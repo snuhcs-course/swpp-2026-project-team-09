@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -9,13 +10,56 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, font, radius, shadow, size, space, text } from '@/design-system';
 import type { CourseLevel } from './departments';
 import { FieldLabel } from './field-label';
+import type { Affiliation } from '@/api/types';
 import type { GenderChoice } from './form';
 import { Input } from './input';
 import { Pill, PILL_ROW_GAP } from './pill';
 
-const LEVELS: readonly { level: CourseLevel; label: string }[] = [
-  { level: 'undergraduate', label: '학부생' },
-  { level: 'graduate', label: '대학원생' },
+interface SegmentFieldProps<Key extends string> {
+  // What a screen reader calls the choice, and the words above it.
+  label: string;
+  title: string;
+  choices: readonly { key: Key; label: string }[];
+  // None of them, until the User chooses one.
+  value: Key | null;
+  onChange: (key: Key) => void;
+}
+
+// One of a few choices side by side, on one track.
+function SegmentField<Key extends string>({
+  label,
+  title,
+  choices,
+  value,
+  onChange,
+}: SegmentFieldProps<Key>): ReactElement {
+  return (
+    <View accessibilityLabel={label} accessibilityRole="radiogroup" style={styles.field}>
+      <FieldLabel>{title}</FieldLabel>
+      <View style={styles.track}>
+        {choices.map(({ key, label: words }) => (
+          <Pressable
+            accessibilityLabel={words}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: key === value }}
+            aria-checked={key === value}
+            key={key}
+            onPress={() => {
+              onChange(key);
+            }}
+            style={[styles.level, key === value && styles.levelOn]}
+          >
+            <Text style={[styles.levelWords, key === value && styles.levelWordsOn]}>{words}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const LEVELS: readonly { key: CourseLevel; label: string }[] = [
+  { key: 'undergraduate', label: '학부생' },
+  { key: 'graduate', label: '대학원생' },
 ];
 
 // The course level: one of two, side by side.
@@ -26,28 +70,24 @@ export function CourseLevelField({
   value: CourseLevel;
   onChange: (level: CourseLevel) => void;
 }): ReactElement {
-  return (
-    <View accessibilityLabel="소속 과정" accessibilityRole="radiogroup" style={styles.field}>
-      <FieldLabel>과정</FieldLabel>
-      <View style={styles.track}>
-        {LEVELS.map(({ level, label }) => (
-          <Pressable
-            accessibilityLabel={label}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: level === value }}
-            aria-checked={level === value}
-            key={level}
-            onPress={() => {
-              onChange(level);
-            }}
-            style={[styles.level, level === value && styles.levelOn]}
-          >
-            <Text style={[styles.levelWords, level === value && styles.levelWordsOn]}>{label}</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
+  return <SegmentField choices={LEVELS} label="소속 과정" onChange={onChange} title="과정" value={value} />;
+}
+
+const AFFILIATIONS: readonly { key: Affiliation; label: string }[] = [
+  { key: 'undergraduate', label: '학부' },
+  { key: 'graduate', label: '대학원' },
+  { key: 'exchange', label: '교환학생' },
+];
+
+// 소속, for the library: one of three, or none until the User chooses.
+export function AffiliationField({
+  value,
+  onChange,
+}: {
+  value: Affiliation | null;
+  onChange: (affiliation: Affiliation) => void;
+}): ReactElement {
+  return <SegmentField choices={AFFILIATIONS} label="소속" onChange={onChange} title="소속" value={value} />;
 }
 
 const GENDERS: readonly { choice: GenderChoice; label: string }[] = [
