@@ -38,6 +38,8 @@ const LUNCH = {
   invitees: [],
 };
 
+const ONLY_MAP_BUTTONS = { mapButtons: ['dining'], cards: [], proposal: null, choices: [], resolvedBy: [] };
+
 const model = new ScriptedModel();
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
@@ -106,14 +108,7 @@ describe('A run that wrote no text', () => {
     const response = await send();
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      text: FIXED_SENTENCE,
-      mapButtons: ['dining'],
-      cards: [],
-      proposal: null,
-      choices: [],
-      resolvedBy: [],
-    });
+    expect(response.body).toEqual({ text: FIXED_SENTENCE, ...ONLY_MAP_BUTTONS });
     expect(warnings()).toContain(
       'The Assistant answered with its fixed sentence: no step had text ' +
         '(finish reason stop, 0 cards, 1 map buttons, 0 choices, no Proposal)',
