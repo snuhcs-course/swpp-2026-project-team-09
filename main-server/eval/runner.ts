@@ -28,6 +28,7 @@ import {
 } from './cases.ts';
 import { addTokens, costOf, NO_TOKENS, type Tokens } from './cost.ts';
 import { type RunOptions, runName } from './options.ts';
+import { FixtureTravel } from './p4/travel-fixture.ts';
 import { Recorder } from './recorder.ts';
 import { runObserverModule } from './run-observer.module.ts';
 import { failureOf, type ReplyTrace, type TurnTrace, usageOf } from './trace.ts';
@@ -48,6 +49,8 @@ export const RESULTS_DIRECTORY = new URL('results/', import.meta.url);
 export interface EvalApp {
   app: INestApplication<Server>;
   recorder: Recorder;
+  // Stands for `travel`, so that the real table and shuttle file never reach a run. The P4 world binds its Places.
+  travel: FixtureTravel;
   // Stands the app's clock at this time, until the next.
   setNow: (now: string) => void;
 }
@@ -60,6 +63,7 @@ export async function startEvalApp(
   options: RunOptions,
 ): Promise<EvalApp> {
   const recorder = new Recorder({ temperature: options.temperature, topP: options.topP });
+  const travel = new FixtureTravel();
   const app = await startApp(
     {
       ...settings,
@@ -74,12 +78,14 @@ export async function startEvalApp(
     refuseMatchServer,
     recorder.wrap(model),
     [runObserverModule(recorder)],
+    travel,
   );
   let now = WORLD_CLOCKS[options.world];
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(now));
   return {
     app,
     recorder,
+    travel,
     setNow: (next) => {
       now = next;
     },

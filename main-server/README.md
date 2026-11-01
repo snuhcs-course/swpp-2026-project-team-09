@@ -633,16 +633,50 @@ of a post, and each becomes its own event.
 
 A Collection's message is stored and answered at once, since the worker waits only five seconds: every session is stored
 as a Draft, and nothing is published inside the request. The step after the answer, `PublicationStepService`, then goes
-through each Source Post of that Source not yet through it, `stepFinishedAt` empty, and publishes the sessions the rules
-read, with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an
+through each Source Post of that Source not yet through it, `stepFinishedAt` empty: the link rule, then the rules' reading
+and a Judgement's, then the comparison with the events that exist (below), then publication of the sessions neither
+attached nor held, the rules' with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an
 Administrator edited or discarded before the step ran is left as it is. A worker that gave up while its message was
 stored does not stop the step. When the step fails on a post, or the server restarts before it ran, the post stays as it
 is, and the next Collection of its Source takes it up; a Collection whose list holds nothing new still sends its
 message, so at the latest at that Source's next scheduled Collection.
 
-With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: every session stays a Draft for an
-Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)
+With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: it still stores Judgements and
+attachments, every other session stays a Draft for an Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)
 says how to turn it off in Production.
+
+**The same event posted twice** (`same-event.ts`). A new post's sessions are only ever attached to events that exist, and
+two existing events are never merged. The step reads only a post's title, text and links, and what differs by Source is
+its address pattern in `post-sources.ts`. Comparing and publishing a post hold one transaction-scoped lock, so that of two
+posts of one event on two pods the second sees the first.
+
+- **The link rule** comes first and asks no model. The worker sends where the links of a post's body lead as `links`, since
+  words can hide an address; the rule reads those and the body's text. When they name one stored post (not the post
+  itself) with as many sessions, the sessions are attached in the order of their numbers, whatever their times, with the
+  reason `link`. A session whose time the post states, more than a header's date, and that differs from its event's leaves the event as it is and
+  sets its `needsAdministrator`, without raising its version. Several posts, or another number of sessions, leave the
+  post's sessions Drafts with `heldFor` `link_not_one_to_one`: they are neither judged nor published. A linked event that
+  is a Draft no one read a time for, neither an Administrator nor the rules, takes nothing: it may never be published, so
+  the post goes on through the step and may publish itself. Should that Draft be published later, the event can show
+  twice unless the title rule catches it. A flag on a Draft moves with it when it is attached in its turn. Only a new post that
+  links a stored one is looked at, so a post stored first and linked by nothing later comes to the title rule alone.
+- **The candidates**, once a session's time is known, are the events of any Source starting within one day, other than the
+  post's own, in any state, so that a cancelled or discarded event does not come back through another post. A Draft is a
+  candidate only if an Administrator made it, or the rules read it and its post has been through the step: the start of
+  any other may be only an application period, and attaching to it could hide the post for good. A session whose
+  Judgement could not be made is compared at its retry, and stays a Draft until then.
+- **The refusing rules** read the titles as written (only with their width folded), never the body, which often speaks of the other kind. They refuse two
+  times of day on one day, and titles that say different rounds (`1차`, `2회차`), modes (대면 against 비대면) or roles (헬퍼, 디자이너, 멘토, 멘티, 튜터, 튜티, 스태프: what a participant does, not who it is for). A
+  title saying nothing of it is not refused. Candidates on the day before or after are kept.
+- **The attaching rule** runs only with `SAME_EVENT_TITLE_RULE=on` (default `off`, also in Production): a wrong attachment
+  hides an event from Users, flagged by nothing, so it stays off until evaluation B has measured it. With it off the
+  candidates are not looked at and both posts are published. Equal normalised titles (NFKC, lower case, without what is in `[]`, `()`, `【】` or `<>`, spaces or
+  punctuation) and equal starts attach, with the reason `equal_title_and_start`. Several such events leave the session a
+  Draft with `heldFor` `several_matches`.
+- **What attaching does:** the session's link moves to the event, with `attachedBy` `rule`. Its own Draft is removed and what
+  it held, the only copy of the post's title and text, stays in the session's `ownDraft`, for detaching (ticket 08b). The
+  event's `sourceUrl`, its version and its route stay, since those read its own session. Attaching tells no app to refetch.
+  A session's `globalEventId` in a Judgement is the event it was published as or attached to, or its Draft while held.
 
 **A Judgement** ([ADR 0008](../docs/adr/0008-judgements-publish-only-what-the-server-checks.md)) reads what the rules
 left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
@@ -664,15 +698,18 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   line that runs across days ends, the place is in its lines and names exactly one Place on a line that names nowhere
   else, and it is not a session the rules or the same answer already gave. A place that is a
   building number alone is taken as Gwanak where the Source's setting says so. A session read as running over a period
-  does not pass until ticket 07.
+  needs no time of day and may last longer than 24 hours, but it must end on two different days, with one quoted line
+  holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
   taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
   post. Failing sessions make no Draft: a post stored as one Draft keeps it for them, and a post the worker sent with a
   Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
-  as it is, with the outcome `no_event`.
+  as it is, with the outcome `no_event`. A session over a period whose end is a day alone, or the 00:00 extra.snu writes
+  where it has no time, is stored as ending at 23:59 of that day in Korea, so that it stays listed through its last day
+  and its card names that day.
 - **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
-  reads it publishes nothing of that Judgement. With `AUTOMATIC_PUBLICATION=off` the Judgement is stored and nothing is
-  published.
+  reads it publishes nothing of that Judgement. A post the link rule decided is not judged. With
+  `AUTOMATIC_PUBLICATION=off` the Judgement and what it attaches are stored and nothing is published.
 - **Failing closed and tries:** an error, a timeout or a malformed answer publishes nothing. A post has at most two tries,
   counted when claimed in `judgements.attempts`, so a server that dies during a call has used its try, and of two servers
   one calls. A claim older than twice the time limit was left by such a server. `source_posts.step_finished_at` has no
@@ -1796,7 +1833,8 @@ prediction, each with equal weight, against 3.5 minutes. The threshold holds whe
 
 `TRAVEL_PROVIDER` (`src/travel/travel.ts`) says how long the way from one Place to another takes at a departure time,
 in seconds, on foot or by the circular shuttle. Show its seconds as whole minutes, rounded up, with `shownMinutes`. Both
-of its files are read once when the server starts. A fixture can be bound to the provider in place of them.
+of its files are read once when the server starts. A fixture can be bound to the provider in place of them. It also
+answers `walkingSeconds`, the way on foot alone, by which a leave-by time's out-travel departs.
 
 - **On foot**, it looks the pair up in `seed/walking-table.json` (Seed data, ADR 0010).
 - **By shuttle**, only the anticlockwise route 41946: a walk to a boarding stop, the average wait, the ride to a stop
@@ -1926,7 +1964,10 @@ its model through OpenRouter with the Vercel AI SDK
   `{ "title", "description", "joinPolicy": "open" | "approval" | "closed", "board", "capacity", "startsAt",`
   `"place", "globalEvent", "invitees" }` with `startsAt` in Korea time, `board` null for a Closed Quest, `place` as
   `{ "id", "name" }` or null, `globalEvent` whole as `GET /global-events` serves it or null, and `invitees`, the Friends
-  to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). The app sends a card back only
+  to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). A candidate of
+  `findFreeTimeEvents` has its 이동 시간 fields beside the `quest` or the `globalEvent`, each only when it applies:
+  `travel` (`{ "mode": "walk" | "shuttle", "minutes" }`), then either `next` (`{ "minutes", "isClass" }`) or `leaveBy`
+  (`"HH:MM"`) with `endUnknown`. Older apps ignore them. The app sends a card back only
   as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
   and never the map buttons. Nothing of a conversation is stored: the app keeps it.
 
@@ -1958,8 +1999,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 - **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
   OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
-- **Tools** (`tools/`): each is a zod schema of its input and a plain function calling this server's services, made
-  with `defineTool` (`feature.ts`). It is given the signed-in User's id and the time of the request. A tool answers only
+- **Tools** (`tools/`, and `free-time/` for the 공강 tools): each is a zod schema of its input and a plain function
+  calling this server's services, made with `defineTool` (`feature.ts`). It is given the signed-in User's id and the
+  time of the request. A tool answers only
   what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
   there is none instead of answering from elsewhere.
   - `getMenus(date, meal?, restaurant?)` answers the menus of that day only, each restaurant with `collectedAt` in
@@ -1999,6 +2041,24 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
     it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change.
+  - **The 공강 tools** (`free-time/`, ADR 0009) work on a day from today to a week ahead, and on the items of a User's
+    day: each Class meeting on that weekday and each timed Sub Quest of a Quest they hold (`UserDayService`, for any
+    User). Rooms, Places, coordinates and the reason anyone is busy are never returned.
+    - `getMyDay(date)` answers the User's items, each with its id (a Class meeting's is its ClassTime's), name, start
+      and end. A Sub Quest with no end, or longer than 3 hours, ends 30 minutes after its start.
+    - `findFreeTimeEvents(date, from, to, board?, departurePlace?, departureTime?, leaveBy?)` takes `from` and `to` as an item id, a
+      clock time, `now` or `end`. It answers the gaps found, with the items around them, the `total` and every candidate
+      that fits, soonest first with no cap: recruiting Quests the User can still enter and published Global Events that
+      start inside a gap, at a place that maps to a Place (`PlaceLookup.placeIdOf`), reached 1 minute early and left in
+      time for the next item, at their end or, after a stay of at least 30 minutes, at a leave-by time. What is left out is neither returned nor explained. Or it answers
+      `{ "result": "needs", "needs": { "side": "before" | "after", "item" } }` for an item of the User's without a Place,
+      and takes the answer as `departurePlace`, which must come from `resolvePlace` in the same message, or `leaveBy`.
+      From off campus, `departureTime` says when the User enters the campus at that Place, and they leave from there
+      at that time. These answer only sides without a Place, and nothing of them is stored. A clock time as `to` also limits a
+      candidate's end. The numbers are in `src/travel/judgement-constants.ts`.
+    - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
+      puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
+      in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
@@ -2013,10 +2073,13 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     `othersText` breaks a tag of the delimiters inside the text, so that it cannot close them.
 - **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
   chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
-  each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so
-  that one feature cannot reach another's data.
+  each request. A capability of the chat joins it as tools and a prompt fragment (ADR 0009, `FREE_TIME_RULES`). An AI
+  feature with an entry point of its own gets a definition of its own that reuses tools, so that it cannot reach
+  another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
-  call, tool call and answer within the limits per message. `causeOf` names why a run failed for the log.
+  call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
+  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). `causeOf` names why a
+  run failed for the log.
 
 ### Testing with the scripted model
 
@@ -2116,7 +2179,8 @@ by id in `eval/fixed-set.ts`: other cases can join `eval/cases/`, and the test c
 `pnpm eval --world p4` runs the 40 cases of `eval/p4/cases/` (공강 파티 15, 공강에 밥 15, 공통 10) in a world of their
 own, `eval/p4/world.yaml`, with the clock at 2026-11-02 (월) 11:30 unless a case gives its own `now`. A case's `asker`
 sends it as another User of the world, such as one with no Timetable. `eval/p4/rules.md` states the judgement in prose,
-`eval/p4/travel-fixture.json` freezes every ordered pair of the world's Places, and `eval/p4/suite.yaml` commits the
+`eval/p4/travel-fixture.json` freezes every ordered pair of the world's Places, bound to `TRAVEL_PROVIDER` so that the
+real table and shuttle file never reach a run, and `eval/p4/suite.yaml` commits the
 thresholds and who drafted and reviewed the labels. Every case has `repeat: 3`, so a scorecard's pass rates are the mean
 of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixture and every seed name.
 

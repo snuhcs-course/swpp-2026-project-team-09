@@ -40,7 +40,8 @@ export function collectedPost(postNumber: number, changes: Record<string, unknow
   return {
     key: String(postNumber),
     address: postAddress(postNumber),
-    title: '[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내',
+    // Its number, so that two posts with the same time are not one event.
+    title: `[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내 ${postNumber}`,
     description: '- 일시: 2026. 10. 13.(화) 17:00\n- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)',
     sessions: [{ number, start, end, readFrom, place }],
     ...post,

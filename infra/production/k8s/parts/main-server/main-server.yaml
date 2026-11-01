@@ -79,6 +79,8 @@ spec:
               valueFrom: { configMapKeyRef: { name: settings, key: AUTOMATIC_PUBLICATION } }
             - name: AUTOMATIC_JUDGEMENT
               valueFrom: { configMapKeyRef: { name: settings, key: AUTOMATIC_JUDGEMENT } }
+            - name: SAME_EVENT_TITLE_RULE
+              valueFrom: { configMapKeyRef: { name: settings, key: SAME_EVENT_TITLE_RULE } }
           resources:
             requests:
               memory: 256Mi

@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { z } from 'zod';
 import { encloses, metresBetween, metresToRing, type Position } from '../common/geometry.js';
 import { PrismaService } from '../common/prisma.service.js';
+import { NEAREST_PLACE_METRES } from '../travel/judgement-constants.js';
 import { byNumber } from './places.service.js';
 import { PlaceDto, toPlaceDto } from './dto/place.dto.js';
 
@@ -51,6 +53,14 @@ function oneCopy(outlines: Map<string, Position[]>, outline: Position[]): Positi
   return outline;
 }
 
+// A place as a Sub Quest holds it: a Place, or a point with the label the app showed, or the label alone.
+export interface WrittenPlace {
+  placeId: string | null;
+  label: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
 const outlinesSchema = z.array(z.array(z.object({ latitude: z.number(), longitude: z.number() })));
 
 // Which Place a position is in. Inject it wherever a feature turns a User's position into a Place.
@@ -92,5 +102,37 @@ export class PlaceLookup implements OnModuleInit {
     }
     const inside = nearest.outline !== null && nearest.metres <= INSIDE_WITHIN_METRES;
     return { place: nearest.place, relation: inside ? 'inside' : 'near' };
+  }
+
+  // The id of the Place a written place is, or null when it is unknown or there is none.
+  placeIdOf(written: WrittenPlace | null): string | null {
+    if (written === null) {
+      return null;
+    }
+    const { placeId, label, latitude, longitude } = written;
+    if (placeId !== null) {
+      return placeId;
+    }
+    const position = latitude === null || longitude === null ? null : { latitude, longitude };
+    const place =
+      position === null ? null : (this.exactlyAt(position) ?? this.at(position)?.place ?? this.nearTo(position));
+    return (place ?? this.named(label))?.id ?? null;
+  }
+
+  private exactlyAt({ latitude, longitude }: Position): PlaceDto | null {
+    const found = this.places.find(({ place }) => place.latitude === latitude && place.longitude === longitude);
+    return found?.place ?? null;
+  }
+
+  private nearTo(position: Position): PlaceDto | null {
+    const [nearest] = this.places
+      .map(({ place }) => ({ place, metres: metresBetween(place, position) }))
+      .toSorted((a, b) => a.metres - b.metres);
+    return nearest !== undefined && nearest.metres <= NEAREST_PLACE_METRES ? nearest.place : null;
+  }
+
+  private named(label: string): PlaceDto | null {
+    const found = this.places.find(({ place }) => place.name === label || place.number === label);
+    return found?.place ?? null;
   }
 }

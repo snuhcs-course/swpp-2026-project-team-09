@@ -177,7 +177,11 @@ describe('Source Posts', () => {
     const postNumber = newPost();
 
     await send(app, eventsMessage([collectedPost(postNumber)]));
-    await collected({ app, prisma }, eventsMessage([collectedPost(postNumber)], { source: 'extra_snu' }), 'extra_snu');
+    await collected(
+      { app, prisma },
+      eventsMessage([collectedPost(postNumber, { title: '다른 행사' })], { source: 'extra_snu' }),
+      'extra_snu',
+    );
     await stepOver(prisma);
 
     expect(await prisma.sourcePost.count({ where: { key: String(postNumber) } })).toBe(2);

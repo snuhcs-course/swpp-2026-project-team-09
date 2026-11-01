@@ -64,6 +64,7 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     ASSISTANT_MAX_OUTPUT_TOKENS: '1000',
     AUTOMATIC_PUBLICATION: 'on',
     AUTOMATIC_JUDGEMENT: 'off',
+    SAME_EVENT_TITLE_RULE: 'off',
     JUDGEMENT_TIMEOUT_MS: '60000',
     JUDGEMENT_MAX_OUTPUT_TOKENS: '4000',
   };
