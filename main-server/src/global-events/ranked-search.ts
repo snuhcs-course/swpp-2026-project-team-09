@@ -4,7 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { eventLastsUntil, holdingPattern, timestamp, wordsHeld } from '../common/search-sql.js';
+import { eventLastsUntil, eventOverlaps, holdingPattern, moreWordsFirst } from '../common/search-sql.js';
 import { Prisma } from '../generated/prisma/client.js';
 
 // What the Assistant's searchGlobalEvents asks for: the published events that overlap the period [from, to) when one is
@@ -24,15 +24,14 @@ export async function rankedSearchIds(
   { period, place, words = [], take }: RankedSearch,
   now: Date,
 ): Promise<string[]> {
-  const held = wordsHeld(words, Prisma.sql`e.title`, Prisma.sql`e.description`);
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     SELECT e.id
     FROM global_events e
     WHERE e.state = 'published'
       AND ${eventLastsUntil(now)}
-      ${period === undefined ? Prisma.empty : Prisma.sql`AND e.starts_at < ${timestamp(period.to)} AND ${eventLastsUntil(period.from)}`}
+      ${period === undefined ? Prisma.empty : Prisma.sql`AND ${eventOverlaps(period)}`}
       ${place === undefined ? Prisma.empty : Prisma.sql`AND e.place ILIKE ${holdingPattern(place)}`}
-    ORDER BY ${held === null ? Prisma.empty : Prisma.sql`${held} DESC,`}
+    ORDER BY ${moreWordsFirst(words, Prisma.sql`e.title`, Prisma.sql`e.description`)}
       e.starts_at ASC NULLS LAST, e.title COLLATE "C" ASC, e.id ASC
     LIMIT ${take}`;
   return rows.map(({ id }) => id);

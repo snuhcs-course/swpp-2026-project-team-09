@@ -23,16 +23,21 @@ export function holdingPattern(text: string): string {
   return `%${text.replaceAll(/[\\%_]/gu, String.raw`\$&`)}%`;
 }
 
-// How many of the words the title or the description holds, ignoring case; a word given twice counts once. Null without
-// words: ORDER BY reads a bare number as a column's position.
-export function wordsHeld(words: readonly string[], title: Prisma.Sql, description: Prisma.Sql): Prisma.Sql | null {
+// Whether the Global Event `e` overlaps the period [from, to).
+export function eventOverlaps({ from, to }: { from: Date; to: Date }): Prisma.Sql {
+  return Prisma.sql`e.starts_at < ${timestamp(to)} AND ${eventLastsUntil(from)}`;
+}
+
+// The start of an ORDER BY: those whose title or description holds more of the words first, ignoring case, a word given
+// twice counting once. Nothing without words.
+export function moreWordsFirst(words: readonly string[], title: Prisma.Sql, description: Prisma.Sql): Prisma.Sql {
   const distinct = [...new Set(words.map((word) => word.toLowerCase()))];
   if (distinct.length === 0) {
-    return null;
+    return Prisma.empty;
   }
   const each = distinct.map((word) => {
     const pattern = holdingPattern(word);
     return Prisma.sql`(${title} ILIKE ${pattern} OR ${description} ILIKE ${pattern})::int`;
   });
-  return Prisma.sql`(${Prisma.join(each, ' + ')})`;
+  return Prisma.sql`(${Prisma.join(each, ' + ')}) DESC,`;
 }

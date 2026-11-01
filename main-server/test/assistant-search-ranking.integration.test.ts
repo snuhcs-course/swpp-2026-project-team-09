@@ -112,13 +112,12 @@ describe('searchRecruitingQuests, reading a word', () => {
   });
 
   it.each([
-    ['%', '2092-01-08', '할인 100%', '할인 1000'],
-    ['_', '2092-01-09', 'snake_case', 'snakeXcase'],
-    ['a backslash', '2092-01-10', String.raw`a\b`, 'ab'],
-  ])('reads %s in a word as itself', async (_, date, held, lookAlike) => {
+    ['%', '2092-01-08', '100%', '할인 100%', '할인 1000'],
+    ['_', '2092-01-09', 'e_c', 'snake_case', 'snakeXcase'],
+    ['a backslash', '2092-01-10', String.raw`a\b`, String.raw`a\b`, 'ab'],
+  ])('reads %s in a word as itself', async (_, date, word, held, lookAlike) => {
     const other = await questAt(`${date}T09:00:00`, { title: lookAlike });
     const found = await questAt(`${date}T10:00:00`, { title: held });
-    const word = { '할인 100%': '100%', snake_case: 'e_c' }[held] ?? String.raw`a\b`;
 
     expect(await questsFound({ from: date, to: date, words: [word] })).toEqual([found, other]);
   });
@@ -201,7 +200,7 @@ describe('searchGlobalEvents, given words', () => {
     expect(await eventsFound({ from: '2092-03-06', to: '2092-03-06' })).toEqual([upper.id, lower.id, hangul.id]);
   });
 
-  it('ignores case and reads %, _ and a backslash in a word as themselves', async () => {
+  it('ignores case and reads % in a word as itself', async () => {
     const other = await eventAt('2092-03-07T09:00:00', { title: '할인 1000' });
     const held = await eventAt('2092-03-07T10:00:00', { title: 'SALE 100%' });
 

@@ -10,8 +10,8 @@ import { GlobalEventsService } from '../../global-events/global-events.service.j
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
+import { CANDIDATES_MAX, DESCRIPTION_MAX, wordsInput } from './search-candidates.js';
 import { daysTogether, hasWindow, inOrder, WINDOW_INPUT, windowOf, windowWords } from './search-window.js';
-import { CANDIDATES_MAX, DESCRIPTION_MAX, wordsInput } from './search-words.js';
 
 const input = z
   .object({

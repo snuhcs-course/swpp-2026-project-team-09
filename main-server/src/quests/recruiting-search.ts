@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { METRES_PER_DEGREE } from '../common/geometry.js';
-import { eventLastsUntil, timestamp, wordsHeld } from '../common/search-sql.js';
+import { eventLastsUntil, eventOverlaps, moreWordsFirst, timestamp } from '../common/search-sql.js';
 import { Prisma, QuestBoard } from '../generated/prisma/client.js';
 
 // What the Assistant's searchRecruitingQuests asks for: the Quests the reader could enter, in the window [from, to) when
@@ -42,9 +42,7 @@ const METRES_FROM_NEAR = Prisma.sql`sqrt(
 // span overlaps it.
 function asItsEvent(now: Date, window: RecruitingSearch['window']): Prisma.Sql {
   return Prisma.sql`e.state = 'published' AND ${eventLastsUntil(now)}${
-    window === undefined
-      ? Prisma.empty
-      : Prisma.sql` AND e.starts_at < ${timestamp(window.to)} AND ${eventLastsUntil(window.from)}`
+    window === undefined ? Prisma.empty : Prisma.sql` AND ${eventOverlaps(window)}`
   }`;
 }
 
@@ -91,7 +89,6 @@ export async function recruitingSearchIds(
   now: Date,
 ): Promise<string[]> {
   const { words = [], near } = search;
-  const held = wordsHeld(words, Prisma.sql`q.title`, Prisma.sql`q.description`);
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     SELECT q.id
     FROM quests q
@@ -105,7 +102,7 @@ export async function recruitingSearchIds(
     LEFT JOIN places p ON p.id = first_sub.place_id
     ${near === undefined ? Prisma.empty : Prisma.sql`JOIN places near ON near.id = ${near.placeId}::uuid`}
     WHERE ${Prisma.join(conditionsOf(readerId, search, now), ' AND ')}
-    ORDER BY ${held === null ? Prisma.empty : Prisma.sql`${held} DESC,`}
+    ORDER BY ${moreWordsFirst(words, Prisma.sql`q.title`, Prisma.sql`q.description`)}
       COALESCE(e.starts_at, first_sub.starts_at) ASC NULLS LAST, q.title COLLATE "C" ASC, q.id ASC
     LIMIT ${search.take}`;
   return rows.map(({ id }) => id);

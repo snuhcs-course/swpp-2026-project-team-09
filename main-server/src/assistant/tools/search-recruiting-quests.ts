@@ -12,8 +12,8 @@ import { RecruitingService } from '../../quests/recruiting.service.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
+import { CANDIDATES_MAX, DESCRIPTION_MAX, wordsInput } from './search-candidates.js';
 import { daysTogether, inOrder, WINDOW_INPUT, windowOf, windowWords } from './search-window.js';
-import { CANDIDATES_MAX, DESCRIPTION_MAX, wordsInput } from './search-words.js';
 
 // How near a Place a 파티 counts as being there, when the model names no other radius.
 const RADIUS_METRES = 300;

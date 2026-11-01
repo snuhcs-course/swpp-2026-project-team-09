@@ -27,4 +27,5 @@
 - A `placeId` that names no Place answers "none", as a Place with nothing around it does. `globalEventId` reads the same way, and neither must come from a resolver in the same message.
 - The reason for "none" of the event search no longer names the words, since they filter nothing.
 - All 41 `until: 11` marks held on the real server, as the simulation said, so none differs from it. They are now null: 72 hold, and the 8 marked `search stage 1` still miss a card.
+- `resolvePlace`'s description also says it serves a search near a Place, since `placeId` must come from it.
 - The instruction not to repeat a step is in; this ticket stops at the instruction. Whether it worked is read from a sample of R1's joined replies in ticket 12a, since no metric sees it.
