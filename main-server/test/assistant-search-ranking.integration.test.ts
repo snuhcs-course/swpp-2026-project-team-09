@@ -162,7 +162,6 @@ describe('searchRecruitingQuests, counting and cutting', () => {
     expect(candidates[0]?.id).toBe(held);
     expect(more).toBe(true);
   });
-
 });
 
 describe('searchRecruitingQuests, given too many words', () => {
