@@ -147,6 +147,7 @@ export async function runFeature(
     shown: lastShown(messages),
     presented: { mapButtons: [], cards: [], proposal: null },
     judged: new Map(),
+    restaurants: new Map(),
   };
   const { text, finishReason } = await generateText({
     model,

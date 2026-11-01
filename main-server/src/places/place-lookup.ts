@@ -119,6 +119,10 @@ export class PlaceLookup implements OnModuleInit {
     return (place ?? this.named(label))?.id ?? null;
   }
 
+  numbered(number: string): PlaceDto | null {
+    return this.places.find(({ place }) => place.number === number)?.place ?? null;
+  }
+
   private exactlyAt({ latitude, longitude }: Position): PlaceDto | null {
     const found = this.places.find(({ place }) => place.latitude === latitude && place.longitude === longitude);
     return found?.place ?? null;

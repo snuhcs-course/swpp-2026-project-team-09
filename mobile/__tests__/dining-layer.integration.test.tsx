@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -94,7 +95,7 @@ describe('the 식당 layer', () => {
     expect(pin(STUDENT_CENTRE)).toBeVisible();
     expect(pin(JAHAYEON)).toBeVisible();
     expect(pin(ENGINEERING)).toBeVisible();
-    // Listed without meals, outside the table, and without a Place.
+    // Listed without meals, without a Place from the server, and at a Place `GET /places` does not list.
     expect(pin('식당 · 예술계식당')).toBeNull();
     expect(pin('식당 · 교수회관식당')).toBeNull();
     expect(pin('식당 · 수의대식당')).toBeNull();

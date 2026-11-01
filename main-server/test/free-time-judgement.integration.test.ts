@@ -10,6 +10,7 @@ import { inject, type ProvidedContext } from 'vitest';
 import { casesIn, type EvalCase, loadCases, nowOf, WORLD_CLOCKS } from '../eval/cases.ts';
 import { type Names, namesOf } from '../eval/normalise.ts';
 import { normaliseResult } from '../eval/normalise-result.ts';
+import { isRecord } from '../eval/readers.ts';
 import { FixtureTravel } from '../eval/p4/travel-fixture.ts';
 import { seedP4World } from '../eval/p4/world.ts';
 import { type World } from '../eval/world.ts';
@@ -25,7 +26,7 @@ import { refuseKakao } from './walking-route.js';
 // fixture, each 공강 tool called with the arguments of a label, and what it answers read as the labels write it. The
 // labels were worked by hand from eval/p4/rules.md and do not follow the code.
 
-const TOOLS = ['getMyDay', 'findFreeTimeEvents'] as const;
+const TOOLS = ['getMyDay', 'findFreeTimeEvents', 'findFreeFriends', 'findMealRestaurants'] as const;
 
 type Tool = (typeof TOOLS)[number];
 
@@ -76,24 +77,42 @@ function idOf(name: unknown): unknown {
   return typeof name === 'string' ? (world.seeds[name]?.id ?? name) : name;
 }
 
-// A label's arguments as the model passes them: items and Places by id.
-function inputOf({ from, to, departurePlace, ...rest }: Record<string, unknown>): object {
+const namesIn = (written: unknown): string[] => (Array.isArray(written) ? written.map(String) : []);
+
+function nameOf(seed: string): string {
+  return world.seeds[seed]?.name ?? seed;
+}
+
+// A label's arguments as the model passes them: items, Places and Friends by id.
+function inputOf({ from, to, departurePlace, friends, ...rest }: Record<string, unknown>): object {
   return {
     ...rest,
     ...(from === undefined ? {} : { from: idOf(from) }),
     ...(to === undefined ? {} : { to: idOf(to) }),
     ...(departurePlace === undefined ? {} : { departurePlace: idOf(departurePlace) }),
+    ...(friends === undefined ? {} : { friendIds: namesIn(friends).map((name) => idOf(name)) }),
   };
 }
 
-// The steps of the model: a departure Place is taken only from resolvePlace, in the same message.
+// The steps of the model: a departure Place is taken only from resolvePlace, and a Friend only from resolveFriend, in
+// the same message.
 function stepsOf(tool: Tool, args: Record<string, unknown>): Step[] {
-  const { departurePlace } = args;
+  const { departurePlace, friends } = args;
   return [
+    ...namesIn(friends).map((seed) => ({ tool: 'resolveFriend', input: { name: nameOf(seed) } })),
     ...(typeof departurePlace === 'string' ? [{ tool: 'resolvePlace', input: { words: departurePlace } }] : []),
     { tool, input: inputOf(args) },
     { text: '…' },
   ];
+}
+
+const bySeed = (a: unknown, b: unknown): number => JSON.stringify(a).localeCompare(JSON.stringify(b));
+
+// The order of the Friends does not matter (rules.md, section 9).
+function friendsInOneOrder(answer: unknown): unknown {
+  return isRecord(answer) && Array.isArray(answer.friends)
+    ? { ...answer, friends: answer.friends.toSorted(bySeed) }
+    : answer;
 }
 
 function accessTokenOf({ asker }: EvalCase): string {
@@ -101,9 +120,11 @@ function accessTokenOf({ asker }: EvalCase): string {
 }
 
 describe('The judgement of the 공강 tools, against the reviewed labels', () => {
-  it('reads labels of both tools, of every case that gives them', () => {
+  it('reads labels of every tool, of every case that gives them', () => {
     expect(labels.filter(({ tool }) => tool === 'findFreeTimeEvents').length).toBeGreaterThanOrEqual(15);
     expect(labels.filter(({ tool }) => tool === 'getMyDay').length).toBeGreaterThanOrEqual(2);
+    expect(labels.filter(({ tool }) => tool === 'findFreeFriends').length).toBeGreaterThanOrEqual(4);
+    expect(labels.filter(({ tool }) => tool === 'findMealRestaurants').length).toBeGreaterThanOrEqual(11);
   });
 
   it.each(labels.map((label) => [label.evalCase.id, label.tool, label] as const))(
@@ -115,7 +136,7 @@ describe('The judgement of the 공강 tools, against the reviewed labels', () =>
       const response = await postAssistantMessages(app, accessTokenOf(evalCase), ask('…'));
 
       expect(response.status).toBe(200);
-      expect(normaliseResult(model.toolResults().at(-1), names)).toEqual(answer);
+      expect(friendsInOneOrder(normaliseResult(model.toolResults().at(-1), names))).toEqual(friendsInOneOrder(answer));
     },
   );
 });
