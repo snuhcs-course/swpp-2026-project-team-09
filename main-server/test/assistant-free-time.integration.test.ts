@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { ownQuest } from './quests.js';
@@ -63,7 +64,8 @@ describe('An item of mine without a Place before the gap', () => {
 
 describe('Leaving for the gap from off campus', () => {
   it('leaves from the Place given at the time given, and never before the item ends', async () => {
-    const date = '2098-01-09';
+    // A day with no other file's Global Event: they share the database, and this walking table holds only four Places.
+    const date = '2098-01-16';
     const { here, near, model } = stage;
     await stage.asking(date);
     const item = await stage.classOn('thursday', '09:00', '10:00', null);
