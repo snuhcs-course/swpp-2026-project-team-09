@@ -1,29 +1,29 @@
 - case: large-v-01
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
         after: 2026-11-04T22:30
 - case: large-v-02
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
         after: 2026-11-02T20:00
 - case: large-v-03
-  until: 10
+  until: null
   calls:
     - tool: searchGlobalEvents
       input:
         after: 2026-11-07T21:00
 - case: large-v-04
-  until: 10
+  until: null
   calls:
     - tool: searchGlobalEvents
       input:
         after: 2026-11-05T21:00
 - case: large-v-05
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -122,7 +122,7 @@
           - 버스킹
           - 음악제
 - case: large-p-02
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -265,7 +265,7 @@
         words: &a1
           - 탁구
 - case: large-h-02
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -280,7 +280,7 @@
         before: 2026-11-07T18:00
         words: *a1
 - case: large-h-04
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -343,7 +343,7 @@
         before: 2026-11-07T20:20
         words: *a3
 - case: large-s-04
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -374,7 +374,7 @@
           - 농구
         capacity: 4
 - case: large-n-02
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -483,7 +483,7 @@
         placeId: 중앙도서관 본관
         radius: 300
 - case: large-o-01
-  until: 10
+  until: null
   calls:
     - tool: searchGlobalEvents
       input:
@@ -496,7 +496,7 @@
           - 회화전
           - 조각전
 - case: large-o-02
-  until: 10
+  until: null
   calls:
     - tool: searchGlobalEvents
       input:
@@ -504,7 +504,7 @@
         words:
           - 판화
 - case: large-o-03
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -541,7 +541,7 @@
           - 회화전
           - 조각전
 - case: large-b-01
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -570,7 +570,7 @@
         words:
           - 사진전
 - case: large-b-04
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -581,7 +581,7 @@
           - 코테
           - 알고리즘
 - case: large-b-05
-  until: 10
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
