@@ -2021,9 +2021,14 @@ its model through OpenRouter with the Vercel AI SDK
     (`dto/assistant-messages.dto.ts`).
   - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
     (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
+  - **The reply's text** is the text of the model's steps in order, a step that repeats the one before it left out,
+    since the model may write beside a tool call and close with a line or with nothing. A run that wrote no text but
+    shows cards, map buttons or a Proposal says `아래에서 확인해 보세요.` above them, and the server logs that it did, as
+    `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
+Proposal)`.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
-    a model error, exhausted credit (OpenRouter's 402), the time running out, or the step cap reached without an
-    answer. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
+    a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
+    or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
 
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
@@ -2132,15 +2137,16 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
   call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
-  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). `causeOf` names why a
-  run failed for the log.
+  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
+  text from the steps' text, or the fixed sentence. `causeOf` names why a run failed for the log.
 
 ### Testing with the scripted model
 
 The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
 `startApp` in the model port's place. Each call to the model takes the next step of its script, and every call is
-kept. A step is a tool to call with its arguments, `{ tool, input }`, the text to answer, `{ text }`, an error to throw
-as the provider would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
+kept. A step is a tool to call with its arguments, `{ tool, input }`, with `text` when the model wrote words beside the
+call, the text to answer, `{ text }`, a call cut at the output limit, `{ cut }`, an error to throw as the provider
+would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
 reach OpenRouter. `test/assistant.integration.test.ts` does it this way:
 
@@ -2194,7 +2200,9 @@ the settings given to `startApp`. During the run the tokens the model reported a
 budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
 
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
-reason and its usage with cache reads and writes. The tool results come through the run observer, the one seam in the
+reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,
+its reasoning tokens and the provider's response as it came, which the benchmark's fetch (`RawResponses`) keeps because
+the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
 shows its error too. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so

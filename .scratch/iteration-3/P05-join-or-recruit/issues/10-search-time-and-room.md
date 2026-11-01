@@ -15,4 +15,4 @@
 - [ ] Every filter runs in the database query, before the list is cut, not over every Quest read into memory; a test checks that adding a condition only ever narrows the result.
 - [ ] The Boards keep their listing unchanged.
 - [ ] Integration tests with the scripted model cover each rule; the large world's server recall test now passes for the cases this ticket enables.
-- [ ] R1 is run (this change alone) in both worlds, with P19 three times on the same commit for G1, and recorded beside R0, with a failure analysis.
+- [ ] This ticket has no full evaluation run of its own (P05 owner, 2026-11-01). Its cases may be checked with `pnpm eval --case`, and the full run comes at the end of the bundle, in ticket 12a.
