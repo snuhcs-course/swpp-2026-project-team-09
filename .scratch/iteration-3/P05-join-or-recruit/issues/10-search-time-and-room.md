@@ -2,7 +2,7 @@
 
 **What to build:** The Assistant's search tools take a time window, and the server drops Quests that are Full, out of time or that the reader cannot enter, before the list is cut, so that "11/2 17:00 이후" returns the evening and every Quest shown can be entered. Spec: `../spec-chat.md`, "A Quest's time and place" and "Search tools".
 
-**Blocked by:** 02, 02b
+**Blocked by:** 02, 02b, 10a
 
 **Status:** ready-for-agent
 
