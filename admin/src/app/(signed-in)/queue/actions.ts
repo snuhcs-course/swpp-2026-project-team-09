@@ -17,19 +17,17 @@ export type QueueAction = { sessionId: string; version: number } & (
   { kind: 'attach'; globalEventId: string } | { kind: 'publish' }
 );
 
+const REFUSALS: Record<string, string> = {
+  GLOBAL_EVENT_CHANGED: 'Another Administrator changed this Draft after you opened the page. Look at it again.',
+  POST_SESSION_NOT_QUEUED: 'Another Administrator has decided this session already.',
+  CANDIDATE_GONE: 'That event is no longer a candidate of this session.',
+};
+
 function refusedFor({ refusal }: MainServerError): string | null {
-  switch (refusal.code) {
-    case 'GLOBAL_EVENT_INCOMPLETE':
-      return `This Draft needs ${listed((refusal.missing ?? []).map((each) => NEEDED[each]))} to be published. Fill them in on its page, and publish it again.`;
-    case 'GLOBAL_EVENT_CHANGED':
-      return 'Another Administrator changed this Draft after you opened the page. Look at it again.';
-    case 'POST_SESSION_NOT_QUEUED':
-      return 'Another Administrator has decided this session already.';
-    case 'CANDIDATE_GONE':
-      return 'That event is no longer a candidate of this session.';
-    default:
-      return null;
+  if (refusal.code === 'GLOBAL_EVENT_INCOMPLETE') {
+    return `This Draft needs ${listed((refusal.missing ?? []).map((each) => NEEDED[each]))} to be published. Fill them in on its page, and publish it again.`;
   }
+  return REFUSALS[refusal.code ?? ''] ?? null;
 }
 
 function send(token: string, action: QueueAction): Promise<void> {

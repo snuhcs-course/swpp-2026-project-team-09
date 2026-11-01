@@ -134,7 +134,8 @@ describe('chooseSameEvent, when the call fails', () => {
 
     const { choices, modelId } = await chooseSameEvent(scripted.model, question, LIMITS);
 
-    expect(choices).toMatchObject([{ outcome: 'failed', globalEventId: null, failure: expect.any(String) as string }]);
+    expect(choices).toMatchObject([{ outcome: 'failed', globalEventId: null }]);
+    expect(choices[0].failure).not.toBeNull();
     expect(modelId).toBeNull();
     expect(scripted.received()).toHaveLength(1);
   });

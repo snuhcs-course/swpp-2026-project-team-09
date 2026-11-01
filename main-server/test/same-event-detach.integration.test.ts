@@ -30,9 +30,9 @@ describe('The sessions of an event', () => {
   it('lists its Source Posts, how each was attached and which can be detached', async () => {
     const { eventId, post, sessionId } = await world.attachedPost();
 
-    const { body } = await world.admin('get', `/${eventId}/sessions`).expect(200);
+    const response = await world.admin('get', `/${eventId}/sessions`).expect(200);
 
-    expect(body).toEqual([
+    expect(response.body).toEqual([
       expect.objectContaining({ source: 'extra_snu', attachedBy: 'own', detachable: false }),
       expect.objectContaining({
         sessionId,
@@ -79,7 +79,7 @@ describe('Detaching a session', () => {
       world.admin('post', `/sessions/${sessionId}/detach`),
     ]);
 
-    expect(statuses.map(({ status }) => status).toSorted()).toEqual([204, 409]);
+    expect(statuses.map(({ status }) => status).toSorted((a, b) => a - b)).toEqual([204, 409]);
     const [own] = await world.prisma.sourcePostSession.findMany({ where: { globalEventId: eventId } });
     await world.admin('post', `/sessions/${own.id}/detach`).expect(409);
   });
@@ -90,9 +90,9 @@ describe('Detaching, then what comes after', () => {
     const { sessionId } = await world.attachedPost();
     await world.prisma.$executeRaw`UPDATE source_post_sessions SET own_draft = NULL WHERE id = ${sessionId}::uuid`;
 
-    const { body } = await world.admin('post', `/sessions/${sessionId}/detach`).expect(409);
+    const response = await world.admin('post', `/sessions/${sessionId}/detach`).expect(409);
 
-    expect(body).toMatchObject({ code: 'POST_SESSION_NOT_DETACHABLE' });
+    expect(response.body).toMatchObject({ code: 'POST_SESSION_NOT_DETACHABLE' });
   });
 
   it('stays as it is through the next Collection and a run over its Draft, asking no model', async () => {

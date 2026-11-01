@@ -117,12 +117,12 @@ describe('Attaching a queued session that has changed', () => {
       world.programme(world.uniqueTitle(), { start: '2027-09-01T14:00:00+09:00' }),
     );
 
-    const { body } = await world
+    const response = await world
       .admin('post', `/queue/${queued.sessionId}/attach`)
       .send({ version: 1, globalEventId: far.id })
       .expect(409);
 
-    expect(body).toMatchObject({ code: 'CANDIDATE_GONE' });
+    expect(response.body).toMatchObject({ code: 'CANDIDATE_GONE' });
   });
 
   it('lets one of two Administrators through', async () => {
@@ -134,7 +134,7 @@ describe('Attaching a queued session that has changed', () => {
       world.admin('post', `/queue/${queued.sessionId}/attach`).send(body),
     ]);
 
-    expect(statuses.map(({ status }) => status).toSorted()).toEqual([204, 409]);
+    expect(statuses.map(({ status }) => status).toSorted((a, b) => a - b)).toEqual([204, 409]);
   });
 });
 
@@ -164,9 +164,9 @@ describe('Publishing a queued session as its own', () => {
     await world.collectedOf('snu_events', post);
     const queued = await world.queuedOf(post);
 
-    const { body } = await world.admin('post', `/queue/${queued.sessionId}/publish`).send({ version: 1 }).expect(409);
+    const response = await world.admin('post', `/queue/${queued.sessionId}/publish`).send({ version: 1 }).expect(409);
 
-    expect(body).toMatchObject({ code: 'GLOBAL_EVENT_INCOMPLETE', missing: ['startsAt', 'position'] });
+    expect(response.body).toMatchObject({ code: 'GLOBAL_EVENT_INCOMPLETE', missing: ['startsAt', 'position'] });
     expect((await world.queuedOf(post)).sessionId).toBe(queued.sessionId);
 
     await world
@@ -188,7 +188,7 @@ describe('Publishing a queued session, refused', () => {
       world.admin('post', `/queue/${queued.sessionId}/publish`).send({ version: 1 }),
     ]);
 
-    expect(statuses.map(({ status }) => status).toSorted()).toEqual([204, 409]);
+    expect(statuses.map(({ status }) => status).toSorted((a, b) => a - b)).toEqual([204, 409]);
   });
 
   it('takes a queued Draft out when it is published or discarded on its own page', async () => {
