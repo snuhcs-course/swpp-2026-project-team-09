@@ -35,6 +35,7 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "eval": "node eval/cli.ts",
+    "eval:holdout": "node eval/cli.ts --world p4 --holdout",
     "eval:score": "node eval/score-cli.ts",
     "eval:compare": "node eval/compare-cli.ts",
     "eval:replay": "node --env-file-if-exists=.env eval/replay/replay-cli.ts",
