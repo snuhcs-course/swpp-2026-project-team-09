@@ -2264,6 +2264,16 @@ real table and shuttle file never reach a run, and `eval/p4/suite.yaml` commits 
 thresholds and who drafted and reviewed the labels. Every case has `repeat: 3`, so a scorecard's pass rates are the mean
 of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixture and every seed name.
 
+A scorecard of the suite adds each threshold's pass or fail, the pass rate of six layers (the action, the tools, the
+arguments, the cards with the map buttons, the Proposal and the reply's words) and the runs that failed on the words
+alone (`eval/p4/report.ts`). Only the thresholds decide. A run counts in a layer only when its case checks that layer,
+and the action is read as if the words were right, so that a failure lands in the lowest layer that needs fixing.
+
+`pnpm eval:holdout` runs the suite's holdout, 12 of its cases with only the last User turn reworded
+(`eval/p4/holdout.yaml`), which P11 does not tune on. Nothing else reaches those wordings, so `pnpm eval --world p4`
+still runs exactly the 40 cases. Its scorecard gives the pass rates and the layer rates, with what the run cost and its
+settings, and names no case, and `pnpm eval:compare` refuses its runs. `eval/p4/record.md` is the record of the suite's runs.
+
 #### The P05 suite
 
 `pnpm eval --world p5` runs the cases of `eval/p5/cases/`, joining or recruiting and finding, in a world of their own,
