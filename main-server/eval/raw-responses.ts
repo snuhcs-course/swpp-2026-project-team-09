@@ -5,7 +5,8 @@
  ******************************************************************************/
 
 // The provider's responses as they came, before its library's schema drops what it does not know. The benchmark gives
-// the model this fetch, and each response is read once more and goes on to the library whole.
+// the model this fetch, and each response is read once more and goes on to the library whole. It holds only the latest
+// response, so it is right only while the benchmark's model calls run one at a time.
 export class RawResponses {
   private latest: string | null = null;
 
