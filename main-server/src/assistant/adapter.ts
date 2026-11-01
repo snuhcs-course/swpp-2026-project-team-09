@@ -4,7 +4,9 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-29  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -22,9 +24,9 @@ export const MODEL_PORT = 'MODEL_PORT';
 
 export type Model = Exclude<LanguageModel, string>;
 
-// The model named by its OpenRouter id, such as anthropic/claude-haiku-5.5.
-export function openRouterModel(apiKey: string, modelId: string): Model {
-  return createOpenRouter({ apiKey }).chat(modelId);
+// The model named by its OpenRouter id, such as anthropic/claude-haiku-5.5. Only the benchmark passes a fetch of its own.
+export function openRouterModel(apiKey: string, modelId: string, fetch?: typeof globalThis.fetch): Model {
+  return createOpenRouter({ apiKey, fetch }).chat(modelId);
 }
 
 // What one message may take. Each tool call is one model call, and so is the answer. The time runs over every call
@@ -45,7 +47,10 @@ const MAX_RETRIES = 0;
 // It adds no ZDR restriction, which could shrink the providers available.
 const PROVIDER_OPTIONS = { openrouter: { provider: { data_collection: 'deny' } } };
 
-// A run that used every step on tools and never answered.
+// What the reply says when no step wrote any text and the reply shows something beneath it.
+export const FIXED_SENTENCE = '아래에서 확인해 보세요.';
+
+// A run that used every step on tools, or that ended with no text and nothing shown.
 export class NoAnswerError extends Error {
   override readonly name = 'NoAnswerError';
 }
@@ -130,9 +135,10 @@ function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
   return proposals.findLast((proposal) => proposal !== null) ?? null;
 }
 
-// Runs the feature on the conversation, the User's new message last, and answers with the model's last text and what
-// the presenters put beside it. It throws NoAnswerError when the steps ran out on tools, and the SDK's errors when the
-// model fails or the time runs out. An observer, if given, is told of each tool call and each step's end.
+// Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and
+// what the presenters put beside it. It throws NoAnswerError when the steps ran out on tools or the run has nothing to
+// say or show, and the SDK's errors when the model fails or the time runs out. An observer, if given, is told of each
+// tool call and each step's end.
 export async function runFeature(
   model: Model,
   feature: Feature,
@@ -149,7 +155,7 @@ export async function runFeature(
     judged: new Map(),
     restaurants: new Map(),
   };
-  const { text, finishReason } = await generateText({
+  const { steps, finishReason } = await generateText({
     model,
     instructions: feature.instructions(asker.now),
     messages: messages.map((message) => ({ role: message.role, content: contentOf(message) })),
@@ -176,10 +182,30 @@ export async function runFeature(
             });
           },
   });
-  if (finishReason === 'tool-calls' || text.trim() === '') {
+  const reply = finishReason === 'tool-calls' ? null : replyOf(textOf(steps), finishReason, feature, context);
+  if (reply === null) {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
-  return { text, ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
+  return reply;
+}
+
+// The reply of a run that ended: the model's text, the fixed sentence over what it showed without any, or none.
+function replyOf(text: string, finishReason: string, feature: Feature, context: ToolContext): FeatureReply | null {
+  const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
+  if (text !== '') {
+    return { ...presented, text, noTextFinishReason: null };
+  }
+  if (presented.cards.length === 0 && presented.mapButtons.length === 0 && presented.proposal === null) {
+    return null;
+  }
+  return { ...presented, text: FIXED_SENTENCE, noTextFinishReason: finishReason };
+}
+
+// The model may write part of its answer beside a tool call and close with a line in its last step, or write nothing
+// there: the reply is every step's text in order, a step that repeats the one before it left out.
+function textOf(steps: readonly { text: string }[]): string {
+  const texts = steps.map((step) => step.text.trim()).filter((text) => text !== '');
+  return texts.filter((text, index) => index === 0 || text !== texts[index - 1]).join('\n\n');
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an

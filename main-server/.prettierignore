@@ -3,3 +3,5 @@ test/answers
 eval/collection/posts
 # Written once by the generator, and pinned by their hashes in eval/p5/suite.yaml.
 eval/p5/large-world-v1
+# Not YAML on purpose, for the test of a tutorial file that does not parse.
+test/fixtures/tutorial/not-yaml.yaml
