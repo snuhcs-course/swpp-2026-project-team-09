@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -162,6 +163,21 @@ describe('retirement', () => {
     expect(await aliasesFor('뷁사')).toEqual([
       expect.objectContaining({ supporters: 3, rejecters: 3, retiredAt: expect.any(Date) as unknown }),
     ]);
+  });
+});
+
+describe('a rejection, for the one who made it', () => {
+  it('keeps the alias from the rejecter until they choose the Place again, while it answers the others', async () => {
+    await teachEveryone(3, studentCentre, '뷁거부');
+    const rejecter = await account();
+    expect((await resolveAs(app, model, rejecter, '뷁거부')).answer.result).toBe('one');
+    await rejectAlias(app, rejecter, { kind: 'place', words: '뷁거부', targetId: studentCentre }).expect(204);
+
+    expect((await resolveAs(app, model, rejecter, '뷁거부')).answer.result).toBe('none');
+    expect((await newcomerResolves('뷁거부')).answer.result).toBe('one');
+
+    await choose(rejecter, studentCentre, '뷁거부');
+    expect(idsOf((await resolveAs(app, model, rejecter, '뷁거부')).answer)).toEqual([studentCentre]);
   });
 });
 

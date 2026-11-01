@@ -3,6 +3,7 @@
  *
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 // Tier 2 of the Place matcher (P07 ticket 01): words that point at Places by someone's say-so rather than by rule. The
@@ -23,3 +24,10 @@ export interface PlaceAliases {
   // The hits for a query normalised as the matcher normalises it: lower case, no spaces.
   lookup(query: string, userId: string): Promise<AliasHit[]>;
 }
+
+// What a User said 아니에요 to for the words: the Place ids no alias answers them with, until they choose one again.
+export interface AliasRejections {
+  excluded(query: string, userId: string): Promise<ReadonlySet<string>>;
+}
+
+export const NO_REJECTIONS: AliasRejections = { excluded: () => Promise.resolve(new Set()) };
