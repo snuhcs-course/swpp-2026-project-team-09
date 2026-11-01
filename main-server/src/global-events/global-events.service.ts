@@ -10,11 +10,13 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CampusBoundary } from '../common/campus-boundary.js';
 import { PrismaService } from '../common/prisma.service.js';
+import { startOfSeoulDay } from '../common/seoul-day.js';
 import { SignalsService } from '../common/signals.service.js';
 import { GlobalEvent, GlobalEventState, Prisma, PublicationRoute } from '../generated/prisma/client.js';
 import { QuestsService } from '../quests/quests.service.js';
@@ -35,12 +37,6 @@ import {
   WITH_OWN_POST_AND_JUDGEMENT,
 } from './dto/global-event.dto.js';
 
-// 00:00 in Asia/Seoul, which keeps +09:00 all year, of the day `now` falls on there.
-function startOfSeoulDay(now: Date): Date {
-  const day = new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  return new Date(`${day}T00:00:00+09:00`);
-}
-
 // An event has ended once its end has passed or, without an end, once the day of its start has passed in Asia/Seoul.
 function notEnded(now: Date): Prisma.GlobalEventWhereInput {
   return { OR: [{ endsAt: { gt: now } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(now) } }] };
@@ -48,8 +44,8 @@ function notEnded(now: Date): Prisma.GlobalEventWhereInput {
 
 // What the Assistant's searchGlobalEvents and resolveGlobalEvent ask for: the events that fall in the period
 // [from, to), whose place holds `place`, whose title holds `title` and whose title or description holds any of
-// `words`, ignoring case. An event without an end falls on the day of its start, and one without a start falls in no
-// period. Without a period, any event that has not ended.
+// `words`, ignoring case. An event falls in the period when its span overlaps it: one without an end lasts until the
+// end of its start's day, and one without a start falls in no period. Without a period, any event that has not ended.
 export interface PublishedSearch {
   period?: { from: Date; to: Date };
   place?: string;
@@ -70,7 +66,7 @@ function searched({ period, place, title, words }: PublishedSearch): Prisma.Glob
       : [
           {
             startsAt: { lt: period.to },
-            OR: [{ endsAt: { gt: period.from } }, { endsAt: null, startsAt: { gte: period.from } }],
+            OR: [{ endsAt: { gte: period.from } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(period.from) } }],
           },
         ]),
     ...(place === undefined ? [] : [{ place: holding(place) }]),

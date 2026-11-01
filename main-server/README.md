@@ -2052,19 +2052,26 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     Korean time, and the lines' text.
   - `getShuttle()` answers the vehicles of the set the worker stored last, each at its stop, with `collectedAt`; or
     "none" when the operator reports no vehicle, or when no set was stored in the last minute.
-  - `searchGlobalEvents(from, to, place?, words?)` answers, as candidates, the published Global Events that have not
-    ended and take place between the two days in Korea, whose place holds `place` and whose title or description holds
-    any of `words` (ignoring case), the earliest 20 first, with `more` when there were more. An event without an end
-    falls on the day of its start, and one without a start falls in no period, so it is never a candidate. Drafts,
-    cancelled and discarded events are never given.
-  - `searchRecruitingQuests(board?, from?, to?, globalEventId?)` answers, as candidates, the Quests that
-    `GET /quests/recruiting` lists for the User (Open and Approval Quests with a Sub Quest ahead that the User does not
-    hold; never a Closed one), of that Board and for that Global Event, whose next Sub Quest falls between the two days
-    in Korea. The next Sub Quest falls in the period as an event does: it overlaps it, one without an end falls on its
-    start, and one without a start falls in no period. Without a period every such Quest is a candidate, those without
-    a start last. The soonest 20 come first, with `more` when there were more. Each carries its title, Board, Global
-    Event, Join Policy, the places left, the next Sub Quest's start, end and place, and the first 300 characters of its
-    description.
+  - Both searches take a time window in Korea: `from` and `to`, whole days, or `after` and `before`, each a date and
+    time to the minute, of which the window holds both ends. A time overrides the day of its end. With only `after`, the
+    window ends at 23:59 of that day; with only `before`, it starts at 00:00 of that day.
+  - `searchGlobalEvents(window, place?, words?)` answers, as candidates, the published Global Events that have not
+    ended and whose span overlaps the window, whose place holds `place` and whose title or description holds any of
+    `words` (ignoring case), the earliest 20 first, with `more` when there were more. An event without an end lasts
+    until the end of its start's day, and one without a start falls in no window, so it is never a candidate. Drafts,
+    cancelled and discarded events are never given. The window is required.
+  - `searchRecruitingQuests(window?, board?, globalEventId?, minPlacesLeft?, capacity?)` answers, as candidates, the
+    Open and Approval Quests the User could enter, decided in the database query (`quests/recruiting-search.ts`) before
+    the list is cut. It goes by a Quest's first Sub Quest, unlike `GET /quests/recruiting`, which keeps listing a Quest
+    with any Sub Quest ahead and is unchanged. A Quest for a Global Event counts as its event, read as it is now: it is
+    given until the event ends, and in a window while the event's span overlaps it; a Quest for a cancelled event is
+    never given. Any other Quest is in a window when it starts in it, and is never given once its start has passed; one
+    without a start falls in no window. Never given: a Quest with fewer places left than `minPlacesLeft` (default one,
+    so never a Full one), one the User holds or already asked to join, and one for a Global Event of which the User
+    holds a Shared Quest. `capacity` is exact. Without a window every other such Quest is a candidate, those without a
+    start last. The soonest 20 come first, with `more` when there were more. Each carries its title, Board, Global
+    Event, Join Policy, the places left, the number of Holders, the first Sub Quest's start, end and place, and the
+    first 300 characters of its description.
   - **Resolvers** take the User's words as written and answer `{ "result": "one", "candidate" }`,
     `{ "result": "several", "candidates", "more" }` (at most 10) or "none", never a guess; the system prompt tells the
     model to ask on several and say so on none. Each adds the ids it answered to `FoundIds`.
