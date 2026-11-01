@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -37,6 +38,7 @@ import { yearLabel } from '../onboarding/form';
 import { TabScreen } from '../shell/tab-screen';
 import { SharingCard } from './sharing-card';
 import { useSharingSwitch } from './use-sharing-switch';
+import { LibraryCard } from './library-card';
 import { thisVersionLine } from './version-line';
 import { WeekCard } from './week-card';
 
@@ -234,7 +236,7 @@ interface MeScreenProps {
 }
 
 // The 내 정보 tab, the `Profile` frame: the User's profile, the week, the Master Switch, the ways to the User's
-// Friends, Parties and Quests, the sign-out, and below it the build and update the phone runs.
+// Friends, Parties and Quests, the library's login, the sign-out, and below it the build and update the phone runs.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();
@@ -252,6 +254,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
           sharing={sharing}
         />
         <ActivityCard />
+        <LibraryCard />
         <SignOut />
         <Text style={styles.version}>{thisVersionLine()}</Text>
       </ScrollView>

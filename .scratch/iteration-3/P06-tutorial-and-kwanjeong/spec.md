@@ -186,7 +186,8 @@ Words:
 - **What the timestamps mean.** Each is set or cleared only by the rules below, so the state never compares timestamps or reads a missing one as a time:
   - `enabledAt`: the tutorial is on. `POST /tutorial/enable` sets it. For a User eligible by default, `GET /tutorial` sets it the first time it finds no `enabledAt` and no `stoppedAt` (creating the row), so "eligible by default" is stored once and later changes to the admission year or 소속 do not turn it off.
   - `stoppedAt`: the User stopped it. `POST /tutorial/stop` sets it; `enable` clears it (and sets `enabledAt` again).
-  - `finishedAt`: set when a complete makes every quest of the content **at that time** completed. It is never cleared by adding quests: quests added to the YAML later do not reappear for a finished User. Only `enable` from 내 정보 clears it, and then the new quests show as not started.
+  - `finishedAt`: set when a complete makes every quest of the content **at that time** completed. It is never cleared by adding quests: quests added to the YAML later do not reappear for a finished User. Only `enable` from 내 정보 clears it, and only when the content has a quest the User has not completed; the new quests then show as not started. An `enable` with every quest completed leaves it set, so the state stays `finished`.
+  - `rowHiddenAt`: the User closed the 내 정보 row. `POST /tutorial/hide-row` sets it; turning the tutorial on (`enable`, or `GET /tutorial` for a User eligible by default) clears it.
 - **The state, derived** in this order, the first that holds:
   - `finished`: `finishedAt` is set;
   - `stopped`: `stoppedAt` is set;
@@ -195,8 +196,8 @@ Words:
   - `available`: otherwise (on, nothing started).
   - The main screen shows the button in `available` and `active` while some quest is not started. It shows the quest-list group in `active`. Elsewhere it shows nothing.
 - **Endpoints**, all as the signed-in User:
-  - `GET /tutorial` → `{ state, quests: [{ ...content, status: notStarted | started | completed }] }`. The content is served from the YAML, so the app has no copy.
-  - `POST /tutorial/enable` (진행하기): sets `enabledAt` and clears `stoppedAt` and `finishedAt`. Progress is kept.
+  - `GET /tutorial` → `{ state, rowHidden, eligibleByDefault, quests: [{ ...content, status: notStarted | started | completed }] }`. The content is served from the YAML, so the app has no copy. `rowHidden` is whether `rowHiddenAt` is set. `eligibleByDefault` is the rule above read now (the 내 정보 row's two `available` subtitles), so the app has no copy of it either.
+  - `POST /tutorial/enable` (진행하기): sets `enabledAt` and clears `stoppedAt` and `rowHiddenAt`, and clears `finishedAt` when a quest of the content is not completed. Progress is kept.
   - `POST /tutorial/stop` (튜토리얼 그만하기, and 끄기 in 내 정보).
   - `POST /tutorial/hide-row` (the ✕ of the 내 정보 row while `off`).
   - `POST /tutorial/quests/:key/start`.
@@ -239,7 +240,8 @@ Words:
 ### The library session (device only)
 
 - **Native modules.**
-  - Two modules are added, neither yet in `mobile/package.json`: `react-native-webview`, and `@react-native-cookies/cookies`, used **only to clear** the web view's cookies at logout (`clearAll(true)`, plus `flush()` on Android). App code never reads a cookie: `get` and `getAll` (and any other read of the module) are forbidden by lint rules: `no-restricted-properties` on the module's `get`, `getAll` and `getFromResponse`, and `no-restricted-imports` of the module everywhere but the one logout file in `mobile/src/library/`. SecureStore holds nothing of the session.
+  - One module is added, `react-native-webview`, and one local Expo module is written, `mobile/modules/snu-now-web-cookies`, a local Expo module that only clears cookies. Its only function, `clearWebViewCookies()`, clears every web-view cookie at logout: on Android `android.webkit.CookieManager` `removeAllCookies` then `flush()`, on iOS the default `WKWebsiteDataStore`'s cookies (`WKWebsiteDataTypeCookies`) and `HTTPCookieStorage`. It has no function that reads, lists or sets a cookie, so app code cannot read one. A lint rule (`no-restricted-imports`) keeps its JS wrapper to the one logout file in `mobile/src/library/` and forbids `@react-native-cookies/cookies`. SecureStore holds nothing of the session.
+  - `@react-native-cookies/cookies` was the first choice. Its 6.2.1 (2022-05) does not build under Gradle 9.3.1 (`jcenter()`), and the owner chose the local module on 2026-11-01.
   - `expo-secure-store` and `expo-web-browser` are already there.
   - **This is a native change.** It raises `version` in `app.json`, which makes a new fingerprint, and needs a native Release by P03's flow (`infra/production/README.md` § The Production APK, and `app-version.json`). Installed 1.0.0 APKs get none of P6's library screens until they update. The tutorial (except the 관정 check) and the server tools need no native change, and the 1.0.0 JS bundle never receives library cards (see Cards).
   - **One native Release with P03 ticket 05.** The change ships in the same Release as P03 ticket 05's planned 1.0.1 verification release: `version` goes from 1.0.0 to 1.0.1, the CI builds the APK from the tag, and the fingerprint's comment stripping from #128 may ride along. The Mac owner builds iOS.
@@ -248,10 +250,10 @@ Words:
   - The app keeps only a "logged in" flag (`kwanjeong.loggedIn` in AsyncStorage). It holds nothing from the site, is set after a login and is cleared when the session ends or on logout.
 - **Login.**
   1. A full-screen, visible web view loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, which sends the User to the school's login.
-  2. When the URL is back on `k-rsv.snu.ac.kr` at `/pc/(main|booking|mybooking)`, the login is done. The `JSESSIONID` stays in the web view's cookie jar, the app sets the flag, and the view closes.
+  2. When the URL is back on `k-rsv.snu.ac.kr` at `/pc/(main|booking|mybooking)` and one read through the hidden view (the User's own bookings for today, the view mounted for that check) answers with the site's JSON, the login is done; a failed read (999, a redirect, not JSON) keeps the view open, since the site may serve `/pc/main` before it sends the User to the school's login. The `JSESSIONID` stays in the web view's cookie jar, the app sets the flag, and the view closes.
   3. No script is injected into the login pages, so the app never reads the password. The login has a 5-minute limit, after which the view closes with "로그인하지 못했어요". Cancelling returns "no session" to the caller.
 - **Calls (the hidden web view).** Every library call, reads and writes, runs inside one hidden web view, made by one client module (`mobile/src/library/`):
-  - The hidden view has no size, is kept mounted at the app's root while the flag is set, and loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, so its scripts run on the library's origin. The client waits for that page before the first call.
+  - The hidden view has no size, is kept mounted at the app's root while the flag is set (and during the login's check), and loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, so its scripts run on the library's origin. The client waits for that page before the first call.
   - For each call the app injects (`injectJavaScript`) one small fixed script, a constant in `mobile/src/library/`. Only its argument varies, a value made with `JSON.stringify`; no script text is built from the User's words or a reply.
   - The script makes the form POST with `fetch('/NEW_SNU_BOOKING/json/<name>')`: form-encoded, `credentials: 'same-origin'`, `redirect: 'manual'`, the headers `X-Requested-With: XMLHttpRequest` and `OS_KIND: WEB`, and `referrer` set to `…/pc/booking/roomForm`. The browser adds the cookie, `Origin` and the web view's own user agent.
   - It posts back through `window.ReactNativeWebView.postMessage` only the parsed JSON or an error kind, never the raw text, headers or cookie.
@@ -269,11 +271,11 @@ Words:
 - **Seat-map images** load from `https://k-rsv.snu.ac.kr:444/MAP/WEB/area_<sectorNo>.png?version=20261022` with no cookie, as plain images outside the web view. The size per sector is in the catalogue.
 - **Logout** really ends the library session. One shared step in `mobile/src/library/`, "end the library session", does it, and three paths call it:
   - the 내 정보 row "관정도서관 로그인", which shows 로그아웃 while the flag is set;
-  - the app's `signOut()` (`mobile/src/auth/sign-in.ts`), before it forgets the main server's tokens, whether or not the flag is set;
-  - the forced end of the app's session, `endSession()` (`mobile/src/session/session-events.ts`), which forgets the tokens and shows the sign-in screen without going through `signOut()` (a refused token, or the session replaced on another phone), before it forgets the tokens, whether or not the flag is set.
+  - the app's `signOut()` (`mobile/src/auth/sign-in.ts`), once the main server's tokens are forgotten and without waiting on it, whether or not the flag is set;
+  - the forced end of the app's session, `endSession()` (`mobile/src/session/session-events.ts`), which forgets the tokens and shows the sign-in screen without going through `signOut()` (a refused token, or the session replaced on another phone), right after it forgets the tokens and without waiting on it, whether or not the flag is set.
 - Ending the session is, in order:
   1. when the `kwanjeong.loggedIn` flag is set, the hidden view loads the site's logout URL (with the same 15-second limit; a failure does not stop the next steps). When the flag is absent, this step is skipped: no hidden view, no network call and no wait;
-  2. every web-view cookie is cleared with `@react-native-cookies/cookies` `clearAll(true)`, then `flush()` on Android. On iOS, `clearAll()` without `true` clears only `NSHTTPCookieStorage`, while the web view's cookies are in `WKWebsiteDataStore`, which only `clearAll(true)` (`useWebKit`) clears; Android ignores the argument;
+  2. every web-view cookie is cleared by the local module that only clears cookies (`clearWebViewCookies()`): `CookieManager.removeAllCookies` and `flush()` on Android; on iOS the web view's cookies are in `WKWebsiteDataStore`, whose cookies it removes, together with `HTTPCookieStorage`;
   3. the `kwanjeong.loggedIn` flag is cleared.
   - A read after logout gives `sessionEnded`, and the next login asks for the password again. After a sign-out, or a forced end of the app's session, and a sign-in with another account, none of the previous person's bookings can be read. This holds on Android and on iOS.
 - **Never sent to our servers:** the session, any library reply, the applicant's or companions' library data, phone, email, BSEQNO. The app's error reporting and logs drop library request and response bodies.
@@ -479,7 +481,7 @@ The security layers. Each box is a trust boundary, and each arrow is labelled wi
 flowchart LR
   subgraph Phone["Phone: the SNU Now app"]
     WV["Web view login<br/>(the User types the password<br/>into the library's own page)"]
-    SS[("Web view cookie jar<br/>(HttpOnly, never read by app code;<br/>cleared on logout, sign-out<br/>and a forced session end)")]
+    SS[("Web view cookie jar<br/>(HttpOnly, never read by app code;<br/>cleared on logout, sign-out<br/>and a forced session end<br/>by a local module that only clears)")]
     LC["Library client<br/>(reads + writes)"]
     HWV["Hidden web view<br/>(same origin, fixed script)"]
     CARDS["Library cards<br/>seat map · book · cancel · return<br/>(writes only on a tap)"]
@@ -510,7 +512,7 @@ flowchart LR
   COMP -- "names + 학번 of consenting<br/>companions" --> LC
 ```
 
-- **The session cookie** is only on the phone, in the web view's own cookie jar. App code, the library client included, never reads it: the hidden web view sends it to the library and gives back only parsed JSON or an error kind. No arrow carries it to our server or the model. Logout, the app's sign-out and the forced end of the app's session (`endSession()`) end it at the library and clear the jar (`clearAll(true)`); the cookie module is used for nothing else.
+- **The session cookie** is only on the phone, in the web view's own cookie jar. App code, the library client included, never reads it: the hidden web view sends it to the library and gives back only parsed JSON or an error kind. No arrow carries it to our server or the model. Logout, the app's sign-out and the forced end of the app's session (`endSession()`) end it at the library and clear the jar with the local module that only clears cookies (`clearWebViewCookies()`), which has no way to read one.
 - **Writes** (book, cancel, return) are sent by the phone, only from a card the User tapped. The server and the model have no path to the library at all.
 - **학번 and registered names** go from our database only to the booker's phone, after each companion consents. They never reach the model, the logs, traces or the eval.
 
@@ -574,7 +576,7 @@ flowchart LR
 
 ### Documentation
 
-- **ADR 0012:** a third party's session stays on the phone. It covers the web-view login, the session kept only in the web view's own cookie jar and never read by app code, logout (and the app's sign-out and forced session end, through one shared step) ending it with the site's logout URL and `@react-native-cookies/cookies` `clearAll(true)` (on iOS only `true` reaches `WKWebsiteDataStore`), the cookie module used only to clear, every library call made through a hidden same-origin web view, the app calling the library itself, the server holding none of it, and why a server-side proxy was rejected (the User's school credentials and session would sit on our server).
+- **ADR 0012:** a third party's session stays on the phone. It covers the web-view login, the session kept only in the web view's own cookie jar and never read by app code, logout (and the app's sign-out and forced session end, through one shared step) ending it with the site's logout URL and a local Expo module that only clears cookies (`WKWebsiteDataStore` on iOS, `CookieManager` on Android; `@react-native-cookies/cookies` did not build under Gradle 9), every library call made through a hidden same-origin web view, the app calling the library itself, the server holding none of it, and why a server-side proxy was rejected (the User's school credentials and session would sit on our server).
 - **GLOSSARY** gains Tutorial, Tutorial Quest, Student Number (학번), Affiliation (소속), Library Space, Library Card and Booking Party.
 - The P6 app README section lists the library client's endpoints and the fake library.
 
@@ -636,8 +638,8 @@ flowchart LR
   - 파워플랜트 is Place 68 (not 제2파워플랜트, 330).
   - The exact S-CARD page URL on student.snu.ac.kr must be copied from the site.
   - `clientCapabilities` gates library cards for the 1.0.0 bundle.
-  - The session lives only in the web view's own cookie jar, and every library call runs in a hidden same-origin web view. App code never reads `JSESSIONID`; the cookie module `@react-native-cookies/cookies` is added only to clear the jar.
-  - The site's logout URL must be copied from the site; logout, the app's sign-out and the forced session end (`endSession()`) also clear every web-view cookie (`clearAll(true)`).
+  - The session lives only in the web view's own cookie jar, and every library call runs in a hidden same-origin web view. App code never reads `JSESSIONID`; a local Expo module that only clears cookies (`mobile/modules/snu-now-web-cookies`) empties the jar at logout.
+  - The site's logout URL must be copied from the site; logout, the app's sign-out and the forced session end (`endSession()`) also clear every web-view cookie (`clearWebViewCookies()`).
   - The 학번 format.
   - The new GLOSSARY terms and ADR 0012.
 - **Open questions from the site** (`references/kwanjeong-site.md`): what `getUserCheck` answers for an ineligible companion; whether the server enforces GR_MIN and the duration limits (the app checks both regardless); whether a room booking's duration comes from bookTime alone; what XFULL means; why G209, G210 and G414 are missing; the media rooms' Saturday hours (the app takes getRoomList's OPENTIME and CLOSETIME for the date, so "0000" means closed). Whether 대학원 열람실 refuses undergraduates is untested. P6 offers it to graduates only, and a refusal says the booking failed.
@@ -653,7 +655,7 @@ flowchart LR
   1. **Profile: 학번, 학적상 이름, 소속.** Server fields, the edit screen and the privacy text. JS only.
   2. **Tutorial server.** `tutorial.yaml` with the five quests, the progress tables, the endpoints, eligibility and the CI checks.
   3. **Tutorial app.** The start button, pager, quest-list group, sheets, button completion, the next and done popups, and the 내 정보 row. JS only, over the mocks and then ticket 2.
-  4. **Library session (native).** `react-native-webview` and `@react-native-cookies/cookies` (clearing only), the login, the hidden web view with its fixed script and message protocol, the library client's interface, the fake transport and the fake library with the copied fixtures, and logout in 내 정보, on the app's sign-out and on the forced session end (`endSession()`), through one shared step. First, build Android and iOS once with the two modules added. Raise `version` to 1.0.1, make the native Release together with P03 ticket 05's verification release (P03's flow), and check one booking by hand.
+  4. **Library session (native).** `react-native-webview` and a local Expo module that only clears cookies, the login, the hidden web view with its fixed script and message protocol, the library client's interface, the fake transport and the fake library with the copied fixtures, and logout in 내 정보, on the app's sign-out and on the forced session end (`endSession()`), through one shared step. First, build Android and iOS once with both added. Raise `version` to 1.0.1, make the native Release together with P03 ticket 05's verification release (P03's flow), and check one booking by hand.
   5. **Tutorial 관정 check.** On ticket 4: found, not found, failed, skip, and 예약 부탁.
   6. **P6 eval set (C0).** On ticket 2. The world, 60 cases, `rules.md`, the blind draft, the review, the second labeller, `suite.yaml` with the frozen thresholds, the superseded P19 case, R0 and the P19 baseline runs. It lands before ticket 7 changes the chat.
   7. **Assistant library and tutorial tools.** The catalogue module, the six library tools and `getTutorial`, `LIBRARY_RULES` and `TUTORIAL_RULES`, the removed prompt line, the `library` card kind and DTO, `clientCapabilities`, the `FreeTimePort`, scripted-model tests, then R1 and the regression.
