@@ -93,7 +93,6 @@ describe('도서관 예약 정보', () => {
     ]);
     expect(screen.queryByRole('header', { name: '프로필 편집' })).toBeNull();
   });
-
 });
 
 describe('도서관 예약 정보 saved before', () => {
@@ -112,6 +111,23 @@ describe('도서관 예약 정보 saved before', () => {
     await save(user);
 
     expect(server.received('PATCH /users/me/profile').map(({ body }) => body)).toEqual([{ studentNumber: '' }]);
+  });
+
+  it('clears the chosen 소속 when it is pressed again, and sends it as null', async () => {
+    const server = await askMainServer({ signedIn: true });
+    const profile = { ...LOBBY.profile, studentNumber: '202612345', registeredName: '홍길순', affiliation: 'graduate' };
+    answerMainScreen(server);
+    server.on('POST /lobby', { status: 200, body: { ...LOBBY, profile } });
+    server.on('PATCH /users/me/profile', { status: 200, body: { ...profile, affiliation: null } });
+    const user = await openEdit();
+
+    await user.press(screen.getByRole('radio', { name: '대학원' }));
+
+    for (const affiliation of ['학부', '대학원', '교환학생']) {
+      expect(screen.getByRole('radio', { name: affiliation })).not.toBeChecked();
+    }
+    await save(user);
+    expect(server.received('PATCH /users/me/profile').map(({ body }) => body)).toEqual([{ affiliation: null }]);
   });
 });
 

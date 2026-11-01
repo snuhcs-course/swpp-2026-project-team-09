@@ -141,7 +141,7 @@ describe('a legal document', () => {
     for (const words of [
       /학번과 학적상 이름은 관정도서관 그룹 스터디룸을 예약할 때만/u,
       /예약할 때마다/u,
-      /휴대폰에만 남고/u,
+      /비밀번호는 SNU Now가 볼 수 없고, 로그인 정보\(세션\)는 휴대폰에만 남아요/u,
     ]) {
       expect(screen.getByText(words)).toBeVisible();
     }

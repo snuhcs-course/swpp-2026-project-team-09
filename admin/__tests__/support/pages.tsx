@@ -13,6 +13,7 @@ import CollectionPage from '@/app/(signed-in)/collection/page';
 import EventPage from '@/app/(signed-in)/events/[id]/page';
 import NewEventPage from '@/app/(signed-in)/events/new/page';
 import PlacesPage from '@/app/(signed-in)/places/page';
+import QueuePage from '@/app/(signed-in)/queue/page';
 import UserPage from '@/app/(signed-in)/users/[id]/page';
 import UsersPage from '@/app/(signed-in)/users/page';
 import EventsPage from '@/app/(signed-in)/page';
@@ -45,6 +46,10 @@ export async function openEvent(id: string, query: Record<string, string> = {}):
 
 export async function openNewEvent(): Promise<void> {
   await openPage(async () => SignedInLayout({ children: await NewEventPage() }));
+}
+
+export async function openQueue(): Promise<void> {
+  await openPage(async () => SignedInLayout({ children: await QueuePage() }));
 }
 
 export async function openCollection(): Promise<void> {

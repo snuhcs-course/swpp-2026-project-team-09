@@ -22,6 +22,8 @@ import { GlobalEventsController } from './global-events.controller.js';
 import { GlobalEventsService } from './global-events.service.js';
 import { JudgementsService } from './judgements.service.js';
 import { PublicationStepService } from './publication-step.service.js';
+import { SameEventChoicesService } from './same-event-choices.service.js';
+import { SameEventQueueService } from './same-event-queue.service.js';
 
 @Module({
   imports: [CollectionModule, PlacesModule, QuestsModule],
@@ -31,6 +33,8 @@ import { PublicationStepService } from './publication-step.service.js';
     CollectedPostsService,
     JudgementsService,
     PublicationStepService,
+    SameEventChoicesService,
+    SameEventQueueService,
     // The Assistant's model. AssistantModule imports this module, so this one binds the port itself.
     {
       provide: MODEL_PORT,

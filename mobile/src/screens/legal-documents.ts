@@ -39,7 +39,7 @@ export const LEGAL_TEXTS: Partial<Record<LegalDocument, readonly LegalSection[]>
     {
       heading: '도서관 로그인',
       paragraphs: [
-        '도서관에는 도서관의 로그인 화면에서 직접 로그인해요. 비밀번호와 로그인 정보(세션)는 휴대폰에만 남고 SNU Now 서버로 보내지 않아요. SNU Now에서 로그아웃하면 지워져요.',
+        '도서관에는 도서관의 로그인 화면에서 직접 로그인해요. 비밀번호는 SNU Now가 볼 수 없고, 로그인 정보(세션)는 휴대폰에만 남아요. 세션은 SNU Now 서버로 보내지 않고, SNU Now에서 로그아웃하면 지워져요.',
       ],
     },
   ],

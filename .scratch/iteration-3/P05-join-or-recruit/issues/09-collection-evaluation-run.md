@@ -18,3 +18,5 @@
 ## Comments
 
 Why the setting (2026-11-01, ticket 05's review): a place such as `중앙도서관 관정관 3층 양두석홀` has neither 서울대 nor a building number, so `namedPlace` refuses it and the session stays a Draft, however well the model reads it. A model cannot add the campus, since the place must be in its quoted line. extra.snu is the university's own site, so a name there is less likely to mean elsewhere. The risk is a general name such as `체육관`, or an event off campus, linked to a wrong Place, and C3's floor is 0. Places another campus or address names stay refused by `namedPlace`. The rules' reading stays as it is: the setting is for the Judgement's `matchedPlace` only, and R0 does not change.
+
+The run of the AI's choice of 08b is with `SAME_EVENT_AI_CHOICE=on`, and the runs before it with it `off`, so that each run changes one thing (2026-11-01, ticket 08b).

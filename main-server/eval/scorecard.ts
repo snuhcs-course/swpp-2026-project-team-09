@@ -4,11 +4,14 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { LARGE_WORLD } from './p5/large-world/world-data.ts';
 import { largeWorldSuite, p5Report } from './p5/report.ts';
 import { p5Section } from './p5/report-section.ts';
+import { p4Report } from './p4/report.ts';
+import { holdoutScorecard, p4Section } from './p4/report-section.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { outcomeOf } from './normalise.ts';
 import {
@@ -274,6 +277,9 @@ function usageSection(score: RunScore): string[] {
 // The scorecard of a scored run, in Markdown.
 export function scorecard(score: RunScore): string {
   const { saved } = score;
+  if (saved.options.holdout === true) {
+    return holdoutScorecard(score, p4Report(score), table, usageSection(score));
+  }
   const failed = score.cases.filter(({ passed }) => !passed);
   const reviewed = reviewedReplies(score);
   const sections = [
@@ -285,6 +291,7 @@ export function scorecard(score: RunScore): string {
     ...categoriesSection(score),
     ...passKSection(score),
     ...usageSection(score),
+    ...(saved.options.world === 'p4' ? p4Section(p4Report(score), table) : []),
     ...(saved.options.world === 'p5' ? p5Section(p5Report(score), table) : []),
     ...(saved.options.world === LARGE_WORLD
       ? p5Section(p5Report(score, largeWorldSuite()), table, `The P05 suite, ${LARGE_WORLD}`)

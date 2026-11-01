@@ -1,0 +1,48 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The P4 holdout (P04 ticket 06): 12 cases of the suite, reworded, which P11 does not tune on. `pnpm eval:holdout` runs
+# them, and `pnpm eval --world p4` never does. Each entry gives only a case's new last User turn: everything else is the
+# case's own (eval/p4/holdout.ts), and each case runs 3 times.
+#
+# Taken by rule, not by hand: each category sorted by id, divided into 4 equal parts, and the middle case of each part.
+#
+# A separate agent drafted the wordings. It saw the 12 questions and world.yaml, with each question's clock, asker and
+# earlier turns, and never the prompts, the tools or the code.
+#
+# It runs twice: with the first official run, and on the final code of P11. Only the pass rates and the layer rates are
+# read, and its scorecard names no case. No holdout failure is opened until P11 is over.
+
+draftedBy: Claude Opus 5.5 (claude-opus-5-5)
+draftedOn: '2026-11-01'
+# The person who confirmed that each wording still has its original's answer.
+reviewedBy: TaeHyun79
+reviewedOn: '2026-11-01'
+wordings:
+  - of: parties-after-last-class
+    user: 오늘 컴그 끝나면 낄 수 있는 파티 있나?
+  - of: parties-held-quests-busy
+    user: 수욜 컴구 끝나고 캡디 전까지 갈 수 있는 파티 있어?
+  - of: parties-next-gap
+    user: 담 공강 때 참여할 수 있는 파티 있을까?
+  - of: parties-over-twenty-narrowed
+    user: 운동 쪽만
+  - of: meals-friend-off-campus-item
+    user: 도윤이랑 오늘 점심 먹으려고
+  - of: meals-no-noodles
+    user: 면 종류 제외
+  - of: meals-same-name-asks
+    user: 오늘 점심은 서준이랑 먹을래
+  - of: meals-who-lunch-begun
+    user: 오늘 점심 누구랑 먹을 수 있어?
+  - of: common-choice-clock-fits
+    user: 수욜 2시~3시 반에 낄 수 있는 파티 있나?
+  - of: common-choice-meal-clock
+    user: 민수랑 내일 1시에 밥 먹고 싶어
+  - of: common-no-timetable-named-classes
+    user: 오늘 멀티코어컴퓨팅 끝나고 현대암호학개론 전까지 참여 가능한 파티 있나?
+  - of: common-off-campus-answer-none
+    user: 출발은 낙성대역이야

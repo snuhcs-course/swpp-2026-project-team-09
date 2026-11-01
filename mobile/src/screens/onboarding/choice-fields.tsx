@@ -23,6 +23,8 @@ interface SegmentFieldProps<Key extends string> {
   // None of them, until the User chooses one.
   value: Key | null;
   onChange: (key: Key) => void;
+  // Given, pressing the chosen one again leaves none chosen.
+  onClear?: () => void;
 }
 
 // One of a few choices side by side, on one track.
@@ -32,6 +34,7 @@ function SegmentField<Key extends string>({
   choices,
   value,
   onChange,
+  onClear,
 }: SegmentFieldProps<Key>): ReactElement {
   return (
     <View accessibilityLabel={label} accessibilityRole="radiogroup" style={styles.field}>
@@ -45,7 +48,11 @@ function SegmentField<Key extends string>({
             aria-checked={key === value}
             key={key}
             onPress={() => {
-              onChange(key);
+              if (onClear !== undefined && key === value) {
+                onClear();
+              } else {
+                onChange(key);
+              }
             }}
             style={[styles.level, key === value && styles.levelOn]}
           >
@@ -79,15 +86,26 @@ const AFFILIATIONS: readonly { key: Affiliation; label: string }[] = [
   { key: 'exchange', label: '교환학생' },
 ];
 
-// 소속, for the library: one of three, or none until the User chooses.
+// 소속, for the library: one of three, or none until the User chooses. Pressing the chosen one again clears it.
 export function AffiliationField({
   value,
   onChange,
 }: {
   value: Affiliation | null;
-  onChange: (affiliation: Affiliation) => void;
+  onChange: (affiliation: Affiliation | null) => void;
 }): ReactElement {
-  return <SegmentField choices={AFFILIATIONS} label="소속" onChange={onChange} title="소속" value={value} />;
+  return (
+    <SegmentField
+      choices={AFFILIATIONS}
+      label="소속"
+      onChange={onChange}
+      onClear={() => {
+        onChange(null);
+      }}
+      title="소속"
+      value={value}
+    />
+  );
 }
 
 const GENDERS: readonly { choice: GenderChoice; label: string }[] = [
