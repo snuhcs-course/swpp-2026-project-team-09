@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
@@ -9,7 +11,7 @@ import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answe
 
 // The checks of the main server's menus.
 
-function isMenuLine(value: unknown): value is MenuLine {
+export function isMenuLine(value: unknown): value is MenuLine {
   const kind = field(value, 'kind');
   const price = field(value, 'price');
   return (
@@ -26,7 +28,12 @@ function isMeal(value: unknown): value is RestaurantMenus['meals'][number] {
 }
 
 function isRestaurantMenus(value: unknown): value is RestaurantMenus {
-  return hasTexts(value, ['name', 'collectedAt']) && listOf(isMeal)(field(value, 'meals'));
+  const placeId = field(value, 'placeId');
+  return (
+    hasTexts(value, ['name', 'collectedAt']) &&
+    (placeId === undefined || isTextOrNull(placeId)) &&
+    listOf(isMeal)(field(value, 'meals'))
+  );
 }
 
 export const isMenus = listOf(isRestaurantMenus);

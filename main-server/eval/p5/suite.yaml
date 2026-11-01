@@ -1,0 +1,1031 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
+# The P05 suite (P05 spec, "The P05 eval suite"): evaluations C and D, committed before any run. Its cases are under
+# cases/, its world is world.yaml and its rules rules.md. `pnpm eval --world p5` runs it: every case has `repeat: 3`.
+# The values are the metrics document's, confirmed by the P05 owner on 2026-10-31. To change one, leave it here and add
+# an entry with `revises:` and `reason:`; a value chosen after seeing a result counts as undeclared.
+world: p5
+
+# k/n counts runs: a case repeated 3 times counts 3. So J3a's 2/3 is at least 6 of its 9 runs, and E5's 4/6 is at least
+# 12 of its 18 (P05 owner, 2026-10-31).
+unit: runs
+
+# R0, the first official run: the code before any chat change of P05, on a clean descendant of C0. Later runs change one
+# thing each: R1 ticket 10, R2 ticket 11, R3 ticket 12.
+naive: 'The chat as it is before this work.'
+
+whenAFloorIsMissed: "That metric's improvement is not claimed, and the failure analysis says why (metrics document, 4.1)."
+
+# A subset of five cases moves by 20% with one case. An improvement smaller than the exact McNemar test can tell (6, 8
+# or 10 fixed with 0, 1 or 2 turned the other way) is reported as a direction only (metrics document, 4.4).
+smallSamples: 'Each subset has at least five cases, and E has six. One case of five is 20%; a smaller improvement is a direction only.'
+
+labels:
+  draftedBy: claude-opus-5-5
+  draftedOn: [2026-10-31, 2026-11-01]
+  reviewedBy: Jaehyun0320
+  reviewedOn: [2026-10-31, 2026-11-01]
+  secondLabeller: 김태현
+  # The second labeller's cases, one drawn per tag with a fixed seed, and three kinds the tags
+  # leave out: asking back, a new Proposal and a named Place.
+  overlap:
+    [
+      join-06,
+      join-08,
+      join-19,
+      join-20,
+      join-12,
+      join-24,
+      search-l-02,
+      search-p-04,
+      search-t1-02,
+      search-t2-02,
+      search-h-01,
+      search-s-05,
+      search-n-05,
+      search-r-01,
+      search-o-03,
+      search-b-02,
+      search-e-01,
+      join-27,
+      join-29,
+      join-31,
+    ]
+
+# P19 cases whose expected answer this work changes, not edited, reported apart in G1. Each is listed with the P05 case
+# that holds the new answer.
+superseded:
+  - { case: making-parties-for-event, heldBy: join-35 }
+  - { case: making-parties-open-dinner, heldBy: join-01 }
+  - { case: making-parties-approval-tennis, heldBy: join-30 }
+  - { case: ask-missing-fields-in-one-question, heldBy: join-37 }
+
+# J10's cases that state a day: there a period of that day is no unstated condition.
+j10StatesDay: [join-24]
+
+# Which cases count toward each metric and subset, as (case id, seed): one entry for each card of the case's answer,
+# and a null seed when the answer has none.
+tags:
+  J3a:
+    - { case: join-03, seed: 배드민턴 치실 분 }
+    - { case: join-06, seed: null }
+    - { case: join-07, seed: null }
+  J3b:
+    - { case: join-04, seed: null }
+    - { case: join-08, seed: null }
+    - { case: join-09, seed: null }
+    - { case: join-10, seed: null }
+  J4:
+    - { case: join-01, seed: 삼겹살 드실 분 }
+    - { case: join-01, seed: 저녁에 고기 구워요 }
+    - { case: join-03, seed: 배드민턴 치실 분 }
+    - { case: join-05, seed: 정기 공연 같이 가요 }
+    - { case: join-06, seed: null }
+    - { case: join-07, seed: null }
+    - { case: join-33, seed: null }
+  J6:
+    - { case: join-16, seed: 정기 공연 같이 가요 }
+    - { case: join-17, seed: 사진전 같이 봐요 }
+    - { case: join-17, seed: 사진전 주말 관람 }
+    - { case: join-17, seed: 전시 보러 가요 }
+    - { case: join-18, seed: 뮤지컬 보러 갈 분 }
+    - { case: join-19, seed: 버스킹 구경 갈 분 }
+  J7:
+    - { case: join-20, seed: null }
+    - { case: join-21, seed: null }
+    - { case: join-22, seed: null }
+  J9:
+    - { case: join-12, seed: 아침 러닝 }
+    - { case: join-13, seed: 테니스 복식 }
+    - { case: join-14, seed: 토익 스피킹 스터디 }
+    - { case: join-15, seed: 독주회 같이 가요 }
+    - { case: join-24, seed: 금요일 저녁 파스타 }
+    - { case: join-24, seed: 버스킹 구경 갈 분 }
+    - { case: join-24, seed: 사진전 같이 봐요 }
+    - { case: join-24, seed: 공룡 전시 보러 가요 }
+    - { case: join-24, seed: 마라땅 드실 분 }
+    - { case: join-24, seed: 공연의 밤 같이 봐요 }
+    - { case: join-24, seed: 사진전 주말 관람 }
+    - { case: join-35, seed: 사진전 같이 봐요 }
+    - { case: join-35, seed: 사진전 주말 관람 }
+    - { case: join-37, seed: 풋쌀 번개 }
+    - { case: join-37, seed: 아침 러닝 }
+    - { case: join-37, seed: 풋살 하실 분 }
+    - { case: join-37, seed: 민턴 한 판 }
+    - { case: join-37, seed: 개발자 농구 모임 }
+    - { case: join-37, seed: 배드민턴 치실 분 }
+    - { case: join-37, seed: 농구 3대3 }
+    - { case: join-37, seed: 테니스 복식 }
+    - { case: join-37, seed: 볼링 여섯 명 }
+    - { case: join-37, seed: 등산 후 막걸리 }
+    - { case: join-37, seed: 배드민튼 초보 모임 }
+    - { case: join-37, seed: 볼링 네 명 }
+    - { case: join-37, seed: 볼링 둘이서 }
+    - { case: join-37, seed: 테니즈 치실 분 }
+  J10:
+    - { case: join-23, seed: 민턴 한 판 }
+    - { case: join-23, seed: 배드민턴 치실 분 }
+    - { case: join-23, seed: 배드민튼 초보 모임 }
+    - { case: join-24, seed: 금요일 저녁 파스타 }
+    - { case: join-24, seed: 버스킹 구경 갈 분 }
+    - { case: join-24, seed: 사진전 같이 봐요 }
+    - { case: join-24, seed: 공룡 전시 보러 가요 }
+    - { case: join-24, seed: 마라땅 드실 분 }
+    - { case: join-24, seed: 공연의 밤 같이 봐요 }
+    - { case: join-24, seed: 사진전 주말 관람 }
+    - { case: join-25, seed: 풋쌀 번개 }
+    - { case: join-25, seed: 풋살 하실 분 }
+    - { case: join-26, seed: 개발자 농구 모임 }
+    - { case: join-26, seed: 농구 3대3 }
+  L:
+    - { case: search-l-01, seed: 양자컴퓨터 특강 }
+    - { case: search-l-01, seed: 스타트업 창업 특강 }
+    - { case: search-l-02, seed: 채용 박람회 }
+    - { case: search-l-02, seed: 동아리 박람회 }
+    - { case: search-l-02, seed: 박람회 같이 돌아요 }
+    - { case: search-l-03, seed: 볼링 네 명 }
+    - { case: search-l-03, seed: 볼링 여섯 명 }
+    - { case: search-l-03, seed: 볼링 둘이서 }
+    - { case: search-l-04, seed: 마라탕 넷이서 }
+    - { case: search-l-04, seed: 마라탕 둘이서 }
+    - { case: search-l-04, seed: 마라탕 여럿이 }
+    - { case: search-l-05, seed: 가을 사진전 }
+    - { case: search-l-06, seed: 가을 사진전 }
+    - { case: search-l-06, seed: 공룡 화석 전시 }
+    - { case: search-l-06, seed: 사진전 같이 봐요 }
+    - { case: search-l-06, seed: 사진전 주말 관람 }
+    - { case: search-l-06, seed: 공룡 전시 보러 가요 }
+    - { case: search-l-06, seed: 전시 보러 가요 }
+  P:
+    - { case: search-p-01, seed: 가을 정기 공연 }
+    - { case: search-p-01, seed: 관현악단 공연의 밤 }
+    - { case: search-p-01, seed: 피아노 독주회 }
+    - { case: search-p-01, seed: '뮤지컬 〈지하철 1호선〉' }
+    - { case: search-p-01, seed: 재즈 콘서드 }
+    - { case: search-p-01, seed: 잔디광장 버스킹 }
+    - { case: search-p-01, seed: 가을 음악제 }
+    - { case: search-p-02, seed: 가을 정기 공연 }
+    - { case: search-p-02, seed: 관현악단 공연의 밤 }
+    - { case: search-p-02, seed: 피아노 독주회 }
+    - { case: search-p-02, seed: '뮤지컬 〈지하철 1호선〉' }
+    - { case: search-p-02, seed: 재즈 콘서드 }
+    - { case: search-p-02, seed: 잔디광장 버스킹 }
+    - { case: search-p-02, seed: 가을 음악제 }
+    - { case: search-p-03, seed: 농구 3대3 }
+    - { case: search-p-03, seed: 풋살 하실 분 }
+    - { case: search-p-03, seed: 테니스 복식 }
+    - { case: search-p-03, seed: 볼링 네 명 }
+    - { case: search-p-03, seed: 볼링 여섯 명 }
+    - { case: search-p-03, seed: 볼링 둘이서 }
+    - { case: search-p-04, seed: 가을 사진전 }
+    - { case: search-p-04, seed: 판화 특별전 }
+    - { case: search-p-04, seed: 공룡 화석 전시 }
+    - { case: search-p-05, seed: 공연의 밤 같이 봐요 }
+    - { case: search-p-05, seed: 버스킹 구경 갈 분 }
+    - { case: search-p-06, seed: 삼겹살 드실 분 }
+    - { case: search-p-06, seed: 저녁에 고기 구워요 }
+    - { case: search-p-06, seed: 배민 같이 시켜요 }
+    - { case: search-p-06, seed: 학식 같이 먹어요 }
+    - { case: search-p-06, seed: 돈까스 드실 분 }
+    - { case: search-p-06, seed: 심야 라면 모임 }
+  T1:
+    - { case: search-t1-01, seed: 재즈 콘서드 갈 사람 }
+    - { case: search-t1-01, seed: 콘서드 같이 가실 분 }
+    - { case: search-t1-02, seed: 재즈 콘서드 }
+    - { case: search-t1-03, seed: 취엄 설명회 }
+    - { case: search-t1-04, seed: 뮤지걸 보러 가실 분 }
+    - { case: search-t1-05, seed: 풋쌀 번개 }
+    - { case: search-t1-06, seed: 마라땅 드실 분 }
+    - { case: search-t1-07, seed: 뮤지걸 보러 가실 분 }
+  T2:
+    - { case: search-t2-01, seed: 재즈 콘서드 갈 사람 }
+    - { case: search-t2-01, seed: 콘서드 같이 가실 분 }
+    - { case: search-t2-02, seed: 양자컴퓨터 특강 }
+    - { case: search-t2-02, seed: 스타트업 창업 특강 }
+    - { case: search-t2-03, seed: 볼링 네 명 }
+    - { case: search-t2-03, seed: 볼링 여섯 명 }
+    - { case: search-t2-03, seed: 볼링 둘이서 }
+    - { case: search-t2-04, seed: 테니즈 치실 분 }
+    - { case: search-t2-05, seed: 채용 박람회 }
+    - { case: search-t2-05, seed: 동아리 박람회 }
+  H:
+    - { case: search-h-01, seed: 치킨 뜯으실 분 }
+    - { case: search-h-01, seed: 족발 야식 모임 }
+    - { case: search-h-01, seed: 오늘 저녁 공부 모임 }
+    - { case: search-h-01, seed: 판화전 같이 봐요 }
+    - { case: search-h-01, seed: 사진전 같이 봐요 }
+    - { case: search-h-01, seed: 사진전 주말 관람 }
+    - { case: search-h-02, seed: 치킨 뜯으실 분 }
+    - { case: search-h-02, seed: 오늘 저녁 공부 모임 }
+    - { case: search-h-02, seed: 판화전 같이 봐요 }
+    - { case: search-h-02, seed: 사진전 같이 봐요 }
+    - { case: search-h-02, seed: 사진전 주말 관람 }
+    - { case: search-h-03, seed: 아침 러닝 }
+    - { case: search-h-03, seed: 사진전 같이 봐요 }
+    - { case: search-h-03, seed: 사진전 주말 관람 }
+    - { case: search-h-04, seed: 학식 같이 먹어요 }
+    - { case: search-h-04, seed: 돈까스 드실 분 }
+    - { case: search-h-04, seed: 사진전 같이 봐요 }
+    - { case: search-h-04, seed: 사진전 주말 관람 }
+    - { case: search-h-05, seed: 가을 사진전 }
+    - { case: search-h-05, seed: 동아리 박람회 }
+    - { case: search-h-05, seed: 도서 바자회 }
+    - { case: search-h-05, seed: 양자컴퓨터 특강 }
+    - { case: search-h-06, seed: 가을 사진전 }
+    - { case: search-h-06, seed: 판화 특별전 }
+    - { case: search-h-06, seed: 도서 바자회 }
+    - { case: search-h-07, seed: 오늘 저녁 공부 모임 }
+  S:
+    - { case: search-s-01, seed: 보드게임 카페 갈 분 }
+    - { case: search-s-01, seed: 보드게임 밤샘 }
+    - { case: search-s-01, seed: 보드게임 셋이서 }
+    - { case: search-s-02, seed: 보드게임 밤샘 }
+    - { case: search-s-02, seed: 보드게임 셋이서 }
+    - { case: search-s-03, seed: 볼링 네 명 }
+    - { case: search-s-03, seed: 볼링 여섯 명 }
+    - { case: search-s-04, seed: null }
+    - { case: search-s-05, seed: 정기 공연 같이 가요 }
+  N:
+    - { case: search-n-01, seed: 볼링 네 명 }
+    - { case: search-n-02, seed: 마라탕 둘이서 }
+    - { case: search-n-03, seed: 보드게임 밤샘 }
+    - { case: search-n-04, seed: 풋살 하실 분 }
+    - { case: search-n-04, seed: 풋쌀 번개 }
+    - { case: search-n-05, seed: 마라탕 넷이서 }
+  R:
+    - { case: search-r-01, seed: 공대 면접 스터디 }
+    - { case: search-r-01, seed: 전공 스터디 그룹 }
+    - { case: search-r-01, seed: 코딩 테스트 스터디 }
+    - { case: search-r-01, seed: 벤치에서 스터디 }
+    - { case: search-r-02, seed: 공대 면접 스터디 }
+    - { case: search-r-02, seed: 전공 스터디 그룹 }
+    - { case: search-r-02, seed: 벤치에서 스터디 }
+    - { case: search-r-03, seed: 목요일 점심 학생회관 }
+    - { case: search-r-03, seed: 목요일 점심 도서관 }
+    - { case: search-r-03, seed: 목요일 점심 문화관 }
+    - { case: search-r-03, seed: 공룡 전시 보러 가요 }
+    - { case: search-r-04, seed: 목요일 점심 문화관 }
+    - { case: search-r-04, seed: 목요일 점심 예술복합 }
+    - { case: search-r-04, seed: 목요일 점심 학생회관 }
+    - { case: search-r-04, seed: 목요일 점심 도서관 }
+    - { case: search-r-04, seed: 공룡 전시 보러 가요 }
+    - { case: search-r-05, seed: 코딩 테스트 스터디 }
+    - { case: search-r-05, seed: 공대 면접 스터디 }
+    - { case: search-r-05, seed: 벤치에서 스터디 }
+  O:
+    - { case: search-o-01, seed: 가을 사진전 }
+    - { case: search-o-01, seed: 판화 특별전 }
+    - { case: search-o-02, seed: 가을 사진전 }
+    - { case: search-o-02, seed: 동아리 박람회 }
+    - { case: search-o-02, seed: 도서 바자회 }
+    - { case: search-o-02, seed: 양자컴퓨터 특강 }
+    - { case: search-o-03, seed: 가을 사진전 }
+    - { case: search-o-03, seed: 채용 박람회 }
+    - { case: search-o-04, seed: 사진전 같이 봐요 }
+    - { case: search-o-04, seed: 사진전 주말 관람 }
+    - { case: search-o-04, seed: 판화전 같이 봐요 }
+    - { case: search-o-05, seed: 사진전 같이 봐요 }
+    - { case: search-o-05, seed: 사진전 주말 관람 }
+    - { case: search-o-05, seed: 전시 보러 가요 }
+    - { case: search-o-06, seed: 사진전 같이 봐요 }
+    - { case: search-o-06, seed: 사진전 주말 관람 }
+    - { case: search-o-06, seed: 공룡 전시 보러 가요 }
+  B:
+    - { case: search-b-01, seed: 전시 보러 가요 }
+    - { case: search-b-01, seed: 사진전 같이 봐요 }
+    - { case: search-b-01, seed: 사진전 주말 관람 }
+    - { case: search-b-01, seed: 공룡 전시 보러 가요 }
+    - { case: search-b-02, seed: 연극 보고 저녁 먹어요 }
+    - { case: search-b-03, seed: 등산 후 막걸리 }
+    - { case: search-b-04, seed: 개발자 농구 모임 }
+    - { case: search-b-05, seed: 취준생 점심 모임 }
+  E:
+    - { case: search-e-01, seed: null }
+    - { case: search-e-02, seed: null }
+    - { case: search-e-03, seed: null }
+    - { case: search-e-04, seed: null }
+    - { case: search-e-05, seed: null }
+    - { case: search-e-06, seed: null }
+  # The cases of the large world are under `largeWorld`, below: the small world holds none.
+  V: []
+
+thresholds:
+  - id: j1.floor
+    metric: J1
+    measure: "Runs whose action is the answer's ÷ runs, on every join-or-recruit case"
+    kind: floor
+    comparator: '>='
+    value: 0.5
+    declared: 2026-10-31
+  - id: j1.target
+    metric: J1
+    measure: "Runs whose action is the answer's ÷ runs, on every join-or-recruit case"
+    kind: target
+    comparator: '>='
+    value: 0.85
+    declared: 2026-10-31
+  - id: j1-p.floor
+    metric: J1-P
+    measure: "Runs whose Proposal holds the answer's fields ÷ runs, on the cases whose answer is a Proposal"
+    kind: floor
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j1-p.target
+    metric: J1-P
+    measure: "Runs whose Proposal holds the answer's fields ÷ runs, on the cases whose answer is a Proposal"
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j2.floor
+    metric: J2
+    measure: "Runs whose Quest cards are exactly the answer's ÷ runs, on the join cases whose answer shows Quest cards"
+    kind: floor
+    comparator: '>='
+    value: 0.4
+    declared: 2026-10-31
+  - id: j2.target
+    metric: J2
+    measure: "Runs whose Quest cards are exactly the answer's ÷ runs, on the join cases whose answer shows Quest cards"
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j3a.floor
+    metric: J3a
+    measure: 'Runs passed ÷ runs, on the three traps a model can avoid'
+    kind: floor
+    comparator: '>='
+    value: 0.6666666666666666
+    declared: 2026-10-31
+  - id: j3a.target
+    metric: J3a
+    measure: 'Runs passed ÷ runs, on the three traps a model can avoid'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: j3b.target
+    metric: J3b
+    measure: 'Runs passed ÷ runs, on the four traps that need the server'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: j4.floor
+    metric: J4
+    measure: 'Runs that show a card outside the answer ÷ runs, on the tagged cases'
+    kind: floor
+    comparator: '<='
+    value: 0.16666666666666666
+    declared: 2026-10-31
+  - id: j4.target
+    metric: J4
+    measure: 'Runs that show a card outside the answer ÷ runs, on the tagged cases'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j6.floor
+    metric: J6
+    measure: 'Runs passed ÷ runs, on the two-turn cases'
+    kind: floor
+    comparator: '>='
+    value: 0.6
+    declared: 2026-10-31
+  - id: j6.target
+    metric: J6
+    measure: 'Runs passed ÷ runs, on the two-turn cases'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j7.floor
+    metric: J7
+    measure: 'Runs passed ÷ runs, on the 그래도 새로 cases'
+    kind: floor
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j7.target
+    metric: J7
+    measure: 'Runs passed ÷ runs, on the 그래도 새로 cases'
+    kind: target
+    comparator: '>='
+    value: 0.95
+    declared: 2026-10-31
+  - id: j8.floor
+    metric: J8
+    measure: 'Runs that say the asker joined or asked to join ÷ runs, on the join cases'
+    kind: floor
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j8.target
+    metric: J8
+    measure: 'Runs that say the asker joined or asked to join ÷ runs, on the join cases'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j9.floor
+    metric: J9
+    measure: 'Runs passed ÷ runs, on the join cases whose answer holds an Approval Quest'
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: j9.target
+    metric: J9
+    measure: 'Runs passed ÷ runs, on the join cases whose answer holds an Approval Quest'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j10.floor
+    metric: J10
+    measure: "Runs that missed an answer's card with an unstated condition in the search ÷ runs, on the tagged cases"
+    kind: floor
+    comparator: '<='
+    value: 0.1
+    declared: 2026-10-31
+  - id: j10.target
+    metric: J10
+    measure: "Runs that missed an answer's card with an unstated condition in the search ÷ runs, on the tagged cases"
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: g1.floor
+    metric: G1
+    measure: 'P19 cases, without the superseded, that passed at the baseline and now fail'
+    kind: floor
+    comparator: '<='
+    value: 2
+    declared: 2026-10-31
+  - id: g1.floor.r1
+    metric: G1
+    measure: "P19 cases, without the superseded and the known failures, that passed all three P19 runs at R0 and fail in two or more of a later run's three"
+    kind: floor
+    comparator: '<='
+    value: 2
+    declared: 2026-11-01
+    revises: g1.floor
+    reason: 'P19 ran three times at R0 and 11 cases that are not known failures differ or fail across them, so one run cannot be the baseline and the frozen measure does not say how to read three. Chosen after seeing R0, so it is marked as a revision; the values do not change. Decided by the P05 owner.'
+  - id: g1.target
+    metric: G1
+    measure: 'P19 cases, without the superseded, that passed at the baseline and now fail'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: g1.target.r1
+    metric: G1
+    measure: "P19 cases, without the superseded and the known failures, that passed all three P19 runs at R0 and fail in two or more of a later run's three"
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-11-01
+    revises: g1.target
+    reason: 'P19 ran three times at R0 and 11 cases that are not known failures differ or fail across them, so one run cannot be the baseline and the frozen measure does not say how to read three. Chosen after seeing R0, so it is marked as a revision; the values do not change. Decided by the P05 owner.'
+  - id: e1.floor
+    metric: E1
+    measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e1.target
+    metric: E1
+    measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e2.floor
+    metric: E2
+    measure: 'Micro recall of subset L'
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e2.target
+    metric: E2
+    measure: 'Micro recall of subset L'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e3.target
+    metric: E3
+    measure: 'Micro recall of subsets P and T1 together, each world apart'
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: e4.target
+    metric: E4
+    measure: 'Micro recall of subset V, in the large world (ticket 02b)'
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: e5.floor
+    metric: E5
+    measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+    kind: floor
+    comparator: '>='
+    value: 0.6666666666666666
+    declared: 2026-10-31
+  - id: e5.target
+    metric: E5
+    measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: e7.floor
+    metric: E7
+    measure: 'Micro recall of subsets T2, H, S, N, R, O and B together, by the model. The floor also asks a server recall of 1.0 in CI, not measured until ticket 02b and ticket 10'
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e7.target
+    metric: E7
+    measure: 'Micro recall of subsets T2, H, S, N, R, O and B together, by the model. The floor also asks a server recall of 1.0 in CI, not measured until ticket 02b and ticket 10'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e8.floor
+    metric: E8
+    measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+    kind: floor
+    comparator: '<='
+    value: 0.05
+    declared: 2026-10-31
+  - id: e8.target
+    metric: E8
+    measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+    kind: target
+    comparator: '<='
+    value: 0.02
+    declared: 2026-10-31
+
+# Reported, with no threshold.
+diagnostic:
+  J5: 'Cases that passed all 3 runs ÷ cases'
+  E6: 'Runs whose cards are exactly the answer ÷ runs'
+
+# The large world (ticket 02b): evaluation D at scale, committed before ticket 10 starts and before any run of it. A run
+# of that world reads these tags and thresholds instead of those above, so E3 and E4 are reported per world. The values
+# are the metrics document's, but for E9, which the P05 owner added. The hashes pin its data file and its cases: any
+# change to them is a new version, whose scores are never put beside these. Its answers are computed from the attributes
+# (eval/p5/README.md).
+largeWorld:
+  version: large-world-v1
+  worldSha256: 462b9539b1a2afa9249ea40d1e18adf3f824b6daec0b36b53f6a0af91a91708c
+  casesSha256: c7cb030213f20c82d23510dc050893c66738d5b31daee4d4895428719aa4ee9f
+  tags:
+    V:
+      - { case: large-v-01, seed: q0076 }
+      - { case: large-v-01, seed: q0110 }
+      - { case: large-v-01, seed: q0207 }
+      - { case: large-v-01, seed: q0333 }
+      - { case: large-v-01, seed: q0619 }
+      - { case: large-v-01, seed: q0676 }
+      - { case: large-v-01, seed: q0687 }
+      - { case: large-v-01, seed: q0706 }
+      - { case: large-v-01, seed: q0760 }
+      - { case: large-v-01, seed: q0762 }
+      - { case: large-v-01, seed: q0782 }
+      - { case: large-v-01, seed: t-under-way-1 }
+      - { case: large-v-01, seed: t-under-way-2 }
+      - { case: large-v-02, seed: q0032 }
+      - { case: large-v-02, seed: q0124 }
+      - { case: large-v-02, seed: q0134 }
+      - { case: large-v-02, seed: q0178 }
+      - { case: large-v-02, seed: q0261 }
+      - { case: large-v-02, seed: q0270 }
+      - { case: large-v-02, seed: q0288 }
+      - { case: large-v-02, seed: q0365 }
+      - { case: large-v-02, seed: q0370 }
+      - { case: large-v-02, seed: q0371 }
+      - { case: large-v-02, seed: q0486 }
+      - { case: large-v-02, seed: q0508 }
+      - { case: large-v-02, seed: q0606 }
+      - { case: large-v-02, seed: q0768 }
+      - { case: large-v-02, seed: q0773 }
+      - { case: large-v-02, seed: q0812 }
+      - { case: large-v-02, seed: q0878 }
+      - { case: large-v-02, seed: t-under-way-1 }
+      - { case: large-v-02, seed: t-under-way-2 }
+      - { case: large-v-03, seed: e0031 }
+      - { case: large-v-03, seed: e0044 }
+      - { case: large-v-03, seed: e0046 }
+      - { case: large-v-03, seed: e0067 }
+      - { case: large-v-03, seed: e0166 }
+      - { case: large-v-03, seed: e0167 }
+      - { case: large-v-03, seed: e0180 }
+      - { case: large-v-03, seed: e0189 }
+      - { case: large-v-03, seed: e0250 }
+      - { case: large-v-03, seed: e0287 }
+      - { case: large-v-03, seed: te-under-way }
+      - { case: large-v-04, seed: e0044 }
+      - { case: large-v-04, seed: e0111 }
+      - { case: large-v-04, seed: e0140 }
+      - { case: large-v-04, seed: e0188 }
+      - { case: large-v-04, seed: e0197 }
+      - { case: large-v-04, seed: e0252 }
+      - { case: large-v-04, seed: e0292 }
+      - { case: large-v-04, seed: te-under-way }
+      - { case: large-v-05, seed: q0519 }
+      - { case: large-v-06, seed: q0775 }
+      - { case: large-v-07, seed: q0187 }
+      - { case: large-v-07, seed: q0443 }
+      - { case: large-v-07, seed: q0513 }
+      - { case: large-v-08, seed: q0177 }
+      - { case: large-v-08, seed: q0324 }
+      - { case: large-v-08, seed: q0654 }
+    L:
+      - { case: large-l-01, seed: q0007 }
+      - { case: large-l-01, seed: q0205 }
+      - { case: large-l-01, seed: q0372 }
+      - { case: large-l-01, seed: q0432 }
+      - { case: large-l-01, seed: q0536 }
+      - { case: large-l-01, seed: q0841 }
+      - { case: large-l-02, seed: q0728 }
+      - { case: large-l-02, seed: q0746 }
+      - { case: large-l-02, seed: q0777 }
+      - { case: large-l-02, seed: q0881 }
+      - { case: large-l-03, seed: e0069 }
+      - { case: large-l-03, seed: e0078 }
+      - { case: large-l-03, seed: e0103 }
+      - { case: large-l-03, seed: e0107 }
+      - { case: large-l-03, seed: e0117 }
+      - { case: large-l-03, seed: e0124 }
+      - { case: large-l-03, seed: e0133 }
+      - { case: large-l-03, seed: e0134 }
+      - { case: large-l-03, seed: e0153 }
+      - { case: large-l-03, seed: e0158 }
+      - { case: large-l-03, seed: e0172 }
+      - { case: large-l-03, seed: e0175 }
+      - { case: large-l-03, seed: e0213 }
+      - { case: large-l-03, seed: e0216 }
+      - { case: large-l-03, seed: e0230 }
+      - { case: large-l-03, seed: e0262 }
+      - { case: large-l-03, seed: e0268 }
+      - { case: large-l-04, seed: te-online-1 }
+      - { case: large-l-04, seed: te-online-2 }
+      - { case: large-l-05, seed: te-face-1 }
+      - { case: large-l-05, seed: te-face-2 }
+    P:
+      - { case: large-p-01, seed: e0021 }
+      - { case: large-p-01, seed: e0028 }
+      - { case: large-p-01, seed: e0057 }
+      - { case: large-p-01, seed: e0101 }
+      - { case: large-p-01, seed: e0121 }
+      - { case: large-p-01, seed: e0139 }
+      - { case: large-p-01, seed: e0246 }
+      - { case: large-p-01, seed: e0273 }
+      - { case: large-p-01, seed: e0283 }
+      - { case: large-p-01, seed: e0289 }
+      - { case: large-p-02, seed: q0236 }
+      - { case: large-p-02, seed: q0405 }
+      - { case: large-p-02, seed: q0487 }
+      - { case: large-p-02, seed: q0693 }
+      - { case: large-p-02, seed: t-board-hiking }
+      - { case: large-p-03, seed: q0179 }
+      - { case: large-p-03, seed: q0188 }
+      - { case: large-p-03, seed: q0265 }
+      - { case: large-p-03, seed: q0663 }
+      - { case: large-p-04, seed: q0514 }
+      - { case: large-p-05, seed: q0063 }
+      - { case: large-p-05, seed: q0215 }
+      - { case: large-p-05, seed: t-baemin-1 }
+      - { case: large-p-05, seed: t-baemin-2 }
+    T1:
+      - { case: large-t1-01, seed: e0222 }
+      - { case: large-t1-01, seed: te-typo-concert }
+      - { case: large-t1-02, seed: q0322 }
+      - { case: large-t1-02, seed: q0689 }
+      - { case: large-t1-02, seed: t-typo-futsal }
+      - { case: large-t1-03, seed: q0165 }
+      - { case: large-t1-03, seed: q0396 }
+      - { case: large-t1-03, seed: q0475 }
+      - { case: large-t1-03, seed: q0586 }
+      - { case: large-t1-03, seed: q0900 }
+      - { case: large-t1-03, seed: t-typo-malatang }
+      - { case: large-t1-04, seed: q0162 }
+      - { case: large-t1-04, seed: q0230 }
+      - { case: large-t1-04, seed: q0462 }
+      - { case: large-t1-04, seed: q0649 }
+      - { case: large-t1-04, seed: t-typo-musical }
+      - { case: large-t1-05, seed: e0099 }
+      - { case: large-t1-05, seed: e0199 }
+      - { case: large-t1-05, seed: te-typo-fair }
+    T2:
+      - { case: large-t2-01, seed: q0179 }
+      - { case: large-t2-01, seed: q0188 }
+      - { case: large-t2-01, seed: q0265 }
+      - { case: large-t2-01, seed: q0663 }
+      - { case: large-t2-02, seed: e0063 }
+      - { case: large-t2-02, seed: e0128 }
+      - { case: large-t2-02, seed: e0164 }
+      - { case: large-t2-03, seed: q0022 }
+      - { case: large-t2-03, seed: q0098 }
+      - { case: large-t2-04, seed: q0031 }
+      - { case: large-t2-04, seed: q0114 }
+      - { case: large-t2-04, seed: q0122 }
+      - { case: large-t2-04, seed: q0267 }
+      - { case: large-t2-04, seed: q0278 }
+      - { case: large-t2-04, seed: q0391 }
+      - { case: large-t2-04, seed: q0563 }
+      - { case: large-t2-04, seed: q0604 }
+      - { case: large-t2-05, seed: e0022 }
+      - { case: large-t2-05, seed: e0211 }
+    H:
+      - { case: large-h-01, seed: t-evening-start }
+      - { case: large-h-01, seed: t-evening-middle }
+      - { case: large-h-01, seed: t-evening-last }
+      - { case: large-h-02, seed: t-after-start }
+      - { case: large-h-02, seed: t-after-last }
+      - { case: large-h-03, seed: t-both-start }
+      - { case: large-h-03, seed: t-both-end }
+      - { case: large-h-04, seed: t-named-first }
+      - { case: large-h-04, seed: t-named-at }
+      - { case: large-h-04, seed: t-named-last }
+      - { case: large-h-05, seed: t-morning-start }
+      - { case: large-h-05, seed: t-morning-last }
+      - { case: large-h-06, seed: t-noon-start }
+      - { case: large-h-06, seed: t-noon-last }
+      - { case: large-h-07, seed: t-today-ahead }
+    S:
+      - { case: large-s-01, seed: t-two-left }
+      - { case: large-s-02, seed: t-one-left }
+      - { case: large-s-02, seed: t-two-left }
+      - { case: large-s-03, seed: q0399 }
+      - { case: large-s-04, seed: q0376 }
+      - { case: large-s-05, seed: q0016 }
+      - { case: large-s-05, seed: q0304 }
+      - { case: large-s-05, seed: q0410 }
+      - { case: large-s-05, seed: q0523 }
+      - { case: large-s-05, seed: q0537 }
+      - { case: large-s-05, seed: q0582 }
+      - { case: large-s-05, seed: q0623 }
+      - { case: large-s-05, seed: q0815 }
+      - { case: large-s-05, seed: q0835 }
+    N:
+      - { case: large-n-01, seed: q0103 }
+      - { case: large-n-01, seed: q0151 }
+      - { case: large-n-01, seed: q0198 }
+      - { case: large-n-01, seed: q0283 }
+      - { case: large-n-01, seed: q0291 }
+      - { case: large-n-01, seed: q0358 }
+      - { case: large-n-01, seed: q0365 }
+      - { case: large-n-01, seed: q0403 }
+      - { case: large-n-01, seed: q0450 }
+      - { case: large-n-01, seed: q0535 }
+      - { case: large-n-01, seed: q0592 }
+      - { case: large-n-01, seed: q0706 }
+      - { case: large-n-01, seed: q0731 }
+      - { case: large-n-01, seed: q0782 }
+      - { case: large-n-01, seed: q0897 }
+      - { case: large-n-01, seed: q0899 }
+      - { case: large-n-01, seed: t-board-basketball }
+      - { case: large-n-02, seed: q0302 }
+      - { case: large-n-02, seed: q0774 }
+      - { case: large-n-03, seed: q0022 }
+      - { case: large-n-03, seed: q0091 }
+      - { case: large-n-03, seed: q0192 }
+      - { case: large-n-03, seed: q0346 }
+      - { case: large-n-03, seed: q0432 }
+      - { case: large-n-03, seed: q0826 }
+      - { case: large-n-03, seed: q0841 }
+      - { case: large-n-04, seed: q0815 }
+      - { case: large-n-05, seed: q0051 }
+      - { case: large-n-05, seed: q0236 }
+      - { case: large-n-05, seed: q0728 }
+      - { case: large-n-05, seed: q0746 }
+      - { case: large-n-05, seed: q0777 }
+      - { case: large-n-05, seed: q0842 }
+    R:
+      - { case: large-r-01, seed: q0086 }
+      - { case: large-r-01, seed: q0139 }
+      - { case: large-r-01, seed: q0191 }
+      - { case: large-r-01, seed: q0317 }
+      - { case: large-r-01, seed: q0344 }
+      - { case: large-r-01, seed: q0368 }
+      - { case: large-r-01, seed: q0447 }
+      - { case: large-r-01, seed: q0573 }
+      - { case: large-r-01, seed: q0581 }
+      - { case: large-r-01, seed: q0607 }
+      - { case: large-r-01, seed: q0710 }
+      - { case: large-r-01, seed: q0903 }
+      - { case: large-r-02, seed: q0107 }
+      - { case: large-r-02, seed: q0249 }
+      - { case: large-r-02, seed: q0438 }
+      - { case: large-r-02, seed: q0464 }
+      - { case: large-r-02, seed: q0696 }
+      - { case: large-r-03, seed: q0498 }
+      - { case: large-r-03, seed: q0637 }
+      - { case: large-r-03, seed: q0758 }
+      - { case: large-r-03, seed: q0852 }
+      - { case: large-r-04, seed: q0271 }
+      - { case: large-r-04, seed: q0279 }
+      - { case: large-r-04, seed: q0400 }
+      - { case: large-r-04, seed: q0448 }
+      - { case: large-r-04, seed: q0512 }
+      - { case: large-r-04, seed: q0749 }
+      - { case: large-r-04, seed: q0828 }
+      - { case: large-r-05, seed: q0129 }
+      - { case: large-r-05, seed: q0174 }
+      - { case: large-r-05, seed: q0439 }
+      - { case: large-r-05, seed: q0584 }
+    O:
+      - { case: large-o-01, seed: e0155 }
+      - { case: large-o-01, seed: e0197 }
+      - { case: large-o-01, seed: e0252 }
+      - { case: large-o-01, seed: e0267 }
+      - { case: large-o-01, seed: te-named }
+      - { case: large-o-01, seed: te-under-way }
+      - { case: large-o-02, seed: te-under-way }
+      - { case: large-o-03, seed: q0076 }
+      - { case: large-o-03, seed: q0796 }
+      - { case: large-o-03, seed: t-under-way-1 }
+      - { case: large-o-03, seed: t-under-way-2 }
+      - { case: large-o-04, seed: t-named-1 }
+      - { case: large-o-04, seed: t-named-2 }
+      - { case: large-o-05, seed: t-under-way-1 }
+      - { case: large-o-05, seed: t-under-way-2 }
+    B:
+      - { case: large-b-01, seed: t-board-hiking }
+      - { case: large-b-02, seed: q0151 }
+      - { case: large-b-02, seed: q0553 }
+      - { case: large-b-02, seed: q0605 }
+      - { case: large-b-02, seed: q0902 }
+      - { case: large-b-02, seed: t-board-basketball }
+      - { case: large-b-03, seed: q0077 }
+      - { case: large-b-03, seed: q0301 }
+      - { case: large-b-03, seed: q0786 }
+      - { case: large-b-03, seed: t-board-photo }
+      - { case: large-b-04, seed: q0273 }
+      - { case: large-b-04, seed: t-board-study }
+      - { case: large-b-05, seed: q0089 }
+      - { case: large-b-05, seed: q0234 }
+      - { case: large-b-05, seed: q0268 }
+      - { case: large-b-05, seed: t-board-meal }
+    E:
+      - { case: large-e-01, seed: null }
+      - { case: large-e-02, seed: null }
+      - { case: large-e-03, seed: null }
+      - { case: large-e-04, seed: null }
+      - { case: large-e-05, seed: null }
+      - { case: large-e-06, seed: null }
+    C:
+      - { case: large-c-01, seed: q0210 }
+      - { case: large-c-01, seed: q0491 }
+      - { case: large-c-01, seed: q0874 }
+      - { case: large-c-01, seed: c-lol-sat-1 }
+      - { case: large-c-01, seed: c-lol-sat-2 }
+      - { case: large-c-01, seed: c-lol-sat-3 }
+      - { case: large-c-01, seed: c-valorant }
+      - { case: large-c-01, seed: c-pcroom }
+      - { case: large-c-02, seed: c-overwatch }
+      - { case: large-c-02, seed: c-pubg }
+      - { case: large-c-02, seed: c-maple }
+      - { case: large-c-02, seed: c-mariokart }
+      - { case: large-c-02, seed: c-tft }
+      - { case: large-c-03, seed: c-lol-wed-1 }
+      - { case: large-c-03, seed: c-lol-wed-2 }
+      - { case: large-c-03, seed: c-lol-wed-3 }
+      - { case: large-c-04, seed: q0621 }
+      - { case: large-c-04, seed: q0645 }
+      - { case: large-c-04, seed: q0685 }
+      - { case: large-c-04, seed: c-lol-wed-1 }
+      - { case: large-c-04, seed: c-lol-wed-2 }
+      - { case: large-c-04, seed: c-lol-wed-3 }
+      - { case: large-c-05, seed: c-dujjonku }
+      - { case: large-c-05, seed: c-eggtart }
+      - { case: large-c-05, seed: c-buttertteok }
+      - { case: large-c-05, seed: c-croffle }
+      - { case: large-c-05, seed: c-coffee }
+      - { case: large-c-05, seed: c-iced }
+      - { case: large-c-06, seed: c-yoajung }
+      - { case: large-c-06, seed: c-bingsu }
+      - { case: large-c-06, seed: c-macaron }
+      - { case: large-c-06, seed: c-rollcake-sat }
+      - { case: large-c-06, seed: c-maple-syrup-sat }
+      - { case: large-c-07, seed: c-chimaek }
+      - { case: large-c-07, seed: c-pimaek }
+      - { case: large-c-07, seed: c-makgeolli }
+      - { case: large-c-08, seed: c-yeopddeok }
+      - { case: large-c-08, seed: c-tteoktwisun }
+      - { case: large-c-09, seed: c-cono }
+      - { case: large-c-09, seed: c-coin-karaoke }
+      - { case: large-c-10, seed: c-climbing }
+      - { case: large-c-10, seed: c-bouldering }
+      - { case: large-c-11, seed: c-knitting }
+      - { case: large-c-11, seed: c-perfume }
+      - { case: large-c-12, seed: c-book }
+      - { case: large-c-13, seed: c-photobooth }
+      - { case: large-c-14, seed: c-escape-room }
+  thresholds:
+    - id: large.e1.floor
+      metric: E1
+      measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+      kind: floor
+      comparator: '>='
+      value: 0.7
+      declared: 2026-11-01
+    - id: large.e1.target
+      metric: E1
+      measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+      kind: target
+      comparator: '>='
+      value: 0.9
+      declared: 2026-11-01
+    - id: large.e2.floor
+      metric: E2
+      measure: 'Micro recall of subset L'
+      kind: floor
+      comparator: '>='
+      value: 0.7
+      declared: 2026-11-01
+    - id: large.e2.target
+      metric: E2
+      measure: 'Micro recall of subset L'
+      kind: target
+      comparator: '>='
+      value: 0.9
+      declared: 2026-11-01
+    - id: large.e3.target
+      metric: E3
+      measure: 'Micro recall of subsets P and T1 together, in this world'
+      kind: target
+      comparator: '>='
+      value: 0.8
+      declared: 2026-11-01
+    - id: large.e4.target
+      metric: E4
+      measure: 'Micro recall of subset V'
+      kind: target
+      comparator: '>='
+      value: 0.8
+      declared: 2026-11-01
+    - id: large.e5.floor
+      metric: E5
+      measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+      kind: floor
+      comparator: '>='
+      value: 0.6666666666666666
+      declared: 2026-11-01
+    - id: large.e5.target
+      metric: E5
+      measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+      kind: target
+      comparator: '='
+      value: 1
+      declared: 2026-11-01
+    - id: large.e7.floor
+      metric: E7
+      measure: 'Micro recall of subsets T2, H, S, N, R, O and B together, by the model. The floor also asks a server recall of 1.0 in CI, which the test of server recall measures once tickets 10 and 11 are in'
+      kind: floor
+      comparator: '>='
+      value: 0.7
+      declared: 2026-11-01
+    - id: large.e7.target
+      metric: E7
+      measure: 'Micro recall of subsets T2, H, S, N, R, O and B together, by the model. The floor also asks a server recall of 1.0 in CI, which the test of server recall measures once tickets 10 and 11 are in'
+      kind: target
+      comparator: '>='
+      value: 0.9
+      declared: 2026-11-01
+    - id: large.e8.floor
+      metric: E8
+      measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+      kind: floor
+      comparator: '<='
+      value: 0.05
+      declared: 2026-11-01
+    - id: large.e8.target
+      metric: E8
+      measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+      kind: target
+      comparator: '<='
+      value: 0.02
+      declared: 2026-11-01
+    - id: large.e9.target
+      metric: E9
+      measure: 'Micro recall of subset C. The P05 owner declared it, 2026-11-01'
+      kind: target
+      comparator: '>='
+      value: 0.8
+      declared: 2026-11-01

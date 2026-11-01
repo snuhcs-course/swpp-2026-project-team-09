@@ -23,10 +23,16 @@ that build; `pnpm start` is the way to Expo Go.
 
 Add packages with `pnpm expo install <package>`, not `pnpm add`. It picks the version that matches the Expo SDK.
 
+A package with native code, `app.json`, and the config plugins are the app's native part. Any edit to them, a
+comment included, needs a new native build before updates reach phones again (see the repository's `CLAUDE.md`, "The
+app's native files").
+
 ### Development settings
 
 A setting is an `EXPO_PUBLIC_` variable given when the app is started, for example
-`EXPO_PUBLIC_MOCK_FAIL=listFriends pnpm start`. A released app ignores all of them.
+`EXPO_PUBLIC_MOCK_FAIL=listFriends pnpm start`. A released app ignores all of them. The build settings of a released
+app, such as `EXPO_PUBLIC_RELEASE_TAG`, are not development settings: they are listed in
+[the Production APK](../infra/production/README.md#the-production-apk).
 
 | Variable                     | Value                                                 | What it does                                        |
 | ---------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
@@ -390,6 +396,7 @@ src/map/            the one map component, its interface and the pictures of its
 src/position/       the User's own position: the phone's, or the development walk, and its sending
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
+src/update/         the check at start for a newer native build, and its dialog
 src/screens/        the screens that the routes show; a screen of several files has a folder
 modules/            the native modules, local Expo modules: the map (snu-now-map) and text recognition (snu-now-ocr)
 __tests__/          Jest tests
@@ -612,6 +619,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     answer, it says "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요" with "다시 시도", while it is the last bubble,
     which sends the User's message again in its place. Once the User's messages of the day are used up (429), it says
     "오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요", without "다시 시도".
+  - A Restaurant card of a 공강에 밥 answer (`chat-restaurant-cards.tsx`) shows the name, "63동 · 오늘 점심", "식사 가능 시간
+    N분", the first two menu lines with "외 N개", a chip per person, "{name} {도보|셔틀} N분" or "{name} —", with the
+    longest highlighted, and 파티 만들기, which opens the party form filled from the card's Proposal as 수정 does, with
+    no model call.
   - The conversation lives in memory in `useChat()` (`src/features/assistant/use-chat.ts`), held by the main screen,
     so closing the sheet keeps it while the app runs and restarting the app loses it. "새 대화" also drops a reply
     still on its way. The server stores none of it.
@@ -629,7 +640,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   open. The layers start off when the app starts and stay as they are while another tab is shown.
 - **The 식당 layer** (`src/features/dining/`, the `MapDining` frame). Turning it on fetches today's menus, a day of
   Korea's calendar, and the Places, every time; failing either shows no pins and says "식당 정보를 불러오지
-  못했어요". A pin stands on the Place of each restaurant of the restaurant → Place table (see "Data") that has a
+  못했어요". A pin stands on the Place `GET /menus` gives each restaurant that has a
   line today; restaurants that share a Place share it. A pin is the frame's single 학식 mark (`MapRestaurant`), with
   the restaurant's name under it from the `names` level, or "{first} 외 {n}곳". Its card says "식당 · 학식 · 63동",
   the restaurant's name (the Place's when several share it), the Place, and the meals each restaurant serves today
@@ -782,7 +793,7 @@ on the meal served next by Korea's clock: 아침 before 10:00, 점심 from 10:00
 20:00 (`NEXT_MEAL_FROM` in the dining adapter). Its address may name the day, the meal and a restaurant
 (`/menus?date=2026-10-06&meal=lunch&restaurant=학생회관식당`), whose section is then scrolled to the top. A day is
 fetched once when it is chosen, and kept; a meal fetches nothing. The restaurants are cards in the server's order,
-the name with "{number}동" where the table places it, and the chosen meal's lines in the page's order (ADR 0001): a
+the name with "{number}동" of the Place `GET /menus` gives it, and the chosen meal's lines in the page's order (ADR 0001): a
 line with a name and a price as a row with the price at the right ("6,000원"), a heading in 14/700, a note in 13
 muted, any other line as written; a restaurant without lines for the meal says "운영하지 않아요". An empty day says
 "이날 올라온 메뉴가 없어요"; the shared loading and error states cover the rest.
@@ -790,7 +801,8 @@ muted, any other line as written; a restaurant without lines for the meal says "
 **The sources of the map's data** (`src/screens/map-sources-screen.tsx`, `/map-sources`), opened from the map's
 credit, slide in from the right: "뒤로" and "지도 데이터 출처", a card for OpenStreetMap (ODbL, with its copyright
 page) and one for 국토지리정보원's 연속수치지형도 건물 under 공공누리 type 1 (with the VWorld page it is downloaded
-from). Each link opens the browser. The year in the second card is that of the files' renewal on the VWorld page.
+from), and one for SRTM, in the public domain. Each link opens the browser. The year in the second card is that of the
+files' renewal on the VWorld page.
 
 **A Quest's room** (`src/screens/room/`, the frame's `PartyDetail`, `/room/<questId>`) is the room of every Quest the
 User holds but a Class Quest: its `파티장` is the Quest's Leader, its `멤버` the Holders and its `일정` the Sub Quests.
@@ -887,7 +899,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   filter the list. Empty: "예정된 행사가 없어요" without any event, "검색 결과가 없어요" after a filter or a search.
 - A card (`event-item.tsx`) has "같이 갈 파티 {n}개" for the recruiting Quests of `GET /quests/recruiting`, "내 파티"
   when the User holds a Quest for the event, the source from the app's own list of announcers, the title, the time
-  and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
+  ("M월 D일까지" for an event whose end is more than 24 hours after its start, on every card and sheet that shows an
+  event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
   "AI 매칭", or "매칭 중" while the User's request waits, which opens the list. At `/events?focus=<id>` the list shows
   every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
 - **파티 찾기/모집** (`recruiting-sheet.tsx`) lists the User's own Quest for the event ("내 파티" when the User leads it,
@@ -917,6 +930,17 @@ the campus; when the camera stops it asks `GET /places/at` and the sheet says th
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
 closes back to the screen it was opened from. The documents' texts are placeholders.
+
+**The update check** (`src/update/`) runs once at every start: `UpdateCheck`, in the root layout beside the stack,
+fetches `app-version.json` from the `app-version` Release on GitHub with a 5-second timeout, without holding back the
+first screen. `app-version.ts` decides from the file's `latest` and `minimum` and the installed version: a build
+older than `latest` sees 업데이트가 필요합니다 with 업데이트 하기 and 계속 사용하기, a build older than `minimum` the same
+without 계속 사용하기. 업데이트 하기 opens the platform's `download`; where it is `null`, as on iOS, the dialog asks the
+User to install the new version and has no 업데이트 하기. Nothing is kept, so the dialog comes back at the next start.
+Any failure, offline, a timeout or a malformed file, shows nothing. The installed version is
+`Constants.expoConfig.version`, the running JavaScript's own `version`. It is the native build's too: `version` is part
+of the fingerprint (raising 1.0.0 to 1.1.0 changes it from `d0581b58…` to `5d2e4656…`), so an update made with
+another `version` never reaches an older build. The web is not checked.
 
 ## Data
 
@@ -1039,12 +1063,6 @@ User's Friend ID is `7KX2M9QD`; `/invite/from-yujian` opens a link the User can 
 Session without a renewal and shows the notice "다른 기기에서 로그인했어요" with the sign-in screen; a 403 with
 `ONBOARDING_REQUIRED` shows Onboarding with the suggestion it carries (`src/session/session-events.ts`, which
 `SessionProvider` follows).
-
-**The restaurant → Place table** (`src/features/dining/restaurant-places.ts`) gives the number of the Place of each
-restaurant whose menus are collected, by the restaurant's name as `GET /menus` gives it. A restaurant missing from
-it, or whose number `GET /places` does not answer, has no pin and is still in the menu panel. When the Co-op renames
-or moves a restaurant, correct its row there, with the name exactly as the worker sends it and the number as the
-main server's Places have it (`main-server/seed/`).
 
 The User's own id is the access token's subject, and the app's time is the phone's. Where the answers are mocks, the
 User is the mock's `me` and the time is the moment the wireframe shows, 1 October 2026 at 13:37 (`src/clock.ts`), so
@@ -1198,8 +1216,10 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   Inside the design system the names are the design system's, also where the glossary prefers another word: its
   `Avatar` is a person's picture anywhere, its event kind is `official`, and a card's place is its `venue`.
 - **Dialog**: the design system has none and the frames ask questions with two answers. `Dialog` shows a title in
-  18/700, a sentence and one or two Buttons over the screen; `tone="danger"` fills the confirming answer in red
-  (the Button variant `destructive`) for what cannot be taken back. Android's back button is its cancel.
+  18/700, a sentence and up to two Buttons over the screen: a confirming answer, a cancel, both, or none for a
+  statement that nothing in the app answers. `tone="danger"` fills the confirming answer in red (the Button variant
+  `destructive`) for what cannot be taken back. Android's back button is its cancel (`onCancel`); without one, back
+  leaves the dialog open.
 - **The parts the screens around the map repeat**, which the design system lacks and the frames draw:
   - `AppBar`: a tab's (title 22/700, actions at the right) or, with `leave`, a sub-screen's (✕ "닫기" or the chevron
     "뒤로" in 48, title 20/700), with an optional count after the title ("퀘스트 12"). `IconButton` is an icon in 48.

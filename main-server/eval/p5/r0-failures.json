@@ -1,0 +1,2651 @@
+{
+  "join-01": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["삼겹살 드실 분", "저녁에 고기 구워요"],
+        "missedNotInResults": ["삼겹살 드실 분", "저녁에 고기 구워요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["삼겹살 드실 분", "저녁에 고기 구워요"],
+        "missedNotInResults": ["삼겹살 드실 분", "저녁에 고기 구워요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["삼겹살 드실 분", "저녁에 고기 구워요"],
+        "missedNotInResults": ["삼겹살 드실 분", "저녁에 고기 구워요"],
+        "extra": []
+      }
+    ]
+  },
+  "join-02": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["resolvePlace"],
+        "missed": ["학식 같이 먹어요"],
+        "missedNotInResults": ["학식 같이 먹어요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["resolvePlace"],
+        "missed": ["학식 같이 먹어요"],
+        "missedNotInResults": ["학식 같이 먹어요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["resolvePlace", "proposeQuest"],
+        "missed": ["학식 같이 먹어요"],
+        "missedNotInResults": ["학식 같이 먹어요"],
+        "extra": []
+      }
+    ]
+  },
+  "join-03": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["배드민턴 치실 분"],
+        "missedNotInResults": ["배드민턴 치실 분"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["배드민턴 치실 분"],
+        "missedNotInResults": ["배드민턴 치실 분"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["배드민턴 치실 분"],
+        "missedNotInResults": ["배드민턴 치실 분"],
+        "extra": []
+      }
+    ]
+  },
+  "join-04": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-05": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["정기 공연 같이 가요"],
+        "missedNotInResults": ["정기 공연 같이 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["정기 공연 같이 가요"],
+        "missedNotInResults": ["정기 공연 같이 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["정기 공연 같이 가요"],
+        "missedNotInResults": ["정기 공연 같이 가요"],
+        "extra": []
+      }
+    ]
+  },
+  "join-06": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-07": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-08": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["resolveGlobalEvent", "proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["resolveGlobalEvent", "proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["resolveGlobalEvent", "proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-09": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-10": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-11": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["치킨 뜯으실 분"],
+        "missedNotInResults": ["치킨 뜯으실 분"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["치킨 뜯으실 분"],
+        "missedNotInResults": ["치킨 뜯으실 분"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["치킨 뜯으실 분"],
+        "missedNotInResults": ["치킨 뜯으실 분"],
+        "extra": []
+      }
+    ]
+  },
+  "join-12": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["아침 러닝"],
+        "missedNotInResults": ["아침 러닝"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": [],
+        "missed": ["아침 러닝"],
+        "missedNotInResults": ["아침 러닝"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["아침 러닝"],
+        "missedNotInResults": ["아침 러닝"],
+        "extra": []
+      }
+    ]
+  },
+  "join-13": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["테니스 복식"],
+        "missedNotInResults": ["테니스 복식"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": [],
+        "missed": ["테니스 복식"],
+        "missedNotInResults": ["테니스 복식"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["테니스 복식"],
+        "missedNotInResults": ["테니스 복식"],
+        "extra": []
+      }
+    ]
+  },
+  "join-14": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["토익 스피킹 스터디"],
+        "missedNotInResults": ["토익 스피킹 스터디"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["토익 스피킹 스터디"],
+        "missedNotInResults": ["토익 스피킹 스터디"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": [],
+        "missed": ["토익 스피킹 스터디"],
+        "missedNotInResults": ["토익 스피킹 스터디"],
+        "extra": []
+      }
+    ]
+  },
+  "join-15": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["resolveGlobalEvent", "proposeQuest"],
+        "missed": ["독주회 같이 가요"],
+        "missedNotInResults": ["독주회 같이 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["resolveGlobalEvent", "proposeQuest"],
+        "missed": ["독주회 같이 가요"],
+        "missedNotInResults": ["독주회 같이 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.forbidden", "tools.required"],
+        "called": ["resolveGlobalEvent", "proposeQuest"],
+        "missed": ["독주회 같이 가요"],
+        "missedNotInResults": ["독주회 같이 가요"],
+        "extra": []
+      }
+    ]
+  },
+  "join-16": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["정기 공연 앞자리"]
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["정기 공연 앞자리"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["정기 공연 앞자리"]
+      }
+    ]
+  },
+  "join-17": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      }
+    ]
+  },
+  "join-20": {
+    "category": "join-or-recruit",
+    "passed": 2,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "Proposal",
+        "checks": ["proposal"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-23": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["민턴 한 판", "배드민턴 치실 분", "배드민튼 초보 모임"],
+        "missedNotInResults": ["민턴 한 판", "배드민턴 치실 분", "배드민튼 초보 모임"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["민턴 한 판", "배드민턴 치실 분", "배드민튼 초보 모임"],
+        "missedNotInResults": ["민턴 한 판", "배드민턴 치실 분", "배드민튼 초보 모임"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["민턴 한 판", "배드민턴 치실 분", "배드민튼 초보 모임"],
+        "missedNotInResults": ["민턴 한 판", "배드민턴 치실 분", "배드민튼 초보 모임"],
+        "extra": []
+      }
+    ]
+  },
+  "join-24": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": [],
+        "missed": [
+          "공룡 전시 보러 가요",
+          "공연의 밤 같이 봐요",
+          "금요일 저녁 파스타",
+          "마라땅 드실 분",
+          "버스킹 구경 갈 분",
+          "사진전 같이 봐요",
+          "사진전 주말 관람"
+        ],
+        "missedNotInResults": [
+          "공룡 전시 보러 가요",
+          "공연의 밤 같이 봐요",
+          "금요일 저녁 파스타",
+          "마라땅 드실 분",
+          "버스킹 구경 갈 분",
+          "사진전 같이 봐요",
+          "사진전 주말 관람"
+        ],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": [],
+        "missed": [
+          "공룡 전시 보러 가요",
+          "공연의 밤 같이 봐요",
+          "금요일 저녁 파스타",
+          "마라땅 드실 분",
+          "버스킹 구경 갈 분",
+          "사진전 같이 봐요",
+          "사진전 주말 관람"
+        ],
+        "missedNotInResults": [
+          "공룡 전시 보러 가요",
+          "공연의 밤 같이 봐요",
+          "금요일 저녁 파스타",
+          "마라땅 드실 분",
+          "버스킹 구경 갈 분",
+          "사진전 같이 봐요",
+          "사진전 주말 관람"
+        ],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": [],
+        "missed": [
+          "공룡 전시 보러 가요",
+          "공연의 밤 같이 봐요",
+          "금요일 저녁 파스타",
+          "마라땅 드실 분",
+          "버스킹 구경 갈 분",
+          "사진전 같이 봐요",
+          "사진전 주말 관람"
+        ],
+        "missedNotInResults": [
+          "공룡 전시 보러 가요",
+          "공연의 밤 같이 봐요",
+          "금요일 저녁 파스타",
+          "마라땅 드실 분",
+          "버스킹 구경 갈 분",
+          "사진전 같이 봐요",
+          "사진전 주말 관람"
+        ],
+        "extra": []
+      }
+    ]
+  },
+  "join-25": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["풋살 하실 분", "풋쌀 번개"],
+        "missedNotInResults": ["풋살 하실 분", "풋쌀 번개"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["풋살 하실 분", "풋쌀 번개"],
+        "missedNotInResults": ["풋살 하실 분", "풋쌀 번개"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["풋살 하실 분", "풋쌀 번개"],
+        "missedNotInResults": ["풋살 하실 분", "풋쌀 번개"],
+        "extra": []
+      }
+    ]
+  },
+  "join-26": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["개발자 농구 모임", "농구 3대3"],
+        "missedNotInResults": ["개발자 농구 모임", "농구 3대3"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["개발자 농구 모임", "농구 3대3"],
+        "missedNotInResults": ["개발자 농구 모임", "농구 3대3"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": ["개발자 농구 모임", "농구 3대3"],
+        "missedNotInResults": ["개발자 농구 모임", "농구 3대3"],
+        "extra": []
+      }
+    ]
+  },
+  "join-29": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-30": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-31": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["resolvePlace", "proposeQuest"],
+        "missed": ["목요일 점심 도서관", "목요일 점심 문화관", "목요일 점심 학생회관"],
+        "missedNotInResults": ["목요일 점심 도서관", "목요일 점심 문화관", "목요일 점심 학생회관"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["resolvePlace"],
+        "missed": ["목요일 점심 도서관", "목요일 점심 문화관", "목요일 점심 학생회관"],
+        "missedNotInResults": ["목요일 점심 도서관", "목요일 점심 문화관", "목요일 점심 학생회관"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["resolvePlace"],
+        "missed": ["목요일 점심 도서관", "목요일 점심 문화관", "목요일 점심 학생회관"],
+        "missedNotInResults": ["목요일 점심 도서관", "목요일 점심 문화관", "목요일 점심 학생회관"],
+        "extra": []
+      }
+    ]
+  },
+  "join-32": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["마라탕 넷이서"],
+        "missedNotInResults": ["마라탕 넷이서"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["마라탕 넷이서"],
+        "missedNotInResults": ["마라탕 넷이서"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["마라탕 넷이서"],
+        "missedNotInResults": ["마라탕 넷이서"],
+        "extra": []
+      }
+    ]
+  },
+  "join-33": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-34": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["민턴 한 판"],
+        "missedNotInResults": ["민턴 한 판"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["민턴 한 판"],
+        "missedNotInResults": ["민턴 한 판"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.forbidden", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": ["민턴 한 판"],
+        "missedNotInResults": ["민턴 한 판"],
+        "extra": []
+      }
+    ]
+  },
+  "join-35": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["resolveGlobalEvent"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": ["resolveGlobalEvent"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": ["resolveGlobalEvent"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "extra": []
+      }
+    ]
+  },
+  "join-36": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["text.mentions", "tools.required"],
+        "called": ["proposeQuest"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "join-37": {
+    "category": "join-or-recruit",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": [],
+        "missed": [
+          "개발자 농구 모임",
+          "농구 3대3",
+          "등산 후 막걸리",
+          "민턴 한 판",
+          "배드민턴 치실 분",
+          "배드민튼 초보 모임",
+          "볼링 네 명",
+          "볼링 둘이서",
+          "볼링 여섯 명",
+          "아침 러닝",
+          "테니스 복식",
+          "테니즈 치실 분",
+          "풋살 하실 분",
+          "풋쌀 번개"
+        ],
+        "missedNotInResults": [
+          "개발자 농구 모임",
+          "농구 3대3",
+          "등산 후 막걸리",
+          "민턴 한 판",
+          "배드민턴 치실 분",
+          "배드민튼 초보 모임",
+          "볼링 네 명",
+          "볼링 둘이서",
+          "볼링 여섯 명",
+          "아침 러닝",
+          "테니스 복식",
+          "테니즈 치실 분",
+          "풋살 하실 분",
+          "풋쌀 번개"
+        ],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": [],
+        "missed": [
+          "개발자 농구 모임",
+          "농구 3대3",
+          "등산 후 막걸리",
+          "민턴 한 판",
+          "배드민턴 치실 분",
+          "배드민튼 초보 모임",
+          "볼링 네 명",
+          "볼링 둘이서",
+          "볼링 여섯 명",
+          "아침 러닝",
+          "테니스 복식",
+          "테니즈 치실 분",
+          "풋살 하실 분",
+          "풋쌀 번개"
+        ],
+        "missedNotInResults": [
+          "개발자 농구 모임",
+          "농구 3대3",
+          "등산 후 막걸리",
+          "민턴 한 판",
+          "배드민턴 치실 분",
+          "배드민튼 초보 모임",
+          "볼링 네 명",
+          "볼링 둘이서",
+          "볼링 여섯 명",
+          "아침 러닝",
+          "테니스 복식",
+          "테니즈 치실 분",
+          "풋살 하실 분",
+          "풋쌀 번개"
+        ],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "먼저 찾지 않음",
+        "checks": ["action", "cards", "text.mentions", "tools.required"],
+        "called": [],
+        "missed": [
+          "개발자 농구 모임",
+          "농구 3대3",
+          "등산 후 막걸리",
+          "민턴 한 판",
+          "배드민턴 치실 분",
+          "배드민튼 초보 모임",
+          "볼링 네 명",
+          "볼링 둘이서",
+          "볼링 여섯 명",
+          "아침 러닝",
+          "테니스 복식",
+          "테니즈 치실 분",
+          "풋살 하실 분",
+          "풋쌀 번개"
+        ],
+        "missedNotInResults": [
+          "개발자 농구 모임",
+          "농구 3대3",
+          "등산 후 막걸리",
+          "민턴 한 판",
+          "배드민턴 치실 분",
+          "배드민튼 초보 모임",
+          "볼링 네 명",
+          "볼링 둘이서",
+          "볼링 여섯 명",
+          "아침 러닝",
+          "테니스 복식",
+          "테니즈 치실 분",
+          "풋살 하실 분",
+          "풋쌀 번개"
+        ],
+        "extra": []
+      }
+    ]
+  },
+  "search-l-02": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["박람회 같이 돌아요"],
+        "missedNotInResults": ["박람회 같이 돌아요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["박람회 같이 돌아요"],
+        "missedNotInResults": ["박람회 같이 돌아요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["박람회 같이 돌아요"],
+        "missedNotInResults": ["박람회 같이 돌아요"],
+        "extra": []
+      }
+    ]
+  },
+  "search-l-03": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["볼링 네 명", "볼링 둘이서", "볼링 여섯 명"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["볼링 네 명", "볼링 둘이서", "볼링 여섯 명"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["볼링 네 명", "볼링 둘이서", "볼링 여섯 명"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-l-06": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "missedNotInResults": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "missedNotInResults": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "missedNotInResults": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "extra": []
+      }
+    ]
+  },
+  "search-p-01": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 음악제", "뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "missedNotInResults": [
+          "가을 음악제",
+          "뮤지컬 〈지하철 1호선〉",
+          "잔디광장 버스킹",
+          "재즈 콘서드",
+          "피아노 독주회"
+        ],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 음악제", "뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "missedNotInResults": [
+          "가을 음악제",
+          "뮤지컬 〈지하철 1호선〉",
+          "잔디광장 버스킹",
+          "재즈 콘서드",
+          "피아노 독주회"
+        ],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 음악제", "뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "missedNotInResults": [
+          "가을 음악제",
+          "뮤지컬 〈지하철 1호선〉",
+          "잔디광장 버스킹",
+          "재즈 콘서드",
+          "피아노 독주회"
+        ],
+        "extra": []
+      }
+    ]
+  },
+  "search-p-02": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "missedNotInResults": ["뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "missedNotInResults": ["뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "missedNotInResults": ["뮤지컬 〈지하철 1호선〉", "잔디광장 버스킹", "재즈 콘서드", "피아노 독주회"],
+        "extra": []
+      }
+    ]
+  },
+  "search-p-03": {
+    "category": "search",
+    "passed": 1,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["농구 3대3", "볼링 네 명", "볼링 둘이서", "볼링 여섯 명", "테니스 복식", "풋살 하실 분"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["볼링 둘이서"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-p-05": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["버스킹 구경 갈 분"],
+        "missedNotInResults": ["버스킹 구경 갈 분"],
+        "extra": ["음악제 같이 가요", "음악제 앞자리 모임"]
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["공연의 밤 같이 봐요", "버스킹 구경 갈 분"],
+        "missedNotInResults": ["버스킹 구경 갈 분"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["공연의 밤 같이 봐요", "버스킹 구경 갈 분"],
+        "missedNotInResults": ["버스킹 구경 갈 분"],
+        "extra": []
+      }
+    ]
+  },
+  "search-p-06": {
+    "category": "search",
+    "passed": 1,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [
+          "돈까스 드실 분",
+          "배민 같이 시켜요",
+          "삼겹살 드실 분",
+          "심야 라면 모임",
+          "저녁에 고기 구워요",
+          "학식 같이 먹어요"
+        ],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [
+          "돈까스 드실 분",
+          "배민 같이 시켜요",
+          "삼겹살 드실 분",
+          "심야 라면 모임",
+          "저녁에 고기 구워요",
+          "학식 같이 먹어요"
+        ],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-t1-01": {
+    "category": "search",
+    "passed": 1,
+    "runs": [
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["공연의 밤 같이 봐요", "음악제 앞자리 모임", "정기 공연 같이 가요"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["공연의 밤 같이 봐요", "독주회 같이 가요", "음악제 같이 가요"]
+      }
+    ]
+  },
+  "search-t1-03": {
+    "category": "search",
+    "passed": 1,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["채용 박람회"]
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["채용 박람회"]
+      }
+    ]
+  },
+  "search-t1-07": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["searchGlobalEvents"],
+        "missed": ["뮤지걸 보러 가실 분"],
+        "missedNotInResults": ["뮤지걸 보러 가실 분"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["searchGlobalEvents"],
+        "missed": ["뮤지걸 보러 가실 분"],
+        "missedNotInResults": ["뮤지걸 보러 가실 분"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["searchGlobalEvents", "searchGlobalEvents"],
+        "missed": ["뮤지걸 보러 가실 분"],
+        "missedNotInResults": ["뮤지걸 보러 가실 분"],
+        "extra": []
+      }
+    ]
+  },
+  "search-t2-01": {
+    "category": "search",
+    "passed": 1,
+    "runs": [
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["resolveGlobalEvent", "searchRecruitingQuests", "showQuests"],
+        "missed": ["콘서드 같이 가실 분"],
+        "missedNotInResults": ["콘서드 같이 가실 분"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["resolveGlobalEvent", "searchRecruitingQuests", "showQuests"],
+        "missed": ["콘서드 같이 가실 분"],
+        "missedNotInResults": ["콘서드 같이 가실 분"],
+        "extra": []
+      }
+    ]
+  },
+  "search-t2-05": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["searchGlobalEvents"],
+        "missed": ["동아리 박람회", "채용 박람회"],
+        "missedNotInResults": ["동아리 박람회", "채용 박람회"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["searchGlobalEvents"],
+        "missed": ["동아리 박람회", "채용 박람회"],
+        "missedNotInResults": ["동아리 박람회", "채용 박람회"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["action", "cards", "tools.required"],
+        "called": ["searchGlobalEvents"],
+        "missed": ["동아리 박람회", "채용 박람회"],
+        "missedNotInResults": ["동아리 박람회", "채용 박람회"],
+        "extra": []
+      }
+    ]
+  },
+  "search-h-01": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchRecruitingQuests"],
+        "missed": [
+          "사진전 같이 봐요",
+          "사진전 주말 관람",
+          "오늘 저녁 공부 모임",
+          "족발 야식 모임",
+          "치킨 뜯으실 분",
+          "판화전 같이 봐요"
+        ],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람", "판화전 같이 봐요"],
+        "missedNotInResults": [],
+        "extra": ["심야 라면 모임", "아침 러닝"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람", "판화전 같이 봐요"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-h-02": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람", "판화전 같이 봐요"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람", "오늘 저녁 공부 모임", "치킨 뜯으실 분", "판화전 같이 봐요"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람", "판화전 같이 봐요"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-h-03": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": [],
+        "extra": ["심야 라면 모임"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-h-04": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": ["사진전 같이 봐요", "사진전 주말 관람"],
+        "extra": []
+      }
+    ]
+  },
+  "search-h-05": {
+    "category": "search",
+    "passed": 2,
+    "runs": [
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 사진전", "도서 바자회", "동아리 박람회", "양자컴퓨터 특강"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-h-06": {
+    "category": "search",
+    "passed": 1,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 사진전", "도서 바자회", "판화 특별전"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 사진전", "도서 바자회", "판화 특별전"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-h-07": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["오늘 저녁 공부 모임"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["오늘 오후 공부 모임"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["오늘 오후 공부 모임"]
+      }
+    ]
+  },
+  "search-s-01": {
+    "category": "search",
+    "passed": 1,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["보드게임 밤샘", "보드게임 셋이서", "보드게임 카페 갈 분"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["보드게임 밤샘", "보드게임 셋이서", "보드게임 카페 갈 분"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-s-04": {
+    "category": "search",
+    "passed": 2,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "안내 문구",
+        "checks": ["text.mentions"],
+        "called": ["searchRecruitingQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-n-01": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["볼링 여섯 명"]
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["볼링 여섯 명"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["볼링 네 명"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-n-02": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["마라탕 둘이서"],
+        "missedNotInResults": [],
+        "extra": ["마라탕 넷이서", "마라탕 여럿이"]
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["마라탕 둘이서"],
+        "missedNotInResults": [],
+        "extra": ["마라탕 넷이서", "마라탕 여럿이"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["마라탕 둘이서"],
+        "missedNotInResults": [],
+        "extra": ["마라탕 넷이서", "마라탕 여럿이"]
+      }
+    ]
+  },
+  "search-n-03": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["보드게임 셋이서", "보드게임 카페 갈 분"]
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "서버 거르기",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["보드게임 번개", "보드게임 셋이서", "보드게임 카페 갈 분"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["보드게임 밤샘"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-n-04": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["풋쌀 번개"],
+        "missedNotInResults": ["풋쌀 번개"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["풋쌀 번개"],
+        "missedNotInResults": ["풋쌀 번개"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["풋쌀 번개"],
+        "missedNotInResults": ["풋쌀 번개"],
+        "extra": []
+      }
+    ]
+  },
+  "search-n-05": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["마라탕 넷이서"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["마라탕 여럿이"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["마라탕 여럿이"]
+      }
+    ]
+  },
+  "search-r-01": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "resolvePlace", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["카페 스터디"]
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "resolvePlace", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["카페 스터디"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "resolvePlace", "searchRecruitingQuests", "showQuests"],
+        "missed": ["공대 면접 스터디", "벤치에서 스터디", "전공 스터디 그룹", "코딩 테스트 스터디"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-r-02": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["인문대 독서 스터디", "카페 스터디", "코딩 테스트 스터디"]
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": ["인문대 독서 스터디", "카페 스터디", "코딩 테스트 스터디"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "resolvePlace", "showQuests"],
+        "missed": ["공대 면접 스터디"],
+        "missedNotInResults": [],
+        "extra": ["카페 스터디"]
+      }
+    ]
+  },
+  "search-r-03": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["공룡 전시 보러 가요", "목요일 점심 도서관", "목요일 점심 문화관"],
+        "missedNotInResults": ["공룡 전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "searchRecruitingQuests", "showQuests"],
+        "missed": ["공룡 전시 보러 가요", "목요일 점심 도서관", "목요일 점심 문화관"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["공룡 전시 보러 가요", "목요일 점심 도서관", "목요일 점심 문화관"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-r-04": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["공룡 전시 보러 가요", "목요일 점심 도서관", "목요일 점심 예술복합", "목요일 점심 학생회관"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [
+          "공룡 전시 보러 가요",
+          "목요일 점심 도서관",
+          "목요일 점심 문화관",
+          "목요일 점심 예술복합",
+          "목요일 점심 학생회관"
+        ],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [
+          "공룡 전시 보러 가요",
+          "목요일 점심 도서관",
+          "목요일 점심 문화관",
+          "목요일 점심 예술복합",
+          "목요일 점심 학생회관"
+        ],
+        "missedNotInResults": ["공룡 전시 보러 가요"],
+        "extra": []
+      }
+    ]
+  },
+  "search-r-05": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "resolvePlace", "showQuests"],
+        "missed": ["공대 면접 스터디", "벤치에서 스터디"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "resolvePlace", "showQuests"],
+        "missed": ["공대 면접 스터디"],
+        "missedNotInResults": [],
+        "extra": ["카페 스터디"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "resolvePlace", "showQuests"],
+        "missed": ["공대 면접 스터디", "벤치에서 스터디"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-o-02": {
+    "category": "search",
+    "passed": 2,
+    "runs": [
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 사진전", "도서 바자회", "동아리 박람회", "양자컴퓨터 특강"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-o-03": {
+    "category": "search",
+    "passed": 1,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 사진전", "채용 박람회"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchGlobalEvents", "showGlobalEvents"],
+        "missed": ["가을 사진전", "채용 박람회"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-o-04": {
+    "category": "search",
+    "passed": 2,
+    "runs": [
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["사진전 같이 봐요", "사진전 주말 관람", "판화전 같이 봐요"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-o-05": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      }
+    ]
+  },
+  "search-o-06": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchRecruitingQuests"],
+        "missed": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["공룡 전시 보러 가요"],
+        "missedNotInResults": [],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "모델 판단",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchRecruitingQuests"],
+        "missed": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-b-01": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["공룡 전시 보러 가요", "사진전 같이 봐요", "사진전 주말 관람", "전시 보러 가요"],
+        "missedNotInResults": ["전시 보러 가요"],
+        "extra": []
+      }
+    ]
+  },
+  "search-b-02": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchRecruitingQuests"],
+        "missed": ["연극 보고 저녁 먹어요"],
+        "missedNotInResults": ["연극 보고 저녁 먹어요"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["연극 보고 저녁 먹어요"],
+        "missedNotInResults": ["연극 보고 저녁 먹어요"],
+        "extra": ["뮤지컬 보러 갈 분"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchRecruitingQuests"],
+        "missed": ["연극 보고 저녁 먹어요"],
+        "missedNotInResults": ["연극 보고 저녁 먹어요"],
+        "extra": []
+      }
+    ]
+  },
+  "search-b-03": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchRecruitingQuests"],
+        "missed": ["등산 후 막걸리"],
+        "missedNotInResults": ["등산 후 막걸리"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchRecruitingQuests"],
+        "missed": ["등산 후 막걸리"],
+        "missedNotInResults": ["등산 후 막걸리"],
+        "extra": []
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards", "tools.required"],
+        "called": ["searchRecruitingQuests"],
+        "missed": ["등산 후 막걸리"],
+        "missedNotInResults": ["등산 후 막걸리"],
+        "extra": []
+      }
+    ]
+  },
+  "search-b-04": {
+    "category": "search",
+    "passed": 0,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["개발자 농구 모임"],
+        "missedNotInResults": ["개발자 농구 모임"],
+        "extra": []
+      },
+      {
+        "repetition": 2,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["개발자 농구 모임"],
+        "missedNotInResults": ["개발자 농구 모임"],
+        "extra": ["배드민튼 초보 모임", "테니즈 치실 분"]
+      },
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "후보에 없음",
+        "checks": ["cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["개발자 농구 모임"],
+        "missedNotInResults": ["개발자 농구 모임"],
+        "extra": ["배드민튼 초보 모임", "테니즈 치실 분"]
+      }
+    ]
+  },
+  "search-b-05": {
+    "category": "search",
+    "passed": 2,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "cards"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": ["취준생 점심 모임"],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-e-03": {
+    "category": "search",
+    "passed": 2,
+    "runs": [
+      {
+        "repetition": 1,
+        "passed": false,
+        "cause": "빈 답 503",
+        "checks": ["action", "text.mentions", "tools.forbidden"],
+        "called": ["searchRecruitingQuests", "showQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  },
+  "search-e-05": {
+    "category": "search",
+    "passed": 2,
+    "runs": [
+      {
+        "repetition": 3,
+        "passed": false,
+        "cause": "안내 문구",
+        "checks": ["text.mentions"],
+        "called": ["searchRecruitingQuests"],
+        "missed": [],
+        "missedNotInResults": [],
+        "extra": []
+      }
+    ]
+  }
+}

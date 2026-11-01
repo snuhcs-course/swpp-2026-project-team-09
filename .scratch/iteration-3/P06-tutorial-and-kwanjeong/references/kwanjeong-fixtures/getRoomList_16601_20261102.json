@@ -1,0 +1,28 @@
+{
+  "successYN": "Y",
+  "BookingTimeList": [
+    {
+      "SEATNO": "16601001",
+      "NAME": "Creative Media Studio",
+      "SECTORNO": "16601",
+      "ROOMNO": "166",
+      "ABLETIME": "2026-11-02 09:00:00,2026-11-02 09:30:00,2026-11-02 10:00:00,2026-11-02 10:30:00,2026-11-02 11:00:00,2026-11-02 11:30:00,2026-11-02 12:00:00,2026-11-02 12:30:00,2026-11-02 13:00:00,2026-11-02 13:30:00,2026-11-02 14:00:00,2026-11-02 14:30:00,2026-11-02 15:00:00,2026-11-02 15:30:00,2026-11-02 16:00:00,2026-11-02 16:30:00",
+      "OPENTIME": "0900",
+      "CLOSETIME": "1700"
+    }
+  ],
+  "params": {
+    "TIME_START": "",
+    "sectorNo": "16601",
+    "NAME": "",
+    "tab_on": "tabBooking",
+    "seatNo": "",
+    "roomName": "Creative Media Studio",
+    "libNo": "1",
+    "roomNo": "166",
+    "TIME_END": "",
+    "sectorName": "Creative Media Studio",
+    "searchDate": "20261102",
+    "ABLETIME": ""
+  }
+}
