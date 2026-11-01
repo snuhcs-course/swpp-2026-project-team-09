@@ -18,6 +18,9 @@
     - user: 7A 열람실 2 구역에 오늘 2시부터 3시간 자리 잡아줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book
@@ -38,6 +41,9 @@
     - user: 8A 열람실 1 구역 오늘 저녁 7시부터 두 시간 예약해 줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book
@@ -58,6 +64,9 @@
     - user: 내일 오후 2시에 XR Experience Center 1시간 예약하고 싶어
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book
@@ -81,6 +90,9 @@
     - user: 대학원 열람실 오늘 1시부터 4시간 잡아줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book
@@ -121,6 +133,9 @@
     - user: VR 체험 오늘 오후 3시부터 30분만 예약해줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book
@@ -143,8 +158,7 @@
   expect:
     actions: [TOOL]
     tools:
-      required: [resolveFriend, proposeLibraryBooking]
-      allowed: [findLibrarySpace]
+      required: [findLibrarySpace, resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - kind: library
@@ -175,6 +189,9 @@
     - user: 7B 노트북존 오늘 6시부터 3시간 예약해줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book
@@ -214,6 +231,9 @@
     - user: 조용한 열람실 오늘 오후 3시부터 2시간 잡아줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book
@@ -252,6 +272,9 @@
     - user: 도서관에 아이맥 쓰는 곳 있잖아, 거기 내일 1시부터 2시간 예약해줘. 과제하려고
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book

@@ -21,13 +21,13 @@ const P6 = new URL('../eval/p6/', import.meta.url);
 // The refusals by a booking's conditions, which go through proposeLibraryBooking, after resolveFriend when the request
 // names Friends (labels-notes.md, rulings 16 and 18).
 const CONDITION_REFUSALS: Record<string, string[]> = {
-  'p6-refusals-seat-tomorrow': ['proposeLibraryBooking'],
-  'p6-refusals-late-and-long': ['proposeLibraryBooking'],
-  'p6-group-rooms-g201': ['proposeLibraryBooking'],
-  'p6-refusals-room-in-four-days': ['resolveFriend', 'proposeLibraryBooking'],
-  'p6-group-rooms-below-min': ['resolveFriend', 'proposeLibraryBooking'],
-  'p6-group-rooms-above-max': ['resolveFriend', 'proposeLibraryBooking'],
-  'p6-group-rooms-nine-people': ['resolveFriend', 'proposeLibraryBooking'],
+  'p6-refusals-seat-tomorrow': ['findLibrarySpace', 'proposeLibraryBooking'],
+  'p6-refusals-late-and-long': ['findLibrarySpace', 'proposeLibraryBooking'],
+  'p6-group-rooms-g201': ['findLibrarySpace', 'proposeLibraryBooking'],
+  'p6-refusals-room-in-four-days': ['findLibrarySpace', 'resolveFriend', 'proposeLibraryBooking'],
+  'p6-group-rooms-below-min': ['findLibrarySpace', 'resolveFriend', 'proposeLibraryBooking'],
+  'p6-group-rooms-above-max': ['findLibrarySpace', 'resolveFriend', 'proposeLibraryBooking'],
+  'p6-group-rooms-nine-people': ['findLibrarySpace', 'resolveFriend', 'proposeLibraryBooking'],
 };
 const cases = casesIn(loadCases(), 'p6');
 const ids = new Set(cases.map(({ id }) => id));
@@ -51,7 +51,8 @@ function suiteFiles(): { name: string; text: string }[] {
 }
 
 // The cases that book or require proposeLibraryBooking, and those whose tools do not match how the question names its
-// people: Friends by name need resolveFriend first, a held Quest from the conversation needs none.
+// people. Every booking takes findLibrarySpace and then proposeLibraryBooking, with resolveFriend between them when the
+// question names Friends; a held Quest is read from the conversation.
 function bookingPaths(): { books: typeof cases; wrong: string[] } {
   // A Friend is named by their given name, as the questions write them: 민수 for 이민수, 하루 for 하루.
   const given = Object.values(data.friends).map(({ name }) => (name.length > 2 ? name.slice(1) : name));
@@ -66,17 +67,21 @@ function bookingPaths(): { books: typeof cases; wrong: string[] } {
     const shown = turns.some((turn) => 'assistant' in turn && turn.assistant.cards.some(({ seed }) => seed === quest));
     const required = JSON.stringify(wanted?.tools.required ?? []);
     if (given.some((name) => asked.includes(name))) {
-      return required === JSON.stringify(['resolveFriend', 'proposeLibraryBooking']) && wanted?.tools.only === true
+      return required === JSON.stringify(['findLibrarySpace', 'resolveFriend', 'proposeLibraryBooking']) &&
+        wanted?.tools.only === true
         ? []
         : [`${id}: Friends named`];
     }
     if (shown) {
       const card = wanted?.cards?.find(({ action }) => action === 'book');
-      return required === JSON.stringify(['proposeLibraryBooking']) && card?.conditions?.quest === quest
+      return required === JSON.stringify(['findLibrarySpace', 'proposeLibraryBooking']) &&
+        card?.conditions?.quest === quest
         ? []
         : [`${id}: held Quest`];
     }
-    return wanted?.tools.required.includes('resolveFriend') === true ? [`${id}: no Friend named`] : [];
+    const plain =
+      required === JSON.stringify(['findLibrarySpace', 'proposeLibraryBooking']) && wanted?.tools.only === true;
+    return plain ? [] : [`${id}: no Friend named`];
   });
 
   return { books, wrong };
@@ -159,6 +164,19 @@ describe('The bookings of the P6 labels', () => {
 
     expect(books.length).toBeGreaterThanOrEqual(20);
     expect(wrong).toEqual([]);
+  });
+
+  // One path per case (labels-notes.md, ruling 19): either no tool at all, or exactly the required tools.
+  it('leave no tool optional in any case', () => {
+    const optional = cases.filter(({ expect: wanted }) => {
+      const tools = wanted?.tools;
+      if (tools === undefined || tools.forbidden === '*') {
+        return false;
+      }
+      return tools.only !== true || tools.allowed.length > 0 || tools.required.length === 0;
+    });
+
+    expect(optional.map(({ id }) => id)).toEqual([]);
   });
 
   // A facility's hours are a fact of the text, as the tutorial's other facts are (labels-notes.md, ruling 10).

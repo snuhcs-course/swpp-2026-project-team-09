@@ -19,16 +19,7 @@
     actions: [TOOL]
     tools:
       required: [findFreeTimeEvents]
-      forbidden:
-        [
-          findLibrarySpace,
-          findLibraryFreeSlots,
-          proposeLibraryBooking,
-          proposeLibraryCancel,
-          proposeLibraryReturn,
-          showLibrarySeats,
-          showMyLibraryBookings,
-        ]
+      only: true
     cards:
       - { kind: library, max: 0 }
 

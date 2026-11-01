@@ -19,8 +19,7 @@
   expect:
     actions: [TOOL]
     tools:
-      required: [resolveFriend, proposeLibraryBooking]
-      allowed: [findLibrarySpace]
+      required: [findLibrarySpace, resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - kind: library
@@ -52,7 +51,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [resolveFriend, proposeLibraryBooking]
+      required: [findLibrarySpace, resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -69,7 +68,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [resolveFriend, proposeLibraryBooking]
+      required: [findLibrarySpace, resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -86,7 +85,7 @@
   expect:
     actions: [ASK]
     tools:
-      allowed: [resolveFriend]
+      required: [resolveFriend]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -107,6 +106,9 @@
     - user: 그 점심 모임 사람들이랑 내일 2시부터 2시간 2층 6인실 잡아줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
     cards:
       - kind: library
         action: book
@@ -126,9 +128,6 @@
         - 초대했어요
         - 초대했
         - '2026-000'
-    tools:
-      required: [proposeLibraryBooking]
-      only: true
 
 # Nine people for a 10인실: the 8-people party limit, whatever the room.
 - id: p6-group-rooms-nine-people
@@ -140,7 +139,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [resolveFriend, proposeLibraryBooking]
+      required: [findLibrarySpace, resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -157,7 +156,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [proposeLibraryBooking]
+      required: [findLibrarySpace, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }

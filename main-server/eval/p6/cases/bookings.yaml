@@ -16,6 +16,9 @@
     - user: 내 도서관 예약 보여줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [showMyLibraryBookings]
+      only: true
     cards:
       - { kind: library, action: myBookings }
       - { kind: library, action: book, max: 0 }
@@ -32,6 +35,9 @@
     - user: 관정 예약 취소해줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [proposeLibraryCancel]
+      only: true
     cards:
       - { kind: library, action: cancel }
       - { kind: library, action: book, max: 0 }
@@ -48,6 +54,9 @@
     - user: 다 썼어, 자리 반납해줘
   expect:
     actions: [TOOL]
+    tools:
+      required: [proposeLibraryReturn]
+      only: true
     cards:
       - { kind: library, action: return }
       - { kind: library, action: book, max: 0 }
@@ -64,6 +73,9 @@
     - user: 오늘 3시 예약 취소
   expect:
     actions: [TOOL]
+    tools:
+      required: [proposeLibraryCancel]
+      only: true
     cards:
       - kind: library
         action: cancel

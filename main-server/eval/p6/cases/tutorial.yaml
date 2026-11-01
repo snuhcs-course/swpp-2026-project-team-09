@@ -21,7 +21,6 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
-      allowed: [searchGlobalEvents, showGlobalEvents, resolvePlace]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -43,7 +42,6 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
-      allowed: [searchGlobalEvents, showGlobalEvents, resolvePlace]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -60,7 +58,6 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
-      allowed: [searchGlobalEvents, showGlobalEvents, resolvePlace]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -79,7 +76,6 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
-      allowed: [searchGlobalEvents, showGlobalEvents, resolvePlace]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -101,7 +97,6 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
-      allowed: [searchGlobalEvents, showGlobalEvents, resolvePlace]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -123,7 +118,6 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
-      allowed: [searchGlobalEvents, showGlobalEvents, resolvePlace]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -145,7 +139,6 @@
     actions: [TOOL]
     tools:
       required: [getTutorial, searchGlobalEvents]
-      allowed: [showGlobalEvents, resolvePlace]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -163,7 +156,6 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
-      allowed: [searchGlobalEvents, showGlobalEvents, resolvePlace]
       only: true
     cards:
       - { kind: library, max: 0 }

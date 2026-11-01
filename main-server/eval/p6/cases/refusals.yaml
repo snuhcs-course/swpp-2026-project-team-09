@@ -116,7 +116,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [proposeLibraryBooking]
+      required: [findLibrarySpace, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -133,7 +133,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [resolveFriend, proposeLibraryBooking]
+      required: [findLibrarySpace, resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -150,7 +150,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [proposeLibraryBooking]
+      required: [findLibrarySpace, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
