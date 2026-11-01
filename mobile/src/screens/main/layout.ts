@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -50,6 +51,8 @@ export function listsTop(inset: number): number {
 export interface Room {
   stage: { width: number; height: number } | null;
   cardHeight: number | null;
+  // The 새내기 튜토리얼's start button is shown, above "오늘의 발자국".
+  tutorialStart: boolean;
 }
 
 // The two columns never share a point. The Quest column keeps the frame's 182, which a title of 146 beside its round
@@ -66,13 +69,13 @@ export function friendsWidth({ stage }: Room): number {
 // - While a card is open, both end above the credit, which sits on the card.
 // - Otherwise the friend list ends above the credit, which sits on "오늘의 발자국", and the Quest list above the
 //   zoom control.
-function underLists(cardHeight: number | null): { friends: number; quests: number } {
+function underLists(cardHeight: number | null, tutorialStart: boolean): { friends: number; quests: number } {
   if (cardHeight !== null) {
     const card = CARD.bottom + cardHeight + CREDIT_ROOM + LISTS.clear;
     return { friends: card, quests: card };
   }
   return {
-    friends: BUTTON_ROW.bottom + BUTTON_ROW.height + CREDIT_ROOM + LISTS.clear,
+    friends: leftControlsTop(tutorialStart) + CREDIT_ROOM + LISTS.clear,
     quests: ZOOM_CONTROL.bottom + ZOOM_CONTROL.height + LISTS.clear,
   };
 }
@@ -89,8 +92,11 @@ function rowsOver(under: number, stage: Room['stage'], inset: number): number {
 }
 
 // The rows each list's window shows, under a status bar `inset` high.
-export function listRows({ stage, cardHeight }: Room, inset: number): { friends: number; quests: number } {
-  const under = underLists(cardHeight);
+export function listRows(
+  { stage, cardHeight, tutorialStart }: Room,
+  inset: number,
+): { friends: number; quests: number } {
+  const under = underLists(cardHeight, tutorialStart);
   return { friends: rowsOver(under.friends, stage, inset), quests: rowsOver(under.quests, stage, inset) };
 }
 
@@ -106,6 +112,16 @@ export const AI_INPUT = { side: space[4], bottom: 12, height: 50 } as const;
 // The row of "오늘의 발자국" and "활성 파티": 48 high, from 16 at the left to 70 from the right, its bottom 158 from
 // the frame's bottom, which is 78 above the navigation.
 export const BUTTON_ROW = { left: space[4], right: 70, bottom: 78, height: 48, gap: 6 } as const;
+
+// The 새내기 튜토리얼's start button: 34 high, 16 from the left, its bottom 214 from the frame's bottom, which is 8
+// above the row of buttons.
+export const TUTORIAL_START = { left: space[4], bottom: BUTTON_ROW.bottom + BUTTON_ROW.height + space[2], height: 34 };
+
+// The top of what stands at the left above the AI input while no card is open: the row of buttons, or the start
+// button above it.
+function leftControlsTop(tutorialStart: boolean): number {
+  return tutorialStart ? TUTORIAL_START.bottom + TUTORIAL_START.height : BUTTON_ROW.bottom + BUTTON_ROW.height;
+}
 
 // The frame's width, at which both buttons of the row are whole, and the narrowest stage that still has a face.
 const FRAME_WIDTH = 390;
@@ -141,11 +157,15 @@ export const LAYER_STACK = {
 const CREDIT_LEFT = space[2];
 const ZOOM_CONTROL_RIGHT = 62;
 
-export function mapInset(cardHeight: number | null): { bottom: number; left: number; right: number } {
+// The 새내기 튜토리얼's start button raises the credit above it.
+export function mapInset(
+  cardHeight: number | null,
+  tutorialStart = false,
+): { bottom: number; left: number; right: number } {
   if (cardHeight !== null) {
     return { bottom: CARD.bottom + cardHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
   }
-  return { bottom: BUTTON_ROW.bottom + BUTTON_ROW.height, left: CREDIT_LEFT, right: ZOOM_CONTROL_RIGHT };
+  return { bottom: leftControlsTop(tutorialStart), left: CREDIT_LEFT, right: ZOOM_CONTROL_RIGHT };
 }
 
 // What the screen's controls take at each edge of the map, with clear room of 16: the two lists end 272 from the
