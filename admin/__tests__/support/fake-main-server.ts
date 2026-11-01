@@ -19,6 +19,7 @@ import type {
 } from '@/main-server';
 import type * as MainServerModule from '@/main-server';
 
+import { SameEventRoutes } from './fake-same-event-routes';
 import { FakeUsers } from './fake-users';
 import {
   byStart,
@@ -39,7 +40,7 @@ interface Account extends Administrator {
 }
 
 // Behaves like the main server's administrator routes, and records each request as "METHOD /path".
-class FakeMainServer implements MainServer {
+class FakeMainServer extends SameEventRoutes implements MainServer {
   requests: string[] = [];
   private accounts: Account[] = [];
   private issued = 0;
@@ -58,6 +59,7 @@ class FakeMainServer implements MainServer {
     this.creations = new FakeCreations();
     this.statuses = [];
     this.unsettled = [];
+    this.sameEvent.reset();
     this.users.reset();
   }
 
@@ -282,7 +284,7 @@ class FakeMainServer implements MainServer {
     return account;
   }
 
-  private answer<T>(request: string, token: string, answer: () => T): Promise<T> {
+  protected answer<T>(request: string, token: string, answer: () => T): Promise<T> {
     this.requests.push(request);
     return this.as(token, answer);
   }
