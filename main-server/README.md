@@ -2116,7 +2116,7 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
 | `--budget <USD>`                                       | 5                                                                                 |
-| `--world <small \| p4>`                                | `small`, P19's world and the cases that name it                                   |
+| `--world <small \| p4 \| p5 \| large-world-v1>`        | `small`, P19's world and the cases that name it                                   |
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
@@ -2169,6 +2169,24 @@ sends it as another User of the world, such as one with no Timetable. `eval/p4/r
 real table and shuttle file never reach a run, and `eval/p4/suite.yaml` commits the
 thresholds and who drafted and reviewed the labels. Every case has `repeat: 3`, so a scorecard's pass rates are the mean
 of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixture and every seed name.
+
+#### The P05 suite
+
+`pnpm eval --world p5` runs the cases of `eval/p5/cases/`, joining or recruiting and finding, in a world of their own,
+`eval/p5/world.yaml`, with the clock at 2026-11-02 (월) 14:05. `eval/p5/rules.md` states the judgement in prose, and
+`eval/p5/suite.yaml` commits the thresholds of evaluations C and D, each case's subset, the superseded P19 cases and who
+drafted and reviewed the labels. Do not run it with the real model before C0, and rehearse only with words outside the
+set, keeping no result (metrics document, 4.1). `test/eval-p5-cases.integration.test.ts` checks the set and the world.
+A scorecard of the suite adds each metric with its pass or fail, and each subset's cards summed over the repetitions
+beside the mean over its cases (`eval/p5/report.ts`).
+
+`pnpm eval --world large-world-v1` runs the 80 cases of `eval/p5/large-world-v1/` in a generated world of 1,000 Quests
+and 307 Global Events, seeded only into the run's fresh database. A run reads the version's data files, and
+`eval/p5/large-world/generate-cli.ts` writes a new version and refuses one that exists. `eval/p5/suite.yaml` holds its
+thresholds and subsets and pins the hashes of its world and cases, which `test/eval-large-world.unit.test.ts` checks.
+`test/eval-large-world.integration.test.ts` calls the search tools with each case's intended inputs and no model, and
+checks the server's recall against what `intended.yaml` expects today. `pnpm eval:compare` refuses two runs of different
+worlds. The record is in `eval/p5/README.md`.
 
 #### Scoring
 

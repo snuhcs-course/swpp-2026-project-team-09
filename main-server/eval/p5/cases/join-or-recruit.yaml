@@ -1,0 +1,802 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
+# 합류와 모집: 있으면 합류, 없으면 만들기 (evaluation C). The fixed histories write the
+# earlier turns as the app sends them back, and only the last turn is scored.
+
+- id: join-01
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 삼겹살 먹을 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [삼겹살 드실 분, 저녁에 고기 구워요], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-02
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 점심에 학생회관에서 같이 밥 먹을 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [학식 같이 먹어요], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-03
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 민턴 칠 사람 구해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [배드민턴 치실 분], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-04
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 같이 농구할 사람 나 포함 6명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 6
+      startsAt: '2026-11-03 19:00'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-05
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 7시에 공연 같이 갈 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [정기 공연 같이 가요], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-06
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 볼링 칠 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 4
+      startsAt: '2026-11-03 19:00'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-07
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 8시에 민턴 칠 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 4
+      startsAt: '2026-11-04 20:00'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-08
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 가을 음악제 같이 갈 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: show
+      capacity: 4
+      startsAt: '2026-11-06 18:00'
+      place: null
+      globalEvent: 가을 음악제
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-09
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 7시에 토익 스터디 할 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: career
+      capacity: 4
+      startsAt: '2026-11-04 19:00'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-10
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 오늘 오후 2시 10분에 보드게임 할 사람 나 포함 5명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 5
+      startsAt: '2026-11-02 14:10'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-11
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 오늘 저녁에 치킨 먹을 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [치킨 뜯으실 분], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-12
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 아침에 같이 러닝할 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [아침 러닝], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[신청]]
+
+- id: join-13
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 6시에 테니스 칠 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [테니스 복식], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[신청]]
+
+- id: join-14
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 7시에 토익 스피킹 스터디 할 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [토익 스피킹 스터디], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[신청]]
+
+- id: join-15
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 이번 주에 독주회 있어?
+    - assistant:
+        text: 목요일에 피아노 독주회가 있어요.
+        cards:
+          - { kind: globalEvent, seed: 피아노 독주회 }
+    - user: 이 공연 같이 갈 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [독주회 같이 가요], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[신청]]
+
+- id: join-16
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일에 공연 뭐 있어?
+    - assistant:
+        text: 수요일에는 가을 정기 공연이 있어요.
+        cards:
+          - { kind: globalEvent, seed: 가을 정기 공연 }
+    - user: 그 행사 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [정기 공연 같이 가요], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-17
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 이번 주에 사진 전시 뭐 있어?
+    - assistant:
+        text: 가을 사진전이 열리고 있어요.
+        cards:
+          - { kind: globalEvent, seed: 가을 사진전 }
+    - user: 그 행사 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [사진전 같이 봐요, 사진전 주말 관람, 전시 보러 가요], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-18
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 토요일에 뮤지컬 있어?
+    - assistant:
+        text: 토요일에 뮤지컬 〈지하철 1호선〉이 있어요.
+        cards:
+          - { kind: globalEvent, seed: 뮤지컬 〈지하철 1호선〉 }
+    - user: 그 행사 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [뮤지컬 보러 갈 분], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-19
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 금요일 저녁에 버스킹 있어?
+    - assistant:
+        text: 금요일 저녁에 잔디광장 버스킹이 있어요.
+        cards:
+          - { kind: globalEvent, seed: 잔디광장 버스킹 }
+    - user: 그 행사 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [버스킹 구경 갈 분], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-20
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 고기 먹을 사람 나 포함 4명 모집해 줘
+    - assistant:
+        text: 이미 모집 중인 파티가 있어요. 참여해 보시겠어요?
+        cards:
+          - { kind: quest, seed: 삼겹살 드실 분 }
+          - { kind: quest, seed: 저녁에 고기 구워요 }
+    - user: 그래도 새로 만들어 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: meal
+      capacity: 4
+      startsAt: '2026-11-03 19:00'
+      place: null
+      globalEvent: null
+
+- id: join-21
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 8시에 민턴 칠 사람 나 포함 4명 모집해 줘
+    - assistant:
+        text: 이미 모집 중인 파티가 있어요. 참여해 보시겠어요?
+        cards:
+          - { kind: quest, seed: 민턴 한 판 }
+    - user: 그래도 새로 만들어 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 4
+      startsAt: '2026-11-05 20:00'
+      place: null
+      globalEvent: null
+
+- id: join-22
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 6시에 풋살 할 사람 나 포함 8명 모집해 줘
+    - assistant:
+        text: 이미 모집 중인 파티가 있어요. 참여해 보시겠어요?
+        cards:
+          - { kind: quest, seed: 풋살 하실 분 }
+    - user: 그래도 새로 만들어 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 8
+      startsAt: '2026-11-04 18:00'
+      place: null
+      globalEvent: null
+
+- id: join-23
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 민턴 칠 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [민턴 한 판, 배드민턴 치실 분, 배드민튼 초보 모임], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-24
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 금요일에 같이 뭐 할 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - {
+          kind: quest,
+          seeds:
+            [
+              금요일 저녁 파스타,
+              버스킹 구경 갈 분,
+              사진전 같이 봐요,
+              공룡 전시 보러 가요,
+              마라땅 드실 분,
+              공연의 밤 같이 봐요,
+              사진전 주말 관람,
+            ],
+          max: 7,
+        }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[신청]]
+
+- id: join-25
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 풋살 할 사람 구해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [풋쌀 번개, 풋살 하실 분], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-26
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 농구할 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [개발자 농구 모임, 농구 3대3], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-27
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 같이 할 사람 모집해 줘
+  expect:
+    actions: [ASK]
+    tools:
+      allowed: [proposeQuest, searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[무엇, 뭐, 어떤, 활동], [언제, 날짜, 요일, 며칠, 날]]
+
+- id: join-28
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 파티 하나 모집해 줘
+  expect:
+    actions: [ASK]
+    tools:
+      allowed: [proposeQuest, searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[무엇, 뭐, 어떤, 활동], [언제, 날짜, 요일, 며칠, 날]]
+
+- id: join-29
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 토요일 오후 3시에 체스 둘 사람 나 포함 2명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 2
+      startsAt: '2026-11-07 15:00'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-30
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 일요일 오전 10시에 요가할 사람 나 포함 5명 모집해 줘. 신청 오면 내가 승인할게
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: approval
+      board: hobby
+      capacity: 5
+      startsAt: '2026-11-08 10:00'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-31
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 점심 12시에 학생회관에서 밥 먹을 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [목요일 점심 학생회관, 목요일 점심 문화관, 목요일 점심 도서관], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-32
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 6시에 마라탕 먹을 사람 4명 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [마라탕 넷이서], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-33
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 7시에 민턴 칠 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 4
+      startsAt: '2026-11-05 19:00'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-34
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 7시 40분에 민턴 칠 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [민턴 한 판], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: join-35
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 가을 사진전 같이 갈 사람 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [사진전 같이 봐요, 사진전 주말 관람], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[신청]]
+
+- id: join-36
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 오후 4시에 자바 스터디 할 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: career
+      capacity: 4
+      startsAt: '2026-11-05 16:00'
+      place: null
+      globalEvent: null
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
+
+- id: join-37
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 운동 파티 하나 모집해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - {
+          kind: quest,
+          seeds:
+            [
+              풋쌀 번개,
+              아침 러닝,
+              풋살 하실 분,
+              민턴 한 판,
+              개발자 농구 모임,
+              배드민턴 치실 분,
+              농구 3대3,
+              테니스 복식,
+              볼링 여섯 명,
+              등산 후 막걸리,
+              배드민튼 초보 모임,
+              볼링 네 명,
+              볼링 둘이서,
+              테니즈 치실 분,
+            ],
+          max: 14,
+        }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[신청]]
