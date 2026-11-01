@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { heldBack } from '../src/assistant/suggestions/holdback.js';
@@ -11,6 +12,7 @@ import {
   cooldownUntil,
   draw,
   fatigueAt,
+  receptive,
   scoreOf,
   thresholdOf,
 } from '../src/assistant/suggestions/scoring.js';
@@ -44,6 +46,15 @@ describe('bucketOf', () => {
   ])('%s → %s', (time, bucket) => {
     const [hours = 0, minutes = 0] = time.split(':').map(Number);
     expect(bucketOf(hours * 60 + minutes)).toBe(bucket);
+  });
+});
+
+describe('receptive', () => {
+  it('silences a learning-arm account from the fifth suggestion in a row not accepted, never a held-back one', () => {
+    expect(receptive(acceptanceOf({ shown: 4, accepted: 0 }), false)).toBe(true);
+    expect(receptive(acceptanceOf({ shown: 5, accepted: 0 }), false)).toBe(false);
+    expect(receptive(acceptanceOf({ shown: 10, accepted: 1 }), false)).toBe(true);
+    expect(receptive(acceptanceOf({ shown: 5, accepted: 0 }), true)).toBe(true);
   });
 });
 

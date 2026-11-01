@@ -11,6 +11,8 @@ CREATE TABLE "suggestion_impressions" (
     "bucket" TEXT NOT NULL,
     "propensity" DOUBLE PRECISION,
     "holdback" BOOLEAN NOT NULL,
+    "receptiveness" DOUBLE PRECISION NOT NULL,
+    "gated" BOOLEAN NOT NULL,
     "shown_at" TIMESTAMP(3) NOT NULL,
     "outcome" "suggestion_outcome" NOT NULL DEFAULT 'shown',
     "outcome_at" TIMESTAMP(3),
@@ -31,9 +33,12 @@ CREATE INDEX "suggestion_impressions_bucket_shown_at_idx" ON "suggestion_impress
 ALTER TABLE "suggestion_impressions" ADD CONSTRAINT "suggestion_impressions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- A silent row shows no template and has no propensity; an outcome other than silent or shown has its time, and only a
--- confirmed one names the Quest it made. A typed request names the template it matched and when.
+-- confirmed one names the Quest it made. A typed request names the template it matched and when. A gated row is
+-- silent and not held back.
 ALTER TABLE "suggestion_impressions" ADD CONSTRAINT "suggestion_impressions_template_check" CHECK (("template" IS NULL) = ("outcome" = 'silent')),
 ADD CONSTRAINT "suggestion_impressions_propensity_check" CHECK (("propensity" IS NULL) = ("template" IS NULL) AND ("propensity" IS NULL OR ("propensity" > 0 AND "propensity" <= 1))),
 ADD CONSTRAINT "suggestion_impressions_outcome_at_check" CHECK (("outcome" IN ('silent', 'shown')) = ("outcome_at" IS NULL)),
 ADD CONSTRAINT "suggestion_impressions_quest_id_check" CHECK (("outcome" = 'confirmed') = ("quest_id" IS NOT NULL)),
-ADD CONSTRAINT "suggestion_impressions_typed_check" CHECK (("typed_template" IS NULL) = ("typed_at" IS NULL));
+ADD CONSTRAINT "suggestion_impressions_typed_check" CHECK (("typed_template" IS NULL) = ("typed_at" IS NULL)),
+ADD CONSTRAINT "suggestion_impressions_receptiveness_check" CHECK ("receptiveness" >= 0 AND "receptiveness" <= 1),
+ADD CONSTRAINT "suggestion_impressions_gated_check" CHECK (NOT "gated" OR ("outcome" = 'silent' AND NOT "holdback"));

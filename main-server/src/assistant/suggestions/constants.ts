@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 // The numbers of the grey suggestions, each with its reason. They are starting points: no precedent publishes its
@@ -60,6 +61,17 @@ export const TYPED_WITHIN_MINUTES = 10;
 // The share of impressions drawn uniformly among the templates above their threshold, so that the log holds the
 // random traffic an offline replay needs; the rest show the top score.
 export const EXPLORE = 0.1;
+
+// The User's own acceptance of the suggestions shown to them lately, smoothed as a template's is, under which nothing
+// is shown (Pre-Filtering, ASEW 2025, research note 12 §2.1): with the prior, five suggestions in a row ignored or
+// dismissed read 1 / 7 and four 1 / 6, so the fifth silences, and a week without any brings the prior back.
+export const RECEPTIVENESS_THRESHOLD = 0.15;
+export const RECEPTIVENESS_IMPRESSIONS = 10;
+export const RECEPTIVENESS_WINDOW_DAYS = 7;
+
+// A suggestion still shown this long after it was shown was ignored, as the replay reads it; a younger one is not yet
+// counted toward the User's receptiveness.
+export const IGNORED_AFTER_MINUTES = 10;
 
 // Cooldowns after a dismissal, longer after the second of a day in Korea, and none shown after the third that day.
 export const COOLDOWN_AFTER_FIRST_HOURS = 2;

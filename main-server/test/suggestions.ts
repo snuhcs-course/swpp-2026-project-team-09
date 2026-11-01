@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -135,6 +136,8 @@ export async function storeImpressions(
       bucket,
       propensity: 1,
       holdback: false,
+      receptiveness: 0.5,
+      gated: false,
       shownAt,
       outcome: index < accepted ? SuggestionOutcome.accepted : SuggestionOutcome.dismissed,
       outcomeAt: shownAt,
