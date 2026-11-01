@@ -12,6 +12,10 @@ import { DECLINED, inboxSchema, lunchQuest, PARTY_REFUSAL, ROOM_KEY, RoomStage }
 // A room request from the book card: the booking party it makes, the consents that make it ready, the people it
 // holds, what the booking came to, its cancel and its expiry.
 
+// Each test signs in four to nine Users and befriends them over HTTP before it starts, which takes up to 4 s on a
+// loaded runner: close to Vitest's 5 s. Only these files wait longer.
+vi.setConfig({ testTimeout: 15_000 });
+
 const stage = new RoomStage();
 
 beforeAll(() => stage.start(inject('settings')));

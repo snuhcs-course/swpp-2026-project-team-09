@@ -13,6 +13,10 @@ import { DECLINED, lunchQuest, RoomStage } from './room-requests.js';
 // What counts as a decline while a room request gathers or is ready: each dissolves it, tells everyone it asked, and
 // deletes a booking party made for it, but never an existing Quest.
 
+// Each test signs in four to nine Users and befriends them over HTTP before it starts, which takes up to 4 s on a
+// loaded runner: close to Vitest's 5 s. Only these files wait longer.
+vi.setConfig({ testTimeout: 15_000 });
+
 const stage = new RoomStage();
 
 beforeAll(() => stage.start(inject('settings')));

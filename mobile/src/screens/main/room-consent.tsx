@@ -11,6 +11,7 @@ import { apiClient } from '@/api/client';
 import { LOBBY_KEY, lobbyQuery } from '@/api/queries';
 import { type RoomAsk, ROOM_INBOX_KEY, roomInboxQuery, roomRequests } from '@/api/room-requests';
 import type { Profile } from '@/api/types';
+import { ConsentedNotice, whenOf } from './room-consented';
 import { Button, color, font, radius, shadow, space, text, TextField, useToast } from '@/design-system';
 
 // What the room requests ask of the User on the main screen: each companion's consent, every time, with the
@@ -22,14 +23,6 @@ export const RECHECK =
 
 export function consentTitle(name: string): string {
   return `${name}님의 학번이 필요해요. 제공해도 될까요?`;
-}
-
-function whenOf({ date, start, minutes }: RoomAsk): string {
-  const [, month = '', day = ''] = date.split('-');
-  const [hours = 0, mins = 0] = start.split(':').map(Number);
-  const endMinutes = hours * 60 + mins + minutes;
-  const end = `${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`;
-  return `${Number(month)}월 ${Number(day)}일 ${start}–${end}`;
 }
 
 // Nine digits, with or without the hyphen.
@@ -166,6 +159,11 @@ function ConsentDialog(props: AskProps): ReactElement {
   );
 }
 
+// An ask by its request and whether it asks again, so that an ask after the library's refusal is shown anew.
+function keyOf({ requestId, recheck }: RoomAsk): string {
+  return `${requestId}:${String(recheck)}`;
+}
+
 // Mounted on the main screen: the first request that waits for the User's answer, and each notice once.
 export function RoomRequestInbox(): ReactElement | null {
   const queryClient = useQueryClient();
@@ -183,16 +181,20 @@ export function RoomRequestInbox(): ReactElement | null {
       void queryClient.invalidateQueries({ queryKey: ROOM_INBOX_KEY });
     });
   }, [notice, show, queryClient]);
-  const ask = inbox?.asks.find(({ requestId, consented }) => consented !== true && !answered.has(requestId));
-  if (ask === undefined || profile === undefined) {
+  const ask = inbox?.asks.find((each) => each.consented !== true && !answered.has(keyOf(each)));
+  const consented = inbox?.asks.find((each) => each.consented === true);
+  if (profile === undefined) {
     return null;
+  }
+  if (ask === undefined) {
+    return consented === undefined ? null : <ConsentedNotice ask={consented} />;
   }
   return (
     <ConsentDialog
       ask={ask}
-      key={ask.requestId}
+      key={keyOf(ask)}
       onDone={() => {
-        setAnswered(new Set([...answered, ask.requestId]));
+        setAnswered(new Set([...answered, keyOf(ask)]));
         void queryClient.invalidateQueries({ queryKey: ROOM_INBOX_KEY });
       }}
       profile={profile}

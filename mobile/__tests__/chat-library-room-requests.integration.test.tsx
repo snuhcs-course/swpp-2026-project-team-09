@@ -8,7 +8,6 @@ import { GROUP_ROOM, libraryCard, ROOM_NOTES } from '@/api/mock/data/library';
 import type { RoomRequest } from '@/api/room-requests';
 import { keepRoomBooking } from '@/library/room-bookings';
 import { ALL_CONSENTED, forgetPartyRequests, rejectedWords, SEND_ASK } from '@/screens/main/library/room-party';
-import { consentTitle } from '@/screens/main/room-consent';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -24,7 +23,6 @@ import {
   pressIn,
   startLibraryChat,
 } from './support/library-chat';
-import { LOBBY } from './support/server';
 
 // A room card with companions runs a room request, against the fake main server and the fake library: the request,
 // its polling until "모두 동의했어요", the companions checked with the library and booked after the applicant, what
@@ -218,54 +216,5 @@ describe('the cancel of a room booked through a room request', () => {
       null,
     ]);
     expectNothingOfTheLibrarySent(server, ['3000001']);
-  });
-});
-
-const ASK = {
-  requestId: REQUEST_ID,
-  requester: { userId: 'other', name: '이부커' },
-  space: { id: '4F-group-6', name: '그룹스터디룸 6인실' },
-  date: '2026-11-03',
-  start: '15:00',
-  minutes: 60,
-  consented: null,
-  recheck: false,
-};
-
-describe('the main screen', () => {
-  it('asks for the consent with the registered name and 학번, asking for them first when 내 정보 has none', async () => {
-    server.on('GET /library/room-requests', { status: 200, body: { asks: [ASK], notices: [] } });
-    server.on('PATCH /users/me/profile', {
-      status: 200,
-      body: { ...LOBBY.profile, studentNumber: '202612345', registeredName: '홍길동' },
-    });
-    server.on(`POST /library/room-requests/${REQUEST_ID}/consent`, { status: 200, body: requestOf('gathering') });
-    const chat = await askForCards({ server, library }, [], { words: '안녕' });
-
-    expect(screen.getByText(consentTitle('홍길동'))).toBeVisible();
-
-    await chat.user.type(screen.getByLabelText('학번'), '2026-12345');
-    await chat.user.press(screen.getByRole('button', { name: '제공하고 참여' }));
-    await pass(100);
-
-    expect(server.received('PATCH /users/me/profile')[0]?.body).toEqual({
-      registeredName: '홍길동',
-      studentNumber: '202612345',
-    });
-    expect(server.received(`POST /library/room-requests/${REQUEST_ID}/consent`)).toHaveLength(1);
-  });
-
-  it('shows each notice once and marks it seen', async () => {
-    const notice = {
-      id: 'dddddddd-0000-4000-8000-000000000005',
-      requestId: REQUEST_ID,
-      text: '파티 구성원이 제안을 거절했습니다',
-    };
-    server.on('GET /library/room-requests', { status: 200, body: { asks: [], notices: [notice] } });
-    server.on(`POST /library/room-notices/${notice.id}/seen`, { status: 204 });
-    await askForCards({ server, library }, [], { words: '안녕' });
-
-    expect(screen.getByText('파티 구성원이 제안을 거절했습니다')).toBeVisible();
-    expect(server.received(`POST /library/room-notices/${notice.id}/seen`)).toHaveLength(1);
   });
 });

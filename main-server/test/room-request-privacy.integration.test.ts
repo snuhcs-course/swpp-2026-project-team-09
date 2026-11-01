@@ -15,6 +15,10 @@ import { withAccessToken } from './sign-in.js';
 // A 학번 and a registered name reach only the requester's phone, in the companions reply, while every companion
 // consents: never another User, another reply or a log line.
 
+// Each test signs in four to nine Users and befriends them over HTTP before it starts, which takes up to 4 s on a
+// loaded runner: close to Vitest's 5 s. Only these files wait longer.
+vi.setConfig({ testTimeout: 15_000 });
+
 const stage = new RoomStage();
 
 beforeAll(() => stage.start(inject('settings')));
