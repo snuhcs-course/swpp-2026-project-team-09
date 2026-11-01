@@ -38,19 +38,22 @@ export function costPerTurnShown(value: number | null): string {
   return value === null ? '—' : `USD ${value.toFixed(4)}`;
 }
 
-// The scorecard's table of one turn's tokens and cost.
-export function perTurnTable(score: RunScore): string {
+// The scorecard's lines on one turn's tokens and cost.
+export function perTurnLines(score: RunScore): string[] {
   const turn = perTurn(score);
-  return table(
-    ['Tokens in', 'Cache read', 'Cache write', 'Tokens out', 'Estimated cost'],
-    [
+  return [
+    'Per turn, one request to the Assistant:',
+    table(
+      ['Tokens in', 'Cache read', 'Cache write', 'Tokens out', 'Estimated cost'],
       [
-        perTurnShown(turn.inputTokens),
-        perTurnShown(turn.cacheReadTokens),
-        perTurnShown(turn.cacheWriteTokens),
-        perTurnShown(turn.outputTokens),
-        costPerTurnShown(turn.costUsd),
+        [
+          perTurnShown(turn.inputTokens),
+          perTurnShown(turn.cacheReadTokens),
+          perTurnShown(turn.cacheWriteTokens),
+          perTurnShown(turn.outputTokens),
+          costPerTurnShown(turn.costUsd),
+        ],
       ],
-    ],
-  );
+    ),
+  ];
 }
