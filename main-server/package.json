@@ -39,6 +39,7 @@
     "eval:replay": "node --env-file-if-exists=.env eval/replay/replay-cli.ts",
     "eval:learning-curve": "node --env-file-if-exists=.env eval/replay/learning-curve-cli.ts",
     "eval:suggestions": "node --env-file-if-exists=.env eval/replay/suggestions-cli.ts",
+    "eval:induce": "node --env-file-if-exists=.env eval/replay/induce-cli.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

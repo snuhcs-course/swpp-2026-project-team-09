@@ -3,20 +3,32 @@
  *
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { disassemble } from 'es-hangul';
+import { heldBack } from '../common/holdback.js';
 import { normaliseWords } from '../common/normalise-words.js';
-import { abbreviations, choseongOf, isChoseongOnly, isMixedChoseong, syllablesOf } from './abbreviations.js';
+import {
+  abbreviations,
+  choseongOf,
+  isChoseongOnly,
+  isMixedChoseong,
+  nameVariants,
+  syllablesOf,
+} from './abbreviations.js';
 import { type PlaceDto } from './dto/place.dto.js';
+import { type CompiledRule, formOf, rewriteOf } from './induced-rules.js';
 import { type AliasSource, type PlaceAliases } from './place-aliases.js';
 import { byNumber } from './places.service.js';
 
 // Which Places a User's words name (P07 ticket 01, research note 08 §3), for the Assistant's resolvePlace. The tiers
 // are tried in order and the first with hits answers; they never mix, so one generated hit (관정 → 관정관) is not
 // outvoted by loose subsequence hits. Within a tier the Places whose name skips fewest syllables come first, then the
-// order of the list. Several hits stay several: the matcher never guesses.
-export type MatchTier = 'exact' | 'alias' | 'generated' | 'subsequence' | 'distance';
+// order of the list. Several hits stay several: the matcher never guesses. The induced tier (ticket 07) holds the forms
+// and rewrites of the rules the model proposed and the replay verified: after the exact names and what anyone taught,
+// before the generator's forms and the loose tiers, whose questions and wrong answers are what the rules fix.
+export type MatchTier = 'exact' | 'alias' | 'induced' | 'generated' | 'subsequence' | 'distance';
 
 export interface PlaceMatch {
   // Null when nothing matched.
@@ -27,6 +39,15 @@ export interface PlaceMatch {
 }
 
 const NONE: PlaceMatch = { tier: null, source: null, places: [] };
+
+// The induced rules the index applies (induced-rules.ts), and the share of accounts that never get their tier, as they
+// never get everyone's aliases, so that what the rules add can be told from habit.
+export interface InducedRules {
+  rules: readonly CompiledRule[];
+  holdbackPercent: number;
+}
+
+export const NO_INDUCED: InducedRules = { rules: [], holdbackPercent: 0 };
 
 const SYLLABLES_ONLY = /^[가-힣]+$/u;
 
@@ -40,6 +61,22 @@ interface Form {
 
 function push<Value>(map: Map<string, Value[]>, at: string, value: Value): void {
   map.set(at, [...(map.get(at) ?? []), value]);
+}
+
+// The forms the name rules make of a Place: of its normalised name and of each variant the generator reads, never one
+// of those names.
+function inducedFormsOf(rules: readonly CompiledRule[], place: PlaceDto): string[] {
+  const names = new Set([place.name, ...nameVariants(place.name)].map((name) => normaliseWords(name)));
+  const forms = new Set<string>();
+  for (const rule of rules) {
+    for (const name of names) {
+      const form = formOf(rule, name);
+      if (form !== null && !names.has(form)) {
+        forms.add(form);
+      }
+    }
+  }
+  return [...forms];
 }
 
 // Whether `query`, syllable by syllable, is `text` with some syllables left out, the first kept.
@@ -106,10 +143,12 @@ export class PlaceIndex {
   private readonly forms: Form[] = [];
   private readonly byForm = new Map<string, Form[]>();
   private readonly byChoseong = new Map<string, Form[]>();
+  private readonly byInduced = new Map<string, Form[]>();
 
   constructor(
     places: readonly PlaceDto[],
     private readonly aliases: readonly PlaceAliases[],
+    private readonly induced: InducedRules = NO_INDUCED,
   ) {
     for (const place of places.toSorted(byNumber)) {
       this.byId.set(place.id, place);
@@ -124,6 +163,14 @@ export class PlaceIndex {
         this.forms.push(form);
         push(this.byForm, text, form);
         push(this.byChoseong, form.choseong, form);
+      }
+      for (const text of inducedFormsOf(induced.rules, place)) {
+        push(this.byInduced, text, {
+          place,
+          text,
+          choseong: choseongOf(text),
+          skipped: length - syllablesOf(text).length,
+        });
       }
     }
   }
@@ -152,6 +199,12 @@ export class PlaceIndex {
         return { tier: 'alias', source: hits[0]?.source ?? null, places: unique(places).toSorted(byNumber) };
       }
     }
+    if (!heldBack(userId, this.induced.holdbackPercent)) {
+      const induced = this.inducedHits(query);
+      if (induced.length > 0) {
+        return { tier: 'induced', source: null, places: induced };
+      }
+    }
     const generated = this.generated(query);
     if (generated.length > 0) {
       return { tier: 'generated', source: null, places: ranked(generated) };
@@ -173,7 +226,7 @@ export class PlaceIndex {
     return close.length > 0 ? { tier: 'distance', source: null, places: ranked(close) } : NONE;
   }
 
-  // Tier 3: a generated form as written, its 초성 when the query is all consonants, or a mixed form position by position.
+  // Tier 4: a generated form as written, its 초성 when the query is all consonants, or a mixed form position by position.
   private generated(query: string): Form[] {
     if (isChoseongOnly(query)) {
       return this.byChoseong.get(query) ?? [];
@@ -183,6 +236,30 @@ export class PlaceIndex {
       return this.forms.filter((form) => matchesMixed(characters, form));
     }
     return this.byForm.get(query) ?? [];
+  }
+
+  // Tier 3: a form an induced name rule made or, for the first induced words rule that rewrites the words, the exact,
+  // generated and induced forms of what it wrote.
+  private inducedHits(query: string): PlaceDto[] {
+    const own = this.byInduced.get(query);
+    if (own !== undefined) {
+      return ranked(own);
+    }
+    for (const rule of this.induced.rules) {
+      const rewritten = rewriteOf(rule, query);
+      if (rewritten === null) {
+        continue;
+      }
+      const exact = [...(this.byName.get(rewritten) ?? []), ...(this.byNumber.get(rewritten) ?? [])];
+      if (exact.length > 0) {
+        return unique(exact).toSorted(byNumber);
+      }
+      const forms = [...this.generated(rewritten), ...(this.byInduced.get(rewritten) ?? [])];
+      if (forms.length > 0) {
+        return ranked(forms);
+      }
+    }
+    return [];
   }
 }
 

@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -22,6 +23,9 @@ import { AliasesController } from './aliases/aliases.controller.js';
 import { AliasesService } from './aliases/aliases.service.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
+import { InductionController } from './induction/induction.controller.js';
+import { InductionService } from './induction/induction.service.js';
+import { ModelReflector, REFLECTOR, type Reflector } from './induction/reflector.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
 import { SUGGESTION_RANDOM, systemRandom } from './suggestions/random.js';
 import { SuggestionCandidates } from './suggestions/suggestion-candidates.service.js';
@@ -32,9 +36,10 @@ import { SuggestionsService } from './suggestions/suggestions.service.js';
   // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule and
   // PlacesModule give what the resolvers read, and TimetableModule what the grey suggestions do.
   imports: [FriendsModule, GlobalEventsModule, MenusModule, PlacesModule, QuestsModule, ShuttleModule, TimetableModule],
-  controllers: [AssistantController, AliasesController, SuggestionsController],
+  controllers: [AssistantController, AliasesController, SuggestionsController, InductionController],
   providers: [
     AssistantService,
+    InductionService,
     ResolutionEventsService,
     AliasesService,
     SuggestionsService,
@@ -47,6 +52,17 @@ import { SuggestionsService } from './suggestions/suggestions.service.js';
         openRouterModel(
           settings.get('OPENROUTER_API_KEY', { infer: true }),
           settings.get('ASSISTANT_MODEL', { infer: true }),
+        ),
+    },
+    // The induction's reflector (P07 ticket 07) is the Assistant's model, called offline.
+    {
+      provide: REFLECTOR,
+      inject: [MODEL_PORT, ConfigService],
+      useFactory: (model: Model, settings: ConfigService<Settings, true>): Reflector =>
+        new ModelReflector(
+          model,
+          settings.get('ASSISTANT_MODEL', { infer: true }),
+          settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }),
         ),
     },
   ],

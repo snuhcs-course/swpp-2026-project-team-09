@@ -17,6 +17,7 @@
 // 2026-10-06  Fable 5.1  prompted by fyoon46
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
 // 2026-10-28  Opus 5.5   prompted by fyoon46
+// 2026-11-01  Fable 5.1  prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -734,6 +735,7 @@ enum ResolutionTier {
   exact
   alias
   generated
+  induced
   subsequence
   distance
 
@@ -754,6 +756,39 @@ enum PlaceAliasSource {
   learned
 
   @@map("place_alias_source")
+}
+
+// Matching rules the model induced from the labelled resolution_events and the replay verified (P07 ticket 07): a
+// restricted regular expression over a Place's normalised name (`name`) or the User's words (`words`) and its
+// replacement (src/places/induced-rules.ts). The counts are as of the last induction. A row is never rewritten or
+// deleted: a retired rule keeps retired_at, and one picked again loses it.
+model InducedRule {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind      InducedRuleKind
+  // 1 to 80 characters, and 1 to 40.
+  pattern   String
+  replace   String
+  // One words it fixed when it was made, for people reading the table.
+  example   String
+  // The labelled words it fixed and broke, and the distinct accounts behind the fixed ones.
+  fixed     Int             @default(0)
+  broke     Int             @default(0)
+  accounts  Int             @default(0)
+  // The model that proposed it.
+  model     String
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+  retiredAt DateTime?       @map("retired_at")
+
+  @@unique([kind, pattern, replace])
+  @@map("induced_rules")
+}
+
+enum InducedRuleKind {
+  name
+  words
+
+  @@map("induced_rule_kind")
 }
 
 // answered: a resolver answered. chosen: the User tapped a candidate. edited: the User changed a Proposal's Place.

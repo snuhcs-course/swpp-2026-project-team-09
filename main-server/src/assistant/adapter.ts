@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -49,6 +50,24 @@ export interface RunLimits {
 // User, who can send the message again instead. Were it ever retried, the retries would stay within `timeoutMs`,
 // which also aborts them.
 const MAX_RETRIES = 0;
+
+// One call to the model with no tools, for the induction's reflector (P07 ticket 07): the text it answers within the
+// time given, and why it stopped (`stop`, or `length` when the tokens ran out, reasoning tokens included). Not
+// retried, as the runs are not.
+export async function completeText(
+  model: Model,
+  call: { system: string; prompt: string; maxOutputTokens: number; timeoutMs: number },
+): Promise<{ text: string; finishReason: string }> {
+  const { text, finishReason } = await generateText({
+    model,
+    instructions: call.system,
+    prompt: call.prompt,
+    maxRetries: MAX_RETRIES,
+    maxOutputTokens: call.maxOutputTokens,
+    timeout: { totalMs: call.timeoutMs },
+  });
+  return { text, finishReason };
+}
 
 // A run that used every step on tools and never answered.
 export class NoAnswerError extends Error {

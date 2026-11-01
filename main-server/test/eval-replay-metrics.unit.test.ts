@@ -79,11 +79,12 @@ describe('The command lines', () => {
   const now = new Date('2026-10-28T05:00:00Z');
 
   it('replay the test set of the gold file with everything learned so far, unless told otherwise', () => {
-    expect(replayFlags([], now)).toEqual({ gold: GOLD_FILE, asOf: now, development: false });
+    expect(replayFlags([], now)).toEqual({ gold: GOLD_FILE, asOf: now, development: false, rules: [] });
     expect(replayFlags(['--gold', 'mine.yaml', '--as-of', '2026-11-10', '--development'], now)).toEqual({
       gold: 'mine.yaml',
       asOf: new Date('2026-11-09T15:00:00Z'),
       development: true,
+      rules: [],
     });
   });
 
@@ -93,6 +94,7 @@ describe('The command lines', () => {
       to: new Date('2026-10-28T15:00:00Z'),
       stepDays: 7,
       finalFrom: null,
+      rules: [],
     });
     expect(suggestionFlags(['--from', '2026-10-01', '--to', '2026-10-01', '--final-from', '2026-10-01'])).toEqual({
       from: new Date('2026-09-30T15:00:00Z'),

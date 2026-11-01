@@ -14,16 +14,18 @@ import { type PlaceDto } from '../../src/places/dto/place.dto.js';
 import { type CurveGroup, curveGroup, type EventRow, type LabelledRow, labelledRows } from './curve-metrics.ts';
 import { catalogOf, connectToDatabase } from './database.ts';
 import { curveFlags, type CurveFlags } from './flags.ts';
+import { type InducedRulesFile, loadRulesFile, rulesAt } from './induced.ts';
 import { learnedAliases } from './learned-aliases.ts';
 import { saveReport, table } from './report.ts';
-import { type Stage, stageB, withAliases } from './stages.ts';
+import { type Stage, stageB, withAliases, withRules } from './stages.ts';
 import { type Slice, sliceOf } from './suggestion-metrics.ts';
 import { shown } from './wilson.ts';
 
-// `pnpm eval:learning-curve --from <day> --to <day> [--step 7]` (P07 tickets 05 and 06): resolution_events replayed by
-// date. At each point T, the aliases rebuilt from the rows before T, by the count and by the chain, answer the labelled
-// `answered` Place rows of the step after T, never with the labels being scored, and the ask rate and top-1 are
-// reported, the held-back accounts apart. See README.md, "Assistant". It never calls the model.
+// `pnpm eval:learning-curve --from <day> --to <day> [--step 7] [--rules <file>]...` (P07 tickets 05 to 07):
+// resolution_events replayed by date. At each point T, the aliases rebuilt from the rows before T, by the count and by
+// the chain, and the rules of the newest file induced before T, answer the labelled `answered` Place rows of the step
+// after T, never with the labels being scored, and the ask rate and top-1 are reported, the held-back accounts apart.
+// See README.md, "Assistant". It never calls the model.
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -32,7 +34,7 @@ export interface CurvePoint {
   from: string;
   // The final slice, from --final-from, tunes nothing (research note 10 §3).
   slice: Slice;
-  learned: { personal: number; counted: number; chained: number };
+  learned: { personal: number; counted: number; chained: number; induced: number };
   learning: CurveGroup;
   holdback: CurveGroup;
 }
@@ -56,7 +58,7 @@ async function pointAt(
   places: readonly PlaceDto[],
   rules: Stage,
   scored: readonly LabelledRow[],
-  at: { from: Date; holdbackPercent: number; finalFrom: Date | null },
+  at: { from: Date; holdbackPercent: number; finalFrom: Date | null; files: readonly InducedRulesFile[] },
 ): Promise<CurvePoint> {
   const learned = await learnedAliases(prisma, places, {
     before: at.from,
@@ -66,6 +68,8 @@ async function pointAt(
   });
   const counted = withAliases(places, { personal: learned.personal, global: learned.counted });
   const chained = withAliases(places, { personal: learned.personal, global: learned.chained });
+  const inducedRules = rulesAt(at.files, at.from)?.rules ?? [];
+  const induced = withRules(places, inducedRules);
   const replayed = await Promise.all(
     scored.map(async ({ row, truth }) => ({
       heldBack: heldBack(row.userId, at.holdbackPercent),
@@ -73,12 +77,18 @@ async function pointAt(
       rules: await rules(row.words, row.userId),
       learned: await counted(row.words, row.userId),
       chained: await chained(row.words, row.userId),
+      induced: await induced(row.words, row.userId),
     })),
   );
   return {
     from: koreaDate(at.from),
     slice: sliceOf(at.from, at.finalFrom),
-    learned: { personal: learned.personalCount, counted: learned.countedCount, chained: learned.chainedCount },
+    learned: {
+      personal: learned.personalCount,
+      counted: learned.countedCount,
+      chained: learned.chainedCount,
+      induced: inducedRules.length,
+    },
     learning: curveGroup(replayed.filter((row) => !row.heldBack)),
     holdback: curveGroup(replayed.filter((row) => row.heldBack)),
   };
@@ -86,9 +96,10 @@ async function pointAt(
 
 export async function learningCurve(
   prisma: PrismaClient,
-  { from, to, stepDays, finalFrom }: CurveFlags,
+  { from, to, stepDays, finalFrom, rules: ruleFiles }: CurveFlags,
   holdbackPercent: number,
 ): Promise<LearningCurve> {
+  const files = ruleFiles.map((file) => loadRulesFile(file));
   const places = await catalogOf(prisma);
   const rules = stageB(places);
   const labelled = labelledRows(await placeEvents(prisma));
@@ -107,7 +118,7 @@ export async function learningCurve(
           const time = row.createdAt.getTime();
           return time >= point.getTime() && time < end;
         });
-        return pointAt(prisma, places, rules, scored, { from: point, holdbackPercent, finalFrom });
+        return pointAt(prisma, places, rules, scored, { from: point, holdbackPercent, finalFrom, files });
       }),
     ),
   };
@@ -117,14 +128,16 @@ const CURVE_COLUMNS = [
   'Slice',
   'From',
   'Arm',
-  'Aliases personal / count / chain',
+  'Aliases personal / count / chain, induced rules',
   'Rows',
   'Ask, rules',
   'Ask, count',
   'Ask, chain',
+  'Ask, induced',
   'Top-1, rules',
   'Top-1, count',
   'Top-1, chain',
+  'Top-1, induced',
 ];
 
 export function curveMarkdown(curve: LearningCurve): string {
@@ -135,14 +148,16 @@ export function curveMarkdown(curve: LearningCurve): string {
         point.slice,
         point.from,
         arm,
-        `${point.learned.personal} / ${point.learned.counted} / ${point.learned.chained}`,
+        `${point.learned.personal} / ${point.learned.counted} / ${point.learned.chained}, ${point.learned.induced}`,
         String(group.n),
         shown(group.askRules),
         shown(group.askLearned),
         shown(group.askChained),
+        shown(group.askInduced),
         shown(group.top1Rules),
         shown(group.top1Learned),
         shown(group.top1Chained),
+        shown(group.top1Induced),
       ];
     }),
   );
@@ -153,7 +168,8 @@ export function curveMarkdown(curve: LearningCurve): string {
       `learned before T. Holdback: ${curve.holdbackPercent}% of accounts, which everyone's aliases never answer. ` +
       "Rules: the matcher with the curated groups only (stage B); count: with the personal aliases and everyone's by " +
       "ticket 03's count (stage C); chain: with the personal aliases and everyone's by the alias chain the server " +
-      'learns by (stage D). ' +
+      'learns by (stage D); induced: with the rules of the newest file induced before T (stage E), none without ' +
+      '--rules. ' +
       `${
         curve.finalFrom === null
           ? 'No final slice was set: every point is one slice.'

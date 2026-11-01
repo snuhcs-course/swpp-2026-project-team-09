@@ -310,6 +310,14 @@ Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/e
 `test/pages/` holds the route page and the vehicle positions as the operator answered them, each asked for once, at
 15:40 KST on Friday 2026-10-02, when six vehicles ran.
 
+## Induction
+
+The worker also starts one job that reads no Source: at 04:00 in Asia/Seoul, `InductionTrigger`
+(`src/induction/induction.trigger.ts`) posts `{}` to the main server's `/assistant/induction` with the worker's token,
+which starts that night's induction of matching rules from what Users chose (the main server's README: Assistant,
+"Induced rules"). The main server answers at once and works on; a main server that is down is logged and tried again
+the next night. `test/induction-trigger.integration.test.ts` runs the trigger once against a `MainServerStub`.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -348,7 +356,8 @@ src/
 ├── menu/                            a feature: the collector of the three menu Sources and its parsers
 ├── shuttle/                         a feature: the collector of the shuttle's route page and vehicle positions, and
 │                                    their parsers
-└── event/                           a feature: the collector of the events list and its parsers
+├── event/                           a feature: the collector of the events list and its parsers
+└── induction/                       a feature: the nightly start of the main server's induction of matching rules
 test/                                tests named by level, which stand in for the Sources and the main server
 └── pages/                           pages saved from the Sources, which the tests read in place of them
 ```

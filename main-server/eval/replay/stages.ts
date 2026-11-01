@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 import { type PlaceDto } from '../../src/places/dto/place.dto.js';
+import { type CompiledRule } from '../../src/places/induced-rules.js';
 import { type AliasSource, type PlaceAliases } from '../../src/places/place-aliases.js';
 import { CuratedGroups } from '../../src/places/place-groups.js';
 import { PlaceIndex } from '../../src/places/place-index.js';
@@ -13,7 +14,8 @@ import { byNumber } from '../../src/places/places.service.js';
 
 // The stages the replay compares (research note 08 §5, P07 ticket 06): A, the substring and number match resolvePlace
 // used before P07; B, the tiered matcher with the curated groups only; C, B with the personal aliases and everyone's
-// by ticket 03's count; D, B with the personal aliases and everyone's by the alias chain the server learns by.
+// by ticket 03's count; D, B with the personal aliases and everyone's by the alias chain the server learns by; E, B with
+// the matching rules the model induced and the replay verified (ticket 07), from a file `pnpm eval:induce` wrote.
 
 export type Result = 'none' | 'one' | 'several';
 
@@ -29,7 +31,7 @@ export interface StageAnswer {
 
 export type Stage = (words: string, userId: string) => Promise<StageAnswer>;
 
-export type StageName = 'A' | 'B' | 'C' | 'D';
+export type StageName = 'A' | 'B' | 'C' | 'D' | 'E';
 
 function answerOf(candidates: string[], tier: string | null, source: AliasSource | null): StageAnswer {
   if (candidates.length === 0) {
@@ -81,4 +83,9 @@ export function withAliases(
   learned: { personal: PlaceAliases; global: PlaceAliases },
 ): Stage {
   return matcherStage(new PlaceIndex(places, [learned.personal, learned.global, new CuratedGroups(places)]));
+}
+
+// Stage E: the curated groups and the induced rules, nothing anyone taught, nobody held back.
+export function withRules(places: readonly PlaceDto[], rules: readonly CompiledRule[]): Stage {
+  return matcherStage(new PlaceIndex(places, [new CuratedGroups(places)], { rules, holdbackPercent: 0 }));
 }
