@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type {
@@ -90,12 +91,16 @@ export function isTokens(value: unknown): value is { accessToken: string; refres
   return hasTexts(value, ['accessToken', 'refreshToken']);
 }
 
+const AFFILIATIONS = new Set<unknown>([null, 'undergraduate', 'graduate', 'exchange']);
+
 export function isProfile(value: unknown): value is Profile {
-  const admissionYear = field(value, 'admissionYear');
   return (
     hasTexts(value, ['name', 'department', 'friendId']) &&
-    (admissionYear === null || isNumber(admissionYear)) &&
-    listOf(isText)(field(value, 'hashtags'))
+    (field(value, 'admissionYear') === null || isNumber(field(value, 'admissionYear'))) &&
+    listOf(isText)(field(value, 'hashtags')) &&
+    isTextOrNull(field(value, 'studentNumber')) &&
+    isTextOrNull(field(value, 'registeredName')) &&
+    AFFILIATIONS.has(field(value, 'affiliation'))
   );
 }
 

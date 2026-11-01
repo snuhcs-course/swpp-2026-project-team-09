@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -13,12 +14,13 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { createQueryClient } from '@/api/query-client';
 import { OverlayHost, ToastProvider } from '@/design-system';
+import { LibrarySessionProvider } from '@/library/library-session';
 import { LiveUpdates } from '@/live/live-updates';
 import { MarkerImageStage } from '@/map';
 import { SessionProvider } from '@/session/session';
 
 // What every screen stands in: the data's cache, where the User is in the flow, the connection to the socket server,
-// the toast, the layer of side panels and bottom sheets over every screen, and the stage that the map's marker
+// the toast, the library session with its hidden web view and login, the layer of side panels and bottom sheets over every screen, and the stage that the map's marker
 // pictures are made on. The root of the swipes, for the edge's swipe back and the 파티 tab's.
 export function AppProviders({ children }: { children: ReactNode }): ReactElement {
   const [queryClient] = useState(createQueryClient);
@@ -28,7 +30,9 @@ export function AppProviders({ children }: { children: ReactNode }): ReactElemen
         <SessionProvider>
           <LiveUpdates />
           <ToastProvider>
-            <OverlayHost>{children}</OverlayHost>
+            <LibrarySessionProvider>
+              <OverlayHost>{children}</OverlayHost>
+            </LibrarySessionProvider>
             <MarkerImageStage />
           </ToastProvider>
         </SessionProvider>

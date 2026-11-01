@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // Partitions, for each check of an answer about Users: the documented shape, each checked field left out, null and of
@@ -44,6 +45,9 @@ const PROFILE = {
   admissionYear: 2024,
   hashtags: ['AI'],
   friendId: '7KX2M9QD',
+  studentNumber: '202612345',
+  registeredName: '홍길동',
+  affiliation: 'exchange',
 };
 const LOBBY = { profile: PROFILE, masterSwitch: false };
 const FRIEND = { id: 'u-min-jun', name: '김민준', department: '경영학과', sharing: true, visible: false };
@@ -110,11 +114,23 @@ describe('isProfile', () => {
       ['the profile', PROFILE],
       ['an emptied admissionYear, null', { ...PROFILE, admissionYear: null }],
       ['emptied hashtags', { ...PROFILE, hashtags: [] }],
+      ['no library details yet', { ...PROFILE, studentNumber: null, registeredName: null, affiliation: null }],
+      ['the 소속 undergraduate', { ...PROFILE, affiliation: 'undergraduate' }],
+      ['the 소속 graduate', { ...PROFILE, affiliation: 'graduate' }],
     ],
     wrongFields(
       PROFILE,
-      { name: [1], department: [1], friendId: [1], admissionYear: ['2024'], hashtags: ['AI', [1]] },
-      ['admissionYear'],
+      {
+        name: [1],
+        department: [1],
+        friendId: [1],
+        admissionYear: ['2024'],
+        hashtags: ['AI', [1]],
+        studentNumber: [202612345],
+        registeredName: [1],
+        affiliation: ['staff', 1],
+      },
+      ['admissionYear', 'studentNumber', 'registeredName', 'affiliation'],
     ),
   );
 });
