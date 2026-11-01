@@ -13,7 +13,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { type ReactElement, type RefObject, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { friendsQuery, lobbyQuery, questsQuery } from '@/api/queries';
 import type { Friend, Profile, Quest } from '@/api/types';
@@ -43,12 +43,10 @@ import { TabScreen } from '../shell/tab-screen';
 import { SharingCard } from './sharing-card';
 import { TutorialRow } from './tutorial-row';
 import { useSharingSwitch } from './use-sharing-switch';
+import { useShowSharing } from './use-show-sharing';
 import { LibraryCard } from './library-card';
 import { thisVersionLine } from './version-line';
 import { WeekCard } from './week-card';
-
-// How long the 위치 공유 card stays outlined after the friend panel's "공유 설정".
-const OUTLINE_MS = 1200;
 
 // The bell on the app bar, with the number of 알림's rows in red.
 function Bell(): ReactElement {
@@ -206,33 +204,6 @@ function SignOut(): ReactElement {
       />
     </>
   );
-}
-
-// Scrolls to the 위치 공유 card while the address asks for it, and gives back that the card was shown after a while.
-function useShowSharing(
-  show: boolean,
-  onShown: () => void,
-): { scroll: RefObject<ScrollView | null>; setTop: (top: number) => void } {
-  const scroll = useRef<ScrollView>(null);
-  const [top, setTop] = useState<number | null>(null);
-  const shown = useEffectEvent(onShown);
-  useEffect(() => {
-    if (show && top !== null) {
-      scroll.current?.scrollTo({ y: Math.max(0, top - space[3]) });
-    }
-  }, [show, top]);
-  useEffect((): (() => void) | void => {
-    if (!show) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      shown();
-    }, OUTLINE_MS);
-    return (): void => {
-      clearTimeout(timer);
-    };
-  }, [show]);
-  return { scroll, setTop };
 }
 
 interface MeScreenProps {
