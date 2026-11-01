@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place } from '@/api/types';
@@ -10,15 +11,20 @@ function place(number: string, name: string, latitude: number, longitude: number
   return { id: `place-${number}`, number, name, latitude, longitude };
 }
 
-// The Places of the mock's classes and restaurants, at the campus map's points, in the main server's order: by number,
+// The Places of the mock's classes, restaurants and 새내기 튜토리얼 quests, at the campus map's points, in the main server's order: by number,
 // then those without one.
 export const PLACES: Place[] = [
+  place('4', '신양인문학술정보관', 37.46089, 126.95326),
+  place('62-1', '중앙도서관 관정관', 37.45903, 126.95247),
   place('63', '학생회관', 37.45932, 126.95058),
+  place('67', 'NH농협두레문예관', 37.46353, 126.94973),
+  place('68', '파워플랜트', 37.46627, 126.95488),
   place('74', '예술복합연구동', 37.46193, 126.95312),
   place('75-1', '제3학생식당', 37.45647, 126.94851),
   place('85', '수의과대학', 37.46744, 126.95365),
   place('109', '자하연식당', 37.46098, 126.95252),
   place('113', '동원생활관', 37.46504, 126.95175),
+  place('151', '미술관', 37.4665, 126.94969),
   place('301', '제1공학관', 37.45016, 126.95259),
   place('302', '제2공학관', 37.44887, 126.95265),
   place('500', '대학원연구동(2단계)', 37.45922, 126.94812),
