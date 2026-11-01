@@ -31,7 +31,7 @@ export function findLibrarySpace(services: LibraryServices): Tool {
     description: `Finds the 관정도서관 spaces the User's words name, from this catalogue of 관정관 (id, floor, name, purpose, aliases):
 ${catalogueSummary(catalogue)}
 
-Only for booking or using a space inside 관정관; a Place near 관정, such as where a 파티 meets ("관정 근처"), is resolvePlace's. Pass every id that fits the words, or none when nothing does, and the words as written. ${RESULTS}`,
+Only for booking or using a space inside 관정관; a Place near 관정, where a 파티 meets or a search near it ("관정 근처"), is resolvePlace's. Pass every id that fits the words, or none when nothing does, and the words as written. ${RESULTS}`,
     input,
     run: async ({ spaceIds = [] }, context) => {
       const blocked = gated(services, context);

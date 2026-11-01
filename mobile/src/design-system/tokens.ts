@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -122,6 +123,19 @@ export const questTone = {
   class: color.inkMuted,
   open: '#2F6FC0',
   closed: color.party,
+} as const;
+
+// The 새내기 튜토리얼's warm look, as the `Main` and `Profile` frames draw it: the Quest colour's ink on a cream ground.
+// `round` is the 내 정보 row's round, `pagerRound` the pager's, `dotNow` the sheet's dot of the quest shown.
+export const tutorialTone = {
+  ink: color.quest,
+  words: '#6B4500',
+  ground: '#FFFBF0',
+  border: '#F1DFAF',
+  box: '#FFF8E6',
+  round: '#FFF1C9',
+  pagerRound: '#FFF4D6',
+  dotNow: '#E8A400',
 } as const;
 
 // The colours of a class in the timetable, by its place in it, as the `Profile` frame draws the week: the first class

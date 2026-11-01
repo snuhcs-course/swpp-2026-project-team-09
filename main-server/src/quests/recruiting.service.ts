@@ -66,7 +66,7 @@ export class RecruitingService {
     return ids.flatMap((id) => listed.find((quest) => quest.id === id) ?? []);
   }
 
-  // The Quests of the search, as the list gives them, in start order.
+  // The Quests of the search, as the list gives them, in the search's order.
   async search(readerId: string, search: RecruitingSearch): Promise<RecruitingQuestDto[]> {
     return this.listedAmong(readerId, await recruitingSearchIds(this.prisma, readerId, search, this.clock.now()));
   }

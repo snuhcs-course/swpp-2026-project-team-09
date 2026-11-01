@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -88,6 +89,23 @@ describe('프로필 편집', () => {
     expect(screen.queryByRole('header', { name: '프로필 편집' })).toBeNull();
     expect(screen.getByText('홍길순')).toBeVisible();
     expect(screen.getByText('컴퓨터공학부')).toBeVisible();
+  });
+});
+
+describe('프로필 편집 and the tutorial', () => {
+  it('reads the tutorial again after a save, since its rule reads the profile', async () => {
+    const server = await askMainServer({ signedIn: true });
+    answerMainScreen(server);
+    server.on('PATCH /users/me/profile', { status: 200, body: { ...LOBBY.profile, name: '홍길순' } });
+    const user = await openEdit();
+    const before = server.received('GET /tutorial').length;
+
+    await user.clear(screen.getByLabelText('이름'));
+    await user.type(screen.getByLabelText('이름'), '홍길순');
+    await user.press(screen.getByRole('button', { name: '저장' }));
+    await pass(500);
+
+    expect(server.received('GET /tutorial').length).toBeGreaterThan(before);
   });
 });
 
