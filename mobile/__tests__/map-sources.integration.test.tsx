@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Linking } from 'react-native';
@@ -47,24 +48,30 @@ describe('the sources of the map data', () => {
     expect(screen.getByText('© OpenStreetMap · 국토지리정보원', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
-  it('credits OpenStreetMap and 국토지리정보원', async () => {
+  it('credits OpenStreetMap, 국토지리정보원 and SRTM', async () => {
     await openSources();
 
     expect(screen.getByRole('header', { name: 'OpenStreetMap' })).toBeVisible();
     expect(screen.getByText('© OpenStreetMap contributors')).toBeVisible();
     expect(
-      screen.getByText('캠퍼스 경계, 셔틀버스 노선과 건물 윤곽에 쓰여요. ODbL 라이선스로 제공돼요.'),
+      screen.getByText('캠퍼스 경계, 셔틀버스 노선, 건물 윤곽과 도보 시간에 쓰여요. ODbL 라이선스로 제공돼요.'),
     ).toBeVisible();
     expect(screen.getByRole('header', { name: '국토지리정보원' })).toBeVisible();
     expect(screen.getByText('국토지리정보원, 연속수치지형도 건물 (2026), 공공누리 제1유형')).toBeVisible();
     expect(
       screen.getByText('건물 윤곽에 쓰여요. 출처를 밝히면 자유롭게 이용할 수 있는 공공저작물이에요.'),
     ).toBeVisible();
+    expect(screen.getByRole('header', { name: 'SRTM' })).toBeVisible();
+    expect(screen.getByText('NASA Shuttle Radar Topography Mission (SRTM) 30 m')).toBeVisible();
+    expect(
+      screen.getByText('도보 시간의 고도 차이에 쓰여요. 누구나 자유롭게 이용할 수 있는 공공 자료예요.'),
+    ).toBeVisible();
   });
 
   it.each([
     ['저작권과 라이선스 보기', 'https://www.openstreetmap.org/copyright'],
     ['브이월드에서 내려받기', 'https://www.vworld.kr/dtmk/dtmk_ntads_s002.do?dsId=30162'],
+    ['데이터 정보 보기', 'https://doi.org/10.5067/MEaSUREs/SRTM/SRTMGL1.003'],
   ])('opens %s in the browser', async (link, url) => {
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
     const user = await openSources();

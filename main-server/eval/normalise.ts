@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { koreaDate, koreaTime } from '../src/assistant/korea-time.ts';
+import { boardOf, clockOf, dayOf, isRecord, momentOf, windowOf, wordsOf } from './readers.ts';
 import { type ToolCallTrace } from './trace.ts';
 
 // The normalisers (spec P19, "Scoring"): each tool's arguments and results, and the reply's cards and Proposal, read
@@ -17,7 +19,18 @@ import { type ToolCallTrace } from './trace.ts';
 export type ToolRole = 'lookup' | 'presenter' | 'resolver' | 'proposer';
 
 // What a call answered: its `result`, a thrown error, or nothing, when the run ended before the tool did.
-const OUTCOMES = ['found', 'none', 'one', 'several', 'shown', 'proposed', 'refused', 'error', 'unfinished'] as const;
+const OUTCOMES = [
+  'found',
+  'none',
+  'needs',
+  'one',
+  'several',
+  'shown',
+  'proposed',
+  'refused',
+  'error',
+  'unfinished',
+] as const;
 
 export type Outcome = (typeof OUTCOMES)[number];
 
@@ -29,10 +42,11 @@ export function namesOf<Seed extends { id: string }>(seeds: Readonly<Record<stri
   return (id) => byId.get(id);
 }
 
-// How a field is read. day: a calendar day in Korea. moment: the day and HH:MM in Korea. words: trimmed text. words[]:
-// a list of them, matched when it holds every word expected. board: a Board's name. id and ids: seed names, a list
-// matched when it is the same set. value: as it is.
-type Field = 'day' | 'moment' | 'words' | 'words[]' | 'board' | 'id' | 'ids' | 'value';
+// How a field is read. day: a calendar day in Korea. moment: the day and HH:MM in Korea. clock: HH:MM in Korea. item: an
+// item's seed name, or else a clock time. window: two clock times. words: trimmed text. words[]: a list of them, matched
+// when it holds every word expected. board: a Board's name. id and ids: seed names, a list matched when it is the same
+// set. value: as it is.
+type Field = 'day' | 'moment' | 'clock' | 'item' | 'window' | 'words' | 'words[]' | 'board' | 'id' | 'ids' | 'value';
 
 // A field as the scorer names it: renamed from an id field, such as placeId to place.
 interface FieldRule {
@@ -48,6 +62,18 @@ interface ToolRule {
 const day = { read: 'day' } as const;
 const words = { read: 'words' } as const;
 const value = { read: 'value' } as const;
+const CLOCK = { read: 'clock' } as const;
+const ITEM = { read: 'item' } as const;
+const BOARD = { read: 'board' } as const;
+const ID = { read: 'id' } as const;
+
+// The arguments of the two tools that judge a meal.
+const mealFields: Record<string, FieldRule> = {
+  date: day,
+  meal: value,
+  window: { read: 'window' },
+  friendIds: { as: 'friends', read: 'ids' },
+};
 
 // One entry per tool of the Assistant (src/assistant/tools/), by the name the model calls it.
 const TOOLS: Record<string, ToolRule> = {
@@ -56,7 +82,7 @@ const TOOLS: Record<string, ToolRule> = {
   searchGlobalEvents: { role: 'lookup', fields: { from: day, to: day, place: words, words: { read: 'words[]' } } },
   searchRecruitingQuests: {
     role: 'lookup',
-    fields: { board: { read: 'board' }, from: day, to: day, globalEventId: { as: 'globalEvent', read: 'id' } },
+    fields: { board: BOARD, from: day, to: day, globalEventId: { as: 'globalEvent', ...ID } },
   },
   showOnMap: { role: 'presenter', fields: { layer: value } },
   showGlobalEvents: { role: 'presenter', fields: { ids: { read: 'ids' } } },
@@ -70,74 +96,29 @@ const TOOLS: Record<string, ToolRule> = {
       title: words,
       description: words,
       joinPolicy: value,
-      board: { read: 'board' },
+      board: BOARD,
       capacity: value,
       startsAt: { read: 'moment' },
-      placeId: { as: 'place', read: 'id' },
-      globalEventId: { as: 'globalEvent', read: 'id' },
+      placeId: { as: 'place', ...ID },
+      globalEventId: { as: 'globalEvent', ...ID },
       inviteeIds: { as: 'invitees', read: 'ids' },
     },
   },
+  getMyDay: { role: 'lookup', fields: { date: day } },
+  findFreeTimeEvents: {
+    role: 'lookup',
+    fields: { date: day, from: ITEM, to: ITEM, board: BOARD, departurePlace: ID, departureTime: CLOCK, leaveBy: CLOCK },
+  },
+  findFreeFriends: { role: 'lookup', fields: mealFields },
+  findMealRestaurants: {
+    role: 'lookup',
+    fields: { ...mealFields, departurePlace: ID, departureTime: CLOCK, leaveBy: CLOCK },
+  },
+  showRestaurants: { role: 'presenter', fields: { keys: { read: 'ids' } } },
 };
 
 export function roleOf(tool: string): ToolRole | null {
   return TOOLS[tool]?.role ?? null;
-}
-
-// The Boards by their Korean names too, as the party form and the tools' descriptions call them.
-const BOARDS: Record<string, string> = {
-  식사: 'meal',
-  커리어: 'career',
-  진로: 'career',
-  취미: 'hobby',
-  운동: 'hobby',
-  공연: 'show',
-  전시: 'show',
-  '공연·전시': 'show',
-};
-
-function isRecord(input: unknown): input is Record<string, unknown> {
-  return typeof input === 'object' && input !== null && !Array.isArray(input);
-}
-
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/u;
-// A date and time with no offset, read as Korea's: 2026-10-22T19:00 or 2026-10-22 19:00.
-const LOCAL_TIME = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?$/u;
-
-function instantOf(text: string): Date | null {
-  const local = LOCAL_TIME.exec(text);
-  const at = new Date(local === null ? text : `${local[1]}T${local[2]}:00+09:00`);
-  return Number.isNaN(at.getTime()) ? null : at;
-}
-
-// A calendar day in Korea; text that is no date stays as it is.
-function dayOf(input: unknown): unknown {
-  if (typeof input !== 'string' || DATE_ONLY.test(input.trim())) {
-    return typeof input === 'string' ? input.trim() : input;
-  }
-  const at = instantOf(input.trim());
-  return at === null ? input : koreaDate(at);
-}
-
-// The day and HH:MM in Korea: "2026-10-22 19:00".
-function momentOf(input: unknown): unknown {
-  if (typeof input !== 'string') {
-    return input;
-  }
-  const at = instantOf(input.trim());
-  return at === null ? input : koreaTime(at).slice(0, 16).replace('T', ' ');
-}
-
-function wordsOf(input: unknown): unknown {
-  return typeof input === 'string' ? input.trim() : input;
-}
-
-function boardOf(input: unknown): unknown {
-  if (typeof input !== 'string') {
-    return input;
-  }
-  const name = input.trim().toLowerCase();
-  return BOARDS[name] ?? name;
 }
 
 function nameOf(input: unknown, names: Names): unknown {
@@ -155,6 +136,9 @@ function sorted<T>(values: readonly T[]): T[] {
 const READERS: Record<Field, (input: unknown, names: Names) => unknown> = {
   day: (input) => dayOf(input),
   moment: (input) => momentOf(input),
+  clock: (input) => clockOf(input),
+  item: (input, names) => (typeof input === 'string' ? (names(input) ?? clockOf(input)) : input),
+  window: (input) => windowOf(input),
   words: (input) => wordsOf(input),
   'words[]': (input) => (Array.isArray(input) ? input.map((word) => wordsOf(word)) : wordsOf(input)),
   board: (input) => boardOf(input),
@@ -230,6 +214,9 @@ export function outcomeOf(call: ToolCallTrace): Outcome {
   if (call.result === undefined) {
     return 'unfinished';
   }
+  if (isRecord(call.result) && 'needs' in call.result) {
+    return 'needs';
+  }
   const answered = isRecord(call.result) ? call.result.result : undefined;
   return isOutcome(answered) ? answered : 'error';
 }
@@ -244,8 +231,9 @@ function titled(entry: unknown, names: Names): string {
   if (!isRecord(entry)) {
     return '';
   }
-  const { id, title, name } = entry;
-  const seed = typeof id === 'string' ? names(id) : undefined;
+  const { title, name } = entry;
+  const given = entry.id ?? entry.key;
+  const seed = typeof given === 'string' ? names(given) : undefined;
   if (seed !== undefined) {
     return seed;
   }

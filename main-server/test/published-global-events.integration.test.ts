@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { getGlobalEvents, publishedAmong } from './global-event-lists.js';
+import { ownSession, postAddress } from './global-events.js';
 import { connectToDatabase, place132, storeEvent } from './quests.js';
 import { refused } from './signals.js';
 import { signIn, signInAsAdministrator, signInBeforeOnboarding } from './sign-in.js';
@@ -35,8 +37,7 @@ describe("A User's list of Global Events", () => {
       description: '설명회를 엽니다.',
       startsAt: new Date('2099-10-13T08:00:00Z'),
       endsAt: new Date('2099-10-13T10:00:00Z'),
-      postNumber: null,
-      sourceUrl: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=1',
+      sessions: ownSession(1),
     });
 
     expect(await publishedAmong(app, accessToken, [event.id])).toEqual([
@@ -48,7 +49,7 @@ describe("A User's list of Global Events", () => {
         endsAt: '2099-10-13T10:00:00.000Z',
         place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
         ...place132,
-        sourceUrl: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=1',
+        sourceUrl: postAddress(1),
       },
     ]);
   });

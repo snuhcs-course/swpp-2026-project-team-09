@@ -1,0 +1,1218 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# 공강 파티: finding a gap and what fits in it. The fixed histories write the earlier turns as the app sends them back,
+# and only the last turn is scored.
+
+- id: parties-named-classes
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 멀티코어컴퓨팅이랑 현대암호학개론 사이에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-02', from: 멀티코어컴퓨팅 (월), to: 현대암호학개론 (월) }
+    cards:
+      - {
+          kind: quest,
+          seeds: [공대 앞 스트레칭 모임, 3식당 점심 번개, 학식 같이 먹어요, 점심 농구 한 판, 보드게임 한 판],
+          max: 5,
+        }
+      - { kind: globalEvent, seeds: [공대 족구 대회, AI 창업 특강, 가을 미디어아트전, 공학 포스터 세션], max: 4 }
+    mapButtons: []
+    text:
+      mentions: [['12:15', 12시 15분], ['14:00', 2시], [9개, 아홉 개, 9건]]
+      absent: [3식당 앞 커피챗, 학생회관 점심 번개, 동아리 연합 공연, 점심 배드민턴, 가을 사진전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-02', from: 멀티코어컴퓨팅 (월), to: 현대암호학개론 (월) }
+        result: found
+        gaps:
+          - { start: '12:15', end: '14:00', before: 멀티코어컴퓨팅, after: 현대암호학개론 }
+        candidates:
+          - {
+              kind: quest,
+              seed: 공대 앞 스트레칭 모임,
+              start: '12:20',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '13:49',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 3식당 점심 번개,
+              start: '12:28',
+              end: null,
+              travel: { mode: shuttle, minutes: 12 },
+              leaveBy: '13:53',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 학식 같이 먹어요,
+              start: '12:45',
+              end: null,
+              travel: { mode: shuttle, minutes: 16 },
+              leaveBy: '13:51',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 공대 족구 대회,
+              start: '12:50',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '13:49',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: AI 창업 특강,
+              start: '13:00',
+              end: '13:40',
+              travel: { mode: walk, minutes: 14 },
+              next: { minutes: 5, isClass: true },
+            }
+          - {
+              kind: globalEvent,
+              seed: 가을 미디어아트전,
+              start: '13:00',
+              end: '18:00',
+              travel: { mode: shuttle, minutes: 16 },
+              leaveBy: '13:51',
+            }
+          - {
+              kind: globalEvent,
+              seed: 공학 포스터 세션,
+              start: '13:00',
+              end: '13:56',
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '13:54',
+            }
+          - {
+              kind: quest,
+              seed: 점심 농구 한 판,
+              start: '13:00',
+              end: null,
+              travel: { mode: shuttle, minutes: 27 },
+              leaveBy: '13:32',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 보드게임 한 판,
+              start: '13:05',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '13:54',
+              endUnknown: true,
+            }
+
+- id: parties-abbreviated-gap-begun
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  now: '2026-11-02T12:40:00+09:00'
+  turns:
+    - user: 멀코 끝났는데 현암 전까지 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-02', to: 현대암호학개론 (월) }
+    cards:
+      - { kind: quest, seeds: [보드게임 한 판], max: 1 }
+      - { kind: globalEvent, seeds: [공대 족구 대회, AI 창업 특강, 가을 미디어아트전, 공학 포스터 세션], max: 4 }
+    mapButtons: []
+    text:
+      mentions: [['12:40', 12시 40분, '12:15', 12시 15분], ['14:00', 2시], [5개, 다섯 개, 5건]]
+      absent:
+        [
+          공대 앞 스트레칭 모임,
+          3식당 앞 커피챗,
+          3식당 점심 번개,
+          학생회관 점심 번개,
+          학식 같이 먹어요,
+          동아리 연합 공연,
+          점심 농구 한 판,
+          점심 배드민턴,
+          가을 사진전,
+        ]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-02', from: 멀티코어컴퓨팅 (월), to: 현대암호학개론 (월) }
+        result: found
+        gaps:
+          - { start: '12:40', end: '14:00', before: 멀티코어컴퓨팅, after: 현대암호학개론 }
+        candidates:
+          - {
+              kind: globalEvent,
+              seed: 공대 족구 대회,
+              start: '12:50',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '13:49',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: AI 창업 특강,
+              start: '13:00',
+              end: '13:40',
+              travel: { mode: walk, minutes: 14 },
+              next: { minutes: 5, isClass: true },
+            }
+          - {
+              kind: globalEvent,
+              seed: 가을 미디어아트전,
+              start: '13:00',
+              end: '18:00',
+              travel: { mode: shuttle, minutes: 16 },
+              leaveBy: '13:51',
+            }
+          - {
+              kind: globalEvent,
+              seed: 공학 포스터 세션,
+              start: '13:00',
+              end: '13:56',
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '13:54',
+            }
+          - {
+              kind: quest,
+              seed: 보드게임 한 판,
+              start: '13:05',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '13:54',
+              endUnknown: true,
+            }
+
+- id: parties-next-gap
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  now: '2026-11-04T10:00:00+09:00'
+  turns:
+    - user: 다음 공강에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-04' }
+    cards:
+      - { kind: quest, seeds: [오전 코드 리뷰], max: 1 }
+      - { kind: globalEvent, seeds: [연구실 공개 세미나], max: 1 }
+    mapButtons: []
+    text:
+      mentions: [['10:45', 10시 45분], ['13:00', 1시], [2개, 두 개, 2건]]
+      absent: [오전 테니스, 가을 사진전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-04', from: now, to: 수요일 점심 모임 (수) }
+        result: found
+        gaps:
+          - { start: '10:45', end: '13:00', before: 컴퓨터구조, after: 수요일 점심 모임 }
+        candidates:
+          - {
+              kind: quest,
+              seed: 오전 코드 리뷰,
+              start: '11:10',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '12:43',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 연구실 공개 세미나,
+              start: '11:30',
+              end: '12:30',
+              travel: { mode: walk, minutes: 0 },
+              next: { minutes: 14, isClass: false },
+            }
+
+- id: parties-named-classes-tomorrow
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 데이터베이스랑 운영체제 사이에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-03', from: 데이터베이스 (화), to: 운영체제 (화) }
+    cards:
+      - {
+          kind: quest,
+          seeds:
+            [
+              점심 코딩 스터디,
+              동원관 앞 카페 모임,
+              문화관 앞 플로깅,
+              재즈 같이 가요,
+              83동 라운지 스터디,
+              야외 농구장 3대3,
+              주간 독서 모임,
+            ],
+          max: 7,
+        }
+      - { kind: globalEvent, seeds: [재즈 런치 콘서트, 미대 작품 설명회], max: 2 }
+    mapButtons: []
+    text:
+      mentions: [['12:15', 12시 15분], ['15:00', 3시], [9개, 아홉 개, 9건]]
+      absent:
+        [
+          문화관 앞 버스킹,
+          자하연 산책 모임,
+          언제든 스터디,
+          녹두 보드게임 모임,
+          샤로수길 맛집 탐방,
+          비공개 점심 약속,
+          토크콘서트 사전 모임,
+          낙성대 플리마켓,
+          가을 사진전,
+        ]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-03', from: 데이터베이스 (화), to: 운영체제 (화) }
+        result: found
+        gaps:
+          - { start: '12:15', end: '15:00', before: 데이터베이스, after: 운영체제 }
+        candidates:
+          - {
+              kind: quest,
+              seed: 점심 코딩 스터디,
+              start: '12:40',
+              end: '13:40',
+              travel: { mode: walk, minutes: 2 },
+              next: { minutes: 0, isClass: true },
+            }
+          - {
+              kind: quest,
+              seed: 동원관 앞 카페 모임,
+              start: '12:50',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '14:55',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 문화관 앞 플로깅,
+              start: '13:10',
+              end: null,
+              travel: { mode: walk, minutes: 5 },
+              leaveBy: '14:54',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 재즈 같이 가요,
+              start: '13:20',
+              end: '14:20',
+              travel: { mode: walk, minutes: 5 },
+              next: { minutes: 5, isClass: true },
+            }
+          - {
+              kind: globalEvent,
+              seed: 재즈 런치 콘서트,
+              start: '13:20',
+              end: '14:20',
+              travel: { mode: walk, minutes: 5 },
+              next: { minutes: 5, isClass: true },
+            }
+          - {
+              kind: globalEvent,
+              seed: 미대 작품 설명회,
+              start: '13:30',
+              end: '14:10',
+              travel: { mode: walk, minutes: 7 },
+              next: { minutes: 9, isClass: true },
+            }
+          - {
+              kind: quest,
+              seed: 83동 라운지 스터디,
+              start: '13:40',
+              end: null,
+              travel: { mode: walk, minutes: 2 },
+              leaveBy: '14:59',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 야외 농구장 3대3,
+              start: '14:00',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '14:55',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 주간 독서 모임,
+              start: '14:10',
+              end: null,
+              travel: { mode: walk, minutes: 0 },
+              leaveBy: '14:57',
+              endUnknown: true,
+            }
+
+- id: parties-before-first-class
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 첫 수업 전에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-03', from: '00:00', to: 데이터베이스 (화) }
+    cards:
+      - { kind: quest, seeds: [아침 러닝], max: 1 }
+      - { kind: globalEvent, seeds: [캠퍼스 투어, 아침 특강], max: 2 }
+    mapButtons: []
+    text:
+      mentions: [['11:00', 11시], [3개, 세 개, 3건]]
+      absent: [모닝 커피챗, 가을 사진전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-03', from: '00:00', to: 데이터베이스 (화) }
+        result: found
+        gaps:
+          - { start: '00:00', end: '11:00', before: null, after: 데이터베이스 }
+        candidates:
+          - {
+              kind: quest,
+              seed: 아침 러닝,
+              start: '07:00',
+              end: null,
+              travel: null,
+              leaveBy: '10:49',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 캠퍼스 투어,
+              start: '08:30',
+              end: null,
+              travel: null,
+              leaveBy: '10:50',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 아침 특강,
+              start: '09:00',
+              end: '10:00',
+              travel: null,
+              next: { minutes: 5, isClass: true },
+            }
+
+- id: parties-after-last-class
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 컴퓨터그래픽스 끝나고 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-02', from: 컴퓨터그래픽스 (월), to: end }
+    cards:
+      - { kind: quest, seeds: [저녁 고기 먹을 사람, 밤 코딩 모임, 주간 독서 모임], max: 3 }
+      - { kind: globalEvent, seeds: [AI 시대의 진로 특강, 가을 재즈 콘서트], max: 2 }
+    mapButtons: []
+    text:
+      mentions: [['17:15', 5시 15분], [5개, 다섯 개, 5건]]
+      absent: [해질녘 산책, 가을 사진전, 가을 미디어아트전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-02', from: 컴퓨터그래픽스 (월), to: end }
+        result: found
+        gaps:
+          - { start: '17:15', end: '24:00', before: 컴퓨터그래픽스, after: null }
+        candidates:
+          - {
+              kind: globalEvent,
+              seed: AI 시대의 진로 특강,
+              start: '18:00',
+              end: '20:00',
+              travel: { mode: walk, minutes: 0 },
+            }
+          - {
+              kind: quest,
+              seed: 저녁 고기 먹을 사람,
+              start: '18:30',
+              end: null,
+              travel: { mode: shuttle, minutes: 14 },
+            }
+          - {
+              kind: globalEvent,
+              seed: 가을 재즈 콘서트,
+              start: '19:00',
+              end: '21:00',
+              travel: { mode: shuttle, minutes: 17 },
+            }
+          - { kind: quest, seed: 밤 코딩 모임, start: '20:00', end: null, travel: { mode: walk, minutes: 0 } }
+          - { kind: quest, seed: 주간 독서 모임, start: '20:00', end: null, travel: { mode: shuttle, minutes: 17 } }
+
+- id: parties-nothing-fits
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 현대암호학개론이랑 컴퓨터그래픽스 사이에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents, showQuests, showGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-02', from: 현대암호학개론 (월), to: 컴퓨터그래픽스 (월) }
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [['15:15', 3시 15분], ['16:00', 4시], [없]]
+      absent: [잠깐 커피 한 잔, 학과 설명회, 가을 미디어아트전, 동아리 연합 공연, 가을 사진전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-02', from: 현대암호학개론 (월), to: 컴퓨터그래픽스 (월) }
+        result: found
+        gaps:
+          - { start: '15:15', end: '16:00', before: 현대암호학개론, after: 컴퓨터그래픽스 }
+        candidates: []
+
+- id: parties-over-twenty
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 금요일 미분방정식이랑 글쓰기의 기초 사이에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-06', from: 미분방정식 (금), to: 글쓰기의 기초 (금) }
+    cards:
+      - kind: quest
+        seeds:
+          [
+            금요일 아침 풋살,
+            브런치 모임,
+            토익 스터디,
+            금요일 점심 농구,
+            금요일 점심 번개,
+            뜨개질 모임,
+            코딩 테스트 스터디,
+            배드민턴 복식,
+            커피 한 잔 모임,
+            보드게임 오후반,
+            사진 출사 모임,
+            테니스 랠리,
+            면접 스터디,
+            디저트 탐방,
+            족구 번개,
+            합창 연습 구경,
+            탁구 한 판,
+            전시 같이 보기,
+          ]
+        max: 18
+      - { kind: globalEvent, seeds: [가을 독서 토크, 총장배 풋살 대회], max: 2 }
+    mapButtons: []
+    text:
+      mentions: [['10:45', 10시 45분], ['18:00', 6시], [25개, 스물다섯, 25건], [조건, 좁혀, 좁힐]]
+      absent: [가을 사진전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-06', from: 미분방정식 (금), to: 글쓰기의 기초 (금) }
+        result: found
+        gaps:
+          - { start: '10:45', end: '18:00', before: 미분방정식, after: 글쓰기의 기초 }
+        candidates:
+          - {
+              kind: quest,
+              seed: 금요일 아침 풋살,
+              start: '11:15',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 브런치 모임,
+              start: '11:30',
+              end: null,
+              travel: { mode: walk, minutes: 6 },
+              leaveBy: '17:53',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 토익 스터디,
+              start: '11:45',
+              end: null,
+              travel: { mode: walk, minutes: 6 },
+              leaveBy: '17:53',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 금요일 점심 농구,
+              start: '12:00',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 금요일 점심 번개,
+              start: '12:15',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '17:56',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 뜨개질 모임,
+              start: '12:30',
+              end: null,
+              travel: { mode: walk, minutes: 5 },
+              leaveBy: '17:55',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 코딩 테스트 스터디,
+              start: '12:45',
+              end: null,
+              travel: { mode: walk, minutes: 5 },
+              leaveBy: '17:54',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 배드민턴 복식,
+              start: '13:00',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 커피 한 잔 모임,
+              start: '13:15',
+              end: null,
+              travel: { mode: walk, minutes: 0 },
+              leaveBy: '17:59',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 가을 독서 토크,
+              start: '13:20',
+              end: '14:00',
+              travel: { mode: walk, minutes: 6 },
+              next: { minutes: 6, isClass: true },
+            }
+          - {
+              kind: quest,
+              seed: 보드게임 오후반,
+              start: '13:30',
+              end: null,
+              travel: { mode: walk, minutes: 0 },
+              leaveBy: '17:59',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 사진 출사 모임,
+              start: '13:45',
+              end: null,
+              travel: { mode: walk, minutes: 12 },
+              leaveBy: '17:46',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 테니스 랠리,
+              start: '14:00',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 총장배 풋살 대회,
+              start: '14:10',
+              end: '15:10',
+              travel: { mode: walk, minutes: 14 },
+              next: { minutes: 15, isClass: true },
+            }
+          - {
+              kind: quest,
+              seed: 면접 스터디,
+              start: '14:15',
+              end: null,
+              travel: { mode: walk, minutes: 5 },
+              leaveBy: '17:54',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 디저트 탐방,
+              start: '14:30',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '17:56',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 족구 번개,
+              start: '14:45',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 합창 연습 구경,
+              start: '15:00',
+              end: null,
+              travel: { mode: walk, minutes: 0 },
+              leaveBy: '17:59',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 탁구 한 판,
+              start: '15:15',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 전시 같이 보기,
+              start: '15:30',
+              end: null,
+              travel: { mode: walk, minutes: 12 },
+              leaveBy: '17:46',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 자소서 첨삭 모임,
+              start: '15:45',
+              end: null,
+              travel: { mode: walk, minutes: 5 },
+              leaveBy: '17:54',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 저녁 러닝 크루,
+              start: '16:00',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 연극 같이 보기,
+              start: '16:15',
+              end: null,
+              travel: { mode: walk, minutes: 0 },
+              leaveBy: '17:59',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 이른 저녁 모임,
+              start: '16:30',
+              end: null,
+              travel: { mode: walk, minutes: 6 },
+              leaveBy: '17:53',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 영어 회화 모임,
+              start: '16:45',
+              end: null,
+              travel: { mode: walk, minutes: 0 },
+              leaveBy: '17:59',
+              endUnknown: true,
+            }
+
+- id: parties-over-twenty-narrowed
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 금요일 미분방정식이랑 글쓰기의 기초 사이에 갈 수 있는 파티 있어?
+    - assistant:
+        text: 금요일 미분방정식은 10:45에 끝나고 글쓰기의 기초는 18:00에 시작해요. 갈 수 있는 파티가 25개라 빠른 순서로 20개를 보여 드려요. 조건을 말해 주시면 좁혀 드릴게요.
+        cards:
+          - { kind: quest, seed: 금요일 아침 풋살 }
+          - { kind: quest, seed: 브런치 모임 }
+          - { kind: quest, seed: 토익 스터디 }
+          - { kind: quest, seed: 금요일 점심 농구 }
+          - { kind: quest, seed: 금요일 점심 번개 }
+          - { kind: quest, seed: 뜨개질 모임 }
+          - { kind: quest, seed: 코딩 테스트 스터디 }
+          - { kind: quest, seed: 배드민턴 복식 }
+          - { kind: quest, seed: 커피 한 잔 모임 }
+          - { kind: globalEvent, seed: 가을 독서 토크 }
+          - { kind: quest, seed: 보드게임 오후반 }
+          - { kind: quest, seed: 사진 출사 모임 }
+          - { kind: quest, seed: 테니스 랠리 }
+          - { kind: globalEvent, seed: 총장배 풋살 대회 }
+          - { kind: quest, seed: 면접 스터디 }
+          - { kind: quest, seed: 디저트 탐방 }
+          - { kind: quest, seed: 족구 번개 }
+          - { kind: quest, seed: 합창 연습 구경 }
+          - { kind: quest, seed: 탁구 한 판 }
+          - { kind: quest, seed: 전시 같이 보기 }
+    - user: 운동만
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-06', from: 미분방정식 (금), to: 글쓰기의 기초 (금), board: hobby }
+    cards:
+      - {
+          kind: quest,
+          seeds:
+            [금요일 아침 풋살, 금요일 점심 농구, 배드민턴 복식, 테니스 랠리, 족구 번개, 탁구 한 판, 저녁 러닝 크루],
+          max: 7,
+        }
+      - { kind: globalEvent, seeds: [총장배 풋살 대회], max: 1 }
+    mapButtons: []
+    text:
+      mentions: [['10:45', 10시 45분], ['18:00', 6시], [8개, 여덟 개, 8건]]
+      absent: [보드게임 오후반, 뜨개질 모임, 사진 출사 모임, 가을 독서 토크]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-06', from: 미분방정식 (금), to: 글쓰기의 기초 (금), board: hobby }
+        result: found
+        gaps:
+          - { start: '10:45', end: '18:00', before: 미분방정식, after: 글쓰기의 기초 }
+        candidates:
+          - {
+              kind: quest,
+              seed: 금요일 아침 풋살,
+              start: '11:15',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 금요일 점심 농구,
+              start: '12:00',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 뜨개질 모임,
+              start: '12:30',
+              end: null,
+              travel: { mode: walk, minutes: 5 },
+              leaveBy: '17:55',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 배드민턴 복식,
+              start: '13:00',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 가을 독서 토크,
+              start: '13:20',
+              end: '14:00',
+              travel: { mode: walk, minutes: 6 },
+              next: { minutes: 6, isClass: true },
+            }
+          - {
+              kind: quest,
+              seed: 보드게임 오후반,
+              start: '13:30',
+              end: null,
+              travel: { mode: walk, minutes: 0 },
+              leaveBy: '17:59',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 사진 출사 모임,
+              start: '13:45',
+              end: null,
+              travel: { mode: walk, minutes: 12 },
+              leaveBy: '17:46',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 테니스 랠리,
+              start: '14:00',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 총장배 풋살 대회,
+              start: '14:10',
+              end: '15:10',
+              travel: { mode: walk, minutes: 14 },
+              next: { minutes: 15, isClass: true },
+            }
+          - {
+              kind: quest,
+              seed: 족구 번개,
+              start: '14:45',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 탁구 한 판,
+              start: '15:15',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+          - {
+              kind: quest,
+              seed: 저녁 러닝 크루,
+              start: '16:00',
+              end: null,
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '17:44',
+              endUnknown: true,
+            }
+
+- id: parties-held-quests-busy
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 수요일 컴퓨터구조랑 캡스톤디자인 사이에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-04', from: 컴퓨터구조 (수), to: 캡스톤디자인 (수) }
+    cards:
+      - { kind: quest, seeds: [오전 코드 리뷰, 오후 커피 모임, 자하연 티타임], max: 3 }
+      - { kind: globalEvent, seeds: [연구실 공개 세미나, 취업 설명회, 학생회 토론회], max: 3 }
+    mapButtons: []
+    text:
+      mentions:
+        [
+          ['10:45', 10시 45분],
+          ['13:00', 1시],
+          ['13:30', 1시 30분, 1시 반],
+          ['15:50', 3시 50분],
+          ['16:20', 4시 20분],
+          ['17:00', 5시],
+          [6개, 여섯 개, 6건],
+        ]
+      absent: [오전 테니스, 늦은 오후 배드민턴, 가을 사진전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-04', from: 컴퓨터구조 (수), to: 캡스톤디자인 (수) }
+        result: found
+        gaps:
+          - { start: '10:45', end: '13:00', before: 컴퓨터구조, after: 수요일 점심 모임 }
+          - { start: '13:30', end: '15:50', before: 수요일 점심 모임, after: 공모전 작업 }
+          - { start: '16:20', end: '17:00', before: 공모전 작업, after: 캡스톤디자인 }
+        candidates:
+          - {
+              kind: quest,
+              seed: 오전 코드 리뷰,
+              start: '11:10',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '12:43',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 연구실 공개 세미나,
+              start: '11:30',
+              end: '12:30',
+              travel: { mode: walk, minutes: 0 },
+              next: { minutes: 14, isClass: false },
+            }
+          - {
+              kind: quest,
+              seed: 오후 커피 모임,
+              start: '13:40',
+              end: null,
+              travel: { mode: walk, minutes: 3 },
+              leaveBy: '15:49',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 취업 설명회,
+              start: '14:10',
+              end: '15:10',
+              travel: { mode: walk, minutes: 3 },
+              next: { minutes: 0, isClass: false },
+            }
+          - {
+              kind: quest,
+              seed: 자하연 티타임,
+              start: '14:30',
+              end: null,
+              travel: { mode: walk, minutes: 6 },
+              leaveBy: '15:44',
+              endUnknown: true,
+            }
+          - {
+              kind: globalEvent,
+              seed: 학생회 토론회,
+              start: '14:30',
+              end: '15:40',
+              travel: { mode: walk, minutes: 0 },
+              next: { minutes: 3, isClass: false },
+            }
+
+- id: parties-what-is-on-meal-search
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 같이 밥 먹을 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents]
+      forbidden: [findFreeTimeEvents, proposeQuest, findMealRestaurants, findFreeFriends]
+    args:
+      searchRecruitingQuests: { from: '2026-11-03', to: '2026-11-03' }
+    cards:
+      - { kind: quest, seeds: [동원관 앞 카페 모임, 샤로수길 맛집 탐방], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      absent: [비공개 점심 약속]
+
+- id: parties-no-timetable-rest-of-day
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  asker: 새내기
+  now: '2026-11-02T18:40:00+09:00'
+  turns:
+    - user: 다음 공강에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-02' }
+    cards:
+      - { kind: quest, seeds: [밤 코딩 모임, 주간 독서 모임], max: 2 }
+      - { kind: globalEvent, seeds: [가을 재즈 콘서트], max: 1 }
+    mapButtons: []
+    text:
+      mentions: [[3개, 세 개, 3건]]
+      absent: [저녁 고기 먹을 사람, AI 시대의 진로 특강, 가을 사진전, 가을 미디어아트전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-02', from: now, to: end }
+        result: found
+        gaps:
+          - { start: '18:40', end: '24:00', before: null, after: null }
+        candidates:
+          - { kind: globalEvent, seed: 가을 재즈 콘서트, start: '19:00', end: '21:00', travel: null }
+          - { kind: quest, seed: 밤 코딩 모임, start: '20:00', end: null, travel: null }
+          - { kind: quest, seed: 주간 독서 모임, start: '20:00', end: null, travel: null }
+
+- id: parties-ambiguous-class
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 컴퓨터 수업 끝나고 갈 수 있는 파티 있어?
+  expect:
+    actions: [ASK]
+    tools:
+      required: [getMyDay]
+      forbidden:
+        [findFreeTimeEvents, showQuests, showGlobalEvents, proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      getMyDay: { date: '2026-11-02' }
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [[컴퓨터구조], [컴퓨터그래픽스]]
+    results:
+      getMyDay:
+        args: { date: '2026-11-02' }
+        result: found
+        items:
+          - { seed: 컴퓨터구조 (월), start: '09:30', end: '10:45' }
+          - { seed: 멀티코어컴퓨팅 (월), start: '11:00', end: '12:15' }
+          - { seed: 현대암호학개론 (월), start: '14:00', end: '15:15' }
+          - { seed: 컴퓨터그래픽스 (월), start: '16:00', end: '17:15' }
+
+- id: parties-departure-after-asking
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 과외 끝나고 갈 수 있는 파티 있어?
+    - assistant:
+        text: 과외가 끝나고 어디서 출발하세요?
+    - user: 낙성대역에서 출발해
+    - assistant:
+        text: 캠퍼스 밖에서는 이동 시간을 계산할 수 없어요. 캠퍼스에는 어디로 들어오세요? 정문처럼 알려 주세요.
+    - user: 서울대 정문으로 들어가
+    - assistant:
+        text: 캠퍼스에는 몇 시쯤 들어오세요?
+    - user: 7시쯤
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolvePlace, findFreeTimeEvents, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents:
+        { date: '2026-11-05', from: 과외 (목), to: end, departurePlace: 서울대 정문, departureTime: '19:00' }
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [오픈 마이크], max: 1 }
+    mapButtons: []
+    text:
+      mentions: [['18:30', 6시 30분, 6시 반, '19:00', 7시], [1개, 한 개, 1건]]
+      absent: [야간 코딩, 저녁 배드민턴]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-05', from: 과외 (목), to: end, departurePlace: 서울대 정문, departureTime: '19:00' }
+        result: found
+        gaps:
+          - { start: '18:30', end: '24:00', before: 과외, after: null }
+        candidates:
+          - { kind: globalEvent, seed: 오픈 마이크, start: '19:30', end: '21:00', travel: { mode: walk, minutes: 13 } }
+
+- id: parties-leave-by-after-asking
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 컴퓨터네트워크 끝나고 과외 전까지 갈 수 있는 파티 있어?
+    - assistant:
+        text: 과외 장소는 이동 시간을 알 수 없어요. 몇 시까지 나서야 하세요?
+    - user: 4시 반까지는 나가야 해
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-05', from: 컴퓨터네트워크 (목), to: 과외 (목), leaveBy: '16:30' }
+    cards:
+      - { kind: quest, seeds: [오후 커피챗], max: 1 }
+      - { kind: globalEvent, seeds: [오픈소스 세미나], max: 1 }
+    mapButtons: []
+    text:
+      mentions: [['14:15', 2시 15분], ['17:00', 5시], [2개, 두 개, 2건]]
+      absent: [늦은 오후 산책, 가을 사진전]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-05', from: 컴퓨터네트워크 (목), to: 과외 (목), leaveBy: '16:30' }
+        result: found
+        gaps:
+          - { start: '14:15', end: '17:00', before: 컴퓨터네트워크, after: 과외 }
+        candidates:
+          - {
+              kind: globalEvent,
+              seed: 오픈소스 세미나,
+              start: '15:00',
+              end: '16:00',
+              travel: { mode: walk, minutes: 0 },
+            }
+          - {
+              kind: quest,
+              seed: 오후 커피챗,
+              start: '15:30',
+              end: null,
+              travel: { mode: walk, minutes: 4 },
+              leaveBy: '16:30',
+              endUnknown: true,
+            }

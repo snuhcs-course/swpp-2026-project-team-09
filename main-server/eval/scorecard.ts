@@ -3,8 +3,14 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { LARGE_WORLD } from './p5/large-world/world-data.ts';
+import { largeWorldSuite, p5Report } from './p5/report.ts';
+import { p5Section } from './p5/report-section.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { outcomeOf } from './normalise.ts';
 import {
@@ -16,7 +22,7 @@ import {
   settingsOf,
   totalFailures,
 } from './run-score.ts';
-import { costPerTurnShown, perTurn, perTurnShown } from './per-turn.ts';
+import { perTurnTable } from './per-turn.ts';
 import { type CaseScore } from './score.ts';
 import { type FailureKind, type TurnTrace } from './trace.ts';
 
@@ -239,7 +245,6 @@ function passKSection({ passK }: RunScore): string[] {
 function usageSection(score: RunScore): string[] {
   const { steps, latency } = averages(score);
   const { turns, tokens } = score.usage;
-  const turn = perTurn(score);
   return [
     '## Steps, latency and cost',
     table(
@@ -267,18 +272,7 @@ function usageSection(score: RunScore): string[] {
       ],
     ),
     'Per turn, one request to the Assistant:',
-    table(
-      ['Tokens in', 'Cache read', 'Cache write', 'Tokens out', 'Estimated cost'],
-      [
-        [
-          perTurnShown(turn.inputTokens),
-          perTurnShown(turn.cacheReadTokens),
-          perTurnShown(turn.cacheWriteTokens),
-          perTurnShown(turn.outputTokens),
-          costPerTurnShown(turn.costUsd),
-        ],
-      ],
-    ),
+    perTurnTable(score),
   ];
 }
 
@@ -296,6 +290,10 @@ export function scorecard(score: RunScore): string {
     ...categoriesSection(score),
     ...passKSection(score),
     ...usageSection(score),
+    ...(saved.options.world === 'p5' ? p5Section(p5Report(score), table) : []),
+    ...(saved.options.world === LARGE_WORLD
+      ? p5Section(p5Report(score, largeWorldSuite()), table, `The P05 suite, ${LARGE_WORLD}`)
+      : []),
     '## Settings',
     table(['Setting', 'Value'], settingsOf(score)),
     '## Failed cases',

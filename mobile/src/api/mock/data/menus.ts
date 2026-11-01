@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Meal, MenuLine, RestaurantMenus } from '@/api/menu-types';
@@ -26,10 +27,12 @@ function plain(text: string): MenuLine {
   return { text, kind: null, name: null, price: null };
 }
 
-function restaurant(name: string, meals: Partial<Record<Meal, MenuLine[]>>): RestaurantMenus {
+// `number` names its Place of the mock's list.
+function restaurant(name: string, number: string, meals: Partial<Record<Meal, MenuLine[]>>): RestaurantMenus {
   const order: Meal[] = ['breakfast', 'lunch', 'dinner'];
   return {
     name,
+    placeId: `place-${number}`,
     collectedAt: '2026-09-30T20:00:00.000Z',
     meals: order.flatMap((meal) => {
       const lines = meals[meal];
@@ -48,7 +51,7 @@ const STUDENT_CENTRE_LUNCH = [
 
 function day(holiday: boolean): RestaurantMenus[] {
   return [
-    restaurant('302동식당', {
+    restaurant('302동식당', '302', {
       lunch: [
         heading('<뷔페> 6,500원', 6500),
         plain('뼈없는감자탕'),
@@ -57,10 +60,10 @@ function day(holiday: boolean): RestaurantMenus[] {
         note('※운영시간: 11:30~13:30'),
       ],
     }),
-    restaurant('동원관식당', {
+    restaurant('동원관식당', '113', {
       lunch: [dish('돈까스김치치즈나베', 6000), dish('고추장숙주불고기', 6000), note('※ 운영시간 : 11:00~14:00')],
     }),
-    restaurant('두레미담', {
+    restaurant('두레미담', '75-1', {
       lunch: [
         heading('<셀프코너> 7,000원', 7000),
         plain('잡곡밥'),
@@ -70,24 +73,24 @@ function day(holiday: boolean): RestaurantMenus[] {
         dish('철판제육볶음', 15000),
       ],
     }),
-    restaurant('수의대식당', { lunch: [plain('카레라이스')] }),
-    restaurant('아워홈(901동)', {
+    restaurant('수의대식당', '85', { lunch: [plain('카레라이스')] }),
+    restaurant('아워홈(901동)', '901', {
       breakfast: [
         dish('세미양식부페', 5000),
         plain('브로콜리스프/아욱국,고기산적조림,계란후라이,토스트,씨리얼, 흰우유/두유,그린샐러드'),
         note('※운영시간 : 08:00~09:30'),
       ],
     }),
-    restaurant('예술계식당', {}),
-    restaurant('자하연식당 2층', {
+    restaurant('예술계식당', '74', {}),
+    restaurant('자하연식당 2층', '109', {
       lunch: [dish('나가사키꼬치어묵', 5500), note('※ 운영시간 : 11:30~14:00')],
       dinner: [dish('뼈없는닭갈비', 6000), note('※ 운영시간 : 17:00~18:30')],
     }),
-    restaurant('자하연식당 3층', {
+    restaurant('자하연식당 3층', '109', {
       lunch: [dish('동태매운탕(#)', 13000), heading('<+세미뷔페>'), plain('오징어다시마숙회'), plain('단호박튀김')],
       dinner: [note('※ 저녁 단체예약문의: 02-880-7889')],
     }),
-    restaurant('학생회관식당', {
+    restaurant('학생회관식당', '63', {
       breakfast: [dish('쇠고기채소찌개', 3000), note('※ 운영시간 : 08:00~10:00')],
       lunch: holiday ? [note('개천절 휴무')] : STUDENT_CENTRE_LUNCH,
       dinner: [dish('갈비구이', 6000), dish('꽁치무조림(#)', 3000), note('※ 운영시간 : 17:00~19:00')],

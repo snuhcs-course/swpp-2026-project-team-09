@@ -17,7 +17,9 @@
 // 2026-10-06  Fable 5.1  prompted by fyoon46
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
 // 2026-10-28  Opus 5.5   prompted by fyoon46
+// 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-01  Fable 5.1  prompted by fyoon46
+// 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -37,39 +39,39 @@ datasource db {
 
 // A person who signed in with an SNU Google account.
 model User {
-  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // Google's subject identifier ("sub"), which stays the same while the email address may change.
-  googleSubject         String                 @unique @map("google_subject")
-  email                 String
+  googleSubject     String             @unique @map("google_subject")
+  email             String
   // The profile. The name and the department stay empty until onboarding. The limits are in src/users/dto/.
-  name                  String                 @default("")
-  department            String                 @default("")
-  admissionYear         Int?                   @map("admission_year")
-  hashtags              String[]               @default([])
+  name              String             @default("")
+  department        String             @default("")
+  admissionYear     Int?               @map("admission_year")
+  hashtags          String[]           @default([])
   // The Google account's name at the last sign-in, from which onboarding suggests a name and a department.
-  googleName            String                 @default("") @map("google_name")
-  onboardedAt           DateTime?              @map("onboarded_at")
+  googleName        String             @default("") @map("google_name")
+  onboardedAt       DateTime?          @map("onboarded_at")
   // Made when the User is created (src/users/friend-id.ts), and never changed.
-  friendId              String                 @unique @map("friend_id")
+  friendId          String             @unique @map("friend_id")
   // Location Sharing as a whole. Off until the User turns it on; signing in and out leave it as it is.
-  masterSwitchOn        Boolean                @default(false) @map("master_switch_on")
-  sessions              Session[]
-  friendshipsAsA        Friendship[]           @relation("FriendshipUserA")
-  friendshipsAsB        Friendship[]           @relation("FriendshipUserB")
-  inviteLinks           InviteLink[]
-  questHolders          QuestHolder[]
-  ledQuests             Quest[]
-  questJoinRequests     QuestJoinRequest[]
-  questInvitations      QuestInvitation[]
-  meetupsProposed       Meetup[]               @relation("MeetupProposer")
-  meetupsReceived       Meetup[]               @relation("MeetupReceiver")
-  partyMember           PartyMember?
-  ledParties            Party[]
-  partyJoinRequests     PartyJoinRequest[]
-  partyInvitations      PartyInvitation[]
-  timetableClasses      TimetableClass[]
-  resolutionEvents      ResolutionEvent[]
-  userAliases           UserAlias[]
+  masterSwitchOn    Boolean            @default(false) @map("master_switch_on")
+  sessions          Session[]
+  friendshipsAsA    Friendship[]       @relation("FriendshipUserA")
+  friendshipsAsB    Friendship[]       @relation("FriendshipUserB")
+  inviteLinks       InviteLink[]
+  questHolders      QuestHolder[]
+  ledQuests         Quest[]
+  questJoinRequests QuestJoinRequest[]
+  questInvitations  QuestInvitation[]
+  meetupsProposed   Meetup[]           @relation("MeetupProposer")
+  meetupsReceived   Meetup[]           @relation("MeetupReceiver")
+  partyMember       PartyMember?
+  ledParties        Party[]
+  partyJoinRequests PartyJoinRequest[]
+  partyInvitations  PartyInvitation[]
+  timetableClasses  TimetableClass[]
+  resolutionEvents  ResolutionEvent[]
+  userAliases       UserAlias[]
   suggestionImpressions SuggestionImpression[]
 
   @@map("users")
@@ -200,25 +202,32 @@ model Administrator {
 // An Event published to every User, collected from the university's events list or created by an Administrator
 // (README.md: Global Events). A Collection never changes one once it is stored.
 model GlobalEvent {
-  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title        String
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title              String
   // The post's body as text, for a collected event.
-  description  String
+  description        String
   // A Draft may have neither. A day read without a time of day is stored at 00:00 Asia/Seoul.
-  startsAt     DateTime?        @map("starts_at")
-  endsAt       DateTime?        @map("ends_at")
-  place        String?
+  startsAt           DateTime?           @map("starts_at")
+  endsAt             DateTime?           @map("ends_at")
+  place              String?
   // A published event has both.
-  latitude     Float?
-  longitude    Float?
-  state        GlobalEventState @default(draft)
+  latitude           Float?
+  longitude          Float?
+  state              GlobalEventState    @default(draft)
   // Checked and raised by every change an Administrator makes, so that a change from an older version is refused.
-  version      Int              @default(1)
-  // The `bbsidx` and address of a collected event's post. An event an Administrator creates has neither.
-  postNumber   Int?             @unique @map("post_number")
-  sourceUrl    String?          @map("source_url")
-  quests       Quest[]
-  questHolders QuestHolder[]
+  version            Int                 @default(1)
+  // How it came to be published; empty while a Draft and for one discarded as a Draft. Only Administrators see it.
+  publicationRoute   PublicationRoute?   @map("publication_route")
+  // That an Administrator must look at it. Only Administrators see it.
+  needsAdministrator Boolean             @default(false) @map("needs_administrator")
+  // Moved to SourcePost, and read and written by nothing. They stay for one Release so that the old pods of a rolling
+  // update keep working; a later migration drops them.
+  retiredPostNumber  Int?                @unique @map("post_number")
+  retiredSourceUrl   String?             @map("source_url")
+  // None for an event an Administrator created.
+  sessions           SourcePostSession[]
+  quests             Quest[]
+  questHolders       QuestHolder[]
 
   @@map("global_events")
 }
@@ -232,6 +241,168 @@ enum GlobalEventState {
   discarded
 
   @@map("global_event_state")
+}
+
+enum PublicationRoute {
+  administrator
+  // The rules read its time and place from its post.
+  rule
+  judgement
+
+  @@map("publication_route")
+}
+
+// One post on a Source that Global Events were read from. Kept whatever becomes of them, so that the next Collection
+// does not bring a discarded event's post back.
+model SourcePost {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source           Source
+  // What identifies the post on its Source, known from the list before its page is opened: SNU Now's `bbsidx`, or
+  // extra.snu's `dataSeq`.
+  key              String
+  address          String
+  // Where the links of the post's body lead. A link hidden behind words is not in its text.
+  links            String[]            @default([])
+  // When the step after the Collection's answer finished with the post. Empty until then, so that the next Collection
+  // of its Source takes up a post that a failure or a restart left.
+  stepFinishedAt   DateTime?           @map("step_finished_at")
+  // Why the step last failed on the post, and when, for Administrators. Emptied when the step finishes.
+  stepFailure      String?             @map("step_failure")
+  stepFailedAt     DateTime?           @map("step_failed_at")
+  sessions         SourcePostSession[]
+  judgement        Judgement?
+  sameEventAnswers SameEventAnswer[]
+
+  @@unique([source, key])
+  @@map("source_posts")
+}
+
+// One numbered session of a Source Post, linked to the Global Event it belongs to.
+model SourcePostSession {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePostId  String            @map("source_post_id") @db.Uuid
+  number        Int
+  globalEventId String            @map("global_event_id") @db.Uuid
+  attachedBy    SessionAttachment @map("attached_by")
+  // The rule's name or the AI's choice; empty for an event's own session.
+  reason        String?
+  // Whether the rules read the session's time and place when it was stored.
+  readByRules   Boolean           @default(false) @map("read_by_rules")
+  // Whether the post itself states the session's time, and it is not only a header's date, which is often the application
+  // period.
+  timeStated    Boolean           @default(false) @map("time_stated")
+  // Why it waits for an Administrator's decision, as a Draft that is neither judged nor published.
+  heldFor       SessionHold?      @map("held_for")
+  // What the session's own Draft held before the session was attached to another event, the only place the post's title
+  // and text are then kept, so that detaching can make the Draft again.
+  ownDraft      Json?             @map("own_draft")
+  sourcePost    SourcePost        @relation(fields: [sourcePostId], references: [id], onDelete: Cascade)
+  globalEvent   GlobalEvent       @relation(fields: [globalEventId], references: [id], onDelete: Cascade)
+
+  @@unique([sourcePostId, number])
+  @@index([globalEventId])
+  @@map("source_post_sessions")
+}
+
+enum SessionHold {
+  // The post's body links a stored post, but their sessions do not match one to one.
+  link_not_one_to_one
+  // Its title and start equal those of several events, or the AI chose for it an event it chose for another session.
+  several_matches
+  // The AI answered that it is unsure.
+  ai_unsure
+  // The call failed, ran out of time, or answered something the server does not take.
+  ai_failed
+  // The event the AI chose can no longer be chosen, or an event it was not asked about has appeared.
+  candidates_changed
+
+  @@map("session_hold")
+}
+
+enum SameEventOutcome {
+  chosen
+  // None of the candidates is the same event.
+  none
+  unsure
+  // The event was chosen for another session of the post too.
+  several
+  failed
+
+  @@map("same_event_outcome")
+}
+
+// What the AI answered about one session of a post, asked at most once. The session is named by its start, since a
+// session a Judgement read has no row until it is settled. The row is made before the call, so that of two servers one
+// calls and a server that dies during it has used its call. Only Administrators see it.
+model SameEventAnswer {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePostId  String            @map("source_post_id") @db.Uuid
+  startsAt      DateTime          @map("starts_at")
+  // Empty while the call runs.
+  outcome       SameEventOutcome?
+  // What it was asked about and what it chose. Not references: an event may be gone by the time the answer is applied,
+  // which is for the step to find.
+  askedEventIds String[]          @map("asked_event_ids") @db.Uuid
+  chosenEventId String?           @map("chosen_event_id") @db.Uuid
+  reason        String?
+  failure       String?
+  modelId       String?           @map("model_id")
+  claimedAt     DateTime          @map("claimed_at")
+  answeredAt    DateTime?         @map("answered_at")
+  sourcePost    SourcePost        @relation(fields: [sourcePostId], references: [id], onDelete: Cascade)
+
+  @@unique([sourcePostId, startsAt])
+  @@map("same_event_answers")
+}
+
+// The AI's reading of the sessions of a Source Post the rules left Drafts. One per post, since one call reads the whole
+// post, whatever its tries. Only Administrators see it.
+model Judgement {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePostId   String            @unique @map("source_post_id") @db.Uuid
+  // The tries claimed, at most two. A try counts when it is claimed, so that a server that dies during the call has used
+  // it. `source_posts.step_finished_at` has no such limit: the step comes back to a post until it finishes, and asks the
+  // model only while a try is left.
+  attempts       Int               @default(0)
+  // While a server calls the model. So that another server, or the next Collection, does not call it too.
+  claimedAt      DateTime?         @map("claimed_at")
+  // Empty until a try ended.
+  outcome        JudgementOutcome?
+  // Why it could not be made: the error's name, never the post or the answer.
+  failure        String?
+  announcesEvent Boolean?          @map("announces_event")
+  // Per session the values, the quoted lines, each check and the event it was published as: JudgedSession. Dropped
+  // when no answer came.
+  sessions       Json?
+  modelId        String?           @map("model_id")
+  judgedAt       DateTime?         @map("judged_at")
+  // When its passing sessions were published, so that that happens once.
+  publishedAt    DateTime?         @map("published_at")
+  sourcePost     SourcePost        @relation(fields: [sourcePostId], references: [id], onDelete: Cascade)
+
+  @@map("judgements")
+}
+
+enum JudgementOutcome {
+  // The model read the post as announcing an event. Each session passed or failed the checks.
+  judged
+  // The model read the post as announcing no event. It stays a Draft.
+  no_event
+  // An error, a timeout or a malformed answer. Nothing was read.
+  failed
+
+  @@map("judgement_outcome")
+}
+
+// How a session came to be linked to its Global Event.
+enum SessionAttachment {
+  // The event was made from this session.
+  own
+  rule
+  ai
+  administrator
+
+  @@map("session_attachment")
 }
 
 // What one or more Users set out to do (README.md: Quests). Its time and place belong to its Sub Quests.
@@ -507,6 +678,8 @@ enum Source {
   shuttle_vehicles
   // The university's events list, https://www.snu.ac.kr/snunow/events
   snu_events
+  // The university's programme site, https://extra.snu.ac.kr
+  extra_snu
 
   @@map("source")
 }
@@ -519,6 +692,9 @@ model CollectionStatus {
   lastSucceededAt   DateTime? @map("last_succeeded_at")
   lastFailedAt      DateTime? @map("last_failed_at")
   lastFailureReason String?   @map("last_failure_reason")
+  // How many posts its last Collection skipped, needing a sign-in or never reaching their page. Empty for a Source that
+  // has no such posts.
+  lastSkippedPosts  Int?      @map("last_skipped_posts")
 
   @@map("collection_statuses")
 }
@@ -528,17 +704,17 @@ model CollectionStatus {
 model Place {
   // Computed from the origin and its identifier when the seed is loaded, not generated by the database, so that a
   // Place has the same id in every database.
-  id         String       @id @db.Uuid
+  id         String      @id @db.Uuid
   origin     PlaceOrigin
   // The identifier the origin gives the entry.
-  originId   String       @map("origin_id")
+  originId   String      @map("origin_id")
   // Such as `302` or `25-1`. Places such as 자하연 have none.
   number     String?
   name       String
   latitude   Float
   longitude  Float
   // Each a closed ring: [[{ latitude, longitude }, …], …].
-  outlines   Json         @default("[]")
+  outlines   Json        @default("[]")
   subQuests  SubQuest[]
   meetups    Meetup[]
   classTimes ClassTime[]

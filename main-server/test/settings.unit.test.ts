@@ -4,6 +4,9 @@
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -202,56 +205,82 @@ describe('settingsSchema: ANDROID_CERTIFICATE_FINGERPRINTS', () => {
   });
 });
 
-describe("settingsSchema: the Assistant's settings", () => {
-  it('unset → the defaults of .env.example, and no key or model', () => {
-    const unset = { ...valid, OPENROUTER_API_KEY: undefined, ASSISTANT_MODEL: undefined };
-
-    expect(settingsSchema.parse(unset)).toMatchObject({
-      OPENROUTER_API_KEY: '',
-      ASSISTANT_MODEL: '',
-      ASSISTANT_DAILY_MESSAGES: 50,
-      ASSISTANT_MAX_STEPS: 8,
-      ASSISTANT_TIMEOUT_MS: 30_000,
-      ASSISTANT_MAX_OUTPUT_TOKENS: 1000,
+describe('settingsSchema: AUTOMATIC_PUBLICATION', () => {
+  it('unset → on', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_PUBLICATION: undefined })).toMatchObject({
+      AUTOMATIC_PUBLICATION: true,
     });
   });
 
-  describe.each([
-    'ASSISTANT_DAILY_MESSAGES',
-    'ASSISTANT_MAX_STEPS',
-    'ASSISTANT_TIMEOUT_MS',
-    'ASSISTANT_MAX_OUTPUT_TOKENS',
-  ])('%s', (setting) => {
-    it(`0 → refused, naming ${setting}`, () => {
-      expect(refused({ ...valid, [setting]: '0' })).toEqual([setting]);
+  it('off → off', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_PUBLICATION: 'off' })).toMatchObject({
+      AUTOMATIC_PUBLICATION: false,
     });
+  });
 
-    it('1 → accepted as 1', () => {
-      expect(settingsSchema.parse({ ...valid, [setting]: '1' })).toMatchObject({ [setting]: 1 });
-    });
+  it('anything else → refused, naming AUTOMATIC_PUBLICATION', () => {
+    expect(refused({ ...valid, AUTOMATIC_PUBLICATION: 'false' })).toEqual(['AUTOMATIC_PUBLICATION']);
   });
 });
 
-describe('settingsSchema: the global aliases', () => {
-  it('missing → on, with 10 percent held back', () => {
-    expect(settingsSchema.parse(valid)).toMatchObject({
-      ASSISTANT_GLOBAL_ALIASES: true,
-      ASSISTANT_ALIAS_HOLDBACK_PERCENT: 10,
+describe('settingsSchema: AUTOMATIC_JUDGEMENT', () => {
+  it('unset → off, and no key is needed', () => {
+    const unset = {
+      ...valid,
+      AUTOMATIC_JUDGEMENT: undefined,
+      OPENROUTER_API_KEY: undefined,
+      ASSISTANT_MODEL: undefined,
+    };
+
+    expect(settingsSchema.parse(unset)).toMatchObject({
+      AUTOMATIC_JUDGEMENT: false,
+      JUDGEMENT_TIMEOUT_MS: 60_000,
+      JUDGEMENT_MAX_OUTPUT_TOKENS: 4000,
     });
   });
 
-  it('false and 0 → off, with nobody held back', () => {
-    expect(
-      settingsSchema.parse({ ...valid, ASSISTANT_GLOBAL_ALIASES: 'false', ASSISTANT_ALIAS_HOLDBACK_PERCENT: '0' }),
-    ).toMatchObject({ ASSISTANT_GLOBAL_ALIASES: false, ASSISTANT_ALIAS_HOLDBACK_PERCENT: 0 });
+  it('on with the key and the model → on', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
+      AUTOMATIC_JUDGEMENT: true,
+    });
   });
 
-  it.each([
-    ['ASSISTANT_GLOBAL_ALIASES', 'maybe'],
-    ['ASSISTANT_ALIAS_HOLDBACK_PERCENT', '101'],
-    ['ASSISTANT_ALIAS_HOLDBACK_PERCENT', '-1'],
-    ['ASSISTANT_ALIAS_HOLDBACK_PERCENT', '2.5'],
-  ])('%s=%s → refused, naming it', (setting, value) => {
-    expect(refused({ ...valid, [setting]: value })).toEqual([setting]);
+  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming AUTOMATIC_JUDGEMENT', (name) => {
+    const without = { ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
+
+    expect(refused(without)).toEqual(['AUTOMATIC_JUDGEMENT']);
+  });
+
+  it('anything else → refused, naming AUTOMATIC_JUDGEMENT', () => {
+    expect(refused({ ...valid, AUTOMATIC_JUDGEMENT: 'true' })).toEqual(['AUTOMATIC_JUDGEMENT']);
+  });
+});
+
+describe('settingsSchema: SAME_EVENT_AI_CHOICE', () => {
+  it('unset → off, and no key is needed', () => {
+    const unset = {
+      ...valid,
+      SAME_EVENT_AI_CHOICE: undefined,
+      OPENROUTER_API_KEY: undefined,
+      ASSISTANT_MODEL: undefined,
+    };
+
+    expect(settingsSchema.parse(unset)).toMatchObject({ SAME_EVENT_AI_CHOICE: false });
+  });
+
+  it('on with the key and the model → on', () => {
+    expect(settingsSchema.parse({ ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
+      SAME_EVENT_AI_CHOICE: true,
+    });
+  });
+
+  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming SAME_EVENT_AI_CHOICE', (name) => {
+    const without = { ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
+
+    expect(refused(without)).toEqual(['SAME_EVENT_AI_CHOICE']);
+  });
+
+  it('anything else → refused, naming SAME_EVENT_AI_CHOICE', () => {
+    expect(refused({ ...valid, SAME_EVENT_AI_CHOICE: 'true' })).toEqual(['SAME_EVENT_AI_CHOICE']);
   });
 });

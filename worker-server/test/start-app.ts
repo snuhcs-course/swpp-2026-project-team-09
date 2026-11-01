@@ -6,11 +6,13 @@
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
+import { LAUNCH_BROWSER, type LaunchBrowser } from '../src/common/browser-pages.js';
 import { FETCH_MAIN_SERVER } from '../src/common/main-server.js';
 import { FETCH } from '../src/common/page-fetcher.js';
 import { Settings } from '../src/common/settings.js';
@@ -20,15 +22,20 @@ function refuseEveryRequest(): Promise<Response> {
   return Promise.reject(new Error('The tests never call a real Source'));
 }
 
+function refuseEveryBrowser(): ReturnType<LaunchBrowser> {
+  return Promise.reject(new Error('The tests never start a real browser'));
+}
+
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
 // Page requests go to `fetchPage` in place of the real Sources; without one, every request fails. `mainServer` takes
-// the worker's messages in place of the main server.
+// the worker's messages in place of the main server. `launchBrowser` starts a stand-in for the browser.
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   {
     fetchPage = refuseEveryRequest,
     mainServer = new MainServerStub(),
-  }: { fetchPage?: typeof fetch; mainServer?: MainServerStub } = {},
+    launchBrowser = refuseEveryBrowser,
+  }: { fetchPage?: typeof fetch; mainServer?: MainServerStub; launchBrowser?: LaunchBrowser } = {},
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
@@ -40,6 +47,8 @@ export async function startApp(
     .useValue(fetchPage)
     .overrideProvider(FETCH_MAIN_SERVER)
     .useValue(mainServer.fetch)
+    .overrideProvider(LAUNCH_BROWSER)
+    .useValue(launchBrowser)
     .compile();
   const app = moduleRef.createNestApplication<INestApplication<Server>>();
   // On a free port of 127.0.0.1, once. A server that does not listen is started and closed by supertest around each

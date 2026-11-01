@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
@@ -18,11 +19,13 @@ import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
 import { ShuttleModule } from '../shuttle/shuttle.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';
+import { TravelModule } from '../travel/travel.module.js';
 import { type Model, MODEL_PORT, openRouterModel } from './adapter.js';
 import { AliasesController } from './aliases/aliases.controller.js';
 import { AliasesService } from './aliases/aliases.service.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
+import { UserDayService } from './free-time/user-day.service.js';
 import { InductionController } from './induction/induction.controller.js';
 import { InductionService } from './induction/induction.service.js';
 import { ModelReflector, REFLECTOR, type Reflector } from './induction/reflector.js';
@@ -34,13 +37,24 @@ import { SuggestionsService } from './suggestions/suggestions.service.js';
 
 @Module({
   // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule and
-  // PlacesModule give what the resolvers read, and TimetableModule what the grey suggestions do.
-  imports: [FriendsModule, GlobalEventsModule, MenusModule, PlacesModule, QuestsModule, ShuttleModule, TimetableModule],
+  // PlacesModule give what the resolvers read, TimetableModule what the grey suggestions do, and TimetableModule and
+  // TravelModule what the 공강 tools do.
+  imports: [
+    FriendsModule,
+    GlobalEventsModule,
+    MenusModule,
+    PlacesModule,
+    QuestsModule,
+    ShuttleModule,
+    TimetableModule,
+    TravelModule,
+  ],
   controllers: [AssistantController, AliasesController, SuggestionsController, InductionController],
   providers: [
     AssistantService,
     InductionService,
     ResolutionEventsService,
+    UserDayService,
     AliasesService,
     SuggestionsService,
     SuggestionCandidates,

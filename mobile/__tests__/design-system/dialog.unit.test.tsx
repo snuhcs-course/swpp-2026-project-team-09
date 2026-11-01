@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
@@ -46,6 +47,22 @@ describe('Dialog', () => {
     await render(<Dialog confirmLabel="확인" title="다른 기기에서 로그인했어요" visible />);
 
     expect(screen.getAllByRole('button')).toHaveLength(1);
+  });
+});
+
+describe('Dialog, with nothing to go on to', () => {
+  it('has only its cancel when nothing goes on', async () => {
+    await render(<Dialog cancelLabel="계속 사용하기" title="업데이트가 필요합니다" visible />);
+
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: '계속 사용하기' })).toBeVisible();
+  });
+
+  it('has no button for a statement that nothing in the app answers', async () => {
+    await render(<Dialog body="새 버전을 설치해 주세요." title="업데이트가 필요합니다" visible />);
+
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.getByText('새 버전을 설치해 주세요.')).toBeVisible();
   });
 });
 

@@ -1,0 +1,871 @@
+{
+  "what": "The P05 owner checked a sample of the model-drafted wordings of the large world (ticket 02b, large-world-v1).",
+  "sample": {
+    "seed": 20261102,
+    "size": 89,
+    "how": "wordingsSample() in eval/p5/large-world/wordings-sample.ts"
+  },
+  "checkedBy": "Jaehyun0320",
+  "checkedOn": "2026-11-01",
+  "how": "A questionnaire page, each answer saved on choosing it: ok, fix with a replacement, or drop.",
+  "result": {
+    "ok": 89,
+    "fix": 0,
+    "drop": 0,
+    "generalNote": null
+  },
+  "note": "The page showed no typo tag on the three hand-made misspelt traps (풋쌀 번개, 인문대학 재즈 콘서드, 총학생회 채용 박랍회); the owner was told during the check.",
+  "items": [
+    {
+      "key": "badminton",
+      "activity": "배드민턴",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "배드민턴 치실 분",
+      "id": "w001-badminton",
+      "verdict": "ok"
+    },
+    {
+      "key": "badminton",
+      "activity": "배드민턴",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "초보 민턴 모임",
+      "id": "w002-badminton",
+      "verdict": "ok"
+    },
+    {
+      "key": "futsal",
+      "activity": "풋살",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "풋살 한 게임 해요",
+      "id": "w003-futsal",
+      "verdict": "ok"
+    },
+    {
+      "key": "futsal",
+      "activity": "풋살",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "풋살 인원 구해요",
+      "id": "w004-futsal",
+      "verdict": "ok"
+    },
+    {
+      "key": "basketball",
+      "activity": "농구",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "농구 3대3 해요",
+      "id": "w005-basketball",
+      "verdict": "ok"
+    },
+    {
+      "key": "basketball",
+      "activity": "농구",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "같이 농구 해요",
+      "id": "w006-basketball",
+      "verdict": "ok"
+    },
+    {
+      "key": "tennis",
+      "activity": "테니스",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "테니스 복식 구해요",
+      "id": "w007-tennis",
+      "verdict": "ok"
+    },
+    {
+      "key": "tennis",
+      "activity": "테니스",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "테니스 랠리 하실 분",
+      "id": "w008-tennis",
+      "verdict": "ok"
+    },
+    {
+      "key": "bowling",
+      "activity": "볼링",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "볼링 네 명 모아요",
+      "id": "w009-bowling",
+      "verdict": "ok"
+    },
+    {
+      "key": "bowling",
+      "activity": "볼링",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "볼링 한 게임 해요",
+      "id": "w010-bowling",
+      "verdict": "ok"
+    },
+    {
+      "key": "running",
+      "activity": "러닝",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "러닝 같이 해요",
+      "id": "w011-running",
+      "verdict": "ok"
+    },
+    {
+      "key": "running",
+      "activity": "러닝",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "캠퍼스 한 바퀴 달려요",
+      "id": "w012-running",
+      "verdict": "ok"
+    },
+    {
+      "key": "hiking",
+      "activity": "등산",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "관악산 등산 가요",
+      "id": "w013-hiking",
+      "verdict": "ok"
+    },
+    {
+      "key": "hiking",
+      "activity": "등산",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "등산 같이 가실 분",
+      "id": "w014-hiking",
+      "verdict": "ok"
+    },
+    {
+      "key": "meat",
+      "activity": "고기",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "고기 구워 먹어요",
+      "id": "w015-meat",
+      "verdict": "ok"
+    },
+    {
+      "key": "meat",
+      "activity": "고기",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "삼겹쌀 드실 분",
+      "id": "w016-meat",
+      "verdict": "ok"
+    },
+    {
+      "key": "malatang",
+      "activity": "마라탕",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "마라탕 먹으러 가요",
+      "id": "w017-malatang",
+      "verdict": "ok"
+    },
+    {
+      "key": "malatang",
+      "activity": "마라탕",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "마라땅 드실 분",
+      "id": "w018-malatang",
+      "verdict": "ok"
+    },
+    {
+      "key": "cafeteria",
+      "activity": "학식",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "학식 같이 먹어요",
+      "id": "w019-cafeteria",
+      "verdict": "ok"
+    },
+    {
+      "key": "cafeteria",
+      "activity": "학식",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "학생식당 같이 가요",
+      "id": "w020-cafeteria",
+      "verdict": "ok"
+    },
+    {
+      "key": "chicken",
+      "activity": "치킨",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "치킨 같이 드실 분",
+      "id": "w021-chicken",
+      "verdict": "ok"
+    },
+    {
+      "key": "chicken",
+      "activity": "치킨",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "치킨 뜯으실붕",
+      "id": "w022-chicken",
+      "verdict": "ok"
+    },
+    {
+      "key": "donkatsu",
+      "activity": "돈까스",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "돈가스 같이 드실 분",
+      "id": "w023-donkatsu",
+      "verdict": "ok"
+    },
+    {
+      "key": "donkatsu",
+      "activity": "돈까스",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "돈까쓰 드실 분",
+      "id": "w024-donkatsu",
+      "verdict": "ok"
+    },
+    {
+      "key": "pasta",
+      "activity": "파스타",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "파스타 먹으러 가요",
+      "id": "w025-pasta",
+      "verdict": "ok"
+    },
+    {
+      "key": "pasta",
+      "activity": "파스타",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "파스타 먹으러 가오",
+      "id": "w026-pasta",
+      "verdict": "ok"
+    },
+    {
+      "key": "ramen",
+      "activity": "라면",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "심야 라면 모임",
+      "id": "w027-ramen",
+      "verdict": "ok"
+    },
+    {
+      "key": "ramen",
+      "activity": "라면",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "야식 라먄 드실 분",
+      "id": "w028-ramen",
+      "verdict": "ok"
+    },
+    {
+      "key": "delivery",
+      "activity": "배달 음식",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "배달 같이 시켜요",
+      "id": "w029-delivery",
+      "verdict": "ok"
+    },
+    {
+      "key": "delivery",
+      "activity": "배달 음식",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "베민 같이 시켜요",
+      "id": "w030-delivery",
+      "verdict": "ok"
+    },
+    {
+      "key": "boardgame",
+      "activity": "보드게임",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "보드게임 하실 분",
+      "id": "w031-boardgame",
+      "verdict": "ok"
+    },
+    {
+      "key": "boardgame",
+      "activity": "보드게임",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "보드게임 카페 갈붕",
+      "id": "w032-boardgame",
+      "verdict": "ok"
+    },
+    {
+      "key": "coding",
+      "activity": "코딩 스터디",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "코딩 스터디 모집해요",
+      "id": "w033-coding",
+      "verdict": "ok"
+    },
+    {
+      "key": "coding",
+      "activity": "코딩 스터디",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "알고리즘 스터디원 구해요",
+      "id": "w034-coding",
+      "verdict": "ok"
+    },
+    {
+      "key": "toeic",
+      "activity": "토익 스터디",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "토익 같이 공부해요",
+      "id": "w035-toeic",
+      "verdict": "ok"
+    },
+    {
+      "key": "toeic",
+      "activity": "토익 스터디",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "토익 스터디 구해요",
+      "id": "w036-toeic",
+      "verdict": "ok"
+    },
+    {
+      "key": "interview",
+      "activity": "면접 스터디",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "공대 면접 스터디",
+      "id": "w037-interview",
+      "verdict": "ok"
+    },
+    {
+      "key": "interview",
+      "activity": "면접 스터디",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "면접 스터디 구해요",
+      "id": "w038-interview",
+      "verdict": "ok"
+    },
+    {
+      "key": "concert",
+      "activity": "콘서트",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "콘서트 보러 가요",
+      "id": "w039-concert",
+      "verdict": "ok"
+    },
+    {
+      "key": "concert",
+      "activity": "콘서트",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "콘서드 같이 가실 분",
+      "id": "w040-concert",
+      "verdict": "ok"
+    },
+    {
+      "key": "concert",
+      "activity": "콘서트",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 어쿠스틱 콘서트",
+      "id": "w041-concert",
+      "verdict": "ok"
+    },
+    {
+      "key": "concert",
+      "activity": "콘서트",
+      "source": "event",
+      "misspelt": true,
+      "wording": "{host} 재즈 콘서드",
+      "id": "w042-concert",
+      "verdict": "ok"
+    },
+    {
+      "key": "recital",
+      "activity": "독주회",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "피아노 독주회 같이 가실 분",
+      "id": "w043-recital",
+      "verdict": "ok"
+    },
+    {
+      "key": "recital",
+      "activity": "독주회",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "독주외 같이 가요",
+      "id": "w044-recital",
+      "verdict": "ok"
+    },
+    {
+      "key": "recital",
+      "activity": "독주회",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 피아노 독주회",
+      "id": "w045-recital",
+      "verdict": "ok"
+    },
+    {
+      "key": "recital",
+      "activity": "독주회",
+      "source": "event",
+      "misspelt": true,
+      "wording": "{host} 피아노 독주외",
+      "id": "w046-recital",
+      "verdict": "ok"
+    },
+    {
+      "key": "musical",
+      "activity": "뮤지컬",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "뮤지컬 보러 갈 분",
+      "id": "w047-musical",
+      "verdict": "ok"
+    },
+    {
+      "key": "musical",
+      "activity": "뮤지컬",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "뮤지컬 같이 봐오",
+      "id": "w048-musical",
+      "verdict": "ok"
+    },
+    {
+      "key": "musical",
+      "activity": "뮤지컬",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 창작 뮤지컬",
+      "id": "w049-musical",
+      "verdict": "ok"
+    },
+    {
+      "key": "musical",
+      "activity": "뮤지컬",
+      "source": "event",
+      "misspelt": true,
+      "wording": "{host} 창작 뮤지걸",
+      "id": "w050-musical",
+      "verdict": "ok"
+    },
+    {
+      "key": "busking",
+      "activity": "버스킹",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "버스킹 같이 봐요",
+      "id": "w051-busking",
+      "verdict": "ok"
+    },
+    {
+      "key": "busking",
+      "activity": "버스킹",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "버스킴 구경 갈 분",
+      "id": "w052-busking",
+      "verdict": "ok"
+    },
+    {
+      "key": "busking",
+      "activity": "버스킹",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 버스킹",
+      "id": "w053-busking",
+      "verdict": "ok"
+    },
+    {
+      "key": "busking",
+      "activity": "버스킹",
+      "source": "event",
+      "misspelt": true,
+      "wording": "{host} 버스킴",
+      "id": "w054-busking",
+      "verdict": "ok"
+    },
+    {
+      "key": "musicfestival",
+      "activity": "음악제",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "가을 음악제 보러 가실 분",
+      "id": "w055-musicfestival",
+      "verdict": "ok"
+    },
+    {
+      "key": "musicfestival",
+      "activity": "음악제",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "음악재 같이 가요",
+      "id": "w056-musicfestival",
+      "verdict": "ok"
+    },
+    {
+      "key": "musicfestival",
+      "activity": "음악제",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 실내악 음악제",
+      "id": "w057-musicfestival",
+      "verdict": "ok"
+    },
+    {
+      "key": "musicfestival",
+      "activity": "음악제",
+      "source": "event",
+      "misspelt": true,
+      "wording": "{host} 음악재",
+      "id": "w058-musicfestival",
+      "verdict": "ok"
+    },
+    {
+      "key": "photo",
+      "activity": "사진전",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "사진전 주말 관람해요",
+      "id": "w059-photo",
+      "verdict": "ok"
+    },
+    {
+      "key": "photo",
+      "activity": "사진전",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "사진젼 같이 봐요",
+      "id": "w060-photo",
+      "verdict": "ok"
+    },
+    {
+      "key": "photo",
+      "activity": "사진전",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 가을 사진전",
+      "id": "w061-photo",
+      "verdict": "ok"
+    },
+    {
+      "key": "photo",
+      "activity": "사진전",
+      "source": "event",
+      "misspelt": true,
+      "wording": "{host} 사진젼",
+      "id": "w062-photo",
+      "verdict": "ok"
+    },
+    {
+      "key": "art",
+      "activity": "미술전",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "판화전 같이 봐요",
+      "id": "w063-art",
+      "verdict": "ok"
+    },
+    {
+      "key": "art",
+      "activity": "미술전",
+      "source": "quest",
+      "misspelt": true,
+      "wording": "판화젼 같이 봐요",
+      "id": "w064-art",
+      "verdict": "ok"
+    },
+    {
+      "key": "art",
+      "activity": "미술전",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 판화 특별전",
+      "id": "w065-art",
+      "verdict": "ok"
+    },
+    {
+      "key": "art",
+      "activity": "미술전",
+      "source": "event",
+      "misspelt": true,
+      "wording": "{host} 판화젼",
+      "id": "w066-art",
+      "verdict": "ok"
+    },
+    {
+      "key": "lecture",
+      "activity": "특강",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "특강 같이 들어요",
+      "id": "w067-lecture",
+      "verdict": "ok"
+    },
+    {
+      "key": "lecture",
+      "activity": "특강",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "창업 특강 같이 가실 분",
+      "id": "w068-lecture",
+      "verdict": "ok"
+    },
+    {
+      "key": "lecture",
+      "activity": "특강",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 창업 특강",
+      "id": "w069-lecture",
+      "verdict": "ok"
+    },
+    {
+      "key": "infosession",
+      "activity": "설명회",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "설명회 같이 들어요",
+      "id": "w070-infosession",
+      "verdict": "ok"
+    },
+    {
+      "key": "infosession",
+      "activity": "설명회",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "취업 설명회 같이 가요",
+      "id": "w071-infosession",
+      "verdict": "ok"
+    },
+    {
+      "key": "infosession",
+      "activity": "설명회",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 전공 설명회",
+      "id": "w072-infosession",
+      "verdict": "ok"
+    },
+    {
+      "key": "fair",
+      "activity": "박람회",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "채용 박람회 같이 가요",
+      "id": "w073-fair",
+      "verdict": "ok"
+    },
+    {
+      "key": "fair",
+      "activity": "박람회",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "박람회 같이 돌아요",
+      "id": "w074-fair",
+      "verdict": "ok"
+    },
+    {
+      "key": "fair",
+      "activity": "박람회",
+      "source": "event",
+      "misspelt": false,
+      "wording": "{host} 진로 박람회",
+      "id": "w075-fair",
+      "verdict": "ok"
+    },
+    {
+      "key": "tabletennis",
+      "activity": "탁구",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "탁구 한 판 해요",
+      "id": "w076-tabletennis",
+      "verdict": "ok"
+    },
+    {
+      "key": "tabletennis",
+      "activity": "탁구",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "탁구 같이 쳐요",
+      "id": "w077-tabletennis",
+      "verdict": "ok"
+    },
+    {
+      "key": "squash",
+      "activity": "스쿼시",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "스쿼시 한 게임 해요",
+      "id": "w078-squash",
+      "verdict": "ok"
+    },
+    {
+      "key": "squash",
+      "activity": "스쿼시",
+      "source": "quest",
+      "misspelt": false,
+      "wording": "스쿼시 치실 분",
+      "id": "w079-squash",
+      "verdict": "ok"
+    },
+    {
+      "key": "futsal",
+      "activity": "풋살",
+      "source": "trap",
+      "misspelt": true,
+      "wording": "풋쌀 번개",
+      "id": "w080-futsal",
+      "verdict": "ok"
+    },
+    {
+      "key": "lecture",
+      "activity": "특강",
+      "source": "trap",
+      "misspelt": false,
+      "wording": "인문대학 대면 특강",
+      "id": "w081-lecture",
+      "verdict": "ok"
+    },
+    {
+      "key": "lecture",
+      "activity": "특강",
+      "source": "trap",
+      "misspelt": false,
+      "wording": "공과대학 대면 특강",
+      "id": "w082-lecture",
+      "verdict": "ok"
+    },
+    {
+      "key": "lecture",
+      "activity": "특강",
+      "source": "trap",
+      "misspelt": false,
+      "wording": "경영대학 비대면 특강",
+      "id": "w083-lecture",
+      "verdict": "ok"
+    },
+    {
+      "key": "lecture",
+      "activity": "특강",
+      "source": "trap",
+      "misspelt": false,
+      "wording": "사회과학대학 비대면 특강",
+      "id": "w084-lecture",
+      "verdict": "ok"
+    },
+    {
+      "key": "concert",
+      "activity": "콘서트",
+      "source": "trap",
+      "misspelt": true,
+      "wording": "인문대학 재즈 콘서드",
+      "id": "w085-concert",
+      "verdict": "ok"
+    },
+    {
+      "key": "fair",
+      "activity": "박람회",
+      "source": "trap",
+      "misspelt": true,
+      "wording": "총학생회 채용 박랍회",
+      "id": "w086-fair",
+      "verdict": "ok"
+    },
+    {
+      "key": "concert",
+      "activity": "콘서트",
+      "source": "trap",
+      "misspelt": false,
+      "wording": "총학생회 초청 콘서트",
+      "id": "w087-concert",
+      "verdict": "ok"
+    },
+    {
+      "key": "photo",
+      "activity": "사진전",
+      "source": "trap",
+      "misspelt": false,
+      "wording": "제9회 관악 사진전",
+      "id": "w088-photo",
+      "verdict": "ok"
+    },
+    {
+      "key": "art",
+      "activity": "미술전",
+      "source": "trap",
+      "misspelt": false,
+      "wording": "미술대학 판화 특별전",
+      "id": "w089-art",
+      "verdict": "ok"
+    }
+  ],
+  "contextPosts": {
+    "what": "The titles of subset C, in eval/p5/large-world/context-posts.ts, outside the sample.",
+    "confirmedInChat": "The owner took the proposed list whole on 2026-11-01, and decided that 커피 counts as 디저트.",
+    "proposedAfterThat": [
+      "커피 한잔하실 분",
+      "아아 마시러 가요"
+    ],
+    "proposedAfterThatNote": "Told to the owner after that decision; no objection, but not checked one by one.",
+    "titles": [
+      "롤 5대5하실 분 구함",
+      "증바람 5인 너만 오면 고",
+      "칼바람 한 판 하실 분",
+      "발로 듀오 구해요",
+      "피시방 같이 가실 분",
+      "옵치 빠대 2명",
+      "배그 스쿼드 한 자리",
+      "메이플 보스팟 구함",
+      "마리오카트 대결하실 분",
+      "롤체 같이 돌려요",
+      "롤 내전 2명 구함",
+      "두쫀쿠 사러 가실 분",
+      "에그타르트 먹으러 가실 분",
+      "버터떡 웨이팅 같이 해요",
+      "크로플 먹으러 가요",
+      "커피 한잔하실 분",
+      "아아 마시러 가요",
+      "요아정 같이 드실 분",
+      "빙수 나눠 드실 분",
+      "마카롱 투어 가요",
+      "롤케이크 먹으러 가요",
+      "메이플 시럽 와플 드실 분",
+      "치맥 하실 분",
+      "피맥 한잔해요",
+      "막걸리 한잔하실 분",
+      "엽떡 같이 드실 분",
+      "떡튀순 먹으러 가요",
+      "코노 갈 사람",
+      "코인노래방 1시간만",
+      "클밍 같이 가요",
+      "볼더링 처음인데 가실 분",
+      "뜨개 모임 하실 분",
+      "향수 공방 원데이클래스",
+      "방탈출 3인 구해요",
+      "인생네컷 찍으러 가요",
+      "책 모임 하실 분",
+      "롤러장 가실 분",
+      "칼바람 맞으며 러닝해요",
+      "보드게임 카페 갈붕"
+    ]
+  }
+}

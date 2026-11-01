@@ -5,6 +5,7 @@
  * 2026-09-29  Opus 5.5   prompted by TaeHyun79
  * 2026-09-29  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -25,6 +26,9 @@ export async function startPostgres(): Promise<StartedTestContainer> {
     image
       .withEnvironment({ POSTGRES_PASSWORD: 'postgres', MAIN_DB_PASSWORD: 'main', MATCH_DB_PASSWORD: 'match' })
       .withExposedPorts(5432)
+      // An autovacuum worker in a test's database makes DROP DATABASE WITH (FORCE) fail for the role `match`, which may not
+      // terminate it. The tests' tables are thrown away, so nothing needs vacuuming.
+      .withCommand(['postgres', '-c', 'autovacuum=off'])
       // The image logs this once while it creates the databases and once when it is ready.
       .withWaitStrategy(Wait.forLogMessage('database system is ready to accept connections', 2))
       .start()

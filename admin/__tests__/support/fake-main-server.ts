@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type {
@@ -14,9 +15,11 @@ import type {
   ListedGlobalEvent,
   MainServer,
   Place,
+  UnsettledPost,
 } from '@/main-server';
 import type * as MainServerModule from '@/main-server';
 
+import { SameEventRoutes } from './fake-same-event-routes';
 import { FakeUsers } from './fake-users';
 import {
   byStart,
@@ -37,7 +40,7 @@ interface Account extends Administrator {
 }
 
 // Behaves like the main server's administrator routes, and records each request as "METHOD /path".
-class FakeMainServer implements MainServer {
+class FakeMainServer extends SameEventRoutes implements MainServer {
   requests: string[] = [];
   private accounts: Account[] = [];
   private issued = 0;
@@ -45,6 +48,7 @@ class FakeMainServer implements MainServer {
   private places: Place[] = [];
   creations = new FakeCreations();
   private statuses: CollectionStatus[] = [];
+  private unsettled: UnsettledPost[] = [];
   readonly users = new FakeUsers();
 
   reset(): void {
@@ -54,11 +58,17 @@ class FakeMainServer implements MainServer {
     this.places = [];
     this.creations = new FakeCreations();
     this.statuses = [];
+    this.unsettled = [];
+    this.sameEvent.reset();
     this.users.reset();
   }
 
   hasCollectionStatuses(...statuses: CollectionStatus[]): void {
     this.statuses.push(...statuses);
+  }
+
+  hasUnsettledPosts(...posts: UnsettledPost[]): void {
+    this.unsettled.push(...posts);
   }
 
   storedEvents(): GlobalEvent[] {
@@ -177,6 +187,9 @@ class FakeMainServer implements MainServer {
     return this.as(token, () => this.statuses);
   }
 
+  listUnsettledPosts = (token: string): Promise<UnsettledPost[]> =>
+    this.answer('GET /admin/global-events/unsettled-posts', token, () => this.unsettled);
+
   listUsers = (token: string): Promise<AdminUser[]> => this.answer('GET /admin/users', token, () => this.users.list());
   listFriendsOf = (token: string, id: string): Promise<AdminFriend[]> =>
     this.answer(`GET /admin/users/${id}/friends`, token, () => this.users.friendsOf(id));
@@ -207,7 +220,7 @@ class FakeMainServer implements MainServer {
       if (event.state === 'published') {
         this.refuseIncomplete(edited);
       }
-      return this.replace(edited);
+      return this.replace(event.state === 'published' ? { ...edited, publicationRoute: 'administrator' } : edited);
     });
   }
 
@@ -228,7 +241,8 @@ class FakeMainServer implements MainServer {
       if (change === 'publish') {
         this.refuseIncomplete(event);
       }
-      return this.replace(withMissing({ ...event, state: to }));
+      const publicationRoute = change === 'publish' ? 'administrator' : event.publicationRoute;
+      return this.replace(withMissing({ ...event, state: to, publicationRoute }));
     });
   }
 
@@ -270,7 +284,7 @@ class FakeMainServer implements MainServer {
     return account;
   }
 
-  private answer<T>(request: string, token: string, answer: () => T): Promise<T> {
+  protected answer<T>(request: string, token: string, answer: () => T): Promise<T> {
     this.requests.push(request);
     return this.as(token, answer);
   }

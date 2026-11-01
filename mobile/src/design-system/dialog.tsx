@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,18 +18,19 @@ interface DialogProps {
   title: string;
   // What an answer leads to, in plain words.
   body?: string;
-  // The answer that goes on. It is the one fill: in the key colour, or in red for `danger`.
-  confirmLabel: string;
+  // The answer that goes on. It is the one fill: in the key colour, or in red for `danger`. Without it the dialog
+  // has only its cancel, or no button at all, for a statement that nothing in the app can answer.
+  confirmLabel?: string;
   // `danger` for an answer that cannot be taken back, such as "로그아웃".
   tone?: 'primary' | 'danger';
-  // The answer that leaves things as they are. Without it the dialog has one button.
+  // The answer that leaves things as they are. Without it the dialog has the confirming answer alone, or no button.
   cancelLabel?: string;
   onConfirm?: () => void;
-  // Also Android's back button.
+  // Also Android's back button. Without it the back button leaves the dialog open.
   onCancel?: () => void;
 }
 
-// A question with two answers, or a statement with one, over the screen and a scrim. The design system has no
+// A question with two answers, or a statement with one answer or none, over the screen and a scrim. The design system has no
 // dialog; this one is built from its card, its text styles and its Buttons.
 export function Dialog({
   visible,
@@ -55,20 +57,24 @@ export function Dialog({
             {title}
           </Text>
           {body === undefined ? null : <Text style={styles.body}>{body}</Text>}
-          <View style={styles.actions}>
-            {cancelLabel === undefined ? null : (
-              <View style={styles.action}>
-                <Button full onPress={onCancel} variant="secondary">
-                  {cancelLabel}
-                </Button>
-              </View>
-            )}
-            <View style={styles.action}>
-              <Button full onPress={onConfirm} variant={tone === 'danger' ? 'destructive' : 'primary'}>
-                {confirmLabel}
-              </Button>
+          {cancelLabel === undefined && confirmLabel === undefined ? null : (
+            <View style={styles.actions}>
+              {cancelLabel === undefined ? null : (
+                <View style={styles.action}>
+                  <Button full onPress={onCancel} variant="secondary">
+                    {cancelLabel}
+                  </Button>
+                </View>
+              )}
+              {confirmLabel === undefined ? null : (
+                <View style={styles.action}>
+                  <Button full onPress={onConfirm} variant={tone === 'danger' ? 'destructive' : 'primary'}>
+                    {confirmLabel}
+                  </Button>
+                </View>
+              )}
             </View>
-          </View>
+          )}
         </View>
       </View>
     </Modal>

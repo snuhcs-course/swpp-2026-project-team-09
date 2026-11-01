@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { type ConfigPlugin, withAppDelegate, withInfoPlist } from 'expo/config-plugins';
+// eas-cli loads this file through Node's own ESM loader, which needs the `.js`: `expo` has no exports map.
+import { type ConfigPlugin, withAppDelegate, withInfoPlist } from 'expo/config-plugins.js';
 
 // An app built with the iOS 27 SDK (Xcode 27) must adopt the scene life cycle, or it quits at launch with "UIScene
 // life cycle is required for apps built with this SDK". Expo SDK 57 ships the scene delegate, `ExpoAppSceneDelegate`,

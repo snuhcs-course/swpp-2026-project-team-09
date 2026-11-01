@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The main-server client through mainServer's calls, fetch stubbed: its setting, each call's headers and body, and
@@ -93,6 +94,20 @@ describe("The main-server client's address", () => {
       url: `${ADDRESS}/admin/global-events?state=draft`,
       method: 'GET',
       cache: 'no-store',
+    });
+  });
+});
+
+describe('The unsettled posts', () => {
+  it('reads them from their own path, with the token', async () => {
+    answer(Response.json([]));
+
+    await expect(mainServer.listUnsettledPosts(TOKEN)).resolves.toEqual([]);
+
+    expect(sent()).toMatchObject({
+      url: `${ADDRESS}/admin/global-events/unsettled-posts`,
+      method: 'GET',
+      headers: { authorization: `Bearer ${TOKEN}` },
     });
   });
 });

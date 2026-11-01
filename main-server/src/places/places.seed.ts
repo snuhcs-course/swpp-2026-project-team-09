@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { v5 as uuidv5 } from 'uuid';
@@ -156,17 +157,27 @@ async function readPlaces(directory: string, nationalMap: LabelledOutline[]): Pr
   ];
 }
 
+// The Places of the seed files inside the Campus Boundary, each with its id.
+export async function readSeedPlaces(
+  directory: string,
+  boundary: CampusBoundary,
+): Promise<(SeedPlace & { id: string })[]> {
+  const { nationalMap } = await readOutlines(directory);
+  return (await readPlaces(directory, nationalMap))
+    .filter((entry) => boundary.contains(entry))
+    .map((entry) => Object.assign(entry, { id: idOf(entry.origin, entry.originId) }));
+}
+
 // Updates each entry in place by its id, so that whatever points at a Place still does. An entry that has left the
 // seed files stays.
 export async function loadPlaces(prisma: PrismaClient, directory: string, boundary: CampusBoundary): Promise<number> {
   const { nationalMap, openStreetMap } = await readOutlines(directory);
-  const entries = (await readPlaces(directory, nationalMap)).filter((entry) => boundary.contains(entry));
+  const entries = await readSeedPlaces(directory, boundary);
   const given = await readSeedFile(directory, 'place-outlines.json', placeOutlinesFileSchema);
   const found = outlinesOf(entries, nationalMap, openStreetMap, given.places);
   await prisma.$transaction(
     entries.map((entry) => {
-      const { origin, originId, ...values } = entry;
-      const id = idOf(origin, originId);
+      const { id, origin, originId, ...values } = entry;
       const outlines = found.get(entry) ?? [];
       return prisma.place.upsert({
         where: { id },

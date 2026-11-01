@@ -5,7 +5,9 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -51,6 +53,11 @@ export interface RunLimits {
 // which also aborts them.
 const MAX_RETRIES = 0;
 
+// Course names, Friends' names, per-Friend results and the words Users typed reach the provider, so no provider that
+// collects data is used.
+// It adds no ZDR restriction, which could shrink the providers available.
+const PROVIDER_OPTIONS = { openrouter: { provider: { data_collection: 'deny' } } };
+
 // One call to the model with no tools, for the induction's reflector (P07 ticket 07): the text it answers within the
 // time given, and why it stopped (`stop`, or `length` when the tokens ran out, reasoning tokens included). Not
 // retried, as the runs are not.
@@ -65,6 +72,7 @@ export async function completeText(
     maxRetries: MAX_RETRIES,
     maxOutputTokens: call.maxOutputTokens,
     timeout: { totalMs: call.timeoutMs },
+    providerOptions: PROVIDER_OPTIONS,
   });
   return { text, finishReason };
 }
@@ -192,6 +200,8 @@ export async function runFeature(
     shown: lastShown(messages),
     presented: { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] },
     resolutions,
+    judged: new Map(),
+    restaurants: new Map(),
   };
   const { text, finishReason } = await generateText({
     model,
@@ -201,6 +211,7 @@ export async function runFeature(
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
     maxOutputTokens,
+    providerOptions: PROVIDER_OPTIONS,
     timeout: { totalMs: timeoutMs },
     onStepEnd:
       observer === undefined
@@ -222,7 +233,7 @@ export async function runFeature(
   if (finishReason === 'tool-calls' || text.trim() === '') {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
-  return { text, ...context.presented };
+  return { text, ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an
