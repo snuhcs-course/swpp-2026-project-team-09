@@ -37,11 +37,12 @@ function asItsEvent(now: Date, window: RecruitingSearch['window']): Prisma.Sql {
   }`;
 }
 
-// Any other Quest is in a window when it starts in it, and is gone once its start has passed. One without a start has
-// not passed, and falls in no window.
+// Any other Quest is in a window when it starts in it, and is gone once its start has passed. One without a start falls
+// in no window, and is gone once its end has passed.
 function asItsStart(now: Date, window: RecruitingSearch['window']): Prisma.Sql {
   return window === undefined
-    ? Prisma.sql`(first_sub.starts_at IS NULL OR first_sub.starts_at >= ${timestamp(now)})`
+    ? Prisma.sql`(first_sub.starts_at >= ${timestamp(now)}
+        OR (first_sub.starts_at IS NULL AND (first_sub.ends_at IS NULL OR first_sub.ends_at > ${timestamp(now)})))`
     : Prisma.sql`first_sub.starts_at >= ${timestamp(now)} AND first_sub.starts_at >= ${timestamp(window.from)}
         AND first_sub.starts_at < ${timestamp(window.to)}`;
 }
@@ -80,7 +81,7 @@ export async function recruitingSearchIds(
     SELECT q.id
     FROM quests q
     JOIN LATERAL (
-      SELECT s.attending, s.starts_at FROM sub_quests s
+      SELECT s.attending, s.starts_at, s.ends_at FROM sub_quests s
       WHERE s.quest_id = q.id
       ORDER BY s.attending DESC, s.created_at ASC, s.id ASC
       LIMIT 1

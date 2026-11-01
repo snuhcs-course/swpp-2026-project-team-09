@@ -175,6 +175,44 @@ describe('searchRecruitingQuests, once its start has passed', () => {
   });
 });
 
+describe('searchRecruitingQuests, for a Quest with no start', () => {
+  // The files share the database, and no other test seeds this Board and capacity.
+  const own = { board: 'career', capacity: 7 };
+
+  it('gives it after those with a start, until its end has passed, and never in a window', async () => {
+    const dated = await questAt('2093-06-20T10:00:00', own);
+    const noEnd = await questAt('2093-06-20T10:00:00', { ...own, title: '언제든', subQuest: { title: '모임' } });
+    const ending = await questAt('2093-06-20T10:00:00', {
+      ...own,
+      title: '가나다',
+      subQuest: { title: '모임', endsAt: korea('2093-06-20T12:00:00').toISOString() },
+    });
+    clockAt('2093-06-20T09:00:00');
+
+    expect(await questsFound(own)).toEqual([dated, ending, noEnd]);
+    expect(await questsFound({ ...own, from: '2093-06-20', to: '2093-06-20' })).toEqual([dated]);
+
+    clockAt('2093-06-20T12:00:00');
+
+    expect(await questsFound(own)).toEqual([noEnd]);
+  });
+});
+
+describe('searchRecruitingQuests, for a Quest with no start, at the cut', () => {
+  it('takes no place in the list once its end has passed', async () => {
+    const own = { board: 'career', capacity: 6 };
+    await Promise.all(Array.from({ length: 20 }, () => questAt('2093-06-25T18:00:00', own)));
+    const endsAt = korea('2093-06-25T12:00:00').toISOString();
+    await questAt('2093-06-25T18:00:00', { ...own, title: '가나다', subQuest: { title: '모임', endsAt } });
+    await questAt('2093-06-25T18:00:00', { ...own, title: '언제든', subQuest: { title: '모임' } });
+    clockAt('2093-06-25T13:00:00');
+
+    await questsFound(own);
+
+    expect(model.toolResults()).toEqual([expect.objectContaining({ more: true })]);
+  });
+});
+
 describe('searchRecruitingQuests, for a Global Event', () => {
   it('gives a Quest for an event under way, in a window it overlaps and without one, until the event ends', async () => {
     const event = await eventAt('2093-07-01T10:00:00', { endsAt: korea('2093-07-10T18:00:00') });

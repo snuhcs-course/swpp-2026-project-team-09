@@ -26,6 +26,7 @@
 - An event ending at the very minute a window starts does not overlap it, as `searched()` already read a period. `eval/p5/large-world/answers.ts` reads that case as overlapping (`end >= from`). No large-world case's recall depends on it, and the small world was not checked for it.
 - Ties in start order go by title in code points, then id. The spec names no tie rule, the database's own collation does not sort Hangul in 가나다 order, and random ids made the list differ between seedings. `large-v-05` holds only by this order: its card is one of three tied candidates across the twentieth place. Ticket 11's ranking replaces this for cases with words.
 - `after` and `before` also take a time with a zone, read in that zone (PR review, 2026-11-02). Without it, `+09:00`, the form of a candidate's time, was refused, and `Z` passed the schema and was read 9 hours off.
+- A Quest whose first Sub Quest has no start is gone once that Sub Quest's end has passed, even with a later Sub Quest ahead (PR review, 2026-11-02). It goes by its first Sub Quest like any other, and the filter stays before the cut.
 - The Quest search takes no `words` or Place yet (ticket 11), so the intended calls' `words` and `placeId` are dropped by the input schema. The 16 cases this ticket frees hold on the window alone; their `until` is now null. The other 49 marks are as they were.
 - The prompt is unchanged, so the model learns `after` and `before` only from the tool descriptions. Whether it uses them is measured in R1 (ticket 12a).
 

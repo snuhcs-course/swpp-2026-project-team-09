@@ -146,6 +146,33 @@ describe('searchRecruitingQuests, by room', () => {
   });
 });
 
+// More Quests than the list holds, all sooner than the one to find, and each left out by the condition.
+function sooner(body: object, day: string): Promise<string[]> {
+  return Promise.all(Array.from({ length: 21 }, () => questAt(`${day}T09:00:00`, body)));
+}
+
+describe('searchRecruitingQuests, before the list is cut', () => {
+  it.each([
+    ['Full', '2094-08-05', { capacity: 1 }, {}],
+    ['with too few places left', '2094-08-06', { capacity: 2 }, { minPlacesLeft: 2 }],
+    ['of another capacity', '2094-08-07', { capacity: 3 }, { capacity: 4 }],
+  ])('finds the later Quest past those %s', async (_, day, body, condition) => {
+    await sooner(body, day);
+    const later = await questAt(`${day}T18:00:00`, { capacity: 4 });
+
+    expect(await questsFound({ from: day, to: day, ...condition })).toEqual([later]);
+    expect(model.toolResults()).toEqual([expect.objectContaining({ more: false })]);
+  });
+
+  it('finds the later Quest past those the reader asked to join', async () => {
+    const asked = await sooner({ joinPolicy: 'approval' }, '2094-08-08');
+    await Promise.all(asked.map((id) => askToJoin(app, reader, id).expect(201)));
+    const later = await questAt('2094-08-08T18:00:00');
+
+    expect(await questsFound({ from: '2094-08-08', to: '2094-08-08' })).toEqual([later]);
+  });
+});
+
 describe('searchRecruitingQuests, with more conditions', () => {
   const broad = { from: '2094-07-05', to: '2094-07-06' };
   let eventId: string;

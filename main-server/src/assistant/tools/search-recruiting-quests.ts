@@ -66,7 +66,7 @@ function reasonForNone(conditions: Conditions): string {
 export function searchRecruitingQuests(recruiting: RecruitingService): Tool {
   return defineTool({
     description:
-      "Searches the recruiting 파티 (Quests) on the Boards that the User can enter, optionally of one Board, in a time window, whether it is whole days (from, to) or times (after, before), or going to a Global Event. The server already leaves out 파티 that are full, already started, or that the User already asked to join or cannot enter. A 파티 for a Global Event is in the window while the event overlaps it; any other 파티 when it starts in it. Answers candidates, the soonest to start first, with the time in Korean time and place, the Join Policy, the places left and the number of Holders, or result 'none' with the reason. Pick those that fit what the User asked for, then show them with showQuests.",
+      "Searches the recruiting 파티 (Quests) on the Boards that the User can enter, optionally of one Board, in a time window, whether it is whole days (from, to) or times (after, before), or going to a Global Event. The server already leaves out 파티 that are full, already started (a 파티 for a Global Event stays until the event ends), or that the User already asked to join or cannot enter. A 파티 for a Global Event is in the window while the event overlaps it; any other 파티 when it starts in it. Answers candidates, the soonest to start first, with the time in Korean time and place, the Join Policy, the places left and the number of Holders, or result 'none' with the reason. Pick those that fit what the User asked for, then show them with showQuests.",
     input,
     run: async (conditions, { userId, found }) => {
       const { board, globalEventId, minPlacesLeft, capacity } = conditions;

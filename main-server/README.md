@@ -2067,7 +2067,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     with any Sub Quest ahead and is unchanged. A Quest for a Global Event counts as its event, read as it is now: it is
     given until the event ends, and in a window while the event's span overlaps it; a Quest for a cancelled event is
     never given. Any other Quest is in a window when it starts in it, and is never given once its start has passed; one
-    without a start falls in no window. Never given: a Quest with fewer places left than `minPlacesLeft` (default one,
+    without a start falls in no window, and is gone once its end has passed. Never given: a Quest with fewer places left than `minPlacesLeft` (default one,
     so never a Full one), one the User holds or already asked to join, and one for a Global Event of which the User
     holds a Shared Quest. `capacity` is exact. Without a window every other such Quest is a candidate, those without a
     start last. The soonest 20 come first, with `more` when there were more. Each carries its title, Board, Global
