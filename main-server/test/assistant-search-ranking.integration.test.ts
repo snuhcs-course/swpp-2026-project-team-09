@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { refuseMatchServer } from './match-server.js';
-import { connectToDatabase, joinQuest, ownQuest, storeEvent } from './quests.js';
+import { connectToDatabase, inBatches, joinQuest, ownQuest, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -149,7 +150,7 @@ describe('searchRecruitingQuests, counting and cutting', () => {
   });
 
   it('brings in a Quest past those that fill the list, by a word beyond the cut of its description', async () => {
-    await Promise.all(Array.from({ length: 31 }, () => questAt('2092-01-12T09:00:00')));
+    await inBatches(31, () => questAt('2092-01-12T09:00:00'));
     const held = await questAt('2092-01-12T18:00:00', { description: `${'가'.repeat(160)} 콘서트` });
 
     const { more, candidates } = await search('searchRecruitingQuests', {
@@ -181,7 +182,7 @@ describe('searchRecruitingQuests, given too many words', () => {
 describe('searchRecruitingQuests, at its limits', () => {
   it('gives 30 candidates when 30 fit, saying there are no more, with descriptions cut at 150 characters', async () => {
     const description = '가'.repeat(151);
-    await Promise.all(Array.from({ length: 30 }, () => questAt('2092-02-05T09:00:00', { description })));
+    await inBatches(30, () => questAt('2092-02-05T09:00:00', { description }));
 
     const { more, candidates } = await search('searchRecruitingQuests', { from: '2092-02-05', to: '2092-02-05' });
 
