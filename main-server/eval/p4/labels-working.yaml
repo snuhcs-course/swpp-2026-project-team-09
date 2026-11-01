@@ -2,11 +2,15 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # The label drafter's working, word for word, one entry per case: how each `expect` in cases/ was worked by hand from
 # rules.md, world.yaml and travel-fixture.json alone, for the reviewer to check. `open: true` marks an answer the rules
 # leave open, which suite.yaml lists for the person's review.
+#
+# The person's review of 11-01 changed the answers of parties-named-classes, parties-abbreviated-gap-begun and
+# parties-departure-after-asking (rules.md section 15). Their entries here are the draft's, not those answers.
 
 - id: parties-named-classes
   working: |

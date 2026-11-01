@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -90,9 +91,9 @@ const candidateSchema = z.strictObject({
   end: clockSchema.nullable(),
   // None when no item comes before the gap.
   travel: z.strictObject({ mode: modeSchema, minutes: z.int().min(0) }).nullable(),
-  // After a candidate with an end of at most 3 hours, the way to the next item.
+  // After a candidate with an end of at most 3 hours that ends in time, the way to the next item.
   next: z.strictObject({ minutes: z.int().min(0), isClass: z.boolean() }).optional(),
-  // After one with no end or longer than 3 hours.
+  // After any other, the time to leave by.
   leaveBy: clockSchema.optional(),
   endUnknown: z.boolean().optional(),
 });

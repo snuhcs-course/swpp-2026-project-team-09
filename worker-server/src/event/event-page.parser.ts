@@ -4,10 +4,11 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type CheerioAPI, load } from 'cheerio';
-import { type CollectedEvent } from './dto/events-collected.dto.js';
 import { readEventTime } from './event-time.js';
 import { postAddress } from './events-list.js';
 
@@ -24,9 +25,9 @@ export function clean(text: string): string {
   return text.replaceAll('\u00A0', ' ').trim();
 }
 
-// The lines of the body as a browser shows them.
-function bodyLines($: CheerioAPI): string[] {
-  const body = $('.board-view .content').first();
+// The lines of a post's body, the first element `selector` finds, as a browser shows them.
+export function bodyLines($: CheerioAPI, selector: string): string[] {
+  const body = $(selector).first();
   body.find('br').replaceWith(LINE_BREAK);
   body
     .find('p, div, ul, ol, li, table, caption, tr, th, td, h1, h2, h3, h4, h5, h6, blockquote')
@@ -73,9 +74,21 @@ function firstValue(lines: string[], isLabel: (label: string) => boolean): strin
   return null;
 }
 
+// A post as its page reads, with its one time and place: the events list's posts have one session.
+export interface EventPost {
+  postNumber: number;
+  sourceUrl: string;
+  title: string;
+  description: string;
+  start: string | null;
+  end: string | null;
+  readFrom: 'body' | 'header' | null;
+  place: string | null;
+}
+
 // The start and end from the body's time line, or failing it from the header's date, which is often the application
 // period.
-function timeOf(timeLine: string | null, headerDate: string): Pick<CollectedEvent, 'start' | 'end' | 'readFrom'> {
+function timeOf(timeLine: string | null, headerDate: string): Pick<EventPost, 'start' | 'end' | 'readFrom'> {
   const bodyTime = timeLine === null ? null : readEventTime(timeLine);
   if (bodyTime !== null) {
     return { ...bodyTime, readFrom: 'body' };
@@ -87,7 +100,7 @@ function timeOf(timeLine: string | null, headerDate: string): Pick<CollectedEven
   return { start: null, end: null, readFrom: null };
 }
 
-export function parseEventPage(html: string, postNumber: number): CollectedEvent {
+export function parseEventPage(html: string, postNumber: number): EventPost {
   const $ = load(html);
   const view = $('.board-view');
   const title = clean(view.find('.header .title').text());
@@ -99,7 +112,7 @@ export function parseEventPage(html: string, postNumber: number): CollectedEvent
   if ($('link[rel="canonical"]').attr('href') !== sourceUrl) {
     throw new Error(`The page is not post ${postNumber}`);
   }
-  const lines = bodyLines($);
+  const lines = bodyLines($, '.board-view .content');
   return {
     postNumber,
     sourceUrl,

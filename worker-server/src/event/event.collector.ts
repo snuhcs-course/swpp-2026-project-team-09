@@ -5,6 +5,7 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -13,14 +14,14 @@ import { load } from 'cheerio';
 import { Collector, Collects } from '../common/collector.js';
 import { PageFetcher } from '../common/page-fetcher.js';
 import {
-  type CollectedEvent,
+  type CollectedPost,
   EVENT_LIST_SOURCES,
   type EventListSource,
   type EventsCollectedMessage,
 } from './dto/events-collected.dto.js';
 import { type StoredEventPostsQuestion, storedEventPostsAnswerSchema } from './dto/stored-event-posts.dto.js';
 import { type ListedPost, parseEventListPage } from './event-list-page.parser.js';
-import { parseEventPage } from './event-page.parser.js';
+import { type EventPost, parseEventPage } from './event-page.parser.js';
 import { filterDay, type ListFilter, listPageAddress, postAddress } from './events-list.js';
 
 // 00:00, 06:00, 12:00 and 18:00. Provisional, until someone has observed when posts appear.
@@ -38,7 +39,7 @@ function isBlockPage(html: string): boolean {
 }
 
 // A post whose page is not a post, with what the list shows of it, so that it waits as a Draft for an Administrator.
-function unreadablePost({ postNumber, title }: ListedPost): CollectedEvent {
+function unreadablePost({ postNumber, title }: ListedPost): EventPost {
   return {
     postNumber,
     sourceUrl: postAddress(postNumber),
@@ -51,12 +52,31 @@ function unreadablePost({ postNumber, title }: ListedPost): CollectedEvent {
   };
 }
 
+function collectedPost({
+  postNumber,
+  sourceUrl,
+  title,
+  description,
+  start,
+  end,
+  readFrom,
+  place,
+}: EventPost): CollectedPost {
+  return {
+    key: String(postNumber),
+    address: sourceUrl,
+    title,
+    description,
+    sessions: [{ number: 1, start, end, readFrom, place }],
+  };
+}
+
 function asError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
 }
 
 // The post's event, or why its page is not the post.
-function readPost(html: string, postNumber: number): CollectedEvent | Error {
+function readPost(html: string, postNumber: number): EventPost | Error {
   try {
     return parseEventPage(html, postNumber);
   } catch (error) {
@@ -88,14 +108,19 @@ export class EventCollector extends Collector {
   // was read before a stop is handed over with why it stopped, so that it is not read again and the Collection fails.
   private async read(source: EventListSource, now: Date): Promise<EventsCollectedMessage> {
     const listed = await this.readList({ from: filterDay(now, 0), to: filterDay(now, LISTED_DAYS) });
-    const question: StoredEventPostsQuestion = { postNumbers: listed.map(({ postNumber }) => postNumber) };
+    const question: StoredEventPostsQuestion = { source, keys: listed.map(({ postNumber }) => String(postNumber)) };
     const answer = await this.ask('/global-events/stored-posts', question, storedEventPostsAnswerSchema);
-    const stored = new Set(answer.postNumbers);
-    const { events, failure } = await this.readPosts(listed.filter(({ postNumber }) => !stored.has(postNumber)));
+    const stored = new Set(answer.keys);
+    const { posts, failure } = await this.readPosts(listed.filter(({ postNumber }) => !stored.has(String(postNumber))));
     if (failure !== null) {
       this.logger.error(`The Collection of ${source} stopped: ${failure.message}`);
     }
-    return { source, collectedAt: now.toISOString(), failureReason: failure?.message ?? null, events };
+    return {
+      source,
+      collectedAt: now.toISOString(),
+      failureReason: failure?.message ?? null,
+      posts: posts.map((post) => collectedPost(post)),
+    };
   }
 
   private async readList(filter: ListFilter): Promise<ListedPost[]> {
@@ -120,17 +145,17 @@ export class EventCollector extends Collector {
   // three posts in a row are not posts. A post whose page is not a post is kept back, and sent as unreadable once a post
   // after it is read, or when the list ends and the Collection read a post: one that read none cannot tell an odd post
   // from pages that have changed, so it fails and its posts are read again.
-  private async readPosts(posts: ListedPost[]): Promise<{ events: CollectedEvent[]; failure: Error | null }> {
-    const events: CollectedEvent[] = [];
-    let unreadable: CollectedEvent[] = [];
+  private async readPosts(listed: ListedPost[]): Promise<{ posts: EventPost[]; failure: Error | null }> {
+    const posts: EventPost[] = [];
+    let unreadable: EventPost[] = [];
     let problem: Error | null = null;
-    for (const post of posts) {
+    for (const post of listed) {
       let html: string;
       try {
         // oxlint-disable-next-line no-await-in-loop -- no page is asked for after one that failed, which may be blocked
         html = await this.page(postAddress(post.postNumber));
       } catch (error) {
-        return { events, failure: asError(error) };
+        return { posts, failure: asError(error) };
       }
       const read = readPost(html, post.postNumber);
       if (read instanceof Error) {
@@ -139,17 +164,17 @@ export class EventCollector extends Collector {
         unreadable.push(unreadablePost(post));
         if (unreadable.length === UNREADABLE_IN_A_ROW) {
           const failure = `${UNREADABLE_IN_A_ROW} posts in a row could not be read: ${read.message}`;
-          return { events, failure: new Error(failure, { cause: read }) };
+          return { posts, failure: new Error(failure, { cause: read }) };
         }
       } else {
-        events.push(...unreadable, read);
+        posts.push(...unreadable, read);
         unreadable = [];
       }
     }
-    if (events.length === 0 && problem !== null) {
-      return { events, failure: new Error(`No post could be read: ${problem.message}`, { cause: problem }) };
+    if (posts.length === 0 && problem !== null) {
+      return { posts, failure: new Error(`No post could be read: ${problem.message}`, { cause: problem }) };
     }
-    return { events: [...events, ...unreadable], failure: null };
+    return { posts: [...posts, ...unreadable], failure: null };
   }
 
   private async page(url: string): Promise<string> {
