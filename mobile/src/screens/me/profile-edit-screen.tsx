@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +10,7 @@ import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { apiClient } from '@/api/client';
+import { ApiError } from '@/api/errors';
 import { LOBBY_KEY, lobbyQuery } from '@/api/queries';
 import type { Lobby, Profile, ProfileChange } from '@/api/types';
 import { Button, cardStyles, color, FullScreenPanel, LoadingState, space, text, useToast } from '@/design-system';
@@ -19,15 +21,39 @@ import { admissionYears, type YearChoice } from '../onboarding/form';
 import { InterestsSection } from '../onboarding/interests-section';
 import { NameField } from '../onboarding/name-field';
 import { YearField } from '../onboarding/year-field';
+import { type LibraryEdit, LibrarySection } from './library-section';
 
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
 
-interface Edit {
+interface Edit extends LibraryEdit {
   name: string;
   department: string;
   year: YearChoice;
   // Without the '#'.
   interests: readonly string[];
+}
+
+// A 학번 kept as its nine digits, shown with the hyphen the User knows it by: "2026-12345".
+function studentNumberShown(studentNumber: string | null): string {
+  return studentNumber === null ? '' : `${studentNumber.slice(0, 4)}-${studentNumber.slice(4)}`;
+}
+
+// The fields of 도서관 예약 정보 the User changed. A 학번 that differs only by the hyphen is the same one, and an emptied
+// field is sent empty.
+function libraryChangesOf(profile: Profile, edit: Edit): ProfileChange {
+  const change: ProfileChange = {};
+  const studentNumber = edit.studentNumber.trim();
+  if (studentNumber.replace('-', '') !== (profile.studentNumber ?? '')) {
+    change.studentNumber = studentNumber;
+  }
+  const registeredName = edit.registeredName.trim();
+  if (registeredName !== (profile.registeredName ?? '')) {
+    change.registeredName = registeredName;
+  }
+  if (edit.affiliation !== profile.affiliation) {
+    change.affiliation = edit.affiliation;
+  }
+  return change;
 }
 
 // Onboarding's choice for an admission year: a year of its list, "그 외" for any other, and none without one.
@@ -54,7 +80,17 @@ function changesOf(profile: Profile, edit: Edit): ProfileChange {
   if (edit.interests.join('\n') !== profile.hashtags.join('\n')) {
     change.hashtags = [...edit.interests];
   }
-  return change;
+  return { ...change, ...libraryChangesOf(profile, edit) };
+}
+
+// The main server refused the 학번: one of its messages starts with the field's name.
+function refusesStudentNumber(error: unknown): boolean {
+  if (!(error instanceof ApiError) || error.status !== 400) {
+    return false;
+  }
+  const { body } = error;
+  const message: unknown = typeof body === 'object' && body !== null ? Reflect.get(body, 'message') : undefined;
+  return Array.isArray(message) && message.some((line) => typeof line === 'string' && line.startsWith('studentNumber'));
 }
 
 // The department list a department is found in: a graduate one only in the graduate list.
@@ -65,11 +101,17 @@ function levelOf(department: string): CourseLevel {
 }
 
 // Sends the changed fields; the answer's profile replaces the Lobby's, and the screen goes back. A failure leaves the
-// form as it is.
-function useSave(profile: Profile): { working: boolean; save: (edit: Edit) => void } {
+// form as it is: a refused 학번 is marked on its field, and anything else is told by a toast.
+function useSave(profile: Profile): {
+  working: boolean;
+  studentNumberRefused: boolean;
+  forgetRefusal: () => void;
+  save: (edit: Edit) => void;
+} {
   const queryClient = useQueryClient();
   const showToast = useToast();
   const [working, setWorking] = useState(false);
+  const [studentNumberRefused, setStudentNumberRefused] = useState(false);
   const save = (edit: Edit): void => {
     const change = changesOf(profile, edit);
     if (Object.keys(change).length === 0) {
@@ -82,13 +124,20 @@ function useSave(profile: Profile): { working: boolean; save: (edit: Edit) => vo
         queryClient.setQueryData<Lobby>(LOBBY_KEY, (lobby) => lobby && { ...lobby, profile: saved });
         router.back();
       },
-      () => {
+      (error: unknown) => {
         setWorking(false);
-        showToast(NOT_SAVED);
+        if (refusesStudentNumber(error)) {
+          setStudentNumberRefused(true);
+        } else {
+          showToast(NOT_SAVED);
+        }
       },
     );
   };
-  return { working, save };
+  const forgetRefusal = (): void => {
+    setStudentNumberRefused(false);
+  };
+  return { working, studentNumberRefused, forgetRefusal, save };
 }
 
 interface BasicSectionProps {
@@ -133,10 +182,16 @@ function EditForm({ profile }: { profile: Profile }): ReactElement {
     department: profile.department,
     year: yearChoiceOf(profile.admissionYear),
     interests: profile.hashtags,
+    studentNumber: studentNumberShown(profile.studentNumber),
+    registeredName: profile.registeredName ?? '',
+    affiliation: profile.affiliation,
   }));
   const [level] = useState(() => levelOf(profile.department));
-  const { working, save } = useSave(profile);
+  const { working, studentNumberRefused, forgetRefusal, save } = useSave(profile);
   const change = (changed: Partial<Edit>): void => {
+    if (changed.studentNumber !== undefined) {
+      forgetRefusal();
+    }
     setEdit((held) => ({ ...held, ...changed }));
   };
   return (
@@ -165,12 +220,14 @@ function EditForm({ profile }: { profile: Profile }): ReactElement {
             change({ interests });
           }}
         />
+        <LibrarySection change={change} edit={edit} studentNumberRefused={studentNumberRefused} />
       </View>
     </FullScreenPanel>
   );
 }
 
-// 프로필 편집, the `ProfileEdit` frame with the fields the main server stores, from the Lobby's profile.
+// 프로필 편집, the `ProfileEdit` frame with the fields the main server stores, from the Lobby's profile, and 도서관 예약
+// 정보, which the frame does not draw yet.
 export function ProfileEditScreen(): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   if (profile === undefined) {

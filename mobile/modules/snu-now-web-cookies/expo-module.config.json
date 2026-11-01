@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["SnuNowWebCookiesModule"]
+  },
+  "android": {
+    "modules": ["com.bonnieandclaude.snunow.webcookies.SnuNowWebCookiesModule"]
+  }
+}

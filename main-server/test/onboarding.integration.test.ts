@@ -3,6 +3,7 @@
  *
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
-import { getProfile } from './profile.js';
+import { getProfile, NO_LIBRARY_DETAILS } from './profile.js';
 import { postOnboarding, postSignIn, signInBeforeOnboarding, signInResultSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -79,7 +80,11 @@ describe('Completing onboarding', () => {
     const response = await postOnboarding(app, accessToken, profile);
 
     expect(response.status).toBe(204);
-    expect((await getProfile(app, accessToken)).body).toEqual({ ...profile, friendId: A_FRIEND_ID });
+    expect((await getProfile(app, accessToken)).body).toEqual({
+      ...profile,
+      friendId: A_FRIEND_ID,
+      ...NO_LIBRARY_DETAILS,
+    });
     expect(signInResultSchema.parse((await postSignIn(app, { sub })).body).onboarding).toEqual({ completed: true });
   });
 
@@ -95,6 +100,7 @@ describe('Completing onboarding', () => {
       admissionYear: null,
       hashtags: [],
       friendId: A_FRIEND_ID,
+      ...NO_LIBRARY_DETAILS,
     });
   });
 
