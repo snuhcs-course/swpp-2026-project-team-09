@@ -135,15 +135,6 @@ describe('A session that does not pass', () => {
     });
     expect((await world.sourcePost(postNumber)).stepFinishedAt).not.toBeNull();
   });
-
-  it('stays a Draft when read as running over a period, until ticket 07', async () => {
-    world.scripted.script(answer([answeredSession({ overPeriod: true })]));
-    const postNumber = newPost();
-
-    await world.collected(draftPost(postNumber));
-
-    expect((await world.onlyEvent(postNumber)).state).toBe('draft');
-  });
 });
 
 describe('Another Source', () => {
