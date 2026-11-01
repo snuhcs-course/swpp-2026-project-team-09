@@ -18,7 +18,7 @@ import { namedPlace } from './named-place.js';
 
 // The body's time line gave a time of day and the place names one Place. The header's date is often the application
 // period.
-function isReadByRules(session: CollectedSession, named: PlaceDto | null): boolean {
+export function isReadByRules(session: CollectedSession, named: PlaceDto | null): boolean {
   return session.readFrom === 'body' && session.start?.hasTimeOfDay === true && named !== null;
 }
 
