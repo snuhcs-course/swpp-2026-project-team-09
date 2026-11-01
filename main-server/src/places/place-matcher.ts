@@ -10,6 +10,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GlobalAliases } from '../assistant/aliases/global-aliases.js';
 import { PersonalAliases } from '../assistant/aliases/personal-aliases.js';
+import { RejectedAliases } from '../assistant/aliases/rejected-aliases.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type Settings } from '../common/settings.js';
 import { toPlaceDto } from './dto/place.dto.js';
@@ -37,7 +38,11 @@ export class PlaceMatcher implements OnModuleInit {
       holdbackPercent: this.settings.get('ASSISTANT_ALIAS_HOLDBACK_PERCENT', { infer: true }),
     });
     const curated = new CuratedGroups(places);
-    this.index = new PlaceIndex(places, [new PersonalAliases(this.prisma), global, curated]);
+    this.index = new PlaceIndex(
+      places,
+      [new PersonalAliases(this.prisma), global, curated],
+      new RejectedAliases(this.prisma),
+    );
     this.rules = new PlaceIndex(places, [curated]);
   }
 

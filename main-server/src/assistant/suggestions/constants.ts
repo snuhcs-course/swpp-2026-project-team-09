@@ -58,8 +58,10 @@ export const REPEATS_MIN = 2;
 // note 10 §1, ProactiveBench's missed needs, ICLR 2025). The replay settles outcomes at the same 10 minutes.
 export const TYPED_WITHIN_MINUTES = 10;
 
-// The share of impressions drawn uniformly among the templates above their threshold, so that the log holds the
-// random traffic an offline replay needs; the rest show the top score.
+// The share of impressions drawn uniformly among every eligible template, those under their threshold included, so
+// that the log holds the random traffic an offline replay needs and a template two cold impressions sank under its
+// threshold keeps getting impressions, by which its acceptance can recover; the rest show the best score above its
+// threshold. Nothing is drawn during a cooldown or behind the gate.
 export const EXPLORE = 0.1;
 
 // The User's own acceptance of the suggestions shown to them lately, smoothed as a template's is, under which nothing

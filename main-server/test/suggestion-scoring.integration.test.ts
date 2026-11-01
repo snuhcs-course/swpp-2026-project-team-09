@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -168,5 +169,23 @@ describe('the exposure', () => {
     expect(shownByChance?.propensity).toBeCloseTo(0.1 / 2);
     expect(shownOnTop).toMatchObject({ template: 'repeat_last', eligible });
     expect(shownOnTop?.propensity).toBeCloseTo(0.9 + 0.1 / 2);
+  });
+
+  it('shows a template under its threshold one time in ten too, so that its acceptance can recover', async () => {
+    const card = await openEvent(24);
+    await mondayClass(app, user, '13:00', '14:15', place301.id);
+    const shownAt = korea(day(24), '11:00');
+    await storeImpressions(prisma, other.id, 'route_to_next_class', 'midday', shownAt, { shown: 2, accepted: 0 });
+    clock.mockReturnValue(korea(day(24), '12:10'));
+
+    random.mockReturnValueOnce(0.05).mockReturnValueOnce(0.9);
+    const explored = await suggestionFor(app, user, card);
+
+    const impression = await impressionOf(explored?.id);
+    expect(impression).toMatchObject({
+      template: 'route_to_next_class',
+      eligible: ['party_for_open_event', 'route_to_next_class'],
+    });
+    expect(impression?.propensity).toBeCloseTo(0.1 / 2);
   });
 });
