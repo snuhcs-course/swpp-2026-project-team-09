@@ -76,19 +76,19 @@ function sameDay(at: Date, label: string): boolean {
   return day !== null && dayOf(at) === dayOf(day.at);
 }
 
-export function startIsRight({ start, overPeriod }: OutputSession, gold: GoldSession | undefined): boolean {
+export function startIsRight({ start }: OutputSession, gold: GoldSession | undefined): boolean {
   if (start === null || gold === undefined || gold.start === 'none') {
     return false;
   }
   if (hasClock(gold.start)) {
     return sameMoment(start, gold.start);
   }
-  return sameDay(start, gold.start) && (overPeriod || isDayAlone(start));
+  return sameDay(start, gold.start) && (gold.overPeriod || isDayAlone(start));
 }
 
 // An end the post does not give is made up. One left out of what the post gives only lowers C4's recall. A label of a day
-// alone is compared by day for a period, and away from one a time of day is wrong.
-export function endIsWrong({ end, overPeriod }: OutputSession, gold: GoldSession | undefined): boolean {
+// alone is compared by day for a period, as the answer says one, and away from one a time of day is wrong.
+export function endIsWrong({ end }: OutputSession, gold: GoldSession | undefined): boolean {
   if (end === null) {
     return false;
   }
@@ -98,7 +98,7 @@ export function endIsWrong({ end, overPeriod }: OutputSession, gold: GoldSession
   if (hasClock(gold.end)) {
     return !sameMoment(end, gold.end);
   }
-  return !sameDay(end, gold.end) || !(overPeriod || isDayAlone(end));
+  return !sameDay(end, gold.end) || !(gold.overPeriod || isDayAlone(end));
 }
 
 export function isPublishedWrong(output: OutputSession, gold: GoldSession | undefined): boolean {

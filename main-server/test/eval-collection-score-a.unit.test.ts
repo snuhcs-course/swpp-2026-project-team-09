@@ -84,10 +84,11 @@ describe('aligning outputs with the answer', () => {
 });
 
 describe('what is wrong in a published session', () => {
-  it('reads a label of a day alone as that day, but not a time on it away from a period', () => {
+  it('reads a label of a day alone as that day, but not a time on it away from a period the answer says', () => {
     const answer = gold({ start: '2026-11-02', end: 'none' });
     expect(startIsRight(output(), answer)).toBe(false);
-    expect(startIsRight(output({ overPeriod: true }), answer)).toBe(true);
+    expect(startIsRight(output(), { ...answer, overPeriod: true })).toBe(true);
+    expect(startIsRight(output({ overPeriod: true }), answer)).toBe(false);
     expect(startIsRight(output({ start: new Date('2026-11-02T00:00:00+09:00') }), answer)).toBe(true);
   });
 
@@ -100,8 +101,9 @@ describe('what is wrong in a published session', () => {
   it('reads the last minute of a period as its day, but not a time of day away from a period', () => {
     const answer = gold({ end: '2026-11-30' });
     const end = new Date('2026-11-30T23:59:00+09:00');
-    expect(endIsWrong(output({ end, overPeriod: true }), answer)).toBe(false);
+    expect(endIsWrong(output({ end }), { ...answer, overPeriod: true })).toBe(false);
     expect(endIsWrong(output({ end }), answer)).toBe(true);
+    expect(endIsWrong(output({ end, overPeriod: true }), answer)).toBe(true);
     expect(endIsWrong(output({ end: new Date('2026-11-30T00:00:00+09:00') }), answer)).toBe(false);
   });
 });

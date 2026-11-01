@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -133,14 +134,23 @@ function naiveFate(session: ComparableSession, events: CandidateEvent[]): Sessio
     : { number: session.number, kind: 'attached', to: closest.id, by: 'similar', candidates };
 }
 
-// The link rule, as attachLinked decides: empty when it leaves the post to the rest of the step.
+// A stored post's sessions as attachLinked counts them: those the worker sent, and those a Judgement added.
+function storedNumbers(reading: PostReading): number[] {
+  const parsed = reading.post.sessions.map(({ number }) => number);
+  const judged = comparableSessions(reading).map(({ number }) => number);
+  return [...new Set([...parsed, ...judged])].toSorted((one, other) => one - other);
+}
+
+// The link rule, as attachLinked decides: empty when it leaves the post to the rest of the step. It reads the whole store,
+// not the set, so every post the body names counts as stored: a Source's posts come in together. One named post outside
+// the set has no sessions here to compare with, and is left to the rest of the step.
 function linkFates({ reading: { post }, partners }: NewPost): SessionFate[] | null {
   const named = namedPosts(post, post.description);
   const linked = partners.filter(({ reading: { post: other } }) =>
     named.some(({ source, key }) => source === other.source && key === other.key),
   );
-  const [only, other] = linked;
-  if (only === undefined) {
+  const [only] = linked;
+  if (named.length === 0 || (named.length === 1 && only === undefined)) {
     return null;
   }
   const allSessions = linked.flatMap(
@@ -150,7 +160,8 @@ function linkFates({ reading: { post }, partners }: NewPost): SessionFate[] | nu
       },
     }) => sessions.map(({ number }) => sessionId(name, number)),
   );
-  if (other !== undefined || only.reading.post.sessions.length !== post.sessions.length) {
+  const numbers = only === undefined ? [] : storedNumbers(only.reading);
+  if (only === undefined || named.length > 1 || numbers.length !== post.sessions.length) {
     return post.sessions.map(({ number }) => ({
       number,
       kind: 'held',
@@ -160,13 +171,13 @@ function linkFates({ reading: { post }, partners }: NewPost): SessionFate[] | nu
   }
   // A linked event no one read a time for takes nothing.
   const read = new Set(comparableSessions(only.reading).map(({ number }) => number));
-  if (!only.reading.post.sessions.every(({ number }) => read.has(number))) {
+  if (!numbers.every((number) => read.has(number))) {
     return null;
   }
   return post.sessions.map(({ number }, index) => ({
     number,
     kind: 'attached',
-    to: sessionId(only.reading.post.post, only.reading.post.sessions[index]?.number ?? number),
+    to: sessionId(only.reading.post.post, numbers[index] ?? number),
     by: 'link',
     candidates: allSessions,
   }));

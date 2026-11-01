@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { type GoldPair } from '../eval/collection/gold.ts';
 import { titleSimilarity } from '../eval/collection/same-event-step.ts';
 import { isEarlier, scoreB } from '../eval/collection/score-b.ts';
 import { verdictsOf } from '../eval/collection/verdicts.ts';
@@ -96,6 +98,36 @@ describe("08a's rules: a link", () => {
     expect(d6).toEqual({ k: 0, n: 1 });
   });
 
+  it('holds a post that also names a post outside the set, as the whole store would', async () => {
+    const description =
+      'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM1 https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM2';
+    const { pairs, d1, d4 } = await scoreB(
+      [pair('b-1', STORED, NEW, false, 'in-person-or-online')],
+      worldOf(reading(STORED), reading(NEW, { title: '둘', description })),
+      'rules',
+      NEVER_ASKED,
+    );
+    expect(pairs[0]?.result).toBe('held');
+    expect(d1).toBe(0);
+    expect(d4).toEqual({ k: 1, n: 1, byHold: { link_not_one_to_one: 1 } });
+  });
+
+  it('counts a session a Judgement added to the linked post, as its rows are', async () => {
+    const description = 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM1';
+    const stored = reading(STORED);
+    const [first] = stored.outputs;
+    const added = first === undefined ? [] : [{ ...first, number: 2, via: 'judgement' as const }];
+    const { pairs } = await scoreB(
+      [pair('b-1', STORED, NEW, true, 'body-link')],
+      worldOf({ ...stored, outputs: [...stored.outputs, ...added] }, reading(NEW, { title: '둘', description })),
+      'rules',
+      NEVER_ASKED,
+    );
+    expect(pairs[0]?.result).toBe('held');
+  });
+});
+
+describe("08a's rules: a link and the rest of the step", () => {
   it('leaves a post alone when the linked post has a session no one read', async () => {
     const description = 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM1';
     const { pairs } = await scoreB(
@@ -105,6 +137,28 @@ describe("08a's rules: a link", () => {
       NEVER_ASKED,
     );
     expect(pairs[0]).toMatchObject({ result: 'none', by: null });
+  });
+});
+
+function ofSession(session: number): GoldPair {
+  return Object.assign(pair(`b-${session}`, STORED, NEW, true), {
+    a: { post: STORED, session },
+    b: { post: NEW, session },
+  });
+}
+
+describe('D1', () => {
+  it('counts a session attached to another session of a true pair of posts', async () => {
+    const other = new Date('2026-11-09T14:00:00+09:00');
+    const { d1, d2, rows } = await scoreB(
+      [ofSession(1), ofSession(2)],
+      worldOf(reading(STORED, { starts: [START, other] }), reading(NEW, { starts: [other, null] })),
+      'rules',
+      NEVER_ASKED,
+    );
+    expect(d2.fp).toBe(0);
+    expect(d1).toBe(1);
+    expect(rows.map(({ failed }) => failed)).toContain('다른 회차에 붙음 (title)');
   });
 });
 

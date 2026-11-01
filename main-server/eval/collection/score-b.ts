@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type GoldPair, type PairSide } from './gold.ts';
@@ -104,10 +105,12 @@ function newPosts(pairs: GoldPair[], readings: Map<string, PostReading>): NewPos
 
 const inScope = (side: PairSide, number: number): boolean => side.session === null || side.session === number;
 
+const isOfSide = (id: string, side: PairSide): boolean =>
+  id.startsWith(`${side.post}#`) && (side.session === null || id === sessionId(side.post, side.session));
+
 function pairResult(pair: GoldPair, fates: SessionFate[]): PairResult {
   const { stored, fresh } = storedAndNew(pair);
-  const toStored = (id: string): boolean =>
-    id.startsWith(`${stored.post}#`) && (stored.session === null || id === sessionId(stored.post, stored.session));
+  const toStored = (id: string): boolean => isOfSide(id, stored);
   const own = fates.filter(({ number }) => inScope(fresh, number));
   const attached = own.find((fate) => fate.kind === 'attached' && toStored(fate.to));
   const held = own.some((fate) => fate.kind === 'held' && fate.candidates.some((id) => toStored(id)));
@@ -170,6 +173,26 @@ function rowsOf(
   });
 }
 
+// An attachment no pair speaks of: a session of a true pair of posts gone to another session of them. It merged two events
+// as a false pair does, which no pair's result shows.
+function strayAttachments(pairs: GoldPair[], fates: Map<string, SessionFate[]>): FailureRowB[] {
+  return [...fates].flatMap(([post, ofPost]) =>
+    ofPost.flatMap((fate): FailureRowB[] => {
+      const isSpokenOf =
+        fate.kind === 'attached' &&
+        pairs.some((pair) => {
+          const { stored, fresh } = storedAndNew(pair);
+          return fresh.post === post && inScope(fresh, fate.number) && isOfSide(fate.to, stored);
+        });
+      if (fate.kind !== 'attached' || isSpokenOf) {
+        return [];
+      }
+      const cause = fate.by === 'ai' ? '모델 판단' : '금지 규칙';
+      return [{ id: `${post} (${fate.number})`, failed: `다른 회차에 붙음 (${fate.by})`, cause }];
+    }),
+  );
+}
+
 // A post that many-to-one pairs share with several others, and every pair it is in.
 function groupsOf(pairs: GoldPair[]): GoldPair[][] {
   const manyToOne = pairs.filter(({ chosenAs }) => chosenAs === 'many-to-one');
@@ -223,8 +246,9 @@ export async function scoreB(
       return found === sameEvent;
     });
   const d2 = d2Of(results);
+  const strays = strayAttachments(pairs, fates);
   return {
-    d1: d2.fp,
+    d1: d2.fp + strays.length,
     d2,
     recallWithQueue: { k: truths.filter(({ result }) => result !== 'none').length, n: truths.length },
     d3: { k: truths.filter(({ reached }) => reached).length, n: truths.length },
@@ -232,6 +256,6 @@ export async function scoreB(
     d5: { k: groups.filter((group) => isRightGroup(group)).length, n: groups.length },
     d6: { k: d2.tp, n: truths.length },
     pairs: results,
-    rows: rowsOf(results, pairs, readings, mode),
+    rows: [...rowsOf(results, pairs, readings, mode), ...strays],
   };
 }
