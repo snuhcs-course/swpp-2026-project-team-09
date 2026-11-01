@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Measured, type P5Report, type Verdict } from './report.ts';
@@ -21,7 +22,7 @@ export function p5Section(
 ): string[] {
   return [
     '## The P05 suite',
-    'k/n counts runs. G1 comes from `pnpm eval:compare` over the P19 baseline. A subset of five cases moves by 20% with one case, and a smaller improvement is a direction only.',
+    'k/n counts runs. G1 is read from three P19 runs against the three of R0. A subset of five cases moves by 20% with one case, and a smaller improvement is a direction only.',
     table(
       ['Metric', 'Measured', 'Thresholds'],
       metrics.map(({ metric, k, n, verdicts }) => [
