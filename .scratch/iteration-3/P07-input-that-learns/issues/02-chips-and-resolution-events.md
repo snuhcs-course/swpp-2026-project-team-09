@@ -32,7 +32,7 @@ On branch `3.0/P07-02-chips-and-resolution-events`, from `2d8ec933`.
 - `src/common/normalise-words.ts`: `normaliseWords` replaces the matcher's `key()` and the Friend resolver's `bare()`, and keys every row. The resolvers' answers are unchanged.
 - `feature.ts`: `Choice`, `Presented.choices`, `chosen` on a User `ChatMessage`, and one new field on `ToolContext`, `resolutions`, a per-run `ResolutionLog` (`answered`, `edited`). `tools/resolved.ts` gains `settle`, which each resolver now calls: the ids go to `FoundIds`, a `several` answer's candidates become choices (plain label, trimmed words, each kind and id once), and the answer is recorded. `recordPlaceChange` there writes the `edited` row for `proposeQuest`.
 - `chosen.ts` checks a `chosen` again (Place in `PlacesService.list`, Friend in `listFriends`, event through a new `GlobalEventsService.notEndedAmong` with the search's not-ended rule). `AssistantService.reply` does it before the run, inside the 503 guard, writes the `chosen` row, and passes the checked choice on the last message; `runFeature` seeds `FoundIds` from it and `contentOf` adds the `[Chosen: …]` line.
-- `resolution-events.service.ts`: `ResolutionEventsService` (`answered`, `chosen`, `edited`, `forRun`), every write in a try that logs `A resolution event was not recorded: <error name> [Prisma code]` and never the words. Model `ResolutionEvent`, migration `20261101200000_add_resolution_events`.
+- `resolution-events.service.ts`: `ResolutionEventsService` (`answered`, `chosen`, `edited`, `forRun`), every write in a try that logs `A resolution event was not recorded: <error name> [Prisma code]` and never the words. Model `ResolutionEvent`, migration `20261102010000_add_resolution_events`.
 
 Decisions where the spec left room:
 

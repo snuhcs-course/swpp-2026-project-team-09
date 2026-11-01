@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "16201002",
+    "NAME": "STUDIO B",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "21㎡, 강의/일반 영상 촬영, 인터뷰, 화상회의/발표|86인치 TV, 강연대|모니터링 TV, 크로마키(녹), 배경지(베,검)|HD 캠코더, LED 조명, 오디오믹서, 마이크|통합방송S/W(Live stream)",
+    "SEAT_IMAGE": "/MAP/POP/pop_16201002.png",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "16201002"
+  }
+}
