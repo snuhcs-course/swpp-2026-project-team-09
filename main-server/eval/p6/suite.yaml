@@ -1,0 +1,95 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# The P6 suite (P06 spec, "The P6 eval suite"; ticket 06): 관정 booking and the tutorial in the Assistant. Its cases are
+# under cases/, its world is world.yaml and its rules rules.md. `pnpm eval --world p6` runs it: every case has
+# `repeat: 3`, so that a pass rate is the mean of the 3 runs.
+#
+# A SKELETON, not yet frozen. The cases hold no `expect` until the blind draft (labels-working.yaml) and the owner's
+# review (labels-notes.md); until then a run loads them and fails every one. The thresholds below are the spec's
+# proposals, to freeze at C0: everything (cases, world, rules, labels, thresholds) is committed and tagged C0 before R0.
+# A value changed after a result is entered with `revises:` and `reason:`, as P5's are.
+world: p6
+
+cases:
+  p6-spaces: 14
+  p6-conditions: 12
+  p6-refusals: 10
+  p6-group-rooms: 7
+  p6-bookings: 5
+  p6-tutorial: 8
+  p6-common: 4
+
+# The case subsets the metrics are reported on.
+subsets:
+  # M1's alias subset: site aliases, proposed aliases and purposes.
+  siteAliases: [p6-spaces-alias-studio, p6-spaces-alias-vr, p6-spaces-alias-whiteboard, p6-spaces-alias-7b-notebook]
+  # The four alias cases: proposed aliases and purposes, the meaning labels the owner reviews and the second labeller
+  # labels.
+  proposedAliases: [p6-spaces-purpose-movie, p6-spaces-alias-quiet, p6-spaces-purpose-livestream, p6-spaces-alias-imac]
+  # M3, by kind.
+  refusalUnsupported: [p6-refusals-main-library, p6-refusals-other-floor, p6-refusals-other-library]
+  refusalNotOnline: [p6-refusals-g202, p6-refusals-info-search, p6-refusals-carrel, p6-spaces-purpose-movie]
+  refusalOutOfWindow: [p6-refusals-seat-tomorrow, p6-refusals-room-in-four-days, p6-refusals-late-and-long]
+  refusalNotEligible: [p6-refusals-grad-room-undergraduate]
+  # The 8-people party limit.
+  partyLimit: [p6-group-rooms-nine-people, p6-group-rooms-g201]
+
+# P19 cases whose expected answer this work changes, not edited, reported apart in the regression. Each is listed with
+# the P6 case that holds the new answer.
+superseded:
+  - { case: out-of-scope-library-seats, heldBy: p6-common-central-library-seats }
+
+score:
+  # A case passes when all its assertions hold. The mean of the 3 runs.
+  runs: 3
+
+# The spec's proposals, to freeze at C0. `declared` is set at the freeze.
+thresholds:
+  - { id: M1, metric: M1, measure: space resolution accuracy, comparator: '>=', value: 0.9, declared: null }
+  - { id: M1-aliases, metric: M1, measure: alias subset, comparator: '>=', value: 0.8, declared: null }
+  - { id: M2, metric: M2, measure: each field's accuracy, comparator: '>=', value: 0.9, declared: null }
+  - { id: M2-useDesc, metric: M2, measure: useDesc accuracy, comparator: '>=', value: 0.8, declared: null }
+  - { id: M3, metric: M3, measure: each refusal kind's share of runs, comparator: '>=', value: 0.9, declared: null }
+  - {
+      id: M4,
+      metric: M4,
+      measure: book,
+      cancel or return cards in replies not labelled that action,
+      over all runs (a hard gate),
+      comparator: '=',
+      value: 0,
+      declared: null,
+    }
+  - { id: M5, metric: M5, measure: grounded tutorial replies, comparator: '>=', value: 0.9, declared: null }
+  - { id: overall, metric: overall, measure: cases passed, comparator: '>=', value: 0.8, declared: null }
+  - {
+      id: per-category,
+      metric: overall,
+      measure: each category's cases passed,
+      comparator: '>=',
+      value: 0.7,
+      declared: null,
+    }
+
+labels:
+  # A separate agent that reads only rules.md, world.yaml, the catalogue, content/tutorial.yaml and the questions.
+  draftedBy: null
+  draftedOn: null
+  reviewedBy: null
+  reviewedOn: null
+  # A teammate who labels 10 cases from scratch.
+  secondLabeller: null
+  overlap: []
+  agreement: null
+  # What the rules left open, with the drafter's reason and the review's answer.
+  openForReview: []
+
+# Set at C0 and at each run.
+freeze:
+  c0Tag: null
+  c0Commit: null
+runs: []

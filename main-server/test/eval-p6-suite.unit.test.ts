@@ -1,0 +1,177 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
+import { readdirSync, readFileSync } from 'node:fs';
+import { parse } from 'yaml';
+import { z } from 'zod';
+import { casesIn, loadCases, nowOf, unlabelled } from '../eval/cases.ts';
+import { FIXED_SET } from '../eval/fixed-set.ts';
+import { FAKE_STUDENT_NUMBER, p6WorldData, STUDENT_NUMBER_LIKE } from '../eval/p6/world-data.ts';
+import { tutorialState } from '../src/tutorial/tutorial-state.js';
+
+// The P6 suite's files (P06 ticket 06), without a model or a database: the cases load in the spec's categories and
+// counts, the suite lists what the ticket asks for, the world says what the cases need, and no file of the suite holds
+// anything written like a 학번 but the fake ones. Reported apart from the product's pyramid (ADR 0007).
+
+const P6 = new URL('../eval/p6/', import.meta.url);
+
+const cases = casesIn(loadCases(), 'p6');
+const ids = cases.map(({ id }) => id);
+const data = p6WorldData();
+
+const suiteSchema = z.looseObject({
+  world: z.literal('p6'),
+  cases: z.record(z.string(), z.int()),
+  subsets: z.record(z.string(), z.array(z.string())),
+  superseded: z.array(z.strictObject({ case: z.string(), heldBy: z.string() })),
+  thresholds: z.array(z.looseObject({ id: z.string(), metric: z.string(), value: z.number() })),
+});
+
+const suite = suiteSchema.parse(parse(readFileSync(new URL('suite.yaml', P6), 'utf8')));
+
+// Every file of the suite, the cases' too, as text.
+function suiteFiles(): { name: string; text: string }[] {
+  const top = readdirSync(P6).filter((name) => /\.(?:ya?ml|md|json)$/u.test(name));
+  const inCases = readdirSync(new URL('cases/', P6)).map((name) => `cases/${name}`);
+  return [...top, ...inCases].map((name) => ({ name, text: readFileSync(new URL(name, P6), 'utf8') }));
+}
+
+describe('The P6 cases', () => {
+  it("hold the spec's seven categories with its counts, 60 in all", () => {
+    const counts = Object.fromEntries(Object.keys(suite.cases).map((category) => [category, 0]));
+    for (const { category } of cases) {
+      counts[category] = (counts[category] ?? 0) + 1;
+    }
+
+    expect(counts).toEqual({
+      'p6-spaces': 14,
+      'p6-conditions': 12,
+      'p6-refusals': 10,
+      'p6-group-rooms': 7,
+      'p6-bookings': 5,
+      'p6-tutorial': 8,
+      'p6-common': 4,
+    });
+    expect(suite.cases).toEqual(counts);
+  });
+
+  it('run every case 3 times, none of them live, at the world clock', () => {
+    expect(cases.filter(({ repeat, live }) => repeat !== 3 || live).map(({ id }) => id)).toEqual([]);
+    expect(new Set(cases.map((evalCase) => nowOf(evalCase)))).toEqual(new Set(['2026-11-04T10:05:00+09:00']));
+  });
+
+  it('are named by their category', () => {
+    expect(cases.filter(({ id, category }) => !id.startsWith(`${category}-`)).map(({ id }) => id)).toEqual([]);
+  });
+
+  // The labels are drafted blind after this commit; the loader takes a case without one and a run fails it.
+  it('hold no expectation until the blind draft', () => {
+    expect(unlabelled(cases).map(({ id }) => id)).toEqual(ids);
+  });
+
+  it('ask only as Users of the world', () => {
+    const askers = Object.keys(data.askers);
+
+    expect(cases.filter(({ asker }) => asker !== undefined && !askers.includes(asker)).map(({ id }) => id)).toEqual([]);
+  });
+});
+
+describe('The P6 suite', () => {
+  it('names only cases it holds in its subsets', () => {
+    const named = Object.values(suite.subsets).flat();
+
+    expect(named.filter((id) => !ids.includes(id))).toEqual([]);
+    expect(suite.subsets.siteAliases).toHaveLength(4);
+    expect(suite.subsets.proposedAliases).toHaveLength(4);
+    expect(suite.subsets.partyLimit).toHaveLength(2);
+  });
+
+  it('lists out-of-scope-library-seats as superseded by a P6 case, and only P19 cases of the fixed set', () => {
+    const fixed = new Set(Object.values(FIXED_SET).flat());
+
+    expect(suite.superseded.map(({ case: id }) => id)).toContain('out-of-scope-library-seats');
+    expect(suite.superseded.filter(({ case: id, heldBy }) => !fixed.has(id) || !ids.includes(heldBy))).toEqual([]);
+  });
+
+  it('proposes a threshold for each of M1 to M5 and overall', () => {
+    expect([...new Set(suite.thresholds.map(({ metric }) => metric))]).toEqual([
+      'M1',
+      'M2',
+      'M3',
+      'M4',
+      'M5',
+      'overall',
+    ]);
+  });
+});
+
+describe('The P6 world', () => {
+  const users = [data.asker, ...Object.values(data.askers)];
+
+  it('holds only fake 학번, each once', () => {
+    const numbers = [...users, ...Object.values(data.friends)].map(({ studentNumber }) => studentNumber);
+
+    expect(numbers.filter((number) => !FAKE_STUDENT_NUMBER.test(number))).toEqual([]);
+    expect(new Set(numbers).size).toBe(numbers.length);
+  });
+
+  it('holds every tutorial state, each as the server derives it from the progress', () => {
+    const keys = ['s-card', 'admin-shuttle', 'kwanjeong', 'health-clinic', 'art-museum'];
+    const derived = users.map(({ tutorial }) =>
+      tutorialState(
+        tutorial.enabled
+          ? {
+              enabledAt: new Date(0),
+              stoppedAt: tutorial.stopped === undefined ? null : new Date(0),
+              finishedAt: tutorial.finished === undefined ? null : new Date(0),
+            }
+          : null,
+        tutorial.quests.map(({ key, completed }) => ({
+          questKey: key,
+          completedAt: completed === undefined ? null : new Date(0),
+        })),
+        keys,
+      ),
+    );
+
+    expect(derived).toEqual(users.map(({ tutorial }) => tutorial.state));
+    expect(new Set(derived)).toEqual(new Set(['off', 'available', 'active', 'stopped', 'finished']));
+  });
+
+  it('holds a 26학번 undergraduate asker, a graduate and an exchange student', () => {
+    expect([data.asker.admissionYear, data.asker.affiliation]).toEqual([2026, 'undergraduate']);
+    expect(Object.values(data.askers).map(({ affiliation }) => affiliation)).toEqual(
+      expect.arrayContaining(['graduate', 'exchange']),
+    );
+  });
+
+  it('holds two Friends of one name, enough Friends for 9 people, and a lunch Quest of Friends', () => {
+    const names = Object.values(data.friends).map(({ name }) => name);
+
+    expect(names.length - new Set(names).size).toBe(1);
+    expect(names.length).toBeGreaterThanOrEqual(8);
+    expect(data.lunchQuest.holders.filter((seed) => data.friends[seed] === undefined)).toEqual([]);
+  });
+});
+
+describe('The privacy of the P6 files', () => {
+  it('holds nothing written like a 학번 but the fake ones, hyphenated', () => {
+    const real = suiteFiles().flatMap(({ name, text }) =>
+      [...text.matchAll(STUDENT_NUMBER_LIKE)]
+        .map(([written]) => written)
+        .filter((written) => !FAKE_STUDENT_NUMBER.test(written))
+        .map((written) => `${name}: ${written}`),
+    );
+
+    expect(real).toEqual([]);
+  });
+
+  it('checks the files it means to', () => {
+    const names = suiteFiles().map(({ name }) => name);
+
+    expect(names).toEqual(expect.arrayContaining(['world.yaml', 'suite.yaml', 'rules.md', 'cases/spaces.yaml']));
+  });
+});

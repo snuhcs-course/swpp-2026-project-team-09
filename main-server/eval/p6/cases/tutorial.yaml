@@ -1,0 +1,70 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Tutorial Q&A (P06 spec, "The P6 eval suite"): one question per quest of content/tutorial.yaml, two whose answer the
+# content lacks (the clinic's hours, today's exhibition), and one on the User's progress. The `expect` of each is
+# drafted blind and not written yet.
+
+# s-card, asked by the exchange student.
+- id: p6-tutorial-s-card
+  category: p6-tutorial
+  world: p6
+  asker: 교환학생
+  repeat: 3
+  turns:
+    - user: 교환학생인데 학생증 어디서 받아? 은행 기능 있는 걸로 받을 수 있어?
+
+- id: p6-tutorial-admin-shuttle
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 튜토리얼에 있는 행정관 셔틀은 어디서 타는 거야?
+
+- id: p6-tutorial-kwanjeong-kiosk
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 관정 열람실 예약하고 키오스크에서 확인 안 하면 어떻게 돼?
+
+- id: p6-tutorial-health-clinic
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 보건진료소 어디 있어?
+
+- id: p6-tutorial-art-museum
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 튜토리얼 미술관 퀘스트에 나오는 파워플랜트는 몇 동이야?
+
+# The content gives no hours: it says so and gives the clinic's link.
+- id: p6-tutorial-clinic-hours
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 보건진료소 몇 시까지 해?
+
+# The content names no exhibition: it says so and gives the links.
+- id: p6-tutorial-exhibition-today
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 미술관 퀘스트 하려는데 오늘 미술관에서 무슨 전시 해?
+
+# The asker completed s-card and started kwanjeong (world.yaml).
+- id: p6-tutorial-progress
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 나 새내기 튜토리얼 어디까지 했지?

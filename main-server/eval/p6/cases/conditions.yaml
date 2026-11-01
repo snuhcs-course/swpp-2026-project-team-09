@@ -1,0 +1,96 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Booking conditions (P06 spec, "The P6 eval suite"): proposeLibraryBooking with the right date, start, minutes or end,
+# seat, equipment and useDesc. Times in several forms, a missing time, useDesc inferable and not, a named seat, "모니터
+# 있는 스터디룸", and "공강에" through findLibraryFreeSlots. The `expect` of each is drafted blind and not written yet.
+
+# The spec's own example.
+- id: p6-conditions-hours-from
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 7층 열람실 5시부터 두 시간 잡아줘
+
+- id: p6-conditions-until
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 오늘 1시부터 4시까지 8A 열람실 1 구역 예약해줘
+
+- id: p6-conditions-half-past-minutes
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 오후 2시 반부터 90분 동안 7A 열람실 2 구역 자리 하나
+
+- id: p6-conditions-now
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 지금 7층 열람실 한 자리 3시간만 잡아줘
+
+# The text 어시스턴트에게 예약 부탁하기 sends from the tutorial's 관정 quest.
+- id: p6-conditions-missing-time
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 관정도서관 7층 열람실에 한 자리 예약해줘
+
+- id: p6-conditions-missing-duration-room
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 2시에 2층 6인실 예약해줘. 민수, 지은, 하람이랑 쓸 거야
+
+- id: p6-conditions-usedesc-team-project
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 모레 3시부터 2시간 2층 6인실 잡아줘. 민수, 지은, 하람이랑 팀플하려고
+
+- id: p6-conditions-usedesc-club
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시부터 1시간 반 4층 6인실 예약해줘. 동아리 회의라 민수, 지은, 유진이랑 같이 써
+
+- id: p6-conditions-usedesc-not-stated
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 오후 1시부터 2시간 2층 6인실, 민수랑 지은이랑 하람이랑
+
+- id: p6-conditions-named-seat
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 7A 열람실 2 구역 7300번 자리로 오늘 6시부터 3시간 예약해줘
+
+- id: p6-conditions-monitor-room
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 모니터 있는 스터디룸 내일 오후 3시부터 2시간 예약해줘. 민수, 지은, 하람이랑 발표 준비해
+
+# The asker's gaps today after 10:05 are 10:45–11:00, 11:45–13:00, 14:15–16:00 and from 17:50 (world.yaml).
+- id: p6-conditions-free-time
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 오늘 내 공강에 7층 열람실 자리 잡아줘

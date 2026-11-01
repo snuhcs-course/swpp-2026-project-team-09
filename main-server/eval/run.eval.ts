@@ -6,6 +6,7 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
@@ -20,6 +21,7 @@ import { seedP4World } from './p4/world.ts';
 import { seedLargeWorld } from './p5/large-world/world.ts';
 import { seedP5World } from './p5/world.ts';
 import { RawResponses } from './raw-responses.ts';
+import { seedP6World } from './p6/world.ts';
 import { type EvalApp, runCase, RunLog, startEvalApp } from './runner.ts';
 import { scoreTurn } from './score.ts';
 import { saveScorecard } from './scorecard.ts';
@@ -35,6 +37,7 @@ const SEEDERS: Record<WorldName, typeof seedWorld> = {
   p4: seedP4World,
   p5: seedP5World,
   'large-world-v1': seedLargeWorld,
+  p6: seedP6World,
 };
 
 const options = runOptionsFromEnv();

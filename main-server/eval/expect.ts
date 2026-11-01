@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -34,17 +35,60 @@ const mentionSchema = z.union([z.string().min(1), z.array(z.string().min(1)).min
 
 export type Mention = z.infer<typeof mentionSchema>;
 
-// The cards of one kind the reply must show: these seeds among them, and how many in all.
+// What a library card does (P06 spec, "Cards and the API contract").
+export const LIBRARY_ACTIONS = ['book', 'cancel', 'return', 'seats', 'myBookings'] as const;
+
+// A time of day in Korea; 24:00 is the end of the day.
+const clockSchema = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/u, 'Expected HH:MM');
+
+const daySchema = z.iso.date();
+
+// The conditions a library card must hold, each compared after normalising (eval/library-card.ts); those left out may be
+// anything. null means the card leaves the field unset: a useDesc of null is one the card asks for.
+const libraryConditionsSchema = z.strictObject({
+  date: daySchema.optional(),
+  start: clockSchema.optional(),
+  minutes: z.int().min(1).optional(),
+  seat: z.string().min(1).nullable().optional(),
+  // The equipment group of a room sector, such as with-monitor, or a named room of a media space, such as STUDIO C.
+  equipment: z.string().min(1).nullable().optional(),
+  useDesc: z.string().min(1).nullable().optional(),
+  // The Friends the booking is with, by seed name, as a set.
+  companions: z.array(seedName).optional(),
+  // The Quest whose Holders the booking is with, by seed name.
+  quest: seedName.nullable().optional(),
+  // What a cancel or return card looks for.
+  target: z
+    .strictObject({ date: daySchema.optional(), space: z.string().min(1).optional(), start: clockSchema.optional() })
+    .optional(),
+});
+
+export type LibraryConditions = z.output<typeof libraryConditionsSchema>;
+
+// The cards of one kind the reply must show: these seeds among them, and how many in all. A library card has no seed: it
+// is matched by its key fields, its action, its space (a catalogue id) and its conditions, and the cards that match are
+// counted, at least one when neither min nor max is given. `{ kind: library, action: book, max: 0 }` is a reply with no
+// book card.
 const cardsSchema = z
   .strictObject({
-    kind: z.enum(['quest', 'globalEvent', 'restaurant']),
+    kind: z.enum(['quest', 'globalEvent', 'restaurant', 'library']),
     seeds: z.array(seedName).default([]),
+    action: z.enum(LIBRARY_ACTIONS).optional(),
+    space: z.string().min(1).optional(),
+    conditions: libraryConditionsSchema.optional(),
     min: z.int().min(0).optional(),
     max: z.int().min(0).optional(),
   })
   .refine(({ min, max }) => min === undefined || max === undefined || min <= max, {
     message: 'min must not be above max',
-  });
+  })
+  .refine(
+    ({ kind, seeds, action, space, conditions }) =>
+      kind === 'library' ? seeds.length === 0 : action === undefined && space === undefined && conditions === undefined,
+    { message: 'A library card is matched by action, space and conditions, and any other card by seeds' },
+  );
+
+export type CardsExpectation = z.output<typeof cardsSchema>;
 
 // The Proposal's fields the reply must hold; those left out are not checked. Its Place, Global Event and invitees by
 // seed name, its start as a time in Korea.
@@ -66,9 +110,6 @@ const argsSchema = z.record(
 );
 
 const toolList = z.array(z.string().min(1));
-
-// A time of day in Korea; 24:00 is the end of the day.
-const clockSchema = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/u, 'Expected HH:MM');
 
 const intervalSchema = z.strictObject({ start: clockSchema, end: clockSchema });
 

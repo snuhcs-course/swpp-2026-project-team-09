@@ -1,0 +1,44 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Bookings, cancel and return (P06 spec, "The P6 eval suite"): "내 예약", "취소해줘", "반납해줘" and "오늘 3시 예약 취소"
+# give the right card and target; "반납했어?" gives no action card. The `expect` of each is drafted blind and not
+# written yet.
+
+- id: p6-bookings-mine
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내 도서관 예약 보여줘
+
+- id: p6-bookings-cancel
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 관정 예약 취소해줘
+
+- id: p6-bookings-return
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 다 썼어, 자리 반납해줘
+
+- id: p6-bookings-cancel-at-three
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 오늘 3시 예약 취소
+
+- id: p6-bookings-did-i-return
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 나 아까 열람실 자리 반납했어?

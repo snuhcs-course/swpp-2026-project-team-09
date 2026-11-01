@@ -1,0 +1,118 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Space resolution (P06 spec, "The P6 eval suite"): which catalogue id or ids a request names. 4 by the site's name, 4
+# by a site alias, 4 by a proposed alias or a purpose, and 2 ambiguous ones. Each case's `expect` is drafted blind
+# (labels-working.yaml) and is not written yet. Subsets for M1: `siteAliases` and `proposedAliases` in suite.yaml.
+
+# ── By the site's name ──
+
+- id: p6-spaces-site-7a-zone2
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 7A 열람실 2 구역에 오늘 2시부터 3시간 자리 잡아줘
+
+- id: p6-spaces-site-8a-zone1
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 8A 열람실 1 구역 오늘 저녁 7시부터 두 시간 예약해 줘
+
+- id: p6-spaces-site-xr
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 오후 2시에 XR Experience Center 1시간 예약하고 싶어
+
+# Asked by the graduate student, to whom 대학원 열람실 is offered.
+- id: p6-spaces-site-grad-reading-room
+  category: p6-spaces
+  world: p6
+  asker: 대학원생
+  repeat: 3
+  turns:
+    - user: 대학원 열람실 오늘 1시부터 4시간 잡아줘
+
+# ── By a site alias ──
+
+- id: p6-spaces-alias-studio
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 3시부터 1시간 스튜디오 예약해줘. 영상 촬영하려고
+
+- id: p6-spaces-alias-vr
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: VR 체험 오늘 오후 3시부터 30분만 예약해줘
+
+- id: p6-spaces-alias-whiteboard
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 4시부터 2시간 전자칠판 있는 방 잡아줘. 민수, 지은, 하람이랑 과제할 거야
+
+- id: p6-spaces-alias-7b-notebook
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 7B 노트북존 오늘 6시부터 3시간 예약해줘
+
+# ── By a proposed alias or a purpose: the four alias cases (meaning labels) ──
+
+# Named in the spec: "6층 영화 보는 곳" → 6F-multimedia-viewing, which is used on site.
+- id: p6-spaces-purpose-movie
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 6층에서 영화 보는 곳 예약해줘
+
+- id: p6-spaces-alias-quiet
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 조용한 열람실 오늘 오후 3시부터 2시간 잡아줘
+
+- id: p6-spaces-purpose-livestream
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 오전 10시부터 1시간 동안 라이브 방송할 수 있는 곳 예약해줘
+
+- id: p6-spaces-alias-imac
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 도서관에 아이맥 쓰는 곳 있잖아, 거기 내일 1시부터 2시간 예약해줘. 과제하려고
+
+# ── Ambiguous: the Assistant asks, listing the candidates ──
+
+- id: p6-spaces-ambiguous-notebook
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 노트북존 오늘 5시부터 2시간 잡아줘
+
+- id: p6-spaces-ambiguous-ten
+  category: p6-spaces
+  world: p6
+  repeat: 3
+  turns:
+    - user: 10인실 내일 3시부터 2시간 쓰고 싶어

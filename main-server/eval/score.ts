@@ -4,9 +4,12 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type Action, type Expect, expectSchema, type Mention } from './expect.ts';
+import { libraryCardFailures, libraryCardsOf } from './library-card.ts';
+import { libraryRefused } from './library-tools.ts';
 import {
   argsMatch,
   callKey,
@@ -99,6 +102,9 @@ function missingMentions(text: string, expect: Expect): Mention[] {
 //   An ASK read from the trace alone is still ASK, so that a wrong one shows, but is recalled only with the mentions.
 // - TOOL+ASK and PROPOSE+ASK: TOOL or PROPOSE, in a case that accepts an ASK, with the text holding its mentions.
 // - REFUSE or CHAT: no tool called, by what the case accepts: REFUSE when it accepts one, else CHAT.
+// - REFUSE also, in a case that accepts one, when nothing is shown and a library tool refused: a space not in scope,
+//   used on site or not for the User, or a booking refused for its window, hours, duration or people (P06 spec, "The
+//   P6 eval suite"). No tool of P19's suites is a library tool, so their cases read as before.
 export function actionOf(trace: TurnTrace, expect: Expect, names: Names): Action | null {
   const { reply } = trace;
   if (reply === null) {
@@ -121,6 +127,9 @@ export function actionOf(trace: TurnTrace, expect: Expect, names: Names): Action
   }
   if (shown || inWords || (answered('none') && holdsMentions)) {
     return asks ? 'TOOL+ASK' : 'TOOL';
+  }
+  if (!shown && expect.actions.includes('REFUSE') && calls.some((call) => libraryRefused(call.name, outcomeOf(call)))) {
+    return 'REFUSE';
   }
   const calledFor = calls.some((call) => {
     const outcome = outcomeOf(call);
@@ -214,6 +223,24 @@ function scoreTools(trace: TurnTrace, expect: Expect, names: Names): ToolsScore 
   };
 }
 
+// Why the reply's cards fail the expected ones: a seed not shown, or too few or too many of a kind.
+function cardFailures(expected: NonNullable<Expect['cards']>, cards: readonly unknown[], names: Names): string[] {
+  const seen = cardsOf(cards, names);
+  const library = libraryCardsOf(cards, names);
+  return expected.flatMap((wanted) => {
+    const { kind, seeds, min, max } = wanted;
+    if (kind === 'library') {
+      return libraryCardFailures(wanted, library);
+    }
+    const ofKind = seen.filter((card) => card.kind === kind);
+    return [
+      ...seeds.filter((seed) => !ofKind.some(({ name }) => name === seed)).map((seed) => `${kind} ${seed} not shown`),
+      ...(min !== undefined && ofKind.length < min ? [`${ofKind.length} ${kind} cards, fewer than ${min}`] : []),
+      ...(max !== undefined && ofKind.length > max ? [`${ofKind.length} ${kind} cards, more than ${max}`] : []),
+    ];
+  });
+}
+
 function outcomeChecks(trace: TurnTrace, expect: Expect, names: Names): Check[] {
   const reply = trace.reply ?? { text: '', cards: [], mapButtons: [], proposal: null };
   const checks: Check[] = [];
@@ -222,16 +249,7 @@ function outcomeChecks(trace: TurnTrace, expect: Expect, names: Names): Check[] 
     checks.push(check('proposal', wrong.length === 0 ? [] : [`wrong or missing: ${wrong.join(', ')}`]));
   }
   if (expect.cards !== undefined) {
-    const seen = cardsOf(reply.cards, names);
-    const failures = expect.cards.flatMap(({ kind, seeds, min, max }) => {
-      const ofKind = seen.filter((card) => card.kind === kind);
-      return [
-        ...seeds.filter((seed) => !ofKind.some(({ name }) => name === seed)).map((seed) => `${kind} ${seed} not shown`),
-        ...(min !== undefined && ofKind.length < min ? [`${ofKind.length} ${kind} cards, fewer than ${min}`] : []),
-        ...(max !== undefined && ofKind.length > max ? [`${ofKind.length} ${kind} cards, more than ${max}`] : []),
-      ];
-    });
-    checks.push(check('cards', failures));
+    checks.push(check('cards', cardFailures(expect.cards, reply.cards, names)));
   }
   if (expect.mapButtons !== undefined) {
     const wanted = expect.mapButtons.toSorted();

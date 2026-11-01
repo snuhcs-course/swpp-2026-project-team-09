@@ -1,0 +1,69 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Group rooms (P06 spec, "The P6 eval suite"): resolveFriend for each Friend, then a book card with companions; below
+# GR_MIN; above GR_MAX; two Friends of one name; the held lunch Quest; 9 people for a 10인실 and a 20인실 (G201)
+# request. The `expect` of each is drafted blind and not written yet.
+
+- id: p6-group-rooms-companions
+  category: p6-group-rooms
+  world: p6
+  repeat: 3
+  turns:
+    - user: 모레 오후 2시부터 2시간 2층 6인실 잡아줘. 민수, 지은, 하람, 유진이랑 과제할 거야
+
+# The spec's example (user story 36): three people for a room of 4–6.
+- id: p6-group-rooms-below-min
+  category: p6-group-rooms
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 3시 4층 스터디룸 민수, 지은이랑 2시간
+
+# Seven people for a room of 4–6 on the 4th floor.
+- id: p6-group-rooms-above-max
+  category: p6-group-rooms
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 4시부터 2시간 4층 6인실 예약해줘. 민수, 지은, 하람, 유진, 도윤, 지호랑 같이 써
+
+# Two Friends are named 박서준.
+- id: p6-group-rooms-same-name
+  category: p6-group-rooms
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 2시부터 2시간 4층 6인실, 서준이랑 민수랑 지은이랑 쓸래
+
+# The lunch Quest the asker holds was shown in the turn before, so its id is in the history.
+- id: p6-group-rooms-lunch-quest
+  category: p6-group-rooms
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 점심 약속 있었나?
+    - assistant:
+        text: 네, 내일 12시에 학생회관에서 '목요일 점심 모임'이 있어요.
+        cards:
+          - { kind: quest, seed: 목요일 점심 모임 }
+    - user: 그 점심 모임 사람들이랑 내일 2시부터 2시간 2층 6인실 잡아줘
+
+# Nine people for a 10인실: the 8-people party limit, whatever the room.
+- id: p6-group-rooms-nine-people
+  category: p6-group-rooms
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내일 3시부터 2시간 2층 10인실 예약해줘. 민수, 지은, 하람, 유진, 도윤, 지호, 서아, 민재랑 9명이야
+
+# G201 needs 11 or more people, which a party cannot hold, so it is refused for any number.
+- id: p6-group-rooms-g201
+  category: p6-group-rooms
+  world: p6
+  repeat: 3
+  turns:
+    - user: 2층 20인실 G201 내일 4시부터 3시간 예약해줘. 동아리 사람들 15명이서 쓸 거야
