@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -82,6 +83,7 @@ describe('searchRecruitingQuests, by Board', () => {
             globalEvent: null,
             joinPolicy: 'open',
             placesLeft: 3,
+            holderCount: 1,
             next: { startsAt: '2097-01-05T18:00:00+09:00', endsAt: '2097-01-05T20:00:00+09:00', place: null },
             description: '<data label="quest.description"></data>',
           },
@@ -92,9 +94,11 @@ describe('searchRecruitingQuests, by Board', () => {
 });
 
 describe('searchRecruitingQuests, by period', () => {
-  it('gives the Quests whose next Sub Quest falls in the period only, the soonest first', async () => {
+  it('gives the Quests that start in the period only, the soonest first', async () => {
     const late = await questAt('2097-02-11T21:00:00');
-    const across = await questAt('2097-02-09T23:00:00', {
+    const early = await questAt('2097-02-10T00:00:00');
+    // It runs into the period, but starts before it.
+    await questAt('2097-02-09T23:00:00', {
       subQuest: { title: '밤샘', startsAt: '2097-02-09T14:00:00Z', endsAt: '2097-02-10T16:00:00Z' },
     });
     await questAt('2097-02-09T20:00:00');
@@ -103,7 +107,7 @@ describe('searchRecruitingQuests, by period', () => {
 
     await askAsReader('10일이랑 11일에 같이 할 파티 있어?');
 
-    expect(candidateIds()).toEqual([across, late]);
+    expect(candidateIds()).toEqual([early, late]);
   });
 
   it('never gives a Closed Quest, or one the User holds', async () => {
@@ -130,7 +134,7 @@ describe('searchRecruitingQuests, by period', () => {
     expect(model.toolResults()).toEqual([
       {
         result: 'none',
-        reason: 'No 파티 that the User can join on the Board show meets next from 2097-04-05 to 2097-04-06.',
+        reason: 'No 파티 that the User can join on the Board show is found from 2097-04-05T00:00 to 2097-04-06T23:59.',
       },
     ]);
   });
