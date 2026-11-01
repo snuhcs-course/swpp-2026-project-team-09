@@ -12,6 +12,8 @@ import { linkTo, PUBLISHED_OWN, SameEventWorld, sessionsOf } from './same-event.
 import { signalsWhile } from './signals.js';
 import { send } from './source-posts.js';
 
+const AN_HOUR_LATER = '2027-03-10T15:00:00+09:00';
+
 const world = new SameEventWorld(986_000);
 let app: INestApplication<Server>;
 
@@ -191,9 +193,33 @@ describe('The link rule, in other cases', () => {
     expect((await world.onlySession('snu_events', linked)).globalEventId).toBe(event.id);
     expect((await world.onlySession('snu_events', linking)).globalEventId).toBe(event.id);
   });
+
+  it('carries the flag on a Draft to the event that Draft is attached to in its turn', async () => {
+    const title = world.uniqueTitle();
+    const event = await world.publishedThrough('extra_snu', world.programme(title, { start: AN_HOUR_LATER }));
+    const linked = world.snuPost(title, { start: AN_HOUR_LATER });
+    const linking = world.snuPost('다른 제목', { description: linkTo(linked) });
+
+    await world.collectedOf('snu_events', linked, linking);
+
+    expect((await world.onlySession('snu_events', linking)).globalEventId).toBe(event.id);
+    expect((await world.stored(event.id)).needsAdministrator).toBe(true);
+  });
 });
 
 describe('Posts that link and fail', () => {
+  it('is left to the rest of the step when no one read a time for the linked event: it is published itself', async () => {
+    const { app: notJudging } = world.posts;
+    const linked = draftPost(world.postNumber());
+    await world.through(notJudging, 'snu_events', [linked]);
+    const post = world.snuPost(world.uniqueTitle(), { description: linkTo(linked) });
+
+    await world.through(notJudging, 'snu_events', [post]);
+
+    expect(await world.onlySession('snu_events', post)).toMatchObject({ ...PUBLISHED_OWN, reason: null });
+    expect((await world.onlySession('snu_events', linked)).globalEvent.state).toBe('draft');
+  });
+
   it('comes before the title rule: a post goes to the event it links, not the one with its title', async () => {
     const title = world.uniqueTitle();
     const named = await world.publishedThrough('extra_snu', world.programme(title));

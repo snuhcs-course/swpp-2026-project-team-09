@@ -55,14 +55,14 @@ export function normalisedTitle(title: string): string {
 
 // What two titles may say apart. Both must say it, and say nothing in common, for them to differ: "1차" against a title
 // with no round says nothing. The body is not read, since it often speaks of the other kind ("비대면 참여 불가").
-const ROUND = /(\d+)\s*회?차(?!원)/gu;
-const IN_PERSON = /(?<!비)대면/u;
-const REMOTE = /비대면/u;
+const ROUND = /(\d+(?:\s*[·・,]\s*\d+)*)\s*회?차(?!원|\s*산업)/gu;
+const IN_PERSON = /(?<!비\s*)대면/u;
+const REMOTE = /비\s*대면/u;
 // What a participant does there, not who it is for: 학생용 and 일반용 can be one event.
 const ROLE = /헬퍼|디자이너|멘토(?!링)|멘티|튜터(?!링)|튜티|스태프/gu;
 
 function roundsOf(title: string): string[] {
-  return [...title.matchAll(ROUND)].map((match) => match[1]);
+  return [...title.matchAll(ROUND)].flatMap((match) => match[1].split(/\D+/u));
 }
 
 function modesOf(title: string): string[] {
@@ -94,13 +94,14 @@ export function refusalOf(first: ComparedSession, second: ComparedSession): Refu
   ) {
     return 'different_times';
   }
-  if (sayApart(roundsOf(first.title), roundsOf(second.title))) {
+  const [title, other] = [first.title.normalize('NFKC'), second.title.normalize('NFKC')];
+  if (sayApart(roundsOf(title), roundsOf(other))) {
     return 'different_rounds';
   }
-  if (sayApart(modesOf(first.title), modesOf(second.title))) {
+  if (sayApart(modesOf(title), modesOf(other))) {
     return 'different_modes';
   }
-  return sayApart(rolesOf(first.title), rolesOf(second.title)) ? 'different_roles' : null;
+  return sayApart(rolesOf(title), rolesOf(other)) ? 'different_roles' : null;
 }
 
 export type SameEventMatch =
@@ -161,8 +162,8 @@ export function ownDraftOf({
 export type PostSession = PostWithOwnSessions['sessions'][number];
 
 // Moves a session of its own Draft to another event, keeps what the Draft held, and removes the Draft. Sessions of other
-// posts already attached to the Draft follow. An Administrator's change to the Draft meanwhile fails the step over the
-// post, so that the next Collection looks at it again.
+// posts already attached to the Draft follow, and so does a flag they set on it. An Administrator's change to the Draft
+// meanwhile fails the step over the post, so that the next Collection looks at it again.
 export async function attachSession(
   tx: Prisma.TransactionClient,
   { id, globalEvent: draft }: PostSession,
@@ -170,6 +171,11 @@ export async function attachSession(
   reason: string,
   ownDraft: OwnDraft = ownDraftOf(draft),
 ): Promise<void> {
+  // Read here: a post of the same message may have flagged the Draft since this session was read.
+  const flagged = await tx.globalEvent.count({ where: { id: draft.id, needsAdministrator: true } });
+  if (flagged > 0) {
+    await tx.globalEvent.update({ where: { id: globalEventId }, data: { needsAdministrator: true } });
+  }
   await tx.sourcePostSession.updateMany({ where: { globalEventId: draft.id }, data: { globalEventId } });
   await tx.sourcePostSession.update({
     where: { id },
@@ -183,10 +189,51 @@ export async function attachSession(
   }
 }
 
+const WITH_LINKED_EVENTS = {
+  sessions: {
+    orderBy: { number: 'asc' },
+    include: {
+      globalEvent: { include: { sessions: { where: { attachedBy: SessionAttachment.own } } } },
+    },
+  },
+} satisfies Prisma.SourcePostInclude;
+
+type LinkedPost = Prisma.SourcePostGetPayload<{ include: typeof WITH_LINKED_EVENTS }>;
+type LinkedSession = LinkedPost['sessions'][number];
+
+// A Draft takes a linked post only with a time someone read: one an Administrator made, or one the rules read. Another
+// may never be published, and the post would be hidden with it, though it could be published itself.
+function takesLinkedPost({ state, sessions }: LinkedSession['globalEvent']): boolean {
+  return state !== GlobalEventState.draft || sessions.length === 0 || sessions.some(({ readByRules }) => readByRules);
+}
+
+// Pairs the sessions by number. An event with another time stays as it is and is flagged, without raising its version.
+async function attachInOrder(
+  tx: Prisma.TransactionClient,
+  sessions: PostSession[],
+  linked: LinkedSession[],
+): Promise<void> {
+  for (const [index, session] of sessions.entries()) {
+    const { globalEvent: target } = linked[index];
+    const { startsAt } = session.globalEvent;
+    if (
+      session.timeStated &&
+      startsAt !== null &&
+      target.startsAt !== null &&
+      startsDiffer(startsAt, target.startsAt)
+    ) {
+      // oxlint-disable-next-line no-await-in-loop -- one transaction runs one statement at a time
+      await tx.globalEvent.update({ where: { id: target.id }, data: { needsAdministrator: true } });
+    }
+    // oxlint-disable-next-line no-await-in-loop -- as above
+    await attachSession(tx, session, target.id, LINK_RULE);
+  }
+}
+
 // The link rule. When the post's body links stored posts, its sessions are attached to the linked post's events in the
-// order of their numbers, whatever their times, or held when they do not match one to one. An event with another time
-// stays as it is and is flagged, without raising its version. Gives whether the rule decided the post. A post whose
-// event an Administrator changed or that has gone on already is left to the rest of the step.
+// order of their numbers, whatever their times, or held when they do not match one to one. Gives whether the rule
+// decided the post. A post whose event an Administrator changed, that has gone on already, or whose linked event no one
+// has read a time for is left to the rest of the step.
 export async function attachLinked(
   tx: Prisma.TransactionClient,
   post: PostWithOwnSessions & { links: string[] },
@@ -204,7 +251,7 @@ export async function attachLinked(
   const stored = await tx.sourcePost.findMany({
     where: { OR: named },
     orderBy: [{ source: 'asc' }, { key: 'asc' }],
-    include: { sessions: { orderBy: { number: 'asc' }, include: { globalEvent: true } } },
+    include: WITH_LINKED_EVENTS,
   });
   // A post that was attached to this one and links it back has nothing to attach to.
   const linked = stored.filter((other) => !other.sessions.every(({ globalEventId }) => ownEvents.has(globalEventId)));
@@ -219,21 +266,10 @@ export async function attachLinked(
     });
     return true;
   }
-  for (const [index, session] of sessions.entries()) {
-    const { globalEvent: target } = only.sessions[index];
-    const { startsAt } = session.globalEvent;
-    if (
-      session.timeStated &&
-      startsAt !== null &&
-      target.startsAt !== null &&
-      startsDiffer(startsAt, target.startsAt)
-    ) {
-      // oxlint-disable-next-line no-await-in-loop -- one transaction runs one statement at a time
-      await tx.globalEvent.update({ where: { id: target.id }, data: { needsAdministrator: true } });
-    }
-    // oxlint-disable-next-line no-await-in-loop -- as above
-    await attachSession(tx, session, target.id, LINK_RULE);
+  if (!only.sessions.every(({ globalEvent }) => takesLinkedPost(globalEvent))) {
+    return false;
   }
+  await attachInOrder(tx, sessions, only.sessions);
   return true;
 }
 

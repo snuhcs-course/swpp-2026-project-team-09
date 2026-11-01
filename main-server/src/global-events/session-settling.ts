@@ -19,6 +19,7 @@ import {
   ownDraftOf,
   type PostSession,
   sameEventMatch,
+  type SameEventMatch,
   TITLE_RULE,
 } from './same-event.js';
 
@@ -30,12 +31,27 @@ export type JudgedValues = Pick<GlobalEvent, 'startsAt' | 'endsAt' | 'place' | '
   publicationRoute: typeof PublicationRoute.judgement;
 };
 
+// What the settings let the step do. Each may be off while the step still runs.
+export interface StepSwitches {
+  publishes: boolean;
+  comparesTitles: boolean;
+}
+
+function titleMatch(
+  tx: Prisma.TransactionClient,
+  comparesTitles: boolean,
+  session: { title: string; startsAt: Date },
+  sourcePostId: string,
+): Promise<SameEventMatch> {
+  return comparesTitles ? sameEventMatch(tx, session, sourcePostId) : Promise.resolve({ kind: 'none' });
+}
+
 // Attaches, holds or publishes each session of the post that the rules read. An event an Administrator has changed or
 // discarded meanwhile is left as it is. Gives whether it published one.
 export async function settleReadByRules(
   tx: Prisma.TransactionClient,
   { id: sourcePostId, sessions }: PostWithOwnSessions,
-  publishes: boolean,
+  { publishes, comparesTitles }: StepSwitches,
 ): Promise<boolean> {
   let published = false;
   for (const session of sessions) {
@@ -43,7 +59,7 @@ export async function settleReadByRules(
     const { id, title, startsAt, state, version } = globalEvent;
     if (readByRules && heldFor === null && startsAt !== null && state === GlobalEventState.draft && version === 1) {
       // oxlint-disable-next-line no-await-in-loop -- one transaction runs one statement at a time
-      const match = await sameEventMatch(tx, { title, startsAt }, sourcePostId);
+      const match = await titleMatch(tx, comparesTitles, { title, startsAt }, sourcePostId);
       if (match.kind === 'one') {
         // oxlint-disable-next-line no-await-in-loop -- as above
         await attachSession(tx, session, match.globalEventId, TITLE_RULE);
@@ -164,18 +180,18 @@ export interface SessionToSettle {
   // The number it takes when it has no Draft.
   number: number;
   values: JudgedValues;
-  publishes: boolean;
+  switches: StepSwitches;
 }
 
 // Attaches, holds or publishes a session a Judgement passed. Gives the event it now belongs to, if any, and whether that
 // was a publication.
 export async function settleJudgedSession(
   tx: Prisma.TransactionClient,
-  { post, draft, number, values, publishes }: SessionToSettle,
+  { post, draft, number, values, switches: { publishes, comparesTitles } }: SessionToSettle,
 ): Promise<{ globalEventId: string | null; published: boolean }> {
   const { title, description } = draft?.globalEvent ?? post.sessions[0]?.globalEvent ?? EMPTY_POST;
   const { startsAt } = values;
-  const match = startsAt === null ? null : await sameEventMatch(tx, { title, startsAt }, post.id);
+  const match = startsAt === null ? null : await titleMatch(tx, comparesTitles, { title, startsAt }, post.id);
   if (match?.kind === 'one') {
     const { globalEventId } = match;
     await attachJudged(tx, post.id, draft, number, globalEventId, ownDraftOf({ ...values, title, description }));

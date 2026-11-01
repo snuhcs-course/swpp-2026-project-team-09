@@ -53,6 +53,10 @@ export class SameEventWorld extends JudgementWorld {
     this.newPost = postNumbersFrom(firstPost);
   }
 
+  override start(settings: Record<string, string> = {}): Promise<void> {
+    return super.start({ SAME_EVENT_TITLE_RULE: 'on', ...settings });
+  }
+
   uniqueTitle(): string {
     this.titles += 1;
     return `같은 행사 시험 ${this.titles}번 특강`;

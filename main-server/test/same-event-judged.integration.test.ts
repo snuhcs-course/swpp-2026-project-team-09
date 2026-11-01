@@ -41,7 +41,7 @@ beforeAll(async () => {
   await world.start();
   const silent = new ScriptedModel();
   otherPod = await startApp(
-    { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'on' },
+    { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'on', SAME_EVENT_TITLE_RULE: 'on' },
     [],
     undefined,
     undefined,
@@ -49,7 +49,7 @@ beforeAll(async () => {
   );
   otherStep = otherPod.get((await import('../src/global-events/publication-step.service.js')).PublicationStepService);
   notPublishing = await startApp(
-    { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'on', AUTOMATIC_PUBLICATION: 'off' },
+    { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'on', AUTOMATIC_PUBLICATION: 'off', SAME_EVENT_TITLE_RULE: 'on' },
     [],
     undefined,
     undefined,

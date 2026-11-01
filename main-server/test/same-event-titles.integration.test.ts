@@ -9,7 +9,7 @@ import { Server } from 'node:http';
 import { changeState, createDraft } from './global-event-changes.js';
 import { getAdminGlobalEvent, publishedAmong } from './global-event-lists.js';
 import { answer } from './judgements.js';
-import { PLACE, PUBLISHED_OWN, SameEventWorld, sessionsOf, START } from './same-event.js';
+import { linkTo, PLACE, PUBLISHED_OWN, SameEventWorld, sessionsOf, START } from './same-event.js';
 import { signalsWhile } from './signals.js';
 import { signIn } from './sign-in.js';
 
@@ -109,6 +109,24 @@ describe('Equal titles with other starts', () => {
     await world.collectedOf('extra_snu', post);
 
     expect(await world.onlySession('extra_snu', post)).toMatchObject(PUBLISHED_OWN);
+  });
+});
+
+describe('With SAME_EVENT_TITLE_RULE off', () => {
+  it('publishes both posts of an equal title and start, and still attaches by a link', async () => {
+    const { app: notComparing } = world.posts;
+    const title = world.uniqueTitle();
+    const first = world.snuPost(title);
+    const second = world.programme(title);
+    const linking = world.programme('다른 제목', { description: linkTo(first) });
+
+    await world.through(notComparing, 'snu_events', [first]);
+    await world.through(notComparing, 'extra_snu', [second, linking]);
+
+    const firstSession = await world.onlySession('snu_events', first);
+    expect(firstSession).toMatchObject(PUBLISHED_OWN);
+    expect(await world.onlySession('extra_snu', second)).toMatchObject(PUBLISHED_OWN);
+    expect((await world.onlySession('extra_snu', linking)).globalEventId).toBe(firstSession.globalEventId);
   });
 });
 

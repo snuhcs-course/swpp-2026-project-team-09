@@ -43,6 +43,9 @@ describe('The refusing rules', () => {
     ['특강 대면', '특강 비대면', 'different_modes'],
     ['행사 헬퍼', '행사 디자이너', 'different_roles'],
     ['멘토 모집', '멘티 모집', 'different_roles'],
+    ['4차 산업혁명 특강 (1회차)', '4차 산업혁명 특강 (2회차)', 'different_rounds'],
+    ['세미나 (１차)', '세미나 (2차)', 'different_rounds'],
+    ['[비 대면] 특강', '[대면] 특강', 'different_modes'],
   ])('tell %s from %s', (first, second, refusal) => {
     expect(refusalOf({ title: first, startsAt: AT_TWO }, { title: second, startsAt: AT_TWO })).toBe(refusal);
   });
@@ -55,6 +58,8 @@ describe('The refusing rules', () => {
     ['3차원 프린팅', '2차 프린팅'],
     ['학생용 특강', '일반용 특강'],
     ['멘토링 안내', '멘티 모집'],
+    ['세미나 (1·2차)', '세미나 (1차)'],
+    ['4차 산업혁명 특강', '2차 특강'],
   ])('do not tell %s from %s', (first, second) => {
     expect(refusalOf({ title: first, startsAt: AT_TWO }, { title: second, startsAt: AT_TWO })).toBeNull();
   });

@@ -35,7 +35,7 @@ import {
   WITH_OWN_SESSIONS,
 } from './judgements.service.js';
 import { attachLinked } from './same-event.js';
-import { createDraft, settleJudgedSession, settleReadByRules } from './session-settling.js';
+import { createDraft, settleJudgedSession, settleReadByRules, type StepSwitches } from './session-settling.js';
 
 // Comparing a post with the events and publishing it are one statement to the other servers: a lock is taken for the
 // transaction, so that of two posts of one event the second sees the first. It may wait for another server's post.
@@ -75,7 +75,7 @@ function publishedValues({ start, end, place }: JudgedSession, { latitude, longi
 @Injectable()
 export class PublicationStepService {
   private readonly logger = new Logger(PublicationStepService.name);
-  private readonly publishes: boolean;
+  private readonly switches: StepSwitches;
   private readonly judges: boolean;
 
   constructor(
@@ -85,7 +85,10 @@ export class PublicationStepService {
     private readonly places: PlacesService,
     settings: ConfigService<Settings, true>,
   ) {
-    this.publishes = settings.get('AUTOMATIC_PUBLICATION', { infer: true });
+    this.switches = {
+      publishes: settings.get('AUTOMATIC_PUBLICATION', { infer: true }),
+      comparesTitles: settings.get('SAME_EVENT_TITLE_RULE', { infer: true }),
+    };
     this.judges = settings.get('AUTOMATIC_JUDGEMENT', { infer: true });
   }
 
@@ -144,7 +147,7 @@ export class PublicationStepService {
   publishPost(sourcePostId: string): Promise<boolean> {
     return this.locked(async (tx) => {
       const stored = await tx.sourcePost.findUniqueOrThrow({ where: { id: sourcePostId }, include: WITH_OWN_SESSIONS });
-      const byRules = await settleReadByRules(tx, stored, this.publishes);
+      const byRules = await settleReadByRules(tx, stored, this.switches);
       const judged = await this.settleJudged(tx, sourcePostId);
       const post = await tx.sourcePost.findUniqueOrThrow({
         where: { id: sourcePostId },
@@ -231,7 +234,7 @@ export class PublicationStepService {
     if (judgement?.outcome !== JudgementOutcome.judged || judgement.publishedAt !== null) {
       return false;
     }
-    if (this.publishes) {
+    if (this.switches.publishes) {
       await tx.judgement.update({ where: { sourcePostId }, data: { publishedAt: new Date() } });
     }
     if (isChangedByAdministrator(post)) {
@@ -259,7 +262,7 @@ export class PublicationStepService {
         const draft = drafts.find(({ globalEventId }) => globalEventId === draftId);
         const values = publishedValues(session, place);
         // oxlint-disable-next-line no-await-in-loop -- one transaction runs one statement at a time
-        const settled = await settleJudgedSession(tx, { post, draft, number, values, publishes: this.publishes });
+        const settled = await settleJudgedSession(tx, { post, draft, number, values, switches: this.switches });
         number += draft === undefined ? 1 : 0;
         published = published || settled.published;
         written.push({ ...session, globalEventId: settled.globalEventId });
