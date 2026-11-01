@@ -18,9 +18,9 @@
 
 draftedBy: Claude Opus 5.5 (claude-opus-5-5)
 draftedOn: '2026-11-01'
-# Set once a person has confirmed that each wording still has its original's answer.
-reviewedBy: null
-reviewedOn: null
+# The person who confirmed that each wording still has its original's answer.
+reviewedBy: TaeHyun79
+reviewedOn: '2026-11-01'
 wordings:
   - of: parties-after-last-class
     user: 오늘 컴그 끝나면 낄 수 있는 파티 있나?

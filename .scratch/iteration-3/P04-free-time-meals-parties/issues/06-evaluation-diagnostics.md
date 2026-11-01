@@ -41,7 +41,7 @@ Declared in a new evidence file beside the walking evaluation, which does not ch
 
 ### Part 2: before the first official run of the P4 suite
 
-- [ ] **The holdout set: 12 fixed-set cases, reworded.** Taken by rule, not by hand: each category sorted by id, divided into 4 equal parts, and the middle case of each part.
+- [x] **The holdout set: 12 fixed-set cases, reworded.** Taken by rule, not by hand: each category sorted by id, divided into 4 equal parts, and the middle case of each part.
 
   | Category | Cases |
   | --- | --- |
@@ -51,8 +51,8 @@ Declared in a new evidence file beside the walking evaluation, which does not ch
 
   - Only the last User turn changes. The world, the clock, the asker, the fixed history and the expected result stay as in the original, and a test checks it.
   - A case runs 3 times, as in the fixed set.
-- [ ] **Who rewords.** A separate session drafts the wordings. It sees the original questions and the world, not the prompts, the tools or the code. It may use abbreviations, spoken wording and another word order, and adds no condition.
-- [ ] **Person: the wordings.** TaeHyun79 reviews the 12 and confirms each still has its original's answer.
+- [x] **Who rewords.** A separate session drafts the wordings. It sees the original questions and the world, not the prompts, the tools or the code. It may use abbreviations, spoken wording and another word order, and adds no condition.
+- [x] **Person: the wordings.** TaeHyun79 reviews the 12 and confirms each still has its original's answer.
 - [x] **Kept apart.** The holdout has its own command. `pnpm eval --world p4` still runs exactly the 40 cases, and their pinned counts do not change.
 - [x] **How it is read.**
   - It runs twice: with the first official run, and on the final code of P11.
@@ -98,7 +98,7 @@ Declared in [evidence/06-walking-and-ride-diagnostics.md](../evidence/06-walking
 
 ### Part 2 (2026-11-01)
 
-- The 12 wordings in `main-server/eval/p4/holdout.yaml` are a draft until TaeHyun79 reviews them, so "The holdout set", "Who rewords" and "Person: the wordings" stay open. `reviewedBy` and `reviewedOn` are set with the review.
+- TaeHyun79 reviewed the 12 wordings in `main-server/eval/p4/holdout.yaml` on 2026-11-01 and approved them as drafted.
 - The drafting agent was given the 12 questions and `world.yaml`, with each question's clock, asker and earlier turns, since a follow-up such as "운동만" has no meaning without them. It was also told to keep people's and places' names as written, because the cases check those words as arguments.
 - The report reads the action as if the reply's words were right, since the scorer's action check also reads the mentions, and a bare ASK must also end by asking. So a run's failure lands in the lowest layer that needs fixing.
 - A run of the holdout gets a scorecard that names no case, and `pnpm eval:compare` refuses it, so that no failure of it is opened by accident.
