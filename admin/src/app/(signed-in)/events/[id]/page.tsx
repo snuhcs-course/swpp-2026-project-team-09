@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import Link from 'next/link';
@@ -14,7 +15,9 @@ import { formatInSeoul } from '@/seoul-time';
 import { asAdministrator } from '@/session';
 
 import { StartTime } from '../../start-time';
+import { isPublicationRoute, NeedsAdministratorMark, PUBLICATION_ROUTES } from '../publication';
 import { EventForm } from './event-form';
+import { JudgementPanel } from './judgement-panel';
 
 const STATES: Record<GlobalEventState, { label: string; look: string }> = {
   draft: { label: 'Draft', look: 'bg-amber-50 text-amber-800' },
@@ -80,8 +83,9 @@ function Stored({ event }: { event: GlobalEvent }): ReactElement {
   );
 }
 
-export default async function EventPage({ params }: PageProps<'/events/[id]'>): Promise<ReactElement> {
+export default async function EventPage({ params, searchParams }: PageProps<'/events/[id]'>): Promise<ReactElement> {
   const { id } = await params;
+  const { route } = await searchParams;
   const [event, places] = await asAdministrator(`/events/${id}`, (token) =>
     Promise.all([read(token, id), mainServer.listPlaces(token)]),
   );
@@ -90,17 +94,31 @@ export default async function EventPage({ params }: PageProps<'/events/[id]'>): 
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-800">
+        <Link
+          href={isPublicationRoute(route) ? `/?route=${route}` : '/'}
+          className="text-sm text-zinc-500 hover:text-zinc-800"
+        >
           ← Events
         </Link>
         <div className="flex flex-wrap items-center gap-3">
           <h1>{event.title}</h1>
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${state.look}`}>{state.label}</span>
+          {event.needsAdministrator && <NeedsAdministratorMark />}
+          {event.publicationRoute !== null && (
+            <span className="text-sm text-zinc-600">
+              Publication Route: {PUBLICATION_ROUTES[event.publicationRoute]}
+            </span>
+          )}
         </div>
       </header>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <Source event={event} />
-        {editable ? <EventForm key={event.version} event={event} places={places} /> : <Stored event={event} />}
+        <div className="min-w-0 space-y-6">
+          {event.judgement !== null && (
+            <JudgementPanel judgement={event.judgement} eventId={event.id} places={places} />
+          )}
+          {editable ? <EventForm key={event.version} event={event} places={places} /> : <Stored event={event} />}
+        </div>
       </div>
     </div>
   );

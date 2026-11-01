@@ -11,7 +11,7 @@ import { clockOf, isRecord } from './readers.ts';
 // and keys as `seed`, times as HH:MM in Korea, others' text unwrapped, and the words only the reply uses left out.
 
 const TIMES = new Set(['start', 'end', 'leaveBy']);
-const UNREAD = new Set(['id', 'key', 'title', 'department', 'lines', 'reason', 'collectedAt', 'place']);
+const UNREAD = new Set(['id', 'key', 'title', 'department', 'lines', 'reason', 'collectedAt', 'place', 'total']);
 const OTHERS_TEXT = /^<data label="[^"]*">(.*)<\/data>$/su;
 
 function unwrapped(input: unknown): unknown {
