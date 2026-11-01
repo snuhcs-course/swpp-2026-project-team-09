@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -186,8 +187,8 @@ const WORLD_FACTS: [string, object, string[], string[]][] = [
   [
     'searchRecruitingQuests',
     { board: 'hobby' },
-    ['저녁 농구 한 판', '주말 배드민턴', '아침 러닝 크루', '"placesLeft":0'],
-    ['어제 점심 번개'],
+    ['저녁 농구 한 판', '주말 배드민턴'],
+    ['어제 점심 번개', '아침 러닝 크루', '"placesLeft":0'],
   ],
 ];
 
