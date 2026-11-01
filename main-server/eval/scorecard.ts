@@ -25,7 +25,7 @@ import {
   settingsOf,
   totalFailures,
 } from './run-score.ts';
-import { perTurnTable } from './per-turn.ts';
+import { perTurnLines } from './per-turn.ts';
 import { type CaseScore } from './score.ts';
 import { type FailureKind, type TurnTrace } from './trace.ts';
 
@@ -274,8 +274,7 @@ function usageSection(score: RunScore): string[] {
         ],
       ],
     ),
-    'Per turn, one request to the Assistant:',
-    perTurnTable(score),
+    ...perTurnLines(score),
   ];
 }
 
