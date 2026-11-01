@@ -1060,6 +1060,8 @@ Behind a hook are three layers:
 | `getMatchingRequest`                                                 | The latest request for a Global Event                        | `GET /matching-requests/:globalEventId`                                 |
 | `withdrawMatchingRequest`                                            | Nothing                                                      | `POST /matching-requests/:globalEventId/withdraw`                       |
 | `askAssistant`                                                       | The Assistant's reply to the conversation                    | `POST /assistant/messages`                                              |
+| `getTutorial`, `enableTutorial`, `stopTutorial`, `hideTutorialRow`   | The 새내기 튜토리얼 with the User's progress, after each     | The mock until P06-02: `GET /tutorial`, `POST /tutorial/enable`, …      |
+| `startTutorialQuest`, `completeTutorialQuest`                        | The 새내기 튜토리얼 with the User's progress                 | The mock until P06-02: `POST /tutorial/quests/:key/start`, `/complete`  |
 
 The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
 (`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The
