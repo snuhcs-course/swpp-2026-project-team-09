@@ -155,7 +155,7 @@ function Bubble({
       testID={mine ? 'user-bubble' : 'assistant-bubble'}
     >
       <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
-      {shown.length === 0 ? null : <Cards actions={cardActions} cards={shown} own={own} />}
+      {shown.length === 0 ? null : <Cards actions={cardActions} bubbleId={id} cards={shown} own={own} />}
       {done === undefined ? null : <Done actions={cardActions} done={done} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
       {layers.map((layer) => (

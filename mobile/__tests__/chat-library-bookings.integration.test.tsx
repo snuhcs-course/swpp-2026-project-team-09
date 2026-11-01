@@ -64,7 +64,7 @@ describe('the cancel card', () => {
     await pressIn(shown, '취소하기');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
-    expect(shown.getByText('예약을 취소했어요')).toBeVisible();
+    expect(inCard(`library-cancel-${CANCEL.library.key}`).getByText('예약을 취소했어요')).toBeVisible();
     expectNothingOfTheLibrarySent(server, ['3000001']);
   });
 
@@ -98,8 +98,9 @@ describe('the cancel card when nothing is to be cancelled', () => {
 
     await pressIn(shown, '그만두기');
 
-    expect(shown.getByText('그만뒀어요')).toBeVisible();
-    expect(shown.queryByRole('button', { name: '취소하기' })).toBeNull();
+    const after = inCard(`library-cancel-${CANCEL.library.key}`);
+    expect(after.getByText('그만뒀어요')).toBeVisible();
+    expect(after.queryByRole('button', { name: '취소하기' })).toBeNull();
     expectNoWrite(library);
   });
 
@@ -127,7 +128,9 @@ describe('the return card', () => {
     await pressIn(shown, '반납하기');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
-    expect(shown.getByText('반납했어요. 이용해 주셔서 고마워요!')).toBeVisible();
+    expect(
+      inCard(`library-return-${RETURN.library.key}`).getByText('반납했어요. 이용해 주셔서 고마워요!'),
+    ).toBeVisible();
   });
 
   it('says "지금 사용 중인 좌석이 없어요" with none in use', async () => {

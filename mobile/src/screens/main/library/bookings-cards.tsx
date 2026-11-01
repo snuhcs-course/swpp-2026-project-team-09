@@ -21,8 +21,9 @@ import {
 import { library } from '@/library/library';
 import type { LibraryBooking } from '@/library/replies';
 import { CardBox, FailureNote, Pill, Pills, Said } from './library-parts';
-import { type Act, ACT_WORDS, useConfirming } from './use-confirming';
-import { useLibraryLoad, useLogInReload, type Write } from './use-library-call';
+import type { CardOutcome } from '@/features/assistant/use-chat';
+import { type Act, ACT_WORDS, type Ended, useConfirming } from './use-confirming';
+import { type LibraryCardActions, useLibraryLoad, useLogInReload, type Write } from './use-library-call';
 
 // The cards that act on the User's own bookings: a cancel or a return card finds the booking its target names, and
 // 내 예약 lists the bookings of the period with 취소 or 반납 on those that allow it. Each sends setCancelBooking only on
@@ -133,11 +134,31 @@ function Found({ act, found, confirming }: FoundProps): ReactElement {
 }
 
 // A cancel or a return card: the bookings of yesterday to three days on that match its target.
-export function CancelReturnCard({ card }: { card: LibraryCardData }): ReactElement {
+// How a cancel or a return card ended, as the chat keeps it.
+function endOf(act: Act, ended: Ended): CardOutcome {
+  if (ended === 'stopped') {
+    return { kind: 'stopped', words: '그만뒀어요' };
+  }
+  return { kind: act === 'cancel' ? 'cancelled' : 'returned', words: ACT_WORDS[act].done };
+}
+
+export function CancelReturnCard({
+  card,
+  place,
+  actions,
+}: {
+  card: LibraryCardData;
+  place: string;
+  actions: LibraryCardActions;
+}): ReactElement {
   const act: Act = card.action === 'return' ? 'return' : 'cancel';
   const { start, end } = cancelPeriod(koreaDateKey(now()));
   const { loaded, reload } = useLibraryLoad(() => library.myBookings(start, end), `${start}-${end}`);
-  const confirming = useConfirming(act, reload);
+  const confirming = useConfirming(act, reload, {
+    onEnd: (ended) => {
+      actions.finish(place, endOf(act, ended));
+    },
+  });
   const logIn = useLogInReload(reload);
   const found = loaded.state === 'ready' ? matchingBookings(loaded.value, card) : [];
   const done = confirming.outcome === 'done';

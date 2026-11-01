@@ -33,16 +33,17 @@ interface SeatMapProps {
   seats: readonly LibrarySeat[];
   // The width the map is drawn at.
   width: number;
-  onSeat: (seat: LibrarySeat) => void;
+  // A tap on a free seat; null when no seat can be booked now.
+  onSeat: ((seat: LibrarySeat) => void) | null;
   testID: string;
   // What lies over the image and under the seats.
   under?: ReactElement;
 }
 
-function Seat({ box, onSeat }: { box: SeatBox; onSeat: (seat: LibrarySeat) => void }): ReactElement {
+function Seat({ box, onSeat }: { box: SeatBox; onSeat: ((seat: LibrarySeat) => void) | null }): ReactElement {
   const place = { left: box.left, top: box.top, width: box.width, height: box.height };
   const label = `${box.seat.VNAME}번 ${SEAT_LOOK[box.state].label}`;
-  if (box.state !== 'free') {
+  if (box.state !== 'free' || onSeat === null) {
     return (
       <View
         accessibilityLabel={label}
@@ -91,7 +92,7 @@ interface LargeSeatMapProps {
   seats: readonly LibrarySeat[];
   visible: boolean;
   onClose: () => void;
-  onSeat: (seat: LibrarySeat) => void;
+  onSeat: ((seat: LibrarySeat) => void) | null;
 }
 
 // The large view: the map 300 high, scrolled sideways, with its title and "옆으로 밀어서 보기".

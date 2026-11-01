@@ -2,7 +2,7 @@
 
 Parent: [P06 spec](../spec.md) ("App: the library cards", "Cards and the API contract")
 Status: ready-for-human
-Blocked by: 04
+Blocked by: 04, 07
 
 ## What to build
 
@@ -35,6 +35,7 @@ It uses ticket 04's library client and fake library, and builds against the `lib
 - A seat book card the app gives for a tapped seat (and for 자리 예약하기) can move its start and length by 30 minutes; a card from the Assistant keeps its time. 내 예약 reads `date` to `until` when the card sets both, else today − 7 to today + 3.
 - The fake library's room lists of 2026-11-02 are stored as the bare response; the fake library now reads both shapes, and gained `addBooking`, `refuseCancels` and `writes()` for the M4 checks.
 - Screenshots were not taken: on the web target the cards cannot reach the library (the hidden web view is native only), so every card would show "관정도서관 로그인이 필요해요".
+- 2026-11-02 (review of #178): how each card ended (booked, declined, cancelled, returned, stopped) is kept in `useChat` by the card's place (bubble id and key), so a card shows only its result after the sheet closes and opens again. A room card with companions or a `questId` says "친구와 함께하는 예약은 곧 지원돼요" and offers no 예약하기 until ticket 09. The seats card offers no 자리 예약하기 and no tappable seat once the next start is past the closing time.
 - The Person check stays open (a room booking with a companion is ticket 09's flow).
 
 

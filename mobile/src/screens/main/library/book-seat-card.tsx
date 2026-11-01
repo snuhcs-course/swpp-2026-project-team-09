@@ -8,6 +8,7 @@ import { type ReactElement, useState } from 'react';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
 import { koreaDateKey } from '@/korea-time';
+import type { CardOutcome } from '@/features/assistant/use-chat';
 import type { ConfirmedPress } from '@/library/client';
 import { seatWords, spaceWords } from '@/library/cards/bookings';
 import { doneOf } from '@/library/cards/done';
@@ -42,12 +43,19 @@ export const BOOK_FAILED = '예약하지 못했어요';
 // 대학원 열람실, which the library may refuse to an undergraduate: the card then says only that it failed.
 const GRADUATE_ROOM = '8F-grad-reading-room';
 
-// After 예약하기 or 취소, the card offers nothing more.
-export type Closed = 'booked' | 'declined' | null;
+// After 예약하기 or 취소, the card offers nothing more: the chat keeps how it ended (`LibraryCardActions.finish`).
+export type Closed = 'booked' | 'declined';
+
+export const CLOSED: Readonly<Record<Closed, CardOutcome>> = {
+  booked: { kind: 'booked', words: '예약했어요' },
+  declined: { kind: 'declined', words: '예약하지 않았어요' },
+};
 
 interface BookSeatCardProps {
   card: LibraryCardData;
   space: LibrarySpace;
+  // The card's place in the chat, by which the chat keeps how it ended.
+  place: string;
   // A card the app gave for a tapped seat: its time can be changed.
   adjustable: boolean;
   actions: LibraryCardActions;
@@ -117,7 +125,6 @@ interface OfferProps extends BookSeatCardProps {
   setSlot: (slot: Slot) => void;
   choose: (label: string) => void;
   write: Write<LibrarySeat>;
-  closed: Closed;
   close: (closed: Closed) => void;
 }
 
@@ -153,9 +160,9 @@ function OfferButtons({
 
 // The seat offered, its time, the card's buttons and the site's notes.
 function SeatOffer(props: OfferProps): ReactElement {
-  const { card, space, adjustable, seat, seats, slot, setSlot, choose, write, closed } = props;
+  const { card, space, adjustable, seat, seats, slot, setSlot, choose, write } = props;
   const [picking, setPicking] = useState(false);
-  const open = closed === null && !write.busy;
+  const open = !write.busy;
   return (
     <>
       <SpaceRow
@@ -173,7 +180,6 @@ function SeatOffer(props: OfferProps): ReactElement {
         />
       ) : null}
       {write.busy ? <Said>예약하는 중이에요</Said> : null}
-      {closed === 'booked' ? <Said>예약했어요</Said> : null}
       <Notes notes={card.notes} />
       <LargeSeatMap
         onClose={() => {
@@ -208,17 +214,19 @@ function NoFreeSeat({ space, card, actions }: Pick<BookSeatCardProps, 'space' | 
 }
 
 export function BookSeatCard(props: BookSeatCardProps): ReactElement {
-  const { card, space, actions } = props;
+  const { card, space, actions, place } = props;
   const [slot, setSlot] = useState<Slot>(() => slotOf(card));
   const [named, setNamed] = useState<string | null>(card.seat);
-  const [closed, setClosed] = useState<Closed>(null);
+  const setClosed = (closed: Closed): void => {
+    actions.finish(place, CLOSED[closed]);
+  };
   const { loaded, reload } = useLibraryLoad(() => seatsFor(space, slot), `${slot.start} ${String(slot.minutes)}`);
   const booking: Booking = { card, space, slot, actions, close: setClosed, choose: setNamed, reload };
   const write = useWrite<LibrarySeat>((seat, press) => sendBooking(booking, seat, press));
   const logIn = useLogInReload(reload);
   const seats = loaded.state === 'ready' ? loaded.value : [];
   const seat = chooseSeat(seats, named);
-  const offer = { ...props, seats, slot, setSlot, choose: setNamed, write, closed, close: setClosed };
+  const offer = { ...props, seats, slot, setSlot, choose: setNamed, write, close: setClosed };
   return (
     <CardBox testID={`library-book-${card.key}`}>
       {loaded.state === 'loading' ? <Said>빈 자리를 찾고 있어요</Said> : null}

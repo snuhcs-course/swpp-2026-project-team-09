@@ -52,15 +52,16 @@ interface RunProps {
   actions: CardActions;
   // The cards of the app's own bubble.
   own: boolean;
+  bubbleId: number;
 }
 
-function Run({ run, actions, own }: RunProps): ReactElement | null {
+function Run({ run, actions, own, bubbleId }: RunProps): ReactElement | null {
   const events = run.filter((card) => card.kind === 'globalEvent');
   const quests = run.filter((card) => card.kind === 'quest');
   const restaurants = run.filter((card) => card.kind === 'restaurant');
   const libraries = run.filter((card) => card.kind === 'library');
   if (libraries.length > 0) {
-    return <ChatLibraryCards actions={actions.library} cards={libraries} own={own} />;
+    return <ChatLibraryCards actions={actions.library} bubbleId={bubbleId} cards={libraries} own={own} />;
   }
   if (events.length > 0) {
     return <ChatEventCards actions={actions.events} cards={events} />;
@@ -80,15 +81,17 @@ export function Cards({
   cards,
   actions,
   own = false,
+  bubbleId,
 }: {
   cards: readonly ShownChatCard[];
   actions: CardActions;
   own?: boolean;
+  bubbleId: number;
 }): ReactElement {
   return (
     <>
       {runsOf(cards).map((run) => (
-        <Run actions={actions} key={keyOf(run)} own={own} run={run} />
+        <Run actions={actions} bubbleId={bubbleId} key={keyOf(run)} own={own} run={run} />
       ))}
     </>
   );

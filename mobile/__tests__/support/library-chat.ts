@@ -48,8 +48,8 @@ export interface LibraryChat {
   user: ReturnType<typeof userEvent.setup>;
 }
 
-export async function startLibraryChat(): Promise<{ server: FakeServer; library: FakeLibrary }> {
-  jest.useFakeTimers({ now: LIBRARY_NOW });
+export async function startLibraryChat(now: Date = LIBRARY_NOW): Promise<{ server: FakeServer; library: FakeLibrary }> {
+  jest.useFakeTimers({ now });
   await startFresh();
   sockets.length = 0;
   const server = await askMainServer({ signedIn: true });
@@ -139,5 +139,14 @@ export async function pressIn(
     throw new Error(`No ${role} ${String(name)}`);
   }
   await fireEvent.press(found);
+  await pass(0);
+}
+
+// The chat closed with its close button and opened again from the AI input: the sheet mounts anew.
+export async function reopenChat(user: LibraryChat['user']): Promise<void> {
+  await user.press(screen.getByRole('button', { name: '대화 닫기' }));
+  await pass(0);
+  expect(screen.queryByTestId('chat-sheet')).toBeNull();
+  await user.press(screen.getByLabelText(AI_INPUT));
   await pass(0);
 }

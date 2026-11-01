@@ -16,7 +16,7 @@ import { freeRooms, nearestStarts } from '@/library/cards/rooms';
 import { nextStart, whenWords } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibraryRoomTimes } from '@/library/replies';
-import { BOOK_FAILED, type Closed, NOT_BOOKED } from './book-seat-card';
+import { BOOK_FAILED, CLOSED, type Closed, NOT_BOOKED } from './book-seat-card';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { Choices, Pledge } from './room-parts';
 import { roomTimesFor } from './room-times';
@@ -41,8 +41,13 @@ export const NO_FREE_ROOM = '그 시간에 빈 방이 없어요';
 interface BookRoomCardProps {
   card: LibraryCardData;
   space: LibrarySpace;
+  // The card's place in the chat, by which the chat keeps how it ended.
+  place: string;
   actions: LibraryCardActions;
 }
+
+// Until the room request with friends (ticket 09), a card with companions or a party says so and books nothing.
+export const WITH_FRIENDS_LATER = '친구와 함께하는 예약은 곧 지원돼요';
 
 interface RoomWrite {
   room: LibraryRoomTimes;
@@ -79,7 +84,6 @@ interface FormProps extends BookRoomCardProps {
   slot: Slot;
   choose: (seatNo: string) => void;
   write: Write<RoomWrite>;
-  closed: Closed;
   close: (closed: Closed) => void;
 }
 
@@ -141,8 +145,8 @@ function RoomButtons({ onBook, onDecline }: { onBook: (() => void) | null; onDec
 }
 
 function RoomOffer(props: FormProps): ReactElement {
-  const { space, room, slot, write, closed } = props;
-  const open = closed === null && !write.busy;
+  const { space, room, slot, write } = props;
+  const open = !write.busy;
   return (
     <>
       <SpaceRow
@@ -153,7 +157,6 @@ function RoomOffer(props: FormProps): ReactElement {
       <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
       {open ? <RoomChoices {...props} /> : null}
       {write.busy ? <Said>예약하는 중이에요</Said> : null}
-      {closed === 'booked' ? <Said>예약했어요</Said> : null}
     </>
   );
 }
@@ -181,23 +184,27 @@ function NoFreeRoom({
   );
 }
 
-export function BookRoomCard(props: BookRoomCardProps): ReactElement {
+function LiveRoomCard(props: BookRoomCardProps): ReactElement {
   const { card, space } = props;
   const [slot, setSlot] = useState<Slot>(() => slotOf(card));
   const [chosen, setChosen] = useState<string | null>(null);
-  const [closed, setClosed] = useState<Closed>(null);
+  const setClosed = (closed: Closed): void => {
+    props.actions.finish(props.place, CLOSED[closed]);
+  };
   const { loaded, reload } = useLibraryLoad(() => roomTimesFor(space, slot.date), slot.date);
   const logIn = useLogInReload(reload);
   const write = useWrite<RoomWrite>(async (chosenRoom, press) => {
     const failed = await sendBooking(props, slot, chosenRoom, press);
-    setClosed(failed === null ? 'booked' : null);
+    if (failed === null) {
+      setClosed('booked');
+    }
     return failed;
   });
   const all = loaded.state === 'ready' ? loaded.value : [];
   const rooms = freeRooms(all, space.seatNos, slot);
   const room = rooms.find(({ SEATNO }) => SEATNO === chosen) ?? rooms[0] ?? null;
   const earliest = slot.date === koreaDateKey(now()) ? nextStart(now()) : space.hours.open;
-  const form = { ...props, rooms, slot, choose: setChosen, write, closed, close: setClosed };
+  const form = { ...props, rooms, slot, choose: setChosen, write, close: setClosed };
   return (
     <CardBox testID={`library-book-${card.key}`}>
       {loaded.state === 'loading' ? <Said>빈 방을 찾고 있어요</Said> : null}
@@ -214,4 +221,21 @@ export function BookRoomCard(props: BookRoomCardProps): ReactElement {
       <Notes notes={card.notes} />
     </CardBox>
   );
+}
+
+// A room card for friends: the room and the time, and that the booking with friends is not here yet. It reads nothing.
+function WithFriends({ card, space }: BookRoomCardProps): ReactElement {
+  const { date, start, minutes } = slotOf(card);
+  return (
+    <CardBox testID={`library-book-${card.key}`}>
+      <SpaceRow icon="users" meta={whenWords(date, start, minutes, now())} title={spaceWords(space)} />
+      <Said>{WITH_FRIENDS_LATER}</Said>
+      <Notes notes={card.notes} />
+    </CardBox>
+  );
+}
+
+export function BookRoomCard(props: BookRoomCardProps): ReactElement {
+  const { companions, questId } = props.card;
+  return companions.length > 0 || questId !== null ? <WithFriends {...props} /> : <LiveRoomCard {...props} />;
 }

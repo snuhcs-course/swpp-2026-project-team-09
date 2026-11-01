@@ -45,6 +45,13 @@ export interface ChatBubble {
   done?: LibraryDone;
 }
 
+// How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
+// booked, cancelled, returned or was dismissed never offers its button again when the sheet opens anew.
+export interface CardOutcome {
+  kind: 'booked' | 'declined' | 'cancelled' | 'returned' | 'stopped';
+  words: string;
+}
+
 // What the app itself adds to the chat: words, the cards it gives and a booking made.
 export interface OwnBubble {
   text: string;
@@ -63,6 +70,9 @@ export interface Chat {
   reset: () => void;
   // Adds the app's own bubble, which no request sends.
   addOwn: (bubble: OwnBubble) => void;
+  // How each library card of the conversation ended, by the card's place: its bubble and its key.
+  outcomes: ReadonlyMap<string, CardOutcome>;
+  finish: (card: string, outcome: CardOutcome) => void;
 }
 
 export const CHAT_FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
@@ -138,6 +148,28 @@ function useBubbles(): Bubbles {
   return { bubbles, said, show, add };
 }
 
+// The app's own bubbles, added after what was said.
+function useAddOwn(add: Bubbles['add']): Chat['addOwn'] {
+  return useCallback(
+    ({ text, cards = [], done }: OwnBubble): void => {
+      add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done });
+    },
+    [add],
+  );
+}
+
+// How the library cards ended, kept with the conversation.
+function useOutcomes(): Pick<Chat, 'outcomes' | 'finish'> & { forget: () => void } {
+  const [outcomes, setOutcomes] = useState<ReadonlyMap<string, CardOutcome>>(new Map());
+  const finish = useCallback((card: string, outcome: CardOutcome): void => {
+    setOutcomes((last) => new Map(last).set(card, outcome));
+  }, []);
+  const forget = useCallback((): void => {
+    setOutcomes(new Map());
+  }, []);
+  return { outcomes, finish, forget };
+}
+
 // The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
 // message sends the conversation, and the reply is shown whole.
 export function useChat(): Chat {
@@ -174,18 +206,16 @@ export function useChat(): Chat {
     ask();
   }, [ask, said, show]);
 
+  const { outcomes, finish, forget } = useOutcomes();
+
   const reset = useCallback((): void => {
     conversation.current += 1;
     show([]);
+    forget();
     setWaiting(false);
-  }, [show]);
+  }, [forget, show]);
 
-  const addOwn = useCallback(
-    ({ text, cards = [], done }: OwnBubble): void => {
-      add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done });
-    },
-    [add],
-  );
+  const addOwn = useAddOwn(add);
 
-  return { bubbles, waiting, send, retry, reset, addOwn };
+  return { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish };
 }

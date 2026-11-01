@@ -14,7 +14,7 @@ import {
 } from '@/library/client';
 import { useLibrarySession } from '@/library/library-session';
 import type { LibraryWriteResult } from '@/library/replies';
-import type { OwnBubble } from '@/features/assistant/use-chat';
+import type { CardOutcome, OwnBubble } from '@/features/assistant/use-chat';
 
 // How a library card reads from the library and logs in: what it loaded or why it failed, and 로그인, which opens the
 // login and then does the pressed action once more.
@@ -151,9 +151,16 @@ export function bseqnoOf(info: Readonly<Record<string, unknown>>): string {
 }
 
 // What a library card does in the chat: it adds the app's own bubbles, such as the done message or the card a tapped
-// seat gives.
+// seat gives, and keeps how it ended with the chat, by its place (`cardPlace`), so that it survives the sheet closing.
 export interface LibraryCardActions {
   addOwn: (bubble: OwnBubble) => void;
+  outcomeOf: (card: string) => CardOutcome | null;
+  finish: (card: string, outcome: CardOutcome) => void;
+}
+
+// A card's place in the chat: its bubble and its key, since the same card may be shown twice.
+export function cardPlace(bubbleId: number, key: string): string {
+  return `${String(bubbleId)}:${key}`;
 }
 
 // The library's own words for a refused write.

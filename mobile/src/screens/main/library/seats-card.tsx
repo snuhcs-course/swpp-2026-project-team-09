@@ -15,7 +15,7 @@ import { tappedSlot } from '@/library/cards/made';
 import type { Slot } from '@/library/cards/payloads';
 import { freeStretches, roomsOf } from '@/library/cards/rooms';
 import { freeSeats } from '@/library/cards/seats';
-import { dayWords, siteBookTime, siteDate } from '@/library/cards/times';
+import { dayWords, minutesOf, siteBookTime, siteDate } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibraryRoomTimes, LibrarySeat } from '@/library/replies';
 import { roomPhotoUrl } from '@/library/site';
@@ -51,14 +51,34 @@ interface SeatMapsProps extends SeatsCardProps {
 }
 
 // The small map at the card's width, its caption, 자리 예약하기, and the large view.
+export const BOOKING_CLOSED = '오늘은 예약 시간이 끝났어요';
+
+function BookAnySeat({ card, space, actions, slot }: Omit<SeatMapsProps, 'seats'>): ReactElement {
+  return (
+    <Pills>
+      <Pill
+        label="자리 예약하기"
+        onPress={() => {
+          actions.addOwn(seatBookBubble(space, null, slot, card.notes));
+        }}
+        primary
+      />
+    </Pills>
+  );
+}
+
 function SeatMaps({ card, space, actions, seats, slot }: SeatMapsProps): ReactElement {
   const [width, setWidth] = useState(0);
   const [large, setLarge] = useState(false);
   const when = card.start === null ? '지금 기준' : `${dayWords(slot.date, now())} ${slot.start} 기준`;
-  const tap = (seat: LibrarySeat): void => {
-    setLarge(false);
-    actions.addOwn(seatBookBubble(space, seat.VNAME, slot, card.notes));
-  };
+  // Past the closing time nothing is booked today: no seat is tapped and no 자리 예약하기 is offered.
+  const bookable = minutesOf(slot.start) + space.minMinutes <= minutesOf(space.hours.close);
+  const tap = bookable
+    ? (seat: LibrarySeat): void => {
+        setLarge(false);
+        actions.addOwn(seatBookBubble(space, seat.VNAME, slot, card.notes));
+      }
+    : null;
   const open = (): void => {
     setLarge(true);
   };
@@ -75,15 +95,7 @@ function SeatMaps({ card, space, actions, seats, slot }: SeatMapsProps): ReactEl
       <Text
         style={styles.caption}
       >{`${spaceWords(space)} · ${when} · 빈 자리 ${String(freeSeats(seats).length)}석`}</Text>
-      <Pills>
-        <Pill
-          label="자리 예약하기"
-          onPress={() => {
-            actions.addOwn(seatBookBubble(space, null, slot, card.notes));
-          }}
-          primary
-        />
-      </Pills>
+      {bookable ? <BookAnySeat {...{ card, space, actions, slot }} /> : <Said>{BOOKING_CLOSED}</Said>}
       <LargeSeatMap
         onClose={() => {
           setLarge(false);

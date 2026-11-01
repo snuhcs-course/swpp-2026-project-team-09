@@ -24,16 +24,25 @@ export const ACT_WORDS: Record<Act, { confirm: string; done: string; none: strin
 };
 
 export type Outcome = 'idle' | 'done' | 'stopped';
+export type Ended = Exclude<Outcome, 'idle'>;
 
 // The confirm of a cancel or a return: setCancelBooking with the booking's number, then what happened. A write that
 // fails is never sent again by itself: the card reads the bookings again to show where they stand.
 export function useConfirming(
   act: Act,
   reload: () => void,
-  // 내 예약 reads its list again, so that the row shows its new STATUS_NAME.
-  { reloadAfter = false } = {},
-): { outcome: Outcome; setOutcome: (outcome: Outcome) => void; write: Write<LibraryBooking> } {
-  const [outcome, setOutcome] = useState<Outcome>('idle');
+  // 내 예약 reads its list again, so that the row shows its new STATUS_NAME; a cancel or a return card tells the chat
+  // how it ended, which keeps it so when the sheet opens anew.
+  {
+    reloadAfter = false,
+    onEnd = (): void => undefined,
+  }: { reloadAfter?: boolean; onEnd?: (outcome: Ended) => void } = {},
+): { outcome: Outcome; setOutcome: (outcome: Ended) => void; write: Write<LibraryBooking> } {
+  const [outcome, setShown] = useState<Outcome>('idle');
+  const setOutcome = (next: Ended): void => {
+    setShown(next);
+    onEnd(next);
+  };
   const write = useWrite<LibraryBooking>(
     async (booking, press) => {
       const result = await library.cancel(booking.BSEQNO, press);
