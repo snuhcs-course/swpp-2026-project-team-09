@@ -104,3 +104,10 @@ Declared in [evidence/06-walking-and-ride-diagnostics.md](../evidence/06-walking
 - A run of the holdout gets a scorecard that names no case, and `pnpm eval:compare` refuses it, so that no failure of it is opened by accident.
 - The regression is recorded in `main-server/eval/p4/record.md`: a fail by the rule, with one real tool-choice fault (`follow-up-yes-after-menus`) and two failures of the words alone.
 - Part 1's boxes are ticked here because PR #159 was to add only the ticket and the evidence file.
+
+### Agent usage (2026-11-01)
+
+- **Agent time** (estimate): about 31 minutes in all: about 24 minutes for the implementing session, about 1 for the agent that drafted the wordings, and about 7 for the two reviewers. The session that wrote this ticket is not counted, and neither is time spent waiting for a person.
+- **Tokens** (measured from the transcripts, subagents included, up to the draft PR):
+  - Input: about 120 not cached, about 11,740,000 cache reads and about 685,000 cache writes.
+  - Output: about 150,000.
