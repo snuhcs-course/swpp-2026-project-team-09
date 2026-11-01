@@ -11,10 +11,11 @@
 import { fileURLToPath } from 'node:url';
 import { inject } from 'vitest';
 import { openRouterModel } from '../src/assistant/adapter.js';
-import { casesIn, loadCases, repetitionsOf, selectCases, sentTurnsOf, type WorldName } from './cases.ts';
+import { repetitionsOf, selectCases, sentTurnsOf, type WorldName } from './cases.ts';
 import { dotEnv, runOptionsFromEnv } from './options.ts';
 import { expectSchema } from './expect.ts';
 import { type Names, namesOf } from './normalise.ts';
+import { casesToRun } from './p4/holdout.ts';
 import { seedP4World } from './p4/world.ts';
 import { seedLargeWorld } from './p5/large-world/world.ts';
 import { seedP5World } from './p5/world.ts';
@@ -36,7 +37,7 @@ const SEEDERS: Record<WorldName, typeof seedWorld> = {
 };
 
 const options = runOptionsFromEnv();
-const cases = selectCases(casesIn(loadCases(), options.world), options.categories, options.caseIds);
+const cases = selectCases(casesToRun(options), options.categories, options.caseIds);
 const log = new RunLog(options);
 // The app and its world, once started, and the world's ids by seed name for the scorer.
 const started: { evalApp?: EvalApp; world?: World; names?: Names } = {};
