@@ -151,11 +151,17 @@ on an undergraduate's account only.
 A User reads and edits their own profile. The routes name no User, so they never reach another User's profile.
 
 - `GET /users/me/profile` answers
-  `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD" }`. Like every User
-  route but two, it needs the User to have finished onboarding. `friendId` is the User's [Friend ID](#friends).
+  `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD", "studentNumber": ..., "registeredName": ..., "affiliation": ... }`.
+  Like every User route but two, it needs the User to have finished onboarding. `friendId` is the User's
+  [Friend ID](#friends).
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
-  empties `admissionYear`, and `[]` empties `hashtags`. The name and the department cannot be emptied. The Friend ID
-  cannot be changed: a `friendId` sent is ignored.
+  empties `admissionYear`, `studentNumber`, `registeredName` and `affiliation`, and `[]` empties `hashtags`. The name
+  and the department cannot be emptied. The Friend ID cannot be changed: a `friendId` sent is ignored.
+- `studentNumber` (학번), `registeredName` (학적상 이름, the name the library knows) and `affiliation` (소속) are for
+  a group study room's booking at 관정도서관. They start empty, and onboarding does not take them. The 학번 and the
+  registered name are in this reply and the Lobby's only: no Friend list, Friend search, Quest, Party or invitation
+  carries them, and the profile's routes do not log them. Where the registered name is needed and it is empty, the
+  name is used (`registeredNameOf` in `src/users/dto/profile.dto.ts`); the stored value stays empty.
 - A value outside these limits gets 400 with a message that starts with the field, and nothing changes. Spaces around
   text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`, and onboarding follows the same
   ones.
@@ -164,6 +170,10 @@ A User reads and edits their own profile. The routes name no User, so they never
   - `admissionYear`: a whole number from 1946, when SNU was founded, to this year in Korea.
   - `hashtags`: at most 20. Each is kept without the `#` in front, in the case sent, and then has 1 to 30 characters
     without whitespace. None may appear twice, whatever the case.
+  - `studentNumber`: four digits and five more, with a hyphen between them or not, such as `2026-12345`. It is kept as
+    the nine digits, `202612345`. An empty one empties it.
+  - `registeredName`: at most 30 characters. An empty one empties it.
+  - `affiliation`: `undergraduate` (학부), `graduate` (대학원) or `exchange` (교환학생).
 
 ## Friends
 
@@ -1971,6 +1981,50 @@ answers the User's classes, each with its times in the order of the week and eac
 `isClassOf(userId, classId, db?)` whether an identifier is one of the User's classes. The Quest list shows each class
 held today as a Class Quest, computed from these and never stored (see [Quests](#quests), Class Quests).
 
+## Tutorial
+
+The 새내기 튜토리얼 walks a new student through campus life, one Tutorial Quest at a time. A Tutorial Quest is not a
+[Quest](#quests): it has no Holder, Board or Sub Quest, so it never shows on the Boards or in Free Time.
+
+**Content.** `content/tutorial.yaml` holds the quests: each one's `key`, `order`, `title`, `brief` (the pager's line),
+`body` (the sheet's paragraphs), `condition` (완료 조건), `completion` (`{ kind: button }`, or
+`{ kind: kwanjeongCheck, skipLabel }` for the quest the phone checks against the User's library bookings),
+`completionMessage`, `places` (a Place of the seed by its number, with `floor` and `label` when they help, or a
+`point` with its `label`) and `links` (`label` and `url`). The server reads and checks it once when it starts, in
+`src/tutorial/tutorial-content.ts`, and a file that does not match stops the start with the reason. Adding a quest is
+an entry in the file. `test/tutorial-content.unit.test.ts` checks that each Place number is in the seed.
+
+**State.** `tutorial_progress` holds one row for each User who has one, with four times, and
+`tutorial_quest_progress` one row for each quest the User started, with when it was completed and how (`button`, or
+`checked`, `forced` or `skipped` for the 관정 quest). A row of a key no longer in the file is ignored. Each time is set
+or cleared only by these rules, and the state is read from which of them are set, never by comparing them:
+
+- `enabledAt`: the tutorial is on. `enable` sets it. For a User eligible by default, admitted this year in Korea or
+  later, or with 소속 `exchange`, `GET /tutorial` sets it the first time it finds neither `enabledAt` nor `stoppedAt`,
+  so a later change of the admission year does not turn it off.
+- `stoppedAt`: `stop` sets it, and `enable` clears it.
+- `finishedAt`: set by the completion that leaves no quest of the file uncompleted. Quests added to the file later
+  leave it set; `enable` clears it, and the new quests then show as not started.
+- `rowHiddenAt`: `hide-row` sets it.
+
+The state is the first that holds: `finished`, `stopped`, `off` (no `enabledAt`), `active` (a quest of the file is
+started) and `available`.
+
+The routes name no User, so they never reach another User's progress. Each is safe to repeat, takes no
+`Idempotency-Key` and answers 200 with what `GET /tutorial` would answer:
+
+- `GET /tutorial` answers `{ state, quests }`, each quest as the file holds it with its `status`: `notStarted`,
+  `started` or `completed`.
+- `POST /tutorial/enable` (진행하기), `POST /tutorial/stop` (튜토리얼 그만하기, 끄기) and `POST /tutorial/hide-row` (the ✕
+  of the 내 정보 row) set the times above. The quests' progress stays.
+- `POST /tutorial/quests/:key/start` starts a quest.
+- `POST /tutorial/quests/:key/complete` with `{ "by": "button" }` completes a `button` quest, and with `checked`,
+  `forced` or `skipped` the `kwanjeongCheck` quest. The phone does the check, so the server records how and does not
+  verify it. A quest completed once keeps how.
+
+The refusals: a key the file does not hold gets 404 with `code` `TUTORIAL_QUEST_NOT_FOUND`, and a `by` the quest's
+kind does not accept gets 400 with `COMPLETION_NOT_ACCEPTED`.
+
 ## Assistant
 
 The Assistant ("SNU Now AI") is the chat that the main screen's input bar opens (P07). It runs in this server and calls
@@ -2065,9 +2119,14 @@ its model through OpenRouter with the Vercel AI SDK
     (`dto/assistant-messages.dto.ts`).
   - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
     (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
+  - **The reply's text** is the text of the model's steps in order, a step that repeats the one before it left out,
+    since the model may write beside a tool call and close with a line or with nothing. A run that wrote no text but
+    shows cards, map buttons or a Proposal says `아래에서 확인해 보세요.` above them, and the server logs that it did, as
+    `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
+Proposal)`.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
-    a model error, exhausted credit (OpenRouter's 402), the time running out, or the step cap reached without an
-    answer. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
+    a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
+    or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
 
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
@@ -2188,8 +2247,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
   call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
-  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). `causeOf` names why a
-  run failed for the log.
+  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
+  text from the steps' text, or the fixed sentence. `causeOf` names why a run failed for the log.
 
 **Grey suggestions** (`src/assistant/suggestions/`) are decided by this server without the model, when the chat opens.
 `GET /assistant/suggestion?screen=main|events|party&openCard=globalEvent:<id>` answers
@@ -2238,8 +2297,9 @@ rejected and needed but not made. The rows go with the account.
 
 The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
 `startApp` in the model port's place. Each call to the model takes the next step of its script, and every call is
-kept. A step is a tool to call with its arguments, `{ tool, input }`, the text to answer, `{ text }`, an error to throw
-as the provider would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
+kept. A step is a tool to call with its arguments, `{ tool, input }`, with `text` when the model wrote words beside the
+call, the text to answer, `{ text }`, a call cut at the output limit, `{ cut }`, an error to throw as the provider
+would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
 reach OpenRouter. `test/assistant.integration.test.ts` does it this way:
 
@@ -2293,7 +2353,9 @@ the settings given to `startApp`. During the run the tokens the model reported a
 budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
 
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
-reason and its usage with cache reads and writes. The tool results come through the run observer, the one seam in the
+reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,
+its reasoning tokens and the provider's response as it came, which the benchmark's fetch (`RawResponses`) keeps because
+the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
 shows its error too. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so
@@ -2597,6 +2659,7 @@ prisma/
 ├── schema.prisma                    database schema
 └── migrations/                      every schema change, applied in order
 seed/                                the seed files, each with where it came from
+content/                             text the server serves as it is, such as the tutorial's quests
 src/
 ├── main.ts                          starts the server
 ├── seed.ts                          the command that loads the seed files, `pnpm db:seed`
@@ -2653,6 +2716,7 @@ src/
 ├── shuttle/                         a feature: the shuttle's stops and line of the seed, the route page's places and
 │                                    hours, and the vehicles the worker collects, served and sent to the socket server
 ├── timetable/                       a feature: a User's timetable, the classes and their times
+├── tutorial/                        a feature: the 새내기 튜토리얼's content and each User's progress
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`

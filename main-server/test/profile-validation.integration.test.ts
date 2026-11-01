@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-09-30  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -51,6 +52,13 @@ describe('Editing the profile with an invalid value', () => {
     ['the same hashtag twice once # is dropped', { hashtags: ['AI', '#AI'] }],
     ['the same hashtag twice in another case', { hashtags: ['AI', 'ai'] }],
     ['hashtags that are not a list', { hashtags: null }],
+    ['a 학번 of eight digits', { studentNumber: '2026-1234' }],
+    ['a 학번 of ten digits', { studentNumber: '2026123456' }],
+    ['a 학번 with a letter', { studentNumber: '2026-1234a' }],
+    ['a 학번 with the hyphen elsewhere', { studentNumber: '20261-2345' }],
+    ['a 학번 sent as a number', { studentNumber: 202612345 }],
+    ['a registered name longer than 30 characters', { registeredName: 'a'.repeat(31) }],
+    ['a 소속 outside the three', { affiliation: 'staff' }],
   ])('refuses %s with 400, names the field and changes nothing', async (_case, body) => {
     const { accessToken } = await signIn(app);
     const before: unknown = (await getProfile(app, accessToken)).body;
