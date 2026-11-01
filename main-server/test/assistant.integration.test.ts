@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-29  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -232,6 +233,43 @@ describe('showOnMap', () => {
       proposal: null,
     });
     expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
+  });
+});
+
+// The model may write beside a tool call and close with a line, or with nothing: the reply keeps every step's words.
+describe('The reply text across the steps', () => {
+  it('keeps the text the model wrote beside a tool call, before the text of its last step', async () => {
+    model.script(
+      { tool: 'showOnMap', input: { layer: 'dining' }, text: '학생회관식당은 제육볶음이에요.' },
+      { text: '지도에서도 볼 수 있어요.' },
+    );
+
+    const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
+
+    expect(response.body).toMatchObject({
+      text: '학생회관식당은 제육볶음이에요.\n\n지도에서도 볼 수 있어요.',
+      mapButtons: ['dining'],
+    });
+  });
+
+  it('answers with the text written beside a tool call when the last step writes nothing', async () => {
+    model.script(
+      { tool: 'showOnMap', input: { layer: 'dining' }, text: '학생회관식당은 제육볶음이에요.' },
+      { text: '' },
+    );
+
+    const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ text: '학생회관식당은 제육볶음이에요.', mapButtons: ['dining'] });
+  });
+
+  it('writes a text the model repeats in its last step once', async () => {
+    model.script({ tool: 'showOnMap', input: { layer: 'dining' }, text: '오늘 메뉴예요.' }, { text: '오늘 메뉴예요.' });
+
+    const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
+
+    expect(response.body).toMatchObject({ text: '오늘 메뉴예요.', mapButtons: ['dining'] });
   });
 });
 

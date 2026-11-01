@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -87,9 +88,11 @@ export interface ToolContext extends Asker {
   readonly restaurants: Map<string, RestaurantCard>;
 }
 
-// A feature's reply: the model's last text, and what the presenters put beside it.
+// A feature's reply: the text of the model's steps, and what the presenters put beside it.
 export interface FeatureReply extends Presented {
   readonly text: string;
+  // When no step wrote text and the text is the fixed sentence, how the last step ended, for the server's log.
+  readonly noTextFinishReason: string | null;
 }
 
 export interface Tool {
