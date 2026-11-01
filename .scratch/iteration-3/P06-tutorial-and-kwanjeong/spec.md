@@ -186,7 +186,8 @@ Words:
 - **What the timestamps mean.** Each is set or cleared only by the rules below, so the state never compares timestamps or reads a missing one as a time:
   - `enabledAt`: the tutorial is on. `POST /tutorial/enable` sets it. For a User eligible by default, `GET /tutorial` sets it the first time it finds no `enabledAt` and no `stoppedAt` (creating the row), so "eligible by default" is stored once and later changes to the admission year or 소속 do not turn it off.
   - `stoppedAt`: the User stopped it. `POST /tutorial/stop` sets it; `enable` clears it (and sets `enabledAt` again).
-  - `finishedAt`: set when a complete makes every quest of the content **at that time** completed. It is never cleared by adding quests: quests added to the YAML later do not reappear for a finished User. Only `enable` from 내 정보 clears it, and then the new quests show as not started.
+  - `finishedAt`: set when a complete makes every quest of the content **at that time** completed. It is never cleared by adding quests: quests added to the YAML later do not reappear for a finished User. Only `enable` from 내 정보 clears it, and only when the content has a quest the User has not completed; the new quests then show as not started. An `enable` with every quest completed leaves it set, so the state stays `finished`.
+  - `rowHiddenAt`: the User closed the 내 정보 row. `POST /tutorial/hide-row` sets it; turning the tutorial on (`enable`, or `GET /tutorial` for a User eligible by default) clears it.
 - **The state, derived** in this order, the first that holds:
   - `finished`: `finishedAt` is set;
   - `stopped`: `stoppedAt` is set;
@@ -195,8 +196,8 @@ Words:
   - `available`: otherwise (on, nothing started).
   - The main screen shows the button in `available` and `active` while some quest is not started. It shows the quest-list group in `active`. Elsewhere it shows nothing.
 - **Endpoints**, all as the signed-in User:
-  - `GET /tutorial` → `{ state, quests: [{ ...content, status: notStarted | started | completed }] }`. The content is served from the YAML, so the app has no copy.
-  - `POST /tutorial/enable` (진행하기): sets `enabledAt` and clears `stoppedAt` and `finishedAt`. Progress is kept.
+  - `GET /tutorial` → `{ state, rowHidden, eligibleByDefault, quests: [{ ...content, status: notStarted | started | completed }] }`. The content is served from the YAML, so the app has no copy. `rowHidden` is whether `rowHiddenAt` is set. `eligibleByDefault` is the rule above read now (the 내 정보 row's two `available` subtitles), so the app has no copy of it either.
+  - `POST /tutorial/enable` (진행하기): sets `enabledAt` and clears `stoppedAt` and `rowHiddenAt`, and clears `finishedAt` when a quest of the content is not completed. Progress is kept.
   - `POST /tutorial/stop` (튜토리얼 그만하기, and 끄기 in 내 정보).
   - `POST /tutorial/hide-row` (the ✕ of the 내 정보 row while `off`).
   - `POST /tutorial/quests/:key/start`.

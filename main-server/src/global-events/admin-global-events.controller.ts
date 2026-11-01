@@ -18,6 +18,12 @@ import {
   stateChangeSchema,
 } from './dto/change-global-event.dto.js';
 import {
+  type AttachQueuedDto,
+  attachQueuedSchema,
+  type LinkedSessionDto,
+  type QueuedSessionDto,
+} from './dto/same-event-queue.dto.js';
+import {
   GlobalEventDetailDto,
   ListedGlobalEventDto,
   type ListedState,
@@ -26,6 +32,7 @@ import {
 import { type UnsettledPostDto } from './dto/unsettled-post.dto.js';
 import { GlobalEventsService } from './global-events.service.js';
 import { PublicationStepService } from './publication-step.service.js';
+import { SameEventQueueService } from './same-event-queue.service.js';
 
 @AdministratorOnly()
 @Controller('admin/global-events')
@@ -33,6 +40,7 @@ export class AdminGlobalEventsController {
   constructor(
     private readonly globalEvents: GlobalEventsService,
     private readonly publicationStep: PublicationStepService,
+    private readonly queue: SameEventQueueService,
   ) {}
 
   @Get()
@@ -46,6 +54,36 @@ export class AdminGlobalEventsController {
     return this.publicationStep.unsettledPosts();
   }
 
+  // The sessions the same-event step could not decide, with their candidates as they now are.
+  @Get('queue')
+  queued(): Promise<QueuedSessionDto[]> {
+    return this.queue.list();
+  }
+
+  @Post('queue/:sessionId/attach')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  attachQueued(
+    @Param('sessionId', { schema: z.uuid() }) sessionId: string,
+    @Body({ schema: attachQueuedSchema }) body: AttachQueuedDto,
+  ): Promise<void> {
+    return this.queue.attach(sessionId, body);
+  }
+
+  @Post('queue/:sessionId/publish')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  publishQueued(
+    @Param('sessionId', { schema: z.uuid() }) sessionId: string,
+    @Body({ schema: stateChangeSchema }) { version }: StateChangeDto,
+  ): Promise<void> {
+    return this.queue.publishAsOwn(sessionId, version);
+  }
+
+  @Post('sessions/:sessionId/detach')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  detach(@Param('sessionId', { schema: z.uuid() }) sessionId: string): Promise<void> {
+    return this.queue.detach(sessionId);
+  }
+
   // By hand, from an organizer's submission.
   @Post()
   @Idempotent({ required: true })
@@ -56,6 +94,18 @@ export class AdminGlobalEventsController {
   @Get(':id')
   read(@Param('id', { schema: z.uuid() }) id: string): Promise<GlobalEventDetailDto> {
     return this.globalEvents.read(id);
+  }
+
+  @Get(':id/sessions')
+  linkedSessions(@Param('id', { schema: z.uuid() }) id: string): Promise<LinkedSessionDto[]> {
+    return this.queue.linkedSessions(id);
+  }
+
+  // An Administrator has looked at what flagged the event.
+  @Post(':id/acknowledge')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  acknowledge(@Param('id', { schema: z.uuid() }) id: string): Promise<void> {
+    return this.globalEvents.acknowledge(id);
   }
 
   @Patch(':id')

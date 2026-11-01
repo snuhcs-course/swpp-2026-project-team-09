@@ -19,7 +19,8 @@ import {
 } from '../generated/prisma/client.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { checkedSessions } from './judgement-checks.js';
+import { type JudgedSession } from './judgement-answer.js';
+import { checkedSessions, placedSessions } from './judgement-checks.js';
 import { askForJudgement, type JudgementLimits } from './judgement-model.js';
 import { maskedPost } from './judgement-post.js';
 import { POST_SOURCE_NAMES, POST_SOURCES } from './post-sources.js';
@@ -45,6 +46,17 @@ export function judgedDrafts({ sessions }: Pick<PostWithOwnSessions, 'sessions'>
   return sessions.filter(
     ({ readByRules, heldFor, globalEvent }) =>
       !readByRules && heldFor === null && globalEvent.state === GlobalEventState.draft,
+  );
+}
+
+// Where each new session of a Judgement goes among the post's Drafts: those it holds are the ones to settle.
+export function placedOfPost(
+  post: Pick<PostWithOwnSessions, 'sessions'>,
+  sessions: JudgedSession[],
+): Map<JudgedSession, string | null> {
+  return placedSessions(
+    sessions.filter(({ globalEventId }) => globalEventId === null),
+    judgedDrafts(post).map(({ globalEvent: { id, startsAt } }) => ({ id, startsAt })),
   );
 }
 

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -82,6 +83,9 @@ describe('the mock of the profile', () => {
       admissionYear: null,
       hashtags: ['러닝'],
       friendId: '7KX2M9QD',
+      studentNumber: null,
+      registeredName: null,
+      affiliation: null,
     });
     expect((await answered(mockClient.enterLobby())).profile).toEqual(profile);
   });

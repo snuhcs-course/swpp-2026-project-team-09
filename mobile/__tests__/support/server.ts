@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
@@ -76,6 +77,9 @@ export const LOBBY: Lobby = {
     admissionYear: 2022,
     hashtags: ['러닝'],
     friendId: '7KX2M9QD',
+    studentNumber: null,
+    registeredName: null,
+    affiliation: null,
   },
   masterSwitch: false,
 };
