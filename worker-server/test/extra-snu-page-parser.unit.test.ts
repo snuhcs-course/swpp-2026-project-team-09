@@ -16,6 +16,23 @@ function parsed(key: string): CollectedPost {
   return parseExtraSnuPage(programme(key), key);
 }
 
+describe("The main text's links", () => {
+  it('give where they lead, whatever their words, and no mail address', () => {
+    const page = programme('PGM012002170').replace(
+      /(주요내용[\s\S]*?class="td_box"[^>]*>)/u,
+      `$1<a href="https://www.snu.ac.kr/snunow/events?md=v&amp;bbsidx=178226">공지</a><a href="mailto:a@snu.ac.kr">메일</a>`,
+    );
+
+    expect(parseExtraSnuPage(page, 'PGM012002170').links).toEqual([
+      'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178226',
+    ]);
+  });
+
+  it("leave out the rest of the page, such as the programme's homepage field", () => {
+    expect(parsed('PGM012002170').links).toEqual([]);
+  });
+});
+
 describe('A programme with one session', () => {
   it("gives the session's time and place from their fields, read as the rules read a post's own time", () => {
     expect(parsed('PGM012002414')).toMatchObject({

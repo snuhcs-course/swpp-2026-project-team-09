@@ -130,7 +130,7 @@ export const WITH_OWN_POST_AND_JUDGEMENT = {
 export type GlobalEventWithJudgement = Prisma.GlobalEventGetPayload<{ include: typeof WITH_OWN_POST_AND_JUDGEMENT }>;
 
 // The Judgement of an event's post, as an Administrator reads it. One post's Judgement covers all its sessions, and a
-// session's `globalEventId` says which event it was published as. `outcome` is `no_event` for a post called no event,
+// session's `globalEventId` says which event it was published as or attached to. `outcome` is `no_event` for a post called no event,
 // `failed` for a Judgement that could not be made, and empty while a try runs.
 export interface JudgementDto {
   outcome: JudgementOutcome | null;

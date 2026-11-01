@@ -592,15 +592,28 @@ To stop what Judgements publish while they keep being stored, turn off `AUTOMATI
 `GET /admin/global-events/unsettled-posts`: during a model outage each new post uses its two tries over two Collections
 and then waits for an Administrator.
 
+### Turning on the same-event title rule
+
+`SAME_EVENT_TITLE_RULE` is `off` in `k8s/parts/shared/kustomization.yaml`: the link rule attaches, but two posts of an equal
+title and start are both published. The rule drops what is bracketed, so `[물리천문학부] 콜로키움` and `[화학부] 콜로키움` at
+one start would attach and the second would leave the app with no flag. Turn it on when evaluation B (ticket 09) has
+measured it on the commit being released, by setting the value to `on` in that file, merging it and releasing. It looks
+only at posts that go through the step afterwards. To turn it off at once, use the ConfigMap patch above with this name,
+and also change the file.
+
 ### Turning on extra.snu's Collections
 
 The worker's image carries a browser for extra.snu, and its pod may use up to 1 GiB for it, but the schedule starts
 nothing while `EXTRA_SNU_COLLECTION` is `off`, its value in `k8s/parts/shared/kustomization.yaml`. Keep it off until the
-same-event rules (`.scratch/iteration-3/P05-join-or-recruit/issues/08a-same-event-rules.md`) are deployed. Before them,
-an event posted on both SNU Now and extra.snu would show twice, and Users could gather for it in two places. Do not run
-`node dist/collect extra_snu` by hand before then either: the command does not look at the setting.
+same-event rules (`.scratch/iteration-3/P05-join-or-recruit/issues/08a-same-event-rules.md`) are deployed and
+`SAME_EVENT_TITLE_RULE` is on. Before that, an event posted on both SNU Now and extra.snu would show twice unless one post
+links the other, and Users could gather for it in two places. Do not run `node dist/collect extra_snu` by hand before then
+either: the command does not look at the setting.
 
-Once they are deployed, check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand, and watch
+Deploy the main server before the worker in the Release that brings them: the worker's message then carries `links`, and
+a main server of an earlier Release refuses a message with a field it does not know.
+
+Once they are deployed and the title rule is on, `EXTRA_SNU_COLLECTION` may be turned on. A person decides when. Check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand, and watch
 its memory from a second terminal while it runs. The browser closes when the Collection ends, so a reading after it says
 nothing, and the numbers lag by the metrics interval:
 

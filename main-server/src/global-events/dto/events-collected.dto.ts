@@ -39,6 +39,8 @@ const collectedPostSchema = z.strictObject({
   address: z.url({ protocol: /^https$/u }),
   title: z.string().min(1),
   description: z.string(),
+  // Where the links of the body lead, whatever their words say. A worker of an earlier Release sends none.
+  links: z.array(z.string()).default([]),
   sessions: z
     .array(collectedSessionSchema)
     .min(1)
