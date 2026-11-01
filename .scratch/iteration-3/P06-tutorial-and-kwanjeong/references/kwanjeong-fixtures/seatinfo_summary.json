@@ -1,0 +1,604 @@
+{
+  "12101": [
+    {
+      "seatNo": "12101001",
+      "NAME": "G201",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|20인실 최소 11명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_12101001.jpg"
+    }
+  ],
+  "12102": [
+    {
+      "seatNo": "12102001",
+      "NAME": "G203",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|10인실 최소 7명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_12102001.jpg"
+    },
+    {
+      "seatNo": "12102002",
+      "NAME": "G207",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|10인실 최소 7명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_12102002.jpg"
+    },
+    {
+      "seatNo": "12102003",
+      "NAME": "G208",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|10인실 최소 7명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_12102003.jpg"
+    }
+  ],
+  "12103": [
+    {
+      "seatNo": "12103001",
+      "NAME": "G204",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_12103001.jpg"
+    },
+    {
+      "seatNo": "12103002",
+      "NAME": "G205",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_12103002.jpg"
+    },
+    {
+      "seatNo": "12103003",
+      "NAME": "G206",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_12103003.jpg"
+    },
+    {
+      "seatNo": "12103006",
+      "NAME": "G211",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_12103006.jpg"
+    }
+  ],
+  "14101": [
+    {
+      "seatNo": "14101001",
+      "NAME": "G402",
+      "COMMENT": "의학과 동문 정규철님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|10인실 최소 7명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14101001.png"
+    },
+    {
+      "seatNo": "14101002",
+      "NAME": "G403",
+      "COMMENT": "국사학과 명예교수 김철준님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|10인실 최소 7명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14101002.png"
+    },
+    {
+      "seatNo": "14101003",
+      "NAME": "G423",
+      "COMMENT": "우송재단에서 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|10인실 최소 7명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14101003.png"
+    },
+    {
+      "seatNo": "14101004",
+      "NAME": "G425",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|10인실 최소 7명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14101004.png"
+    }
+  ],
+  "14102": [
+    {
+      "seatNo": "14102001",
+      "NAME": "G401",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|8인실 최소 6명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14102001.png"
+    }
+  ],
+  "14103": [
+    {
+      "seatNo": "14103001",
+      "NAME": "G404",
+      "COMMENT": "제12대 평의원회의장 박종근님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103001.png"
+    },
+    {
+      "seatNo": "14103002",
+      "NAME": "G405",
+      "COMMENT": "문헌지식정보 최고위과정 제4기 일동이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103002.png"
+    },
+    {
+      "seatNo": "14103003",
+      "NAME": "G406",
+      "COMMENT": "국사학과 명예교수 이태진님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103003.png"
+    },
+    {
+      "seatNo": "14103004",
+      "NAME": "G407",
+      "COMMENT": "물리학과 동문 김두희님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103004.png"
+    },
+    {
+      "seatNo": "14103005",
+      "NAME": "G408",
+      "COMMENT": "중앙도서관 사서선임행정관 김성자님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103005.png"
+    },
+    {
+      "seatNo": "14103006",
+      "NAME": "G409",
+      "COMMENT": "국사학과 명예교수 최병헌님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103006.png"
+    },
+    {
+      "seatNo": "14103007",
+      "NAME": "G410",
+      "COMMENT": "(주)수도CAC 대표이사 송명호님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103007.png"
+    },
+    {
+      "seatNo": "14103008",
+      "NAME": "G411",
+      "COMMENT": "국어국문학과 명예교수 이상억님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103008.png"
+    },
+    {
+      "seatNo": "14103009",
+      "NAME": "G412",
+      "COMMENT": "마이크로엠(주) 대표이사 이상복님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103009.png"
+    },
+    {
+      "seatNo": "14103010",
+      "NAME": "G413",
+      "COMMENT": "문헌지식정보 최고위과정 제5기 일동이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103010.png"
+    },
+    {
+      "seatNo": "14103012",
+      "NAME": "G415",
+      "COMMENT": "키티스산학연정보(주) 대표이사 홍영표님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103012.png"
+    },
+    {
+      "seatNo": "14103013",
+      "NAME": "G416",
+      "COMMENT": "제18-21대 의학도서관장 서정욱님이 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103013.png"
+    },
+    {
+      "seatNo": "14103014",
+      "NAME": "G417",
+      "COMMENT": "키티스산학연정보(주)에서 기증해주신 그룹스터디룸입니다.",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103014.png"
+    },
+    {
+      "seatNo": "14103015",
+      "NAME": "G418",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103015.png"
+    },
+    {
+      "seatNo": "14103016",
+      "NAME": "G419",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103016.png"
+    },
+    {
+      "seatNo": "14103017",
+      "NAME": "G420",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103017.png"
+    },
+    {
+      "seatNo": "14103018",
+      "NAME": "G421",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103018.png"
+    },
+    {
+      "seatNo": "14103019",
+      "NAME": "G422",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103019.png"
+    },
+    {
+      "seatNo": "14103020",
+      "NAME": "G424",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103020.png"
+    },
+    {
+      "seatNo": "14103021",
+      "NAME": "G426",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103021.png"
+    },
+    {
+      "seatNo": "14103022",
+      "NAME": "G427",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103022.png"
+    },
+    {
+      "seatNo": "14103023",
+      "NAME": "G428",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103023.png"
+    },
+    {
+      "seatNo": "14103024",
+      "NAME": "G429",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103024.png"
+    },
+    {
+      "seatNo": "14103025",
+      "NAME": "G430",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+      "MONITOR_YN": "",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_14103025.png"
+    }
+  ],
+  "16201": [
+    {
+      "seatNo": "16201001",
+      "NAME": "STUDIO A",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "27㎡(WIDE), 영상/사진 촬영, 화상회의/발표|모니터링 TV, 크로마키(파,녹), 배경지(노,흰)|HD 캠코더, LED 조명, 오디오믹서, 마이크|통합방송S/W(Live stream)",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_16201001.png"
+    },
+    {
+      "seatNo": "16201002",
+      "NAME": "STUDIO B",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "21㎡, 강의/일반 영상 촬영, 인터뷰, 화상회의/발표|86인치 TV, 강연대|모니터링 TV, 크로마키(녹), 배경지(베,검)|HD 캠코더, LED 조명, 오디오믹서, 마이크|통합방송S/W(Live stream)",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_16201002.png"
+    },
+    {
+      "seatNo": "16201003",
+      "NAME": "STUDIO C",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "1인 실시간 방송, 유선문의 02-880-1159|HD 캠코더, 오디오믹서, LED 조명, 마이크|크로마키, 통합방송S/W(Live stream)|Adobe 편집 S/W",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_16201003.png"
+    }
+  ],
+  "16401": [
+    {
+      "seatNo": "16401001",
+      "NAME": "Media Carrel A",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|최소 1명 이상, 최대 6명 예약|첨단 미디어 및 XR 관련 연구,창업,프로젝트 등 다양한 활동 지원|VR 기기, iMac, 책상, 의자 이용 가능",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_16401001.png"
+    },
+    {
+      "seatNo": "16401002",
+      "NAME": "Media Carrel B",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "무선랜 제공|최소 1명 이상, 최대 6명 예약|첨단 미디어 및 XR 관련 연구,창업,프로젝트 등 다양한 활동 지원|VR 기기, 이동식 작은 테이블, 의자 이용 가능",
+      "MONITOR_YN": "N",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "N",
+      "SEAT_IMAGE": "/MAP/POP/pop_16401002.png"
+    }
+  ],
+  "16501": [
+    {
+      "seatNo": "16501001",
+      "NAME": "VR 1",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|1명 예약|다양한 VR 체험 가능|연구 및 학습을 위한 VR 기기, 고성능 컴퓨터|스마트 TV 이용 가능",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_165011-4.jpg"
+    },
+    {
+      "seatNo": "16501002",
+      "NAME": "VR 2",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|1명 예약|다양한 VR 체험 가능|연구 및 학습을 위한 VR 기기, 고성능 컴퓨터|스마트 TV 이용 가능",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_165011-4.jpg"
+    },
+    {
+      "seatNo": "16501003",
+      "NAME": "공간컴퓨팅 1",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|1명 예약|다양한 공간컴퓨팅 체험 가능|연구 및 학습을 위한 공간컴퓨팅 기기, 고성능 컴퓨터|스마트 TV 이용 가능",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_165011-4.jpg"
+    },
+    {
+      "seatNo": "16501004",
+      "NAME": "공간컴퓨팅 2",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|1명 예약|다양한 공간컴퓨팅 체험 가능|연구 및 학습을 위한 공간컴퓨팅 기기, 고성능 컴퓨터|스마트 TV 이용 가능",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_165011-4.jpg"
+    },
+    {
+      "seatNo": "16501007",
+      "NAME": "AR-MR 1",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|1명 예약|다양한 AR-MR 콘텐츠 체험 가능|연구 및 학습을 위한 AR-MR 기기, 고성능 컴퓨터|스마트 TV 이용 가능",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_165017-8.jpg"
+    },
+    {
+      "seatNo": "16501008",
+      "NAME": "AR-MR 2",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "모니터/무선랜/전원 제공|1명 예약|다양한 AR-MR 콘텐츠 체험 가능|연구 및 학습을 위한 AR-MR 기기, 고성능 컴퓨터|스마트 TV 이용 가능",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_165017-8.jpg"
+    }
+  ],
+  "16601": [
+    {
+      "seatNo": "16601001",
+      "NAME": "Creative Media Studio",
+      "COMMENT": "",
+      "DEVICE_COMMENT": "최소 1명 이상, 최대 10명 예약|대형 첨단 촬영 스튜디오. RGB 및 스팟 조명, 카메라 3대, 모니터링 TV, 프롬프터, 대형 크로마키(녹색), 호리존트(촬영에 최적화된 배경), 오디오 믹서, 스위처, 마이크 등 이용 가능",
+      "MONITOR_YN": "Y",
+      "LAN_YN": "Y",
+      "STAND_YN": "",
+      "POWER_YN": "Y",
+      "SEAT_IMAGE": "/MAP/POP/pop_16601001.png"
+    }
+  ],
+  "sample_12104001": {
+    "SEATNO": "12104001",
+    "NAME": "G202",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "무선랜/전원 제공|5인실 최소 4명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_12104001.jpg",
+    "MONITOR_YN": "",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "sample_17101001": {
+    "successYN": "N",
+    "msg": "좌석 추가 정보가 존재하지 않습니다."
+  },
+  "sample_17201001": {
+    "successYN": "N",
+    "msg": "좌석 추가 정보가 존재하지 않습니다."
+  },
+  "sample_17202001": {
+    "successYN": "N",
+    "msg": "좌석 추가 정보가 존재하지 않습니다."
+  },
+  "sample_17301001": {
+    "successYN": "N",
+    "msg": "좌석 추가 정보가 존재하지 않습니다."
+  },
+  "sample_18101001": {
+    "successYN": "N",
+    "msg": "좌석 추가 정보가 존재하지 않습니다."
+  },
+  "sample_18201001": {
+    "successYN": "N",
+    "msg": "좌석 추가 정보가 존재하지 않습니다."
+  },
+  "sample_18202001": {
+    "successYN": "N",
+    "msg": "좌석 추가 정보가 존재하지 않습니다."
+  },
+  "sample_18301001": {
+    "successYN": "N",
+    "msg": "좌석 추가 정보가 존재하지 않습니다."
+  }
+}

@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions: each side of the next meal's four times; a pin for one restaurant, two at a Place and none; each
-// menu line; the 7 days. Expected values: P15-01's criteria (iteration 1) and the restaurant table, in Korea's time.
+// menu line; the 7 days. Expected values: P15-01's criteria (iteration 1), in Korea's time.
 
 import { restaurant } from '../support/dining';
 import type { MenuLine } from '@/api/menu-types';
@@ -14,6 +15,7 @@ import { menuDays, nextMeal, toDiningCards, toMenuDay } from '@/features/dining/
 
 const STUDENT_HALL: Place = { id: 'p63', number: '63', name: '학생회관', latitude: 37.4595, longitude: 126.9505 };
 const JAHAYEON: Place = { id: 'p109', number: '109', name: '자하연식당', latitude: 37.4609, longitude: 126.9519 };
+const DURE: Place = { id: 'p75-1', number: '75-1', name: '제3학생식당', latitude: 37.45647, longitude: 126.94851 };
 
 function dish(text: string): MenuLine {
   return { text, kind: 'dish', name: null, price: null };
@@ -39,7 +41,7 @@ describe('nextMeal', () => {
 
 describe('toDiningCards', () => {
   it('one restaurant at its Place → a card with its name, its number and the meals served today', () => {
-    const [card] = toDiningCards([restaurant('학생회관식당', LUNCH_AND_DINNER)], [STUDENT_HALL]);
+    const [card] = toDiningCards([restaurant('학생회관식당', LUNCH_AND_DINNER, 'p63')], [STUDENT_HALL]);
     expect(card).toEqual({
       id: 'dining:p63',
       kind: 'dining',
@@ -58,7 +60,7 @@ describe('toDiningCards', () => {
   });
 
   it("two restaurants at one Place → one card under the Place's name, a line for each", () => {
-    const menus = [restaurant('자하연식당 2층', LUNCH), restaurant('자하연식당 3층', LUNCH_AND_DINNER)];
+    const menus = [restaurant('자하연식당 2층', LUNCH, 'p109'), restaurant('자하연식당 3층', LUNCH_AND_DINNER, 'p109')];
     const cards = toDiningCards(menus, [JAHAYEON]);
     expect(cards).toHaveLength(1);
     expect(cards[0]).toMatchObject({
@@ -74,14 +76,14 @@ describe('toDiningCards', () => {
   });
 
   it.each([
-    ['a restaurant without lines today', [restaurant('학생회관식당', [])], [STUDENT_HALL]],
+    ['a restaurant without lines today', [restaurant('학생회관식당', [], 'p63')], [STUDENT_HALL]],
     [
       'a restaurant with only empty meals',
-      [restaurant('학생회관식당', [{ meal: 'lunch', lines: [] }])],
+      [restaurant('학생회관식당', [{ meal: 'lunch', lines: [] }], 'p63')],
       [STUDENT_HALL],
     ],
-    ['a restaurant outside the table', [restaurant('새 식당', LUNCH)], [STUDENT_HALL]],
-    ['a restaurant whose Place is not answered', [restaurant('학생회관식당', LUNCH)], [JAHAYEON]],
+    ['a restaurant the server gives no Place', [restaurant('새 식당', LUNCH)], [STUDENT_HALL]],
+    ['a restaurant whose Place is not answered', [restaurant('학생회관식당', LUNCH, 'p63')], [JAHAYEON]],
   ])('%s → no pin', (_, menus, places) => {
     expect(toDiningCards(menus, places)).toEqual([]);
   });
@@ -98,7 +100,7 @@ describe('toMenuDay', () => {
   ];
 
   it('each kind of line → a priced row, a heading, a note or plain words', () => {
-    const { restaurants } = toMenuDay([restaurant('학생회관식당', [{ meal: 'lunch', lines }])]);
+    const { restaurants } = toMenuDay([restaurant('학생회관식당', [{ meal: 'lunch', lines }])], []);
     expect(restaurants[0]?.meals.lunch).toEqual([
       { type: 'heading', text: '정식 6000원' },
       { type: 'priced', name: '제육볶음', price: '6,000원' },
@@ -109,8 +111,9 @@ describe('toMenuDay', () => {
     ]);
   });
 
-  it('a restaurant in the table and one outside it → its number, and none', () => {
-    const { restaurants } = toMenuDay([restaurant('두레미담', LUNCH), restaurant('새 식당', [])]);
+  it('a restaurant at a Place with a number and one without a Place → its number, and none', () => {
+    const menus = [restaurant('두레미담', LUNCH, 'p75-1'), restaurant('새 식당', [])];
+    const { restaurants } = toMenuDay(menus, [DURE]);
     expect(restaurants.map(({ name, place }) => [name, place])).toEqual([
       ['두레미담', '75-1동'],
       ['새 식당', null],
@@ -120,14 +123,14 @@ describe('toMenuDay', () => {
 
   it("restaurants collected at different times → the oldest Collection, in Korea's time", () => {
     const menus = [
-      restaurant('학생회관식당', LUNCH, '2026-10-05T21:30:00Z'),
-      restaurant('두레미담', LUNCH, '2026-10-05T20:05:00Z'),
+      restaurant('학생회관식당', LUNCH, null, '2026-10-05T21:30:00Z'),
+      restaurant('두레미담', LUNCH, null, '2026-10-05T20:05:00Z'),
     ];
-    expect(toMenuDay(menus).collected).toBe('10월 6일 05:05에 가져온 메뉴예요');
+    expect(toMenuDay(menus, []).collected).toBe('10월 6일 05:05에 가져온 메뉴예요');
   });
 
   it('an empty day → no restaurant and no Collection line', () => {
-    expect(toMenuDay([])).toEqual({ restaurants: [], collected: '' });
+    expect(toMenuDay([], [])).toEqual({ restaurants: [], collected: '' });
   });
 });
 

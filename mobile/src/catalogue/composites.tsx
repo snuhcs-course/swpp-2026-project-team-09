@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -121,10 +122,37 @@ const DIALOG_BUTTONS = [
   ['question', '질문 열기'],
   ['statement', '알림 열기'],
   ['danger', '확인 열기'],
+  ['cancel-only', '취소만 열기'],
+  ['no-button', '버튼 없이 열기'],
 ] as const;
 
+type DialogName = (typeof DIALOG_BUTTONS)[number][0];
+
+// The dialogs with no confirming answer: a cancel alone, and none at all.
+function AnswerlessDialogs({ open, close }: { open: DialogName | null; close: () => void }): ReactElement {
+  return (
+    <>
+      <Dialog
+        body="새 버전의 앱이 나왔어요. 새 버전을 설치해 주세요."
+        cancelLabel="계속 사용하기"
+        onCancel={close}
+        title="업데이트가 필요합니다"
+        visible={open === 'cancel-only'}
+      />
+      {/* A statement that nothing answers has no button. In the app it stays; here Android's back button closes it,
+          so that the catalogue can go on. */}
+      <Dialog
+        body="새 버전의 앱이 나왔어요. 새 버전을 설치해 주세요."
+        onCancel={close}
+        title="업데이트가 필요합니다"
+        visible={open === 'no-button'}
+      />
+    </>
+  );
+}
+
 export function Dialogs(): ReactElement {
-  const [open, setOpen] = useState<(typeof DIALOG_BUTTONS)[number][0] | null>(null);
+  const [open, setOpen] = useState<DialogName | null>(null);
   const close = (): void => {
     setOpen(null);
   };
@@ -169,6 +197,7 @@ export function Dialogs(): ReactElement {
         tone="danger"
         visible={open === 'danger'}
       />
+      <AnswerlessDialogs close={close} open={open} />
     </Section>
   );
 }

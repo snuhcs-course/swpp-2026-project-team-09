@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -9,6 +10,7 @@ import { parseArgs, parseEnv } from 'node:util';
 import { z } from 'zod';
 import { koreaDate } from '../src/assistant/korea-time.ts';
 import { settingsSchema } from '../src/common/settings.ts';
+import { WORLDS } from './cases.ts';
 import { pricesSchema } from './cost.ts';
 
 // The options of a run (spec P19, "Where it lives and how it runs"): the model and its hyperparameters from the
@@ -34,6 +36,8 @@ export const runOptionsSchema = z.strictObject({
   caseIds: z.array(z.string()),
   // The run stops once its estimated cost passes this, in USD.
   budgetUsd: z.number().positive(),
+  // The world the run seeds, and whose cases it runs.
+  world: z.enum(WORLDS),
   prices: pricesSchema,
   // The commit measured, and whether files were changed on top of it.
   commit: z.string().min(1),
@@ -91,6 +95,7 @@ export function parseFlags(argv: string[], env: Record<string, string | undefine
       category: { type: 'string', multiple: true },
       case: { type: 'string', multiple: true },
       budget: { type: 'string' },
+      world: { type: 'string' },
       yes: { type: 'boolean', default: false },
     },
   });
@@ -109,6 +114,7 @@ export function parseFlags(argv: string[], env: Record<string, string | undefine
     categories: listOf(values.category),
     caseIds: listOf(values.case),
     budgetUsd: number('budget', values.budget) ?? DEFAULT_BUDGET_USD,
+    world: values.world ?? 'small',
   });
   return { options, yes: values.yes };
 }

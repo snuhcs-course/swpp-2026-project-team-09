@@ -7,6 +7,7 @@
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import {
@@ -24,12 +25,15 @@ import { REDIS } from '../common/redis.module.js';
 import { type Settings } from '../common/settings.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { MenusService } from '../menus/menus.service.js';
+import { RestaurantPlaces } from '../menus/restaurant-places.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
+import { PlaceLookup } from '../places/place-lookup.js';
 import { PlaceMatcher } from '../places/place-matcher.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { RecruitingService } from '../quests/recruiting.service.js';
 import { ShuttleService } from '../shuttle/shuttle.service.js';
+import { TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
 import {
   causeOf,
   type Model,
@@ -44,6 +48,7 @@ import { chatAssistant } from './chat/chat-assistant.js';
 import { checkedChoice, type ChoiceServices } from './chosen.js';
 import { type AssistantReplyDto, type SentMessage } from './dto/assistant-messages.dto.js';
 import { type Asker, type ChatMessage, type Feature } from './feature.js';
+import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
 import { SuggestionsService } from './suggestions/suggestions.service.js';
@@ -79,10 +84,24 @@ export class AssistantService {
     private readonly resolutionEvents: ResolutionEventsService,
     private readonly aliases: AliasesService,
     private readonly suggestions: SuggestionsService,
+    placeLookup: PlaceLookup,
+    days: UserDayService,
+    restaurantPlaces: RestaurantPlaces,
+    @Inject(TRAVEL_PROVIDER) travel: TravelProvider,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
-    this.chat = chatAssistant({ menus, shuttle, globalEvents, recruiting, friends, places, placeMatcher, aliases });
+    this.chat = chatAssistant({
+      menus,
+      shuttle,
+      globalEvents,
+      recruiting,
+      friends,
+      places,
+      placeMatcher,
+      aliases,
+      freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
+    });
     this.choiceServices = { places, friends, globalEvents };
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });

@@ -3,32 +3,186 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
-# plain inputs and print a verdict; those under Doing call gh, aws, docker, kustomize, and kubectl.
+# plain inputs, files or stdin and print a verdict, job outputs or a file's content, without calling anything outside;
+# those under Doing call gh, aws, docker, kustomize, kubectl, and the app's tools. The
+# app's job builds and attaches its APK from the workflow itself; its decision, its checks of the APK and of the
+# published updates, and its new app-version.json are here.
 
 readonly SERVERS=(main-server socket-server worker-server match-server admin)
 readonly PARAMETER_PATH=/snunow/production
 readonly NAMESPACE=snunow
+# The SHA-256 digest of the Expo template's debug key, which signs every APK, so that a new one installs over the old.
+readonly APK_SIGNER=fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
 REPOSITORY_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 readonly REPOSITORY_ROOT
-readonly TARGETS='main-server|socket-server|worker-server|match-server|admin|all'
+readonly TARGETS='main-server|socket-server|worker-server|match-server|admin|app|all'
 readonly RELEASE_REF="^refs/tags/snunow/($TARGETS)/[0-9]{2}\\.(0[1-9]|1[0-2])\\.(0[1-9]|[12][0-9]|3[01])-[1-9][0-9]*\$"
 
 # --- Deciding -----------------------------------------------------------------------------------------------------
 
-# Prints the job outputs for a Release's ref: the servers it deploys, as a JSON array, and the images' Release tag.
+# Prints the job outputs for a Release's ref: the servers it deploys, as a JSON array, whether it publishes the app's
+# bundle, and the images' Release tag. `all` is the five servers and the app; `app` deploys no server.
 check_name() {
-  local ref=$1 servers
+  local ref=$1 servers=() app=false
   if [[ ! "$ref" =~ $RELEASE_REF ]]; then
     echo "name: $ref is not a Release tag (refs/tags/snunow/<target>/YY.MM.DD-N)" >&2
     return 1
   fi
-  if [[ "${BASH_REMATCH[1]}" == all ]]; then servers=("${SERVERS[@]}"); else servers=("${BASH_REMATCH[1]}"); fi
+  case ${BASH_REMATCH[1]} in
+    all) servers=("${SERVERS[@]}") app=true ;;
+    app) app=true ;;
+    *) servers=("${BASH_REMATCH[1]}") ;;
+  esac
   local name=${ref#refs/tags/snunow/}
   echo "servers=$(jq --compact-output --null-input '$ARGS.positional' --args "${servers[@]}")"
+  echo "app=$app"
   echo "image-tag=${name//\//-}"
+}
+
+# Whether version $1 is lower than, equal to, or higher than $2, as -1, 0, or 1. Both are x.y.z.
+compare_versions() {
+  local a b i
+  IFS=. read -r -a a <<<"$1"
+  IFS=. read -r -a b <<<"$2"
+  for i in 0 1 2; do
+    if ((10#${a[i]} < 10#${b[i]})); then
+      echo -1
+      return
+    elif ((10#${a[i]} > 10#${b[i]})); then
+      echo 1
+      return
+    fi
+  done
+  echo 0
+}
+
+# Prints publish or publish-needs-build, given the app's Android and iOS fingerprints, its `version`, the path of
+# app-version.json, which describes the latest native build, and, for CI's check, `ci`. An update reaches only the
+# builds whose fingerprint is its own: when the native part changed, it goes out only with a raised `version`, for the
+# native build that is still to be made (publish-needs-build). A changed native part with an unchanged `version` fails.
+# One with a lower `version` is a commit from before the latest native Release: a Release refuses it, since no
+# installed build takes its bundle, but CI prints behind, so that a branch not yet rebased, or a server's Release of an
+# older commit, is not stopped. The reason goes to stderr, the verdict alone to stdout.
+app_decision() {
+  local android=$1 ios=$2 version=$3 file=$4 check=${5:-} latest built_android built_ios
+  local semver='^[0-9]+\.[0-9]+\.[0-9]+$'
+  if ! latest=$(jq -er '.latest | strings' "$file" 2>/dev/null) ||
+    ! built_android=$(jq -er '.fingerprint.android | strings' "$file" 2>/dev/null) ||
+    ! built_ios=$(jq -er '.fingerprint.ios | strings' "$file" 2>/dev/null) || [[ ! "$latest" =~ $semver ]]; then
+    echo "app: $file is missing or unreadable; it must give latest as x.y.z and fingerprint.android and .ios" >&2
+    return 1
+  fi
+  if [[ ! "$version" =~ $semver || -z "$android" || -z "$ios" ]]; then
+    echo "app: the app's version ($version) must be x.y.z, and both fingerprints must be given" >&2
+    return 1
+  fi
+  if [[ "$android" == "$built_android" && "$ios" == "$built_ios" ]]; then
+    echo "app: the native part is the latest native build's ($latest)" >&2
+    echo publish
+    return
+  fi
+  case $(compare_versions "$version" "$latest") in
+    1)
+      echo "app: the native part changed and version $version is above the latest native build's $latest" >&2
+      echo publish-needs-build
+      ;;
+    -1)
+      if [[ "$check" == ci ]]; then
+        echo "app: this commit is behind the latest native Release ($latest), as its version $version and its" \
+          "native part show; rebase onto the main line" >&2
+        echo behind
+        return
+      fi
+      echo "app: this commit's version $version is below the latest native build's $latest; no installed build" \
+        "takes its bundle, so it is not published" >&2
+      return 1
+      ;;
+    *)
+      echo "app: the native part changed since the latest native build ($latest), but version is $version; raise" \
+        "version in mobile/app.json and make a native Release" >&2
+      return 1
+      ;;
+  esac
+}
+
+# Prints publish or skip, given the workflow's event and GitHub's comparison of the latest published update's commit
+# with this run's (behind, ahead, identical, diverged, or empty when there is none to compare). A pushed tag whose
+# commit is behind the published one is an older Release whose server jobs finished late: it skips, so as not to put an
+# older bundle over a newer one. A run by hand is a deliberate rollback and always publishes.
+app_order() {
+  local event=$1 status=$2
+  if [[ "$event" == push && "$status" == behind ]]; then
+    echo "app: a newer commit's bundle is already published; this older Release does not publish its own" >&2
+    echo skip
+    return
+  fi
+  case $event:$status in
+    push:) echo "app: no earlier update to compare with" >&2 ;;
+    push:*) echo "app: this commit is $status of the published update's" >&2 ;;
+    *) echo "app: a run by hand always publishes" >&2 ;;
+  esac
+  echo publish
+}
+
+# Checks the updates that `eas update --json` printed, given on stdin, against the Android and iOS fingerprints the
+# decision computed: each platform must have been published, under its fingerprint as its runtime version.
+check_published() {
+  local -A expected=([android]=$1 [ios]=$2)
+  local updates platform published
+  updates=$(cat)
+  for platform in android ios; do
+    if ! published=$(jq -er --arg platform "$platform" \
+      '[.[] | select(.platform == $platform) | .runtimeVersion] | if length == 1 then .[0] | strings else empty end' \
+      <<<"$updates" 2>/dev/null); then
+      echo "app: eas update did not report exactly one $platform update" >&2
+      return 1
+    fi
+    if [[ "$published" != "${expected[$platform]}" ]]; then
+      echo "app: the $platform update went out for runtime version $published, but its fingerprint is" \
+        "${expected[$platform]}" >&2
+      return 1
+    fi
+  done
+  echo "app: published for android $1 and ios $2" >&2
+}
+
+# Checks a built APK, given the Android fingerprint the decision computed, the fingerprint embedded in the APK
+# (assets/fingerprint), and `apksigner verify --print-certs`'s output on stdin: the APK must carry the computed
+# fingerprint, and its one signer must be the shared debug key.
+check_apk() {
+  local computed=$1 embedded=$2 signers
+  if [[ -z "$computed" || "$embedded" != "$computed" ]]; then
+    echo "app: the APK embeds the fingerprint '$embedded', but the computed one is '$computed'" >&2
+    return 1
+  fi
+  signers=$(sed -n 's/^Signer #[0-9]* certificate SHA-256 digest: *//p')
+  if [[ "$signers" != "$APK_SIGNER" ]]; then
+    echo "app: the APK is signed by '${signers//$'\n'/ }', not the shared debug key $APK_SIGNER" >&2
+    return 1
+  fi
+  echo "app: the APK embeds $embedded and is signed by the shared debug key" >&2
+}
+
+# Prints the new app-version.json for a native build, given its version, its Android and iOS fingerprints, the APK's
+# address, and the path of the old app-version.json, whose `minimum` it keeps. iOS has no download until iOS builds
+# are distributed.
+app_version_json() {
+  local version=$1 android=$2 ios=$3 url=$4 file=$5 minimum
+  if ! minimum=$(jq -er '.minimum | strings' "$file" 2>/dev/null); then
+    echo "app: $file is missing or unreadable; it must give minimum" >&2
+    return 1
+  fi
+  if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ || -z "$android" || -z "$ios" || "$url" != https://* ]]; then
+    echo "app: a new app-version.json needs version as x.y.z, both fingerprints, and the APK's https address" >&2
+    return 1
+  fi
+  jq --null-input --arg latest "$version" --arg minimum "$minimum" --arg android "$android" --arg ios "$ios" \
+    --arg url "$url" '{latest: $latest, minimum: $minimum, fingerprint: {android: $android, ios: $ios},
+    download: {android: $url, ios: null}}'
 }
 
 # Prints `name<TAB>status<TAB>conclusion` for each job of a CI run, given the run's status and GitHub's jobs answer on
@@ -145,6 +299,30 @@ read_ci_jobs() {
     jobs=$(gh api "repos/$repository/actions/runs/$id/jobs?per_page=100") || return 1
     jobs_from_json "$run_status" <<<"$jobs"
   done < <(jq -r '.workflow_runs[] | [.id, .status] | @tsv' <<<"$runs")
+}
+
+# Prints the app's Android and iOS fingerprints, its `version`, and the decision (app_decision) as job outputs, given
+# the address of app-version.json, where to save it, and, for CI's check, `ci`. The fingerprints are computed in mobile/ under the build
+# settings in the environment, with expo-updates' own command, so they are the runtime versions a build gets. An empty
+# setting would give another fingerprint, or a bundle that calls nowhere, so each must be set.
+fingerprint_and_decide() {
+  local url=$1 file=$2 check=${3:-} android ios version verdict name
+  for name in EXPO_PUBLIC_MAIN_SERVER_URL EXPO_PUBLIC_SOCKET_SERVER_URL EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID \
+    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID GOOGLE_IOS_URL_SCHEME INVITE_LINK_HOST; do
+    if [[ -z "${!name:-}" ]]; then
+      echo "app: the repository variable for $name is not set" >&2
+      return 1
+    fi
+  done
+  cd "$REPOSITORY_ROOT/mobile"
+  android=$(npx expo-updates fingerprint:generate --platform android | jq -er .hash) &&
+    ios=$(npx expo-updates fingerprint:generate --platform ios | jq -er .hash) &&
+    version=$(jq -er .expo.version app.json) || return 1
+  echo "app: version $version, fingerprints android $android, ios $ios" >&2
+  # A transient GitHub error would turn CI red and, through the Release gate, block every Release: retry it.
+  curl --fail --silent --show-error --location --retry 3 --retry-all-errors --output "$file" "$url" || echo "app: $url could not be downloaded" >&2
+  verdict=$(app_decision "$android" "$ios" "$version" "$file" "$check") || return 1
+  printf 'android=%s\nios=%s\nversion=%s\nverdict=%s\n' "$android" "$ios" "$version" "$verdict"
 }
 
 # Waits for CI's results on the commit and fails unless every CI job has passed. It only reads them: CI runs on the
@@ -276,6 +454,12 @@ main() {
   trap 'rm -rf "$work"' EXIT
   case $command in
     check-name) check_name "$@" ;;
+    app-decision) app_decision "$@" ;;
+    app-order) app_order "$@" ;;
+    check-published) check_published "$@" ;;
+    check-apk) check_apk "$@" ;;
+    app-version-json) app_version_json "$@" ;;
+    fingerprint-and-decide) fingerprint_and_decide "$@" ;;
     gate) gate "$@" ;;
     write-secrets) write_secrets "$@" ;;
     push-image) push_image "$@" ;;

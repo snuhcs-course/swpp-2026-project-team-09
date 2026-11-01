@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "12101001",
+    "NAME": "G201",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "무선랜/전원 제공|20인실 최소 11명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_12101001.jpg",
+    "MONITOR_YN": "",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "12101001"
+  }
+}

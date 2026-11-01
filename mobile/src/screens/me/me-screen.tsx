@@ -3,7 +3,9 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -37,6 +39,7 @@ import { yearLabel } from '../onboarding/form';
 import { TabScreen } from '../shell/tab-screen';
 import { SharingCard } from './sharing-card';
 import { useSharingSwitch } from './use-sharing-switch';
+import { thisVersionLine } from './version-line';
 import { WeekCard } from './week-card';
 
 // How long the 위치 공유 card stays outlined after the friend panel's "공유 설정".
@@ -141,14 +144,7 @@ function ActivityCard(): ReactElement {
         }}
         value={friends}
       />
-      <ActivityRow
-        icon="chat"
-        label="내가 가르친 말"
-        onPress={() => {
-          router.push('/me/aliases');
-        }}
-        value=""
-      />
+      <ActivityRow icon="chat" label="내가 가르친 말" onPress={openAliases} value="" />
       <ActivityRow
         icon="users"
         label="참여 중인 파티"
@@ -241,7 +237,12 @@ interface MeScreenProps {
 }
 
 // The 내 정보 tab, the `Profile` frame: the User's profile, the week, the Master Switch, the ways to the User's
-// Friends, the words they taught the Assistant, their Parties and Quests, and the sign-out.
+// 내가 가르친 말, the words the User taught the Assistant (P07).
+function openAliases(): void {
+  router.push('/me/aliases');
+}
+
+// Friends, the words they taught the Assistant, their Parties and Quests, the sign-out, and the build the phone runs.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();
@@ -260,6 +261,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
         />
         <ActivityCard />
         <SignOut />
+        <Text style={styles.version}>{thisVersionLine()}</Text>
       </ScrollView>
       <LocationExplanation
         blocked={sharing.blocked}
@@ -311,4 +313,5 @@ const styles = StyleSheet.create({
   },
   outPressed: { backgroundColor: color.dangerSoft },
   outWords: { ...text.label, color: color.danger },
+  version: { ...text.caption, textAlign: 'center', color: color.inkMuted },
 });
