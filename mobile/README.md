@@ -1543,3 +1543,154 @@ adb shell am start -a android.intent.action.VIEW \
   -d "'snunow://ocr-check?uri=file:///data/data/com.bonnieandclaude.snunow/files/snutt-1.png&name=snutt-1'"
 adb exec-out run-as com.bonnieandclaude.snunow cat files/snutt-1.json > snutt-1.json
 ```
+
+## 관정도서관 (P06)
+
+The app books 관정도서관 itself, as the User, through the library's booking site `k-rsv.snu.ac.kr`. Why the library
+session stays on the phone is [ADR 0012](../docs/adr/0012-a-third-partys-session-stays-on-the-phone.md). The code is in
+`src/library/`:
+
+```text
+site.ts              the site's addresses, the allow-list, and which pages belong to the site
+client.ts            the library client: one function per call, over a transport (`createLibraryClient`)
+transport.ts         what a transport is: `call(endpoint, body)` and `logout()`
+hidden-transport.ts  the app's one transport, the hidden web view: waits for its page, injects, matches the reply
+hidden-view.tsx      the hidden web view, mounted at the app's root while the flag is set
+call-script.ts       the one fixed script injected per call, and the message protocol
+login-view.tsx       the full-screen login web view
+library-session.tsx  the login, the flag and the logout for the screens (`useLibrarySession()`)
+flag.ts              the "logged in" flag, `kwanjeong.loggedIn` in AsyncStorage
+end-session.ts       "end the library session", the one shared logout step
+web-cookies.ts       the JS wrapper of modules/snu-now-web-cookies
+errors.ts            the failure kinds and what a card says for each
+press.ts             the confirm press that a write needs
+room-bookings.ts     the phone's map from a room booking's BSEQNO to its room request
+cards/               the library cards' logic: the payloads, seats, rooms, bookings, times and the done message
+```
+
+### The endpoints
+
+Every call is a form POST to `/NEW_SNU_BOOKING/json/<name>`, except the room form, a `GET` of the page
+`/NEW_SNU_BOOKING/pc/booking/roomForm`. The script and the client hold the same allow-list (`site.ts`) and refuse
+anything else with `notAllowed`.
+
+| Kind      | Endpoint              | Client       | What it gives                                                          |
+| --------- | --------------------- | ------------ | ---------------------------------------------------------------------- |
+| Read      | `getSectorList`       | `sectors`    | The sectors of a floor                                                 |
+| Read      | `getRoomList`         | `roomTimes`  | The rooms of a sector on a date, with their free 30-minute starts      |
+| Read      | `getSeatBookingList`  | `seats`      | The seats or rooms of a sector for a time, free or taken               |
+| Read      | `getSeatInfoFromList` | `seatInfo`   | A room's GR_MIN and GR_MAX, the people it takes                        |
+| Read      | `getUserCheck`        | `checkUser`  | Whether the library knows a companion's name and 학번                  |
+| Read      | `getMyBookingList`    | `myBookings` | The User's own bookings between two dates (the site's null is `[]`)    |
+| Room form | `roomForm`            | `roomForm`   | Only the applicant's name and 학번, and the prefilled phone and email  |
+| Write     | `setRoomBooking`      | `book`       | Books a seat or a room                                                 |
+| Write     | `setCancelBooking`    | `cancel`     | Cancels a booking (STATUS 1 or 2), or returns a seat in use (STATUS 3) |
+
+`setSeatReturn` is not used and is not on the list: no button of the site uses it, and a return is `setCancelBooking`.
+A write is sent only with the `ConfirmedPress` a card's confirm button makes (`confirmedPress()`); without one the
+client throws `notAllowed` and nothing reaches the site. The client retries nothing by itself: a write that timed out
+is never sent again, and the card reloads 내 예약 to show what happened. The hidden view's page has 20 seconds to load,
+and each call 15 seconds, after which it counts as `network`.
+
+A call fails with a `LibraryError` whose `kind` is one of:
+
+- `sessionEnded`: HTTP 999, a redirect, a reply that is not JSON (for the room form, a page without the applicant's
+  fields), or the hidden view's page landing anywhere off the site's `/NEW_SNU_BOOKING/pc/` screens;
+- `network`: no answer in time, an HTTP error, or a reply the client cannot read;
+- `notAllowed`: an endpoint off the list, or a write without a confirm press;
+- `noSession`: the flag is not set, so the client did not call at all.
+
+The error names only the kind and the endpoint, never a form field or a reply, so that nothing of the library
+reaches a log or an error report.
+
+### The session ended
+
+On `sessionEnded` the client clears the flag, which unmounts the hidden view, and the card shows "관정도서관 로그인이
+끝났어요. 다시 로그인해 주세요." with 로그인. 로그인 opens the login again (`retryAfterLogin`), and after it the action the
+User pressed is tried once more; a second failure is the card's to show.
+
+The login opens `…/pc/main` in a visible web view and injects nothing into it. It is done once the view is back on
+`/pc/main`, `/pc/booking` or `/pc/mybooking` and one read through the hidden view, the User's own bookings for today,
+answers with JSON (`loginWorks`); only then is the flag set. ✕ is "no session", and after 5 minutes the view closes
+with "로그인하지 못했어요".
+
+### Logout
+
+`endLibrarySession()` (`end-session.ts`) is the one step that ends the library session. Three paths take it:
+
+- the 내 정보 row "관정도서관 로그인", which shows 로그아웃 while the flag is set;
+- the app's `signOut()` (`src/auth/sign-in.ts`), once the main server's tokens are forgotten;
+- the forced end of the app's Session, `endSession()` (`src/session/session-events.ts`), right after it forgets the
+  tokens. It is a refused token or the Session replaced on another phone, and does not go through `signOut()`.
+
+The two sign-outs take it whether or not the flag is set and do not wait on it (`endLibrarySessionInBackground()`).
+In order: with the flag set, the hidden view loads the site's logout URL (15 seconds at most, and a failure does not
+stop the rest; without the flag there is no view, no call and no wait); every web-view cookie is cleared by
+`clearWebViewCookies()`; and the flag is cleared. The cookies and the flag are cleared even when an earlier part fails.
+
+### The cookie module and its lint rule
+
+`modules/snu-now-web-cookies` is a local Expo module that only clears cookies (its own README has the details). Its one
+function, `clearWebViewCookies()`, calls `CookieManager.removeAllCookies` and then `flush()` on Android, and on iOS
+removes the cookies of the default `WKWebsiteDataStore` and of `HTTPCookieStorage`. It has no function that reads,
+lists or sets a cookie. `src/library/web-cookies.ts` is its JS wrapper; in a build without the module (Expo Go, the
+web, Jest) it does nothing.
+
+`.oxlintrc.json`'s `no-restricted-imports` forbids importing `web-cookies` (`**/web-cookies`,
+`@/library/web-cookies`) anywhere but `src/library/end-session.ts` and `__tests__/`, and forbids
+`@react-native-cookies/cookies` everywhere. That package was the first choice; its 6.2.1 does not build under Gradle
+9.3.1.
+
+### The fake library
+
+No test reaches the real site. `__tests__/support/kwanjeong/fake-library.ts` is a fake 관정도서관: `FakeLibrary`
+answers by endpoint and form fields from the redacted replies recorded from the site, the JSON files beside it
+(`getSectorList_all.json`, `getRoomList_<sectorNo>_<YYYYMMDD>.json`, `getSeatBookingList_<sectorNo>.json`,
+`getSeatInfoFromList_all.json`, `getMyBookingList_20260901-20261004.json` and the `seatinfo_*` files), copied from the
+P06 references. The room form answers `FAKE_ROOM_FORM`, a fake applicant (`2026-00001`, `010-0000-0000`,
+`student@example.com`). It records every request in `requests`, and `writes()` lists those that change a booking,
+which is how a test checks that no write left before the confirm press. `logouts` records each logout.
+
+- `fakeTransport(library)` is the transport to give `createLibraryClient` in a test of the client.
+- `answerFromFakeLibrary(library)` (`__tests__/support/library-session.tsx`) makes the app's hidden transport answer
+  from it, for the tests of the screens and cards. The same file stands in for the cookie module's native side with
+  a `jest.fn`.
+
+A test tells it to fail with:
+
+- `answerNext('sessionEnded' | 'network' | 'notAllowed', …)`: the next calls answer these error kinds, one each, in
+  order;
+- `refuseBookings(message)`: `setRoomBooking` answers the site's `bookingFailInfo` with the message;
+- `takeSeat(seatNo)`: the seat shows as taken, and booking it is refused with "이미 예약된 좌석입니다.";
+- `refuseUser(schoolNo)`: `getUserCheck` does not know that 학번;
+- `refuseCancels(message)`: `setCancelBooking` answers with a failure;
+- `holdWrites()` and `release()`: writes are answered only on `release`, as a slow library would.
+
+`addBooking(booking)` adds a booking to `getMyBookingList`, and a cancelled or returned one is listed as 예약취소 or
+본인반납.
+
+### Group study rooms
+
+A group study room with companions goes through a room request on the main server (`src/api/room-requests.ts`,
+main-server `src/library/`), the app's routes and never the Assistant's: `POST /library/room-requests` with an
+`Idempotency-Key`, `GET /library/room-requests` (the requests that ask the User, and the one-time notices),
+`GET /library/room-requests/:id` (which the booker's card polls), `POST …/:id/consent`, `POST …/:id/decline` (거절 and
+철회), `GET …/:id/companions`, `POST …/:id/result { ok, failedUserId? }`, `POST …/:id/cancelled` and
+`POST /library/room-notices/:id/seen`. Once every companion consents, the booker's phone reads the companions' names and
+학번 (the one reply that holds them, `Cache-Control: no-store`), checks each with `getUserCheck`, books with
+`setRoomBooking` and reports only `ok` or the companion the library did not know. The BSEQNO stays on the phone, in
+`room-bookings.ts`'s map, so that a later cancel can tell the server "the booking of request X was cancelled" with no
+body.
+
+### Privacy
+
+Library data never leaves the phone. The session stays in the web views' cookie jar, which no app code reads; the
+client gets back only parsed JSON or an error kind. No library reply, seat, booking, BSEQNO, phone number or email is
+sent to our servers or the model: the Assistant's library cards carry only the space, date, time, duration and
+`useDesc`, and the done message after a booking is the app's own bubble, never sent to the model. The only thing the
+main server hears of the library is a room request's result and its cancel, with no library data. Errors and logs
+name a failure's kind and endpoint only. A companion's 학번 and registered name come from the main server only to the
+booker's phone, after that companion consents, and go only to the library.
+
+Examples, tests and fixtures hold no real 학번, name, session or library reply: 학번 are fake (`2026-00001` and so
+on), and the fixtures are redacted.
