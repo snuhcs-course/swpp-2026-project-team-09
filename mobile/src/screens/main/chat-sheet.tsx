@@ -6,6 +6,7 @@
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -137,11 +138,17 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
+  const { bubbles, waiting, send, retry, reset, addOwn } = chat;
   const cardActions: CardActions = useMemo(
-    () => ({ events: eventCards.actions, quests: questCards.actions, proposals, openPartyForm: onOpenPartyForm }),
-    [eventCards.actions, questCards.actions, proposals, onOpenPartyForm],
+    () => ({
+      events: eventCards.actions,
+      quests: questCards.actions,
+      proposals,
+      openPartyForm: onOpenPartyForm,
+      library: { addOwn },
+    }),
+    [eventCards.actions, questCards.actions, proposals, onOpenPartyForm, addOwn],
   );
-  const { bubbles, waiting, send, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = inputTop + OVER_INPUT;
   return (

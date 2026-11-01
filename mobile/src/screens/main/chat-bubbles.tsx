@@ -6,6 +6,7 @@
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useRef } from 'react';
@@ -15,6 +16,8 @@ import { Button, color, font, Icon, type IconName, radius, space, text } from '@
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { type CardActions, Cards, type ProposalActions } from './chat-cards';
 import { ChatProposalCard } from './chat-proposal-card';
+import type { LibraryDone } from '@/library/cards/done';
+import { LibraryDoneRows } from './library/library-done';
 
 // The examples of the empty chat, each with its icon on its layer's colour. They replace the frame's library seats,
 // and 파티 찾기 takes the Party's colour. A press sends the words.
@@ -115,6 +118,18 @@ function Proposal({
   );
 }
 
+// The done message of a library booking, whose 좌석 현황 보기 gives the seats card in the app's own bubble.
+function Done({ done, actions }: { done: LibraryDone; actions: CardActions }): ReactElement {
+  return (
+    <LibraryDoneRows
+      done={done}
+      onSeats={() => {
+        actions.library.addOwn({ text: '좌석 현황이에요.', cards: [{ kind: 'library', library: done.seatsCard }] });
+      }}
+    />
+  );
+}
+
 interface BubbleProps {
   bubble: ChatBubble;
   // 다시 시도 under a failure the Assistant may get over, while it is the last bubble.
@@ -124,7 +139,7 @@ interface BubbleProps {
 }
 
 function Bubble({
-  bubble: { id, role, text: words, cards, mapButtons, proposal, failure },
+  bubble: { id, role, text: words, cards, mapButtons, proposal, failure, own = false, done },
   onRetry,
   onShowLayer,
   cardActions,
@@ -140,7 +155,8 @@ function Bubble({
       testID={mine ? 'user-bubble' : 'assistant-bubble'}
     >
       <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
-      {shown.length === 0 ? null : <Cards actions={cardActions} cards={shown} />}
+      {shown.length === 0 ? null : <Cards actions={cardActions} cards={shown} own={own} />}
+      {done === undefined ? null : <Done actions={cardActions} done={done} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>

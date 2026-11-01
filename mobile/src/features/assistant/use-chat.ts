@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -19,6 +20,7 @@ import {
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
+import type { LibraryDone } from '@/library/cards/done';
 
 // Why the Assistant gave no answer: it could not answer now, which 다시 시도 sends again, or the User's messages of
 // the day are used up.
@@ -37,6 +39,17 @@ export interface ChatBubble {
   // The Proposal an Assistant's answer made. The last one is sent back with its values.
   proposal: QuestProposal | null;
   failure: ChatFailure | null;
+  // The app's own bubble, never sent to the Assistant: what a library card says once it acted, or the card it gave.
+  own?: boolean;
+  // A booking a library card made, as its done message shows it.
+  done?: LibraryDone;
+}
+
+// What the app itself adds to the chat: words, the cards it gives and a booking made.
+export interface OwnBubble {
+  text: string;
+  cards?: readonly ShownChatCard[];
+  done?: LibraryDone;
 }
 
 export interface Chat {
@@ -48,6 +61,8 @@ export interface Chat {
   retry: () => void;
   // 새 대화: forgets the conversation, and a reply still on its way.
   reset: () => void;
+  // Adds the app's own bubble, which no request sends.
+  addOwn: (bubble: OwnBubble) => void;
 }
 
 export const CHAT_FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
@@ -59,11 +74,11 @@ function textLength(messages: readonly ChatMessage[]): number {
   return messages.reduce((total, message) => total + lengthOf(message), 0);
 }
 
-// What a request sends of the conversation: the latest 20 messages without the failures, fewer while they hold more
-// characters than the main server takes. The last Proposal goes with its message, by its values, so that the
-// Assistant can change one of its fields and keep the others.
+// What a request sends of the conversation: the latest 20 messages without the failures and the app's own bubbles,
+// fewer while they hold more characters than the main server takes. The last Proposal goes with its message, by its
+// values, so that the Assistant can change one of its fields and keep the others.
 export function messagesToSend(bubbles: readonly ChatBubble[]): ChatMessage[] {
-  const said = bubbles.filter(({ failure }) => failure === null);
+  const said = bubbles.filter(({ failure, own = false }) => failure === null && !own);
   const proposing = said.findLast(({ proposal }) => proposal !== null);
   let messages = said
     .map((bubble): ChatMessage => {
@@ -165,5 +180,12 @@ export function useChat(): Chat {
     setWaiting(false);
   }, [show]);
 
-  return { bubbles, waiting, send, retry, reset };
+  const addOwn = useCallback(
+    ({ text, cards = [], done }: OwnBubble): void => {
+      add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done });
+    },
+    [add],
+  );
+
+  return { bubbles, waiting, send, retry, reset, addOwn };
 }
