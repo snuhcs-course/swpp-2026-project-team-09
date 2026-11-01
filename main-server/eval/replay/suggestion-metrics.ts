@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { type Rate, rate } from './wilson.ts';
@@ -13,12 +14,14 @@ import { type Rate, rate } from './wilson.ts';
 // proposal accepted, a proposal rejected, and help needed but not proposed.
 
 // One row of suggestion_impressions as the curves read it: `template` is null and the outcome `silent` when nothing was
-// shown, `typedTemplate` the eligible template whose Proposal the User asked for in the chat within 10 minutes.
+// shown, `gated` when the User's own acceptance of the last suggestions held it back, `typedTemplate` the eligible
+// template whose Proposal the User asked for in the chat within 10 minutes.
 export interface Impression {
   template: string | null;
   eligible: string[];
   propensity: number | null;
   holdback: boolean;
+  gated: boolean;
   shownAt: Date;
   outcome: 'silent' | 'shown' | 'accepted' | 'dismissed' | 'confirmed';
   outcomeAt: Date | null;
@@ -96,13 +99,17 @@ export interface NeedCell {
   typedWhatWasShown: number;
 }
 
-// The openings of a slice: every row, those that showed nothing, and of those the ones followed by a request a
-// template would have covered.
+// The openings of a slice and arm: every row, those that showed nothing, the gate's among them, the silent ones
+// followed by a request a template would have covered, and the accepted over every opening, which the gate is judged
+// by, arm against arm: a gate raises acceptance per shown by shrinking the denominator.
 export interface Openings {
   slice: Slice;
+  holdback: boolean;
   openings: number;
   silent: number;
+  gated: number;
   silentThenTyped: number;
+  accepted: Rate;
 }
 
 function within(impression: Impression): boolean {
@@ -228,18 +235,50 @@ export function needCells(impressions: readonly Impression[], finalFrom: Date | 
     );
 }
 
-// Every row by slice: the openings, the silent ones, and the silent ones the User then typed a covered request after.
+interface OpeningCounts {
+  slice: Slice;
+  holdback: boolean;
+  openings: number;
+  silent: number;
+  gated: number;
+  silentThenTyped: number;
+  accepted: number;
+}
+
+// Every row by slice and arm, in the order of their keys.
 export function openingsOf(impressions: readonly Impression[], finalFrom: Date | null = null): Openings[] {
-  const slices = new Map<Slice, Openings>();
+  const groups = new Map<string, OpeningCounts>();
   for (const row of impressions) {
     const slice = sliceOf(row.shownAt, finalFrom);
-    const counted = slices.get(slice) ?? { slice, openings: 0, silent: 0, silentThenTyped: 0 };
+    const at = `${slice} ${arm(row.holdback)}`;
+    const counted = groups.get(at) ?? {
+      slice,
+      holdback: row.holdback,
+      openings: 0,
+      silent: 0,
+      gated: 0,
+      silentThenTyped: 0,
+      accepted: 0,
+    };
     counted.openings += 1;
     if (row.template === null) {
       counted.silent += 1;
+      counted.gated += row.gated ? 1 : 0;
       counted.silentThenTyped += row.typedTemplate === null ? 0 : 1;
+    } else if (isAccepted(row)) {
+      counted.accepted += 1;
     }
-    slices.set(slice, counted);
+    groups.set(at, counted);
   }
-  return [...slices.values()].toSorted((a, b) => a.slice.localeCompare(b.slice));
+  return [...groups]
+    .toSorted(([a], [b]) => a.localeCompare(b))
+    .map(([, { slice, holdback, openings, silent, gated, silentThenTyped, accepted }]) => ({
+      slice,
+      holdback,
+      openings,
+      silent,
+      gated,
+      silentThenTyped,
+      accepted: rate(accepted, openings),
+    }));
 }

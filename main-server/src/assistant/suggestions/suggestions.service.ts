@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -17,6 +18,9 @@ import { type QuestProposal } from '../proposal.js';
 import {
   ACCEPTANCE_WINDOW_DAYS,
   COOLDOWN_AFTER_SECOND_HOURS,
+  IGNORED_AFTER_MINUTES,
+  RECEPTIVENESS_IMPRESSIONS,
+  RECEPTIVENESS_WINDOW_DAYS,
   REPEAT_WINDOW_DAYS,
   TEMPLATES,
   TYPED_WITHIN_MINUTES,
@@ -25,7 +29,17 @@ import { type SuggestionAnswerDto, type SuggestionOutcomeDto, type SuggestionQue
 import { heldBack } from './holdback.js';
 import { koreaMidnight, koreaMinutes } from './korea-day.js';
 import { type RandomSource, SUGGESTION_RANDOM } from './random.js';
-import { type Bucket, bucketOf, draw, fatigueAt, type Impressions, scoreOf, thresholdOf } from './scoring.js';
+import {
+  acceptanceOf,
+  type Bucket,
+  bucketOf,
+  draw,
+  fatigueAt,
+  type Impressions,
+  receptive,
+  scoreOf,
+  thresholdOf,
+} from './scoring.js';
 import { type EligibleSuggestion, SuggestionCandidates } from './suggestion-candidates.service.js';
 
 const MINUTE_MS = 60 * 1000;
@@ -81,24 +95,19 @@ export class SuggestionsService {
     const now = this.clock.now();
     const history = await this.historyOf(userId, now);
     const bucket = bucketOf(koreaMinutes(now));
-    const [eligible, impressions] = await Promise.all([
+    const [eligible, impressions, recent] = await Promise.all([
       this.candidates.eligible(userId, now, query, history.madeFromSuggestions),
       this.impressionsIn(bucket, now),
+      this.recentlyShown(userId, now),
     ]);
     const holdback = heldBack(userId, this.holdbackPercent);
+    // A User who ignored or dismissed the last suggestions is shown nothing, whatever the templates score, and the row
+    // says so; a held-back account is never gated, so that what the gate costs in accepts can be read.
+    const receptiveness = acceptanceOf(recent);
+    const gated = !receptive(receptiveness, holdback);
     // During a cooldown every score is 0, so nothing reaches its threshold and the row says what was held back.
-    const fatigue = fatigueAt(now, history.dismissedAt);
-    const scored = eligible
-      .map((candidate): Scored => {
-        const { template, repeats } = candidate;
-        const counted = impressions.get(template) ?? { shown: 0, accepted: 0 };
-        return { candidate, score: scoreOf({ template, impressions: counted, repeats, fatigue, holdback }) };
-      })
-      .toSorted(
-        (a, b) =>
-          b.score - a.score || TEMPLATES.indexOf(a.candidate.template) - TEMPLATES.indexOf(b.candidate.template),
-      );
-    const above = scored.filter(({ candidate, score }) => score >= thresholdOf(candidate.template));
+    const scored = this.scoredOf(eligible, impressions, fatigueAt(now, history.dismissedAt), holdback);
+    const above = gated ? [] : scored.filter(({ candidate, score }) => score >= thresholdOf(candidate.template));
     const drawn = above.length === 0 ? null : draw(above.length, () => this.random.next());
     const shown = drawn === null ? null : above[drawn.index].candidate;
     const { id } = await this.prisma.suggestionImpression.create({
@@ -110,6 +119,8 @@ export class SuggestionsService {
         bucket,
         propensity: drawn?.propensity ?? null,
         holdback,
+        receptiveness,
+        gated,
         shownAt: now,
         outcome: shown === null ? SuggestionOutcome.silent : SuggestionOutcome.shown,
       },
@@ -175,6 +186,50 @@ export class SuggestionsService {
     } catch (error) {
       this.logger.warn(`A typed request was not matched to its suggestion: ${databaseCauseOf(error)}`);
     }
+  }
+
+  // The eligible templates scored, the best first and ties in the order of TEMPLATES.
+  private scoredOf(
+    eligible: readonly EligibleSuggestion[],
+    impressions: ReadonlyMap<string, Impressions>,
+    fatigue: number,
+    holdback: boolean,
+  ): Scored[] {
+    return eligible
+      .map((candidate): Scored => {
+        const { template, repeats } = candidate;
+        const counted = impressions.get(template) ?? { shown: 0, accepted: 0 };
+        return { candidate, score: scoreOf({ template, impressions: counted, repeats, fatigue, holdback }) };
+      })
+      .toSorted(
+        (a, b) =>
+          b.score - a.score || TEMPLATES.indexOf(a.candidate.template) - TEMPLATES.indexOf(b.candidate.template),
+      );
+  }
+
+  // The User's newest shown impressions of the last week whose outcome is settled, one still shown ten minutes on
+  // having been ignored, by which their receptiveness is read; a confirmation counts as accepted.
+  private async recentlyShown(userId: string, now: Date): Promise<Impressions> {
+    const rows = await this.prisma.suggestionImpression.findMany({
+      where: {
+        userId,
+        template: { not: null },
+        shownAt: { gte: new Date(now.getTime() - RECEPTIVENESS_WINDOW_DAYS * DAY_MS), lte: now },
+        OR: [
+          { outcome: { not: SuggestionOutcome.shown } },
+          { shownAt: { lte: new Date(now.getTime() - IGNORED_AFTER_MINUTES * MINUTE_MS) } },
+        ],
+      },
+      orderBy: { shownAt: 'desc' },
+      take: RECEPTIVENESS_IMPRESSIONS,
+      select: { outcome: true },
+    });
+    return {
+      shown: rows.length,
+      accepted: rows.filter(
+        ({ outcome }) => outcome === SuggestionOutcome.accepted || outcome === SuggestionOutcome.confirmed,
+      ).length,
+    };
   }
 
   // A dismissal before the day of six hours ago can hold nothing back now. A Quest made from a suggestion starts
