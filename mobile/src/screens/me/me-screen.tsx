@@ -8,6 +8,7 @@
  * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -40,6 +41,7 @@ import { LocationExplanation } from '../main/location-explanation';
 import { yearLabel } from '../onboarding/form';
 import { TabScreen } from '../shell/tab-screen';
 import { SharingCard } from './sharing-card';
+import { TutorialRow } from './tutorial-row';
 import { useSharingSwitch } from './use-sharing-switch';
 import { LibraryCard } from './library-card';
 import { thisVersionLine } from './version-line';
@@ -244,9 +246,9 @@ function openAliases(): void {
   router.push('/me/aliases');
 }
 
-// The 내 정보 tab, the `Profile` frame: the User's profile, the week, the Master Switch, the ways to the User's
-// Friends, the words they taught the Assistant, their Parties and Quests, the library's login, the sign-out, and below
-// it the build and update the phone runs.
+// The 내 정보 tab, the `Profile` frame: the User's profile, the 새내기 튜토리얼 row, the week, the Master Switch, the ways to
+// the User's Friends, the words they taught the Assistant, their Parties and Quests, the library's login, the sign-out,
+// and below it the build and update the phone runs.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();
@@ -255,6 +257,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
     <TabScreen actions={<Bell />} title="내 정보">
       <ScrollView contentContainerStyle={styles.body} ref={scroll}>
         {profile === undefined ? null : <ProfileCard profile={profile} />}
+        {profile === undefined ? null : <TutorialRow />}
         <WeekCard />
         <SharingCard
           onLayout={(event) => {

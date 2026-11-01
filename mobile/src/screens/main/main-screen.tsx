@@ -9,10 +9,11 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { router, useIsFocused } from 'expo-router';
-import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
+import { type ReactElement, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
@@ -22,6 +23,7 @@ import type { CardView } from '@/features/map/adapter';
 import { groupedByPlace } from '@/features/map/place-groups';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
+import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { Card } from './card';
@@ -38,6 +40,7 @@ import { useAskedPerson } from './use-asked-person';
 import { type MainRoute, useRoute } from './use-route';
 import { type Selection, useSelection } from './use-selection';
 import { type Things, useThings } from './use-things';
+import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
 import { ZoomControl } from './zoom-control';
 
 const NO_CARDS: readonly CardView[] = [];
@@ -46,6 +49,7 @@ interface ListProps {
   map: MainMap;
   room: Room;
   selection: Selection;
+  tutorial: TutorialFlow;
 }
 
 interface OverMapProps {
@@ -176,7 +180,7 @@ function MainMapView({ map, me, things, lines, room, onPress }: MainMapViewProps
     <Map
       avatars={[...things.avatars, ...me.avatars]}
       {...CAMPUS_CAMERA}
-      inset={mapInset(room.cardHeight)}
+      inset={mapInset(room.cardHeight, room.tutorialStart)}
       markers={things.markers}
       onCameraIdle={map.onCameraIdle}
       onCreditPress={() => {
@@ -215,27 +219,63 @@ function openEventOf(card: CardView | null): string | null {
 }
 
 // The friend list and the Quest list, which give way to a card at the top.
-function Lists({ hidden, map, room, selection }: { hidden: boolean } & ListProps): ReactElement {
+function Lists({ hidden, map, room, selection, tutorial }: { hidden: boolean } & ListProps): ReactElement {
   return (
     <View style={[styles.lists, hidden && styles.hidden]}>
       <FriendList map={map} room={room} selection={selection} />
-      <QuestList map={map} room={room} selection={selection} />
+      <QuestList
+        map={map}
+        onTutorial={tutorial.openSheet}
+        room={room}
+        selection={selection}
+        tutorial={tutorial.tutorial}
+      />
     </View>
   );
 }
 
 // The room the parts over the map have, and the toast's place. What is at the bottom card's place counts: a card at
 // the bottom, or the shuttle's notice; one that appears counts from the last one's height until it is laid out.
-function useRoom(atBottom: boolean): {
+function useRoom(
+  atBottom: boolean,
+  tutorialStart: boolean,
+): {
   room: Room;
   setStage: (stage: Room['stage']) => void;
   setCardHeight: (height: number) => void;
 } {
   const [cardHeight, setCardHeight] = useState(0);
   const [stage, setStage] = useState<Room['stage']>(null);
-  const room: Room = { stage, cardHeight: atBottom ? cardHeight : null };
+  const room: Room = { stage, cardHeight: atBottom ? cardHeight : null, tutorialStart: tutorialStart && !atBottom };
   useToastOverMap(room.cardHeight);
   return { room, setStage, setCardHeight };
+}
+
+// A tutorial quest pressed on the Quest list on the whole screen comes back by the main screen's address,
+// `/main?tutorial=…`, and opens its sheet here.
+function useAskedTutorialQuest(openSheet: (key: string) => void): void {
+  const { tutorial } = useLocalSearchParams<{ tutorial?: string }>();
+  useEffect(() => {
+    if (tutorial !== undefined) {
+      router.setParams({ tutorial: undefined });
+      openSheet(tutorial);
+    }
+  }, [tutorial, openSheet]);
+}
+
+// The 새내기 튜토리얼 over the main screen, and whether its start button shows: not while a card is open.
+function useMainTutorial(selection: Selection): { tutorial: TutorialFlow; start: boolean } {
+  const tutorial = useTutorialFlow();
+  useAskedTutorialQuest(tutorial.openSheet);
+  return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null };
+}
+
+// 지도에서 보기 of a tutorial quest: the map comes close to the point, and an open card closes.
+function showOnMap(map: MainMap, selection: Selection): (position: LatLng) => void {
+  return (position) => {
+    selection.close();
+    map.goTo(position, 'close');
+  };
 }
 
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
@@ -265,13 +305,14 @@ export function MainScreen(): ReactElement {
   const party = useActivePartyRoom();
   useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
-  const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null);
+  const { tutorial, start } = useMainTutorial(selection);
+  const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null, start);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView lines={lines} map={map} me={me} onPress={selection.select} room={room} things={things} />
         <OverMap onStage={setStage}>
-          <Lists hidden={taken.topCard} map={map} room={room} selection={selection} />
+          <Lists hidden={taken.topCard} map={map} room={room} selection={selection} tutorial={tutorial} />
           {taken.bottomCard || taken.notice !== null || stack.open ? null : <MainZoomControl map={map} me={me} />}
           <SelectedCard
             map={map}
@@ -286,9 +327,11 @@ export function MainScreen(): ReactElement {
             chatFrom={{ openEventId: openEventOf(selection.selected), routeTo: route.routeTo }}
             onNoticeHeight={setCardHeight}
             onParty={party.open}
+            onShowOnMap={showOnMap(map, selection)}
             room={room}
             stack={stack}
             taken={taken}
+            tutorial={tutorial}
           />
         </OverMap>
       </View>
