@@ -32,7 +32,7 @@ import { type PostSourceSettings } from './post-sources.js';
 const HOURS_24_MS = 24 * 60 * 60 * 1000;
 
 // What marks a line as a period to apply in, not the event's own time.
-const APPLICATION =
+export const APPLICATION =
   /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|예약|appl(?:y|ication)|regist(?:er|ration)|deadline/iu;
 
 // A line this short holds a label for the next one, as "신청 기간" above its dates does.
@@ -193,19 +193,23 @@ function placeInLines({ place, lines }: AnsweredSession): boolean {
   return written !== '' && quotedPieces(lines.place).some((piece) => piece.includes(written));
 }
 
-// The one Place the session's place names. A building number alone says nothing of which campus, which the Source's
-// setting answers; a place that names another campus is still refused by namedPlace.
+// The one Place the session's place names. A building number alone, or a Place's name alone, says nothing of which campus,
+// which the Source's settings answer; a place that names another campus is still refused by namedPlace.
 export function matchedPlace(
   place: string | null,
-  { buildingNumberIsGwanak }: PostSourceSettings,
+  { buildingNumberIsGwanak, placeNameIsGwanak }: PostSourceSettings,
   places: PlaceDto[],
 ): PlaceDto | null {
   if (place === null) {
     return null;
   }
   const written = normalised(place);
-  const onGwanak = buildingNumberIsGwanak && BUILDING_NUMBER_ALONE.test(written);
-  return namedPlace(onGwanak ? `서울대학교 ${written}` : written, places);
+  const onGwanak = `서울대학교 ${written}`;
+  const asWritten = namedPlace(
+    buildingNumberIsGwanak && BUILDING_NUMBER_ALONE.test(written) ? onGwanak : written,
+    places,
+  );
+  return asWritten ?? (placeNameIsGwanak ? namedPlace(onGwanak, places) : null);
 }
 
 function checksOf(

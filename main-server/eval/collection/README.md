@@ -12,6 +12,24 @@
 | 두 라벨러의 라벨, 일치도, 합의, gold 파일 | 완료 (2026-10-31) |
 | C0 태그                                   | 완료 (2026-11-01) |
 
+## 실행
+
+`pnpm eval:collection --run <이름> --part held-out`(main-server에서). DB 없이 저장본만 읽고, 실제 사이트를 받지 않습니다. 파서는 worker-server의 코드를 그 자리에서 불러오므로 worker-server에도 `pnpm install`이 필요합니다. `--part`를 주지 않으면 개발 세트만 읽습니다. 추적하지 않는 파일까지 깨끗한 트리에서만 돕니다. 결과는 `eval/results/collection-*.{json,md}`에 쌓이고, 남길 것은 `git add -f`로 커밋합니다.
+
+| `--run`      | 평가 | 바꾼 것                                    | 모델                                    |
+| ------------ | ---- | ------------------------------------------ | --------------------------------------- |
+| `r0a`        | A    | 없음. 규칙만                               | 안 부름                                 |
+| `judgement`  | A    | Judgement. B의 글도 함께 읽어 답을 저장    | 부름                                    |
+| `place-name` | A    | 장소 이름 설정. Judgement의 답을 다시 검사 | 안 부름 (`--from`)                      |
+| `r0b`        | B    | 없음. 같은 시작 + 제목 유사도(Dice ≥ 0.5)  | 안 부름 (`--from`)                      |
+| `title-rule` | B    | 08a 규칙 (`SAME_EVENT_TITLE_RULE=on`)      | 안 부름 (`--from`)                      |
+| `ai-choice`  | B    | 08b AI 선택 (`SAME_EVENT_AI_CHOICE=on`)    | AI 선택만 부름 (`--from`으로 시각 읽음) |
+
+- `--from <run.json>`은 저장된 답을 다시 씁니다. `--no-model`을 더하면 모델 없이 다시 채점합니다(메트릭 4.4절).
+- `--place-name on`은 B의 run에서 장소 이름 설정을 켭니다. 평가 A가 설정을 남겼을 때만 씁니다.
+- `--budget`은 USD 예산입니다. 기본 1이고, 넘으면 그 자리에서 멈춥니다.
+- 채점 방법(회차 맞추기, 쌍의 도착 순서, D 지표)은 티켓 09의 Comments에 있습니다.
+
 ## 파일
 
 | 파일                                          | 내용                                                |

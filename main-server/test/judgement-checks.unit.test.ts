@@ -230,8 +230,8 @@ describe('checkedSessions: whether a session is new', () => {
 });
 
 describe('matchedPlace', () => {
-  const gwanak = { buildingNumberIsGwanak: true, postKeyInLink: /x/u };
-  const elsewhere = { buildingNumberIsGwanak: false, postKeyInLink: /x/u };
+  const gwanak = { buildingNumberIsGwanak: true, placeNameIsGwanak: false, postKeyInLink: /x/u };
+  const elsewhere = { buildingNumberIsGwanak: false, placeNameIsGwanak: false, postKeyInLink: /x/u };
 
   it.each(['301동', '301동 117호', '301동 1층', '301동 지하1층 117호'])('takes %s alone as Gwanak', (place) => {
     expect(matchedPlace(place, gwanak, PLACES)?.id).toBe('b');
