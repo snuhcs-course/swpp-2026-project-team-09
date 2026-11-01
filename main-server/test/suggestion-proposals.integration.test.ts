@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -172,6 +173,8 @@ describe('repeat_last, not applying', () => {
         bucket: 'morning',
         propensity: 1,
         holdback: false,
+        receptiveness: 0.5,
+        gated: false,
         shownAt,
         outcome: 'confirmed',
         outcomeAt: shownAt,

@@ -1944,12 +1944,17 @@ suggestion shows from 0.25, 0.35 for one that names a Friend, and none shows for
 the second of a day in Korea, and for the rest of the day after the third. The top score shows 9 times in 10, else one
 of those over their threshold drawn uniformly (`SUGGESTION_RANDOM` binds the random source), and the probability the
 shown one had is written as its propensity. `ASSISTANT_SUGGESTION_HOLDBACK_PERCENT` (10) of accounts, chosen by the
-SHA-256 of the User's id, read acceptance as 0.5 and no repeats. The numbers sit in `suggestions/constants.ts`, each
-with its reason. `suggestion_impressions` holds one row for each answer, without any text: the template shown, or null
-when nothing was shown, the eligible templates best first, `candidates`, the ids each eligible template's Proposal
-would take as `<template> <kind>:<id>`, the bucket, the propensity (null when nothing was shown), `holdback`,
-`shown_at`, when the chat opened, and the outcome: `silent` when nothing was shown (no template eligible, none over its
-threshold, or a cooldown), else `shown` until `POST /assistant/suggestions/:id/outcome` with
+SHA-256 of the User's id, read acceptance as 0.5 and no repeats. Before the templates are scored, the User's own
+acceptance of the suggestions shown to them lately, their newest ten of the last week whose outcome is settled,
+smoothed the same way, is read as their receptiveness: under 0.15, five in a row ignored or dismissed, nothing is shown
+to a learning-arm account whatever the templates score, as Pre-Filtering (ASEW 2025) gates a suggestion from
+content-free signals before it is made; a held-back account is never gated, which is how the accepts the gate costs
+are read. The numbers sit in `suggestions/constants.ts`, each with its reason. `suggestion_impressions` holds one row
+for each answer, without any text: the template shown, or null when nothing was shown, the eligible templates best
+first, `candidates`, the ids each eligible template's Proposal would take as `<template> <kind>:<id>`, the bucket, the
+propensity (null when nothing was shown), `holdback`, `receptiveness` and `gated`, `shown_at`, when the chat opened,
+and the outcome: `silent` when nothing was shown (no template eligible, none over its threshold, a cooldown, or the
+gate), else `shown` until `POST /assistant/suggestions/:id/outcome` with
 `{ "outcome": "accepted" | "dismissed" }`, or `{ "outcome": "confirmed", "questId" }` once 만들기 made the Proposal's
 Quest, answers 204 and records it with `outcome_at`. The same outcome again changes nothing; another User's suggestion
 gets 404 `SUGGESTION_NOT_FOUND`, and an outcome that would replace a later one 409 `SUGGESTION_OUTCOME_SETTLED`. An
