@@ -93,3 +93,8 @@ Research note 12 (`.scratch/iteration-3/research/12-ghost-text-suggestions-2025-
 - Agent time: about 79 minutes (estimate), two Opus 5.5 sessions in their worktrees, the server half and the app half, plus about 21 minutes of the orchestrating Fable 5.1 session, which wrote the spec and tickets, reviewed, merged and tested the stack, split evenly over tickets 02 to 05.
 - Tokens (estimate): the building sessions about 46.6M input, of which about 46.0M cache reads, 655k cache writes and 408 uncached, and about 273k output; the orchestrating share about 10.1M input (9.9M cache reads, 132k cache writes) and 33k output. With cache reads excluded, about 1.1M in all.
 - After research note 10, the same day: about 20 minutes more of the Fable 5.1 session (estimate; the 40 minutes of that pass split evenly over tickets 04 and 05), about 14.7M input, of which 14.0M cache reads and 707k cache writes, and about 200k output. With cache reads excluded, about 0.9M.
+
+### Agent usage (2026-11-01)
+
+- Agent time: about 25 minutes (estimate), one Fable 5.1 session: the explanation of what the gate would be, then the gate, its tests, the openings per arm in ticket 05's suggestion curves, the merges forward to ticket 07, and the live database and server brought up to date.
+- Tokens (estimate): about 16.4M input, of which about 16.2M cache reads, 250k cache writes and 2k uncached, and about 143k output. With cache reads excluded, about 0.4M.
