@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
@@ -27,9 +28,10 @@ function isMeal(value: unknown): value is RestaurantMenus['meals'][number] {
 }
 
 function isRestaurantMenus(value: unknown): value is RestaurantMenus {
+  const placeId = field(value, 'placeId');
   return (
     hasTexts(value, ['name', 'collectedAt']) &&
-    isTextOrNull(field(value, 'placeId')) &&
+    (placeId === undefined || isTextOrNull(placeId)) &&
     listOf(isMeal)(field(value, 'meals'))
   );
 }

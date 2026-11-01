@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -11,7 +12,7 @@ import { act, fireEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { ScrollView } from 'react-native';
 import { pass, screen } from './support/app';
-import { answerDining, BUFFET, HOURS, NO_PRICE, STEW } from './support/dining';
+import { answerDining, BUFFET, HOURS, NO_PRICE, STEW, TODAY_MENUS } from './support/dining';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { LAYERS } from './support/lists';
@@ -158,6 +159,16 @@ describe('the restaurants of a day', () => {
     }
     expect(screen.getByRole('header', { name: '302동식당  302동' })).toBeVisible();
     expect(screen.getByRole('header', { name: '교수회관식당' })).toBeVisible();
+  });
+
+  it('lists the restaurants of a server that gives no Place yet, only without their Place', async () => {
+    const older = TODAY_MENUS.map(({ name, collectedAt, meals }) => ({ name, collectedAt, meals }));
+    server.on('GET /menus', { status: 200, body: older });
+
+    await openFromStack();
+
+    expect(screen.getByRole('header', { name: '302동식당' })).toBeVisible();
+    expect(screen.queryByRole('header', { name: '302동식당  302동' })).toBeNull();
   });
 });
 

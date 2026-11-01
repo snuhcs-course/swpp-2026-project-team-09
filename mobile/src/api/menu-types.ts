@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // --- Menus (GET /menus?date=) ---
@@ -23,8 +24,9 @@ export interface MenuLine {
 // the page lists with empty cells has none.
 export interface RestaurantMenus {
   name: string;
-  // Its Place; null for a restaurant the server's seed does not hold.
-  placeId: string | null;
+  // Its Place; null for a restaurant the server's seed does not hold, and left out by a server from before P4, so that
+  // the app's JavaScript and the server can land in either order.
+  placeId?: string | null;
   collectedAt: string;
   meals: { meal: Meal; lines: MenuLine[] }[];
 }
