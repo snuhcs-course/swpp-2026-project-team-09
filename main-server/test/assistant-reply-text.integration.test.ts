@@ -112,6 +112,7 @@ describe('A run that wrote no text', () => {
       cards: [],
       proposal: null,
       choices: [],
+      resolvedBy: [],
     });
     expect(warnings()).toContain(
       'The Assistant answered with its fixed sentence: no step had text ' +
