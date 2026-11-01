@@ -5,12 +5,13 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useRef } from 'react';
 import { Keyboard, Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { GlobalEventCard, MapLayer, QuestProposal } from '@/api/assistant-types';
-import type { ShownChatCard, ShownRecruitingQuest } from '@/api/quest-parts-types';
+import type { ShownChatCard, ShownQuestCard } from '@/api/quest-parts-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { ChatEventCards, type EventCardActions } from './chat-event-cards';
@@ -107,7 +108,7 @@ export interface CardActions {
 }
 
 // The cards of an answer in the order the Assistant showed them, the cards of one kind next to each other together.
-type CardRun = { kind: 'globalEvent'; events: GlobalEventCard[] } | { kind: 'quest'; quests: ShownRecruitingQuest[] };
+type CardRun = { kind: 'globalEvent'; events: GlobalEventCard[] } | { kind: 'quest'; quests: ShownQuestCard[] };
 
 function runsOf(cards: readonly ShownChatCard[]): CardRun[] {
   const runs: CardRun[] = [];
@@ -120,9 +121,9 @@ function runsOf(cards: readonly ShownChatCard[]): CardRun[] {
         runs.push({ kind: 'globalEvent', events: [card] });
       }
     } else if (last?.kind === 'quest') {
-      last.quests.push(card.quest);
+      last.quests.push(card);
     } else {
-      runs.push({ kind: 'quest', quests: [card.quest] });
+      runs.push({ kind: 'quest', quests: [card] });
     }
   }
   return runs;
@@ -135,7 +136,7 @@ function Cards({ cards, actions }: { cards: readonly ShownChatCard[]; actions: C
         run.kind === 'globalEvent' ? (
           <ChatEventCards actions={actions.events} cards={run.events} key={`event-${run.events[0]?.globalEvent.id}`} />
         ) : (
-          <ChatQuestCards actions={actions.quests} key={`quest-${run.quests[0]?.id}`} quests={run.quests} />
+          <ChatQuestCards actions={actions.quests} cards={run.quests} key={`quest-${run.quests[0]?.quest.id}`} />
         ),
       )}
     </>

@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -52,6 +53,9 @@ beforeAll(async () => {
     options,
   );
   started.world = await SEEDERS[options.world](started.evalApp.app, inject('settings').DATABASE_URL);
+  if (options.world === 'p4') {
+    started.evalApp.travel.bind(started.world.seeds);
+  }
   started.names = namesOf(started.world.seeds);
   log.keepSeeds(started.world.seeds);
 });

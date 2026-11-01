@@ -8,6 +8,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -26,7 +27,14 @@ import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { type MakeQuestDto, type SubQuestContentDto } from './dto/quest-requests.dto.js';
-import { hasSubQuestsAhead, QUEST_INCLUDE, QuestDto, toQuestDto } from './dto/quest.dto.js';
+import {
+  hasSubQuestsAhead,
+  QUEST_INCLUDE,
+  QuestDto,
+  type SubQuestContent,
+  subQuestContentsOf,
+  toQuestDto,
+} from './dto/quest.dto.js';
 import { notFound, questNotFound } from './refusals.js';
 
 // What a Sub Quest that a Holder writes stores.
@@ -103,6 +111,15 @@ export class QuestsService {
       ...quests.map((quest) => toQuestDto(quest, userId, now)),
       ...(await this.classQuests.todayFor(userId, now)),
     ].filter(({ subQuests }) => subQuests.some(({ ended }) => !ended));
+  }
+
+  // Every Sub Quest of the stored Quests the User holds, whether it passed or not.
+  async heldSubQuests(userId: string): Promise<SubQuestContent[]> {
+    const quests = await this.prisma.quest.findMany({
+      where: { holders: { some: { userId } } },
+      include: QUEST_INCLUDE,
+    });
+    return quests.flatMap((quest) => subQuestContentsOf(quest));
   }
 
   async read(userId: string, questId: string): Promise<QuestDto> {

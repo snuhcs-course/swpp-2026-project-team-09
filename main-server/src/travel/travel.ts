@@ -30,6 +30,8 @@ export interface Travel {
 // and shuttle file.
 export interface TravelProvider {
   travel(fromPlaceId: string, toPlaceId: string, departure: Date): Travel;
+  // The way on foot alone, whatever the shuttle offers. A leave-by time's out-travel departs by it.
+  walkingSeconds(fromPlaceId: string, toPlaceId: string): number;
 }
 
 export const TRAVEL_PROVIDER = 'TRAVEL_PROVIDER';
@@ -77,6 +79,10 @@ export class SeedTravel implements TravelProvider {
     return shuttle + SHUTTLE_ADVANTAGE_SECONDS <= walk
       ? { seconds: Math.round(shuttle), mode: 'shuttle' }
       : { seconds: walk, mode: 'walk' };
+  }
+
+  walkingSeconds(fromPlaceId: string, toPlaceId: string): number {
+    return cell(this.table.placeToPlace, this.row(fromPlaceId), this.row(toPlaceId));
   }
 
   private row(placeId: string): number {
