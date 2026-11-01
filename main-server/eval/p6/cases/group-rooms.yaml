@@ -41,13 +41,14 @@
         - 초대했
         - '2026-000'
 
-# The spec's example (user story 36): three people for a room of 4–6.
+# The spec's example (user story 36), with the room named: three people for a room of 4–6. "4층 스터디룸" alone fits
+# every 4층 group study room, which would be an ASK (ruling 20).
 - id: p6-group-rooms-below-min
   category: p6-group-rooms
   world: p6
   repeat: 3
   turns:
-    - user: 내일 3시 4층 스터디룸 민수, 지은이랑 2시간
+    - user: 내일 3시 4층 6인실 민수, 지은이랑 2시간
   expect:
     actions: [REFUSE]
     tools:

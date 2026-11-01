@@ -47,7 +47,7 @@ A refusal shows no book, cancel or return card. Refusals split by who decides: a
 - A request names a space by its catalogue `name`, by one of its `aliases` (site or proposed), or by a purpose its `purpose` text states. A floor narrows the spaces to that floor.
 - **The candidates come from the words only.** The number of people never narrows them: a room too small or too large for the people is still a candidate, and the question comes first.
 - Every implemented space that fits the words is a candidate. One candidate is the space. **Two or more: ask**, naming every one, and never pick one. A floor or a name that fits only one ends the question.
-- A floor with a kind and no name fits every space of that kind on the floor: bare "7층 열람실" and "7층 자리" fit the four 7층 seat spaces, 7F-7A-zone1-notebook, 7F-7A-zone2, 7F-notebook-171 and 7F-7B-notebook (an ASK). "모니터 있는 스터디룸" fits the 4층 10인실, 8인실 and the 6인실 with a monitor (an ASK), whatever the number of people.
+- A floor with a kind and no name fits every space of that kind on the floor, even where it is also a proposed alias: "4층 스터디룸" fits every 4층 group study room, and bare "7층 열람실" and "7층 자리" fit the four 7층 seat spaces, 7F-7A-zone1-notebook, 7F-7A-zone2, 7F-notebook-171 and 7F-7B-notebook (an ASK). "모니터 있는 스터디룸" fits the 4층 10인실, 8인실 and the 6인실 with a monitor (an ASK), whatever the number of people.
 - 스튜디오 and 라이브 방송 fit both 6F-studio (창의미디어스페이스) and 6F-creative-media-studio (Creative Media Studio), which both film and broadcast: an ASK.
 - 중앙도서관 is 관정관 and 본관. "중앙도서관 열람실" fits the 7층 and 8층 seat spaces: an ASK between 7층 and 8층, saying that 본관 is 미구현.
 - **"아무 자리(나)"** with no space named leaves the space to the Assistant: the default seat space, **7F-7A-zone2**, for any asker. It ends the space question, but not a missing time. The card picks the first free seat, and 다른 자리 고르기 moves it.
@@ -56,7 +56,7 @@ A refusal shows no book, cancel or return card. Refusals split by who decides: a
 - **notOnline**: a space inside 관정관 with `bookable: false`: 2F-group-5-G202 (G202), 6F-multimedia-viewing (멀티미디어 감상석, PC), 6F-info-search (정보검색실), 7F-carrel and 8F-carrel (캐럴). The reply says it is used on site (현장 이용) and offers no other space instead: 영화 보는 곳 is 감상석, never a studio, which forbids uses other than 촬영·방송.
 - **unsupported**: 본관 (main-library), 관정관 1·3·5층 (other-floors), and anything not in the catalogue, such as another library. The reply says "아직 미구현이에요" and what is supported: 관정관 2·4층 그룹스터디룸, 6층 미디어 공간, 7·8층 열람실.
 - **notEligible**: 8F-grad-reading-room for an asker whose 소속 is not 대학원. The reply says it is for graduate students, as set in 내 정보. For a graduate asker it is an ordinary seat space.
-- The space's result kind comes before its conditions: a notOnline, unsupported or notEligible space is refused for that reason, whatever the time. A refusal that holds for every candidate (a seat tomorrow, 23:30 for 7 hours) is a refusal, not an ASK.
+- The space's result kind comes before its conditions: a notOnline, unsupported or notEligible space is refused for that reason, whatever the time. A refusal by the conditions needs one space first: the cases of condition refusals name exactly one space, so each has one path (findLibrarySpace, proposeLibraryBooking, REFUSE).
 
 ## 4. The booking window
 
@@ -194,5 +194,6 @@ What the spec and the catalogue left open, as the PM ruled on the blind draft, n
 17. "내 공강에 7층 열람실" is an ASK for the space, with no tool (section 12).
 18. Named Friends go through `resolveFriend` before `proposeLibraryBooking`, in a card or a condition refusal (section 16).
 19. One path for every booking: `findLibrarySpace`, `resolveFriend` when Friends are named, `proposeLibraryBooking`; no tool is optional in any case (section 16).
+20. A condition refusal's question names one space ("7A 열람실 2 구역", "4층 6인실"); an ambiguous one would be an ASK first (section 3).
 
 Also settled from the draft, unchanged: a bare hour from 1 to 6 is the afternoon (section 1); purposes outside section 8's mapping (라이브 방송, 발표 준비, 체험) leave the useDesc out; a booking lies inside the hours from start to end (section 5); a named room of a media space is passed as `equipment`.

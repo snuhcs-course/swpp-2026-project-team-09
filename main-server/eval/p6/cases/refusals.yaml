@@ -107,12 +107,13 @@
 
 # ── out of the window or the hours ──
 
+# The space is named, so it has one id and one path: findLibrarySpace, proposeLibraryBooking, REFUSE (ruling 20).
 - id: p6-refusals-seat-tomorrow
   category: p6-refusals
   world: p6
   repeat: 3
   turns:
-    - user: 내일 아침 9시부터 7층 열람실 3시간 예약해줘
+    - user: 내일 아침 9시부터 7A 열람실 2 구역 3시간 예약해줘
   expect:
     actions: [REFUSE]
     tools:
@@ -146,7 +147,7 @@
   world: p6
   repeat: 3
   turns:
-    - user: 오늘 밤 11시 반부터 7시간 7층 열람실 잡아줘
+    - user: 오늘 밤 11시 반부터 7시간 7A 열람실 2 구역 잡아줘
   expect:
     actions: [REFUSE]
     tools:
