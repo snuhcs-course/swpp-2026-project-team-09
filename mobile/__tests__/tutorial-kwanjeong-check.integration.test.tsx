@@ -41,7 +41,7 @@ const NOT_FOUND = '아직 관정도서관 예약 기록이 없어요.\n예약하
 const FAILED = '도서관 서버에 연결하지 못했어요. 잠시 후 다시 확인해 주세요.';
 const MESSAGE = '관정도서관 이용은 어떠셨나요? 도서관을 자주 이용해 보아요!';
 // The most recent of the recorded bookings that count: STATUS 5, returned.
-const FOUND_TITLE = '그룹스터디룸 · G420번';
+const FOUND_TITLE = '그룹스터디룸 · G420';
 const FOUND_WHEN = '10월 1일 20:00–23:00 · 예약·이용 기록';
 
 let library: FakeLibrary;
