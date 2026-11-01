@@ -148,7 +148,7 @@ describe('searchRecruitingQuests, by room', () => {
 
 // More Quests than the list holds, all sooner than the one to find, and each left out by the condition.
 function sooner(body: object, day: string): Promise<string[]> {
-  return Promise.all(Array.from({ length: 21 }, () => questAt(`${day}T09:00:00`, body)));
+  return Promise.all(Array.from({ length: 31 }, () => questAt(`${day}T09:00:00`, body)));
 }
 
 describe('searchRecruitingQuests, before the list is cut', () => {

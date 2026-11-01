@@ -2120,22 +2120,29 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     window ends at 23:59 of that day; with only `before`, it starts at 00:00 of that day. A time with a zone is read in
     that zone.
   - `searchGlobalEvents(window, place?, words?)` answers, as candidates, the published Global Events that have not
-    ended and whose span overlaps the window, whose place holds `place` and whose title or description holds any of
-    `words` (ignoring case), the earliest 20 first, with `more` when there were more. An event without an end lasts
-    until the end of its start's day, and one without a start falls in no window, so it is never a candidate. Drafts,
-    cancelled and discarded events are never given. The window is required.
-  - `searchRecruitingQuests(window?, board?, globalEventId?, minPlacesLeft?, capacity?)` answers, as candidates, the
-    Open and Approval Quests the User could enter, decided in the database query (`quests/recruiting-search.ts`) before
-    the list is cut. It goes by a Quest's first Sub Quest, unlike `GET /quests/recruiting`, which keeps listing a Quest
-    with any Sub Quest ahead and is unchanged. A Quest for a Global Event counts as its event, read as it is now: it is
-    given until the event ends, and in a window while the event's span overlaps it; a Quest for a cancelled event is
-    never given. Any other Quest is in a window when it starts in it, and is never given once its start has passed; one
-    without a start falls in no window, and is gone once its end has passed. Never given: a Quest with fewer places left than `minPlacesLeft` (default one,
-    so never a Full one), one the User holds or already asked to join, and one for a Global Event of which the User
-    holds a Shared Quest. `capacity` is exact. Without a window every other such Quest is a candidate, those without a
-    start last. The soonest 20 come first, with `more` when there were more. Each carries its title, Board, Global
-    Event, Join Policy, the places left, the number of Holders, the first Sub Quest's start, end and place, and the
-    first 300 characters of its description.
+    ended and whose span overlaps the window, whose place holds `place`, decided in the database query
+    (`global-events/ranked-search.ts`) before the list is cut. An event without an end lasts until the end of its
+    start's day, and one without a start falls in no window, so it is never a candidate. Drafts, cancelled and discarded
+    events are never given. The window is required. Each carries its title, start, end, place and the first 150
+    characters of its description.
+  - `searchRecruitingQuests(window?, board?, globalEventId?, minPlacesLeft?, capacity?, words?, placeId?, radius?)`
+    answers, as candidates, the Open and Approval Quests the User could enter, decided in the database query
+    (`quests/recruiting-search.ts`) before the list is cut. It goes by a Quest's first Sub Quest, unlike
+    `GET /quests/recruiting`, which keeps listing a Quest with any Sub Quest ahead and is unchanged. A Quest for a Global
+    Event counts as its event, read as it is now: it is given until the event ends, and in a window while the event's
+    span overlaps it; a Quest for a cancelled event is never given. Any other Quest is in a window when it starts in it,
+    and is never given once its start has passed; one without a start falls in no window, and is gone once its end has
+    passed. Never given: a Quest with fewer places left than `minPlacesLeft` (default one, so never a Full one), one the
+    User holds or already asked to join, and one for a Global Event of which the User holds a Shared Quest. `capacity` is
+    exact. With `placeId`, only the Quests whose position is within `radius` metres of that Place (default 300, both ends
+    included), as `metresBetween` reads it: the position is the first Sub Quest's Place, its point on the map, or its
+    Global Event's, and a Quest with words only is left out. Without a window every other such Quest is a candidate,
+    those without a start last. Each carries its title, Board, Global Event, Join Policy, the places left, the number of
+    Holders, the first Sub Quest's start, end and place, and the first 150 characters of its description.
+  - In both searches `words` (at most ten) rank and drop nothing: those whose title or description holds more of them
+    come first, ignoring case and counting a word given twice once, ties in start order, then by title in code points.
+    The rest of the window fills the places left, up to 30, with `more` when there were more. The server does not order
+    by Holders.
   - **Resolvers** take the User's words as written and answer `{ "result": "one", "candidate" }`,
     `{ "result": "several", "candidates", "more" }` (at most 10) or "none", never a guess; the system prompt tells the
     model to ask on several and say so on none. Each adds the ids it answered to `FoundIds`.
