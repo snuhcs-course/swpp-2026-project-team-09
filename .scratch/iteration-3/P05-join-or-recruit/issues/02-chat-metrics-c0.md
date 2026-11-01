@@ -51,7 +51,7 @@ Known gap: `join-08` expects a Proposal, as the spec says, but a User holding a 
 
 R0 ran on `28c0ce1`, a clean tree: the P05 suite three times per case and P19 three times over, for about USD 1.20 of the eval model. The record is `main-server/eval/p5/r0.md`, with the improvement log and the failure analysis; the results are in `main-server/eval/results/`.
 
-Not in any P05 ticket at the time, now ticket 10a: when the model calls a card tool and then writes nothing, the server answers 503. It took 31 of the 300 P05 runs and 10 of the 216 P19 runs. The record says so, and R0 keeps those runs. The owner decided on 2026-11-01 to fix it before ticket 10.
+Not in any P05 ticket at the time, now ticket 10a: when the model writes its answer beside a tool call and ends the next step with no words, the server reads only the last step and answers 503. It took 31 of the 300 P05 runs and 10 of the 216 P19 runs. The record says so, and R0 keeps those runs. The owner decided on 2026-11-01 to fix it before ticket 10.
 
 The large world's R0 belongs to ticket 02b.
 
