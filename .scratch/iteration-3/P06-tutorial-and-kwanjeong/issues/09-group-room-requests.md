@@ -39,7 +39,7 @@ It reads 학번 and registered names from ticket 01, checks the key with ticket 
 - Nothing runs on a schedule, so expiry happens when any room request route is read next (the main screen polls `GET /library/room-requests` every 15 s).
 - The main server has no HTTP request logging, so the companions body is in no log line by construction; the logger-capture test (`test/room-request-privacy.integration.test.ts`) checks every log line and every other reply of a full flow.
 - The wireframes (version 1793520134-8f7e, unchanged) have no consent frame, so the dialog follows the invitation's answers. The notices are toasts on the main screen.
-- Not done in the app: a 철회 button for a consent already given (the server's `POST …/decline` takes it); 내 예약's cancel goes through the same confirm as the cancel card, so it reports too.
+- A companion who consented sees the request at the top of the main screen with 철회 (`POST …/decline`). 내 예약's cancel goes through the same confirm as the cancel card, so it reports too.
 - The Person check stays open.
 
 ### Agent usage (2026-11-02)
