@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -117,21 +118,34 @@ describe('consent, once on a phone', () => {
 });
 
 describe('a legal document', () => {
-  it.each(['이용약관', '개인정보 처리방침', '위치정보 이용약관'])(
-    'opens from the row "%s" on a screen of its own and closes back to consent',
-    async (title) => {
-      const user = await signInFresh();
+  it.each([
+    ['이용약관', '(이용약관 내용이 들어갈 것)'],
+    ['개인정보 처리방침', '학번, 학적상 이름, 소속'],
+    ['위치정보 이용약관', '(위치정보 이용약관 내용이 들어갈 것)'],
+  ])('opens from the row "%s" on a screen of its own and closes back to consent', async (title, words) => {
+    const user = await signInFresh();
 
-      await user.press(screen.getByRole('link', { name: title }));
-      await pass(100);
-      expect(screen.getByRole('header', { name: title })).toBeVisible();
-      expect(screen.getByText(`(${title} 내용이 들어갈 것)`)).toBeVisible();
+    await user.press(screen.getByRole('link', { name: title }));
+    await pass(100);
+    expect(screen.getByRole('header', { name: title })).toBeVisible();
+    expect(screen.getByText(words)).toBeVisible();
 
-      await press(user, '닫기');
-      expect(screen.queryByRole('header', { name: title })).toBeNull();
-      expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
-    },
-  );
+    await press(user, '닫기');
+    expect(screen.queryByRole('header', { name: title })).toBeNull();
+    expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
+  });
+
+  it('on privacy says what the library details are for, and that the library session stays on the phone', async () => {
+    await startApp('/legal/privacy');
+
+    for (const words of [
+      /학번과 학적상 이름은 관정도서관 그룹 스터디룸을 예약할 때만/u,
+      /예약할 때마다/u,
+      /비밀번호는 SNU Now가 볼 수 없고, 로그인 정보\(세션\)는 휴대폰에만 남아요/u,
+    ]) {
+      expect(screen.getByText(words)).toBeVisible();
+    }
+  });
 
   it('can be read by its address alone, and closes to the start of the app', async () => {
     await startApp('/legal/privacy');
