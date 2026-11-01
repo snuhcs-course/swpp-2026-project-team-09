@@ -7,11 +7,13 @@
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { LatLng } from '@/api/types';
 import { now } from '@/clock';
 import { space } from '@/design-system';
 import { nextMeal } from '@/features/dining/adapter';
@@ -25,6 +27,10 @@ import type { ChatFrom } from './chat-suggestion';
 import { LayerControls, type LayerStack } from './layers';
 import { AI_INPUT, CARD, LAYERS_BUTTON, type Room } from './layout';
 import { ShuttleNotice } from './shuttle-notice';
+import { TutorialPager } from './tutorial/tutorial-pager';
+import { TutorialSheet } from './tutorial/tutorial-sheet';
+import { TutorialStartButton } from './tutorial/tutorial-start-button';
+import type { TutorialFlow } from './tutorial/use-tutorial-flow';
 
 // The menu panel at the meal served next, at a restaurant's section or at the top of the list.
 export function openMenus(restaurant?: string): void {
@@ -66,6 +72,10 @@ interface MapBottomProps {
   room: Room;
   stack: LayerStack;
   chatFrom: ChatFrom;
+  // The 새내기 튜토리얼: its start button while `room.tutorialStart`, its pager and its quests' sheets.
+  tutorial: TutorialFlow;
+  // A quest's 지도에서 보기.
+  onShowOnMap: (position: LatLng) => void;
 }
 
 // What is at the bottom of the map: the shuttle's notice, the row of buttons, the 편의기능 button and the AI input. A
@@ -74,7 +84,7 @@ interface MapBottomProps {
 // in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input stands right above
 // it, and the chat keeps its last bubble clear of it there. The conversation is kept while the app runs.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, room, stack, chatFrom } = props;
+  const { taken, onParty, onNoticeHeight, room, stack, chatFrom, tutorial, onShowOnMap } = props;
   const chat = useChatSheet(useIsFocused(), stack.turnOn, chatFrom);
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const lift = useKeyboardLift();
@@ -87,6 +97,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       {under && !bottomCard ? (
         <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} onMenus={openMenus} stack={stack} />
       ) : null}
+      {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
       {chat.sheet(AI_INPUT.bottom + lift + inputHeight)}
       <AiInput
         chatOpen={chat.shown}
@@ -97,6 +108,19 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         fill={chat.fill}
         placeholder={chat.placeholder}
         waiting={chat.chat.waiting}
+      />
+      <TutorialPager flow={tutorial} />
+      <TutorialSheet
+        flow={tutorial}
+        onAskAssistant={(words) => {
+          tutorial.closeSheet();
+          chat.open();
+          chat.chat.send(words);
+        }}
+        onShowOnMap={(position) => {
+          tutorial.closeSheet();
+          onShowOnMap(position);
+        }}
       />
     </>
   );

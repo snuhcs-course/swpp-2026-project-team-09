@@ -97,9 +97,9 @@ describe('searchGlobalEvents, by state', () => {
 });
 
 describe('searchGlobalEvents, by words and place', () => {
-  it('gives only the events holding a word, at the place asked for', async () => {
+  it('gives only the events at the place asked for, those holding a word first', async () => {
     const concert = await storeAt('2098-03-05T19:00:00', { title: '가을 재즈 공연', place: '문화관(73동) 대강당' });
-    await storeAt('2098-03-05T18:00:00', { title: '도서관 북토크', place: '문화관(73동) 대강당' });
+    const talk = await storeAt('2098-03-05T18:00:00', { title: '도서관 북토크', place: '문화관(73동) 대강당' });
     await storeAt('2098-03-05T20:00:00', { title: '실내악 공연' });
     model.script(
       { tool: 'searchGlobalEvents', input: { from: '2098-03-05', to: '2098-03-05', place: '73동', words: ['공연'] } },
@@ -108,11 +108,10 @@ describe('searchGlobalEvents, by words and place', () => {
 
     await postAssistantMessages(app, accessToken, ask('그날 73동에서 공연 있어?'));
 
-    expect(candidateIds()).toEqual([concert.id]);
+    expect(candidateIds()).toEqual([concert.id, talk.id]);
   });
 
   it('says "none" with the reason when nothing matches', async () => {
-    await storeAt('2098-04-05T19:00:00', { title: '도서관 북토크' });
     model.script(
       { tool: 'searchGlobalEvents', input: { from: '2098-04-05', to: '2098-04-06', words: ['공연'] } },
       { text: '그때는 공연이 없어요.' },
@@ -123,7 +122,7 @@ describe('searchGlobalEvents, by words and place', () => {
     expect(model.toolResults()).toEqual([
       {
         result: 'none',
-        reason: 'No published Global Event holding 공연 takes place from 2098-04-05T00:00 to 2098-04-06T23:59.',
+        reason: 'No published Global Event takes place from 2098-04-05T00:00 to 2098-04-06T23:59.',
       },
     ]);
   });
