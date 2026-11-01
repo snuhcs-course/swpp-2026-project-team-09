@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -55,6 +56,16 @@ export class TutorialService {
       });
     }
     return this.tutorialOf(userId, user);
+  }
+
+  // The tutorial as the User has it now, without turning it on: what the Assistant reads (getTutorial).
+  peek(userId: string): Promise<TutorialDto> {
+    return this.tutorialOf(userId);
+  }
+
+  // The facts of each quest by its key, which only the Assistant reads.
+  facts(): ReadonlyMap<string, TutorialQuest['facts']> {
+    return new Map(this.content.quests.map(({ key, facts }) => [key, facts]));
   }
 
   // 진행하기: keeps the quests' progress and shows the 내 정보 row again. A finished tutorial stays finished unless the
@@ -169,7 +180,7 @@ export class TutorialService {
       state: tutorialState(progress, rows, this.keys),
       rowHidden: progress !== null && progress.rowHiddenAt !== null,
       eligibleByDefault: isEligibleByDefault(user, new Date()),
-      quests: this.content.quests.map((quest) => ({
+      quests: this.content.quests.map(({ facts: _facts, ...quest }) => ({
         ...quest,
         status: questStatus(rows.find(({ questKey }) => questKey === quest.key)),
       })),

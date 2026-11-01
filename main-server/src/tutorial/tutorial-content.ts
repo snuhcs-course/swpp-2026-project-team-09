@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { readFile } from 'node:fs/promises';
@@ -46,6 +47,9 @@ const questSchema = z.strictObject({
   completionMessage: text,
   places: z.array(placeSchema),
   links: z.array(z.strictObject({ label: text, url: z.url({ protocol: /^https?$/u }) })),
+  // What the Assistant answers from beyond the sheet's text, each with where it was read and when. GET /tutorial does
+  // not serve them.
+  facts: z.array(z.strictObject({ text, source: z.url({ protocol: /^https?$/u }), checked: z.iso.date() })).default([]),
 });
 
 const contentSchema = z
@@ -78,4 +82,26 @@ export async function readTutorialContent(file: string): Promise<TutorialContent
     throw new Error(`${file} is not a valid tutorial: ${z.prettifyError(result.error)}`);
   }
   return result.data;
+}
+
+// The official booking site, which the 관정 quest links to when booking in the app is turned off.
+export const KWANJEONG_SITE = {
+  label: '관정도서관 예약 사이트',
+  url: 'https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main',
+};
+
+// The content as GET /tutorial serves it. With 관정 booking turned off (LIBRARY_BOOKING_ENABLED), a quest checked
+// through the library is completed by its button instead, so that the phone never calls the library for it, and links
+// to the official site.
+export function servedContent(content: TutorialContent, libraryBooking: boolean): TutorialContent {
+  if (libraryBooking) {
+    return content;
+  }
+  return {
+    quests: content.quests.map((quest) =>
+      quest.completion.kind === 'kwanjeongCheck'
+        ? { ...quest, completion: { kind: 'button' }, links: [...quest.links, KWANJEONG_SITE] }
+        : quest,
+    ),
+  };
 }

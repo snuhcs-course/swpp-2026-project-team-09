@@ -11,6 +11,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -107,6 +108,13 @@ export const settingsSchema = z
       .enum(['on', 'off'])
       .default('off')
       .transform((value) => value === 'on'),
+    // Whether the Assistant books 관정도서관 through the phone's library cards. "false" turns it off without a release
+    // (P06): the library tools answer with the official site and no card, and the tutorial's 관정 quest is completed
+    // by its button.
+    LIBRARY_BOOKING_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((value) => value === 'true'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
   })

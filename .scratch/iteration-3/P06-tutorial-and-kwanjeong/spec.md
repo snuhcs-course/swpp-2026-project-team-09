@@ -133,7 +133,7 @@ Words:
 | 1 | `s-card` | 학생증(S-CARD) 발급받기 | Place 67 (NH농협두레문예관), floor 2; Place 4 (우리은행); MySNU `https://my.snu.ac.kr`; 학생처 S-CARD 발급 절차 (student.snu.ac.kr › 대학생활 › 기타 › s-card › 발급 절차) | button |
 | 2 | `admin-shuttle` | 행정관 셔틀 이용하기 | point 37.460938, 126.950312, "행정관 셔틀 정류장 (행정관 잔디광장 아래)" (plus code 8Q98FX62+94) | button |
 | 3 | `kwanjeong` | 관정도서관 예약하기 | Place 62-1 (중앙도서관 관정관) | kwanjeongCheck, skip "이미 예약 및 이용해본 적이 있어요" |
-| 4 | `health-clinic` | 서울대 보건진료소 이용 | Place 63 (학생회관), floor 2; `https://health4u.snu.ac.kr/index.do` | button |
+| 4 | `health-clinic` | 서울대 보건진료소 이용 | Place 63 (학생회관), floor 3; `https://health4u.snu.ac.kr/index.do` and its 진료 시간표, 오시는 길, 이용 절차 and 진료 예약 pages | button |
 | 5 | `art-museum` | 서울대 미술관/파워플랜트 관람 | Place 151 (미술관), Place 68 (파워플랜트); `http://www.snumoa.org/`, `https://culture.snu.ac.kr/event/powerplant365/` | button |
 
 - Texts:
@@ -166,7 +166,8 @@ Words:
   - **health-clinic**
     - brief: "보건진료소가 어디 있는지 알아 두세요." *(drafted)*
     - body:
-      - "서울대 보건진료소는 학생회관(63동) 2층에 있어요. 진료 시간과 이용 방법은 보건진료소 홈페이지에서 확인할 수 있어요."
+      - "서울대 보건진료소는 학생회관(63동) 3–4층에 있어요. 진료는 3층에서 하고, 접수와 수납은 329호에서 해요. 진료 시간과 이용 방법은 보건진료소 홈페이지에서 확인할 수 있어요."
+    - facts (for the Assistant, not served by GET /tutorial; each with its source on health4u.snu.ac.kr, checked 2026-11-02): 3–4층, 진료 3층, 접수·수납 329호; 평일 09:00–12:00, 13:30–17:30, 금요일 16:30까지, 12:00–13:30 진료 없음; the departments; 신분증을 들고 329호에서 접수, 예약은 선택(하루 전까지 온라인), 정신건강의학과는 예약 필수; the cost; 대표전화 02-880-5338. Saturday and vacation hours are not stated, so the Assistant answers them as 확인되지 않아요 with the 진료 시간표 link.
     - condition: "보건진료소 위치와 이용 방법 확인하기" *(drafted)*
     - completionMessage: "아플 땐 참지 말고 보건진료소를 찾아 주세요!" *(drafted)*
   - **art-museum**
