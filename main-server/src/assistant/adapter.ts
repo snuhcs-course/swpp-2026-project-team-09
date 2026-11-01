@@ -6,11 +6,19 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-29  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
-import { type Asker, type ChatMessage, type Feature, type FeatureReply, type ToolContext } from './feature.js';
+import {
+  type Asker,
+  type ChatMessage,
+  type Feature,
+  type FeatureReply,
+  type Presented,
+  type ToolContext,
+} from './feature.js';
 import { FoundIds } from './found-ids.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
 
@@ -46,7 +54,10 @@ const MAX_RETRIES = 0;
 // It adds no ZDR restriction, which could shrink the providers available.
 const PROVIDER_OPTIONS = { openrouter: { provider: { data_collection: 'deny' } } };
 
-// A run that used every step on tools and never answered.
+// What the reply says when no step wrote any text and the reply shows something beneath it.
+export const FIXED_SENTENCE = '아래에서 확인해 보세요.';
+
+// A run that used every step on tools, or that ended with no text and nothing shown.
 export class NoAnswerError extends Error {
   override readonly name = 'NoAnswerError';
 }
@@ -131,9 +142,10 @@ function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
   return proposals.findLast((proposal) => proposal !== null) ?? null;
 }
 
-// Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and what
-// the presenters put beside it. It throws NoAnswerError when the steps ran out on tools, and the SDK's errors when the
-// model fails or the time runs out. An observer, if given, is told of each tool call and each step's end.
+// Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and
+// what the presenters put beside it. It throws NoAnswerError when the steps ran out on tools or the run has nothing to
+// say or show, and the SDK's errors when the model fails or the time runs out. An observer, if given, is told of each
+// tool call and each step's end.
 export async function runFeature(
   model: Model,
   feature: Feature,
@@ -177,11 +189,23 @@ export async function runFeature(
             });
           },
   });
-  const text = textOf(steps);
-  if (finishReason === 'tool-calls' || text === '') {
+  const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
+  const reply = finishReason === 'tool-calls' ? null : replyOf(textOf(steps), finishReason, presented);
+  if (reply === null) {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
-  return { text, ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
+  return reply;
+}
+
+// The reply of a run that ended: the model's text, the fixed sentence over what it showed without any, or none.
+function replyOf(text: string, finishReason: string, presented: Presented): FeatureReply | null {
+  if (text !== '') {
+    return { ...presented, text, noTextFinishReason: null };
+  }
+  if (presented.cards.length === 0 && presented.mapButtons.length === 0 && presented.proposal === null) {
+    return null;
+  }
+  return { ...presented, text: FIXED_SENTENCE, noTextFinishReason: finishReason };
 }
 
 // The model may write part of its answer beside a tool call and close with a line in its last step, or write nothing

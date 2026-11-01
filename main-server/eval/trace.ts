@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The trace of a turn (spec P19, "The recorder"): what the model did in it, step by step, and how the turn ended. A
@@ -25,6 +26,14 @@ export interface ToolCallTrace {
   error?: string;
 }
 
+// What a step cut at the output limit wrote, to find out why it was cut: its content parts as the provider library gave
+// them, its reasoning tokens and the provider's response. Only the trace keeps it, never the server's logs.
+export interface CutStepTrace {
+  content: unknown[];
+  reasoningTokens: number | null;
+  rawResponse: unknown;
+}
+
 // One step: one model call, the tools it called and what it wrote, its finish reason and its usage. A call that
 // failed, such as one aborted when the time ran out, has the error's name and no finish reason.
 export interface StepTrace {
@@ -36,6 +45,8 @@ export interface StepTrace {
   // Whether the run told the observer the step ended, which it does once the step's tools returned.
   ended: boolean;
   error?: string;
+  // Only on a step cut at the output limit.
+  cut?: CutStepTrace;
 }
 
 // Why the Assistant did not answer. STEP_LIMIT: the last step at the step cap ended on tool calls. TIMEOUT: the time

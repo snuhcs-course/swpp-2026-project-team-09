@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { APICallError, type LanguageModelMiddleware, wrapLanguageModel } from 'ai';
@@ -38,6 +39,30 @@ function inputOf(text: string): unknown {
     return JSON.parse(text) as unknown;
   } catch {
     return text;
+  }
+}
+
+type Generated = Awaited<ReturnType<Parameters<NonNullable<LanguageModelMiddleware['wrapGenerate']>>[0]['doGenerate']>>;
+
+// What the provider answered, on the step it belongs to. The result itself goes on to the run untouched.
+function record(step: StepTrace, { finishReason, usage, content, response }: Generated): void {
+  const { inputTokens, outputTokens } = usage;
+  step.finishReason = finishReason.unified;
+  step.usage = {
+    inputTokens: inputTokens.total ?? null,
+    outputTokens: outputTokens.total ?? null,
+    cacheReadTokens: inputTokens.cacheRead ?? null,
+    cacheWriteTokens: inputTokens.cacheWrite ?? null,
+  };
+  for (const part of content) {
+    if (part.type === 'tool-call') {
+      step.toolCalls.push({ id: part.toolCallId, name: part.toolName, input: inputOf(part.input) });
+    } else if (part.type === 'text') {
+      step.text += part.text;
+    }
+  }
+  if (finishReason.unified === 'length') {
+    step.cut = { content, reasoningTokens: outputTokens.reasoning ?? null, rawResponse: response?.body ?? null };
   }
 }
 
@@ -111,21 +136,7 @@ export class Recorder implements RunObserver {
         const started = performance.now();
         try {
           const result = await doGenerate();
-          const { inputTokens, outputTokens } = result.usage;
-          step.finishReason = result.finishReason.unified;
-          step.usage = {
-            inputTokens: inputTokens.total ?? null,
-            outputTokens: outputTokens.total ?? null,
-            cacheReadTokens: inputTokens.cacheRead ?? null,
-            cacheWriteTokens: inputTokens.cacheWrite ?? null,
-          };
-          for (const part of result.content) {
-            if (part.type === 'tool-call') {
-              step.toolCalls.push({ id: part.toolCallId, name: part.toolName, input: inputOf(part.input) });
-            } else if (part.type === 'text') {
-              step.text += part.text;
-            }
-          }
+          record(step, result);
           return result;
         } catch (error) {
           step.error = nameOf(error);
