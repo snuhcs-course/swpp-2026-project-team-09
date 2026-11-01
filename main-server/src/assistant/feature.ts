@@ -11,6 +11,7 @@ import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
 import { type TravelBox } from './free-time/candidate-fit.js';
+import { type RestaurantCard } from './free-time/restaurant-card.js';
 import { type JudgedCandidates } from './free-time/travel-boxes.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
 
@@ -19,11 +20,11 @@ import { type QuestProposal, type SentProposal } from './proposal.js';
 // its own system prompt and its own set of tools. A new capability of the chat joins it as tools and a prompt fragment
 // (ADR 0009), and a Feature of its own only when it has an entry point of its own. `adapter.ts` alone runs them.
 
-// What a card shows: a Quest or a Global Event.
-export type CardKind = 'quest' | 'globalEvent';
+// What a card shows: a Quest, a Global Event or a Restaurant.
+export type CardKind = 'quest' | 'globalEvent' | 'restaurant';
 
-// A card the Assistant showed: what it is and its id. The model is given only these, never the card's data from an
-// earlier message, and calls a tool again when it needs it.
+// A card the Assistant showed: what it is and its id, which for a Restaurant is its key. The model is given only these,
+// never the card's data from an earlier message, and calls a tool again when it needs it.
 export interface CardReference {
   kind: CardKind;
   id: string;
@@ -56,7 +57,7 @@ export interface QuestCard extends TravelBox {
   quest: RecruitingQuestDto;
 }
 
-export type Card = GlobalEventCard | QuestCard;
+export type Card = GlobalEventCard | QuestCard | RestaurantCard;
 
 // What the presenters put in the reply beside its text, gathered over one run.
 export interface Presented {
@@ -76,12 +77,14 @@ export interface Asker {
 
 // What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned, which are
 // all its presenters accept, the last Proposal sent back with the conversation, whose ids proposeQuest also accepts,
-// what the presenters have put in the reply, and the candidates findFreeTimeEvents returned so far.
+// what the presenters have put in the reply, the candidates findFreeTimeEvents returned so far, and the card of each
+// Restaurant findMealRestaurants returned, by its key, in order.
 export interface ToolContext extends Asker {
   readonly found: FoundIds;
   readonly shown: SentProposal | null;
   readonly presented: Presented;
   readonly judged: JudgedCandidates;
+  readonly restaurants: Map<string, RestaurantCard>;
 }
 
 // A feature's reply: the model's last text, and what the presenters put beside it.
