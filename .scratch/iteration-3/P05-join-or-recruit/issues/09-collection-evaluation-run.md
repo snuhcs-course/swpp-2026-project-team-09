@@ -80,7 +80,7 @@ All on the held-out sets of tag `eval-freeze-iter3-collection`, set hash `af9f5e
 | 08a's rules | 00:40:26 | `e588e702` | `--run title-rule --part held-out --from <the Judgement> --budget 1` | building number | 0 | 0 / 0 | 0 |
 | 08b's AI | 00:40:28–00:40:58 | `e588e702` | `--run ai-choice --part held-out --from <the Judgement> --budget 1` | building number | 8 | 31,414 / 2,523 | 0.0044 |
 
-Prompt caching read and wrote nothing. The commit changed between the runs because the Place setting was removed (see above); `e588e702` leaves a Judgement's reading as it was with the setting off, and scoring code did not change, so nothing was scored again. Before them, a smoke run over the development part: 42 calls, USD 0.0255, not committed.
+Prompt caching read and wrote nothing. The commit changed between the runs because the Place setting was removed (see above); `e588e702` leaves a Judgement's reading as it was with the setting off. The code review then changed how a day-alone end is scored (see Decisions, C2's end), so R0 of A and the Judgement were scored again with no model at `d699d204`: every score and verdict is the same, and those files are not kept. Evaluation B's scores do not use it, and the Place setting's run cannot be repeated there. Before them, a smoke run over the development part: 42 calls, USD 0.0255, not committed.
 
 ### Evaluation A
 
@@ -96,7 +96,7 @@ Prompt caching read and wrote nothing. The commit changed between the runs becau
 | C6 over a period | ≥ 0.80 / ≥ 0.95 | 0/85 | 63/85 (74.1%) | 63/85 | floor **FAIL**, target FAIL |
 | C7 application period published | = 0 / = 0 | 0 | 0 | 0 | PASS, PASS |
 
-C4's other fields in the Judgement, precision and recall: end 51/55, 51/76; place 35/35, 35/64; announces an event 44/44, 44/49. Made-up values: start 2/63, end 1/55, place 0/35. C3 with sessions a check stopped is also 0. C6's misses are all sessions with no output: the 63 sessions given were all judged right. Zero of 27 wrong has a one-sided 95% upper bound of about 10.5%. The floors of C4's schema and C6 are missed, so no improvement of them is claimed.
+C4's other fields in the Judgement, precision and recall: end 51/55, 51/76; place 35/35, 35/64; announces an event 44/44, 44/49. Made-up values: start 2/63, end 1/55, place 0/35. C3 with sessions a check stopped is also 0. **C4's place is narrower than the decision:** it counts a value only once `matchedPlace` gave it a Place, since an answer is a Place. So it reads no place the campus check refused, and its precision and made-up rate say nothing of those, as C3's diagnosis does not either. Scoring them would take a new way to match a written place, which was not decided. Of C6's 22 misses, 20 have no output, and 2 were read as running over a period where the answer says not: a-034 (1), from 11-06 to 11-08, and a-039 (1), whose answer has no start. Zero of 27 wrong has a one-sided 95% upper bound of about 10.5%. The floors of C4's schema and C6 are missed, so no improvement of them is claimed.
 
 Failure analysis of the Judgement, 37 of the 64 sessions, with the report's automatic cause checked against the saved answers:
 
@@ -106,9 +106,11 @@ Failure analysis of the Judgement, 37 of the 64 sessions, with the report's auto
 | a-056 (4), a-063 (6) (10) | the model said no event | extraction: both recruit for a counselling programme, which the answers count as an event | none decided |
 | a-044, a-062 (2), a-065 (2) (5) | start, end and place all null, so every check fails; the report's "campus assumption" for three of them is wrong | extraction | none decided |
 | a-005 (4) | `AI_NoObjectGeneratedError`, the one answer of 60 off the schema; the run keeps only the error's name | extraction | none decided |
-| a-058 (6), a-064 (1) (7) | `dateAgrees`, `timeAgrees`: the values equal the answers', and the checks stopped them | check rule, the quoted lines not read by the check. A person should look | none decided |
+| a-058 (6), a-064 (1) (7) | `dateAgrees` and `timeAgrees` for a-058, `timeAgrees` for a-064: the values equal the answers', and the checks stopped them | check rule, the quoted lines not read by the check. A person should look | none decided |
 | a-004 (1) | `dateAgrees`, `length`, `placeMatches` on a period and on an extra session | check rule and campus assumption | none decided |
 | a-029 (2) | `linesInPost` | evidence line | none decided |
+
+Two answers of the 141 calls were off the schema, both `AI_NoObjectGeneratedError`: `snu-177524` (a-005, above) and `extra-PGM012002205` (b-082, a false pair, which then had no reading for that post and was not attached). Neither was asked again. The Judgement's run asked no post of evaluation B twice either.
 
 No prompt, rule, set or answer was changed for these results.
 
@@ -127,7 +129,7 @@ No prompt, rule, set or answer was changed for these results.
 
 D4 by reason in the AI's run: `ai_unsure` 3, `link_not_one_to_one` 2. R0 has no link rule, so it does not count the merge below. These three runs change only the same-event step, but evaluation B reads a Judgement's passed sessions, so C1's misses limit it: see the first row below.
 
-Failure analysis of 08b's AI, 30 of the 120 pairs:
+Failure analysis of 08b's AI, 30 of the 96 held-out pairs:
 
 | Pairs | Failed | Cause | Next run |
 |---|---|---|---|
@@ -136,7 +138,7 @@ Failure analysis of 08b's AI, 30 of the 120 pairs:
 | b-008, 057 (2) | held, `link_not_one_to_one`; the report's automatic causes for these are wrong | many to one: a linked post with another number of sessions | none decided |
 | b-119 (1) | attached wrongly by the link rule | refusing rule: `attachLinked` takes a post linking its online or in-person twin before any refusing rule looks | none decided |
 
-The model's own choice caused no wrong merge. Whether an answer is wrong was not found for any pair, but no answer was re-examined.
+The model's own choice caused no wrong merge. No answer was examined again, so whether any of these is an answer's error is not known.
 
 ### Improvement log
 
@@ -147,15 +149,26 @@ The model's own choice caused no wrong merge. Whether an answer is wrong was not
 | Judgement | 11-02 | `fed4a2e0` | Judgement | C1 | 0/64 | 27/64 | ≥ 0.25 / ≥ 0.60 | floor PASS, target FAIL | |
 | Judgement | 11-02 | `fed4a2e0` | Judgement | C2 | 0/0 | 0/27 | ≤ 1/30 / = 0 | PASS | |
 | Judgement | 11-02 | `fed4a2e0` | Judgement | C4 schema | n/a | 59/60 | = 1 | floor FAIL | a-005 |
-| Judgement | 11-02 | `fed4a2e0` | Judgement | C6 | 0/85 | 63/85 | ≥ 0.80 / ≥ 0.95 | floor FAIL | 22 with no output |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C6 | 0/85 | 63/85 | ≥ 0.80 / ≥ 0.95 | floor FAIL | 20 with no output, 2 wrong |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C3 | 0 | 0 | = 0 | PASS | |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C4 start precision | 0/0 | 59/63 | ≥ 0.90 / ≥ 0.95 | floor PASS, target FAIL | |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C4 start recall | 0/84 | 59/84 | ≥ 0.80 | FAIL | |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C5 | 0 | 0 | = 0 | PASS | |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C7 | 0 | 0 | = 0 | PASS | |
 | Place setting | 11-02 | `fed4a2e0` | name taken as Gwanak on extra.snu | C1 | 27/64 | 32/64 | ≥ 0.25 / ≥ 0.60 | floor PASS, target FAIL | removed |
 | Place setting | 11-02 | `fed4a2e0` | name taken as Gwanak on extra.snu | C2 | 0/27 | 2/34 | ≤ 1/30 / = 0 | floor FAIL | removed |
 | R0 B | 11-02 | `e588e702` | — (equal start, Dice ≥ 0.5) | D1 | — | 0 | = 0 | PASS | no link rule |
 | R0 B | 11-02 | `e588e702` | — (equal start, Dice ≥ 0.5) | D3 | — | 7/32 | ≥ 0.95 | FAIL | |
 | R0 B | 11-02 | `e588e702` | — (equal start, Dice ≥ 0.5) | D6 | — | 2/32 | ≥ 0.50 | FAIL | |
+| R0 B | 11-02 | `e588e702` | — (equal start, Dice ≥ 0.5) | D2 with queue | — | 2/32 | ≥ 0.80 | FAIL | |
+| R0 B | 11-02 | `e588e702` | — (equal start, Dice ≥ 0.5) | D4 | — | 0/26 | ≤ 0.30 | PASS | |
+| 08a | 11-02 | `e588e702` | link and title rules | D2 with queue | 2/32 | 3/32 | ≥ 0.80 | FAIL | |
+| 08a | 11-02 | `e588e702` | link and title rules | D4 | 0/26 | 2/28 | ≤ 0.30 | PASS | |
 | 08a | 11-02 | `e588e702` | link and title rules | D1 | 0 | 1 | = 0 | floor FAIL | b-119 |
 | 08a | 11-02 | `e588e702` | link and title rules | D3 | 7/32 | 8/32 | ≥ 0.95 | FAIL | |
 | 08a | 11-02 | `e588e702` | link and title rules | D6 | 2/32 | 1/32 | ≥ 0.50 | FAIL | |
+| 08b | 11-02 | `e588e702` | the AI's choice | D3 | 8/32 | 8/32 | ≥ 0.95 | FAIL | |
+| 08b | 11-02 | `e588e702` | the AI's choice | D4 | 2/28 | 5/28 | ≤ 0.30 | PASS | |
 | 08b | 11-02 | `e588e702` | the AI's choice | D1 | 1 | 1 | = 0 | floor FAIL | same pair |
 | 08b | 11-02 | `e588e702` | the AI's choice | D2 with queue | 3/32 | 8/32 | ≥ 0.80 | FAIL | direction only |
 | 08b | 11-02 | `e588e702` | the AI's choice | D6 | 1/32 | 3/32 | ≥ 0.50 | FAIL | direction only |
@@ -169,3 +182,9 @@ No value was changed or committed.
 - **`SAME_EVENT_AI_CHOICE`:** stays off. It needs D1 at 0 on the commit being released.
 - **`SAME_EVENT_TITLE_RULE`, `EXTRA_SNU_COLLECTION`:** evaluation B has now measured the title rule, with D1 at 1 from the link rule. Whether to turn them on is left to a person.
 
+### Agent usage (2026-11-02)
+
+Up to the PR, from this ticket's session and its 2 review subagents; review rounds after it are not counted.
+
+- Agent time: about 1 hour 15 minutes (estimate, including waiting on the runs and tests).
+- Tokens: input 14,449,806 + 749,901 + 226 (cache reads 14,449,806, cache writes 749,901, uncached 226), output 228,288.
