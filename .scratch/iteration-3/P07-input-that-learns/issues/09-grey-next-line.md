@@ -44,3 +44,8 @@ Decisions where the spec left room:
 Tests: `next-line.unit`, `next-lines.integration`, `eval-replay-curves.unit` on the server; `chat-next-line.integration` and `answers-next-line.unit` in the app.
 
 **On the real model.** `pnpm eval --yes --budget 1 --category next-lines`, Haiku 5.5, one run: 5 of 5 sentences did what they say, USD 0.015. Five runs of one are not a rate; they show that the sentences work.
+
+### Agent usage (2026-11-01)
+
+- Agent time: about 40 minutes (estimate), one Opus 5.5 session, waiting on no person: the ticket, both halves, the look at the local web build, the benchmark's cases, and the PR bodies of the stack.
+- Tokens (estimate): about 91.5M input, of which about 91.1M cache reads, 412k cache writes and 0.2k uncached, and about 299k output. With cache reads excluded, about 0.7M. The reflector made no call; the benchmark's five cases cost about USD 0.015.
