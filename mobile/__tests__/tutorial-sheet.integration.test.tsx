@@ -23,11 +23,10 @@ import {
   started,
 } from './support/tutorial';
 import { apiClient } from '@/api/client';
-import { TUTORIAL_SHEET_FLAGS } from '@/screens/main/tutorial/tutorial-sheet';
 
 // A 새내기 튜토리얼 quest's sheet on the main screen, against the mocks (MainTutorialSheet, MainTutorialOk and
-// MainTutorialNext): its content, completing a button quest, the 관정 quest's skip and 예약 부탁 (hidden until ticket
-// 07), and 그만하기.
+// MainTutorialNext): its content, completing a button quest, the 관정 quest's buttons, skip and 예약 부탁 (hidden until
+// ticket 07), and 그만하기. The 관정 check itself is `tutorial-kwanjeong-check.integration.test.tsx`'s.
 
 jest.mock('expo-location');
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(() => Promise.resolve({ type: 'opened' })) }));
@@ -141,13 +140,13 @@ describe('completing a button quest', () => {
 });
 
 describe('the 관정 quest', () => {
-  it('offers 나중에 and the skip, and no 완료했어요 before its check', async () => {
+  it('offers 나중에, 완료했어요 and the skip', async () => {
     await openSheet('kwanjeong', KWANJEONG_ROW);
 
     expect(button('나중에')).toBeVisible();
-    expect(findButton('어시스턴트에게 예약 부탁하기')).toBeNull();
+    expect(button('완료했어요')).toBeVisible();
+    expect(button('어시스턴트에게 예약 부탁하기')).toBeVisible();
     expect(button('이미 예약 및 이용해본 적이 있어요')).toBeVisible();
-    expect(findButton('완료했어요')).toBeNull();
     expect(button('중앙도서관 관정관 지도에서 보기')).toBeVisible();
   });
 
@@ -162,8 +161,7 @@ describe('the 관정 quest', () => {
     expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 4/5')).toBeVisible();
   });
 
-  it('asks the Assistant for a seat once ticket 07 turns it on: the sheet closes and the chat opens with the words sent', async () => {
-    jest.replaceProperty(TUTORIAL_SHEET_FLAGS, 'askAssistantToBook', true);
+  it('asks the Assistant for a seat: the sheet closes and the chat opens with the words sent', async () => {
     const user = await openSheet('kwanjeong', KWANJEONG_ROW);
 
     await user.press(button('어시스턴트에게 예약 부탁하기'));
