@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "14103001",
+    "NAME": "G404",
+    "COMMENT": "제12대 평의원회의장 박종근님이 기증해주신 그룹스터디룸입니다.",
+    "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_14103001.png",
+    "MONITOR_YN": "",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "14103001"
+  }
+}
