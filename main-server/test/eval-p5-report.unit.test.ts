@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { p5Report, type Suite } from '../eval/p5/report.ts';
@@ -109,6 +110,19 @@ describe('A threshold', () => {
     const { metrics } = report([{ id: 's1', seeds: ['가'], shown: showing(['가']) }]);
 
     expect(metrics.find(({ metric }) => metric === 'E4')).toMatchObject({ n: 0, verdicts: [{ passed: null }] });
+  });
+
+  it('is judged by its revision, the original staying in the file', () => {
+    const score = scoreRun({ name: 'run', seeds: SEEDS, options: { world: 'p5' }, cases: [] });
+    const { metrics } = p5Report(score, {
+      ...SUITE,
+      thresholds: [
+        { id: 'g1.floor', metric: 'G1', kind: 'floor', comparator: '<=', value: 2 },
+        { id: 'g1.floor.r1', revises: 'g1.floor', metric: 'G1', kind: 'floor', comparator: '<=', value: 1 },
+      ],
+    });
+
+    expect(metrics.find(({ metric }) => metric === 'G1')?.verdicts).toMatchObject([{ id: 'g1.floor.r1' }]);
   });
 });
 

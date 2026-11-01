@@ -12,4 +12,4 @@
 - [ ] The instructions say that a question naming neither 행사 nor 파티 ("뮤지컬 있어?") searches both Global Events and Quests, and that a question about an event's Quests ("그 행사 파티 있어?", "사진전 가는 파티 있어?") also takes Quests with no Global Event for the same activity within the event's span. The cases `search-l-02`, `search-l-06`, `search-t1-07`, `search-o-05` and `join-17` measure it.
 - [ ] The Quest search takes a Place and a radius (300 m, as the rules of the P05 suite read "about 300 m"), measured between positions: a Place's, a point's, or a Global Event's for a Quest attending one. A Quest with words only is left out when a Place is given.
 - [ ] Integration tests with the scripted model cover ranking, the limits and the radius; the large world's server recall test passes for the cases this ticket enables.
-- [ ] R2 is run (this change alone) in both worlds and recorded beside R1.
+- [ ] R2 is run (this change alone) in both worlds, with P19 three times on the same commit for G1, and recorded beside R1.
