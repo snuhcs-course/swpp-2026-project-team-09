@@ -28,6 +28,7 @@
 - The reason for "none" of the event search no longer names the words, since they filter nothing.
 - All 41 `until: 11` marks held on the real server, as the simulation said, so none differs from it. They are now null: 72 hold, and the 8 marked `search stage 1` still miss a card.
 - `resolvePlace`'s description also says it serves a search near a Place, since `placeId` must come from it.
+- The instructions' examples are "오페라 있어?" and "그 전시 같이 갈 사람 있어?", not the ticket's and the spec's "뮤지컬 있어?", "그 행사 파티 있어?" and "사진전 가는 파티 있어?" (P05 owner, 2026-11-02, from PR review). Those three are questions of the frozen cases that measure the rule, and a case the model has seen word for word measures less. The rule is the same and the C0 set does not change, so R1 still compares with R0a. The tool description's typo example, 영하제 to 영화제, is in no case for the same reason; its related words are the spec's own example for 공연.
 - The instruction not to repeat a step is in; this ticket stops at the instruction. Whether it worked is read from a sample of R1's joined replies in ticket 12a, since no metric sees it.
 
 ### Agent usage (2026-11-02)

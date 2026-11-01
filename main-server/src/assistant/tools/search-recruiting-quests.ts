@@ -45,7 +45,7 @@ const input = z
       .min(1)
       .optional()
       .describe('Only the 파티 of exactly this many people in total, the User included. Leave it out for any size.'),
-    words: wordsInput('파티', '민턴, 배드민턴 for 민턴'),
+    words: wordsInput('파티'),
     placeId: z
       .uuid()
       .optional()

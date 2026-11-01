@@ -22,7 +22,7 @@ const input = z
       .min(1)
       .optional()
       .describe('Only the events whose place holds these words, such as 301동. Leave it out for any place.'),
-    words: wordsInput('events', '공연, 콘서트, 음악회, 연주회, 뮤지컬 for 공연'),
+    words: wordsInput('events'),
   })
   .refine(daysTogether, { message: 'Give both from and to, or neither', path: ['to'] })
   .refine(hasWindow, { message: 'Give from and to, or after or before', path: ['from'] })

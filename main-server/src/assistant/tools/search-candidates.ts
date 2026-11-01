@@ -16,12 +16,12 @@ export const DESCRIPTION_MAX = 150;
 // costs the query two ILIKEs, while a call over the limit is refused and costs the model a step.
 const WORDS_MAX = 10;
 
-export function wordsInput(candidates: string, example: string): z.ZodOptional<z.ZodArray<z.ZodString>> {
+export function wordsInput(candidates: string): z.ZodOptional<z.ZodArray<z.ZodString>> {
   return z
     .array(z.string().trim().min(1))
     .max(WORDS_MAX)
     .optional()
     .describe(
-      `Words of what the User asked for, which rank the ${candidates}: those whose title or description holds more of them come first, and those holding none still fill the places left. Give the User's word and related words, such as ${example}, and correct a typo in the User's question, as 콘서드 to 콘서트.`,
+      `Words of what the User asked for, which rank the ${candidates}: those whose title or description holds more of them come first, and those holding none still fill the places left. Give the User's word and related words, such as 콘서트, 음악회, 연주회 and 뮤지컬 for 공연, and correct a typo in the User's question, as 영하제 to 영화제.`,
     );
 }

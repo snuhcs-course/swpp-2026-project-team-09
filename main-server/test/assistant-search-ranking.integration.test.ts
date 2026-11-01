@@ -12,7 +12,7 @@ import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { refuseMatchServer } from './match-server.js';
-import { connectToDatabase, ownQuest, storeEvent } from './quests.js';
+import { connectToDatabase, joinQuest, ownQuest, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -124,6 +124,21 @@ describe('searchRecruitingQuests, reading a word', () => {
 });
 
 describe('searchRecruitingQuests, counting and cutting', () => {
+  it('counts a word once when both the title and the description hold it', async () => {
+    const sooner = await questAt('2092-01-14T09:00:00', { title: '콘서트' });
+    const later = await questAt('2092-01-14T10:00:00', { title: '콘서트', description: '콘서트 보러 가요' });
+
+    expect(await questsFound({ from: '2092-01-14', to: '2092-01-14', words: ['콘서트'] })).toEqual([sooner, later]);
+  });
+
+  it('does not order by Holders', async () => {
+    const sooner = await questAt('2092-01-15T09:00:00', { capacity: 4 });
+    const fuller = await questAt('2092-01-15T10:00:00', { capacity: 4 });
+    await joinQuest(app, await signInUser(app), fuller).expect(201);
+
+    expect(await questsFound({ from: '2092-01-15', to: '2092-01-15' })).toEqual([sooner, fuller]);
+  });
+
   it('counts a word given twice once', async () => {
     const other = await questAt('2092-01-11T09:00:00', { title: '버스킹' });
     const held = await questAt('2092-01-11T10:00:00', { title: 'Concert' });
@@ -148,6 +163,9 @@ describe('searchRecruitingQuests, counting and cutting', () => {
     expect(more).toBe(true);
   });
 
+});
+
+describe('searchRecruitingQuests, given too many words', () => {
   it('takes ten words and refuses more, back to the model', async () => {
     const quest = await questAt('2092-01-13T09:00:00');
     const words = Array.from({ length: 10 }, (_, index) => `말${index}`);
