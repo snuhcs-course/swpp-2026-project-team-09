@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type Action, type Expect, expectSchema, type Mention } from './expect.ts';
@@ -67,9 +68,20 @@ function compact(text: string): string {
   return text.replaceAll(/\s/gu, '');
 }
 
+// A word that starts with a digit counts only where no digit comes before it: 2시 is not in 12시.
+function holdsWord(text: string, word: string): boolean {
+  if (!/^\d/u.test(word)) {
+    return text.includes(word);
+  }
+  return text
+    .split(word)
+    .slice(0, -1)
+    .some((before) => !/\d$/u.test(before));
+}
+
 function mentionedIn(text: string, mention: Mention): boolean {
   const words = typeof mention === 'string' ? [mention] : mention;
-  return words.some((word) => compact(text).includes(compact(word)));
+  return words.some((word) => holdsWord(compact(text), compact(word)));
 }
 
 function missingMentions(text: string, expect: Expect): Mention[] {

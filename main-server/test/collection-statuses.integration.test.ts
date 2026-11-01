@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -30,7 +32,7 @@ afterAll(async () => {
   await drop();
 });
 
-const neverCollected = { lastSucceededAt: null, lastFailedAt: null, lastFailureReason: null };
+const neverCollected = { lastSucceededAt: null, lastFailedAt: null, lastFailureReason: null, lastSkippedPosts: null };
 
 describe("An Administrator's list of Collection statuses", () => {
   it('answers every Source in the order of the Sources, with nothing for one never collected', async () => {
@@ -58,9 +60,11 @@ describe("An Administrator's list of Collection statuses", () => {
         lastSucceededAt: '2026-10-05T22:00:00.000Z',
         lastFailedAt: '2026-10-04T22:00:00.000Z',
         lastFailureReason: 'The route page answered 503.',
+        lastSkippedPosts: null,
       },
       { source: 'shuttle_vehicles', ...neverCollected },
       { source: 'snu_events', ...neverCollected },
+      { source: 'extra_snu', ...neverCollected },
     ]);
   });
 });

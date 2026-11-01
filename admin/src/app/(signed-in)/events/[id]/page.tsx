@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import Link from 'next/link';
@@ -50,7 +51,7 @@ function Source({ event }: { event: GlobalEvent }): ReactElement {
           >
             Open the post on the events list
           </a>
-          {event.postNumber !== null && <p className="text-zinc-600">Post number {event.postNumber}</p>}
+          {event.postKey !== null && <p className="text-zinc-600">Post {event.postKey}</p>}
         </div>
       )}
       <h3 className="text-sm font-medium text-zinc-500">Text as stored</h3>

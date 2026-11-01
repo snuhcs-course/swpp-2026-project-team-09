@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { caseSchema } from '../eval/cases.ts';
@@ -202,6 +203,16 @@ describe('The map buttons and the text', () => {
       'text.mentions',
     ]);
   });
+
+  it('do not match a word that starts with a digit inside a longer number', () => {
+    const trace = turn({ text: '12시 15분까지 18개 있어요.' });
+
+    expect(failedChecks(trace, { actions: ['ASK'], text: { mentions: ['2시', '8개'] } })).toEqual([
+      'action',
+      'text.mentions',
+    ]);
+    expect(failedChecks(trace, { actions: ['ASK'], text: { mentions: ['12시', '15분', '18개'] } })).toEqual([]);
+  });
 });
 
 describe('The words the text must not hold', () => {
@@ -209,6 +220,15 @@ describe('The words the text must not hold', () => {
 
   it('fail when one is there, spaces aside', () => {
     expect(failedChecks(trace, { actions: ['TOOL'], text: { absent: ['김지은'] } })).toEqual(['text.absent']);
+  });
+
+  it('pass on a word that starts with a digit inside a longer number', () => {
+    expect(
+      failedChecks(turn({ steps: [[menusFound]], text: '116동이에요.' }), {
+        actions: ['TOOL'],
+        text: { absent: ['16동'] },
+      }),
+    ).toEqual([]);
   });
 
   it('pass when none is, with no mentions asked', () => {

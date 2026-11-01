@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { boardOf, clockOf, dayOf, isRecord, momentOf, windowOf, wordsOf } from './readers.ts';
@@ -106,10 +107,13 @@ const TOOLS: Record<string, ToolRule> = {
   getMyDay: { role: 'lookup', fields: { date: day } },
   findFreeTimeEvents: {
     role: 'lookup',
-    fields: { date: day, from: ITEM, to: ITEM, board: BOARD, departurePlace: ID, leaveBy: CLOCK },
+    fields: { date: day, from: ITEM, to: ITEM, board: BOARD, departurePlace: ID, departureTime: CLOCK, leaveBy: CLOCK },
   },
   findFreeFriends: { role: 'lookup', fields: mealFields },
-  findMealRestaurants: { role: 'lookup', fields: { ...mealFields, departurePlace: ID, leaveBy: CLOCK } },
+  findMealRestaurants: {
+    role: 'lookup',
+    fields: { ...mealFields, departurePlace: ID, departureTime: CLOCK, leaveBy: CLOCK },
+  },
   showRestaurants: { role: 'presenter', fields: { keys: { read: 'ids' } } },
 };
 

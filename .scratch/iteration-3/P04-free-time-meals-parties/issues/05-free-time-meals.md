@@ -44,12 +44,12 @@ The app changes only in JavaScript. An item marked **Person** is a person's work
   - when the shared time has several intervals, the earliest one in which the Restaurant fits is used, and a window the model passes limits the search.
 - [ ] **Items without a Place.**
   - A Sub Quest with a point or a label goes through ticket 04's mapping first, the User's and a Friend's alike. Only one it cannot map is without a Place (ticket 03, PM decisions).
-  - My item next to the free interval: the tool returns `needs` as in ticket 04, and accepts a departure Place or a leave-by time. Nothing is stored.
+  - My item next to the free interval: the tool returns `needs` as in ticket 04, and accepts a departure Place, a departure time or a leave-by time. Nothing is stored.
   - A Friend's item: that side's travel is left out and the Friend is judged on time only. Their Travel Time shows as below, and "—" only when the time to show is unknown (ticket 03, PM decisions).
 - [ ] **Travel shown per person:** the in-time; with no previous item, the out-time; with neither, "—".
 - [ ] **Order:** by the longest Travel Time shown, shortest first; then by the sum of the shown times; then by name. A "—" counts in neither and is never highlighted. At most 20 cards.
 - [ ] **Menu conditions** ("면 빼고", "국밥 먹고 싶어") are read by the model from the menu lines it receives. There is no condition code, keyword list or word-specific prompt hint. "X 빼고" keeps Restaurants with at least one dish of that meal that is not X, and "X 먹고 싶어" keeps those with an X dish.
-- [ ] **`findMealRestaurants`** takes a date, a meal and Friend ids, and optionally a window, a departure Place and a leave-by time.
+- [ ] **`findMealRestaurants`** takes a date, a meal and Friend ids, and optionally a window, a departure Place, a departure time and a leave-by time.
   - It returns the shared time, `collectedAt` and the fitting Restaurants in order.
   - Each comes with its key, name and Place, its non-note menu lines (wrapped as others' text), 식사 가능 시간, the start, and each person's Travel Time and mode.
   - When no menu was collected for that day, it says so. When the shared time is empty, it says so and does not say who is busy. It can also return `needs`.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
@@ -22,16 +23,27 @@ import {
   type ListedState,
   listedStateSchema,
 } from './dto/global-event.dto.js';
+import { type UnsettledPostDto } from './dto/unsettled-post.dto.js';
 import { GlobalEventsService } from './global-events.service.js';
+import { PublicationStepService } from './publication-step.service.js';
 
 @AdministratorOnly()
 @Controller('admin/global-events')
 export class AdminGlobalEventsController {
-  constructor(private readonly globalEvents: GlobalEventsService) {}
+  constructor(
+    private readonly globalEvents: GlobalEventsService,
+    private readonly publicationStep: PublicationStepService,
+  ) {}
 
   @Get()
   list(@Query('state', { schema: listedStateSchema }) state: ListedState): Promise<ListedGlobalEventDto[]> {
     return this.globalEvents.listForAdministrators(state);
+  }
+
+  // The posts the step failed on or has not finished with, and those whose Judgement could not be made.
+  @Get('unsettled-posts')
+  unsettledPosts(): Promise<UnsettledPostDto[]> {
+    return this.publicationStep.unsettledPosts();
   }
 
   // By hand, from an organizer's submission.

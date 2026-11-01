@@ -797,7 +797,8 @@ muted, any other line as written; a restaurant without lines for the meal says "
 **The sources of the map's data** (`src/screens/map-sources-screen.tsx`, `/map-sources`), opened from the map's
 credit, slide in from the right: "뒤로" and "지도 데이터 출처", a card for OpenStreetMap (ODbL, with its copyright
 page) and one for 국토지리정보원's 연속수치지형도 건물 under 공공누리 type 1 (with the VWorld page it is downloaded
-from). Each link opens the browser. The year in the second card is that of the files' renewal on the VWorld page.
+from), and one for SRTM, in the public domain. Each link opens the browser. The year in the second card is that of the
+files' renewal on the VWorld page.
 
 **A Quest's room** (`src/screens/room/`, the frame's `PartyDetail`, `/room/<questId>`) is the room of every Quest the
 User holds but a Class Quest: its `파티장` is the Quest's Leader, its `멤버` the Holders and its `일정` the Sub Quests.

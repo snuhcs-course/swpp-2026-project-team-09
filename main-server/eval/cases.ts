@@ -12,8 +12,8 @@ import { z } from 'zod';
 import { expectSchema } from './expect.ts';
 
 // The cases (spec P19, "Cases"): YAML files under eval/cases/, eval/p4/cases/ and eval/p5/cases/, one per category,
-// each a list of cases. A case is a conversation and what the Assistant should do in it. This file reads them; what `expect` holds is
-// the scorer's (eval/expect.ts).
+// each a list of cases. A case is a conversation and what the Assistant should do in it. This file reads them; what
+// `expect` holds is the scorer's (eval/expect.ts).
 //
 // Three kinds of case, by their turns:
 // - single turn: one User's message;

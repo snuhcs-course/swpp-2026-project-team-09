@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # 공통: asking back, refusals, no Timetable, off-campus items, and both sides of each tool-choice rule for meals and
@@ -16,7 +17,7 @@
   expect:
     actions: [ASK]
     tools:
-      forbidden: ['*']
+      forbidden: '*'
     mapButtons: []
     text:
       mentions: [[언제, 날짜, 어느 날, 며칠, 요일, 점심, 저녁]]
@@ -30,7 +31,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      forbidden: ['*']
+      forbidden: '*'
     mapButtons: []
     text:
       absent: [미시경제이론, 거시경제이론, 사회과학관, 16동]
@@ -54,7 +55,7 @@
       - { kind: globalEvent, seeds: [], max: 0 }
     mapButtons: []
     text:
-      mentions: [[몇 시, 시간, 언제]]
+      mentions: [[몇 시, 수업 시간, 시간표, 언제]]
     results:
       getMyDay:
         args: { date: '2026-11-02' }

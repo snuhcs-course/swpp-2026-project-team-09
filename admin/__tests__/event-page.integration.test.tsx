@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react';
@@ -23,7 +24,7 @@ describe('the event’s page', () => {
     const link = within(source).getByRole('link', { name: 'Open the post on the events list' });
     expect(link).toHaveAttribute('href', 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525');
     expect(link).toHaveAttribute('target', '_blank');
-    expect(within(source).getByText('Post number 176525')).toBeVisible();
+    expect(within(source).getByText('Post 176525')).toBeVisible();
     expect(within(source).getByText(/일시: 2026\. 10\. 12\.\(월\) 18:30\s+장소:/u)).toBeVisible();
   });
 
