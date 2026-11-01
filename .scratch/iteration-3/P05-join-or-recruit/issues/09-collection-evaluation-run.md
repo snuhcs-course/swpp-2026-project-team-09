@@ -6,14 +6,14 @@
 
 **Status:** ready-for-agent
 
-- [ ] R0 of each evaluation (the rules alone for A; equal starts and title similarity for B) is run over the held-out sets and recorded.
-- [ ] Then each change is run on its own, one change per run: the Judgement (A), the rules of 08a (B), the AI's choice of 08b (B).
-- [ ] Before the Judgement's run, how many extra.snu places name a Place only by name is measured without a model, and the number is written in this ticket: `matchedPlace` over the place fields of saved extra.snu pages outside `set-a.yaml`, such as those of ticket 04 in `worker-server/test/pages`. No held-out post or label is read for it.
-- [ ] Unless that shows almost none, a Source setting takes a place named only by a Place's name as Gwanak, on for extra.snu, beside `buildingNumberIsGwanak` in `post-sources.ts`, and the spec's place check says so. It is one more change with its own run of evaluation A, and it stays only if C2 and C3 stay within their floors; otherwise it is removed and this ticket says why.
-- [ ] Each run is on a clean commit and records the exact command, the commit, the date and time, the model slug, the checks turned on, the campus setting, the cost, the scores and each threshold's pass or fail.
+- [x] R0 of each evaluation (the rules alone for A; equal starts and title similarity for B) is run over the held-out sets and recorded.
+- [x] Then each change is run on its own, one change per run: the Judgement (A), the rules of 08a (B), the AI's choice of 08b (B).
+- [x] Before the Judgement's run, how many extra.snu places name a Place only by name is measured without a model, and the number is written in this ticket: `matchedPlace` over the place fields of saved extra.snu pages outside `set-a.yaml`, such as those of ticket 04 in `worker-server/test/pages`. No held-out post or label is read for it.
+- [x] Unless that shows almost none, a Source setting takes a place named only by a Place's name as Gwanak, on for extra.snu, beside `buildingNumberIsGwanak` in `post-sources.ts`, and the spec's place check says so. It is one more change with its own run of evaluation A, and it stays only if C2 and C3 stay within their floors; otherwise it is removed and this ticket says why.
+- [x] Each run is on a clean commit and records the exact command, the commit, the date and time, the model slug, the checks turned on, the campus setting, the cost, the scores and each threshold's pass or fail.
 - [ ] A missed floor of C2, C3 or D1 turns automatic publication off in Production, and the record says so.
 - [ ] `AUTOMATIC_JUDGEMENT` is turned on in Production only after evaluation A's floors are met and the posts may be sent to the model provider, and the record says so.
-- [ ] A failure analysis table is written for the failed posts and pairs, and the scores go into the improvement log table.
+- [x] A failure analysis table is written for the failed posts and pairs, and the scores go into the improvement log table.
 
 ## Comments
 
@@ -66,3 +66,106 @@ Neither wrong session has a wrong place: places were 42/42 right. The setting le
 The set and its answers are not changed. Whether an answer is wrong here is for a person to check.
 
 With the setting off, a Judgement's reading is the same as at `fed4a2e0`, so R0 of A and the Judgement's run stand, and evaluation B's three runs read with it off.
+
+### Runs (2026-11-02, KST)
+
+All on the held-out sets of tag `eval-freeze-iter3-collection`, set hash `af9f5ed5…`, thresholds blob `ee1b5bc9`, with the model asked as `anthropic/claude-haiku-5.5` (canonical `anthropic/claude-haiku-5.5-20261007`, which answered under the name asked), 60 s and 4,000 output tokens, one call per post, no retry. The agent ran them from `main-server`, each approved by Jaehyun0320. Each run's full record, with its checks and campus setting, is `main-server/eval/results/collection-held-out-<run>-<commit>.md`, beside its JSON.
+
+| Run | Time | Commit | Command after `pnpm eval:collection` | Campus setting | Calls | Tokens in / out | USD |
+|---|---|---|---|---|---|---|---|
+| R0 of A | 00:20:03 | `fed4a2e0` | `--run r0a --part held-out` | building number | 0 | 0 / 0 | 0 |
+| Judgement | 00:21:25–00:31:59 | `fed4a2e0` | `--run judgement --part held-out --budget 1` | building number | 141 | 279,979 / 114,474 | 0.0852 |
+| Place setting | 00:37:46 | `fed4a2e0` | `--run place-name --part held-out --from eval/results/collection-held-out-judgement-fed4a2e0.json` | building number, name on extra.snu | 0 | 0 / 0 | 0 |
+| R0 of B | 00:40:24 | `e588e702` | `--run r0b --part held-out --from <the Judgement> --budget 1` | building number | 0 | 0 / 0 | 0 |
+| 08a's rules | 00:40:26 | `e588e702` | `--run title-rule --part held-out --from <the Judgement> --budget 1` | building number | 0 | 0 / 0 | 0 |
+| 08b's AI | 00:40:28–00:40:58 | `e588e702` | `--run ai-choice --part held-out --from <the Judgement> --budget 1` | building number | 8 | 31,414 / 2,523 | 0.0044 |
+
+Prompt caching read and wrote nothing. The commit changed between the runs because the Place setting was removed (see above); `e588e702` leaves a Judgement's reading as it was with the setting off, and scoring code did not change, so nothing was scored again. Before them, a smoke run over the development part: 42 calls, USD 0.0255, not committed.
+
+### Evaluation A
+
+| Metric | Floor / target | R0 | Judgement | Place setting (removed) | Judgement's verdict |
+|---|---|---|---|---|---|
+| C1 published with no person | ≥ 0.25 / ≥ 0.60 | 0/64 | 27/64 (42.2%) | 32/64 | floor PASS, target FAIL |
+| C2 wrongly published | ≤ 1/30 / = 0 | 0/0 | 0/27 | 2/34 | PASS, PASS |
+| C3 wrong Place, published | = 0 / = 0 | 0 | 0 | 0 | PASS, PASS |
+| C4 schema | = 1 / — | n/a | 59/60 | 59/60 | floor **FAIL** |
+| C4 start precision | ≥ 0.90 / ≥ 0.95 | 0/0 | 59/63 (93.7%) | 59/63 | floor PASS, target FAIL |
+| C4 start recall | — / ≥ 0.80 | 0/84 | 59/84 (70.2%) | 59/84 | target FAIL |
+| C5 not an event, published | = 0 / = 0 | 0 | 0 | 0 | PASS, PASS |
+| C6 over a period | ≥ 0.80 / ≥ 0.95 | 0/85 | 63/85 (74.1%) | 63/85 | floor **FAIL**, target FAIL |
+| C7 application period published | = 0 / = 0 | 0 | 0 | 0 | PASS, PASS |
+
+C4's other fields in the Judgement, precision and recall: end 51/55, 51/76; place 35/35, 35/64; announces an event 44/44, 44/49. Made-up values: start 2/63, end 1/55, place 0/35. C3 with sessions a check stopped is also 0. C6's misses are all sessions with no output: the 63 sessions given were all judged right. Zero of 27 wrong has a one-sided 95% upper bound of about 10.5%. The floors of C4's schema and C6 are missed, so no improvement of them is claimed.
+
+Failure analysis of the Judgement, 37 of the 64 sessions, with the report's automatic cause checked against the saved answers:
+
+| Sessions | Failed | Cause | Next run |
+|---|---|---|---|
+| a-001, a-015 (1, 2), a-017, a-049, a-053, a-070, a-073, a-074 (9) | `placeMatches` alone | campus assumption: a place with no 서울대 or lone building number | none: the setting that would have let 7 of them through is removed |
+| a-056 (4), a-063 (6) (10) | the model said no event | extraction: both recruit for a counselling programme, which the answers count as an event | none decided |
+| a-044, a-062 (2), a-065 (2) (5) | start, end and place all null, so every check fails; the report's "campus assumption" for three of them is wrong | extraction | none decided |
+| a-005 (4) | `AI_NoObjectGeneratedError`, the one answer of 60 off the schema; the run keeps only the error's name | extraction | none decided |
+| a-058 (6), a-064 (1) (7) | `dateAgrees`, `timeAgrees`: the values equal the answers', and the checks stopped them | check rule, the quoted lines not read by the check. A person should look | none decided |
+| a-004 (1) | `dateAgrees`, `length`, `placeMatches` on a period and on an extra session | check rule and campus assumption | none decided |
+| a-029 (2) | `linesInPost` | evidence line | none decided |
+
+No prompt, rule, set or answer was changed for these results.
+
+### Evaluation B
+
+| Metric | Target | R0 | 08a's rules | 08b's AI | Last verdict |
+|---|---|---|---|---|---|
+| D1 wrong automatic merges | floor = 0, target = 0 | 0 | 1 | 1 | floor **FAIL** |
+| D2 TP / FP / FN | — | 2 / 0 / 30 | 1 / 1 / 31 | 3 / 1 / 29 | — |
+| D2 precision / recall / F1 | — | 1.000 / 0.063 / 0.118 | 0.500 / 0.031 / 0.059 | 0.750 / 0.094 / 0.167 | — |
+| D2 recall with the queue | ≥ 0.80 | 2/32 | 3/32 | 8/32 | FAIL |
+| D3 candidates reached | ≥ 0.95 | 7/32 | 8/32 | 8/32 | FAIL |
+| D4 queue share | ≤ 0.30 | 0/26 | 2/28 | 5/28 | PASS |
+| D5 many-to-one groups | diagnostic | 0/5 | 0/5 | 0/5 | — |
+| D6 attached with no person | ≥ 0.50 | 2/32 | 1/32 | 3/32 | FAIL |
+
+D4 by reason in the AI's run: `ai_unsure` 3, `link_not_one_to_one` 2. R0 has no link rule, so it does not count the merge below. These three runs change only the same-event step, but evaluation B reads a Judgement's passed sessions, so C1's misses limit it: see the first row below.
+
+Failure analysis of 08b's AI, 30 of the 120 pairs:
+
+| Pairs | Failed | Cause | Next run |
+|---|---|---|---|
+| b-002, 003, 004, 013, 017, 029, 035, 040, 048, 067, 075, 081, 089, 090, 093, 094, 096, 098, 100, 105, 108, 109, 110, 113 (24) | no candidate: 21 with no passed session on either side, 3 with none on the stored side. No side had a passed session too far away | candidates missed, because of the Judgement's checks and mostly `placeMatches`, not the one-day window. In 18, the values given before the checks fall within a day | none decided |
+| b-038, 047, 092 (3) | held, `ai_unsure` | many to one | none decided |
+| b-008, 057 (2) | held, `link_not_one_to_one`; the report's automatic causes for these are wrong | many to one: a linked post with another number of sessions | none decided |
+| b-119 (1) | attached wrongly by the link rule | refusing rule: `attachLinked` takes a post linking its online or in-person twin before any refusing rule looks | none decided |
+
+The model's own choice caused no wrong merge. Whether an answer is wrong was not found for any pair, but no answer was re-examined.
+
+### Improvement log
+
+| run | date | commit | what changed | metric | before | now (k/n) | threshold | PASS/FAIL | note |
+|---|---|---|---|---|---|---|---|---|---|
+| R0 A | 11-02 | `fed4a2e0` | — (rules) | C1 | — | 0/64 | ≥ 0.25 / ≥ 0.60 | floor FAIL, target FAIL | as the set is made |
+| R0 A | 11-02 | `fed4a2e0` | — (rules) | C2 | — | 0/0 | ≤ 1/30 / = 0 | n/a | nothing published |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C1 | 0/64 | 27/64 | ≥ 0.25 / ≥ 0.60 | floor PASS, target FAIL | |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C2 | 0/0 | 0/27 | ≤ 1/30 / = 0 | PASS | |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C4 schema | n/a | 59/60 | = 1 | floor FAIL | a-005 |
+| Judgement | 11-02 | `fed4a2e0` | Judgement | C6 | 0/85 | 63/85 | ≥ 0.80 / ≥ 0.95 | floor FAIL | 22 with no output |
+| Place setting | 11-02 | `fed4a2e0` | name taken as Gwanak on extra.snu | C1 | 27/64 | 32/64 | ≥ 0.25 / ≥ 0.60 | floor PASS, target FAIL | removed |
+| Place setting | 11-02 | `fed4a2e0` | name taken as Gwanak on extra.snu | C2 | 0/27 | 2/34 | ≤ 1/30 / = 0 | floor FAIL | removed |
+| R0 B | 11-02 | `e588e702` | — (equal start, Dice ≥ 0.5) | D1 | — | 0 | = 0 | PASS | no link rule |
+| R0 B | 11-02 | `e588e702` | — (equal start, Dice ≥ 0.5) | D3 | — | 7/32 | ≥ 0.95 | FAIL | |
+| R0 B | 11-02 | `e588e702` | — (equal start, Dice ≥ 0.5) | D6 | — | 2/32 | ≥ 0.50 | FAIL | |
+| 08a | 11-02 | `e588e702` | link and title rules | D1 | 0 | 1 | = 0 | floor FAIL | b-119 |
+| 08a | 11-02 | `e588e702` | link and title rules | D3 | 7/32 | 8/32 | ≥ 0.95 | FAIL | |
+| 08a | 11-02 | `e588e702` | link and title rules | D6 | 2/32 | 1/32 | ≥ 0.50 | FAIL | |
+| 08b | 11-02 | `e588e702` | the AI's choice | D1 | 1 | 1 | = 0 | floor FAIL | same pair |
+| 08b | 11-02 | `e588e702` | the AI's choice | D2 with queue | 3/32 | 8/32 | ≥ 0.80 | FAIL | direction only |
+| 08b | 11-02 | `e588e702` | the AI's choice | D6 | 1/32 | 3/32 | ≥ 0.50 | FAIL | direction only |
+
+### Production settings: for a person to decide
+
+No value was changed or committed.
+
+- **`AUTOMATIC_PUBLICATION`:** D1's floor is missed, and the metrics document (4.1) and this ticket then turn it off in Production. It is `on` in `kustomization.yaml`. The merge comes from the link rule, which works with `SAME_EVENT_TITLE_RULE` off; it needs a post that links its twin, and b-119's two posts are both from extra.snu, whose Collections are off. Not yet done, and not yet decided.
+- **`AUTOMATIC_JUDGEMENT`:** stays off. Evaluation A's floors of C4's schema and C6 are not met.
+- **`SAME_EVENT_AI_CHOICE`:** stays off. It needs D1 at 0 on the commit being released.
+- **`SAME_EVENT_TITLE_RULE`, `EXTRA_SNU_COLLECTION`:** evaluation B has now measured the title rule, with D1 at 1 from the link rule. Whether to turn them on is left to a person.
+
