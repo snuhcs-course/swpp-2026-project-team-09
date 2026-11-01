@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,6 +13,7 @@ import { forgetMockSwitch } from '@/api/mock/client';
 import { resetMockFriendships } from '@/api/mock/friendships';
 import { resetMockTimetable } from '@/api/mock/timetable';
 import { forgetMockMatching } from '@/api/mock/events';
+import { resetMockTutorial } from '@/api/mock/tutorial';
 
 const SETTINGS = [
   'EXPO_PUBLIC_SIGN_IN_ENDING',
@@ -35,6 +37,7 @@ export async function startFresh(): Promise<void> {
   await AsyncStorage.clear();
   forgetMockSwitch();
   forgetMockMatching();
+  resetMockTutorial();
 }
 
 // Lets a mock's wait pass and gives its answer. Use with Jest's fake timers.

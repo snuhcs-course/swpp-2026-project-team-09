@@ -30,6 +30,7 @@ import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { mockRoom } from './room';
+import { mockTutorial } from './tutorial';
 import { mockWalkingRoute } from './walking-route';
 
 // The Master Switch, which the main server keeps on the User. The mock keeps it in memory: off at each start.
@@ -198,4 +199,5 @@ export const mockClient: ApiClient = {
   ...mockRoom,
   ...mockParty,
   ...mockEvents,
+  ...mockTutorial,
 };
