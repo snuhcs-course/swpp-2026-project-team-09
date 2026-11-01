@@ -54,6 +54,8 @@ R0a ran on `60fc2da` for USD 3.25. The record is `main-server/eval/p5/r0a.md`, w
 
 **Proposal to the P05 owner: a new ticket, not accepting them.** 22 of 240 large-world runs are cut and 9 get no answer. The ticket keeps reasoning from using up the output limit, by a higher `maxOutputTokens` or a reasoning setting, whichever works on this model through OpenRouter, one per run. It measures the large world's `length` steps and no-text 503s, and comes after R2, whose trace counts them again first, since R1 and R2 change what the model reads. This ticket makes no fix.
 
+**Decided by the P05 owner (2026-11-01).** The cut runs are not accepted. The fix is ticket 12a, inside a bundle with tickets 10, 11 and 12 that shares one full run, R1, in place of R1, R2 and R3. So the fix does not wait for R2's trace. The rule against repeating an answer goes into ticket 11.
+
 ### Agent usage (2026-11-01)
 
 - Agent time: about 2 hours 40 minutes (estimate), two sessions of one conversation with four review subagents, summed from the transcript with gaps capped at 5 minutes. It does not count the 1 hour 6 minutes R0a itself took. The session behind `4f71e368`, which this branch cherry-picks, is not counted: its usage is not known here.
