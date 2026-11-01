@@ -23,7 +23,7 @@ export function p5Section(
 ): string[] {
   return [
     `## ${title}`,
-    'k/n counts runs. G1 comes from `pnpm eval:compare` over the P19 baseline. A subset of five cases moves by 20% with one case, and a smaller improvement is a direction only.',
+    'k/n counts runs. G1 is read from three P19 runs against the three of R0. A subset of five cases moves by 20% with one case, and a smaller improvement is a direction only.',
     table(
       ['Metric', 'Measured', 'Thresholds'],
       // A world without a metric's cases or thresholds, as the large world is of evaluation C, leaves it out.

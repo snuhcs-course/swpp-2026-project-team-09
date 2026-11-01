@@ -469,6 +469,15 @@ thresholds:
     comparator: '<='
     value: 2
     declared: 2026-10-31
+  - id: g1.floor.r1
+    metric: G1
+    measure: "P19 cases, without the superseded and the known failures, that passed all three P19 runs at R0 and fail in two or more of a later run's three"
+    kind: floor
+    comparator: '<='
+    value: 2
+    declared: 2026-11-01
+    revises: g1.floor
+    reason: 'P19 ran three times at R0 and 11 cases that are not known failures differ or fail across them, so one run cannot be the baseline and the frozen measure does not say how to read three. Chosen after seeing R0, so it is marked as a revision; the values do not change. Decided by the P05 owner.'
   - id: g1.target
     metric: G1
     measure: 'P19 cases, without the superseded, that passed at the baseline and now fail'
@@ -476,6 +485,15 @@ thresholds:
     comparator: '='
     value: 0
     declared: 2026-10-31
+  - id: g1.target.r1
+    metric: G1
+    measure: "P19 cases, without the superseded and the known failures, that passed all three P19 runs at R0 and fail in two or more of a later run's three"
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-11-01
+    revises: g1.target
+    reason: 'P19 ran three times at R0 and 11 cases that are not known failures differ or fail across them, so one run cannot be the baseline and the frozen measure does not say how to read three. Chosen after seeing R0, so it is marked as a revision; the values do not change. Decided by the P05 owner.'
   - id: e1.floor
     metric: E1
     measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"

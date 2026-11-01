@@ -23,6 +23,8 @@ import { type CaseScore, type ScoredTurn } from '../score.ts';
 export const tagSchema = z.union([z.string(), z.strictObject({ case: z.string(), seed: z.string().nullable() })]);
 
 const thresholdSchema = z.looseObject({
+  id: z.string().optional(),
+  revises: z.string().optional(),
   metric: z.string(),
   kind: z.enum(['floor', 'target']),
   comparator: z.enum(['>=', '<=', '=']),
@@ -300,11 +302,13 @@ export function p5Report(score: RunScore, suite: Suite = p5Suite()): P5Report {
     },
   };
   const subsets = CARD_SUBSETS.map((subset) => subsetScore(subset, reading.runsTagged(subset), names));
+  // A revised threshold stays in the file, and its revision is what a run is judged by.
+  const revised = new Set(suite.thresholds.flatMap(({ revises }) => (revises === undefined ? [] : [revises])));
   const measures = { ...joinMeasures(reading), ...searchMeasures(subsets, reading, score.cases) };
   const metrics = Object.entries(measures).map(([metric, measure]): MetricScore => {
     const measured = measure();
     const verdicts = suite.thresholds
-      .filter((threshold) => threshold.metric === metric)
+      .filter((threshold) => threshold.metric === metric && !revised.has(threshold.id ?? ''))
       .map((threshold) => verdictOf(measured, threshold));
     return { metric, k: measured.k, n: measured.n, verdicts };
   });
