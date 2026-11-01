@@ -94,7 +94,7 @@ Nothing to build here. P11 follows these, and the first official run waits for P
 
 ### Part 1 (2026-11-01)
 
-Declared in [evidence/06-walking-and-ride-diagnostics.md](../evidence/06-walking-and-ride-diagnostics.md). The file goes beyond the ticket's wording in a few places: the rider names the band before the first ride, a ride's band is that of the time of reaching the stop, a pair and band with no logged median is compared with the fallback only, the rides are on route 41946, the same walker walks the calibration pairs, and k is never applied to the table. The Person walks and rides remain.
+Declared in [evidence/06-walking-and-ride-diagnostics.md](../evidence/06-walking-and-ride-diagnostics.md). The file goes beyond the ticket's wording in a few places: the rides through the longest segment board before 신소재공동연구소, the rider names the band before the first ride, a ride's band is that of the time of reaching the stop, a pair and band with no logged median is compared with the fallback only, the rides are on route 41946, the same walker walks the calibration pairs, and k is never applied to the table. The Person walks and rides remain.
 
 ### Part 2 (2026-11-01)
 
