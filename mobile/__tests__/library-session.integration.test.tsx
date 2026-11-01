@@ -2,100 +2,35 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import type * as WebViewStub from './support/web-view';
-import { forgetWebViews, shownWebViews, webViewAt } from './support/web-view';
-import { signOut } from '@/auth/sign-in';
-import * as tokens from '@/auth/tokens';
-import { ToastProvider } from '@/design-system';
-import { endLibrarySession } from '@/library/end-session';
+import { fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  answerFromFakeLibrary,
+  clearWebViewCookies,
+  loadHidden,
+  navigate,
+  pass,
+  showRow,
+  useLibrarySessionTests,
+} from './support/library-session';
+import { shownWebViews, webViewAt } from './support/web-view';
 import { isLibraryLoggedIn, markLibraryLoggedIn } from '@/library/flag';
-import { LOGOUT_MS } from '@/library/hidden-transport';
-import { hiddenTransport } from '@/library/library';
-import { LibrarySessionProvider, useLibrarySession } from '@/library/library-session';
+import { HiddenViewTransport, LOGOUT_MS, PAGE_LOAD_MS } from '@/library/hidden-transport';
+import { HiddenLibraryView } from '@/library/hidden-view';
 import { LOGIN_LIMIT_MS } from '@/library/login-view';
 import { LIBRARY_LOGOUT_URL, LIBRARY_MAIN_URL } from '@/library/site';
 import { LibraryCard } from '@/screens/me/library-card';
-import { endSession } from '@/session/session-events';
-import * as kept from '@/storage/kept';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { type ReactElement, useState } from 'react';
-import { Pressable, Text } from 'react-native';
 
-// The library session's login and its end, with the web views stood in for and the cookie module's native side
-// replaced: the login's URL rule, and "end the library session" from the provider's logout, `signOut()` and
-// `endSession()`, with the flag set and without it.
+// The library session's login and its end from 내 정보, with the web views stood in for and the cookie module's native
+// side replaced: the login's URL rule and its check, and the hidden view's page events.
 
-jest.mock('react-native-webview', () => jest.requireActual<typeof WebViewStub>('./support/web-view').webViewModule);
-
-const clearWebViewCookies = jest.fn((): Promise<void> => Promise.resolve());
-
-function giveCookieModule(): void {
-  const scope: { expo?: { modules?: Record<string, unknown> } } = globalThis;
-  scope.expo ??= {};
-  scope.expo.modules ??= {};
-  scope.expo.modules.SnuNowWebCookies = { clearWebViewCookies };
-}
-
-// A row that opens the login or ends the session, as the 내 정보 row does, and says how the login ended.
-function Row(): ReactElement {
-  const { loggedIn, logIn, logOut } = useLibrarySession();
-  const [outcome, setOutcome] = useState('');
-  return (
-    <>
-      <Text>{loggedIn ? '로그인됨' : '로그인하지 않음'}</Text>
-      <Text>{outcome}</Text>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => {
-          void (loggedIn ? logOut() : logIn().then(setOutcome));
-        }}
-      >
-        <Text>{loggedIn ? '로그아웃' : '로그인'}</Text>
-      </Pressable>
-    </>
-  );
-}
-
-async function pass(milliseconds: number): Promise<void> {
-  await act(async () => {
-    await jest.advanceTimersByTimeAsync(milliseconds);
-  });
-}
-
-async function showRow(row: ReactElement = <Row />): Promise<void> {
-  await render(
-    <ToastProvider>
-      <LibrarySessionProvider>{row}</LibrarySessionProvider>
-    </ToastProvider>,
-  );
-  await pass(0);
-}
-
-async function navigate(url: string, loading = false): Promise<void> {
-  await fireEvent(screen.getByTestId('library-login-view'), 'navigationStateChange', { url, loading });
-}
-
-async function loadHidden(url: string): Promise<void> {
-  await fireEvent(screen.getByTestId('library-hidden-web-view'), 'loadEnd', { nativeEvent: { url, loading: false } });
-}
-
-beforeEach(async () => {
-  jest.useFakeTimers();
-  await AsyncStorage.clear();
-  forgetWebViews();
-  clearWebViewCookies.mockClear();
-  giveCookieModule();
-});
-
-afterEach(() => {
-  jest.useRealTimers();
-});
+useLibrarySessionTests();
 
 describe('the login', () => {
-  it("opens the library's page, injects nothing, and is done back on the booking screens", async () => {
+  it("opens the library's page, injects nothing, and is done back on the booking screens once a read works", async () => {
+    const library = answerFromFakeLibrary();
     await showRow();
     await fireEvent.press(screen.getByRole('button', { name: '로그인' }));
     await pass(0);
@@ -114,12 +49,45 @@ describe('the login', () => {
     await navigate('https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main');
     await pass(0);
 
+    expect(library.requestsTo('getMyBookingList')).toHaveLength(1);
     expect(screen.getByText('loggedIn')).toBeVisible();
     await expect(isLibraryLoggedIn()).resolves.toBe(true);
     // The hidden view is mounted at the root while the flag is set, on the site's main page.
     expect(shownWebViews.some((shown) => shown.mounted && shown.props.testID === 'library-hidden-web-view')).toBe(true);
   });
+});
 
+describe("the login's check", () => {
+  it('stays open when the main page comes but the read does not work, and is done once it does', async () => {
+    const library = answerFromFakeLibrary();
+    library.answerNext('sessionEnded');
+    await showRow();
+    await fireEvent.press(screen.getByRole('button', { name: '로그인' }));
+    await pass(0);
+
+    // The page the login starts from, served before the site sends the User to the school's login.
+    await navigate(LIBRARY_MAIN_URL);
+    await pass(0);
+
+    expect(library.requestsTo('getMyBookingList')).toHaveLength(1);
+    expect(screen.queryByText('loggedIn')).toBeNull();
+    expect(screen.getByTestId('library-login-view')).toBeVisible();
+    await expect(isLibraryLoggedIn()).resolves.toBe(false);
+    expect(shownWebViews.some((shown) => shown.mounted && shown.props.testID === 'library-hidden-web-view')).toBe(
+      false,
+    );
+
+    await navigate('https://nsso.snu.ac.kr/sso/login');
+    await navigate('https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main');
+    await pass(0);
+
+    expect(library.requestsTo('getMyBookingList')).toHaveLength(2);
+    expect(screen.getByText('loggedIn')).toBeVisible();
+    await expect(isLibraryLoggedIn()).resolves.toBe(true);
+  });
+});
+
+describe('the login, left without a session', () => {
   it('gives "no session" when the User closes it', async () => {
     await showRow();
     await fireEvent.press(screen.getByRole('button', { name: '로그인' }));
@@ -139,6 +107,32 @@ describe('the login', () => {
 
     expect(screen.getByText('failed')).toBeVisible();
     expect(screen.getByText('로그인하지 못했어요')).toBeVisible();
+  });
+});
+
+describe("the hidden view's page", () => {
+  it('stays failed when the load fails, as the web view tells it with onError and then onLoadEnd, and loads again', async () => {
+    const transport = new HiddenViewTransport();
+    await render(<HiddenLibraryView transport={transport} />);
+    const failed = { url: LIBRARY_MAIN_URL, loading: false, code: -2, description: 'net::ERR_INTERNET_DISCONNECTED' };
+    const first = screen.getByTestId('library-hidden-web-view');
+    await fireEvent(first, 'error', { nativeEvent: failed });
+    await fireEvent(first, 'loadEnd', { nativeEvent: failed });
+    const before = shownWebViews.length;
+
+    let reply: unknown = null;
+    void transport.call('getMyBookingList', {}).then((answer) => {
+      reply = answer;
+    });
+    await pass(0);
+
+    // Not taken as ready: nothing is injected into the error page, and the page is loaded again.
+    expect(shownWebViews.flatMap((shown) => shown.injected)).toEqual([]);
+    expect(shownWebViews).toHaveLength(before + 1);
+    expect(reply).toBeNull();
+
+    await pass(PAGE_LOAD_MS);
+    expect(reply).toEqual({ ok: false, error: 'network' });
   });
 });
 
@@ -172,61 +166,5 @@ describe('the end of the library session', () => {
 
     expect(clearWebViewCookies).toHaveBeenCalledTimes(1);
     await expect(isLibraryLoggedIn()).resolves.toBe(false);
-  });
-});
-
-describe('the end of the library session from the sign-outs', () => {
-  it('without the flag, loads nothing and only clears the cookies', async () => {
-    const logout = jest.spyOn(hiddenTransport, 'logout');
-
-    await endLibrarySession();
-
-    expect(logout).not.toHaveBeenCalled();
-    expect(shownWebViews).toEqual([]);
-    expect(clearWebViewCookies).toHaveBeenCalledTimes(1);
-    logout.mockRestore();
-  });
-
-  it('runs from signOut(), before the tokens are forgotten', async () => {
-    await markLibraryLoggedIn();
-    const logout = jest.spyOn(hiddenTransport, 'logout').mockResolvedValue(true);
-    const keep = jest.spyOn(kept, 'keep');
-
-    await signOut();
-
-    expect(logout).toHaveBeenCalledTimes(1);
-    expect(clearWebViewCookies.mock.invocationCallOrder[0]).toBeLessThan(keep.mock.invocationCallOrder[0] ?? 0);
-    expect(clearWebViewCookies).toHaveBeenCalledTimes(1);
-    await expect(isLibraryLoggedIn()).resolves.toBe(false);
-    jest.restoreAllMocks();
-  });
-});
-
-describe('the end of the library session on the forced end', () => {
-  it('runs from endSession(), the forced end, with or without the flag', async () => {
-    await markLibraryLoggedIn();
-    const logout = jest.spyOn(hiddenTransport, 'logout').mockResolvedValue(true);
-
-    const forget = jest.spyOn(tokens, 'forgetTokens');
-
-    await endSession(true);
-    await endSession(false);
-
-    expect(clearWebViewCookies.mock.invocationCallOrder[0]).toBeLessThan(forget.mock.invocationCallOrder[0] ?? 0);
-    expect(logout).toHaveBeenCalledTimes(1);
-    expect(clearWebViewCookies).toHaveBeenCalledTimes(2);
-    await expect(isLibraryLoggedIn()).resolves.toBe(false);
-    jest.restoreAllMocks();
-  });
-
-  it('goes on to clear the flag when the cookies could not be cleared', async () => {
-    await markLibraryLoggedIn();
-    jest.spyOn(hiddenTransport, 'logout').mockResolvedValue(false);
-    clearWebViewCookies.mockRejectedValueOnce(new Error('no jar'));
-
-    await endLibrarySession();
-
-    await expect(isLibraryLoggedIn()).resolves.toBe(false);
-    jest.restoreAllMocks();
   });
 });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,7 +38,11 @@ export async function markLibraryLoggedIn(): Promise<void> {
   tell(true);
 }
 
+// The views hear that the flag is cleared even when the phone's storage fails, so the hidden view unmounts.
 export async function clearLibraryLoggedIn(): Promise<void> {
-  await AsyncStorage.removeItem(KEY);
-  tell(false);
+  try {
+    await AsyncStorage.removeItem(KEY);
+  } finally {
+    tell(false);
+  }
 }

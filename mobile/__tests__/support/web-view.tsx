@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, type Ref, useEffect, useImperativeHandle, useState } from 'react';
@@ -10,7 +11,7 @@ import type { WebViewProps } from 'react-native-webview';
 
 // A stand-in for `react-native-webview`, which needs the native view. Each mounted web view is listed with its props
 // and the scripts injected into it, so that a test can play the page's events (a load, a navigation, a message).
-// Use with `jest.mock('react-native-webview', () => jest.requireActual('./support/web-view').webViewModule)`.
+// Every test gets it from the shared Jest setup (`jest-setup.ts`).
 
 export interface ShownWebView {
   props: WebViewProps;

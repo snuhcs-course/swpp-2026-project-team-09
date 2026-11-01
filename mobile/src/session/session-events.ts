@@ -3,11 +3,12 @@
  *
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Suggestion } from '@/api/types';
 import { forgetTokens } from '@/auth/tokens';
-import { endLibrarySession } from '@/library/end-session';
+import { endLibrarySessionInBackground } from '@/library/end-session';
 import { keep } from '@/storage/kept';
 
 // What the main server or the socket server says about the Session in the middle of anything, which the session's
@@ -34,10 +35,11 @@ export function announce(event: SessionEvent): void {
 }
 
 // The Session is over: the tokens are forgotten, the phone no longer keeps that the User signed in, and the screens
-// show the sign-in screen. The library session ends before the tokens go, whether or not the User logged in to it.
+// show the sign-in screen. The library session ends right after the tokens go, whether or not the User logged in to
+// it, without the end waiting on the library's site.
 export async function endSession(replaced: boolean): Promise<void> {
-  await endLibrarySession();
   await forgetTokens();
+  endLibrarySessionInBackground();
   await keep({ signedIn: false, suggestion: null });
   announce({ kind: 'ended', replaced });
 }

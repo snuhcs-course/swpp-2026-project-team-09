@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -16,7 +17,8 @@ import {
   useState,
 } from 'react';
 import { useToast } from '@/design-system';
-import type { LoginOutcome } from './client';
+import { koreaDateKey } from '@/korea-time';
+import { type LoginOutcome, loginWorks } from './client';
 import { endLibrarySession } from './end-session';
 import { isLibraryLoggedIn, listenToLibraryFlag, markLibraryLoggedIn } from './flag';
 import { HiddenLibraryView } from './hidden-view';
@@ -62,12 +64,31 @@ function useLoggedIn(): boolean {
   return loggedIn;
 }
 
+// The login's check. While it runs, the hidden view is mounted for its one read, before the flag is set; a session
+// that works keeps it mounted until the flag is set.
+function useLoginCheck(): { checking: boolean; check: () => Promise<boolean>; stopChecking: () => void } {
+  const [checking, setChecking] = useState(false);
+  const check = useCallback(async (): Promise<boolean> => {
+    setChecking(true);
+    const works = await loginWorks(hiddenTransport, koreaDateKey(new Date()).replaceAll('-', ''));
+    if (!works) {
+      setChecking(false);
+    }
+    return works;
+  }, []);
+  const stopChecking = useCallback((): void => {
+    setChecking(false);
+  }, []);
+  return { checking, check, stopChecking };
+}
+
 // The library session over the whole app: the hidden web view at the root while the flag is set, and the login,
 // opened by whichever card or row asks for it.
 export function LibrarySessionProvider({ children }: { children: ReactNode }): ReactElement {
   const loggedIn = useLoggedIn();
   const showToast = useToast();
   const [loggingIn, setLoggingIn] = useState(false);
+  const { checking, check, stopChecking } = useLoginCheck();
   const waiting = useRef<((outcome: LoginOutcome) => void)[]>([]);
   const logIn = useCallback(
     () =>
@@ -89,12 +110,17 @@ export function LibrarySessionProvider({ children }: { children: ReactNode }): R
         }
       };
       if (outcome === 'loggedIn') {
-        void markLibraryLoggedIn().then(settle);
+        const after = (): void => {
+          stopChecking();
+          settle();
+        };
+        void markLibraryLoggedIn().then(after, after);
       } else {
+        stopChecking();
         settle();
       }
     },
-    [showToast],
+    [showToast, stopChecking],
   );
   const session = useMemo(
     () => ({ loggedIn, logIn, logOut: (): Promise<void> => endLibrarySession() }),
@@ -103,8 +129,8 @@ export function LibrarySessionProvider({ children }: { children: ReactNode }): R
   return (
     <LibrarySessionContext value={session}>
       {children}
-      {loggedIn ? <HiddenLibraryView transport={hiddenTransport} /> : null}
-      <LibraryLogin onDone={done} visible={loggingIn} />
+      {loggedIn || checking ? <HiddenLibraryView transport={hiddenTransport} /> : null}
+      <LibraryLogin check={check} onDone={done} visible={loggingIn} />
     </LibrarySessionContext>
   );
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { clearLibraryLoggedIn, isLibraryLoggedIn } from './flag';
@@ -301,4 +302,14 @@ export async function retryAfterLogin<T>(logIn: () => Promise<LoginOutcome>, act
     throw new LibraryError('noSession', null);
   }
   return action();
+}
+
+// Whether the session the login left works: one read through the transport, the User's own bookings for `today`
+// (YYYYMMDD), answers with the site's JSON. The login starts from the site's main page, which the site may serve
+// before it sends the User to the school's login, so reaching that page is not enough. The site's "log in" (HTTP 999,
+// a redirect, a page that is not JSON) or any other failure is no session. It goes around the flag, which is set only
+// once this answers.
+export async function loginWorks(transport: LibraryTransport, today: string): Promise<boolean> {
+  const reply = await transport.call('getMyBookingList', { start: today, end: today });
+  return reply.ok && isRecord(reply.result) && 'bookingList' in reply.result;
 }

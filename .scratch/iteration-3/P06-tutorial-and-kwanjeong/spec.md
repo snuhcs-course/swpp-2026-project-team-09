@@ -249,10 +249,10 @@ Words:
   - The app keeps only a "logged in" flag (`kwanjeong.loggedIn` in AsyncStorage). It holds nothing from the site, is set after a login and is cleared when the session ends or on logout.
 - **Login.**
   1. A full-screen, visible web view loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, which sends the User to the school's login.
-  2. When the URL is back on `k-rsv.snu.ac.kr` at `/pc/(main|booking|mybooking)`, the login is done. The `JSESSIONID` stays in the web view's cookie jar, the app sets the flag, and the view closes.
+  2. When the URL is back on `k-rsv.snu.ac.kr` at `/pc/(main|booking|mybooking)` and one read through the hidden view (the User's own bookings for today, the view mounted for that check) answers with the site's JSON, the login is done; a failed read (999, a redirect, not JSON) keeps the view open, since the site may serve `/pc/main` before it sends the User to the school's login. The `JSESSIONID` stays in the web view's cookie jar, the app sets the flag, and the view closes.
   3. No script is injected into the login pages, so the app never reads the password. The login has a 5-minute limit, after which the view closes with "로그인하지 못했어요". Cancelling returns "no session" to the caller.
 - **Calls (the hidden web view).** Every library call, reads and writes, runs inside one hidden web view, made by one client module (`mobile/src/library/`):
-  - The hidden view has no size, is kept mounted at the app's root while the flag is set, and loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, so its scripts run on the library's origin. The client waits for that page before the first call.
+  - The hidden view has no size, is kept mounted at the app's root while the flag is set (and during the login's check), and loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, so its scripts run on the library's origin. The client waits for that page before the first call.
   - For each call the app injects (`injectJavaScript`) one small fixed script, a constant in `mobile/src/library/`. Only its argument varies, a value made with `JSON.stringify`; no script text is built from the User's words or a reply.
   - The script makes the form POST with `fetch('/NEW_SNU_BOOKING/json/<name>')`: form-encoded, `credentials: 'same-origin'`, `redirect: 'manual'`, the headers `X-Requested-With: XMLHttpRequest` and `OS_KIND: WEB`, and `referrer` set to `…/pc/booking/roomForm`. The browser adds the cookie, `Origin` and the web view's own user agent.
   - It posts back through `window.ReactNativeWebView.postMessage` only the parsed JSON or an error kind, never the raw text, headers or cookie.
@@ -270,8 +270,8 @@ Words:
 - **Seat-map images** load from `https://k-rsv.snu.ac.kr:444/MAP/WEB/area_<sectorNo>.png?version=20261022` with no cookie, as plain images outside the web view. The size per sector is in the catalogue.
 - **Logout** really ends the library session. One shared step in `mobile/src/library/`, "end the library session", does it, and three paths call it:
   - the 내 정보 row "관정도서관 로그인", which shows 로그아웃 while the flag is set;
-  - the app's `signOut()` (`mobile/src/auth/sign-in.ts`), before it forgets the main server's tokens, whether or not the flag is set;
-  - the forced end of the app's session, `endSession()` (`mobile/src/session/session-events.ts`), which forgets the tokens and shows the sign-in screen without going through `signOut()` (a refused token, or the session replaced on another phone), before it forgets the tokens, whether or not the flag is set.
+  - the app's `signOut()` (`mobile/src/auth/sign-in.ts`), once the main server's tokens are forgotten and without waiting on it, whether or not the flag is set;
+  - the forced end of the app's session, `endSession()` (`mobile/src/session/session-events.ts`), which forgets the tokens and shows the sign-in screen without going through `signOut()` (a refused token, or the session replaced on another phone), right after it forgets the tokens and without waiting on it, whether or not the flag is set.
 - Ending the session is, in order:
   1. when the `kwanjeong.loggedIn` flag is set, the hidden view loads the site's logout URL (with the same 15-second limit; a failure does not stop the next steps). When the flag is absent, this step is skipped: no hidden view, no network call and no wait;
   2. every web-view cookie is cleared by the local module that only clears cookies (`clearWebViewCookies()`): `CookieManager.removeAllCookies` and `flush()` on Android; on iOS the web view's cookies are in `WKWebsiteDataStore`, whose cookies it removes, together with `HTTPCookieStorage`;

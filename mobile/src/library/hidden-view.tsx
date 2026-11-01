@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useRef, useState } from 'react';
@@ -43,10 +44,10 @@ export function HiddenLibraryView({ transport }: HiddenLibraryViewProps): ReactE
         onError={() => {
           transport.loadFailed();
         }}
-        onLoadEnd={(event) => {
-          if (!event.nativeEvent.loading) {
-            transport.loaded(event.nativeEvent.url);
-          }
+        // `onLoad`, not `onLoadEnd`: the web view calls `onLoadEnd` after `onError` too, which would take a failed
+        // page as loaded. `onLoad` comes only when the page did load.
+        onLoad={(event) => {
+          transport.loaded(event.nativeEvent.url);
         }}
         onMessage={(event) => {
           transport.received(event.nativeEvent.data, event.nativeEvent.url);
