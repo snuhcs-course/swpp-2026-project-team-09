@@ -11,6 +11,7 @@ import { apiClient } from '@/api/client';
 import { LOBBY_KEY, lobbyQuery } from '@/api/queries';
 import { type RoomAsk, ROOM_INBOX_KEY, roomInboxQuery, roomRequests } from '@/api/room-requests';
 import type { Profile } from '@/api/types';
+import { retryRoomReports } from '@/library/room-bookings';
 import { ConsentedNotice, whenOf } from './room-consented';
 import { Button, color, font, radius, shadow, space, text, TextField, useToast } from '@/design-system';
 
@@ -167,7 +168,11 @@ function keyOf({ requestId, recheck }: RoomAsk): string {
 // Mounted on the main screen: the first request that waits for the User's answer, and each notice once.
 export function RoomRequestInbox(): ReactElement | null {
   const queryClient = useQueryClient();
-  const inbox = useQuery(roomInboxQuery).data;
+  const { data: inbox, dataUpdatedAt } = useQuery(roomInboxQuery);
+  // The reports of bookings made that did not get through, sent again at the start and at each poll.
+  useEffect(() => {
+    void retryRoomReports();
+  }, [dataUpdatedAt]);
   const profile = useQuery(lobbyQuery).data?.profile;
   const show = useToast();
   const [answered, setAnswered] = useState<ReadonlySet<string>>(new Set());

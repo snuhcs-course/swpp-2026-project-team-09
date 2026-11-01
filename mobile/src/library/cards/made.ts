@@ -66,3 +66,9 @@ export function seatBookCardOf(
   const key = `book:${space.id}:${slot.date}:${slot.start.replace(':', '')}:${String(slot.minutes)}${named}`;
   return { ...card(key, 'book', space, notes), date: slot.date, start: slot.start, minutes: slot.minutes, seat: label };
 }
+
+// The cancel card of a room just booked, for the booker to cancel it from the chat.
+export function roomCancelCardOf(space: LibrarySpace, slot: Slot): LibraryCardData {
+  const key = `cancel:${space.id}:${slot.date}:${slot.start.replace(':', '')}`;
+  return { ...card(key, 'cancel', space, []), target: { spaceId: space.id, date: slot.date, start: slot.start } };
+}
