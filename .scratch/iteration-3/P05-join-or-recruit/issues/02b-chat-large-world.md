@@ -49,7 +49,7 @@ The record is `main-server/eval/p5/r0-large.md`, with `r0-large-failures.json` a
 
 Of the 193 failed runs, 131 missed cards the run's searches did not return, and 115 of those stopped with `more: true` in a result.
 
-37 runs got 503. 33 are ticket 10a's shape. 4 have no text anywhere and called no card tool, their last step cut at 1,000 output tokens. Ticket 10a leaves those at 503, and no P05 ticket covers them.
+37 runs got 503. 33 are ticket 10a's shape. 4 have no text anywhere and called no card tool, their last step cut at 1,000 output tokens. Ticket 10a leaves those at 503, and looks for their cause in R0a's traces.
 
 P04's chat PRs landed after this run, so the same suite ran again as R0p on `871886a` (`main-server/eval/p5/r0p.md`), the baseline R0a is compared with. G1 there is 1, `follow-up-yes-after-menus`, which now calls #142's `findMealRestaurants`. It comes from P04's change, not P05's. Whether the case or the behaviour is right is not decided here.
 
