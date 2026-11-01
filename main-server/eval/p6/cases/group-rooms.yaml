@@ -6,8 +6,9 @@
 
 # Group rooms (P06 spec, "The P6 eval suite"): resolveFriend for each Friend, then a book card with companions; below
 # GR_MIN; above GR_MAX; two Friends of one name; the held lunch Quest; 9 people for a 10인실 and a 20인실 (G201)
-# request. Each `expect` was drafted blind and settled by the PM's rulings of 2026-11-02 (labels-notes.md). A refusal
-# calls no tool; the same-name ASK may call only resolveFriend.
+# request. Each `expect` was drafted blind and settled by the PM's rulings of 2026-11-02 (labels-notes.md). A headcount
+# refusal goes through proposeLibraryBooking and calls nothing else (ruling 16); the same-name ASK may call only
+# resolveFriend.
 
 - id: p6-group-rooms-companions
   category: p6-group-rooms
@@ -47,7 +48,8 @@
   expect:
     actions: [REFUSE]
     tools:
-      forbidden: '*'
+      required: [proposeLibraryBooking]
+      only: true
     cards:
       - { kind: library, max: 0 }
     text:
@@ -63,7 +65,8 @@
   expect:
     actions: [REFUSE]
     tools:
-      forbidden: '*'
+      required: [proposeLibraryBooking]
+      only: true
     cards:
       - { kind: library, max: 0 }
     text:
@@ -130,7 +133,8 @@
   expect:
     actions: [REFUSE]
     tools:
-      forbidden: '*'
+      required: [proposeLibraryBooking]
+      only: true
     cards:
       - { kind: library, max: 0 }
     text:
@@ -146,7 +150,8 @@
   expect:
     actions: [REFUSE]
     tools:
-      forbidden: '*'
+      required: [proposeLibraryBooking]
+      only: true
     cards:
       - { kind: library, max: 0 }
     text:

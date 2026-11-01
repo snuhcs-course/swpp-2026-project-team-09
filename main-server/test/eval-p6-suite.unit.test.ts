@@ -18,6 +18,17 @@ import { tutorialState } from '../src/tutorial/tutorial-state.js';
 
 const P6 = new URL('../eval/p6/', import.meta.url);
 
+// The refusals by a booking's conditions, which go through proposeLibraryBooking (labels-notes.md, ruling 16).
+const CONDITION_REFUSALS = [
+  'p6-refusals-seat-tomorrow',
+  'p6-refusals-room-in-four-days',
+  'p6-refusals-late-and-long',
+  'p6-group-rooms-below-min',
+  'p6-group-rooms-above-max',
+  'p6-group-rooms-nine-people',
+  'p6-group-rooms-g201',
+];
+
 const cases = casesIn(loadCases(), 'p6');
 const ids = new Set(cases.map(({ id }) => id));
 const data = p6WorldData();
@@ -86,10 +97,10 @@ describe('The P6 labels', () => {
 });
 
 describe('The tools and words of the P6 labels', () => {
-  it('let a refusal, a CHAT and an ASK call no tool, but the resolver of a name or the free slots', () => {
-    const asksWith: Record<string, string[]> = {
+  it('let a space refusal, a CHAT and an ASK call no tool, and a condition refusal only proposeLibraryBooking', () => {
+    const onlyWith: Record<string, string[]> = {
       'p6-group-rooms-same-name': ['resolveFriend'],
-      'p6-conditions-free-time': ['findLibraryFreeSlots'],
+      ...Object.fromEntries(CONDITION_REFUSALS.map((id) => [id, ['proposeLibraryBooking']])),
     };
     const loose = cases.flatMap(({ id, expect: wanted }) => {
       if (wanted === undefined || !['REFUSE', 'ASK', 'CHAT'].includes(wanted.actions[0] ?? '')) {
@@ -97,7 +108,7 @@ describe('The tools and words of the P6 labels', () => {
       }
       const { required, allowed, forbidden, only } = wanted.tools;
       const tools = [...required, ...allowed].toSorted();
-      const allowedHere = asksWith[id];
+      const allowedHere = onlyWith[id];
       const tight =
         allowedHere === undefined
           ? forbidden === '*'

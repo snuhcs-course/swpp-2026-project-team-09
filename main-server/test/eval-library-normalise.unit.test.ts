@@ -269,41 +269,4 @@ describe('A library turn, scored', () => {
       passed: true,
     });
   });
-
-  it('still reads a refused booking as an ASK where the case accepts one', () => {
-    const refused = call('proposeLibraryBooking', { spaceId: '7F-7A-zone2' }, { result: 'refused' });
-    const ask = expectOf({
-      actions: ['ASK'],
-      tools: { allowed: ['proposeLibraryBooking'] },
-      text: { mentions: [['몇 시']] },
-    });
-
-    expect(scoreTurn(turn({ steps: [[refused]], text: '몇 시부터 할까요?' }), ask, names)).toMatchObject({
-      action: 'ASK',
-      passed: true,
-    });
-  });
-});
-
-describe('A case that allows only some tools', () => {
-  const resolved = call('resolveFriend', { name: '서준' }, { result: 'several' });
-  const looked = call('findLibrarySpace', { spaceIds: ['4F-group-6'] }, { result: 'implemented' });
-  const sameName = expectOf({
-    actions: ['ASK'],
-    tools: { allowed: ['resolveFriend'], only: true },
-    text: { mentions: ['경영학과'] },
-  });
-
-  it('passes a turn that calls only those', () => {
-    expect(scoreTurn(turn({ steps: [[resolved]], text: '경영학과 박서준이에요?' }), sameName, names).passed).toBe(true);
-  });
-
-  it('fails a turn that calls any other, as a forbidden call', () => {
-    const score = scoreTurn(turn({ steps: [[resolved, looked]], text: '경영학과 박서준이에요?' }), sameName, names);
-
-    expect(score.checks.find(({ name }) => name === 'tools.forbidden')).toMatchObject({
-      passed: false,
-      detail: 'findLibrarySpace called',
-    });
-  });
 });

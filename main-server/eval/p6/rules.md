@@ -26,21 +26,21 @@ The rules come from the P06 spec (`.scratch/iteration-3/P06-tutorial-and-kwanjeo
 
 Every library request ends in one of these. Each has its own action in the label (section 16).
 
-| Kind                                  | When                                                                                                                                                     | The reply                                                                                                                                      |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **book card**                         | One implemented space fits, every condition holds, no companions                                                                                         | A book card for that space with the date, start, minutes and the rest (sections 4–10)                                                          |
-| **room request card** (방 요청 카드)  | As a book card, for a room with companions or a held Quest (section 9)                                                                                   | A book card carrying the companions or the Quest; its first button is 동의 요청 보내기, and the reply says the companions are asked to consent |
-| **ask**                               | Several spaces fit the words (section 3), the time is missing (section 11), two Friends share a name (section 9), or several free slots fit (section 12) | A question naming every candidate or what is missing; no card, and no tool before it but the name resolver or the free slots                   |
-| **refuse-unsupported**                | The space is outside the scope (section 3)                                                                                                               | "아직 미구현" and what is supported; no card, no tool                                                                                          |
-| **refuse-not-online**                 | The space is in 관정관 but not bookable online (section 3)                                                                                               | It is used on site (현장 이용); no card, no tool, and no other space offered in its place                                                      |
-| **refuse-not-eligible**               | 대학원 열람실 for an asker who is not a graduate (section 3)                                                                                             | 대학원 열람실 is for graduate students, as set in 내 정보; no card, no tool                                                                    |
-| **refuse-out-of-window**              | A date, start, hours, duration, seat, useDesc or people the rules refuse (sections 4–9)                                                                  | The reason with its bound, every refused field at once, and a question for the changed value; no card, no tool                                 |
-| **seats card**                        | "자리 있어?", "좌석 현황", "빈자리" for one space (section 12)                                                                                           | A seats card for the space; no number of free seats in the text                                                                                |
-| **cancel / return / myBookings card** | "취소해줘", "반납해줘", "내 예약" (section 13)                                                                                                           | That card, with its target                                                                                                                     |
-| **information answer**                | A question about the tutorial, a quest or a campus facility (section 14)                                                                                 | The answer from the app's information, in the fixed order of section 14                                                                        |
-| **chat**                              | Small talk about the library, or a question about what the Assistant cannot see ("반납했어?")                                                            | A short answer, no tool and no card                                                                                                            |
+| Kind                                           | When                                                                                                                                                     | The reply                                                                                                                                                    |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **book card**                                  | One implemented space fits, every condition holds, no companions                                                                                         | A book card for that space with the date, start, minutes and the rest (sections 4–10)                                                                        |
+| **room request card** (방 요청 카드)           | As a book card, for a room with companions or a held Quest (section 9)                                                                                   | A book card carrying the companions or the Quest; its first button is 동의 요청 보내기, and the reply says the companions are asked to consent               |
+| **ask**                                        | Several spaces fit the words (section 3), the time is missing (section 11), two Friends share a name (section 9), or several free slots fit (section 12) | A question naming every candidate or what is missing; no card, and no tool before it but the name resolver or the free slots                                 |
+| **refuse-unsupported**                         | The space is outside the scope (section 3)                                                                                                               | "아직 미구현" and what is supported; no card, no tool                                                                                                        |
+| **refuse-not-online**                          | The space is in 관정관 but not bookable online (section 3)                                                                                               | It is used on site (현장 이용); no card, no tool, and no other space offered in its place                                                                    |
+| **refuse-not-eligible**                        | 대학원 열람실 for an asker who is not a graduate (section 3)                                                                                             | 대학원 열람실 is for graduate students, as set in 내 정보; no card, no tool                                                                                  |
+| **refuse-out-of-window** (a condition refusal) | A date, start, hours, duration, seat, useDesc or people the rules refuse (sections 4–9)                                                                  | The reason with its bound, every refused field at once, and a question for the changed value, from `proposeLibraryBooking`'s refusal; no card, no other tool |
+| **seats card**                                 | "자리 있어?", "좌석 현황", "빈자리" for one space (section 12)                                                                                           | A seats card for the space; no number of free seats in the text                                                                                              |
+| **cancel / return / myBookings card**          | "취소해줘", "반납해줘", "내 예약" (section 13)                                                                                                           | That card, with its target                                                                                                                                   |
+| **information answer**                         | A question about the tutorial, a quest or a campus facility (section 14)                                                                                 | The answer from the app's information, in the fixed order of section 14                                                                                      |
+| **chat**                                       | Small talk about the library, or a question about what the Assistant cannot see ("반납했어?")                                                            | A short answer, no tool and no card                                                                                                                          |
 
-A refusal shows no book, cancel or return card. A reply never says that it booked, cancelled or returned anything: only the User's press does that.
+A refusal shows no book, cancel or return card. Refusals split by who decides: a **space refusal** (unsupported, notOnline, notEligible) calls no tool, since each space's status is in `findLibrarySpace`'s description; a **condition refusal** goes through `proposeLibraryBooking`, which holds the checks, and the reply passes on its reasons. A reply never says that it booked, cancelled or returned anything: only the User's press does that.
 
 ## 3. Which space a request names
 
@@ -123,14 +123,14 @@ A book card holds the space, the date, the start, the minutes, and when given th
 ## 11. Asking
 
 - **No time given** (no start, or no duration): ask, in one question, "몇 시부터 몇 시까지 예약할까요?", together with any other missing field (the space when several fit, naming every candidate; a Friend's name when two fit). Never book at a guessed time.
-- An ASK calls no tool before its question, except `resolveFriend` for a name that fits two Friends and `findLibraryFreeSlots` for "공강에". Times an ASK lists are written HH:MM, 24-hour.
+- An ASK calls no tool before its question, except `resolveFriend` for a name that fits two Friends. Times an ASK lists are written HH:MM, 24-hour.
 - No date given: 오늘. A date given without a time is still a missing time.
 - The useDesc, the seat and the pledge are never asked in the text: the card asks.
 
 ## 12. Seats and free time
 
 - "자리 있어?", "좌석 현황", "빈자리" ask for a **seats card** of one space (`showLibrarySeats`), not a book card. The seats card shows the free seats; the reply does not count them. When several seat spaces fit, it is an ASK naming them (section 3), with no seats card: "지금 7층 자리 있어?" asks between the four 7층 seat spaces.
-- "공강에", "수업 사이에": the asker's Free Time comes first (`findLibraryFreeSlots`), clipped to the space's hours and the window. The asker's gaps today after 10:05 are 10:45–11:00, 11:45–13:00, 14:15–16:00 and from 17:50 (world.yaml). Aligned to 30 minutes and at least 30 long, they start at 12:00, 14:30 and 18:00. With several, the reply lists them (HH:MM) and asks which, with no card; it never invents a time outside them.
+- "공강에", "수업 사이에" for one space: the asker's Free Time comes first (`findLibraryFreeSlots`), clipped to the space's hours and the window. The asker's gaps today after 10:05 are 10:45–11:00, 11:45–13:00, 14:15–16:00 and from 17:50 (world.yaml). Aligned to 30 minutes and at least 30 long, they start at 12:00, 14:30 and 18:00. With several, the reply lists them (HH:MM) and asks which, with no card; it never invents a time outside them. When the space is still ambiguous ("내 공강에 7층 열람실"), the space question comes first, with no tool and no slot times.
 - A question about Free Time with nothing about the library is P4's (`findFreeTimeEvents`), not the library's.
 
 ## 13. My bookings, cancel and return
@@ -164,7 +164,8 @@ Each case has one label with one action; none accepts two answers.
 - **book card**, **seats card**, **cancel / return / myBookings card**: TOOL, with an `expect.cards` entry of kind `library` giving the action, the space (catalogue id) and the conditions (date YYYY-MM-DD, start HH:MM, minutes, seat, equipment, useDesc, companions by seed name, quest by seed name, target). `useDesc: null` means the card must leave it unset. Times are checked in the card's values, never in the text. A book card's text holds 예약하기.
 - **room request card**: as a book card, with the companions or the Quest, and the text holding 동의 and none of 예약했어요, 예약되었어요, 초대했어요.
 - **ask**: ASK, with every candidate (or what is missing, such as 몇 시) in `text.mentions`, no library card (`{ kind: library, max: 0 }`), and no tool (`tools.forbidden: '*'`), or only the one tool section 11 allows (`tools.allowed` or `required` with `only: true`).
-- **refuse-…**: REFUSE, with the reason in `text.mentions` (미구현, 현장, 대학원생, 당일, 3일, 6시간, 8명 and the like), no library card and no tool (`tools.forbidden: '*'`): the bounds are in the rules, so a refusal needs no tool.
+- **space refusal** (refuse-unsupported, -not-online, -not-eligible): REFUSE, with the reason in `text.mentions` (미구현, 현장, 대학원생), no library card and no tool (`tools.forbidden: '*'`).
+- **condition refusal** (refuse-out-of-window, and the headcount refusals of section 9): REFUSE, with the reason in `text.mentions` (당일, 3일, 6시간, 1명, 8인실, 8명 and the like), no library card, and `proposeLibraryBooking` required with no other tool (`tools.required: [proposeLibraryBooking]`, `only: true`). The scorer reads a refused `proposeLibraryBooking` with nothing shown as a REFUSE.
 - **information answer**: TOOL, `getTutorial` required, the other sources of section 14 allowed and nothing else (`only: true`), with the facts in `text.mentions` and what must not be said in `text.absent`.
 - **chat**: CHAT, no tool, no library card.
 - A book, cancel or return card in a reply whose label is not that action counts against M4, the hard gate.
@@ -177,16 +178,18 @@ What the spec and the catalogue left open, as the PM ruled on the blind draft, n
 2. Candidates come from the words only; the number of people never narrows them (section 3).
 3. 스튜디오 and 라이브 방송 fit 6F-studio and Creative Media Studio: an ASK (section 3).
 4. "중앙도서관 열람실" is an ASK between 7층 and 8층 that says 본관 is 미구현 (section 3).
-5. "공강에" is an ASK listing the free slots, after `findLibraryFreeSlots` (section 12).
+5. "내 공강에 7층 열람실" asks which space first, with no tool and no slot times (section 12; ruling 17 replaces the earlier free-slots ASK).
 6. "반납했어?" is a CHAT with no card at all (section 13).
 7. No weekday names: 오늘, 내일, 모레, N일 뒤 (section 1).
 8. Information questions search in a fixed order: getTutorial, the app's other data, the official link (section 14).
 9. "아무 자리(나)" is the default seat space 7F-7A-zone2; a missing time is still asked (section 3).
 10. The clinic's facts come from health4u.snu.ac.kr, and a facility's hours are checked in the text (section 14).
-11. No tool for a refusal or a plain ASK; the same-name ASK may call only `resolveFriend` (sections 11, 16).
+11. No tool for a space refusal or a plain ASK; the same-name ASK may call only `resolveFriend` (sections 11, 16).
 12. Companions make a room request card, whose text says 동의 (section 9).
 13. "VR 체험" leaves the useDesc out; "아이맥 쓰는 곳" is Media Carrel A (sections 3, 8).
 14. Times are checked in card values only, outside an ASK's list and ruling 10 (section 16).
 15. One answer per case (section 16).
+16. Refusals split by who decides: a space refusal calls no tool; a condition refusal goes through `proposeLibraryBooking` and nothing else (sections 2, 16).
+17. "내 공강에 7층 열람실" is an ASK for the space, with no tool (section 12).
 
 Also settled from the draft, unchanged: a bare hour from 1 to 6 is the afternoon (section 1); purposes outside section 8's mapping (라이브 방송, 발표 준비, 체험) leave the useDesc out; a booking lies inside the hours from start to end (section 5); a named room of a media space is passed as `equipment`.

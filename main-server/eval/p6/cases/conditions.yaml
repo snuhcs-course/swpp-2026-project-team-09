@@ -247,8 +247,8 @@
     text:
       mentions: [10인실, 8인실, 6인실]
 
-# The asker's gaps today after 10:05 are 10:45–11:00, 11:45–13:00, 14:15–16:00 and from 17:50 (world.yaml); aligned to
-# 30 minutes and at least 30 long they start at 12:00, 14:30 and 18:00. An ASK listing them, after findLibraryFreeSlots.
+# "7층 열람실" fits the four 7층 seat spaces, so the reply asks which one first, with no tool and no slot times
+# (ruling 17). The asker's gaps today are in world.yaml.
 - id: p6-conditions-free-time
   category: p6-conditions
   world: p6
@@ -258,15 +258,15 @@
   expect:
     actions: [ASK]
     tools:
-      required: [findLibraryFreeSlots]
-      only: true
+      forbidden: '*'
     cards:
       - { kind: library, max: 0 }
     text:
       mentions:
-        - '12:00'
-        - '14:30'
-        - '18:00'
+        - [7A 열람실 1 구역, 7A 1구역, 7A 1 구역]
+        - [7A 열람실 2 구역, 7A 2구역, 7A 2 구역]
+        - [7B 노트북존, 7B]
+        - [노트북존]
 
 # "아무 자리나" leaves the space to the Assistant: the default seat space, 7F-7A-zone2 (rules.md section 3). It ends the
 # space question, but not a missing time (ruling 9).

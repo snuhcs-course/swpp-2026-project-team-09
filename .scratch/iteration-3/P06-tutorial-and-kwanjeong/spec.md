@@ -348,7 +348,7 @@ Words:
     - "공강에" or "수업 사이에": `findLibraryFreeSlots` first;
     - cancel, return or "내 예약": the three tools.
   - to pass every catalogue id that fits the words, and never pick when several fit: ask, listing them, with no tool before the question. The candidates come from the words only, never the number of people. A floor and a kind with no name ("7층 열람실", "7층 자리") fit every such space on the floor. "아무 자리(나)" with no space named is the default seat space, 7F-7A-zone2;
-  - a refusal by the rules (window, hours, duration, people, a space out of scope, on site or not for the User) needs no tool;
+  - refusals split by who decides: a space out of scope, on site or not for the User is refused with no tool, since each space's status is in `findLibrarySpace`'s description; a window, hours, duration, seat or headcount refusal goes through `proposeLibraryBooking`, which holds those checks, and passes on its reasons;
   - with companions or a held Quest, the card is a room request card: say the companions are asked to consent (동의 요청 보내기), never that anything was booked or anyone invited;
   - to ask for the time when none was given, in one question with any other missing field;
   - to read 오늘, 내일, 모레, "N일 뒤" and weekdays against now; "N시간" as minutes; "~까지" as `end`; and "지금" as the next 30 minutes;
@@ -362,7 +362,7 @@ Words:
   - that the Assistant cannot see the User's bookings, seats or rooms, and never says it booked, cancelled or returned anything.
 - **`TUTORIAL_RULES`:**
   - answer questions about the tutorial, its quests and campus facilities (where to get the 학생증, the shuttle stop, the 보건진료소 and its hours, the 관정 rules, what is on at the museum) from the app's information, in a fixed order: `getTutorial` first; then the app's other data (Global Events for an exhibition at 미술관 or 파워플랜트, Places); then the official link. A facility fact found nowhere is "확인되지 않아요". Never invent;
-  - the 보건진료소's facts (location 학생회관(63동) 3–4층, care on 3층, reception 329호; hours 09:00–12:00 and 13:30–17:30, Fridays until 16:30; services, phone, how to use) are collected from health4u.snu.ac.kr into the app's content (ticket 07);
+  - the 보건진료소's facts (location 학생회관(63동) 3–4층, care on 3층, reception 329호; hours 09:00–12:00 and 13:30–17:30, Fridays until 16:30; services, phone, how to use) are collected from health4u.snu.ac.kr into the app's content (a small PR before C0);
   - never start, complete or stop a quest: tell the User where the buttons are;
   - for "관정 예약해줘" during the tutorial, use the library tools as for any User.
 - **Limits.** The 8 steps, the 30-second limit, the output cap, the history of 20 and the daily limit stay. A booking with three Friends is `findLibrarySpace` + 3 × `resolveFriend` + `proposeLibraryBooking`, which fits.
@@ -538,8 +538,8 @@ flowchart LR
 | Category | What is right | Cases |
 |---|---|---|
 | Space resolution | the right catalogue id or ids: 4 by the site's name, 4 by a site alias, 4 by a proposed alias or a purpose ("6층 영화 보는 곳" → 6F-multimedia-viewing, notOnline); 2 ambiguous ones that ASK, listing the candidates | 14 |
-| Booking conditions | `proposeLibraryBooking` with the right date, start, minutes or end, seat, equipment and useDesc: times given in several forms; missing time → ASK; useDesc inferable and not (left out); a named seat; "모니터 있는 스터디룸" → ASK; "공강에" through `findLibraryFreeSlots` → ASK listing the slots; "아무 자리나" with and without a time | 14 |
-| Refusals | unsupported → "미구현" and no card (3); notOnline → "현장" and no card (3); out of window or hours (seat tomorrow, room in 4 days, 23:30, 7 hours) → the reason and no card (3); 대학원 열람실 for an undergraduate → notEligible (1) | 10 |
+| Booking conditions | `proposeLibraryBooking` with the right date, start, minutes or end, seat, equipment and useDesc: times given in several forms; missing time → ASK; useDesc inferable and not (left out); a named seat; "모니터 있는 스터디룸" → ASK; "내 공강에 7층 열람실" → ASK for the space first, with no tool; "아무 자리나" with and without a time | 14 |
+| Refusals | unsupported → "미구현", no card and no tool (3); notOnline → "현장", no card and no tool (3); out of window or hours (seat tomorrow, room in 4 days, 23:30, 7 hours) → `proposeLibraryBooking`'s reason and no card (3); 대학원 열람실 for an undergraduate → notEligible (1) | 10 |
 | Group rooms | `resolveFriend` for each Friend, then a room request card with companions (동의 요청); below GR_MIN → refusal naming how many more; above GR_MAX → a larger size named; same-name Friends → ASK; the held lunch Quest → `questId`; 9 people for a 10인실 and a 20인실 (G201) request → the 8-people refusal and no card | 7 |
 | Bookings, cancel, return | "내 예약", "취소해줘", "반납해줘", "오늘 3시 예약 취소" → the right card and target; "반납했어?" → CHAT, no card at all | 5 |
 | Tutorial Q&A | one per quest from the content; two whose answer the tutorial lacks, answered from the app's other information (the clinic's hours from the collected facts, today's exhibition from the Global Events); one on the User's progress | 8 |

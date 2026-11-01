@@ -7,7 +7,8 @@
 # Refusals (P06 spec, "The P6 eval suite"): unsupported → "미구현" and no card (3); notOnline → "현장" and no card (3);
 # out of the window or the hours (a seat tomorrow, a room in 4 days, 23:30 and 7 hours) → the reason and no card (3);
 # 대학원 열람실 for an undergraduate → notEligible (1). Each `expect` was drafted blind and settled by the PM's rulings
-# of 2026-11-02 (labels-notes.md). A refusal calls no tool: its bounds are in the rules.
+# of 2026-11-02 (labels-notes.md). A space refusal calls no tool; a condition refusal (window, hours, duration) goes
+# through proposeLibraryBooking, which holds the checks, and calls nothing else (ruling 16).
 
 # ── unsupported ──
 
@@ -115,7 +116,8 @@
   expect:
     actions: [REFUSE]
     tools:
-      forbidden: '*'
+      required: [proposeLibraryBooking]
+      only: true
     cards:
       - { kind: library, max: 0 }
     text:
@@ -131,7 +133,8 @@
   expect:
     actions: [REFUSE]
     tools:
-      forbidden: '*'
+      required: [proposeLibraryBooking]
+      only: true
     cards:
       - { kind: library, max: 0 }
     text:
@@ -147,7 +150,8 @@
   expect:
     actions: [REFUSE]
     tools:
-      forbidden: '*'
+      required: [proposeLibraryBooking]
+      only: true
     cards:
       - { kind: library, max: 0 }
     text:
