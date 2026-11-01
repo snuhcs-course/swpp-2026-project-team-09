@@ -70,7 +70,10 @@ describe('the queue page', () => {
 
     const card = within(screen.getByRole('listitem', { name: '새 특강' }));
     expect(card.getByRole('link', { name: '새 특강' })).toHaveAttribute('href', '/events/draft-1');
-    expect(card.getByRole('link', { name: 'SNU Now 178000, session 1' })).toHaveAttribute('href', QUEUED.address);
+    expect(card.getByRole('link', { name: 'SNU events list 178000, session 1' })).toHaveAttribute(
+      'href',
+      QUEUED.address,
+    );
     expect(card.getByText('The AI is unsure.')).toBeVisible();
     expect(card.getByText('제목이 비슷하지만 확실하지 않습니다')).toBeVisible();
     expect(card.getByRole('link', { name: '비슷한 특강' })).toHaveAttribute('href', '/events/event-1');
@@ -119,8 +122,9 @@ describe('deciding a queued session', () => {
 
     fireEvent.click(button('Publish as its own event'));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/Fill them in on its page/u);
-    expect(screen.getByRole('link', { name: '새 특강' })).toHaveAttribute('href', '/events/draft-1');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/Fill them in on its page/u);
+    expect(within(alert).getByRole('link', { name: 'Open the Draft' })).toHaveAttribute('href', '/events/draft-1');
   });
 
   it('says so when another Administrator decided first', async () => {
@@ -144,7 +148,10 @@ describe('the Source Posts of an event', () => {
     await opened(stored);
 
     const panel = within(screen.getByRole('region', { name: 'Source Posts' }));
-    expect(panel.getByRole('link', { name: 'extra.snu PGM012, session 1' })).toHaveAttribute('href', OWN.address);
+    expect(panel.getByRole('link', { name: 'extra.snu programmes PGM012, session 1' })).toHaveAttribute(
+      'href',
+      OWN.address,
+    );
     expect(panel.getByText('Its own post')).toBeVisible();
     expect(panel.getByText('By the AI')).toBeVisible();
     expect(panel.getByText('같은 행사입니다')).toBeVisible();

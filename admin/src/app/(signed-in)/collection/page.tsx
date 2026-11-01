@@ -13,19 +13,9 @@ import { type CollectionStatus, mainServer, type UnsettledPost } from '@/main-se
 import { formatInSeoul } from '@/seoul-time';
 import { asAdministrator } from '@/session';
 
+import { sourceLabel } from '../events/publication';
+
 import { JUDGEMENT_TRIES } from '../events/publication';
-
-const SOURCES: Record<string, string> = {
-  coop_menus: 'Co-op menus',
-  dormitory_menus: 'Dormitory menus',
-  veterinary_menus: 'Veterinary college menus',
-  shuttle_stops: 'Shuttle stops',
-  shuttle_vehicles: 'Shuttle vehicles',
-  snu_events: 'SNU events list',
-  extra_snu: 'extra.snu programmes',
-};
-
-const sourceName = (source: string): string => SOURCES[source] ?? source;
 
 function stateOf({ lastSucceededAt, lastFailedAt }: CollectionStatus): { label: string; broken: boolean } {
   if (lastSucceededAt === null) {
@@ -41,7 +31,7 @@ function StatusRow({ status }: { status: CollectionStatus }): ReactElement {
   const { label, broken } = stateOf(status);
   return (
     <tr>
-      <td className="font-medium">{sourceName(status.source)}</td>
+      <td className="font-medium">{sourceLabel(status.source)}</td>
       <td className={broken ? 'font-medium text-red-700' : 'text-zinc-600'}>{label}</td>
       <td className="whitespace-nowrap">
         {status.lastSucceededAt === null ? '—' : formatInSeoul(status.lastSucceededAt)}
@@ -75,7 +65,7 @@ function UnsettledRow({ post }: { post: UnsettledPost }): ReactElement {
   return (
     <tr>
       <td className="font-medium">
-        {sourceName(post.source)} ·{' '}
+        {sourceLabel(post.source)} ·{' '}
         <a href={post.address} target="_blank" rel="noreferrer" className="text-accent-strong hover:underline">
           Post {post.key}
         </a>

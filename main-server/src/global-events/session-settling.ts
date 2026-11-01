@@ -117,9 +117,14 @@ async function compared(
     stored,
     left.map(({ id }) => id),
   );
-  return applied.kind === 'attach'
-    ? { ...applied, attachedBy: SessionAttachment.ai, target: startOf(applied.globalEventId) }
-    : applied;
+  if (applied.kind !== 'attach') {
+    return applied;
+  }
+  // One event cannot take two sessions of a post, whether asked in one call or two.
+  const taken = await tx.sourcePostSession.count({ where: { sourcePostId, globalEventId: applied.globalEventId } });
+  return taken > 0
+    ? { kind: 'hold', heldFor: SessionHold.several_matches }
+    : { ...applied, attachedBy: SessionAttachment.ai, target: startOf(applied.globalEventId) };
 }
 
 // An event with another time stays as it is and is flagged, without raising its version.

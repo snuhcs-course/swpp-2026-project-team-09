@@ -107,7 +107,7 @@ export class PublicationStepService {
     const judgement = await this.judgements.judgeDraft(globalEventId);
     if (judgement !== null) {
       if (this.switches.choosesByAi) {
-        await this.sameEventChoices.ask(judgement.sourcePostId);
+        await this.sameEventChoices.ask(judgement.sourcePostId, true);
       }
       const published = await this.locked(async (tx) =>
         (await this.isBeingAsked(tx, judgement.sourcePostId)) ? false : this.settleJudged(tx, judgement.sourcePostId),

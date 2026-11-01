@@ -27,10 +27,10 @@ import { awaitsComparison } from './session-settling.js';
 type PostToAsk = PostWithOwnSessions & { judgement: Judgement | null };
 
 // The sessions of a post that the rules read and those a Judgement passed, that the step has not settled.
-function sessionsOf(post: PostToAsk): (ComparedSession & { place: string | null })[] {
+function sessionsOf(post: PostToAsk, judgedOnly: boolean): (ComparedSession & { place: string | null })[] {
   const byRules = post.sessions.flatMap((session) => {
     const { title, startsAt, place } = session.globalEvent;
-    return awaitsComparison(session) && startsAt !== null ? [{ title, startsAt, place }] : [];
+    return !judgedOnly && awaitsComparison(session) && startsAt !== null ? [{ title, startsAt, place }] : [];
   });
   const { judgement } = post;
   if (
@@ -82,9 +82,10 @@ export class SameEventChoicesService {
   }
 
   // Asks about the sessions no one has asked about: one call for the post, whose rows are claimed first. Sessions with no
-  // candidate left, or that the title rule decides, ask nothing.
-  async ask(sourcePostId: string): Promise<void> {
-    const sessions = await this.toAsk(sourcePostId);
+  // candidate left, or that the title rule decides, ask nothing. `judgedOnly` is for a run over a Draft, which leaves the
+  // rules' sessions as they are and would not apply an answer about them.
+  async ask(sourcePostId: string, judgedOnly = false): Promise<void> {
+    const sessions = await this.toAsk(sourcePostId, judgedOnly);
     if (sessions.length === 0) {
       return;
     }
@@ -117,16 +118,20 @@ export class SameEventChoicesService {
     return (await tx.sameEventAnswer.count({ where: { sourcePostId, outcome: null } })) > 0;
   }
 
-  private async toAsk(sourcePostId: string): Promise<SessionToCompare[]> {
+  private async toAsk(sourcePostId: string, judgedOnly = false): Promise<SessionToCompare[]> {
     const post = await this.prisma.sourcePost.findUniqueOrThrow({
       where: { id: sourcePostId },
       include: { judgement: true, sameEventAnswers: { select: { startsAt: true } }, ...WITH_OWN_SESSIONS },
     });
     const asked = new Set(post.sameEventAnswers.map(({ startsAt }) => startsAt.getTime()));
     const toAsk = new Map<number, SessionToCompare>();
-    for (const session of sessionsOf(post)) {
+    for (const session of sessionsOf(post, judgedOnly)) {
       const at = session.startsAt.getTime();
-      if (!asked.has(at) && !toAsk.has(at)) {
+      const same = toAsk.get(at);
+      if (same !== undefined) {
+        // Two sessions at one start have one answer, so it reads both their places.
+        same.place = [same.place, session.place].filter((place) => place !== null).join(' / ');
+      } else if (!asked.has(at)) {
         // oxlint-disable-next-line no-await-in-loop -- few sessions, and no transaction is held
         const events = await sameEventCandidates(this.prisma, session.startsAt, sourcePostId);
         const candidates = candidatesLeft(session, events);
@@ -148,7 +153,6 @@ export class SameEventChoicesService {
     const { choices, modelId } = await chooseSameEvent(
       this.model,
       { post: { title: event?.title ?? '', text: event?.description ?? '' }, source: post.source, sessions },
-      now,
       this.limits,
     );
     for (const { startsAt, outcome, globalEventId, reason, failure } of choices) {

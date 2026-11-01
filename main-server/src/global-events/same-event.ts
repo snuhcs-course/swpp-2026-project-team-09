@@ -17,7 +17,7 @@ import { isChangedByAdministrator, type PostWithOwnSessions } from './judgements
 import { POST_SOURCE_NAMES, POST_SOURCES } from './post-sources.js';
 
 const A_DAY = 24 * 60 * 60 * 1000;
-const KOREA_OFFSET = 9 * 60 * 60 * 1000;
+export const KOREA_OFFSET = 9 * 60 * 60 * 1000;
 
 // The names of the rules, as a link's reason records them.
 export const LINK_RULE = 'link';
@@ -167,6 +167,12 @@ export function ownDraftOf({
 
 export type PostSession = PostWithOwnSessions['sessions'][number];
 
+export class DraftChangedError extends Error {
+  constructor() {
+    super('An Administrator changed a Draft while it was being attached');
+  }
+}
+
 // Moves a session of its own Draft to another event, keeps what the Draft held, and removes the Draft. Sessions of other
 // posts already attached to the Draft follow, and so does a flag they set on it. An Administrator's change to the Draft
 // meanwhile fails the step over the post, so that the next Collection looks at it again.
@@ -194,7 +200,7 @@ export async function attachSession(
     where: { id: draft.id, state: GlobalEventState.draft, version },
   });
   if (count === 0) {
-    throw new Error('An Administrator changed a Draft while it was being attached');
+    throw new DraftChangedError();
   }
 }
 

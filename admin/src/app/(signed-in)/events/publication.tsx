@@ -20,7 +20,15 @@ export const isPublicationRoute = (value: unknown): value is PublicationRoute =>
 // A post's Judgement is tried at most this many times, as the main server's JUDGEMENT_TRIES says.
 export const JUDGEMENT_TRIES = 2;
 
-const SOURCES: Record<string, string> = { snu_events: 'SNU Now', extra_snu: 'extra.snu' };
+const SOURCES: Record<string, string> = {
+  coop_menus: 'Co-op menus',
+  dormitory_menus: 'Dormitory menus',
+  veterinary_menus: 'Veterinary college menus',
+  shuttle_stops: 'Shuttle stops',
+  shuttle_vehicles: 'Shuttle vehicles',
+  snu_events: 'SNU events list',
+  extra_snu: 'extra.snu programmes',
+};
 
 export const sourceLabel = (source: string): string => SOURCES[source] ?? source;
 

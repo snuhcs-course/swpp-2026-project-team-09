@@ -77,6 +77,17 @@ function Candidates({
   );
 }
 
+function RefusalLine({ refusal, draftId }: { refusal: string; draftId: string }): ReactElement {
+  return (
+    <p role="alert" className="text-red-700">
+      {refusal}{' '}
+      <Link href={`/events/${draftId}`} className="font-medium underline">
+        Open the Draft
+      </Link>
+    </p>
+  );
+}
+
 // One undecided session: attach it to a candidate, or publish its Draft as its own event. A Draft that needs more is
 // filled in on its page, where it stays in the queue until it is published.
 export function QueuedSessionCard({ session }: { session: QueuedSession }): ReactElement {
@@ -103,11 +114,7 @@ export function QueuedSessionCard({ session }: { session: QueuedSession }): Reac
         <p>{WHY_HELD[heldFor]}</p>
         {reason !== null && <p className="break-words text-zinc-600">{reason}</p>}
       </div>
-      {refusal !== null && (
-        <p role="alert" className="text-red-700">
-          {refusal}
-        </p>
-      )}
+      {refusal !== null && <RefusalLine refusal={refusal} draftId={draft.id} />}
       <Candidates
         candidates={candidates}
         pending={pending}

@@ -7,8 +7,8 @@
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
 import { causeOf, type Model } from '../assistant/adapter.js';
-import { koreaNow } from '../assistant/korea-time.js';
 import { SameEventOutcome, SessionHold, type GlobalEventState } from '../generated/prisma/client.js';
+import { KOREA_OFFSET } from './same-event.js';
 import { type JudgementLimits } from './judgement-model.js';
 import { maskedPost, type JudgedPost } from './judgement-post.js';
 
@@ -85,7 +85,7 @@ export interface SameEventChoices {
 
 // A start in Korea, a day alone being stored at 00:00.
 function koreaText(at: Date): string {
-  const text = new Date(at.getTime() + 9 * 60 * 60 * 1000).toISOString();
+  const text = new Date(at.getTime() + KOREA_OFFSET).toISOString();
   return text.slice(11, 16) === '00:00' ? text.slice(0, 10) : text.slice(0, 16);
 }
 
@@ -94,17 +94,19 @@ function candidatesOf(sessions: SessionToCompare[]): CandidateEvent[] {
   return [...new Map(sessions.flatMap(({ candidates }) => candidates).map((each) => [each.id, each])).values()];
 }
 
+const maskedPlace = (place: string | null): string =>
+  place === null ? 'not read' : maskedPost({ title: '', text: place }).text;
+
 function questionText({ post, source, sessions }: SameEventQuestion, candidates: CandidateEvent[]): string {
   const { title, text } = maskedPost(post);
   const numberOf = (id: string): number => candidates.findIndex((each) => each.id === id) + 1;
   const sessionLines = sessions.map(
     (session, index) =>
-      `Session ${index + 1}: ${koreaText(session.startsAt)}, place: ${session.place ?? 'not read'}, candidates: ${session.candidates.map(({ id }) => numberOf(id)).join(', ')}`,
+      `Session ${index + 1}: ${koreaText(session.startsAt)}, place: ${maskedPlace(session.place)}, candidates: ${session.candidates.map(({ id }) => numberOf(id)).join(', ')}`,
   );
   const candidateTexts = candidates.map((candidate, index) => {
     const masked = maskedPost({ title: candidate.title, text: candidate.description });
-    const place = candidate.place === null ? 'not read' : maskedPost({ title: '', text: candidate.place }).text;
-    return `Candidate ${index + 1}\nTitle: ${masked.title}\nStart: ${koreaText(candidate.startsAt)}\nPlace: ${place}\nText:\n${masked.text}`;
+    return `Candidate ${index + 1}\nTitle: ${masked.title}\nStart: ${koreaText(candidate.startsAt)}\nPlace: ${maskedPlace(candidate.place)}\nText:\n${masked.text}`;
   });
   return [
     `Source: ${source}\nTitle: ${title}\nNotice:\n${text}`,
@@ -122,16 +124,14 @@ function chosenId(
   return candidates.some((candidate) => candidate.id === id) ? id : undefined;
 }
 
+function failedChoice(startsAt: Date, failure: string): SessionChoice {
+  return { startsAt, outcome: SameEventOutcome.failed, globalEventId: null, reason: null, failure };
+}
+
 // What the answer says of one session: a missing or doubled entry, a candidate not listed for it or an answer at odds
 // with itself is no answer, and fails closed.
 function readEntry(entries: AnsweredSession[], session: SessionToCompare, numbered: CandidateEvent[]): SessionChoice {
-  const failed = (failure: string): SessionChoice => ({
-    startsAt: session.startsAt,
-    outcome: SameEventOutcome.failed,
-    globalEventId: null,
-    reason: null,
-    failure,
-  });
+  const failed = (failure: string): SessionChoice => failedChoice(session.startsAt, failure);
   const [entry, doubled] = entries;
   if (entry === undefined || doubled !== undefined) {
     return failed('The answer does not hold one entry for the session');
@@ -180,7 +180,6 @@ export function readAnswer(answer: Answer, sessions: SessionToCompare[]): Sessio
 export async function chooseSameEvent(
   model: Model,
   question: SameEventQuestion,
-  now: Date,
   { timeoutMs, maxOutputTokens }: JudgementLimits,
 ): Promise<SameEventChoices> {
   try {
@@ -190,7 +189,7 @@ export async function chooseSameEvent(
       messages: [
         {
           role: 'user',
-          content: `Today in Korea: ${koreaNow(now)}\n\n${questionText(question, candidatesOf(question.sessions))}`,
+          content: questionText(question, candidatesOf(question.sessions)),
         },
       ],
       output: Output.object({ schema: answerSchema }),
@@ -204,13 +203,7 @@ export async function chooseSameEvent(
   } catch (error) {
     const failure = causeOf(error);
     return {
-      choices: question.sessions.map(({ startsAt }) => ({
-        startsAt,
-        outcome: SameEventOutcome.failed,
-        globalEventId: null,
-        reason: null,
-        failure,
-      })),
+      choices: question.sessions.map(({ startsAt }) => failedChoice(startsAt, failure)),
       modelId: null,
     };
   }

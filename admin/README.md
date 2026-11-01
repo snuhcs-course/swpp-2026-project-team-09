@@ -98,6 +98,7 @@ controls and tables so that every page looks alike.
 | `/places`         | Kakao's map of the campus with every Place's outlines, or a marker for a Place without one; a search and a click select a Place and show its record.                                                    |
 | `/users`          | Lists the Users with their name, email, department, Friend ID and number of Friends, a User before onboarding marked; a search filters them. A User opens their page.                                   |
 | `/users/<id>`     | A User's Friends, "친구 맺기" with another onboarded User who is not yet their Friend, and "친구 끊기" after a confirmation. An unknown id shows the not-found page.                                    |
+| `/queue`          | Same-event queue: the sessions the system could not decide, why each waits, what the AI said and its candidates, to attach or publish as its own.                                                       |
 | `/collection`     | Collection status: each Source with its last success and last failure, a broken Source marked, and below them the posts that are not settled.                                                           |
 | `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so. |
 
@@ -112,6 +113,9 @@ A published event's Publication Route is a column of the Published table, and `/
 event's page, whose "← Events" goes back to the same filter. A Draft has no route, so the Drafts stay as they are;
 ended and cancelled events are in neither list. `needsAdministrator` marks a row and the
 event's page with "Needs an Administrator". The event's page also shows the route.
+
+The event's page lists its Source Posts and sessions, with their Source, link, how each was attached and why, and a
+detach action for those attached (`events/[id]/sessions-panel.tsx`). A flagged event offers to take the flag off.
 
 The event's page shows the Judgement of its post beside the post's text (`events/[id]/judgement-panel.tsx`), when there
 is one. A post has one Judgement, so the panel holds all its sessions: each with its values, the lines they were read
@@ -235,10 +239,11 @@ needs Docker. `pnpm test:cov` and `pnpm test:cov:unit` add the coverage of `src/
 src/app/sign-in/         the sign-in page, Google's button and the sign-in Server Action
 src/app/(signed-in)/     the pages behind the session; layout.tsx and site-menu.tsx are the menu around them
 src/app/(signed-in)/events/       the form's fields shared by both event pages (event-fields.tsx, fields.ts), the map and the Publication Route's labels (publication.tsx)
-src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx), its Judgement (judgement-panel.tsx) and its Server Action
+src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx), its Judgement (judgement-panel.tsx), its Source Posts (sessions-panel.tsx) and its Server Action
 src/app/(signed-in)/events/new/   the page for a new event and its Server Action
 src/app/(signed-in)/places/       the Places page and its map
 src/app/(signed-in)/users/        the Users page, and in [id]/ a User's page with their friendships
+src/app/(signed-in)/queue/        the same-event queue, with its Server Action
 src/app/(signed-in)/collection/   the Collection status page
 src/app/health/          /health/live and /health/ready, answered without a session; ready while the main server is live
 src/app/globals.css      the palette, the font and the shared classes

@@ -23,7 +23,7 @@ function refusedFor({ refusal }: MainServerError): string | null {
       return `This Draft needs ${listed((refusal.missing ?? []).map((each) => NEEDED[each]))} to be published. Fill them in on its page, and publish it again.`;
     case 'GLOBAL_EVENT_CHANGED':
       return 'Another Administrator changed this Draft after you opened the page. Look at it again.';
-    case 'SESSION_NOT_QUEUED':
+    case 'POST_SESSION_NOT_QUEUED':
       return 'Another Administrator has decided this session already.';
     case 'CANDIDATE_GONE':
       return 'That event is no longer a candidate of this session.';

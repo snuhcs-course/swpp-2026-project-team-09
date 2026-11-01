@@ -7,8 +7,9 @@
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { type PublicationStepService } from '../src/global-events/publication-step.service.js';
-import { eventsMessage } from './global-events.js';
-import { type Post, START } from './same-event.js';
+import { collectedPost, eventsMessage } from './global-events.js';
+import { answer, PLACE_LINE, TIME_LINE } from './judgements.js';
+import { PLACE, type Post, START } from './same-event.js';
 import { DIFFERENT, QueueWorld, SAME } from './same-event-queue.js';
 import { ScriptedModel } from './scripted-model.js';
 import { send } from './source-posts.js';
@@ -148,5 +149,53 @@ describe('Another server asking', () => {
     });
     expect((await world.sourcePostOf('snu_events', post)).stepFinishedAt).not.toBeNull();
     expect(world.scripted.received()).toHaveLength(0);
+  });
+});
+
+describe('One event and a post', () => {
+  it('takes one session of two at one start, and the other waits', async () => {
+    const event = await world.publishedThrough('extra_snu', world.programme(world.uniqueTitle()));
+    const post = collectedPost(world.postNumber(), {
+      title: world.uniqueTitle(),
+      description: '본문',
+      sessions: [
+        { number: 1, start: START, end: null, readFrom: 'body', place: PLACE },
+        { number: 2, start: START, end: null, readFrom: 'body', place: '제1공학관(301동)' },
+      ],
+    });
+    world.scripted.script(SAME);
+
+    await world.collectedOf('snu_events', post);
+
+    const { sessions } = await world.sourcePostOf('snu_events', post);
+    expect(sessions.map(({ attachedBy, heldFor }) => [attachedBy, heldFor])).toEqual([
+      ['ai', null],
+      ['own', 'several_matches'],
+    ]);
+    expect(sessions[0].globalEventId).toBe(event.id);
+    expect(world.sentToTheModel()).toContain('제1공학관(301동)');
+    expect(world.scripted.received()).toHaveLength(1);
+  });
+});
+
+describe('A run over a Draft', () => {
+  it('asks nothing about the sessions the rules read', async () => {
+    const { post: changes } = await withCandidate();
+    const post = collectedPost(Number(changes.key), {
+      title: changes.title,
+      description: `${TIME_LINE}\n${PLACE_LINE}`,
+      sessions: [
+        { number: 1, start: START, end: null, readFrom: 'body', place: PLACE },
+        { number: 2, start: null, end: null, readFrom: null, place: null },
+      ],
+    });
+    await stored(post);
+    const { sessions } = await world.sourcePostOf('snu_events', post);
+    world.scripted.script(answer());
+
+    await world.step.overDraft(sessions[1].globalEventId);
+
+    expect(world.scripted.received()).toHaveLength(1);
+    expect(await world.prisma.sameEventAnswer.count({ where: { sourcePostId: sessions[0].sourcePostId } })).toBe(0);
   });
 });

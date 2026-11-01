@@ -17,7 +17,7 @@ import {
   type QueuedSessionDto,
 } from './dto/same-event-queue.dto.js';
 import { GlobalEventsService } from './global-events.service.js';
-import { attachSession, candidatesLeft, namedPosts, sameEventCandidates } from './same-event.js';
+import { attachSession, candidatesLeft, DraftChangedError, namedPosts, sameEventCandidates } from './same-event.js';
 import { withStepLock } from './step-lock.js';
 
 const WITH_POST_AND_EVENT = {
@@ -43,7 +43,11 @@ const ownDraftSchema = z.object({
   endsAt: z.iso.datetime().nullable(),
 });
 
-const notQueued = (): Error => conflict('SESSION_NOT_QUEUED', 'This session no longer waits for an Administrator.');
+const notQueued = (): Error =>
+  conflict('POST_SESSION_NOT_QUEUED', 'This session no longer waits for an Administrator.');
+
+const draftChanged = (version: number): Error =>
+  conflict('GLOBAL_EVENT_CHANGED', 'The Global Event was changed since this version.', { version });
 
 const orNull = (at: string | null): Date | null => (at === null ? null : new Date(at));
 
@@ -91,7 +95,11 @@ export class SameEventQueueService {
       if (!candidates.some(({ id }) => id === globalEventId)) {
         throw conflict('CANDIDATE_GONE', 'This event is no longer a candidate of the session.');
       }
-      await attachSession(tx, session, globalEventId, null, undefined, SessionAttachment.administrator);
+      try {
+        await attachSession(tx, session, globalEventId, null, undefined, SessionAttachment.administrator);
+      } catch (error) {
+        throw error instanceof DraftChangedError ? draftChanged(session.globalEvent.version) : error;
+      }
     });
   }
 
@@ -105,14 +113,18 @@ export class SameEventQueueService {
           missing,
         });
       }
-      await tx.globalEvent.update({
-        where: { id: globalEvent.id },
+      // An edit on the event's own page takes no lock, so the write compares what was read.
+      const { count } = await tx.globalEvent.updateMany({
+        where: { id: globalEvent.id, version, state: GlobalEventState.draft },
         data: {
           state: GlobalEventState.published,
           publicationRoute: PublicationRoute.administrator,
           version: { increment: 1 },
         },
       });
+      if (count === 0) {
+        throw draftChanged(version);
+      }
       await tx.sourcePostSession.update({ where: { id }, data: { heldFor: null } });
     });
     this.globalEvents.signalChanged();
@@ -126,10 +138,10 @@ export class SameEventQueueService {
     return withStepLock(this.prisma, async (tx) => {
       const session = await tx.sourcePostSession.findUnique({ where: { id: sessionId } });
       if (session === null) {
-        throw notFound('SESSION_NOT_FOUND', 'No session has this id.');
+        throw notFound('POST_SESSION_NOT_FOUND', 'No session has this id.');
       }
       if (session.attachedBy === SessionAttachment.own || session.ownDraft === null) {
-        throw conflict('SESSION_NOT_DETACHABLE', 'This session is not attached with what its Draft held.');
+        throw conflict('POST_SESSION_NOT_DETACHABLE', 'This session is not attached with what its Draft held.');
       }
       const { startsAt, endsAt, ...kept } = ownDraftSchema.parse(session.ownDraft);
       const draft = await tx.globalEvent.create({
@@ -213,9 +225,7 @@ export class SameEventQueueService {
       throw notQueued();
     }
     if (session.globalEvent.version !== version) {
-      throw conflict('GLOBAL_EVENT_CHANGED', 'The Global Event was changed since this version.', {
-        version: session.globalEvent.version,
-      });
+      throw draftChanged(session.globalEvent.version);
     }
     return session;
   }

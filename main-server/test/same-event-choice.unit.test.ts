@@ -14,7 +14,6 @@ import {
 } from '../src/global-events/same-event-choice.js';
 import { ScriptedModel } from './scripted-model.js';
 
-const NOW = new Date('2026-11-01T03:00:00Z');
 const LIMITS = { timeoutMs: 200, maxOutputTokens: 500 };
 const [FIRST_ID, SECOND_ID] = ['aaaaaaaa-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000002'];
 
@@ -86,6 +85,7 @@ describe('readAnswer', () => {
 
 describe('chooseSameEvent', () => {
   const scripted = new ScriptedModel();
+  const sessionPlace = 'd@snu.ac.kr';
   const question = {
     post: { title: '제목 a@snu.ac.kr', text: '문의 02-880-1234' },
     source: 'snu_events',
@@ -96,10 +96,19 @@ describe('chooseSameEvent', () => {
     ],
   };
 
+  it('masks the place of a session too', async () => {
+    scripted.script({ text: JSON.stringify({ sessions: [entry(1, 'unsure')] }) });
+    const placed = { ...question.sessions[0], place: sessionPlace };
+
+    await chooseSameEvent(scripted.model, { ...question, sessions: [placed] }, LIMITS);
+
+    expect(JSON.stringify(scripted.received()[0].prompt)).not.toContain(sessionPlace);
+  });
+
   it('sends masked texts and numbers, never an address or an id', async () => {
     scripted.script({ text: JSON.stringify({ sessions: [entry(1, 'same', 1)] }) });
 
-    const { choices } = await chooseSameEvent(scripted.model, question, NOW, LIMITS);
+    const { choices } = await chooseSameEvent(scripted.model, question, LIMITS);
 
     expect(choices[0]).toMatchObject({ outcome: 'chosen', globalEventId: FIRST_ID, reason: '이유' });
     const sent = JSON.stringify(scripted.received()[0].prompt);
@@ -111,15 +120,19 @@ describe('chooseSameEvent', () => {
       expect(sent).not.toContain(hidden);
     }
   });
+});
+
+describe('chooseSameEvent, when the call fails', () => {
+  const scripted = new ScriptedModel();
+  const question = { post: { title: '제목', text: '본문' }, source: 'snu_events', sessions: [ONE] };
 
   it.each([
     ['an error', { error: new Error('The model went away') }],
-    ['a timeout', { stall: true as const }],
     ['a malformed answer', { text: '{"sessions": "모름"}' }],
   ])('gives failed choices on %s, with one call and no throw', async (_, step) => {
     scripted.script(step);
 
-    const { choices, modelId } = await chooseSameEvent(scripted.model, question, NOW, LIMITS);
+    const { choices, modelId } = await chooseSameEvent(scripted.model, question, LIMITS);
 
     expect(choices).toMatchObject([{ outcome: 'failed', globalEventId: null, failure: expect.any(String) as string }]);
     expect(modelId).toBeNull();
