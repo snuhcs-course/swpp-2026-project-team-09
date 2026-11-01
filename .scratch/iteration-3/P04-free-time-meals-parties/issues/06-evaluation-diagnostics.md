@@ -107,7 +107,7 @@ Declared in [evidence/06-walking-and-ride-diagnostics.md](../evidence/06-walking
 
 ### Agent usage (2026-11-01)
 
-- **Agent time** (estimate): about 31 minutes in all: about 24 minutes for the implementing session, about 1 for the agent that drafted the wordings, and about 7 for the two reviewers. The session that wrote this ticket is not counted, and neither is time spent waiting for a person.
-- **Tokens** (measured from the transcripts, subagents included, up to the draft PR):
-  - Input: about 120 not cached, about 11,740,000 cache reads and about 685,000 cache writes.
-  - Output: about 150,000.
+- **Agent time** (estimate): about 63 minutes in all: about 55 minutes for the implementing session, about 1 for the agent that drafted the wordings, and about 7 for the two reviewers. The session that wrote this ticket is not counted, and neither is time spent waiting for a person.
+- **Tokens** (measured from the transcripts, subagents included, up to the rebase on #159):
+  - Input: about 230 not cached, about 29,160,000 cache reads and about 1,115,000 cache writes.
+  - Output: about 218,000.
