@@ -18,17 +18,17 @@ No official run yet. It waits for P05's ticket 10a and for a person to confirm t
 
 ### Smoke run, not scored
 
-| Item | Value |
-| --- | --- |
-| Cases | `parties-named-classes`, 3 runs |
-| Date | 2026-11-01, 17:32 KST |
-| Commit | `871886a` |
-| Command | `pnpm eval --world p4 --case parties-named-classes --model anthropic/claude-haiku-5.5 --budget 0.5` |
-| Model | `anthropic/claude-haiku-5.5`; that day's `canonical_slug` was `anthropic/claude-haiku-5.5-20261007`, as P05's R0 looked it up on 2026-11-01 |
-| Decoding | Provider defaults: no temperature, top-p or seed passed |
-| Limits | 8 steps, 30 s, 1,000 output tokens |
-| Usage | Input 172,383, output 3,232, USD 0.0189 |
-| Result file | `eval/results/2026-11-01-871886a-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault`, kept locally and not committed |
+| Item        | Value                                                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cases       | `parties-named-classes`, 3 runs                                                                                                             |
+| Date        | 2026-11-01, 17:32 KST                                                                                                                       |
+| Commit      | `871886a`                                                                                                                                   |
+| Command     | `pnpm eval --world p4 --case parties-named-classes --model anthropic/claude-haiku-5.5 --budget 0.5`                                         |
+| Model       | `anthropic/claude-haiku-5.5`; that day's `canonical_slug` was `anthropic/claude-haiku-5.5-20261007`, as P05's R0 looked it up on 2026-11-01 |
+| Decoding    | Provider defaults: no temperature, top-p or seed passed                                                                                     |
+| Limits      | 8 steps, 30 s, 1,000 output tokens                                                                                                          |
+| Usage       | Input 172,383, output 3,232, USD 0.0189                                                                                                     |
+| Result file | `eval/results/2026-11-01-871886a-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault`, kept locally and not committed        |
 
 It was run to see that the suite reaches the real model. It is not scored, and nothing changed because of it. Its finding, a reply that leaves out the gap and the count, is not fixed before the first official run.
 
@@ -36,10 +36,10 @@ It was run to see that the suite reaches the real model. It is not scored, and n
 
 Read from runs that exist. Nothing was run for this.
 
-| Set | Commit | Runs | What it is |
-| --- | --- | --- | --- |
-| Baseline | `28c0ce1` | P05's R0, P19 runs with suffixes `-2`, `-3`, `-4` | In place of `c94bcc7`, which never ran. Same assistant code, model and limits |
-| Later | `871886a` | P05's R0p, P19 runs of `871886a7` with suffixes `-3`, `-4`, `-5` | P04's chat, with no change of P05 |
+| Set      | Commit    | Runs                                                             | What it is                                                                    |
+| -------- | --------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Baseline | `28c0ce1` | P05's R0, P19 runs with suffixes `-2`, `-3`, `-4`                | In place of `c94bcc7`, which never ran. Same assistant code, model and limits |
+| Later    | `871886a` | P05's R0p, P19 runs of `871886a7` with suffixes `-3`, `-4`, `-5` | P04's chat, with no change of P05                                             |
 
 All six are Haiku 5.5 with 8 steps, 30 s and 1,000 output tokens. The result files are in `eval/results/`, and each run holds the 62 cases of the fixed set. A case fails a run when any of its repetitions in that run failed.
 
@@ -47,11 +47,11 @@ All six are Haiku 5.5 with 8 steps, 30 s and 1,000 output tokens. The result fil
 
 The rule stands: a case newly fails when it fails in at least 2 later runs and at most 1 baseline run, and no case may newly fail. **Read by it, this is a fail, with three cases.**
 
-| Case | Failed runs, baseline → later | Where it failed in the later runs | From P04's tools? |
-| --- | --- | --- | --- |
-| `follow-up-yes-after-menus` | 0 → 3 | Action, tools, Proposal | Yes |
-| `compound-menus-and-shuttle` | 1 → 2 | Words alone | No new tool called |
-| `follow-up-seven-oclock` | 1 → 2 | Words alone | No new tool called |
+| Case                         | Failed runs, baseline → later | Where it failed in the later runs | From P04's tools?  |
+| ---------------------------- | ----------------------------- | --------------------------------- | ------------------ |
+| `follow-up-yes-after-menus`  | 0 → 3                         | Action, tools, Proposal           | Yes                |
+| `compound-menus-and-shuttle` | 1 → 2                         | Words alone                       | No new tool called |
+| `follow-up-seven-oclock`     | 1 → 2                         | Words alone                       | No new tool called |
 
 The other cases that moved did not newly fail. 8 failed less often, and 4 failed in one run more without reaching the rule.
 
@@ -73,25 +73,25 @@ The last two are a change of one run each, on replies that vary between runs. Th
 
 The baseline could call none. The later runs made 22 calls in 6 cases, none of them to `findFreeTimeEvents`:
 
-| Case | `findFreeFriends` | `findMealRestaurants` | `showRestaurants` | `getMyDay` |
-| --- | ---: | ---: | ---: | ---: |
-| `follow-up-yes-after-menus` | | 3 | 3 | |
-| `live-which-minsu` | 2 | 1 | 1 | 1 |
-| `follow-up-second-same-name-friend` | 3 | | | |
-| `ask-which-same-name-friend` | 3 | | | |
-| `ask-lunch-already-past` | 3 | | | |
-| `ask-which-minsu` | 2 | | | |
-| **All** | **13** | **4** | **4** | **1** |
+| Case                                | `findFreeFriends` | `findMealRestaurants` | `showRestaurants` | `getMyDay` |
+| ----------------------------------- | ----------------: | --------------------: | ----------------: | ---------: |
+| `follow-up-yes-after-menus`         |                   |                     3 |                 3 |            |
+| `live-which-minsu`                  |                 2 |                     1 |                 1 |          1 |
+| `follow-up-second-same-name-friend` |                 3 |                       |                   |            |
+| `ask-which-same-name-friend`        |                 3 |                       |                   |            |
+| `ask-lunch-already-past`            |                 3 |                       |                   |            |
+| `ask-which-minsu`                   |                 2 |                       |                   |            |
+| **All**                             |            **13** |                 **4** |             **4** |      **1** |
 
 ### Tokens and cost per turn
 
-| Measure | Baseline | Later | Change |
-| --- | ---: | ---: | ---: |
-| Turns | 224 | 223 | |
-| Input per turn | 19,236 | 34,970 | +82% |
-| Output per turn | 474 | 507 | +7% |
-| Cost per turn | USD 0.00216 | USD 0.00375 | +74% |
-| Input per run | 1,436,299 | 2,599,465 | +81% |
-| Cost of the 3 runs | USD 0.48 | USD 0.84 | +73% |
+| Measure            |    Baseline |       Later | Change |
+| ------------------ | ----------: | ----------: | -----: |
+| Turns              |         224 |         223 |        |
+| Input per turn     |      19,236 |      34,970 |   +82% |
+| Output per turn    |         474 |         507 |    +7% |
+| Cost per turn      | USD 0.00216 | USD 0.00375 |   +74% |
+| Input per run      |   1,436,299 |   2,599,465 |   +81% |
+| Cost of the 3 runs |    USD 0.48 |    USD 0.84 |   +73% |
 
 No run read or wrote the prompt cache.
