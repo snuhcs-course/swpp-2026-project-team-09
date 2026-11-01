@@ -49,3 +49,8 @@ Tests: `next-line.unit`, `next-lines.integration`, `eval-replay-curves.unit` on 
 
 - Agent time: about 40 minutes (estimate), one Opus 5.5 session, waiting on no person: the ticket, both halves, the look at the local web build, the benchmark's cases, and the PR bodies of the stack.
 - Tokens (estimate): about 91.5M input, of which about 91.1M cache reads, 412k cache writes and 0.2k uncached, and about 299k output. With cache reads excluded, about 0.7M. The reflector made no call; the benchmark's five cases cost about USD 0.015.
+
+### Agent usage (2026-11-02)
+
+- Agent time: about 40 minutes (estimate), one Opus 5.5 session, waiting on no person: merging #161, #162, #164, #165, #166, and #167 through the stack, moving the migrations after 3.0/Main's latest, the checks on every branch, and opening the PRs.
+- Tokens (estimate): about 14.0M input, of which about 13.4M cache reads, 565k cache writes and 0.2k uncached, and about 112k output. With cache reads excluded, about 0.7M.
