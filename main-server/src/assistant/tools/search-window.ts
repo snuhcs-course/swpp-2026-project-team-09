@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
+import { koreaTime } from '../korea-time.js';
 
 // The time window both search tools take, in Asia/Seoul: whole days, or times that override the end they name.
 
@@ -17,13 +18,13 @@ export const WINDOW_INPUT = {
     .describe('The first day of a period of whole days, a calendar day in Korea as YYYY-MM-DD. Give it with to.'),
   to: z.iso.date().optional().describe('The last day of that period, the same as from for one day.'),
   after: z.iso
-    .datetime({ local: true })
+    .datetime({ local: true, offset: true })
     .optional()
     .describe(
       'When the window starts, a date and time in Korea as YYYY-MM-DDTHH:MM, such as 2026-11-02T17:00 for "11/2 17:00 이후". With no before and no to, the window ends at 23:59 of that day.',
     ),
   before: z.iso
-    .datetime({ local: true })
+    .datetime({ local: true, offset: true })
     .optional()
     .describe(
       'When the window ends, in the same form, this minute included. With after, it gives both ends, such as "11/2 15–18시". With no after and no from, the window starts at 00:00 of that day.',
@@ -37,10 +38,18 @@ export interface WindowConditions {
   before?: string;
 }
 
+// The minute in Korea of a time given as YYYY-MM-DDTHH:MM. One with a zone, such as the +09:00 a candidate's time has,
+// is read in that zone.
+function koreaMinute(time: string): string {
+  return (/(?:Z|[+-]\d{2}:?\d{2})$/u.test(time) ? koreaTime(new Date(time)) : time).slice(0, 16);
+}
+
 // The first and the last minute of the window in Korea, as YYYY-MM-DDTHH:MM, or null when no end was given.
 function minutesOf({ from, to, after, before }: WindowConditions): { first: string; last: string } | null {
-  const first = after?.slice(0, 16) ?? (from === undefined ? undefined : `${from}T00:00`);
-  const last = before?.slice(0, 16) ?? (to === undefined ? undefined : `${to}T23:59`);
+  const first =
+    (after === undefined ? undefined : koreaMinute(after)) ?? (from === undefined ? undefined : `${from}T00:00`);
+  const last =
+    (before === undefined ? undefined : koreaMinute(before)) ?? (to === undefined ? undefined : `${to}T23:59`);
   if (first === undefined) {
     return last === undefined ? null : { first: `${last.slice(0, 10)}T00:00`, last };
   }

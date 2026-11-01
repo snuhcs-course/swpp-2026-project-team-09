@@ -25,11 +25,12 @@
 - A Quest for a cancelled event is never returned, though the Boards may still list it for another Sub Quest ahead. The spec does not say; such a Quest counts as its event, which is gone.
 - An event ending at the very minute a window starts does not overlap it, as `searched()` already read a period. `eval/p5/large-world/answers.ts` reads that case as overlapping (`end >= from`). No large-world case's recall depends on it, and the small world was not checked for it.
 - Ties in start order go by title in code points, then id. The spec names no tie rule, the database's own collation does not sort Hangul in 가나다 order, and random ids made the list differ between seedings. `large-v-05` holds only by this order: its card is one of three tied candidates across the twentieth place. Ticket 11's ranking replaces this for cases with words.
+- `after` and `before` also take a time with a zone, read in that zone (PR review, 2026-11-02). Without it, `+09:00`, the form of a candidate's time, was refused, and `Z` passed the schema and was read 9 hours off.
 - The Quest search takes no `words` or Place yet (ticket 11), so the intended calls' `words` and `placeId` are dropped by the input schema. The 16 cases this ticket frees hold on the window alone; their `until` is now null. The other 49 marks are as they were.
 - The prompt is unchanged, so the model learns `after` and `before` only from the tool descriptions. Whether it uses them is measured in R1 (ticket 12a).
 
 ### Agent usage (2026-11-02)
 
-- Agent time: about 18 minutes (estimate), one session with two review subagents, from the transcript's first and last timestamps up to this commit. It does not count waiting for CI and for reviews after the PR.
-- Tokens, subagents included: input 96, with 5,580,219 cache reads and 357,321 cache writes shown apart; output 94,525. Counted before this commit.
+- Agent time: about 27 minutes (estimate), one session with two review subagents, summed from the transcript with gaps capped at 5 minutes, up to this commit.
+- Tokens, subagents included: input 116, with 7,452,785 cache reads and 376,187 cache writes shown apart; output 106,880. Counted before this commit.
 - No eval model calls.

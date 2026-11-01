@@ -35,6 +35,13 @@ describe('windowOf', () => {
     expect(windowOf(conditions)).toEqual({ from: korea(`${from}:00`), to: korea(`${to}:00`) });
   });
 
+  it.each(['2026-11-02T17:00:00+09:00', '2026-11-02T08:00:00Z', '2026-11-02T04:00:00-04:00'])(
+    'reads %s in its zone, as the same minute in Korea',
+    (after) => {
+      expect(windowOf({ after })).toEqual({ from: korea('2026-11-02T17:00:00'), to: korea('2026-11-03T00:00:00') });
+    },
+  );
+
   it('gives none without an end', () => {
     expect(windowOf({})).toBeUndefined();
     expect(hasWindow({})).toBe(false);

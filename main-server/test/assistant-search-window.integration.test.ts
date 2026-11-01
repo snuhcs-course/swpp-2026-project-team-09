@@ -133,6 +133,16 @@ describe('searchRecruitingQuests, in a window of times', () => {
   });
 });
 
+describe('searchRecruitingQuests, given a time with a zone', () => {
+  it('reads it in that zone, so that a time copied from a candidate finds the same Quests', async () => {
+    await questAt('2093-02-20T16:59:00');
+    const quest = await questAt('2093-02-20T17:00:00');
+
+    expect(await questsFound({ after: '2093-02-20T17:00:00+09:00' })).toEqual([quest]);
+    expect(await questsFound({ after: '2093-02-20T08:00:00Z' })).toEqual([quest]);
+  });
+});
+
 describe('searchRecruitingQuests, by its first Sub Quest', () => {
   it("goes by the first Sub Quest's start, not by a later one", async () => {
     const quest = await questAt('2093-05-05T18:00:00');

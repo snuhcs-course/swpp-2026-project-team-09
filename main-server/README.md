@@ -2054,7 +2054,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     "none" when the operator reports no vehicle, or when no set was stored in the last minute.
   - Both searches take a time window in Korea: `from` and `to`, whole days, or `after` and `before`, each a date and
     time to the minute, of which the window holds both ends. A time overrides the day of its end. With only `after`, the
-    window ends at 23:59 of that day; with only `before`, it starts at 00:00 of that day.
+    window ends at 23:59 of that day; with only `before`, it starts at 00:00 of that day. A time with a zone is read in
+    that zone.
   - `searchGlobalEvents(window, place?, words?)` answers, as candidates, the published Global Events that have not
     ended and whose span overlaps the window, whose place holds `place` and whose title or description holds any of
     `words` (ignoring case), the earliest 20 first, with `more` when there were more. An event without an end lasts

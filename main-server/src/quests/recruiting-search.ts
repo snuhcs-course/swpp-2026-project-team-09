@@ -69,7 +69,7 @@ function conditionsOf(readerId: string, search: RecruitingSearch, now: Date): Pr
 // The ids of the Quests found, in start order, those without a start last. Every filter is here, before the list is cut,
 // so that a search stays quick however many Quests there are. The first Sub Quest is in the order that
 // QUEST_INCLUDE reads them, and the attending one takes its time from the Global Event as it is now.
-// Ties go by title in code points, 가나다 order in every database, so that the same world gives the same list.
+// Ties go by title in code points, which keeps Hangul in 가나다 order, so that every database gives the same list.
 export async function recruitingSearchIds(
   prisma: Pick<Prisma.TransactionClient, '$queryRaw'>,
   readerId: string,
