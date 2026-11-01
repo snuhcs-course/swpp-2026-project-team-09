@@ -2,16 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { INestApplication, Logger } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { APICallError, RetryError } from 'ai';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
-import { ask, postAssistantMessages, type SentMessage } from './assistant.js';
+import { ask, captureLogs, postAssistantMessages, type SentMessage } from './assistant.js';
 import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
@@ -50,26 +51,6 @@ function providerError(statusCode: number, sent: string): APICallError {
     statusCode,
     responseBody: `{"error":"${sent}"}`,
   });
-}
-
-// Everything written to the server's log, to the console and to the process's output, from now on.
-function captureLogs(): () => string {
-  const spies = [
-    ...(['log', 'warn', 'error', 'debug', 'verbose', 'fatal'] as const).map((level) =>
-      vi.spyOn(Logger.prototype, level),
-    ),
-    ...(['log', 'warn', 'error', 'info', 'debug'] as const).map((level) => vi.spyOn(console, level)),
-    vi.spyOn(process.stdout, 'write'),
-    vi.spyOn(process.stderr, 'write'),
-  ];
-  return () =>
-    spies
-      .flatMap((spy) => {
-        const values: unknown[] = spy.mock.calls.flat();
-        return values;
-      })
-      .map((value) => (value instanceof Error ? `${value.message} ${value.stack}` : JSON.stringify(value)))
-      .join('\n');
 }
 
 describe('A message the model fails on gets the error reply, and the log the cause', () => {
