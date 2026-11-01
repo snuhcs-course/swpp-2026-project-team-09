@@ -19,7 +19,7 @@
 - [x] A second labeller labels an overlapping part from scratch, without the drafts, and the agreement with the reviewed answers is recorded as in ticket 01.
 - [x] Evaluations A and B are not drafted this way: their answers are read from real posts by people, since a drafting model would share the Judgement's mistakes.
 - [x] The eval harness's own tests pass in CI with the new suite.
-- [ ] The commit is tagged as C0 and recorded.
+- [x] The commit is tagged as C0 and recorded.
 - [ ] R0 runs on the C0 commit with no chat change of P05 in it, on a clean working tree, three times per case, with the exact command recorded. P19's cases run three times on the same commit as the regression baseline.
 - [ ] The record names the commit, the date and time, the model slug, the repetitions, the limits and the cost, as section 4.3 lists. Scores go into the improvement log table as R0 with each threshold's pass or fail, and a failure analysis table is written for the failed cases.
 
@@ -43,9 +43,13 @@ Known gap: `join-08` expects a Proposal, as the spec says, but a User holding a 
 
 `TaeHyun79` reviewed `8abf006` and the owner settled three items before C0. `search-o-05` now expects `전시 보러 가요`, as `join-17` does; section 8 of the rules says that "about 300 m" means 300 m or less and that a broad word such as 운동 finds every activity under it. Only `search-o-05`'s answer changed.
 
+### C0 tagged (2026-11-01)
+
+`eval-freeze-iter3-chat` on `28c0ce1`, the merge commit of #140. The record is `main-server/eval/p5/README.md`. R0 is left, once its cost and command are approved.
+
 ### Agent usage (2026-11-01)
 
 Agent work so far; R0 will add to it.
 
-- Agent time: about 1 hour 20 minutes (estimate), one session with two review subagents and five drafting CLI calls.
-- Tokens, subagents and drafting included: input 342, with 30,290,144 cache reads and 963,635 cache writes shown apart; output 350,613. Counted before this commit.
+- Agent time: about 1 hour 50 minutes (estimate), one session with two review subagents and five drafting CLI calls.
+- Tokens, subagents and drafting included: input 470, with 43,616,665 cache reads and 1,340,027 cache writes shown apart; output 408,138. Counted before this commit.
