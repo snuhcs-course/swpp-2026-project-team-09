@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-26  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { canBeChoseong, getChoseong } from 'es-hangul';
@@ -111,6 +112,8 @@ const MORPHEMES = [
 
 // The tail a name is said without (R6): 체육관 is 체육, 테니스장 is 테니스.
 const TAILS = ['센터', '센타', '관', '동', '원', '소', '장', '역'];
+// A college named X과대학 or X과학대학 is said X대 (R8): 수의과대학 is 수의대, 자연과학대학 is 자연대, 공과대학 is 공대.
+const COLLEGE = /^([가-힣]+?)과학?대학$/u;
 
 // Hangul syllables are single code points, so code points are syllables.
 export function syllablesOf(text: string): string[] {
@@ -239,6 +242,10 @@ export function abbreviations(name: string): string[] {
     const joined = variant.replaceAll(SPACES, '');
     if (joined !== own) {
       forms.add(joined);
+    }
+    const college = COLLEGE.exec(joined)?.[1];
+    if (college !== undefined) {
+      forms.add(`${college}대`);
     }
     const words = variant.split(' ').filter((word) => HANGUL_WORD.test(word));
     if (words.length === 0) {
