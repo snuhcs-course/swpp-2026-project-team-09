@@ -5,6 +5,8 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -18,6 +20,7 @@ import { askGoogle, forgetGoogle, type GoogleAccountPrompt, googleAvailable } fr
 import { isSnuAccount, readIdToken, subjectOf } from '@/auth/id-token';
 import { forgetTokens, heldTokens, keepTokens } from '@/auth/tokens';
 import { namedSignInEnding, signInEnding } from '@/dev-settings';
+import { endLibrarySessionInBackground } from '@/library/end-session';
 import { keep, readKept } from '@/storage/kept';
 
 // Sign-in lives behind these two operations. A build that holds Google's sign-in module asks Google which account.
@@ -126,10 +129,13 @@ async function signOutOfMainServer(): Promise<void> {
   await forgetTokens();
 }
 
+// The library session ends too, whether or not the User logged in to it, so that the next person on the phone never
+// sees this one's bookings. It starts once the tokens are gone and the sign-out does not wait on the library's site.
 export async function signOut(): Promise<void> {
   if (asksMainServer()) {
     await signOutOfMainServer();
   }
+  endLibrarySessionInBackground();
   await keep({ signedIn: false, suggestion: null });
   if (googleAvailable()) {
     await forgetGoogleQuietly();

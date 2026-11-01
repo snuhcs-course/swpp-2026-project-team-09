@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "14102001",
+    "NAME": "G401",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "모니터/무선랜/전원 제공|8인실 최소 6명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_14102001.png",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "14102001"
+  }
+}

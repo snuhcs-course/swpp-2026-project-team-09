@@ -40,6 +40,7 @@ import { TabScreen } from '../shell/tab-screen';
 import { SharingCard } from './sharing-card';
 import { TutorialRow } from './tutorial-row';
 import { useSharingSwitch } from './use-sharing-switch';
+import { LibraryCard } from './library-card';
 import { thisVersionLine } from './version-line';
 import { WeekCard } from './week-card';
 
@@ -236,8 +237,8 @@ interface MeScreenProps {
   onSharingShown: () => void;
 }
 
-// The 내 정보 tab, the `Profile` frame: the User's profile, the 새내기 튜토리얼 row, the week, the Master Switch, the ways to the User's
-// Friends, Parties and Quests, the sign-out, and below it the build and update the phone runs.
+// The 내 정보 tab, the `Profile` frame: the User's profile, the 새내기 튜토리얼 row, the week, the Master Switch, the ways to
+// the User's Friends, Parties and Quests, the library's login, the sign-out, and below it the build and update the phone runs.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();
@@ -256,6 +257,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
           sharing={sharing}
         />
         <ActivityCard />
+        <LibraryCard />
         <SignOut />
         <Text style={styles.version}>{thisVersionLine()}</Text>
       </ScrollView>

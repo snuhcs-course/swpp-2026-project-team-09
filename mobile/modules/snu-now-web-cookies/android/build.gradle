@@ -1,0 +1,21 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.bonnieandclaude.snunow'
+version = '1.0.0'
+
+android {
+  namespace 'com.bonnieandclaude.snunow.webcookies'
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}

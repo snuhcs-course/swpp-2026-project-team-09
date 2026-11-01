@@ -396,9 +396,11 @@ src/map/            the one map component, its interface and the pictures of its
 src/position/       the User's own position: the phone's, or the development walk, and its sending
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
+src/library/        관정도서관: the library client, its hidden web view and login, and the end of its session
 src/update/         the check at start for a newer native build, and its dialog
 src/screens/        the screens that the routes show; a screen of several files has a folder
-modules/            the native modules, local Expo modules: the map (snu-now-map) and text recognition (snu-now-ocr)
+modules/            the native modules, local Expo modules: the map (snu-now-map), text recognition (snu-now-ocr) and
+                    the web views' cookie clearing (snu-now-web-cookies)
 __tests__/          Jest tests
 maestro/            the device runs' Maestro flows: integration/ holds M1 and M2, subflows/ the steps they share
 scripts/            the device runs' two commands: build-mock-apk.sh and test-device.sh
