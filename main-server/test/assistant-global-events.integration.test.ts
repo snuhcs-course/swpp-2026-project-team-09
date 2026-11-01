@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -119,7 +120,10 @@ describe('searchGlobalEvents, by words and place', () => {
     await postAssistantMessages(app, accessToken, ask('그 주말에 공연 있어?'));
 
     expect(model.toolResults()).toEqual([
-      { result: 'none', reason: 'No published Global Event holding 공연 takes place from 2098-04-05 to 2098-04-06.' },
+      {
+        result: 'none',
+        reason: 'No published Global Event holding 공연 takes place from 2098-04-05T00:00 to 2098-04-06T23:59.',
+      },
     ]);
   });
 });
