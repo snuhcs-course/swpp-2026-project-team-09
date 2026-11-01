@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +12,7 @@ import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
-import { LOBBY_KEY, lobbyQuery } from '@/api/queries';
+import { LOBBY_KEY, lobbyQuery, TUTORIAL_KEY } from '@/api/queries';
 import type { Lobby, Profile, ProfileChange } from '@/api/types';
 import { Button, cardStyles, color, FullScreenPanel, LoadingState, space, text, useToast } from '@/design-system';
 import { DepartmentField } from '../onboarding/department-field';
@@ -100,8 +101,9 @@ function levelOf(department: string): CourseLevel {
     : 'undergraduate';
 }
 
-// Sends the changed fields; the answer's profile replaces the Lobby's, and the screen goes back. A failure leaves the
-// form as it is: a refused 학번 is marked on its field, and anything else is told by a toast.
+// Sends the changed fields; the answer's profile replaces the Lobby's, the tutorial is read again (the server's
+// `eligibleByDefault` reads the admission year and 소속), and the screen goes back. A failure leaves the form as it is:
+// a refused 학번 is marked on its field, and anything else is told by a toast.
 function useSave(profile: Profile): {
   working: boolean;
   studentNumberRefused: boolean;
@@ -122,6 +124,7 @@ function useSave(profile: Profile): {
     apiClient.updateProfile(change).then(
       (saved) => {
         queryClient.setQueryData<Lobby>(LOBBY_KEY, (lobby) => lobby && { ...lobby, profile: saved });
+        void queryClient.invalidateQueries({ queryKey: TUTORIAL_KEY });
         router.back();
       },
       (error: unknown) => {
