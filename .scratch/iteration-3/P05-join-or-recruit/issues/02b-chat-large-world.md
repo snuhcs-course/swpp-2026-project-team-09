@@ -18,7 +18,7 @@
 - [x] Subset V (more matches in a window than fit in one result, answers late in the day) runs here, with cases for the other subsets at scale. E3 and E4 are reported per world.
 - [x] Subset tags and thresholds for the large world's cases are committed with them.
 - [x] A test in CI, with no model, calls the search tools with each case's intended inputs and checks that the server's result holds every expected card (server recall). Until ticket 10 lands, the cases that need its inputs are marked as expected to fail.
-- [ ] R0 is run in the large world on code with no chat change of P05, and recorded beside the small world's R0.
+- [x] R0 is run in the large world on code with no chat change of P05, and recorded beside the small world's R0.
 
 ## Comments
 
@@ -43,9 +43,18 @@ Nothing wrong was found in ticket 02's world, cases or answers.
 
 `eval-freeze-iter3-chat-large` on `cdf3c01`, the merge commit of #152. The record is `main-server/eval/p5/README.md`. R0 is left, once its cost and command are approved.
 
+### R0 (2026-11-01)
+
+The record is `main-server/eval/p5/r0-large.md`, with `r0-large-failures.json` and the results. It ran on `cdf3c01`, the C0 tag, in a clean tree: 240 runs, USD 0.81. 47 runs passed and 11 of 80 cases passed all three. E7 is under its floor (79/432), E4 is 6/177, E3 and E9 are under their targets, and E1, E2 and E5 are over their floors.
+
+Of the 193 failed runs, 131 missed cards the run's searches did not return, and 115 of those stopped with `more: true` in a result.
+
+37 runs got 503. 33 are ticket 10a's shape. 4 have no text anywhere and called no card tool, their last step cut at 1,000 output tokens. Ticket 10a leaves those at 503, and looks for their cause in R0a's traces.
+
+P04's chat PRs landed after this run, so the same suite ran again as R0p on `871886a` (`main-server/eval/p5/r0p.md`), the baseline R0a is compared with. G1 there is 1, `follow-up-yes-after-menus`, which now calls #142's `findMealRestaurants`. It comes from P04's change, not P05's. Whether the case or the behaviour is right is not decided here.
+
 ### Agent usage (2026-11-01)
 
-Agent work so far; R0 will add to it.
-
-- Agent time: about 2 hours 20 minutes (estimate), one session with two review subagents.
-- Tokens, subagents included: input 444, with 35,221,069 cache reads and 1,305,380 cache writes shown apart; output 386,380. Counted before this commit.
+- Agent time: about 3 hours 10 minutes (estimate), one session with two review subagents. It adds about 50 minutes for R0 and R0p and their records, and does not count the 1 hour 30 minutes the runs took.
+- Tokens, subagents included: input 542, with 51,469,110 cache reads and 1,474,568 cache writes shown apart; output 453,053. Counted before this commit; what was added since 15:42 KST may include late work on ticket 02.
+- Tokens of the eval model, not an agent's: R0 in the large world input 6,970,434, output 220,999, USD 0.81. R0p input 29,414,333, output 541,501, USD 3.21. No cache.
