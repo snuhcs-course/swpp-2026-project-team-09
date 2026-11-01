@@ -4,13 +4,17 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { Logger } from '@nestjs/common';
+import { generateText } from 'ai';
 import { inject, type ProvidedContext } from 'vitest';
+import { openRouterModel } from '../src/assistant/adapter.js';
 import { loadCases } from '../eval/cases.ts';
 import { FALLBACK_PRICES } from '../eval/cost.ts';
 import { type RunOptions } from '../eval/options.ts';
+import { RawResponses } from '../eval/raw-responses.ts';
+import { Recorder } from '../eval/recorder.ts';
 import { type EvalApp, runCase, startEvalApp } from '../eval/runner.ts';
 import { seedWorld, type World } from '../eval/world.ts';
+import { captureLogs } from './assistant.js';
 import { type SeededDatabase, seededDatabase } from './containers.js';
 import { ScriptedModel } from './scripted-model.js';
 
@@ -66,14 +70,6 @@ function sample(): ReturnType<typeof loadCases>[number] {
   return found;
 }
 
-// Everything written to the server's log from now on.
-function captureLogs(): () => string {
-  const spies = (['log', 'warn', 'error', 'debug', 'verbose', 'fatal'] as const).map((level) =>
-    vi.spyOn(Logger.prototype, level),
-  );
-  return () => JSON.stringify(spies.flatMap((spy) => spy.mock.calls));
-}
-
 describe('A step cut at the output limit', () => {
   it('with no text keeps its parts, reasoning tokens and raw response in the trace only, and stays 503', async () => {
     const logs = captureLogs();
@@ -88,7 +84,9 @@ describe('A step cut at the output limit', () => {
     expect(turn?.status).toBe(503);
     expect(turn?.reply).toBeNull();
     expect(turn?.steps[0]?.cut).toBeUndefined();
-    expect(turn?.steps[1]).toMatchObject({
+    // Read back as the run is saved.
+    const saved: unknown = JSON.parse(JSON.stringify(turn?.steps[1]));
+    expect(saved).toMatchObject({
       finishReason: 'length',
       text: '',
       cut: {
@@ -113,5 +111,31 @@ describe('A step cut at the output limit', () => {
     expect(turn?.reply).toMatchObject({ text: '잘린 답이', cards: [], mapButtons: [], proposal: null });
     expect(turn?.steps[0]?.cut).toMatchObject({ content: [{ type: 'text', text: '잘린 답이' }], reasoningTokens: 0 });
     expect(logs()).not.toContain('잘린 답이');
+  });
+});
+
+describe("The provider's response on a cut step", () => {
+  it('is kept as it came, with what its library drops, and the reply stays the same', async () => {
+    const unknownDetail = { type: 'reasoning.new-kind', note: '모르는 항목' };
+    const body = {
+      id: 'gen-2',
+      model: 'test/model',
+      choices: [
+        {
+          index: 0,
+          finish_reason: 'length',
+          message: { role: 'assistant', content: '잘린 글', reasoning_details: [unknownDetail] },
+        },
+      ],
+      usage: { prompt_tokens: 5, completion_tokens: 321, total_tokens: 326 },
+    };
+    const rawResponses = new RawResponses(() => Promise.resolve(Response.json(body)));
+    const recorder = new Recorder({ temperature: null, topP: null }, rawResponses);
+    const recorded = recorder.wrap(openRouterModel('test-key', 'test/model', rawResponses.fetch));
+
+    const { text, finishReason } = await generateText({ model: recorded, prompt: '안녕' });
+
+    expect({ text, finishReason }).toEqual({ text: '잘린 글', finishReason: 'length' });
+    expect(recorder.take()[0]?.cut?.rawResponse).toEqual(body);
   });
 });

@@ -7,6 +7,7 @@
 
 import { APICallError, type LanguageModelMiddleware, wrapLanguageModel } from 'ai';
 import { type Model, type RunObserver, type StepEnd, type ToolCallEnd } from '../src/assistant/adapter.js';
+import { type RawResponses } from './raw-responses.ts';
 import { type StepTrace } from './trace.ts';
 
 // The recorder (spec P19, "The recorder"): a wrapper around the model that records each model call, the tools the
@@ -44,8 +45,13 @@ function inputOf(text: string): unknown {
 
 type Generated = Awaited<ReturnType<Parameters<NonNullable<LanguageModelMiddleware['wrapGenerate']>>[0]['doGenerate']>>;
 
-// What the provider answered, on the step it belongs to. The result itself goes on to the run untouched.
-function record(step: StepTrace, { finishReason, usage, content, response }: Generated): void {
+// What the provider answered, on the step it belongs to. The result itself goes on to the run untouched. `rawResponse`
+// is the response as it came, or without one, as the provider library read it.
+function recordResult(
+  step: StepTrace,
+  { finishReason, usage, content, response }: Generated,
+  rawResponse: unknown,
+): void {
   const { inputTokens, outputTokens } = usage;
   step.finishReason = finishReason.unified;
   step.usage = {
@@ -62,14 +68,21 @@ function record(step: StepTrace, { finishReason, usage, content, response }: Gen
     }
   }
   if (finishReason.unified === 'length') {
-    step.cut = { content, reasoningTokens: outputTokens.reasoning ?? null, rawResponse: response?.body ?? null };
+    step.cut = {
+      content,
+      reasoningTokens: outputTokens.reasoning ?? null,
+      rawResponse: rawResponse ?? response?.body ?? null,
+    };
   }
 }
 
 export class Recorder implements RunObserver {
   private steps: StepTrace[] = [];
 
-  constructor(private readonly sampling: Sampling) {}
+  constructor(
+    private readonly sampling: Sampling,
+    private readonly rawResponses?: RawResponses,
+  ) {}
 
   // The model with the run's sampling settings, recording each call.
   wrap(model: Model): Model {
@@ -136,7 +149,7 @@ export class Recorder implements RunObserver {
         const started = performance.now();
         try {
           const result = await doGenerate();
-          record(step, result);
+          recordResult(step, result, this.rawResponses?.take());
           return result;
         } catch (error) {
           step.error = nameOf(error);

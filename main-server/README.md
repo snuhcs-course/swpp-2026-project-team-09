@@ -2024,7 +2024,8 @@ its model through OpenRouter with the Vercel AI SDK
   - **The reply's text** is the text of the model's steps in order, a step that repeats the one before it left out,
     since the model may write beside a tool call and close with a line or with nothing. A run that wrote no text but
     shows cards, map buttons or a Proposal says `아래에서 확인해 보세요.` above them, and the server logs that it did, as
-    `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no Proposal)`.
+    `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
+Proposal)`.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
     a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
@@ -2136,8 +2137,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
   call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
-  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). `causeOf` names why a
-  run failed for the log.
+  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
+  text from the steps' text, or the fixed sentence. `causeOf` names why a run failed for the log.
 
 ### Testing with the scripted model
 
@@ -2200,8 +2201,8 @@ budget. The budget is an estimate; a credit limit on the OpenRouter key is the h
 
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
 reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,
-its reasoning tokens and the provider's response as the provider library read it. Only the trace holds these, never
-the server's logs. The tool results come through the run observer, the one seam in the
+its reasoning tokens and the provider's response as it came, which the benchmark's fetch (`RawResponses`) keeps because
+the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
 shows its error too. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so

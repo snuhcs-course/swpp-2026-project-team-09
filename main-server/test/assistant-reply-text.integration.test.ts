@@ -19,18 +19,19 @@ import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
 
 // The reply's text when the model's steps wrote it in different places, or wrote none, with the scripted model in the
-// model's place. The files share the database, so the test's event stands in a month of 2097 no other file uses.
+// model's place. The files share the database, so the test's event stands in a month of 2097 no other file uses, and
+// its clock on a morning of 2095 no other file uses.
 
 const UNAVAILABLE = { statusCode: 503, error: 'Service Unavailable', message: 'The Assistant cannot answer now' };
-// 2096-05-07 09:00 in Korea.
-const NOW = new Date('2096-05-07T00:00:00Z');
+// 2095-09-01 09:00 in Korea.
+const NOW = new Date('2095-09-01T00:00:00Z');
 const LUNCH = {
-  title: '2096 학식 같이 먹어요',
+  title: '2095 학식 같이 먹어요',
   description: '내일 점심 학식 같이 먹을 사람 모집해요',
   joinPolicy: 'open',
   board: 'meal',
   capacity: 4,
-  startsAt: '2096-05-08T12:00:00+09:00',
+  startsAt: '2095-09-02T12:00:00+09:00',
   place: null,
   globalEvent: null,
   invitees: [],
@@ -113,10 +114,10 @@ describe('A run that wrote no text', () => {
 
   it('says the fixed sentence over cards', async () => {
     const warnings = captureWarnings();
-    const startsAt = new Date('2097-03-05T18:00:00+09:00');
+    const startsAt = new Date('2097-08-05T18:00:00+09:00');
     const event = await storeEvent(prisma, { startsAt, endsAt: new Date(startsAt.getTime() + 60 * 60 * 1000) });
     model.script(
-      { tool: 'searchGlobalEvents', input: { from: '2097-03-05', to: '2097-03-05' } },
+      { tool: 'searchGlobalEvents', input: { from: '2097-08-05', to: '2097-08-05' } },
       { tool: 'showGlobalEvents', input: { ids: [event.id] } },
       { cut: {} },
     );
@@ -147,7 +148,7 @@ describe('A run that wrote no text', () => {
 describe('The error reply stays', () => {
   it('for a run with no text that showed nothing', async () => {
     const warnings = captureWarnings();
-    model.script({ tool: 'getMenus', input: { date: '2096-05-07' } }, { text: '   ' });
+    model.script({ tool: 'getMenus', input: { date: '2095-09-01' } }, { text: '   ' });
 
     const response = await send();
 

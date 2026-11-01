@@ -27,7 +27,7 @@ export interface ToolCallTrace {
 }
 
 // What a step cut at the output limit wrote, to find out why it was cut: its content parts as the provider library gave
-// them, its reasoning tokens and the provider's response. Only the trace keeps it, never the server's logs.
+// them, its reasoning tokens and the provider's response as it came. Only the trace keeps it, never the server's logs.
 export interface CutStepTrace {
   content: unknown[];
   reasoningTokens: number | null;

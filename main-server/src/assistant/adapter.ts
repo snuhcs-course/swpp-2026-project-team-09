@@ -11,14 +11,7 @@
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
-import {
-  type Asker,
-  type ChatMessage,
-  type Feature,
-  type FeatureReply,
-  type Presented,
-  type ToolContext,
-} from './feature.js';
+import { type Asker, type ChatMessage, type Feature, type FeatureReply, type ToolContext } from './feature.js';
 import { FoundIds } from './found-ids.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
 
@@ -31,9 +24,9 @@ export const MODEL_PORT = 'MODEL_PORT';
 
 export type Model = Exclude<LanguageModel, string>;
 
-// The model named by its OpenRouter id, such as anthropic/claude-haiku-5.5.
-export function openRouterModel(apiKey: string, modelId: string): Model {
-  return createOpenRouter({ apiKey }).chat(modelId);
+// The model named by its OpenRouter id, such as anthropic/claude-haiku-5.5. Only the benchmark passes a fetch of its own.
+export function openRouterModel(apiKey: string, modelId: string, fetch?: typeof globalThis.fetch): Model {
+  return createOpenRouter({ apiKey, fetch }).chat(modelId);
 }
 
 // What one message may take. Each tool call is one model call, and so is the answer. The time runs over every call
@@ -189,8 +182,7 @@ export async function runFeature(
             });
           },
   });
-  const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
-  const reply = finishReason === 'tool-calls' ? null : replyOf(textOf(steps), finishReason, presented);
+  const reply = finishReason === 'tool-calls' ? null : replyOf(textOf(steps), finishReason, feature, context);
   if (reply === null) {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
@@ -198,7 +190,8 @@ export async function runFeature(
 }
 
 // The reply of a run that ended: the model's text, the fixed sentence over what it showed without any, or none.
-function replyOf(text: string, finishReason: string, presented: Presented): FeatureReply | null {
+function replyOf(text: string, finishReason: string, feature: Feature, context: ToolContext): FeatureReply | null {
+  const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
   if (text !== '') {
     return { ...presented, text, noTextFinishReason: null };
   }
