@@ -4,6 +4,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -87,7 +88,7 @@ describe('party_for_open_event', () => {
           capacity: 3,
           startsAt: '2102-01-03T18:00:00+09:00',
           place: null,
-          globalEvent: toPublishedGlobalEventDto(event),
+          globalEvent: toPublishedGlobalEventDto({ ...event, sessions: [] }),
           invitees: [],
         },
       },

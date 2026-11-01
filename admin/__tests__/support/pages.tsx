@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react';
@@ -12,6 +13,7 @@ import CollectionPage from '@/app/(signed-in)/collection/page';
 import EventPage from '@/app/(signed-in)/events/[id]/page';
 import NewEventPage from '@/app/(signed-in)/events/new/page';
 import PlacesPage from '@/app/(signed-in)/places/page';
+import QueuePage from '@/app/(signed-in)/queue/page';
 import UserPage from '@/app/(signed-in)/users/[id]/page';
 import UsersPage from '@/app/(signed-in)/users/page';
 import EventsPage from '@/app/(signed-in)/page';
@@ -26,20 +28,28 @@ export async function openAdministrators(): Promise<void> {
   await openPage(async () => SignedInLayout({ children: await AdministratorsPage() }));
 }
 
-export async function openEvents(): Promise<void> {
-  await openPage(async () => SignedInLayout({ children: await EventsPage() }));
-}
-
-export async function openEvent(id: string): Promise<void> {
+export async function openEvents(query: Record<string, string> = {}): Promise<void> {
   await openPage(async () =>
     SignedInLayout({
-      children: await EventPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) }),
+      children: await EventsPage({ params: Promise.resolve({}), searchParams: Promise.resolve(query) }),
+    }),
+  );
+}
+
+export async function openEvent(id: string, query: Record<string, string> = {}): Promise<void> {
+  await openPage(async () =>
+    SignedInLayout({
+      children: await EventPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve(query) }),
     }),
   );
 }
 
 export async function openNewEvent(): Promise<void> {
   await openPage(async () => SignedInLayout({ children: await NewEventPage() }));
+}
+
+export async function openQueue(): Promise<void> {
+  await openPage(async () => SignedInLayout({ children: await QueuePage() }));
 }
 
 export async function openCollection(): Promise<void> {

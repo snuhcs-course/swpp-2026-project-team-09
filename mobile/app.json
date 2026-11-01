@@ -2,7 +2,11 @@
   "expo": {
     "name": "SNU Now",
     "slug": "snu-now",
+    "owner": "snu-now",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "snunow",
@@ -72,6 +76,17 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "48010556-087b-4ff5-945f-f60b9c77236f"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/48010556-087b-4ff5-945f-f60b9c77236f",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

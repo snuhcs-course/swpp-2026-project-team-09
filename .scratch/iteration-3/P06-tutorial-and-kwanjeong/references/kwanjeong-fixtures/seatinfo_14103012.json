@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "14103012",
+    "NAME": "G415",
+    "COMMENT": "키티스산학연정보(주) 대표이사 홍영표님이 기증해주신 그룹스터디룸입니다.",
+    "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_14103012.png",
+    "MONITOR_YN": "",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "14103012"
+  }
+}

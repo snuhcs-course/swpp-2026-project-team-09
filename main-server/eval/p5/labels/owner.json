@@ -1,0 +1,664 @@
+{
+  "join-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-04": {
+    "verdict": "approve",
+    "answer": {
+      "action": "propose",
+      "cards": [],
+      "proposal": {
+        "board": "hobby",
+        "capacity": 6,
+        "globalEvent": null,
+        "joinPolicy": "open",
+        "place": null,
+        "startsAt": "2026-11-03 19:00"
+      },
+      "mentions": [["없", "찾지 못", "못 찾"]]
+    },
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-06": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-07": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-08": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-09": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-10": {
+    "verdict": "approve",
+    "answer": {
+      "action": "propose",
+      "cards": [],
+      "proposal": {
+        "board": "hobby",
+        "capacity": 5,
+        "globalEvent": null,
+        "joinPolicy": "open",
+        "place": null,
+        "startsAt": "2026-11-02 14:10"
+      },
+      "mentions": [["없", "찾지 못", "못 찾"]]
+    },
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-11": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-12": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-13": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-14": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-15": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-16": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-17": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-18": {
+    "verdict": "edit",
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "뮤지컬 보러 갈 분"
+        }
+      ],
+      "proposal": null,
+      "mentions": null
+    },
+    "reason": "뮤지컬 행사가 아니라 다른 파티 글 중 뮤지컬을 보러가자(관련 행사가 앱에 안 올라와 있어도)는 글을 찾아줘야 할 것 같은데. 즉 행사 카드뿐 아니라 행사가 태깅되지 않은 다른 뮤지컬 관련 파티가 있으면 찾아줘야 할 듯? 물론 11/8 뮤지걸 저거는 일요일꺼라 안 보여주는 게 맞지만.",
+    "savedOn": "2026-10-31"
+  },
+  "join-19": {
+    "verdict": "edit",
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "버스킹 구경 갈 분"
+        }
+      ],
+      "proposal": null,
+      "mentions": null
+    },
+    "reason": "이것도 join-18처럼 버스킹 관련 파티도 찾아줘야 할 듯?",
+    "savedOn": "2026-10-31"
+  },
+  "join-20": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-21": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-22": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-23": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-24": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-25": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-26": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-27": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-28": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-29": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-30": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-31": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-32": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-33": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-34": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-35": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-36": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-37": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-b-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-b-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-b-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-b-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-b-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-e-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-e-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-e-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-e-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-e-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-e-06": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-h-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-h-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-h-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-h-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-h-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-h-06": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-h-07": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-l-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-l-02": {
+    "verdict": "edit",
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "globalEvent",
+          "seed": "채용 박람회"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "동아리 박람회"
+        },
+        {
+          "kind": "quest",
+          "seed": "박람회 같이 돌아요"
+        }
+      ],
+      "proposal": null,
+      "mentions": null
+    },
+    "reason": "이것도 박람회 및 박람회 비슷한 파티는 다 찾아줘야 할 듯함.",
+    "savedOn": "2026-10-31"
+  },
+  "search-l-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-l-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-l-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-l-06": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-n-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-n-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-n-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-n-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-n-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-o-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-o-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-o-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-o-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-o-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-o-06": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-p-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-p-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-p-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-p-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-p-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-p-06": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-r-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-r-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-r-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-r-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-r-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-s-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-s-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-s-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-s-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-s-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t1-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t1-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t1-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t1-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t1-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t1-06": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t1-07": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t2-01": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t2-02": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t2-03": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t2-04": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t2-05": {
+    "verdict": "approve",
+    "answer": null,
+    "reason": "",
+    "savedOn": "2026-10-31"
+  }
+}

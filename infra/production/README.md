@@ -505,7 +505,8 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
      coop_menus dormitory_menus veterinary_menus snu_events shuttle_stops shuttle_vehicles
    ```
 
-   It logs for each Source whether its Collection succeeded, and exits with status 1 when one failed.
+   It logs for each Source whether its Collection succeeded, and exits with status 1 when one failed. `extra_snu` is left
+   out on purpose until it may run ([Turning on extra.snu's Collections](#turning-on-extrasnus-collections)).
 
 10. **The Production APK** ([The Production APK](#the-production-apk)).
 
@@ -516,19 +517,21 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
 A Release is a tag named `snunow/<target>/YY.MM.DD-N` on a reviewed commit of the iteration branch. Pushing it starts
 the Release workflow, which deploys the target at that commit.
 
-| Target          | What it deploys                |
-| --------------- | ------------------------------ |
-| `main-server`   | The main server                |
-| `socket-server` | The socket server              |
-| `worker-server` | The worker server              |
-| `match-server`  | The match server               |
-| `admin`         | The admin site                 |
-| `all`           | All five, at the tagged commit |
+| Target          | What it deploys                                               |
+| --------------- | ------------------------------------------------------------- |
+| `main-server`   | The main server                                               |
+| `socket-server` | The socket server                                             |
+| `worker-server` | The worker server                                             |
+| `match-server`  | The match server                                              |
+| `admin`         | The admin site                                                |
+| `app`           | The app's bundle, published to EAS Update                     |
+| `all`           | The five servers, then the app's bundle, at the tagged commit |
 
 `all` is for the first deploy, for a change that spans servers, and for rolling a changed setting or secret value to
-every server. `YY.MM.DD` is the day in Korea, and `N` is the target's order that day, from 1, so
-`snunow/main-server/26.11.13-1` and `snunow/all/26.11.13-1` can share a day. A name that does not match, such as
-`snunow/web/26.11.13-1` or `snunow/main-server/26.11.13`, fails the run at its first step.
+every server. `app` is for a change to the app alone ([The app's bundle](#the-apps-bundle)). `YY.MM.DD` is the day in
+Korea, and `N` is the target's order that day, from 1, so `snunow/main-server/26.11.13-1` and `snunow/all/26.11.13-1`
+can share a day. A name that does not match, such as `snunow/web/26.11.13-1` or `snunow/main-server/26.11.13`, fails the
+run at its first step.
 
 ```bash
 git fetch origin
@@ -549,6 +552,102 @@ The servers are separate services, so different servers may run different commit
 released in an order that keeps the old and new versions working together, for example the main server's new route
 before the match server that calls it. Or it goes out as one `all` Release.
 
+### Stopping automatic publication
+
+The step after a Collection publishes what it read as long as `AUTOMATIC_PUBLICATION` is `on`, its value in
+`k8s/parts/shared/kustomization.yaml`. To stop it at once, without a build or a Release, change the value in the
+ConfigMap the main server reads and restart it:
+
+```bash
+settings=$(kubectl --namespace snunow get deployment main-server --output json |
+  jq -r '.spec.template.spec.containers[0].env[] | select(.name == "AUTOMATIC_PUBLICATION") | .valueFrom.configMapKeyRef.name')
+kubectl --namespace snunow patch configmap "$settings" --type merge --patch '{"data":{"AUTOMATIC_PUBLICATION":"off"}}'
+kubectl --namespace snunow rollout restart deployment/main-server
+kubectl --namespace snunow rollout status deployment/main-server
+```
+
+Do not use `kubectl set env` here: it leaves a literal value beside the manifest's `valueFrom`, which the next Release's
+server-side apply cannot merge.
+
+Every session from then on stays a Draft for an Administrator, and what was published stays published. The next Release
+brings the committed value back, so also set `AUTOMATIC_PUBLICATION=off` in that file and merge it. Sessions stored
+meanwhile are not published when it is turned on again.
+
+### Turning on Judgements
+
+`AUTOMATIC_JUDGEMENT` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called, no post leaves the server, and
+the rules go on publishing. Turn it on only when all of these hold (ticket 09):
+
+- masked posts may still be sent to the model provider, as Jaehyun0320 and TaeHyun79 agreed on 2026-11-01;
+- evaluation A's floors are met, on the commit being released, and recorded;
+- the OpenRouter key's credit limit allows for it, since Judgements spend the Assistant's credit, and its account allows
+  only providers that do not train on prompts.
+
+Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no
+`OPENROUTER_API_KEY` or `ASSISTANT_MODEL`, so a Release with that mistake does not replace the running pods. To turn it
+off again at once, use the ConfigMap patch above with `AUTOMATIC_JUDGEMENT`, and also change the file. Drafts stored while
+it was off are not judged when it is turned on.
+
+To stop what Judgements publish while they keep being stored, turn off `AUTOMATIC_PUBLICATION` instead. Check failures on
+`GET /admin/global-events/unsettled-posts`: during a model outage each new post uses its two tries over two Collections
+and then waits for an Administrator.
+
+### Turning on the same-event title rule
+
+`SAME_EVENT_TITLE_RULE` is `off` in `k8s/parts/shared/kustomization.yaml`: the link rule attaches, but two posts of an equal
+title and start are both published. The rule drops what is bracketed, so `[물리천문학부] 콜로키움` and `[화학부] 콜로키움` at
+one start would attach and the second would leave the app with no flag. Turn it on when evaluation B (ticket 09) has
+measured it on the commit being released, by setting the value to `on` in that file, merging it and releasing. It looks
+only at posts that go through the step afterwards. To turn it off at once, use the ConfigMap patch above with this name,
+and also change the file.
+
+### Turning on the same-event AI choice
+
+`SAME_EVENT_AI_CHOICE` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called for the same-event step and no
+post leaves the server for it, and a session the rules do not attach is published as before. Turn it on only when both
+hold: evaluation B (ticket 09) has shown D1 at its floor of 0 on the commit being released, and the posts may be sent to the
+model provider. A person decides this, by setting the value to `on` in that file, merging it and releasing. With `on`, the
+server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`. It looks only at posts that go through the
+step afterwards. To turn it off at once, use the ConfigMap patch above with this name, and also change the file.
+
+The queue, attaching, publishing from it and detaching work with the setting off too: `/queue` on the admin site. With it
+on, a model outage sends the sessions that have candidates there, each once, publishing none of them.
+
+### Turning on extra.snu's Collections
+
+The worker's image carries a browser for extra.snu, and its pod may use up to 1 GiB for it, but the schedule starts
+nothing while `EXTRA_SNU_COLLECTION` is `off`, its value in `k8s/parts/shared/kustomization.yaml`. Keep it off until the
+same-event rules (`.scratch/iteration-3/P05-join-or-recruit/issues/08a-same-event-rules.md`) are deployed and
+`SAME_EVENT_TITLE_RULE` is on. Before that, an event posted on both SNU Now and extra.snu would show twice unless one post
+links the other, and Users could gather for it in two places. Do not run `node dist/collect extra_snu` by hand before then
+either: the command does not look at the setting.
+
+Deploy the main server before the worker in the Release that brings them: the worker's message then carries `links`, and
+a main server of an earlier Release refuses a message with a field it does not know.
+
+Once they are deployed and the title rule is on, `EXTRA_SNU_COLLECTION` may be turned on. A person decides when. Check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand, and watch
+its memory from a second terminal while it runs. The browser closes when the Collection ends, so a reading after it says
+nothing, and the numbers lag by the metrics interval:
+
+```bash
+kubectl --namespace snunow exec deployment/worker-server -- node dist/collect extra_snu
+# In a second terminal, during the Collection:
+watch kubectl --namespace snunow top pod --selector app=worker-server
+```
+
+Then set `EXTRA_SNU_COLLECTION=on` in `k8s/parts/shared/kustomization.yaml`, merge it and release the worker. To stop it
+again at once, without a build or a Release, change the value in the ConfigMap the worker reads and restart it:
+
+```bash
+settings=$(kubectl --namespace snunow get deployment worker-server --output json |
+  jq -r '.spec.template.spec.containers[0].env[] | select(.name == "EXTRA_SNU_COLLECTION") | .valueFrom.configMapKeyRef.name')
+kubectl --namespace snunow patch configmap "$settings" --type merge --patch '{"data":{"EXTRA_SNU_COLLECTION":"off"}}'
+kubectl --namespace snunow rollout restart deployment/worker-server
+kubectl --namespace snunow rollout status deployment/worker-server
+```
+
+The next Release brings the committed value back, so also set it in that file and merge it. What was collected stays.
+
 ### Following a Release
 
 The run appears in the repository's **Actions** tab under the Release workflow, named after the tag:
@@ -562,9 +661,13 @@ The run appears in the repository's **Actions** tab under the Release workflow, 
 4. A job for each server it deploys applies the server's target and waits until its Deployment has rolled out. A
    Deployment that does not become ready fails the run. The main and socket servers and the admin site keep their old
    pods serving then; the worker and match servers, which use `Recreate`, stay down until a working Release.
+5. For `app` and `all`, the `release app` job publishes the bundle ([The app's bundle](#the-apps-bundle)). For `all`
+   it starts only once every server job has succeeded, so a new bundle never calls a server that is not there yet; a
+   failed or cancelled server job skips it.
 
-A newer Release of a server cancels that server's running one, and Releases of different servers deploy at once. In
-the cluster, `kubectl --namespace snunow rollout status deployment/<server>` follows a rollout, and
+A newer Release of a server cancels that server's running one, a newer `app` or `all` Release cancels the app's job, and
+Releases of different servers deploy at once. In the cluster,
+`kubectl --namespace snunow rollout status deployment/<server>` follows a rollout, and
 `kubectl --namespace snunow get pods` shows the pods.
 
 ### Fixing a bad Release, and deploying an earlier one again
@@ -573,7 +676,12 @@ A bad Release is fixed with a new Release of a fixed commit.
 
 In an emergency, an earlier Release is deployed again from the **Actions** tab: open the Release workflow, choose
 **Run workflow**, pick the earlier Release's tag under **Use workflow from**, and run it. It deploys that tag's target
-at the tag's commit, and puts back that commit's shared part, so its Ingresses and Redis come back too.
+at the tag's commit, and puts back that commit's shared part, so its Ingresses and Redis come back too. For an `app`
+tag, or an `all` tag, it publishes that commit's bundle again as the newest update, which phones take at their next
+starts. Such a rollback works only within the current native build: a tag from before the latest native Release
+fails the fingerprint check by design, since no installed build would take its bundle. A rollback holds until the next
+publish: if an `all` Release pushed earlier finishes its servers afterwards and its commit is newer than the rolled-back
+one, its bundle goes out over the rollback. Run the rollback again by hand if that happens.
 
 Never deploy again across a migration. Migrations only move forward, so a server older than the database's schema may
 fail. To see whether Releases since the earlier one brought a migration:
@@ -583,6 +691,53 @@ git diff --stat <earlier tag> <current tag> -- main-server/prisma/migrations mat
 ```
 
 If any did, fix with a new Release instead.
+
+### The app's bundle
+
+The `release app` job publishes the tagged commit's JavaScript bundle for Android and iOS to the `production` channel
+of EAS Update, with the tag as its message and in `EXPO_PUBLIC_RELEASE_TAG`, and the commit in
+`EXPO_PUBLIC_RELEASE_COMMIT`. After the same CI gate as the servers, it first looks up the commit of the latest update
+on the `production` branch. When the Release came from a pushed tag and its commit is older than that one, as when an
+older `all` Release's server jobs finished after a newer Release, it does not publish: the job succeeds, and its
+summary says so. A run by hand is a deliberate rollback and always publishes.
+
+One app job runs at a time, and a newer one waits instead of cancelling the running one, since an `all` Release's app
+job starts only when its servers finish. GitHub keeps one waiting job per group: a third that arrives replaces the
+waiting one, which ends as cancelled. If a Release's app job was cancelled that way, run its tag again by hand.
+
+It then computes the app's Android and iOS fingerprints and compares them with `app-version.json`
+([`version` and `app-version.json`](#version-and-app-versionjson)):
+
+- Both equal the latest native build's: it publishes.
+- One differs and `version` in `mobile/app.json` is above the file's `latest`: it builds and releases the APK first
+  ([Releasing it](#releasing-it)), then publishes. Until the iOS build is made by hand, no iPhone takes the update.
+- One differs and `version` equals `latest`: it fails before publishing. Raise `version` and make a native Release
+  ([Releasing it](#releasing-it)).
+- One differs and `version` is below `latest`, a commit from before the latest native Release: it fails before
+  publishing, since no installed build would take the bundle.
+- The file cannot be downloaded or read: it fails.
+
+After publishing, it checks that EAS Update published each platform under the fingerprint it computed, and fails if
+not.
+
+It takes the build settings ([Its settings](#its-settings)) only from these repository variables, the
+Organization's developer robot token from the repository secret `EXPO_TOKEN`, and, for an APK, the Kakao key from the
+repository secret `KAKAO_NATIVE_APP_KEY`. It alone has `contents: write`, to create Releases and upload their assets.
+
+| Repository variable                    | Build setting                      |
+| -------------------------------------- | ---------------------------------- |
+| `PRODUCTION_APP_MAIN_SERVER_URL`       | `EXPO_PUBLIC_MAIN_SERVER_URL`      |
+| `PRODUCTION_APP_SOCKET_SERVER_URL`     | `EXPO_PUBLIC_SOCKET_SERVER_URL`    |
+| `PRODUCTION_APP_GOOGLE_WEB_CLIENT_ID`  | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` |
+| `PRODUCTION_APP_GOOGLE_IOS_CLIENT_ID`  | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` |
+| `PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME` | `GOOGLE_IOS_URL_SCHEME`            |
+| `PRODUCTION_APP_INVITE_LINK_HOST`      | `INVITE_LINK_HOST`                 |
+
+Each must equal the native build's value: a different one changes the fingerprint or points the bundle elsewhere.
+
+The EAS project keeps no environment variables. `--environment production` is required since eas-cli 26 and would
+load any variables stored on EAS for that environment, so they must stay empty for the bundle to use only the
+repository variables.
 
 ### Rotating a secret
 
@@ -623,28 +778,218 @@ is placed only on a node with room for its request, and a container that goes ov
 
 ## The Production APK
 
-Built by hand as the [dev APK](../deploy/README.md#adding-an-apk) is, signed with the shared debug key, with both
-server addresses in `mobile/.env` set to Production's:
+A native build, signed with the shared debug key. Most changes reach phones without one, as an update the app
+downloads from EAS Update; a native build is needed only when the native part changes: a native dependency, a config
+plugin, or `app.json`. The Release workflow builds it ([Releasing it](#releasing-it)); it is built by hand, as the
+[dev APK](../deploy/README.md#adding-an-apk) is, only when CI cannot. iOS is always built by hand, by the Mac owner.
+
+### Its settings
+
+`mobile/.env` holds these when the APK is built by hand; the Release workflow takes them from the repository
+([The app's bundle](#the-apps-bundle)):
 
 ```text
 EXPO_PUBLIC_MAIN_SERVER_URL=https://api.snunow.com
 EXPO_PUBLIC_SOCKET_SERVER_URL=https://api.snunow.com
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<the main server's Google client, of type "Web application">
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=<the Google client of type "iOS">
+GOOGLE_IOS_URL_SCHEME=<the iOS client's ID reversed>
+INVITE_LINK_HOST=api.snunow.com
+KAKAO_NATIVE_APP_KEY=<the team's key>
+EXPO_PUBLIC_RELEASE_TAG=snunow/app/26.11.13-1
+EXPO_PUBLIC_RELEASE_COMMIT=<the tag's full commit>
 ```
 
-Leave `INVITE_LINK_HOST` empty, as for the dev APK. Then tag the commit it was built from as
-`snunow/app/YY.MM.DD-N`, where N is the app's order that day, and attach the APK, named after the tag with `/` as `-`,
-to a GitHub release page for that tag:
+`ANDROID_X86_64` is never set, and `UPDATE_CHANNEL` is left unset, which means `production`. The release tag and commit are the Release's own, below; 내 정보 shows them.
+
+An update published later must be made with the same settings, and the Release workflow uses the same values. The
+app takes an update only when the update's runtime version, a **fingerprint** of the native part, equals its own.
+`INVITE_LINK_HOST`, `GOOGLE_IOS_URL_SCHEME`, `ANDROID_X86_64`, `UPDATE_CHANNEL` and `version` change the app's
+configuration and so the fingerprint, as does any edit to a config plugin's file, comments included: an update made with any of them different reaches no installed app. The `EXPO_PUBLIC_*` values and the
+Kakao key leave the fingerprint alone, measured with `@expo/fingerprint`, but the `EXPO_PUBLIC_*` values are baked
+into the JavaScript, so an update with other ones would point the app elsewhere.
+
+### `version` and `app-version.json`
+
+`version` in `mobile/app.json` is raised only for a native build, never for an update. The first build with
+`expo-updates` kept `1.0.0`, as the APKs installed before it have no update check that a higher number could start.
+
+`app-version.json` describes the latest native build. The app reads it at start to offer a newer APK, and the
+Release workflow to tell whether an update still fits the native build:
+
+```json
+{
+  "latest": "1.0.0",
+  "minimum": "1.0.0",
+  "fingerprint": { "android": "<hash>", "ios": "<hash>" },
+  "download": {
+    "android": "https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/snunow/app/26.11.13-1/snunow-app-26.11.13-1.apk",
+    "ios": null
+  }
+}
+```
+
+`latest` is the build's `version`, and `minimum` the lowest version allowed to go on; raising it stops older builds
+without a new one. `fingerprint` is the build's runtime versions, from `npx expo-updates fingerprint:generate` for
+each platform with the settings above.
+
+The file lives on a Release of its own, `app-version`, at a fixed address, so that it never depends on which Release
+is marked Latest. It is never marked Latest itself:
 
 ```bash
-git tag snunow/app/26.11.13-1 <commit>
-git push origin snunow/app/26.11.13-1
+gh release create app-version app-version.json --latest=false \
+  --title app-version --notes 'The latest native build of the app, which the app and the Release workflow read.'
+```
+
+That was done once. A native Release replaces the file with `gh release upload app-version app-version.json --clobber`.
+
+### Releasing it
+
+Raise `version` in `mobile/app.json` with the native change. CI's `app-fingerprint` job runs the Release workflow's
+decision on every push: it fails when the native part changed and `version` did not, and passes with a notice when
+`version` was raised. A commit from before the latest native Release, such as a branch not yet rebased, passes with a
+notice to rebase; its app job would still refuse to publish. The Release gate waits for `app-fingerprint` as for every
+CI job, so a commit whose native part changed without a raised `version` cannot be released at all, servers included,
+which is intended. Then tag the commit as an `app` Release, `snunow/app/YY.MM.DD-N`, where N is the app's order
+that day; an `all` Release does the same.
+
+Its `release app` job finds that the fingerprint changed and `version` was raised, and before publishing the bundle:
+
+1. builds the APK as the hand build does (`CI=1 pnpm expo prebuild --platform android --no-install`, then
+   `./gradlew assembleRelease` with JDK 21 and the runner's Android SDK), with the build settings from the repository
+   variables and the Kakao key from the repository secret `KAKAO_NATIVE_APP_KEY`;
+2. checks that the APK embeds the computed Android fingerprint (`assets/fingerprint`) and is signed by the shared debug
+   key (SHA-256 `fac61745…3b9c`), so that it installs over the builds on phones;
+3. attaches it, named after the tag with `/` as `-`, to the tag's GitHub Release, creating the Release if there is
+   none;
+4. replaces `app-version.json` with the new `version` as `latest`, the old `minimum`, both fingerprints, and the APK's
+   address.
+
+A failed step stops the job, and nothing after it happens. The run's summary gives the APK's address. Testers open the
+release page in a phone's browser and install the APK from it; an older build offers it at its next start, once
+GitHub serves the new `app-version.json`, a few minutes later. The iOS build for the same commit is still made by
+hand.
+
+When CI cannot build, the job fails and publishes nothing. Build the APK by hand from the tagged commit with the
+settings above, attach it, and replace `app-version.json`, written by `release.sh app-version-json` from the old file
+and the fingerprints CI computed for the commit; then run the Release workflow again by hand on the tag, which now
+finds the native part built and publishes the bundle:
+
+```bash
 cp mobile/android/app/build/outputs/apk/release/app-release.apk snunow-app-26.11.13-1.apk
 gh release create snunow/app/26.11.13-1 snunow-app-26.11.13-1.apk --verify-tag \
   --title snunow/app/26.11.13-1 --notes 'The app for Production, at https://api.snunow.com.'
+curl --fail --location --remote-name \
+  https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/app-version/app-version.json
+mkdir new
+.github/release/release.sh app-version-json <version> <android fingerprint> <ios fingerprint> \
+  https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/snunow/app/26.11.13-1/snunow-app-26.11.13-1.apk \
+  app-version.json >new/app-version.json
+gh release upload app-version new/app-version.json --clobber
 ```
 
-An app tag deploys nothing: the Release workflow does not run for it, and it is not a Release. Testers open the release
-page in a phone's browser and install the APK from it.
+### Publishing an update by hand
+
+Only when the Release workflow cannot, such as while EAS or GitHub Actions is down, an update is published from
+`mobile/` with the settings above, the update's own tag and commit in the two `EXPO_PUBLIC_RELEASE_*` values, and the
+Organization's developer robot token as `EXPO_TOKEN`:
+
+```bash
+eas update --channel production --environment production --platform all --message snunow/app/26.11.14-1
+```
+
+`--environment` is required in a non-interactive run since eas-cli 26. The project keeps no variables on EAS, so it
+adds nothing, and the settings come from `mobile/.env`.
+
+An installed app downloads it the next time it starts and runs it from the start after that.
+
+## The Production iOS build
+
+The iOS counterpart of the APK, built and installed by the Mac owner with Xcode, on an iPhone or, without one, on the
+simulator. It is not distributed, through TestFlight or otherwise, so `download.ios` in `app-version.json` is `null`.
+It takes the same bundles from EAS Update as the APK. The Mac's tools, and why the checkout stays out of iCloud Drive,
+are in [mobile/README.md](../../mobile/README.md), "Build the app for iOS".
+
+### The iOS build's settings
+
+`mobile/.env` holds the same settings as the APK's ([Its settings](#its-settings)) and the Release workflow's
+([The app's bundle](#the-apps-bundle)):
+
+- `EXPO_PUBLIC_MAIN_SERVER_URL` and `EXPO_PUBLIC_SOCKET_SERVER_URL`, both `https://api.snunow.com`;
+- `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` and `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`, the Google web and iOS client IDs;
+- `GOOGLE_IOS_URL_SCHEME`, the iOS client's ID reversed;
+- `INVITE_LINK_HOST=api.snunow.com`;
+- `KAKAO_NATIVE_APP_KEY`, the team's key;
+- `EXPO_PUBLIC_RELEASE_TAG` and `EXPO_PUBLIC_RELEASE_COMMIT`, the tag and full commit of the Release built.
+
+`ANDROID_X86_64` is never set, and `UPDATE_CHANNEL` is left unset. A value other than CI's either changes the
+fingerprint, and the build then takes no update, or is baked into the JavaScript and points the app elsewhere.
+
+### Building it
+
+Build the commit of an `app` or `all` Release, normally the newest, with Node.js 24 and pnpm 12.6.0. From `mobile/`:
+
+```bash
+git checkout snunow/app/26.11.13-1
+pnpm install --frozen-lockfile
+CI=1 pnpm expo prebuild --platform ios
+open ios/*.xcworkspace
+```
+
+The checkout must sit at a path without spaces: expo-constants' "Generate app.config" build phase fails on one, and a
+symlink does not help, since Xcode resolves it.
+
+`prebuild` generates the iOS project in `ios/` and installs its pods; `CI=1` keeps it from asking questions. Before
+building, tell Xcode which Node to use. Its "Generate updates resources" phase runs `node` from `PATH` to read the app's
+configuration, and Xcode's `PATH` usually lacks Homebrew. When that fails, the phase only logs `Cannot get Expo
+config…`, and the build succeeds with a fingerprint computed without the configuration. One build embedded `6d3e9ef3…`
+instead of `ffd1bd8f…` this way, and took no update. In `mobile/ios/.xcode.env.local`, with the path of your Node 24:
+
+```bash
+export PATH=/opt/homebrew/opt/node@24/bin:$PATH
+export NODE_BINARY=/opt/homebrew/opt/node@24/bin/node
+```
+
+Then, in Xcode:
+
+1. Under the target's **Signing & Capabilities**, choose a team. A free Apple ID's Personal Team works.
+2. Under **Product > Scheme > Edit Scheme… > Run > Build Configuration**, choose **Release**. `expo-updates` is off in
+   a Debug build, which loads its JavaScript from the development server instead.
+3. Choose the iPhone, or a simulator if there is none, and run.
+
+**Change nothing in `mobile/app.json`, the bundle identifier included, to make signing work.** Any change there changes
+the fingerprint, and the build would take no update. If Xcode says the bundle identifier `com.bonnieandclaude.snunow`
+is not available to a free team, stop and report it.
+
+A free account's build stops opening 7 days after it was signed; build and install it again then. A free account also
+installs at most 3 apps of its own on a device.
+
+Without an iPhone, a Release build for the simulator needs no team and has no 7-day limit: choose a simulator in step 3
+and skip step 1.
+
+### The iOS fingerprint
+
+CI computes the iOS fingerprint on Linux, and the Mac build must have the same one. On the Mac, from `mobile/`, with
+the same `.env`:
+
+```bash
+set -a; . ./.env; set +a
+npx expo-updates fingerprint:generate --platform ios
+curl -sL https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/app-version/app-version.json
+```
+
+The hash the second line prints must equal `fingerprint.ios` in the file the third prints. If it differs, report it:
+whoever maintains the Releases then writes the Mac build's hash into `fingerprint.ios` and replaces the file with
+`gh release upload app-version app-version.json --clobber`.
+
+`fingerprint:generate` is a check made before building. The build computes its own fingerprint during an Xcode build
+phase, after `prebuild` has made `ios/`, and the real proof is an update arriving. If the hashes match but no update
+arrives, compare the fingerprint the built app carries, in `SNUNow.app/EXUpdates.bundle/fingerprint`: in Xcode,
+**Product > Show Build Folder in Finder**, then open the `.app` with **Show Package Contents**. A different hash there
+usually means the Node problem above.
+
+On iOS, 업데이트가 필요합니다 has no 업데이트 하기, since `download.ios` is `null`: it only asks the User to install the
+new version.
 
 ## Moving to account B
 

@@ -3,6 +3,7 @@
  *
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { CollectionService } from '../collection/collection.service.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type MenusCollectedMessage } from './dto/menus-collected.dto.js';
 import { RestaurantMenusDto, toRestaurantMenusDto } from './dto/restaurant-menus.dto.js';
+import { RestaurantPlaces } from './restaurant-places.js';
 
 // A `date` column holds the calendar day of the Date in UTC.
 function calendarDay(date: string): Date {
@@ -25,6 +27,7 @@ export class MenusService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly collection: CollectionService,
+    private readonly places: RestaurantPlaces,
   ) {}
 
   // Replaces what the Source stored for each day the message carries, so that a repeat leaves one set of records and a
@@ -66,6 +69,6 @@ export class MenusService {
     });
     return days
       .toSorted((a, b) => koreanOrder.compare(a.restaurant, b.restaurant))
-      .map((day) => toRestaurantMenusDto(day));
+      .map((day) => toRestaurantMenusDto(day, this.places.placeOf(day.restaurant)?.id ?? null));
   }
 }

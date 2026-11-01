@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { GlobalEvent, GlobalEventChange, Missing, Refusal } from '@/main-server';
@@ -83,9 +85,13 @@ export function newEvent(event: Partial<GlobalEvent>): GlobalEvent {
     longitude: null,
     state: 'draft',
     version: 1,
-    postNumber: null,
+    source: null,
+    postKey: null,
     sourceUrl: null,
+    publicationRoute: null,
+    needsAdministrator: false,
     missing: [],
+    judgement: null,
     ...event,
   });
 }

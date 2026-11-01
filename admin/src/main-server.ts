@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import 'server-only';
@@ -35,6 +37,8 @@ export interface Administrator {
   signedIn: boolean;
 }
 
+export type PublicationRoute = 'administrator' | 'rule' | 'judgement';
+
 export interface ListedGlobalEvent {
   id: string;
   title: string;
@@ -45,13 +49,102 @@ export interface ListedGlobalEvent {
   longitude: number | null;
   state: GlobalEventState;
   version: number;
-  postNumber: number | null;
+  source: string | null;
+  postKey: string | null;
   sourceUrl: string | null;
+  publicationRoute: PublicationRoute | null;
+  needsAdministrator: boolean;
   missing: Missing[];
+}
+
+// A session as the AI read it. The times are as it wrote them, which the checks may have failed to read. `name` of a
+// check is the main server's to choose. `globalEventId` is the event it belongs to, not proof that it was published.
+export interface JudgedSession {
+  start: string | null;
+  end: string | null;
+  place: string | null;
+  overPeriod: boolean;
+  lines: { start: string[]; end: string[]; place: string[] };
+  placeId: string | null;
+  checks: { name: string; passed: boolean }[];
+  passed: boolean;
+  globalEventId: string | null;
+}
+
+// The one Judgement of an event's post. `outcome` is empty while a try runs, and `sessions` empty when no answer came.
+export interface Judgement {
+  outcome: 'judged' | 'no_event' | 'failed' | null;
+  failure: string | null;
+  attempts: number;
+  announcesEvent: boolean | null;
+  sessions: JudgedSession[];
+  modelId: string | null;
+  judgedAt: string | null;
 }
 
 export interface GlobalEvent extends ListedGlobalEvent {
   description: string;
+  judgement: Judgement | null;
+}
+
+// A post the publication step failed on or has not finished with, or whose Judgement could not be made.
+export interface UnsettledPost {
+  source: string;
+  key: string;
+  address: string;
+  stepFinished: boolean;
+  stepFailure: string | null;
+  stepFailedAt: string | null;
+  judgementFailure: string | null;
+  judgementAttempts: number;
+  // Its events that are still Drafts.
+  drafts: { id: string; title: string }[];
+}
+
+// Why a session waits for an Administrator.
+export type SessionHold = 'link_not_one_to_one' | 'several_matches' | 'ai_unsure' | 'ai_failed' | 'candidates_changed';
+
+export interface QueueCandidate {
+  id: string;
+  title: string;
+  startsAt: string | null;
+  place: string | null;
+  state: GlobalEventState;
+}
+
+// A session the same-event step could not decide, with its Draft and its candidates as they now are. `reason` is what the
+// AI said of it.
+export interface QueuedSession {
+  sessionId: string;
+  number: number;
+  heldFor: SessionHold;
+  reason: string | null;
+  source: string;
+  key: string;
+  address: string;
+  draft: {
+    id: string;
+    version: number;
+    title: string;
+    startsAt: string | null;
+    place: string | null;
+    missing: Missing[];
+  };
+  candidates: QueueCandidate[];
+}
+
+export type SessionAttachment = 'own' | 'rule' | 'ai' | 'administrator';
+
+// A session linked to an event, from any Source Post.
+export interface LinkedSession {
+  sessionId: string;
+  number: number;
+  source: string;
+  key: string;
+  address: string;
+  attachedBy: SessionAttachment;
+  reason: string | null;
+  detachable: boolean;
 }
 
 // The fields an edit sends. Times carry their offset; null clears an optional field.
@@ -113,6 +206,7 @@ export interface CollectionStatus {
   lastSucceededAt: string | null;
   lastFailedAt: string | null;
   lastFailureReason: string | null;
+  lastSkippedPosts: number | null;
 }
 
 async function request<T>(
@@ -163,6 +257,8 @@ export const mainServer = {
     request('DELETE', `/admin/administrators/${encodeURIComponent(id)}`, token),
   listGlobalEvents: (token: string, state: 'draft' | 'published'): Promise<ListedGlobalEvent[]> =>
     request('GET', `/admin/global-events?state=${state}`, token),
+  listUnsettledPosts: (token: string): Promise<UnsettledPost[]> =>
+    request('GET', '/admin/global-events/unsettled-posts', token),
   // The same key on a retry gets the event the first attempt created.
   createGlobalEvent: (token: string, idempotencyKey: string, change: GlobalEventChange): Promise<GlobalEvent> =>
     request('POST', '/admin/global-events', token, change, idempotencyKey),
@@ -175,6 +271,20 @@ export const mainServer = {
     change: 'publish' | 'discard' | 'cancel',
     version: number,
   ): Promise<GlobalEvent> => request('POST', `${eventPath(id)}/${change}`, token, { version }),
+  acknowledgeGlobalEvent: (token: string, id: string): Promise<void> =>
+    request('POST', `${eventPath(id)}/acknowledge`, token),
+  listLinkedSessions: (token: string, id: string): Promise<LinkedSession[]> =>
+    request('GET', `${eventPath(id)}/sessions`, token),
+  detachSession: (token: string, sessionId: string): Promise<void> =>
+    request('POST', `/admin/global-events/sessions/${encodeURIComponent(sessionId)}/detach`, token),
+  listSameEventQueue: (token: string): Promise<QueuedSession[]> => request('GET', '/admin/global-events/queue', token),
+  attachQueuedSession: (token: string, sessionId: string, version: number, globalEventId: string): Promise<void> =>
+    request('POST', `/admin/global-events/queue/${encodeURIComponent(sessionId)}/attach`, token, {
+      version,
+      globalEventId,
+    }),
+  publishQueuedSession: (token: string, sessionId: string, version: number): Promise<void> =>
+    request('POST', `/admin/global-events/queue/${encodeURIComponent(sessionId)}/publish`, token, { version }),
   listPlaces: (token: string): Promise<Place[]> => request('GET', '/admin/places', token),
   listUsers: (token: string): Promise<AdminUser[]> => request('GET', '/admin/users', token),
   listFriendsOf: (token: string, id: string): Promise<AdminFriend[]> =>

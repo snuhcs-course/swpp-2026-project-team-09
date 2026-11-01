@@ -46,6 +46,17 @@ Files whose comments start with `#` (shell, YAML, Dockerfile) draw the same box 
 - `git grep -l "AI-generated with Claude"` lists the marked files; the AI Collaboration Report points to it.
 - Rows for Iteration 1 were filled in from the commit history: each row is a day on which a person's commit carrying a `Co-Authored-By: Claude` trailer changed the file.
 
+## The app's native files
+
+The app takes its JavaScript over the air from EAS Update, but only while the native part's fingerprint stays the same. Changing any of these files changes the fingerprint, comments included. That covers the AI-generated box row too. Once they change, updates no longer reach the installed APKs until a new native build is released:
+
+- `mobile/app.json`;
+- `mobile/app.config.ts`'s settings;
+- the config plugins (`mobile/plugins/`, `mobile/modules/*/app.plugin.ts`);
+- native dependencies.
+
+Do not touch them for a comment or a tidy-up. When they must change, the change is a native one: raise `version` and make a native Release, as `infra/production/README.md` § The Production APK describes. The Release workflow fails a publish when the fingerprint changed and `version` did not.
+
 ## Usage reporting
 
 When you finish a ticket, record the agent work it took under the ticket's `## Comments`, in a dated `### Agent usage (YYYY-MM-DD)` section:
