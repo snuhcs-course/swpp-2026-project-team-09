@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -135,6 +136,17 @@ describe('a Closed Proposal with Friends, a Place and a Global Event', () => {
     });
     expect(await send(steps('2095-06-10T19:00:00+09:00'))).toMatchObject({ proposal: null });
     expect(refusedFields()).toEqual(['startsAt']);
+  });
+});
+
+describe('a Closed Proposal the model leaves fields out of', () => {
+  it('is 비공개 for the invited Friend and the User when the Join Policy and the capacity are left out', async () => {
+    const { proposal } = await send([
+      resolveHaneul,
+      { tool: 'proposeQuest', input: dinner({ joinPolicy: undefined, capacity: undefined, inviteeIds: [haneul.id] }) },
+    ]);
+
+    expect(proposal).toMatchObject({ joinPolicy: 'closed', capacity: 2, board: null });
   });
 });
 

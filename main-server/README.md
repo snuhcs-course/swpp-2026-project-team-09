@@ -1829,7 +1829,9 @@ its model through OpenRouter with the Vercel AI SDK
     Friend's label being `친구` and a Place no longer in the catalog `장소`; `DELETE /assistant/aliases/:id` answers
     204, or 404 `ALIAS_NOT_FOUND` for another User's; `POST /assistant/aliases/reject` with
     `{ "kind": "place" | "friend", "words", "targetId" }` (아니에요) writes a `rejected` row, deletes the User's alias
-    and counts the words again, and answers 204. `ASSISTANT_GLOBAL_ALIASES=false` switches everyone's aliases off at
+    and counts the words again, and answers 204. From then on no alias answers that User those words with that Place,
+    everyone's included, until they choose it for the words again (`src/assistant/aliases/rejected-aliases.ts`), while
+    the alias stands for the others. `ASSISTANT_GLOBAL_ALIASES=false` switches everyone's aliases off at
     once, and `ASSISTANT_ALIAS_HOLDBACK_PERCENT` (10) keeps that share of Users, by the first four bytes of the
     SHA-256 of their id modulo 100 (`src/common/holdback.ts`), from receiving them while their choices still count.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
@@ -1897,7 +1899,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     User and the invitees fit the capacity. It takes an id only when a resolver returned it in this message or it is
     in the last Proposal sent back, and checks it again every time: the Place exists, the event is published, each
     invitee is a Friend. With a Global Event and no time it starts at the event's start; a time before is a meeting
-    before the event, as the form's `모이기`, and one after its start is refused. It answers
+    before the event, as the form's `모이기`, and one after its start is refused. A Join Policy or a capacity the model
+    leaves out is filled as the form starts: 비공개 for the invited Friends and the User when Friends are invited, else
+    공개 for 4, so that a request that named what matters is proposed at once and the card takes the correction. It answers
     `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
     the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
     it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and

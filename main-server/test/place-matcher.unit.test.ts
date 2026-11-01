@@ -3,12 +3,18 @@
  *
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
-import { type AliasHit, type AliasSource, type PlaceAliases } from '../src/places/place-aliases.js';
+import {
+  type AliasHit,
+  type AliasRejections,
+  type AliasSource,
+  type PlaceAliases,
+} from '../src/places/place-aliases.js';
 import { CuratedGroups } from '../src/places/place-groups.js';
 import { PlaceIndex } from '../src/places/place-index.js';
 
@@ -103,6 +109,9 @@ function fakeSource(source: AliasSource, hits: Record<string, string[]>): PlaceA
 const STUDENT_CENTRE = 'campus_map:80';
 const LIBRARY = 'campus_map:79';
 
+// Rejections of the ids given, for every User and words.
+const rejected = (ids: string[]): AliasRejections => ({ excluded: () => Promise.resolve(new Set(ids)) });
+
 describe('tier 2, the sources in order', () => {
   it("answers the first source with hits, the User's own before everyone's, and asks no later one", async () => {
     const personal = fakeSource('personal', { 뷁관: [STUDENT_CENTRE] });
@@ -120,6 +129,18 @@ describe('tier 2, the sources in order', () => {
       ['뷁관', USER],
       ['뷁도', USER],
     ]);
+  });
+
+  it("leaves a Place the User rejected for the words out of every source's answer, and goes on", async () => {
+    const personal = fakeSource('personal', { 뷁관: [STUDENT_CENTRE] });
+    const global = fakeSource('global', { 뷁관: [LIBRARY] });
+
+    await expect(
+      new PlaceIndex(places, [personal, global], rejected([STUDENT_CENTRE])).match('뷁관', USER),
+    ).resolves.toMatchObject({ source: 'global', places: [{ id: LIBRARY }] });
+    await expect(
+      new PlaceIndex(places, [personal, global], rejected([STUDENT_CENTRE, LIBRARY])).match('뷁관', USER),
+    ).resolves.toMatchObject({ tier: null, places: [] });
   });
 
   it('answers several for several hits of one source', async () => {
