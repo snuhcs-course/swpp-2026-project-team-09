@@ -5,6 +5,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -84,6 +85,18 @@ export async function ownQuest(app: INestApplication<Server>, user: TestUser, bo
     throw new Error(`Making a Quest answered ${response.status}: ${JSON.stringify(response.body)}`);
   }
   return z.object({ id: z.string() }).parse(response.body).id;
+}
+
+// Makes `count` things, a few at a time: 30 Quests at once, on a loaded machine, wait for a connection longer than a
+// transaction may.
+export async function inBatches<T>(count: number, make: () => Promise<T>): Promise<T[]> {
+  const made: T[] = [];
+  while (made.length < count) {
+    const batch = Array.from({ length: Math.min(5, count - made.length) }, () => make());
+    // oxlint-disable-next-line no-await-in-loop -- a batch at a time
+    made.push(...(await Promise.all(batch)));
+  }
+  return made;
 }
 
 export function getRecruitingQuests(
