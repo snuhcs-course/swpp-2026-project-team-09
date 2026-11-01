@@ -8,6 +8,7 @@
 import { screen, within } from '@testing-library/react';
 
 import { browser } from './support/browser';
+import { fakeMainServer } from './support/fake-main-server';
 import { openEvent } from './support/pages';
 import { COLLECTED, opened, signedInWithPlaces, type } from './support/events';
 
@@ -41,6 +42,7 @@ describe('the event’s page', () => {
     await openEvent(crypto.randomUUID());
 
     expect(browser.notFound).toBe(true);
+    expect(fakeMainServer.requests.filter((each) => each.endsWith('/sessions'))).toEqual([]);
   });
 });
 

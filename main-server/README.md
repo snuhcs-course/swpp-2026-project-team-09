@@ -575,10 +575,10 @@ The refusals each have a `code`, and are checked in the order of the table:
 | Refusal                                                                                   | Status     | `code`                                              | Also in the body |
 | ----------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------- | ---------------- |
 | An unknown id                                                                             | 404        | `GLOBAL_EVENT_NOT_FOUND`                            |                  |
+| Attaching or publishing a queued session no longer queued, or detaching a session unknown | 409 or 404 | `POST_SESSION_NOT_QUEUED`, `POST_SESSION_NOT_FOUND` | —                |
 | A change the state does not allow, or an edit of a cancelled or discarded event           | 409        | `GLOBAL_EVENT_STATE`                                | `state`          |
 | A `version` that is not the stored one                                                    | 409        | `GLOBAL_EVENT_CHANGED`                              | `version`        |
 | Publishing without a start or a position, or an edit that would remove one                | 409        | `GLOBAL_EVENT_INCOMPLETE`                           | `missing`        |
-| Attaching or publishing a queued session no longer queued, or detaching a session unknown | 409 or 404 | `POST_SESSION_NOT_QUEUED`, `POST_SESSION_NOT_FOUND` | —                |
 | Attaching a queued session to an event that is no longer its candidate                    | 409        | `CANDIDATE_GONE`                                    | —                |
 | Detaching a session of its own, or one that kept nothing of its Draft                     | 409        | `POST_SESSION_NOT_DETACHABLE`                       | —                |
 

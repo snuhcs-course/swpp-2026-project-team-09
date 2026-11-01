@@ -127,16 +127,15 @@ describe('deciding a queued session', () => {
     expect(within(alert).getByRole('link', { name: 'Open the Draft' })).toHaveAttribute('href', '/events/draft-1');
   });
 
-  it('says so when another Administrator decided first', async () => {
+  it('takes the card away, with no refusal, when another Administrator decided first', async () => {
     fakeMainServer.sameEvent.hasQueued(QUEUED);
     await openQueue();
     await fakeMainServer.publishQueuedSession(fakeMainServer.signedInAs('kim@snu.ac.kr'), 'session-1', 1);
 
     fireEvent.click(button('Publish as its own event'));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Another Administrator has decided this session already.',
-    );
+    expect(await screen.findByText('No session is waiting.')).toBeVisible();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 

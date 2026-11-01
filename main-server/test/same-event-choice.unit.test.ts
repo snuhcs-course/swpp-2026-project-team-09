@@ -76,6 +76,16 @@ describe('readAnswer', () => {
     expect(readAnswer(answerOf(entry(1, 'same', 2), entry(2, 'same', 2)), sessions)[0].outcome).toBe('failed');
   });
 
+  it('sends a session standing for several at one start to an Administrator, when it says same', () => {
+    const shared = { ...ONE, sharedStart: true };
+
+    expect(readAnswer(answerOf(entry(1, 'same', 1)), [shared])[0]).toMatchObject({
+      outcome: 'several',
+      globalEventId: null,
+    });
+    expect(readAnswer(answerOf(entry(1, 'different')), [shared])[0].outcome).toBe('none');
+  });
+
   it('sends two sessions that chose one event to an Administrator', () => {
     expect(
       readAnswer(answerOf(entry(1, 'same', 1), entry(2, 'same', 1)), [ONE, OTHER]).map(({ outcome }) => outcome),

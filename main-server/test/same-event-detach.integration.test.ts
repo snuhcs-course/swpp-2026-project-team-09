@@ -7,6 +7,8 @@
 import { eventsMessage } from './global-events.js';
 import { START } from './same-event.js';
 import { LATER, QueueWorld } from './same-event-queue.js';
+import { questFor } from './quests.js';
+import { signInUser } from './friends.js';
 import { signalsWhile } from './signals.js';
 import { send } from './source-posts.js';
 
@@ -49,6 +51,20 @@ describe('The sessions of an event', () => {
 });
 
 describe('Detaching a session', () => {
+  it("leaves the event's Quests on the event, and none on the Draft", async () => {
+    const { eventId, post, sessionId } = await world.attachedPost();
+    const user = await signInUser(world.judging);
+    const { questId } = await questFor(world.judging, user, eventId);
+
+    await world.admin('post', `/sessions/${sessionId}/detach`).expect(204);
+
+    expect(await world.prisma.quest.findUniqueOrThrow({ where: { id: questId } })).toMatchObject({
+      globalEventId: eventId,
+    });
+    const { globalEventId: draftId } = await world.onlySession('snu_events', post);
+    expect(await world.prisma.quest.count({ where: { globalEventId: draftId } })).toBe(0);
+  });
+
   it('makes it its own Draft again with a new id, and the event stays', async () => {
     const { eventId, post, sessionId } = await world.attachedPost();
     const before = await world.stored(eventId);

@@ -103,7 +103,7 @@ export class SameEventChoicesService {
       claimed.some((row) => row.startsAt.getTime() === startsAt.getTime()),
     );
     if (mine.length > 0) {
-      await this.askAndStore(sourcePostId, mine, now);
+      await this.askAndStore(sourcePostId, mine);
     }
   }
 
@@ -131,6 +131,7 @@ export class SameEventChoicesService {
       if (same !== undefined) {
         // Two sessions at one start have one answer, so it reads both their places.
         same.place = [same.place, session.place].filter((place) => place !== null).join(' / ');
+        same.sharedStart = true;
       } else if (!asked.has(at)) {
         // oxlint-disable-next-line no-await-in-loop -- few sessions, and no transaction is held
         const events = await sameEventCandidates(this.prisma, session.startsAt, sourcePostId);
@@ -144,7 +145,7 @@ export class SameEventChoicesService {
     return [...toAsk.values()];
   }
 
-  private async askAndStore(sourcePostId: string, sessions: SessionToCompare[], now: Date): Promise<void> {
+  private async askAndStore(sourcePostId: string, sessions: SessionToCompare[]): Promise<void> {
     const post = await this.prisma.sourcePost.findUniqueOrThrow({
       where: { id: sourcePostId },
       include: WITH_OWN_SESSIONS,
@@ -155,6 +156,7 @@ export class SameEventChoicesService {
       { post: { title: event?.title ?? '', text: event?.description ?? '' }, source: post.source, sessions },
       this.limits,
     );
+    const answeredAt = this.clock.now();
     for (const { startsAt, outcome, globalEventId, reason, failure } of choices) {
       if (failure !== null) {
         // Never the post's text or the answer.
@@ -163,7 +165,7 @@ export class SameEventChoicesService {
       // oxlint-disable-next-line no-await-in-loop -- few sessions
       await this.prisma.sameEventAnswer.updateMany({
         where: { sourcePostId, startsAt, outcome: null },
-        data: { outcome, chosenEventId: globalEventId, reason, failure, modelId, answeredAt: now },
+        data: { outcome, chosenEventId: globalEventId, reason, failure, modelId, answeredAt },
       });
     }
   }

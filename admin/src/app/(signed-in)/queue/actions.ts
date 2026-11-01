@@ -19,7 +19,6 @@ export type QueueAction = { sessionId: string; version: number } & (
 
 const REFUSALS: Record<string, string> = {
   GLOBAL_EVENT_CHANGED: 'Another Administrator changed this Draft after you opened the page. Look at it again.',
-  POST_SESSION_NOT_QUEUED: 'Another Administrator has decided this session already.',
   CANDIDATE_GONE: 'That event is no longer a candidate of this session.',
 };
 
@@ -42,6 +41,11 @@ export async function decideSession(action: QueueAction): Promise<string | null>
   try {
     await asAdministrator('/queue', (token) => send(token, action));
   } catch (error) {
+    // Another Administrator decided it: the reload takes its card away, and that says so.
+    if (error instanceof MainServerError && error.refusal.code === 'POST_SESSION_NOT_QUEUED') {
+      refresh();
+      return null;
+    }
     const refused = error instanceof MainServerError ? refusedFor(error) : null;
     if (refused === null) {
       throw error;

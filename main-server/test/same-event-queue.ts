@@ -43,6 +43,7 @@ export class QueueWorld extends SameEventWorld {
   }
 
   async clear(): Promise<void> {
+    await this.prisma.quest.deleteMany();
     await this.prisma.globalEvent.deleteMany();
     await this.prisma.sourcePost.deleteMany();
   }

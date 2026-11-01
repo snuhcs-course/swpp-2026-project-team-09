@@ -182,7 +182,7 @@ One post on a Source that Global Events were read from, such as an SNU Now notic
 _Avoid_: Original, article, duplicate
 
 **Same-event queue**:
-The sessions of Source Posts that wait for an Administrator, since neither the rules nor the AI could say whether they are an event that exists. Each stays a Draft with its candidates, which Users do not see, until an Administrator attaches it to one or publishes it as its own. Detaching is the way back from a session attached by mistake: it becomes its own Draft again, and the event keeps its Quests.
+The sessions of Source Posts that wait for an Administrator, since neither the rules nor the AI could say whether they are an event that exists. Each stays a Draft with its candidates, which Users do not see, until an Administrator attaches it to one, publishes it as its own or discards its Draft. Detaching is the way back from a session attached by mistake: it becomes its own Draft again, and the event keeps its Quests.
 _Avoid_: Review list, pending posts
 
 **Restaurant**:

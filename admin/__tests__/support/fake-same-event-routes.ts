@@ -6,7 +6,11 @@
 
 import type { GlobalEvent, LinkedSession, QueuedSession } from '@/main-server';
 
+import type * as MainServerModule from '@/main-server';
+
 import { FakeSameEvent } from './fake-same-event';
+
+const { MainServerError } = await vi.importActual<typeof MainServerModule>('@/main-server');
 
 // The main server's routes over them, apart from the fake's others.
 export abstract class SameEventRoutes {
@@ -17,7 +21,13 @@ export abstract class SameEventRoutes {
   protected abstract answer<T>(request: string, token: string, work: () => T): Promise<T>;
 
   listLinkedSessions = (token: string, id: string): Promise<LinkedSession[]> =>
-    this.answer(`GET /admin/global-events/${id}/sessions`, token, () => this.sameEvent.linkedTo(id));
+    this.answer(`GET /admin/global-events/${id}/sessions`, token, () => {
+      // As the main server does for an id that is not a UUID.
+      if (this.storedEvent(id) === undefined) {
+        throw new MainServerError(400);
+      }
+      return this.sameEvent.linkedTo(id);
+    });
 
   acknowledgeGlobalEvent = (token: string, id: string): Promise<void> =>
     this.answer(`POST /admin/global-events/${id}/acknowledge`, token, () => {

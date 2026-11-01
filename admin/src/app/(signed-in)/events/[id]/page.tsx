@@ -10,7 +10,14 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 
-import { type GlobalEvent, type GlobalEventState, mainServer, MainServerError } from '@/main-server';
+import {
+  type GlobalEvent,
+  type GlobalEventState,
+  type LinkedSession,
+  mainServer,
+  MainServerError,
+  type Place,
+} from '@/main-server';
 import { formatInSeoul } from '@/seoul-time';
 import { asAdministrator } from '@/session';
 
@@ -37,6 +44,19 @@ async function read(token: string, id: string): Promise<GlobalEvent> {
     }
     throw error;
   }
+}
+
+// The event first: an id that names none is a 404, whichever request would answer first.
+async function readPage(
+  token: string,
+  id: string,
+): Promise<{ event: GlobalEvent; places: Place[]; sessions: LinkedSession[] }> {
+  const event = await read(token, id);
+  const [places, sessions] = await Promise.all([
+    mainServer.listPlaces(token),
+    mainServer.listLinkedSessions(token, id),
+  ]);
+  return { event, places, sessions };
 }
 
 function Source({ event }: { event: GlobalEvent }): ReactElement {
@@ -87,9 +107,7 @@ function Stored({ event }: { event: GlobalEvent }): ReactElement {
 export default async function EventPage({ params, searchParams }: PageProps<'/events/[id]'>): Promise<ReactElement> {
   const { id } = await params;
   const { route } = await searchParams;
-  const [event, places, sessions] = await asAdministrator(`/events/${id}`, (token) =>
-    Promise.all([read(token, id), mainServer.listPlaces(token), mainServer.listLinkedSessions(token, id)]),
-  );
+  const { event, places, sessions } = await asAdministrator(`/events/${id}`, (token) => readPage(token, id));
   const state = STATES[event.state];
   const editable = event.state === 'draft' || event.state === 'published';
   return (

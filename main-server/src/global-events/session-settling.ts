@@ -74,6 +74,12 @@ type Compared =
     };
 
 const OWN: Compared = { kind: 'own' };
+const SEVERAL: Compared = { kind: 'hold', heldFor: SessionHold.several_matches };
+
+// One event cannot take two sessions of a post, whichever way each came to it.
+async function holdsOneOf(tx: Prisma.TransactionClient, sourcePostId: string, globalEventId: string): Promise<boolean> {
+  return (await tx.sourcePostSession.count({ where: { sourcePostId, globalEventId } })) > 0;
+}
 
 // A session the rules read that the step has yet to compare.
 export function awaitsComparison({ readByRules, heldFor, globalEvent }: PostSession): boolean {
@@ -96,11 +102,15 @@ async function compared(
   const match = comparesTitles ? matchAmong(session, events) : { kind: 'none' as const };
   if (match.kind === 'one') {
     const { globalEventId } = match;
+    // With the AI off this stays as 08a left it, for the runs before the AI's to compare.
+    if (choosesByAi && (await holdsOneOf(tx, sourcePostId, globalEventId))) {
+      return SEVERAL;
+    }
     const rule = SessionAttachment.rule;
     return { kind: 'attach', globalEventId, reason: TITLE_RULE, attachedBy: rule, target: startOf(globalEventId) };
   }
   if (match.kind === 'several') {
-    return { kind: 'hold', heldFor: SessionHold.several_matches };
+    return SEVERAL;
   }
   if (!choosesByAi) {
     return OWN;
@@ -109,7 +119,8 @@ async function compared(
   const stored = await tx.sameEventAnswer.findUnique({
     where: { sourcePostId_startsAt: { sourcePostId, startsAt: session.startsAt } },
   });
-  // Asked about none and none has come. With an answer, a chosen event that has gone must not make the session its own.
+  // With no answer, any candidate left is one the AI was not asked about, also when the title rule decided at the asking
+  // and no longer does: D4 counts it as `candidates_changed`. Asked about none and none has come. With an answer, a chosen event that has gone must not make the session its own.
   if (stored === null && left.length === 0) {
     return OWN;
   }
@@ -120,10 +131,8 @@ async function compared(
   if (applied.kind !== 'attach') {
     return applied;
   }
-  // One event cannot take two sessions of a post, whether asked in one call or two.
-  const taken = await tx.sourcePostSession.count({ where: { sourcePostId, globalEventId: applied.globalEventId } });
-  return taken > 0
-    ? { kind: 'hold', heldFor: SessionHold.several_matches }
+  return (await holdsOneOf(tx, sourcePostId, applied.globalEventId))
+    ? SEVERAL
     : { ...applied, attachedBy: SessionAttachment.ai, target: startOf(applied.globalEventId) };
 }
 

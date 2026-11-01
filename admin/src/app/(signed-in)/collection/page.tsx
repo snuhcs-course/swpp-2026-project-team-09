@@ -13,9 +13,7 @@ import { type CollectionStatus, mainServer, type UnsettledPost } from '@/main-se
 import { formatInSeoul } from '@/seoul-time';
 import { asAdministrator } from '@/session';
 
-import { sourceLabel } from '../events/publication';
-
-import { JUDGEMENT_TRIES } from '../events/publication';
+import { JUDGEMENT_TRIES, sourceLabel } from '../events/publication';
 
 function stateOf({ lastSucceededAt, lastFailedAt }: CollectionStatus): { label: string; broken: boolean } {
   if (lastSucceededAt === null) {

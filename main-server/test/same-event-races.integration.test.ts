@@ -153,7 +153,7 @@ describe('Another server asking', () => {
 });
 
 describe('One event and a post', () => {
-  it('takes one session of two at one start, and the other waits', async () => {
+  it('holds both of two sessions at one start, since one answer cannot say which it means', async () => {
     const event = await world.publishedThrough('extra_snu', world.programme(world.uniqueTitle()));
     const post = collectedPost(world.postNumber(), {
       title: world.uniqueTitle(),
@@ -169,12 +169,43 @@ describe('One event and a post', () => {
 
     const { sessions } = await world.sourcePostOf('snu_events', post);
     expect(sessions.map(({ attachedBy, heldFor }) => [attachedBy, heldFor])).toEqual([
-      ['ai', null],
+      ['own', 'several_matches'],
       ['own', 'several_matches'],
     ]);
-    expect(sessions[0].globalEventId).toBe(event.id);
+    expect(await world.prisma.sourcePostSession.count({ where: { globalEventId: event.id } })).toBe(1);
     expect(world.sentToTheModel()).toContain('제1공학관(301동)');
     expect(world.scripted.received()).toHaveLength(1);
+  });
+});
+
+describe('One event, the AI and the title rule', () => {
+  const NEXT_DAY = '2027-03-11T14:00:00+09:00';
+
+  it.each([
+    ['the AI first', [START, NEXT_DAY], ['ai', 'own'], [null, 'several_matches']],
+    ['the title rule first', [NEXT_DAY, START], ['rule', 'own'], [null, 'several_matches']],
+  ])('takes one session of a post with %s, and the other waits', async (_, starts, attached, held) => {
+    const title = world.uniqueTitle();
+    const event = await world.publishedThrough('extra_snu', world.programme(title, { start: NEXT_DAY }));
+    const post = collectedPost(world.postNumber(), {
+      title,
+      description: '본문',
+      sessions: starts.map((start, index) => ({
+        number: index + 1,
+        start,
+        end: null,
+        readFrom: 'body',
+        place: PLACE,
+      })),
+    });
+    world.scripted.script(SAME);
+
+    await world.collectedOf('snu_events', post);
+
+    const { sessions } = await world.sourcePostOf('snu_events', post);
+    expect(sessions.map(({ attachedBy }) => attachedBy)).toEqual(attached);
+    expect(sessions.map(({ heldFor }) => heldFor)).toEqual(held);
+    expect(sessions[0].globalEventId).toBe(event.id);
   });
 });
 

@@ -60,6 +60,9 @@ export interface SessionToCompare {
   place: string | null;
   // Those the refusing rules left. A session with none is not asked about.
   candidates: CandidateEvent[];
+  // Whether it stands for several sessions of the post at this start, whose places it lists: one answer cannot say which
+  // of them an event is.
+  sharedStart?: boolean;
 }
 
 export interface SameEventQuestion {
@@ -153,10 +156,11 @@ function readEntry(entries: AnsweredSession[], session: SessionToCompare, number
 }
 
 // One event cannot take two sessions of a post: an Administrator decides between them.
-function withoutDoubles(choices: SessionChoice[]): SessionChoice[] {
-  return choices.map((choice) =>
+function withoutDoubles(choices: SessionChoice[], sessions: SessionToCompare[]): SessionChoice[] {
+  return choices.map((choice, index) =>
     choice.globalEventId !== null &&
-    choices.filter(({ globalEventId }) => globalEventId === choice.globalEventId).length > 1
+    (sessions[index].sharedStart === true ||
+      choices.filter(({ globalEventId }) => globalEventId === choice.globalEventId).length > 1)
       ? { ...choice, outcome: SameEventOutcome.several, globalEventId: null }
       : choice,
   );
@@ -172,6 +176,7 @@ export function readAnswer(answer: Answer, sessions: SessionToCompare[]): Sessio
         numbered,
       ),
     ),
+    sessions,
   );
 }
 
