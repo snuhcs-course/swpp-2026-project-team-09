@@ -7,14 +7,54 @@
     "perf": "error"
   },
   "rules": {
-    "max-lines": ["error", { "skipComments": true }],
+    "max-lines": [
+      "error",
+      {
+        "skipComments": true
+      }
+    ],
     "typescript/no-explicit-any": "error",
     "typescript/explicit-function-return-type": "error",
     "typescript/no-non-null-assertion": "error",
     "typescript/consistent-type-imports": "error",
-    "typescript/prefer-readonly-parameter-types": "off"
+    "typescript/prefer-readonly-parameter-types": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@react-native-cookies/cookies",
+            "message": "App code never reads a cookie. The web views' jar is cleared only by modules/snu-now-web-cookies, through src/library/end-session.ts."
+          }
+        ],
+        "patterns": [
+          {
+            "group": ["**/web-cookies", "@/library/web-cookies"],
+            "message": "Only src/library/end-session.ts clears the web views' cookies, in the shared step that ends the library session."
+          }
+        ]
+      }
+    ]
   },
   "env": {
     "node": true
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/library/end-session.ts", "__tests__/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@react-native-cookies/cookies",
+                "message": "App code never reads a cookie. The web views' jar is cleared only by modules/snu-now-web-cookies, through src/library/end-session.ts."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

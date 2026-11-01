@@ -47,6 +47,11 @@ model User {
   department        String             @default("")
   admissionYear     Int?               @map("admission_year")
   hashtags          String[]           @default([])
+  // For a group study room's booking at 관정도서관 only, and never in another User's reply. The 학번 is nine digits
+  // without the hyphen; an empty registered name is taken to be the name. The limits are in src/users/dto/.
+  studentNumber     String?            @map("student_number")
+  registeredName    String?            @map("registered_name")
+  affiliation       Affiliation?
   // The Google account's name at the last sign-in, from which onboarding suggests a name and a department.
   googleName        String             @default("") @map("google_name")
   onboardedAt       DateTime?          @map("onboarded_at")
@@ -73,6 +78,15 @@ model User {
   tutorialQuests    TutorialQuestProgress[]
 
   @@map("users")
+}
+
+// 소속: 학부, 대학원 or 교환학생.
+enum Affiliation {
+  undergraduate
+  graduate
+  exchange
+
+  @@map("affiliation")
 }
 
 // A Friend Request while acceptedAt is empty, and a friendship once it is accepted. One row for both, keyed by the two
