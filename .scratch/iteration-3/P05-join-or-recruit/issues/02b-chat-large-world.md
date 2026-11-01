@@ -39,6 +39,10 @@ Server recall today, checked against the real server: 15 cases hold every card a
 
 Nothing wrong was found in ticket 02's world, cases or answers.
 
+### C0 tagged (2026-11-01)
+
+`eval-freeze-iter3-chat-large` on `cdf3c01`, the merge commit of #152. The record is `main-server/eval/p5/README.md`. R0 is left, once its cost and command are approved.
+
 ### Agent usage (2026-11-01)
 
 Agent work so far; R0 will add to it.

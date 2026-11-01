@@ -187,6 +187,13 @@ V 8, L 5, P 5, T1 5, T2 5, H 7, S 5, N 5, R 5, O 5, B 5, E 6, C 14케이스입�
 
 **미완료.** C0 뒤에 깨끗한 트리에서 돌립니다. 케이스 수, 예상 비용, 쓸 키와 예산, 명령을 보여 주고 P05 담당의 승인을 받은 뒤에 실행합니다. 저장된 run에는 해시가 남지 않으므로, 메트릭 4.3절대로 `suite.yaml`의 세계와 케이스 해시를 기록에 적습니다.
 
+### 큰 세계의 C0
+
+- 태그: `eval-freeze-iter3-chat-large`
+- 커밋: `cdf3c0148e8fa2399a966e999bd512b0ed645e14` (#152의 머지 커밋)
+- 고정 세트: `large-world-v1`, 80케이스, 3번 반복. `world.json`의 SHA-256은 `462b9539b1a2afa9249ea40d1e18adf3f824b6daec0b36b53f6a0af91a91708c`, `cases/search.yaml`은 `c7cb030213f20c82d23510dc050893c66738d5b31daee4d4895428719aa4ee9f`이고 `suite.yaml`에 같은 값이 있습니다. 태그의 `large-world-v1` 트리 해시는 `29eb1f625475dccd910c81a68f36d9b15f769a50`입니다.
+- 큰 세계의 R0는 이 커밋에서 돌립니다. 아직 돌리지 않았습니다.
+
 ## R0
 
 `r0.md`에 실행 기록, 개선 기록 표, failure analysis가 있습니다. C0 커밋에서 깨끗한 트리로 돌렸고, 결과는 `eval/results/`에 있습니다. 큰 세계의 R0는 티켓 02b에서 따로 돌립니다.
