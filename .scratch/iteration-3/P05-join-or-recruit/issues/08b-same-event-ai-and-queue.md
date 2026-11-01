@@ -42,3 +42,8 @@ Known limits:
 - Queue actions compare the Draft's version under the lock. The window in which an edit on the Draft's own page lands inside an attach or a publish is covered by the code's guards, with no test forcing it.
 
 Ticket 09's runner can use `candidatesLeft`, `matchAmong` (`same-event.ts`), `chooseSameEvent`, `appliedChoice` and `holdOf` (`same-event-choice.ts`) with no database. D4 counts `heldFor` by value.
+
+### Agent usage (2026-11-01)
+
+- Agent time: about 1 hour (estimate), one session with two review subagents, leaving out the time waiting for a person and for another session's evaluation to end.
+- Tokens, subagents included: input 132, with 11,469,011 cache reads and 539,936 cache writes shown apart; output 186,261. Counted before the PR was opened and its review.
