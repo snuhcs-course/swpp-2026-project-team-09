@@ -8,7 +8,7 @@ Blocked by: 04
 
 The chat's library cards come alive on the phone. A book card shows a real free seat or room for the asked time and books it only when the User presses 예약하기, then the done message reminds them to confirm at the kiosk and to return the seat. A seats card draws the site's seat map with the free seats lit, small in the chat and large on a tap, and tapping a free seat gives a book card for it. Cancel and return cards find the matching booking and act only on confirm; myBookings lists the User's bookings. Every failure says what happened. Nothing is ever written to the library before a confirm press.
 
-It uses ticket 04's library client and fake library, and builds against the `library` card DTO and `clientCapabilities` fixed in the spec, mocking ticket 07's replies until it lands. Room bookings with companions are ticket 09; here a room book card books for the applicant alone.
+It uses ticket 04's library client and fake library, and builds against the `library` card DTO and `clientCapabilities` fixed in the spec, mocking ticket 07's replies until it lands. Room bookings with companions are ticket 09; here a room book card books for the applicant alone. Ticket 09 also adds, to this ticket's cancel card, the report to the server when a room booked through a room request is cancelled.
 
 ## Acceptance criteria
 
@@ -23,4 +23,5 @@ It uses ticket 04's library client and fake library, and builds against the `lib
 - [ ] Privacy: BSEQNO, phone, email and every library reply stay on the phone; the done message is never sent to the model; a test inspects the requests to our API mock and finds none of them.
 - [ ] **M4 in CI:** in every test that drives a library card, the fake library records no write request (`setRoomBooking`, `setCancelBooking`) before the confirm press.
 - [ ] Tests, named by ADR 0007, integration against the API mocks and the fake library (prior art: `chat-restaurant-card`, `chat-proposal-card`): each card kind; seat placement at scaled POSX/POSY, the tap and the large view; the seat and room payloads; the useDesc picker and 서약서 gating; the done message with the return text; each failure; session ended and the retry. Payload builders and seat scaling get unit tests.
+- [ ] **Person**, on one real phone against the real site: one group-room booking with a companion in `sMemberJsInfo` (`getUserCheck`, then `setRoomBooking`) and its cancel, recorded with screenshots in the PR. The room flow was read from the site's JS, not recorded, so this is its first real check (through ticket 09's flow if it has landed; otherwise this check moves to ticket 09's).
 - [ ] No native file changes beyond ticket 04's (CLAUDE.md § The app's native files).

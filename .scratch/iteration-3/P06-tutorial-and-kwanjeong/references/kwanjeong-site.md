@@ -1,6 +1,6 @@
 # 관정관 booking site: findings (read-only, 2026-11-01)
 
-Raw material lives next to this file: `json/` (redacted responses), `html/`, `js/`, `img/` and `img/maps/`, `out/` (request logs without cookies) and `scripts/`. The crawl attempted no write request, and the safety route aborted nothing.
+The crawl's raw material (`json/`, `html/`, `js/`, `img/` and `img/maps/`, `out/` request logs without cookies, and `scripts/`) is kept outside the repository; only redacted responses are in `kwanjeong-fixtures/`. The crawl attempted no write request, and the safety route aborted nothing.
 
 ## Spaces (libNo 1)
 
@@ -23,6 +23,7 @@ Every space books in 30-minute steps.
 | Same kind as the 열람실 | 171 / 173 / 181 / 183 | 17101 / 17301 / 18101 / 18301 | 노트북존 / 7B 노트북존 / 노트북 존 / 대학원 열람실 | seat | – | 0:30–6:00 | 07–23 | today only |
 
 - **Room hours** come from getRoomList's OPENTIME/CLOSETIME for the date ("0000" means closed). Seats are open 07–23.
+- **G201 (20인실)** needs ≥ 11 people, so it is not bookable through a party yet: a SNU Now party (Quest) holds at most 8. 10인실 rooms (GR_MIN 7) are bookable by 7–8 people.
 - **Group rooms:** at most 3 h with no extension. A booking not entered within 1 h is cancelled, and 3 no-shows in 7 days bring a 3-day ban.
 - **Reading rooms:** at most 6 h, and an extension is possible. The seat must be confirmed at the kiosk within 30 min or it is auto-returned, and 5 no-shows or unreturned seats in a month bring a 10-day ban.
 - **Not bookable online:**
@@ -77,12 +78,13 @@ All are `POST /NEW_SNU_BOOKING/json/<name>`, form-encoded, with headers `X-Reque
 
 ## My bookings
 
+- **Fixture:** `kwanjeong-fixtures/getMyBookingList_*.json` is anonymised: its dates and times are shifted (each day's rows by the same amount, order kept, onto 2026-10-01 to 2026-10-03), and BSEQNO is replaced with fake sequential numbers (1000001 …). STATUS, STATUS_NAME and the structure are as recorded. No other fixture holds a BSEQNO or a timestamp of the person's history (getRoomList and getSeatBookingList show only occupancy).
 - **Row fields:** BSEQNO, SEATNO, REGTIME, USESTART, USEEXPIRE, RETURNTIME, STATUS, STATUS_NAME, FLOOR_NAME, ROOM_NAME, SECTOR_NAME, SEAT_NAME, SEAT_VNAME, SECTORNO, ROOMNO, LIB_NAME, EXTEND_YN, RETURN_YN. No identity fields.
 - **STATUS:**
   - 1: awaiting approval
   - 2: booked
   - 3: checked in
-  - 4: finished
+  - 4: 좌석미반납 (EXPIREREASON_NAME 사용시간 만료): the use time ran out without a return. The seat was used, so the tutorial's 관정 check counts it as found.
   - 5: returned
   - 6: no-show
   - 7: cancelled

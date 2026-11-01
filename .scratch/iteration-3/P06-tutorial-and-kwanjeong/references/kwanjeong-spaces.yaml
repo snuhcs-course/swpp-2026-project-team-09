@@ -59,6 +59,7 @@ spaces:
     purpose: "11–20명이 함께 강의·과제·동아리 활동·연구·취업 준비를 하는 대형 그룹스터디룸입니다."
     equipment: "무선랜/전원 제공 (LAN_YN Y, POWER_YN Y, no monitor)"
     capacity: "11–20"
+    party_note: "needs ≥ 11 people, not bookable through a party yet"   # a party (Quest) holds at most 8
     common: group_study_room
     photo: /MAP/POP/pop_12101001.jpg
     aliases:

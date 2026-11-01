@@ -1,19 +1,19 @@
 {
-  "request": "start=20260801&end=20261101",
+  "request": "start=20260901&end=20261004",
   "response": {
     "successYN": "Y",
     "params": {
-      "start": "20260801",
-      "end": "20261101"
+      "start": "20260901",
+      "end": "20261004"
     },
     "bookingList": [
       {
-        "BSEQNO": 5442250,
+        "BSEQNO": 1000006,
         "SEATNO": 17202001,
-        "REGTIME": "2026-10-26 11:14:34",
-        "USESTART": "2026-10-26 17:00:00",
-        "USEEXPIRE": "2026-10-26 18:00:00",
-        "RETURNTIME": "2026-10-26 11:16:15",
+        "REGTIME": "2026-10-03 12:14:34",
+        "USESTART": "2026-10-03 18:00:00",
+        "USEEXPIRE": "2026-10-03 19:00:00",
+        "RETURNTIME": "2026-10-03 12:16:15",
         "STATUS": 7,
         "STATUS_NAME": "예약취소",
         "FLOOR_NAME": "7층",
@@ -32,12 +32,12 @@
         "PRINTCNT": 0
       },
       {
-        "BSEQNO": 5442144,
+        "BSEQNO": 1000005,
         "SEATNO": 17202200,
-        "REGTIME": "2026-10-26 10:49:16",
-        "USESTART": "2026-10-26 11:00:00",
-        "USEEXPIRE": "2026-10-26 12:00:00",
-        "RETURNTIME": "2026-10-26 11:30:00",
+        "REGTIME": "2026-10-03 11:49:16",
+        "USESTART": "2026-10-03 12:00:00",
+        "USEEXPIRE": "2026-10-03 13:00:00",
+        "RETURNTIME": "2026-10-03 12:30:00",
         "STATUS": 6,
         "STATUS_NAME": "예약부도",
         "FLOOR_NAME": "7층",
@@ -56,12 +56,12 @@
         "PRINTCNT": 0
       },
       {
-        "BSEQNO": 5442102,
+        "BSEQNO": 1000004,
         "SEATNO": 17202200,
-        "REGTIME": "2026-10-26 10:37:52",
-        "USESTART": "2026-10-26 11:00:00",
-        "USEEXPIRE": "2026-10-26 12:00:00",
-        "RETURNTIME": "2026-10-26 10:48:48",
+        "REGTIME": "2026-10-03 11:37:52",
+        "USESTART": "2026-10-03 12:00:00",
+        "USEEXPIRE": "2026-10-03 13:00:00",
+        "RETURNTIME": "2026-10-03 11:48:48",
         "STATUS": 7,
         "STATUS_NAME": "예약취소",
         "FLOOR_NAME": "7층",
@@ -80,12 +80,12 @@
         "PRINTCNT": 0
       },
       {
-        "BSEQNO": 5396046,
+        "BSEQNO": 1000003,
         "SEATNO": 14103008,
-        "REGTIME": "2026-10-02 13:39:05",
-        "USESTART": "2026-10-02 17:00:00",
-        "USEEXPIRE": "2026-10-02 19:00:00",
-        "RETURNTIME": "2026-10-02 19:00:02",
+        "REGTIME": "2026-10-01 14:39:05",
+        "USESTART": "2026-10-01 18:00:00",
+        "USEEXPIRE": "2026-10-01 20:00:00",
+        "RETURNTIME": "2026-10-01 20:00:02",
         "STATUS": 4,
         "STATUS_NAME": "좌석미반납",
         "FLOOR_NAME": "4층",
@@ -104,12 +104,12 @@
         "PRINTCNT": 1
       },
       {
-        "BSEQNO": 5396040,
+        "BSEQNO": 1000002,
         "SEATNO": 14103017,
-        "REGTIME": "2026-10-02 13:37:35",
-        "USESTART": "2026-10-02 19:00:00",
-        "USEEXPIRE": "2026-10-02 22:00:00",
-        "RETURNTIME": "2026-10-02 21:56:26",
+        "REGTIME": "2026-10-01 14:37:35",
+        "USESTART": "2026-10-01 20:00:00",
+        "USEEXPIRE": "2026-10-01 23:00:00",
+        "RETURNTIME": "2026-10-01 22:56:26",
         "STATUS": 5,
         "STATUS_NAME": "본인반납",
         "FLOOR_NAME": "4층",
@@ -128,12 +128,12 @@
         "PRINTCNT": 1
       },
       {
-        "BSEQNO": 5396036,
+        "BSEQNO": 1000001,
         "SEATNO": 14103017,
-        "REGTIME": "2026-10-02 13:35:58",
-        "USESTART": "2026-10-02 14:30:00",
-        "USEEXPIRE": "2026-10-02 17:00:00",
-        "RETURNTIME": "2026-10-02 17:00:02",
+        "REGTIME": "2026-10-01 14:35:58",
+        "USESTART": "2026-10-01 15:30:00",
+        "USEEXPIRE": "2026-10-01 18:00:00",
+        "RETURNTIME": "2026-10-01 18:00:02",
         "STATUS": 4,
         "STATUS_NAME": "좌석미반납",
         "FLOOR_NAME": "4층",

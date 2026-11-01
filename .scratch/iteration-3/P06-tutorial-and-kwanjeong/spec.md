@@ -24,7 +24,7 @@ Two capabilities. Both rest on content and rules the server owns, and the model 
 - **관정도서관 booking in the chat.** "7층 열람실 5시부터 두 시간 잡아줘", "내일 3시에 4층 스터디룸 민수랑 지은이랑", "지금 8층 자리 있어?", "반납해줘".
   - The Assistant finds the space in the catalogue and checks the booking window and the hours. It answers with a card. The phone, which alone holds the User's library session, fills the card with live seats or rooms and books, cancels or returns only after the User presses the card's button.
   - Seats show on the site's own seat map, small in the chat and large on a tap. Tapping a free seat gives a booking card for it.
-  - A group study room is booked by a 파티. Each invited Friend consents to share their 학번, and a refusal dissolves a 파티 made for the booking.
+  - A group study room is booked by a 파티. Each invited Friend consents to share their 학번, and a refusal dissolves a 파티 made for the booking. A 파티 holds at most 8 people, so a booking for 9 or more is refused and G201 (20인실, 11 or more) is not offered.
   - Spaces that cannot be booked online get a "현장 이용" answer. Spaces outside the scope get "아직 미구현".
 
 Words:
@@ -60,7 +60,7 @@ Words:
 16. As a User, I want to log in to the library once in a web view inside the app, with the school's own login page, so that SNU Now never sees my password.
 17. As a User, I want the session kept on my phone only, so that our server, its logs and the AI never hold it.
 18. As a User, I want to be asked to log in again only when the school's session has ended, so that I am not asked every time.
-19. As a User, I want to log out of the library from 내 정보, so that I can remove the session.
+19. As a User, I want to log out of the library from 내 정보, and signing out of SNU Now to log me out of the library too, so that the session is really gone and the next person on this phone never sees my bookings.
 
 ### Booking in the chat
 
@@ -83,7 +83,7 @@ Words:
 
 ### Group study rooms
 
-36. As a User, I want "내일 3시 4층 스터디룸 민수, 지은이랑" to check that three people fit the room (GR_MIN–GR_MAX), so that I do not try a room the library refuses.
+36. As a User, I want "내일 3시 4층 스터디룸 민수, 지은이랑" to check that three people fit the room (GR_MIN–GR_MAX) and a 파티 (at most 8), so that I do not try a room the library or SNU Now refuses.
 37. As a User, I want a booking party made and my Friends invited, so that the booking is a 파티 we share.
 38. As an invited Friend, I want to be asked "(내 이름)님의 학번이 필요해요. 제공해도 될까요?" with the registered name and 학번 that will be sent, so that I decide each time.
 39. As a member, I want everyone to see "파티 구성원이 제안을 거절했습니다" and the booking party dissolved when anyone declines, so that nobody waits for a booking that will not happen.
@@ -183,20 +183,24 @@ Words:
   - `TutorialQuestProgress { userId, questKey, startedAt, completedAt?, completedBy? (button | checked | forced | skipped), @@id([userId, questKey]) }`.
   - Unknown keys (a quest removed from the YAML) are ignored on read.
 - **Eligible by default:** `admissionYear ≥` the current year in Korea (by the server's clock), or `affiliation = exchange`.
-- **The state, derived:**
-  - `finished`: all quests completed;
-  - `stopped`: `stoppedAt` is later than `enabledAt`;
-  - `active`: at least one quest started and not finished;
-  - `available`: eligible by default or enabled, not stopped, nothing started;
-  - `off`: otherwise.
+- **What the timestamps mean.** Each is set or cleared only by the rules below, so the state never compares timestamps or reads a missing one as a time:
+  - `enabledAt`: the tutorial is on. `POST /tutorial/enable` sets it. For a User eligible by default, `GET /tutorial` sets it the first time it finds no `enabledAt` and no `stoppedAt` (creating the row), so "eligible by default" is stored once and later changes to the admission year or 소속 do not turn it off.
+  - `stoppedAt`: the User stopped it. `POST /tutorial/stop` sets it; `enable` clears it (and sets `enabledAt` again).
+  - `finishedAt`: set when a complete makes every quest of the content **at that time** completed. It is never cleared by adding quests: quests added to the YAML later do not reappear for a finished User. Only `enable` from 내 정보 clears it, and then the new quests show as not started.
+- **The state, derived** in this order, the first that holds:
+  - `finished`: `finishedAt` is set;
+  - `stopped`: `stoppedAt` is set;
+  - `off`: `enabledAt` is not set (no row, or a row with only `rowHiddenAt`);
+  - `active`: at least one quest of the content is started (completed or not);
+  - `available`: otherwise (on, nothing started).
   - The main screen shows the button in `available` and `active` while some quest is not started. It shows the quest-list group in `active`. Elsewhere it shows nothing.
 - **Endpoints**, all as the signed-in User:
   - `GET /tutorial` → `{ state, quests: [{ ...content, status: notStarted | started | completed }] }`. The content is served from the YAML, so the app has no copy.
-  - `POST /tutorial/enable` (진행하기): sets `enabledAt` and clears a stop. Progress is kept.
+  - `POST /tutorial/enable` (진행하기): sets `enabledAt` and clears `stoppedAt` and `finishedAt`. Progress is kept.
   - `POST /tutorial/stop` (튜토리얼 그만하기, and 끄기 in 내 정보).
   - `POST /tutorial/hide-row` (the ✕ of the 내 정보 row while `off`).
   - `POST /tutorial/quests/:key/start`.
-  - `POST /tutorial/quests/:key/complete { by }`: `button` is accepted only for a button quest, and `checked | forced | skipped` only for `kwanjeongCheck`. The phone does the 관정 check, so the server records how the quest was completed and does not verify it. Completing the last quest sets `finishedAt`.
+  - `POST /tutorial/quests/:key/complete { by }`: `button` is accepted only for a button quest, and `checked | forced | skipped` only for `kwanjeongCheck`. The phone does the 관정 check, so the server records how the quest was completed and does not verify it. A complete that leaves no quest of the content uncompleted sets `finishedAt` (above).
   - Each call is idempotent and answers with the new `GET /tutorial` body.
 
 **App.**
@@ -218,7 +222,7 @@ Words:
   - **The 관정 check:**
     1. The sheet shows "관정도서관 예약 내역을 확인하고 있어요 ···". Without a library session, the login web view opens first, and cancelling it counts as not found.
     2. The phone calls `getMyBookingList(start = today − 30 days, end = today + 3 days)`.
-    3. Found means a row with STATUS 2, 3, 4 or 5.
+    3. Found means a row with STATUS 2 (booked), 3 (checked in), 4 (좌석미반납, 사용시간 만료: the use time ran out without a return, so the seat was used) or 5 (returned, 본인반납).
     4. On found (MainTutorialOk): the most recent row as "{ROOM_NAME} · {SEAT_VNAME}번" / "{M월 D일} {USESTART}–{USEEXPIRE} · 예약·이용 기록" with "확인됨", the completionMessage, and 퀘스트 완료 (complete `checked`).
     5. On not found (MainTutorialFail): "아직 관정도서관 예약 기록이 없어요.\n예약하고 이용한 뒤 다시 확인해 주세요." with 다시 확인, 그냥 완료하기 (complete `forced`) and 어시스턴트에게 예약 부탁하기.
     6. A failed call (network, or the session ending mid-call) shows "도서관 서버에 연결하지 못했어요. 잠시 후 다시 확인해 주세요." with the same buttons.
@@ -226,20 +230,20 @@ Words:
   - 어시스턴트에게 예약 부탁하기 closes the sheet, opens the chat and sends "관정도서관 7층 열람실에 한 자리 예약해줘" (the frames' text).
 - **The 내 정보 row** (ProfileTutorial). The subtitle by state:
   - `off`: "학교생활이 처음이라면\n퀘스트로 하나씩 익혀 보세요" with 진행하기 and ✕;
-  - `available`, eligible by default: "지도 화면 아래 버튼으로 시작할 수 있어요";
+  - `available`, eligible by default (by the rule, read now): "지도 화면 아래 버튼으로 시작할 수 있어요";
   - `available`, enabled: "켜 두었어요 · 지도 화면 아래 버튼으로 시작해요" with 끄기;
   - `active`: "진행 중 · 완료 k/N · 지도의 퀘스트 목록에서 이어서 해요" with 그만하기;
   - `stopped`: "그만두었어요 · 다시 하려면 진행하기를 눌러요" with 진행하기;
-  - `finished`: "모두 완료했어요".
+  - `finished`: "모두 완료했어요". When the content has quests the User has not completed (added after `finishedAt`), it adds "새 퀘스트가 있어요" with 진행하기.
 
 ### The library session (device only)
 
 - **Native modules.**
-  - `react-native-webview` is the only module added. It is not in `mobile/package.json`. No cookie module is added, and SecureStore holds nothing of the session.
+  - Two modules are added, neither yet in `mobile/package.json`: `react-native-webview`, and `@react-native-cookies/cookies`, used **only to clear** the web view's cookies at logout (`clearAll()`, plus `flush()` on Android). App code never reads a cookie: `get` and `getAll` (and any other read of the module) are forbidden by lint rules: `no-restricted-properties` on the module's `get`, `getAll` and `getFromResponse`, and `no-restricted-imports` of the module everywhere but the one logout file in `mobile/src/library/`. SecureStore holds nothing of the session.
   - `expo-secure-store` and `expo-web-browser` are already there.
   - **This is a native change.** It raises `version` in `app.json`, which makes a new fingerprint, and needs a native Release by P03's flow (`infra/production/README.md` § The Production APK, and `app-version.json`). Installed 1.0.0 APKs get none of P6's library screens until they update. The tutorial (except the 관정 check) and the server tools need no native change, and the 1.0.0 JS bundle never receives library cards (see Cards).
   - **One native Release with P03 ticket 05.** The change ships in the same Release as P03 ticket 05's planned 1.0.1 verification release: `version` goes from 1.0.0 to 1.0.1, the CI builds the APK from the tag, and the fingerprint's comment stripping from #128 may ride along. The Mac owner builds iOS.
-- **Where the session lives.** The session is the `HttpOnly` cookie `JSESSIONID` on `k-rsv.snu.ac.kr` (path `/NEW_SNU_BOOKING/`). It lives only in the web view's own cookie jar. App code never reads, copies or stores it: not in SecureStore, not in JS memory, not in a log.
+- **Where the session lives.** The session is the `HttpOnly` cookie `JSESSIONID` on `k-rsv.snu.ac.kr` (path `/NEW_SNU_BOOKING/`). It lives only in the web view's own cookie jar. App code never reads, copies or stores it: not in SecureStore, not in JS memory, not in a log. The cookie module only clears the jar (Logout).
   - Both web views (the login and the hidden one) use the default, persistent web view store (not `incognito`), so they share that jar.
   - The app keeps only a "logged in" flag (`kwanjeong.loggedIn` in AsyncStorage). It holds nothing from the site, is set after a login and is cleared when the session ends or on logout.
 - **Login.**
@@ -263,7 +267,11 @@ Words:
   - `setSeatReturn` is not on the list, since no site button uses it.
 - **Session ended.** HTTP 999, a redirect, or a reply that is not JSON gives `sessionEnded`, and so does the hidden view's page landing anywhere off `k-rsv.snu.ac.kr`/`/pc/`. The client clears the flag and the card shows "관정도서관 로그인이 끝났어요. 다시 로그인해 주세요." with 로그인, which opens the login again. After the login, the action the User pressed is retried once.
 - **Seat-map images** load from `https://k-rsv.snu.ac.kr:444/MAP/WEB/area_<sectorNo>.png?version=20261022` with no cookie, as plain images outside the web view. The size per sector is in the catalogue.
-- **Logout.** A 내 정보 row "관정도서관 로그인" shows 로그아웃 while the flag is set. Logout clears the web view's cookies and data: the hidden view loads the site's logout URL, then its cache and data are cleared with react-native-webview's `clearCache(true)`, and the flag is cleared. A read after logout gives `sessionEnded`.
+- **Logout** really ends the library session. A 내 정보 row "관정도서관 로그인" shows 로그아웃 while the flag is set, and the app's `signOut()` (`mobile/src/auth/sign-in.ts`) runs the same logout before it forgets the main server's tokens, whether or not the flag is set. Ending the session is, in order:
+  1. the hidden view loads the site's logout URL (with the same 15-second limit; a failure does not stop the next steps);
+  2. every web-view cookie is cleared with `@react-native-cookies/cookies` `clearAll()`, then `flush()` on Android;
+  3. the `kwanjeong.loggedIn` flag is cleared.
+  - A read after logout gives `sessionEnded`, and the next login asks for the password again. After a sign-out and a sign-in with another account, none of the previous person's bookings can be read.
 - **Never sent to our servers:** the session, any library reply, the applicant's or companions' library data, phone, email, BSEQNO. The app's error reporting and logs drop library request and response bodies.
 
 ### The space catalogue
@@ -274,6 +282,7 @@ Words:
   - `mapImage`: `{ width, height }` for seat sectors;
   - `booking_ahead_days`: 0 for seats, 3 for rooms;
   - `step_minutes`: 30.
+- G201 (`2F-group-20`) keeps `implemented: true` (the site books it) and carries `party_note: "needs ≥ 11 people, not bookable through a party yet"`. `proposeLibraryBooking` refuses it with the 8-people message (Assistant, "At most 8 people").
 - **Result kinds** of a space:
   - `implemented`: bookable online and in scope;
   - `notOnline`: `bookable: false` inside 관정관 (G202, 161 멀티미디어, 163 정보검색실, the carrels 174 and 184);
@@ -315,7 +324,8 @@ Words:
       - a `useDesc` not among the space's options;
       - people outside the room's capacity (below).
     - Each refusal comes with the reason and the bound, worded for the reply (for example "열람실은 당일만 예약할 수 있어요", "그룹스터디룸은 3일 뒤까지만 예약할 수 있어요", "열람실은 최대 6시간이에요").
-    - **People** are the User plus `friendIds` (ids `resolveFriend` returned in this message) or the Holders of `questId` (a Quest the User holds). They are compared with the space's capacity as numbers. Below GR_MIN, the refusal gives how many more are needed. Above GR_MAX, it names the larger sizes on that floor that fit.
+    - **People** are the User plus `friendIds` (ids `resolveFriend` returned in this message) or the Holders of `questId` (a Quest the User holds). They are compared with the space's capacity as numbers. Below GR_MIN, the refusal gives how many more are needed. Above GR_MAX, it names the larger sizes on that floor that fit and a party can hold (GR_MIN ≤ 8).
+    - **At most 8 people.** A booking party is a Quest, and a Quest's capacity is 1–8 (`quests_capacity_check`, `quest-requests.dto.ts`), which stays. So people above 8 (the User plus 8 or more Friends) are refused with "파티는 최대 8명까지라 9명 이상 방 예약은 아직 못 해요 — 직접 예약해 주세요", whatever the room. A space whose GR_MIN is above 8 (G201 20인실, GR_MIN 11) gets the same refusal for any number of people, and is never named as a larger size. 10인실 rooms (GR_MIN 7) stay bookable by 7 or 8 people.
     - Reading rooms take no companions. With companions, it refuses and says seats are individual.
     - Media rooms take companions through the same booking party as group rooms.
     - It refuses a `notOnline`, `unsupported` or `notEligible` space with that answer's reason.
@@ -393,6 +403,7 @@ Words:
   1. The card loads `getMyBookingList` (today − 1 to today + 3) and keeps the rows that match `target` and the STATUS (cancel: 1 or 2; return: 3).
   2. One row: "{space} · {seat} · {time}" with 취소하기 or 반납하기 and 그만두기. Several: a list to choose from. None: "취소할 예약이 없어요" or "지금 사용 중인 좌석이 없어요".
   3. The confirm sends `setCancelBooking(bseqno)`, then "예약을 취소했어요" or "반납했어요. 이용해 주셔서 고마워요!".
+  4. For a room booked through a room request, a successful cancel also tells the server (Group study rooms, "Cancelling a booked room").
 - **seats.** Wireframe MainChatLibSeats.
   - The site's `area_<sector>.png` draws at the card's width, with each seat a box at POSX, POSY (33×28 image pixels) scaled to it:
     - free: orange #F89200;
@@ -415,26 +426,35 @@ Words:
 ### Group study rooms: the room request
 
 - **Made from the book card** with companions, by "동의 요청 보내기". The app calls `POST /library/room-requests { key, friendIds | questId }`.
-  - The server checks the key's conditions again with the same code as the tool: the catalogue, the window, the capacity, and that the ids are the User's Friends or the Quest's Holders.
+  - The server checks the key's conditions again with the same code as the tool: the catalogue, the window, the capacity, at most 8 people (so at most 7 `friendIds`, and never G201), and that the ids are the User's Friends or the Quest's Holders. More than 8 is a 400 with "파티는 최대 8명까지라 9명 이상 방 예약은 아직 못 해요 — 직접 예약해 주세요".
   - With `friendIds`, it makes a **booking party**: a Closed Quest titled "관정 {space} 예약", led by the User. It has one Sub Quest at Place 62-1 from start to end, and a `QuestInvitation` for each Friend.
   - With `questId` (an existing Quest the User holds), it makes no Quest and asks that Quest's other Holders.
-  - It writes `RoomRequest { id, questId, madeForBooking, requesterId, spaceId, date, start, minutes, useDesc, status: gathering | ready | booked | dissolved | expired, failedUserId? }` and a `RoomConsent { requestId, userId, answeredAt?, consented? }` per companion.
+  - It writes `RoomRequest { id, questId, madeForBooking, requesterId, spaceId, date, start, minutes, useDesc, status: gathering | ready | booked | cancelled | dissolved | expired, failedUserId? }` and a `RoomConsent { requestId, userId, answeredAt?, consented? }` per companion.
 - **The consent.**
   - A booking party's invitation, or for an existing Quest a notice in its Holders' list, shows "{registeredName or name}님의 학번이 필요해요. 제공해도 될까요?". Under it are the registered name and 학번 that will be sent, and 제공하고 참여 and 거절.
   - With no 학번 or registered name in 내 정보, the dialog asks for them and saves them to 내 정보 first.
   - Consenting accepts the invitation (Quest invitation acceptance, unchanged) and sets `consented`.
   - The consent is for this request only and is asked again for every booking.
-- **A decline** (거절, or declining the invitation):
+- **A decline** (거절, or declining the invitation), and everything that counts as one while the request is `gathering` or `ready`:
+  - a companion (consented or not) leaving the party, or being removed from it (`DELETE quests/:questId/holders/:userId`);
+  - the party (the booking party or the existing Quest) being deleted;
+  - a companion unfriending the booker, or the booker unfriending a companion;
+  - a companion withdrawing their consent (철회, in the same notice).
   - It sets `dissolved`. Every member and invitee sees "파티 구성원이 제안을 거절했습니다": a one-time notice on the main screen, and in the booker's card.
   - When `madeForBooking`, the Quest is deleted with its invitations.
   - An existing Quest is never deleted or changed. Only the request ends.
-- **Ready.** When every consent is in, the status is `ready`, and the booker's card, which polls `GET /library/room-requests/:id`, enables 예약하기.
+- **Ready.** When every current Holder other than the booker has consented, the status is `ready`, and the booker's card, which polls `GET /library/room-requests/:id`, enables 예약하기.
+- **A Holder who joins later** (after the request was made, for example by an invitation to the existing Quest) gets a `RoomConsent` row and the same consent notice. The request goes back to `gathering` and the booking stays blocked until that Holder consents; a refusal dissolves it as above. People are counted again against the capacity and the 8-people limit, and going outside them dissolves the request with the refusal's reason.
 - **Booking.**
-  1. On 예약하기, the phone calls `GET /library/room-requests/:id/companions`. It is allowed only for the requester, only while `ready`, and returns `[{ userId, registeredName, studentNumber }]`.
+  1. On 예약하기, the phone calls `GET /library/room-requests/:id/companions`. It is allowed only for the requester, only while `ready`, and returns `[{ userId, registeredName, studentNumber }]` only for people who are **current** Holders of the party **and** have consented to this request. It is checked against the Holders when the reply is built, not when the consent was given: anyone who left, was removed or unfriended is never in it (and the request is already `dissolved`, so the reply is 409).
   2. The phone runs `getUserCheck(roomNo, name, 학번)` for each companion and puts the NAME and SCHOOLNO the library returns into `sMemberJsInfo`, after the applicant's own from the room form.
   3. It sends `setRoomBooking`.
   4. It reports `POST /library/room-requests/:id/result { ok, failedUserId? }`, with no library data.
-  5. On `ok` the status is `booked`, and members see "{booker}님이 {space} {date time} 예약을 마쳤어요".
+  5. On `ok` the status is `booked`, and members see "{booker}님이 {space} {date time} 예약을 마쳤어요". The phone keeps the booking's BSEQNO with the request id in a local map (AsyncStorage, never sent).
+- **Cancelling a booked room.** When the booker cancels a room booking on the phone (a cancel card, or 내 예약) whose BSEQNO is in that map, the phone, after `setCancelBooking` succeeds, calls `POST /library/room-requests/:id/cancelled` with no body: no library data, only "the booking for request X was cancelled". It is allowed only for the requester and only while `booked`, and is idempotent.
+  - The status becomes `cancelled`, so the booking party no longer sits in its members' day: a booking party made for it is deleted with its Sub Quest, which stops blocking the companions' Free Time. An existing Quest is never deleted or changed.
+  - Members see "{booker}님이 {space} {date time} 예약을 취소했어요".
+  - A booking cancelled elsewhere (the library's app, a kiosk) is not seen. Its request stays `booked`, and the booking party stays until its end like any Quest.
 - **A rejected companion.**
   - When `getUserCheck` or the booking rejects a companion, the request sets `failedUserId` and goes back to `gathering` for that member.
   - That member is asked "도서관에서 이름이나 학번을 확인하지 못했어요. 내 정보의 학적상 이름과 학번이 맞는지 확인해 주세요.", with 확인했어요 (re-consent) and 거절 (dissolve as above).
@@ -442,7 +462,7 @@ Words:
   - When the library's message is about the room or time, the card shows it and the request stays `ready`.
 - **The end.**
   - A request still not `booked` at its start is `expired`, and a booking party made for it is deleted.
-  - `RoomConsent` rows are deleted at any final status.
+  - `RoomConsent` rows are deleted at `booked` and at every final status (`cancelled`, `dissolved`, `expired`).
   - 학번 is never copied into a request. It is read from `users` when the companions reply is built. No request, reply or log line of these endpoints holds it except that reply's body, which the HTTP logging leaves out.
 - **Never the model.** The room request endpoints are the app's, outside the Assistant.
 
@@ -454,7 +474,7 @@ The security layers. Each box is a trust boundary, and each arrow is labelled wi
 flowchart LR
   subgraph Phone["Phone: the SNU Now app"]
     WV["Web view login<br/>(the User types the password<br/>into the library's own page)"]
-    SS[("Web view cookie jar<br/>(HttpOnly, never read by app code)")]
+    SS[("Web view cookie jar<br/>(HttpOnly, never read by app code;<br/>cleared on logout and sign-out)")]
     LC["Library client<br/>(reads + writes)"]
     HWV["Hidden web view<br/>(same origin, fixed script)"]
     CARDS["Library cards<br/>seat map · book · cancel · return<br/>(writes only on a tap)"]
@@ -485,11 +505,10 @@ flowchart LR
   COMP -- "names + 학번 of consenting<br/>companions" --> LC
 ```
 
-- **The session cookie** is only on the phone, in the web view's own cookie jar. App code, the library client included, never reads it: the hidden web view sends it to the library and gives back only parsed JSON or an error kind. No arrow carries it to our server or the model.
+- **The session cookie** is only on the phone, in the web view's own cookie jar. App code, the library client included, never reads it: the hidden web view sends it to the library and gives back only parsed JSON or an error kind. No arrow carries it to our server or the model. Logout and the app's sign-out end it at the library and clear the jar (`clearAll()`); the cookie module is used for nothing else.
 - **Writes** (book, cancel, return) are sent by the phone, only from a card the User tapped. The server and the model have no path to the library at all.
 - **학번 and registered names** go from our database only to the booker's phone, after each companion consents. They never reach the model, the logs, traces or the eval.
 
-- The model sees the User's words, catalogue entries, its tools' checked inputs and results, Friends' names and ids (as today), and the tutorial's text. It never sees the session, any library reply, 학번, registered names, phone, email or BSEQNO.
 - The model sees the User's words, catalogue entries, its tools' checked inputs and results, Friends' names and ids (as today), and the tutorial's text. It never sees the session, any library reply, 학번, registered names, phone, email or BSEQNO.
 - Our servers never see the session or any library reply. They hold 학번 and registered names in `users` and send them only in the companions reply.
 - Eval worlds, cases, labels, traces and results hold no real 학번, names or library data. The eval world's 학번 are fake (`2026-00001` and so on), and the fake library's fixtures are the redacted responses of `references/`.
@@ -504,14 +523,14 @@ flowchart LR
   - a lunch Quest the asker holds, for the "existing 파티" cases;
   - tutorial progress in each state.
   - The library is not called by any server tool, so the world needs no library. The `FreeTimePort` is bound to the world's days.
-- **Categories and counts** (58 cases, every one `repeat: 3`):
+- **Categories and counts** (60 cases, every one `repeat: 3`):
 
 | Category | What is right | Cases |
 |---|---|---|
 | Space resolution | the right catalogue id or ids: 4 by the site's name, 4 by a site alias, 4 by a proposed alias or a purpose ("6층 영화 보는 곳" → 6F-multimedia-viewing, notOnline); 2 ambiguous ones that ASK, listing the candidates | 14 |
 | Booking conditions | `proposeLibraryBooking` with the right date, start, minutes or end, seat, equipment and useDesc: times given in several forms; missing time → ASK; useDesc inferable and not (left out); a named seat; "모니터 있는 스터디룸"; "공강에" through `findLibraryFreeSlots` | 12 |
 | Refusals | unsupported → "미구현" and no card (3); notOnline → "현장" and no card (3); out of window or hours (seat tomorrow, room in 4 days, 23:30, 7 hours) → the reason and no card (3); 대학원 열람실 for an undergraduate → notEligible (1) | 10 |
-| Group rooms | `resolveFriend` for each Friend, then a book card with companions; below GR_MIN → refusal naming how many more; above GR_MAX → a larger size named; same-name Friends → ASK; the held lunch Quest → `questId` | 5 |
+| Group rooms | `resolveFriend` for each Friend, then a book card with companions; below GR_MIN → refusal naming how many more; above GR_MAX → a larger size named; same-name Friends → ASK; the held lunch Quest → `questId`; 9 people for a 10인실 and a 20인실 (G201) request → the 8-people refusal and no card | 7 |
 | Bookings, cancel, return | "내 예약", "취소해줘", "반납해줘", "오늘 3시 예약 취소" → the right card and target; "반납했어?" → no action card | 5 |
 | Tutorial Q&A | one per quest from the content; two whose answer the content lacks (the clinic's hours, today's exhibition) → says so and gives the link; one on the User's progress | 8 |
 | Common | library versus 공강 tool choice; "지금 7층 자리 있어?" → seats card; "중앙도서관 열람실 빈자리" → seats of the 7/8층 rooms or ASK, per the rules; small talk about the library → CHAT | 4 |
@@ -531,7 +550,7 @@ flowchart LR
   - **M5 Tutorial grounding:** the share of tutorial replies with every `text.mentions` fact and no unsupported sentence. A sentence is unsupported when the content does not state it. The scorecard lists each tutorial reply in full. The owner marks unsupported sentences, following `rules.md`, and the marks are committed with the run. Proposed: ≥ 90% of replies.
   - **Overall:** a case passes when all its assertions hold. Proposed: overall ≥ 80%, each category ≥ 70%, the mean of 3 runs. Record the model, the limits, the commit and the date.
 - **Ground truth.**
-  - `rules.md` states the judgement in prose: the result kinds, the window, the hours, durations, capacity, the useDesc inference rule, when to ask, and the tutorial's grounding rule.
+  - `rules.md` states the judgement in prose: the result kinds, the window, the hours, durations, capacity and the 8-people party limit, the useDesc inference rule, when to ask, and the tutorial's grounding rule.
   - An agent in a separate session drafts each case's `expect` with its working in `labels-working.yaml`. It sees only `rules.md`, `world.yaml`, the catalogue, `tutorial.yaml` and the questions, never the prompt, tools or code.
   - The owner (AhnJinYoung) reviews every draft and records each change with its reason. The meaning labels are the alias and purpose mappings and the useDesc inferences.
   - A second labeller, a teammate, labels 10 cases from scratch, one per category plus the four alias cases, and the agreement is reported.
@@ -544,12 +563,13 @@ flowchart LR
   - Every case of `eval/cases` (P19) runs 3 times on the commit before P6's chat change and 3 times after, with the same model and limits.
   - A case newly fails when it fails in at least 2 later runs and at most 1 baseline run. No case may newly fail.
   - `out-of-scope-library-seats` is superseded: it is listed at C0 with the P6 case that holds its new answer, and it is not edited.
+  - **P05 runs at the same time.** P05's R1, R2 and R3 each measure one change of its own, and its G1 regression runs the fixed P19 set (`FIXED_SET`), where `out-of-scope-library-seats` would show as a regression after P6's prompt change. So ticket 07's chat change merges only at a point agreed with the P05 owner (between two of P05's runs, never inside one), and a fresh P19 baseline (3 runs) is run and recorded on `3.0/Main` just before that merge, with P05's changes since ticket 06's baseline included. P6's regression and P05's next G1 compare against it, and P05's G1 reports `out-of-scope-library-seats` as superseded by P6.
   - Calls to the new tools in the regression cases are reported, with tokens and cost per turn.
   - The P4 and P5 suites run once before and once after, as a report, not a gate.
 
 ### Documentation
 
-- **ADR 0012:** a third party's session stays on the phone. It covers the web-view login, the session kept only in the web view's own cookie jar and never read by app code, every library call made through a hidden same-origin web view, the app calling the library itself, the server holding none of it, and why a server-side proxy was rejected (the User's school credentials and session would sit on our server).
+- **ADR 0012:** a third party's session stays on the phone. It covers the web-view login, the session kept only in the web view's own cookie jar and never read by app code, logout (and the app's sign-out) ending it with the site's logout URL and `@react-native-cookies/cookies` `clearAll()`, the cookie module used only to clear, every library call made through a hidden same-origin web view, the app calling the library itself, the server holding none of it, and why a server-side proxy was rejected (the User's school credentials and session would sit on our server).
 - **GLOSSARY** gains Tutorial, Tutorial Quest, Student Number (학번), Affiliation (소속), Library Space, Library Card and Booking Party.
 - The P6 app README section lists the library client's endpoints and the fake library.
 
@@ -557,13 +577,17 @@ flowchart LR
 
 - **A good test** drives the feature from outside and checks what the User or a client sees: an HTTP reply, a press and the screen, a request the fake library receives. It does not check internal calls, prompt wording or the model's prose. File names follow ADR 0007: `.unit.test.ts(x)` or `.integration.test.ts(x)`.
 - **Server, without a model:**
-  - the tutorial endpoints (prior art: the profile and Quest integration tests): eligibility by year and by `exchange`, each state, enable, stop and resume keeping progress, idempotent start and complete, `by` checked against the completion kind, `finished` after the last;
+  - the tutorial endpoints (prior art: the profile and Quest integration tests): eligibility by year and by `exchange`, each state, enable, stop and resume keeping progress, idempotent start and complete, `by` checked against the completion kind, `finished` after the last and staying `finished` when a quest is added to the content, and `enable` showing the added quest;
   - the YAML loads, each Place number exists in the seed, each link is a URL, and the keys are unique (unit);
   - the catalogue loads, and every id, `roomNo` and `sectorNo` is unique (unit);
   - the window, hours, duration and capacity rules over a table of cases, including GR_MIN and GR_MAX compared as numbers ("10" > "8") (unit);
   - the room request endpoints:
     - consent, a decline dissolving a booking party but never an existing Quest;
-    - companions only for the requester while `ready`, and never in any other reply;
+    - each case that counts as a decline: leaving, removal (`DELETE quests/:questId/holders/:userId`), the party deleted, unfriending either way, and a withdrawn consent, each giving `dissolved` and the notice;
+    - a Holder joining after the request goes back to `gathering` and blocks the booking until they consent;
+    - companions only for the requester while `ready`, only for current consenting Holders, and never in any other reply;
+    - the 8-people limit (8 accepted, 9 refused; G201 refused);
+    - `cancelled` from the booker only while `booked`, deleting a booking party and freeing its members' Free Time;
     - expiry, and `failedUserId` going back to `gathering`;
     - no 학번 in any log line, checked by capturing the logger.
 - **Assistant over HTTP with the model scripted** (prior art: the `assistant-*` integration tests and `test/scripted-model.ts`):
@@ -571,7 +595,7 @@ flowchart LR
   - the model's input never holds a 학번, a registered name or a session: a scripted run over a world that has them checks every prompt the scripted model received.
 - **App, against its mocks and the fake library** (prior art: `chat-restaurant-card`, `chat-proposal-card` and `profile-edit` integration tests). The library client is an interface over a transport. The hidden-web-view transport is one implementation; the tests use a fake transport backed by the fake library, which serves the redacted recorded responses (copied from the crawl into `mobile/__tests__/support/kwanjeong/`) and records every request. The injected script gets a unit test of its own, run with a stubbed `fetch` and `postMessage`: the headers, the form encoding, the allow-list and the error kinds. Tests:
   - the pager, ◀ ▶, 퀘스트 시작, several started, the quest list group, the sheet, button completion, the next-quest pager, all done, 그만하기 and 진행하기;
-  - the 관정 check: found (STATUS 2–5), not found (only 6 and 7), failed, skip, and no session opening the login;
+  - the 관정 check: found (STATUS 2–5, 4 included), not found (only 6 and 7), failed, skip, and no session opening the login;
   - the seat map: free seats placed at their scaled POSX and POSY, a tap giving a book card, and the large view;
   - each card's payload equal to the site's (seat and room, `sMemberJsInfo` order, hyphen-free 학번);
   - M4: no write before the confirm press;
@@ -579,7 +603,7 @@ flowchart LR
   - the useDesc picker and the 서약서 checkbox gating 예약하기;
   - the done message with the return text;
   - the consent dialog and the dissolve notice.
-- **The web-view login and the hidden web view** are checked by hand on one real phone against the real site: one login, one seat booking and its return, and logout, recorded with screenshots. They are not automated.
+- **The web-view login and the hidden web view** are checked by hand on one real phone against the real site: one login, one seat booking and its return, one group-room booking with a companion in `sMemberJsInfo` (`getUserCheck` then `setRoomBooking`) and its cancel, logout (the library then asks for the password again), and an app sign-out followed by a sign-in with another account (the previous person's bookings are not visible, and the library asks for a password), recorded with screenshots. They are not automated.
 - **Eval with the real model**, outside CI: the P6 suite and the regression, as above.
 
 ## Out of Scope
@@ -607,21 +631,26 @@ flowchart LR
   - 파워플랜트 is Place 68 (not 제2파워플랜트, 330).
   - The exact S-CARD page URL on student.snu.ac.kr must be copied from the site.
   - `clientCapabilities` gates library cards for the 1.0.0 bundle.
-  - The session lives only in the web view's own cookie jar, and every library call runs in a hidden same-origin web view. App code never reads `JSESSIONID`; no cookie module is added.
-  - The site's logout URL must be copied from the site; logout also clears the web view's cache and data.
+  - The session lives only in the web view's own cookie jar, and every library call runs in a hidden same-origin web view. App code never reads `JSESSIONID`; the cookie module `@react-native-cookies/cookies` is added only to clear the jar.
+  - The site's logout URL must be copied from the site; logout, and the app's sign-out, also clear every web-view cookie.
   - The 학번 format.
   - The new GLOSSARY terms and ADR 0012.
 - **Open questions from the site** (`references/kwanjeong-site.md`): what `getUserCheck` answers for an ineligible companion; whether the server enforces GR_MIN and the duration limits (the app checks both regardless); whether a room booking's duration comes from bookTime alone; what XFULL means; why G209, G210 and G414 are missing; the media rooms' Saturday hours (the app takes getRoomList's OPENTIME and CLOSETIME for the date, so "0000" means closed). Whether 대학원 열람실 refuses undergraduates is untested. P6 offers it to graduates only, and a refusal says the booking failed.
-- **The crawl's raw files** (`json/`, `html/`, `img/maps/`) sit in a scratchpad that may be wiped. The fake library ticket copies the redacted responses into the repository first.
+- **The crawl's raw files** (`json/`, `html/`, `img/maps/`) are kept outside the repository, in a scratchpad that may be wiped. Only the redacted responses are in `references/kwanjeong-fixtures/` (the `getMyBookingList` one anonymised), which the fake library ticket copies.
+- **School policy.** Whether the school allows an app to book 관정 for its students is to be checked with the TA at the P16 meeting. Until then, and if it is refused, the server's feature flag `LIBRARY_BOOKING_ENABLED` (environment, default `true`) turns 관정 booking off without a release:
+  - the library tools answer `{ result: 'none', reason: '관정도서관 예약은 공식 사이트나 앱에서 해 주세요.', link }` and attach no library card, so the phone makes no library call from the chat;
+  - the room request endpoints answer 404;
+  - `GET /tutorial` serves the 관정 quest with `completion: { kind: button }` and the official link, so its check never calls the library;
+  - the fallback is a deep link to the official site (`https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, opened with `expo-web-browser`) or the official 관정도서관 app (its store link to be copied).
 - **P07 choices** (`origin/3.0/P07-02-chips-and-resolution-events`) are not on `3.0/Main`. `several` spaces are asked in text until they merge, then offered as chips.
 - **P04's `freeTimeOf`** merged into `3.0/Main` with #142, so no mock is needed. The `FreeTimePort` remains the seam for the eval world.
 - **Suggested tickets** (ticket files are written separately). The tutorial comes first, then 관정:
   1. **Profile: 학번, 학적상 이름, 소속.** Server fields, the edit screen and the privacy text. JS only.
   2. **Tutorial server.** `tutorial.yaml` with the five quests, the progress tables, the endpoints, eligibility and the CI checks.
   3. **Tutorial app.** The start button, pager, quest-list group, sheets, button completion, the next and done popups, and the 내 정보 row. JS only, over the mocks and then ticket 2.
-  4. **Library session (native).** `react-native-webview` only, the login, the hidden web view with its fixed script and message protocol, the library client's interface, the fake transport and the fake library with the copied fixtures, and logout in 내 정보. Raise `version` to 1.0.1, make the native Release together with P03 ticket 05's verification release (P03's flow), and check one booking by hand.
+  4. **Library session (native).** `react-native-webview` and `@react-native-cookies/cookies` (clearing only), the login, the hidden web view with its fixed script and message protocol, the library client's interface, the fake transport and the fake library with the copied fixtures, and logout in 내 정보 and on the app's sign-out. Raise `version` to 1.0.1, make the native Release together with P03 ticket 05's verification release (P03's flow), and check one booking by hand.
   5. **Tutorial 관정 check.** On ticket 4: found, not found, failed, skip, and 예약 부탁.
-  6. **P6 eval set (C0).** The world, 58 cases, `rules.md`, the blind draft, the review, the second labeller, `suite.yaml` with the frozen thresholds, the superseded P19 case, R0 and the P19 baseline runs. It lands before ticket 7 changes the chat.
+  6. **P6 eval set (C0).** On ticket 2. The world, 60 cases, `rules.md`, the blind draft, the review, the second labeller, `suite.yaml` with the frozen thresholds, the superseded P19 case, R0 and the P19 baseline runs. It lands before ticket 7 changes the chat.
   7. **Assistant library and tutorial tools.** The catalogue module, the six library tools and `getTutorial`, `LIBRARY_RULES` and `TUTORIAL_RULES`, the removed prompt line, the `library` card kind and DTO, `clientCapabilities`, the `FreeTimePort`, scripted-model tests, then R1 and the regression.
   8. **App library cards.** Seat and room book cards, the seat map, cancel, return, my bookings, the done message, failures, and the M4 tests. On tickets 4 and 7.
   9. **Group-room requests.** The room request tables and endpoints, the booking party, consent, dissolve, companions, the rejected-companion loop, expiry, and the app's consent dialog and notices. On tickets 1, 7 and 8.
@@ -630,11 +659,13 @@ flowchart LR
 
 | Wave | Tickets | Starts | Native change |
 |---|---|---|---|
-| 1 | 01 Profile, 02 Tutorial server, 03 Tutorial app, 04 Library session, 06 P6 eval set (C0) | now | 04 only |
+| 1 | 01 Profile, 02 Tutorial server, 03 Tutorial app, 04 Library session | now | 04 only |
+| 1 or 2 | 06 P6 eval set (C0) (on 02: its labels read `tutorial.yaml`) | when 02 lands (wave 1 if 02 lands first, else wave 2) | no |
 | 2 | 05 Tutorial 관정 check (on 03, 04), 07 Assistant tools (on 01, 02, and after 06 for merge order), 08 App library cards (on 04) | as their blockers land | no |
 | 3 | 09 Group-room requests (on 01, 07, 08) | after 07 and 08 | no |
 | 4 | 10 Docs (on 04, 09) | last | no |
 
   - 04 is the only native change: it raises `version` and needs a native Release. It ships in **one** native Release together with P03 ticket 05's planned 1.0.1 verification release: `version` 1.0.0 → 1.0.1, the CI builds the APK from the tag, and the fingerprint comment stripping from #128 may ride along. The tag is set together with P03 ticket 05's check; the Mac owner still builds iOS.
-  - 07's chat changes land only after 06's C0 tag, R0 and the P19 baseline. 07 can be built in parallel and rebased.
+  - 07's chat changes land only after 06's C0 tag, R0 and the P19 baseline, and at a point agreed with the P05 owner (Regression). 07 can be built in parallel and rebased.
+  - 06 freezes `tutorial.yaml`'s texts with C0, so the owner reviews the *drafted* texts before the freeze.
   - 03 builds against the tutorial API with mocks and switches to the real API when 02 lands. 08 builds against mocks of 07's card DTO.
