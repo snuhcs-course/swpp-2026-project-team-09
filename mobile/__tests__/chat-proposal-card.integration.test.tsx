@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -145,6 +146,7 @@ describe('the Proposal sent back', () => {
     await say(user, '시간만 1시로');
 
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
+      clientCapabilities: ['library'],
       messages: [
         { role: 'user', text: ASKED },
         { role: 'assistant', text: REPLY, cards: [] },
