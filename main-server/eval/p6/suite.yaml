@@ -14,6 +14,13 @@
 # facts come from health4u.snu.ac.kr. The thresholds below are the spec's proposals, frozen at C0: everything (cases,
 # world, rules, labels, thresholds) is committed and tagged C0 before R0. A value changed after a result is entered with
 # `revises:` and `reason:`, as P5's are.
+#
+# The tutorial is the suite's own copy, tutorial.yaml beside this file, frozen with C0; a run of the p6 world serves it in
+# the place of content/tutorial.yaml (WORLD_TUTORIAL_FILES in eval/cases.ts). A new tutorial quest ships with at least
+# two P6 cases: one asking a fact in its content, and one asking something the content lacks, answered with the link or
+# 확인되지 않아요. The copy is updated, together with any label tied to the number of quests (such as
+# p6-tutorial-progress), only when the suite moves to a new version (C1). That change is entered with `revises:` and
+# `reason:`, and the new version gets its own run.
 world: p6
 
 cases:

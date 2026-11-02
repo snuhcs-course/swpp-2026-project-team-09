@@ -234,3 +234,32 @@ export function myBookingsCard(from: string, until: string): LibraryCard {
     library: { ...EMPTY, key: `myBookings:${from}:${until}`, action: 'myBookings', date: from, until },
   };
 }
+
+export interface BookKey {
+  spaceId: string;
+  date: string;
+  start: string;
+  minutes: number;
+  seat?: string;
+  equipment?: string;
+}
+
+// What a book card's key encodes, for a request the app makes from that card; null for any other key.
+export function bookKeyOf(key: string): BookKey | null {
+  if (!isLibraryKey(key) || !key.startsWith('book:')) {
+    return null;
+  }
+  const [, spaceId = '', date = '', time = '', minutes = '', ...rest] = key.split(':');
+  const named = (prefix: string): string | undefined =>
+    rest.find((part) => part.startsWith(prefix))?.slice(prefix.length);
+  const seat = named('s=');
+  const equipment = named('e=');
+  return {
+    spaceId,
+    date,
+    start: `${time.slice(0, 2)}:${time.slice(2)}`,
+    minutes: Number(minutes),
+    ...(seat === undefined ? {} : { seat }),
+    ...(equipment === undefined ? {} : { equipment }),
+  };
+}

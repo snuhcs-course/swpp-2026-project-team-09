@@ -9,8 +9,10 @@
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'zod';
+import { type ClientCapability } from '../src/assistant/feature.js';
 import { expectSchema } from './expect.ts';
 
 // The cases (spec P19, "Cases"): YAML files under eval/cases/, eval/p4/cases/, eval/p5/cases/, eval/p6/cases/ and a large
@@ -48,6 +50,23 @@ export const WORLD_CLOCKS: Record<WorldName, string> = {
   p5: '2026-11-02T14:05:00+09:00',
   'large-world-v1': '2026-11-02T14:05:00+09:00',
   p6: '2026-11-04T10:05:00+09:00',
+};
+
+// What a run of each world sends beside the messages. P6's says the app can show 관정 booking, without which the library
+// tools answer that the app is too old; the other worlds send nothing more, so their requests stay as their earlier runs'.
+export const WORLD_REQUEST_FIELDS: Record<WorldName, { clientCapabilities?: ClientCapability[] }> = {
+  small: {},
+  p4: {},
+  p5: {},
+  'large-world-v1': {},
+  p6: { clientCapabilities: ['library'] },
+};
+
+// The tutorial content a run of each world reads in the place of content/tutorial.yaml. The P6 suite reads its own copy,
+// frozen with C0 (eval/p6/suite.yaml), so that a quest added to the app does not change it; the other worlds read the
+// live file.
+export const WORLD_TUTORIAL_FILES: Partial<Record<WorldName, string>> = {
+  p6: fileURLToPath(new URL('p6/tutorial.yaml', import.meta.url)),
 };
 
 const seedName = z.string().min(1);

@@ -21,7 +21,7 @@ An item marked **Person** is a person's work, not an agent's.
 - [x] **64 cases**, every one `repeat: 3`, in the spec's seven categories and counts (14, 15, 10, 7, 5, 8, 5; the PM added two "아무 자리" cases, and the review two one-space cases, on 2026-11-02), including each case the category table names. Group rooms include the two 8-people cases: 9 people for a 10인실, and a 20인실 (G201) request, each expecting the refusal "파티는 최대 8명까지라 9명 이상 방 예약은 아직 못 해요 — 직접 예약해 주세요" and no card.
 - [x] **`rules.md`** states the judgement in prose: the result kinds, the window, the hours, durations, capacity, the 8-people party limit (G201 never offered), the useDesc inference rule, when to ask, and the tutorial's grounding rule.
 - [x] **Blind draft.** An agent in a separate session, seeing only `rules.md`, `world.yaml`, the catalogue, `tutorial.yaml` and the questions (never the prompt, tools or code), drafts each `expect` with its working in `labels-working.yaml`. _(Drafted 2026-11-02; the PM's rulings are in `labels-notes.md`.)_
-- [ ] **Person:** the tutorial texts in `tutorial.yaml` (the _drafted_ ones above all) are reviewed by the owner before the freeze, since C0 freezes the labels drawn from them.
+- [x] **Person:** the tutorial texts in `tutorial.yaml` (the _drafted_ ones above all) are reviewed by the owner before the freeze, since C0 freezes the labels drawn from them. _(Reviewed by the owner (안진영), 2026-11-02.)_
 - [x] **Person:** the owner (AhnJinYoung) reviews every draft and records each change with its reason in `labels-notes.md`, especially the alias and purpose mappings and the useDesc inferences. _(Three rounds of rulings on 2026-11-02: one answer per case, anything ambiguous an ASK.)_
 - [x] **Person:** the PR reviewer (함재현) reviews the labels. _(The review on #177 came from 함재현's account running an agent (Claude), not a person's read of every label; its points are applied, rulings 16–21 in `labels-notes.md`.)_
 - [ ] **Person, optional:** a teammate labels about 10 cases from scratch; the agreement is reported in `suite.yaml`. _(The count as first written did not add up: one per category plus the four alias cases is 11, not 10.)_
@@ -35,6 +35,8 @@ An item marked **Person** is a person's work, not an agent's.
 - [x] Tests, named by ADR 0007: unit tests for the new normalisers and the `library` card matcher; the suite's files load and validate (harness tests, reported apart from the product's pyramid).
 
 ## Comments
+
+- 2026-11-02: the suite now reads its own copy of the tutorial, `main-server/eval/p6/tutorial.yaml`, frozen with C0; a run of the p6 world serves it in the place of `content/tutorial.yaml` (`WORLD_TUTORIAL_FILES` in `eval/cases.ts`), so a quest added to the app does not change the frozen suite. The rule for new quests and for updating the copy at C1 is in `suite.yaml`, `labels-notes.md` and the server README's Tutorial section.
 
 ### Agent usage (2026-11-02)
 
