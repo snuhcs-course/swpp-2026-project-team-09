@@ -42,3 +42,11 @@ The P05 owner decided to run one full evaluation after tickets 10, 11, 12 and th
 ### R1 (2026-11-02)
 
 R1 ran at `e171a95c`, recorded in `main-server/eval/p5/r1.md`. G1 is 3 against a floor of 2, and J9 (2/21) and J10 (3/12) miss their floors too; no instruction was changed for them and the run was not repeated. Whether to look into these with `--case` or run again is the P05 owner's call.
+
+The owner sent R1 to review as it is (2026-11-02): G1 stays 3 in the record, and what to do about the floors it missed is left to the owner.
+
+### Agent usage (2026-11-02)
+
+- Agent time: about 70 minutes (estimate), one session with no subagents, summed from the transcript with gaps capped at 5 minutes. That cap leaves out most of the time waiting on R1's 70 minutes and on people.
+- Tokens: input 180, with 12,556,270 cache reads and 269,284 cache writes shown apart; output 101,501. Counted before this commit.
+- Eval model calls, on the OpenRouter key: USD 4.58. R1 USD 4.29 and the 14-case check USD 0.29.
