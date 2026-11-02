@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
+import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
@@ -17,6 +18,9 @@ import { daysTogether, inOrder, WINDOW_INPUT, windowOf, windowWords } from './se
 
 // How near a Place a 파티 counts as being there, when the model names no other radius.
 const RADIUS_METRES = 300;
+
+// The widest search near a Place: a huge radius would turn the Place filter off without any sign.
+const RADIUS_MAX_METRES = 3000;
 
 const input = z
   .object({
@@ -30,7 +34,9 @@ const input = z
     globalEventId: z
       .uuid()
       .optional()
-      .describe('Only the 파티 going to this Global Event, as searchGlobalEvents returned it.'),
+      .describe(
+        'Only the 파티 going to this Global Event, as searchGlobalEvents or resolveGlobalEvent returned it, or from [Cards shown: …].',
+      ),
     minPlacesLeft: z
       .number()
       .int()
@@ -55,8 +61,11 @@ const input = z
     radius: z
       .number()
       .positive()
+      .max(RADIUS_MAX_METRES)
       .optional()
-      .describe(`How near placeId, in metres, this distance included. Leave it out for ${RADIUS_METRES}.`),
+      .describe(
+        `How near placeId, in metres, this distance included, up to ${RADIUS_MAX_METRES}. Leave it out for ${RADIUS_METRES}.`,
+      ),
   })
   .refine(daysTogether, { message: 'Give both from and to, or neither', path: ['to'] })
   .refine(inOrder, { message: 'The window must not end before it starts', path: ['to'] })
@@ -102,7 +111,7 @@ function candidateOf(quest: RecruitingQuestDto): object {
 // that fit what the User meant, those holding more of the words first and then the soonest to start, or "none" with the
 // reason. Their text was written by other Users, so it reaches the model inside delimiters. showQuests accepts the ids it
 // returned.
-export function searchRecruitingQuests(recruiting: RecruitingService): Tool {
+export function searchRecruitingQuests(recruiting: RecruitingService, places: PlacesService): Tool {
   return defineTool({
     description:
       "Searches the recruiting 파티 (Quests) on the Boards that the User can enter, optionally of one Board, in a time window, whether it is whole days (from, to) or times (after, before), going to a Global Event, or at or near a Place. The server already leaves out 파티 that are full, already started (a 파티 for a Global Event stays until the event ends), or that the User already asked to join or cannot enter. A 파티 for a Global Event is in the window while the event overlaps it; any other 파티 when it starts in it. Answers candidates, those holding more of the words first, then the soonest to start, with the time in Korean time and place, the Join Policy, the places left and the number of Holders, or result 'none' with the reason. Words only rank, so a candidate may hold none of them and still fit, and may be something else: read each one. Pick those that fit what the User asked for, then show them with showQuests.",
@@ -120,7 +129,8 @@ export function searchRecruitingQuests(recruiting: RecruitingService): Tool {
         take: CANDIDATES_MAX + 1,
       });
       if (quests.length === 0) {
-        return noneFound(reasonForNone(conditions));
+        const noSuchPlace = placeId !== undefined && !(await places.exists(placeId));
+        return noneFound(noSuchPlace ? 'There is no such Place.' : reasonForNone(conditions));
       }
       const candidates = quests.slice(0, CANDIDATES_MAX);
       found.add(
