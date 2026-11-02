@@ -12,7 +12,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'zod';
-import { type ClientCapability } from '../src/assistant/feature.js';
+import type { ClientCapability } from '../src/assistant/feature.js';
 import { expectSchema } from './expect.ts';
 
 // The cases (spec P19, "Cases"): YAML files under eval/cases/, eval/p4/cases/, eval/p5/cases/, eval/p6/cases/ and a large

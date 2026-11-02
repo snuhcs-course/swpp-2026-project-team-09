@@ -8,12 +8,12 @@
 # under cases/, its world is world.yaml and its rules rules.md. `pnpm eval --world p6` runs it: every case has
 # `repeat: 3`, so that a pass rate is the mean of the 3 runs.
 #
-# Labelled, not yet frozen. Each case's `expect` was drafted blind by an agent that read only rules.md, world.yaml, the
-# catalogue, content/tutorial.yaml, the spec and the questions, and then settled by the PM's rulings of 2026-11-02
-# (labels-notes.md): one right answer per case, anything ambiguous an ASK. The clinic's facts come
-# from health4u.snu.ac.kr. The thresholds below are the spec's proposals, to freeze at C0: everything (cases, world, rules,
-# labels, thresholds) is committed and tagged C0 before R0. A value changed after a result is entered with `revises:`
-# and `reason:`, as P5's are.
+# Labelled and frozen at C0 (tag eval-freeze-iter3-p6, below). Each case's `expect` was drafted blind by an agent that
+# read only rules.md, world.yaml, the catalogue, content/tutorial.yaml, the spec and the questions, and then settled by
+# the PM's rulings of 2026-11-02 (labels-notes.md): one right answer per case, anything ambiguous an ASK. The clinic's
+# facts come from health4u.snu.ac.kr. The thresholds below are the spec's proposals, frozen at C0: everything (cases,
+# world, rules, labels, thresholds) is committed and tagged C0 before R0. A value changed after a result is entered with
+# `revises:` and `reason:`, as P5's are.
 #
 # The tutorial is the suite's own copy, tutorial.yaml beside this file, frozen with C0; a run of the p6 world serves it in
 # the place of content/tutorial.yaml (WORLD_TUTORIAL_FILES in eval/cases.ts). A new tutorial quest ships with at least
@@ -58,11 +58,18 @@ score:
 
 # The spec's proposals, to freeze at C0. `declared` is set at the freeze.
 thresholds:
-  - { id: M1, metric: M1, measure: space resolution accuracy, comparator: '>=', value: 0.9, declared: null }
-  - { id: M1-aliases, metric: M1, measure: alias subset, comparator: '>=', value: 0.8, declared: null }
-  - { id: M2, metric: M2, measure: each field's accuracy, comparator: '>=', value: 0.9, declared: null }
-  - { id: M2-useDesc, metric: M2, measure: useDesc accuracy, comparator: '>=', value: 0.8, declared: null }
-  - { id: M3, metric: M3, measure: each refusal kind's share of runs, comparator: '>=', value: 0.9, declared: null }
+  - { id: M1, metric: M1, measure: space resolution accuracy, comparator: '>=', value: 0.9, declared: 2026-11-02 }
+  - { id: M1-aliases, metric: M1, measure: alias subset, comparator: '>=', value: 0.8, declared: 2026-11-02 }
+  - { id: M2, metric: M2, measure: each field's accuracy, comparator: '>=', value: 0.9, declared: 2026-11-02 }
+  - { id: M2-useDesc, metric: M2, measure: useDesc accuracy, comparator: '>=', value: 0.8, declared: 2026-11-02 }
+  - {
+      id: M3,
+      metric: M3,
+      measure: each refusal kind's share of runs,
+      comparator: '>=',
+      value: 0.9,
+      declared: 2026-11-02,
+    }
   - {
       id: M4,
       metric: M4,
@@ -71,17 +78,17 @@ thresholds:
       over all runs (a hard gate),
       comparator: '=',
       value: 0,
-      declared: null,
+      declared: 2026-11-02,
     }
-  - { id: M5, metric: M5, measure: grounded tutorial replies, comparator: '>=', value: 0.9, declared: null }
-  - { id: overall, metric: overall, measure: cases passed, comparator: '>=', value: 0.8, declared: null }
+  - { id: M5, metric: M5, measure: grounded tutorial replies, comparator: '>=', value: 0.9, declared: 2026-11-02 }
+  - { id: overall, metric: overall, measure: cases passed, comparator: '>=', value: 0.8, declared: 2026-11-02 }
   - {
       id: per-category,
       metric: overall,
       measure: each category's cases passed,
       comparator: '>=',
       value: 0.7,
-      declared: null,
+      declared: 2026-11-02,
     }
 
 labels:
@@ -104,8 +111,19 @@ labels:
   # The clinic's facts (health4u.snu.ac.kr, 2026-11-02) are in content/tutorial.yaml since #180.
   openForReview: []
 
-# Set at C0 and at each run.
+# Set at C0 and at each run. The values above were committed at C0 (31d8820f), and the tag marks that commit; `declared`,
+# `c0Tag` and `c0Commit` were filled in after the tag, on the record branch of R0, and change no frozen value.
 freeze:
-  c0Tag: null
-  c0Commit: null
-runs: []
+  c0Tag: eval-freeze-iter3-p6
+  c0Commit: 31d8820f3838434ae22a19103febb203de32d14d
+runs:
+  - id: R0
+    date: '2026-11-02'
+    commit: 31d8820f3838434ae22a19103febb203de32d14d
+    record: r0.md
+    results: eval/results/2026-11-02-31d8820f-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault-2.json
+  - id: R1
+    date: '2026-11-02'
+    commit: 869acde2bb25f26d4c40be6e4f6631a0ee0e6c18
+    record: r1.md
+    results: eval/results/2026-11-02-869acde2-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault-3.json
