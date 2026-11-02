@@ -108,6 +108,7 @@ export class AssistantService {
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
+    const libraryEnabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     this.chat = chatAssistant({
       menus,
       shuttle,
@@ -117,14 +118,7 @@ export class AssistantService {
       places,
       placeMatcher,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
-      library: {
-        catalogue,
-        freeTime,
-        friends,
-        quests,
-        users,
-        enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
-      },
+      library: { catalogue, freeTime, friends, quests, users, enabled: libraryEnabled },
       tutorial,
     });
     this.choiceServices = { places, friends, globalEvents };
