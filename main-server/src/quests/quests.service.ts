@@ -9,6 +9,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -23,6 +24,7 @@ import {
   QuestHolder,
   SubQuest,
 } from '../generated/prisma/client.js';
+import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
@@ -63,6 +65,7 @@ export class QuestsService {
     private readonly signals: SignalsService,
     @Inject(CLOCK) private readonly clock: Clock,
     private readonly classQuests: ClassQuestsService,
+    private readonly roomRequests: RoomRequestSync,
   ) {}
 
   // The User's Quest for the Global Event, made the first time, with the title given or else the event's. The User's
@@ -140,6 +143,7 @@ export class QuestsService {
 
   async drop(userId: string, questId: string): Promise<void> {
     await this.changeShared(userId, questId, (tx) => this.removeHolder(questId, userId, tx));
+    await this.roomRequests.questChanged(questId);
   }
 
   // Locks the Quest's row until the transaction ends, so that changes to one Quest run one after another.

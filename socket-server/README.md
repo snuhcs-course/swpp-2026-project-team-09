@@ -155,6 +155,7 @@ The signals and what the app does on each:
 | `quests-changed`        | nothing                                       | fetches `GET /quests`, the requests to join and the invitations of the main server again                   |
 | `party-changed`         | nothing                                       | fetches `GET /parties/mine`, `GET /parties`, the Party requests and invitations of the main server again   |
 | `matching-changed`      | nothing                                       | fetches `GET /matching-requests` and each request it shows, `GET /matching-requests/:globalEventId`, again |
+| `room-requests-changed` | nothing                                       | fetches `GET /library/room-requests` and the room request a book card polls again                          |
 
 ```ts
 socket.on('friends-changed', () => {

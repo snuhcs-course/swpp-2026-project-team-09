@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
@@ -40,7 +41,7 @@ describe('The command line, from the settings', () => {
       topP: null,
       maxSteps: 30,
       timeoutMs: 30_000,
-      maxOutputTokens: 1000,
+      maxOutputTokens: 4000,
       repeat: null,
       categories: [],
       caseIds: [],

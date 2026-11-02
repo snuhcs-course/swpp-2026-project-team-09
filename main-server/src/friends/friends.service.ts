@@ -6,6 +6,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
+import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import {
   FriendDto,
@@ -91,6 +93,7 @@ export class FriendsService {
     private readonly users: UsersService,
     private readonly signals: SignalsService,
     private readonly visibility: VisibilityService,
+    private readonly roomRequests: RoomRequestSync,
   ) {}
 
   async ownerOf(friendId: string): Promise<User> {
@@ -222,6 +225,7 @@ export class FriendsService {
         }
       }),
     );
+    await this.roomRequests.friendshipEnded(userId, friendUserId);
   }
 
   // The User's switch for Location Sharing at their own end of the friendship.

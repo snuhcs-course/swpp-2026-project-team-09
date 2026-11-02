@@ -5,12 +5,14 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, QuestJoinRequest } from '../generated/prisma/client.js';
+import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import {
@@ -42,6 +44,7 @@ export class JoinRequestsService {
     private readonly leader: LeaderService,
     private readonly signals: SignalsService,
     private readonly classQuests: ClassQuestsService,
+    private readonly roomRequests: RoomRequestSync,
   ) {}
 
   // A Closed Quest is answered as unknown, as joining it is. A User who holds the Quest alone for its Global Event may
@@ -129,6 +132,7 @@ export class JoinRequestsService {
       });
     });
     this.signals.send(holderIds, 'quests-changed');
+    await this.roomRequests.questChanged(questId);
   }
 
   async decline(leaderId: string, questId: string, requestId: string): Promise<void> {
