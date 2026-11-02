@@ -6,8 +6,9 @@
 
 # Booking conditions (P06 spec, "The P6 eval suite"): proposeLibraryBooking with the right date, start, minutes or end,
 # seat, equipment and useDesc. Times in several forms, a missing time, useDesc inferable and not, a named seat, "모니터
-# 있는 스터디룸", and "공강에" through findLibraryFreeSlots. Each `expect` was drafted blind and settled by the
-# PM's rulings of 2026-11-02 (labels-notes.md).
+# 있는 스터디룸" → ASK, "공강에" with an ambiguous space → ASK for the space, and with one space → findLibraryFreeSlots
+# and an ASK listing the slots. Each `expect` was drafted blind and settled by the PM's rulings of 2026-11-02
+# (labels-notes.md).
 
 # The spec's own example. "7층 열람실" fits the four 7층 seat spaces: an ASK (ruling 1).
 - id: p6-conditions-hours-from
@@ -285,6 +286,27 @@
         - [7A 열람실 2 구역, 7A 2구역, 7A 2 구역]
         - [7B 노트북존, 7B]
         - [노트북존]
+
+# The space is named, so the 공강 slots come first: findLibraryFreeSlots and no other tool, and an ASK listing the slots
+# that start at 12:00, 14:30 and 18:00 (the asker's gaps today, aligned to 30 minutes; ruling 21).
+- id: p6-conditions-free-time-one-space
+  category: p6-conditions
+  world: p6
+  repeat: 3
+  turns:
+    - user: 오늘 내 공강에 7A 열람실 2 구역 자리 잡아줘
+  expect:
+    actions: [ASK]
+    tools:
+      required: [findLibraryFreeSlots]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions:
+        - '12:00'
+        - '14:30'
+        - '18:00'
 
 # "아무 자리나" leaves the space to the Assistant: the default seat space, 7F-7A-zone2 (rules.md section 3). It ends the
 # space question, but not a missing time (ruling 9).

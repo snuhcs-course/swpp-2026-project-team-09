@@ -534,17 +534,17 @@ flowchart LR
   - a Global Event exhibition at 미술관 running that day, for the exhibition question;
   - tutorial progress in each state.
   - The library is not called by any server tool, so the world needs no library. The `FreeTimePort` is bound to the world's days.
-- **Categories and counts** (62 cases, every one `repeat: 3`; two "아무 자리" cases added by the PM on 2026-11-02):
+- **Categories and counts** (64 cases, every one `repeat: 3`; two "아무 자리" cases added by the PM and two one-space cases added after the review, 2026-11-02):
 
 | Category | What is right | Cases |
 |---|---|---|
 | Space resolution | the right catalogue id or ids: 4 by the site's name, 4 by a site alias, 4 by a proposed alias or a purpose ("6층 영화 보는 곳" → 6F-multimedia-viewing, notOnline); 2 ambiguous ones that ASK, listing the candidates | 14 |
-| Booking conditions | `proposeLibraryBooking` with the right date, start, minutes or end, seat, equipment and useDesc: times given in several forms; missing time → ASK; useDesc inferable and not (left out); a named seat; "모니터 있는 스터디룸" → ASK; "내 공강에 7층 열람실" → ASK for the space first, with no tool; "아무 자리나" with and without a time | 14 |
+| Booking conditions | `proposeLibraryBooking` with the right date, start, minutes or end, seat, equipment and useDesc: times given in several forms; missing time → ASK; useDesc inferable and not (left out); a named seat; "모니터 있는 스터디룸" → ASK; "내 공강에 7층 열람실" → ASK for the space first, with no tool; "내 공강에 7A 열람실 2 구역" → `findLibraryFreeSlots` and an ASK listing the slots; "아무 자리나" with and without a time | 15 |
 | Refusals | unsupported → "미구현", no card and no tool (3); notOnline → "현장", no card and no tool (3); out of window or hours (seat tomorrow, room in 4 days, 23:30, 7 hours) → `proposeLibraryBooking`'s reason and no card (3); 대학원 열람실 for an undergraduate → notEligible (1) | 10 |
 | Group rooms | `resolveFriend` for each Friend, then a room request card with companions (동의 요청); below GR_MIN → refusal naming how many more; above GR_MAX → a larger size named; same-name Friends → ASK; the held lunch Quest → `questId`; 9 people for a 10인실 and a 20인실 (G201) request → the 8-people refusal and no card | 7 |
 | Bookings, cancel, return | "내 예약", "취소해줘", "반납해줘", "오늘 3시 예약 취소" → the right card and target; "반납했어?" → CHAT, no card at all | 5 |
 | Tutorial Q&A | one per quest from the content; two whose answer the tutorial lacks, answered from the app's other information (the clinic's hours from the collected facts, today's exhibition from the Global Events); one on the User's progress | 8 |
-| Common | library versus 공강 tool choice; "지금 7층 자리 있어?" → ASK naming the four 7층 seat spaces; "중앙도서관 열람실 빈자리" → ASK between 7층 and 8층, saying 본관 is 미구현; small talk about the library → CHAT | 4 |
+| Common | library versus 공강 tool choice; "지금 7층 자리 있어?" → ASK naming the four 7층 seat spaces; "7A 열람실 2 구역 지금 자리 있어?" → `showLibrarySeats` and one seats card; "중앙도서관 열람실 빈자리" → ASK between 7층 and 8층, saying 본관 is 미구현; small talk about the library → CHAT | 5 |
 
 Each case has one right answer, and anything ambiguous is an ASK: no label accepts two answers (the PM, 2026-11-02; `eval/p6/labels-notes.md`).
 
@@ -663,7 +663,7 @@ Each case has one right answer, and anything ambiguous is an ASK: no label accep
   3. **Tutorial app.** The start button, pager, quest-list group, sheets, button completion, the next and done popups, and the 내 정보 row. JS only, over the mocks and then ticket 2.
   4. **Library session (native).** `react-native-webview` and a local Expo module that only clears cookies, the login, the hidden web view with its fixed script and message protocol, the library client's interface, the fake transport and the fake library with the copied fixtures, and logout in 내 정보, on the app's sign-out and on the forced session end (`endSession()`), through one shared step. First, build Android and iOS once with both added. Raise `version` to 1.0.1, make the native Release together with P03 ticket 05's verification release (P03's flow), and check one booking by hand.
   5. **Tutorial 관정 check.** On ticket 4: found, not found, failed, skip, and 예약 부탁.
-  6. **P6 eval set (C0).** On ticket 2. The world, 62 cases, `rules.md`, the blind draft, the PM's rulings and the PR review, `suite.yaml` with the frozen thresholds, the superseded P19 case, R0 and the P19 baseline runs. It lands before ticket 7 changes the chat.
+  6. **P6 eval set (C0).** On ticket 2. The world, 64 cases, `rules.md`, the blind draft, the PM's rulings and the PR review, `suite.yaml` with the frozen thresholds, the superseded P19 case, R0 and the P19 baseline runs. It lands before ticket 7 changes the chat.
   7. **Assistant library and tutorial tools.** The catalogue module, the six library tools and `getTutorial`, `LIBRARY_RULES` and `TUTORIAL_RULES`, the removed prompt line, the `library` card kind and DTO, `clientCapabilities`, the `FreeTimePort`, scripted-model tests, then R1 and the regression.
   8. **App library cards.** Seat and room book cards, the seat map, cancel, return, my bookings, the done message, failures, and the M4 tests. On tickets 4 and 7.
   9. **Group-room requests.** The room request tables and endpoints, the booking party, consent, dissolve, companions, the rejected-companion loop, expiry, and the app's consent dialog and notices. On tickets 1, 7 and 8.

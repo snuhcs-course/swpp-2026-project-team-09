@@ -18,12 +18,12 @@ world: p6
 
 cases:
   p6-spaces: 14
-  p6-conditions: 14
+  p6-conditions: 15
   p6-refusals: 10
   p6-group-rooms: 7
   p6-bookings: 5
   p6-tutorial: 8
-  p6-common: 4
+  p6-common: 5
 
 # The case subsets the metrics are reported on.
 subsets:
@@ -85,15 +85,16 @@ labels:
   # The PM's rulings on the draft, three rounds on one day (labels-notes.md). The PR reviewer checks the labels.
   ruledBy: AhnJinYoung
   ruledOn: '2026-11-02'
-  reviewedBy: null
-  reviewedOn: null
+  # The label review on #177 came from 함재현's GitHub account running an agent (Claude), not a person's read of every
+  # label. Its points were applied (labels-notes.md, rulings 16–21).
+  reviewedBy: Jaehyun0320 (an agent, Claude, run from 함재현's account)
+  reviewedOn: '2026-11-02'
   # Optional: a teammate who labels about 10 cases from scratch.
   secondLabeller: null
   overlap: []
   agreement: null
   # What is still open.
-  # The clinic's facts (health4u.snu.ac.kr, 2026-11-02) are labelled here; ticket 07 puts them into the app's content
-  # and fixes the tutorial's floor.
+  # The clinic's facts (health4u.snu.ac.kr, 2026-11-02) are in content/tutorial.yaml since #180.
   openForReview: []
 
 # Set at C0 and at each run.

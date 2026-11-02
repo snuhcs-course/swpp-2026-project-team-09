@@ -158,7 +158,11 @@
     text:
       mentions:
         - 6시간
-        - [운영 시간, 이용 시간, 마감]
+        - - 운영 시간
+          - 이용 시간
+          - 마감
+          - 이용할 수
+          - '23:00'
 
 # ── notEligible: the asker is an undergraduate ──
 

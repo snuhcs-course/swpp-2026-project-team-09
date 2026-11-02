@@ -64,8 +64,8 @@
     text:
       mentions: [30분, 반납, 10일]
 
-# The clinic is on 학생회관(63동) 3–4층, care on 3층 and reception at 329호 (health4u.snu.ac.kr). The tutorial's 2층 is
-# wrong; a small PR before C0 fixes the content (ruling 10).
+# The clinic is on 학생회관(63동) 3–4층, care on 3층 and reception at 329호 (health4u.snu.ac.kr), as content/tutorial.yaml
+# says since #180 (ruling 10).
 - id: p6-tutorial-health-clinic
   category: p6-tutorial
   world: p6
@@ -106,7 +106,7 @@
       absent:
         - '330'
 
-# The tutorial gives no hours; the clinic's facts, collected from health4u.snu.ac.kr into the app's content (a PR before C0),
+# The tutorial gives no hours; the clinic's facts, collected from health4u.snu.ac.kr into content/tutorial.yaml (#180),
 # do: 09:00–17:30, and 16:30 on Fridays. A facility fact is checked in the text (ruling 10).
 - id: p6-tutorial-clinic-hours
   category: p6-tutorial

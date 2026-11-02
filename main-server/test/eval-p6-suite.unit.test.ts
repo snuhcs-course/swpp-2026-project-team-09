@@ -88,7 +88,7 @@ function bookingPaths(): { books: typeof cases; wrong: string[] } {
 }
 
 describe('The P6 cases', () => {
-  it('hold the seven categories with their counts, 62 in all', () => {
+  it('hold the seven categories with their counts, 64 in all', () => {
     const counts = Object.fromEntries(Object.keys(suite.cases).map((category) => [category, 0]));
     for (const { category } of cases) {
       counts[category] = (counts[category] ?? 0) + 1;
@@ -96,12 +96,12 @@ describe('The P6 cases', () => {
 
     expect(counts).toEqual({
       'p6-spaces': 14,
-      'p6-conditions': 14,
+      'p6-conditions': 15,
       'p6-refusals': 10,
       'p6-group-rooms': 7,
       'p6-bookings': 5,
       'p6-tutorial': 8,
-      'p6-common': 4,
+      'p6-common': 5,
     });
     expect(suite.cases).toEqual(counts);
   });
@@ -137,6 +137,7 @@ describe('The tools and words of the P6 labels', () => {
   it('let a space refusal, a CHAT and an ASK call no tool, and a condition refusal only proposeLibraryBooking', () => {
     const onlyWith: Record<string, string[]> = {
       'p6-group-rooms-same-name': ['resolveFriend'],
+      'p6-conditions-free-time-one-space': ['findLibraryFreeSlots'],
       ...CONDITION_REFUSALS,
     };
     const loose = cases.flatMap(({ id, expect: wanted }) => {
@@ -179,14 +180,15 @@ describe('The bookings of the P6 labels', () => {
     expect(optional.map(({ id }) => id)).toEqual([]);
   });
 
-  // A facility's hours are a fact of the text, as the tutorial's other facts are (labels-notes.md, ruling 10).
+  // A facility's hours are a fact of the text, as the tutorial's other facts are (labels-notes.md, ruling 10), and so
+  // are the hours in proposeLibraryBooking's reason, which late-and-long accepts as one wording (ruling 21).
   it('name the candidates an ASK chooses between, and no time outside an ASK but a facility fact', () => {
     const asks = cases.filter(({ expect: wanted }) => wanted?.actions[0] === 'ASK');
     const timed = cases.filter(
       ({ id, expect: wanted }) =>
         wanted !== undefined &&
         wanted.actions[0] !== 'ASK' &&
-        id !== 'p6-tutorial-clinic-hours' &&
+        !['p6-tutorial-clinic-hours', 'p6-refusals-late-and-long'].includes(id) &&
         JSON.stringify(wanted.text ?? {}).match(/\d{1,2}:\d{2}/u) !== null,
     );
 

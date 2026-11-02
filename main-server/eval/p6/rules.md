@@ -129,8 +129,8 @@ A book card holds the space, the date, the start, the minutes, and when given th
 
 ## 12. Seats and free time
 
-- "자리 있어?", "좌석 현황", "빈자리" ask for a **seats card** of one space (`showLibrarySeats`), not a book card. The seats card shows the free seats; the reply does not count them. When several seat spaces fit, it is an ASK naming them (section 3), with no seats card: "지금 7층 자리 있어?" asks between the four 7층 seat spaces.
-- "공강에", "수업 사이에" for one space: the asker's Free Time comes first (`findLibraryFreeSlots`), clipped to the space's hours and the window. The asker's gaps today after 10:05 are 10:45–11:00, 11:45–13:00, 14:15–16:00 and from 17:50 (world.yaml). Aligned to 30 minutes and at least 30 long, they start at 12:00, 14:30 and 18:00. With several, the reply lists them (HH:MM) and asks which, with no card; it never invents a time outside them. When the space is still ambiguous ("내 공강에 7층 열람실"), the space question comes first, with no tool and no slot times.
+- "자리 있어?", "좌석 현황", "빈자리" ask for a **seats card** of one space (`showLibrarySeats`, called directly with the space's id and no other tool), not a book card. The seats card shows the free seats; the reply does not count them. When several seat spaces fit, it is an ASK naming them (section 3), with no seats card: "지금 7층 자리 있어?" asks between the four 7층 seat spaces.
+- "공강에", "수업 사이에" for one space: the asker's Free Time comes first (`findLibraryFreeSlots`, with no `findLibrarySpace` before it and no other tool), clipped to the space's hours and the window. The asker's gaps today after 10:05 are 10:45–11:00, 11:45–13:00, 14:15–16:00 and from 17:50 (world.yaml). Aligned to 30 minutes and at least 30 long, they start at 12:00, 14:30 and 18:00. With several, the reply lists them (HH:MM) and asks which, with no card; it never invents a time outside them. When the space is still ambiguous ("내 공강에 7층 열람실"), the space question comes first, with no tool and no slot times.
 - A question about Free Time with nothing about the library is P4's (`findFreeTimeEvents`), not the library's.
 
 ## 13. My bookings, cancel and return
@@ -195,5 +195,6 @@ What the spec and the catalogue left open, as the PM ruled on the blind draft, n
 18. Named Friends go through `resolveFriend` before `proposeLibraryBooking`, in a card or a condition refusal (section 16).
 19. One path for every booking: `findLibrarySpace`, `resolveFriend` when Friends are named, `proposeLibraryBooking`; no tool is optional in any case (section 16).
 20. A condition refusal's question names one space ("7A 열람실 2 구역", "4층 6인실"); an ambiguous one would be an ASK first (section 3).
+21. Each ambiguous-space ASK has a one-space twin: "내 공강에 7A 열람실 2 구역" → `findLibraryFreeSlots` and an ASK listing the slots; "7A 열람실 2 구역 지금 자리 있어?" → `showLibrarySeats` and one seats card (section 12).
 
 Also settled from the draft, unchanged: a bare hour from 1 to 6 is the afternoon (section 1); purposes outside section 8's mapping (라이브 방송, 발표 준비, 체험) leave the useDesc out; a booking lies inside the hours from start to end (section 5); a named room of a media space is passed as `equipment`.

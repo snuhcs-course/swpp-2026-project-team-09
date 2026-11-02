@@ -43,6 +43,22 @@
         - [7B 노트북존, 7B]
         - [노트북존]
 
+# One space named: showLibrarySeats with its id and no other tool, and one seats card for 7F-7A-zone2 (ruling 21).
+- id: p6-common-seats-one-space
+  category: p6-common
+  world: p6
+  repeat: 3
+  turns:
+    - user: 7A 열람실 2 구역 지금 자리 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [showLibrarySeats]
+      only: true
+    cards:
+      - { kind: library, action: seats, space: 7F-7A-zone2, min: 1, max: 1 }
+      - { kind: library, action: book, max: 0 }
+
 # Supersedes P19's out-of-scope-library-seats, the same question, which expected a refusal (suite.yaml, `superseded`).
 # The P19 case is not edited. An ASK between 7층 and 8층 that says 본관 is 미구현 (ruling 4).
 - id: p6-common-central-library-seats
