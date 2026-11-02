@@ -8,9 +8,9 @@
 
 - [x] Reasoning cannot use up the output limit, by a higher `maxOutputTokens` or a reasoning setting, whichever works on this model through OpenRouter. The ticket records which it chose and why.
 - [x] Its effect is checked with `pnpm eval --world large-world-v1 --case` on the cases with a cut step in R0a: `large-v-01`, `large-v-02`, `large-v-04`, `large-v-05`, `large-l-03`, `large-t2-03`, `large-h-03`, `large-s-04`, `large-o-03`, `large-o-05`, `large-c-01`, `large-c-07`, `large-c-11`, `large-c-13`.
-- [ ] R1, the bundled run, is run in both worlds, with P19 three times on the same commit for G1, compared with R0a and recorded beside it with a failure analysis. Its cost and command are approved before it runs. A setting of the run's limits that changed is written as that run's condition (metrics 4.3).
-- [ ] The record says that R1 holds four changes against metrics 4.4, and reads them apart as far as they go: the large world's server recall tests for tickets 10 and 11, the J metrics for ticket 12, `length` steps and no-text 503s for this ticket. What does not split is said so.
-- [ ] A sample of R1's joined replies is read and counted as in R0a, for ticket 11's rule.
+- [x] R1, the bundled run, is run in both worlds, with P19 three times on the same commit for G1, compared with R0a and recorded beside it with a failure analysis. Its cost and command are approved before it runs. A setting of the run's limits that changed is written as that run's condition (metrics 4.3).
+- [x] The record says that R1 holds four changes against metrics 4.4, and reads them apart as far as they go: the large world's server recall tests for tickets 10 and 11, the J metrics for ticket 12, `length` steps and no-text 503s for this ticket. What does not split is said so.
+- [x] A sample of R1's joined replies is read and counted as in R0a, for ticket 11's rule.
 
 ## Comments
 
@@ -38,3 +38,7 @@ The P05 owner decided to run one full evaluation after tickets 10, 11, 12 and th
 
   This check holds tickets 10, 11 and 12 as well, so it does not show this change alone. Its token counts and cost are not this change's cost either: the same cases cost 1.24 times R0a's, and input tokens rose while output tokens fell.
 - No deployment file sets `ASSISTANT_MAX_OUTPUT_TOKENS` (`compose.deploy.yaml`, `infra/deploy/snu-now.env.example`, `infra/production/k8s`), so the servers take the new default. A value in a running server's own `.env` was not checked.
+
+### R1 (2026-11-02)
+
+R1 ran at `e171a95c`, recorded in `main-server/eval/p5/r1.md`. G1 is 3 against a floor of 2, and J9 (2/21) and J10 (3/12) miss their floors too; no instruction was changed for them and the run was not repeated. Whether to look into these with `--case` or run again is the P05 owner's call.
