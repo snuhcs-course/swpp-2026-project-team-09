@@ -1994,6 +1994,13 @@ The 새내기 튜토리얼 walks a new student through campus life, one Tutorial
 `src/tutorial/tutorial-content.ts`, and a file that does not match stops the start with the reason. Adding a quest is
 an entry in the file. `test/tutorial-content.unit.test.ts` checks that each Place number is in the seed.
 
+**The P6 suite's copy.** The P6 eval suite reads its own copy of the content, `eval/p6/tutorial.yaml`, frozen with C0
+(`WORLD_TUTORIAL_FILES` in `eval/cases.ts`); every other world reads `content/tutorial.yaml`. So adding a quest here does
+not change the frozen suite, and a new quest ships with at least two P6 cases: one asking a fact in its content, and one
+asking something the content lacks, answered with the quest's link or 확인되지 않아요. The copy is updated, together
+with any label tied to the number of quests (such as `p6-tutorial-progress`), only when the suite moves to a new version
+(C1). That change is entered with `revises:` and `reason:`, and the new version gets its own run.
+
 **State.** `tutorial_progress` holds one row for each User who has one, with four times, and
 `tutorial_quest_progress` one row for each quest the User started, with when it was completed and how (`button`, or
 `checked`, `forced` or `skipped` for the 관정 quest). A row of a key no longer in the file is ignored. Each time is set

@@ -36,6 +36,13 @@
 
 **The four "7층" ASKs name three spaces exactly.** These are hours-from, now, missing-time and seats-now. 7F-notebook-171's only name, 노트북존, is already matched by "7B 노트북존", so its mention passes whenever 7B's does. In effect the check is by name for 7A 1 구역, 7A 2 구역 and 7B, and 171 is covered only by that loose match.
 
+## The tutorial copy
+
+The suite reads its own copy of the tutorial, `tutorial.yaml` beside these notes, frozen with C0; a run of the p6 world serves it in the place of `content/tutorial.yaml` (`WORLD_TUTORIAL_FILES` in `eval/cases.ts`). The tutorial labels, such as the quest count of `p6-tutorial-progress`, are drafted from that copy.
+
+- A new tutorial quest ships with at least two P6 cases: one asking a fact in its content, and one asking something the content lacks, answered with the link or 확인되지 않아요.
+- The copy is updated, together with any label tied to the number of quests (such as `p6-tutorial-progress`), only when the suite moves to a new version (C1). That change is entered with `revises:` and `reason:`, and the new version gets its own run.
+
 ## Still to do outside the labels
 
 - Ticket 07's `LIBRARY_RULES` and `TUTORIAL_RULES` state rulings 1–21 as rules.

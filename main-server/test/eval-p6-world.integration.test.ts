@@ -7,25 +7,42 @@
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject, type ProvidedContext } from 'vitest';
-import { casesIn, loadCases, WORLD_CLOCKS } from '../eval/cases.ts';
+import { casesIn, loadCases, WORLD_TUTORIAL_FILES } from '../eval/cases.ts';
+import { FALLBACK_PRICES } from '../eval/cost.ts';
+import { type RunOptions } from '../eval/options.ts';
 import { seedP6World } from '../eval/p6/world.ts';
 import { p6WorldData } from '../eval/p6/world-data.ts';
+import { startEvalApp } from '../eval/runner.ts';
 import { type World } from '../eval/world.ts';
-import { CLOCK, type Clock } from '../src/quests/clock.js';
+import { TUTORIAL_FILE, TUTORIAL_FILE_PATH } from '../src/tutorial/tutorial-content.js';
 import { connect, type SeededDatabase, seededDatabase } from './containers.js';
 import { unseeded } from './eval-refs.ts';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
-import { startApp } from './start-app.js';
 import { getTutorial, tutorialAfter } from './tutorial.js';
-import { refuseKakao } from './walking-route.js';
 
 // The P6 world seeded into a database of its own (P06 ticket 06), without a model: every seed name a case gives is in
 // it as that kind of thing, each User's tutorial is in the state world.yaml gives, and the lunch Quest holds its five
-// people. Reported apart from the product's pyramid (ADR 0007).
+// people. The app is started as a P6 run starts it, so it reads the suite's frozen copy of the tutorial. Reported apart
+// from the product's pyramid (ADR 0007).
 
 const cases = casesIn(loadCases(), 'p6');
 const data = p6WorldData();
+
+const OPTIONS: RunOptions = {
+  model: 'test/model',
+  temperature: null,
+  topP: null,
+  maxSteps: 3,
+  timeoutMs: 30_000,
+  maxOutputTokens: 321,
+  repeat: null,
+  categories: [],
+  caseIds: [],
+  budgetUsd: 5,
+  world: 'p6',
+  prices: FALLBACK_PRICES,
+  commit: 'abc1234',
+};
 
 describe('The P6 world', () => {
   const model = new ScriptedModel();
@@ -35,8 +52,7 @@ describe('The P6 world', () => {
 
   beforeAll(async () => {
     database = await seededDatabase(inject('settings'));
-    app = await startApp(database.settings, [], refuseKakao, refuseMatchServer, model.model);
-    vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(WORLD_CLOCKS.p6));
+    ({ app } = await startEvalApp(database.settings, model.model, OPTIONS));
     world = await seedP6World(app, database.url);
     // Seventeen Users signed in, befriended and given a profile through the app, which a loaded machine takes minutes for.
   }, 300_000);
@@ -44,6 +60,11 @@ describe('The P6 world', () => {
   afterAll(async () => {
     await app.close();
     await database.drop();
+  });
+
+  it("reads the suite's frozen copy of the tutorial, eval/p6/tutorial.yaml, not content/tutorial.yaml", () => {
+    expect(app.get<string>(TUTORIAL_FILE_PATH)).toBe(WORLD_TUTORIAL_FILES.p6);
+    expect(WORLD_TUTORIAL_FILES.p6).not.toBe(TUTORIAL_FILE);
   });
 
   it('holds every seed name a case gives, as the kind of thing the case takes it for', () => {
