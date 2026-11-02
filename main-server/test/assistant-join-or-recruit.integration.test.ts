@@ -57,7 +57,10 @@ describe('the instructions on a request to recruit', () => {
 
   it.each([
     ['searching first', 'first look for one they could join'],
-    ['no search once the User asked for a new one', 'has already said in this conversation to make a new one'],
+    [
+      'no search once the User asked for a new one',
+      'has said in this conversation, this message included, to make a new one',
+    ],
     ['the seven days of an activity with no day', 'the next 7 days from today'],
     ['every activity of a day with no activity', 'every activity, with no words and no Board'],
     ['asking only when both are missing', 'With neither an activity nor a day, ask'],

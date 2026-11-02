@@ -2135,8 +2135,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     come first, ignoring case and counting a word given twice once, ties in start order, then by title in code points.
     The rest of the window fills the places left, up to 30, with `more` when there were more. The server does not order
     by Holders.
-  - On a request to recruit, the system prompt has the model search before it proposes, unless the User already said to
-    make a new one in the conversation: only what the User stated is compared, what fits is shown as cards with the most
+  - On a request to recruit, the system prompt has the model search before it proposes, unless the User said to make a
+    new one in the conversation, this message included: only what the User stated is compared, what fits is shown as cards with the most
     Holders first and a question, and the User joins from the card. With nothing that fits, it proposes and says none was
     found.
   - **Resolvers** take the User's words as written and answer `{ "result": "one", "candidate" }`,

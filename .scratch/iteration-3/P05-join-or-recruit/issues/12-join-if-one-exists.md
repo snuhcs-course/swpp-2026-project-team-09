@@ -19,6 +19,7 @@
 ### Decisions (2026-11-02)
 
 - A plain "만들어 줘" searches first, as "모집해 줘" does; only a statement that the User wants a new one skips the search (P05 owner, 2026-11-02). The spec names only the second. Its aim is that Users do not end up in separate half-empty Quests, and a plain "만들어 줘" does not say the User has looked.
+- A first message that already asks for a new one goes straight to `proposeQuest` with no search: the rule reads "in this conversation, this message included" (P05 owner, 2026-11-02, from #184's review). Read as earlier messages only, the old wording could search once against what the User said, and story 6 says the User is never forced into an existing Quest. It lands before R1, in the bundle, so R1 still compares with R0a.
 - `searchRecruitingQuests`'s `radius` is at most 3,000 m: 3,000 is taken, and more is refused back to the model by the input schema (P05 owner, from #168's review). A huge value turned the Place filter off without any sign.
 - A `placeId` that names no Place still answers "none", with the reason "There is no such Place." (P05 owner, from #168's review). The old reason said "within 300 m of that Place", which told the model nothing near a Place that is not there. The wording for a Place with nothing around it is unchanged. The server asks whether the Place exists only after an empty result, through `PlacesService.exists`, so a search that finds Quests costs no extra query.
 - ADR 0005's sentence now says that search narrows by fixed conditions, the server ranks what is left by the search words, and the model picks from those candidates (P05 owner, from #168's review). Since ticket 11 the model no longer ranks what is left.
@@ -33,6 +34,6 @@
 
 ### Agent usage (2026-11-02)
 
-- Agent time: about 15 minutes (estimate), one session with two review subagents, summed from the transcripts with gaps capped at 5 minutes. Waiting for CI and people is capped the same way, so a little of it is counted.
-- Tokens, subagents included: input 80, with 3,069,961 cache reads and 256,177 cache writes shown apart; output 49,494. Counted before this commit.
+- Agent time: about 25 minutes (estimate), one session with two review subagents, summed from the transcripts with gaps capped at 5 minutes. Waiting for CI and people is capped the same way, so a little of it is counted.
+- Tokens, subagents included: input 112, with 4,975,581 cache reads and 273,583 cache writes shown apart; output 61,591. Counted before this commit.
 - No eval model calls.
