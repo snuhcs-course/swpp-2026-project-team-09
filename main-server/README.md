@@ -2091,7 +2091,7 @@ Proposal)`.
   what one User spends, not what all of them do.
 - **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
   call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
-  written in each call (1,000). A failed model call is not retried.
+  written in each call, reasoning included (4,000). A failed model call is not retried.
 
 The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
