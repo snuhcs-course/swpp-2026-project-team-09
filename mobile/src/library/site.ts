@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // What the app knows of 관정도서관's booking site, k-rsv.snu.ac.kr: its addresses, the calls the app may make there,
@@ -82,4 +83,9 @@ export function isLoginDone(address: string): boolean {
 // The seat map of a reading room's sector, a plain image that loads with no cookie.
 export function seatMapUrl(sectorNo: number | string): string {
   return `https://${LIBRARY_HOST}:444/MAP/WEB/area_${String(sectorNo)}.png?version=20261022`;
+}
+
+// A room's photo, a plain image that loads with no cookie. The site keeps some as PNG and some as JPEG.
+export function roomPhotoUrl(seatNo: number | string, kind: 'png' | 'jpg' = 'png'): string {
+  return `https://${LIBRARY_HOST}:444/MAP/POP/pop_${String(seatNo)}.${kind}`;
 }

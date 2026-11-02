@@ -1,0 +1,90 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Common (P06 spec, "The P6 eval suite"): the library tools against the 공강 tools; "지금 7층 자리 있어?" and
+# "중앙도서관 열람실 빈자리" → an ASK listing the candidates, since several fit (rules.md section 3); small talk about
+# the library → CHAT. Each `expect` was drafted blind and settled by the PM's rulings of 2026-11-02 (labels-notes.md).
+
+# 공강 with nothing about the library: P4's tools, not the library's.
+- id: p6-common-free-time-not-library
+  category: p6-common
+  world: p6
+  repeat: 3
+  turns:
+    - user: 오늘 공강에 할 만한 거 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+
+# "7층" fits the four 7층 seat spaces: an ASK, not a seats card (ruling 1).
+- id: p6-common-seats-now
+  category: p6-common
+  world: p6
+  repeat: 3
+  turns:
+    - user: 지금 7층 자리 있어?
+  expect:
+    actions: [ASK]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions:
+        - [7A 열람실 1 구역, 7A 1구역, 7A 1 구역]
+        - [7A 열람실 2 구역, 7A 2구역, 7A 2 구역]
+        - [7B 노트북존, 7B]
+        - [노트북존]
+
+# One space named: findLibrarySpace, then showLibrarySeats with the id it returned, and no other tool, and one seats card for 7F-7A-zone2 (ruling 21).
+- id: p6-common-seats-one-space
+  category: p6-common
+  world: p6
+  repeat: 3
+  turns:
+    - user: 7A 열람실 2 구역 지금 자리 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, showLibrarySeats]
+      only: true
+    cards:
+      - { kind: library, action: seats, space: 7F-7A-zone2, min: 1, max: 1 }
+      - { kind: library, action: book, max: 0 }
+
+# Supersedes P19's out-of-scope-library-seats, the same question, which expected a refusal (suite.yaml, `superseded`).
+# The P19 case is not edited. An ASK between 7층 and 8층 that says 본관 is 미구현 (ruling 4).
+- id: p6-common-central-library-seats
+  category: p6-common
+  world: p6
+  repeat: 3
+  turns:
+    - user: 중앙도서관 열람실 지금 빈자리 몇 개야?
+  expect:
+    actions: [ASK]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [7층, 8층, 미구현]
+
+- id: p6-common-small-talk
+  category: p6-common
+  world: p6
+  repeat: 3
+  turns:
+    - user: 관정도서관 진짜 넓더라 ㅋㅋ 공부할 맛 난다
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }

@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -122,7 +123,7 @@ describe('the chat with the Assistant', () => {
     await user.press(screen.getByRole('button', { name: '식사 메뉴 추천' }));
 
     expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
-      { messages: [{ role: 'user', text: '식사 메뉴 추천' }] },
+      { clientCapabilities: ['library'], messages: [{ role: 'user', text: '식사 메뉴 추천' }] },
     ]);
     expect(screen.queryByText(GREETING)).toBeNull();
   });
@@ -187,6 +188,7 @@ describe("the chat's input and bubbles", () => {
     await user.press(sendButton());
 
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
+      clientCapabilities: ['library'],
       messages: [
         { role: 'user', text: '식사 메뉴 추천' },
         { role: 'assistant', text: REPLY, cards: [] },
@@ -218,6 +220,7 @@ describe('the conversation kept and discarded', () => {
     expect(screen.getByRole('header', { name: GREETING })).toBeVisible();
     await say(user, '한식');
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
+      clientCapabilities: ['library'],
       messages: [{ role: 'user', text: '한식' }],
     });
   });
@@ -248,7 +251,10 @@ describe('what the chat sends', () => {
       { role: 'assistant', text: REPLY, cards: [] },
       { role: 'user', text: `질문 ${index + 2}` },
     ]).flat();
-    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({ messages: latest });
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
+      clientCapabilities: ['library'],
+      messages: latest,
+    });
   });
 
   it('keeps the User from writing more than a message takes', async () => {
@@ -296,6 +302,7 @@ describe("the chat's failures", () => {
     await say(user, '한식');
 
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
+      clientCapabilities: ['library'],
       messages: [
         { role: 'user', text: '오늘 점심 뭐 나와?' },
         { role: 'user', text: '한식' },

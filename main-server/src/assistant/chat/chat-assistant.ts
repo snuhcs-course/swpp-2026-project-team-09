@@ -7,6 +7,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -25,6 +26,8 @@ import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { koreaNow } from '../korea-time.js';
+import { LIBRARY_RULES } from '../library/library-rules.js';
+import { type LibraryServices, libraryTools } from '../library/library-tools.js';
 import { DELIMITER } from '../others-text.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
@@ -37,6 +40,9 @@ import { searchRecruitingQuests } from '../tools/search-recruiting-quests.js';
 import { showGlobalEvents } from '../tools/show-global-events.js';
 import { showOnMap } from '../tools/show-on-map.js';
 import { showQuests } from '../tools/show-quests.js';
+import { TutorialService } from '../../tutorial/tutorial.service.js';
+import { getTutorial } from '../tutorial/get-tutorial.js';
+import { TUTORIAL_RULES } from '../tutorial/tutorial-rules.js';
 
 // The services the chat Assistant's tools call.
 export interface ChatAssistantServices {
@@ -49,10 +55,12 @@ export interface ChatAssistantServices {
   placeMatcher: PlaceMatcher;
   aliases: AliasesService;
   freeTime: FreeTimeServices;
+  library: LibraryServices;
+  tutorial: TutorialService;
 }
 
 function instructions(now: Date): string {
-  return `${chatRules(now)}\n\n${FREE_TIME_RULES}`;
+  return [chatRules(now), FREE_TIME_RULES, LIBRARY_RULES, TUTORIAL_RULES].join('\n\n');
 }
 
 function chatRules(now: Date): string {
@@ -90,8 +98,7 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
 - What you write beside a tool call reaches the User as part of the answer. In the last step, do not repeat it: add only what is new, or nothing.
 - Keep small talk short. To recommend a meal, first ask what the User feels like (한식, 일식, 양식, …), then recommend from that day's menus from getMenus.
 - Politely decline long general work, such as writing a report or an essay, or writing or fixing code, and say what you can help with on campus.
-- You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.
-- Study spaces, such as library seats and 열람실, are not supported yet. Say so when asked.`;
+- You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.`;
 }
 
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
@@ -105,6 +112,8 @@ export function chatAssistant({
   placeMatcher,
   aliases,
   freeTime,
+  library,
+  tutorial,
 }: ChatAssistantServices): Feature {
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
@@ -128,6 +137,10 @@ export function chatAssistant({
       findFreeFriends,
       findMealRestaurants,
       showRestaurants,
+      // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
+      // showLibrarySeats and showMyLibraryBookings.
+      ...libraryTools(library),
+      getTutorial: getTutorial(tutorial),
     },
   };
 }
