@@ -12,6 +12,7 @@ import * as tokens from '@/auth/tokens';
 import { endLibrarySession } from '@/library/end-session';
 import { isLibraryLoggedIn, markLibraryLoggedIn } from '@/library/flag';
 import { hiddenTransport } from '@/library/library';
+import { keepRoomBooking } from '@/library/room-bookings';
 import { endSession } from '@/session/session-events';
 import * as kept from '@/storage/kept';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -106,6 +107,18 @@ describe('the end of the library session on the forced end', () => {
     await pass(0);
     expect(clearWebViewCookies).toHaveBeenCalledTimes(1);
     await expect(isLibraryLoggedIn()).resolves.toBe(false);
+  });
+});
+
+describe('the end of the library session and what the phone kept', () => {
+  it("removes the room bookings' map and their unsent reports, so the next person sees nothing of them", async () => {
+    await keepRoomBooking(3000001, 'request-1');
+    await AsyncStorage.setItem('snunow.room-results', JSON.stringify(['request-1']));
+
+    await endLibrarySession();
+
+    await expect(AsyncStorage.getItem('snunow.room-bookings')).resolves.toBeNull();
+    await expect(AsyncStorage.getItem('snunow.room-results')).resolves.toBeNull();
   });
 });
 

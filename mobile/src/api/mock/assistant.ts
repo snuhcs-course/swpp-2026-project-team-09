@@ -4,6 +4,8 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage, Choice, ProposalPlace, QuestProposal } from '@/api/assistant-types';
@@ -14,10 +16,11 @@ import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { GLOBAL_EVENTS } from './data/quests';
+import { isLibraryAsk, libraryReply } from './library-replies';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
-// the shuttle with its layer's button, a request to make or recruit for a 파티 with a Proposal for tomorrow's lunch,
-// or, 비공개, a Closed one for the mocks' first Global Event inviting their first Friend,
+// the shuttle with its layer's button, one about 관정도서관 with a library card, a request to make or recruit for a 파티
+// with a Proposal for tomorrow's lunch, or, 비공개, a Closed one for the mocks' first Global Event inviting their first Friend,
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, one that says 학관 with the question which Place it means and the candidates as chips, the answer
 // to it with a Proposal for tomorrow's lunch there, and anything else with a short reply, so that the chat can be
@@ -114,19 +117,31 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
-export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantReply {
-  const last = messages.at(-1)?.text ?? '';
-  const place = chosenPlace(messages.at(-1));
+// 학관's candidates, and the Proposal once one of them is chosen.
+function hakgwanReply(message: ChatMessage | undefined): AssistantReply | null {
+  const place = chosenPlace(message);
   if (place !== null) {
     return { text: PROPOSING, mapButtons: [], cards: [], proposal: { ...lunchProposal(), place }, choices: [] };
   }
-  if (saysHakgwan(last)) {
+  if (saysHakgwan(message?.text ?? '')) {
     const text = '학관은 여러 곳을 말할 수 있어요. 어디를 말씀하신 건가요?';
     return { text, mapButtons: [], cards: [], proposal: null, choices: [...HAKGWAN] };
+  }
+  return null;
+}
+
+export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantReply {
+  const last = messages.at(-1)?.text ?? '';
+  const hakgwan = hakgwanReply(messages.at(-1));
+  if (hakgwan !== null) {
+    return hakgwan;
   }
   if (SHUTTLE_WORDS.some((word) => last.includes(word))) {
     const text = '셔틀이 어디 있는지 지도에서 볼 수 있어요.';
     return { text, mapButtons: ['shuttle'], cards: [], proposal: null, choices: [] };
+  }
+  if (isLibraryAsk(last)) {
+    return libraryReply(last);
   }
   if (PROPOSAL_WORDS.some((word) => last.includes(word))) {
     return {

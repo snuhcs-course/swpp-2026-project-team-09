@@ -9,6 +9,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -32,6 +33,7 @@ import { listsTop, mapInset, ROUTE_PADDING, type Room, takenUnderToast, takenUnd
 import { LocationExplanation } from './location-explanation';
 import { MapBottom, openMenus, takenBy } from './map-bottom';
 import { QuestList } from './quest-list';
+import { RoomRequestInbox } from './room-consent';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
@@ -329,6 +331,7 @@ export function MainScreen(): ReactElement {
       </View>
       {party.sheet}
       <LocationExplanation blocked={me.blocked} onAllow={me.allow} onLater={me.later} visible={me.explaining} />
+      <RoomRequestInbox />
     </View>
   );
 }
