@@ -25,7 +25,7 @@ The `library` card DTO, its `key` grammar and `clientCapabilities` are fixed in 
   - integration, over HTTP with the model scripted (prior art: the `assistant-*` tests and `test/scripted-model.ts`): each tool's result kinds, `several`, the refusals and reasons, the card's key and fields, `findLibraryFreeSlots` against a seeded Timetable, `getTutorial`'s content and status, and the refusal without `clientCapabilities`.
 - [x] **The feature flag** `LIBRARY_BOOKING_ENABLED` (spec, Further Notes): off, the library tools answer `none` with the official link and no card, the room request endpoints answer 404, and `GET /tutorial` serves the 관정 quest as a button quest; an integration test covers off.
 - [ ] **Merge point with P05.** _(Open: needs the agreed point with the P05 owner and a fresh P19 baseline, which are paid model runs.)_ P05's R1/R2 each measure one change and its G1 uses the fixed P19 set (`FIXED_SET`), where `out-of-scope-library-seats` may show as a regression. This ticket's chat change merges only at a point agreed with the P05 owner (between two P05 runs), and a fresh P19 baseline (3 runs) is run and recorded on `3.0/Main` just before that merge; R1's regression compares against it.
-- [ ] **R1** _(Open: paid model runs, not made here; the eval runner must send `clientCapabilities: ['library']` for the P6 world, ticket 06's side.)_ of the P6 suite and the P19 regression (3 runs after, compared with the fresh baseline above, or ticket 06's when nothing changed the chat since): no P19 case newly fails, and new-tool calls in the regression cases are reported with tokens and cost per turn. The P4 and P5 suites run once as a report. Results are recorded against the frozen thresholds.
+- [ ] **R1** _(Open: paid model runs, not made here; the eval runner must send `clientCapabilities: ['library']` for the P6 world, ticket 06's side.)_ of the P6 suite and the P19 regression (3 runs after, compared with the fresh baseline above, or ticket 06's when nothing changed the chat since): no P19 case newly fails, and new-tool calls in the regression cases are reported with tokens and cost per turn. The P4 and P5 suites run once as a report. Results are recorded against the frozen thresholds. _(Run 2026-11-02 on `869acde2`, `eval/p6/r1.md`; not ticked, since the run does not meet it. P6 R1 is 140/192 (72.9%): M1, M1-aliases, M2-useDesc, M4 pass and M5 passes only before the person's marking; M2 (equipment 0/6, companions 13/15), M3 (unsupported 7/9), overall and per-category (group-rooms, tutorial) miss their thresholds. The three P19 runs stopped at their USD 0.5 budgets after 68–69 of 75 turns; on the 49 cases run they match P05 R1 (41, 43, 43 against 41, 42, 43), with no new-tool call, but `no-data-meal-parties-day-after-tomorrow` failed once where P05 R1 never failed and five cases were not run. P4 and P5 were not run.)_
 
 ## Comments
 
@@ -46,3 +46,11 @@ The `library` card DTO, its `key` grammar and `clientCapabilities` are fixed in 
 
 - Agent time: about 2 hours 30 minutes in one session (an estimate; the machine was heavily loaded by other worktrees' test runs, which slowed each check).
 - Tokens (estimate): input about 4.5 M, of which about 4.2 M cache reads and 0.25 M cache writes; output about 90 k. No subagents.
+
+### Agent usage (2026-11-02, R1)
+
+The R1 run of P6, the three P19 regression runs and their record (`eval/p6/r1.md`), in one agent session.
+
+- Agent time: about 45 minutes, an estimate. About 17 of them were the runs, and about 8 were waiting for #188 to merge.
+- Tokens, an estimate: about 3.5M input, of which about 3.3M cache reads and 0.2M cache writes, and about 45k output. No subagents. The coordinating session that started this one is not included.
+- Model runs on OpenRouter: USD 2.60 (P6 R1 1.10, P19 0.50 × 3).

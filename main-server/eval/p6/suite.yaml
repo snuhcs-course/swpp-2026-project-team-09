@@ -122,3 +122,8 @@ runs:
     commit: 31d8820f3838434ae22a19103febb203de32d14d
     record: r0.md
     results: eval/results/2026-11-02-31d8820f-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault-2.json
+  - id: R1
+    date: '2026-11-02'
+    commit: 869acde2bb25f26d4c40be6e4f6631a0ee0e6c18
+    record: r1.md
+    results: eval/results/2026-11-02-869acde2-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault-3.json
