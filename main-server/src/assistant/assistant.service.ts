@@ -171,20 +171,31 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
-      if (proposal !== null) {
-        // A Proposal asked for in the chat may be one a grey suggestion would have made (suggestions.service.ts).
-        await this.suggestions.typedInstead(userId, proposal, now);
-      }
       const last = conversation.at(-1);
-      if (taught || resolutions.reachedPlace || (last?.role === 'user' && last.chosen !== null)) {
-        // The session may have led the User's words to a Place, which everyone's aliases learn from (ticket 06).
-        await this.aliases.recountSession(userId);
-      }
+      const reached = taught || resolutions.reachedPlace || (last?.role === 'user' && last.chosen !== null);
+      await this.learnFrom(userId, now, reply.proposal, reached);
+      const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
       return { text, mapButtons, cards, proposal, choices, resolvedBy };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
+    }
+  }
+
+  // What a reply teaches: a Proposal asked for in the chat may be one a grey suggestion would have made
+  // (suggestions.service.ts), and a session that may have led the User's words to a Place teaches everyone's aliases
+  // (ticket 06).
+  private async learnFrom(
+    userId: string,
+    now: Date,
+    proposal: FeatureReply['proposal'],
+    reached: boolean,
+  ): Promise<void> {
+    if (proposal !== null) {
+      await this.suggestions.typedInstead(userId, proposal, now);
+    }
+    if (reached) {
+      await this.aliases.recountSession(userId);
     }
   }
 
