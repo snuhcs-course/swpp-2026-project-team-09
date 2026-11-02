@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { library } from '@/library/library';
 import type { LibraryBooking } from '@/library/replies';
+import { reportRoomCancelled } from '@/library/room-bookings';
 import { libraryMessage, type PendingMark, useWrite, type Write } from './use-library-call';
 
 // The words and the confirm of a cancel or a return, which a cancel or a return card and a row of 내 예약 share.
@@ -55,6 +56,8 @@ export function useConfirming(
           message: message === '' ? ACT_WORDS[act].failed : `${ACT_WORDS[act].failed}: ${message}`,
         };
       }
+      // A room booked through a room request: the server is told, so that its booking party stops blocking the day.
+      await reportRoomCancelled(booking.BSEQNO);
       setOutcome('done');
       if (reloadAfter) {
         reload();
