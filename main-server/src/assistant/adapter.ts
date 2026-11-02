@@ -7,11 +7,12 @@
  * 2026-10-29  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
-import { type Asker, type ChatMessage, type Feature, type FeatureReply, type ToolContext } from './feature.js';
+import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
 import { FoundIds } from './found-ids.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
 
@@ -142,13 +143,14 @@ function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
 export async function runFeature(
   model: Model,
   feature: Feature,
-  asker: Asker,
+  asker: Request,
   messages: readonly ChatMessage[],
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
   observer?: RunObserver,
 ): Promise<FeatureReply> {
   const context: ToolContext = {
     ...asker,
+    capabilities: new Set(asker.capabilities),
     found: new FoundIds(),
     shown: lastShown(messages),
     presented: { mapButtons: [], cards: [], proposal: null },
