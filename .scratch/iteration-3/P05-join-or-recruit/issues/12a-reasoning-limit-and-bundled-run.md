@@ -24,8 +24,8 @@ The P05 owner decided to run one full evaluation after tickets 10, 11, 12 and th
   - OpenRouter's reasoning guide (https://openrouter.ai/docs/use-cases/reasoning-tokens, read 2026-11-02) says that the limit covers reasoning and the visible output together, and gives raising the limit as a way out of a call cut with no answer.
   - `reasoning.max_tokens` has a minimum of 1,024 on Anthropic models and must stay under the limit, so it cannot be used at 1,000 by the guide. A lower `effort` or `none` would change the reasoning of every step, in a run that already holds four changes, and raising the limit leaves it as it was. Neither was run: this rests on the guide and on that reason.
   - 4,000 is the limit the Judgements already have (`JUDGEMENT_MAX_OUTPUT_TOKENS`). At R0a's pace, about 1,000 tokens in 5.5 s, one call of 4,000 takes about 22 s, within the 30 s of a message; R0a's longest turn was 11.5 s.
-  - The limit is not a hard stop on reasoning: a call could still reach 4,000. The check below saw none near it, and R1's `length` steps measure it.
-- The check, `pnpm eval --world large-world-v1 --budget 1 --yes --case <the 14 cases>` at commit `914c9f76`, 2026-11-02 12:01-12:07 KST, 42 runs, USD 0.29:
+  - The limit is not a hard stop on reasoning, so the first box above is met as measured, not as a guarantee: no call reached the limit in the check below or in R1, and a call still could.
+- The check, `pnpm eval --world large-world-v1 --budget 1 --yes --case <the 14 cases>` at commit `914c9f76`, 2026-11-02 12:01-12:07 KST, 42 runs, USD 0.29, saved as `main-server/eval/results/2026-11-02-914c9f76-…`:
 
   | Same 14 cases, 42 runs | R0a (1,000) | This check (4,000) |
   | --- | --- | --- |

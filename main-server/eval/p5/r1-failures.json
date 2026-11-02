@@ -8758,5 +8758,443 @@
         ]
       }
     }
+  },
+  "p19": {
+    "run": "2026-11-02-e171a95c-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault -3, -4, -5",
+    "note": "Only cases with a failed run. No rule-based cause: r1.md gives the readings.",
+    "cases": {
+      "ambiguous-intent-lunch-at-student-center": {
+        "category": "ambiguous-intent",
+        "group": "known failure",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["getMenus", "showOnMap"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["getMenus", "showOnMap"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["getMenus", "showOnMap"]
+          }
+        ]
+      },
+      "ambiguous-intent-festival-company": {
+        "category": "ambiguous-intent",
+        "group": "known failure",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchGlobalEvents", "searchRecruitingQuests", "showQuests", "showGlobalEvents"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchGlobalEvents", "searchRecruitingQuests", "showGlobalEvents", "showQuests"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchGlobalEvents", "searchRecruitingQuests", "showQuests", "showGlobalEvents"]
+          }
+        ]
+      },
+      "ambiguous-intent-basketball-tomorrow": {
+        "category": "ambiguous-intent",
+        "group": "known failure",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchRecruitingQuests", "showQuests"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchRecruitingQuests", "showQuests"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchRecruitingQuests", "searchGlobalEvents", "showQuests"]
+          }
+        ]
+      },
+      "ambiguous-intent-jazz-concert": {
+        "category": "ambiguous-intent",
+        "group": "known failure",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchGlobalEvents", "searchRecruitingQuests", "showGlobalEvents", "showQuests"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchGlobalEvents", "searchRecruitingQuests", "showGlobalEvents", "showQuests"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchGlobalEvents", "searchRecruitingQuests", "showGlobalEvents", "showQuests"]
+          }
+        ]
+      },
+      "follow-up-second-same-name-friend": {
+        "category": "follow-ups",
+        "group": "known failure",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": ["resolveFriend", "resolvePlace", "findFreeFriends", "proposeQuest"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": ["resolveFriend", "resolvePlace", "findFreeFriends", "proposeQuest"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["proposal"],
+            "called": ["resolveFriend", "resolvePlace", "proposeQuest"]
+          }
+        ]
+      },
+      "follow-up-seven-oclock": {
+        "category": "follow-ups",
+        "group": "other",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["proposeQuest"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["proposeQuest"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["proposeQuest"]
+          }
+        ]
+      },
+      "follow-up-yes-after-menus": {
+        "category": "follow-ups",
+        "group": "other",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["resolveFriend", "getMenus", "findMealRestaurants", "showRestaurants", "showOnMap"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["resolveFriend", "findMealRestaurants", "showRestaurants", "showOnMap"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["resolveFriend", "getMenus", "findMealRestaurants", "showRestaurants", "showOnMap"]
+          }
+        ]
+      },
+      "global-events-tonight-talk": {
+        "category": "global-events",
+        "group": "other",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["args"],
+            "called": ["searchGlobalEvents", "showGlobalEvents"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["args"],
+            "called": ["searchGlobalEvents", "showGlobalEvents"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["args"],
+            "called": ["searchGlobalEvents", "showGlobalEvents"]
+          }
+        ]
+      },
+      "global-events-weekend-festival": {
+        "category": "global-events",
+        "group": "other",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["cards"],
+            "called": ["searchGlobalEvents", "showGlobalEvents"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": ["searchGlobalEvents", "showGlobalEvents"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": ["searchGlobalEvents", "showGlobalEvents"]
+          }
+        ]
+      },
+      "live-lunch-then-seven": {
+        "category": "live",
+        "group": "other",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["proposeQuest"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": ["proposeQuest"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["proposeQuest"]
+          }
+        ]
+      },
+      "making-parties-for-event": {
+        "category": "making-parties",
+        "group": "superseded",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["searchRecruitingQuests", "showQuests"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["searchRecruitingQuests", "searchGlobalEvents", "showQuests"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["searchRecruitingQuests", "showQuests"]
+          }
+        ]
+      },
+      "making-parties-abbreviation-hakgwan": {
+        "category": "making-parties",
+        "group": "known failure",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["resolveFriend", "resolvePlace"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["resolveFriend", "resolvePlace"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "proposal", "tools.required"],
+            "called": ["resolveFriend", "resolvePlace"]
+          }
+        ]
+      },
+      "menus-abbreviation-hakgwan": {
+        "category": "menus",
+        "group": "known failure",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": ["getMenus", "getMenus", "showOnMap"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "mapButtons", "text.mentions", "tools.required"],
+            "called": ["getMenus"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "mapButtons", "text.mentions", "tools.required"],
+            "called": ["getMenus"]
+          }
+        ]
+      },
+      "ask-which-festival-event": {
+        "category": "missing-or-ambiguous-target",
+        "group": "other",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchRecruitingQuests", "resolveFriend", "resolveFriend", "showQuests"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchRecruitingQuests", "resolveFriend", "resolveFriend", "showQuests"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": ["resolveFriend", "resolveFriend", "resolveGlobalEvent"]
+          }
+        ]
+      },
+      "ask-missing-time": {
+        "category": "missing-or-ambiguous-target",
+        "group": "other",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": []
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": []
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": true,
+            "checks": [],
+            "called": []
+          }
+        ]
+      },
+      "ask-missing-fields-in-one-question": {
+        "category": "missing-or-ambiguous-target",
+        "group": "superseded",
+        "runs": [
+          {
+            "p19Run": 1,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchRecruitingQuests", "showQuests"]
+          },
+          {
+            "p19Run": 2,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchRecruitingQuests", "showQuests"]
+          },
+          {
+            "p19Run": 3,
+            "repetition": 1,
+            "passed": false,
+            "checks": ["action", "text.mentions"],
+            "called": ["searchRecruitingQuests", "showQuests"]
+          }
+        ]
+      }
+    }
   }
 }
