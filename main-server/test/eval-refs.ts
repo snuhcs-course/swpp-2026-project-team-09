@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type EvalCase } from '../eval/cases.ts';
@@ -34,8 +35,9 @@ const isItem = (written: unknown): written is string => typeof written === 'stri
 
 // The id fields of a tool's arguments.
 function refsOfArgs(tool: string, args: Readonly<Record<string, unknown>>): SeedRef[] {
-  const { globalEvent, place, invitees, friends, departurePlace, from, to, keys, ids } = args;
+  const { globalEvent, place, invitees, friends, departurePlace, from, to, keys, ids, quest } = args;
   return [
+    ...(tool === 'proposeLibraryBooking' && typeof quest === 'string' ? [{ kind: 'quest' as const, name: quest }] : []),
     ...(typeof globalEvent === 'string' ? [{ kind: 'globalEvent' as const, name: globalEvent }] : []),
     ...(tool === 'proposeQuest' && typeof place === 'string' ? [{ kind: 'place' as const, name: place }] : []),
     ...(typeof departurePlace === 'string' ? [{ kind: 'place' as const, name: departurePlace }] : []),
@@ -62,10 +64,21 @@ function refsOfResults(results: Expect['results']): SeedRef[] {
   ];
 }
 
+// The seed names of expected cards: their seeds, or a library card's companions and Quest.
+function refsOfCards({ kind, seeds, conditions }: NonNullable<Expect['cards']>[number]): SeedRef[] {
+  if (kind !== 'library') {
+    return seeds.map((name) => ({ kind, name }));
+  }
+  const companions: SeedRef[] = (conditions?.companions ?? []).map((name) => ({ kind: 'friend', name }));
+  return typeof conditions?.quest === 'string'
+    ? companions.concat({ kind: 'quest', name: conditions.quest })
+    : companions;
+}
+
 // The seed names of an `expect`: its cards, its Proposal, its results and the id fields of its arguments.
 function refsOfExpect(expected: Expect): SeedRef[] {
   return [
-    ...(expected.cards ?? []).flatMap(({ kind, seeds }) => seeds.map((name) => ({ kind, name }))),
+    ...(expected.cards ?? []).flatMap((cards) => refsOfCards(cards)),
     ...refsOfProposal(expected.proposal),
     ...refsOfResults(expected.results),
     ...Object.entries(expected.args).flatMap(([tool, written]) =>

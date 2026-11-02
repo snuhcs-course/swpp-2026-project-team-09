@@ -5,6 +5,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -213,7 +214,7 @@ describe("settingsSchema: the Assistant's settings", () => {
       ASSISTANT_DAILY_MESSAGES: 50,
       ASSISTANT_MAX_STEPS: 8,
       ASSISTANT_TIMEOUT_MS: 30_000,
-      ASSISTANT_MAX_OUTPUT_TOKENS: 1000,
+      ASSISTANT_MAX_OUTPUT_TOKENS: 4000,
     });
   });
 

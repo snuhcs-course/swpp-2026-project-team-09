@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { koreaDate, koreaTime } from '../src/assistant/korea-time.ts';
@@ -82,4 +83,60 @@ export function boardOf(input: unknown): unknown {
   }
   const name = input.trim().toLowerCase();
   return BOARDS[name] ?? name;
+}
+
+const HOURS_MINUTES = /^(\d{1,2}):(\d{2})(?::00)?$/u;
+const ISO_MINUTES = /^PT(?:(\d+)H)?(?:(\d+)M)?$/iu;
+
+// A length in whole minutes, from a number, digits, H:MM or an ISO 8601 duration such as PT1H30M; other input stays as
+// it is.
+export function minutesOf(input: unknown): unknown {
+  if (typeof input === 'number') {
+    return input;
+  }
+  if (typeof input !== 'string') {
+    return input;
+  }
+  const text = input.trim();
+  if (/^\d+$/u.test(text)) {
+    return Number(text);
+  }
+  const clock = HOURS_MINUTES.exec(text);
+  if (clock !== null) {
+    return Number(clock[1]) * 60 + Number(clock[2]);
+  }
+  const iso = ISO_MINUTES.exec(text);
+  if (iso !== null && (iso[1] !== undefined || iso[2] !== undefined)) {
+    return Number(iso[1] ?? 0) * 60 + Number(iso[2] ?? 0);
+  }
+  return text;
+}
+
+const COMPACT_CLOCK = /^([01]\d|2[0-4])([0-5]\d)$/u;
+
+// HH:MM in Korea, as clockOf reads it, and also from the compact HHMM of a library card's key, such as 1700.
+export function startOf(input: unknown): unknown {
+  if (typeof input === 'string') {
+    const compact = COMPACT_CLOCK.exec(input.trim());
+    if (compact !== null) {
+      return `${compact[1]}:${compact[2]}`;
+    }
+  }
+  return clockOf(input);
+}
+
+// A catalogue id of the 관정 space catalogue, such as 7F-7A-zone2, trimmed.
+export function spaceIdOf(input: unknown): unknown {
+  return typeof input === 'string' ? input.trim() : input;
+}
+
+// Catalogue ids as a sorted set; a single id is read as a set of one.
+export function spaceIdsOf(input: unknown): unknown {
+  if (typeof input === 'string') {
+    return [input.trim()];
+  }
+  if (!Array.isArray(input)) {
+    return input;
+  }
+  return [...new Set(input.map((id) => (typeof id === 'string' ? id.trim() : JSON.stringify(id))))].toSorted();
 }
