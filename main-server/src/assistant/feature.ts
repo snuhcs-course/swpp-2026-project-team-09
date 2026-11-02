@@ -6,6 +6,8 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -17,6 +19,7 @@ import { type FoundIds } from './found-ids.js';
 import { type TravelBox } from './free-time/candidate-fit.js';
 import { type RestaurantCard } from './free-time/restaurant-card.js';
 import { type JudgedCandidates } from './free-time/travel-boxes.js';
+import { type LibraryCard } from './library/library-card.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
 
 // The parts of an AI feature that know nothing of the model library (ADR 0005). A tool is a zod schema of its input
@@ -24,10 +27,10 @@ import { type QuestProposal, type SentProposal } from './proposal.js';
 // its own system prompt and its own set of tools. A new capability of the chat joins it as tools and a prompt fragment
 // (ADR 0009), and a Feature of its own only when it has an entry point of its own. `adapter.ts` alone runs them.
 
-// What a card shows: a Quest, a Global Event or a Restaurant.
-export type CardKind = 'quest' | 'globalEvent' | 'restaurant';
+// What a card shows: a Quest, a Global Event, a Restaurant or a 관정도서관 action the phone fills from the library.
+export type CardKind = 'quest' | 'globalEvent' | 'restaurant' | 'library';
 
-// A card the Assistant showed: what it is and its id, which for a Restaurant is its key. The model is given only these,
+// A card the Assistant showed: what it is and its id, which for a Restaurant and a library card is its key. The model is given only these,
 // never the card's data from an earlier message, and calls a tool again when it needs it.
 export interface CardReference {
   kind: CardKind;
@@ -86,7 +89,13 @@ export interface QuestCard extends TravelBox {
   quest: RecruitingQuestDto;
 }
 
-export type Card = GlobalEventCard | QuestCard | RestaurantCard;
+export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
+
+// What the app says it can show beside the cards every version shows. Library cards are attached only for an app that
+// says `library`, since older apps refuse a reply with a card they do not know.
+export const CLIENT_CAPABILITIES = ['library'] as const;
+
+export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 
 // What the presenters put in the reply beside its text, gathered over one run.
 export interface Presented {
@@ -127,12 +136,18 @@ export interface ResolutionLog {
   edited(fromPlaceId: string, toPlaceId: string): Promise<void>;
 }
 
+// Who asks, when, and what their app can show.
+export interface Request extends Asker {
+  readonly capabilities: readonly ClientCapability[];
+}
+
 // What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned and the
 // candidate the User chose, which are all its presenters accept, the last Proposal sent back with the conversation,
 // whose ids proposeQuest also accepts, what the presenters have put in the reply, where the resolvers record what
-// they answered, the candidates findFreeTimeEvents returned so far, and the card of each Restaurant
-// findMealRestaurants returned, by its key, in order.
+// they answered, the candidates findFreeTimeEvents returned so far, the card of each Restaurant findMealRestaurants
+// returned, by its key, in order, and what the User's app can show.
 export interface ToolContext extends Asker {
+  readonly capabilities: ReadonlySet<ClientCapability>;
   readonly found: FoundIds;
   readonly shown: SentProposal | null;
   readonly presented: Presented;

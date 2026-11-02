@@ -5,12 +5,14 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, Prisma, Quest } from '../generated/prisma/client.js';
+import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { type UpdateQuestDto } from './dto/quest-requests.dto.js';
@@ -30,6 +32,7 @@ export class LeaderService {
     private readonly quests: QuestsService,
     private readonly signals: SignalsService,
     private readonly classQuests: ClassQuestsService,
+    private readonly roomRequests: RoomRequestSync,
   ) {}
 
   // Refuses unless the User holds and leads the Quest. Read without a lock, so that the Leader's actions are refused in
@@ -83,6 +86,7 @@ export class LeaderService {
       return [...holders, ...joinRequests, ...invitations].map((one) => one.userId);
     });
     this.signals.send([...new Set(told)], 'quests-changed');
+    await this.roomRequests.questChanged(questId);
   }
 
   async handOver(userId: string, questId: string, newLeaderId: string): Promise<void> {
@@ -108,6 +112,7 @@ export class LeaderService {
       },
       holderId,
     );
+    await this.roomRequests.questChanged(questId);
   }
 
   // Locks the User the change is about, if any, then the Quest, checks that the actor leads it and makes the change.

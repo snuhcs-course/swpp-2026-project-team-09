@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
@@ -22,8 +23,8 @@ export class AssistantController {
   @HttpCode(HttpStatus.OK)
   reply(
     @CurrentUser() user: SignedInUser,
-    @Body({ schema: assistantMessagesSchema }) { messages }: AssistantMessages,
+    @Body({ schema: assistantMessagesSchema }) { messages, clientCapabilities }: AssistantMessages,
   ): Promise<AssistantReplyDto> {
-    return this.assistant.reply(user.id, messages);
+    return this.assistant.reply(user.id, messages, clientCapabilities);
   }
 }

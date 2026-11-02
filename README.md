@@ -346,7 +346,7 @@ file's.
 | `ASSISTANT_DAILY_MESSAGES`         | Optional: the messages a User may send in a day in Korea; 50 unless set.                            |
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                   |
-| `ASSISTANT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in each call; 1000 unless set.                             |
+| `ASSISTANT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in each call; 4000 unless set.                             |
 | `AUTOMATIC_JUDGEMENT`              | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.       |
 | `SAME_EVENT_TITLE_RULE`            | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.       |
 | `SAME_EVENT_AI_CHOICE`             | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set. |

@@ -6,12 +6,15 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
   type AssistantReply,
   type ChatCard,
   type Choice,
+  CLIENT_CAPABILITIES,
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
@@ -24,11 +27,13 @@ import type { ApiClient } from '@/api/client';
 import { isResolvedBy } from './alias-client';
 import { field, hasTexts, isBoard, isJoinPolicy, isNothing, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isGlobalEvent } from './event-client';
+import { isLibraryCardData, withLibraryDefaults } from './library-card-answers';
 import { call } from './http';
 import { isMenuLine } from './menu-answers';
 import { isRecruitingQuest } from './party-client';
 
-// The operation of the AI chat: the conversation goes to the main server, which asks the model.
+// The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request says
+// that this app draws library cards (`clientCapabilities`).
 
 function isMapLayer(value: unknown): value is MapLayer {
   return MAP_LAYERS.some((layer) => layer === value);
@@ -108,6 +113,8 @@ function isChatCard(value: unknown): value is ChatCard {
       return isRecruitingQuest(field(value, 'quest')) && isTravelBox(value);
     case 'restaurant':
       return isRestaurant(field(value, 'restaurant'));
+    case 'library':
+      return isLibraryCardData(field(value, 'library'));
     default:
       return false;
   }
@@ -125,6 +132,10 @@ export type AssistantAnswer = Omit<AssistantReply, 'choices' | 'resolvedBy'> & {
   resolvedBy?: ResolvedBy[];
 };
 
+function filled(card: ChatCard): ChatCard {
+  return card.kind === 'library' ? { kind: 'library', library: withLibraryDefaults(card.library) } : card;
+}
+
 export function isAssistantAnswer(value: unknown): value is AssistantAnswer {
   const proposal = field(value, 'proposal');
   const choices = field(value, 'choices');
@@ -141,8 +152,10 @@ export function isAssistantAnswer(value: unknown): value is AssistantAnswer {
 
 export const assistantClient: Pick<ApiClient, 'askAssistant'> = {
   askAssistant: async (messages) => {
-    const answer = await call('POST', '/assistant/messages', isAssistantAnswer, { body: { messages } });
+    const answer = await call('POST', '/assistant/messages', isAssistantAnswer, {
+      body: { messages, clientCapabilities: CLIENT_CAPABILITIES },
+    });
     const { choices = [], resolvedBy = [], ...reply } = answer;
-    return { ...reply, choices, resolvedBy };
+    return { ...reply, cards: reply.cards.map(filled), choices, resolvedBy };
   },
 };

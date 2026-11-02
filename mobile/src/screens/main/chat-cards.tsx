@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -13,6 +14,8 @@ import { ChatEventCards, type EventCardActions } from './chat-event-cards';
 import type { ProposalMaking } from './chat-proposal-card';
 import { ChatQuestCards, type QuestCardActions } from './chat-quest-cards';
 import { ChatRestaurantCards } from './chat-restaurant-cards';
+import { ChatLibraryCards } from './library/chat-library-cards';
+import type { LibraryCardActions } from './library/use-library-call';
 
 // What the Proposal card of an answer does, by the answer's bubble: how its making stands, 만들기 and 수정.
 export interface ProposalActions {
@@ -30,6 +33,8 @@ export interface CardActions {
   openPartyForm: (proposal: QuestProposal) => void;
   // 아니에요 under the words an answer read through an alias.
   rejectAlias: Chat['rejectAlias'];
+  // What the library cards add to the chat.
+  library: LibraryCardActions;
 }
 
 // The cards of an answer in the order the Assistant showed them, the cards of one kind next to each other together.
@@ -46,10 +51,22 @@ function runsOf(cards: readonly ShownChatCard[]): ShownChatCard[][] {
   return runs;
 }
 
-function Run({ run, actions }: { run: readonly ShownChatCard[]; actions: CardActions }): ReactElement | null {
+interface RunProps {
+  run: readonly ShownChatCard[];
+  actions: CardActions;
+  // The cards of the app's own bubble.
+  own: boolean;
+  bubbleId: number;
+}
+
+function Run({ run, actions, own, bubbleId }: RunProps): ReactElement | null {
   const events = run.filter((card) => card.kind === 'globalEvent');
   const quests = run.filter((card) => card.kind === 'quest');
   const restaurants = run.filter((card) => card.kind === 'restaurant');
+  const libraries = run.filter((card) => card.kind === 'library');
+  if (libraries.length > 0) {
+    return <ChatLibraryCards actions={actions.library} bubbleId={bubbleId} cards={libraries} own={own} />;
+  }
   if (events.length > 0) {
     return <ChatEventCards actions={actions.events} cards={events} />;
   }
@@ -64,11 +81,21 @@ function keyOf(run: readonly ShownChatCard[]): string {
   return first === undefined ? '' : `${first.kind}-${referenceOf(first).id}`;
 }
 
-export function Cards({ cards, actions }: { cards: readonly ShownChatCard[]; actions: CardActions }): ReactElement {
+export function Cards({
+  cards,
+  actions,
+  own = false,
+  bubbleId,
+}: {
+  cards: readonly ShownChatCard[];
+  actions: CardActions;
+  own?: boolean;
+  bubbleId: number;
+}): ReactElement {
   return (
     <>
       {runsOf(cards).map((run) => (
-        <Run actions={actions} key={keyOf(run)} run={run} />
+        <Run actions={actions} bubbleId={bubbleId} key={keyOf(run)} own={own} run={run} />
       ))}
     </>
   );

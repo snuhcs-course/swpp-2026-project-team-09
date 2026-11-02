@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -43,7 +44,7 @@ describe("settingsSchema: the Assistant's settings", () => {
       ASSISTANT_DAILY_MESSAGES: 50,
       ASSISTANT_MAX_STEPS: 8,
       ASSISTANT_TIMEOUT_MS: 30_000,
-      ASSISTANT_MAX_OUTPUT_TOKENS: 1000,
+      ASSISTANT_MAX_OUTPUT_TOKENS: 4000,
     });
   });
 

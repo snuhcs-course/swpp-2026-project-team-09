@@ -2,21 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { Prisma } from '../src/generated/prisma/client.js';
 import { signInUser } from './friends.js';
 import { patchProfile } from './profile.js';
 import { signInAsAdministrator, withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { admitIn, getTutorial, postTutorial, tutorialAfter, yearInKorea } from './tutorial.js';
 import request from 'supertest';
-
-// P06 ticket 01 adds User.affiliation. Until it lands, only the admission year makes a User eligible by default.
-const HAS_AFFILIATION = 'affiliation' in Prisma.UserScalarFieldEnum;
 
 let app: INestApplication<Server>;
 
@@ -128,7 +125,7 @@ describe('Any other User', () => {
   });
 });
 
-describe.skipIf(!HAS_AFFILIATION)('An exchange student', () => {
+describe('An exchange student', () => {
   it('finds the tutorial on without turning it on, whatever the admission year', async () => {
     const user = await signInUser(app);
     await admitIn(app, user, yearInKorea() - 1);

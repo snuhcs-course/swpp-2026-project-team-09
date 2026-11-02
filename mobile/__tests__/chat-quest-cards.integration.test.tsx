@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -105,6 +106,7 @@ describe('the Quest cards of an answer', () => {
     await user.press(screen.getByRole('button', { name: '보내기' }));
 
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
+      clientCapabilities: ['library'],
       messages: [
         { role: 'user', text: '파티 찾기' },
         {
