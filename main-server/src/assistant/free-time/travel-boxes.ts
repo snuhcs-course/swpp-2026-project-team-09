@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type Card, type CardKind } from '../feature.js';
@@ -10,7 +11,8 @@ import { type TravelBox } from './candidate-fit.js';
 
 // What the step after a run needs of each candidate findFreeTimeEvents returned, by card.
 export interface JudgedCandidate {
-  kind: CardKind;
+  // A Quest's or a Global Event's: never a library card's.
+  kind: Exclude<CardKind, 'library'>;
   id: string;
   title: string;
   // For a Quest, the start of the Sub Quest judged inside the gap, which its card may not show.

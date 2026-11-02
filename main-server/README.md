@@ -2062,11 +2062,20 @@ its model through OpenRouter with the Vercel AI SDK
   null when the way is unknown) and its `proposal`, the meal Quest the server filled in for the card's 파티 만들기. An APK
   from before P4 refuses a reply with such a card as its ordinary failure. The app sends a card back only
   as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
-  and never the map buttons. Nothing of a conversation is stored: the app keeps it.
+  and never the map buttons. Nothing of a conversation is stored: the app keeps it. A `library` card
+  (`{ "kind": "library", "library": { … } }`, `src/assistant/library/library-card.ts`) holds `key`, `action`
+  (`book | cancel | return | seats | myBookings`), `space` (or null) with `id`, `name`, `floor`, `placeNumber` (`62-1`),
+  `unit` (`seat | room`), `roomNo`, `sectorNo`, `seatNos`, `mapImage` (`{ "width", "height" }` or null), `hours`
+  (`{ "open", "close" }`), `minMinutes`, `maxMinutes` and `stepMinutes`, then `date`, `start`, `minutes`, `seat`,
+  `useDesc`, `useDescOptions` (when the card asks for the 사용용도), `pledge` (the 서약서 text or null), `companions`
+  (`[{ "friendId", "name" }]`), `questId`, `notes`, `until` (the end of a myBookings period) and `target`
+  (`{ "date"?, "spaceId"?, "start"? }` for cancel and return), every field always there and null when it does not
+  apply. It holds nothing live: the phone fills it from the library. It is attached only when the request carries
+  `"clientCapabilities": ["library"]` beside `messages`.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
-    (`quest` or `globalEvent` by id, `restaurant` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
+    (`quest` or `globalEvent` by id, `restaurant` and `library` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
     out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
@@ -2191,6 +2200,24 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
+  - **The 관정도서관 tools** (`library/`, P06, `LIBRARY_RULES`) never call the library: the phone, which alone holds the
+    User's library session, fills their cards and books, cancels or returns only on the card's button. The space
+    catalogue `library/kwanjeong-spaces.yaml` is read and checked once at start (`library/catalogue.ts`); each space is
+    `implemented`, `notOnline` (현장 이용), `unsupported` (아직 미구현) or `notEligible` (대학원 열람실 for anyone whose
+    소속 is not 대학원). `findLibrarySpace(spaceIds?, words)` answers the ids the model read the words as (`several`
+    when two or more are bookable; FoundKind `librarySpace`); `findLibraryFreeSlots(spaceId, date, minutes?)` the User's
+    Free Time within the hours and the window, through `FREE_TIME_PORT`; `proposeLibraryBooking` checks the window
+    (seats today, rooms up to 3 days ahead), the hours, 30-minute steps, the duration, the seat, the equipment group,
+    the 사용용도 and the people (GR_MIN–GR_MAX as numbers, at most 8 for a party, G201 never), listing every refusal
+    at once (`library/booking-rules.ts`), and shows a `library` card (`library/library-card.ts`);
+    `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
+    cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id in the
+    history, checked against its grammar. Library cards are attached only for a request with
+    `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
+    `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
+    or the User's 소속.
+  - `getTutorial(questKey?)` (`tutorial/`, `TUTORIAL_RULES`) answers the 새내기 튜토리얼's content from
+    `content/tutorial.yaml` and the User's status of each quest, without turning the tutorial on.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
