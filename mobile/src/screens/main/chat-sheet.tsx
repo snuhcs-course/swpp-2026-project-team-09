@@ -9,6 +9,8 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -140,6 +142,7 @@ function useChatCards({ chat, onOpenEvent, onOpenPost, onOpenPartyForm, proposal
 } {
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
+  const { addOwn, outcomes, finish, unfinish } = chat;
   const cardActions: CardActions = useMemo(
     () => ({
       events: eventCards.actions,
@@ -147,8 +150,19 @@ function useChatCards({ chat, onOpenEvent, onOpenPost, onOpenPartyForm, proposal
       proposals,
       rejectAlias: chat.rejectAlias,
       openPartyForm: onOpenPartyForm,
+      library: { addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish, unfinish },
     }),
-    [eventCards.actions, questCards.actions, proposals, chat.rejectAlias, onOpenPartyForm],
+    [
+      eventCards.actions,
+      questCards.actions,
+      proposals,
+      chat.rejectAlias,
+      onOpenPartyForm,
+      addOwn,
+      outcomes,
+      finish,
+      unfinish,
+    ],
   );
   return {
     cardActions,

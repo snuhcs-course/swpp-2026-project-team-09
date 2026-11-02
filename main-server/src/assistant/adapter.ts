@@ -11,16 +11,18 @@
  * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
 import {
-  type Asker,
   type ChatMessage,
   type Choice,
   type Feature,
   type FeatureReply,
+  type Request,
   type ResolutionLog,
   type ToolContext,
 } from './feature.js';
@@ -187,9 +189,10 @@ function foundChosen(messages: readonly ChatMessage[]): FoundIds {
   return found;
 }
 
-function contextOf(asker: Asker, messages: readonly ChatMessage[], resolutions: ResolutionLog): ToolContext {
+function contextOf(asker: Request, messages: readonly ChatMessage[], resolutions: ResolutionLog): ToolContext {
   return {
     ...asker,
+    capabilities: new Set(asker.capabilities),
     found: foundChosen(messages),
     shown: lastShown(messages),
     presented: { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] },
@@ -206,7 +209,7 @@ function contextOf(asker: Asker, messages: readonly ChatMessage[], resolutions: 
 export async function runFeature(
   model: Model,
   feature: Feature,
-  asker: Asker,
+  asker: Request,
   messages: readonly ChatMessage[],
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
   resolutions: ResolutionLog,

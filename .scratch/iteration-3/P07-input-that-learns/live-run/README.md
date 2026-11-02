@@ -29,6 +29,9 @@ docker compose -p p07-live exec -T postgres psql -U main -d main -v ON_ERROR_STO
 node --env-file=main-server/.env .scratch/iteration-3/P07-input-that-learns/live-run/sign-tokens.mjs
 ```
 
+`sign-tokens.mjs` signs with whatever key the `.env` it is given holds. Never run it with a development or Production
+`.env`: its tokens would sign in as those accounts there.
+
 The seed sets the two timetables from the moment it runs: a class that ended 10 minutes before and the next 50 minutes
 after, so `route_to_next_class` applies at once on the main screen, and a free hour from 10:50 so that
 `lunch_with_free_friend` applies on a rerun between 11:00 and 14:00 in Korea. The event card is

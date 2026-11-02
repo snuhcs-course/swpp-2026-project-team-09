@@ -11,7 +11,7 @@
 - [x] "N명" asks for capacity N; a request naming a Global Event uses that event's Quests with no time or Place comparison.
 - [x] Found Quests are shown as the Boards' cards with a question; the Assistant never joins by itself and never says the User joined.
 - [x] With no match, the Proposal comes with a line that none was found; "그래도 새로 만들어 줘" gives a Proposal.
-- [ ] P19's cases are not edited; the superseded ones listed at C0 are reported apart in the bundled run.
+- [x] P19's cases are not edited; the superseded ones listed at C0 are reported apart in the bundled run.
 - [x] This ticket has no full evaluation run of its own (P05 owner, 2026-11-01). Its cases may be checked with `pnpm eval --case`, and the full run comes at the end of the bundle, in ticket 12a.
 
 ## Comments

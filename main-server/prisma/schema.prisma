@@ -21,6 +21,7 @@
 // 2026-11-01  Fable 5.1  prompted by fyoon46
 // 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+// 2026-11-02  Opus 5.5   prompted by AhnJinYoung
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -81,6 +82,9 @@ model User {
   resolutionEvents  ResolutionEvent[]
   userAliases       UserAlias[]
   suggestionImpressions SuggestionImpression[]
+  roomRequests      RoomRequest[]
+  roomConsents      RoomConsent[]
+  roomNotices       RoomNotice[]
 
   @@map("users")
 }
@@ -1091,4 +1095,79 @@ enum SuggestionOutcome {
   confirmed
 
   @@map("suggestion_outcome")
+}
+
+// A request to book a 관정 group study room with companions (README.md: Group study room requests). The companions are
+// the other Holders of its Quest: a booking party made for it, or an existing Quest the requester holds. It holds no
+// 학번 and no registered name: those are read from users only when the companions reply is built.
+model RoomRequest {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Not a relation, since the request outlives its Quest: a booking party is deleted when the request ends, and a
+  // Quest deleted while the request gathers dissolves it.
+  questId        String            @map("quest_id") @db.Uuid
+  madeForBooking Boolean           @map("made_for_booking")
+  requesterId    String            @map("requester_id") @db.Uuid
+  requester      User              @relation(fields: [requesterId], references: [id])
+  // The catalogue's id, the day (YYYY-MM-DD) and the start (HH:MM) in Korea, and the length.
+  spaceId        String            @map("space_id")
+  date           String
+  start          String
+  minutes        Int
+  // The date and the start as one time, by which a request still not booked expires.
+  startsAt       DateTime          @map("starts_at")
+  useDesc        String?           @map("use_desc")
+  status         RoomRequestStatus @default(gathering)
+  // The companion the library did not recognise, who is asked to check their 내 정보.
+  failedUserId   String?           @map("failed_user_id") @db.Uuid
+  // Why it was dissolved, shown on the requester's card.
+  reason         String?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  consents       RoomConsent[]
+  notices        RoomNotice[]
+
+  @@index([questId])
+  @@index([requesterId])
+  @@index([status, startsAt])
+  @@map("room_requests")
+}
+
+enum RoomRequestStatus {
+  // Waiting for a companion's consent.
+  gathering
+  // Every current Holder but the requester consented.
+  ready
+  booked
+  cancelled
+  dissolved
+  expired
+
+  @@map("room_request_status")
+}
+
+// A companion's answer to one room request, for that request only. Deleted when the request is booked or ends.
+model RoomConsent {
+  requestId  String      @map("request_id") @db.Uuid
+  request    RoomRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  userId     String      @map("user_id") @db.Uuid
+  user       User        @relation(fields: [userId], references: [id])
+  answeredAt DateTime?   @map("answered_at")
+  consented  Boolean?
+
+  @@id([requestId, userId])
+  @@index([userId])
+  @@map("room_consents")
+}
+
+// A one-time notice on a member's main screen about a room request: dissolved, booked or cancelled. Deleted once seen.
+model RoomNotice {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  user      User        @relation(fields: [userId], references: [id])
+  requestId String      @map("request_id") @db.Uuid
+  request   RoomRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("room_notices")
 }

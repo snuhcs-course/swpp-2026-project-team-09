@@ -4,6 +4,8 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage, Choice, ProposalPlace, QuestProposal } from '@/api/assistant-types';
@@ -15,10 +17,11 @@ import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { GLOBAL_EVENTS } from './data/quests';
+import { isLibraryAsk, libraryReply } from './library-replies';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
-// the shuttle with its layer's button, a request to make or recruit for a 파티 with a Proposal for tomorrow's lunch,
-// or, 비공개, a Closed one for the mocks' first Global Event inviting their first Friend,
+// the shuttle with its layer's button, one about 관정도서관 with a library card, a request to make or recruit for a 파티
+// with a Proposal for tomorrow's lunch, or, 비공개, a Closed one for the mocks' first Global Event inviting their first Friend,
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, one that says 학관 with the question which Place it means and the candidates as chips, the answer
 // to it with a Proposal for tomorrow's lunch there, one that says 중도 with that Proposal at 중앙도서관, read through
@@ -149,6 +152,9 @@ export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantR
   const last = messages.at(-1)?.text ?? '';
   if (SHUTTLE_WORDS.some((word) => last.includes(word))) {
     return replyOf('셔틀이 어디 있는지 지도에서 볼 수 있어요.', { mapButtons: ['shuttle'] });
+  }
+  if (isLibraryAsk(last)) {
+    return libraryReply(last);
   }
   if (PROPOSAL_WORDS.some((word) => last.includes(word))) {
     return replyOf(PROPOSING, { proposal: last.includes('비공개') ? closedProposal() : lunchProposal() });

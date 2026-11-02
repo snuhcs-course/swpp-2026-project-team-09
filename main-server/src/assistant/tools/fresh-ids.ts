@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type Card, type CardKind, CARDS_MAX, type Presented } from '../feature.js';
@@ -10,6 +11,9 @@ import { type Card, type CardKind, CARDS_MAX, type Presented } from '../feature.
 export function idOf(card: Card): string {
   if (card.kind === 'restaurant') {
     return card.restaurant.key;
+  }
+  if (card.kind === 'library') {
+    return card.library.key;
   }
   return card.kind === 'quest' ? card.quest.id : card.globalEvent.id;
 }

@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // When the words several Users led to a Place become every User's alias (P07 tickets 03 and 06, scenario 4 plan
@@ -36,6 +37,10 @@ export const SESSION_GAP_MINUTES = 5;
 
 // Rows older than this teach nothing: the paper mines three months of logs.
 export const CHAIN_WINDOW_DAYS = 90;
+
+// Past this many rows in the window, the chain's count belongs in a nightly job rather than in each reply (ticket 06,
+// Decided). The server only says so in its log.
+export const CHAIN_ROWS_MAX = 10_000;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
