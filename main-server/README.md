@@ -2183,7 +2183,9 @@ its model through OpenRouter with the Vercel AI SDK
     generalised matching rules, which the server replays over the labelled `resolution_events` and puts in force only
     when they fix the words of several accounts and break none. A rule is a restricted regular expression (JavaScript's
     with the `u` flag: literals, classes, `.`, `\d`, anchors, alternation, groups that are at most optional,
-    quantifiers on single atoms only, at most 80 characters; no backreference, lookaround or quantified group) and a
+    quantifiers on single atoms only, at most 80 characters; no backreference, lookaround or quantified group; and at
+    most 2,601 ways to try a match, the repeats of its quantifiers, `*` and `+` counting 51, times its alternatives and,
+    unless it starts with `^`, 51 starts, so that `^(.+)(.+)$` passes and `^.*.*.*!$` is refused as too slow) and a
     replacement of literals and `$1`–`$9`: a `name` rule turns a Place's normalised name into a form students say
     (`^(.{1,3}?)(?:과학|과|학)?대학$` → `$1대` makes 경영대 of 경영대학 and 자연대 of 자연과학대학), joining the index
     for every Place the pattern fits; a `words` rule turns the User's words into what to look up instead (`^윗(.+)$`
@@ -2191,7 +2193,8 @@ its model through OpenRouter with the Vercel AI SDK
     a catalog id by construction. Induced hits are the `induced` tier, after `exact` and `alias` and before
     `generated`: the exact names and what anyone taught answer first, and the rules before the generator's forms and
     the loose tiers, whose questions and wrong answers are most of what they fix; the held-back accounts of
-    `ASSISTANT_ALIAS_HOLDBACK_PERCENT` never get the tier, and `ASSISTANT_INDUCED_RULES=false` switches it off. The
+    `ASSISTANT_ALIAS_HOLDBACK_PERCENT` never get the tier, and `ASSISTANT_INDUCED_RULES=false` switches it off; the
+    nightly run goes on while it is off, so that the rules are verified against the latest rows when it is on again. The
     instances are the learning curve's labelled rows (an `answered` Place row and the Place its account then chose or
     edited to, accounts 7 days old or more, the last 90 days), one per words and Place with its accounts, a fifth of
     the words held out by a stable hash. The loop is GEPA's (Agrawal et al., ICLR 2026; `induction/loop.ts`,
