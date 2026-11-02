@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
@@ -73,6 +74,38 @@ describe('The pattern check', () => {
 
   it('refuses a pattern over 80 characters', () => {
     expect(checkPattern('가'.repeat(81))).toBe('pattern too long');
+  });
+});
+
+// The ways a match may try, which bound how long a pattern can backtrack on words of at most 50 characters.
+describe('The pattern check, on the cost of a match', () => {
+  it.each([
+    ['^(.+)(.+)$', 'two unbounded quantifiers, anchored'],
+    ['[가-힣]+관', 'one unbounded quantifier, unanchored'],
+    ['^.{0,10}.{0,10}학$', 'two bounded quantifiers'],
+  ])('allows %s, %s', (pattern) => {
+    expect(checkPattern(pattern)).toBeNull();
+  });
+
+  it.each([
+    ['^.*.*.*.*.*.*.*.*!$', 'eight unbounded quantifiers in a row'],
+    ['^.*.*.*!$', 'three unbounded quantifiers'],
+    ['.+.+관', 'two unbounded quantifiers, unanchored'],
+    [`^${'.?'.repeat(26)}!$`, 'a run of optional atoms'],
+    ['^.{0,10}.{0,10}.{0,10}.{0,10}$', 'bounded quantifiers whose repeats multiply'],
+    ['^(?:a|b|c|d|e|f|g|h|i|j)(?:a|b|c|d|e|f|g|h|i|j)(?:a|b|c|d|e|f|g|h|i|j)(?:a|b|c)$', 'alternatives that multiply'],
+  ])('refuses %s, %s, as too slow', (pattern) => {
+    expect(checkPattern(pattern)).toBe('pattern too slow');
+  });
+
+  it('keeps every allowed pattern fast on the longest words that fail it', () => {
+    const words = '가'.repeat(50);
+    for (const pattern of ['^(.+)(.+)!$', '[가-힣]+!', '^.{0,10}.{0,10}!$', '^(.{1,3}?)(?:과학|과|학)?대학$']) {
+      expect(checkPattern(pattern)).toBeNull();
+      const started = performance.now();
+      new RegExp(pattern, 'u').test(words);
+      expect(performance.now() - started).toBeLessThan(50);
+    }
   });
 });
 

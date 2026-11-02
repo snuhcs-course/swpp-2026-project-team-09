@@ -10,6 +10,8 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -31,8 +33,9 @@ import { FriendList } from './friend-list';
 import { useLayerStack } from './layers';
 import { listsTop, mapInset, ROUTE_PADDING, type Room, takenUnderToast, takenUnderToastOverCard } from './layout';
 import { LocationExplanation } from './location-explanation';
-import { MapBottom, openMenus, takenBy } from './map-bottom';
+import { MapBottom, openEventOf, openMenus, takenBy } from './map-bottom';
 import { QuestList } from './quest-list';
+import { RoomRequestInbox } from './room-consent';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
@@ -212,12 +215,6 @@ function useLines(shuttle: ShuttleLayer, route: MainRoute): readonly MapLine[] {
   return useMemo(() => [...shuttle.lines, ...(route.line === null ? [] : [route.line])], [shuttle.lines, route.line]);
 }
 
-// The Global Event whose card is open, which the chat's suggestion is asked for.
-function openEventOf(card: CardView | null): string | null {
-  const primary = card?.kind === 'global-event' ? card.primary : null;
-  return primary?.action === 'recruit' ? primary.eventId : null;
-}
-
 // The friend list and the Quest list, which give way to a card at the top.
 function Lists({ hidden, map, room, selection, tutorial }: { hidden: boolean } & ListProps): ReactElement {
   return (
@@ -337,6 +334,7 @@ export function MainScreen(): ReactElement {
       </View>
       {party.sheet}
       <LocationExplanation blocked={me.blocked} onAllow={me.allow} onLater={me.later} visible={me.explaining} />
+      <RoomRequestInbox />
     </View>
   );
 }

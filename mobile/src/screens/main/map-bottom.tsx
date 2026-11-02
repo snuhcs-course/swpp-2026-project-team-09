@@ -8,6 +8,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -57,6 +58,12 @@ export interface Taken {
   topCard: boolean;
   bottomCard: boolean;
   notice: string | null;
+}
+
+// The Global Event whose card is open, which the chat's suggestion is asked for.
+export function openEventOf(card: CardView | null): string | null {
+  const primary = card?.kind === 'global-event' ? card.primary : null;
+  return primary?.action === 'recruit' ? primary.eventId : null;
 }
 
 export function takenBy(selected: CardView | null, serviceHours: string | null): Taken {

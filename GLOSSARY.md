@@ -38,6 +38,14 @@ _Avoid_: Follow request
 A one-time link a User sends so that whoever opens and accepts it becomes their Friend.
 _Avoid_: Share link, invitation code
 
+**Student Number**:
+A User's 학번, the number by which SNU knows a student. Its first four digits are the year of admission. The library needs it to name each member of a group study room.
+_Avoid_: Student ID (the 학생증), school number
+
+**Affiliation**:
+A User's 소속: undergraduate (학부), graduate (대학원) or exchange student (교환학생).
+_Avoid_: Department (a department is the 학과), status
+
 ### Events
 
 **Event**:
@@ -186,6 +194,38 @@ _Avoid_: Recommendation, hint, ghost text (the grey look, not the thing)
 **Resolution Event**:
 One row the server keeps when a resolver answers or a User chooses, rejects or edits a candidate: the normalised words, the ids shown and the outcome, never the sentence. What Aliases are learned from and what the learning curve is measured on.
 _Avoid_: Log line, conversation
+
+### The tutorial
+
+**Tutorial**:
+The 새내기 튜토리얼: a guide for new students to the basics of campus life, made of Tutorial Quests. A User goes through it in any order, skips what does not interest them and can stop it.
+_Avoid_: Quest, Onboarding (Onboarding is the name and department after the first sign-in)
+
+**Tutorial Quest**:
+One page of the Tutorial, a step of campus life such as getting the student card, which a User starts and completes. It is not a Quest: it has no Holder, Board, Sub Quest or capacity.
+_Avoid_: Quest
+
+### 관정도서관
+
+**Library Space**:
+One entry of the catalogue of 관정도서관: a reading-room sector, a size of group study room on a floor, or a media room. What a User asks to book is a Library Space, and the library then gives a seat or a room of it.
+_Avoid_: Place (a Place is a building or spot on the campus), room, sector
+
+**Library Session**:
+The User logged in to 관정도서관's booking site on one phone. It stays on that phone, and the app's sign-out ends it.
+_Avoid_: Session (a Session is the app signed in), library login
+
+**Library Card**:
+A card of an Assistant reply that the phone fills from 관정도서관, such as free seats or the User's bookings, and from which the User books, cancels or returns.
+_Avoid_: Library pass, the library's membership card
+
+**Booking Party**:
+A 비공개 파티, a Closed Quest, made for one group-study-room booking: the booker leads it, and the Friends who will be named in the booking are invited to it.
+_Avoid_: Room party, study group
+
+**Room Request**:
+The record of one group-study-room booking with companions while it gathers their consents, until it is booked, cancelled, dissolved or expired. Each companion's consent to share their Student Number is for that request only.
+_Avoid_: Consent request, booking request
 
 ### Campus services
 

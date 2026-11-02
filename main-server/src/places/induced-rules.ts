@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { normaliseWords } from '../common/normalise-words.js';
@@ -12,7 +13,7 @@ import { normaliseWords } from '../common/normalise-words.js';
 // words into what to look up instead (^윗(.+)$ → 상부$1). A rule never names a Place: what it writes is matched by the
 // catalog as any words are. The syntax is JavaScript's RegExp with the u flag, restricted so that no pattern can run
 // away on words of at most 50 characters: literals, classes, ., \d, anchors, alternation, groups that are at most
-// optional, and quantifiers on single atoms.
+// optional, and quantifiers on single atoms, with at most PATHS_MAX ways through its quantifiers and alternatives.
 
 export type RuleKind = 'name' | 'words';
 
@@ -34,6 +35,10 @@ const FORM_MIN = 2;
 const WORDS_MAX = 50;
 const GROUP_DEPTH_MAX = 3;
 const REPEAT_MAX = 10;
+// The ways a match may try: with no repeated group, each quantifier and each alternation is passed at most once on a
+// try, so their counts multiplied, times the starts of a pattern not anchored by a leading ^, bound the backtracking.
+// `*` and `+` count as every length of the longest words: ^(.+)(.+)$ and [가-힣]+관 fit, ^.*.*.*!$ does not.
+const PATHS_MAX = (WORDS_MAX + 1) ** 2;
 
 // What a rule may write: what normalised names and words are made of.
 const WRITTEN = /^[가-힣ㄱ-ㅎa-z0-9]+$/u;
@@ -43,7 +48,11 @@ const BOUNDED = /^\{\d{1,2}(?:,\d{1,2})?\}$/u;
 const ESCAPABLE = new Set(['d', '.', '(', ')', '[', ']', '{', '}', '^', '$', '|', '?', '*', '+', '\\']);
 
 export type Refusal =
-  'pattern too long' | 'pattern not allowed' | 'pattern does not compile' | 'replacement not allowed';
+  | 'pattern too long'
+  | 'pattern not allowed'
+  | 'pattern too slow'
+  | 'pattern does not compile'
+  | 'replacement not allowed';
 
 type Kind = 'atom' | 'open' | 'close' | 'quantifier' | 'anchor' | 'bar' | 'bad';
 
@@ -53,6 +62,8 @@ interface Token {
   next: number;
   // A quantifier that is `?`, allowed after a group and, as lazy, after another quantifier.
   optional: boolean;
+  // A quantifier's count of repeats it may try.
+  ways: number;
 }
 
 // Where a class opened at `at` closes, or -1: `]` ends it, `\` escapes the next character, and it is never empty.
@@ -74,57 +85,59 @@ function classEnd(chars: readonly string[], at: number): number {
   return -1;
 }
 
-// Where a bounded quantifier opened at `at` closes, or -1: {m} or {m,n} with n at most REPEAT_MAX.
-function braceEnd(chars: readonly string[], at: number): number {
+// A bounded quantifier opened at `at`, {m} or {m,n} with n at most REPEAT_MAX: where it closes and its count of
+// repeats, or null.
+function braceOf(chars: readonly string[], at: number): { end: number; ways: number } | null {
   const end = chars.indexOf('}', at);
   if (end < 0) {
-    return -1;
+    return null;
   }
   const text = chars.slice(at, end + 1).join('');
   if (!BOUNDED.test(text)) {
-    return -1;
+    return null;
   }
-  const bounds = text.slice(1, -1).split(',').map(Number);
-  return Math.max(...bounds) <= REPEAT_MAX && (bounds[1] ?? 0) >= (bounds[0] ?? 0) ? end : -1;
+  const [low = 0, high = low] = text.slice(1, -1).split(',').map(Number);
+  return high <= REPEAT_MAX && high >= low ? { end, ways: high - low + 1 } : null;
 }
 
 function tokenOf(chars: readonly string[], at: number): Token {
-  const bad: Token = { kind: 'bad', next: at + 1, optional: false };
+  const bad: Token = { kind: 'bad', next: at + 1, optional: false, ways: 1 };
   const character = chars[at] ?? '';
   switch (character) {
     case '\\': {
       const escaped = chars[at + 1];
-      return escaped !== undefined && ESCAPABLE.has(escaped) ? { kind: 'atom', next: at + 2, optional: false } : bad;
+      return escaped !== undefined && ESCAPABLE.has(escaped) ? { ...bad, kind: 'atom', next: at + 2 } : bad;
     }
     case '[': {
       const end = classEnd(chars, at);
-      return end < 0 ? bad : { kind: 'atom', next: end + 1, optional: false };
+      return end < 0 ? bad : { ...bad, kind: 'atom', next: end + 1 };
     }
     case '(':
       if (chars[at + 1] === '?') {
-        return chars[at + 2] === ':' ? { kind: 'open', next: at + 3, optional: false } : bad;
+        return chars[at + 2] === ':' ? { ...bad, kind: 'open', next: at + 3 } : bad;
       }
-      return { kind: 'open', next: at + 1, optional: false };
+      return { ...bad, kind: 'open' };
     case ')':
-      return { kind: 'close', next: at + 1, optional: false };
+      return { ...bad, kind: 'close' };
     case '?':
+      return { ...bad, kind: 'quantifier', optional: true, ways: 2 };
     case '*':
     case '+':
-      return { kind: 'quantifier', next: at + 1, optional: character === '?' };
+      return { ...bad, kind: 'quantifier', ways: WORDS_MAX + 1 };
     case '{': {
-      const end = braceEnd(chars, at);
-      return end < 0 ? bad : { kind: 'quantifier', next: end + 1, optional: false };
+      const brace = braceOf(chars, at);
+      return brace === null ? bad : { ...bad, kind: 'quantifier', next: brace.end + 1, ways: brace.ways };
     }
     case '^':
     case '$':
-      return { kind: 'anchor', next: at + 1, optional: false };
+      return { ...bad, kind: 'anchor' };
     case '|':
-      return { kind: 'bar', next: at + 1, optional: false };
+      return { ...bad, kind: 'bar' };
     case ']':
     case '}':
       return bad;
     default:
-      return { kind: 'atom', next: at + 1, optional: false };
+      return { ...bad, kind: 'atom' };
   }
 }
 
@@ -147,6 +160,22 @@ function after(last: Last, token: Token): Last {
   return token.kind === 'quantifier' && last === 'quantifier' ? 'lazy' : token.kind;
 }
 
+// The ways a token adds: a quantifier its repeats, but not as the lazy `?` of another; a close or the end the
+// alternatives of its group, counted in `bars`, one per open group and one for the whole.
+function waysOf(token: Token, last: Last, bars: number[]): number {
+  if (token.kind === 'quantifier') {
+    return last === 'quantifier' ? 1 : token.ways;
+  }
+  if (token.kind === 'bar') {
+    bars[bars.length - 1] = (bars.at(-1) ?? 0) + 1;
+  } else if (token.kind === 'open') {
+    bars.push(0);
+  } else if (token.kind === 'close') {
+    return 1 + (bars.pop() ?? 0);
+  }
+  return 1;
+}
+
 // Why a pattern is refused, or null when it is allowed.
 export function checkPattern(pattern: string): Refusal | null {
   if (pattern.length > PATTERN_MAX) {
@@ -154,24 +183,25 @@ export function checkPattern(pattern: string): Refusal | null {
   }
   const chars = Array.from(pattern);
   let last: Last = 'start';
-  let depth = 0;
+  const bars = [0];
+  let paths = 1;
   for (let at = 0; at < chars.length;) {
     const token = tokenOf(chars, at);
-    if (!follows(token, last)) {
+    if (!follows(token, last) || (token.kind === 'close' && bars.length === 1)) {
       return 'pattern not allowed';
     }
-    if (token.kind === 'open') {
-      depth += 1;
-    } else if (token.kind === 'close') {
-      depth -= 1;
-    }
-    if (depth < 0 || depth > GROUP_DEPTH_MAX) {
+    paths *= waysOf(token, last, bars);
+    if (bars.length - 1 > GROUP_DEPTH_MAX) {
       return 'pattern not allowed';
     }
     last = after(last, token);
     at = token.next;
   }
-  return depth === 0 && last !== 'start' && last !== 'open' && last !== 'bar' ? null : 'pattern not allowed';
+  if (bars.length !== 1 || last === 'start' || last === 'open' || last === 'bar') {
+    return 'pattern not allowed';
+  }
+  const starts = chars[0] === '^' && bars[0] === 0 ? 1 : WORDS_MAX + 1;
+  return paths * (1 + (bars[0] ?? 0)) * starts > PATHS_MAX ? 'pattern too slow' : null;
 }
 
 export function checkReplace(replace: string): Refusal | null {

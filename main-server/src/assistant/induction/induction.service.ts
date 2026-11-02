@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -136,8 +137,8 @@ export class InductionService {
       active: result.kept.length,
     };
     this.logger.log(
-      `Induction: ${report.calls} calls, ${report.promoted.length} rules promoted, ${report.retired.length} retired, ` +
-        `${report.active} in force`,
+      `Induction: seed ${seed}, ${report.calls} calls, ${report.promoted.length} rules promoted, ` +
+        `${report.retired.length} retired, ${report.active} in force`,
     );
     return report;
   }

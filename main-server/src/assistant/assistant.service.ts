@@ -12,6 +12,8 @@
  * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -35,9 +37,12 @@ import { PlaceLookup } from '../places/place-lookup.js';
 import { PlaceMatcher } from '../places/place-matcher.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
+import { QuestsService } from '../quests/quests.service.js';
 import { RecruitingService } from '../quests/recruiting.service.js';
 import { ShuttleService } from '../shuttle/shuttle.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
+import { TutorialService } from '../tutorial/tutorial.service.js';
+import { UsersService } from '../users/users.service.js';
 import {
   causeOf,
   type Model,
@@ -51,9 +56,11 @@ import { AliasesService } from './aliases/aliases.service.js';
 import { chatAssistant } from './chat/chat-assistant.js';
 import { checkedChoice, type ChoiceServices } from './chosen.js';
 import { type AssistantReplyDto, type SentMessage } from './dto/assistant-messages.dto.js';
-import { type Asker, type ChatMessage, type Feature, type FeatureReply } from './feature.js';
+import { type Asker, type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
+import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
+import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
 import { NextLines } from './suggestions/next-lines.service.js';
 import { SuggestionsService } from './suggestions/suggestions.service.js';
@@ -64,6 +71,14 @@ export const HISTORY_MAX = 20;
 
 // A day's count outlives its day in Korea, whatever the server's clock, and is then dropped.
 const COUNT_LIFETIME_SECONDS = 2 * 24 * 60 * 60;
+
+function limitsOf(settings: ConfigService<Settings, true>): RunLimits {
+  return {
+    maxSteps: settings.get('ASSISTANT_MAX_STEPS', { infer: true }),
+    timeoutMs: settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }),
+    maxOutputTokens: settings.get('ASSISTANT_MAX_OUTPUT_TOKENS', { infer: true }),
+  };
+}
 
 @Injectable()
 export class AssistantService {
@@ -94,9 +109,15 @@ export class AssistantService {
     days: UserDayService,
     restaurantPlaces: RestaurantPlaces,
     @Inject(TRAVEL_PROVIDER) travel: TravelProvider,
+    @Inject(LIBRARY_CATALOGUE) catalogue: Catalogue,
+    @Inject(FREE_TIME_PORT) freeTime: FreeTimePort,
+    quests: QuestsService,
+    users: UsersService,
+    tutorial: TutorialService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
+    const libraryEnabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     this.chat = chatAssistant({
       menus,
       shuttle,
@@ -107,20 +128,22 @@ export class AssistantService {
       placeMatcher,
       aliases,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
+      library: { catalogue, freeTime, friends, quests, users, enabled: libraryEnabled },
+      tutorial,
     });
     this.choiceServices = { places, friends, globalEvents };
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
-    this.limits = {
-      maxSteps: settings.get('ASSISTANT_MAX_STEPS', { infer: true }),
-      timeoutMs: settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }),
-      maxOutputTokens: settings.get('ASSISTANT_MAX_OUTPUT_TOKENS', { infer: true }),
-    };
+    this.limits = limitsOf(settings);
   }
 
   // The reply, or one error reply whatever failed: 503 when the Assistant cannot answer, 429 once the User's messages
   // of the day are used up. The log says why, never what anyone wrote.
-  async reply(userId: string, messages: readonly SentMessage[]): Promise<AssistantReplyDto> {
+  async reply(
+    userId: string,
+    messages: readonly SentMessage[],
+    capabilities: readonly ClientCapability[] = [],
+  ): Promise<AssistantReplyDto> {
     if (!this.keyConfigured) {
       this.logger.warn('The Assistant did not answer: no OpenRouter key is configured');
       throw unavailable();
@@ -131,7 +154,7 @@ export class AssistantService {
       this.logger.log(`A User reached the daily limit of ${this.dailyMessages} messages`);
       throw new HttpException("Today's messages are used up", HttpStatus.TOO_MANY_REQUESTS);
     }
-    const asker = { userId, now };
+    const asker = { userId, now, capabilities };
     try {
       const conversation = await this.conversationOf(asker, messages.slice(-HISTORY_MAX));
       let taught = false;
@@ -151,21 +174,32 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
-      if (proposal !== null) {
-        // A Proposal asked for in the chat may be one a grey suggestion would have made (suggestions.service.ts).
-        await this.suggestions.typedInstead(userId, proposal, now);
-      }
       const last = conversation.at(-1);
-      if (taught || resolutions.reachedPlace || (last?.role === 'user' && last.chosen !== null)) {
-        // The session may have led the User's words to a Place, which everyone's aliases learn from (ticket 06).
-        await this.aliases.recountSession(userId);
-      }
+      const reached = taught || resolutions.reachedPlace || (last?.role === 'user' && last.chosen !== null);
+      await this.learnFrom(userId, now, reply.proposal, reached);
+      const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
       const nextLine = await this.nextLines.of(userId, reply);
       return { text, mapButtons, cards, proposal, choices, resolvedBy, nextLine };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
+    }
+  }
+
+  // What a reply teaches: a Proposal asked for in the chat may be one a grey suggestion would have made
+  // (suggestions.service.ts), and a session that may have led the User's words to a Place teaches everyone's aliases
+  // (ticket 06).
+  private async learnFrom(
+    userId: string,
+    now: Date,
+    proposal: FeatureReply['proposal'],
+    reached: boolean,
+  ): Promise<void> {
+    if (proposal !== null) {
+      await this.suggestions.typedInstead(userId, proposal, now);
+    }
+    if (reached) {
+      await this.aliases.recountSession(userId);
     }
   }
 

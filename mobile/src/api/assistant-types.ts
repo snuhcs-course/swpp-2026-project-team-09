@@ -6,6 +6,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { MenuLine } from './menu-types';
@@ -14,12 +15,16 @@ import type { Board, GlobalEvent, JoinPolicy } from './types';
 
 // --- The Assistant (POST /assistant/messages) ---
 
-// A card the Assistant showed, by what it is and its id, which for a Restaurant is its key. The server is sent only
-// these, never the card's data.
+// A card the Assistant showed, by what it is and its id, which for a Restaurant and a library card is its key. The
+// server is sent only these, never the card's data.
 export interface CardReference {
-  kind: 'quest' | 'globalEvent' | 'restaurant';
+  kind: 'quest' | 'globalEvent' | 'restaurant' | 'library';
   id: string;
 }
+
+// What the app tells the main server it can draw, with every chat request: library cards. An app without it (the
+// 1.0.0 bundle) is never sent one.
+export const CLIENT_CAPABILITIES = ['library'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -143,7 +148,59 @@ export interface RestaurantCard {
   };
 }
 
-export type ChatCard = GlobalEventCard | QuestCard | RestaurantCard;
+// A space of 관정도서관 as the server's catalogue gives it: a reading room's sector, booked by the seat, or a room
+// sector (a group study room or a media room), booked by the room. `seatNos` are the sector's rooms, or an equipment
+// group's when one was asked for. `mapImage` is the size of a reading room's seat map in image pixels. `hours` are
+// "HH:MM" to "HH:MM" and the minutes are the booking's shortest, longest and step.
+export interface LibrarySpace {
+  id: string;
+  name: string;
+  floor: number;
+  placeNumber: string;
+  unit: 'seat' | 'room';
+  roomNo: number;
+  sectorNo: number;
+  seatNos: number[];
+  mapImage: { width: number; height: number } | null;
+  hours: { open: string; close: string };
+  minMinutes: number;
+  maxMinutes: number;
+  stepMinutes: number;
+}
+
+export type LibraryAction = 'book' | 'cancel' | 'return' | 'seats' | 'myBookings';
+
+// A library card of a reply, filled by the server from its catalogue and the tool's checked input. It carries no live
+// data: the phone reads the seats, the rooms and the User's bookings from the library itself. `key` encodes the card,
+// such as "book:7F-7A-zone2:2026-11-04:1700:60", and is its id in the history sent back. `date` is "YYYY-MM-DD" and
+// `start` "HH:MM". `seat` is a seat's label or a room's name. `useDescOptions` are given when `useDesc` is not set,
+// `pledge` is a media room's 서약서, and `notes` the site's rules for this kind. A cancel or a return card names the
+// booking it looks for in `target`, and a space only when one was asked for. 내 예약 reads from `date` to `until`
+// when the server sets both. Every field is sent, null when unset.
+export interface LibraryCardData {
+  key: string;
+  action: LibraryAction;
+  space: LibrarySpace | null;
+  date: string | null;
+  start: string | null;
+  minutes: number | null;
+  seat: string | null;
+  useDesc: string | null;
+  useDescOptions: string[];
+  pledge: string | null;
+  companions: { friendId: string; name: string }[];
+  questId: string | null;
+  notes: string[];
+  until: string | null;
+  target: { date?: string; spaceId?: string; start?: string } | null;
+}
+
+export interface LibraryCard {
+  kind: 'library';
+  library: LibraryCardData;
+}
+
+export type ChatCard = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 
 // The characters a Proposal counts for, as the main server counts them (proposalLength): its title, its description,
 // and the names of its Place, its event and its Friends.
@@ -162,6 +219,9 @@ export function lengthOf(message: ChatMessage): number {
 export function referenceOf(card: ChatCard): CardReference {
   if (card.kind === 'restaurant') {
     return { kind: card.kind, id: card.restaurant.key };
+  }
+  if (card.kind === 'library') {
+    return { kind: card.kind, id: card.library.key };
   }
   return { kind: card.kind, id: card.kind === 'quest' ? card.quest.id : card.globalEvent.id };
 }

@@ -46,7 +46,7 @@ The rule that makes words every User's Place alias becomes the absorbing Markov 
 On branch `3.0/P07-06-markov-chain-aliases`, from `3.0/P07-05-replay-metric` at `53660de8`.
 
 - `src/assistant/aliases/alias-sessions.ts`: `ChainRow`, the states (`placeState`, `openState`, `placeOf`), `sessionsOf` (the three cuts and the account's age), `walkOf` (the readings, an alias answer as two visits, the implied state before a label, the end), `transitionsOf` (the counts and the supporters of successful sessions). `alias-chain.ts`: `chainOf` (the walks and the rejecters), `sourceOf`, `visitsFrom` (the series), `firstPassage`, `aliasOf` (candidates, the test, the share, the argmax, the self-partition), `standingOf`. `alias-rows.ts`: `chainRows`, the window's rows with each account's onboarding. `alias-rules.ts`: `SESSION_GAP_MINUTES` 5 and `CHAIN_WINDOW_DAYS` 90 beside the other constants; `topOf` and `qualifies` left for the baseline.
-- `AliasesService`: `learn` writes the personal alias only; `recountSession` reads the User's Place rows of the last 5 minutes, builds the chain once and counts each words through `recount`, which asks `PlaceMatcher.byRule` for the source, writes `supporters`, `rejecters`, `score`, `success` and `own_success` on the words' rows, retires the rows the chain no longer picks and makes the one it does (`make`). `reject` counts its words again. `AssistantService.reply` calls `recountSession` once after a run that learned, chose or reached a Place (`RunLog.reachedPlace` from `ResolutionEventsService.forRun`). `PlaceMatcher` keeps a second index without the learned sources for `byRule`. Migration `20261102040000_add_alias_success`.
+- `AliasesService`: `learn` writes the personal alias only; `recountSession` reads the User's Place rows of the last 5 minutes, builds the chain once and counts each words through `recount`, which asks `PlaceMatcher.byRule` for the source, writes `supporters`, `rejecters`, `score`, `success` and `own_success` on the words' rows, retires the rows the chain no longer picks and makes the one it does (`make`). `reject` counts its words again. `AssistantService.reply` calls `recountSession` once after a run that learned, chose or reached a Place (`RunLog.reachedPlace` from `ResolutionEventsService.forRun`). `PlaceMatcher` keeps a second index without the learned sources for `byRule`. Migration `20261102160000_add_alias_success`.
 - Replay: `eval/replay/counted-aliases.ts` (ticket 03's `standingsOf`, `topOf`, `qualifies`, moved from `src`), `learned-aliases.ts` rebuilding everyone's aliases by the count and by the chain (the chain's source being stage B's reading), `withAliases` in place of `stageC`, stage D in `replay.ts` (the gold report's fourth column and `learned: { personal, counted, chained }`), the chain's series in `learning-curve.ts` and `curve-metrics.ts` (`askChained`, `top1Chained`).
 
 Decisions where the paper left room, each with its reason:
@@ -62,7 +62,7 @@ Decisions where the paper left room, each with its reason:
 
 Tests: `test/alias-chain.unit.test.ts` (the three cuts and the account's age; the walk's states, the implied state and the end; the counts, self-loops and supporters; the series against (I − Q)⁻¹ = [[2, 0.5], [0, 1]] and the paper's quarter; the source; the alias, the guards, the rephrase, the self-partition, the share on the first passage, the rejecters and `standingOf`). `test/eval-replay-counted.unit.test.ts` (ticket 03's `topOf` and `qualifies`, moved). `test/global-aliases.integration.test.ts` gains the chain's three tests (words answered `none` learned from the Place named next, with `success` in (0, 1] and `own_success` 0; nothing across a 6-minute gap; 학생회관 kept); ticket 03's tests pass unchanged. `test/eval-replay.integration.test.ts` checks stages C and D together and gains stage D's test (the rephrased none-words answered by D and not by C). `pnpm lint`, `pnpm typecheck`, the unit suite (362) and the touched integration files (53) pass.
 
-Measured on the live run's database (the rows of 2026-10-29, ticket 05, Comments), `pnpm eval:replay --development` on 2026-11-01:
+Measured on the live run's database (the rows of 2026-10-29, ticket 05, Comments), `pnpm eval:replay --development` on 2026-11-01 with the code of `97bd0a64`, before ticket 01's R8:
 
 | | B: rules and groups | C: B and aliases by the count | D: B and aliases by the chain |
 | --- | --- | --- | --- |
@@ -70,13 +70,15 @@ Measured on the live run's database (the rows of 2026-10-29, ticket 05, Comments
 | Everyone's aliases learned for the set | — | 3 | 2 |
 | Resolution, recall@10, false none | 63.2%, 92.1%, 5.3% | the same | the same |
 
+At `8ed56f0a` the same evening, after R8 (수의대 reaches 수의과대학), the same command gives top-1 B 33/38, C 36/38 and D 35/38, the PR's numbers: the chain still does not beat the count.
+
 D learns 미대 and 호암 and not 정문. In the live run the first account probed 수의대, 미대, 경영대, 대운동장, 호암 and 정문 one after another, choosing nothing, and then named 예술관(미대)1: to the chain that is one search rephrased six times, so the reach from `open:정문` leaks to 예술관(미대)1 (first passage 0.667 to 서울대 정문, 0.333 to 예술관(미대)1), and the share guard keeps 정문 a question, where the count, reading taps alone, promoted it. The learning curve has its 10 labelled rows on 2026-10-29 and no later rows: no curve yet.
 
 ### Decided (2026-11-01)
 
 - **A probe of several words stays one rephrased search.** Neither a syllable shared with the earlier words (it would lose rephrases by meaning, 미대 → 예술관) nor a shorter gap (it would split real sessions) is worth what it costs; the share guard already kept 정문 a question rather than a wrong alias, and a student who probes six words in a row is rare. Nothing changes.
 - **A supporter is what the chain counts**: every account whose successful session reached the Place after the words, one that accepted an alias's answer in silence included. It is the paper's measure, "absence of failure", and the one the server learns by; ticket 03's taps and edits are what the replay's stage C still reports beside it.
-- **The chain is rebuilt from the window's rows on every count** while `resolution_events` of the window stay under 10,000 rows (a few hundred today); past that, the count moves to a nightly job beside the induction's, which the worker server already schedules.
+- **The chain is rebuilt from the window's rows on every count** while `resolution_events` of the window stay under 10,000 rows (a few hundred today); past that, the count moves to a nightly job beside the induction's, which the worker server already schedules. Until that move, the server logs a warning once a process when the window passes 10,000 rows (`CHAIN_ROWS_MAX`).
 - **The 5 minutes and the 90 days stand** (`SESSION_GAP_MINUTES`, `CHAIN_WINDOW_DAYS` in `alias-rules.ts`), in place of the paper's 45 seconds and three months, until the final slice of the replay says otherwise.
 
 ### Agent usage (2026-11-01)

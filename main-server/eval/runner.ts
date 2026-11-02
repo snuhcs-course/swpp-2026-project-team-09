@@ -5,6 +5,8 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -22,12 +24,12 @@ import { startApp } from '../test/start-app.js';
 import { refuseKakao } from '../test/walking-route.js';
 import {
   type CaseKind,
-  type CaseProposal,
-  type CaseTurn,
   type EvalCase,
   kindOf,
   nowOf,
   WORLD_CLOCKS,
+  WORLD_REQUEST_FIELDS,
+  WORLD_TUTORIAL_FILES,
 } from './cases.ts';
 import { addTokens, costOf, NO_TOKENS, type Tokens } from './cost.ts';
 import { type RunOptions, runName } from './options.ts';
@@ -36,7 +38,8 @@ import { type RawResponses } from './raw-responses.ts';
 import { Recorder } from './recorder.ts';
 import { runObserverModule } from './run-observer.module.ts';
 import { failureOf, type ReplyTrace, type TurnTrace, usageOf } from './trace.ts';
-import { type Seeded, seedOf, type World } from './world.ts';
+import { requestMessages, type SentAssistant } from './request-messages.ts';
+import { type Seeded, type World } from './world.ts';
 
 // The runner (spec P19, ticket 01): the app started as the e2e tests start it, with the model behind the recorder and
 // the clock fixed, each case's turns sent to POST /assistant/messages as the app sends them, and the run saved as
@@ -59,7 +62,8 @@ export interface EvalApp {
   setNow: (now: string) => void;
 }
 
-// Starts the app with `model` behind the recorder, the run's limits as its settings and the clock fixed at its world's.
+// Starts the app with `model` behind the recorder, the run's limits as its settings, the clock fixed at its world's and
+// the world's tutorial content, if it has its own.
 // `settings` are the e2e settings with the model's key and id, and `rawResponses` what the model's fetch fills, if any.
 export async function startEvalApp(
   settings: Partial<Record<keyof Settings, string>>,
@@ -84,6 +88,7 @@ export async function startEvalApp(
     recorder.wrap(model),
     [runObserverModule(recorder)],
     travel,
+    WORLD_TUTORIAL_FILES[options.world],
   );
   let now = WORLD_CLOCKS[options.world];
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(now));
@@ -95,42 +100,6 @@ export async function startEvalApp(
       now = next;
     },
   };
-}
-
-type SentAssistant = Extract<SentMessage, { role: 'assistant' }>;
-
-function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['proposal'] {
-  const { place, globalEvent, invitees, ...values } = proposal;
-  return {
-    ...values,
-    place: place === null ? null : { id: seedOf(world.seeds, 'place', place).id, name: place },
-    globalEvent:
-      globalEvent === null ? null : { id: seedOf(world.seeds, 'globalEvent', globalEvent).id, title: globalEvent },
-    invitees: invitees.map((name) => ({ id: seedOf(world.seeds, 'friend', name).id, name })),
-  };
-}
-
-// A case's turns as the app sends them, its seed names turned into the world's ids.
-export function requestMessages(turns: readonly CaseTurn[], world: World): SentMessage[] {
-  return turns.map((turn): SentMessage => {
-    if ('user' in turn) {
-      const { user, chosen } = turn;
-      return chosen === undefined
-        ? { role: 'user', text: user }
-        : {
-            role: 'user',
-            text: user,
-            chosen: { kind: chosen.kind, id: seedOf(world.seeds, chosen.kind, chosen.seed).id, words: chosen.words },
-          };
-    }
-    const { text, cards, proposal } = turn.assistant;
-    return {
-      role: 'assistant',
-      text,
-      cards: cards.map(({ kind, seed }) => ({ kind, id: seedOf(world.seeds, kind, seed).id })),
-      proposal: proposal === null ? null : sentProposalOf(proposal, world),
-    };
-  });
 }
 
 // The reply sent back with the next message, as the app does: the cards by reference, the Proposal by its values.
@@ -155,17 +124,18 @@ function accessTokenOf(world: World, { asker }: EvalCase): string {
   return token;
 }
 
-// Sends the messages and records the turn.
+// Sends the messages, with the case's world's fields beside them, and records the turn.
 async function sendTurn(
   evalApp: EvalApp,
   accessToken: string,
   messages: readonly SentMessage[],
   options: RunOptions,
+  fields: object,
 ): Promise<{ trace: TurnTrace; body: AssistantReplyDto | null }> {
   const { app, recorder } = evalApp;
   recorder.begin();
   const started = performance.now();
-  const response = await postAssistantMessages(app, accessToken, messages);
+  const response = await postAssistantMessages(app, accessToken, messages, fields);
   const latencyMs = Math.round(performance.now() - started);
   const steps = recorder.take();
   const ok = response.status === 200;
@@ -232,6 +202,7 @@ export async function runCase(
 ): Promise<CaseRun> {
   const kind = kindOf(evalCase);
   const accessToken = accessTokenOf(world, evalCase);
+  const fields = WORLD_REQUEST_FIELDS[evalCase.world];
   evalApp.setNow(nowOf(evalCase));
   const userTurns = evalCase.turns.flatMap((turn) => ('user' in turn ? [turn] : []));
   const run: CaseRun = {
@@ -245,7 +216,7 @@ export async function runCase(
     turns: [],
   };
   if (kind !== 'live') {
-    const { trace } = await sendTurn(evalApp, accessToken, requestMessages(evalCase.turns, world), options);
+    const { trace } = await sendTurn(evalApp, accessToken, requestMessages(evalCase.turns, world), options, fields);
     run.turns.push(trace);
     turnEnded(trace);
     return run;
@@ -257,7 +228,7 @@ export async function runCase(
     }
     messages.push({ role: 'user', text: turn.user });
     // oxlint-disable-next-line no-await-in-loop -- each turn is sent with the replies before it
-    const { trace, body } = await sendTurn(evalApp, accessToken, messages, options);
+    const { trace, body } = await sendTurn(evalApp, accessToken, messages, options, fields);
     run.turns.push(trace);
     turnEnded(trace);
     if (body === null || !passed(trace, turn.expect ?? null)) {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -9,7 +10,7 @@ import { Server } from 'node:http';
 import { inject, type ProvidedContext } from 'vitest';
 import { casesIn, loadCases, WORLD_CLOCKS } from '../eval/cases.ts';
 import { seedP4World } from '../eval/p4/world.ts';
-import { requestMessages } from '../eval/runner.ts';
+import { requestMessages } from '../eval/request-messages.ts';
 import { type World } from '../eval/world.ts';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { postAssistantMessages } from './assistant.js';

@@ -3,12 +3,14 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
+import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { QuestDto } from './dto/quest.dto.js';
 import {
   toWaitingDto,
@@ -36,6 +38,7 @@ export class InvitationsService {
     private readonly leader: LeaderService,
     private readonly friends: FriendsService,
     private readonly signals: SignalsService,
+    private readonly roomRequests: RoomRequestSync,
   ) {}
 
   async invite(leaderId: string, questId: string, userId: string): Promise<void> {
@@ -88,6 +91,7 @@ export class InvitationsService {
       return invitation.userId;
     });
     this.signals.send([userId], 'quests-changed');
+    await this.roomRequests.questChanged(questId);
   }
 
   // A refused acceptance leaves the invitation waiting. Checked again once the Quest is locked, so that an invitation
@@ -106,6 +110,7 @@ export class InvitationsService {
       return { questId: invitation.questId, holderIds: entered };
     });
     this.signals.send(holderIds, 'quests-changed');
+    await this.roomRequests.questChanged(questId);
     return this.quests.read(userId, questId);
   }
 
@@ -122,5 +127,6 @@ export class InvitationsService {
       throw invitationNotFound();
     }
     this.signals.send([userId, invitation.quest.leaderId], 'quests-changed');
+    await this.roomRequests.questChanged(invitation.questId);
   }
 }

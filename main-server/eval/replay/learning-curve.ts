@@ -4,6 +4,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { koreaDate } from '../../src/assistant/korea-time.js';
@@ -103,25 +104,18 @@ export async function learningCurve(
   const places = await catalogOf(prisma);
   const rules = stageB(places);
   const labelled = labelledRows(await placeEvents(prisma));
-  const points: Date[] = [];
+  const points: CurvePoint[] = [];
   for (let at = from.getTime(); at <= to.getTime(); at += stepDays * DAY_MS) {
-    points.push(new Date(at));
+    const scored = labelled.filter(({ row }) => {
+      const time = row.createdAt.getTime();
+      return time >= at && time < at + stepDays * DAY_MS;
+    });
+    const point = { from: new Date(at), holdbackPercent, finalFrom, files };
+    // A point at a time, so that a long range does not start every point's queries at once and wait on the pool.
+    // oxlint-disable-next-line no-await-in-loop
+    points.push(await pointAt(prisma, places, rules, scored, point));
   }
-  return {
-    stepDays,
-    holdbackPercent,
-    finalFrom: finalFrom === null ? null : koreaDate(finalFrom),
-    points: await Promise.all(
-      points.map((point) => {
-        const end = point.getTime() + stepDays * DAY_MS;
-        const scored = labelled.filter(({ row }) => {
-          const time = row.createdAt.getTime();
-          return time >= point.getTime() && time < end;
-        });
-        return pointAt(prisma, places, rules, scored, { from: point, holdbackPercent, finalFrom, files });
-      }),
-    ),
-  };
+  return { stepDays, holdbackPercent, finalFrom: finalFrom === null ? null : koreaDate(finalFrom), points };
 }
 
 const CURVE_COLUMNS = [

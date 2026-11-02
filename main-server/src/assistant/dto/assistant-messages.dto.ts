@@ -6,6 +6,8 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -15,9 +17,11 @@ import {
   CARDS_MAX,
   type Choice,
   type ChoiceKind,
+  CLIENT_CAPABILITIES,
   type MapLayer,
   type ResolvedBy,
 } from '../feature.js';
+import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
@@ -41,6 +45,11 @@ const RESTAURANT_KEY_MAX = 200;
 const cardReference = z.union([
   z.strictObject({ kind: z.enum(['quest', 'globalEvent'] satisfies CardKind[]), id: z.uuid() }),
   z.strictObject({ kind: z.literal('restaurant' satisfies CardKind), id: z.string().min(1).max(RESTAURANT_KEY_MAX) }),
+  // A library card's key, checked against its grammar and never looked up.
+  z.strictObject({
+    kind: z.literal('library' satisfies CardKind),
+    id: z.string().max(LIBRARY_KEY_MAX).refine(isLibraryKey, 'Expected a library card key'),
+  }),
 ]);
 
 const userMessage = z.strictObject({
@@ -65,8 +74,10 @@ function lengthOf(message: Message): number {
 
 // The conversation so far, as the app keeps it, the User's new message last. The server stores no message; of a
 // chosen candidate, only its id and its words, normalised. A request over a length is refused before the model is
-// called.
+// called. `clientCapabilities` says what the app can show beside the cards every version shows: ['library'] for
+// library cards.
 export const assistantMessagesSchema = z.strictObject({
+  clientCapabilities: z.array(z.enum(CLIENT_CAPABILITIES)).max(CLIENT_CAPABILITIES.length).default([]),
   messages: z
     .array(z.discriminatedUnion('role', [userMessage, assistantMessage]))
     .min(1)

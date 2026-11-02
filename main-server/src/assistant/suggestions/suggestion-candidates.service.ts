@@ -4,6 +4,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -186,6 +187,7 @@ export class SuggestionCandidates {
     const context: ToolContext = {
       userId,
       now,
+      capabilities: new Set(),
       found: ids,
       shown: null,
       presented: { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] },

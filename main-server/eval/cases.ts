@@ -6,15 +6,18 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'zod';
+import type { ClientCapability } from '../src/assistant/feature.js';
 import { expectSchema } from './expect.ts';
 
-// The cases (spec P19, "Cases"): YAML files under eval/cases/, eval/p4/cases/, eval/p5/cases/ and a large world's, one
-// per category, each a list of cases. A case is a conversation and what the Assistant should do in it. This file reads
+// The cases (spec P19, "Cases"): YAML files under eval/cases/, eval/p4/cases/, eval/p5/cases/, eval/p6/cases/ and a large
+// world's, one per category, each a list of cases. A case is a conversation and what the Assistant should do in it. This file reads
 // them; what `expect` holds is the scorer's (eval/expect.ts).
 //
 // Three kinds of case, by their turns:
@@ -31,20 +34,40 @@ const P5_CASES_DIRECTORY = new URL('p5/cases/', import.meta.url);
 
 const LARGE_WORLD_CASES_DIRECTORY = new URL('p5/large-world-v1/cases/', import.meta.url);
 
+const P6_CASES_DIRECTORY = new URL('p6/cases/', import.meta.url);
+
 // The worlds a case can run in: `small`, P19's (eval/world.ts), `p4`, of the 공강 tools (eval/p4/world.ts), `p5`, of
-// joining and finding (eval/p5/world.ts), and `large-world-v1`, of finding at scale (eval/p5/large-world/world.ts). A run
-// is of one world.
-export const WORLDS = ['small', 'p4', 'p5', 'large-world-v1'] as const;
+// joining and finding (eval/p5/world.ts), `large-world-v1`, of finding at scale (eval/p5/large-world/world.ts), and `p6`,
+// of 관정 booking and the tutorial (eval/p6/world.ts). A run is of one world.
+export const WORLDS = ['small', 'p4', 'p5', 'large-world-v1', 'p6'] as const;
 
 export type WorldName = (typeof WORLDS)[number];
 
 // When a run of each world stands in Korea, unless a case gives its own `now`: 2026-10-21 (수) 14:05, 2026-11-02 (월)
-// 11:30, and 2026-11-02 (월) 14:05 for both of P05's.
+// 11:30, 2026-11-02 (월) 14:05 for both of P05's, and 2026-11-04 (수) 10:05 for P6's.
 export const WORLD_CLOCKS: Record<WorldName, string> = {
   small: '2026-10-21T14:05:00+09:00',
   p4: '2026-11-02T11:30:00+09:00',
   p5: '2026-11-02T14:05:00+09:00',
   'large-world-v1': '2026-11-02T14:05:00+09:00',
+  p6: '2026-11-04T10:05:00+09:00',
+};
+
+// What a run of each world sends beside the messages. P6's says the app can show 관정 booking, without which the library
+// tools answer that the app is too old; the other worlds send nothing more, so their requests stay as their earlier runs'.
+export const WORLD_REQUEST_FIELDS: Record<WorldName, { clientCapabilities?: ClientCapability[] }> = {
+  small: {},
+  p4: {},
+  p5: {},
+  'large-world-v1': {},
+  p6: { clientCapabilities: ['library'] },
+};
+
+// The tutorial content a run of each world reads in the place of content/tutorial.yaml. The P6 suite reads its own copy,
+// frozen with C0 (eval/p6/suite.yaml), so that a quest added to the app does not change it; the other worlds read the
+// live file.
+export const WORLD_TUTORIAL_FILES: Partial<Record<WorldName, string>> = {
+  p6: fileURLToPath(new URL('p6/tutorial.yaml', import.meta.url)),
 };
 
 const seedName = z.string().min(1);
@@ -97,7 +120,8 @@ export const caseSchema = z
     // Why the Assistant does not do this yet: scored as usual, reported apart.
     knownFailure: z.string().min(1).optional(),
     turns: z.array(z.union([userTurnSchema, assistantTurnSchema])).min(1),
-    // What the scored turn should be, for the scorer: the last, or a live case's last when it gives none of its own.
+    // What the scored turn should be, for the scorer: the last, or a live case's last when it gives none of its own. A
+    // case of a suite whose labels are not yet drafted has none (eval/p6/ before C0); the scorer fails it.
     expect: expectSchema.optional(),
   })
   .refine(({ knownFailure, expect }) => knownFailure === undefined || expect?.knownFailure === undefined, {
@@ -141,7 +165,13 @@ function casesInDirectory(directory: URL): EvalCase[] {
 // Every case of every file in the directories, in the order of the files' names and then as written. A case that does
 // not fit the schema, or an id used twice, fails the whole load.
 export function loadCases(
-  directories: readonly URL[] = [CASES_DIRECTORY, P4_CASES_DIRECTORY, P5_CASES_DIRECTORY, LARGE_WORLD_CASES_DIRECTORY],
+  directories: readonly URL[] = [
+    CASES_DIRECTORY,
+    P4_CASES_DIRECTORY,
+    P5_CASES_DIRECTORY,
+    LARGE_WORLD_CASES_DIRECTORY,
+    P6_CASES_DIRECTORY,
+  ],
 ): EvalCase[] {
   const cases = directories.flatMap((directory) => casesInDirectory(directory));
   const seen = new Set<string>();
@@ -177,6 +207,14 @@ export function selectCases(cases: EvalCase[], categories: readonly string[], ca
     return cases;
   }
   return cases.filter(({ id, category }) => categories.includes(category) || caseIds.includes(id));
+}
+
+// The cases with no expectation of their last turn, which a run can only fail: a suite before its labels are drafted.
+export function unlabelled(cases: readonly EvalCase[]): EvalCase[] {
+  return cases.filter(({ expect, turns }) => {
+    const last = turns.at(-1);
+    return expect === undefined && (last === undefined || !('user' in last) || last.expect === undefined);
+  });
 }
 
 // How many times a case runs: once, or for a case of the repeated set, `repeat` when given and else its own count.

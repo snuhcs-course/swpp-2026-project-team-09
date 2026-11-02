@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -18,7 +19,7 @@ import { type ChoiceKind } from '../feature.js';
 import { ResolutionEventsService } from '../resolution-events.service.js';
 import { aliasOf, type Chain, chainOf, type Decision, sourceOf, standingOf } from './alias-chain.js';
 import { chainRows } from './alias-rows.js';
-import { MIN_SCORE, scoreOf, SESSION_GAP_MINUTES } from './alias-rules.js';
+import { CHAIN_ROWS_MAX, MIN_SCORE, scoreOf, SESSION_GAP_MINUTES } from './alias-rules.js';
 import { type AliasDto } from './aliases.dto.js';
 import { type AliasKind, PersonalAliases } from './personal-aliases.js';
 
@@ -42,6 +43,7 @@ const aliasNotFound = (): NotFoundException =>
 @Injectable()
 export class AliasesService {
   private readonly logger = new Logger(AliasesService.name);
+  private warnedRows = false;
   private readonly personal: PersonalAliases;
 
   constructor(
@@ -87,7 +89,7 @@ export class AliasesService {
       if (words.size === 0) {
         return;
       }
-      const chain = chainOf(await chainRows(this.prisma));
+      const chain = await this.windowChain();
       for (const text of words) {
         const chosen = recent
           .filter((row) => row.words === text && (row.outcome === 'chosen' || row.outcome === 'edited'))
@@ -100,6 +102,18 @@ export class AliasesService {
     }
   }
 
+  // The chain of the window's rows. Once they pass CHAIN_ROWS_MAX the log says so, once a process.
+  private async windowChain(): Promise<Chain> {
+    const rows = await chainRows(this.prisma);
+    if (rows.length > CHAIN_ROWS_MAX && !this.warnedRows) {
+      this.warnedRows = true;
+      this.logger.warn(
+        `The alias chain read ${rows.length} rows, over ${CHAIN_ROWS_MAX}: its count belongs in the nightly job`,
+      );
+    }
+    return chainOf(rows);
+  }
+
   // 아니에요: the User said an answer read from an alias was wrong. It is recorded as a rejected event, their own alias
   // for it is deleted, and for a Place everyone's alias of the words is counted again.
   async reject(userId: string, kind: AliasKind, words: string, targetId: string): Promise<void> {
@@ -107,7 +121,7 @@ export class AliasesService {
     await this.resolutionEvents.rejected(userId, kind, key, targetId);
     await this.prisma.userAlias.deleteMany({ where: { userId, kind, words: key, targetId } });
     if (kind === 'place') {
-      await this.recount(key, chainOf(await chainRows(this.prisma)), new Date(), new Set());
+      await this.recount(key, await this.windowChain(), new Date(), new Set());
     }
   }
 

@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -17,14 +18,18 @@ import { withAccessToken } from './sign-in.js';
 // One message as the app sends it: an Assistant's may leave out its cards.
 export type SentMessage = z.input<typeof assistantMessagesSchema>['messages'][number];
 
-// Sends the conversation as the app does: the messages so far, the User's new one last. A test of a refusal may send
-// messages of another shape.
+// Sends the conversation as the app does: the messages so far, the User's new one last, and `more` beside them, such
+// as clientCapabilities. A test of a refusal may send messages of another shape.
 export function postAssistantMessages(
   app: INestApplication<Server>,
   accessToken: string | undefined,
   messages: readonly object[],
+  more: object = {},
 ): request.Test {
-  return withAccessToken(request(app.getHttpServer()).post('/assistant/messages'), accessToken).send({ messages });
+  return withAccessToken(request(app.getHttpServer()).post('/assistant/messages'), accessToken).send({
+    messages,
+    ...more,
+  });
 }
 
 // One message of the User's.
