@@ -5,6 +5,7 @@
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-26  Fable 5.1  prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -38,6 +39,10 @@ export class PlacesService {
   async listForAdministrators(): Promise<AdminPlaceDto[]> {
     const places = await this.prisma.place.findMany();
     return places.toSorted(byNumber).map((place) => toAdminPlaceDto(place));
+  }
+
+  async exists(id: string): Promise<boolean> {
+    return (await this.prisma.place.count({ where: { id } })) > 0;
   }
 
   // In memory: the list is a few hundred entries, and `q` is then no LIKE pattern whose `%` and `_` need escaping.
