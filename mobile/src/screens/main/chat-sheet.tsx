@@ -36,6 +36,7 @@ import type { EventCardActions } from './chat-event-cards';
 import type { QuestCardActions } from './chat-quest-cards';
 import type { AiInputFill } from './ai-input';
 import { type ChatFrom, SuggestionRow, useSuggestedSheet } from './chat-suggestion';
+import type { LibraryCardActions } from './library/use-library-call';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 interface ChatSheetProps {
@@ -136,6 +137,14 @@ function useQuestCards(onOpenPost: (questId: string) => void): {
   return { actions, sheet };
 }
 
+// What the library cards do with the chat: add the app's own bubbles and keep how each card ended.
+function useLibraryActions({ addOwn, outcomes, finish, unfinish }: Chat): LibraryCardActions {
+  return useMemo(
+    () => ({ addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish, unfinish }),
+    [addOwn, outcomes, finish, unfinish],
+  );
+}
+
 // What the cards of the answers do, and the sheets their buttons open over the chat.
 function useChatCards({ chat, onOpenEvent, onOpenPost, onOpenPartyForm, proposals }: ChatSheetProps): {
   cardActions: CardActions;
@@ -143,7 +152,7 @@ function useChatCards({ chat, onOpenEvent, onOpenPost, onOpenPartyForm, proposal
 } {
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
-  const { addOwn, outcomes, finish, unfinish } = chat;
+  const library = useLibraryActions(chat);
   const cardActions: CardActions = useMemo(
     () => ({
       events: eventCards.actions,
@@ -151,19 +160,9 @@ function useChatCards({ chat, onOpenEvent, onOpenPost, onOpenPartyForm, proposal
       proposals,
       rejectAlias: chat.rejectAlias,
       openPartyForm: onOpenPartyForm,
-      library: { addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish, unfinish },
+      library,
     }),
-    [
-      eventCards.actions,
-      questCards.actions,
-      proposals,
-      chat.rejectAlias,
-      onOpenPartyForm,
-      addOwn,
-      outcomes,
-      finish,
-      unfinish,
-    ],
+    [eventCards.actions, questCards.actions, proposals, chat.rejectAlias, onOpenPartyForm, library],
   );
   return {
     cardActions,
