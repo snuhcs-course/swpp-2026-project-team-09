@@ -137,7 +137,7 @@ describe('The tools and words of the P6 labels', () => {
   it('let a space refusal, a CHAT and an ASK call no tool, and a condition refusal only proposeLibraryBooking', () => {
     const onlyWith: Record<string, string[]> = {
       'p6-group-rooms-same-name': ['resolveFriend'],
-      'p6-conditions-free-time-one-space': ['findLibraryFreeSlots'],
+      'p6-conditions-free-time-one-space': ['findLibrarySpace', 'findLibraryFreeSlots'],
       ...CONDITION_REFUSALS,
     };
     const loose = cases.flatMap(({ id, expect: wanted }) => {

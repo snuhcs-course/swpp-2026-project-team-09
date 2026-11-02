@@ -287,7 +287,7 @@
         - [7B 노트북존, 7B]
         - [노트북존]
 
-# The space is named, so the 공강 slots come first: findLibraryFreeSlots and no other tool, and an ASK listing the slots
+# The space is named, so it is found and its 공강 slots come next: findLibrarySpace, findLibraryFreeSlots and no other tool, and an ASK listing the slots
 # that start at 12:00, 14:30 and 18:00 (the asker's gaps today, aligned to 30 minutes; ruling 21).
 - id: p6-conditions-free-time-one-space
   category: p6-conditions
@@ -298,7 +298,7 @@
   expect:
     actions: [ASK]
     tools:
-      required: [findLibraryFreeSlots]
+      required: [findLibrarySpace, findLibraryFreeSlots]
       only: true
     cards:
       - { kind: library, max: 0 }

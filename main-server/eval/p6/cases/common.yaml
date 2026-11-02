@@ -43,7 +43,7 @@
         - [7B 노트북존, 7B]
         - [노트북존]
 
-# One space named: showLibrarySeats with its id and no other tool, and one seats card for 7F-7A-zone2 (ruling 21).
+# One space named: findLibrarySpace, then showLibrarySeats with the id it returned, and no other tool, and one seats card for 7F-7A-zone2 (ruling 21).
 - id: p6-common-seats-one-space
   category: p6-common
   world: p6
@@ -53,7 +53,7 @@
   expect:
     actions: [TOOL]
     tools:
-      required: [showLibrarySeats]
+      required: [findLibrarySpace, showLibrarySeats]
       only: true
     cards:
       - { kind: library, action: seats, space: 7F-7A-zone2, min: 1, max: 1 }
