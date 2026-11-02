@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -27,6 +28,7 @@ import {
   kindOf,
   nowOf,
   WORLD_CLOCKS,
+  WORLD_REQUEST_FIELDS,
 } from './cases.ts';
 import { addTokens, costOf, NO_TOKENS, type Tokens } from './cost.ts';
 import { type RunOptions, runName } from './options.ts';
@@ -147,17 +149,18 @@ function accessTokenOf(world: World, { asker }: EvalCase): string {
   return token;
 }
 
-// Sends the messages and records the turn.
+// Sends the messages, with the case's world's fields beside them, and records the turn.
 async function sendTurn(
   evalApp: EvalApp,
   accessToken: string,
   messages: readonly SentMessage[],
   options: RunOptions,
+  fields: object,
 ): Promise<{ trace: TurnTrace; body: AssistantReplyDto | null }> {
   const { app, recorder } = evalApp;
   recorder.begin();
   const started = performance.now();
-  const response = await postAssistantMessages(app, accessToken, messages);
+  const response = await postAssistantMessages(app, accessToken, messages, fields);
   const latencyMs = Math.round(performance.now() - started);
   const steps = recorder.take();
   const ok = response.status === 200;
@@ -224,6 +227,7 @@ export async function runCase(
 ): Promise<CaseRun> {
   const kind = kindOf(evalCase);
   const accessToken = accessTokenOf(world, evalCase);
+  const fields = WORLD_REQUEST_FIELDS[evalCase.world];
   evalApp.setNow(nowOf(evalCase));
   const userTurns = evalCase.turns.flatMap((turn) => ('user' in turn ? [turn] : []));
   const run: CaseRun = {
@@ -237,7 +241,7 @@ export async function runCase(
     turns: [],
   };
   if (kind !== 'live') {
-    const { trace } = await sendTurn(evalApp, accessToken, requestMessages(evalCase.turns, world), options);
+    const { trace } = await sendTurn(evalApp, accessToken, requestMessages(evalCase.turns, world), options, fields);
     run.turns.push(trace);
     turnEnded(trace);
     return run;
@@ -249,7 +253,7 @@ export async function runCase(
     }
     messages.push({ role: 'user', text: turn.user });
     // oxlint-disable-next-line no-await-in-loop -- each turn is sent with the replies before it
-    const { trace, body } = await sendTurn(evalApp, accessToken, messages, options);
+    const { trace, body } = await sendTurn(evalApp, accessToken, messages, options, fields);
     run.turns.push(trace);
     turnEnded(trace);
     if (body === null || !passed(trace, turn.expect ?? null)) {
