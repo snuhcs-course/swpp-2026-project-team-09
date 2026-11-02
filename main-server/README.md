@@ -2216,15 +2216,20 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     and is never given once its start has passed; one without a start falls in no window, and is gone once its end has
     passed. Never given: a Quest with fewer places left than `minPlacesLeft` (default one, so never a Full one), one the
     User holds or already asked to join, and one for a Global Event of which the User holds a Shared Quest. `capacity` is
-    exact. With `placeId`, only the Quests whose position is within `radius` metres of that Place (default 300, both ends
-    included), as `metresBetween` reads it: the position is the first Sub Quest's Place, its point on the map, or its
-    Global Event's, and a Quest with words only is left out. Without a window every other such Quest is a candidate,
+    exact. With `placeId`, only the Quests whose position is within `radius` metres of that Place (default 300, at most
+    3,000, both ends included), as `metresBetween` reads it: the position is the first Sub Quest's Place, its point on the
+    map, or its Global Event's, and a Quest with words only is left out. A `placeId` that names no Place answers "none",
+    with that as the reason. Without a window every other such Quest is a candidate,
     those without a start last. Each carries its title, Board, Global Event, Join Policy, the places left, the number of
     Holders, the first Sub Quest's start, end and place, and the first 150 characters of its description.
   - In both searches `words` (at most ten) rank and drop nothing: those whose title or description holds more of them
     come first, ignoring case and counting a word given twice once, ties in start order, then by title in code points.
     The rest of the window fills the places left, up to 30, with `more` when there were more. The server does not order
     by Holders.
+  - On a request to recruit, the system prompt has the model search before it proposes, unless the User said to make a
+    new one in the conversation, this message included: only what the User stated is compared, what fits is shown as cards with the most
+    Holders first and a question, and the User joins from the card. With nothing that fits, it proposes and says none was
+    found.
   - **Resolvers** take the User's words as written and answer `{ "result": "one", "candidate" }`,
     `{ "result": "several", "candidates", "more" }` (at most 10) or "none", never a guess; the system prompt tells the
     model to ask on several and say so on none. Each adds the ids it answered to `FoundIds`.
