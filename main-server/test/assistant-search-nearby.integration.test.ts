@@ -205,7 +205,7 @@ describe('searchRecruitingQuests, at the radius', () => {
   });
 });
 
-describe('searchRecruitingQuests, given a radius or nothing around the Place', () => {
+describe('searchRecruitingQuests, given a radius', () => {
   it('takes another radius', async () => {
     const quest = await questAt('2091-02-07T09:00:00', point(north(400)));
     const day = { from: '2091-02-07', to: '2091-02-07', placeId: engineering.id };
@@ -222,13 +222,29 @@ describe('searchRecruitingQuests, given a radius or nothing around the Place', (
     expect(JSON.stringify(model.received().at(-1)?.prompt)).toContain('Give placeId with radius');
   });
 
-  it.each([
-    ['a Place with nothing around it', '2091-02-08', (): string => engineering.id],
-    ['no such Place', '2091-02-10', (): string => '00000000-0000-4000-8000-000000000000'],
-  ])('says "none" with the reason for %s', async (_, date, placeId) => {
+  it('takes the largest radius', async () => {
+    const quest = await questAt('2091-02-11T09:00:00', point(north(2900)));
+
+    expect(await questsFound({ from: '2091-02-11', to: '2091-02-11', placeId: engineering.id, radius: 3000 })).toEqual([
+      quest,
+    ]);
+  });
+
+  it('refuses a radius past the largest, back to the model', async () => {
+    model.script({ tool: 'searchRecruitingQuests', input: { placeId: engineering.id, radius: 3000.5 } }, { text: '…' });
+
+    await postAssistantMessages(app, reader.accessToken, ask('근처에 파티 있어?'));
+
+    expect(JSON.stringify(model.received().at(-1)?.prompt)).toContain('too_big');
+  });
+});
+
+describe('searchRecruitingQuests, given a Place with no Quest found', () => {
+  it('says "none" because nothing is around a Place that exists', async () => {
+    const date = '2091-02-08';
     await questAt(`${date}T09:00:00`, point(north(400)));
     model.script(
-      { tool: 'searchRecruitingQuests', input: { from: date, to: date, placeId: placeId() } },
+      { tool: 'searchRecruitingQuests', input: { from: date, to: date, placeId: engineering.id } },
       { text: '…' },
     );
 
@@ -240,5 +256,21 @@ describe('searchRecruitingQuests, given a radius or nothing around the Place', (
         reason: `No 파티 that the User can join within 300 m of that Place is found from ${date}T00:00 to ${date}T23:59.`,
       },
     ]);
+  });
+
+  it('says "none" because there is no such Place', async () => {
+    const date = '2091-02-10';
+    await questAt(`${date}T09:00:00`, point(north(400)));
+    model.script(
+      {
+        tool: 'searchRecruitingQuests',
+        input: { from: date, to: date, placeId: '00000000-0000-4000-8000-000000000000' },
+      },
+      { text: '…' },
+    );
+
+    await postAssistantMessages(app, reader.accessToken, ask('근처에 파티 있어?'));
+
+    expect(model.toolResults()).toEqual([{ result: 'none', reason: 'There is no such Place.' }]);
   });
 });

@@ -65,7 +65,17 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
 - A question that names neither 행사 nor 파티, such as "오페라 있어?", searches both with searchGlobalEvents and searchRecruitingQuests, since the User may mean a 파티 with no Global Event.
 - A question about an event's 파티, such as "그 전시 같이 갈 사람 있어?", searches the 파티 going to that event, and also, with the event's span as the window and words of its activity, 파티 with no Global Event for the same activity.
 - When the User asks for 파티 with no condition, such as "파티 찾기", call searchRecruitingQuests with no condition, show the few (at most 3) that meet soonest with showQuests, and add one line inviting the User to narrow down, such as "운동, 식사처럼 원하는 걸 말해 주시면 좁혀 드릴게요".
-- When the User asks to make or recruit a 파티 (모집해 줘, 만들어 줘), call proposeQuest with its title, a short description (write one from the request when they gave none), open unless they want to approve each member, the Board, how many people in total, the User included, and when it starts, read against now. When only 아침, 점심 or 저녁 is given for the time, it starts at 08:00, 12:00 or 18:00. When proposeQuest refuses fields, ask the User for those, all in one question. When it proposes, the User sees a card with every field and 만들기: say in a sentence that nothing is made until they press 만들기, and do not repeat the fields.
+- When the User asks to make or recruit a 파티 (모집해 줘, 만들어 줘), first look for one they could join, by these rules, before you propose. Skip the search and go straight to proposeQuest only when the User has said in this conversation, this message included, to make a new one, such as "찾지 말고 바로 열어 줘" or "이거 말고 새 파티로 열어 줘".
+  - Compare only what the User stated. With an activity and no day, search the next 7 days from today with words of the activity. With a day and no activity, search that day for every activity, with no words and no Board. With neither an activity nor a day, ask for them, without searching or proposing.
+  - A named time is a window from 30 minutes before it to 30 minutes after it, in after and before. 아침 is 07:00–11:00, 점심 11:00–16:00 and 저녁 17:00–22:00.
+  - With a named Place, resolve it with resolvePlace, give its placeId and leave radius out, so that it means 300 m or less.
+  - A number of people (N명) counts the User, so it asks for capacity N. With no number, leave capacity out.
+  - When the request names a Global Event, resolve it with resolveGlobalEvent, or take its id from [Cards shown: …] when the User points at a card shown, and search with its globalEventId, with no time, Place or words: its 파티 are the candidates, whatever their time and place.
+  - Offer only Open and Approval 파티, never a 비공개 파티.
+  - Words of the same meaning are the same activity, as 플스 and 플레이스테이션 are; words that only look alike are not, as 플스 and 플랭크 are not. A 파티 for another activity does not fit, even at the same time.
+  - When some fit, show them with showQuests, the highest holderCount first, and ask in a sentence whether the User wants to join one. The User joins from the card. Never join for the User, and never say that they joined or asked to join.
+  - When none fits, call proposeQuest as below, with a line saying that none was found, also when you ask for the fields it refused.
+- To propose a 파티, call proposeQuest with its title, a short description (write one from the request when they gave none), open unless they want to approve each member, the Board, how many people in total, the User included, and when it starts, read against now. When only 아침, 점심 or 저녁 is given for the time, it starts at 08:00, 12:00 or 18:00. When proposeQuest refuses fields, ask the User for those, all in one question. When it proposes, the User sees a card with every field and 만들기: say in a sentence that nothing is made until they press 만들기, and do not repeat the fields.
 - A 파티 that is 비공개, or only for Friends the User names, is closed: no Board and at least one Friend to invite. Count the invited Friends and the User in its people.
 - Before proposeQuest, resolve each Friend to invite with resolveFriend, the place with resolvePlace and a related event with resolveGlobalEvent, passing the User's words as written. Never pick for the User: when a resolver answers 'several', ask which one, listing the names; when it answers 'none', say that nothing matches those words. Give proposeQuest only the ids they returned in this message or those in [Proposal shown: …]. With a related event and no time given, leave startsAt out: the 파티 starts with the event.
 - To change a Proposal you showed before ("시간만 1시로"), call proposeQuest again with the values of [Proposal shown: …] and only that change, its ids included.
@@ -100,7 +110,7 @@ export function chatAssistant({
       showOnMap: showOnMap(),
       searchGlobalEvents: searchGlobalEvents(globalEvents),
       showGlobalEvents: showGlobalEvents(globalEvents),
-      searchRecruitingQuests: searchRecruitingQuests(recruiting),
+      searchRecruitingQuests: searchRecruitingQuests(recruiting, places),
       showQuests: showQuests(recruiting),
       resolveFriend: resolveFriend(friends),
       resolvePlace: resolvePlace(placeMatcher),
