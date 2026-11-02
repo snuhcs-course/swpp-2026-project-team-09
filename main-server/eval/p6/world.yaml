@@ -1,0 +1,155 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# The P6 world (P06 spec, "The P6 eval suite"): what the library and tutorial cases run in, by seed name.
+# eval/p6/world.ts seeds it. The labels are drafted from this file, rules.md, the space catalogue
+# (.scratch/iteration-3/P06-tutorial-and-kwanjeong/references/kwanjeong-spaces.yaml) and content/tutorial.yaml, so a
+# change here changes the answers; it is frozen at C0.
+#
+# Times are in Korea. The cases stand on Wednesday 2026-11-04 at 10:05: 오늘 is 11/4 (수), 내일 11/5 (목), 모레 11/6 (금),
+# 11/7 (토) is today + 3 and 11/8 (일) today + 4.
+#
+# Privacy: every 학번 here is fake, 2026-000NN, and follows no admission year; every name is made up. The world holds no
+# library data: the library is the phone's, and no server tool calls it.
+
+# The User every case asks as, unless the case names one of `askers`. A 26학번 undergraduate who has started the
+# tutorial.
+asker:
+  name: 김새봄
+  department: 자유전공학부
+  admissionYear: 2026
+  affiliation: undergraduate
+  registeredName: 김새봄
+  studentNumber: '2026-00001'
+  tutorial:
+    state: active
+    enabled: true
+    quests:
+      - { key: s-card, started: '2026-11-02T13:00', completedBy: button, completed: '2026-11-03T15:20' }
+      - { key: kwanjeong, started: '2026-11-03T15:25' }
+
+# Users a case can ask as, by seed name, each with no Timetable and no Friends.
+askers:
+  # A graduate student: 대학원 열람실 is offered to them. The tutorial was never turned on.
+  대학원생:
+    name: 이도윤
+    department: 컴퓨터공학부 대학원
+    admissionYear: 2024
+    affiliation: graduate
+    registeredName: 이도윤
+    studentNumber: '2026-00002'
+    tutorial: { state: 'off', enabled: false, quests: [] }
+  # An exchange student, eligible for the tutorial by default; it is on and nothing is started.
+  교환학생:
+    name: 레아
+    department: 경영학과
+    admissionYear: null
+    affiliation: exchange
+    registeredName: MARTIN LEA
+    studentNumber: '2026-00003'
+    tutorial: { state: available, enabled: true, quests: [] }
+  # A 25학번 who turned the tutorial on in 내 정보, started one quest and then stopped it.
+  그만둔학생:
+    name: 박지후
+    department: 사회학과
+    admissionYear: 2025
+    affiliation: undergraduate
+    registeredName: 박지후
+    studentNumber: '2026-00004'
+    tutorial:
+      state: stopped
+      enabled: true
+      stopped: '2026-11-03T18:00'
+      quests:
+        - { key: s-card, started: '2026-11-03T17:40' }
+  # A 26학번 who finished every quest.
+  다한학생:
+    name: 최하윤
+    department: 생명과학부
+    admissionYear: 2026
+    affiliation: undergraduate
+    registeredName: 최하윤
+    studentNumber: '2026-00005'
+    tutorial:
+      state: finished
+      enabled: true
+      finished: '2026-11-03T16:00'
+      quests:
+        - { key: s-card, started: '2026-11-02T10:00', completedBy: button, completed: '2026-11-02T14:00' }
+        - { key: admin-shuttle, started: '2026-11-02T10:05', completedBy: button, completed: '2026-11-02T16:00' }
+        - { key: kwanjeong, started: '2026-11-02T10:10', completedBy: checked, completed: '2026-11-03T11:00' }
+        - { key: health-clinic, started: '2026-11-02T10:15', completedBy: button, completed: '2026-11-03T12:00' }
+        - { key: art-museum, started: '2026-11-02T10:20', completedBy: button, completed: '2026-11-03T16:00' }
+
+# The Places the world uses, of the shared seed: seed name and number. 중앙도서관 관정관 is 관정도서관 (62-1); the tutorial's
+# places are 67, 4, 63, 151 and 68.
+places:
+  중앙도서관 관정관: '62-1'
+  중앙도서관 본관: '62'
+  학생회관: '63'
+  NH농협두레문예관: '67'
+  신양인문학술정보관: '4'
+  미술관: '151'
+  파워플랜트: '68'
+  제1공학관: '301'
+  이공계멀티미디어강의동: '43-1'
+  인문사회계멀티미디어강의동: '83'
+
+# The asker's Timetable. On Wednesday 11/4 the asker is in class 09:30–10:45, 11:00–11:45, 13:00–14:15 and 16:00–17:50,
+# so the gaps of today after now are 10:45–11:00, 11:45–13:00 (around 12:00), 14:15–16:00 (around 15:00) and from 17:50.
+timetable:
+  - course: 미적분학 1
+    meetings:
+      - { day: monday, start: '09:30', end: '10:45', place: 이공계멀티미디어강의동 }
+      - { day: wednesday, start: '09:30', end: '10:45', place: 이공계멀티미디어강의동 }
+  - course: 컴퓨터과학이 여는 세계
+    meetings:
+      - { day: wednesday, start: '11:00', end: '11:45', place: 제1공학관 }
+  - course: 대학 글쓰기 1
+    meetings:
+      - { day: wednesday, start: '13:00', end: '14:15', place: 인문사회계멀티미디어강의동 }
+      - { day: friday, start: '13:00', end: '14:15', place: 인문사회계멀티미디어강의동 }
+  - course: 물리학실험 1
+    meetings:
+      - { day: wednesday, start: '16:00', end: '17:50', place: 이공계멀티미디어강의동 }
+  - course: 경제원론
+    meetings:
+      - { day: thursday, start: '09:30', end: '10:45', place: null }
+
+# The asker's Friends by seed name, with the registered name (학적상 이름) and the fake 학번 of each. Two are named 박서준.
+# 하루 goes by a name other than the registered one. None has a Timetable.
+friends:
+  이민수: { name: 이민수, department: 경제학부, registeredName: 이민수, studentNumber: '2026-00011' }
+  김지은: { name: 김지은, department: 컴퓨터공학부, registeredName: 김지은, studentNumber: '2026-00012' }
+  박서준 (경영학과): { name: 박서준, department: 경영학과, registeredName: 박서준, studentNumber: '2026-00013' }
+  박서준 (물리천문학부): { name: 박서준, department: 물리천문학부, registeredName: 박서준, studentNumber: '2026-00014' }
+  정하람: { name: 정하람, department: 국어국문학과, registeredName: 정하람, studentNumber: '2026-00015' }
+  최유진: { name: 최유진, department: 심리학과, registeredName: 최유진, studentNumber: '2026-00016' }
+  한도윤: { name: 한도윤, department: 전기정보공학부, registeredName: 한도윤, studentNumber: '2026-00017' }
+  오지호: { name: 오지호, department: 건축학과, registeredName: 오지호, studentNumber: '2026-00018' }
+  윤서아: { name: 윤서아, department: 영어영문학과, registeredName: 윤서아, studentNumber: '2026-00019' }
+  강민재: { name: 강민재, department: 수학과, registeredName: 강민재, studentNumber: '2026-00020' }
+  하루: { name: 하루, department: 미술학과, registeredName: 김하루, studentNumber: '2026-00021' }
+
+# The lunch Quest the asker holds, for the "existing 파티" cases: a Closed Quest the asker leads, with four Friends as
+# Holders, 5 people in all, on Thursday at 학생회관. It is not a booking party.
+lunchQuest:
+  title: 학관 점심 모임
+  capacity: 6
+  holders: [이민수, 김지은, 정하람, 최유진]
+  starts: '2026-11-05T12:00'
+  ends: '2026-11-05T13:00'
+  place: 학생회관
+
+# Published Global Events. The exhibition at 미술관 runs today, so "오늘 미술관에서 무슨 전시 해?" is answered from the
+# app's data after getTutorial (rules.md section 14). 파워플랜트 has none.
+globalEvents:
+  - title: 가을 소장품전
+    description: 서울대학교 미술관 소장품 가운데 근현대 회화를 모은 전시입니다.
+    starts: '2026-10-28T10:00'
+    ends: '2026-11-15T18:00'
+    place: 서울대학교 미술관 1층
+    point: { latitude: 37.4665, longitude: 126.94969 }
