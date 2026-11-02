@@ -257,9 +257,10 @@ export const roomRequests: RoomRequestsClient = {
 export const ROOM_INBOX_KEY = ['room-inbox'] as const;
 export const ROOM_REQUEST_KEY = ['room-request'] as const;
 
-// The main screen's: what asks the User, and the one-time notices.
+// The main screen's: what asks the User, and the one-time notices. Asked again on `room-requests-changed` and when
+// the live connection opens again (`live-updates.tsx`), not on a timer, which would keep the screen's tests' timers
+// from ever running out.
 export const roomInboxQuery = queryOptions({
   queryKey: ROOM_INBOX_KEY,
   queryFn: () => roomRequests.inbox(),
-  refetchInterval: 15_000,
 });

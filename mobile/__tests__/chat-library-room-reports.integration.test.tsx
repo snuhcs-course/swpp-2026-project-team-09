@@ -12,6 +12,7 @@ import { pass, screen } from './support/app';
 import { type FakeServer, refusal } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { bookingRow, inCard, pressIn, startLibraryChat } from './support/library-chat';
+import { socketServer } from './support/live';
 import { COMPANIONS, readyCard, REQUEST_ID } from './support/room-requests';
 
 // A room booked through a room request stays booked whatever its report comes to: a report that does not get through
@@ -49,7 +50,7 @@ afterEach(() => {
 const RESULT = `POST /library/room-requests/${REQUEST_ID}/result`;
 
 describe('the report of a room booked', () => {
-  it('shows the booking done when the report fails, books once, and sends the report again at the next poll', async () => {
+  it('shows the booking done when the report fails, books once, and sends the report again when the requests are asked again', async () => {
     server.on(RESULT, 'no-answer');
     const shown = await readyCard({ server, library });
 
@@ -61,10 +62,18 @@ describe('the report of a room booked', () => {
     expect(server.received(RESULT)).toHaveLength(1);
 
     server.on(RESULT, { status: 204 });
-    await pass(16_000);
+    // The main screen asks its room requests again on the signal, and sends the kept report with it.
+    await socketServer((socket) => {
+      socket.accept();
+      socket.send('room-requests-changed');
+    });
+    await pass(100);
 
     expect(server.received(RESULT).map(({ body }) => body)).toEqual([{ ok: true }, { ok: true }]);
-    await pass(16_000);
+    await socketServer((socket) => {
+      socket.send('room-requests-changed');
+    });
+    await pass(100);
     expect(server.received(RESULT)).toHaveLength(2);
     expect(library.writes().filter(({ endpoint }) => endpoint === 'setRoomBooking')).toHaveLength(1);
   });
