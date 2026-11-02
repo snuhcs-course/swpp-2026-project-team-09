@@ -8,6 +8,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -93,6 +94,7 @@ export class AssistantService {
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
+    const libraryEnabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     this.chat = chatAssistant({
       menus,
       shuttle,
@@ -102,14 +104,7 @@ export class AssistantService {
       places,
       placeMatcher,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
-      library: {
-        catalogue,
-        freeTime,
-        friends,
-        quests,
-        users,
-        enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
-      },
+      library: { catalogue, freeTime, friends, quests, users, enabled: libraryEnabled },
       tutorial,
     });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
