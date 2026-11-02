@@ -1994,6 +1994,13 @@ The 새내기 튜토리얼 walks a new student through campus life, one Tutorial
 `src/tutorial/tutorial-content.ts`, and a file that does not match stops the start with the reason. Adding a quest is
 an entry in the file. `test/tutorial-content.unit.test.ts` checks that each Place number is in the seed.
 
+**The P6 suite's copy.** The P6 eval suite reads its own copy of the content, `eval/p6/tutorial.yaml`, frozen with C0
+(`WORLD_TUTORIAL_FILES` in `eval/cases.ts`); every other world reads `content/tutorial.yaml`. So adding a quest here does
+not change the frozen suite, and a new quest ships with at least two P6 cases: one asking a fact in its content, and one
+asking something the content lacks, answered with the quest's link or 확인되지 않아요. The copy is updated, together
+with any label tied to the number of quests (such as `p6-tutorial-progress`), only when the suite moves to a new version
+(C1). That change is entered with `revises:` and `reason:`, and the new version gets its own run.
+
 **State.** `tutorial_progress` holds one row for each User who has one, with four times, and
 `tutorial_quest_progress` one row for each quest the User started, with when it was completed and how (`button`, or
 `checked`, `forced` or `skipped` for the 관정 quest). A row of a key no longer in the file is ignored. Each time is set
@@ -2024,6 +2031,42 @@ The routes name no User, so they never reach another User's progress. Each is sa
 
 The refusals: a key the file does not hold gets 404 with `code` `TUTORIAL_QUEST_NOT_FOUND`, and a `by` the quest's
 kind does not accept gets 400 with `COMPLETION_NOT_ACCEPTED`.
+
+## Group study room requests
+
+A 관정 group study room is booked with companions through a room request (`src/library/`). The routes are the app's,
+never the Assistant's tools, and the phone alone talks to the library: the server never sees a library reply.
+
+- `POST /library/room-requests` with `{ key, friendIds }` or `{ key, questId }`, and `useDesc` when the card chose it,
+  takes an `Idempotency-Key`. The key is a book card's, and its conditions are checked again with the Assistant's
+  `checkBooking`: the catalogue, the window, the hours, the capacity and at most 8 people (so never G201). More than 8
+  is a 400 with the party's reason, as is a `friendIds` entry that is not the User's Friend. With `friendIds` it makes
+  a **booking party**: the Closed Quest "관정 {space} 예약" the User leads, with one Sub Quest at Place 62-1 for the
+  booking's time and a `QuestInvitation` for each Friend. With `questId` (a Quest the User holds) it makes no Quest
+  and asks its other Holders. Each companion gets a `room_consents` row.
+- `GET /library/room-requests` answers `{ asks, notices }`: the gathering requests that ask the User, for the consent
+  dialog, and the one-time notices, which `POST /library/room-notices/:id/seen` deletes.
+- `GET /library/room-requests/:id` is what the booker's card polls. `status` is `gathering`, `ready` (every current
+  Holder but the requester consented), `booked`, `cancelled`, `dissolved` (with `reason`) or `expired`.
+- `POST …/:id/consent` accepts the booking party's invitation as any invitation is accepted, then consents, for this
+  request only. It needs the User's 학번 in 내 정보 (409 `STUDENT_NUMBER_MISSING`). `POST …/:id/decline` is 거절, and
+  철회 after consenting.
+- `GET …/:id/companions` answers `[{ userId, registeredName, studentNumber }]` with `Cache-Control: no-store`, only to
+  the requester (else 403) and only while `ready` (else 409), for the current Holders who consented, read when the
+  reply is built. It is the only reply with a 학번 or a registered name.
+- `POST …/:id/result` with `{ ok, failedUserId? }`: `ok` books it, a `failedUserId` sends it back to `gathering` for
+  that companion, who is asked to check their 내 정보, and neither leaves it `ready`.
+- `POST …/:id/cancelled`, with no body, is the requester's only while `booked`, and safe to repeat. A booking party
+  made for the request is deleted with its Sub Quest, so it no longer blocks its members' Free Time.
+
+**Keeping a request true to its Quest.** `RoomRequestSync` settles each gathering or ready request after a change to
+its Quest is stored: a companion leaving or removed, the requester leaving, the Quest deleted, a declined or cancelled
+invitation, and an ended friendship between the requester and a companion each dissolve it. A Holder who joins later
+is asked too, sending the request back to `gathering`, and people the room no longer holds dissolve it with the
+reason. A dissolved request's booking party is deleted, an existing Quest never, and everyone it asked gets the notice
+"파티 구성원이 제안을 거절했습니다". A request still not booked at its start is `expired` when any room request is read
+next, and its booking party goes. Consents are deleted at `booked` and at every final status. Every change sends
+`room-requests-changed` to the Users it concerns.
 
 ## Assistant
 

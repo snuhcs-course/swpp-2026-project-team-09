@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -27,6 +28,7 @@ import {
   SENT_INVITATIONS_KEY,
   SHUTTLE_VEHICLES_KEY,
 } from '@/api/queries';
+import { ROOM_INBOX_KEY, ROOM_REQUEST_KEY } from '@/api/room-requests';
 import { renewSession } from '@/api/server/http';
 import { asksMainServer, socketServerUrl } from '@/api/servers';
 import type { ShuttleVehicle } from '@/api/shuttle-types';
@@ -52,6 +54,7 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
   'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
   'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
+  'room-requests-changed': [ROOM_INBOX_KEY, ROOM_REQUEST_KEY],
 };
 
 // The lists of what waits for the User, which 알림 and the badge on 파티 show.
@@ -71,6 +74,7 @@ const SHOWN: readonly QueryKey[] = [
   MY_JOIN_REQUESTS_KEY,
   MATCHING_REQUESTS_KEY,
   SENT_INVITATIONS_KEY,
+  ROOM_INBOX_KEY,
   ...WAITING,
 ];
 
