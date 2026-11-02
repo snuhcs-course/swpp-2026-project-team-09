@@ -173,7 +173,7 @@ describe('완료했어요 without a booking that counts', () => {
     expect(button('다시 확인')).toBeVisible();
     expect(button('그냥 완료하기')).toBeVisible();
     expect(findButton('퀘스트 완료')).toBeNull();
-    expect(findButton('어시스턴트에게 예약 부탁하기')).toBeNull();
+    expect(button('어시스턴트에게 예약 부탁하기')).toBeVisible();
     expect(await status()).toBe('started');
   });
 
@@ -266,10 +266,9 @@ describe('the skip', () => {
   });
 });
 
-describe('어시스턴트에게 예약 부탁하기, once ticket 07 turns it on', () => {
-  it('is offered after a check that found nothing, and opens the chat with the request', async () => {
+describe('어시스턴트에게 예약 부탁하기', () => {
+  it('is offered after a check that found nothing, and opens the chat with the request and its seat card', async () => {
     await setUp(A_MONTH_LATER);
-    jest.replaceProperty(TUTORIAL_SHEET_FLAGS, 'askAssistantToBook', true);
     const user = await openSheet('kwanjeong', KWANJEONG_ROW);
 
     await pressAndWait(user, '완료했어요');
@@ -279,11 +278,16 @@ describe('어시스턴트에게 예약 부탁하기, once ticket 07 turns it on'
     expect(screen.queryByLabelText(SHEET)).toBeNull();
     expect(screen.getByTestId('chat-sheet')).toBeVisible();
     expect(screen.getByText('관정도서관 7층 열람실에 한 자리 예약해줘')).toBeVisible();
+    // The Assistant's library card for 7F-7A-zone2 reads the seats and offers the first free one, writing nothing.
+    expect(screen.getByText(/^관정관 7층 7A 열람실 2 구역 · 7193번$/u)).toBeVisible();
+    expect(button('예약하기')).toBeVisible();
+    expect(library.requestsTo('getSeatBookingList')).toHaveLength(1);
     expect(await status()).toBe('started');
   });
 
   it('stays hidden while the switch is off', async () => {
     await setUp(A_MONTH_LATER);
+    jest.replaceProperty(TUTORIAL_SHEET_FLAGS, 'askAssistantToBook', false);
     const user = await openSheet('kwanjeong', KWANJEONG_ROW);
 
     expect(findButton('어시스턴트에게 예약 부탁하기')).toBeNull();

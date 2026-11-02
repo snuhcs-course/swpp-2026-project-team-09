@@ -18,10 +18,9 @@ import type { SheetView, TutorialFlow } from './use-tutorial-flow';
 // What 어시스턴트에게 예약 부탁하기 sends, the frames' words.
 export const KWANJEONG_ASK = '관정도서관 7층 열람실에 한 자리 예약해줘';
 
-// The switch of 어시스턴트에게 예약 부탁하기: off until ticket P06-07 lands, since the Assistant refuses study spaces
-// until then (the chat prompt's study-spaces line). Ticket 07 sets `askAssistantToBook` to true. An object, so that a
-// test can turn it on.
-export const TUTORIAL_SHEET_FLAGS = { askAssistantToBook: false };
+// The switch of 어시스턴트에게 예약 부탁하기: on since the library cards (P06-08), which merge after the Assistant's
+// library tools (P06-07). An object, so that a test can turn it off.
+export const TUTORIAL_SHEET_FLAGS = { askAssistantToBook: true };
 
 interface TutorialSheetProps {
   flow: TutorialFlow;
