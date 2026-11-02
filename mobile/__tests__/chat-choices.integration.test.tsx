@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -129,6 +130,7 @@ describe('what the chips send, and when they leave', () => {
 
     expect(screen.getAllByTestId('user-bubble').at(-1)).toHaveTextContent('학생회관');
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
+      clientCapabilities: ['library'],
       messages: [
         { role: 'user', text: ASKED },
         { role: 'assistant', text: QUESTION, cards: [] },
@@ -155,6 +157,7 @@ describe('what the chips send, and when they leave', () => {
 
     expect(chipRows()).toEqual([]);
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
+      clientCapabilities: ['library'],
       messages: [
         { role: 'user', text: ASKED },
         { role: 'assistant', text: QUESTION, cards: [] },

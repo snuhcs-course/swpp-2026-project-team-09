@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { LibraryErrorKind } from '@/library/call-script';
+import type { LibraryBooking } from '@/library/replies';
 import type { LibraryEndpoint } from '@/library/site';
 import type { LibraryTransport, TransportReply } from '@/library/transport';
 import myBookings from './getMyBookingList_20260901-20261004.json';
@@ -38,8 +40,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+// A recorded file holds its request and its response, or (the room lists of 2026-11-02) the response alone.
 function responseOf(file: unknown): unknown {
-  return isRecord(file) ? file.response : null;
+  if (!isRecord(file)) {
+    return null;
+  }
+  return 'response' in file ? file.response : file;
 }
 
 // The fake applicant of the room form: fake values, as the eval world's.
@@ -51,6 +57,15 @@ export const FAKE_ROOM_FORM = {
 };
 
 export const TAKEN_SEAT_MESSAGE = '이미 예약된 좌석입니다.';
+
+// A booking cancelled (STATUS 7) or, once in use, returned (STATUS 5).
+function ended(booking: LibraryBooking): LibraryBooking {
+  const returned = booking.STATUS === 3;
+  return Object.assign({}, booking, {
+    STATUS: returned ? 5 : 7,
+    STATUS_NAME: returned ? '본인반납' : '예약취소',
+  });
+}
 
 // "2026-10-03 18:00:00" as the site's YYYYMMDD.
 function day(text: string): string {
@@ -64,6 +79,59 @@ export class FakeLibrary {
   private failBookingWith: string | null = null;
   private readonly taken = new Set<string>();
   private lastBseqno = 2000000;
+  // The User's bookings besides the recorded ones, such as one to cancel; and those cancelled or returned.
+  private readonly added: LibraryBooking[] = [];
+  private readonly cancelled = new Set<number>();
+  private cancelFailWith: string | null = null;
+  // The 학번 getUserCheck does not recognise.
+  private readonly unknownUsers = new Set<string>();
+
+  private held: (() => void)[] | null = null;
+
+  // From now on a write is answered only on `release`, as a slow library would.
+  holdWrites(): void {
+    this.held = [];
+  }
+
+  release(): void {
+    const waiting = this.held ?? [];
+    this.held = null;
+    for (const answer of waiting) {
+      answer();
+    }
+  }
+
+  // The answer of a call: at once, or for a held write, once released.
+  reply(endpoint: LibraryEndpoint, body: Body): Promise<TransportReply> {
+    const waiting = this.held;
+    if (waiting === null || (endpoint !== 'setRoomBooking' && endpoint !== 'setCancelBooking')) {
+      return Promise.resolve(this.answer(endpoint, body));
+    }
+    return new Promise((resolve) => {
+      waiting.push(() => {
+        resolve(this.answer(endpoint, body));
+      });
+    });
+  }
+
+  // A booking of the User's, which getMyBookingList lists with the recorded ones.
+  addBooking(booking: LibraryBooking): void {
+    this.added.push(booking);
+  }
+
+  // getUserCheck answers this 학번 with the site's msg and no useCheckInfo.
+  refuseUser(schoolNo: string): void {
+    this.unknownUsers.add(schoolNo);
+  }
+
+  refuseCancels(message: string): void {
+    this.cancelFailWith = message;
+  }
+
+  // Every request made so far that changes a booking.
+  writes(): FakeRequest[] {
+    return this.requests.filter(({ endpoint }) => endpoint === 'setRoomBooking' || endpoint === 'setCancelBooking');
+  }
 
   // The next calls answer these error kinds, one each, in order.
   answerNext(...errors: LibraryErrorKind[]): void {
@@ -104,7 +172,9 @@ export class FakeLibrary {
       case 'getSeatInfoFromList':
         return (seatInfoFromList as Record<string, unknown>)[body.sectorNo];
       case 'getUserCheck':
-        return { successYN: 'Y', useCheckInfo: { NAME: body.pUserName, SCHOOLNO: body.pSchoolNo } };
+        return this.unknownUsers.has(body.pSchoolNo ?? '')
+          ? { successYN: 'N', msg: '이용자 정보가 없습니다.' }
+          : { successYN: 'Y', useCheckInfo: { NAME: body.pUserName, SCHOOLNO: body.pSchoolNo } };
       case 'getMyBookingList':
         return this.bookings(body);
       case 'roomForm':
@@ -112,7 +182,7 @@ export class FakeLibrary {
       case 'setRoomBooking':
         return this.book(body);
       case 'setCancelBooking':
-        return { successYN: 'Y' };
+        return this.cancel(body);
       default:
         return undefined;
     }
@@ -129,11 +199,21 @@ export class FakeLibrary {
     return { ...response, SeatList: seats };
   }
 
-  // The recorded bookings whose use starts within the asked dates; the site answers null for none.
+  private cancel({ bseqno }: Body): unknown {
+    if (this.cancelFailWith !== null) {
+      return { successYN: 'N', msg: this.cancelFailWith };
+    }
+    this.cancelled.add(Number(bseqno));
+    return { successYN: 'Y' };
+  }
+
+  // The recorded and added bookings whose use starts within the asked dates, a cancelled one as 예약취소 and a
+  // returned one as 본인반납; the site answers null for none.
   private bookings({ start, end }: Body): unknown {
-    const list = myBookings.response.bookingList.filter(
-      ({ USESTART }) => day(USESTART) >= (start ?? '') && day(USESTART) <= (end ?? ''),
+    const all: LibraryBooking[] = [...this.added, ...myBookings.response.bookingList].map((booking) =>
+      this.cancelled.has(booking.BSEQNO) ? ended(booking) : booking,
     );
+    const list = all.filter(({ USESTART }) => day(USESTART) >= (start ?? '') && day(USESTART) <= (end ?? ''));
     return { ...myBookings.response, params: { start, end }, bookingList: list.length === 0 ? null : list };
   }
 
@@ -153,7 +233,7 @@ export class FakeLibrary {
 export function fakeTransport(library: FakeLibrary = new FakeLibrary()): LibraryTransport & { library: FakeLibrary } {
   return {
     library,
-    call: (endpoint, body) => Promise.resolve(library.answer(endpoint, body)),
+    call: (endpoint, body) => library.reply(endpoint, body),
     logout: () => {
       library.logouts.push(Date.now());
       return Promise.resolve(true);

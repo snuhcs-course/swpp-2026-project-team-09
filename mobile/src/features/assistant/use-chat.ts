@@ -5,6 +5,8 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -24,6 +26,8 @@ import {
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
+import type { LibraryDone } from '@/library/cards/done';
+import { useRejectAlias } from './use-reject-alias';
 
 // Why the Assistant gave no answer: it could not answer now, which 다시 시도 sends again, or the User's messages of
 // the day are used up.
@@ -48,6 +52,26 @@ export interface ChatBubble {
   // The words an Assistant's answer read through an alias, each shown with 아니에요 until the User presses it.
   resolvedBy: readonly ResolvedBy[];
   failure: ChatFailure | null;
+  // The app's own bubble, never sent to the Assistant: what a library card says once it acted, or the card it gave.
+  own?: boolean;
+  // A booking a library card made, as its done message shows it.
+  done?: LibraryDone;
+}
+
+// How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
+// booked, cancelled, returned or was dismissed never offers its button again when the sheet opens anew.
+export interface CardOutcome {
+  // `pending` from the confirm press until the library answers, so that a sheet opened anew meanwhile offers no
+  // button; the card clears it when the write fails.
+  kind: 'pending' | 'booked' | 'declined' | 'cancelled' | 'returned' | 'stopped';
+  words: string;
+}
+
+// What the app itself adds to the chat: words, the cards it gives and a booking made.
+export interface OwnBubble {
+  text: string;
+  cards?: readonly ShownChatCard[];
+  done?: LibraryDone;
 }
 
 export interface Chat {
@@ -67,6 +91,13 @@ export interface Chat {
   // Shows a Proposal that no request asked for, a suggestion's, as the Assistant's, and gives its bubble's id. Nothing
   // is sent now; the bubble goes with the next request as any other.
   propose: (text: string, proposal: QuestProposal) => number;
+  // Adds the app's own bubble, which no request sends.
+  addOwn: (bubble: OwnBubble) => void;
+  // How each library card of the conversation ended, by the card's place: its bubble and its key.
+  outcomes: ReadonlyMap<string, CardOutcome>;
+  finish: (card: string, outcome: CardOutcome) => void;
+  // Forgets a card's mark: a write that was pending failed, and the card offers its button again.
+  unfinish: (card: string) => void;
 }
 
 export const CHAT_FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
@@ -78,11 +109,11 @@ function textLength(messages: readonly ChatMessage[]): number {
   return messages.reduce((total, message) => total + lengthOf(message), 0);
 }
 
-// What a request sends of the conversation: the latest 20 messages without the failures, fewer while they hold more
-// characters than the main server takes. The last Proposal goes with its message, by its values, so that the
-// Assistant can change one of its fields and keep the others.
+// What a request sends of the conversation: the latest 20 messages without the failures and the app's own bubbles,
+// fewer while they hold more characters than the main server takes. The last Proposal goes with its message, by its
+// values, so that the Assistant can change one of its fields and keep the others.
 export function messagesToSend(bubbles: readonly ChatBubble[]): ChatMessage[] {
-  const said = bubbles.filter(({ failure }) => failure === null);
+  const said = bubbles.filter(({ failure, own = false }) => failure === null && !own);
   const proposing = said.findLast(({ proposal }) => proposal !== null);
   let messages = said
     .map((bubble): ChatMessage => {
@@ -141,7 +172,7 @@ function userBubble(text: string, chosen: Chosen | null): NewBubble {
   };
 }
 
-interface Bubbles {
+export interface Bubbles {
   bubbles: readonly ChatBubble[];
   // What was said, as the next request sends it, without waiting for a render.
   said: { readonly current: readonly ChatBubble[] };
@@ -168,35 +199,53 @@ function useBubbles(): Bubbles {
   return { bubbles, said, show, add };
 }
 
-function sameReading(one: ResolvedBy, other: ResolvedBy): boolean {
-  return one.kind === other.kind && one.words === other.words && one.id === other.id;
-}
-
-// 아니에요 of the conversation's bubbles: the line of that reading leaves its bubble once the main server took it.
-function useRejectAlias({ said, show }: Pick<Bubbles, 'said' | 'show'>): Chat['rejectAlias'] {
+// The app's own bubbles, added after what was said.
+function useAddOwn(add: Bubbles['add']): Chat['addOwn'] {
   return useCallback(
-    async (bubbleId: number, reading: ResolvedBy): Promise<void> => {
-      await apiClient.rejectAlias({ kind: reading.kind, words: reading.words, targetId: reading.id });
-      show(
-        said.current.map((bubble) =>
-          bubble.id === bubbleId
-            ? { ...bubble, resolvedBy: bubble.resolvedBy.filter((held) => !sameReading(held, reading)) }
-            : bubble,
-        ),
-      );
+    ({ text, cards = [], done }: OwnBubble): void => {
+      add({
+        role: 'assistant',
+        text,
+        cards,
+        mapButtons: [],
+        proposal: null,
+        choices: [],
+        chosen: null,
+        resolvedBy: [],
+        failure: null,
+        own: true,
+        done,
+      });
     },
-    [said, show],
+    [add],
   );
 }
 
+// How the library cards ended, kept with the conversation.
+function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forget: () => void } {
+  const [outcomes, setOutcomes] = useState<ReadonlyMap<string, CardOutcome>>(new Map());
+  const finish = useCallback((card: string, outcome: CardOutcome): void => {
+    setOutcomes((last) => new Map(last).set(card, outcome));
+  }, []);
+  const unfinish = useCallback((card: string): void => {
+    setOutcomes((last) => {
+      const next = new Map(last);
+      next.delete(card);
+      return next;
+    });
+  }, []);
+  const forget = useCallback((): void => {
+    setOutcomes(new Map());
+  }, []);
+  return { outcomes, finish, unfinish, forget };
+}
+
 // Asking the Assistant: the request for the conversation as it stands, the User's message last, with 다시 시도 and
-// 새 대화.
-function useAsking({ said, show, add }: Bubbles): {
-  waiting: boolean;
-  ask: () => void;
-  retry: () => void;
-  reset: () => void;
-} {
+// 새 대화, which also forgets how the library cards ended.
+function useAsking(
+  { said, show, add }: Bubbles,
+  forget: () => void,
+): { waiting: boolean; ask: () => void; retry: () => void; reset: () => void } {
   const [waiting, setWaiting] = useState(false);
   // Which conversation a reply belongs to: 새 대화 starts another, and a reply to the one before is dropped.
   const conversation = useRef(0);
@@ -223,8 +272,9 @@ function useAsking({ said, show, add }: Bubbles): {
   const reset = useCallback((): void => {
     conversation.current += 1;
     show([]);
+    forget();
     setWaiting(false);
-  }, [show]);
+  }, [forget, show]);
 
   return { waiting, ask, retry, reset };
 }
@@ -249,7 +299,8 @@ function proposedBubble(text: string, proposal: QuestProposal): NewBubble {
 export function useChat(): Chat {
   const held = useBubbles();
   const { add, said, show } = held;
-  const { waiting, ask, retry, reset } = useAsking(held);
+  const { outcomes, finish, unfinish, forget } = useOutcomes();
+  const { waiting, ask, retry, reset } = useAsking(held, forget);
 
   const send = useCallback(
     (text: string): void => {
@@ -272,7 +323,21 @@ export function useChat(): Chat {
     [add],
   );
 
+  const addOwn = useAddOwn(add);
   const rejectAlias = useRejectAlias({ said, show });
 
-  return { bubbles: held.bubbles, waiting, send, choose, retry, rejectAlias, reset, propose };
+  return {
+    bubbles: held.bubbles,
+    waiting,
+    send,
+    choose,
+    retry,
+    rejectAlias,
+    reset,
+    propose,
+    addOwn,
+    outcomes,
+    finish,
+    unfinish,
+  };
 }

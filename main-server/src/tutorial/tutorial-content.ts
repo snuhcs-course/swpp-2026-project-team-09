@@ -83,3 +83,25 @@ export async function readTutorialContent(file: string): Promise<TutorialContent
   }
   return result.data;
 }
+
+// The official booking site, which the 관정 quest links to when booking in the app is turned off.
+export const KWANJEONG_SITE = {
+  label: '관정도서관 예약 사이트',
+  url: 'https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main',
+};
+
+// The content as GET /tutorial serves it. With 관정 booking turned off (LIBRARY_BOOKING_ENABLED), a quest checked
+// through the library is completed by its button instead, so that the phone never calls the library for it, and links
+// to the official site.
+export function servedContent(content: TutorialContent, libraryBooking: boolean): TutorialContent {
+  if (libraryBooking) {
+    return content;
+  }
+  return {
+    quests: content.quests.map((quest) =>
+      quest.completion.kind === 'kwanjeongCheck'
+        ? { ...quest, completion: { kind: 'button' }, links: [...quest.links, KWANJEONG_SITE] }
+        : quest,
+    ),
+  };
+}
