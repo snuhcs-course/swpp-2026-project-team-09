@@ -1,0 +1,5467 @@
+{
+  "record": {
+    "run": "r0b",
+    "command": "pnpm eval:collection --run r0b --from eval/results/collection-held-out-judgement-fed4a2e0.json --part held-out --no-model",
+    "commit": "464ea9c5ad97208f0b6216d674a37d675b0d6e95",
+    "c0Tag": "eval-freeze-iter3-collection",
+    "isDescendantOfC0": true,
+    "setHash": "af9f5ed56cb5854d09b9e8e0a59247dcac97c64d6303d6c2385a617e8ec95bf3",
+    "thresholdsBlob": "ee1b5bc95cf83a0cbdee44f246aae875a811c8ff",
+    "startedAt": "2026-11-01T16:38:35.393Z",
+    "endedAt": "2026-11-01T16:38:36.607Z",
+    "part": "held-out",
+    "modelAsked": "anthropic/claude-haiku-5.5",
+    "canonicalSlug": "anthropic/claude-haiku-5.5-20261007",
+    "modelsAnswered": [
+      "anthropic/claude-haiku-5.5"
+    ],
+    "limits": {
+      "timeoutMs": 60000,
+      "maxOutputTokens": 4000
+    },
+    "switches": {
+      "equal starts with title similarity": true,
+      "SAME_EVENT_TITLE_RULE": false,
+      "SAME_EVENT_AI_CHOICE": false
+    },
+    "buildingNumberIsGwanak": {
+      "snu_events": true,
+      "extra_snu": true
+    },
+    "checks": [
+      "announcesEvent",
+      "linesInPost",
+      "dateAgrees",
+      "weekdayAgrees",
+      "timeAgrees",
+      "notApplicationPeriod",
+      "startBeforeEnd",
+      "hasTimeOfDay",
+      "length",
+      "placeInLines",
+      "placeMatches",
+      "newSession"
+    ],
+    "from": "eval/results/collection-held-out-judgement-fed4a2e0.json",
+    "usage": {
+      "calls": 0,
+      "tokens": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0
+      },
+      "costUsd": 0
+    },
+    "budgetUsd": 1,
+    "pricesSource": "openrouter"
+  },
+  "score": {
+    "b": {
+      "d1": 0,
+      "d2": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 30,
+        "precision": 1,
+        "recall": 0.0625,
+        "f1": 0.11764705882352941
+      },
+      "recallWithQueue": {
+        "k": 2,
+        "n": 32
+      },
+      "d3": {
+        "k": 7,
+        "n": 32
+      },
+      "d4": {
+        "k": 0,
+        "n": 26,
+        "byHold": {}
+      },
+      "d5": {
+        "k": 0,
+        "n": 5
+      },
+      "d6": {
+        "k": 2,
+        "n": 32
+      },
+      "pairs": [
+        {
+          "id": "b-001",
+          "sameEvent": false,
+          "newPost": "snu-176978",
+          "stored": "extra-PGM012001976",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-002",
+          "sameEvent": true,
+          "newPost": "snu-177017",
+          "stored": "extra-PGM012002307",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-003",
+          "sameEvent": true,
+          "newPost": "snu-177026",
+          "stored": "extra-PGM012002309",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-004",
+          "sameEvent": true,
+          "newPost": "snu-178085",
+          "stored": "extra-PGM012002390",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-005",
+          "sameEvent": false,
+          "newPost": "snu-178328",
+          "stored": "snu-178250",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-008",
+          "sameEvent": true,
+          "newPost": "snu-177707",
+          "stored": "extra-PGM012002381",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-009",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002084",
+          "stored": "extra-PGM012002082",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-011",
+          "sameEvent": false,
+          "newPost": "snu-177017",
+          "stored": "extra-PGM012002415",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-012",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002333",
+          "stored": "extra-PGM012002332",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-013",
+          "sameEvent": true,
+          "newPost": "snu-178016",
+          "stored": "extra-PGM012002397",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-015",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002355",
+          "stored": "extra-PGM012002354",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-016",
+          "sameEvent": false,
+          "newPost": "snu-177017",
+          "stored": "extra-PGM012002211",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-017",
+          "sameEvent": true,
+          "newPost": "snu-178085",
+          "stored": "extra-PGM012002394",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-018",
+          "sameEvent": false,
+          "newPost": "snu-176924",
+          "stored": "extra-PGM012002195",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-019",
+          "sameEvent": false,
+          "newPost": "snu-177314",
+          "stored": "extra-PGM012001958",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-020",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002335",
+          "stored": "extra-PGM012002334",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-021",
+          "sameEvent": false,
+          "newPost": "snu-178103",
+          "stored": "snu-177821",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-022",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002088",
+          "stored": "extra-PGM012002084",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-023",
+          "sameEvent": true,
+          "newPost": "snu-178223",
+          "stored": "extra-PGM012002404",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-025",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002393",
+          "stored": "extra-PGM012002390",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-026",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002398",
+          "stored": "extra-PGM012002397",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-027",
+          "sameEvent": false,
+          "newPost": "snu-177869",
+          "stored": "extra-PGM012002332",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-028",
+          "sameEvent": false,
+          "newPost": "snu-177317",
+          "stored": "extra-PGM012002398",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-029",
+          "sameEvent": true,
+          "newPost": "extra-PGM012002234",
+          "stored": "extra-PGM012002075",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-030",
+          "sameEvent": false,
+          "newPost": "snu-178349",
+          "stored": "snu-178346",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-032",
+          "sameEvent": false,
+          "newPost": "snu-177317",
+          "stored": "extra-PGM012001882",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-033",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002356",
+          "stored": "extra-PGM012002355",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-034",
+          "sameEvent": false,
+          "newPost": "snu-177533",
+          "stored": "extra-PGM012002349",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-035",
+          "sameEvent": true,
+          "newPost": "snu-177764",
+          "stored": "extra-PGM012002392",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-036",
+          "sameEvent": false,
+          "newPost": "snu-176972",
+          "stored": "extra-PGM012002272",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-037",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002412",
+          "stored": "extra-PGM012002411",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-038",
+          "sameEvent": true,
+          "newPost": "snu-176978",
+          "stored": "extra-PGM012001958",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-039",
+          "sameEvent": false,
+          "newPost": "snu-177920",
+          "stored": "extra-PGM012001958",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-040",
+          "sameEvent": true,
+          "newPost": "snu-178016",
+          "stored": "extra-PGM012001882",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-042",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002368",
+          "stored": "extra-PGM012002367",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-043",
+          "sameEvent": false,
+          "newPost": "snu-178151",
+          "stored": "extra-PGM012002406",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-044",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002175",
+          "stored": "extra-PGM012002174",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-045",
+          "sameEvent": false,
+          "newPost": "snu-177707",
+          "stored": "extra-PGM012002382",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-046",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002177",
+          "stored": "extra-PGM012002176",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-047",
+          "sameEvent": true,
+          "newPost": "snu-177920",
+          "stored": "extra-PGM012001958",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-048",
+          "sameEvent": true,
+          "newPost": "snu-177764",
+          "stored": "extra-PGM012002394",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-049",
+          "sameEvent": false,
+          "newPost": "snu-178097",
+          "stored": "snu-177473",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-051",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002347",
+          "stored": "extra-PGM012002331",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-054",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002358",
+          "stored": "extra-PGM012002357",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-055",
+          "sameEvent": false,
+          "newPost": "snu-177131",
+          "stored": "snu-177122",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-056",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002322",
+          "stored": "extra-PGM012002304",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-057",
+          "sameEvent": true,
+          "newPost": "snu-178079",
+          "stored": "extra-PGM012002382",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-060",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002357",
+          "stored": "extra-PGM012002356",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-061",
+          "sameEvent": false,
+          "newPost": "snu-178079",
+          "stored": "extra-PGM012002381",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-063",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002398",
+          "stored": "extra-PGM012001882",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-064",
+          "sameEvent": true,
+          "newPost": "snu-178064",
+          "stored": "extra-PGM012002395",
+          "result": "attached",
+          "reached": true,
+          "by": "similar"
+        },
+        {
+          "id": "b-065",
+          "sameEvent": false,
+          "newPost": "snu-178427",
+          "stored": "extra-PGM012002347",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-067",
+          "sameEvent": true,
+          "newPost": "extra-PGM012002091",
+          "stored": "extra-PGM012002071",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-068",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002176",
+          "stored": "extra-PGM012002175",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-070",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002364",
+          "stored": "extra-PGM012002363",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-071",
+          "sameEvent": false,
+          "newPost": "snu-177626",
+          "stored": "extra-PGM012002271",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-072",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002309",
+          "stored": "extra-PGM012002277",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-073",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002332",
+          "stored": "extra-PGM012002331",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-074",
+          "sameEvent": false,
+          "newPost": "snu-177893",
+          "stored": "extra-PGM012002322",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-075",
+          "sameEvent": true,
+          "newPost": "snu-177764",
+          "stored": "extra-PGM012002391",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-076",
+          "sameEvent": false,
+          "newPost": "snu-177692",
+          "stored": "snu-177626",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-078",
+          "sameEvent": false,
+          "newPost": "snu-177026",
+          "stored": "extra-PGM012002277",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-080",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002090",
+          "stored": "extra-PGM012002088",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-081",
+          "sameEvent": true,
+          "newPost": "snu-178085",
+          "stored": "extra-PGM012002391",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-082",
+          "sameEvent": false,
+          "newPost": "snu-177113",
+          "stored": "extra-PGM012002205",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-084",
+          "sameEvent": false,
+          "newPost": "snu-178079",
+          "stored": "extra-PGM012002146",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-085",
+          "sameEvent": false,
+          "newPost": "snu-178064",
+          "stored": "extra-PGM012002377",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-086",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002394",
+          "stored": "extra-PGM012002391",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-089",
+          "sameEvent": true,
+          "newPost": "snu-177458",
+          "stored": "extra-PGM012002264",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-090",
+          "sameEvent": true,
+          "newPost": "snu-177764",
+          "stored": "extra-PGM012002393",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-091",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002365",
+          "stored": "extra-PGM012002364",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-092",
+          "sameEvent": true,
+          "newPost": "snu-177314",
+          "stored": "extra-PGM012001958",
+          "result": "none",
+          "reached": true,
+          "by": null
+        },
+        {
+          "id": "b-093",
+          "sameEvent": true,
+          "newPost": "snu-177848",
+          "stored": "extra-PGM012002396",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-094",
+          "sameEvent": true,
+          "newPost": "snu-177764",
+          "stored": "extra-PGM012002390",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-095",
+          "sameEvent": false,
+          "newPost": "snu-177902",
+          "stored": "extra-PGM012002390",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-096",
+          "sameEvent": true,
+          "newPost": "extra-PGM012002139",
+          "stored": "extra-PGM012002074",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-098",
+          "sameEvent": true,
+          "newPost": "snu-178085",
+          "stored": "extra-PGM012002389",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-099",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002326",
+          "stored": "extra-PGM012002322",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-100",
+          "sameEvent": true,
+          "newPost": "snu-178085",
+          "stored": "extra-PGM012002392",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-101",
+          "sameEvent": false,
+          "newPost": "snu-177668",
+          "stored": "snu-177323",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-102",
+          "sameEvent": false,
+          "newPost": "snu-177710",
+          "stored": "extra-PGM012002393",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-104",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002146",
+          "stored": "extra-PGM012002144",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-105",
+          "sameEvent": true,
+          "newPost": "snu-178016",
+          "stored": "extra-PGM012002398",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-107",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002179",
+          "stored": "extra-PGM012002177",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-108",
+          "sameEvent": true,
+          "newPost": "snu-178013",
+          "stored": "extra-PGM012002403",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-109",
+          "sameEvent": true,
+          "newPost": "snu-177764",
+          "stored": "extra-PGM012002389",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-110",
+          "sameEvent": true,
+          "newPost": "snu-178085",
+          "stored": "extra-PGM012002393",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-111",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002392",
+          "stored": "extra-PGM012002389",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-113",
+          "sameEvent": true,
+          "newPost": "extra-PGM012002138",
+          "stored": "extra-PGM012002073",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-114",
+          "sameEvent": false,
+          "newPost": "snu-178136",
+          "stored": "extra-PGM012002328",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-115",
+          "sameEvent": false,
+          "newPost": "snu-177707",
+          "stored": "extra-PGM012002144",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-116",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002317",
+          "stored": "extra-PGM012002315",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-117",
+          "sameEvent": true,
+          "newPost": "extra-PGM012001977",
+          "stored": "extra-PGM012001976",
+          "result": "attached",
+          "reached": true,
+          "by": "similar"
+        },
+        {
+          "id": "b-118",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002382",
+          "stored": "extra-PGM012002381",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-119",
+          "sameEvent": false,
+          "newPost": "extra-PGM012001975",
+          "stored": "extra-PGM012001974",
+          "result": "none",
+          "reached": false,
+          "by": null
+        },
+        {
+          "id": "b-120",
+          "sameEvent": false,
+          "newPost": "extra-PGM012002334",
+          "stored": "extra-PGM012002333",
+          "result": "none",
+          "reached": false,
+          "by": null
+        }
+      ],
+      "rows": [
+        {
+          "id": "b-002",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-003",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-004",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-008",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-013",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-017",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-023",
+          "failed": "못 붙음 (none)",
+          "cause": "제목 규칙 밖 (AI의 몫)"
+        },
+        {
+          "id": "b-029",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-035",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-038",
+          "failed": "못 붙음 (none)",
+          "cause": "다대일"
+        },
+        {
+          "id": "b-040",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-047",
+          "failed": "못 붙음 (none)",
+          "cause": "다대일"
+        },
+        {
+          "id": "b-048",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-057",
+          "failed": "못 붙음 (none)",
+          "cause": "제목 규칙 밖 (AI의 몫)"
+        },
+        {
+          "id": "b-067",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-075",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-081",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-089",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-090",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-092",
+          "failed": "못 붙음 (none)",
+          "cause": "다대일"
+        },
+        {
+          "id": "b-093",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-094",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-096",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-098",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-100",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-105",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-108",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-109",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-110",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        },
+        {
+          "id": "b-113",
+          "failed": "못 붙음 (none)",
+          "cause": "후보 단계 누락"
+        }
+      ]
+    }
+  },
+  "verdicts": [
+    {
+      "id": "d1.floor",
+      "metric": "D1",
+      "kind": "floor",
+      "threshold": "= 0",
+      "measured": "0",
+      "result": "PASS"
+    },
+    {
+      "id": "d1.target",
+      "metric": "D1",
+      "kind": "target",
+      "threshold": "= 0",
+      "measured": "0",
+      "result": "PASS"
+    },
+    {
+      "id": "d2.recall-with-queue.target",
+      "metric": "D2",
+      "kind": "target",
+      "threshold": ">= 0.8",
+      "measured": "2/32",
+      "result": "FAIL"
+    },
+    {
+      "id": "d3.target",
+      "metric": "D3",
+      "kind": "target",
+      "threshold": ">= 0.95",
+      "measured": "7/32",
+      "result": "FAIL"
+    },
+    {
+      "id": "d4.target",
+      "metric": "D4",
+      "kind": "target",
+      "threshold": "<= 0.3",
+      "measured": "0/26",
+      "result": "PASS"
+    },
+    {
+      "id": "d6.target",
+      "metric": "D6",
+      "kind": "target",
+      "threshold": ">= 0.5",
+      "measured": "2/32",
+      "result": "FAIL"
+    }
+  ],
+  "stopped": null,
+  "calls": {
+    "judgements": {
+      "extra-PGM012002294": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-16T13:00",
+              "end": "2026-11-16T14:00",
+              "place": "222동 B102호 최병오홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.16. 13:00 ~ 2026.11.16. 14:00 / 장소: 222동 B102호",
+                  "- 일시: 2026.11.16. (월) 13:00"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.16. 13:00 ~ 2026.11.16. 14:00 / 장소: 222동 B102호"
+                ],
+                "place": [
+                  "- 장소: 222동 B102호 최병오홀"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002261": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T13:30",
+              "end": "2026-11-11T15:30",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.11. 13:30 ~ 2026.11.11. 15:30 / 장소: zoom을 활용한 비대면 강의"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.11. 13:30 ~ 2026.11.11. 15:30 / 장소: zoom을 활용한 비대면 강의"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-25T13:30",
+              "end": "2026-11-25T15:30",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[2회차] 기간: 2026.11.25. 13:30 ~ 2026.11.25. 15:30 / 장소: zoom을 활용한 비대면 강의"
+                ],
+                "end": [
+                  "[2회차] 기간: 2026.11.25. 13:30 ~ 2026.11.25. 15:30 / 장소: zoom을 활용한 비대면 강의"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002411": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-25T19:00",
+              "end": "2026-11-25T21:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.25. 19:00 ~ 2026.11.25. 21:00 / 장소: ZOOM"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.25. 19:00 ~ 2026.11.25. 21:00 / 장소: ZOOM"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177590": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-26",
+              "end": "2026-10-29",
+              "place": "서울대학교 아시아연구소(101동) 2층 삼익홀, 영원홀 등",
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "○기간: 2026년 10월 26일(월)~29일(목)"
+                ],
+                "end": [
+                  "○기간: 2026년 10월 26일(월)~29일(목)"
+                ],
+                "place": [
+                  "○장소: 서울대학교 아시아연구소(101동) 2층 삼익홀, 영원홀 등"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-27T10:20",
+              "end": null,
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "○기조강연: 10월 27일(화) 오전 10시 20분, Min Zhou(UCLA) 석좌교수"
+                ],
+                "end": [],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177524": {
+        "answer": null,
+        "failure": "AI_NoObjectGeneratedError",
+        "modelId": null
+      },
+      "snu-178424": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-05T14:00",
+              "end": "2026-11-05T17:30",
+              "place": "서울대학교 사범대학 10-1동 101호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "※ 일시: 11월 5일(목) 14:00~17:30"
+                ],
+                "end": [
+                  "※ 일시: 11월 5일(목) 14:00~17:30"
+                ],
+                "place": [
+                  "※ 장소: 서울대학교 사범대학 10-1동 101호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178250": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-03T11:00",
+              "end": null,
+              "place": "71-1동 308호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시: 2026. 11. 3.(화) 11:00"
+                ],
+                "end": [],
+                "place": [
+                  "- 장소: 71-1동 308호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-04T19:00",
+              "end": null,
+              "place": "101동 220호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시: 2026. 11. 4.(수) 19:00"
+                ],
+                "end": [],
+                "place": [
+                  "- 장소: 101동 220호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-04T10:00",
+              "end": "2026-11-05T18:00",
+              "place": "잔디광장",
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "- 일시: 2026. 11. 4.(수)~ 2026. 11. 5.(목) 10:00~18:00"
+                ],
+                "end": [
+                  "- 일시: 2026. 11. 4.(수)~ 2026. 11. 5.(목) 10:00~18:00"
+                ],
+                "place": [
+                  "- 장소: 잔디광장"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-06T15:00",
+              "end": null,
+              "place": "잔디광장",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시: 2026. 11. 6.(금) 15:00"
+                ],
+                "end": [],
+                "place": [
+                  "- 장소: 잔디광장"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177506": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002198": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-13T13:00",
+              "end": "2026-11-13T15:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "Date: [Part 1] 2026. 11. 13. (금) 13:00-15:00 / [Part 2] 2026. 11. 20. (금) 11:00-13:00"
+                ],
+                "end": [
+                  "Date: [Part 1] 2026. 11. 13. (금) 13:00-15:00 / [Part 2] 2026. 11. 20. (금) 11:00-13:00"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-20T11:00",
+              "end": "2026-11-20T13:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "Date: [Part 1] 2026. 11. 13. (금) 13:00-15:00 / [Part 2] 2026. 11. 20. (금) 11:00-13:00"
+                ],
+                "end": [
+                  "Date: [Part 1] 2026. 11. 13. (금) 13:00-15:00 / [Part 2] 2026. 11. 20. (금) 11:00-13:00"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177407": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-28T12:00",
+              "end": "2026-10-28T13:30",
+              "place": "우석경제관 504호 (223동 504호)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일자: 10월 28일(수) 12:00-13:30"
+                ],
+                "end": [
+                  "- 일자: 10월 28일(수) 12:00-13:30"
+                ],
+                "place": [
+                  "- 장소: 우석경제관 504호 (223동 504호)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002367": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-20T19:00",
+              "end": "2026-11-20T21:00",
+              "place": "기숙사 운동장",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.20. 19:00 ~ 2026.11.20. 21:00 / 장소: 기숙사 운동장"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.20. 19:00 ~ 2026.11.20. 21:00 / 장소: 기숙사 운동장"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.20. 19:00 ~ 2026.11.20. 21:00 / 장소: 기숙사 운동장"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002362": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-12-01T19:00",
+              "end": "2026-12-01T21:00",
+              "place": "906동 3층 세미나실 1,2,3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.12.01. 19:00 ~ 2026.12.01. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.12.01. 19:00 ~ 2026.12.01. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.12.01. 19:00 ~ 2026.12.01. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ]
+              }
+            },
+            {
+              "start": "2026-12-08T19:00",
+              "end": "2026-12-08T22:00",
+              "place": "906동 3층 세미나실 1,2,3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[2회차] 기간: 2026.12.08. 19:00 ~ 2026.12.08. 22:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[2회차] 기간: 2026.12.08. 19:00 ~ 2026.12.08. 22:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": [
+                  "[2회차] 기간: 2026.12.08. 19:00 ~ 2026.12.08. 22:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177989": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-12T12:00",
+              "end": null,
+              "place": "101동 210호 (아시아연구소 영원홀)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "시간: 11/12 목 12시"
+                ],
+                "end": [],
+                "place": [
+                  "장소: 101동 210호 (아시아연구소 영원홀)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002406": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06T15:00",
+              "end": "2026-11-06T19:00",
+              "place": "18ehd 312gh",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.06. 15:00 ~ 2026.11.06. 19:00 / 장소: 18ehd 312gh"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.06. 15:00 ~ 2026.11.06. 19:00 / 장소: 18ehd 312gh"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.06. 15:00 ~ 2026.11.06. 19:00 / 장소: 18ehd 312gh"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178349": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-02T11:00",
+              "end": null,
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026년 11월 2일 월요일 오전 11시"
+                ],
+                "end": [],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178067": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-18",
+              "end": "2026-11-20",
+              "place": "인천 네스트호텔에서 개최될 예정입니다.",
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "2026년 11월 18일(수)부터 20일(금) 까지 인천 네스트호텔에서 개최될 예정입니다."
+                ],
+                "end": [
+                  "2026년 11월 18일(수)부터 20일(금) 까지 인천 네스트호텔에서 개최될 예정입니다."
+                ],
+                "place": [
+                  "2026년 11월 18일(수)부터 20일(금) 까지 인천 네스트호텔에서 개최될 예정입니다."
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178235": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-13",
+              "end": "2026-11-22",
+              "place": "코어라운지(B1, B2) 렉처홀(2F)",
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "2026.10.13.-11.22."
+                ],
+                "end": [
+                  "2026.10.13.-11.22."
+                ],
+                "place": [
+                  "코어라운지(B1, B2) 렉처홀(2F)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177476": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002238": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002415": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002199": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002245": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-17T16:00",
+              "end": "2026-09-17T18:00",
+              "place": "220동 203호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- ­일시: 2026. 9. 17.(목) 16:00 ~ 18:00"
+                ],
+                "end": [
+                  "- ­일시: 2026. 9. 17.(목) 16:00 ~ 18:00"
+                ],
+                "place": [
+                  "- 장소: 220동 203호"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-19T16:00",
+              "end": "2026-10-19T18:00",
+              "place": "220동 204호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- ­일시: 2026. 10. 19.(월) 16:00 ~ 18:00"
+                ],
+                "end": [
+                  "- ­일시: 2026. 10. 19.(월) 16:00 ~ 18:00"
+                ],
+                "place": [
+                  "­- 장소: 220동 204호 *장소 변동됨"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-05T16:00",
+              "end": "2026-11-05T18:00",
+              "place": "220동 203호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- ­일시: 2026. 11. 5.(목) 16:00 ~ 18:00"
+                ],
+                "end": [
+                  "- ­일시: 2026. 11. 5.(목) 16:00 ~ 18:00"
+                ],
+                "place": [
+                  "- ­장소: 220동 203호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002387": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-05T17:00",
+              "end": "2026-11-05T18:30",
+              "place": "18동 312호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.05. 17:00 ~ 2026.11.05. 18:30 / 장소: 18동 312호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.05. 17:00 ~ 2026.11.05. 18:30 / 장소: 18동 312호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.05. 17:00 ~ 2026.11.05. 18:30 / 장소: 18동 312호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177752": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002197": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T10:00",
+              "end": "2026-11-11T12:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "Date: 2026. 11. 11. (수) 10:00-12:00"
+                ],
+                "end": [
+                  "Date: 2026. 11. 11. (수) 10:00-12:00"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177995": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T13:00",
+              "end": "2026-11-11T17:30",
+              "place": "서울대 의대 (대학로) 행정관 3층 대강당 301호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 일 시 : 2026년 11월 11일(수) 13:00 ~ 17:30"
+                ],
+                "end": [
+                  "■ 일 시 : 2026년 11월 11일(수) 13:00 ~ 17:30"
+                ],
+                "place": [
+                  "■ 장 소 : 서울대 의대 (대학로) 행정관 3층 대강당 301호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178025": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06",
+              "end": "2026-11-08",
+              "place": "한화리조트 용인",
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "일정: 11/6(금) ~ 11/8(일) (2박 3일 일정)"
+                ],
+                "end": [
+                  "일정: 11/6(금) ~ 11/8(일) (2박 3일 일정)"
+                ],
+                "place": [
+                  "장소: 한화리조트 용인"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177509": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-16T13:00",
+              "end": "2026-10-16T15:00",
+              "place": "서울대학교 43-1동 301호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "시간: 13:00~15:00",
+                  "10월 16일 (금): AI와 생산적 금융 (최재원 교수)"
+                ],
+                "end": [
+                  "시간: 13:00~15:00"
+                ],
+                "place": [
+                  "장소: 서울대학교 43-1동 301호"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-23T13:00",
+              "end": "2026-10-23T15:00",
+              "place": "서울대학교 43-1동 301호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "시간: 13:00~15:00",
+                  "10월 23일 (금): 결혼 옵션 세대를 지나 Z세대의 선택은? (민세진 교수)"
+                ],
+                "end": [
+                  "시간: 13:00~15:00"
+                ],
+                "place": [
+                  "장소: 서울대학교 43-1동 301호"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-30T13:00",
+              "end": "2026-10-30T15:00",
+              "place": "서울대학교 43-1동 301호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "시간: 13:00~15:00",
+                  "10월 30일 (금): 한국 서비스업의 생산성: 구조와 과제 (전현배 교수)"
+                ],
+                "end": [
+                  "시간: 13:00~15:00"
+                ],
+                "place": [
+                  "장소: 서울대학교 43-1동 301호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-27T13:00",
+              "end": "2026-11-27T15:00",
+              "place": "서울대학교 43-1동 301호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "시간: 13:00~15:00",
+                  "11월 27일 (금): 혁신적 기술의 기원 (이정동 교수)"
+                ],
+                "end": [
+                  "시간: 13:00~15:00"
+                ],
+                "place": [
+                  "장소: 서울대학교 43-1동 301호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177767": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04T17:00",
+              "end": "2026-11-04T18:30",
+              "place": "아시아연구소 101동406호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "강연일시: 2026년11월 4일, 오후 5시-6시 30분"
+                ],
+                "end": [
+                  "강연일시: 2026년11월 4일, 오후 5시-6시 30분"
+                ],
+                "place": [
+                  "강연 장소: 아시아연구소 101동406호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002395": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04T16:00",
+              "end": "2026-11-04T18:00",
+              "place": "서울대학교 롯데국제교육관(152-1동) 303호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026. 11. 4.(수) 16:00~18:00"
+                ],
+                "end": [
+                  "일시: 2026. 11. 4.(수) 16:00~18:00"
+                ],
+                "place": [
+                  "장소: 서울대학교 롯데국제교육관(152-1동) 303호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002385": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-05",
+              "end": "2026-11-27",
+              "place": null,
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.05. 00:00 ~ 2026.11.27. 00:00"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.05. 00:00 ~ 2026.11.27. 00:00"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002413": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177320": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": null,
+              "end": null,
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [],
+                "end": [],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178247": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-30T16:00",
+              "end": null,
+              "place": "서울대학교 43동 101호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시 및 장소: 10월 30일(금) 16시, 서울대학교 43동 101호 (장소 주의)"
+                ],
+                "end": [],
+                "place": [
+                  "일시 및 장소: 10월 30일(금) 16시, 서울대학교 43동 101호 (장소 주의)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177659": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06T11:00",
+              "end": "2026-11-06T13:00",
+              "place": "서울대학교 8동 301호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "11/6 (금) 오전 11시-오후1시"
+                ],
+                "end": [
+                  "11/6 (금) 오전 11시-오후1시"
+                ],
+                "place": [
+                  "서울대학교 8동 301호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178082": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002313": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-12T19:00",
+              "end": "2026-11-12T20:30",
+              "place": "18동 1층 Playground",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.12. 19:00 ~ 2026.11.12. 20:30 / 장소: 18동 1층 Playground"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.12. 19:00 ~ 2026.11.12. 20:30 / 장소: 18동 1층 Playground"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.12. 19:00 ~ 2026.11.12. 20:30 / 장소: 18동 1층 Playground"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002298": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002331": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-03T17:00",
+              "end": "2026-11-03T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.03. 17:00 ~ 2026.11.03. 21:00 / 장소: 920동 1층 공용주방"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.03. 17:00 ~ 2026.11.03. 21:00 / 장소: 920동 1층 공용주방"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.03. 17:00 ~ 2026.11.03. 21:00 / 장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178130": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-29T14:00",
+              "end": "2026-10-29T14:50",
+              "place": "SNU Commons 중앙도서관(중앙도서관 본관 1층) 뉴박스",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 시크릿 뮤지엄(전시): 10월 29일(목) 14:00~14:50"
+                ],
+                "end": [
+                  "- 시크릿 뮤지엄(전시): 10월 29일(목) 14:00~14:50"
+                ],
+                "place": [
+                  "* 행사장소: SNU Commons 중앙도서관(중앙도서관 본관 1층) 뉴박스"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-30T10:00",
+              "end": "2026-10-30T11:25",
+              "place": "SNU Commons 중앙도서관(중앙도서관 본관 1층) 뉴박스",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 베를린 필하모닉 카메라타(클래식 음악): 10월 30일(금) 10:00~11:25"
+                ],
+                "end": [
+                  "- 베를린 필하모닉 카메라타(클래식 음악): 10월 30일(금) 10:00~11:25"
+                ],
+                "place": [
+                  "* 행사장소: SNU Commons 중앙도서관(중앙도서관 본관 1층) 뉴박스"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177650": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-22T14:00",
+              "end": "2026-10-22T18:00",
+              "place": "서울대학교 우정원 글로벌사회공헌센터 153동 210호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 10월 22일 (목) 14:00-18:00(예정)"
+                ],
+                "end": [
+                  "일시: 10월 22일 (목) 14:00-18:00(예정)"
+                ],
+                "place": [
+                  "장소: 서울대학교 우정원 글로벌사회공헌센터 153동 210호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177653": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178010": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04T12:30",
+              "end": "2026-11-04T14:00",
+              "place": "IBK커뮤니케이션센터 64동 201호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "● 시간 및 장소: 11월 4일 (수) 12:30~14:00, IBK커뮤니케이션센터 64동 201호"
+                ],
+                "end": [
+                  "● 시간 및 장소: 11월 4일 (수) 12:30~14:00, IBK커뮤니케이션센터 64동 201호"
+                ],
+                "place": [
+                  "● 시간 및 장소: 11월 4일 (수) 12:30~14:00, IBK커뮤니케이션센터 64동 201호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177470": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-02T16:00",
+              "end": "2026-11-02T18:00",
+              "place": "서울대 철학사상연구소 6동 403호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "1. 11월 2일(월) 오후 4–6시"
+                ],
+                "end": [
+                  "1. 11월 2일(월) 오후 4–6시"
+                ],
+                "place": [
+                  "l 장소: 서울대 철학사상연구소 6동 403호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-16T16:00",
+              "end": "2026-11-16T18:00",
+              "place": "서울대 철학사상연구소 6동 403호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "2. 11월 16일(월) 오후 4–6시"
+                ],
+                "end": [
+                  "2. 11월 16일(월) 오후 4–6시"
+                ],
+                "place": [
+                  "l 장소: 서울대 철학사상연구소 6동 403호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-24T16:00",
+              "end": "2026-11-24T18:00",
+              "place": "서울대 철학사상연구소 6동 403호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "3. 11월 24일(화) 오후 4–6시"
+                ],
+                "end": [
+                  "3. 11월 24일(화) 오후 4–6시"
+                ],
+                "place": [
+                  "l 장소: 서울대 철학사상연구소 6동 403호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-30T16:00",
+              "end": "2026-11-30T18:00",
+              "place": "서울대 철학사상연구소 6동 403호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "4. 11월 30일(월) 오후 4–6시"
+                ],
+                "end": [
+                  "4. 11월 30일(월) 오후 4–6시"
+                ],
+                "place": [
+                  "l 장소: 서울대 철학사상연구소 6동 403호"
+                ]
+              }
+            },
+            {
+              "start": "2026-12-07T16:00",
+              "end": "2026-12-07T18:00",
+              "place": "서울대 철학사상연구소 6동 403호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "5. 12월 7일(월) 오후 4–6시"
+                ],
+                "end": [
+                  "5. 12월 7일(월) 오후 4–6시"
+                ],
+                "place": [
+                  "l 장소: 서울대 철학사상연구소 6동 403호"
+                ]
+              }
+            },
+            {
+              "start": "2026-12-14T16:00",
+              "end": "2026-12-14T18:00",
+              "place": "서울대 철학사상연구소 6동 403호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "6. 12월 14일(월) 오후 4–6시"
+                ],
+                "end": [
+                  "6. 12월 14일(월) 오후 4–6시"
+                ],
+                "place": [
+                  "l 장소: 서울대 철학사상연구소 6동 403호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178454": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-05T09:00",
+              "end": "2026-11-05T10:30",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "◎ 일시: 2026년 11월 5일(목) 9:00 - 10:30"
+                ],
+                "end": [
+                  "◎ 일시: 2026년 11월 5일(목) 9:00 - 10:30"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177773": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-28T17:00",
+              "end": null,
+              "place": "138동 컴퓨터연구소 6층 민상렬홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "10월 28일 수요일 오후 5시, 138동 컴퓨터연구소 6층 민상렬홀에서 만나요!"
+                ],
+                "end": [],
+                "place": [
+                  "10월 28일 수요일 오후 5시, 138동 컴퓨터연구소 6층 민상렬홀에서 만나요!"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177662": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178013": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": null,
+              "end": null,
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [],
+                "end": [],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177458": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177755": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-30T15:00",
+              "end": "2026-10-30T18:00",
+              "place": "서울대학교 28동 301호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일정: 10/30(금) 오후 3-6시."
+                ],
+                "end": [
+                  "일정: 10/30(금) 오후 3-6시."
+                ],
+                "place": [
+                  "장소: 서울대학교 28동 301호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002403": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": null,
+              "end": null,
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [],
+                "end": [],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178244": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177326": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002347": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-03T17:00",
+              "end": "2026-11-03T18:00",
+              "place": "222동 701호 목련홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.03. 17:00 ~ 2026.11.03. 18:00 / 장소: 222동 701호 목련홀"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.03. 17:00 ~ 2026.11.03. 18:00 / 장소: 222동 701호 목련홀"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.03. 17:00 ~ 2026.11.03. 18:00 / 장소: 222동 701호 목련홀"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012001974": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06T10:30",
+              "end": "2026-11-06T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.06. 10:30 ~ 2026.11.06. 11:45 / 장소: 61동 320호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.06. 10:30 ~ 2026.11.06. 11:45 / 장소: 61동 320호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.06. 10:30 ~ 2026.11.06. 11:45 / 장소: 61동 320호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178016": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T14:00",
+              "end": "2026-11-11T15:30",
+              "place": "서울대학교 중앙도서관 관정관 3층 양두석홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 교육 일시: 2026년 11월 11일(수) 14:00–15:30"
+                ],
+                "end": [
+                  "- 교육 일시: 2026년 11월 11일(수) 14:00–15:30"
+                ],
+                "place": [
+                  "- 교육 장소: 서울대학교 중앙도서관 관정관 3층 양두석홀"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-12T15:00",
+              "end": "2026-11-12T16:30",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 교육 일시: 2026년 11월 12일(목) 15:00–16:30"
+                ],
+                "end": [
+                  "- 교육 일시: 2026년 11월 12일(목) 15:00–16:30"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-13T10:30",
+              "end": "2026-11-13T12:00",
+              "place": "서울대학교 중앙도서관 관정관 3층 양두석홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 교육 일시: 2026년 11월 13일(금) 10:30–12:00"
+                ],
+                "end": [
+                  "- 교육 일시: 2026년 11월 13일(금) 10:30–12:00"
+                ],
+                "place": [
+                  "- 교육 장소: 서울대학교 중앙도서관 관정관 3층 양두석홀"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178145": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T12:00",
+              "end": "2026-11-11T13:30",
+              "place": "우석경제관 504호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "11월 11일 (수) 12:00-13:30 | 우석경제관 504호"
+                ],
+                "end": [
+                  "11월 11일 (수) 12:00-13:30 | 우석경제관 504호"
+                ],
+                "place": [
+                  "11월 11일 (수) 12:00-13:30 | 우석경제관 504호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002375": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-09T19:00",
+              "end": "2026-11-09T21:00",
+              "place": "906동 3층 세미나실 1, 2, 3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.09. 19:00 ~ 2026.11.09. 21:00 / 장소: 906동 3층 세미나실 1, 2, 3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.09. 19:00 ~ 2026.11.09. 21:00 / 장소: 906동 3층 세미나실 1, 2, 3호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.09. 19:00 ~ 2026.11.09. 21:00 / 장소: 906동 3층 세미나실 1, 2, 3호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002304": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-23T10:00",
+              "end": "2026-10-23T12:30",
+              "place": "18동 101호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.23. 10:00 ~ 2026.10.23. 12:30 / 장소: 18동 101호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.23. 10:00 ~ 2026.10.23. 12:30 / 장소: 18동 101호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.10.23. 10:00 ~ 2026.10.23. 12:30 / 장소: 18동 101호"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-30T10:00",
+              "end": "2026-10-30T11:10",
+              "place": "18동 101호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[2회차] 기간: 2026.10.30. 10:00 ~ 2026.10.30. 11:10 / 장소: 18동 101호"
+                ],
+                "end": [
+                  "[2회차] 기간: 2026.10.30. 10:00 ~ 2026.10.30. 11:10 / 장소: 18동 101호"
+                ],
+                "place": [
+                  "[2회차] 기간: 2026.10.30. 10:00 ~ 2026.10.30. 11:10 / 장소: 18동 101호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-06T10:00",
+              "end": "2026-11-06T12:30",
+              "place": "18동 101호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[3회차] 기간: 2026.11.06. 10:00 ~ 2026.11.06. 12:30 / 장소: 18동 101호"
+                ],
+                "end": [
+                  "[3회차] 기간: 2026.11.06. 10:00 ~ 2026.11.06. 12:30 / 장소: 18동 101호"
+                ],
+                "place": [
+                  "[3회차] 기간: 2026.11.06. 10:00 ~ 2026.11.06. 12:30 / 장소: 18동 101호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002369": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012001976": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-13T10:30",
+              "end": "2026-11-13T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 11:45 / 장소: 61동 320호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 11:45 / 장소: 61동 320호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 11:45 / 장소: 61동 320호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177017": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002307": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-23T00:00",
+              "end": "2026-12-21T23:59",
+              "place": "학부대학",
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.23. 00:00 ~ 2026.12.21. 23:59 / 장소: 학부대학"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.23. 00:00 ~ 2026.12.21. 23:59 / 장소: 학부대학"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.10.23. 00:00 ~ 2026.12.21. 23:59 / 장소: 학부대학"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177026": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-16",
+              "end": "2026-10-25",
+              "place": null,
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "- 2차 모의고사 응시 기간 : 10.16.(금) ~ 10.25.(일)"
+                ],
+                "end": [
+                  "- 2차 모의고사 응시 기간 : 10.16.(금) ~ 10.25.(일)"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002309": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178085": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04",
+              "end": "2026-11-05",
+              "place": "행정관 앞 잔디광장",
+              "overPeriod": true,
+              "lines": {
+                "start": [
+                  "- 일시 및 장소: 2026. 11. 4.(수) ~ 11. 5.(목), 행정관 앞 잔디광장"
+                ],
+                "end": [
+                  "- 일시 및 장소: 2026. 11. 4.(수) ~ 11. 5.(목), 행정관 앞 잔디광장"
+                ],
+                "place": [
+                  "- 일시 및 장소: 2026. 11. 4.(수) ~ 11. 5.(목), 행정관 앞 잔디광장"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-06T15:00",
+              "end": null,
+              "place": "잔디광장 야외무대 및 관악캠퍼스 일대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시 및 장소: 2026. 11. 6.(금) 15:00, 잔디광장 야외무대 및 관악캠퍼스 일대"
+                ],
+                "end": [],
+                "place": [
+                  "- 일시 및 장소: 2026. 11. 6.(금) 15:00, 잔디광장 야외무대 및 관악캠퍼스 일대"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-06T17:00",
+              "end": null,
+              "place": "야구장",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시 및 장소: 2026. 11. 6.(금) 17:00 (걷기 행사 종료 후), 야구장"
+                ],
+                "end": [],
+                "place": [
+                  "- 일시 및 장소: 2026. 11. 6.(금) 17:00 (걷기 행사 종료 후), 야구장"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002390": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04T13:30",
+              "end": "2026-11-04T14:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.04. 13:30 ~ 2026.11.04. 14:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.04. 13:30 ~ 2026.11.04. 14:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.04. 13:30 ~ 2026.11.04. 14:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178328": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-03T11:00",
+              "end": "2026-11-03T13:00",
+              "place": "종합운동장 옆 잔디밭(경영대학 앞)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시: 2026. 11. 3.(화) 11:00~13:00"
+                ],
+                "end": [
+                  "- 일시: 2026. 11. 3.(화) 11:00~13:00"
+                ],
+                "place": [
+                  "- 장소: 종합운동장 옆 잔디밭(경영대학 앞)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002381": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-03T21:00",
+              "end": "2026-11-03T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.03. 21:00 ~ 2026.11.03. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.03. 21:00 ~ 2026.11.03. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-10T21:00",
+              "end": "2026-11-10T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[2회차] 기간: 2026.11.10. 21:00 ~ 2026.11.10. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[2회차] 기간: 2026.11.10. 21:00 ~ 2026.11.10. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-17T21:00",
+              "end": "2026-11-17T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[3회차] 기간: 2026.11.17. 21:00 ~ 2026.11.17. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[3회차] 기간: 2026.11.17. 21:00 ~ 2026.11.17. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-24T21:00",
+              "end": "2026-11-24T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[4회차] 기간: 2026.11.24. 21:00 ~ 2026.11.24. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[4회차] 기간: 2026.11.24. 21:00 ~ 2026.11.24. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-12-01T21:00",
+              "end": "2026-12-01T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[5회차] 기간: 2026.12.01. 21:00 ~ 2026.12.01. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[5회차] 기간: 2026.12.01. 21:00 ~ 2026.12.01. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-12-08T21:00",
+              "end": "2026-12-08T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[6회차] 기간: 2026.12.08. 21:00 ~ 2026.12.08. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[6회차] 기간: 2026.12.08. 21:00 ~ 2026.12.08. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177707": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-03T21:00",
+              "end": "2026-11-03T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-10T21:00",
+              "end": "2026-11-10T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-17T21:00",
+              "end": "2026-11-17T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-24T21:00",
+              "end": "2026-11-24T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-12-01T21:00",
+              "end": "2026-12-01T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-12-08T21:00",
+              "end": "2026-12-08T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 3일~12월 8일, 매주 화요일 21:00~22:00, 총 6회기"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002084": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-30T19:00",
+              "end": "2026-09-30T21:00",
+              "place": "906동 3층 세미나실 1,2,3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.09.30. 19:00 ~ 2026.09.30. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.09.30. 19:00 ~ 2026.09.30. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.09.30. 19:00 ~ 2026.09.30. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002082": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-23T19:00",
+              "end": "2026-09-23T21:00",
+              "place": "906동 3층 세미나실 1,2,3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.09.23. 19:00 ~ 2026.09.23. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.09.23. 19:00 ~ 2026.09.23. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.09.23. 19:00 ~ 2026.09.23. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002332": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T19:00",
+              "end": "2026-11-11T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026년 11월 11일 수요일",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "end": [
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "place": [
+                  "장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002333": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-24T19:00",
+              "end": "2026-11-24T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026년 11월 24일 화요일",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "end": [
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "place": [
+                  "장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002397": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-13T10:30",
+              "end": "2026-11-13T12:00",
+              "place": "중앙도서관 관정관 3층 양두석홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 12:00 / 장소: 중앙도서관 관정관 3층 양두석홀"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 12:00 / 장소: 중앙도서관 관정관 3층 양두석홀"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 12:00 / 장소: 중앙도서관 관정관 3층 양두석홀"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002355": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-12T19:00",
+              "end": "2026-11-12T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.12. 19:00 ~ 2026.11.12. 21:00 / 장소: 920동 1층 공용주방"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.12. 19:00 ~ 2026.11.12. 21:00 / 장소: 920동 1층 공용주방"
+                ],
+                "place": [
+                  "장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002354": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-05T19:00",
+              "end": "2026-11-05T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.05. 19:00 ~ 2026.11.05. 21:00 / 장소: 920동 1층 공용주방"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.05. 19:00 ~ 2026.11.05. 21:00 / 장소: 920동 1층 공용주방"
+                ],
+                "place": [
+                  "장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002211": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002394": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-05T15:30",
+              "end": "2026-11-05T16:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.05. 15:30 ~ 2026.11.05. 16:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.05. 15:30 ~ 2026.11.05. 16:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.05. 15:30 ~ 2026.11.05. 16:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002195": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-14T10:00",
+              "end": "2026-10-14T12:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "Date: 2026. 10. 14. (수) 10:00-12:00"
+                ],
+                "end": [
+                  "Date: 2026. 10. 14. (수) 10:00-12:00"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012001958": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-04T10:30",
+              "end": "2026-09-04T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.09.04. 10:30 ~ 2026.09.04. 11:45"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.09.04. 10:30 ~ 2026.09.04. 11:45"
+                ],
+                "place": [
+                  "61동 320호/ZOOM"
+                ]
+              }
+            },
+            {
+              "start": "2026-09-18T10:30",
+              "end": "2026-09-18T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[2회차] 기간: 2026.09.18. 10:30 ~ 2026.09.18. 11:45"
+                ],
+                "end": [
+                  "[2회차] 기간: 2026.09.18. 10:30 ~ 2026.09.18. 11:45"
+                ],
+                "place": [
+                  "61동 320호/ZOOM"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-02T10:30",
+              "end": "2026-10-02T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[3회차] 기간: 2026.10.02. 10:30 ~ 2026.10.02. 11:45"
+                ],
+                "end": [
+                  "[3회차] 기간: 2026.10.02. 10:30 ~ 2026.10.02. 11:45"
+                ],
+                "place": [
+                  "61동 320호/ZOOM"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-16T10:30",
+              "end": "2026-10-16T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[4회차] 기간: 2026.10.16. 10:30 ~ 2026.10.16. 11:45"
+                ],
+                "end": [
+                  "[4회차] 기간: 2026.10.16. 10:30 ~ 2026.10.16. 11:45"
+                ],
+                "place": [
+                  "61동 320호/ZOOM"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-23T10:30",
+              "end": "2026-10-23T11:45",
+              "place": "43-1동 201호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[5회차] 기간: 2026.10.23. 10:30 ~ 2026.10.23. 11:45"
+                ],
+                "end": [
+                  "[5회차] 기간: 2026.10.23. 10:30 ~ 2026.10.23. 11:45"
+                ],
+                "place": [
+                  "43-1동 201호/ZOOM"
+                ]
+              }
+            },
+            {
+              "start": "2026-10-30T10:30",
+              "end": "2026-10-30T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[6회차] 기간: 2026.10.30. 10:30 ~ 2026.10.30. 11:45"
+                ],
+                "end": [
+                  "[6회차] 기간: 2026.10.30. 10:30 ~ 2026.10.30. 11:45"
+                ],
+                "place": [
+                  "61동 320호/ZOOM"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-06T10:30",
+              "end": "2026-11-06T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "11월 6일(금) 10:30~11:45"
+                ],
+                "end": [
+                  "[7회차] 기간: 2026.11.06. 11:45 ~ 2026.11.06. 11:45"
+                ],
+                "place": [
+                  "61동 320호/ZOOM"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-13T10:30",
+              "end": "2026-11-13T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[8회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 11:45"
+                ],
+                "end": [
+                  "[8회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 11:45"
+                ],
+                "place": [
+                  "61동 320호/ZOOM"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002334": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-12-02T19:00",
+              "end": "2026-12-02T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026년 12월 2일 수요일",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "end": [
+                  "일시: 2026년 12월 2일 수요일",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "place": [
+                  "장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002335": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-12-15T19:00",
+              "end": "2026-12-15T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026년 12월 15일 화요일",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "end": [
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "place": [
+                  "장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002088": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-14T19:00",
+              "end": "2026-10-14T21:00",
+              "place": "906동 3층 세미나실 1,2,3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.14. 19:00 ~ 2026.10.14. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.14. 19:00 ~ 2026.10.14. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.10.14. 19:00 ~ 2026.10.14. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ]
+              }
+            },
+            {
+              "start": "2026-09-30T19:00",
+              "end": "2026-09-30T21:00",
+              "place": "906동 3층 세미나실",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 9.30 수요일",
+                  "시간: 19:00-21:00"
+                ],
+                "end": [
+                  "시간: 19:00-21:00"
+                ],
+                "place": [
+                  "장소: 906동 3층 세미나실"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178223": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-18T13:00",
+              "end": "2026-11-18T17:00",
+              "place": "롯데국제교육관(152-1동) 207호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "교육일정: 2026년 11월 18일(수) 13:00~17:00 (4h)"
+                ],
+                "end": [
+                  "교육일정: 2026년 11월 18일(수) 13:00~17:00 (4h)"
+                ],
+                "place": [
+                  "진행장소: 롯데국제교육관(152-1동) 207호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002393": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-05T13:30",
+              "end": "2026-11-05T14:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.05. 13:30 ~ 2026.11.05. 14:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.05. 13:30 ~ 2026.11.05. 14:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.05. 13:30 ~ 2026.11.05. 14:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002398": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-12T15:00",
+              "end": "2026-11-12T16:30",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.12. 15:00 ~ 2026.11.12. 16:30 / 장소: 실시간 온라인(Zoom)"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.12. 15:00 ~ 2026.11.12. 16:30 / 장소: 실시간 온라인(Zoom)"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177869": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T17:00",
+              "end": "2026-11-11T18:30",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "• 일시: 2026. 11. 11. (수) 17:00~18:30 (KST)"
+                ],
+                "end": [
+                  "• 일시: 2026. 11. 11. (수) 17:00~18:30 (KST)"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177317": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-21T14:00",
+              "end": "2026-10-21T15:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 교육 일시: 2026년 10월 21일(수) 14:00–15:00"
+                ],
+                "end": [
+                  "- 교육 일시: 2026년 10월 21일(수) 14:00–15:00"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002075": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-19T19:00",
+              "end": "2026-10-19T21:00",
+              "place": "906동 3층 세미나실",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.19. 19:00 ~ 2026.10.19. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.19. 19:00 ~ 2026.10.19. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.10.19. 19:00 ~ 2026.10.19. 21:00 / 장소: 906동 3층 세미나실"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002234": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-19T19:00",
+              "end": "2026-10-19T21:00",
+              "place": "906동 3층 세미나실",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.19. 19:00 ~ 2026.10.19. 21:00 / 장소: 906동 3층 세미나실",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.19. 19:00 ~ 2026.10.19. 21:00 / 장소: 906동 3층 세미나실",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "place": [
+                  "장소: 906동 3층 세미나실"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012001882": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T14:00",
+              "end": "2026-11-11T15:30",
+              "place": "중앙도서관 관정관 3층 양두석홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시 : 2026. 11. 11.(수) 14:00 ~ 15:30"
+                ],
+                "end": [
+                  "일시 : 2026. 11. 11.(수) 14:00 ~ 15:30"
+                ],
+                "place": [
+                  "장소 : 중앙도서관 관정관 3층 양두석홀"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002356": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-19T19:00",
+              "end": "2026-11-19T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.19. 19:00 ~ 2026.11.19. 21:00 / 장소: 920동 1층 공용주방"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.19. 19:00 ~ 2026.11.19. 21:00 / 장소: 920동 1층 공용주방"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.19. 19:00 ~ 2026.11.19. 21:00 / 장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002349": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-26T16:00",
+              "end": "2026-10-26T17:00",
+              "place": "생활과학대학(222동) 701호 목련홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026.10.26.(월) 16:00 ~ 17:00"
+                ],
+                "end": [
+                  "일시: 2026.10.26.(월) 16:00 ~ 17:00"
+                ],
+                "place": [
+                  "장소: 생활과학대학(222동) 701호 목련홀"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177764": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04T11:40",
+              "end": "2026-11-04T12:40",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "맨몸 필라테스: 2026. 11. 4.(수) ~ 11. 5.(목) 11:40~12:40"
+                ],
+                "end": [
+                  "맨몸 필라테스: 2026. 11. 4.(수) ~ 11. 5.(목) 11:40~12:40"
+                ],
+                "place": [
+                  "행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-05T11:40",
+              "end": "2026-11-05T12:40",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "맨몸 필라테스: 2026. 11. 4.(수) ~ 11. 5.(목) 11:40~12:40"
+                ],
+                "end": [
+                  "맨몸 필라테스: 2026. 11. 4.(수) ~ 11. 5.(목) 11:40~12:40"
+                ],
+                "place": [
+                  "행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-04T13:30",
+              "end": "2026-11-04T14:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "건강댄스: 2026. 11. 4.(수) ~ 11. 5.(목) 13:30~14:30"
+                ],
+                "end": [
+                  "건강댄스: 2026. 11. 4.(수) ~ 11. 5.(목) 13:30~14:30"
+                ],
+                "place": [
+                  "행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-05T13:30",
+              "end": "2026-11-05T14:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "건강댄스: 2026. 11. 4.(수) ~ 11. 5.(목) 13:30~14:30"
+                ],
+                "end": [
+                  "건강댄스: 2026. 11. 4.(수) ~ 11. 5.(목) 13:30~14:30"
+                ],
+                "place": [
+                  "행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-04T15:30",
+              "end": "2026-11-04T16:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "태극권: 2026. 11. 4.(수) ~ 11. 5.(목) 15:30~16:30"
+                ],
+                "end": [
+                  "태극권: 2026. 11. 4.(수) ~ 11. 5.(목) 15:30~16:30"
+                ],
+                "place": [
+                  "행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-05T15:30",
+              "end": "2026-11-05T16:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "태극권: 2026. 11. 4.(수) ~ 11. 5.(목) 15:30~16:30"
+                ],
+                "end": [
+                  "태극권: 2026. 11. 4.(수) ~ 11. 5.(목) 15:30~16:30"
+                ],
+                "place": [
+                  "행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002392": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-05T11:40",
+              "end": "2026-11-05T12:40",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.05. 11:40 ~ 2026.11.05. 12:40 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.05. 11:40 ~ 2026.11.05. 12:40 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.05. 11:40 ~ 2026.11.05. 12:40 / 장소: 행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002272": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-27T15:00",
+              "end": "2026-10-27T17:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.27. 15:00 ~ 2026.10.27. 17:00 / 장소: ZOOM"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.27. 15:00 ~ 2026.10.27. 17:00 / 장소: ZOOM"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002412": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-26T19:00",
+              "end": "2026-11-26T21:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.26. 19:00 ~ 2026.11.26. 21:00 / 장소: ZOOM"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.26. 19:00 ~ 2026.11.26. 21:00 / 장소: ZOOM"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002368": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-12-04T19:00",
+              "end": "2026-12-04T21:00",
+              "place": "기숙사 운동장",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.12.04. 19:00 ~ 2026.12.04. 21:00 / 장소: 기숙사 운동장"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.12.04. 19:00 ~ 2026.12.04. 21:00 / 장소: 기숙사 운동장"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.12.04. 19:00 ~ 2026.12.04. 21:00 / 장소: 기숙사 운동장"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178151": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06T15:00",
+              "end": null,
+              "place": "잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "□ 일시: 2026. 11. 6.(금) 오후 3시"
+                ],
+                "end": [],
+                "place": [
+                  "※ 잔디광장 야외무대에 모여 사전 신청을 확인하고, 기념 티셔츠를 수령한 뒤 개회식 후 출발"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002174": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-28T11:40",
+              "end": "2026-10-28T12:40",
+              "place": "SNU Commons 중앙도서관(본관 1층 '케이브1')",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "ㅇ 3회차: 2026. 10. 28.(수)  ☞  3회차 신청 바로가기",
+                  "매주 수요일 11: 40 ~ 12:40 총 7회 운영 예정"
+                ],
+                "end": [
+                  "매주 수요일 11: 40 ~ 12:40 총 7회 운영 예정"
+                ],
+                "place": [
+                  "□ 행사장소: SNU Commons 중앙도서관(본관 1층 '케이브1')"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002175": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-11T11:40",
+              "end": "2026-11-11T12:40",
+              "place": "SNU Commons 중앙도서관(본관 1층 '케이브1')",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.11. 11:40 ~ 2026.11.11. 12:40 / 장소: SNU Commons 중앙도서관(본관 1층 '케이브1')"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.11. 11:40 ~ 2026.11.11. 12:40 / 장소: SNU Commons 중앙도서관(본관 1층 '케이브1')"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.11. 11:40 ~ 2026.11.11. 12:40 / 장소: SNU Commons 중앙도서관(본관 1층 '케이브1')"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002176": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-18T11:40",
+              "end": "2026-11-18T12:40",
+              "place": "SNU Commons 중앙도서관(본관 1층 '케이브1')",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "ㅇ 5회차: 2026. 11. 18.(수)  ☞  5회차 신청 바로가기",
+                  "□ 운영일정: 매주 수요일 11: 40 ~ 12:40 총 7회 운영 예정"
+                ],
+                "end": [
+                  "ㅇ 5회차: 2026. 11. 18.(수)  ☞  5회차 신청 바로가기",
+                  "□ 운영일정: 매주 수요일 11: 40 ~ 12:40 총 7회 운영 예정"
+                ],
+                "place": [
+                  "□ 행사장소: SNU Commons 중앙도서관(본관 1층 '케이브1')"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002177": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-25T11:40",
+              "end": "2026-11-25T12:40",
+              "place": "SNU Commons 중앙도서관(본관 1층 '케이브1')",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.25. 11:40 ~ 2026.11.25. 12:40 / 장소: SNU Commons 중앙도서관(본관 1층 '케이브1')",
+                  "ㅇ 6회차: 2026. 11. 25.(수)  ☞  6회차 신청 바로가기"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.25. 11:40 ~ 2026.11.25. 12:40 / 장소: SNU Commons 중앙도서관(본관 1층 '케이브1')"
+                ],
+                "place": [
+                  "□ 행사장소: SNU Commons 중앙도서관(본관 1층 '케이브1')"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177473": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-02T14:00",
+              "end": "2026-11-02T17:00",
+              "place": "서울대학교 의과대학 의학도서관 우봉홀(4동 121호)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시: 2026. 11. 2.(월) 14:00~17:00 (13:30 등록 시작)"
+                ],
+                "end": [
+                  "- 일시: 2026. 11. 2.(월) 14:00~17:00 (13:30 등록 시작)"
+                ],
+                "place": [
+                  "- 장소: 서울대학교 의과대학 의학도서관 우봉홀(4동 121호) / 온라인 병행"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002358": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-12-14T19:00",
+              "end": "2026-12-14T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.12.14. 19:00 ~ 2026.12.14. 21:00 / 장소: 920동 1층 공용주방",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.12.14. 19:00 ~ 2026.12.14. 21:00 / 장소: 920동 1층 공용주방",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "place": [
+                  "장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002357": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-12-03T19:00",
+              "end": "2026-12-03T21:00",
+              "place": "920동 1층 공용주방",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.12.03. 19:00 ~ 2026.12.03. 21:00 / 장소: 920동 1층 공용주방",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.12.03. 19:00 ~ 2026.12.03. 21:00 / 장소: 920동 1층 공용주방",
+                  "시간: 19:00 ~ 21:00"
+                ],
+                "place": [
+                  "장소: 920동 1층 공용주방"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177122": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-19T13:00",
+              "end": null,
+              "place": "서울대학교 501동 목암홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시: 2026년 10월 19일(월) 오후 1시"
+                ],
+                "end": [],
+                "place": [
+                  "- 장소: 서울대학교 501동 목암홀"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002322": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06T10:00",
+              "end": "2026-11-06T12:00",
+              "place": "학부대학 61동 321호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.06. 10:00 ~ 2026.11.06. 12:00 / 장소: 대면(학부대학 61동 321호)"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.06. 10:00 ~ 2026.11.06. 12:00 / 장소: 대면(학부대학 61동 321호)"
+                ],
+                "place": [
+                  "<장소> 학부대학 61동 321호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178079": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-12T11:00",
+              "end": "2026-11-12T12:00",
+              "place": "대학생활문화원(63동 학생회관 5층)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "place": [
+                  "■ 강 의 장 소: 대학생활문화원(63동 학생회관 5층)"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-19T11:00",
+              "end": "2026-11-19T12:00",
+              "place": "대학생활문화원(63동 학생회관 5층)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "place": [
+                  "■ 강 의 장 소: 대학생활문화원(63동 학생회관 5층)"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-26T11:00",
+              "end": "2026-11-26T12:00",
+              "place": "대학생활문화원(63동 학생회관 5층)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "place": [
+                  "■ 강 의 장 소: 대학생활문화원(63동 학생회관 5층)"
+                ]
+              }
+            },
+            {
+              "start": "2026-12-03T11:00",
+              "end": "2026-12-03T12:00",
+              "place": "대학생활문화원(63동 학생회관 5층)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "place": [
+                  "■ 강 의 장 소: 대학생활문화원(63동 학생회관 5층)"
+                ]
+              }
+            },
+            {
+              "start": "2026-12-10T11:00",
+              "end": "2026-12-10T12:00",
+              "place": "대학생활문화원(63동 학생회관 5층)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "place": [
+                  "■ 강 의 장 소: 대학생활문화원(63동 학생회관 5층)"
+                ]
+              }
+            },
+            {
+              "start": "2026-12-17T11:00",
+              "end": "2026-12-17T12:00",
+              "place": "대학생활문화원(63동 학생회관 5층)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "end": [
+                  "■ 강 의 시 간: 11월 12일~12월 17일, 매주 목요일 11:00~12:00, 총 6회기"
+                ],
+                "place": [
+                  "■ 강 의 장 소: 대학생활문화원(63동 학생회관 5층)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002091": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-27T19:00",
+              "end": "2026-10-27T21:00",
+              "place": "906동 3층 세미나실",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.27. 19:00 ~ 2026.10.27. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.27. 19:00 ~ 2026.10.27. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "place": [
+                  "장소: 906동 3층 세미나실"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002071": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-27T19:00",
+              "end": "2026-10-27T21:00",
+              "place": "906동 3층 세미나실",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.27. 19:00 ~ 2026.10.27. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.27. 19:00 ~ 2026.10.27. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.10.27. 19:00 ~ 2026.10.27. 21:00 / 장소: 906동 3층 세미나실"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002363": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04T19:00",
+              "end": "2026-11-04T21:00",
+              "place": "906동 3층 세미나실 1,2,3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.04. 19:00 ~ 2026.11.04. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.04. 19:00 ~ 2026.11.04. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.04. 19:00 ~ 2026.11.04. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002364": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-16T19:00",
+              "end": "2026-11-16T21:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.16. 19:00 ~ 2026.11.16. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.16. 19:00 ~ 2026.11.16. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002271": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-26T14:00",
+              "end": "2026-10-26T18:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.26. 14:00 ~ 2026.10.26. 18:00 / 장소: ZOOM"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.26. 14:00 ~ 2026.10.26. 18:00 / 장소: ZOOM"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002277": {
+        "answer": {
+          "announcesEvent": false,
+          "sessions": []
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177893": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06T10:00",
+              "end": "2026-11-06T18:00",
+              "place": "인문대학 4동 302호 (국제회의실)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "*일시: 2026년 11월 6일(금) 10:00~18:00"
+                ],
+                "end": [
+                  "*일시: 2026년 11월 6일(금) 10:00~18:00"
+                ],
+                "place": [
+                  "*장소: 인문대학 4동 302호 (국제회의실)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002391": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04T15:30",
+              "end": "2026-11-04T16:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.04. 15:30 ~ 2026.11.04. 16:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.04. 15:30 ~ 2026.11.04. 16:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.04. 15:30 ~ 2026.11.04. 16:30 / 장소: 행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-05T15:30",
+              "end": "2026-11-05T16:30",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 태극권: 2026. 11. 4.(수) ~ 11. 5.(목) 15:30~16:30"
+                ],
+                "end": [
+                  "- 태극권: 2026. 11. 4.(수) ~ 11. 5.(목) 15:30~16:30"
+                ],
+                "place": [
+                  "- 행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002090": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-28T19:00",
+              "end": "2026-10-28T21:00",
+              "place": "906동 3층 세미나실 1,2,3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.28. 19:00 ~ 2026.10.28. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.28. 19:00 ~ 2026.10.28. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.10.28. 19:00 ~ 2026.10.28. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177113": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-14T16:00",
+              "end": "2026-10-14T17:00",
+              "place": "국제처 1층 라운지(152동, CJ International Center)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "□ 일시: 2026. 10. 14.(수) 16:00~17:00"
+                ],
+                "end": [
+                  "□ 일시: 2026. 10. 14.(수) 16:00~17:00"
+                ],
+                "place": [
+                  "□ 장소: 국제처 1층 라운지(152동, CJ International Center)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002205": {
+        "answer": null,
+        "failure": "AI_NoObjectGeneratedError",
+        "modelId": null
+      },
+      "extra-PGM012002146": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-15T21:00",
+              "end": "2026-09-15T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.09.15. 21:00 ~ 2026.09.15. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.09.15. 21:00 ~ 2026.09.15. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-09-22T21:00",
+              "end": "2026-09-22T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[2회차] 기간: 2026.09.22. 21:00 ~ 2026.09.22. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[2회차] 기간: 2026.09.22. 21:00 ~ 2026.09.22. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-09-29T21:00",
+              "end": "2026-09-29T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[3회차] 기간: 2026.09.29. 21:00 ~ 2026.09.29. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[3회차] 기간: 2026.09.29. 21:00 ~ 2026.09.29. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-10-06T21:00",
+              "end": "2026-10-06T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[4회차] 기간: 2026.10.06. 21:00 ~ 2026.10.06. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[4회차] 기간: 2026.10.06. 21:00 ~ 2026.10.06. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-10-13T21:00",
+              "end": "2026-10-13T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[5회차] 기간: 2026.10.13. 21:00 ~ 2026.10.13. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[5회차] 기간: 2026.10.13. 21:00 ~ 2026.10.13. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-10-20T21:00",
+              "end": "2026-10-20T22:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[6회차] 기간: 2026.10.20. 21:00 ~ 2026.10.20. 22:00 / 장소: Zoom"
+                ],
+                "end": [
+                  "[6회차] 기간: 2026.10.20. 21:00 ~ 2026.10.20. 22:00 / 장소: Zoom"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002264": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-29T18:30",
+              "end": "2026-10-29T21:30",
+              "place": "학생회관 5층 대학생활문화원 523호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.29. 18:30 ~ 2026.10.29. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.29. 18:30 ~ 2026.10.29. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.10.29. 18:30 ~ 2026.10.29. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-05T18:30",
+              "end": "2026-11-05T21:30",
+              "place": "학생회관 5층 대학생활문화원 523호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[2회차] 기간: 2026.11.05. 18:30 ~ 2026.11.05. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "end": [
+                  "[2회차] 기간: 2026.11.05. 18:30 ~ 2026.11.05. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "place": [
+                  "[2회차] 기간: 2026.11.05. 18:30 ~ 2026.11.05. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-12T18:30",
+              "end": "2026-11-12T21:30",
+              "place": "학생회관 5층 대학생활문화원 523호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[3회차] 기간: 2026.11.12. 18:30 ~ 2026.11.12. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "end": [
+                  "[3회차] 기간: 2026.11.12. 18:30 ~ 2026.11.12. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "place": [
+                  "[3회차] 기간: 2026.11.12. 18:30 ~ 2026.11.12. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-19T18:30",
+              "end": "2026-11-19T21:30",
+              "place": "학생회관 5층 대학생활문화원 523호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[4회차] 기간: 2026.11.19. 18:30 ~ 2026.11.19. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "end": [
+                  "[4회차] 기간: 2026.11.19. 18:30 ~ 2026.11.19. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "place": [
+                  "[4회차] 기간: 2026.11.19. 18:30 ~ 2026.11.19. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-26T18:30",
+              "end": "2026-11-26T21:30",
+              "place": "학생회관 5층 대학생활문화원 523호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[5회차] 기간: 2026.11.26. 18:30 ~ 2026.11.26. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "end": [
+                  "[5회차] 기간: 2026.11.26. 18:30 ~ 2026.11.26. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "place": [
+                  "[5회차] 기간: 2026.11.26. 18:30 ~ 2026.11.26. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ]
+              }
+            },
+            {
+              "start": "2026-12-03T18:30",
+              "end": "2026-12-03T21:30",
+              "place": "학생회관 5층 대학생활문화원 523호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[6회차] 기간: 2026.12.03. 18:30 ~ 2026.12.03. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "end": [
+                  "[6회차] 기간: 2026.12.03. 18:30 ~ 2026.12.03. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ],
+                "place": [
+                  "[6회차] 기간: 2026.12.03. 18:30 ~ 2026.12.03. 21:30 / 장소: 학생회관 5층 대학생활문화원 523호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002365": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-12-07T19:00",
+              "end": "2026-12-07T21:00",
+              "place": "906동 3층 세미나실 1,2,3호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.12.07. 19:00 ~ 2026.12.07. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.12.07. 19:00 ~ 2026.12.07. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.12.07. 19:00 ~ 2026.12.07. 21:00 / 장소: 906동 3층 세미나실 1,2,3호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002396": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-28T17:00",
+              "end": "2026-10-28T18:30",
+              "place": "서울대학교병원 융합의학기술원 15층 스마트교육센터",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시 : 2026. 10. 28.(수) 17:00-18:30"
+                ],
+                "end": [
+                  "- 일시 : 2026. 10. 28.(수) 17:00-18:30"
+                ],
+                "place": [
+                  "- 장소 : 온라인 및 오프라인 동시 진행",
+                  "- 오프라인 : 서울대학교병원 융합의학기술원 15층 스마트교육센터"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177848": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-28T17:00",
+              "end": "2026-10-28T18:30",
+              "place": "서울대학교병원 융합의학기술원 15층 스마트교육센터",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시 : 2026. 10. 28.(수) 17:00-18:30"
+                ],
+                "end": [
+                  "- 일시 : 2026. 10. 28.(수) 17:00-18:30"
+                ],
+                "place": [
+                  "- 장소 : 온라인 및 오프라인 동시 진행",
+                  "- 오프라인 : 서울대학교병원 융합의학기술원 15층 스마트교육센터"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002074": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-19T14:00",
+              "end": "2026-09-19T15:00",
+              "place": "퐁피두 센터 한화",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.09.19. 14:00 ~ 2026.09.19. 15:00 / 장소: 퐁피두 센터 한화"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.09.19. 14:00 ~ 2026.09.19. 15:00 / 장소: 퐁피두 센터 한화"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.09.19. 14:00 ~ 2026.09.19. 15:00 / 장소: 퐁피두 센터 한화"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002139": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-19T14:00",
+              "end": "2026-09-19T17:00",
+              "place": "퐁피두센터 한화[서울특별시 영등포구 63로 50(여의도동)]",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.09.19. 14:00 ~ 2026.09.19. 17:00 / 장소: 퐁피두센터 한화[서울특별시 영등포구 63로 50(여의도동)]"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.09.19. 14:00 ~ 2026.09.19. 17:00 / 장소: 퐁피두센터 한화[서울특별시 영등포구 63로 50(여의도동)]"
+                ],
+                "place": [
+                  "장소: 퐁피두센터 한화[서울특별시 영등포구 63로 50(여의도동)]"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002389": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-04T11:40",
+              "end": "2026-11-04T12:40",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.04. 11:40 ~ 2026.11.04. 12:40 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.04. 11:40 ~ 2026.11.04. 12:40 / 장소: 행정관 앞 잔디광장 야외무대"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.04. 11:40 ~ 2026.11.04. 12:40 / 장소: 행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            },
+            {
+              "start": "2026-11-05T11:40",
+              "end": "2026-11-05T12:40",
+              "place": "행정관 앞 잔디광장 야외무대",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 맨몸 필라테스: 2026. 11. 4.(수) ~ 11. 5.(목) 11:40~12:40"
+                ],
+                "end": [
+                  "- 맨몸 필라테스: 2026. 11. 4.(수) ~ 11. 5.(목) 11:40~12:40"
+                ],
+                "place": [
+                  "- 행정관 앞 잔디광장 야외무대"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002326": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06T13:00",
+              "end": "2026-11-06T15:00",
+              "place": "학부대학 61동 321호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.06. 13:00 ~ 2026.11.06. 15:00 / 장소: 대면(학부대학 61동 321호)"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.06. 13:00 ~ 2026.11.06. 15:00 / 장소: 대면(학부대학 61동 321호)"
+                ],
+                "place": [
+                  "<장소> 학부대학 61동 321호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177668": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-29T12:30",
+              "end": "2026-10-29T14:00",
+              "place": "서울대학교 국제대학원 국제회의실 (4층)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026년 10월 29일(목), 12:30–14:00"
+                ],
+                "end": [
+                  "일시: 2026년 10월 29일(목), 12:30–14:00"
+                ],
+                "place": [
+                  "장소: 서울대학교 국제대학원 국제회의실 (4층)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-177323": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-22T12:30",
+              "end": "2026-10-22T14:00",
+              "place": "서울대학교 국제대학원 국제회의실 (4층)",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "일시: 2026년 10월 22일(목), 12:30–14:00"
+                ],
+                "end": [
+                  "일시: 2026년 10월 22일(목), 12:30–14:00"
+                ],
+                "place": [
+                  "장소: 서울대학교 국제대학원 국제회의실 (4층)"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002179": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-12-09T11:40",
+              "end": "2026-12-09T12:40",
+              "place": "SNU Commons 중앙도서관(본관 1층 '케이브1')",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "ㅇ 7회차: 2026. 12.   9.(수)  ☞  7회차 신청 바로가기",
+                  "□ 운영일정: 매주 수요일 11: 40 ~ 12:40 총 7회 운영 예정"
+                ],
+                "end": [
+                  "□ 운영일정: 매주 수요일 11: 40 ~ 12:40 총 7회 운영 예정"
+                ],
+                "place": [
+                  "□ 행사장소: SNU Commons 중앙도서관(본관 1층 '케이브1')"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002138": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-15T19:00",
+              "end": "2026-09-15T21:00",
+              "place": "906동 3층 세미나실",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.09.15. 19:00 ~ 2026.09.15. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.09.15. 19:00 ~ 2026.09.15. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "place": [
+                  "장소: 906동 3층 세미나실"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002073": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-09-15T19:00",
+              "end": "2026-09-15T21:00",
+              "place": "906동 3층 세미나실",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.09.15. 19:00 ~ 2026.09.15. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.09.15. 19:00 ~ 2026.09.15. 21:00 / 장소: 906동 3층 세미나실"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.09.15. 19:00 ~ 2026.09.15. 21:00 / 장소: 906동 3층 세미나실"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002328": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-09T14:00",
+              "end": "2026-11-09T16:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.09. 14:00 ~ 2026.11.09. 16:00 / 장소: 비대면(온라인)"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.09. 14:00 ~ 2026.11.09. 16:00 / 장소: 비대면(온라인)"
+                ],
+                "place": []
+              }
+            },
+            {
+              "start": "2026-11-10T14:00",
+              "end": "2026-11-10T16:00",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[2회차] 기간: 2026.11.10. 14:00 ~ 2026.11.10. 16:00 / 장소: 비대면(온라인)"
+                ],
+                "end": [
+                  "[2회차] 기간: 2026.11.10. 14:00 ~ 2026.11.10. 16:00 / 장소: 비대면(온라인)"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "snu-178136": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-09T14:00",
+              "end": "2026-11-09T16:00",
+              "place": "서울대학교 중앙도서관 양두석홀",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "- 일시: 2026. 11. 9.(월) 14:00~16:00"
+                ],
+                "end": [
+                  "- 일시: 2026. 11. 9.(월) 14:00~16:00"
+                ],
+                "place": [
+                  "- 장소: 서울대학교 중앙도서관 양두석홀"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002315": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-30T10:00",
+              "end": "2026-10-30T12:00",
+              "place": "학부대학 61동 321호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.10.30. 10:00 ~ 2026.10.30. 12:00 / 장소: 대면(학부대학 61동 321호)"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.10.30. 10:00 ~ 2026.10.30. 12:00 / 장소: 대면(학부대학 61동 321호)"
+                ],
+                "place": [
+                  "<장소> 학부대학 61동 321호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012002317": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-10-30T13:00",
+              "end": "2026-10-30T15:00",
+              "place": "학부대학 61동 321호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "<일정> (2차) 10.30.(금) 13~15시"
+                ],
+                "end": [
+                  "<일정> (2차) 10.30.(금) 13~15시"
+                ],
+                "place": [
+                  "<장소> 학부대학 61동 321호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012001977": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-13T10:30",
+              "end": "2026-11-13T11:45",
+              "place": "61동 320호",
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 11:45 / 장소: 61동 320호"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 11:45 / 장소: 61동 320호"
+                ],
+                "place": [
+                  "[1회차] 기간: 2026.11.13. 10:30 ~ 2026.11.13. 11:45 / 장소: 61동 320호"
+                ]
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      },
+      "extra-PGM012001975": {
+        "answer": {
+          "announcesEvent": true,
+          "sessions": [
+            {
+              "start": "2026-11-06T10:30",
+              "end": "2026-11-06T11:45",
+              "place": null,
+              "overPeriod": false,
+              "lines": {
+                "start": [
+                  "[1회차] 기간: 2026.11.06. 10:30 ~ 2026.11.06. 11:45 / 장소: ZOOM을 활용한 비대면 강의"
+                ],
+                "end": [
+                  "[1회차] 기간: 2026.11.06. 10:30 ~ 2026.11.06. 11:45 / 장소: ZOOM을 활용한 비대면 강의"
+                ],
+                "place": []
+              }
+            }
+          ]
+        },
+        "failure": null,
+        "modelId": "anthropic/claude-haiku-5.5"
+      }
+    },
+    "choices": {}
+  },
+  "usage": {
+    "calls": 0,
+    "tokens": {
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cacheReadTokens": 0,
+      "cacheWriteTokens": 0
+    },
+    "costUsd": 0
+  },
+  "modelIds": [
+    "anthropic/claude-haiku-5.5"
+  ]
+}

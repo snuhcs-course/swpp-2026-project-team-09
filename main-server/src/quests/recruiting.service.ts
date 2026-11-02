@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -25,6 +26,7 @@ import {
   toRecruitingQuestDto,
 } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
+import { type RecruitingSearch, recruitingSearchIds } from './recruiting-search.js';
 import { alreadyHolder, conflict, notRecruiting, sharedQuestHeld } from './refusals.js';
 
 // A Quest of the list that the reader can still enter, with all its Sub Quests.
@@ -59,6 +61,11 @@ export class RecruitingService {
   async listedAmong(readerId: string, ids: readonly string[]): Promise<RecruitingQuestDto[]> {
     const listed = await this.listWhere(readerId, { id: { in: [...ids] } });
     return ids.flatMap((id) => listed.find((quest) => quest.id === id) ?? []);
+  }
+
+  // The Quests of the search, as the list gives them, in the search's order.
+  async search(readerId: string, search: RecruitingSearch): Promise<RecruitingQuestDto[]> {
+    return this.listedAmong(readerId, await recruitingSearchIds(this.prisma, readerId, search, this.clock.now()));
   }
 
   // The Quests the list gives the reader, of that Board, that they have not asked for and entering would not refuse.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -25,7 +26,7 @@ const input = z.object({
 export function resolvePlace(places: PlacesService): Tool {
   return defineTool({
     description:
-      "Finds the campus Place (a building) the User's words refer to, by name or building number, for where a 파티 meets. Answers result 'one' with the Place, 'several' with the candidates, or 'none' with the reason. On 'several', ask the User which one, listing the names; on 'none', say there is no such Place.",
+      "Finds the campus Place (a building) the User's words refer to, by name or building number, for where a 파티 meets or to search near it. Answers result 'one' with the Place, 'several' with the candidates, or 'none' with the reason. On 'several', ask the User which one, listing the names; on 'none', say there is no such Place.",
     input,
     run: async ({ words }, { found }) => {
       const matched = await places.search(words);

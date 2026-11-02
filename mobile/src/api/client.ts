@@ -10,6 +10,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage } from './assistant-types';
@@ -50,6 +51,7 @@ import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
 import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
+import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
 
 // Everything the screens ask of the main server. A refusal or no answer is thrown as an `ApiError`.
@@ -167,6 +169,14 @@ export interface ApiClient {
   declineInvitation: (invitationId: string) => Promise<void>;
   // The chat Assistant's reply to the conversation, the User's new message last.
   askAssistant: (messages: ChatMessage[]) => Promise<AssistantReply>;
+  // The 새내기 튜토리얼: its content and the User's progress. Each change answers with the new tutorial, and each is
+  // idempotent. A key that is no quest is refused with 404; a `by` that does not fit the quest's completion with 400.
+  getTutorial: () => Promise<Tutorial>;
+  enableTutorial: () => Promise<Tutorial>;
+  stopTutorial: () => Promise<Tutorial>;
+  hideTutorialRow: () => Promise<Tutorial>;
+  startTutorialQuest: (key: string) => Promise<Tutorial>;
+  completeTutorialQuest: (key: string, by: TutorialCompletedBy) => Promise<Tutorial>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -264,4 +274,10 @@ export const apiClient: ShownClient = {
   listCompanionSeekers: () => chosen().listCompanionSeekers(),
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages) => chosen().askAssistant(messages),
+  getTutorial: () => chosen().getTutorial(),
+  enableTutorial: () => chosen().enableTutorial(),
+  stopTutorial: () => chosen().stopTutorial(),
+  hideTutorialRow: () => chosen().hideTutorialRow(),
+  startTutorialQuest: (key) => chosen().startTutorialQuest(key),
+  completeTutorialQuest: (key, by) => chosen().completeTutorialQuest(key, by),
 };

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -9,57 +10,44 @@ import { GlobalEventsService } from '../../global-events/global-events.service.j
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
-
-// The most candidates one search gives, the earliest first.
-const CANDIDATES_MAX = 20;
-// The characters of a description a candidate carries: enough to tell what kind of event it is.
-const DESCRIPTION_MAX = 300;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { CANDIDATES_MAX, DESCRIPTION_MAX, wordsInput } from './search-candidates.js';
+import { daysTogether, hasWindow, inOrder, WINDOW_INPUT, windowOf, windowWords } from './search-window.js';
 
 const input = z
   .object({
-    from: z.iso.date().describe('The first day of the period, a calendar day in Korea as YYYY-MM-DD.'),
-    to: z.iso.date().describe('The last day of the period, the same as from for one day.'),
+    ...WINDOW_INPUT,
     place: z
       .string()
       .trim()
       .min(1)
       .optional()
       .describe('Only the events whose place holds these words, such as 301동. Leave it out for any place.'),
-    words: z
-      .array(z.string().trim().min(1))
-      .max(5)
-      .optional()
-      .describe(
-        'Only the events whose title or description holds any of these words, such as 공연 or 콘서트. Leave it out for every kind of event.',
-      ),
+    words: wordsInput('events'),
   })
-  .refine(({ from, to }) => from <= to, { message: 'to must not be before from', path: ['to'] });
+  .refine(daysTogether, { message: 'Give both from and to, or neither', path: ['to'] })
+  .refine(hasWindow, { message: 'Give from and to, or after or before', path: ['from'] })
+  .refine(inOrder, { message: 'The window must not end before it starts', path: ['to'] });
 
 type Conditions = z.output<typeof input>;
 
-function reasonForNone({ from, to, place, words }: Conditions): string {
-  const period = from === to ? `on ${from}` : `from ${from} to ${to}`;
+function reasonForNone(conditions: Conditions): string {
+  const { place } = conditions;
   const where = place === undefined ? '' : ` at a place holding ${place}`;
-  const what = words === undefined || words.length === 0 ? '' : ` holding ${words.join(' or ')}`;
-  return `No published Global Event${what}${where} takes place ${period}.`;
+  return `No published Global Event${where} takes place${windowWords(conditions)}.`;
 }
 
-// A lookup: the published Global Events of a period that have not ended, as compact candidates from which the model
+// A lookup: the published Global Events of a window that have not ended, as compact candidates from which the model
 // picks those that fit what the User meant, or "none" with the reason. Their text was collected from Sources or
 // written by organizers, so it reaches the model inside delimiters. showGlobalEvents accepts the ids it returned.
 export function searchGlobalEvents(globalEvents: GlobalEventsService): Tool {
   return defineTool({
     description:
-      "Searches the published Global Events (campus events: concerts, talks, exhibitions, festivals, …) that take place in a period, optionally at a place and holding some words. Answers candidates, the earliest first, with their start and end in Korean time, or result 'none' with the reason. Pick those that fit what the User asked for, then show them with showGlobalEvents.",
+      "Searches the published Global Events (campus events: concerts, talks, exhibitions, festivals, …) whose span overlaps a time window, whether it is whole days (from, to) or times (after, before), optionally at a place. Answers candidates, those holding more of the words first, then the earliest, with their start and end in Korean time, or result 'none' with the reason. Words only rank, so a candidate may hold none of them and still fit, and may be something else: read each one. Pick those that fit what the User asked for, then show them with showGlobalEvents.",
     input,
     run: async (conditions, { now, found }) => {
-      const { from, to, place, words } = conditions;
-      const start = new Date(`${from}T00:00:00+09:00`);
-      const end = new Date(new Date(`${to}T00:00:00+09:00`).getTime() + DAY_MS);
-      const events = await globalEvents.searchPublished(
-        { period: { from: start, to: end }, place, words, take: CANDIDATES_MAX + 1 },
+      const { place, words } = conditions;
+      const events = await globalEvents.searchRanked(
+        { period: windowOf(conditions), place, words, take: CANDIDATES_MAX + 1 },
         now,
       );
       if (events.length === 0) {
@@ -72,7 +60,7 @@ export function searchGlobalEvents(globalEvents: GlobalEventsService): Tool {
       );
       return {
         result: 'found',
-        // More events match than were given: a shorter period or more words narrows them.
+        // More events match than were given: a shorter window narrows them.
         more: events.length > CANDIDATES_MAX,
         events: candidates.map((event) => ({
           id: event.id,

@@ -26,3 +26,7 @@ The `library` card DTO, its `key` grammar and `clientCapabilities` are fixed in 
 - [ ] **The feature flag** `LIBRARY_BOOKING_ENABLED` (spec, Further Notes): off, the library tools answer `none` with the official link and no card, the room request endpoints answer 404, and `GET /tutorial` serves the 관정 quest as a button quest; an integration test covers off.
 - [ ] **Merge point with P05.** P05's R1/R2 each measure one change and its G1 uses the fixed P19 set (`FIXED_SET`), where `out-of-scope-library-seats` may show as a regression. This ticket's chat change merges only at a point agreed with the P05 owner (between two P05 runs), and a fresh P19 baseline (3 runs) is run and recorded on `3.0/Main` just before that merge; R1's regression compares against it.
 - [ ] **R1** of the P6 suite and the P19 regression (3 runs after, compared with the fresh baseline above, or ticket 06's when nothing changed the chat since): no P19 case newly fails, and new-tool calls in the regression cases are reported with tokens and cost per turn. The P4 and P5 suites run once as a report. Results are recorded against the frozen thresholds.
+
+## Comments
+
+- From ticket 03 (2026-11-02): the tutorial's 관정 sheet hides 어시스턴트에게 예약 부탁하기 until this ticket lands. When the chat change merges, set `TUTORIAL_SHEET_FLAGS.askAssistantToBook` to true in `mobile/src/screens/main/tutorial/tutorial-sheet.tsx` and check that "관정도서관 7층 열람실에 한 자리 예약해줘" gets a booking card.
