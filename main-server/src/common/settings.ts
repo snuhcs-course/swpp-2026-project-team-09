@@ -11,6 +11,8 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -77,11 +79,12 @@ export const settingsSchema = z
     OPENROUTER_API_KEY: z.string().default(''),
     ASSISTANT_MODEL: z.string().default(''),
     // The Assistant's limits: the messages a User may send in a day in Korea, and per message the model calls, the
-    // time in milliseconds and the tokens the model may write in each call.
+    // time in milliseconds and the tokens the model may write in each call. Its reasoning counts towards those tokens,
+    // and at 1,000 it could use them all and leave no answer (eval/p5/r0a.md).
     ASSISTANT_DAILY_MESSAGES: count(50),
     ASSISTANT_MAX_STEPS: count(8),
     ASSISTANT_TIMEOUT_MS: count(30_000),
-    ASSISTANT_MAX_OUTPUT_TOKENS: count(1000),
+    ASSISTANT_MAX_OUTPUT_TOKENS: count(4000),
     // Whether the step after a Collection publishes what it read. "off" leaves every session a Draft: it is turned off
     // when automatic publication is found to make mistakes (infra/production/README.md).
     AUTOMATIC_PUBLICATION: z
@@ -107,6 +110,13 @@ export const settingsSchema = z
       .enum(['on', 'off'])
       .default('off')
       .transform((value) => value === 'on'),
+    // Whether the Assistant books 관정도서관 through the phone's library cards. "false" turns it off without a release
+    // (P06): the library tools answer with the official site and no card, and the tutorial's 관정 quest is completed
+    // by its button.
+    LIBRARY_BOOKING_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((value) => value === 'true'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
   })

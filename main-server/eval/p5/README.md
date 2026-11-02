@@ -16,6 +16,7 @@
 | 큰 세계의 R0                                           | 완료 (2026-11-01), `r0-large.md` |
 | P04 채팅 머지 뒤의 기준선 (R0p)                        | 완료 (2026-11-01), `r0p.md`      |
 | 티켓 10a 뒤의 run (R0a)                                | 완료 (2026-11-01), `r0a.md`      |
+| 티켓 10, 11, 12, 12a의 묶음 run (R1)                   | 완료 (2026-11-02), `r1.md`       |
 
 ## 파일
 
@@ -199,5 +200,6 @@ V 8, L 5, P 5, T1 5, T2 5, H 7, S 5, N 5, R 5, O 5, B 5, E 6, C 14케이스입�
 | `r0-large.md`, `r0-large-failures.json` | 큰 세계의 R0                             | `cdf3c01` |
 | `r0p.md`, `r0p-failures.json`           | P04 채팅 머지 뒤의 기준선. 두 세계와 P19 | `871886a` |
 | `r0a.md`, `r0a-failures.json`           | 티켓 10a 뒤의 run. 두 세계와 P19         | `60fc2da` |
+| `r1.md`, `r1-failures.json`             | 묶음 run. 두 세계와 P19                  | `e171a95` |
 
-네 기록 모두 실행 기록, 개선 기록 표, failure analysis를 담고, 결과는 `eval/results/`에 있습니다. R0a는 `r0p.md`와 비교한 기록입니다. 세계가 다른 점수는 나란히 놓지 않습니다.
+다섯 기록 모두 실행 기록, 개선 기록 표, failure analysis를 담고, 결과는 `eval/results/`에 있습니다. R0a는 `r0p.md`와, R1은 `r0a.md`와 비교한 기록입니다. R1은 출력 한도가 달라 그 이유를 `r1.md`에 적었습니다. 세계가 다른 점수는 나란히 놓지 않습니다.

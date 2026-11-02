@@ -7,6 +7,7 @@
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -30,9 +31,12 @@ import { PlaceLookup } from '../places/place-lookup.js';
 import { PlaceMatcher } from '../places/place-matcher.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
+import { QuestsService } from '../quests/quests.service.js';
 import { RecruitingService } from '../quests/recruiting.service.js';
 import { ShuttleService } from '../shuttle/shuttle.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
+import { TutorialService } from '../tutorial/tutorial.service.js';
+import { UsersService } from '../users/users.service.js';
 import {
   causeOf,
   type Model,
@@ -44,9 +48,11 @@ import {
 } from './adapter.js';
 import { chatAssistant } from './chat/chat-assistant.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
-import { type ChatMessage, type Feature, type FeatureReply } from './feature.js';
+import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
+import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
+import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
 // message cost more.
@@ -79,6 +85,11 @@ export class AssistantService {
     days: UserDayService,
     restaurantPlaces: RestaurantPlaces,
     @Inject(TRAVEL_PROVIDER) travel: TravelProvider,
+    @Inject(LIBRARY_CATALOGUE) catalogue: Catalogue,
+    @Inject(FREE_TIME_PORT) freeTime: FreeTimePort,
+    quests: QuestsService,
+    users: UsersService,
+    tutorial: TutorialService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -91,6 +102,15 @@ export class AssistantService {
       places,
       placeMatcher,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
+      library: {
+        catalogue,
+        freeTime,
+        friends,
+        quests,
+        users,
+        enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
+      },
+      tutorial,
     });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
@@ -103,7 +123,11 @@ export class AssistantService {
 
   // The reply, or one error reply whatever failed: 503 when the Assistant cannot answer, 429 once the User's messages
   // of the day are used up. The log says why, never what anyone wrote.
-  async reply(userId: string, messages: readonly ChatMessage[]): Promise<AssistantReplyDto> {
+  async reply(
+    userId: string,
+    messages: readonly ChatMessage[],
+    capabilities: readonly ClientCapability[] = [],
+  ): Promise<AssistantReplyDto> {
     if (!this.keyConfigured) {
       this.logger.warn('The Assistant did not answer: no OpenRouter key is configured');
       throw unavailable();
@@ -116,7 +140,14 @@ export class AssistantService {
     }
     const latest = messages.slice(-HISTORY_MAX);
     try {
-      const reply = await runFeature(this.model, this.chat, { userId, now }, latest, this.limits, this.observer);
+      const reply = await runFeature(
+        this.model,
+        this.chat,
+        { userId, now, capabilities },
+        latest,
+        this.limits,
+        this.observer,
+      );
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }

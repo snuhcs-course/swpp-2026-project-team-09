@@ -4,12 +4,13 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { execFileSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { startVitest } from 'vitest/node';
-import { repetitionsOf, selectCases, sentTurnsOf } from './cases.ts';
+import { repetitionsOf, selectCases, sentTurnsOf, unlabelled } from './cases.ts';
 import { costOf, pricesOf, tokensPerTurn } from './cost.ts';
 import { dotEnv, parseFlags, RUN_ENV, type RunOptions } from './options.ts';
 import { casesToRun } from './p4/holdout.ts';
@@ -55,6 +56,11 @@ async function main(): Promise<number> {
   const { options: flags, yes } = parseFlags(process.argv.slice(2), env);
   const options: RunOptions = { ...flags, prices: await pricesOf(flags.model), commit: commit() };
   const cases = selectCases(casesToRun(options), options.categories, options.caseIds);
+  // A suite before its labels are drafted (eval/p6/ before C0) loads and runs, but scores nothing: say so first.
+  const unscored = unlabelled(cases).length;
+  if (unscored > 0) {
+    console.log(`${unscored} of the cases have no expectation yet, so the scorecard fails them`);
+  }
   const turns = cases.reduce(
     (total, evalCase) => total + sentTurnsOf(evalCase) * repetitionsOf(evalCase, options.repeat),
     0,

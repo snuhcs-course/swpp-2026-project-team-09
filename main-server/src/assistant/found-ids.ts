@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // The guard of the presenters and of proposeQuest: a card shows, and a Proposal takes, only what a lookup or a
@@ -11,8 +12,8 @@
 // presenters refuse any other.
 
 // What an id names: a card's Quest, Global Event or Restaurant (by its key), or a Friend or a Place a resolver returned,
-// which are never cards.
-export type FoundKind = 'quest' | 'globalEvent' | 'restaurant' | 'friend' | 'place';
+// which are never cards, or a 관정도서관 space of the catalogue findLibrarySpace returned.
+export type FoundKind = 'quest' | 'globalEvent' | 'restaurant' | 'friend' | 'place' | 'librarySpace';
 
 export class FoundIds {
   private readonly found: Record<FoundKind, Set<string>> = {
@@ -21,6 +22,7 @@ export class FoundIds {
     restaurant: new Set(),
     friend: new Set(),
     place: new Set(),
+    librarySpace: new Set(),
   };
 
   // The ids a lookup or a resolver returned to the model.

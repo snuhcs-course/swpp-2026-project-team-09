@@ -1,0 +1,654 @@
+# The blind draft as the drafter wrote it (2026-11-02), kept for the record. The labels that run are the cases' `expect`,
+# after the PM's rulings in labels-notes.md, which changed several of the answers below.
+
+# P6 labels, drafted blind from rules.md, world.yaml, the catalogue, tutorial.yaml, spec.md and the cases only.
+# One `expect` block per case id, in rules.md section 16's form, ready to paste under the case.
+# Conventions:
+# - A field left out of a card entry is not checked. `useDesc: null` means the card must leave it unset.
+# - `{ kind: library, max: 0 }` means no library card at all; `{ kind: library, action: X, max: 0 }` means no card of
+#   that action.
+# - Section 17 decisions used here: a bare 1–6시 is the afternoon (17.1); capacity narrows the candidates (17.2);
+#   "지금 7층 자리 있어?" gives seats cards (17.3, the spec); unmapped purposes are left out (17.4); a named room goes in
+#   `equipment` (17.7). See p6-labels-review.md.
+# - `spaceIn` (p6-common-seats-now only) is a proposed extension: the card's space is one of the listed ids.
+
+# ───────────────────────── spaces ─────────────────────────
+
+p6-spaces-site-7a-zone2:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 7F-7A-zone2, date: '2026-11-04', start: '14:00', minutes: 180 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+p6-spaces-site-8a-zone1:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 8F-8A-zone1-quiet, date: '2026-11-04', start: '19:00', minutes: 120 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+p6-spaces-site-xr:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 6F-xr, date: '2026-11-05', start: '14:00', minutes: 60, useDesc: null }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+p6-spaces-site-grad-reading-room:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 8F-grad-reading-room, date: '2026-11-04', start: '13:00', minutes: 240 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+# 애매: "스튜디오" is 6F-studio's site alias; Creative Media Studio also films. Picked 6F-studio.
+p6-spaces-alias-studio:
+  expect:
+    action: TOOL
+    cards:
+      - {
+          kind: library,
+          action: book,
+          space: 6F-studio,
+          date: '2026-11-05',
+          start: '15:00',
+          minutes: 60,
+          useDesc: 콘텐츠제작,
+        }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+# 애매: "VR 체험" names the space; 체험 is not in section 8's mapping, so useDesc is left out. Equipment not checked.
+p6-spaces-alias-vr:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 6F-xr, date: '2026-11-04', start: '15:00', minutes: 30, useDesc: null }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+p6-spaces-alias-whiteboard:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 4F-group-6
+        equipment: with-electronic-whiteboard
+        date: '2026-11-05'
+        start: '16:00'
+        minutes: 120
+        useDesc: 과제
+        companions: [이민수, 김지은, 정하람]
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요, 초대했, '2026-000']
+
+p6-spaces-alias-7b-notebook:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 7F-7B-notebook, date: '2026-11-04', start: '18:00', minutes: 180 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+# notOnline: 영화 보는 곳 → 6F-multimedia-viewing. No studio offered instead.
+p6-spaces-purpose-movie:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [현장]
+      absent: [스튜디오, 창의미디어스페이스, Creative Media Studio]
+
+p6-spaces-alias-quiet:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 8F-8A-zone1-quiet, date: '2026-11-04', start: '15:00', minutes: 120 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+# 애매: 라이브 방송 is STUDIO C's alias (17.7: passed as equipment); the purpose maps to no useDesc (17.4).
+p6-spaces-purpose-livestream:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 6F-studio
+        equipment: STUDIO C
+        date: '2026-11-05'
+        start: '10:00'
+        minutes: 60
+        useDesc: null
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+# 애매: 아이맥 쓰는 곳 → 6F-media-carrel; only Media Carrel A has the iMac, so it is passed as equipment.
+p6-spaces-alias-imac:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 6F-media-carrel
+        equipment: Media Carrel A
+        date: '2026-11-05'
+        start: '13:00'
+        minutes: 120
+        useDesc: 과제
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+# Candidates: 7F-7A-zone1-notebook, 7F-notebook-171, 8F-8A-zone2-notebook (rules.md section 3).
+p6-spaces-ambiguous-notebook:
+  expect:
+    action: ASK
+    cards:
+      - { kind: library, action: book, max: 0 }
+    text:
+      mentions: [7A 열람실 1 구역, 8A 열람실 2 구역, 노트북존]
+
+# Candidates: 2F-group-10, 4F-group-10 (same name; told apart by floor).
+p6-spaces-ambiguous-ten:
+  expect:
+    action: ASK
+    cards:
+      - { kind: library, action: book, max: 0 }
+    text:
+      mentions: [2층, 4층]
+
+# ───────────────────────── conditions ─────────────────────────
+
+# 애매: "7층 열람실" is 7F-7A-zone2's alias; the spec's card example (7193번) is in 7F-7A-zone2.
+p6-conditions-hours-from:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 7F-7A-zone2, date: '2026-11-04', start: '17:00', minutes: 120 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+p6-conditions-until:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 8F-8A-zone1-quiet, date: '2026-11-04', start: '13:00', minutes: 180 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+p6-conditions-half-past-minutes:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 7F-7A-zone2, date: '2026-11-04', start: '14:30', minutes: 90 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+# 애매: as p6-conditions-hours-from. 지금 at 10:05 → 10:30.
+p6-conditions-now:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: book, space: 7F-7A-zone2, date: '2026-11-04', start: '10:30', minutes: 180 }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+p6-conditions-missing-time:
+  expect:
+    action: ASK
+    cards:
+      - { kind: library, action: book, max: 0 }
+    text:
+      mentions: [몇 시]
+
+# The duration is missing. Space 2F-group-6, 4 people, 11/5 14:00.
+p6-conditions-missing-duration-room:
+  expect:
+    action: ASK
+    cards:
+      - { kind: library, action: book, max: 0 }
+    text:
+      mentions: [몇 시]
+
+p6-conditions-usedesc-team-project:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 2F-group-6
+        date: '2026-11-06'
+        start: '15:00'
+        minutes: 120
+        useDesc: 과제
+        companions: [이민수, 김지은, 정하람]
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요, 초대했, '2026-000']
+
+p6-conditions-usedesc-club:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 4F-group-6
+        date: '2026-11-05'
+        start: '19:00'
+        minutes: 90
+        useDesc: 동아리활동
+        companions: [이민수, 김지은, 최유진]
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요, 초대했, '2026-000']
+
+p6-conditions-usedesc-not-stated:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 2F-group-6
+        date: '2026-11-05'
+        start: '13:00'
+        minutes: 120
+        useDesc: null
+        companions: [이민수, 김지은, 정하람]
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요, 초대했, '2026-000']
+
+p6-conditions-named-seat:
+  expect:
+    action: TOOL
+    cards:
+      - {
+          kind: library,
+          action: book,
+          space: 7F-7A-zone2,
+          seat: '7300',
+          date: '2026-11-04',
+          start: '18:00',
+          minutes: 180,
+        }
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요]
+
+# 애매 (17.2): by the words 4F-group-10, 4F-group-8 and 4F-group-6 with-monitor fit; 4 people fit only 4F-group-6.
+# 발표 준비 maps to no useDesc (17.4).
+p6-conditions-monitor-room:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 4F-group-6
+        equipment: with-monitor
+        date: '2026-11-05'
+        start: '15:00'
+        minutes: 120
+        useDesc: null
+        companions: [이민수, 김지은, 정하람]
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요, 초대했, '2026-000']
+
+# 애매: findLibraryFreeSlots(7F-7A-zone2, 2026-11-04) gives 12:00–13:00, 14:30–16:00 and 18:00–23:00 (10:45–11:00 is
+# under 30 minutes once aligned). Several gaps → offer them and ask. A book card inside one gap is the other reading.
+p6-conditions-free-time:
+  expect:
+    action: ASK
+    tools: [findLibraryFreeSlots]
+    cards:
+      - { kind: library, action: book, max: 0 }
+    text:
+      mentions: ['12:00', '14:30']
+
+# ───────────────────────── refusals ─────────────────────────
+
+p6-refusals-main-library:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [미구현]
+
+p6-refusals-other-floor:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [미구현]
+
+p6-refusals-other-library:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [미구현]
+
+p6-refusals-g202:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [현장]
+      absent: [6인실]
+
+p6-refusals-info-search:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [현장]
+
+p6-refusals-carrel:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [현장]
+
+p6-refusals-seat-tomorrow:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [당일]
+
+# Sunday 11/8 is today + 4.
+p6-refusals-room-in-four-days:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [3일]
+
+# Both at once: 23:30 is past the 07:00–23:00 hours, and 7 hours is past 6.
+p6-refusals-late-and-long:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [6시간, '23']
+
+p6-refusals-grad-room-undergraduate:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [대학원생, 내 정보]
+
+# ───────────────────────── group rooms ─────────────────────────
+
+p6-group-rooms-companions:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 2F-group-6
+        date: '2026-11-06'
+        start: '14:00'
+        minutes: 120
+        useDesc: 과제
+        companions: [이민수, 김지은, 정하람, 최유진]
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요, 초대했, '2026-000']
+
+# 3 people for 4F-group-6 (4–6): 1 more needed.
+p6-group-rooms-below-min:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [1명]
+
+# 7 people for 4F-group-6 (4–6): 4F-group-8 (6–8) and 4F-group-10 (7–10) fit and a party holds 7.
+p6-group-rooms-above-max:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [8인실, 10인실]
+
+p6-group-rooms-same-name:
+  expect:
+    action: ASK
+    cards:
+      - { kind: library, action: book, max: 0 }
+    text:
+      mentions: [경영학과, 물리천문학부]
+
+# The lunch Quest's Holders plus the asker: 5 people, inside 4–6.
+p6-group-rooms-lunch-quest:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: book
+        space: 2F-group-6
+        date: '2026-11-05'
+        start: '14:00'
+        minutes: 120
+        useDesc: null
+        quest: 목요일 점심 모임
+    text:
+      mentions: [예약하기]
+      absent: [예약되었어요, 예약했어요, 초대했, '2026-000']
+
+p6-group-rooms-nine-people:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [8명]
+
+p6-group-rooms-g201:
+  expect:
+    action: REFUSE
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [8명]
+
+# ───────────────────────── bookings ─────────────────────────
+
+p6-bookings-mine:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: myBookings }
+    text:
+      absent: [예약되었어요]
+
+p6-bookings-cancel:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: cancel }
+    text:
+      mentions: [취소하기]
+      absent: [취소했어요, 취소되었어요]
+
+p6-bookings-return:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: return }
+    text:
+      mentions: [반납하기]
+      absent: [반납했어요, 반납되었어요]
+
+p6-bookings-cancel-at-three:
+  expect:
+    action: TOOL
+    cards:
+      - { kind: library, action: cancel, target: { date: '2026-11-04', start: '15:00' } }
+    text:
+      mentions: [취소하기]
+      absent: [취소했어요, 취소되었어요]
+
+# 애매: it cannot see the bookings and says so. CHAT; a myBookings card offered beside it is the other reading.
+p6-bookings-did-i-return:
+  expect:
+    action: CHAT
+    cards:
+      - { kind: library, action: cancel, max: 0 }
+      - { kind: library, action: return, max: 0 }
+      - { kind: library, action: book, max: 0 }
+    text:
+      absent: [반납됐어요, 반납되었어요, 반납하셨어요]
+
+# ───────────────────────── tutorial ─────────────────────────
+
+p6-tutorial-s-card:
+  expect:
+    action: TOOL
+    tools: [getTutorial]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [학생지원센터, '67', MySNU, 교환학생, 금융]
+
+p6-tutorial-admin-shuttle:
+  expect:
+    action: TOOL
+    tools: [getTutorial]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [잔디광장, 메가커피]
+
+p6-tutorial-kwanjeong-kiosk:
+  expect:
+    action: TOOL
+    tools: [getTutorial]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [30분, 반납, 10일]
+
+p6-tutorial-health-clinic:
+  expect:
+    action: TOOL
+    tools: [getTutorial]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [학생회관, '63', 2층]
+
+p6-tutorial-art-museum:
+  expect:
+    action: TOOL
+    tools: [getTutorial]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: ['68']
+      absent: ['330']
+
+# The content gives no hours: says so and gives the link. No invented hours.
+p6-tutorial-clinic-hours:
+  expect:
+    action: TOOL
+    tools: [getTutorial]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [health4u.snu.ac.kr]
+      absent: ['17:00', '17:50', '18:00', '18시', 오후 5시, 오후 6시]
+
+# The content names no exhibition: says so and gives the links. Invented exhibitions are marked under M5.
+p6-tutorial-exhibition-today:
+  expect:
+    action: TOOL
+    tools: [getTutorial]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [snumoa.org, powerplant365]
+
+# s-card 완료, kwanjeong 진행 중, the other three 시작 전.
+p6-tutorial-progress:
+  expect:
+    action: TOOL
+    tools: [getTutorial]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [학생증, 관정, 완료, 진행]
+
+# ───────────────────────── common ─────────────────────────
+
+# P4's tool, not the library's.
+p6-common-free-time-not-library:
+  expect:
+    action: TOOL
+    tools: [findFreeTimeEvents]
+    cards:
+      - { kind: library, max: 0 }
+
+# 애매 (17.3): the spec expects a seats card; four 7층 seat spaces fit. Any of them, one or more cards; no book card.
+p6-common-seats-now:
+  expect:
+    action: TOOL
+    cards:
+      - kind: library
+        action: seats
+        spaceIn: [7F-7A-zone1-notebook, 7F-7A-zone2, 7F-notebook-171, 7F-7B-notebook]
+        date: '2026-11-04'
+      - { kind: library, action: book, max: 0 }
+
+# 애매 (17.3): 중앙도서관 is 관정관 and 본관; the spec says "seats of the 7/8층 rooms or ASK, per the rules", and the
+# rules ask when several fit. Picked ASK. No count of free seats in the text.
+p6-common-central-library-seats:
+  expect:
+    action: ASK
+    cards:
+      - { kind: library, action: book, max: 0 }
+    text:
+      mentions: [7층, 8층]
+
+p6-common-small-talk:
+  expect:
+    action: CHAT
+    cards:
+      - { kind: library, max: 0 }

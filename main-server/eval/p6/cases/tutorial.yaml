@@ -1,0 +1,163 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Tutorial Q&A (P06 spec, "The P6 eval suite"): one question per quest of content/tutorial.yaml, two whose answer the
+# tutorial lacks (the clinic's hours, today's exhibition), and one on the User's progress. Information questions search
+# in a fixed order: getTutorial, then the app's other data (Global Events, Places), then the official link (ruling 8). The `expect` of each is
+# drafted blind and settled by the PM's rulings of 2026-11-02 (labels-notes.md).
+
+# s-card, asked by the exchange student.
+- id: p6-tutorial-s-card
+  category: p6-tutorial
+  world: p6
+  asker: 교환학생
+  repeat: 3
+  turns:
+    - user: 교환학생인데 학생증 어디서 받아? 은행 기능 있는 걸로 받을 수 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getTutorial]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions:
+        - 학생지원센터
+        - '67'
+        - MySNU
+        - 교환학생
+        - 금융
+
+- id: p6-tutorial-admin-shuttle
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 튜토리얼에 있는 행정관 셔틀은 어디서 타는 거야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getTutorial]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [잔디광장, 메가커피]
+
+- id: p6-tutorial-kwanjeong-kiosk
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 관정 열람실 예약하고 키오스크에서 확인 안 하면 어떻게 돼?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getTutorial]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [30분, 반납, 10일]
+
+# The clinic is on 학생회관(63동) 3–4층, care on 3층 and reception at 329호 (health4u.snu.ac.kr), as content/tutorial.yaml
+# says since #180 (ruling 10).
+- id: p6-tutorial-health-clinic
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 보건진료소 어디 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getTutorial]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions:
+        - 학생회관
+        - '63'
+        - 3층
+        - '329'
+      absent: [2층]
+
+- id: p6-tutorial-art-museum
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 튜토리얼 미술관 퀘스트에 나오는 파워플랜트는 몇 동이야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getTutorial]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions:
+        - '68'
+      absent:
+        - '330'
+
+# The tutorial gives no hours; the clinic's facts, collected from health4u.snu.ac.kr into content/tutorial.yaml (#180),
+# do: 09:00–17:30, and 16:30 on Fridays. A facility fact is checked in the text (ruling 10).
+- id: p6-tutorial-clinic-hours
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 보건진료소 몇 시까지 해?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getTutorial]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions:
+        - '09:00'
+        - '17:30'
+        - 금요일
+        - '16:30'
+
+# The tutorial names no exhibition; the world's Global Event 가을 소장품전 at 미술관 runs today, and the answer names it.
+- id: p6-tutorial-exhibition-today
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 미술관 퀘스트 하려는데 오늘 미술관에서 무슨 전시 해?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getTutorial, searchGlobalEvents]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [가을 소장품전]
+
+# The asker completed s-card and started kwanjeong (world.yaml).
+- id: p6-tutorial-progress
+  category: p6-tutorial
+  world: p6
+  repeat: 3
+  turns:
+    - user: 나 새내기 튜토리얼 어디까지 했지?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getTutorial]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [학생증, 관정, 완료, 진행]

@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -99,10 +100,15 @@ describe('The labels', () => {
   });
 
   it('require no presenter of a kind of card that has none to show, since a presenter takes at least one id', () => {
-    const presenters = { quest: 'showQuests', globalEvent: 'showGlobalEvents', restaurant: 'showRestaurants' };
+    // A library card, of P6's suite, has no presenter here.
+    const presenters: Partial<Record<string, string>> = {
+      quest: 'showQuests',
+      globalEvent: 'showGlobalEvents',
+      restaurant: 'showRestaurants',
+    };
     const impossible = cases.flatMap(({ id, expect: wanted }) =>
       (wanted?.cards ?? [])
-        .filter(({ kind, max }) => max === 0 && wanted?.tools.required.includes(presenters[kind]) === true)
+        .filter(({ kind, max }) => max === 0 && wanted?.tools.required.includes(presenters[kind] ?? '') === true)
         .map(({ kind }) => `${id} ${kind}`),
     );
 

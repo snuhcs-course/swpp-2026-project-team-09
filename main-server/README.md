@@ -1994,6 +1994,13 @@ The 새내기 튜토리얼 walks a new student through campus life, one Tutorial
 `src/tutorial/tutorial-content.ts`, and a file that does not match stops the start with the reason. Adding a quest is
 an entry in the file. `test/tutorial-content.unit.test.ts` checks that each Place number is in the seed.
 
+**The P6 suite's copy.** The P6 eval suite reads its own copy of the content, `eval/p6/tutorial.yaml`, frozen with C0
+(`WORLD_TUTORIAL_FILES` in `eval/cases.ts`); every other world reads `content/tutorial.yaml`. So adding a quest here does
+not change the frozen suite, and a new quest ships with at least two P6 cases: one asking a fact in its content, and one
+asking something the content lacks, answered with the quest's link or 확인되지 않아요. The copy is updated, together
+with any label tied to the number of quests (such as `p6-tutorial-progress`), only when the suite moves to a new version
+(C1). That change is entered with `revises:` and `reason:`, and the new version gets its own run.
+
 **State.** `tutorial_progress` holds one row for each User who has one, with four times, and
 `tutorial_quest_progress` one row for each quest the User started, with when it was completed and how (`button`, or
 `checked`, `forced` or `skipped` for the 관정 quest). A row of a key no longer in the file is ignored. Each time is set
@@ -2024,6 +2031,42 @@ The routes name no User, so they never reach another User's progress. Each is sa
 
 The refusals: a key the file does not hold gets 404 with `code` `TUTORIAL_QUEST_NOT_FOUND`, and a `by` the quest's
 kind does not accept gets 400 with `COMPLETION_NOT_ACCEPTED`.
+
+## Group study room requests
+
+A 관정 group study room is booked with companions through a room request (`src/library/`). The routes are the app's,
+never the Assistant's tools, and the phone alone talks to the library: the server never sees a library reply.
+
+- `POST /library/room-requests` with `{ key, friendIds }` or `{ key, questId }`, and `useDesc` when the card chose it,
+  takes an `Idempotency-Key`. The key is a book card's, and its conditions are checked again with the Assistant's
+  `checkBooking`: the catalogue, the window, the hours, the capacity and at most 8 people (so never G201). More than 8
+  is a 400 with the party's reason, as is a `friendIds` entry that is not the User's Friend. With `friendIds` it makes
+  a **booking party**: the Closed Quest "관정 {space} 예약" the User leads, with one Sub Quest at Place 62-1 for the
+  booking's time and a `QuestInvitation` for each Friend. With `questId` (a Quest the User holds) it makes no Quest
+  and asks its other Holders. Each companion gets a `room_consents` row.
+- `GET /library/room-requests` answers `{ asks, notices }`: the gathering requests that ask the User, for the consent
+  dialog, and the one-time notices, which `POST /library/room-notices/:id/seen` deletes.
+- `GET /library/room-requests/:id` is what the booker's card polls. `status` is `gathering`, `ready` (every current
+  Holder but the requester consented), `booked`, `cancelled`, `dissolved` (with `reason`) or `expired`.
+- `POST …/:id/consent` accepts the booking party's invitation as any invitation is accepted, then consents, for this
+  request only. It needs the User's 학번 in 내 정보 (409 `STUDENT_NUMBER_MISSING`). `POST …/:id/decline` is 거절, and
+  철회 after consenting.
+- `GET …/:id/companions` answers `[{ userId, registeredName, studentNumber }]` with `Cache-Control: no-store`, only to
+  the requester (else 403) and only while `ready` (else 409), for the current Holders who consented, read when the
+  reply is built. It is the only reply with a 학번 or a registered name.
+- `POST …/:id/result` with `{ ok, failedUserId? }`: `ok` books it, a `failedUserId` sends it back to `gathering` for
+  that companion, who is asked to check their 내 정보, and neither leaves it `ready`.
+- `POST …/:id/cancelled`, with no body, is the requester's only while `booked`, and safe to repeat. A booking party
+  made for the request is deleted with its Sub Quest, so it no longer blocks its members' Free Time.
+
+**Keeping a request true to its Quest.** `RoomRequestSync` settles each gathering or ready request after a change to
+its Quest is stored: a companion leaving or removed, the requester leaving, the Quest deleted, a declined or cancelled
+invitation, and an ended friendship between the requester and a companion each dissolve it. A Holder who joins later
+is asked too, sending the request back to `gathering`, and people the room no longer holds dissolve it with the
+reason. A dissolved request's booking party is deleted, an existing Quest never, and everyone it asked gets the notice
+"파티 구성원이 제안을 거절했습니다". A request still not booked at its start is `expired` when any room request is read
+next, and its booking party goes. Consents are deleted at `booked` and at every final status. Every change sends
+`room-requests-changed` to the Users it concerns.
 
 ## Assistant
 
@@ -2062,11 +2105,20 @@ its model through OpenRouter with the Vercel AI SDK
   null when the way is unknown) and its `proposal`, the meal Quest the server filled in for the card's 파티 만들기. An APK
   from before P4 refuses a reply with such a card as its ordinary failure. The app sends a card back only
   as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
-  and never the map buttons. Nothing of a conversation is stored: the app keeps it.
+  and never the map buttons. Nothing of a conversation is stored: the app keeps it. A `library` card
+  (`{ "kind": "library", "library": { … } }`, `src/assistant/library/library-card.ts`) holds `key`, `action`
+  (`book | cancel | return | seats | myBookings`), `space` (or null) with `id`, `name`, `floor`, `placeNumber` (`62-1`),
+  `unit` (`seat | room`), `roomNo`, `sectorNo`, `seatNos`, `mapImage` (`{ "width", "height" }` or null), `hours`
+  (`{ "open", "close" }`), `minMinutes`, `maxMinutes` and `stepMinutes`, then `date`, `start`, `minutes`, `seat`,
+  `useDesc`, `useDescOptions` (when the card asks for the 사용용도), `pledge` (the 서약서 text or null), `companions`
+  (`[{ "friendId", "name" }]`), `questId`, `notes`, `until` (the end of a myBookings period) and `target`
+  (`{ "date"?, "spaceId"?, "start"? }` for cancel and return), every field always there and null when it does not
+  apply. It holds nothing live: the phone fills it from the library. It is attached only when the request carries
+  `"clientCapabilities": ["library"]` beside `messages`.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
-    (`quest` or `globalEvent` by id, `restaurant` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
+    (`quest` or `globalEvent` by id, `restaurant` and `library` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
     out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
@@ -2091,7 +2143,7 @@ Proposal)`.
   what one User spends, not what all of them do.
 - **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
   call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
-  written in each call (1,000). A failed model call is not retried.
+  written in each call, reasoning included (4,000). A failed model call is not retried.
 
 The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
@@ -2196,6 +2248,24 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
+  - **The 관정도서관 tools** (`library/`, P06, `LIBRARY_RULES`) never call the library: the phone, which alone holds the
+    User's library session, fills their cards and books, cancels or returns only on the card's button. The space
+    catalogue `library/kwanjeong-spaces.yaml` is read and checked once at start (`library/catalogue.ts`); each space is
+    `implemented`, `notOnline` (현장 이용), `unsupported` (아직 미구현) or `notEligible` (대학원 열람실 for anyone whose
+    소속 is not 대학원). `findLibrarySpace(spaceIds?, words)` answers the ids the model read the words as (`several`
+    when two or more are bookable; FoundKind `librarySpace`); `findLibraryFreeSlots(spaceId, date, minutes?)` the User's
+    Free Time within the hours and the window, through `FREE_TIME_PORT`; `proposeLibraryBooking` checks the window
+    (seats today, rooms up to 3 days ahead), the hours, 30-minute steps, the duration, the seat, the equipment group,
+    the 사용용도 and the people (GR_MIN–GR_MAX as numbers, at most 8 for a party, G201 never), listing every refusal
+    at once (`library/booking-rules.ts`), and shows a `library` card (`library/library-card.ts`);
+    `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
+    cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id in the
+    history, checked against its grammar. Library cards are attached only for a request with
+    `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
+    `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
+    or the User's 소속.
+  - `getTutorial(questKey?)` (`tutorial/`, `TUTORIAL_RULES`) answers the 새내기 튜토리얼's content from
+    `content/tutorial.yaml` and the User's status of each quest, without turning the tutorial on.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards

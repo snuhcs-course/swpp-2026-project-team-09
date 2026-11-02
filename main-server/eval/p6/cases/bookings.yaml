@@ -1,0 +1,108 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Bookings, cancel and return (P06 spec, "The P6 eval suite"): "내 예약", "취소해줘", "반납해줘" and "오늘 3시 예약 취소"
+# give the right card and target; "반납했어?" gives no action card. Each `expect` was drafted blind and settled
+# by the PM's rulings of 2026-11-02 (labels-notes.md).
+
+- id: p6-bookings-mine
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 내 도서관 예약 보여줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [showMyLibraryBookings]
+      only: true
+    cards:
+      - { kind: library, action: myBookings }
+      - { kind: library, action: book, max: 0 }
+      - { kind: library, action: cancel, max: 0 }
+      - { kind: library, action: return, max: 0 }
+    text:
+      absent: [예약되었어요]
+
+- id: p6-bookings-cancel
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 관정 예약 취소해줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [proposeLibraryCancel]
+      only: true
+    cards:
+      - { kind: library, action: cancel }
+      - { kind: library, action: book, max: 0 }
+      - { kind: library, action: return, max: 0 }
+    text:
+      mentions: [취소하기]
+      absent: [취소했어요, 취소되었어요]
+
+- id: p6-bookings-return
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 다 썼어, 자리 반납해줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [proposeLibraryReturn]
+      only: true
+    cards:
+      - { kind: library, action: return }
+      - { kind: library, action: book, max: 0 }
+      - { kind: library, action: cancel, max: 0 }
+    text:
+      mentions: [반납하기]
+      absent: [반납했어요, 반납되었어요]
+
+- id: p6-bookings-cancel-at-three
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 오늘 3시 예약 취소
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [proposeLibraryCancel]
+      only: true
+    cards:
+      - kind: library
+        action: cancel
+        conditions:
+          target:
+            date: '2026-11-04'
+            start: '15:00'
+      - { kind: library, action: book, max: 0 }
+      - { kind: library, action: return, max: 0 }
+    text:
+      mentions: [취소하기]
+      absent: [취소했어요, 취소되었어요]
+
+# The Assistant cannot see the bookings: CHAT, saying so, with no library card at all (ruling 6).
+- id: p6-bookings-did-i-return
+  category: p6-bookings
+  world: p6
+  repeat: 3
+  turns:
+    - user: 나 아까 열람실 자리 반납했어?
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions:
+        - [볼 수 없, 확인할 수 없, 알 수 없, 보이지 않]
+      absent: [반납됐어요, 반납되었어요, 반납하셨어요]
