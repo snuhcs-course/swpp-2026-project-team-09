@@ -9,6 +9,7 @@
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'zod';
 import { expectSchema } from './expect.ts';
@@ -48,6 +49,13 @@ export const WORLD_CLOCKS: Record<WorldName, string> = {
   p5: '2026-11-02T14:05:00+09:00',
   'large-world-v1': '2026-11-02T14:05:00+09:00',
   p6: '2026-11-04T10:05:00+09:00',
+};
+
+// The tutorial content a run of each world reads in the place of content/tutorial.yaml. The P6 suite reads its own copy,
+// frozen with C0 (eval/p6/suite.yaml), so that a quest added to the app does not change it; the other worlds read the
+// live file.
+export const WORLD_TUTORIAL_FILES: Partial<Record<WorldName, string>> = {
+  p6: fileURLToPath(new URL('p6/tutorial.yaml', import.meta.url)),
 };
 
 const seedName = z.string().min(1);

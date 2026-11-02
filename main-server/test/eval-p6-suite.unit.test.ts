@@ -5,11 +5,13 @@
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'zod';
-import { casesIn, loadCases, nowOf, unlabelled } from '../eval/cases.ts';
+import { casesIn, loadCases, nowOf, unlabelled, WORLD_TUTORIAL_FILES, WORLDS } from '../eval/cases.ts';
 import { FIXED_SET } from '../eval/fixed-set.ts';
 import { FAKE_STUDENT_NUMBER, p6WorldData, STUDENT_NUMBER_LIKE } from '../eval/p6/world-data.ts';
+import { readTutorialContent, TUTORIAL_FILE } from '../src/tutorial/tutorial-content.js';
 import { tutorialState } from '../src/tutorial/tutorial-state.js';
 
 // The P6 suite's files (P06 ticket 06), without a model or a database: the cases load in the spec's categories and
@@ -297,5 +299,23 @@ describe('The privacy of the P6 files', () => {
     const names = suiteFiles().map(({ name }) => name);
 
     expect(names).toEqual(expect.arrayContaining(['world.yaml', 'suite.yaml', 'rules.md', 'cases/spaces.yaml']));
+  });
+});
+
+describe("The P6 suite's tutorial", () => {
+  it('is its own copy, eval/p6/tutorial.yaml, which no other world reads', () => {
+    expect(WORLD_TUTORIAL_FILES.p6).toBe(fileURLToPath(new URL('tutorial.yaml', P6)));
+    expect(WORLD_TUTORIAL_FILES.p6).not.toBe(TUTORIAL_FILE);
+    expect(WORLDS.filter((world) => WORLD_TUTORIAL_FILES[world] !== undefined)).toEqual(['p6']);
+  });
+
+  it("matches the server's schema of the tutorial content, with the quests the world's progress names", async () => {
+    const content = await readTutorialContent(fileURLToPath(new URL('tutorial.yaml', P6)));
+    const keys = new Set(content.quests.map(({ key }) => key));
+    const named = [data.asker, ...Object.values(data.askers)].flatMap(({ tutorial }) =>
+      tutorial.quests.map(({ key }) => key),
+    );
+
+    expect(named.filter((key) => !keys.has(key))).toEqual([]);
   });
 });

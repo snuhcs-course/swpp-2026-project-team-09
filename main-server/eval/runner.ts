@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -27,6 +28,7 @@ import {
   kindOf,
   nowOf,
   WORLD_CLOCKS,
+  WORLD_TUTORIAL_FILES,
 } from './cases.ts';
 import { addTokens, costOf, NO_TOKENS, type Tokens } from './cost.ts';
 import { type RunOptions, runName } from './options.ts';
@@ -58,7 +60,8 @@ export interface EvalApp {
   setNow: (now: string) => void;
 }
 
-// Starts the app with `model` behind the recorder, the run's limits as its settings and the clock fixed at its world's.
+// Starts the app with `model` behind the recorder, the run's limits as its settings, the clock fixed at its world's and
+// the world's tutorial content, if it has its own.
 // `settings` are the e2e settings with the model's key and id, and `rawResponses` what the model's fetch fills, if any.
 export async function startEvalApp(
   settings: Partial<Record<keyof Settings, string>>,
@@ -83,6 +86,7 @@ export async function startEvalApp(
     recorder.wrap(model),
     [runObserverModule(recorder)],
     travel,
+    WORLD_TUTORIAL_FILES[options.world],
   );
   let now = WORLD_CLOCKS[options.world];
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(now));
