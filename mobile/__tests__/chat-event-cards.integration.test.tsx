@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -142,18 +143,24 @@ describe("an event card's 파티 찾기/모집", () => {
   });
 });
 
+// Matching was dropped: in the HE build, the card's AI 매칭 and 매칭 중 say 준비 중이에요 over the chat.
 describe("an event card's AI 매칭", () => {
-  it("asks for Matching from the tab's sheet", async () => {
-    server.on('POST /matching-requests', { status: 201, body: waiting(CAREER.id) });
+  it.each([
+    ['AI 매칭', []],
+    ['매칭 중', [waiting(CAREER.id)]],
+  ])('says 준비 중이에요 on %s, opens nothing and asks nothing', async (name, matching) => {
+    answerEvents(server, { matching });
     const user = await answered();
+    const address = shownAddress();
 
-    await user.press(chatCard(CAREER.id).getByRole('button', { name: 'AI 매칭' }));
-    await pass(500);
-    await user.press(screen.getByRole('button', { name: '3명' }));
-    await user.press(screen.getByRole('button', { name: '매칭 신청' }));
+    await user.press(chatCard(CAREER.id).getByRole('button', { name }));
     await pass(500);
 
-    expect(server.received('POST /matching-requests').at(-1)?.body).toEqual({ globalEventId: CAREER.id, size: 3 });
-    expect(screen.getByText('매칭을 신청했어요 · 결과는 알림으로 와요')).toBeVisible();
+    expect(screen.getByTestId('toast-layer')).toHaveTextContent('준비 중이에요');
+    expect(screen.getByTestId('chat-sheet')).toBeVisible();
+    expect(screen.queryByRole('header', { name: 'AI 매칭' })).toBeNull();
+    expect(shownAddress()).toBe(address);
+    expect(server.received('POST /matching-requests')).toHaveLength(0);
+    expect(chatCard(CAREER.id).getByRole('button', { name })).toBeVisible();
   });
 });
