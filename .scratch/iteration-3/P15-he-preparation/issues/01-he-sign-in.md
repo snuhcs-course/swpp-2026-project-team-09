@@ -41,7 +41,7 @@ An evaluator signs in by picking one of the seven HE accounts from a list on the
   - The main screen shows the location explanation again.
   - The background-sharing choice stays forgotten, as it is today.
 - [x] The mock sign-in of an app without a Google client ID is unchanged.
-- [ ] Tests named by ADR 0007, with CI green on the HE branch:
+- [x] Tests named by ADR 0007, with CI green on the HE branch:
   - server integration tests for the setting on and off, an unknown key and a test-key Google token (prior art: the `auth` and `sign-out` integration tests);
   - app integration tests over the fake server for the list, a pick, a cancel, and a sign-out followed by consent again (prior art: the `sign-in` and `consent` integration tests).
 
@@ -53,3 +53,4 @@ An evaluator signs in by picking one of the seven HE accounts from a list on the
   - **App:** `askGoogle` in `mobile/src/auth/google.ts` now opens the list (`mobile/src/auth/he-accounts.ts`, the app's copy of the keys, roles and names, and `mobile/src/screens/he-account-sheet.tsx`, a bottom sheet on the sign-in screen) in place of Google's sheet and chooser. Everything after Google's step is the existing code, and the mock (no Google client ID) is untouched. `signOut()` now also forgets `consented` and `locationExplained`.
   - **Tests:** `main-server/test/he-sign-in.integration.test.ts` (on, unset, unknown key, Google token) and `mobile/__tests__/he-sign-in.integration.test.tsx` (the list from both buttons, a pick to consent and Onboarding, a cancel, a sign-out followed by consent and the explanation again). Changed to the HE behaviour: `google.unit.test.ts` (asking Google), `consent.integration.test.tsx` and `api/sign-in.integration.test.ts` (consent is asked again after a sign-out) and `library-sign-out.integration.test.tsx` (what the sign-out keeps).
   - **Not ticked:** CI green on the HE branch, which runs only once the branch is pushed. Locally, lint, format check, typecheck and every test of `main-server` and `mobile` pass.
+- **CI (2026-11-03):** every CI check passed on `a78b952` and on `d0a4ed5`, the pushed `3.0/P15-he`, which holds this ticket. That ticks the last box.
