@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -86,15 +87,16 @@ describe('the consent screen', () => {
   });
 });
 
-describe('consent, once on a phone', () => {
-  it('is not asked again after a sign-out and a new sign-in', async () => {
+describe('consent on a phone', () => {
+  // On the HE branch (P15) every evaluator on a shared phone is asked.
+  it('is asked again after a sign-out and a new sign-in', async () => {
     const user = await signInFresh();
     await press(user, AGREE);
     await press(user, '로그아웃');
 
     await press(user, SIGN_IN, 400);
-    expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
-    expect(screen.queryByRole('header', { name: TITLE })).toBeNull();
+    expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
+    expect(screen.queryByRole('header', { name: ONBOARDING })).toBeNull();
   });
 
   it('is asked after the loading screen of a signed-in User who has not agreed', async () => {

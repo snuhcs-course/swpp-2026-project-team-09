@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,7 +13,7 @@ import { startsFromFirstState } from '@/dev-settings';
 // What the phone keeps so that the app can open again where the User left it.
 export interface Kept {
   signedIn: boolean;
-  // The User agreed to the legal documents on this phone. A sign-out leaves it as it is.
+  // The User agreed to the legal documents on this phone. On the HE branch a sign-out forgets it (P15).
   consented: boolean;
   // What the sign-in suggested for Onboarding's name and department. Null once Onboarding is finished.
   suggestion: Suggestion | null;
@@ -20,7 +21,7 @@ export interface Kept {
   // The Onboarding's answers. The course level and the gender live nowhere else.
   answers: OnboardingAnswers | null;
   // The User answered the explanation before the location prompt on this phone, so the main screen does not show it
-  // by itself again.
+  // by itself again. On the HE branch a sign-out forgets it (P15).
   locationExplained: boolean;
   // The token of the Invite Link the app was opened with, until its accept screen shows it. A later link replaces it.
   inviteToken: string | null;

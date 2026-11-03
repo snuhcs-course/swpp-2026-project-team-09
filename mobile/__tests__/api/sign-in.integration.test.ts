@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -166,11 +167,12 @@ describe('what the phone keeps of the consent', () => {
     });
   });
 
-  it('remembers after a sign-out that the User agreed to the legal documents', async () => {
-    await keep({ signedIn: true, consented: true });
+  // On the HE branch (P15), so that the next evaluator on the phone is asked again.
+  it('forgets at a sign-out that the User agreed to the legal documents and answered the location explanation', async () => {
+    await keep({ signedIn: true, consented: true, locationExplained: true });
     await signOut();
 
-    expect((await readKept()).consented).toBe(true);
+    expect(await readKept()).toMatchObject({ consented: false, locationExplained: false });
   });
 
   it('keeps both of two changes made at once', async () => {

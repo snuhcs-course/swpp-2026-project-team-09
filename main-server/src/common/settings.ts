@@ -13,6 +13,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -119,6 +120,12 @@ export const settingsSchema = z
       .transform((value) => value === 'true'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
+    // Whether the seven HE accounts sign in by their keys in place of Google's ID token (src/he/he-accounts.ts). On
+    // only on the Heuristic Evaluation's server (P15).
+    HE_ACCOUNTS: z
+      .enum(['on', 'off'])
+      .default('off')
+      .transform((value) => value === 'on'),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
