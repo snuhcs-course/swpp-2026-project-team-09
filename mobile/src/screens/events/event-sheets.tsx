@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -56,11 +57,6 @@ export function useEventSheets(): EventSheetsState {
       openPartyCreate(eventId);
     },
   };
-}
-
-// A card whose request for Matching waits opens the User's requests.
-export function openMatchingRequests(): void {
-  router.push('/matching');
 }
 
 export function EventSheets({ sheets, quests }: { sheets: EventSheetsState; quests: readonly Quest[] }): ReactElement {
