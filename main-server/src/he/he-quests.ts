@@ -6,8 +6,7 @@
 
 import { type JoinPolicy, type QuestBoard } from '../generated/prisma/client.js';
 
-// The eight recruiting Quests of the Heuristic Evaluation (P15), which `he-seed` writes (src/he/he.seed.ts). Each is
-// held by its Leader alone, with one Sub Quest.
+// The recruiting Quests of the Heuristic Evaluation (P15). Each is held by its Leader alone, with one Sub Quest.
 
 // A Sub Quest at a time in Korea and a Place by the campus map's number, or the attending Sub Quest of a demo Global
 // Event, by its key in src/demo/demo-data.ts.
@@ -20,7 +19,6 @@ export interface HeQuest {
   board: QuestBoard;
   joinPolicy: JoinPolicy;
   capacity: number;
-  // An HE account's key.
   leader: string;
   description: string;
   subQuest: HeSubQuest;

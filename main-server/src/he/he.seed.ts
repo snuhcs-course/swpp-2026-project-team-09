@@ -7,7 +7,7 @@
 import { v5 as uuidv5 } from 'uuid';
 import { demoId } from '../demo/demo-data.js';
 import { type Prisma, PrismaClient, Weekday } from '../generated/prisma/client.js';
-import { HE_ACCOUNTS, type HeAccount, type HeMeeting, type HeTimetable } from './he-accounts.js';
+import { HE_ACCOUNT_LIST, type HeAccount, type HeMeeting, type HeTimetable } from './he-accounts.js';
 import { HE_QUESTS, type HeQuest } from './he-quests.js';
 
 const ID_NAMESPACE = '82529fdd-02fb-47b8-9185-f8d34df6c4b9';
@@ -21,7 +21,6 @@ const QUESTS_MADE_AT = new Date('2026-11-04T09:00:00+09:00');
 // A Class given a start alone.
 const CLASS_MINUTES = 75;
 
-// The weekdays each column of a Timetable is held on.
 const HELD_ON: Record<keyof HeTimetable, Weekday[]> = {
   wednesday: [Weekday.monday, Weekday.wednesday],
   thursday: [Weekday.tuesday, Weekday.thursday],
@@ -31,7 +30,6 @@ const HELD_ON: Record<keyof HeTimetable, Weekday[]> = {
 // A Place's id by the campus map's number.
 type PlaceOf = (number: string) => string;
 
-// Every meeting of the Timetable, with the column it is in.
 function meetingsOf(timetable: HeTimetable): [keyof HeTimetable, HeMeeting][] {
   return (['wednesday', 'thursday', 'friday'] as const).flatMap((column) =>
     timetable[column].map((meeting): [keyof HeTimetable, HeMeeting] => [column, meeting]),
@@ -52,11 +50,17 @@ function pair(oneId: string, otherId: string): { userAId: string; userBId: strin
   return oneId < otherId ? { userAId: oneId, userBId: otherId } : { userAId: otherId, userBId: oneId };
 }
 
-async function missingUsers(prisma: PrismaClient): Promise<Prisma.UserCreateManyInput[]> {
-  const ids = HE_ACCOUNTS.map(({ key }) => userId(key));
-  const found = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true } });
-  const existing = new Set(found.map(({ id }) => id));
-  return HE_ACCOUNTS.filter(({ key }) => !existing.has(userId(key))).map((account) => ({
+// The rows whose ids the table does not hold yet.
+async function notThere<Row extends { id: string }>(
+  rows: Row[],
+  findIds: (ids: string[]) => Promise<{ id: string }[]>,
+): Promise<Row[]> {
+  const found = new Set((await findIds(rows.map(({ id }) => id))).map(({ id }) => id));
+  return rows.filter(({ id }) => !found.has(id));
+}
+
+function missingUsers(prisma: PrismaClient): Promise<Prisma.UserCreateManyInput[]> {
+  const users = HE_ACCOUNT_LIST.map((account) => ({
     id: userId(account.key),
     googleSubject: account.key,
     email: account.email,
@@ -65,10 +69,11 @@ async function missingUsers(prisma: PrismaClient): Promise<Prisma.UserCreateMany
     name: account.name,
     department: account.department,
   }));
+  return notThere(users, (ids) => prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true } }));
 }
 
 async function missingFriendships(prisma: PrismaClient): Promise<Prisma.FriendshipCreateManyInput[]> {
-  const friendships = HE_ACCOUNTS.flatMap(({ key, friends }) =>
+  const friendships = HE_ACCOUNT_LIST.flatMap(({ key, friends }) =>
     friends.map((friend) => ({
       ...pair(userId(key), userId(friend)),
       senderId: userId(key),
@@ -122,14 +127,11 @@ function classesOf({ key, timetable }: HeAccount, place: PlaceOf): HeClass[] {
 }
 
 // A Class the account still has is left as it is, with its times.
-async function missingClasses(prisma: PrismaClient, place: PlaceOf): Promise<HeClass[]> {
-  const classes = HE_ACCOUNTS.flatMap((account) => classesOf(account, place));
-  const found = await prisma.timetableClass.findMany({
-    where: { id: { in: classes.map(({ id }) => id) } },
-    select: { id: true },
-  });
-  const existing = new Set(found.map(({ id }) => id));
-  return classes.filter(({ id }) => !existing.has(id));
+function missingClasses(prisma: PrismaClient, place: PlaceOf): Promise<HeClass[]> {
+  const classes = HE_ACCOUNT_LIST.flatMap((account) => classesOf(account, place));
+  return notThere(classes, (ids) =>
+    prisma.timetableClass.findMany({ where: { id: { in: ids } }, select: { id: true } }),
+  );
 }
 
 const inKorea = (time: string): Date => new Date(`${time}:00+09:00`);
@@ -144,18 +146,20 @@ interface QuestRows {
 function rowsOf({ number, leader, subQuest, ...quest }: HeQuest, place: PlaceOf): QuestRows {
   const id = heId(`quest:${number}`);
   const createdAt = new Date(QUESTS_MADE_AT.getTime() - number * 60 * 1000);
-  const globalEventId = 'globalEvent' in subQuest ? demoId(`global-event:${subQuest.globalEvent}`) : null;
   const leaderId = userId(leader);
   // The attending Sub Quest reads its title, time and place from the Global Event.
-  const content =
+  const { globalEventId, content } =
     'globalEvent' in subQuest
-      ? { attending: true }
+      ? { globalEventId: demoId(`global-event:${subQuest.globalEvent}`), content: { attending: true } }
       : {
-          attending: false,
-          title: subQuest.title,
-          startsAt: inKorea(subQuest.startsAt),
-          endsAt: inKorea(subQuest.endsAt),
-          placeId: place(subQuest.place),
+          globalEventId: null,
+          content: {
+            attending: false,
+            title: subQuest.title,
+            startsAt: inKorea(subQuest.startsAt),
+            endsAt: inKorea(subQuest.endsAt),
+            placeId: place(subQuest.place),
+          },
         };
   return {
     id,
@@ -166,14 +170,9 @@ function rowsOf({ number, leader, subQuest, ...quest }: HeQuest, place: PlaceOf)
 }
 
 // A Quest that is there is left as it is, with its Holders and Sub Quests.
-async function missingQuests(prisma: PrismaClient, place: PlaceOf): Promise<QuestRows[]> {
+function missingQuests(prisma: PrismaClient, place: PlaceOf): Promise<QuestRows[]> {
   const quests = HE_QUESTS.map((quest) => rowsOf(quest, place));
-  const found = await prisma.quest.findMany({
-    where: { id: { in: quests.map(({ id }) => id) } },
-    select: { id: true },
-  });
-  const existing = new Set(found.map(({ id }) => id));
-  return quests.filter(({ id }) => !existing.has(id));
+  return notThere(quests, (ids) => prisma.quest.findMany({ where: { id: { in: ids } }, select: { id: true } }));
 }
 
 // The number before a hyphen, by which 43-1 comes after 43 and before 58.
@@ -182,7 +181,7 @@ const leading = (number: string): number => Number(number.split('-')[0]);
 // The campus map's numbers of the Places the data names, in the order of the numbers.
 function placeNumbers(): string[] {
   const numbers = new Set([
-    ...HE_ACCOUNTS.flatMap(({ timetable }) => meetingsOf(timetable).map(([, { place }]) => place)),
+    ...HE_ACCOUNT_LIST.flatMap(({ timetable }) => meetingsOf(timetable).map(([, { place }]) => place)),
     ...HE_QUESTS.flatMap(({ subQuest }) => ('place' in subQuest ? [subQuest.place] : [])),
   ]);
   return [...numbers].toSorted((a, b) => leading(a) - leading(b) || a.localeCompare(b));
@@ -190,13 +189,27 @@ function placeNumbers(): string[] {
 
 const GLOBAL_EVENTS = HE_QUESTS.flatMap(({ subQuest }) => ('globalEvent' in subQuest ? [subQuest.globalEvent] : []));
 
+// A key that signed in before the seed made a User with the key as its Google subject, which the seed's own User of
+// that key would clash with.
+async function signedInEarly(prisma: PrismaClient): Promise<string[]> {
+  const keys = HE_ACCOUNT_LIST.map(({ key }) => key);
+  const users = await prisma.user.findMany({
+    where: { googleSubject: { in: keys }, id: { notIn: keys.map((key) => userId(key)) } },
+    select: { googleSubject: true },
+  });
+  const early = new Set(users.map(({ googleSubject }) => googleSubject));
+  return keys.filter((key) => early.has(key));
+}
+
 // What other steps write first: the campus map's Places, which the seed files load, and the demo Global Events, which
-// the demo data holds. Stops with all that is missing named, before anything is written.
+// the demo data holds. Stops with all that is missing named, and any key that signed in first, before anything is
+// written.
 async function prerequisites(prisma: PrismaClient): Promise<PlaceOf> {
   const numbers = placeNumbers();
-  const [places, events] = await Promise.all([
+  const [places, events, early] = await Promise.all([
     prisma.place.findMany({ where: { origin: 'campus_map', number: { in: numbers } } }),
     prisma.globalEvent.findMany({ where: { id: { in: GLOBAL_EVENTS.map((key) => demoId(`global-event:${key}`)) } } }),
+    signedInEarly(prisma),
   ]);
   const ids = new Map(places.map(({ number, id }) => [number, id]));
   const missingPlaces = numbers.filter((number) => !ids.has(number));
@@ -210,13 +223,16 @@ async function prerequisites(prisma: PrismaClient): Promise<PlaceOf> {
       ? []
       : [`the demo Global Event ${missingEvents.join(', ')} (write the demo data: the demo profile's demo-seed)`]),
   ];
-  if (missing.length > 0) {
-    throw new Error(`The HE seed wrote nothing. It needs ${missing.join(' and ')}.`);
+  const problems = [
+    ...(missing.length === 0 ? [] : [`It needs ${missing.join(' and ')}.`]),
+    ...(early.length === 0 ? [] : [`The keys ${early.join(', ')} signed in before the seed: remove their Users.`]),
+  ];
+  if (problems.length > 0) {
+    throw new Error(`The HE seed wrote nothing. ${problems.join(' ')}`);
   }
   return (number) => ids.get(number) ?? '';
 }
 
-// How many rows of each kind a run wrote.
 export interface HeSeeded {
   users: number;
   friendships: number;

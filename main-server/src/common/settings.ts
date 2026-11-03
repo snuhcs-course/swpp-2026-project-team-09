@@ -120,7 +120,7 @@ export const settingsSchema = z
       .transform((value) => value === 'true'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
-    // Whether the seven HE accounts sign in by their keys in place of Google's ID token (src/he/he-accounts.ts). On
+    // Whether the HE accounts sign in by their keys in place of Google's ID token (src/he/he-accounts.ts). On
     // only on the Heuristic Evaluation's server (P15).
     HE_ACCOUNTS: z
       .enum(['on', 'off'])

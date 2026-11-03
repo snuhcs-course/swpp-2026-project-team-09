@@ -4,9 +4,8 @@
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// The seven accounts of the Heuristic Evaluation (P15), which exist only on the HE branch. With HE_ACCOUNTS on, an ID
-// token equal to a key signs in as its account (src/auth/he-stand-in.ts). `he-seed` writes them with their Friends and
-// Timetables (src/he/he.seed.ts). The app keeps its own copy of the keys.
+// The accounts of the Heuristic Evaluation (P15), which exist only on the HE branch. The app keeps its own copy of the
+// keys, since the two share no code.
 
 export type HeRole = 'round-1' | 'round-2' | 'spare';
 
@@ -49,7 +48,7 @@ function account(fields: Omit<HeAccount, 'googleName' | 'email'>): HeAccount {
 }
 
 // The spec's tables, in their order, which the app's list follows.
-export const HE_ACCOUNTS: readonly HeAccount[] = [
+export const HE_ACCOUNT_LIST: readonly HeAccount[] = [
   account({
     key: 'he-r1a',
     role: 'round-1',
