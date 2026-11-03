@@ -4,11 +4,13 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { TurboModule } from 'react-native';
 import { Platform, TurboModuleRegistry } from 'react-native';
 import type { GoogleOneTapSignIn } from 'react-native-nitro-google-signin';
+import { askHeAccount } from '@/auth/he-accounts';
 
 // The one file that touches Google's sign-in library, `react-native-nitro-google-signin`. The library is native code:
 // only a development build or a released app holds it, and loading it anywhere else throws. So nothing here loads it
@@ -67,25 +69,10 @@ function google(): typeof GoogleOneTapSignIn {
   return loaded.GoogleOneTapSignIn;
 }
 
-// Opens Google's account sheet, or its chooser when asked that way, and gives the chosen account's ID token. A User
-// who closes either is not a failure. Anything else throws: no Google Play services, a client that Google does not
-// know, no network.
-export async function askGoogle(way: GoogleAccountPrompt = 'phone-accounts'): Promise<GoogleAnswer> {
-  const signIn = google();
-  await signIn.checkPlayServices();
-  // `createAccount` is the sheet with every Google account on the phone. A phone with no Google account has nothing
-  // to list there, and Google's own dialog, which can add one, opens instead. `presentExplicitSignIn` is that dialog.
-  let response = way === 'chooser' ? await signIn.presentExplicitSignIn() : await signIn.createAccount();
-  if (response.type === 'noSavedCredentialFound' && way === 'phone-accounts') {
-    response = await signIn.presentExplicitSignIn();
-  }
-  if (response.type === 'cancelled') {
-    return { kind: 'cancelled' };
-  }
-  if (response.type !== 'success' || response.data === null) {
-    throw new Error('Google gave no account');
-  }
-  return { kind: 'token', idToken: response.data.idToken };
+// On the HE branch (P15) no Google sheet opens: either way, the sign-in screen lists the HE accounts, and the one
+// picked gives its key in place of the ID token (src/auth/he-accounts.ts). Closing the list is a cancel.
+export function askGoogle(_way: GoogleAccountPrompt = 'phone-accounts'): Promise<GoogleAnswer> {
+  return askHeAccount();
 }
 
 // Signs out of Google on the phone, so that the next sign-in asks which account again.

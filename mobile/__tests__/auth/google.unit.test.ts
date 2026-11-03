@@ -3,10 +3,12 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Platform, TurboModuleRegistry } from 'react-native';
 import { askGoogle, forgetGoogle, googleAvailable } from '@/auth/google';
+import { closeHeAccounts, pickHeAccount } from '@/auth/he-accounts';
 
 interface Response {
   type: 'success' | 'noSavedCredentialFound' | 'cancelled';
@@ -29,13 +31,6 @@ jest.mock('react-native-nitro-google-signin', () => ({
     signOut: mockSignOut,
   },
 }));
-
-const CANCELLED: Response = { type: 'cancelled', data: null };
-const NO_ACCOUNT: Response = { type: 'noSavedCredentialFound', data: null };
-
-function success(idToken: string): Response {
-  return { type: 'success', data: { idToken } };
-}
 
 // A build on Android that holds the native module and was given the web client.
 function aBuildWithGoogle(): void {
@@ -61,7 +56,6 @@ describe('whether a build can ask Google', () => {
     process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = 'web-client';
 
     expect(googleAvailable()).toBe(false);
-    await expect(askGoogle()).rejects.toThrow('holds no Google sign-in');
     await expect(forgetGoogle()).rejects.toThrow('holds no Google sign-in');
     expect(mockConfigure).not.toHaveBeenCalled();
   });
@@ -87,65 +81,34 @@ describe('whether a build can ask Google', () => {
   });
 });
 
+// On the HE branch (P15) the HE accounts' list takes the place of Google's sheet and chooser.
 describe('asking Google', () => {
   beforeEach(aBuildWithGoogle);
 
-  it("gives the chosen account's ID token, asked for the web client and no hosted domain", async () => {
-    mockCreateAccount.mockResolvedValue(success('the-token'));
+  it("gives the key of the HE account picked, and opens neither Google's sheet nor its chooser", async () => {
+    const asked = askGoogle();
+    pickHeAccount('he-r1a');
+    expect(await asked).toEqual({ kind: 'token', idToken: 'he-r1a' });
 
-    expect(await askGoogle()).toEqual({ kind: 'token', idToken: 'the-token' });
-    expect(mockConfigure).toHaveBeenCalledWith({ webClientId: 'web-client', iosClientId: null });
+    const chooser = askGoogle('chooser');
+    pickHeAccount('he-s3');
+    expect(await chooser).toEqual({ kind: 'token', idToken: 'he-s3' });
+
+    expect(mockCheckPlayServices).not.toHaveBeenCalled();
+    expect(mockCreateAccount).not.toHaveBeenCalled();
     expect(mockPresentExplicitSignIn).not.toHaveBeenCalled();
   });
 
-  it('says "cancelled" when the User closes the sheet', async () => {
-    mockCreateAccount.mockResolvedValue(CANCELLED);
+  it('says "cancelled" when the list closes without a pick', async () => {
+    const asked = askGoogle();
+    closeHeAccounts();
 
-    expect(await askGoogle()).toEqual({ kind: 'cancelled' });
-  });
-
-  it("opens Google's own dialog on a phone that has no account to list", async () => {
-    mockCreateAccount.mockResolvedValue(NO_ACCOUNT);
-    mockPresentExplicitSignIn.mockResolvedValue(success('added'));
-
-    expect(await askGoogle()).toEqual({ kind: 'token', idToken: 'added' });
-  });
-
-  it('throws when no account comes of it, when Play services are missing and when Google refuses', async () => {
-    mockCreateAccount.mockResolvedValue(NO_ACCOUNT);
-    mockPresentExplicitSignIn.mockResolvedValue(NO_ACCOUNT);
-    await expect(askGoogle()).rejects.toThrow('Google gave no account');
-
-    mockCreateAccount.mockRejectedValue(new Error('DEVELOPER_ERROR'));
-    await expect(askGoogle()).rejects.toThrow('DEVELOPER_ERROR');
-
-    mockCheckPlayServices.mockRejectedValue(new Error('PLAY_SERVICES_NOT_AVAILABLE'));
-    await expect(askGoogle()).rejects.toThrow('PLAY_SERVICES_NOT_AVAILABLE');
+    expect(await asked).toEqual({ kind: 'cancelled' });
   });
 
   it('forgets the account by signing out of Google', async () => {
     await forgetGoogle();
 
     expect(mockSignOut).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("asking Google's chooser", () => {
-  beforeEach(aBuildWithGoogle);
-
-  it("opens Google's chooser, which can add an account, when asked that way, and not the phone's sheet", async () => {
-    mockPresentExplicitSignIn.mockResolvedValue(success('another'));
-
-    expect(await askGoogle('chooser')).toEqual({ kind: 'token', idToken: 'another' });
-    expect(mockCheckPlayServices).toHaveBeenCalledTimes(1);
-    expect(mockCreateAccount).not.toHaveBeenCalled();
-  });
-
-  it('says "cancelled" when the User closes the chooser, and throws when it gives no account', async () => {
-    mockPresentExplicitSignIn.mockResolvedValue(CANCELLED);
-    expect(await askGoogle('chooser')).toEqual({ kind: 'cancelled' });
-
-    mockPresentExplicitSignIn.mockResolvedValue(NO_ACCOUNT);
-    await expect(askGoogle('chooser')).rejects.toThrow('Google gave no account');
   });
 });

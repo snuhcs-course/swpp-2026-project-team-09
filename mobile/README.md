@@ -66,6 +66,11 @@ everywhere else:
 | Expo Go, the web, the tests                                                | The mock: it signs in after 0.3 seconds, with no sheet        |
 | Any of them with `EXPO_PUBLIC_SIGN_IN_ENDING`                              | The mock, with the ending that the setting names              |
 
+On the HE branch (P15), Google's account sheet and chooser never open. Where the app would ask Google, both buttons of
+the sign-in screen open the list of the seven HE accounts (`src/auth/he-accounts.ts`, `src/screens/he-account-sheet.tsx`),
+each by its role and name, such as `1라운드 · 김하늘`. The account picked gives its key in place of Google's ID token,
+which the main server takes while its `HE_ACCOUNTS` is on; closing the list is a closed sheet. The mock is unchanged.
+
 With the main server's address (`asksMainServer()` in `src/api/servers.ts`), Google's ID token goes to
 `POST /auth/google`, and the main server's answer gives the ending: 200 signs in, with whether the User finished
 Onboarding and the suggestion; 403 is an account outside SNU; anything else, and no answer, is a failure. A closed sheet
@@ -467,7 +472,8 @@ refused state for an account outside SNU or any other failure. A press in a refu
 
 The consent screen asks once on a phone: a signed-in User who has not agreed there sees it after the sign-in, or after
 the loading screen, and the Session remembers where they go next. "동의하고 시작" stores the consent and calls `agree`;
-"로그아웃" signs out. A sign-out leaves the consent on the phone.
+"로그아웃" signs out. On the HE branch a sign-out forgets the consent and the location explanation, so that the next
+evaluator on the phone sees both.
 
 The Onboarding screen (`src/screens/onboarding/`) starts from what the sign-in suggested: the name and the department,
 each with the badge "Google 계정에서 가져옴" until the User changes that field. The department is a name from the

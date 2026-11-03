@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, screen } from '@testing-library/react-native';
@@ -66,7 +67,12 @@ describe('the end of the library session from the sign-outs', () => {
 
     await signOut();
 
-    expect(keep).toHaveBeenCalledWith({ signedIn: false, suggestion: null });
+    expect(keep).toHaveBeenCalledWith({
+      signedIn: false,
+      suggestion: null,
+      consented: false,
+      locationExplained: false,
+    });
   });
 });
 

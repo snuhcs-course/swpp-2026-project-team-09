@@ -112,6 +112,11 @@ The app signs in with Google and sends the ID token it gets to the main server:
   soon as its session ends. The main server then tells the socket server, which disconnects the session's connections,
   and clears the User's position (see [Location Sharing](#location-sharing)).
 
+With `HE_ACCOUNTS=on`, which only the Heuristic Evaluation's server sets (P15), the seven HE accounts of
+`src/he/he-accounts.ts` sign in without Google: an `idToken` equal to an account's key, such as `he-r1a`, is taken as
+an SNU account with the key as its Google subject, a verified address on `he.invalid` and the Google name
+`<name> / 학생 / <department>`. Every other ID token goes to Google as above. The admin site's sign-in is unchanged.
+
 `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
 stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
 `ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only `ACCESS_TOKEN_PUBLIC_KEY`, never the private

@@ -6,6 +6,7 @@
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { AccessTokenPayload } from './access-token.guard.js';
 import { SignInResultDto } from './dto/sign-in-result.dto.js';
 import { TokensDto } from './dto/tokens.dto.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
+import { heAccountClaims } from './he-stand-in.js';
 import { SessionsService } from './sessions.service.js';
 
 // Google sets the hosted domain claim ("hd") only for accounts of a Google Workspace domain. An @snu.ac.kr email
@@ -62,12 +64,12 @@ export class AuthService {
     private readonly settings: ConfigService<Settings, true>,
   ) {}
 
-  // Signs in with a Google ID token. The first sign-in of a Google account creates its User. A User has one session,
-  // so the sign-in ends the one on the other phone.
+  // Signs in with a Google ID token, or with HE_ACCOUNTS on also an HE account's key. The first sign-in of a Google
+  // account creates its User. A User has one session, so the sign-in ends the one on the other phone.
   async signIn(idToken: string): Promise<SignInResultDto> {
-    const claims = await this.googleVerifier.verify(idToken, [
-      this.settings.get('GOOGLE_APP_CLIENT_ID', { infer: true }),
-    ]);
+    const claims =
+      (this.settings.get('HE_ACCOUNTS', { infer: true }) ? heAccountClaims(idToken) : undefined) ??
+      (await this.googleVerifier.verify(idToken, [this.settings.get('GOOGLE_APP_CLIENT_ID', { infer: true })]));
     if (claims === undefined) {
       throw new UnauthorizedException('The Google ID token is invalid or expired.');
     }
