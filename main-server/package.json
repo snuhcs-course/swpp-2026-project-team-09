@@ -22,6 +22,7 @@
     "db:seed": "nest build && node --env-file-if-exists=.env dist/seed",
     "demo:seed": "nest build && node --env-file-if-exists=.env dist/demo-seed",
     "demo:walk": "nest build && node --env-file-if-exists=.env dist/demo-walk",
+    "he:seed": "nest build && node --env-file-if-exists=.env dist/he-seed",
     "seed:export": "node scripts/export-seed.ts",
     "walking:build": "nest build && node dist/build-walking-table",
     "keys:generate": "node scripts/generate-access-token-keys.ts",

@@ -20,8 +20,7 @@ export function heAccountClaims(idToken: string): SignInClaims | undefined {
   return {
     sub: account.key,
     hd: 'snu.ac.kr',
-    // A reserved domain (RFC 2606) that no mail reaches. The app never shows the address.
-    email: `${account.key}@he.invalid`,
+    email: account.email,
     email_verified: true,
     name: account.googleName,
   };

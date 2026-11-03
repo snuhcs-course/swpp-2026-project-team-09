@@ -117,6 +117,11 @@ With `HE_ACCOUNTS=on`, which only the Heuristic Evaluation's server sets (P15), 
 an SNU account with the key as its Google subject, a verified address on `he.invalid` and the Google name
 `<name> / 학생 / <department>`. Every other ID token goes to Google as above. The admin site's sign-in is unchanged.
 
+`he-seed` writes the HE accounts as Users before Onboarding, with their Friend IDs, Friends, weekly Timetables and the
+eight recruiting Quests of `src/he/he-quests.ts`, at fixed times of the week of 2026-11-04. It runs once the seed files
+and the demo data are in, and stops naming what is missing: `node dist/he-seed` in the main server's container, or
+`pnpm he:seed`. Every row has an id of its own, and a run writes only what is missing, so a second run changes nothing.
+
 `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
 stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
 `ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only `ACCESS_TOKEN_PUBLIC_KEY`, never the private
@@ -2662,8 +2667,10 @@ src/
 ├── load-seed.ts                     loads every seed file; the command and the tests call it
 ├── demo-seed.ts                     the command that writes the demo data, `pnpm demo:seed`
 ├── demo-walk.ts                     the command that walks the demo Users, `pnpm demo:walk`
+├── he-seed.ts                       the command that writes the HE data (P15), `pnpm he:seed`
 ├── build-walking-table.ts           the command that writes the walking table, `pnpm walking:build`
 ├── demo/                            the demo profile's data, its seed and the walker's paths (not a module)
+├── he/                              the HE accounts, recruiting Quests and their seed (P15; not a module)
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
