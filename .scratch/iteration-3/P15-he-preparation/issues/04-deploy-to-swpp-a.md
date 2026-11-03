@@ -25,7 +25,7 @@ Each is done only after the PM says so in the chat:
 
 ## Acceptance criteria
 
-- [ ] **Tracked branch:** bootstrap clones the HE branch and the deploy run tracks it.
+- [x] **Tracked branch:** bootstrap clones the HE branch and the deploy run tracks it.
   - The gate on the required checks is unchanged.
   - `PUBLIC_URL` is server A's host.
   - The deploy scripts' bats tests expect the HE branch and pass.
@@ -42,3 +42,11 @@ Each is done only after the PM says so in the chat:
   - a key signs in over HTTP;
   - the server holds menus, upcoming published Global Events and the Shuttle Stops.
 - [ ] **Untouched:** swpp-b is only read, and development, 3.0/Main and Production are untouched.
+
+## Comments
+
+- **Code (2026-11-03), on `3.0/P15-he-04`.**
+  - **Tracked branch:** `bootstrap.sh` clones `3.0/P15-he` and `deploy.sh`'s `TRACKED_REF` is `3.0/P15-he`, so `/deploy-status` names it. The gate is unchanged: it asks GitHub's `commits/<hash>/check-runs` for the fetched commit by hash, so the slash in the branch name never reaches the API path.
+  - **Settings:** `compose.deploy.yaml` hands `HE_ACCOUNTS` to the main server, `off` when the file lacks it. The settings file the bootstrap writes, and `snu-now.env.example`, have server A's `PUBLIC_URL`, `HE_ACCOUNTS=on`, `DEMO_ACCOUNT_EMAILS` empty, `COMPOSE_PROFILES=demo` and `EXTRA_SNU_COLLECTION=off`; `KAKAO_REST_API_KEY` and `INITIAL_ADMINISTRATOR_EMAILS` stay `CHANGE_ME` and `OPENROUTER_API_KEY` empty for the keys from swpp-b. `docker compose config` over the template gives the main server `HE_ACCOUNTS=on`.
+  - **Tests:** `bootstrap.bats` and `deploy.bats` expect the HE branch, server A's address and the HE settings; `bats --recursive infra/deploy` (27) and CI's shellcheck pass. The README's branch, host and settings lines follow.
+  - **Not ticked:** Settings, since swpp-a's own file and its `CHANGE_ME`s wait for bootstrap and the keys; Collections, Running server and Untouched wait for the PM's steps.

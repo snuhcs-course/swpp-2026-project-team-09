@@ -1,19 +1,19 @@
 # deploy
 
-The Dev Server's deployment and its runbook. The Dev Server is server B of the two the course lends the team. It runs
-the four servers, PostgreSQL, Redis and the Demo Data under Docker Compose, behind a Caddy proxy, and keeps itself on
-the tip of `development`: nothing pushes to it
+The Dev Server's deployment and its runbook. On `3.0/P15-he` it deploys the HE server instead, on server A of the two
+the course lends the team, with `HE_ACCOUNTS` on. It runs the four servers, PostgreSQL, Redis and the Demo Data under
+Docker Compose, behind a Caddy proxy, and keeps itself on the tip of `3.0/P15-he`: nothing pushes to it
 ([ADR 0003](../../docs/adr/0003-the-dev-server-pulls-its-deployments.md),
 [ADR 0004](../../docs/adr/0004-compose-not-kubernetes-on-the-course-servers.md)).
 
 ## The Dev Server
 
-Every team member reaches it as `ssh swpp-b` with their own key, from the university's network only, and has `sudo`
+Every team member reaches it as `ssh swpp-a` with their own key, from the university's network only, and has `sudo`
 there. The server is an Incus (LXC) container with Ubuntu 24.04, on UTC.
 
 ### Its address
 
-`http://swpp26t09.147-46-242-174.sslip.io`, plain HTTP on port 80. The course's ingress routes only this exact host
+`http://swpp26t09.147-46-242-169.sslip.io`, plain HTTP on port 80. The course's ingress routes only this exact host
 name to the server and ends requests that last over 120 seconds. The proxy (`infra/proxy/Caddyfile`) answers:
 
 | Path                                   | What answers                                     |
@@ -24,7 +24,7 @@ name to the server and ends requests that last over 120 seconds. The proxy (`inf
 | Anything else, such as `/health/ready` | The main server                                  |
 
 The main server must define no route under `/apk/` or `/deploy-status`, which the proxy answers itself. The admin
-site is not deployed: run it on a laptop with `MAIN_SERVER_URL=http://swpp26t09.147-46-242-174.sslip.io` in
+site is not deployed: run it on a laptop with `MAIN_SERVER_URL=http://swpp26t09.147-46-242-169.sslip.io` in
 `admin/.env`.
 
 ### What a deploy run does
@@ -32,7 +32,7 @@ site is not deployed: run it on a laptop with `MAIN_SERVER_URL=http://swpp26t09.
 `snu-now-deploy.timer` starts `snu-now-deploy.service` two minutes after boot and a minute after each run ends;
 systemd never starts it while a run is going. The service runs `infra/deploy/deploy.sh` from the checkout, as root:
 
-1. Fetches `development`. When its tip is the deployed commit, the result is `up-to-date` and the run stops.
+1. Fetches `3.0/P15-he`. When its tip is the deployed commit, the result is `up-to-date` and the run stops.
 2. Reads the tip's check runs from GitHub's public API, without a token. The CI checks `main-server`,
    `socket-server`, `worker-server`, `match-server` and `flow-tests` must have succeeded; `admin`, `mobile` and
    `deploy-scripts` are not consulted. One success of each among its runs is enough. Otherwise a check missing, still
@@ -108,19 +108,19 @@ Each service keeps at most 30 MB of logs (10 MB × 3 files).
 
 ## First setup
 
-On a fresh server, from a laptop on the university's network, with a checkout of `development`:
+On a fresh server, from a laptop on the university's network, with a checkout of `3.0/P15-he`:
 
 ```bash
-scp infra/deploy/bootstrap.sh swpp-b:
-ssh swpp-b
+scp infra/deploy/bootstrap.sh swpp-a:
+ssh swpp-a
 sudo bash bootstrap.sh
 rm bootstrap.sh
 ```
 
 The bootstrap installs `docker.io`, `docker-compose-v2`, `docker-buildx`, `git`, `curl` and `jq` from Ubuntu's archive,
-creates the five folders of [Where things are](#where-things-are), clones the repository on `development` into the
+creates the five folders of [Where things are](#where-things-are), clones the repository on `3.0/P15-he` into the
 checkout and marks it safe for git under root. It writes the settings file with the generated and fixed values and
-`CHANGE_ME` for the three a person fills in, copies the five unit files into systemd and runs
+`CHANGE_ME` for the two a person fills in, copies the five unit files into systemd and runs
 `systemctl enable --now` on the two timers. It never overwrites an existing settings file and never deploys.
 
 It takes the team group from `/srv/team`. If it stops saying that `/srv/team` belongs to root, name the team's group
@@ -152,8 +152,9 @@ servers' own `.env.example` files.
 **Written by the bootstrap, left as they are.** The generated secrets: `POSTGRES_PASSWORD`, `MAIN_DB_PASSWORD`,
 `MATCH_DB_PASSWORD`, the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, `WORKER_TOKEN`
 and `MATCH_SERVER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
-`PUBLIC_URL` (the Dev Server's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug
-key's, which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS` and `EXTRA_SNU_COLLECTION=off`.
+`PUBLIC_URL` (server A's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug key's,
+which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS`, `EXTRA_SNU_COLLECTION=off`, `HE_ACCOUNTS=on` and
+`DEMO_ACCOUNT_EMAILS`, empty.
 
 **Filled in by a person**, `CHANGE_ME` until then:
 
@@ -161,7 +162,6 @@ key's, which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS` and
 | ------------------------------ | -------------------------------------------------------------------------- | ------------------------------------- |
 | `KAKAO_REST_API_KEY`           | The REST API key of the team's Kakao app                                   | The Owner of the Kakao app, privately |
 | `INITIAL_ADMINISTRATOR_EMAILS` | The four members' addresses they sign in to the admin site with, by commas | The members                           |
-| `DEMO_ACCOUNT_EMAILS`          | The four members' SNU addresses, separated by commas                       | The members                           |
 
 `OPENROUTER_API_KEY`, the Assistant's OpenRouter key (`main-server/.env.example` says how to make one), is left empty
 rather than `CHANGE_ME`: while it is empty, the Assistant answers that it is unavailable and everything else runs. A
@@ -186,14 +186,14 @@ way:
 
 ## Reading the status and the journal
 
-From any browser, `http://swpp26t09.147-46-242-174.sslip.io/deploy-status`. Its fields:
+From any browser, `http://swpp26t09.147-46-242-169.sslip.io/deploy-status`. Its fields:
 
 | Field               | What it is                                                       |
 | ------------------- | ---------------------------------------------------------------- |
-| `trackedRef`        | `development`                                                    |
+| `trackedRef`        | `3.0/P15-he`                                                     |
 | `checkedAt`         | When the run ran, in UTC                                         |
 | `result`            | What the run did, below                                          |
-| `candidateCommit`   | The tip of `development` the run looked at                       |
+| `candidateCommit`   | The tip of `3.0/P15-he` the run looked at                        |
 | `attempt`           | 1 to 3, when the run built the candidate or held it              |
 | `deployedCommit`    | The last commit built, started and checked healthy               |
 | `deployedAt`        | When that commit was deployed                                    |
@@ -454,8 +454,8 @@ gzip main-server/eval/shuttle-days/*.csv
 
 ## Server A
 
-Server A (`ssh swpp-a`, `http://swpp26t09.147-46-242-169.sslip.io`) stays empty. Production runs on AWS
-([ADR 0006](../../docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)).
+Server A (`ssh swpp-a`, `http://swpp26t09.147-46-242-169.sslip.io`) runs the HE server from `3.0/P15-he`. Production
+runs on AWS ([ADR 0006](../../docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)).
 
 ## Not covered by tests
 

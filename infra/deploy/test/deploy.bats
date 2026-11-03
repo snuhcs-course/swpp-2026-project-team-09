@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-11-03  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -114,7 +115,10 @@ serve_check_runs() {
   [ "$status" -eq 0 ]
   [ "$(steps | tr '\n' ' ')" = "fetch check-runs dump reset clean compose-build compose-up ready handshake image-prune builder-prune " ]
   [ "$(field 'keys_unsorted | join(" ")')" = "trackedRef checkedAt result candidateCommit attempt deployedCommit deployedAt checks recreatedServices" ]
-  [ "$(field '[.trackedRef, .result, .candidateCommit, .attempt, .deployedCommit] | join(" ")')" = "development deployed $TIP 1 $TIP" ]
+  [ "$(field '[.trackedRef, .result, .candidateCommit, .attempt, .deployedCommit] | join(" ")')" = "3.0/P15-he deployed $TIP 1 $TIP" ]
+  grep -qx 'git fetch --quiet origin 3.0/P15-he' "$FAKE_CALLS"
+  # By the commit, since a branch name with a slash is no path segment of GitHub's API.
+  grep -q "https://api.github.com/repos/snuhcs-course/swpp-2026-project-team-09/commits/$TIP/check-runs" "$FAKE_CALLS"
   [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
   [[ "$(field .deployedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
   [[ ! "$(field .deployedAt)" < "$(field .checkedAt)" ]] || false
