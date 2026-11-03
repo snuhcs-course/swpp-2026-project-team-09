@@ -5,6 +5,7 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-03  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Readies a course server for the deploy timer. Run as root, once and again whenever: it never overwrites the settings
@@ -21,6 +22,7 @@ if [[ $TEAM_GROUP == root ]]; then
 fi
 
 REPOSITORY=https://github.com/snuhcs-course/swpp-2026-project-team-09.git
+BRANCH=3.0/P15-he
 # git, curl and jq for the clone and the deploy run, which a minimal image may lack.
 PACKAGES=(docker.io docker-compose-v2 docker-buildx git curl jq)
 UNITS=(snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer
@@ -72,8 +74,8 @@ install_packages() {
 
 clone() {
   if [[ ! -d $CHECKOUT/.git ]]; then
-    log "cloning development into $CHECKOUT"
-    git clone --branch development "$REPOSITORY" "$CHECKOUT"
+    log "cloning $BRANCH into $CHECKOUT"
+    git clone --branch "$BRANCH" "$REPOSITORY" "$CHECKOUT"
   fi
   # For every user, root included, whoever owns the files. Not grep -q, which could stop git with SIGPIPE.
   if ! git config --system --get-all safe.directory | grep -xF -- "$CHECKOUT" >/dev/null; then
@@ -126,16 +128,17 @@ ACCESS_TOKEN_PRIVATE_KEY="$private_key"
 ACCESS_TOKEN_PUBLIC_KEY="$public_key"
 WORKER_TOKEN=$worker_token
 MATCH_SERVER_TOKEN=$match_server_token
-PUBLIC_URL=http://swpp26t09.147-46-242-174.sslip.io
+PUBLIC_URL=http://swpp26t09.147-46-242-169.sslip.io
 GOOGLE_APP_CLIENT_ID=1021723676612-aria1ohmdms787sqbvldtt8484fnf04c.apps.googleusercontent.com
 GOOGLE_ADMIN_CLIENT_ID=1021723676612-23lpoe5ue36rr2a07uora5ai4qckoe87.apps.googleusercontent.com
 ANDROID_CERTIFICATE_FINGERPRINTS=FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
 ASSISTANT_MODEL=anthropic/claude-haiku-5.5
 ROUND_INTERVAL_SECONDS=60
 EXTRA_SNU_COLLECTION=off
+HE_ACCOUNTS=on
 KAKAO_REST_API_KEY=CHANGE_ME
 INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME
-DEMO_ACCOUNT_EMAILS=CHANGE_ME
+DEMO_ACCOUNT_EMAILS=
 OPENROUTER_API_KEY=
 EOF
   chgrp "$TEAM_GROUP" "$ENV_FILE.partial"
