@@ -402,7 +402,7 @@ src/position/       the User's own position: the phone's, or the development wal
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/library/        관정도서관: the library client, its hidden web view and login, and the end of its session
-src/update/         the check at start for a newer native build, and its dialog
+src/update/         the check at start for a newer native build, and its dialog; unused on the HE branch
 src/screens/        the screens that the routes show; a screen of several files has a folder
 modules/            the native modules, local Expo modules: the map (snu-now-map), text recognition (snu-now-ocr) and
                     the web views' cookie clearing (snu-now-web-cookies)
@@ -901,16 +901,18 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 /global-events`) by their start, with the data of `useEventSources()` and the words of `src/features/events/adapter.ts`:
 
 - The app bar (`events-bar.tsx`) has "행사", the sparkle "AI 매칭 신청 내역" with a navy count of the waiting
-  requests, which opens the AI 매칭 신청 list, and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
-  place of the title and keeps the events whose title, place or description holds the words.
+  requests, which on the HE branch says "준비 중이에요" in place of opening the AI 매칭 신청 list, and the search,
+  which puts the field "행사 검색" and ✕ "검색 닫기" in place of the title and keeps the events whose title, place or
+  description holds the words.
 - The chips "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest)
   filter the list. Empty: "예정된 행사가 없어요" without any event, "검색 결과가 없어요" after a filter or a search.
 - A card (`event-item.tsx`) has "같이 갈 파티 {n}개" for the recruiting Quests of `GET /quests/recruiting`, "내 파티"
   when the User holds a Quest for the event, the source from the app's own list of announcers, the title, the time
   ("M월 D일까지" for an event whose end is more than 24 hours after its start, on every card and sheet that shows an
   event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
-  "AI 매칭", or "매칭 중" while the User's request waits, which opens the list. At `/events?focus=<id>` the list shows
-  every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
+  "AI 매칭", or "매칭 중" while the User's request waits, which on the HE branch says "준비 중이에요" and opens
+  nothing. At `/events?focus=<id>` the list shows every event, scrolls to the card and marks it with a navy border and
+  a glow for 2.6 s (`use-focus.ts`).
 - **파티 찾기/모집** (`recruiting-sheet.tsx`) lists the User's own Quest for the event ("내 파티" when the User leads it,
   "참여 중" with its Leader otherwise), then the Quests gathering for it (`GET /quests/recruiting?globalEventId=`),
   each with its fill and its next Sub Quest. The User's own opens its room; another's asks "‘{title}’에
@@ -921,8 +923,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 - **AI 매칭** (`matching-sheet.tsx`) asks only the group size, "2명", "3명" or "4명", explains what Matching does and
   sends `POST /matching-requests`. **The AI 매칭 신청 list** (`matching-screen.tsx`, `/matching`) shows each waiting
   request with "매칭 중", when it was asked, the event and the size, and withdraws one after "매칭 신청을 취소할까요?"
-  (`POST /matching-requests/:globalEventId/withdraw`). The requests and their refusals are in `use-event-actions.ts`,
-  and the words of every refusal in `src/features/quests/refusals.ts`.
+  (`POST /matching-requests/:globalEventId/withdraw`). On the HE branch no press opens either. The requests and their
+  refusals are in `use-event-actions.ts`, and the words of every refusal in `src/features/quests/refusals.ts`.
 - `MatchingWatch` (`src/features/events/matching-watch.tsx`), in the signed-in layout, watches the waiting requests
   wherever the User is: a request that stops waiting is read again (`GET /matching-requests/:globalEventId`), and a
   match says "{event} 파티가 만들어졌어요" and fetches the Quests again.
@@ -939,12 +941,14 @@ The three legal documents open from the consent screen on a screen of their own,
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
 closes back to the screen it was opened from. The documents' texts are placeholders.
 
-**The update check** (`src/update/`) runs once at every start: `UpdateCheck`, in the root layout beside the stack,
-fetches `app-version.json` from the `app-version` Release on GitHub with a 5-second timeout, without holding back the
-first screen. `app-version.ts` decides from the file's `latest` and `minimum` and the installed version: a build
-older than `latest` sees 업데이트가 필요합니다 with 업데이트 하기 and 계속 사용하기, a build older than `minimum` the same
-without 계속 사용하기. 업데이트 하기 opens the platform's `download`; where it is `null`, as on iOS, the dialog asks the
-User to install the new version and has no 업데이트 하기. Nothing is kept, so the dialog comes back at the next start.
+**The update check** (`src/update/`) is off on the HE branch: the root layout does not mount `UpdateCheck`, so the app
+asks for no version file and shows no dialog, and the folder is kept unused. Mounted in the root layout beside the
+stack, `UpdateCheck` runs once at every start and fetches `app-version.json` from the `app-version` Release on GitHub
+with a 5-second timeout, without holding back the first screen. `app-version.ts` decides from the file's `latest` and
+`minimum` and the installed version: a build older than `latest` sees 업데이트가 필요합니다 with 업데이트 하기 and
+계속 사용하기, a build older than `minimum` the same without 계속 사용하기. 업데이트 하기 opens the platform's `download`;
+where it is `null`, as on iOS, the dialog asks the User to install the new version and has no 업데이트 하기. Nothing is
+kept, so the dialog comes back at the next start.
 Any failure, offline, a timeout or a malformed file, shows nothing. The installed version is
 `Constants.expoConfig.version`, the running JavaScript's own `version`. It is the native build's too: `version` is part
 of the fingerprint (raising 1.0.0 to 1.1.0 changes it from `d0581b58…` to `5d2e4656…`), so an update made with

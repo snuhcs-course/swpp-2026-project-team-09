@@ -13,22 +13,12 @@ import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { createDatabase } from './containers.js';
 import { googleIdToken } from './google.js';
+import { ACCOUNTS } from './he-seed.js';
 import { signInResultSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 // The HE accounts sign in by their keys in place of Google's ID token while HE_ACCOUNTS is on (P15). Their Google
 // subjects are fixed, so the Users live in a database of their own and show in no other test file's lists.
-
-// The spec's seven accounts (.scratch/iteration-3/P15-he-preparation/spec.md, The HE accounts).
-const ACCOUNTS = [
-  { key: 'he-r1a', name: '김하늘', department: '컴퓨터공학부' },
-  { key: 'he-r1b', name: '최유나', department: '심리학과' },
-  { key: 'he-r2a', name: '한지우', department: '산업공학과' },
-  { key: 'he-r2b', name: '정민재', department: '경제학부' },
-  { key: 'he-s1', name: '이도현', department: '경영학과' },
-  { key: 'he-s2', name: '박서진', department: '기계공학부' },
-  { key: 'he-s3', name: '오세린', department: '생명과학부' },
-];
 
 const INVALID = { message: 'The Google ID token is invalid or expired.' };
 

@@ -117,11 +117,6 @@ With `HE_ACCOUNTS=on`, which only the Heuristic Evaluation's server sets (P15), 
 an SNU account with the key as its Google subject, a verified address on `he.invalid` and the Google name
 `<name> / 학생 / <department>`. Every other ID token goes to Google as above. The admin site's sign-in is unchanged.
 
-`he-seed` writes the HE accounts as Users before Onboarding, with their Friend IDs, Friends, weekly Timetables and the
-eight recruiting Quests of `src/he/he-quests.ts`, at fixed times of the week of 2026-11-04. It runs once the seed files
-and the demo data are in, and stops naming what is missing: `node dist/he-seed` in the main server's container, or
-`pnpm he:seed`. Every row has an id of its own, and a run writes only what is missing, so a second run changes nothing.
-
 `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
 stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
 `ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only `ACCESS_TOKEN_PUBLIC_KEY`, never the private
@@ -2633,6 +2628,15 @@ the operator's vehicles are shown, since each set replaces the one before.
 **Starting again**: `docker compose --profile demo down -v` deletes the database with the demo data, and with
 everything else in it: the collected Global Events, what Administrators did with them and the Administrators
 themselves. To bring only the demo's times up to date, restart `demo-seed` as above instead.
+
+## HE data
+
+`he-seed` writes the HE accounts of [Sign-in](#sign-in) as Users before Onboarding, with their Friend IDs, Friends,
+weekly Timetables and the eight recruiting Quests of `src/he/he-quests.ts`, at fixed times of the week of 2026-11-04.
+It runs once the seed files and the demo data are in, and stops naming what is missing: `node dist/he-seed` in the main
+server's container, or `pnpm he:seed`. Every row has an id of its own, and a run writes only what is missing, so a
+second run changes nothing. A key that signed in before the first run made a User the seed did not write, so the seed
+also stops, writing nothing, naming each such key until its User is removed.
 
 ## Checks
 
