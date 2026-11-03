@@ -5,6 +5,7 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-03  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Runs bootstrap.sh on a pretend machine under $BATS_TEST_TMPDIR: the team folder, systemd's unit folder and, through
@@ -16,7 +17,7 @@ CONTRACT=(
   POSTGRES_PASSWORD MAIN_DB_PASSWORD MATCH_DB_PASSWORD ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY WORKER_TOKEN
   MATCH_SERVER_TOKEN
   PUBLIC_URL GOOGLE_APP_CLIENT_ID GOOGLE_ADMIN_CLIENT_ID ANDROID_CERTIFICATE_FINGERPRINTS ASSISTANT_MODEL
-  ROUND_INTERVAL_SECONDS EXTRA_SNU_COLLECTION
+  ROUND_INTERVAL_SECONDS EXTRA_SNU_COLLECTION HE_ACCOUNTS
   KAKAO_REST_API_KEY INITIAL_ADMINISTRATOR_EMAILS DEMO_ACCOUNT_EMAILS OPENROUTER_API_KEY
 )
 
@@ -80,7 +81,7 @@ example_value_of() {
   sed -n "s/^$1=//p" "$REPOSITORY/main-server/.env.example"
 }
 
-@test "a fresh settings file holds every variable of the contract; the generated values are present, non-empty and distinct; exactly KAKAO_REST_API_KEY, INITIAL_ADMINISTRATOR_EMAILS and DEMO_ACCOUNT_EMAILS are CHANGE_ME; PUBLIC_URL, the two Google client ids, the fingerprints and COMPOSE_PROFILES have the spec's fixed values" {
+@test "a fresh settings file holds every variable of the contract; the generated values are present, non-empty and distinct; exactly KAKAO_REST_API_KEY and INITIAL_ADMINISTRATOR_EMAILS are CHANGE_ME; DEMO_ACCOUNT_EMAILS is empty; PUBLIC_URL (server A's), the two Google client ids, the fingerprints, COMPOSE_PROFILES and HE_ACCOUNTS have the spec's fixed values" {
   bootstrap
 
   [ "$(grep -v -e '^#' -e '^$' "$SETTINGS" | sed 's/=.*//' | sort)" = "$(printf '%s\n' "${CONTRACT[@]}" | sort)" ]
@@ -94,11 +95,13 @@ example_value_of() {
   [ "$(for name in POSTGRES_PASSWORD MAIN_DB_PASSWORD MATCH_DB_PASSWORD WORKER_TOKEN MATCH_SERVER_TOKEN \
     ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY; do value_of "$name"; done | sort -u | grep -c .)" -eq 7 ]
 
-  [ "$(grep CHANGE_ME "$SETTINGS" | sort)" = "$(printf '%s\n' DEMO_ACCOUNT_EMAILS=CHANGE_ME \
-    INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME KAKAO_REST_API_KEY=CHANGE_ME)" ]
+  [ "$(grep CHANGE_ME "$SETTINGS" | sort)" = "$(printf '%s\n' INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME \
+    KAKAO_REST_API_KEY=CHANGE_ME)" ]
+  grep -qx 'DEMO_ACCOUNT_EMAILS=' "$SETTINGS"
 
-  [ "$(value_of PUBLIC_URL)" = http://swpp26t09.147-46-242-174.sslip.io ]
+  [ "$(value_of PUBLIC_URL)" = http://swpp26t09.147-46-242-169.sslip.io ]
   [ "$(value_of COMPOSE_PROFILES)" = demo ]
+  [ "$(value_of HE_ACCOUNTS)" = on ]
   for name in GOOGLE_APP_CLIENT_ID GOOGLE_ADMIN_CLIENT_ID ANDROID_CERTIFICATE_FINGERPRINTS; do
     [ -n "$(example_value_of "$name")" ]
     [ "$(value_of "$name")" = "$(example_value_of "$name")" ]
@@ -144,7 +147,7 @@ example_value_of() {
   for package in docker.io docker-compose-v2 docker-buildx jq; do
     [[ $packages == *" $package "* ]] || false
   done
-  grep -qx "git clone --branch development https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \
+  grep -qx "git clone --branch 3.0/P15-he https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \
     "$calls"
   grep -qx "git config --system --add safe.directory $CHECKOUT" "$calls"
   for unit in snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer \

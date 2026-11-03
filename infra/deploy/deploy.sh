@@ -4,14 +4,15 @@
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
+# 2026-11-03  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
-# One run of the Dev Server's deployment, started by snu-now-deploy.timer: brings the stack up to the tip of
-# development once its server checks have passed, and writes status.json, which the proxy serves at /deploy-status.
+# One run of the HE server's deployment, started by snu-now-deploy.timer: brings the stack up to the tip of
+# 3.0/P15-he once its server checks have passed, and writes status.json, which the proxy serves at /deploy-status.
 # The functions under Deciding take plain inputs and print a verdict. Those under Doing act, calling git, docker and
 # curl through $GIT, $DOCKER and $CURL so that the tests replace them.
 
-readonly TRACKED_REF=development
+readonly TRACKED_REF=3.0/P15-he
 readonly REPOSITORY=snuhcs-course/swpp-2026-project-team-09
 readonly REQUIRED_CHECKS='main-server socket-server worker-server match-server flow-tests'
 readonly MAX_ATTEMPTS=3
