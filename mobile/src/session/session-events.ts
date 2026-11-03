@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Suggestion } from '@/api/types';
@@ -36,11 +37,12 @@ export function announce(event: SessionEvent): void {
 
 // The Session is over: the tokens are forgotten, the phone no longer keeps that the User signed in, and the screens
 // show the sign-in screen. The library session ends right after the tokens go, whether or not the User logged in to
-// it, without the end waiting on the library's site.
+// it, without the end waiting on the library's site. On the HE branch (P15) the phone also forgets the consent and the
+// location explanation, as `signOut()` does, so that the next evaluator on the phone is shown both.
 export async function endSession(replaced: boolean): Promise<void> {
   await forgetTokens();
   endLibrarySessionInBackground();
-  await keep({ signedIn: false, suggestion: null });
+  await keep({ signedIn: false, suggestion: null, consented: false, locationExplained: false });
   announce({ kind: 'ended', replaced });
 }
 
