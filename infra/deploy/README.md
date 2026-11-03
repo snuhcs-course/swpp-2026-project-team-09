@@ -1,12 +1,13 @@
 # deploy
 
-The Dev Server's deployment and its runbook. On `3.0/P15-he` it deploys the HE server instead, on server A of the two
-the course lends the team, with `HE_ACCOUNTS` on. It runs the four servers, PostgreSQL, Redis and the Demo Data under
-Docker Compose, behind a Caddy proxy, and keeps itself on the tip of `3.0/P15-he`: nothing pushes to it
+The HE server's deployment and its runbook. On `3.0/P15-he` the Dev Server's deployment runs the HE server instead, on
+server A of the two the course lends the team, with `HE_ACCOUNTS` on. It runs the four servers, PostgreSQL, Redis and
+the Demo Data under Docker Compose, behind a Caddy proxy, and keeps itself on the tip of `3.0/P15-he`: nothing pushes
+to it
 ([ADR 0003](../../docs/adr/0003-the-dev-server-pulls-its-deployments.md),
 [ADR 0004](../../docs/adr/0004-compose-not-kubernetes-on-the-course-servers.md)).
 
-## The Dev Server
+## The HE server
 
 Every team member reaches it as `ssh swpp-a` with their own key, from the university's network only, and has `sudo`
 there. The server is an Incus (LXC) container with Ubuntu 24.04, on UTC.
@@ -89,7 +90,7 @@ without `sudo`. Docker and systemd need `sudo`.
 ### Compose by hand
 
 On the server, always through the settings file and both Compose files. A bare `docker compose` in the checkout
-would start the laptop stack over the Dev Server's containers. Paste this function into the shell, or into your
+would start the laptop stack over the HE server's containers. Paste this function into the shell, or into your
 `~/.bashrc`:
 
 ```bash
@@ -137,7 +138,7 @@ left, that a `CHANGE_ME` waits. Once the checkout exists, run it from there:
 The timers start at once, so the first deploy run stops at `secrets-missing`. Fill in the settings
 ([Filling the settings](#filling-the-settings)); the next run, within a minute, deploys by itself. The first build of
 the four servers' images takes several minutes. Follow it with `sudo journalctl -u snu-now-deploy --follow`, then open
-`/health/ready` and `/deploy-status` at the Dev Server's address from a phone. Until the first deployment nothing
+`/health/ready` and `/deploy-status` at the HE server's address from a phone. Until the first deployment nothing
 listens on port 80 and the ingress answers 503; the status is then read on the server, in
 `/srv/team/snu-now-status/status.json`.
 
@@ -250,8 +251,9 @@ To apply the demo refresh now: `sudo systemctl start snu-now-demo-refresh`.
 
 ## Moving `development` to `2.0/Main`
 
-The Dev Server follows `development` and nothing else. `2.0/Main` is the reviewed iteration branch; `development` only
-ever receives it, by a fast-forward. After a pull request is merged into `2.0/Main`, from any checkout:
+The Dev Server, on swpp-b, follows `development` and nothing else; the HE server follows `3.0/P15-he`. `2.0/Main` is
+the reviewed iteration branch; `development` only ever receives it, by a fast-forward. After a pull request is merged
+into `2.0/Main`, from any checkout:
 
 ```bash
 git fetch origin
@@ -279,7 +281,7 @@ follows any other.
 Every deploy run dumps the databases before it checks out the new commit, so the newest dump holds the data from
 before the last deployment. A dump is a `pg_dumpall` of the whole cluster, with the roles and their passwords: restore
 it under the settings file it was taken with. When the main server starts on the restored data, it applies the
-migrations the dump lacks; if a migration broke the data, restore once `development` carries a corrected one.
+migrations the dump lacks; if a migration broke the data, restore once `3.0/P15-he` carries a corrected one.
 
 ```bash
 ls -lt /srv/team/snu-now-backups
@@ -319,12 +321,12 @@ On the empty database the main server loads the seed, registers the addresses of
 
 ## Adding an APK
 
-The dev APK is a release build of the app pointed at the Dev Server and signed with the shared debug key, which
+The dev APK is a release build of the app pointed at the HE server and signed with the shared debug key, which
 Google, Kakao and the settings file already know. On a laptop that builds the app for Android (JDK 17 and the Android
 SDK: [mobile/README.md](../../mobile/README.md), "Build the app for Android"):
 
-1. In `mobile/.env`, fill in `KAKAO_NATIVE_APP_KEY` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, and set the two server
-   addresses to the commented lines of `mobile/.env.example`. Leave `INVITE_LINK_HOST` empty: over plain HTTP an
+1. In `mobile/.env`, fill in `KAKAO_NATIVE_APP_KEY` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, set the two server
+   addresses to the HE server's and `UPDATE_CHANNEL` to `he`. Leave `INVITE_LINK_HOST` empty: over plain HTTP an
    Invite Link opens the app only through `snunow://`.
 2. Build it:
 
@@ -339,10 +341,10 @@ SDK: [mobile/README.md](../../mobile/README.md), "Build the app for Android"):
 3. Copy it into the APK folder under today's date:
 
    ```bash
-   scp app/build/outputs/apk/release/app-release.apk swpp-b:/srv/team/snu-now-apk/snu-now-dev-$(date +%F).apk
+   scp app/build/outputs/apk/release/app-release.apk swpp-a:/srv/team/snu-now-apk/snu-now-dev-$(date +%F).apk
    ```
 
-On a phone, open `http://swpp26t09.147-46-242-174.sslip.io/apk/` in the browser, tap the newest file and allow the
+On a phone, open `http://swpp26t09.147-46-242-169.sslip.io/apk/` in the browser, tap the newest file and allow the
 browser to install apps. The folder keeps every APK until someone deletes it with `rm` on the server.
 
 ## Backing up before the course deletes the servers
@@ -358,13 +360,13 @@ dc exec -T postgres pg_dumpall --username postgres | gzip > /srv/team/snu-now-ba
 and copy both to a laptop on the university's network:
 
 ```bash
-scp swpp-b:/srv/team/snu-now-secrets/snu-now.env .
-scp 'swpp-b:/srv/team/snu-now-backups/*.sql.gz' .
+scp swpp-a:/srv/team/snu-now-secrets/snu-now.env .
+scp 'swpp-a:/srv/team/snu-now-backups/*.sql.gz' .
 ```
 
 The settings file holds the private key that signs access tokens, and the dumps hold Users' data: keep them where only
-the team can read them, never in the repository, and delete them when they are no longer needed. To carry the Dev
-Server to a new server, run the bootstrap there, copy the saved file over the settings file it wrote (`cp` keeps the
+the team can read them, never in the repository, and delete them when they are no longer needed. To carry the HE
+server to a new server, run the bootstrap there, copy the saved file over the settings file it wrote (`cp` keeps the
 file's group and mode), correct `PUBLIC_URL` if the address changed, and restore the dump once the first deployment
 has run.
 
@@ -375,7 +377,7 @@ has run.
   Caddyfile that does not validate fails the build while the running proxy stays.
 - A change to a unit file reaches systemd only through the bootstrap. Once a deploy run has taken the commit, run
   `sudo bash /srv/team/snu-now/infra/deploy/bootstrap.sh`; it installs the changed units and reloads systemd.
-- A new setting: add it to the server's settings file by hand before the commit that needs it reaches `development`,
+- A new setting: add it to the server's settings file by hand before the commit that needs it reaches `3.0/P15-he`,
   since the bootstrap never rewrites an existing file. In the commit, add it to `compose.deploy.yaml`,
   `snu-now.env.example` and the settings the bootstrap writes.
 - The tests: `bats --recursive infra/deploy` and `shellcheck` on every `*.sh` and `*.bats` under `infra/deploy`
@@ -384,12 +386,12 @@ has run.
 
 A deploy run waits only for the five server checks, not for `deploy-scripts`, so a commit that breaks `deploy.sh`
 itself deploys like any other. Every later run is then the broken script's and fails, until a fixed commit reaches
-`development`, and a script that no longer fetches never takes the fix by itself. To get back quickly, revert the
-commit on `2.0/Main` in a pull request, [move `development`](#moving-development-to-20main), and put the checkout on
-the new tip by hand, so that the next run is the fixed script's and deploys the tip once its checks pass:
+`3.0/P15-he`, and a script that no longer fetches never takes the fix by itself. To get back quickly, revert the
+commit on `3.0/P15-he`, push it, and put the checkout on the new tip by hand, so that the next run is the fixed
+script's and deploys the tip once its checks pass:
 
 ```bash
-sudo git -C /srv/team/snu-now fetch origin development
+sudo git -C /srv/team/snu-now fetch origin 3.0/P15-he
 sudo git -C /srv/team/snu-now reset --hard FETCH_HEAD
 ```
 

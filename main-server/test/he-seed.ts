@@ -68,7 +68,8 @@ export class HeStage {
   readonly signedIn = new Map<string, SignInResult>();
   private drop!: () => Promise<void>;
 
-  async start(): Promise<void> {
+  // Everything the HE seed needs, without the HE data.
+  async prepare(): Promise<void> {
     let url: string;
     ({ prisma: this.prisma, url, drop: this.drop } = await createDatabase(inject('settings').DATABASE_URL));
     await loadSeed(this.prisma);
@@ -79,10 +80,14 @@ export class HeStage {
     // Imported after the app, so that it is the class the app registered.
     const { SignalsService } = await import('../src/common/signals.service.js');
     await seedDemo(this.prisma, this.app.get(SignalsService), DEMO_REFRESH);
+  }
+
+  async start(): Promise<void> {
+    await this.prepare();
     await seedHe(this.prisma);
     await Promise.all(
       ACCOUNTS.map(async ({ key, name, department }) => {
-        const response = await request(this.app.getHttpServer()).post('/auth/google').send({ idToken: key });
+        const response = await this.signIn(key);
         expect(response.status).toBe(200);
         const result = signInResultSchema.parse(response.body);
         this.signedIn.set(name, result);
@@ -95,6 +100,26 @@ export class HeStage {
   async stop(): Promise<void> {
     await this.app.close();
     await this.drop();
+  }
+
+  signIn(key: string): request.Test {
+    return request(this.app.getHttpServer()).post('/auth/google').send({ idToken: key });
+  }
+
+  rowCounts(): Promise<number[]> {
+    const { prisma } = this;
+    return Promise.all([
+      prisma.user.count(),
+      prisma.friendship.count(),
+      prisma.timetableClass.count(),
+      prisma.classTime.count(),
+      prisma.quest.count(),
+      prisma.questHolder.count(),
+      prisma.subQuest.count(),
+      prisma.questInvitation.count(),
+      prisma.questJoinRequest.count(),
+      prisma.partyMember.count(),
+    ]);
   }
 
   tokenOf(name: string): string {

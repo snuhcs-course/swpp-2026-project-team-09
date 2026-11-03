@@ -170,22 +170,6 @@ describe('The Timetables', () => {
   });
 });
 
-function rowCounts(): Promise<number[]> {
-  const { prisma } = stage;
-  return Promise.all([
-    prisma.user.count(),
-    prisma.friendship.count(),
-    prisma.timetableClass.count(),
-    prisma.classTime.count(),
-    prisma.quest.count(),
-    prisma.questHolder.count(),
-    prisma.subQuest.count(),
-    prisma.questInvitation.count(),
-    prisma.questJoinRequest.count(),
-    prisma.partyMember.count(),
-  ]);
-}
-
 // What each account's app reads of its own: the profile, the Friends, the Timetable and the Quests it holds. A route
 // past Onboarding answers only an onboarded account.
 function everythingRead(): Promise<unknown[][]> {
@@ -199,12 +183,12 @@ function everythingRead(): Promise<unknown[][]> {
 
 describe('A second run', () => {
   it('changes nothing, and every account keeps its Onboarding answers', async () => {
-    const counts = await rowCounts();
+    const counts = await stage.rowCounts();
     const read = await everythingRead();
 
     await seedHe(stage.prisma);
 
-    expect(await rowCounts()).toStrictEqual(counts);
+    expect(await stage.rowCounts()).toStrictEqual(counts);
     expect(await everythingRead()).toStrictEqual(read);
     const profiles = await Promise.all(ACCOUNTS.map(async ({ name }) => (await lobbyOf(name)).profile));
     expect(profiles).toMatchObject(

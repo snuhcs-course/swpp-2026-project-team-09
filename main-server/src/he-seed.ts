@@ -9,9 +9,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from './generated/prisma/client.js';
 import { seedHe } from './he/he.seed.js';
 
-// The command that writes the Heuristic Evaluation's data (P15) into the database at DATABASE_URL, once the seed files
-// and the demo data are in: `pnpm he:seed`, or `node dist/he-seed` in the main server's container. A run again writes
-// only what is missing. Like `pnpm db:seed`, it needs that setting alone and starts no Nest application.
+// The HE data (README.md: HE data). Like `pnpm db:seed`, it needs DATABASE_URL alone and starts no Nest application.
 async function heSeed(): Promise<void> {
   const databaseUrl = process.env['DATABASE_URL'];
   if (databaseUrl === undefined) {
