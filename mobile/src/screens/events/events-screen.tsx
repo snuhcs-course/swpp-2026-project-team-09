@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useState } from 'react';
@@ -14,7 +15,7 @@ import { useEventSources } from '@/features/events/use-events';
 import { TabScreen } from '../shell/tab-screen';
 import { EventItem } from './event-item';
 import { Filters, MatchingButton, SearchBar } from './events-bar';
-import { EventSheets, openMatchingRequests, type PickedEvent, useEventSheets } from './event-sheets';
+import { EventSheets, type PickedEvent, useEventSheets } from './event-sheets';
 import { type Focus, useFocus } from './use-focus';
 
 interface ListProps extends Omit<Focus, 'focused'> {
@@ -23,10 +24,9 @@ interface ListProps extends Omit<Focus, 'focused'> {
   search: string;
   focused: string | null;
   onRecruit: (event: PickedEvent) => void;
-  onMatch: (event: PickedEvent) => void;
 }
 
-function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit, onMatch }: ListProps): ReactElement {
+function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit }: ListProps): ReactElement {
   const views = toEventViews(sources, filter, search);
   if (sources.events.length === 0) {
     return <EmptyState words="예정된 행사가 없어요" />;
@@ -44,10 +44,6 @@ function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit, o
           onLayout={(y) => {
             onCardAt(event.id, y);
           }}
-          onMatch={() => {
-            onMatch(event);
-          }}
-          onMatching={openMatchingRequests}
           onRecruit={() => {
             onRecruit(event);
           }}
@@ -98,14 +94,7 @@ export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElem
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       {data === undefined ? null : (
-        <List
-          {...focusing}
-          filter={filter}
-          onMatch={sheets.setMatchEvent}
-          onRecruit={sheets.setRecruitEvent}
-          search={search}
-          sources={data}
-        />
+        <List {...focusing} filter={filter} onRecruit={sheets.setRecruitEvent} search={search} sources={data} />
       )}
       <EventSheets quests={quests} sheets={sheets} />
     </TabScreen>

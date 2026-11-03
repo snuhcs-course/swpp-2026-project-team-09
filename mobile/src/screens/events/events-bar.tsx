@@ -3,13 +3,13 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Chip, color, font, Icon, IconButton, SearchField, size, space } from '@/design-system';
+import { Chip, color, font, Icon, IconButton, SearchField, size, space, useNotReadyToast } from '@/design-system';
 import type { EventFilter } from '@/features/events/adapter';
 
 // The 행사 tab's app bar and filters, as the `Events` frame draws them.
@@ -21,15 +21,15 @@ const FILTERS: readonly { key: EventFilter; label: string }[] = [
   { key: 'recruiting', label: '파티 모집 중' },
 ];
 
-// The sparkle that opens the AI 매칭 신청 list, with a navy count of the waiting requests.
+// The sparkle of the AI 매칭 신청 list, with a navy count of the waiting requests. Matching was dropped, so the HE
+// build says 준비 중이에요 in place of opening the list.
 export function MatchingButton({ count }: { count: number }): ReactElement {
+  const showNotReady = useNotReadyToast();
   return (
     <Pressable
       accessibilityLabel={count === 0 ? 'AI 매칭 신청 내역' : `AI 매칭 신청 내역 ${count}건`}
       accessibilityRole="button"
-      onPress={() => {
-        router.push('/matching');
-      }}
+      onPress={showNotReady}
       style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
     >
       <Icon color={color.ink} name="sparkle" size={22} />
