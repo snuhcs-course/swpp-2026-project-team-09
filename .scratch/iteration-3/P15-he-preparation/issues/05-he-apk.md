@@ -50,3 +50,14 @@ The PM uploads the ZIP by 2026-11-03 23:59 and installs the APK.
   - **ZIP:** `/Users/taehyun/Downloads/snu-now-he/snu-now-he-bfbf85b.zip`, holding only the APK, 53,206,250 bytes, SHA-256 `a154cd327713f6be583e6f9711366d3359c3b28075cf66a285f9336e663ad671`. It replaces the `4c3e129` ZIP for eTL. The `4c3e129` files were no longer in `/Users/taehyun/Downloads/snu-now-he/` (the folder was gone) when this one was built.
   - **Checks in the APK:** the manifest's `expo-channel-name` and `assets/app.config`'s `updates.requestHeaders` both read `he`. The JS bundle holds swpp-a's address once and neither the Dev Server's nor `api.snunow.com`; its only other host is expo-router's `localhost:8081` default.
   - **Emulator check:** on `Medium_Phone`, the app installed was the 1.0.0 of 2026-10-23 again, since the earlier install was not kept in the emulator's snapshot. `adb install -r` replaced it with this APK. The app opened to the sign-in screen, and the logo button opened 계정 고르기 with the seven rows; Back closed it onto the sign-in screen. No account was picked. At launch expo-updates ended in `CheckError` and ran the embedded bundle: EAS Update answers the `he` channel with 404, "There is no channel named he", so no update reaches this APK until that channel is created.
+
+### Agent usage (2026-11-03)
+
+- **Agent time** (estimate): about 1 hour.
+  - The first build: 43 minutes, which includes the Gradle runs and the emulator.
+  - The rebuild from `bfbf85b`: 11 minutes.
+  - The main session: about 5 minutes.
+- **Tokens** (measured, subagents):
+  - The first build: input 126 uncached, plus 5,714,107 cache reads and 290,362 cache writes; output 27,479.
+  - The rebuild: input 96 uncached, plus 3,700,411 cache reads and 109,904 cache writes; output 18,613.
+  - The main session that ran all of P15's tickets is counted once, under ticket 06.

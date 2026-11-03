@@ -61,3 +61,10 @@ Each is done only after the PM says so in the chat:
   - An unknown key is refused with 401. The key `he-s1` signs in over HTTP, and the answer is Onboarding not completed, with 이도현 / 경영학과 suggested. Its sign-out gave 204.
   - The database holds 686 menu lines, 31 upcoming published Global Events and 14 Shuttle Stops.
   - **Untouched:** swpp-b was only read: the key lines, their lengths and a log count. Nothing was pushed to development or 3.0/Main, and Production was not touched.
+
+### Agent usage (2026-11-03)
+
+- **Agent time** (estimate): about 30 minutes.
+  - The code subagent: 10 minutes.
+  - The main session: about 20 minutes. That covers the push, bootstrap, the key copy, watching the first deploy, the Collections and this record.
+- **Tokens** (measured, subagent): input 96 uncached, plus 5,590,674 cache reads and 119,475 cache writes; output 34,831. The main session that ran all of P15's tickets is counted once, under ticket 06.

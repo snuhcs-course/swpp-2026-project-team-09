@@ -30,3 +30,10 @@ Nothing else is hidden or changed.
 - 2026-11-03: The card's `MatchButton` (both AI 매칭 and 매칭 중, on the 행사 tab and in the chat) and the bar's `MatchingButton` call `useNotReadyToast()`. The cards lost their `onMatch`/`onMatching` wiring, the chat its `match` action, and `openMatchingRequests` went with them. The Matching sheet, the `/matching` screen and the live match notice stay as on 3.0/Main, unreachable from the UI, to keep the HE diff small; the bar still counts waiting requests.
 - 2026-11-03: `src/app/_layout.tsx` no longer mounts `UpdateCheck`; `src/update/` itself is untouched. No EAS, update or native file changed.
 - 2026-11-03: `events-matching` and `chat-event-cards` now press each point and check the toast, the address and that no `POST /matching-requests` is sent. `update-check` starts the app with its real root layout over a file that would require an update, on Android and iOS, and checks that no version file is requested and no dialog shows; it was red against the old layout. Lint, format check, typecheck and the whole Jest run (197 suites) pass locally. CI on GitHub runs once the HE branch is pushed.
+
+### Agent usage (2026-11-03)
+
+- **Agent time** (estimate): about 40 minutes.
+  - The implementing subagent: 34 minutes, which includes waiting on its own test runs.
+  - The main session: about 5 minutes.
+- **Tokens** (measured, subagent): input 134 uncached, plus 8,266,498 cache reads and 317,502 cache writes; output 45,061. The main session that ran all of P15's tickets is counted once, under ticket 06.

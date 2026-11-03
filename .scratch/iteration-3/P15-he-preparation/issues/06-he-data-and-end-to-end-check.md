@@ -46,3 +46,24 @@ swpp-a holds the HE data, and the HE APK is checked against it on the emulator, 
   - **Location Accuracy loop:** on a phone with Google Location Accuracy off, Google's dialog opens on the map. No thanks or Back closes it, the app comes back to the front, `watchPositionAsync` starts again, and the dialog opens again. Every close sent a new `CHECK_SETTINGS` in logcat. The cause is expo-location's default `mayShowUserSettingsDialog: true` in `mobile/src/position/`, code from 3.0/Main, not the HE branch. Fixing it was left out because it is outside the spec and the APK was already built. The PM turns on location and Google Location Accuracy on both phones before the HE, and the dialog then never opens. The fix belongs to Iteration 4.
   - **Seeded post times:** today the seeded Quests show 「11/04 08:52」 and 「방금」 for their post time. They read right on 11-04.
 - **Not checked:** the app's socket connection under a round account, and the time-bound effects at 2026-11-04 15:30, which the seed's integration test checks with the clock fixed.
+
+### Agent usage (2026-11-03)
+
+- **Agent time** (estimate): about 55 minutes for this ticket.
+  - The check subagent: 22 minutes.
+  - The main session: about 30 minutes. That covers the seed and its failed first run, the Location Accuracy dialog, the spares' put-back and this record.
+- **Tokens** (measured, subagent): input 252 uncached, plus 17,302,458 cache reads and 183,853 cache writes; output 55,492.
+- **The branch's code review** (from `0e08f83`), counted here because it closes the spec:
+  - Time: the standards reviewer took 3 minutes, the spec reviewer 5 and the fixer 19. The main session added about 10 minutes.
+  - Tokens:
+    - Standards reviewer: input 50 uncached, plus 3,188,750 cache reads and 138,387 cache writes; output 18,915.
+    - Spec reviewer: input 60 uncached, plus 4,084,546 cache reads and 142,917 cache writes; output 25,173.
+    - Fixer: input 142 uncached, plus 11,716,952 cache reads and 201,480 cache writes; output 64,610.
+- **The main session for all of P15's tickets** (session `9d1cec8b-4916-40df-b65d-eb657a435f0d`, 15:57–18:50):
+  - Time, estimated: about 1 hour 30 minutes of work. This excludes the waits on subagents, CI and the PM.
+  - Tokens, measured up to the record: input 408 uncached, plus 40,530,865 cache reads and 295,305 cache writes; output 127,006.
+- **P15's design**, the grilling of 2026-11-02 and 11-03 (session `77938261-34e0-441c-ab77-2752bebcdd25`), which the spec counts as P15's:
+  - Time: about 2 to 3 hours of agent work. This is estimated from its 104 turns and output, since its waits for the PM cannot be told apart.
+  - Tokens, measured:
+    - Main: input 238 uncached, plus 32,430,682 cache reads and 1,303,919 cache writes; output 370,832.
+    - Its subagents: input 114 uncached, plus 10,559,039 cache reads and 882,725 cache writes; output 173,891.

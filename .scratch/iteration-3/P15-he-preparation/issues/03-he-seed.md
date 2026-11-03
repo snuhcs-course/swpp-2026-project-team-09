@@ -40,3 +40,11 @@ Blocked by: 01 (the account table and the sign-in by key)
   - **Tests:** `main-server/test/he-seed.integration.test.ts` (accounts, friendships, Timetables, a second run, the refusals), `he-seed-quests.integration.test.ts` and `he-seed-free-time.integration.test.ts`, over a stage in `test/he-seed.ts`: seed files, demo data as refreshed at 11-04 04:00, the HE seed, the clock at 11-04 15:30 KST, and every account signed in by key and onboarded through the API. Free Time is read through the Assistant's 공강 tools (`getMyDay`, `findFreeTimeEvents`, `findFreeFriends`) with the scripted model. Every effect the spec lists held as written; no time, Place, Friend or Leader was changed. Lint, format check, typecheck and all 227 test files of `main-server` pass locally.
   - **Not ticked:** CI green on the HE branch, which runs only once the branch is pushed.
 - **CI (2026-11-03):** every CI check passed on `a78b952` and on `d0a4ed5`, the pushed `3.0/P15-he`, which holds this ticket. That ticks the last box.
+
+### Agent usage (2026-11-03)
+
+- **Agent time** (estimate): about 35 minutes.
+  - The implementing subagent: 30 minutes.
+  - The main session: about 5 minutes.
+  - The review's seed fixes are counted under ticket 06.
+- **Tokens** (measured, subagent): input 246 uncached, plus 28,125,355 cache reads and 313,123 cache writes; output 124,945. The main session that ran all of P15's tickets is counted once, under ticket 06.

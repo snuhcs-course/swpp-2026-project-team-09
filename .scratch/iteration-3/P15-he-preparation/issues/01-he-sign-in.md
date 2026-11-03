@@ -55,3 +55,14 @@ An evaluator signs in by picking one of the seven HE accounts from a list on the
   - **Not ticked:** CI green on the HE branch, which runs only once the branch is pushed. Locally, lint, format check, typecheck and every test of `main-server` and `mobile` pass.
 - **CI (2026-11-03):** every CI check passed on `a78b952` and on `d0a4ed5`, the pushed `3.0/P15-he`, which holds this ticket. That ticks the last box.
 - **Review (2026-11-03), on `3.0/P15-he-session`:** a Session that ends without a sign-out, because the account signed in on another phone (story 12) or the Session could not be renewed, went through `endSession()` in `mobile/src/session/session-events.ts`, which kept `consented` and `locationExplained`, so the next evaluator on that phone skipped consent and the location explanation. `endSession()` now forgets both, as `signOut()` does; the background-sharing choice is unchanged. New test in `mobile/__tests__/he-sign-in.integration.test.tsx`: after the socket server ends the Session with `SESSION_REPLACED`, the next sign-in shows consent and the main screen the explanation.
+
+### Agent usage (2026-11-03)
+
+- **Agent time** (estimate): about 1 hour 20 minutes.
+  - The implementing subagent: 55 minutes.
+  - The review's fix for a Session ended from another phone: 13 minutes.
+  - The main session's briefing, review and merges: about 10 minutes.
+- **Tokens** (measured from the transcripts, subagents only):
+  - The implementer: input 274 uncached, plus 27,157,946 cache reads and 855,483 cache writes; output 82,843.
+  - The Session fix: input 62 uncached, plus 2,406,297 cache reads and 122,793 cache writes; output 11,571.
+  - The main session that ran all of P15's tickets is counted once, under ticket 06.
