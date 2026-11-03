@@ -4,6 +4,7 @@
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-03  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -151,15 +152,20 @@ check_published() {
 }
 
 # Checks a built APK, given the Android fingerprint the decision computed, the fingerprint embedded in the APK
-# (assets/fingerprint), and `apksigner verify --print-certs`'s output on stdin: the APK must carry the computed
-# fingerprint, and its one signer must be the shared debug key.
+# (assets/fingerprint), and `apksigner verify --print-certs`'s output on stdin, which it echoes to stderr: the APK must
+# carry the computed fingerprint, and its one signer must be the shared debug key. Build-tools before 37 name a signer
+# `Signer #1`, 37 names it by scheme, `V2 Signer:`, and a signer for an SDK range is `Signer (minSdkVersion=…, …)`; one
+# key named by several schemes is one signer.
 check_apk() {
-  local computed=$1 embedded=$2 signers
+  local computed=$1 embedded=$2 certs signers
+  certs=$(cat)
+  printf '%s\n' "$certs" >&2
   if [[ -z "$computed" || "$embedded" != "$computed" ]]; then
     echo "app: the APK embeds the fingerprint '$embedded', but the computed one is '$computed'" >&2
     return 1
   fi
-  signers=$(sed -n 's/^Signer #[0-9]* certificate SHA-256 digest: *//p')
+  signers=$(sed -nE 's/^(V[0-9.]+ )?Signer( #[0-9]+| \([^)]*\))?:? certificate SHA-256 digest: *//p' <<<"$certs" |
+    sort -u)
   if [[ "$signers" != "$APK_SIGNER" ]]; then
     echo "app: the APK is signed by '${signers//$'\n'/ }', not the shared debug key $APK_SIGNER" >&2
     return 1
