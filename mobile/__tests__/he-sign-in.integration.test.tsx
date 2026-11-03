@@ -9,7 +9,9 @@ import type * as FakeSocketModule from './support/fake-socket';
 import type * as GoogleModule from '@/auth/google';
 import { userEvent } from '@testing-library/react-native';
 import type { FakeServer } from './support/fake-server';
+import { sockets } from './support/fake-socket';
 import { pass, screen, startApp } from './support/app';
+import { REPLACED, socketServer } from './support/live';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW, TOKENS } from './support/server';
 import { EXPLANATION, givePhone } from './support/main';
@@ -57,6 +59,7 @@ let server: FakeServer;
 beforeEach(async () => {
   jest.useFakeTimers({ now: PHONE_NOW });
   await startFresh();
+  sockets.length = 0;
   server = await askMainServer({ signedIn: false });
   answerMainScreen(server);
 });
@@ -164,6 +167,26 @@ describe('the next evaluator on the phone', () => {
     await user.press(dialogButton('로그아웃'));
     await pass(500);
     expect((await readKept()).backgroundChosen).toBe(false);
+
+    await signInAs(user, '1라운드 · 최유나');
+    expect(screen.getByRole('header', { name: EXPLANATION })).toBeVisible();
+  });
+
+  it('after a sign-in on another phone ended the Session, sees consent and the location explanation again', async () => {
+    server.on('POST /auth/google', { status: 200, body: { ...TOKENS, onboarding: { completed: true } } });
+    givePhone({ permission: 'unasked' });
+    const user = await openSignIn();
+    await signInAs(user, '1라운드 · 김하늘');
+    expect(screen.getByRole('header', { name: EXPLANATION })).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '나중에' }));
+    await pass(100);
+
+    await socketServer((socket) => {
+      socket.send('session-ended', { code: 'SESSION_REPLACED' });
+    });
+    await pass(500);
+    expect(screen.getByRole('header', { name: REPLACED })).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '확인' }));
 
     await signInAs(user, '1라운드 · 최유나');
     expect(screen.getByRole('header', { name: EXPLANATION })).toBeVisible();
