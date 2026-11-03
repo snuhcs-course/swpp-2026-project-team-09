@@ -3,6 +3,7 @@
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-03  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target at the tag's commit once
@@ -222,7 +223,9 @@ jobs:
           fi
           CI=1 pnpm expo prebuild --platform android --no-install
           echo "sdk.dir=$ANDROID_HOME" >android/local.properties
-          (cd android && ./gradlew assembleRelease --no-daemon)
+          # The generated gradle.properties gives Gradle 512 MB of Metaspace, which the release lint of P06's added native
+          # modules (the web view and snu-now-web-cookies) ran out of on snunow/all/26.11.03-1.
+          (cd android && ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=2g")
       - name: Check the APK
         if: steps.decision.outputs.verdict == 'publish-needs-build'
         env:
