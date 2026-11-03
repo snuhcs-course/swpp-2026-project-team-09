@@ -4,6 +4,7 @@
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-03  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
@@ -273,6 +274,25 @@ print_certs() {
   run --separate-stderr "$RELEASE" check-apk "$ANDROID" "$ANDROID" <<<"$(print_certs "$SIGNER")"
 
   [ "$status" -eq 0 ]
+  # apksigner's output is in the log.
+  [[ "$stderr" == *"Signer #1 certificate SHA-256 digest: $SIGNER"* ]] || false
+}
+
+# Build-tools 37's apksigner (ubuntu-26.04's newest) names the signer by its scheme, as it printed for 1.0.1's APK on
+# snunow/app/26.11.03-1; a signer for an SDK range is named by the range. One key under several schemes is one signer.
+@test "an APK's signer is read from build-tools 37's and from an SDK range's lines too" {
+  local certs
+  for certs in "V2 Signer: certificate SHA-256 digest: $SIGNER" \
+    "Signer (minSdkVersion=24, maxSdkVersion=2147483647) certificate SHA-256 digest: $SIGNER" \
+    "V2 Signer: certificate SHA-256 digest: $SIGNER"$'\n'"V3 Signer: certificate SHA-256 digest: $SIGNER"; do
+    run --separate-stderr "$RELEASE" check-apk "$ANDROID" "$ANDROID" <<<"$certs"
+    [ "$status" -eq 0 ] || { echo "refused '$certs'"; false; }
+  done
+
+  run --separate-stderr "$RELEASE" check-apk "$ANDROID" "$ANDROID" \
+    <<<"V2 Signer: certificate SHA-256 digest: $SIGNER"$'\n'"V3 Signer: certificate SHA-256 digest: $CHANGED$CHANGED"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"not the shared debug key $SIGNER"* ]] || false
 }
 
 @test "an APK with another or no embedded fingerprint, or another, a second or no signer, fails" {
