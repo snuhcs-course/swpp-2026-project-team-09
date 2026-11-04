@@ -27,9 +27,9 @@ For diagnosis only: the observed action is read without the case, the last sente
 
 | Measure | Value |
 | --- | --- |
-| Tool selection accuracy | 175/192 (91.1%) |
+| Tool selection accuracy | 172/192 (89.6%) |
 | Argument accuracy | 0/0 (—) |
-| Over-calling | 8/192 (4.2%) of turns, 17 calls |
+| Over-calling | 11/192 (5.7%) of turns, 20 calls |
 | Under-calling | 9/192 (4.7%) of turns, 12 tools |
 
 ## Pass rate per category
@@ -44,12 +44,12 @@ Known failures are counted apart and never as regressions. Failure kinds count t
 | p6-group-rooms | 11/21 (52.4%) | 0/0 | 0 | 0 | 0 |
 | p6-refusals | 27/30 (90.0%) | 0/0 | 0 | 0 | 0 |
 | p6-spaces | 31/42 (73.8%) | 0/0 | 0 | 0 | 0 |
-| p6-tutorial | 21/24 (87.5%) | 0/0 | 0 | 0 | 0 |
-| **All** | 148/192 (77.1%) | 0/0 | 0 | 0 | 0 |
+| p6-tutorial | 18/24 (75.0%) | 0/0 | 0 | 0 | 0 |
+| **All** | 145/192 (75.5%) | 0/0 | 0 | 0 | 0 |
 
 ## pass^3
 
-45/64 (70.3%) of the repeated cases passed every run.
+44/64 (68.8%) of the repeated cases passed every run.
 
 | Case | Runs passed |
 | --- | --- |
@@ -112,7 +112,7 @@ Known failures are counted apart and never as regressions. Failure kinds count t
 | p6-tutorial-s-card | 3/3 |
 | p6-tutorial-admin-shuttle | 3/3 |
 | p6-tutorial-kwanjeong-kiosk | 3/3 |
-| p6-tutorial-health-clinic | 3/3 |
+| p6-tutorial-health-clinic | 0/3 |
 | p6-tutorial-art-museum | 3/3 |
 | p6-tutorial-clinic-hours | 1/3 |
 | p6-tutorial-exhibition-today | 2/3 |
@@ -827,6 +827,66 @@ Known failures are counted apart and never as regressions. Failure kinds count t
   - Reply (84 characters):
 
 > 내일(11/5) 13:00–15:00 미디어캐럴 예약 카드를 띄워 드렸어요. 예약하기를 눌러야 예약이 확정되고, 그 전까지는 아무것도 예약되지 않아요.
+
+
+### p6-tutorial-health-clinic (p6-tutorial)
+
+- Turn 1, "보건진료소 어디 있어?": took TOOL, accepted TOOL
+  - tools.forbidden: resolvePlace called
+  - Steps:
+  1. finish tool-calls, 1554 ms
+     - getTutorial `{}` → found: `{"result":"found","state":"active","total":5,"quests":[{"key":"s-card","order":1,"title":"학생증(S-CARD) 발급받기","brief":"학생증(S-CARD)을 신청하고 받아 보세요.","body":["학생증(S-CARD)은 도서관 출입처럼 학교생활 곳곳에서 써요.","· 신청: MySNU에서 온라인으로 신청해요.","· 수령: 신청한 다음 날부터 학생지원센터(67동 NH농협두레문예관 2층)에서 받아요. 평일 9:00–17:50에 열어요.","· 금융 기능이 있…`
+     - resolvePlace `{"words":"보건진료소"}` → none: `{"result":"none","reason":"No Place has a name holding 보건진료소 or the building number 보건진료소."}`
+  2. finish stop, 2444 ms
+  - Reply (339 characters):
+
+> 보건진료소는 **학생회관(63동) 3–4층**에 있어요. 진료는 3층에서 하고, 접수와 수납은 329호에서 해요.
+> 
+> - **진료 시간:** 평일 09:00–12:00, 13:30–17:30 (금요일은 16:30까지). 12:00–13:30에는 진료하지 않아요.
+> - **대표전화:** 02-880-5338
+> - **이용:** 예약 없이도 진료받을 수 있고, 진료 당일 신분증을 들고 329호에서 접수하면 돼요.
+> 
+> 오늘은 수요일이라 지금(10:05) 진료 중이고, 12시까지 진료해요. 자세한 내용은 [보건진료소 홈페이지](https://health4u.snu.ac.kr/index.do)에서 확인할 수 있어요.
+
+
+### p6-tutorial-health-clinic (p6-tutorial, run 2)
+
+- Turn 1, "보건진료소 어디 있어?": took TOOL, accepted TOOL
+  - tools.forbidden: resolvePlace called
+  - Steps:
+  1. finish tool-calls, 1551 ms
+     - getTutorial `{}` → found: `{"result":"found","state":"active","total":5,"quests":[{"key":"s-card","order":1,"title":"학생증(S-CARD) 발급받기","brief":"학생증(S-CARD)을 신청하고 받아 보세요.","body":["학생증(S-CARD)은 도서관 출입처럼 학교생활 곳곳에서 써요.","· 신청: MySNU에서 온라인으로 신청해요.","· 수령: 신청한 다음 날부터 학생지원센터(67동 NH농협두레문예관 2층)에서 받아요. 평일 9:00–17:50에 열어요.","· 금융 기능이 있…`
+     - resolvePlace `{"words":"보건진료소"}` → none: `{"result":"none","reason":"No Place has a name holding 보건진료소 or the building number 보건진료소."}`
+  2. finish stop, 2016 ms
+  - Reply (285 characters):
+
+> 보건진료소는 **학생회관(63동) 3–4층**에 있어요. 진료는 3층에서 하고, 접수와 수납은 329호에서 해요.
+> 
+> - **진료 시간:** 평일 09:00–12:00, 13:30–17:30 (금요일은 16:30까지), 12:00–13:30은 진료하지 않아요.
+> - **이용:** 예약 없이도 진료받을 수 있어요. 진료 당일 신분증을 들고 329호에서 접수하면 돼요.
+> - **전화:** 대표전화는 02-880-5338이에요.
+> 
+> 최신 정보는 보건진료소 홈페이지(health4u.snu.ac.kr)에서 확인해 보세요.
+
+
+### p6-tutorial-health-clinic (p6-tutorial, run 3)
+
+- Turn 1, "보건진료소 어디 있어?": took TOOL, accepted TOOL
+  - tools.forbidden: resolvePlace called
+  - Steps:
+  1. finish tool-calls, 1738 ms
+     - getTutorial `{}` → found: `{"result":"found","state":"active","total":5,"quests":[{"key":"s-card","order":1,"title":"학생증(S-CARD) 발급받기","brief":"학생증(S-CARD)을 신청하고 받아 보세요.","body":["학생증(S-CARD)은 도서관 출입처럼 학교생활 곳곳에서 써요.","· 신청: MySNU에서 온라인으로 신청해요.","· 수령: 신청한 다음 날부터 학생지원센터(67동 NH농협두레문예관 2층)에서 받아요. 평일 9:00–17:50에 열어요.","· 금융 기능이 있…`
+     - resolvePlace `{"words":"보건진료소"}` → none: `{"result":"none","reason":"No Place has a name holding 보건진료소 or the building number 보건진료소."}`
+  2. finish stop, 2322 ms
+  - Reply (403 characters):
+
+> 서울대 보건진료소는 **학생회관(63동) 3–4층**에 있어요. 진료는 3층에서 하고, 접수와 수납은 329호에서 해요.
+> 
+> - **진료 시간:** 평일 09:00–12:00, 13:30–17:30이고, 금요일은 16:30까지예요. 12:00–13:30에는 진료하지 않아요.
+> - **이용:** 예약 없이도 갈 수 있어요. 진료 당일 신분증을 들고 329호에서 접수하면 돼요.
+> - **전화:** 대표전화 02-880-5338이에요.
+> 
+> 자세한 내용은 [보건진료소 홈페이지](https://health4u.snu.ac.kr/index.do)와 [오시는 길](https://health4u.snu.ac.kr/operation/guide/_/view.do)에서 확인할 수 있어요. 이 정보는 2026-11-02에 확인된 내용이에요.
 
 
 ### p6-tutorial-clinic-hours (p6-tutorial, run 2)

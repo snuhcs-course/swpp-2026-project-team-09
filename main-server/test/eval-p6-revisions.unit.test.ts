@@ -48,8 +48,16 @@ describe('The revised P6 labels', () => {
       expect(tools?.only).toBe(true);
       expect(tools?.forbidden).toEqual(expect.arrayContaining(['findLibrarySpace', 'proposeLibraryBooking']));
     }
-    expect(cases.get('p6-common-free-time-not-library')?.expect?.tools.allowed).toEqual(['getMyDay']);
-    expect(cases.get('p6-tutorial-health-clinic')?.expect?.tools.allowed).toEqual(['resolvePlace']);
-    expect(cases.get('p6-tutorial-exhibition-today')?.expect?.tools.required).toContain('showGlobalEvents');
+    expect(cases.get('p6-common-free-time-not-library')?.expect?.tools.required).toEqual([
+      'getMyDay',
+      'findFreeTimeEvents',
+    ]);
+    expect(cases.get('p6-tutorial-exhibition-today')?.expect?.tools.required).toEqual([
+      'getTutorial',
+      'searchGlobalEvents',
+      'showGlobalEvents',
+    ]);
+    expect(cases.get('p6-tutorial-health-clinic')?.expect?.tools).toMatchObject({ required: ['getTutorial'] });
+    expect(cases.get('p6-tutorial-health-clinic')?.expect?.tools.forbidden).toContain('resolvePlace');
   });
 });

@@ -67,8 +67,8 @@
 
 # The clinic is on 학생회관(63동) 3–4층, care on 3층 and reception at 329호 (health4u.snu.ac.kr), as content/tutorial.yaml
 # says since #180 (ruling 10).
-# Revised at P13 (suite.yaml, revisions): resolvePlace, which the chat's rules use for a place the User names, is
-# allowed.
+# Reviewed at P13 (suite.yaml, revisions): getTutorial states the place, so resolvePlace is not on the path and stays
+# forbidden.
 - id: p6-tutorial-health-clinic
   category: p6-tutorial
   world: p6
@@ -79,9 +79,9 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
-      allowed: [resolvePlace]
       forbidden:
         [
+          resolvePlace,
           findLibrarySpace,
           findLibraryFreeSlots,
           proposeLibraryBooking,

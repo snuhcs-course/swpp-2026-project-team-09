@@ -10,7 +10,7 @@
 # the library → CHAT. Each `expect` was drafted blind and settled by the PM's rulings of 2026-11-02 (labels-notes.md).
 
 # 공강 with nothing about the library: P4's tools, not the library's.
-# Revised at P13 (suite.yaml, revisions): getMyDay, which the 공강 rules call for the items' ids, is allowed.
+# Revised at P13 (suite.yaml, revisions): getMyDay, which the 공강 rules call for the items' ids, is required.
 - id: p6-common-free-time-not-library
   category: p6-common
   world: p6
@@ -20,8 +20,7 @@
   expect:
     actions: [TOOL]
     tools:
-      required: [findFreeTimeEvents]
-      allowed: [getMyDay]
+      required: [getMyDay, findFreeTimeEvents]
       forbidden:
         [
           findLibrarySpace,

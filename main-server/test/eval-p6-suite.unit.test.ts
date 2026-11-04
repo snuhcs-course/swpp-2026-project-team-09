@@ -170,8 +170,8 @@ describe('The bookings of the P6 labels', () => {
     expect(wrong).toEqual([]);
   });
 
-  // One path per case (labels-notes.md, ruling 19), but the two tools made optional at P13 (suite.yaml, revisions).
-  it('leave no tool optional in any case but the two revised ones', () => {
+  // One path per case (labels-notes.md, ruling 19): either no tool at all, or exactly the required tools.
+  it('leave no tool optional in any case', () => {
     const optional = cases.filter(({ expect: wanted }) => {
       const tools = wanted?.tools;
       if (tools === undefined || tools.forbidden === '*') {
@@ -180,7 +180,7 @@ describe('The bookings of the P6 labels', () => {
       return tools.only !== true || tools.allowed.length > 0 || tools.required.length === 0;
     });
 
-    expect(optional.map(({ id }) => id)).toEqual(['p6-common-free-time-not-library', 'p6-tutorial-health-clinic']);
+    expect(optional.map(({ id }) => id)).toEqual([]);
   });
 
   // A facility's hours are a fact of the text, as the tutorial's other facts are (labels-notes.md, ruling 10), and so
