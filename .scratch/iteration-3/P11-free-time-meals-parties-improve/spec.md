@@ -70,7 +70,7 @@ Nothing else in P04's evaluation changes: the 40 cases, the labels, the world, t
 15. As the PM, I want one command that scores a table against the walks and runs the fit, so that every number can be reproduced from the repository.
 16. As the PM, I want the walked times committed as data, so that the scorer does not depend on a web page.
 17. As the PM, I want pairs that are off because of a missing path recorded as a limitation, so that the test walks are not used to edit the graph.
-18. As the walker, I want the route lines I owe listed as my items, so that the walking method's record is complete.
+18. As the PM, I want the owed route lines dropped in one dated line, so that ticket 01's "owed" marks are not left open when no path is fixed.
 
 ### The shuttle
 
@@ -92,7 +92,7 @@ Nothing else in P04's evaluation changes: the 40 cases, the labels, the world, t
 31. As the PM, I want later changes taken only from the first run's layer report, lowest layer first, so that each change goes where a failure is.
 32. As the PM, I want one change per run, compared with `pnpm eval:compare`, and a change that makes things worse reverted with the revert recorded, so that every kept change is shown to help.
 33. As the PM, I want the changes to stop after the fourth or when nothing is left to fix, so that the work has a fixed end.
-34. As the PM, I want each real-model run's command and estimated cost shown before it starts, within USD 10 in all, so that the spend stays approved.
+34. As the PM, I want the agent to check each real-model run's command, settings and estimated cost against this spec before starting it, within USD 10 in all, so that the runs need no approval from me and the spend stays within what I approved.
 35. As the PM, I want the holdout's pass rate read beside that of the same 12 fixed-set cases, so that I can see whether a change only fits the fixed set's wording.
 36. As the PM, I want the two words-only regressions read again rather than targeted, so that run-to-run flutter is not tuned away and reported as a fix.
 37. As the PM, I want no router, and one line in the record if ADR 0009's condition holds, so that the question stays where ADR 0009 put it.
@@ -128,7 +128,7 @@ Nothing else in P04's evaluation changes: the 40 cases, the labels, the world, t
 - The reason: 22 of the 30 walks took under 300 s, where ±120 s is 40% of the walk or more. On 25 of them, those under 480 s, the 25% term is the smaller.
 - The original ±2-minute result of 11-02 stays as recorded. Every table scored on the 30 walks is reported under both tolerances, and the revised one is the threshold from 11-05.
 - Known when revising, and stated in the file: under the revised tolerance the original table has 3 of 30 within (pairs 2, 13, 16) and the baseline 4 of 30 (pairs 4, 5, 16, 24). No calibrated table had been built or scored.
-- The rule that a pair more than 2 minutes off gets one route line does not change.
+- **Route lines are dropped.** The walking method's line on the route taken, for a pair more than 2 minutes off, is no longer written. Pair 20's line stays, and the 15 owed lines are not written: they change no score, and P11 fixes no path. The revision file records this.
 
 ### The walking table: before, improvement, after
 
@@ -147,7 +147,7 @@ Nothing else in P04's evaluation changes: the 40 cases, the labels, the world, t
 - **Adoption:** the rebuilt table replaces the committed walking table only when its MAE over the 30 is lower than the original's, whatever either threshold says. Otherwise the original stays and ticket 01 records why. The revision file declares this rule.
 - A rebuilt table also changes the walking legs of shuttle travel, so it can change when the shuttle is 3 minutes faster. No rule changes with it.
 - The table is a server seed. It reaches the Dev Server with the merge and Production with the next regular Release. No native file changes.
-- **Paths are a limitation.** A pair that is off because the graph lacks a path stays off. The graph, the pins and the elevations are not edited from the test walks. Only pair 20 has its route line so far (a cut between 자하연 and 농협은행); the 15 owed lines will show which other pairs walk a path the graph lacks.
+- **Paths are a limitation.** A pair that is off because the graph lacks a path stays off. The graph, the pins and the elevations are not edited from the test walks. Only pair 20 has its route line (a cut between 자하연 and 농협은행).
 
 ### The walking scorer
 
@@ -196,7 +196,10 @@ Nothing else in P04's evaluation changes: the 40 cases, the labels, the world, t
 - **The before set, at X:** the P4 suite once (`pnpm eval --world p4`, where every case runs 3 times), the holdout once (`pnpm eval:holdout`), and P19 three times (`pnpm eval`). It is the P4 suite's first official run.
 - **The after set, at the branch's final code:** the same three.
 - **Cost and time**, estimated: each set about USD 1.8 and 35 minutes, and each change's P4 run about USD 0.75 and 15 minutes. With four changes, about USD 6.6 and 3 to 3.5 hours in all. The PM approved up to USD 10 on 2026-11-05.
-- An agent starts every real-model run from the main checkout with the PM's `main-server/.env`. Before each run it shows the command and the estimated cost and waits for the PM's approval. Each run passes `--budget`.
+- An agent starts every real-model run from the main checkout with the PM's `main-server/.env`, without asking the PM:
+  - before each run it checks the command, the commit, the settings and the estimated cost against this spec, and the cost against what is left of the USD 10;
+  - each run passes `--budget`, and its cost goes into the record;
+  - a run that would take the total over USD 10 is not started, and the PM is asked.
 
 ### The chat: changes
 
@@ -236,7 +239,7 @@ Each moves here as an acceptance item. When it is done, it is ticked on its P04 
 
 - **Ticket 01**
   - The calibration fit and the rebuilt table's score: its Comments say the fit has not run.
-  - **Person:** the 15 owed route lines, and C12's line, which names C11 although the pair that walks that road the other way is C13.
+  - The 15 owed route lines: dropped by the PM on 2026-11-05. Ticket 01 says so in one line, and C12's line stays as written.
 - **Ticket 02**
   - Person, the collector: installed on 2026-11-01 at 22:30 KST and checked by hand in service hours on 11-02. Ticked with those dates.
   - Person, fetching and gzipping: fetched on 11-03 at 19:03. P11 gzips them.

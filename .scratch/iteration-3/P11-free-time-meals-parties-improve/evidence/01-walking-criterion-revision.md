@@ -7,13 +7,13 @@ Task: [P11](../spec.md). This file lands on `3.0/Main` with the spec, before any
 - The 30 test pairs, the walking method, the metric (per pair, |table − walked|, summarised as the MAE and a share within), the baseline, and the threshold's form: at least 70% of the pairs within, and the table's MAE below the baseline's.
 - The walked times are those recorded in P04 ticket 01's `## Comments`, with the late presses taken off.
 - The result of 11-02 under the original ±2 minutes stays as recorded there: the table's MAE 168.5 s with 14 of 30 within, the baseline's 124.6 s with 18 of 30, and the threshold missed. It is reported beside every result below.
-- The rule that a pair more than 2 minutes off gets one line on the route taken.
 
 ## The revision
 
 - **Within**, per pair: |table − walked| ≤ min(0.25 × walked, 120 s). The walked time is the reference. A difference equal to the limit counts as within.
 - **The threshold** from this date: at least 70% of the 30 pairs within this tolerance, and the table's MAE below the baseline's.
 - The original ±2 minutes is still computed and reported beside it, for every table scored on the 30 walks.
+- **Route lines.** The walking method's line on the route taken, for a pair more than 2 minutes off, is no longer written. Pair 20's line stays, and the 15 lines owed since 11-02 are not written. They change no score, and P11 fixes no path.
 
 ## Why
 
