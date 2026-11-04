@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { METRES_PER_DEGREE, metresPerDegreeEast, type Position } from '../common/geometry.js';
@@ -9,9 +10,10 @@ import { METRES_PER_DEGREE, metresPerDegreeEast, type Position } from '../common
 // The walking model of ADR 0010: OpenStreetMap's paths as a graph, each pin joined to it, and the walk's seconds. Only
 // the offline builder runs this; the server looks the results up.
 
-const WALKING_METRES_PER_SECOND = 1.1;
-// 0.5 minutes per 10 m, only when the destination is higher.
-const CLIMB_SECONDS_PER_METRE = 3;
+// Both fitted to the 13 calibration walks of P04's evidence/06, unrounded (P11 ticket 02). The climb value, added only
+// when the destination is higher, was fitted below 0 and became 0.
+export const WALKING_METRES_PER_SECOND = 1.3966856966974264;
+export const CLIMB_SECONDS_PER_METRE = 0;
 const JOIN_MARGIN_METRES = 20;
 
 const WALKED_HIGHWAYS = new Set([
