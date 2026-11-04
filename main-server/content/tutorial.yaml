@@ -3,24 +3,46 @@
 #
 # 2026-11-01  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-04  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The 새내기 튜토리얼 (README.md: Tutorial). The server checks this file when it starts and serves it with GET /tutorial,
 # so the app keeps no copy. Each entry is one Tutorial Quest, shown in `order`. Adding a quest is an entry here.
 #
+# Each quest names its Tutorial Category (`category`), one of `categories`, which lists them in the order the app shows
+# them. A category's quests come one after another in `order`. A User's progress is kept by `key`, so a new `order`
+# keeps it.
+#
 # A place is a Place of the shared seed by its number (seed/campus-map-places.json and the others), with the floor and
 # the label shown when they help, or a point with its label. A completion is `button` (완료했어요), or `kwanjeongCheck`,
-# which the phone checks against the User's library bookings, with the label of its skip.
+# which the phone checks against the User's library bookings, with the label of its skip; the server serves it as
+# `button` unless LIBRARY_BOOKING_ENABLED and TUTORIAL_KWANJEONG_CHECK are both on. `ask` is what 어시스턴트에게 예약
+# 부탁하기 sends.
 # `facts` are what the Assistant answers from beyond the sheet's text (getTutorial), each with its source and the day
 # it was checked; GET /tutorial does not serve them. A fact the source does not state is left out, and the Assistant
 # answers it as 확인되지 않아요 with the quest's link.
 #
 # The texts marked *drafted* in the P06 spec (the briefs, conditions and completion messages of the quests other than
-# kwanjeong) wait for the owner's review before the P6 eval set freezes them.
+# kwanjeong) wait for the owner's review before the P6 eval set freezes them. The ten quests P13 added are marked
+# *drafted* each, from .scratch/iteration-3/P13-freshman-and-kwanjeong-improve/references/quest-candidates.md, with
+# their facts read again on the official pages on 2026-11-04.
+
+categories:
+  - key: life
+    label: 생활
+  - key: study
+    label: 공부·학사
+  - key: transit
+    label: 이동
+  - key: health
+    label: 건강
+  - key: culture
+    label: 문화·여가
 
 quests:
   - key: s-card
     order: 1
+    category: life
     title: 학생증(S-CARD) 발급받기
     brief: 학생증(S-CARD)을 신청하고 받아 보세요.
     body:
@@ -46,8 +68,244 @@ quests:
       - label: 학생처 S-CARD 발급 절차
         url: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%ea%b8%b0%ed%83%80/s-card/%eb%b0%9c%ea%b8%89-%ec%a0%88%ec%b0%a8/
 
-  - key: admin-shuttle
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
+  - key: thousand-won-meals
     order: 2
+    category: life
+    title: 천원의 식사 이용하기
+    brief: 아침만이 아니라 점심과 저녁도 1,000원에 먹을 수 있어요.
+    body:
+      - 천원의 식사는 아침·점심·저녁 하루 세 끼를 1,000원에 먹을 수 있게 하는 서울대의 식사 지원이에요. 2015년에 국내 대학에서 처음 시작했어요.
+      - 끼니마다 어느 식당에서 언제 하는지는 학생처 안내에 없으니, 생협 식단에서 확인해 보세요.
+    condition: 천원의 식사로 한 끼 먹어 보기
+    completion:
+      kind: button
+    completionMessage: 든든하게 드셨나요? 바쁜 날에도 끼니는 꼭 챙겨요!
+    places:
+      - place: '63'
+    links:
+      - label: 학생처 천원의 식샤 안내
+        url: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%ec%8b%9d%ec%83%9d%ed%99%9c/%ec%b2%9c%ec%9b%90%ec%9d%98%ec%8b%9d%ec%83%a4/
+      - label: 서울대학교 생활협동조합
+        url: https://snuco.snu.ac.kr/
+    # Left out, as the page does not state it: which restaurant serves which meal, and when.
+    facts:
+      - text: 2015년 국내 대학 최초로 도입됐고, 지금은 아침·점심·저녁 하루 세 끼를 1,000원에 제공해요.
+        source: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%ec%8b%9d%ec%83%9d%ed%99%9c/%ec%b2%9c%ec%9b%90%ec%9d%98%ec%8b%9d%ec%83%a4/
+        checked: 2026-11-04
+      - text: 학기 중 하루 평균 약 2,500명이 이용해요.
+        source: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%ec%8b%9d%ec%83%9d%ed%99%9c/%ec%b2%9c%ec%9b%90%ec%9d%98%ec%8b%9d%ec%83%a4/
+        checked: 2026-11-04
+
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
+  - key: lost-and-found
+    order: 3
+    category: life
+    title: 분실물센터 위치 알아두기
+    brief: 물건을 잃어버리면 찾아갈 교내 분실물센터를 알아 두세요.
+    body:
+      - 교내 분실물센터는 아시아연구소(101동) 1층, 국민은행 옆에 있어요. 캠퍼스안전반이 운영해요.
+      - '· 운영 시간: 09:00–18:00 · 전화: 02-880-8114'
+      - · 찾아갈 때는 서약서를 쓰고, 잃어버린 곳과 때를 확인해요. 신분증이나 학생증은 본인인지 대조해요.
+      - · 1개월 동안 보관한 뒤에는 경찰청 유실물센터와 관악경찰서로 넘어가요.
+    condition: 분실물센터 위치 확인하기
+    completion:
+      kind: button
+    completionMessage: 이제 물건을 잃어버려도 어디로 가야 할지 알겠죠?
+    places:
+      - place: '101'
+        floor: 1
+    links:
+      - label: 학생처 분실물센터 안내
+        url: https://student.snu.ac.kr/%EC%86%8C%EC%8B%9D%C2%B7%EC%95%8C%EB%A6%BC/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/?mod=document&uid=153
+    # Left out, as the notice does not state it: the days it opens (weekends and holidays).
+    facts:
+      - text: 캠퍼스안전반 분실물센터는 아시아연구소 1층, 국민은행 옆에 있어요. 09:00–18:00에 운영하고 전화는 02-880-8114예요.
+        source: https://student.snu.ac.kr/%EC%86%8C%EC%8B%9D%C2%B7%EC%95%8C%EB%A6%BC/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/?mod=document&uid=153
+        checked: 2026-11-04
+      - text: 유실물을 받을 때는 서약서를 쓰고 분실 장소·날짜·시간을 확인해요. 신분증·학생증은 본인 신분을 대조하고, 휴대폰·전자기기는 연락처와 블루투스 자동 연결을 확인해요.
+        source: https://student.snu.ac.kr/%EC%86%8C%EC%8B%9D%C2%B7%EC%95%8C%EB%A6%BC/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/?mod=document&uid=153
+        checked: 2026-11-04
+      - text: 보관 기간은 1개월이고, 지나면 경찰청 유실물센터와 관악경찰서로 넘겨요.
+        source: https://student.snu.ac.kr/%EC%86%8C%EC%8B%9D%C2%B7%EC%95%8C%EB%A6%BC/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/?mod=document&uid=153
+        checked: 2026-11-04
+      - text: 67동 두레문예관에서 주운 물건은 201호 학생지원센터가 2영업일 보관한 뒤 분실물센터로 옮겨요.
+        source: https://student.snu.ac.kr/%EC%86%8C%EC%8B%9D%C2%B7%EC%95%8C%EB%A6%BC/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/?mod=document&uid=153
+        checked: 2026-11-04
+      - text: 학내 구성원은 마이스누 전체공지 메뉴의 분실물 항목에서 분실물 정보를 볼 수 있어요.
+        source: https://student.snu.ac.kr/%EC%86%8C%EC%8B%9D%C2%B7%EC%95%8C%EB%A6%BC/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/?mod=document&uid=153
+        checked: 2026-11-04
+
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
+  - key: laptop-rental
+    order: 4
+    category: life
+    title: 노트북 대여 서비스 알아두기
+    brief: 노트북이 고장 나도 걱정 마세요. 정보화본부에서 하루 1,000원에 빌릴 수 있어요.
+    body:
+      - 정보화본부(102동) 101호 IT Service Center에서 학생은 노트북을 하루 1,000원에 빌릴 수 있어요.
+      - '· 신청: 마이스누 → 캠퍼스·복지 → IT서비스 → 장비/SW대여 → 장비신청'
+      - · 대여와 반납은 평일 09:00–18:00에만 돼요. 주말과 공휴일에는 안 돼요.
+      - · 늦게 반납하면 하루에 대여료의 2배를 연체료로 내요.
+    condition: 노트북 대여 방법 확인하기
+    completion:
+      kind: button
+    completionMessage: 급할 때 노트북을 빌릴 곳이 생겼어요!
+    places:
+      - place: '102'
+        label: 정보화본부(102동) 101호
+    links:
+      - label: 정보화본부 전산장비 대여
+        url: https://ist.snu.ac.kr/%ec%a0%84%ec%82%b0%ec%9e%a5%eb%b9%84%eb%8c%80%ec%97%ac/
+    # Left out, as the page does not state it: the longest a laptop may be borrowed.
+    facts:
+      - text: 학생 개인용 노트북은 하루 1,000원이에요. 마이스누 → 캠퍼스·복지 → IT서비스 → 장비/SW대여 → 장비신청에서 신청해요.
+        source: https://ist.snu.ac.kr/%ec%a0%84%ec%82%b0%ec%9e%a5%eb%b9%84%eb%8c%80%ec%97%ac/
+        checked: 2026-11-04
+      - text: 관악캠퍼스에서는 정보화본부(102동 101호) IT Service Center에서 빌리고 돌려줘요.
+        source: https://ist.snu.ac.kr/%ec%a0%84%ec%82%b0%ec%9e%a5%eb%b9%84%eb%8c%80%ec%97%ac/
+        checked: 2026-11-04
+      - text: 운영 시간은 평일 09:00–18:00이고, 주말과 공휴일에는 대여와 반납을 할 수 없어요. 연체료는 하루에 대여료의 2배예요.
+        source: https://ist.snu.ac.kr/%ec%a0%84%ec%82%b0%ec%9e%a5%eb%b9%84%eb%8c%80%ec%97%ac/
+        checked: 2026-11-04
+      - text: 기종은 삼성 NT750XGK(15.6인치), LG그램 15ZG90R(15인치), LG그램 14Z90S(14인치)이고, Windows 11에 한글과 MS Office 등이 깔려 있어요.
+        source: https://ist.snu.ac.kr/%ec%a0%84%ec%82%b0%ec%9e%a5%eb%b9%84%eb%8c%80%ec%97%ac/
+        checked: 2026-11-04
+
+  - key: kwanjeong
+    order: 5
+    category: study
+    title: 관정도서관 예약하기
+    brief: 관정도서관 열람실을 예약하고 이용해 보세요.
+    body:
+      - 관정도서관은 관정도서관 내부 키오스크에 로그인한 후 좌석을 예약하거나, 관정도서관 공식 앱, 또는 이 SNU Now에서 어시스턴트에게 부탁해 예약을 진행할 수 있어요. 이번 튜토리얼에서는 관정도서관을 이용해보세요!
+      - 열람실 좌석은 예약한 뒤 30분 안에 좌석배정기(키오스크)에서 확인해야 해요. 확인하지 않으면 자동으로 반납돼요.
+      - 확인하지 않거나 반납하지 않은 일이 한 달에 5번이면 10일 동안 예약할 수 없어요. 그룹스터디룸은 1시간 안에 들어가지 않으면 취소되고, 7일에 3번이면 3일 동안 예약할 수 없어요.
+      - 사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!
+    condition: 관정도서관 열람실이나 스터디룸 예약 및 이용
+    completion:
+      kind: kwanjeongCheck
+      skipLabel: 이미 예약 및 이용해본 적이 있어요
+    # The words of 어시스턴트에게 예약 부탁하기, which the sheet shows while 관정 booking is on (LIBRARY_BOOKING_ENABLED).
+    ask: 관정도서관 7층 열람실에 한 자리 예약해줘
+    completionMessage: 관정도서관 이용은 어떠셨나요? 도서관을 자주 이용해 보아요!
+    places:
+      - place: '62-1'
+    links: []
+
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review. The notice names the system
+  # 타 학과(부) 전공 교과목 성적평가방법 선택제; "S/U" is the title the spec gives.
+  - key: su-grading-option
+    order: 6
+    category: study
+    title: 성적평가방법 선택제(S/U) 신청하기
+    brief: 다른 학과 전공 과목도 학점 걱정을 덜고 들을 수 있어요.
+    body:
+      - 다른 학과(부)의 전공 교과목 중 지정된 과목은 학생이 직접 성적평가방법을 바꿔 신청할 수 있어요.
+      - · 수업일수 1/4이 되는 날까지 mySNU에서 직접 신청해요. 2026학년도 1학기는 3월 26일(목)까지였어요.
+      - · 대상 과목은 학교가 정한 목록에 있는 과목뿐이에요. 학기마다 공지를 확인해 보세요.
+    condition: 성적평가방법 선택제 신청 기간과 대상 과목 확인하기
+    completion:
+      kind: button
+    completionMessage: 관심 있던 다른 학과 과목에도 부담 없이 도전해 보세요!
+    places: []
+    links:
+      - label: MySNU
+        url: https://my.snu.ac.kr
+      - label: 2026-1 수강신청 변경 및 취소 안내 (컴퓨터공학부 공지)
+        url: https://cse.snu.ac.kr/community/notice/24751
+    # Left out, as the notice does not state it: the menu of mySNU to apply in.
+    facts:
+      - text: 타 학과(부) 전공 교과목 성적평가방법 선택제는 학생이 직접 수업일수 1/4선까지 mySNU에서 신청해요. 2026학년도 1학기는 2026-03-26(목)까지였어요.
+        source: https://cse.snu.ac.kr/community/notice/24751
+        checked: 2026-11-04
+      - text: 대상은 타 학과(부) 전공 교과목 중 지정된 목록에 있는 과목이에요.
+        source: https://cse.snu.ac.kr/community/notice/24751
+        checked: 2026-11-04
+      - text: 교과구분 변경도 같은 날, 수업일수 1/4선까지 등록해요. 2026학년도 1학기는 2026-03-26(목)까지였어요.
+        source: https://cse.snu.ac.kr/community/notice/24751
+        checked: 2026-11-04
+
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
+  - key: chatgpt-edu
+    order: 7
+    category: study
+    title: ChatGPT Edu 무료로 쓰기
+    brief: 재학생이면 따로 신청하지 않아도 ChatGPT Edu를 쓸 수 있어요.
+    body:
+      - 서울대는 재학 중인 학생에게 ChatGPT Edu를 제공해요. 관리자가 한꺼번에 등록하므로 따로 신청하지 않아도 돼요.
+      - · chatgpt.com에 접속해 마이스누 포털 아이디와 비밀번호로 로그인해요.
+      - · 휴학생은 쓸 수 없고, 3개월 넘게 접속하지 않으면 아이디가 회수돼요. 필요하면 다시 요청할 수 있어요.
+      - · 학교의 AI 활용 지침을 지켜서 써 주세요.
+    condition: ChatGPT Edu에 로그인해 보기
+    completion:
+      kind: button
+    completionMessage: 공부할 때 든든한 도우미가 하나 더 생겼어요!
+    places: []
+    links:
+      - label: ChatGPT
+        url: https://chatgpt.com
+      - label: 생성형 AI(ChatGPT Edu) 서비스 이용 안내 (컴퓨터공학부 공지)
+        url: https://cse.snu.ac.kr/community/notice/25201
+    # Left out, as the notice does not state it: the models and the limits of use.
+    facts:
+      - text: 재학·재직 중인 학내 구성원이 대상이고 휴학·휴직 중에는 쓸 수 없어요. 학생은 별도 신청 절차 없이 관리자가 일괄 등록해요.
+        source: https://cse.snu.ac.kr/community/notice/25201
+        checked: 2026-11-04
+      - text: https://chatgpt.com 에 접속해 마이스누 포털 아이디와 비밀번호로 로그인해요.
+        source: https://cse.snu.ac.kr/community/notice/25201
+        checked: 2026-11-04
+      - text: 운영 기간은 2026년 6월부터 2027년 8월까지(15개월)예요.
+        source: https://cse.snu.ac.kr/community/notice/25201
+        checked: 2026-11-04
+      - text: 3개월 이상 접속하지 않으면 아이디가 회수되고, 필요하면 다시 쓰겠다고 요청할 수 있어요. 휴학·휴직·퇴직하면 계정이 정지돼요.
+        source: https://cse.snu.ac.kr/community/notice/25201
+        checked: 2026-11-04
+
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review. Re-read on 2026-11-04: whether
+  # the licences may be installed on a student's own laptop is left out of body and facts, since ist.snu.ac.kr lists
+  # "학생 개인 노트북(불법 설치 및 사용 불가)" and www.snu.ac.kr says only that the software is downloaded on campus.
+  - key: ms365-campus-software
+    order: 8
+    category: study
+    title: 캠퍼스 라이선스 소프트웨어 받기
+    brief: 한글, MS Office, SPSS, MATLAB 같은 소프트웨어를 학교 라이선스로 받을 수 있어요.
+    body:
+      - 서울대 구성원은 교육·연구에 쓰는 소프트웨어를 학교 라이선스로 무료로 쓸 수 있어요. Windows, 한글, MS Office, V3, 알툴즈, SPSS·SAS·Stata, MATLAB, ChemDraw 등이 있어요.
+      - '· 받는 곳: 학내에서 마이스누에 로그인한 뒤 캠퍼스·복지 → IT서비스 → 장비/SW대여 → 캠퍼스라이선스SW다운로드'
+      - · 순수 교육과 연구 목적으로만 쓸 수 있어요.
+      - · Microsoft 365는 mso365.snu.ac.kr에서 SNU 아이디로 써요. 졸업하면 쓸 수 없어요.
+    condition: 캠퍼스 라이선스 소프트웨어 받는 곳 확인하기
+    completion:
+      kind: button
+    completionMessage: 이제 필요한 프로그램을 사지 않고 학교 라이선스로 써 보세요!
+    places: []
+    links:
+      - label: 정보화본부 캠퍼스 라이선스 소프트웨어
+        url: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
+      - label: Microsoft 365
+        url: https://mso365.snu.ac.kr/
+    # Left out: whether the licences may be installed on a student's own laptop (the sources disagree, above).
+    facts:
+      - text: 캠퍼스 라이선스 소프트웨어는 MS Windows(업그레이드용)와 Office, 한글, SAS, Stata, SPSS Statistics, MATLAB, ChemDraw, AutoDesk(교육용), V3, 알툴즈 등이에요. 재학생과 교직원이 대상이에요.
+        source: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
+        checked: 2026-11-04
+      - text: 학내에서 마이스누에 로그인한 뒤 내려받아요.
+        source: https://www.snu.ac.kr/campuslife/aid/it
+        checked: 2026-11-04
+      - text: 메뉴는 마이스누 로그인 → 캠퍼스·복지 → IT서비스 → 장비/SW대여 → 캠퍼스라이선스SW다운로드, 또는 메인페이지의 소프트웨어 다운로드예요.
+        source: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
+        checked: 2026-11-04
+      - text: 순수 교육·연구 목적 외에는 쓸 수 없고, 학내 벤처기업 같은 영리 단체와 병원·병원 부속시설에서는 쓸 수 없어요.
+        source: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
+        checked: 2026-11-04
+      - text: Microsoft 365는 https://mso365.snu.ac.kr/ 에서 개인정보 동의 후 SNU 아이디와 비밀번호로 써요. OneDrive 1GB와 Exchange 1GB를 주고, 재학생은 졸업하면 쓸 수 없어요.
+        source: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
+        checked: 2026-11-04
+
+  - key: admin-shuttle
+    order: 9
+    category: transit
     title: 행정관 셔틀 이용하기
     brief: 행정관 앞에서 셔틀을 타 보세요.
     body:
@@ -65,26 +323,53 @@ quests:
         label: 행정관 셔틀 정류장 (행정관 잔디광장 아래)
     links: []
 
-  - key: kwanjeong
-    order: 3
-    title: 관정도서관 예약하기
-    brief: 관정도서관 열람실을 예약하고 이용해 보세요.
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review. The night lines only; the
+  # daytime 행정관 셔틀 is admin-shuttle's.
+  - key: night-shuttle
+    order: 10
+    category: transit
+    title: 야간 셔틀 타기
+    brief: 밤늦게까지 공부한 날에도 셔틀을 타고 집에 갈 수 있어요.
     body:
-      - 관정도서관은 관정도서관 내부 키오스크에 로그인한 후 좌석을 예약하거나, 관정도서관 공식 앱, 또는 이 SNU Now에서 어시스턴트에게 부탁해 예약을 진행할 수 있어요. 이번 튜토리얼에서는 관정도서관을 이용해보세요!
-      - 열람실 좌석은 예약한 뒤 30분 안에 좌석배정기(키오스크)에서 확인해야 해요. 확인하지 않으면 자동으로 반납돼요.
-      - 확인하지 않거나 반납하지 않은 일이 한 달에 5번이면 10일 동안 예약할 수 없어요. 그룹스터디룸은 1시간 안에 들어가지 않으면 취소되고, 7일에 3번이면 3일 동안 예약할 수 없어요.
-      - 사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!
-    condition: 관정도서관 열람실이나 스터디룸 예약 및 이용
+      - 밤에는 셔틀이 두 가지 있어요.
+      - '· 야간 도서관 셔틀(탈출셔틀): 연중 21:10, 21:40, 22:10, 22:40, 23:10에 행정관 앞에서 서울대입구역과 대학동으로 바로 가요.'
+      - '· 심야셔틀: 학기 중 24:00–02:00에 30분 간격으로 에너지자원신기술연구소에서 출발해 교내를 돌고 낙성대(인헌초)를 거쳐 서울대입구역 3번 출구까지 가요.'
+      - '· 2026년 시험기간(10/12–10/30, 11/30–12/14, 주말·공휴일 제외)에는 심야셔틀이 302동에서 23:40, 00:15, 00:50, 01:25, 02:00에 출발하고, 서울대입구역행 도서관 셔틀이 2대에서 3대로 늘어요.'
+    condition: 야간 도서관 셔틀이나 심야셔틀 타 보기
     completion:
-      kind: kwanjeongCheck
-      skipLabel: 이미 예약 및 이용해본 적이 있어요
-    completionMessage: 관정도서관 이용은 어떠셨나요? 도서관을 자주 이용해 보아요!
+      kind: button
+    completionMessage: 늦은 밤에도 안전하게 돌아가셨나요? 오늘도 수고 많았어요!
     places:
-      - place: '62-1'
-    links: []
+      # The 행정관 셔틀 정류장 of admin-shuttle; the shuttle page says 행정관 앞.
+      - point:
+          latitude: 37.460938
+          longitude: 126.950312
+        label: 행정관 앞 (야간 도서관 셔틀)
+      - place: '302'
+        label: 제2공학관(302동) (시험기간 심야셔틀)
+    links:
+      - label: 셔틀버스 노선 및 시간
+        url: https://www.snu.ac.kr/about/gwanak/shuttles/shuttle_stops
+      - label: 시험기간 셔틀 증차 및 심야셔틀 노선 변경 안내 (컴퓨터공학부 공지)
+        url: https://cse.snu.ac.kr/ko/community/notice/25702
+    # Left out, as the page says only 학기중: whether the 심야셔틀 runs in the vacation.
+    facts:
+      - text: 야간 도서관 셔틀은 연중 21:10, 21:40, 22:10, 22:40, 23:10에 행정관 앞에서 출발해요. 서울대입구역으로 바로 가는 차와 대학동(서울정보학교 인근 세븐일레븐 앞)으로 바로 가는 차가 있어요.
+        source: https://www.snu.ac.kr/about/gwanak/shuttles/shuttle_stops
+        checked: 2026-11-04
+      - text: 심야셔틀은 학기 중 24:00–02:00에 30분 간격으로 다니는 25인승이에요. 에너지자원신기술연구소 → 301동 → 302동 → 38동 → 농생대 → 자연대 → 정문 → 경영대 → 수의대 → 국제대학원 → 기숙사 → BK국제관 → 낙성대(인헌초) → 서울대입구역(3번 출구)으로 가요.
+        source: https://www.snu.ac.kr/about/gwanak/shuttles/shuttle_stops
+        checked: 2026-11-04
+      - text: 2026년 시험기간(1차 10/12–10/30, 2차 11/30–12/14, 주말·공휴일 제외)에는 심야셔틀 1대가 302동에서 23:40, 00:15, 00:50, 01:25, 02:00에 35분 간격으로 출발해요. 302동 → 301동 → 에너지자원신기술연구소 → 38동 → 농생대 → 자연대 → 정문 → 경영대 → 수의대 → 국제대학원 → 노천강당 → 기숙사 → BK국제관 → 낙성대(인헌초) → 서울대입구역으로 가요.
+        source: https://cse.snu.ac.kr/ko/community/notice/25702
+        checked: 2026-11-04
+      - text: 2026년 시험기간에는 야간 도서관 셔틀의 행정관 → 서울대입구역 노선이 2대에서 3대로 늘어요. 행정관 → 대학동은 2대 그대로이고, 출발 시간은 같아요.
+        source: https://cse.snu.ac.kr/ko/community/notice/25702
+        checked: 2026-11-04
 
   - key: health-clinic
-    order: 4
+    order: 11
+    category: health
     title: 서울대 보건진료소 이용
     brief: 보건진료소가 어디 있는지 알아 두세요.
     body:
@@ -133,8 +418,44 @@ quests:
         source: https://health4u.snu.ac.kr/operation/guide/_/view.do
         checked: 2026-11-02
 
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
+  - key: counseling-center
+    order: 12
+    category: health
+    title: 대학생활문화원 상담 알아두기
+    brief: 마음이 힘들 때 이야기할 수 있는 곳을 알아 두세요.
+    body:
+      - 대학생활문화원은 학생회관(63동) 5층에 있어요. 학교생활이나 마음이 힘들 때 상담을 받을 수 있어요.
+      - · 개인상담은 신청하고 접수면접(신청서와 심리검사)을 거친 뒤 상담자가 정해지면, 주 1회 50분 대면으로 해요.
+      - '· 24시간 위기상담전화 스누콜: (02) 880-8080'
+    condition: 대학생활문화원 위치와 스누콜 번호 확인하기
+    completion:
+      kind: button
+    completionMessage: 혼자 버티지 않아도 돼요. 언제든 도움을 요청하세요.
+    places:
+      - place: '63'
+        floor: 5
+    links:
+      - label: 대학생활문화원 프로그램 안내
+        url: https://www.snu.ac.kr/campuslife/aid/programs
+    # Left out, as the page does not state it: whether counselling costs anything.
+    facts:
+      - text: 대학생활문화원은 학생회관(63동) 5층에 있어요. 전화는 (02) 880-5501, (02) 880-5497이에요.
+        source: https://www.snu.ac.kr/campuslife/aid/programs
+        checked: 2026-11-04
+      - text: 24시간 위기상담전화 스누콜은 (02) 880-8080이에요.
+        source: https://www.snu.ac.kr/campuslife/aid/programs
+        checked: 2026-11-04
+      - text: 개인상담은 신청과 접수면접(신청서·심리검사)을 거쳐 상담자가 배정되면 상담자가 연락해 첫 상담을 정하고, 주 1회 50분 대면으로 진행해요.
+        source: https://www.snu.ac.kr/campuslife/aid/programs
+        checked: 2026-11-04
+      - text: MMPI-2, 진로탐색검사(STRONG), TCI 같은 심리검사가 있고, 7–10주 과정의 대인관계 향상 집단 프로그램이 있어요.
+        source: https://www.snu.ac.kr/campuslife/aid/programs
+        checked: 2026-11-04
+
   - key: art-museum
-    order: 5
+    order: 13
+    category: culture
     title: 서울대 미술관/파워플랜트 관람
     brief: 캠퍼스 안의 미술관과 파워플랜트에서 전시를 봐요.
     body:
@@ -152,3 +473,80 @@ quests:
         url: http://www.snumoa.org/
       - label: 파워플랜트
         url: https://culture.snu.ac.kr/event/powerplant365/
+
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
+  - key: dure-practice-room
+    order: 14
+    category: culture
+    title: 두레문예관 연습실 예약하기
+    brief: 동아리가 아니어도 혼자 악기나 춤을 연습할 방을 빌릴 수 있어요.
+    body:
+      - NH농협두레문예관(67동)에는 연습실 7개 호실이 있어요. 동아리뿐 아니라 재학생 개인도 예약할 수 있어요.
+      - · 예약하샤에서 빈 호실을 찾아 신청하면 두레운영실이 검토하고, 결과를 이메일로 보내요. 승인까지 1–3일 걸려요.
+      - · 개인은 15일 안의 날짜를 한 번에 3시간까지 예약할 수 있어요. 사용 당일 예약은 승인되지 않아요.
+    condition: 두레문예관 연습실 예약 방법 확인하기
+    completion:
+      kind: button
+    completionMessage: 마음껏 연습할 공간이 생겼어요. 즐겁게 연습하세요!
+    places:
+      - place: '67'
+    links:
+      - label: 학생처 연습실 안내
+        url: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%eb%ac%b8%ed%99%94%c2%b7%ec%98%88%ec%88%a0/%ec%97%b0%ec%8a%b5%ec%8b%a4/
+    # Left out, as the page does not state it: whether a room costs anything, and what each room holds.
+    facts:
+      - text: NH농협두레문예관(67동) 연습실은 총 7개 호실이고, 학내 학생단체(동아리)나 재학생 개인이 예약해 쓸 수 있어요.
+        source: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%eb%ac%b8%ed%99%94%c2%b7%ec%98%88%ec%88%a0/%ec%97%b0%ec%8a%b5%ec%8b%a4/
+        checked: 2026-11-04
+      - text: 예약하샤에서 빈 호실을 확인해 신청하면 두레운영실이 검토하고, 처리 결과는 신청자 이메일로 자동 발송돼요. 1–3일 걸려요.
+        source: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%eb%ac%b8%ed%99%94%c2%b7%ec%98%88%ec%88%a0/%ec%97%b0%ec%8a%b5%ec%8b%a4/
+        checked: 2026-11-04
+      - text: 재학생 개인은 15일 이내 날짜를 1회 3시간까지, 두레 단체ID가 있는 단체는 30일 이내 날짜를 1회 6시간까지 예약할 수 있어요. 사용 당일 예약은 승인되지 않아요.
+        source: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%eb%ac%b8%ed%99%94%c2%b7%ec%98%88%ec%88%a0/%ec%97%b0%ec%8a%b5%ec%8b%a4/
+        checked: 2026-11-04
+      - text: 학생회관(63동)과 풍산마당 2층 연습실은 총동아리연합회 단체ID를 받은 학생단체(동아리)만 쓸 수 있어요.
+        source: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%eb%ac%b8%ed%99%94%c2%b7%ec%98%88%ec%88%a0/%ec%97%b0%ec%8a%b5%ec%8b%a4/
+        checked: 2026-11-04
+
+  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review. Re-read on 2026-11-04: the
+  # course is 서울등산관광센터's 연주대 A코스 (서울대건설환경종합연구소 → 도림천계곡 → 연주대 정상), "the shortest and
+  # easiest to 연주대"; the press's "공학관 입구" is the same start. Its time is left out of body and facts: the guide's
+  # table does not tie a time to the course plainly, and the press gives a reporter's 70 minutes and "보통 85분".
+  # The two points are OpenStreetMap's: the bus stop 건설환경종합연구소 (node 11560054588), next to the trailhead by
+  # the guide, and 연주대 (node 3445797247).
+  - key: gwanaksan-engineering-trail
+    order: 15
+    category: culture
+    title: 공학관 코스로 관악산 오르기
+    brief: 캠퍼스에서 바로 관악산 정상 연주대까지 올라 보세요.
+    body:
+      - 공대 위 건설환경종합연구소에서 도림천계곡을 따라 관악산 정상 연주대까지 오를 수 있어요. 서울등산관광센터는 이 길(연주대 A코스)을 연주대에 오르는 가장 짧고 쉬운 코스로 안내해요.
+      - · 등산로 입구는 5513번 버스의 건설환경종합연구소 정류장 바로 옆이에요.
+      - · 산길이니 편한 신발을 신고, 해가 지기 전에 내려오세요.
+    condition: 연주대까지 올라 보기
+    completion:
+      kind: button
+    completionMessage: 정상에서 본 캠퍼스는 어땠나요? 수고 많았어요!
+    places:
+      - point:
+          latitude: 37.4472146
+          longitude: 126.9498331
+        label: 등산로 입구 (건설환경종합연구소 정류장)
+      - point:
+          latitude: 37.4447713
+          longitude: 126.9645611
+        label: 연주대 (관악산 정상)
+    links:
+      - label: 관악산 등산 코스 (서울등산관광센터)
+        url: https://seoulhiking.or.kr/theme/basic/img/mountain_gwanaksan-kr.pdf
+    # Left out (above): how long the climb takes.
+    facts:
+      - text: 서울등산관광센터는 서울대건설환경종합연구소 → 도림천계곡 → 연주대 정상의 연주대 A코스를 관악산 정상 연주대에 오르는 가장 짧고 쉬운 코스로, 등산 초보자도 도전해 볼 만하다고 안내해요.
+        source: https://seoulhiking.or.kr/theme/basic/img/mountain_gwanaksan-kr.pdf
+        checked: 2026-11-04
+      - text: 2호선 서울대입구역 3번 출구로 나와 200m쯤 걸어 5513번 버스를 타고 건설환경종합연구소 정류장에서 내리면 바로 옆이 등산로 입구예요.
+        source: https://seoulhiking.or.kr/theme/basic/img/mountain_gwanaksan-kr.pdf
+        checked: 2026-11-04
+      - text: 2026년 3월 기사에 따르면 주말과 공휴일에는 연주대 정상에서 사진을 찍으려고 1시간가량 줄을 서기도 해요.
+        source: https://www.hankyung.com/article/2026030487117
+        checked: 2026-11-04

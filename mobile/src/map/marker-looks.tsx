@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,6 +18,7 @@ import {
   MapPin,
   type MapPlaceKind,
   MapRestaurant,
+  MapTutorialPin,
   type PersonTone,
 } from '@/design-system';
 
@@ -26,7 +28,8 @@ import {
 // - for each person, the two sizes in each tone the person was seen in, with and without a photo, dimmed while the
 //   person's position was old, and each of them selected, which only the one selected person ever asks for;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
-// - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected.
+// - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected;
+// - one for the tutorial's place pin.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
 // A name holds nothing that changes from one answer of the server to the next: a person is named by their id and by
@@ -63,7 +66,9 @@ export type MarkerLook =
   // The Place of restaurants with menus today, at every level of detail.
   | { kind: 'restaurant'; selected?: boolean }
   // Things of several kinds at one place: a small round for each kind, in the order given.
-  | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean };
+  | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean }
+  // The place 지도에서 보기 of a tutorial quest shows: a red teardrop with a white circle, at every level of detail.
+  | { kind: 'tutorialPlace' };
 
 function parts(...names: (string | false)[]): string {
   return names.filter((name) => name !== false).join(':');
@@ -73,6 +78,9 @@ function parts(...names: (string | false)[]): string {
 export function lookName(look: MarkerLook): string {
   if (look.kind === 'me') {
     return look.small === true ? 'me:small' : 'me';
+  }
+  if (look.kind === 'tutorialPlace') {
+    return 'tutorialPlace';
   }
   const selected = look.selected === true && 'selected';
   if (look.kind === 'restaurant') {
@@ -100,7 +108,7 @@ export function standsOnTip(look: MarkerLook): boolean {
   if (look.kind === 'me') {
     return false;
   }
-  return look.kind === 'person' || look.kind === 'restaurant' || look.form === 'pin';
+  return look.kind === 'person' || look.kind === 'restaurant' || look.kind === 'tutorialPlace' || look.form === 'pin';
 }
 
 // The design system's view of a look.
@@ -123,6 +131,9 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
   }
   if (look.kind === 'restaurant') {
     return <MapRestaurant selected={look.selected} />;
+  }
+  if (look.kind === 'tutorialPlace') {
+    return <MapTutorialPin />;
   }
   if (look.kind === 'group') {
     return look.form === 'dot' ? (
