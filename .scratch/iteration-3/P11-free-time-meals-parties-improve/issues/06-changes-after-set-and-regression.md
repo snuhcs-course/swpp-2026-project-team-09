@@ -40,3 +40,12 @@ It works on ticket 04's branch.
 - [ ] One pull request for tickets 04 to 06 goes into `3.0/Main`.
 
 ## Comments
+
+Changes 1 to 4 ran, and only change 1 was kept; the after set ran at `bf738eb8`, whose code is change 1's. The after set's holdout has not run: it would take P11's runs over the USD 10 the PM approved, so it waits for the PM. Until it runs, the branch does not merge `3.0/Main` and the pull request is not opened. Everything is in [`record.md`](../../../../main-server/eval/p4/record.md#the-changes).
+
+### Agent usage (2026-11-05)
+
+- **Agent time** (estimate): about 80 minutes: about 70 of the orchestrating session on this ticket, and about 10 for the two reviewers. The real-model runs of the changes and the after set took about 85 minutes, 04:29 to 05:59 KST, within that session's time. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the transcripts, up to 06:10 KST): the orchestrating session's for all of P11, counted once here, and this ticket's two reviewers.
+  - Input: 548 not cached, 61,270,676 cache reads and 663,895 cache writes.
+  - Output: 207,341.
