@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -21,7 +22,7 @@ function isEligibleByDefault(user: User, at: Date): boolean {
   return eligibleByDefault({ admissionYear: user.admissionYear, affiliation: user.affiliation }, at);
 }
 
-// The completions each kind of quest accepts. The phone does the 관정 check, so the server records how and does not
+// The completions each kind of quest accepts, by the kind it is served as (servedContent). The phone does the 관정 check, so the server records how and does not
 // verify it.
 const ACCEPTED_BY: Record<TutorialQuest['completion']['kind'], readonly TutorialCompletion[]> = {
   button: [TutorialCompletion.button],
@@ -179,6 +180,7 @@ export class TutorialService {
       state: tutorialState(progress, rows, this.keys),
       rowHidden: progress !== null && progress.rowHiddenAt !== null,
       eligibleByDefault: isEligibleByDefault(user, new Date()),
+      categories: this.content.categories,
       quests: this.content.quests.map(({ facts: _facts, ...quest }) => ({
         ...quest,
         status: questStatus(rows.find(({ questKey }) => questKey === quest.key)),
