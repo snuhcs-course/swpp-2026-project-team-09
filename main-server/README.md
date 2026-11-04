@@ -2489,6 +2489,8 @@ into the database.
 | `srtm-elevation.json`            | SRTM 30 m heights over the campus, read only by the builder                                             | NASA SRTM, through OpenTopoData                      |
 | `walking-table.json`             | Seconds on foot for every pair of Places and of Places and stops, with each one's elevation             | `pnpm walking:build`, from the seed files above      |
 | `restaurant-places.json`         | The number of each Restaurant's Place, by its name as `GET /menus` gives it, read by the server         | Written by hand                                      |
+| `study-spaces.json`              | The 공부공간 layer's Study Spaces by building, each at a Place number, read by the server               | Written by hand from P13's research                  |
+| `department-colleges.json`       | The college of each department of the app's list, or `null`, read by the server                         | Written by hand from the app's department list       |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
@@ -2529,6 +2531,16 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **When the Co-op renames or moves a restaurant**, correct its row in `restaurant-places.json`, with the name exactly as
   the worker sends it and the number as the Places have it. A restaurant the file does not hold has no Place: no pin, no
   "N동" and no place in 공강에 밥. It stays in the menu panel.
+- **The 공부공간 layer** (`GET /study-spaces`, signed in): `study-spaces.json` holds each building at a Place number
+  of the seed and its Study Spaces, each with its `hours` (display text, or `null`), its `restriction` (`colleges`,
+  `departments` or `graduateOnly`, with the `label` of "○○ 학생만 사용할 수 있어요"), `link`, `source`, `confidence` and a
+  `note` for the reviewer, which is never served. The server reads it once at start, with `department-colleges.json`;
+  a Place number the seed does not hold, or a restriction naming a college or a department the table does not hold,
+  stops the start. A space is `usable` for a User whose 학과 is listed, or whose 학과's college is, or, for
+  `graduateOnly`, whose 소속 is 대학원; an empty or unknown 학과, or no 소속, is not. A building is `usable` when any of
+  its spaces is. 관정관's entry lists the seat sectors of the library catalogue the User may book, which the phone reads
+  through the User's own Library Session; no count comes back. When the app's department list changes, add the new
+  names to `department-colleges.json`: the app's test fails until every name has an entry.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.
