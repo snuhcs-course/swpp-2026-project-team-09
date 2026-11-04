@@ -6,9 +6,10 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { router, useIsFocused } from 'expo-router';
+import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
@@ -20,7 +21,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { BottomControls } from './bottom-controls';
-import { useChatSheet } from './chat-sheet';
+import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { AI_INPUT, CARD, LAYERS_BUTTON, type Room } from './layout';
 import { ShuttleNotice } from './shuttle-notice';
@@ -72,6 +73,8 @@ interface MapBottomProps {
   tutorial: TutorialFlow;
   // A quest's 지도에서 보기.
   onShowOnMap: (position: LatLng) => void;
+  // The chat's sheet, which the main screen holds, so that a card's button can ask the Assistant.
+  chat: ChatSheetControl;
 }
 
 // What is at the bottom of the map: the shuttle's notice, the row of buttons, the 편의기능 button and the AI input. A
@@ -80,8 +83,7 @@ interface MapBottomProps {
 // in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input stands right above
 // it, and the chat keeps its last bubble clear of it there. The conversation is kept while the app runs.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, room, stack, tutorial, onShowOnMap } = props;
-  const chat = useChatSheet(useIsFocused(), stack.turnOn);
+  const { taken, onParty, onNoticeHeight, room, stack, tutorial, onShowOnMap, chat } = props;
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const lift = useKeyboardLift();
   const { bottomCard, notice } = taken;
@@ -91,7 +93,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       {under && notice !== null ? <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} /> : null}
       {under ? <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} room={room} /> : null}
       {under && !bottomCard ? (
-        <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} onMenus={openMenus} stack={stack} />
+        <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} stack={stack} />
       ) : null}
       {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
       {chat.sheet(AI_INPUT.bottom + lift + inputHeight)}

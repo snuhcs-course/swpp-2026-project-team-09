@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,6 +18,7 @@ import {
   MapPin,
   type MapPlaceKind,
   MapRestaurant,
+  MapStudyCluster,
   type PersonTone,
 } from '@/design-system';
 
@@ -59,7 +61,10 @@ export type MarkerLook =
       photo: string | null;
     }
   // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
-  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean }
+  // `muted` is translucent grey: a study building none of whose spaces the User may use.
+  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean; muted?: boolean }
+  // Study pins merged while the whole campus is in view, with how many they are.
+  | { kind: 'study-cluster'; count: number; selected?: boolean }
   // The Place of restaurants with menus today, at every level of detail.
   | { kind: 'restaurant'; selected?: boolean }
   // Things of several kinds at one place: a small round for each kind, in the order given.
@@ -81,13 +86,16 @@ export function lookName(look: MarkerLook): string {
   if (look.kind === 'group') {
     return parts('group', look.kinds.join('+'), look.form, selected);
   }
+  if (look.kind === 'study-cluster') {
+    return parts('study-cluster', String(look.count), selected);
+  }
   if (look.kind === 'person') {
     const photo = look.photo !== null && 'photo';
     const stale = look.stale === true && 'stale';
     return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, stale, selected);
   }
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
-  return parts(look.kind, look.form, count, selected);
+  return parts(look.kind, look.form, count, look.muted === true && 'muted', selected);
 }
 
 export function hasPhoto(look: MarkerLook): boolean {
@@ -97,7 +105,7 @@ export function hasPhoto(look: MarkerLook): boolean {
 // A pin and a person's marker stand on their tip, the bottom of their view. Everything else, a round thing, sits on
 // its middle.
 export function standsOnTip(look: MarkerLook): boolean {
-  if (look.kind === 'me') {
+  if (look.kind === 'me' || look.kind === 'study-cluster') {
     return false;
   }
   return look.kind === 'person' || look.kind === 'restaurant' || look.form === 'pin';
@@ -131,9 +139,12 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
       <MapGroupPin kinds={look.kinds} selected={look.selected} />
     );
   }
+  if (look.kind === 'study-cluster') {
+    return <MapStudyCluster count={look.count} selected={look.selected} />;
+  }
   return look.form === 'dot' ? (
     <MapDot kind={look.kind} selected={look.selected} />
   ) : (
-    <MapPin count={look.count} kind={look.kind} selected={look.selected} />
+    <MapPin count={look.count} kind={look.kind} muted={look.muted} selected={look.selected} />
   );
 }
