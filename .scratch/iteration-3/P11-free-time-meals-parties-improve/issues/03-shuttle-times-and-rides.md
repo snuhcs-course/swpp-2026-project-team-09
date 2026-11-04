@@ -35,3 +35,12 @@ It starts on a new branch from `3.0/Main` after the spec's pull request has merg
 - [x] The existing shuttle and travel tests stay green.
 
 ## Comments
+
+The results are recorded in [P04 ticket 02's `## Comments`](../../P04-free-time-meals-parties/issues/02-shuttle-log.md#the-days-the-derived-times-and-the-score-2026-11-05).
+
+### Agent usage (2026-11-05)
+
+- **Agent time** (estimate): about 21 minutes: about 13 for the implementing agent, about 4 for the reviewer, and about 4 of the orchestrating session. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts; the orchestrating session's are counted once, under ticket 06):
+  - Input: 212 not cached, 11,357,250 cache reads and 267,132 cache writes.
+  - Output: 71,225.
