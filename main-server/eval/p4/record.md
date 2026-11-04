@@ -14,7 +14,114 @@ The walked times stay in ticket 01's `## Comments`, as the walking evaluation sa
 
 ## Runs
 
-No official run yet. It waits for P05's ticket 10a and for a person to confirm the cost.
+The official runs are P11's ([spec](../../../.scratch/iteration-3/P11-free-time-meals-parties-improve/spec.md)). They run on the branch `3.0/P11-04-chat`, cut from **X = `74d5a0e8163718311d1f052a1843133ceb0c4472`**, the tip of `3.0/Main` on 2026-11-05 after P11's spec merged (#199). The branch does not merge `3.0/Main` until the after set has run.
+
+Every run below has these settings:
+
+| Item     | Value                                                                                                      |
+| -------- | ---------------------------------------------------------------------------------------------------------- |
+| Provider | OpenRouter, the path at X                                                                                  |
+| Model    | `anthropic/claude-haiku-5.5`; on 2026-11-05 its `canonical_slug` was `anthropic/claude-haiku-5.5-20261007` |
+| Decoding | Provider defaults: no temperature, top-p or seed passed                                                    |
+| Limits   | 8 steps and 30 s; 4,000 output tokens for the P4 suite and the holdout, 1,000 for P19                      |
+
+Costs are the scorecards' estimates at OpenRouter's prices. The result files of the before and after sets are in `eval/results/` and committed, although the folder is ignored; a change's run keeps its files locally.
+
+### The before set, at X
+
+#### The P4 suite's first official run
+
+| Item        | Value                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| Date        | 2026-11-05, 03:49–04:01 KST                                                              |
+| Commit      | `74d5a0e8`                                                                               |
+| Command     | `pnpm eval --world p4 --model anthropic/claude-haiku-5.5 --budget 1.5 --yes`             |
+| Result file | `2026-11-05-74d5a0e8-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault` |
+| Usage       | 120 turns; input 10,049,230, output 86,892, no cache read or write; USD 1.0484           |
+
+| Threshold                     | Passed         | Wanted | Verdict |
+| ----------------------------- | -------------- | ------ | ------- |
+| Overall                       | 85/120 (70.8%) | ≥ 80%  | Fail    |
+| free-time-parties (공강 파티) | 27/45 (60.0%)  | ≥ 70%  | Fail    |
+| free-time-meals (공강에 밥)   | 34/45 (75.6%)  | ≥ 70%  | Pass    |
+| free-time-common (공통)       | 24/30 (80.0%)  | ≥ 70%  | Pass    |
+
+| Layer                 | Passed          |
+| --------------------- | --------------- |
+| Action                | 118/120 (98.3%) |
+| Tools                 | 107/120 (89.2%) |
+| Arguments             | 102/111 (91.9%) |
+| Cards and map buttons | 100/114 (87.7%) |
+| Proposal              | 6/6 (100.0%)    |
+| Words                 | 80/111 (72.1%)  |
+
+The 20 runs that failed on the reply's words alone: `common-choice-clock-fits` run 1; `meals-no-noodles` runs 1–3; `meals-soup-wanted` run 2; `meals-no-shared-time` runs 1–3; `meals-no-restaurant-fits` runs 1 and 3; `parties-named-classes` run 2; `parties-abbreviated-gap-begun` runs 1 and 3; `parties-next-gap` run 1; `parties-named-classes-tomorrow` runs 1 and 2; `parties-nothing-fits` run 2; `parties-over-twenty-narrowed` runs 1–3.
+
+#### The holdout
+
+| Item        | Value                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| Date        | 2026-11-05, 04:01–04:06 KST                                                                      |
+| Commit      | `74d5a0e8`                                                                                       |
+| Command     | `pnpm eval:holdout --model anthropic/claude-haiku-5.5 --budget 0.6 --yes`                        |
+| Result file | `2026-11-05-74d5a0e8-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault-holdout` |
+| Usage       | 36 turns; input 3,254,484, output 31,111; USD 0.3410                                             |
+
+Beside the same 12 cases in the fixed set's official run above:
+
+| Measure               | Holdout        | Same 12 fixed-set cases |
+| --------------------- | -------------- | ----------------------- |
+| Overall               | 23/36 (63.9%)  | 25/36 (69.4%)           |
+| free-time-parties     | 4/12 (33.3%)   | 6/12 (50.0%)            |
+| free-time-meals       | 9/12 (75.0%)   | 9/12 (75.0%)            |
+| free-time-common      | 10/12 (83.3%)  | 10/12 (83.3%)           |
+| Action                | 36/36 (100.0%) | 35/36 (97.2%)           |
+| Tools                 | 35/36 (97.2%)  | 35/36 (97.2%)           |
+| Arguments             | 35/36 (97.2%)  | 35/36 (97.2%)           |
+| Cards and map buttons | 30/33 (90.9%)  | 31/33 (93.9%)           |
+| Proposal              | 3/3 (100.0%)   | 3/3 (100.0%)            |
+| Words                 | 22/33 (66.7%)  | 22/33 (66.7%)           |
+
+The fixed set's column is read from the official run's result file with `p4Report` over those 12 cases; its scorecard gives only the overall 25/36.
+
+#### P19, three runs
+
+| Item    | Value                                                                                                                 |
+| ------- | --------------------------------------------------------------------------------------------------------------------- |
+| Date    | 2026-11-05, 04:06–04:26 KST                                                                                           |
+| Commit  | `74d5a0e8`                                                                                                            |
+| Command | `pnpm eval --model anthropic/claude-haiku-5.5 --max-output-tokens 1000 --budget 1.0 --yes`; run 1 with `--budget 0.6` |
+
+| Run | Result file                                                                                | Passed, known failures apart | Input     | Output | Cost       |
+| --- | ------------------------------------------------------------------------------------------ | ---------------------------- | --------- | ------ | ---------- |
+| 1   | `2026-11-05-74d5a0e8-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault`   | 57/64 (89.1%)                | 5,142,956 | 41,962 | USD 0.5353 |
+| 2   | `2026-11-05-74d5a0e8-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault-2` | 57/64 (89.1%)                | 5,168,504 | 41,944 | USD 0.5378 |
+| 3   | `2026-11-05-74d5a0e8-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault-3` | 55/64 (85.9%)                | 5,135,695 | 40,968 | USD 0.5341 |
+
+Run 1 cost more than the USD 0.6 budget left room for, so the first start of run 2, also at `--budget 0.6`, was stopped after about 30 s, before it saved anything; runs 2 and 3 then ran at `--budget 1.0`. That start's cost is in no scorecard. These three runs are read in ticket 06, against R0, to tell a case broken by another task since R0 from one broken by P11.
+
+The before set cost USD 2.9966 by the scorecards.
+
+#### The failures to fix
+
+From the P4 suite's run above, each failure under the lowest layer it failed in, lowest layer first. Ticket 06 takes later changes from this list only.
+
+1. **Action**
+   - `common-off-campus-after`, run 1: `findFreeTimeEvents` answered `needs` with side after, and the model passed `leaveBy` 17:00, the start of the next item, instead of asking by when the User must leave.
+   - `common-off-campus-answer-none`, run 3: after `resolvePlace` answered none, the model asked where the User enters the campus, but in English, in the rule's own words.
+2. **Tools**
+   - `parties-departure-after-asking`, runs 1–3: the User had answered "서울대 정문으로 들어가", and the model called `resolvePlace` with "정문", got two Places and asked again instead of calling `findFreeTimeEvents`.
+   - `common-choice-clock-search`, runs 1–3: "수요일 2시부터 3시 반 파티 있어?" called `searchRecruitingQuests` only, not `searchGlobalEvents`, with `after` and `before` in place of the day's `from` and `to`.
+   - `showGlobalEvents` not called for the Global Events `findFreeTimeEvents` returned: `parties-named-classes` run 3, `parties-before-first-class` runs 1 and 3, `parties-held-quests-busy` run 1.
+   - `meals-soup-wanted`, runs 1 and 3: the follow-up "국밥 먹고 싶어" after Restaurant cards called `getMenus`, not `resolveFriend` and `findMealRestaurants`.
+3. **Arguments**
+   - `parties-held-quests-busy`, run 2: the gap between two named Classes was asked as two gaps that stop at the User's held Quests.
+4. **Words**
+   - How many candidates fit, missing: `common-choice-clock-fits` run 1, `parties-named-classes` run 2, `parties-abbreviated-gap-begun` run 3, `parties-next-gap` run 1, `parties-named-classes-tomorrow` runs 1 and 2, `parties-over-twenty-narrowed` runs 1–3. This is the smoke run's finding.
+   - The gap's times, missing: `parties-abbreviated-gap-begun` runs 1 and 3.
+   - No "없" when nothing fits or no time is shared: `meals-no-shared-time` runs 1–3, `meals-no-restaurant-fits` runs 1 and 3, `parties-nothing-fits` run 2.
+   - The left-out Restaurant named: `meals-no-noodles` runs 1–3.
+   - The shared time, missing: `meals-soup-wanted` run 2.
 
 ### Smoke run, not scored
 
