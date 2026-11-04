@@ -65,3 +65,10 @@ Threshold: at least 70% within, and the MAE below the baseline's
 ```
 
 The 8 pairs' table MAE is exactly 360.25 s (2,882 / 8), which the command prints as 360.3 and the 11-02 record gives as 360.2, rounded half to even; every other recorded number is printed as recorded.
+
+### Agent usage (2026-11-05)
+
+- **Agent time** (estimate): about 22 minutes: about 13 for the implementing agent, about 5 for the two reviewers, and about 5 of the orchestrating session. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts; the orchestrating session's are counted once, under ticket 06):
+  - Input: 192 not cached, 11,421,981 cache reads and 342,784 cache writes.
+  - Output: 87,228.

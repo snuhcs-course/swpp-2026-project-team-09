@@ -6,7 +6,7 @@
 
 import { scoreWalks, type TestWalk, withinRevisedTolerance, withinTwoMinutes } from '../scripts/walking/score.ts';
 
-// Ten pairs that both predictions get right, with the pair names the eight telling pairs do not use.
+// Pairs that both predictions get right, with the pair names the eight telling pairs do not use.
 function exact(count = 10): TestWalk[] {
   return Array.from({ length: count }, (_, index) => ({
     pair: `x${index}`,
