@@ -136,6 +136,81 @@ The changes stop here, at the fourth. The branch's final code is change 1's: the
 
 Across these five runs of the same 40 cases, the pass rate moved between 67.5% and 80.0%, and cases that no change touched moved in and out of passing in every comparison. A change of a few points is within that spread.
 
+### The after set, at the branch's final code
+
+The final code is change 1's: the set ran at `bf738eb8`, whose code equals `1966d8e1`'s, changes 2 to 4 being reverted.
+
+#### The P4 suite
+
+| Item        | Value                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| Date        | 2026-11-05, 05:26–05:39 KST                                                              |
+| Commit      | `bf738eb8`                                                                               |
+| Command     | `pnpm eval --world p4 --model anthropic/claude-haiku-5.5 --budget 1.5 --yes`             |
+| Result file | `2026-11-05-bf738eb8-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault` |
+| Usage       | 120 turns; input 10,342,042, output 89,821, no cache read or write; USD 1.0791           |
+
+| Threshold         | Before, at X   | After          | Wanted | Verdict after |
+| ----------------- | -------------- | -------------- | ------ | ------------- |
+| Overall           | 85/120 (70.8%) | 92/120 (76.7%) | ≥ 80%  | Fail          |
+| free-time-parties | 27/45 (60.0%)  | 26/45 (57.8%)  | ≥ 70%  | Fail          |
+| free-time-meals   | 34/45 (75.6%)  | 41/45 (91.1%)  | ≥ 70%  | Pass          |
+| free-time-common  | 24/30 (80.0%)  | 25/30 (83.3%)  | ≥ 70%  | Pass          |
+
+| Layer                 | Before          | After           |
+| --------------------- | --------------- | --------------- |
+| Action                | 118/120 (98.3%) | 118/120 (98.3%) |
+| Tools                 | 107/120 (89.2%) | 112/120 (93.3%) |
+| Arguments             | 102/111 (91.9%) | 107/111 (96.4%) |
+| Cards and map buttons | 100/114 (87.7%) | 107/114 (93.9%) |
+| Proposal              | 6/6 (100.0%)    | 6/6 (100.0%)    |
+| Words                 | 80/111 (72.1%)  | 87/111 (78.4%)  |
+
+The 19 runs that failed on the reply's words alone: `meals-no-timetable-friends-dinner` run 2; `meals-no-noodles` runs 1 and 3; `meals-no-shared-time` run 3; `parties-named-classes` run 2; `parties-abbreviated-gap-begun` runs 1 and 2; `parties-next-gap` runs 1–3; `parties-named-classes-tomorrow` run 2; `parties-after-last-class` run 1; `parties-nothing-fits` runs 1 and 3; `parties-over-twenty` run 2; `parties-over-twenty-narrowed` run 1; `parties-held-quests-busy` run 2; `parties-no-timetable-rest-of-day` run 3; `parties-departure-after-asking` run 3.
+
+Change 1's own run measured the same code at 80.0%, with all four thresholds met; this run gives 76.7%.
+
+#### P19, three runs
+
+| Item    | Value                                                                                                                                                           |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Date    | 2026-11-05, 05:39–05:59 KST                                                                                                                                     |
+| Commit  | `bf738eb8`                                                                                                                                                      |
+| Command | `pnpm eval --model anthropic/claude-haiku-5.5 --max-output-tokens 1000 --budget 1.0 --yes`; run 3 with `--budget 0.62`, so that the total could not pass USD 10 |
+
+| Run | Result file                                                                                | Passed, known failures apart | Input     | Output | Cost       |
+| --- | ------------------------------------------------------------------------------------------ | ---------------------------- | --------- | ------ | ---------- |
+| 1   | `2026-11-05-bf738eb8-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault`   | 56/64 (87.5%)                | 5,155,298 | 41,864 | USD 0.5365 |
+| 2   | `2026-11-05-bf738eb8-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault-2` | 58/64 (90.6%)                | 5,140,852 | 41,402 | USD 0.5348 |
+| 3   | `2026-11-05-bf738eb8-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault-3` | 58/64 (90.6%)                | 5,099,864 | 42,276 | USD 0.5311 |
+
+#### The holdout
+
+Not run yet. P11's runs so far cost USD 9.8582 by the scorecards, and the holdout, about USD 0.34, would take them over the USD 10 the PM approved, so it waits for the PM. The same 12 cases in this set's P4 run, to set beside it: 26/36 (72.2%); 공강 파티 5/12, 공강에 밥 10/12, 공통 11/12; Action 35/36, Tools 35/36, Arguments 36/36, Cards and map buttons 32/33, Proposal 3/3, Words 23/33.
+
+#### The regression
+
+Read by the frozen rule: the after set's three P19 runs against R0's three (`28c0ce1`, suffixes `-2`, `-3`, `-4`, 1,000 output tokens), over the 62 cases of the fixed set. A case fails a run when any of its repetitions in that run failed. X's three runs tell a case broken by another task since R0 from one broken by P11.
+
+**Read by it, this is a fail, with six cases. None newly fails because of P11's code:** each also fails in at least 2 of X's 3 runs.
+
+| Case                                 | Failed runs, R0 → X → after | Whose                               | Where it fails in the after runs |
+| ------------------------------------ | --------------------------- | ----------------------------------- | -------------------------------- |
+| `follow-up-yes-after-menus`          | 0 → 3 → 3                   | P04's chat; change 1 did not fix it | Action, tools, Proposal          |
+| `follow-up-seven-oclock`             | 1 → 2 → 2                   | P04's chat                          | Words alone                      |
+| `ask-missing-fields-in-one-question` | 0 → 3 → 3                   | Another task, between R0 and X      | Action                           |
+| `ask-which-festival-event`           | 0 → 3 → 3                   | Another task, between R0 and X      | Action, words                    |
+| `global-events-tonight-talk`         | 0 → 3 → 3                   | Another task, between R0 and X      | Arguments                        |
+| `making-parties-for-event`           | 0 → 3 → 3                   | Another task, between R0 and X      | Action, tools, Proposal          |
+
+`compound-menus-and-shuttle`, P04's other words-only regression, failed in no after run, so it no longer newly fails.
+
+**`follow-up-yes-after-menus` still fails, in all 3 after runs.** After "응 김지은이랑", the model called `resolveFriend`, then `findMealRestaurants`, `showRestaurants` and `showOnMap`, twice also `getMenus`, and never `proposeQuest`, as at X. Its replies point to the card's 파티 만들기. Change 1 was judged by the P4 suite, which does not hold this case. It is recorded as a fail of P04's chat that P11's change did not fix, for P20.
+
+**`follow-up-seven-oclock` still newly fails**, for the same cause as at P04: the Proposal is right at 19:00, and the 2 failed runs move the time without the words 오전, 아침 or 07:00 that check it against the morning.
+
+Regressions remain after the prompt was changed, so by ADR 0009 a router is reconsidered in iteration 4.
+
 ### Smoke run, not scored
 
 | Item        | Value                                                                                                                                       |
