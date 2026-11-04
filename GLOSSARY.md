@@ -229,6 +229,10 @@ _Avoid_: Review list, pending posts
 A dining place whose daily menu a Source publishes.
 _Avoid_: Cafeteria
 
+**Study Space**:
+A place on the campus to study, such as a library's reading room, a college's 열람실 or a student lounge, shown on the 공부공간 layer under its building. Some are open only to a college, a department or graduate students; whether one is open to a User is read from 내 정보.
+_Avoid_: Library Space (a Library Space is one entry of 관정도서관's booking catalogue), study room
+
 **Travel Time**:
 The time from one Place to another, on foot or by the circular shuttle.
 _Avoid_: ETA, distance
