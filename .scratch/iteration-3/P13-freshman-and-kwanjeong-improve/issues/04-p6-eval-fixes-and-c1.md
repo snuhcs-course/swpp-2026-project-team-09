@@ -1,7 +1,7 @@
 # 04: P6 eval fixes and R1 rescored, then the new quests' cases and C1
 
 Parent: [P13 spec](../spec.md) ("P6 eval: fixes, new cases and C1")
-Status: ready-for-human
+Status: ready-for-human (part A done on `3.0/P13-04-p6-eval-fixes-and-c1`; part B waits for 01 and #170, and needs the PM's rulings and 함재현's review)
 Blocked by: none for part A; 01 and P07-02 (#170) for part B
 
 ## What to build
@@ -15,12 +15,15 @@ Part A and part B may be two PRs. Part B needs people: the PM rules on the draft
 ## Acceptance criteria
 
 Part A:
-- [ ] `main-server/eval/library-card.ts` reads the key's optional `s=` and `e=` segments, so that a card's seat and equipment are scored from its key when the card has no field.
-- [ ] `eval/p6/suite.yaml` gains `revises:` with `reason:` for: `p6-spaces-alias-imac` (Media Carrel A in `seat`, not `equipment`), and `p6-common-free-time-not-library`, `p6-tutorial-exhibition-today` and `p6-tutorial-health-clinic` (their `tools.only` no longer forbids what the chat's rules require; the library tools stay forbidden). No threshold changes.
-- [ ] R1 is rescored from `eval/results/2026-11-02-869acde2-…-3.json` with `pnpm eval:score`, with no model call; `r1.md` gains a section with each threshold as run and after the fixes, and its 잠정 note says which points are now settled.
-- [ ] Tests, named by ADR 0007 (harness tests, reported apart): `main-server/test/eval-library-card.unit.test.ts` (keys with and without `s=` and `e=`), and `main-server/test/eval-cli-plain-node.integration.test.ts`, which spawns `node eval/cli.ts --world p6` without `--yes`, with stdin not a terminal and a dummy key, and checks that it prints the estimate and exits without `ERR_MODULE_NOT_FOUND` (it fails on #188's `import { type … }`).
+- [x] `main-server/eval/library-card.ts` reads the key's optional `s=` and `e=` segments, so that a card's seat and equipment are scored from its key when the card has no field.
+- [x] `eval/p6/suite.yaml` gains `revises:` with `reason:` for: `p6-spaces-alias-imac` (Media Carrel A in `seat`, not `equipment`), and `p6-common-free-time-not-library`, `p6-tutorial-exhibition-today` and `p6-tutorial-health-clinic` (their `tools.only` no longer forbids what the chat's rules require; the library tools stay forbidden). No threshold changes.
+- [x] R1 is rescored from `eval/results/2026-11-02-869acde2-…-3.json` with `pnpm eval:score`, with no model call; `r1.md` gains a section with each threshold as run and after the fixes, and its 잠정 note says which points are now settled.
+- [x] Tests, named by ADR 0007 (harness tests, reported apart): `main-server/test/eval-library-card.unit.test.ts` (keys with and without `s=` and `e=`), and `main-server/test/eval-cli-plain-node.integration.test.ts`, which spawns `node eval/cli.ts --world p6` without `--yes`, with stdin not a terminal and a dummy key, and checks that it prints the estimate and exits without `ERR_MODULE_NOT_FOUND` (it fails on #188's `import { type … }`).
 
 Part B:
+
+> **Decision (2026-11-04, from 함재현's comment on #192).** `text.maxLength`'s 80 characters count the rendered text, without the markdown markers: `**` is removed before counting (`**7층**에서 몇 시부터 쓸까요?` counts as `7층에서 몇 시부터 쓸까요?`). The choices' labels are not counted.
+
 - [ ] `eval/p6/cases/tutorial.yaml` gains twenty cases, two per new quest of 01: one on a fact the content states, one on what it lacks (answered with the quest's link or 확인되지 않아요, with `text.absent` for a tempting made-up value). Times in `text.mentions` are HH:MM.
 - [ ] Each new `expect` is drafted by an agent in a separate session that sees only `rules.md`, `world.yaml`, the catalogue, the tutorial copy and the questions; the PM's rulings are in `labels-notes.md`; 함재현's review is recorded in `suite.yaml` (`reviewedBy`, `reviewedOn`).
 - [ ] `eval/p6/tutorial.yaml` becomes 01's `content/tutorial.yaml`, entered with `revises:`; cases and world values that count the quests (`p6-tutorial-progress`, the world's tutorial progress) are revised for fifteen.
@@ -31,3 +34,10 @@ Part B:
 - [ ] `test/eval-cases.integration.test.ts` is extended: the C1 cases load, and each new case's quest is in the copy. `test/eval-ask-choices.unit.test.ts` (harness test): a mention met only by a choice's label passes, `text.absent` fails on a label, `text.maxLength` fails at 81 characters and on two sentences, and `expect.choices` ignores order.
 
 ## Comments
+
+### Agent usage (2026-11-04)
+
+Part A only. Estimates, not measured:
+
+- Agent time: about 1 hour 30 minutes, over three sessions of one agent (two were stopped by restarts of the machine).
+- Tokens: about 2.6M input, of which about 2.4M cache reads and 0.15M cache writes, and about 45k output. No subagents. No model call of the eval was made: R1 was rescored from its saved results.

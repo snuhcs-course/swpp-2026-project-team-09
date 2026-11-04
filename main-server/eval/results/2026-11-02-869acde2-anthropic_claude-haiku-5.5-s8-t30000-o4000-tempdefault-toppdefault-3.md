@@ -832,7 +832,6 @@ Known failures are counted apart and never as regressions. Failure kinds count t
 ### p6-spaces-alias-whiteboard (p6-spaces, run 3)
 
 - Turn 1, "내일 4시부터 2시간 전자칠판 있는 방 잡아줘. 민수, 지은, 하람이랑 과제할 거야": took TOOL, accepted TOOL
-  - cards: 0 library book 4F-group-6 cards, fewer than 1 (closest differs in equipment)
   - text.mentions: missing ["동의 요청","동의"]
   - Steps:
   1. finish tool-calls, 3483 ms
