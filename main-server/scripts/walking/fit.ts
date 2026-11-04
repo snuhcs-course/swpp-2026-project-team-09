@@ -8,8 +8,8 @@
 // per metre, fitted by ordinary least squares with no constant term.
 
 // The build the frozen table came from.
-const FROZEN_METRES_PER_SECOND = 1.1;
-const FROZEN_CLIMB_SECONDS_PER_METRE = 3;
+export const FROZEN_METRES_PER_SECOND = 1.1;
+export const FROZEN_CLIMB_SECONDS_PER_METRE = 3;
 
 export interface CalibrationWalk {
   pair: string;
@@ -25,7 +25,6 @@ export interface Fit {
   climbSecondsPerMetre: number;
 }
 
-// A pair's path metres and climb from its seconds in the frozen table and the two Places' elevations.
 export function recoveredInput({
   tableSeconds,
   fromElevation,

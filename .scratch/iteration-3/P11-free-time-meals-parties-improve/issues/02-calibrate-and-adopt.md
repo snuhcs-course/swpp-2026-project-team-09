@@ -77,3 +77,10 @@ Metres and climbs recovered from the table's seconds at the freeze, at 1.1 m/s a
 Speed: 1.3966856966974264 m/s
 Climb: -0.40634283201311705 s per metre, below 0, so 0 with the same speed
 ```
+
+### Agent usage (2026-11-05)
+
+- **Agent time** (estimate): about 22 minutes: about 11 for the implementing agent, about 5 for the two reviewers, and about 6 of the orchestrating session, with the review's fixes. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts; the orchestrating session's are counted once, under ticket 06):
+  - Input: 142 not cached, 10,838,826 cache reads and 367,362 cache writes.
+  - Output: 66,907.

@@ -9,7 +9,12 @@ import { join, relative, resolve } from 'node:path';
 import { z } from 'zod';
 import { SEED_DIRECTORY } from '../src/common/seed-directory.ts';
 import { WALKING_TABLE_FILE, type WalkingTable, walkingTableSchema } from '../src/travel/walking-table.ts';
-import { fitSpeedAndClimb, recoveredInput } from './walking/fit.ts';
+import {
+  FROZEN_CLIMB_SECONDS_PER_METRE,
+  FROZEN_METRES_PER_SECOND,
+  fitSpeedAndClimb,
+  recoveredInput,
+} from './walking/fit.ts';
 import { scoreWalks, TELLING_PAIRS } from './walking/score.ts';
 
 // `pnpm walking:score [table]`: a walking table, the committed one unless another is named, against the 30 test walks,
@@ -66,7 +71,6 @@ function tableSeconds(table: WalkingTable, { pair, fromPlaceId, toPlaceId }: Pai
   return found;
 }
 
-// Each pair with its one walk.
 function walked(pairs: readonly Pair[], walks: readonly Walk[]): { pair: Pair; walk: Walk }[] {
   if (walks.length !== pairs.length) {
     throw new Error(`${walks.length} walks for ${pairs.length} pairs`);
@@ -166,7 +170,8 @@ function printFit(committed: WalkingTable, calibrationWalks: { pair: Pair; walk:
   );
   console.log('  seconds = metres / speed + climb × climb seconds per metre');
   console.log(
-    "Metres and climbs recovered from the table's seconds at the freeze, at 1.1 m/s and 3 s per metre of climb:",
+    "Metres and climbs recovered from the table's seconds at the freeze, at " +
+      `${FROZEN_METRES_PER_SECOND} m/s and ${FROZEN_CLIMB_SECONDS_PER_METRE} s per metre of climb:`,
   );
   console.log(inputRow('Pair', 'Walked (s)', 'Metres', 'Climb (m)'));
   for (const { pair, walked: walkedSeconds, metres, climb } of inputs) {
@@ -175,7 +180,9 @@ function printFit(committed: WalkingTable, calibrationWalks: { pair: Pair; walk:
   console.log(`Speed: ${fit.metresPerSecond} m/s`);
   console.log(
     `Climb: ${fit.fittedClimbSecondsPerMetre} s per metre` +
-      (fit.fittedClimbSecondsPerMetre < 0 ? ', below 0, so 0 with the same speed' : ''),
+      (fit.climbSecondsPerMetre === fit.fittedClimbSecondsPerMetre
+        ? ''
+        : `, below 0, so ${fit.climbSecondsPerMetre} with the same speed`),
   );
 }
 
