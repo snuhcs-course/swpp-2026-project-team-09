@@ -8,6 +8,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -124,6 +125,11 @@ export const shuttleQuery = queryOptions({ queryKey: SHUTTLE_KEY, queryFn: () =>
 export const shuttleVehiclesQuery = queryOptions({
   queryKey: SHUTTLE_VEHICLES_KEY,
   queryFn: () => apiClient.listShuttleVehicles(),
+});
+// The 공부공간 layer, which follows 내 정보: asked again each time the layer is turned on.
+export const studySpacesQuery = queryOptions({
+  queryKey: ['study-spaces'],
+  queryFn: () => apiClient.listStudySpaces(),
 });
 // The recruiting Quests of one board, or of all under 'all', each under the one key.
 export function recruitingQuery(

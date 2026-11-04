@@ -32,6 +32,7 @@ export { MapPerson, type PersonTone } from './map-person';
 export { KindRounds, MapGroupDot, MapGroupPin } from './map-group-pin';
 export { MapTutorialPin } from './map-tutorial-pin';
 export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, MapRestaurant, placeKindLook } from './map-pin';
+export { MapStudyCluster } from './map-study-cluster';
 export { Overlay, OverlayHost } from './overlay';
 export { SearchField } from './search-field';
 export { type Segment, SegmentedTabs } from './segmented-tabs';
