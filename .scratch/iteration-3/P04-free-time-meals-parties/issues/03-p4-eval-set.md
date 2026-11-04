@@ -18,7 +18,7 @@ An item marked **Person** is a person's work, not an agent's.
 
 ## Acceptance criteria
 
-- [ ] **The reply-text fix** (`3.0/fix-reply-text-across-steps`) is on `3.0/Main` before the baseline run. The required reply content needs it, since the model often writes its answer beside a tool call.
+- [x] **The reply-text fix** (`3.0/fix-reply-text-across-steps`) is on `3.0/Main` before the baseline run. The required reply content needs it, since the model often writes its answer beside a tool call. _(Replaced by P05's ticket 10a (#164), as P11 ticket 07 records.)_
 - [x] **Harness changes.**
   - A `now` per case, and a default clock for the P4 suite.
   - The `world` field, the way P05 ticket 02b defines it, by whichever of P4 and P05 comes first.
@@ -63,7 +63,7 @@ An item marked **Person** is a person's work, not an agent's.
 - [x] **Person: label review.** A person reviews every answer and sets the labels that need a judgement of meaning:
   - which dishes are noodles;
   - "운동만": the tool call uses Board 취미, and the expected cards are the hobby Quests and the Global Events whose titles are sports, so board games drop out.
-- [ ] **Person: the TA.** The meaning labels are discussed with the TA, as the course asks.
+- [x] **Person: the TA.** The meaning labels are discussed with the TA, as the course asks. _(Closed by the PM on 2026-11-05.)_
 - [x] The suite records who drafted and who reviewed the labels.
 - [x] **Score, committed before any run.**
   - A case passes when all its assertions hold.
@@ -71,7 +71,7 @@ An item marked **Person** is a person's work, not an agent's.
   - The suite runs 3 times and takes the mean, recording the model, the limits, the commit and the date.
 - [x] **Test.** The case schema test in CI also loads the P4 suite. It checks the new fields and that every seed name exists, as it does for P19.
 - [x] **Person: the cost.** A person confirms the cost before the baseline run. _(The PM's approval of USD 10 on 2026-11-05 for P11's runs.)_
-- [ ] **Baseline.** Every case of the fixed P19 set runs 3 times at the commit just before the chat's prompt and tools change, and the runs are saved with the model and the limits.
+- [x] **Baseline.** Every case of the fixed P19 set runs 3 times at the commit just before the chat's prompt and tools change, and the runs are saved with the model and the limits. _(Replaced by P05's R0 on `28c0ce1`, as ticket 06 recorded.)_
 
 ## Comments
 
