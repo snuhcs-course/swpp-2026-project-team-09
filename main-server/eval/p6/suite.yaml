@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-04  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The P6 suite (P06 spec, "The P6 eval suite"; ticket 06): 관정 booking and the tutorial in the Assistant. Its cases are
@@ -110,6 +111,55 @@ labels:
   # What is still open.
   # The clinic's facts (health4u.snu.ac.kr, 2026-11-02) are in content/tutorial.yaml since #180.
   openForReview: []
+
+# Labels changed after a result, in the P5 form (an entry that `revises:` with its `reason:`): the case, the part of its
+# `expect` revised, what it was and what it is now. The case files hold the revised label, marked where it changed; the
+# C0 label is at the tag. Each was found in R1 (r1.md, the 잠정 note) and settled by the PM on 2026-11-04 (P13 ticket 04).
+# No threshold changes. R1 is scored both ways in r1.md.
+revisions:
+  - case: p6-spaces-alias-imac
+    revises: expect.cards[0].conditions.equipment
+    was: { equipment: Media Carrel A }
+    now: { seat: Media Carrel A }
+    reason: >-
+      Media Carrel A is one of the two named rooms of 6F-media-carrel, and proposeLibraryBooking takes a named room in
+      `seat` ("A seat or room the User named: 7193, G405, STUDIO A."); the card's equipment is a group such as
+      with-electronic-whiteboard. The C0 label put the room in the wrong field, so no right card could pass it.
+    declared: 2026-11-04
+  - case: p6-common-free-time-not-library
+    revises: expect.tools
+    was: { required: [findFreeTimeEvents], only: true }
+    now: { required: [findFreeTimeEvents], allowed: [getMyDay], only: true, forbidden: library tools }
+    reason: >-
+      The 공강 rules (src/assistant/free-time/free-time-rules.ts) name a gap to findFreeTimeEvents by the ids of the
+      User's items, which come from getMyDay ("Call getMyDay for the ids of the items the User named"), so `only` forbade
+      a call the rules make. getMyDay is allowed, not required: a gap from now needs no id, so the rules leave it to the
+      model. With resolvePlace below, it is one of the two tools a case leaves optional against ruling 19. The library
+      tools (findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
+      showLibrarySeats, showMyLibraryBookings) stay forbidden, which is what the case tests.
+    declared: 2026-11-04
+  - case: p6-tutorial-exhibition-today
+    revises: expect.tools
+    was: { required: [getTutorial, searchGlobalEvents], only: true }
+    now: { required: [getTutorial, searchGlobalEvents, showGlobalEvents], only: true, forbidden: library tools }
+    reason: >-
+      The chat's rules (src/assistant/chat/chat-assistant.ts) show the Global Events searchGlobalEvents found with
+      showGlobalEvents, and the world's 가을 소장품전 is found, so `only` forbade a call the rules require. It is
+      required, keeping one path (ruling 19); the library tools (findLibrarySpace, findLibraryFreeSlots,
+      proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn, showLibrarySeats, showMyLibraryBookings) stay
+      forbidden.
+    declared: 2026-11-04
+  - case: p6-tutorial-health-clinic
+    revises: expect.tools
+    was: { required: [getTutorial], only: true }
+    now: { required: [getTutorial], allowed: [resolvePlace], only: true, forbidden: library tools }
+    reason: >-
+      The tutorial rules (src/assistant/tutorial/tutorial-rules.ts) look in getTutorial first and then in the app's
+      other data, "resolvePlace for a building", so `only` forbade a call the rules make. A 'none' from it changes
+      nothing the label checks (the text still gives the tutorial's 학생회관 63동 3층 329호). It is allowed, not required,
+      as the rules give it only when getTutorial is not enough: the second tool a case leaves optional against ruling
+      19. The library tools stay forbidden, as above.
+    declared: 2026-11-04
 
 # Set at C0 and at each run. The values above were committed at C0 (31d8820f), and the tag marks that commit; `declared`,
 # `c0Tag` and `c0Commit` were filled in after the tag, on the record branch of R0, and change no frozen value.

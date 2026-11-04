@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-04  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Tutorial Q&A (P06 spec, "The P6 eval suite"): one question per quest of content/tutorial.yaml, two whose answer the
@@ -66,6 +67,8 @@
 
 # The clinic is on 학생회관(63동) 3–4층, care on 3층 and reception at 329호 (health4u.snu.ac.kr), as content/tutorial.yaml
 # says since #180 (ruling 10).
+# Revised at P13 (suite.yaml, revisions): resolvePlace, which the chat's rules use for a place the User names, is
+# allowed.
 - id: p6-tutorial-health-clinic
   category: p6-tutorial
   world: p6
@@ -76,6 +79,17 @@
     actions: [TOOL]
     tools:
       required: [getTutorial]
+      allowed: [resolvePlace]
+      forbidden:
+        [
+          findLibrarySpace,
+          findLibraryFreeSlots,
+          proposeLibraryBooking,
+          proposeLibraryCancel,
+          proposeLibraryReturn,
+          showLibrarySeats,
+          showMyLibraryBookings,
+        ]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -129,6 +143,8 @@
         - '16:30'
 
 # The tutorial names no exhibition; the world's Global Event 가을 소장품전 at 미술관 runs today, and the answer names it.
+# Revised at P13 (suite.yaml, revisions): showGlobalEvents, which the chat's rules call after searchGlobalEvents, is
+# required.
 - id: p6-tutorial-exhibition-today
   category: p6-tutorial
   world: p6
@@ -138,7 +154,17 @@
   expect:
     actions: [TOOL]
     tools:
-      required: [getTutorial, searchGlobalEvents]
+      required: [getTutorial, searchGlobalEvents, showGlobalEvents]
+      forbidden:
+        [
+          findLibrarySpace,
+          findLibraryFreeSlots,
+          proposeLibraryBooking,
+          proposeLibraryCancel,
+          proposeLibraryReturn,
+          showLibrarySeats,
+          showMyLibraryBookings,
+        ]
       only: true
     cards:
       - { kind: library, max: 0 }

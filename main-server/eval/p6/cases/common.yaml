@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-04  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Common (P06 spec, "The P6 eval suite"): the library tools against the 공강 tools; "지금 7층 자리 있어?" and
@@ -9,6 +10,7 @@
 # the library → CHAT. Each `expect` was drafted blind and settled by the PM's rulings of 2026-11-02 (labels-notes.md).
 
 # 공강 with nothing about the library: P4's tools, not the library's.
+# Revised at P13 (suite.yaml, revisions): getMyDay, which the 공강 rules call for the items' ids, is allowed.
 - id: p6-common-free-time-not-library
   category: p6-common
   world: p6
@@ -19,6 +21,17 @@
     actions: [TOOL]
     tools:
       required: [findFreeTimeEvents]
+      allowed: [getMyDay]
+      forbidden:
+        [
+          findLibrarySpace,
+          findLibraryFreeSlots,
+          proposeLibraryBooking,
+          proposeLibraryCancel,
+          proposeLibraryReturn,
+          showLibrarySeats,
+          showMyLibraryBookings,
+        ]
       only: true
     cards:
       - { kind: library, max: 0 }
