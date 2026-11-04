@@ -70,7 +70,7 @@ An item marked **Person** is a person's work, not an agent's.
   - Thresholds: overall ≥ 80% and each category ≥ 70%.
   - The suite runs 3 times and takes the mean, recording the model, the limits, the commit and the date.
 - [x] **Test.** The case schema test in CI also loads the P4 suite. It checks the new fields and that every seed name exists, as it does for P19.
-- [ ] **Person: the cost.** A person confirms the cost before the baseline run.
+- [x] **Person: the cost.** A person confirms the cost before the baseline run. _(The PM's approval of USD 10 on 2026-11-05 for P11's runs.)_
 - [ ] **Baseline.** Every case of the fixed P19 set runs 3 times at the commit just before the chat's prompt and tools change, and the runs are saved with the model and the limits.
 
 ## Comments

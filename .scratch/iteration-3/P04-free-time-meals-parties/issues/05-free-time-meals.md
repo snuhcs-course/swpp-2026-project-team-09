@@ -95,12 +95,12 @@ The app changes only in JavaScript. An item marked **Person** is a person's work
   - The open rule as a unit test on a committed fixture of the lines the worker parses from its saved menu pages of 2026-10-01.
   - Fake-server screen tests: the Restaurant card; 파티 만들기 opening the filled form, and the form making the Quest and inviting; the dining layer and the menu panel using `placeId` from the server.
 - [ ] **Landing.** With ticket 04, this lands before P05's R0 (11-02). It rebases on whatever P07 has landed, as ticket 04 does.
-- [ ] **Person: the cost.** A person confirms the cost before each real-model run below.
-- [ ] **After the change: regression.**
+- [x] **Person: the cost.** A person confirms the cost before each real-model run below. _(The PM's approval of USD 10 on 2026-11-05 for P11's runs.)_
+- [x] **After the change: regression.** _(Recorded from R0 and R0p by ticket 06, and read again in P11's after set on 2026-11-05, in [`record.md`](../../../../main-server/eval/p4/record.md#the-regression).)_
   - Every case of the fixed P19 set runs 3 times again, with the same model and limits as ticket 03's baseline.
   - A case newly fails when it fails in at least 2 later runs but in at most 1 baseline run. No case may newly fail.
   - Any call to a new tool in those cases is reported, with the tokens and cost per turn of both sets of runs.
-- [ ] **After both scenarios: the P4 suite.** The 40 cases run 3 times. The mean per category and overall is recorded against the thresholds, with the model, the limits, the commit and the date.
+- [x] **After both scenarios: the P4 suite.** The 40 cases run 3 times. The mean per category and overall is recorded against the thresholds, with the model, the limits, the commit and the date. _(P11's before set, the P4 suite's first official run on 2026-11-05, in [`record.md`](../../../../main-server/eval/p4/record.md).)_
 
 ## Comments
 
