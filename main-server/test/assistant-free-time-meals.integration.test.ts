@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -212,7 +213,7 @@ describe("A Restaurant card's Proposal", () => {
             board: null,
             capacity: 2,
             startsAt: `${date}T12:50:00+09:00`,
-            place: { id: stage.barely.id, name: '학생회관식당 (63동)' },
+            place: { id: stage.barely.id, name: '학생회관식당 (63동)', booking: null },
             globalEvent: null,
             invitees: [{ id: friend.id, name: '최다온' }],
           },
