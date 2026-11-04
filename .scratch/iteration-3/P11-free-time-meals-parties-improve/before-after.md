@@ -1,6 +1,6 @@
 # P11: before and after
 
-The three strands of [P11](spec.md), each measured by P04's frozen evaluation before and after its improvement. Every number links to where it is recorded. All runs and measurements are of 2026-11-05 unless a row says otherwise.
+The three strands of [P11](spec.md), each measured by P04's frozen evaluation before and after its improvement. Every number links to where it is recorded. The walks were made on 11-01 and 11-02 and the rides on 11-03; every score and run here is of 2026-11-05.
 
 ## The walking table
 
@@ -56,12 +56,20 @@ Measured on `3.0/P11-04-chat`, cut from X = `74d5a0e8`. Before is X's code; afte
 
 Change 1's own run, on the same code as the after set, gave 80.0% with all four thresholds met. Over the five runs of the 40 cases, the pass rate moved between 67.5% and 80.0%.
 
-| The holdout, 12 reworded cases | Before        | After         |
-| ------------------------------ | ------------- | ------------- |
-| Holdout                        | 23/36 (63.9%) | Not run yet   |
-| The same 12 fixed-set cases    | 25/36 (69.4%) | 26/36 (72.2%) |
+| The holdout, 12 reworded cases | Holdout, before | Same 12 fixed-set cases, before | Holdout, after | Same 12 fixed-set cases, after |
+| ------------------------------ | --------------- | ------------------------------- | -------------- | ------------------------------ |
+| Overall                        | 23/36 (63.9%)   | 25/36 (69.4%)                   | Not run yet    | 26/36 (72.2%)                  |
+| 공강 파티                      | 4/12            | 6/12                            |                | 5/12                           |
+| 공강에 밥                      | 9/12            | 9/12                            |                | 10/12                          |
+| 공통                           | 10/12           | 10/12                           |                | 11/12                          |
+| Layer: Action                  | 36/36           | 35/36                           |                | 35/36                          |
+| Layer: Tools                   | 35/36           | 35/36                           |                | 35/36                          |
+| Layer: Arguments               | 35/36           | 35/36                           |                | 36/36                          |
+| Layer: Cards and map buttons   | 30/33           | 31/33                           |                | 32/33                          |
+| Layer: Proposal                | 3/3             | 3/3                             |                | 3/3                            |
+| Layer: Words                   | 22/33           | 22/33                           |                | 23/33                          |
 
-The after set's holdout run would take P11's runs over the USD 10 the PM approved, so it waits for the PM.
+Recorded under "The holdout" of the before set and of [the after set](../../../main-server/eval/p4/record.md#the-after-set-at-the-branchs-final-code) in `record.md`. The after set's holdout run would take P11's runs over the USD 10 the PM approved, so it waits for the PM.
 
 | The regression, P19 against R0 (`28c0ce1`, 1,000 output tokens) | After                                                                                                                                                                                     |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -70,11 +78,11 @@ The after set's holdout run would take P11's runs over the USD 10 the PM approve
 | P04's own regressions                                           | `follow-up-yes-after-menus` still fails 3 of 3, change 1 having not fixed it; `follow-up-seven-oclock` still newly fails, on the words alone; `compound-menus-and-shuttle` no longer does |
 | From other tasks between R0 and X                               | `ask-missing-fields-in-one-question`, `ask-which-festival-event`, `global-events-tonight-talk`, `making-parties-for-event`                                                                |
 
-| Cost of P11's runs, by the scorecards | USD        |
-| ------------------------------------- | ---------- |
-| The before set                        | 2.9966     |
-| The four changes' runs                | 4.1801     |
-| The after set, without its holdout    | 2.6815     |
-| **All**                               | **9.8582** |
+| [Cost of P11's runs](../../../main-server/eval/p4/record.md#the-after-set-at-the-branchs-final-code), by the scorecards | USD        |
+| ----------------------------------------------------------------------------------------------------------------------- | ---------- |
+| The before set                                                                                                          | 2.9966     |
+| The four changes' runs                                                                                                  | 4.1801     |
+| The after set, without its holdout                                                                                      | 2.6815     |
+| **All**                                                                                                                 | **9.8582** |
 
 A start of the before set's second P19 run was stopped after about 30 s and is in no scorecard.

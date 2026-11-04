@@ -18,7 +18,7 @@ An item marked **Person** is a person's work, not an agent's.
 
 ## Acceptance criteria
 
-- [x] **The reply-text fix** (`3.0/fix-reply-text-across-steps`) is on `3.0/Main` before the baseline run. The required reply content needs it, since the model often writes its answer beside a tool call. _(Replaced by P05's ticket 10a (#164), as P11 ticket 07 records.)_
+- [x] **The reply-text fix** (`3.0/fix-reply-text-across-steps`) is on `3.0/Main` before the baseline run. The required reply content needs it, since the model often writes its answer beside a tool call. _(Replaced by P05's ticket 10a (#164), as P11's spec decided.)_
 - [x] **Harness changes.**
   - A `now` per case, and a default clock for the P4 suite.
   - The `world` field, the way P05 ticket 02b defines it, by whichever of P4 and P05 comes first.
