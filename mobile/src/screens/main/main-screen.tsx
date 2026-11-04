@@ -19,6 +19,7 @@ import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
 import { color, useNotReadyToast, useToastAbove } from '@/design-system';
+import type { CardView } from '@/features/map/adapter';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
@@ -40,6 +41,7 @@ import { type MainRoute, useRoute } from './use-route';
 import { type Selection, useSelection } from './use-selection';
 import { type Things, useThings } from './use-things';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
+import { TUTORIAL_PIN_ID, type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
 import { ZoomControl } from './zoom-control';
 
 interface ListProps {
@@ -168,23 +170,39 @@ function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
   );
 }
 
+// A press on the map: the tutorial place pin takes its own first; any other goes to the map's things, where merged
+// study pins zoom in.
+function pressWithPin(pin: TutorialPin, onThing: (id: string) => void): (id: string) => void {
+  return (id) => {
+    if (id === TUTORIAL_PIN_ID) {
+      pin.press(id);
+    } else {
+      onThing(id);
+    }
+  };
+}
+
 interface MainMapViewProps {
   map: MainMap;
   me: Me;
   things: Things;
   lines: readonly MapLine[];
   room: Room;
+  // The tutorial place pin, whose marker the map draws over the things'.
+  pin: TutorialPin;
+  // What a press on a marker does: the tutorial pin's press for its own marker, else the things'.
   onPress: (id: string) => void;
 }
 
-// The map with the things of the cards, the User's own Avatar and the lines. Its credit opens the sources of its data.
-function MainMapView({ map, me, things, lines, room, onPress }: MainMapViewProps): ReactElement {
+// The map with the things of the cards, the tutorial place pin, the User's own Avatar and the lines. Its credit opens
+// the sources of its data.
+function MainMapView({ map, me, things, lines, room, pin, onPress }: MainMapViewProps): ReactElement {
   return (
     <Map
       avatars={[...things.avatars, ...me.avatars]}
       {...CAMPUS_CAMERA}
       inset={mapInset(room.cardHeight, room.tutorialStart)}
-      markers={things.markers}
+      markers={[...things.markers, ...pin.markers]}
       onCameraIdle={map.onCameraIdle}
       onCreditPress={() => {
         router.push('/map-sources');
@@ -247,19 +265,17 @@ function useAskedTutorialQuest(openSheet: (key: string) => void): void {
   }, [tutorial, openSheet]);
 }
 
-// The 새내기 튜토리얼 over the main screen, and whether its start button shows: not while a card is open.
-function useMainTutorial(selection: Selection): { tutorial: TutorialFlow; start: boolean } {
+// The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), and the pin
+// of its 지도에서 보기.
+function useMainTutorial(
+  selection: Selection,
+  cards: readonly CardView[],
+  map: MainMap,
+): { tutorial: TutorialFlow; start: boolean; pin: TutorialPin } {
   const tutorial = useTutorialFlow();
   useAskedTutorialQuest(tutorial.openSheet);
-  return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null };
-}
-
-// 지도에서 보기 of a tutorial quest: the map comes close to the point, and an open card closes.
-function showOnMap(map: MainMap, selection: Selection): (position: LatLng) => void {
-  return (position) => {
-    selection.close();
-    map.goTo(position, 'close');
-  };
+  const pin = useTutorialPin({ cards, selection, goTo: map.goTo, tutorialState: tutorial.tutorial?.state });
+  return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null, pin };
 }
 
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
@@ -287,13 +303,13 @@ export function MainScreen(): ReactElement {
   const party = useActivePartyRoom();
   useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
-  const { tutorial, start } = useMainTutorial(selection);
+  const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null, start);
-  const onPress = pressOnMap(cards, map, selection);
+  const onPress = pressWithPin(pin, pressOnMap(cards, map, selection));
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
-        <MainMapView lines={lines} map={map} me={me} onPress={onPress} room={room} things={things} />
+        <MainMapView lines={lines} map={map} me={me} onPress={onPress} pin={pin} room={room} things={things} />
         <OverMap onStage={setStage}>
           <Lists hidden={taken.topCard} map={map} room={room} selection={selection} tutorial={tutorial} />
           {taken.bottomCard || taken.notice !== null || stack.open ? null : <MainZoomControl map={map} me={me} />}
@@ -311,7 +327,7 @@ export function MainScreen(): ReactElement {
             chat={chat}
             onNoticeHeight={setCardHeight}
             onParty={party.open}
-            onShowOnMap={showOnMap(map, selection)}
+            onShowOnMap={pin.showOnMap}
             room={room}
             stack={stack}
             taken={taken}

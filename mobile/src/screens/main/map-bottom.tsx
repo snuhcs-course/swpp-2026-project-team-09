@@ -12,7 +12,6 @@
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { LatLng } from '@/api/types';
 import { now } from '@/clock';
 import { space } from '@/design-system';
 import { nextMeal } from '@/features/dining/adapter';
@@ -29,6 +28,7 @@ import { TutorialPager } from './tutorial/tutorial-pager';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
 import type { TutorialFlow } from './tutorial/use-tutorial-flow';
+import type { TutorialPinTarget } from './tutorial/use-tutorial-pin';
 
 // The menu panel at the meal served next, at a restaurant's section or at the top of the list.
 export function openMenus(restaurant?: string): void {
@@ -72,7 +72,7 @@ interface MapBottomProps {
   // The 새내기 튜토리얼: its start button while `room.tutorialStart`, its pager and its quests' sheets.
   tutorial: TutorialFlow;
   // A quest's 지도에서 보기.
-  onShowOnMap: (position: LatLng) => void;
+  onShowOnMap: (target: TutorialPinTarget) => void;
   // The chat's sheet, which the main screen holds, so that a card's button can ask the Assistant.
   chat: ChatSheetControl;
 }
@@ -113,9 +113,9 @@ export function MapBottom(props: MapBottomProps): ReactElement {
           chat.open();
           chat.chat.send(words);
         }}
-        onShowOnMap={(position) => {
+        onShowOnMap={(target) => {
           tutorial.closeSheet();
-          onShowOnMap(position);
+          onShowOnMap(target);
         }}
       />
     </>

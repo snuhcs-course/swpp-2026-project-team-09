@@ -30,6 +30,7 @@ export { Icon, ICON_NAMES, type IconName } from './icon';
 export { ListRow, RoundIcon, SectionHeader } from './list-row';
 export { MapPerson, type PersonTone } from './map-person';
 export { KindRounds, MapGroupDot, MapGroupPin } from './map-group-pin';
+export { MapTutorialPin } from './map-tutorial-pin';
 export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, MapRestaurant, placeKindLook } from './map-pin';
 export { MapStudyCluster } from './map-study-cluster';
 export { Overlay, OverlayHost } from './overlay';

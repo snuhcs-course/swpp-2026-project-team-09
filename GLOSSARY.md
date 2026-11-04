@@ -189,6 +189,10 @@ _Avoid_: Quest, Onboarding (Onboarding is the name and department after the firs
 One page of the Tutorial, a step of campus life such as getting the student card, which a User starts and completes. It is not a Quest: it has no Holder, Board, Sub Quest or capacity.
 _Avoid_: Quest
 
+**Tutorial Category**:
+A group of Tutorial Quests about one part of campus life, such as 생활 or 이동, shown together. Every Tutorial Quest belongs to exactly one, and a category's quests come one after another.
+_Avoid_: Tutorial Layer, Quest category
+
 ### 관정도서관
 
 **Library Space**:
