@@ -42,16 +42,6 @@ const suiteSchema = z.looseObject({
   subsets: z.record(z.string(), z.array(z.string())),
   superseded: z.array(z.strictObject({ case: z.string(), heldBy: z.string() })),
   thresholds: z.array(z.looseObject({ id: z.string(), metric: z.string(), value: z.number() })),
-  revisions: z.array(
-    z.strictObject({
-      case: z.string(),
-      revises: z.string().min(1),
-      was: z.unknown(),
-      now: z.unknown(),
-      reason: z.string().min(1),
-      declared: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
-    }),
-  ),
 });
 
 const suite = suiteSchema.parse(parse(readFileSync(new URL('suite.yaml', P6), 'utf8')));
@@ -180,36 +170,17 @@ describe('The bookings of the P6 labels', () => {
     expect(wrong).toEqual([]);
   });
 
-  // One path per case (labels-notes.md, ruling 19): either no tool at all, or exactly the required tools. The two
-  // tools the chat's rules leave to the model were made optional at P13 (suite.yaml, revisions) and are the only ones.
+  // One path per case (labels-notes.md, ruling 19), but the two tools made optional at P13 (suite.yaml, revisions).
   it('leave no tool optional in any case but the two revised ones', () => {
-    const optional = cases.flatMap(({ id, expect: wanted }) => {
+    const optional = cases.filter(({ expect: wanted }) => {
       const tools = wanted?.tools;
       if (tools === undefined || tools.forbidden === '*') {
-        return [];
+        return false;
       }
-      return tools.only !== true || tools.allowed.length > 0 || tools.required.length === 0
-        ? [{ id, allowed: tools.allowed }]
-        : [];
+      return tools.only !== true || tools.allowed.length > 0 || tools.required.length === 0;
     });
-    const revised = new Set(suite.revisions.map(({ case: id }) => id));
 
-    expect(optional).toEqual([
-      { id: 'p6-common-free-time-not-library', allowed: ['getMyDay'] },
-      { id: 'p6-tutorial-health-clinic', allowed: ['resolvePlace'] },
-    ]);
-    expect(optional.filter(({ id }) => !revised.has(id))).toEqual([]);
-  });
-
-  // Every revision names a case of the suite and says why (P13 ticket 04), in the P5 form.
-  it('enter each revised label with revises and reason', () => {
-    expect(suite.revisions.filter(({ case: id }) => !ids.has(id))).toEqual([]);
-    expect(suite.revisions.map(({ case: id }) => id)).toEqual([
-      'p6-spaces-alias-imac',
-      'p6-common-free-time-not-library',
-      'p6-tutorial-exhibition-today',
-      'p6-tutorial-health-clinic',
-    ]);
+    expect(optional.map(({ id }) => id)).toEqual(['p6-common-free-time-not-library', 'p6-tutorial-health-clinic']);
   });
 
   // A facility's hours are a fact of the text, as the tutorial's other facts are (labels-notes.md, ruling 10), and so

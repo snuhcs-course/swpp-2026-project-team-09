@@ -42,11 +42,18 @@ function keyParts(key: unknown): Partial<Record<KeyPart, string>> {
     return {};
   }
   const [action, space, date, start, minutes, ...rest] = key.split(':');
-  const named = Object.entries(NAMED).map(([prefix, part]) => [
+  const named = Object.entries(NAMED).map(([prefix, part]): [KeyPart, string | undefined] => [
     part,
     rest.find((segment) => segment.startsWith(prefix))?.slice(prefix.length),
   ]);
-  const given = { action, space, date, start, minutes, ...Object.fromEntries(named) };
+  const given: Record<string, string | undefined> = {
+    action,
+    space,
+    date,
+    start,
+    minutes,
+    ...Object.fromEntries(named),
+  };
   return Object.fromEntries(Object.entries(given).filter(([, part]) => part !== undefined && part !== ''));
 }
 

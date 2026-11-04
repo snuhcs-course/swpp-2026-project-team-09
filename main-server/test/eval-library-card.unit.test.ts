@@ -4,6 +4,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { type CardsExpectation } from '../eval/expect.ts';
 import { libraryCardFailures, libraryCardOf } from '../eval/library-card.ts';
 import { names } from './eval-traces.ts';
 
@@ -13,6 +14,10 @@ import { names } from './eval-traces.ts';
 // harness test, reported apart from the product's pyramid (ADR 0007). No app, no model.
 
 const card = (library: Record<string, unknown>): unknown => ({ kind: 'library', library });
+
+function wanted(space: string, conditions: Record<string, unknown>): CardsExpectation {
+  return { kind: 'library', seeds: [], action: 'book', space, conditions };
+}
 
 describe('A library card read from its key', () => {
   it('reads the five fixed segments, with no seat or equipment when the key has neither', () => {
@@ -40,7 +45,9 @@ describe('A library card read from its key', () => {
       libraryCardOf(card({ key: 'book:6F-media-carrel:2026-11-05:1300:120:e=with-imac:s=Media Carrel A' }), names),
     ).toMatchObject({ space: '6F-media-carrel', seat: 'Media Carrel A', equipment: 'with-imac' });
   });
+});
 
+describe("A library card's own fields against its key", () => {
   it("prefers the card's own fields to its key, a field left null falling back to the key", () => {
     const key = 'book:7F-7A-zone2:2026-11-04:1800:180:s=7300:e=with-outlet';
     expect(libraryCardOf(card({ key, seat: '7100', equipment: 'none' }), names)).toMatchObject({
@@ -52,7 +59,9 @@ describe('A library card read from its key', () => {
       equipment: 'with-outlet',
     });
   });
+});
 
+describe("A library card's key against its fields and the expectation", () => {
   it("takes the key's equipment before the space's group", () => {
     const space = { id: '4F-group-6', group: 'without-whiteboard' };
     expect(
@@ -68,14 +77,6 @@ describe('A library card read from its key', () => {
       libraryCardOf(card({ key: 'book:4F-group-6:2026-11-05:1600:120:e=with-electronic-whiteboard' }), names),
       libraryCardOf(card({ key: 'book:6F-media-carrel:2026-11-05:1300:120:s=Media Carrel A' }), names),
     ].flatMap((read) => (read === null ? [] : [read]));
-    const wanted = (space: string, conditions: Record<string, unknown>) => ({
-      kind: 'library' as const,
-      seeds: [],
-      action: 'book' as const,
-      space,
-      conditions,
-    });
-
     expect(libraryCardFailures(wanted('4F-group-6', { equipment: 'with-electronic-whiteboard' }), seen)).toEqual([]);
     expect(libraryCardFailures(wanted('6F-media-carrel', { seat: 'Media Carrel A' }), seen)).toEqual([]);
     expect(libraryCardFailures(wanted('6F-media-carrel', { equipment: 'Media Carrel A' }), seen)).toEqual([

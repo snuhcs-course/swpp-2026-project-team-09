@@ -4,6 +4,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { z } from 'zod';
 import { loadCases } from '../eval/cases.ts';
 import { withCurrentLabels } from '../eval/relabel.ts';
 
@@ -12,6 +13,8 @@ import { withCurrentLabels } from '../eval/relabel.ts';
 // apart from the product's pyramid (ADR 0007). It reads the case files; no app, no model.
 
 const cases = loadCases();
+
+const relabelledSchema = z.looseObject({ name: z.string(), cases: z.array(z.record(z.string(), z.unknown())) });
 
 function savedRun(id: string): { name: string; cases: Record<string, unknown>[] } {
   return {
@@ -32,7 +35,7 @@ function savedRun(id: string): { name: string; cases: Record<string, unknown>[] 
 
 describe('A saved run with the current labels', () => {
   it("replaces each case's recorded labels by the case file's, keeping the run", () => {
-    const relabelled = withCurrentLabels(savedRun('p6-spaces-alias-imac'), cases) as ReturnType<typeof savedRun>;
+    const relabelled = relabelledSchema.parse(withCurrentLabels(savedRun('p6-spaces-alias-imac'), cases));
     const [run] = relabelled.cases;
     const current = cases.find(({ id }) => id === 'p6-spaces-alias-imac');
 

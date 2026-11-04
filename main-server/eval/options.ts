@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -49,8 +50,11 @@ export const runOptionsSchema = z.strictObject({
 export type RunOptions = z.infer<typeof runOptionsSchema>;
 
 // main-server/.env as text values, or none when there is no file. Its key is read from here and never printed.
+// EVAL_ENV_FILE names another file in its place, so that a test can start the command line with a dummy key and leave a
+// developer's .env alone.
 export function dotEnv(): Record<string, string | undefined> {
-  const file = new URL('../.env', import.meta.url);
+  const named = process.env.EVAL_ENV_FILE;
+  const file = named === undefined || named === '' ? new URL('../.env', import.meta.url) : named;
   return existsSync(file) ? parseEnv(readFileSync(file, 'utf8')) : {};
 }
 
