@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -92,7 +93,7 @@ describe('Any other User', () => {
     expect(tutorial.state).toBe('off');
     expect(tutorial.eligibleByDefault).toBe(false);
     expect(tutorial.rowHidden).toBe(false);
-    expect(tutorial.quests.map(({ status }) => status)).toEqual(Array.from({ length: 5 }, () => 'notStarted'));
+    expect(tutorial.quests.map(({ status }) => status)).toEqual(Array.from({ length: 15 }, () => 'notStarted'));
   });
 
   it('finds it on after turning it on', async () => {

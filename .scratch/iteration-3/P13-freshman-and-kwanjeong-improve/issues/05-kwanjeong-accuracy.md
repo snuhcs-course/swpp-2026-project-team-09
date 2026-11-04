@@ -38,3 +38,5 @@ The runs are paid and one-off, hence ready-for-human: the PM approves each run's
 - [ ] Each run's estimate (from A01 ticket 03's cost per turn) is approved by the PM before it starts, and recorded with the actual cost.
 
 ## Comments
+
+- Since P13-01 (#196), the P6 world's frozen tutorial copy serves the 관정 quest as a button quest (`TUTORIAL_KWANJEONG_CHECK` off): R2's record names this as a condition changed against R1.
