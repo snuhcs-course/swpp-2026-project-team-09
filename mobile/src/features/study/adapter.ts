@@ -114,12 +114,12 @@ function clusterCard(members: readonly CardView[]): CardView {
   };
 }
 
-// The cards with the study pins that would overlap at this zoom merged: the cluster's card comes where its first
-// building's would, and each building's card stays, within the cluster, so that it has no marker of its own. A
-// building within a place's group keeps to the group. Without a zoom nothing is merged.
-export function clusteredStudy(cards: readonly CardView[], zoom: number | null): CardView[] {
+// Which study pins would overlap at this zoom: the ids of each set of two or more, in the cards' order. A building
+// within a place's group keeps to the group. Without a zoom, none. The main screen keys its cards by these sets, so
+// that a move of the camera that merges nothing new leaves the cards as they were.
+export function studyMerges(cards: readonly CardView[], zoom: number | null): string[][] {
   if (zoom === null) {
-    return [...cards];
+    return [];
   }
   const seeds: CardView[][] = [];
   for (const card of cards) {
@@ -134,8 +134,21 @@ export function clusteredStudy(cards: readonly CardView[], zoom: number | null):
       }
     }
   }
+  return seeds.filter((one) => one.length > 1).map((members) => members.map(({ id }) => id));
+}
+
+// The cards with each set of `studyMerges` merged: the cluster's card comes where its first building's would, and each
+// building's card stays, within the cluster, so that it has no marker of its own. With no set, the same cards.
+export function clusteredStudy(
+  cards: readonly CardView[],
+  merges: readonly (readonly string[])[],
+): readonly CardView[] {
+  if (merges.length === 0) {
+    return cards;
+  }
   const clusterOf = new Map<string, CardView[]>();
-  for (const members of seeds.filter((one) => one.length > 1)) {
+  for (const ids of merges) {
+    const members = cards.filter(({ id }) => ids.includes(id));
     for (const member of members) {
       clusterOf.set(member.id, members);
     }

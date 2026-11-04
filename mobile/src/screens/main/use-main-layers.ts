@@ -10,7 +10,7 @@ import type { CardView } from '@/features/map/adapter';
 import { groupedByPlace } from '@/features/map/place-groups';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
-import { clusteredStudy } from '@/features/study/adapter';
+import { clusteredStudy, studyMerges } from '@/features/study/adapter';
 import { useStudyCards } from '@/features/study/use-study';
 import { type ChatSheetControl, useChatSheet } from './chat-sheet';
 import { type LayerStack, useLayerStack } from './layers';
@@ -37,10 +37,16 @@ function useCards(
   const mapCards = data ?? NO_CARDS;
   const diningCards = useDiningCards(layers.dining);
   const studyCards = useStudyCards(layers.study);
-  const cards = useMemo(
-    () => clusteredStudy(groupedByPlace([...mapCards, ...diningCards, ...studyCards, ...shuttle.cards]), zoom),
-    [mapCards, diningCards, studyCards, shuttle.cards, zoom],
+  const grouped = useMemo(
+    () => groupedByPlace([...mapCards, ...diningCards, ...studyCards, ...shuttle.cards]),
+    [mapCards, diningCards, studyCards, shuttle.cards],
   );
+  // Keyed by what merges, not by the zoom: a camera that moves, as a press on a list's row makes it, keeps the same
+  // cards unless the merged pins change. A selection waiting for the cards (`selectOrWait`) waits for new cards.
+  const merges = studyMerges(grouped, zoom);
+  const mergesKey = JSON.stringify(merges);
+  // `mergesKey` stands for `merges`, which is new each render.
+  const cards = useMemo(() => clusteredStudy(grouped, merges), [grouped, mergesKey]);
   return { cards, ready: data !== undefined };
 }
 
