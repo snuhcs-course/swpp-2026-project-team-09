@@ -1,12 +1,14 @@
-# 01: Ten new Tutorial Quests in five categories, and 관정 completed by its button
+# 01: Ten new Tutorial Quests in five categories, 관정 completed by its button, and a pin for 지도에서 보기
 
-Parent: [P13 spec](../spec.md) ("The Tutorial Quests")
+Parent: [P13 spec](../spec.md) ("The Tutorial Quests", "지도에서 보기 drops a pin")
 Status: ready-for-agent
 Blocked by: none
 
 ## What to build
 
 The 새내기 튜토리얼 grows from five Tutorial Quests to fifteen, grouped into five Tutorial Categories (생활, 공부·학사, 이동, 건강, 문화·여가). The ten new quests come from `references/quest-candidates.md` (4, 6, 9+10 merged as 야간 셔틀 타기, 16, 22, 25, 26, 29, 33, 35), each with sourced facts the Assistant answers from. The pager, the quest list and the sheet show the categories within the current tutorial UI. Every quest, 관정 included, is completed by 완료했어요; the phone's 관정 check stays in the code behind a server flag, off, and 어시스턴트에게 예약 부탁하기 stays on the 관정 sheet.
+
+지도에서 보기 also drops a red pin on the quest's place (`references/tutorial-place-pin.png`), which today only moves the camera. A tap on it opens the map's card at that Place if there is one; otherwise it is the pin and its label alone.
 
 This ticket changes no prompt. The Assistant reads the new quests through `getTutorial` as it reads the old ones.
 
@@ -23,9 +25,11 @@ This ticket changes no prompt. The Assistant reads the new quests through `getTu
 - [ ] Quests gain an optional `ask`; 관정's is "관정도서관 7층 열람실에 한 자리 예약해줘". `servedContent` drops it when `LIBRARY_BOOKING_ENABLED` is off. The sheet shows 어시스턴트에게 예약 부탁하기 for any quest with `ask` (while `TUTORIAL_SHEET_FLAGS.askAssistantToBook` is on), and the skip text button only for `kwanjeongCheck`.
 - [ ] The pager keeps "새내기 튜토리얼 n/N" over all fifteen, shows a row of the five category chips that moves to that category's first quest not started (or its first quest), and shows the category's label above the title. The quest list's kicker and the sheet's kicker read "새내기 튜토리얼 · {category} · n/N".
 - [ ] Existing progress is kept: completed quests stay completed, and a User finished at five quests gets "새 퀘스트가 있어요" and the new quests on 진행하기.
+- [ ] 지도에서 보기 puts one tutorial place pin on the main map at the place's point: a red teardrop with a white circle as in `references/tutorial-place-pin.png`, in `color.danger` and `color.surface`, as a new marker look of `@/map`, with the place's words (`shownPlace`) under it. Another 지도에서 보기 replaces it; a tap on the map away from it, selecting another thing, or stopping the tutorial removes it.
+- [ ] A tap on the pin at a Place where the map has a card (a 식당, a 공부공간 building once 02 is in, a place group or any thing there) selects that card, as a tap on its marker does. At a Place with no card, or a point such as the 행정관 셔틀 정류장, the tap opens nothing; the pin and its label stay.
 - [ ] `GLOSSARY.md` gains **Tutorial Category**.
-- [ ] Tests, named by ADR 0007: `main-server/test/tutorial-content.unit.test.ts` (the category rules, fifteen quests load), `tutorial-content.integration.test.ts` (every Place exists), `tutorial-progress.integration.test.ts` (관정 by button with the flag off, by check with it on; a finished User sees the new quests); `mobile/__tests__/tutorial-pager.integration.test.tsx` (chips, captions), `tutorial-sheet.integration.test.tsx` (관정 served as a button: 완료했어요 and 어시스턴트에게 예약 부탁하기, no skip), and `tutorial-kwanjeong-check.integration.test.tsx` still passing with the quest served as `kwanjeongCheck`.
-- [ ] Screenshots of the pager with the chips, the quest list and a new quest's sheet, from the web target, in the PR.
+- [ ] Tests, named by ADR 0007: `main-server/test/tutorial-content.unit.test.ts` (the category rules, fifteen quests load), `tutorial-content.integration.test.ts` (every Place exists), `tutorial-progress.integration.test.ts` (관정 by button with the flag off, by check with it on; a finished User sees the new quests); `mobile/__tests__/tutorial-pager.integration.test.tsx` (chips, captions), `tutorial-sheet.integration.test.tsx` (관정 served as a button: 완료했어요 and 어시스턴트에게 예약 부탁하기, no skip), `tutorial-kwanjeong-check.integration.test.tsx` still passing with the quest served as `kwanjeongCheck`, and `mobile/__tests__/tutorial-place-pin.integration.test.tsx` (one pin with its words; a second replaces it; a tap at a Place with a 식당 card opens it; a tap on the 행정관 셔틀 정류장's pin opens nothing).
+- [ ] Screenshots of the pager with the chips, the quest list, a new quest's sheet, and the pin on a building and on the shuttle stop, from the web target, in the PR.
 - [ ] No native file changes (CLAUDE.md § The app's native files).
 
 ## Comments
