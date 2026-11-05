@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -43,6 +44,7 @@ export const JUDGEMENT_CHECKS = [
   'placeInLines',
   'placeMatches',
   'newSession',
+  'timesConsistent',
 ] as const;
 
 export type JudgementCheck = (typeof JUDGEMENT_CHECKS)[number];

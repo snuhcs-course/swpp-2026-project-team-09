@@ -231,7 +231,8 @@ describe('A session whose time fails and whose place passes', () => {
 
     await world.collectedOf('snu_events', post);
 
-    expect(await failedChecks(post)).toEqual(['timeAgrees']);
+    // A start the line does not write is another start than the line's for that day.
+    expect(await failedChecks(post)).toEqual(['timeAgrees', 'timesConsistent']);
     const own = await world.onlySession('snu_events', post);
     expect(own).toMatchObject({
       attachedBy: 'own',

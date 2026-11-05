@@ -3,8 +3,10 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { type CampusDefault } from '../../src/global-events/named-place.js';
 import { type Tokens } from '../cost.ts';
 import { type RunName, type RunOutcome, type RunScore } from './run.ts';
 import { type FieldScore, type Rate, type ScoreA } from './score-a.ts';
@@ -29,7 +31,7 @@ export interface RunRecord {
   modelsAnswered: string[];
   limits: { timeoutMs: number; maxOutputTokens: number };
   switches: Record<string, boolean | string>;
-  buildingNumberIsGwanak: Record<string, boolean>;
+  campusDefault: Record<string, CampusDefault>;
   checks: readonly string[];
   from: string | null;
   usage: { calls: number; tokens: Tokens; costUsd: number };
@@ -120,7 +122,7 @@ function recordLines(record: RunRecord): string[] {
     `| 모델 | 요청 \`${record.modelAsked}\`, 목록의 canonical \`${record.canonicalSlug ?? '없음'}\`, 응답 \`${record.modelsAnswered.join(', ') || '없음'}\` |`,
     `| 실행 제한 | ${record.limits.timeoutMs} ms, 출력 ${record.limits.maxOutputTokens} 토큰, 재시도 없음, 글당 한 번. 공급자 기본 디코딩 |`,
     `| 켠 설정 | ${JSON.stringify(record.switches)} |`,
-    `| 캠퍼스 설정 | buildingNumberIsGwanak ${JSON.stringify(record.buildingNumberIsGwanak)} |`,
+    `| 캠퍼스 설정 | campusDefault ${JSON.stringify(record.campusDefault)} |`,
     `| 켠 검사 | ${record.checks.join(', ')} |`,
     `| 다시 쓴 답 | ${record.from ?? '없음'} |`,
     `| 사용량과 비용 | 호출 ${calls}, 입력 ${tokens.inputTokens} (캐시 읽기 ${tokens.cacheReadTokens}, 쓰기 ${tokens.cacheWriteTokens}), 출력 ${tokens.outputTokens}, USD ${costUsd.toFixed(4)} (${record.pricesSource}), 예산 USD ${record.budgetUsd} |`,

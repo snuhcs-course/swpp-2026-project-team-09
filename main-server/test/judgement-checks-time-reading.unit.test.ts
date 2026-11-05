@@ -63,7 +63,7 @@ describe('checkedSessions: the hours of 오전 or 오후', () => {
   });
 
   it('fails a start the hours do not write', () => {
-    expect(failing('3월 9일(화) 오후 2–5시', { start: '2027-03-09T02:00' })).toEqual(['timeAgrees']);
+    expect(failing('3월 9일(화) 오후 2–5시', { start: '2027-03-09T02:00' })).toEqual(['timeAgrees', 'timesConsistent']);
   });
 });
 
