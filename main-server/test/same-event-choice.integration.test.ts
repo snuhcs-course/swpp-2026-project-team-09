@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -91,7 +92,7 @@ describe('The AI chooses a candidate at another time, or for a Judgement', () =>
   it('attaches a session a Judgement read', async () => {
     const event = await world.publishedThrough(
       'extra_snu',
-      world.programme(world.uniqueTitle(), { start: '2026-11-05T14:00:00+09:00' }),
+      world.programme(world.uniqueTitle(), { start: '2076-11-05T14:00:00+09:00' }),
     );
     const post = draftPost(world.postNumber(), { title: world.uniqueTitle() });
     world.scripted.script(answer(), SAME);
@@ -263,15 +264,15 @@ describe('A Judgement of several sessions', () => {
   it('asks once for the post, about the sessions with candidates', async () => {
     const event = await world.publishedThrough(
       'extra_snu',
-      world.programme(world.uniqueTitle(), { start: '2026-11-05T14:00:00+09:00' }),
+      world.programme(world.uniqueTitle(), { start: '2076-11-05T14:00:00+09:00' }),
     );
-    const line = '- 일시: 2026. 11. 5.(목) 14:00~16:00, 2026. 12. 5.(토) 14:00~16:00';
+    const line = '- 일시: 2076. 11. 5.(목) 14:00~16:00, 2076. 12. 5.(토) 14:00~16:00';
     const post = draftPost(world.postNumber(), { title: world.uniqueTitle(), description: `${line}\n${PLACE_LINE}` });
     const lines = { start: [line], end: [line], place: [PLACE_LINE] };
     world.scripted.script(
       answer([
         answeredSession({ lines }),
-        answeredSession({ start: '2026-12-05T14:00', end: '2026-12-05T16:00', lines }),
+        answeredSession({ start: '2076-12-05T14:00', end: '2076-12-05T16:00', lines }),
       ]),
       SAME,
     );

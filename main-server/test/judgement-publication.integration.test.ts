@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { collectedPost, eventsMessage, postNumbersFrom } from './global-events.js';
@@ -42,8 +43,8 @@ describe('A Judgement that passes', () => {
       state: 'published',
       publicationRoute: 'judgement',
       version: 1,
-      startsAt: new Date('2026-11-05T14:00:00+09:00'),
-      endsAt: new Date('2026-11-05T16:00:00+09:00'),
+      startsAt: new Date('2076-11-05T14:00:00+09:00'),
+      endsAt: new Date('2076-11-05T16:00:00+09:00'),
       place: PLACE,
     });
     expect(event.latitude).not.toBeNull();
@@ -71,7 +72,7 @@ describe('A stored Judgement', () => {
     expect(judgement.judgedAt).not.toBeNull();
     expect(judgement.sessions).toMatchObject([
       {
-        start: '2026-11-05T14:00',
+        start: '2076-11-05T14:00',
         place: PLACE,
         lines: { start: [TIME_LINE], end: [TIME_LINE], place: [PLACE_LINE] },
         passed: true,
@@ -93,7 +94,7 @@ describe('What is sent to the model', () => {
     expect(sent).toContain('[전화번호]');
     expect(sent).not.toContain('office@snu.ac.kr');
     expect(sent).not.toContain('880-1234');
-    expect(sent).toContain('2026. 11. 5.(목) 14:00~16:00');
+    expect(sent).toContain('2076. 11. 5.(목) 14:00~16:00');
   });
 
   it('is nothing when the rules read the post', async () => {
@@ -110,7 +111,7 @@ describe('What is sent to the model', () => {
 
 describe('A session that does not pass', () => {
   it('stays a Draft with the failed check recorded', async () => {
-    world.scripted.script(answer([answeredSession({ start: '2026-11-06T14:00', end: '2026-11-06T16:00' })]));
+    world.scripted.script(answer([answeredSession({ start: '2076-11-06T14:00', end: '2076-11-06T16:00' })]));
     const postNumber = newPost();
 
     await world.collected(draftPost(postNumber));
