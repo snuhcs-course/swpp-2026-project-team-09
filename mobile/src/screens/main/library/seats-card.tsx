@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -53,6 +54,9 @@ interface SeatMapsProps extends SeatsCardProps {
 // The small map at the card's width, its caption, 자리 예약하기, and the large view.
 export const BOOKING_CLOSED = '오늘은 예약 시간이 끝났어요';
 
+// Under the caption while seats can be booked: what a tap on a free seat does.
+export const SEAT_TAP_HINT = '빈자리를 누르면 그 자리로 예약할 수 있어요';
+
 function BookAnySeat({ card, space, actions, slot }: Omit<SeatMapsProps, 'seats'>): ReactElement {
   return (
     <Pills>
@@ -95,6 +99,7 @@ function SeatMaps({ card, space, actions, seats, slot }: SeatMapsProps): ReactEl
       <Text
         style={styles.caption}
       >{`${spaceWords(space)} · ${when} · 빈 자리 ${String(freeSeats(seats).length)}석`}</Text>
+      {bookable ? <Text style={styles.caption}>{SEAT_TAP_HINT}</Text> : null}
       {bookable ? <BookAnySeat {...{ card, space, actions, slot }} /> : <Said>{BOOKING_CLOSED}</Said>}
       <LargeSeatMap
         onClose={() => {

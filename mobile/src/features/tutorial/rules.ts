@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
@@ -34,6 +35,23 @@ export function questsInList(tutorial: Tutorial | undefined): TutorialQuest[] {
 // "n/N": a quest's place in the tutorial.
 export function stepOf(tutorial: Tutorial, key: string): string {
   return `${tutorial.quests.findIndex((quest) => quest.key === key) + 1}/${tutorial.quests.length}`;
+}
+
+// The label of a quest's Tutorial Category, or null for a quest without one.
+export function categoryOf(tutorial: Tutorial, quest: TutorialQuest): string | null {
+  return tutorial.categories.find(({ key }) => key === quest.category)?.label ?? null;
+}
+
+// The kicker of the quest list's rows and of the sheet: "새내기 튜토리얼 · {category} · n/N".
+export function kickerOf(tutorial: Tutorial, quest: TutorialQuest): string {
+  const category = categoryOf(tutorial, quest);
+  return ['새내기 튜토리얼', ...(category === null ? [] : [category]), stepOf(tutorial, quest.key)].join(' · ');
+}
+
+// Where a category's chip moves the pager: to its first quest not started, or to its first quest.
+export function firstOfCategory(quests: readonly TutorialQuest[], category: string): number {
+  const notStarted = quests.findIndex((quest) => quest.category === category && quest.status === 'notStarted');
+  return notStarted === -1 ? quests.findIndex((quest) => quest.category === category) : notStarted;
 }
 
 // Where the pager opens: on the first quest not started, or on the first one without one.

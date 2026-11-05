@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { LatLng } from './types';
@@ -16,7 +17,8 @@ export type TutorialState = 'off' | 'available' | 'active' | 'stopped' | 'finish
 
 export type TutorialQuestStatus = 'notStarted' | 'started' | 'completed';
 
-// How a quest was completed. `button` only for a button quest; the other three only for the 관정 quest.
+// How a quest was completed. `button` only for a quest served as a button quest; the other three only for the 관정
+// quest while the main server serves it as `kwanjeongCheck` (LIBRARY_BOOKING_ENABLED and TUTORIAL_KWANJEONG_CHECK on).
 export type TutorialCompletedBy = 'button' | 'checked' | 'forced' | 'skipped';
 
 export type TutorialCompletion = { kind: 'button' } | { kind: 'kwanjeongCheck'; skipLabel: string };
@@ -30,9 +32,18 @@ export interface TutorialLink {
   url: string;
 }
 
+// A Tutorial Category: one of the groups the quests are shown in (생활, 공부·학사, …). Its quests come one after
+// another in `order`.
+export interface TutorialCategory {
+  key: string;
+  label: string;
+}
+
 export interface TutorialQuest {
   key: string;
   order: number;
+  // The key of its Tutorial Category.
+  category?: string;
   title: string;
   // The pager's line.
   brief: string;
@@ -45,6 +56,8 @@ export interface TutorialQuest {
   completionMessage: string;
   places: TutorialPlace[];
   links: TutorialLink[];
+  // What 어시스턴트에게 예약 부탁하기 sends; the sheet shows the button only for a quest with it.
+  ask?: string;
   status: TutorialQuestStatus;
 }
 
@@ -54,6 +67,8 @@ export interface Tutorial {
   rowHidden: boolean;
   // The main server's rule, read now: admitted this year in Korea or later, or 소속 교환학생. The app has no copy of it.
   eligibleByDefault: boolean;
+  // In the order they are shown.
+  categories: TutorialCategory[];
   // In `order`.
   quests: TutorialQuest[];
 }

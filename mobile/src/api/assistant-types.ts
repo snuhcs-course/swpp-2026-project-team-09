@@ -7,6 +7,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { MenuLine } from './menu-types';
@@ -28,9 +29,17 @@ export const CLIENT_CAPABILITIES = ['library'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
+// Where a Place's facilities are booked online: the page 시설 예약하기 opens on a made Proposal.
+export interface FacilityBooking {
+  label: string;
+  url: string;
+}
+
+// A Place with its booking page, null where it has none. A main server before P13-06 leaves it out.
 export interface ProposalPlace {
   id: string;
   name: string;
+  booking?: FacilityBooking | null;
 }
 
 export interface ProposalFriend {

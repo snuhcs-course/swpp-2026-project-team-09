@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -10,43 +11,39 @@ import {
   type Prisma,
   PublicationRoute,
   SessionAttachment,
-  SessionHold,
+  type SessionHold,
 } from '../generated/prisma/client.js';
 import { type PlaceDto } from '../places/dto/place.dto.js';
 import { type JudgedSession } from './judgement-answer.js';
 import { periodEndAt, readJudgedTime } from './judgement-time.js';
 import { type PostWithOwnSessions } from './judgements.service.js';
-import {
-  attachSession,
-  candidatesLeft,
-  type ComparedSession,
-  matchAmong,
-  type OwnDraft,
-  ownDraftOf,
-  type PostSession,
-  sameEventCandidates,
-  startsDiffer,
-  TITLE_RULE,
-} from './same-event.js';
-import { appliedChoice } from './same-event-choice.js';
+import { attachSession, type OwnDraft, ownDraftOf, type PostSession, startsDiffer } from './same-event.js';
+import { type Compared, compared, OWN, type StepSwitches } from './session-comparison.js';
+import { type SessionVerdict } from './session-verdict.js';
 
 const EMPTY_POST = { title: '', description: '' };
 
+// What a Draft holds of a session's time and place.
+export type DraftValues = Pick<GlobalEvent, 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude'>;
+
 // What a Judgement read of a session, as it would publish it.
-export type JudgedValues = Pick<GlobalEvent, 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude'> & {
+export type JudgedValues = DraftValues & {
   state: typeof GlobalEventState.published;
   publicationRoute: typeof PublicationRoute.judgement;
 };
 
-export function publishedValues(
-  { start, end, place, overPeriod }: JudgedSession,
-  { latitude, longitude }: PlaceDto,
-): JudgedValues {
+function judgedTimes({ start, end, overPeriod }: JudgedSession): Pick<DraftValues, 'startsAt' | 'endsAt'> {
   const judgedEnd = readJudgedTime(end ?? '');
   return {
     startsAt: readJudgedTime(start ?? '')?.at ?? null,
     endsAt: judgedEnd !== null && overPeriod ? periodEndAt(judgedEnd) : (judgedEnd?.at ?? null),
-    place,
+  };
+}
+
+export function publishedValues(session: JudgedSession, { latitude, longitude }: PlaceDto): JudgedValues {
+  return {
+    ...judgedTimes(session),
+    place: session.place,
     latitude,
     longitude,
     state: GlobalEventState.published,
@@ -54,86 +51,28 @@ export function publishedValues(
   };
 }
 
-// What the settings let the step do. Each may be off while the step still runs.
-export interface StepSwitches {
-  publishes: boolean;
-  comparesTitles: boolean;
-  choosesByAi: boolean;
-}
-
-// What the comparison says of a session. To attach, also how, and the start of the event it goes to.
-type Compared =
-  | { kind: 'own' }
-  | { kind: 'hold'; heldFor: SessionHold }
-  | {
-      kind: 'attach';
-      globalEventId: string;
-      reason: string | null;
-      attachedBy: SessionAttachment;
-      target: Date;
-    };
-
-const OWN: Compared = { kind: 'own' };
-const SEVERAL: Compared = { kind: 'hold', heldFor: SessionHold.several_matches };
-
-// One event cannot take two sessions of a post, whichever way each came to it.
-async function holdsOneOf(tx: Prisma.TransactionClient, sourcePostId: string, globalEventId: string): Promise<boolean> {
-  return (await tx.sourcePostSession.count({ where: { sourcePostId, globalEventId } })) > 0;
+// What a Judgement read of a session it does not publish, over what its Draft holds: the time, when the checks of the
+// time pass or the session is compared, and the place, when the checks of the place pass and it is not compared.
+export function draftValues(
+  session: JudgedSession,
+  { comparable, timeRead, placeRead }: SessionVerdict,
+  place: PlaceDto | undefined,
+  draft: DraftValues | undefined,
+): DraftValues {
+  const { startsAt, endsAt } = judgedTimes(session);
+  const kept = draft ?? { startsAt: null, endsAt: null, place: null, latitude: null, longitude: null };
+  const time = comparable || timeRead ? { startsAt, endsAt } : { startsAt: kept.startsAt, endsAt: kept.endsAt };
+  const placed =
+    !comparable && placeRead && place !== undefined
+      ? { place: session.place, latitude: place.latitude, longitude: place.longitude }
+      : { place: kept.place, latitude: kept.latitude, longitude: kept.longitude };
+  return { ...time, ...placed };
 }
 
 // A session the rules read that the step has yet to compare.
 export function awaitsComparison({ readByRules, heldFor, globalEvent }: PostSession): boolean {
   const { startsAt, state, version } = globalEvent;
   return readByRules && heldFor === null && startsAt !== null && state === GlobalEventState.draft && version === 1;
-}
-
-// The rules, then the answer the AI gave for the candidates they left. With both switches off nothing is looked at.
-async function compared(
-  tx: Prisma.TransactionClient,
-  session: ComparedSession,
-  sourcePostId: string,
-  { comparesTitles, choosesByAi }: StepSwitches,
-): Promise<Compared> {
-  if (!comparesTitles && !choosesByAi) {
-    return OWN;
-  }
-  const events = await sameEventCandidates(tx, session.startsAt, sourcePostId);
-  const startOf = (id: string): Date => events.find((event) => event.id === id)?.startsAt ?? session.startsAt;
-  const match = comparesTitles ? matchAmong(session, events) : { kind: 'none' as const };
-  if (match.kind === 'one') {
-    const { globalEventId } = match;
-    // With the AI off this stays as 08a left it, for the runs before the AI's to compare.
-    if (choosesByAi && (await holdsOneOf(tx, sourcePostId, globalEventId))) {
-      return SEVERAL;
-    }
-    const rule = SessionAttachment.rule;
-    return { kind: 'attach', globalEventId, reason: TITLE_RULE, attachedBy: rule, target: startOf(globalEventId) };
-  }
-  if (match.kind === 'several') {
-    return SEVERAL;
-  }
-  if (!choosesByAi) {
-    return OWN;
-  }
-  const left = candidatesLeft(session, events);
-  const stored = await tx.sameEventAnswer.findUnique({
-    where: { sourcePostId_startsAt: { sourcePostId, startsAt: session.startsAt } },
-  });
-  // With no answer, any candidate left is one the AI was not asked about, also when the title rule decided at the asking
-  // and no longer does: D4 counts it as `candidates_changed`. Asked about none and none has come. With an answer, a chosen event that has gone must not make the session its own.
-  if (stored === null && left.length === 0) {
-    return OWN;
-  }
-  const applied = appliedChoice(
-    stored,
-    left.map(({ id }) => id),
-  );
-  if (applied.kind !== 'attach') {
-    return applied;
-  }
-  return (await holdsOneOf(tx, sourcePostId, applied.globalEventId))
-    ? SEVERAL
-    : { ...applied, attachedBy: SessionAttachment.ai, target: startOf(applied.globalEventId) };
 }
 
 // An event with another time stays as it is and is flagged, without raising its version.
@@ -229,7 +168,7 @@ export async function createDraft(
   tx: Prisma.TransactionClient,
   post: PostWithOwnSessions,
   number: number,
-  { startsAt, endsAt, place, latitude, longitude }: JudgedValues,
+  { startsAt, endsAt, place, latitude, longitude }: DraftValues,
   heldFor: SessionHold | null = null,
 ): Promise<string> {
   const { title, description } = post.sessions[0]?.globalEvent ?? EMPTY_POST;
@@ -254,7 +193,7 @@ async function holdJudged(
   post: PostWithOwnSessions,
   draft: PostSession | undefined,
   number: number,
-  values: JudgedValues,
+  values: DraftValues,
   heldFor: SessionHold,
 ): Promise<string> {
   if (draft === undefined) {
@@ -322,4 +261,48 @@ export async function settleJudgedSession(
     ? createEvent(tx, post, number, values)
     : publishDraft(tx, draft.globalEventId, values));
   return { globalEventId, published: globalEventId !== null };
+}
+
+// Fills the session's Draft with what was read, a new one if it has none. A Draft an Administrator reached first is left.
+async function fillDraft(
+  tx: Prisma.TransactionClient,
+  post: PostWithOwnSessions,
+  draft: PostSession | undefined,
+  number: number,
+  values: DraftValues,
+): Promise<string> {
+  if (draft === undefined) {
+    return createDraft(tx, post, number, values);
+  }
+  await tx.globalEvent.updateMany({
+    where: { id: draft.globalEventId, state: GlobalEventState.draft, version: 1 },
+    data: values,
+  });
+  return draft.globalEventId;
+}
+
+export interface UnpublishedToSettle extends Omit<SessionToSettle, 'values'> {
+  values: DraftValues;
+  // Whether it is compared with the events that exist, or only fills its Draft.
+  comparable: boolean;
+}
+
+// Attaches or holds a session a Judgement read but may not publish, or keeps it in its Draft with what was read. Gives the
+// event it now belongs to.
+export async function settleUnpublishedSession(
+  tx: Prisma.TransactionClient,
+  { post, draft, number, values, switches, comparable }: UnpublishedToSettle,
+): Promise<string> {
+  const { title, description } = draft?.globalEvent ?? post.sessions[0]?.globalEvent ?? EMPTY_POST;
+  const { startsAt } = values;
+  const decision =
+    !comparable || startsAt === null ? OWN : await compared(tx, { title, startsAt }, post.id, switches, false);
+  if (decision.kind === 'attach') {
+    await attachJudged(tx, post.id, draft, number, decision, ownDraftOf({ ...values, title, description }));
+    return decision.globalEventId;
+  }
+  if (decision.kind === 'hold') {
+    return holdJudged(tx, post, draft, number, values, decision.heldFor);
+  }
+  return fillDraft(tx, post, draft, number, values);
 }
