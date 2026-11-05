@@ -15,6 +15,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
@@ -47,6 +48,7 @@ import { PartiesModule } from './parties/parties.module.js';
 import { PlacesModule } from './places/places.module.js';
 import { QuestsModule } from './quests/quests.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
+import { StudySpacesModule } from './study-spaces/study-spaces.module.js';
 import { TimetableModule } from './timetable/timetable.module.js';
 import { TravelModule } from './travel/travel.module.js';
 import { TutorialModule } from './tutorial/tutorial.module.js';
@@ -97,6 +99,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     TutorialModule,
     AssistantModule,
     RoomRequestsModule,
+    StudySpacesModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).

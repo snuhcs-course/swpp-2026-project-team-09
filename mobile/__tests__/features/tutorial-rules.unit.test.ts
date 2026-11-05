@@ -3,10 +3,21 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial, TutorialQuest, TutorialQuestStatus, TutorialState } from '@/api/tutorial-types';
-import { firstNotStarted, nextAfter, questsInList, rowOf, showsStartButton, stepOf } from '@/features/tutorial/rules';
+import {
+  categoryOf,
+  firstNotStarted,
+  firstOfCategory,
+  kickerOf,
+  nextAfter,
+  questsInList,
+  rowOf,
+  showsStartButton,
+  stepOf,
+} from '@/features/tutorial/rules';
 
 // What the 새내기 튜토리얼 shows where, by the main server's state and the quests' statuses.
 
@@ -31,6 +42,7 @@ function tutorialOf(state: TutorialState, ...statuses: TutorialQuestStatus[]): T
     state,
     rowHidden: false,
     eligibleByDefault: false,
+    categories: [],
     quests: statuses.map((status, index) => quest(`q${index + 1}`, status)),
   };
 }
@@ -62,6 +74,44 @@ describe('the quest list group', () => {
 
   it('numbers a quest by its place', () => {
     expect(stepOf(tutorialOf('active', 'started', 'started', 'notStarted'), 'q2')).toBe('2/3');
+  });
+});
+
+// Two categories: q1 and q2 생활, q3 and q4 공부·학사.
+function withCategories(...statuses: TutorialQuestStatus[]): Tutorial {
+  const tutorial = tutorialOf('active', ...statuses);
+  for (const [index, each] of tutorial.quests.entries()) {
+    each.category = index < 2 ? 'life' : 'study';
+  }
+  tutorial.categories = [
+    { key: 'life', label: '생활' },
+    { key: 'study', label: '공부·학사' },
+  ];
+  return tutorial;
+}
+
+describe('the Tutorial Categories', () => {
+  it("name a quest's category in the kicker, with its place", () => {
+    const tutorial = withCategories('started', 'notStarted', 'started', 'notStarted');
+    const third = tutorial.quests[2];
+
+    expect(third === undefined ? null : categoryOf(tutorial, third)).toBe('공부·학사');
+    expect(third === undefined ? null : kickerOf(tutorial, third)).toBe('새내기 튜토리얼 · 공부·학사 · 3/4');
+  });
+
+  it('leave the kicker without a category for a quest without one', () => {
+    const tutorial = tutorialOf('active', 'started');
+    const [first] = tutorial.quests;
+
+    expect(first === undefined ? null : kickerOf(tutorial, first)).toBe('새내기 튜토리얼 · 1/1');
+  });
+
+  it("move to the category's first quest not started, or its first quest", () => {
+    expect(firstOfCategory(withCategories('notStarted', 'notStarted', 'started', 'notStarted').quests, 'study')).toBe(
+      3,
+    );
+    expect(firstOfCategory(withCategories('notStarted', 'notStarted', 'completed', 'started').quests, 'study')).toBe(2);
+    expect(firstOfCategory(withCategories('notStarted').quests, 'culture')).toBe(-1);
   });
 });
 

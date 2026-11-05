@@ -694,7 +694,7 @@ posts of one event on two pods the second sees the first.
 - **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
   refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`). `off` calls no model, sends nothing out and asks
   nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
-  with candidates the refusing rules left, whether the rules read them or a Judgement passed them, it makes one call,
+  with candidates the refusing rules left, whether the rules read them or a Judgement's session is compared, it makes one call,
   outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
   decided, or a post the link rule decided. An answer is stored in `same_event_answers`, one row per session named by
   its start, made before the call: of two servers one calls, and a session is never asked about twice.
@@ -705,7 +705,8 @@ posts of one event on two pods the second sees the first.
   `same-event-choice.ts`): `link_not_one_to_one`, `several_matches` (several title matches, or two sessions chose one
   event), `ai_unsure`, `ai_failed` (a failed call, a timeout, a malformed answer, a candidate not offered, or a server
   that stopped during the call), `candidates_changed` (the chosen event is no longer a candidate, or one the AI was not
-  asked about has appeared, as when another server published it meanwhile). It stays a Draft, is neither judged nor
+  asked about has appeared, as when another server published it meanwhile), `place_unchecked` (a Judgement's session
+  whose place failed the checks, which no candidate takes on ADR 0014's terms). It stays a Draft, is neither judged nor
   published, and its post finishes the step. A post another server is asking about is left to it.
 - **What an Administrator does** (`admin/global-events`, each under the step's lock, so that of two one acts and the
   other gets 409): `GET queue` lists the sessions with their candidates, worked out when asked, so a removed event goes,
@@ -743,11 +744,24 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
   taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
-  post. Failing sessions make no Draft: a post stored as one Draft keeps it for them, and a post the worker sent with a
-  Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
-  as it is, with the outcome `no_event`. A session over a period whose end is a day alone, or the 00:00 extra.snu writes
-  where it has no time, is stored as ending at 23:59 of that day in Korea, so that it stays listed through its last day
-  and its card names that day.
+  post. A post called no event stays as it is, with the outcome `no_event`. A session over a period whose end is a day
+  alone, or the 00:00 extra.snu writes where it has no time, is stored as ending at 23:59 of that day in Korea, so that
+  it stays listed through its last day and its card names that day. Failing sessions are never published
+  (`session-verdict.ts`,
+  [ADR 0014](../docs/adr/0014-a-session-whose-place-fails-is-still-compared-as-the-same-event.md)):
+  - one that fails only `length`, `placeInLines` or `placeMatches` (a named list, so a check added later only stops
+    publication) is compared with the events that exist, its place given to the AI as written. It is attached only when
+    its normalised title and start equal the event's (`attachedBy` `rule`, reason `equal_title_and_start_without_place`),
+    or when the AI answers `same`, the starts are equal to the minute and one normalised title holds the other
+    (`attachedBy` `ai`, reason `same_minute_and_contained_title`; the AI's sentence stays in `same_event_answers`).
+    Otherwise it is held with `heldFor` `place_unchecked`, or as the AI's answer says. With no candidate, or with
+    `SAME_EVENT_AI_CHOICE=off` and no title match, it stays its own Draft with its time filled;
+  - one whose lines are in the post and whose time checks, or place checks, all pass fills its Draft with that time, or
+    that place and its position;
+  - the rest are written in the Judgement only;
+  - such a session takes its own Draft, or the post's only one, or one with no start, as a passing one does. A post
+    keeps a Draft for the sessions that settle nothing, so that no time the worker read is lost: the session then gets a
+    new Draft, which the link rule counts as one of the post's sessions, as it counts a passing session's new event.
 - **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
   reads it publishes nothing of that Judgement. A post the link rule decided is not judged. With
   `AUTOMATIC_PUBLICATION=off` the Judgement and what it attaches are stored and nothing is published.
@@ -783,7 +797,7 @@ DTO the app receives carries any of it. An entry of that list:
 The `judgement` of an event's page holds `outcome` (`judged`, `no_event` for a post called no event, `failed` for one that
 could not be made, `null` while a try runs), `failure`, `attempts`, `announcesEvent`, `modelId`, `judgedAt` and `sessions`,
 each with `start`, `end`, `place`, `overPeriod`, `lines`, `placeId`, `checks` (each `name` and `passed`), `passed` and
-`globalEventId`, the event it was published as.
+`globalEventId`, the event it was published as or attached to, or the Draft it fills or waits in.
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 
@@ -1869,10 +1883,15 @@ without an offset, stops the command. Stops are named by `loop_order`, their pla
 wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. What the file lacks,
 the fallback in that module covers. The 75% of R11 decides only what the score counts.
 
-The score holds each day out and compares it with the times derived from the others. A stop-band or pair-band those
-days lack is predicted with the fallback. The ride compares every held-out ride with the median, by MAE and the share
-within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored stop-band of 08–19 with the
-prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs are below their baselines.
+The file holds less than is derived, as the PM decided on 2026-11-05. It holds no wait, so the fallback answers every
+wait; waits come back only by a later change, once a third logged day agrees. It holds a ride only for a pair and band
+logged on at least two days.
+
+The score holds each day out and compares it with all the times derived from the others, not with what the file holds.
+A stop-band or pair-band those days lack is predicted with the fallback. The ride compares every held-out ride with the
+median, by MAE and the share within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored
+stop-band of 08–19 with the prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs
+are below their baselines.
 
 ## Travel Time
 
@@ -1990,7 +2009,11 @@ The 새내기 튜토리얼 walks a new student through campus life, one Tutorial
 `body` (the sheet's paragraphs), `condition` (완료 조건), `completion` (`{ kind: button }`, or
 `{ kind: kwanjeongCheck, skipLabel }` for the quest the phone checks against the User's library bookings),
 `completionMessage`, `places` (a Place of the seed by its number, with `floor` and `label` when they help, or a
-`point` with its `label`) and `links` (`label` and `url`). The server reads and checks it once when it starts, in
+`point` with its `label`), `links` (`label` and `url`), `category` (the key of its Tutorial Category), an optional
+`ask` (the words 어시스턴트에게 예약 부탁하기 sends) and `facts` (what the Assistant answers from, each with its `source`
+and the day it was `checked`). A top-level `categories` list gives each Tutorial Category's `key` and `label`, in the
+order the app shows them; every quest names one of them, every category holds a quest, and a category's quests come
+one after another in `order`. The server reads and checks it once when it starts, in
 `src/tutorial/tutorial-content.ts`, and a file that does not match stops the start with the reason. Adding a quest is
 an entry in the file. `test/tutorial-content.unit.test.ts` checks that each Place number is in the seed.
 
@@ -2020,13 +2043,16 @@ started) and `available`.
 The routes name no User, so they never reach another User's progress. Each is safe to repeat, takes no
 `Idempotency-Key` and answers 200 with what `GET /tutorial` would answer:
 
-- `GET /tutorial` answers `{ state, quests }`, each quest as the file holds it with its `status`: `notStarted`,
-  `started` or `completed`.
+- `GET /tutorial` answers `{ state, categories, quests }`, each quest as the file holds it, without its `facts`, with
+  its `status`: `notStarted`, `started` or `completed`. The 관정 quest is served as the file holds it,
+  `kwanjeongCheck`, only while `LIBRARY_BOOKING_ENABLED` and `TUTORIAL_KWANJEONG_CHECK` are both on; otherwise it is
+  served, and completed, as a `button` quest. With `LIBRARY_BOOKING_ENABLED` off it also links to the official site,
+  and no quest has `ask`.
 - `POST /tutorial/enable` (진행하기), `POST /tutorial/stop` (튜토리얼 그만하기, 끄기) and `POST /tutorial/hide-row` (the ✕
   of the 내 정보 row) set the times above. The quests' progress stays.
 - `POST /tutorial/quests/:key/start` starts a quest.
-- `POST /tutorial/quests/:key/complete` with `{ "by": "button" }` completes a `button` quest, and with `checked`,
-  `forced` or `skipped` the `kwanjeongCheck` quest. The phone does the check, so the server records how and does not
+- `POST /tutorial/quests/:key/complete` with `{ "by": "button" }` completes a quest served as `button`, and with
+  `checked`, `forced` or `skipped` one served as `kwanjeongCheck`. The phone does the check, so the server records how and does not
   verify it. A quest completed once keeps how.
 
 The refusals: a key the file does not hold gets 404 with `code` `TUTORIAL_QUEST_NOT_FOUND`, and a `by` the quest's
@@ -2176,6 +2202,12 @@ its model through OpenRouter with the Vercel AI SDK
     shows cards, map buttons or a Proposal says `아래에서 확인해 보세요.` above them, and the server logs that it did, as
     `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
 Proposal)`.
+  - **The Approval line** (P12, `approval-line.ts`): when the cards show a Quest whose Join Policy is Approval and the
+    text holds fewer than two of 승인, 수락 and 신청, the server adds a line after it, fixed sentence included:
+    `승인제 파티는 참여 신청 후 파티장이 수락하면 참여돼요.`, or, when the User's last message with letters (not
+    only `18:00` or `2`) has no Hangul,
+    `A party that needs approval takes you in once you ask to join and its leader accepts.` It applies to every
+    feature that shows Quest cards.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
     a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
@@ -2231,6 +2263,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     come first, ignoring case and counting a word given twice once, ties in start order, then by title in code points.
     The rest of the window fills the places left, up to 30, with `more` when there were more. The server does not order
     by Holders.
+  - **The Place note** (P12): when `resolvePlace` answered one Place in this message (`FoundIds` keeps it) and a search
+    is not given it, `placeId` in `searchRecruitingQuests` or `place` in `searchGlobalEvents`, the answer, found or
+    "none", carries `note`: that its candidates are from any place, naming the Place, its number and its id, and how to
+    search near it. The candidates and their order are as without it. A Place of an earlier message, or of the
+    Proposal sent back, makes no note.
   - On a request to recruit, the system prompt has the model search before it proposes, unless the User said to make a
     new one in the conversation, this message included: only what the User stated is compared, what fits is shown as cards with the most
     Holders first and a question, and the User joins from the card. With nothing that fits, it proposes and says none was
@@ -2260,8 +2297,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     leaves out is filled as the form starts: 비공개 for the invited Friends and the User when Friends are invited, else
     공개 for 4, so that a request that named what matters is proposed at once and the card takes the correction. It answers
     `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
-    the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
-    it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
+    the User for, except a Board: a missing one's refusal names the four Boards and tells the model to choose the one
+    the activity plainly fits, without asking, and propose once nothing else is missing, asking only when it fits none
+    or more than one. Or it answers
+    `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when it is called
+    twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change.
     The free text the model writes into a Proposal is the title and the description, from the User's own words; both
     are bounded by `makeQuestSchema` (50 and 200 characters) before the card is drawn and by `questProposalSchema`
@@ -2448,9 +2488,11 @@ its reasoning tokens and the provider's response as it came, which the benchmark
 the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
-shows its error too. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so
-production runs as before. A turn's trace ends with the reply (its text and length, cards, map buttons, Proposal) or
-the failure: STEP_LIMIT, TIMEOUT or ERROR.
+shows its error too, and of the reply's text before the Approval line. `AssistantService` passes the one bound to
+`RUN_OBSERVER`, which only the benchmark binds, so production runs as before. A turn's trace ends with the reply (its
+text and length, cards, map buttons, Proposal, and `modelText`, the model's own text, with `approvalLine`, whether the
+server added the line) or the failure: STEP_LIMIT, TIMEOUT or ERROR. A run saved before P12 has neither field, and its
+text is the model's. The P05 report reads J9 on the reply the User saw and J9-model on `modelText`.
 
 A case is a single turn, a fixed history (the earlier turns written out, the Assistant's with cards and a Proposal by
 seed name; all of them are sent in one request, and only the last turn is scored) or live (`live: true`: each User's message sent with the real replies before
@@ -2675,6 +2717,8 @@ into the database.
 | `srtm-elevation.json`            | SRTM 30 m heights over the campus, read only by the builder                                             | NASA SRTM, through OpenTopoData                      |
 | `walking-table.json`             | Seconds on foot for every pair of Places and of Places and stops, with each one's elevation             | `pnpm walking:build`, from the seed files above      |
 | `restaurant-places.json`         | The number of each Restaurant's Place, by its name as `GET /menus` gives it, read by the server         | Written by hand                                      |
+| `study-spaces.json`              | The 공부공간 layer's Study Spaces by building, each at a Place number, read by the server               | Written by hand from P13's research                  |
+| `department-colleges.json`       | The college of each department of the app's list, or `null`, read by the server                         | Written by hand from the app's department list       |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
@@ -2682,6 +2726,18 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   extract change. `pnpm walking:build --sensitivity` writes nothing: it moves every pin 10 m and 20 m in random
   directions, 10 runs each, and prints the mean change and the Places that move most. `openstreetmap-paths.json` and
   `srtm-elevation.json` were exported once and have no name in `pnpm seed:export`, so that the table stays reproducible.
+- **Scoring a walking table**: `pnpm walking:score` scores the committed table against the 30 test walks of P04's
+  walking evaluation, and `pnpm walking:score <file>` another table the builder wrote. It calls nothing. It reads the
+  frozen pairs, with the table's and the baseline's seconds at the freeze, from `eval/walking/pairs.json` and the walked
+  times from `eval/walking/walks.json`. For the table, and beside it the baseline, it prints the MAE, the share within
+  ±2 minutes and within min(25% of the walk, 2 minutes), a difference equal to the limit counting as within, the share
+  walked more than 2 minutes longer than predicted and the MAE over the 8 pairs where the two differed by more than 2
+  minutes at the freeze; then k = Σ(walked × table) / Σ(table²), and the threshold under each tolerance: at least 70%
+  within, and the table's MAE below the baseline's. Last it fits the speed and the climb value to the 13 calibration
+  walks, by ordinary least squares with no constant term, and prints them unrounded; a climb value below 0 becomes 0
+  with that fit's speed. Each pair's path metres and climb are recovered from its seconds at the freeze, at 1.1 m/s and
+  3 s per metre of climb, and from the committed table's elevations. The builder's two constants in
+  `src/travel/walking-graph.ts` are that fit's, as P11 adopted them.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
@@ -2715,6 +2771,16 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **When the Co-op renames or moves a restaurant**, correct its row in `restaurant-places.json`, with the name exactly as
   the worker sends it and the number as the Places have it. A restaurant the file does not hold has no Place: no pin, no
   "N동" and no place in 공강에 밥. It stays in the menu panel.
+- **The 공부공간 layer** (`GET /study-spaces`, signed in): `study-spaces.json` holds each building at a Place number
+  of the seed and its Study Spaces, each with its `hours` (display text, or `null`), its `restriction` (`colleges`,
+  `departments` or `graduateOnly`, with the `label` of "○○ 학생만 사용할 수 있어요"), `link`, `source`, `confidence` and a
+  `note` for the reviewer, which is never served. The server reads it once at start, with `department-colleges.json`;
+  a Place number the seed does not hold, or a restriction naming a college or a department the table does not hold,
+  stops the start. A space is `usable` for a User whose 학과 is listed, or whose 학과's college is, or, for
+  `graduateOnly`, whose 소속 is 대학원; an empty or unknown 학과, or no 소속, is not. A building is `usable` when any of
+  its spaces is. 관정관's entry lists the seat sectors of the library catalogue the User may book, which the phone reads
+  through the User's own Library Session; no count comes back. When the app's department list changes, add the new
+  names to `department-colleges.json`: the app's test fails until every name has an entry.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.
@@ -2898,8 +2964,8 @@ src/
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases;
-                                     `replay/` and `gold/`, the replay without the model, `pnpm eval:replay`
-                                     also the shuttle metric's logged days
+                                     `replay/` and `gold/`, the replay without the model, `pnpm eval:replay`; also the shuttle
+                                     metric's logged days, and the walking evaluation's pairs and walks
 test/                                tests named by level; the integration tests run against PostgreSQL and Redis in
                                      containers
 ```
