@@ -4,7 +4,7 @@ Status: ready-for-agent
 
 Parent: `../spec.md` (P12)
 
-Branch and PR: its own branch from `3.0/Main` after the spec merges, merging the tag `p12-x` (X) once it exists and nothing newer (`3.0/P12-04-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The PR merges only after ticket 06's after set is recorded. Heavy jobs take the shared lock (spec, Measurement).
+Branch and PR: its own branch from `3.0/Main` after the spec merges, merging the tag `p12-x` (X) once it exists and nothing newer (`3.0/P12-04-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The after set measures this PR at a fixed commit on `p12-x`, never on `3.0/Main`. Before it merges, the PR is updated from `3.0/Main`, and ticket 06 records any change between the measured commit and what lands. Heavy jobs take the shared lock (spec, Measurement).
 
 **What to build:** Two changes that land together in one PR. The wider campus default without the time check would publish wrong times (a-015, a-053). They may be split into commits, but not into PRs.
 
@@ -146,7 +146,7 @@ Draft failing `placeMatches` and `timesConsistent`.
 
 ### Agent usage (2026-11-05)
 
-- Agent time: about 1 hour 30 minutes over one session, an estimate that leaves out the waits for the owner.
-- Tokens, the session and its two review subagents together: input 298, output 115,784; of the input, cache reads
-  19,633,543 and cache writes 350,730.
-
+- Agent time: about 2 hours 15 minutes over one session, through #215's first review; an estimate that leaves out the
+  waits for the owner and for CI.
+- Tokens, the session and its two review subagents together: input 460, output 163,190; of the input, cache reads
+  39,811,783 and cache writes 424,956.
