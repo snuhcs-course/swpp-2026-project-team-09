@@ -5,6 +5,7 @@
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -32,6 +33,8 @@ let place302: Place;
 const FIRST_MONDAY = '2102-01-02';
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
+// 301's study rooms, booked on 예약하샤 (seed/facility-booking.json).
+const STUDY_ROOMS = { label: '예약하샤 스터디룸 예약', url: 'https://ssims.snu.ac.kr/index.do' };
 
 function day(weeks: number): string {
   return weeksAfter(FIRST_MONDAY, weeks);
@@ -136,7 +139,7 @@ describe('repeat_last', () => {
           board: 'meal',
           capacity: 4,
           startsAt: `${day(18)}T12:30:00+09:00`,
-          place: { id: place301.id, name: place301.name },
+          place: { id: place301.id, name: place301.name, booking: STUDY_ROOMS },
           globalEvent: null,
           invitees: [],
         },
