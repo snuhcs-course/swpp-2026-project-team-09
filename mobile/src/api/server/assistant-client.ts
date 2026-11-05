@@ -67,7 +67,7 @@ function isNamed(value: unknown): value is { id: string; name: string } {
   return hasTexts(value, ['id', 'name']);
 }
 
-function isQuestProposal(value: unknown): value is QuestProposal {
+export function isQuestProposal(value: unknown): value is QuestProposal {
   const place = field(value, 'place');
   const globalEvent = field(value, 'globalEvent');
   return (

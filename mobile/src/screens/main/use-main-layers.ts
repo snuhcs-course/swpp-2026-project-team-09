@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -12,7 +13,7 @@ import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
 import { clusteredStudy, studyMerges } from '@/features/study/adapter';
 import { useStudyCards } from '@/features/study/use-study';
-import { type ChatSheetControl, useChatSheet } from './chat-sheet';
+import type { ChatSheetControl } from './chat-sheet';
 import { type LayerStack, useLayerStack } from './layers';
 import { ROUTE_PADDING } from './layout';
 import type { MainMap } from './use-main-map';
@@ -75,15 +76,14 @@ export interface MainLayers {
   shuttle: ShuttleLayer;
   cards: readonly CardView[];
   ready: boolean;
-  chat: ChatSheetControl;
 }
 
-// The 편의기능 stack and what its layers put on the map, with the map's own cards, and the chat's sheet, which turns a
-// layer on from a map button and which a card's button may ask.
+// The 편의기능 stack and what its layers put on the map, with the map's own cards. The chat's sheet, which turns a
+// layer on from a map button and which a card's button may ask, is the main screen's, since it opens from the card
+// that is selected.
 export function useMainLayers(inFront: boolean, map: MainMap): MainLayers {
   const stack = useLayerStack(inFront);
   const shuttle = useShuttle(stack.layers.shuttle);
   const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map));
-  const chat = useChatSheet(inFront, stack.turnOn);
-  return { stack, shuttle, cards, ready, chat };
+  return { stack, shuttle, cards, ready };
 }

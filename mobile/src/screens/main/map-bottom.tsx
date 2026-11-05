@@ -5,8 +5,11 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -20,7 +23,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { BottomControls } from './bottom-controls';
-import type { ChatSheetControl } from './chat-sheet';
+import { type ChatSheetControl, useChatSheet } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { AI_INPUT, CARD, LAYERS_BUTTON, type Room } from './layout';
 import { ShuttleNotice } from './shuttle-notice';
@@ -29,6 +32,7 @@ import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
 import type { TutorialFlow } from './tutorial/use-tutorial-flow';
 import type { TutorialPinTarget } from './tutorial/use-tutorial-pin';
+import type { MainRoute } from './use-route';
 
 // The menu panel at the meal served next, at a restaurant's section or at the top of the list.
 export function openMenus(restaurant?: string): void {
@@ -55,6 +59,23 @@ export interface Taken {
   topCard: boolean;
   bottomCard: boolean;
   notice: string | null;
+}
+
+// The Global Event whose card is open, which the chat's suggestion is asked for.
+function openEventOf(card: CardView | null): string | null {
+  const primary = card?.kind === 'global-event' ? card.primary : null;
+  return primary?.action === 'recruit' ? primary.eventId : null;
+}
+
+// The chat's sheet, which the main screen holds so that a card's button can ask the Assistant. It opens from the
+// selected card: its Global Event, for the suggestion, and its 길찾기.
+export function useMainChat(
+  inFront: boolean,
+  stack: LayerStack,
+  selected: CardView | null,
+  route: MainRoute,
+): ChatSheetControl {
+  return useChatSheet(inFront, stack.turnOn, { openEventId: openEventOf(selected), routeTo: route.routeTo });
 }
 
 export function takenBy(selected: CardView | null, serviceHours: string | null): Taken {
@@ -103,6 +124,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         onHeight={setInputHeight}
         onOpen={chat.open}
         onSend={chat.chat.send}
+        placeholder={chat.placeholder}
         waiting={chat.chat.waiting}
       />
       <TutorialPager flow={tutorial} />

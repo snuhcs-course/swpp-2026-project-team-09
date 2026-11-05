@@ -45,6 +45,9 @@ const ASSISTANT_DEFAULTS = {
   ASSISTANT_MAX_OUTPUT_TOKENS: '1000',
   ASSISTANT_GLOBAL_ALIASES: 'true',
   ASSISTANT_ALIAS_HOLDBACK_PERCENT: '10',
+  // No account is held back, so that every test's User gets the whole score. A test of the holdback starts an app with
+  // 100.
+  ASSISTANT_SUGGESTION_HOLDBACK_PERCENT: '0',
 };
 
 // Starts PostgreSQL and Redis once for every test file, brings the empty main database up to the current schema and

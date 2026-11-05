@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
@@ -30,11 +31,16 @@ import { UserDayService } from './free-time/user-day.service.js';
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
+import { SUGGESTION_RANDOM, systemRandom } from './suggestions/random.js';
+import { SuggestionCandidates } from './suggestions/suggestion-candidates.service.js';
+import { SuggestionsController } from './suggestions/suggestions.controller.js';
+import { SuggestionsService } from './suggestions/suggestions.service.js';
 
 @Module({
   // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule and
-  // PlacesModule give what the resolvers read, and TimetableModule and TravelModule what the 공강 tools do. UsersModule
-  // gives the 소속 the library tools read, and TutorialModule the tutorial getTutorial answers.
+  // PlacesModule give what the resolvers read, TimetableModule what the grey suggestions do, and TimetableModule and
+  // TravelModule what the 공강 tools do. UsersModule gives the 소속 the library tools read, and TutorialModule the
+  // tutorial getTutorial answers.
   imports: [
     FriendsModule,
     GlobalEventsModule,
@@ -47,12 +53,15 @@ import { ResolutionEventsService } from './resolution-events.service.js';
     TutorialModule,
     UsersModule,
   ],
-  controllers: [AssistantController, AliasesController],
+  controllers: [AssistantController, AliasesController, SuggestionsController],
   providers: [
     AssistantService,
     ResolutionEventsService,
     UserDayService,
     AliasesService,
+    SuggestionsService,
+    SuggestionCandidates,
+    { provide: SUGGESTION_RANDOM, useFactory: systemRandom },
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     // The P6 eval world binds a day of its own here.

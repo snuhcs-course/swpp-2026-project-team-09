@@ -34,6 +34,7 @@ import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
 import { mockRoom } from './room';
+import { mockSuggestion } from './suggestion';
 import { mockTutorial } from './tutorial';
 import { mockWalkingRoute } from './walking-route';
 
@@ -204,6 +205,7 @@ export const mockClient: ApiClient = {
   ...mockRoom,
   ...mockParty,
   ...mockEvents,
+  ...mockSuggestion,
   ...mockAliases,
   ...mockTutorial,
 };

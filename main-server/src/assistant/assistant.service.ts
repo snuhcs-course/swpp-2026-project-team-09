@@ -6,6 +6,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by fyoon46
@@ -59,6 +60,7 @@ import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
+import { SuggestionsService } from './suggestions/suggestions.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
 // message cost more.
@@ -98,6 +100,7 @@ export class AssistantService {
     placeMatcher: PlaceMatcher,
     private readonly resolutionEvents: ResolutionEventsService,
     private readonly aliases: AliasesService,
+    private readonly suggestions: SuggestionsService,
     placeLookup: PlaceLookup,
     days: UserDayService,
     restaurantPlaces: RestaurantPlaces,
@@ -166,6 +169,10 @@ export class AssistantService {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
       const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
+      if (proposal !== null) {
+        // A Proposal asked for in the chat may be one a grey suggestion would have made (suggestions.service.ts).
+        await this.suggestions.typedInstead(userId, proposal, now);
+      }
       return { text, mapButtons, cards, proposal, choices, resolvedBy };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);

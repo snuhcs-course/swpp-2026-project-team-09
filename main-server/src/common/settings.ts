@@ -10,6 +10,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
@@ -97,6 +98,9 @@ export const settingsSchema = z
     // of their id, who never receive them while they still teach, so that learning can be told from habit.
     ASSISTANT_GLOBAL_ALIASES: z.stringbool().default(true),
     ASSISTANT_ALIAS_HOLDBACK_PERCENT: percent(10),
+    // The share of accounts, in percent, whose grey suggestions use the base weights only, so that what the learned
+    // factors add can be told from habit.
+    ASSISTANT_SUGGESTION_HOLDBACK_PERCENT: percent(10),
     // Whether the step after a Collection publishes what it read. "off" leaves every session a Draft: it is turned off
     // when automatic publication is found to make mistakes (infra/production/README.md).
     AUTOMATIC_PUBLICATION: z

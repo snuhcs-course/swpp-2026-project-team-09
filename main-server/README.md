@@ -2303,6 +2303,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when it is called
     twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change.
+    The free text the model writes into a Proposal is the title and the description, from the User's own words; both
+    are bounded by `makeQuestSchema` (50 and 200 characters) before the card is drawn and by `questProposalSchema`
+    when the Proposal is sent back, `startsAt` must parse as a date and time, `capacity` is 1 to 8, and every name on
+    the card comes from the catalog, never from the model. The tap on 만들기 is the last line, not the defence.
   - **The 공강 tools** (`free-time/`, ADR 0009) work on a day from today to a week ahead, and on the items of a User's
     day: each Class meeting on that weekday and each timed Sub Quest of a Quest they hold (`UserDayService`, for any
     User). Rooms, Places, coordinates and the reason anyone is busy are never returned.
@@ -2375,6 +2379,49 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
   (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
   text from the steps' text, or the fixed sentence. `causeOf` names why a run failed for the log.
+
+**Grey suggestions** (`src/assistant/suggestions/`) are decided by this server without the model, when the chat opens.
+`GET /assistant/suggestion?screen=main|events|party&openCard=globalEvent:<id>` answers
+`200 { "suggestion": { "id", "text", "reason", "action" } }` or `{ "suggestion": null }`, never cached, where `action` is
+`{ "type": "proposal", "proposal": { … } }` with a Proposal as above, or `{ "type": "route", "placeId", "name" }`; a
+query of another shape gets 400. Four templates apply by rules read in Korea time from the timetables, a User being
+free when no class of theirs covers now: `lunch_with_free_friend` (from 11:00 to 14:00, the User free and a Friend
+whose friendship shares at both ends free with a class today: a Closed Proposal for two inviting the first such Friend
+of the list, at the next quarter hour at least 15 minutes ahead), `route_to_next_class` (on `main`, the next class
+today starts within 60 minutes and has a Place), `party_for_open_event` (the open card is a published event that has
+not ended: an Open Proposal for three on the show Board, starting with it) and `repeat_last` (two or more Quests the
+User led in the last 14 days at one Place in one meal slot, 아침 before 10:30, 점심 to 14:30, 저녁 from 16:00, none
+made from a suggestion: the last one again at its time today or tomorrow). Each Proposal goes through `proposeQuest`
+with the template's ids as if a resolver had returned them, so one the chat would refuse is never shown. The score is
+the template's weight × its acceptance `(accepted + 1) / (shown + 2)` over all Users' impressions of the last 30 days in
+the bucket of the time of day (05–11, 11–14, 14–18, 18–05) × `1 + 0.5 × min(repeats, 4)` for `repeat_last`. A
+suggestion shows from 0.25, 0.35 for one that names a Friend, and none shows for 2 hours after a dismissal, for 6 after
+the second of a day in Korea, and for the rest of the day after the third. The best score over its threshold shows 9
+times in 10, else one of every eligible template drawn uniformly, those under their threshold included, so that a
+template a few cold impressions sank keeps getting impressions and its acceptance can recover (`SUGGESTION_RANDOM`
+binds the random source; nothing is drawn during a cooldown or behind the gate), and the probability the shown one had
+is written as its propensity. `ASSISTANT_SUGGESTION_HOLDBACK_PERCENT` (10) of accounts, chosen by the
+SHA-256 of the User's id, read acceptance as 0.5 and no repeats. Before the templates are scored, the User's own
+acceptance of the suggestions shown to them lately, their newest ten of the last week whose outcome is settled,
+smoothed the same way, is read as their receptiveness: under 0.15, five in a row ignored or dismissed, nothing is shown
+to a learning-arm account whatever the templates score, as Pre-Filtering (ASEW 2025) gates a suggestion from
+content-free signals before it is made; a held-back account is never gated, which is how the accepts the gate costs
+are read. The numbers sit in `suggestions/constants.ts`, each with its reason. `suggestion_impressions` holds one row
+for each answer, without any text: the template shown, or null when nothing was shown, the eligible templates best
+first, `candidates`, the ids each eligible template's Proposal would take as `<template> <kind>:<id>`, the bucket, the
+propensity (null when nothing was shown), `holdback`, `receptiveness` and `gated`, `shown_at`, when the chat opened,
+and the outcome: `silent` when nothing was shown (no template eligible, none over its threshold, a cooldown, or the
+gate), else `shown` until `POST /assistant/suggestions/:id/outcome` with
+`{ "outcome": "accepted" | "dismissed" }`, or `{ "outcome": "confirmed", "questId" }` once 만들기 made the Proposal's
+Quest, answers 204 and records it with `outcome_at`. The same outcome again changes nothing; another User's suggestion
+gets 404 `SUGGESTION_NOT_FOUND`, and an outcome that would replace a later one 409 `SUGGESTION_OUTCOME_SETTLED`. An
+ignored suggestion is a row still `shown` 10 minutes on, read when the rows are analysed. When a chat reply carries a
+Proposal, the server matches it to the User's row of the last 10 minutes: the first eligible template whose Proposal
+would have taken one of its ids (its Place, its event or an invited Friend) is written as `typed_template` with
+`typed_at`. On a silent row, or one that showed another template, that is a missed need: the User asked for what a
+suggestion could have offered. On the row of the template shown it says the User typed what was suggested. Acceptance
+and missed needs together are what the replay reports (below), as ProactiveBench (ICLR 2025) counts proposals accepted,
+rejected and needed but not made. The rows go with the account.
 
 ### Testing with the scripted model
 

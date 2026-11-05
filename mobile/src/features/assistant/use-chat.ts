@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -26,6 +27,7 @@ import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
+import { useRejectAlias } from './use-reject-alias';
 
 // Why the Assistant gave no answer: it could not answer now, which 다시 시도 sends again, or the User's messages of
 // the day are used up.
@@ -86,6 +88,9 @@ export interface Chat {
   rejectAlias: (bubbleId: number, reading: ResolvedBy) => Promise<void>;
   // 새 대화: forgets the conversation, and a reply still on its way.
   reset: () => void;
+  // Shows a Proposal that no request asked for, a suggestion's, as the Assistant's, and gives its bubble's id. Nothing
+  // is sent now; the bubble goes with the next request as any other.
+  propose: (text: string, proposal: QuestProposal) => number;
   // Adds the app's own bubble, which no request sends.
   addOwn: (bubble: OwnBubble) => void;
   // How each library card of the conversation ended, by the card's place: its bubble and its key.
@@ -167,12 +172,12 @@ function userBubble(text: string, chosen: Chosen | null): NewBubble {
   };
 }
 
-interface Bubbles {
+export interface Bubbles {
   bubbles: readonly ChatBubble[];
   // What was said, as the next request sends it, without waiting for a render.
   said: { readonly current: readonly ChatBubble[] };
   show: (next: readonly ChatBubble[]) => void;
-  add: (bubble: NewBubble) => void;
+  add: (bubble: NewBubble) => number;
 }
 
 function useBubbles(): Bubbles {
@@ -184,34 +189,14 @@ function useBubbles(): Bubbles {
     setBubbles(next);
   }, []);
   const add = useCallback(
-    (bubble: NewBubble): void => {
+    (bubble: NewBubble): number => {
       nextId.current += 1;
       show([...said.current, { ...bubble, id: nextId.current }]);
+      return nextId.current;
     },
     [show],
   );
   return { bubbles, said, show, add };
-}
-
-function sameReading(one: ResolvedBy, other: ResolvedBy): boolean {
-  return one.kind === other.kind && one.words === other.words && one.id === other.id;
-}
-
-// 아니에요 of the conversation's bubbles: the line of that reading leaves its bubble once the main server took it.
-function useRejectAlias({ said, show }: Pick<Bubbles, 'said' | 'show'>): Chat['rejectAlias'] {
-  return useCallback(
-    async (bubbleId: number, reading: ResolvedBy): Promise<void> => {
-      await apiClient.rejectAlias({ kind: reading.kind, words: reading.words, targetId: reading.id });
-      show(
-        said.current.map((bubble) =>
-          bubble.id === bubbleId
-            ? { ...bubble, resolvedBy: bubble.resolvedBy.filter((held) => !sameReading(held, reading)) }
-            : bubble,
-        ),
-      );
-    },
-    [said, show],
-  );
 }
 
 // The app's own bubbles, added after what was said.
@@ -255,11 +240,16 @@ function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forge
   return { outcomes, finish, unfinish, forget };
 }
 
-// Asks the Assistant to answer the conversation as it stands, the User's message last. `drop` starts another
-// conversation, and a reply to the one before is dropped.
-function useAsk({ said, add }: Pick<Bubbles, 'said' | 'add'>): { waiting: boolean; ask: () => void; drop: () => void } {
+// Asking the Assistant: the request for the conversation as it stands, the User's message last, with 다시 시도 and
+// 새 대화, which also forgets how the library cards ended.
+function useAsking(
+  { said, show, add }: Bubbles,
+  forget: () => void,
+): { waiting: boolean; ask: () => void; retry: () => void; reset: () => void } {
   const [waiting, setWaiting] = useState(false);
+  // Which conversation a reply belongs to: 새 대화 starts another, and a reply to the one before is dropped.
   const conversation = useRef(0);
+
   const ask = useCallback((): void => {
     const asked = conversation.current;
     setWaiting(true);
@@ -270,18 +260,47 @@ function useAsk({ said, add }: Pick<Bubbles, 'said' | 'add'>): { waiting: boolea
       }
     });
   }, [add, said]);
-  const drop = useCallback((): void => {
+
+  const retry = useCallback((): void => {
+    if (said.current.at(-1)?.failure !== 'unavailable') {
+      return;
+    }
+    show(said.current.slice(0, -1));
+    ask();
+  }, [ask, said, show]);
+
+  const reset = useCallback((): void => {
     conversation.current += 1;
+    show([]);
+    forget();
     setWaiting(false);
-  }, []);
-  return { waiting, ask, drop };
+  }, [forget, show]);
+
+  return { waiting, ask, retry, reset };
+}
+
+// An Assistant's bubble the app adds itself, with a Proposal the server made outside the chat.
+function proposedBubble(text: string, proposal: QuestProposal): NewBubble {
+  return {
+    role: 'assistant',
+    text,
+    cards: [],
+    mapButtons: [],
+    proposal,
+    choices: [],
+    chosen: null,
+    resolvedBy: [],
+    failure: null,
+  };
 }
 
 // The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
 // message sends the conversation, and the reply is shown whole.
 export function useChat(): Chat {
-  const { bubbles, said, show, add } = useBubbles();
-  const { waiting, ask, drop } = useAsk({ said, add });
+  const held = useBubbles();
+  const { add, said, show } = held;
+  const { outcomes, finish, unfinish, forget } = useOutcomes();
+  const { waiting, ask, retry, reset } = useAsking(held, forget);
 
   const send = useCallback(
     (text: string): void => {
@@ -299,24 +318,26 @@ export function useChat(): Chat {
     [add, ask],
   );
 
-  const retry = useCallback((): void => {
-    if (said.current.at(-1)?.failure !== 'unavailable') {
-      return;
-    }
-    show(said.current.slice(0, -1));
-    ask();
-  }, [ask, said, show]);
-
-  const { outcomes, finish, unfinish, forget } = useOutcomes();
-
-  const reset = useCallback((): void => {
-    drop();
-    show([]);
-    forget();
-  }, [drop, forget, show]);
+  const propose = useCallback(
+    (text: string, proposal: QuestProposal): number => add(proposedBubble(text, proposal)),
+    [add],
+  );
 
   const addOwn = useAddOwn(add);
   const rejectAlias = useRejectAlias({ said, show });
 
-  return { bubbles, waiting, send, choose, retry, rejectAlias, reset, addOwn, outcomes, finish, unfinish };
+  return {
+    bubbles: held.bubbles,
+    waiting,
+    send,
+    choose,
+    retry,
+    rejectAlias,
+    reset,
+    propose,
+    addOwn,
+    outcomes,
+    finish,
+    unfinish,
+  };
 }

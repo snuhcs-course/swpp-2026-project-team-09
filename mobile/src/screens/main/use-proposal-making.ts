@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +18,8 @@ import { useSendParty } from '../party/form/use-send';
 import { showMine } from '../party/use-party-actions';
 import type { ProposalActions } from './chat-cards';
 import type { ProposalMaking } from './chat-proposal-card';
+
+type OnMade = (bubbleId: number, questId: string) => void;
 
 const NOT_READY = '빠진 내용이 있어요. 채팅으로 알려 주세요';
 const STARTED = '시작 시간이 지났어요. 새 시간을 채팅으로 알려 주세요';
@@ -43,8 +46,9 @@ export function openProposalForm(proposal: QuestProposal, made: () => void, clos
 // Proposal is made once: its card then says so, and a second press while it is on its way does nothing. The state
 // lives with the conversation, so that closing the sheet keeps it.
 // A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
-// without making leaves the card as it was.
-export function useProposalMaking(close: () => void): ProposalActions {
+// without making leaves the card as it was. `onMade` closes the sheet once 만들기 made a Quest, told which and from
+// which card's bubble.
+export function useProposalMaking(close: () => void, onMade: OnMade): ProposalActions {
   const sendParty = useSendParty(null);
   const showToast = useToast();
   const announcers = useQuery(globalEventAnnouncersQuery).data;
@@ -75,7 +79,7 @@ export function useProposalMaking(close: () => void): ProposalActions {
         return;
       }
       mark(bubbleId, 'made');
-      close();
+      onMade(bubbleId, sent.questId);
       if (sent.sent === 'room') {
         router.navigate(`/room/${sent.questId}`);
       } else {

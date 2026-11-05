@@ -22,6 +22,7 @@ import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
+import type { ChatSuggestion, SuggestionContext, SuggestionOutcome } from './suggestion-types';
 import type { MatchingRequest } from './matching-types';
 import type {
   Board,
@@ -175,6 +176,10 @@ export interface ApiClient {
   declineInvitation: (invitationId: string) => Promise<void>;
   // The chat Assistant's reply to the conversation, the User's new message last.
   askAssistant: (messages: ChatMessage[]) => Promise<AssistantReply>;
+  // The grey suggestion of the empty chat, for where it opened; null when none fits.
+  getChatSuggestion: (context: SuggestionContext) => Promise<ChatSuggestion | null>;
+  // Refused with 404 for a suggestion shown to another User.
+  sendSuggestionOutcome: (suggestionId: string, outcome: SuggestionOutcome) => Promise<void>;
   // The words the User taught the Assistant, the latest used first.
   listAliases: () => Promise<TaughtAlias[]>;
   // Refused with 404 for an alias the User does not have.
@@ -287,6 +292,8 @@ export const apiClient: ShownClient = {
   listCompanionSeekers: () => chosen().listCompanionSeekers(),
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages) => chosen().askAssistant(messages),
+  getChatSuggestion: (context) => chosen().getChatSuggestion(context),
+  sendSuggestionOutcome: (suggestionId, outcome) => chosen().sendSuggestionOutcome(suggestionId, outcome),
   listAliases: () => chosen().listAliases(),
   deleteAlias: (aliasId) => chosen().deleteAlias(aliasId),
   rejectAlias: (rejection) => chosen().rejectAlias(rejection),

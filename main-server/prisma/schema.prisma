@@ -18,6 +18,7 @@
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
 // 2026-10-28  Opus 5.5   prompted by fyoon46
 // 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-01  Fable 5.1  prompted by fyoon46
 // 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-01  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-02  Opus 5.5   prompted by AhnJinYoung
@@ -81,6 +82,7 @@ model User {
   tutorialQuests    TutorialQuestProgress[]
   resolutionEvents  ResolutionEvent[]
   userAliases       UserAlias[]
+  suggestionImpressions SuggestionImpression[]
   roomRequests      RoomRequest[]
   roomConsents      RoomConsent[]
   roomNotices       RoomNotice[]
@@ -1001,6 +1003,63 @@ enum ResolutionOutcome {
   rejected
 
   @@map("resolution_outcome")
+}
+
+// A grey suggestion the Assistant showed a User when the chat opened, and what the User did with it (README.md:
+// Assistant). It holds no text, only what measuring acceptance needs. It goes with the account.
+model SuggestionImpression {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String            @map("user_id") @db.Uuid
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // One row for each answer of GET /assistant/suggestion: the template shown, such as lunch_with_free_friend, or null
+  // when nothing was shown; every template that was eligible, the best score first; and the ids each eligible
+  // template's action would take, as "<template> <kind>:<id>", by which a request the User typed instead is matched.
+  template      String?
+  eligible      String[]
+  candidates    String[]
+  // The time of day in Korea whose acceptance was read: morning, midday, afternoon or evening.
+  bucket        String
+  // The probability the shown template had of being shown, by which acceptance is weighted later; null when nothing
+  // was shown.
+  propensity    Float?
+  // Whether the account is held back to the base weights.
+  holdback      Boolean
+  // The User's own acceptance of the suggestions shown to them in the last week, smoothed, read before the templates
+  // are scored, and whether it alone held everything back; a held-back account is never gated.
+  receptiveness Float
+  gated         Boolean
+  // When the chat opened and the suggestion was decided, shown or not.
+  shownAt       DateTime          @map("shown_at")
+  // The migration checks that template is null exactly for a silent outcome, that outcomeAt is set once the outcome is
+  // neither silent nor shown, and questId exactly when it is confirmed.
+  outcome       SuggestionOutcome @default(shown)
+  outcomeAt     DateTime?         @map("outcome_at")
+  // The Quest made from the suggestion's Proposal. No relation, so that the row outlives the Quest.
+  questId       String?           @map("quest_id") @db.Uuid
+  // The eligible template whose action the Proposal the User asked for in the chat within 10 minutes would have
+  // taken, and when: a missed need when it is not the template shown.
+  typedTemplate String?           @map("typed_template")
+  typedAt       DateTime?         @map("typed_at")
+
+  @@index([userId, shownAt])
+  @@index([bucket, shownAt])
+  @@map("suggestion_impressions")
+}
+
+// An impression still shown 10 minutes after it was shown was ignored, which is read when it is analysed, not stored.
+enum SuggestionOutcome {
+  // Nothing was shown: no template was eligible, none reached its threshold, a cooldown held them back, or the User's
+  // receptiveness did.
+  silent
+  shown
+  // Tapped.
+  accepted
+  // Closed with ×.
+  dismissed
+  // Its Proposal's Quest was made with 만들기.
+  confirmed
+
+  @@map("suggestion_outcome")
 }
 
 // A request to book a 관정 group study room with companions (README.md: Group study room requests). The companions are

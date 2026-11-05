@@ -8,6 +8,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -21,16 +22,19 @@ import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import { questsQuery } from '@/api/queries';
 import { Button, color, font, Icon, space } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
+import type { Suggestion } from '@/features/assistant/use-suggestion';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import type { PostView } from '@/features/party/posts';
 import { EventSheets, useEventSheets } from '../events/event-sheets';
 import { JoinSheet } from '../party/join-sheet';
 import { openPost } from '../party/post-card';
 import { usePartyActions } from '../party/use-party-actions';
-import { ChatBubbles, ChatEmpty } from './chat-bubbles';
+import { ChatBubbles } from './chat-bubbles';
 import type { CardActions, ProposalActions } from './chat-cards';
+import { ChatEmpty } from './chat-empty';
 import type { EventCardActions } from './chat-event-cards';
 import type { QuestCardActions } from './chat-quest-cards';
+import { type ChatFrom, SuggestionRow, useSuggestedSheet } from './chat-suggestion';
 import type { LibraryCardActions } from './library/use-library-call';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
@@ -49,6 +53,8 @@ interface ChatSheetProps {
   onOpenPartyForm: (proposal: QuestProposal) => void;
   // The Proposal card of an answer: 만들기, and how it stands.
   proposals: ProposalActions;
+  // The grey suggestion of the empty chat.
+  suggestion: Suggestion;
   // How high the AI input's top stands above the sheet's bottom: the input lies over it.
   inputTop: number;
 }
@@ -130,12 +136,6 @@ function useQuestCards(onOpenPost: (questId: string) => void): {
   return { actions, sheet };
 }
 
-// The chat with the Assistant, the `MainChat` frame: a translucent sheet from the top of the screen to the
-// navigation, over the map and the lists. The AI input stays at the bottom over it as the chat's input. The
-// conversation is the main screen's, so that the sheet only shows it. A press on the sheet that nothing in it takes
-// puts the keyboard down, and the sheet stays: the header and the conversation each see to it. The sheet itself takes
-// no touch: on Android a JS responder around the conversation's scroll view takes the drag from it, and the
-// conversation stopped scrolling while the keyboard was down.
 // What the library cards do with the chat: add the app's own bubbles and keep how each card ended.
 function useLibraryActions({ addOwn, outcomes, finish, unfinish }: Chat): LibraryCardActions {
   return useMemo(
@@ -144,13 +144,13 @@ function useLibraryActions({ addOwn, outcomes, finish, unfinish }: Chat): Librar
   );
 }
 
-export function ChatSheet(props: ChatSheetProps): ReactElement {
-  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, onOpenPartyForm, proposals, inputTop } = props;
-  const { top } = useSafeAreaInsets();
-  useBackToClose(inFront, onClose);
+// What the cards of the answers do, and the sheets their buttons open over the chat.
+function useChatCards({ chat, onOpenEvent, onOpenPost, onOpenPartyForm, proposals }: ChatSheetProps): {
+  cardActions: CardActions;
+  sheets: ReactElement;
+} {
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
-  const { bubbles, waiting, send, choose, retry, reset } = chat;
   const library = useLibraryActions(chat);
   const cardActions: CardActions = useMemo(
     () => ({
@@ -163,13 +163,36 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
     }),
     [eventCards.actions, questCards.actions, proposals, chat.rejectAlias, onOpenPartyForm, library],
   );
+  return {
+    cardActions,
+    sheets: (
+      <>
+        {eventCards.sheets}
+        {questCards.sheet}
+      </>
+    ),
+  };
+}
+
+// The chat with the Assistant, the `MainChat` frame: a translucent sheet from the top of the screen to the
+// navigation, over the map and the lists. The AI input stays at the bottom over it as the chat's input. The
+// conversation is the main screen's, so that the sheet only shows it. A press on the sheet that nothing in it takes
+// puts the keyboard down, and the sheet stays: the header and the conversation each see to it. The sheet itself takes
+// no touch: on Android a JS responder around the conversation's scroll view takes the drag from it, and the
+// conversation stopped scrolling while the keyboard was down.
+export function ChatSheet(props: ChatSheetProps): ReactElement {
+  const { chat, inFront, onClose, onShowLayer, suggestion, inputTop } = props;
+  const { top } = useSafeAreaInsets();
+  useBackToClose(inFront, onClose);
+  const { cardActions, sheets } = useChatCards(props);
+  const { bubbles, waiting, send, choose, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = inputTop + OVER_INPUT;
   return (
     <View style={[styles.sheet, { top: -top }]} testID="chat-sheet">
       <ChatHeader onClose={onClose} onReset={reset} />
       {bubbles.length === 0 && !waiting ? (
-        <ChatEmpty onSend={send} under={under} />
+        <ChatEmpty onSend={send} suggestion={<SuggestionRow suggestion={suggestion} />} under={under} />
       ) : (
         <ChatBubbles
           bubbles={bubbles}
@@ -181,8 +204,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
           waiting={waiting}
         />
       )}
-      {eventCards.sheets}
-      {questCards.sheet}
+      {sheets}
     </View>
   );
 }
@@ -236,6 +258,8 @@ export interface ChatSheetControl {
   chat: Chat;
   shown: boolean;
   open: () => void;
+  // The AI input's placeholder: the suggestion's text while one is held.
+  placeholder: string | undefined;
   // The sheet while it is open, under an AI input whose top stands that high above the sheet's bottom.
   sheet: (inputTop: number) => ReactElement | null;
 }
@@ -244,24 +268,18 @@ export interface ChatSheetControl {
 // sheet and turns its layer on with `turnOn`, the map's own layers; an event card closes it and opens the 행사 tab at
 // the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does; a Proposal,
 // once made, closes it and shows 내 파티, as the party form does, and its 수정, like a Restaurant card's 파티 만들기, closes
-// it and opens that form. However the sheet closes, the keyboard goes down with it: the AI input would keep the focus
-// otherwise.
-export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
+// it and opens that form. Opening on the empty chat asks for a grey suggestion (`useSuggestedSheet`).
+export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void, from: ChatFrom): ChatSheetControl {
   const chat = useChat();
   const [shown, setShown] = useState(false);
-  const open = useCallback((): void => {
-    setShown(true);
-  }, []);
-  const close = useCallback((): void => {
-    Keyboard.dismiss();
-    setShown(false);
-  }, []);
+  const { suggestion, open, close, closeMade } = useSuggestedSheet(chat, from, setShown);
   const { showLayer, openEvent, openQuestPost, openPartyForm } = useLeaving(close, turnOn);
-  const proposals = useProposalMaking(close);
+  const proposals = useProposalMaking(close, closeMade);
   return {
     chat,
     shown,
     open,
+    placeholder: suggestion.held?.text,
     sheet: (inputTop) =>
       shown ? (
         <ChatSheet
@@ -274,6 +292,7 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
           onOpenPost={openQuestPost}
           onShowLayer={showLayer}
           proposals={proposals}
+          suggestion={suggestion}
         />
       ) : null,
   };

@@ -47,6 +47,7 @@ import { eventClient } from './event-client';
 import { call } from './http';
 import { partyClient } from './party-client';
 import { roomClient } from './room-client';
+import { suggestionClient } from './suggestion-client';
 import { TUTORIAL_SERVED, tutorialClient } from './tutorial-client';
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
@@ -57,6 +58,7 @@ export const serverClient: ApiClient = {
   ...partyClient,
   ...eventClient,
   ...assistantClient,
+  ...suggestionClient,
   ...aliasClient,
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),

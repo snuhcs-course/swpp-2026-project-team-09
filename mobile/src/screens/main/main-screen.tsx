@@ -8,10 +8,13 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -30,7 +33,7 @@ import { Card } from './card';
 import { FriendList } from './friend-list';
 import { listsTop, mapInset, ROUTE_PADDING, type Room, takenUnderToast, takenUnderToastOverCard } from './layout';
 import { LocationExplanation } from './location-explanation';
-import { MapBottom, openMenus, takenBy } from './map-bottom';
+import { MapBottom, openMenus, takenBy, useMainChat } from './map-bottom';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
 import { askAssistant, pressOnMap, useMainLayers } from './use-main-layers';
@@ -268,17 +271,18 @@ function useAskedTutorialQuest(openSheet: (key: string) => void): void {
   }, [tutorial, openSheet]);
 }
 
-// The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), and the pin
-// of its 지도에서 보기.
+// The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), the pin of its
+// 지도에서 보기, and a press on the map, which that pin takes first.
 function useMainTutorial(
   selection: Selection,
   cards: readonly CardView[],
   map: MainMap,
-): { tutorial: TutorialFlow; start: boolean; pin: TutorialPin } {
+): { tutorial: TutorialFlow; start: boolean; pin: TutorialPin; onPress: (id: string) => void } {
   const tutorial = useTutorialFlow();
   useAskedTutorialQuest(tutorial.openSheet);
   const pin = useTutorialPin({ cards, selection, goTo: map.goTo, tutorialState: tutorial.tutorial?.state });
-  return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null, pin };
+  const onPress = pressWithPin(pin, pressOnMap(cards, map, selection));
+  return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null, pin, onPress };
 }
 
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
@@ -298,17 +302,17 @@ export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
   const me = useMe(map);
-  const { stack, shuttle, cards, ready, chat } = useMainLayers(inFront, map);
+  const { stack, shuttle, cards, ready } = useMainLayers(inFront, map);
   const selection = useSelection(cards, inFront);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
+  const chat = useMainChat(inFront, stack, selection.selected, route);
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
   useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
-  const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
+  const { tutorial, start, pin, onPress } = useMainTutorial(selection, cards, map);
   const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null, start);
-  const onPress = pressWithPin(pin, pressOnMap(cards, map, selection));
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
