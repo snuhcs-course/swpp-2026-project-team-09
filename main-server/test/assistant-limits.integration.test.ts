@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -221,12 +222,12 @@ describe('With a shorter daily limit', () => {
   });
 });
 
-describe('Without an OpenRouter key', () => {
+describe("Without the chosen provider's key, OpenRouter's being set", () => {
   let keyless: INestApplication<Server>;
 
   beforeAll(async () => {
     keyless = await startApp(
-      { ...inject('settings'), OPENROUTER_API_KEY: '' },
+      { ...inject('settings'), MODEL_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: '', OPENROUTER_API_KEY: 'key' },
       [],
       refuseKakao,
       refuseMatchServer,
@@ -247,5 +248,33 @@ describe('Without an OpenRouter key', () => {
 
     expect(response.body).toEqual(UNAVAILABLE);
     expect(model.received()).toHaveLength(0);
+  });
+});
+
+describe('With only the Anthropic key', () => {
+  let anthropicOnly: INestApplication<Server>;
+
+  beforeAll(async () => {
+    anthropicOnly = await startApp(
+      { ...inject('settings'), MODEL_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: 'key', OPENROUTER_API_KEY: '' },
+      [],
+      refuseKakao,
+      refuseMatchServer,
+      model.model,
+    );
+  });
+
+  afterAll(async () => {
+    await anthropicOnly.close();
+  });
+
+  it('the Assistant answers', async () => {
+    const { accessToken: token } = await signIn(anthropicOnly);
+    model.script({ text: '네' });
+
+    const response = await postAssistantMessages(anthropicOnly, token, ask('안녕'));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ text: '네' });
   });
 });

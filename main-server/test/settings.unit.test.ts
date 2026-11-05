@@ -6,6 +6,7 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -252,11 +253,14 @@ describe('settingsSchema: AUTOMATIC_PUBLICATION', () => {
   });
 });
 
+// With each on, the chosen provider's key and model: test/settings-model.unit.test.ts.
 describe('settingsSchema: AUTOMATIC_JUDGEMENT', () => {
   it('unset → off, and no key is needed', () => {
     const unset = {
       ...valid,
       AUTOMATIC_JUDGEMENT: undefined,
+      ANTHROPIC_API_KEY: undefined,
+      ANTHROPIC_MODEL: undefined,
       OPENROUTER_API_KEY: undefined,
       ASSISTANT_MODEL: undefined,
     };
@@ -266,18 +270,6 @@ describe('settingsSchema: AUTOMATIC_JUDGEMENT', () => {
       JUDGEMENT_TIMEOUT_MS: 60_000,
       JUDGEMENT_MAX_OUTPUT_TOKENS: 4000,
     });
-  });
-
-  it('on with the key and the model → on', () => {
-    expect(settingsSchema.parse({ ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
-      AUTOMATIC_JUDGEMENT: true,
-    });
-  });
-
-  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming AUTOMATIC_JUDGEMENT', (name) => {
-    const without = { ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
-
-    expect(refused(without)).toEqual(['AUTOMATIC_JUDGEMENT']);
   });
 
   it('anything else → refused, naming AUTOMATIC_JUDGEMENT', () => {
@@ -290,23 +282,13 @@ describe('settingsSchema: SAME_EVENT_AI_CHOICE', () => {
     const unset = {
       ...valid,
       SAME_EVENT_AI_CHOICE: undefined,
+      ANTHROPIC_API_KEY: undefined,
+      ANTHROPIC_MODEL: undefined,
       OPENROUTER_API_KEY: undefined,
       ASSISTANT_MODEL: undefined,
     };
 
     expect(settingsSchema.parse(unset)).toMatchObject({ SAME_EVENT_AI_CHOICE: false });
-  });
-
-  it('on with the key and the model → on', () => {
-    expect(settingsSchema.parse({ ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
-      SAME_EVENT_AI_CHOICE: true,
-    });
-  });
-
-  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming SAME_EVENT_AI_CHOICE', (name) => {
-    const without = { ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
-
-    expect(refused(without)).toEqual(['SAME_EVENT_AI_CHOICE']);
   });
 
   it('anything else → refused, naming SAME_EVENT_AI_CHOICE', () => {

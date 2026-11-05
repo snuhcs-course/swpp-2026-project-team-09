@@ -2,14 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 import { causeOf, type Model, MODEL_PORT } from '../assistant/adapter.js';
+import { keyConfigured } from '../assistant/model-port.js';
 import { PrismaService } from '../common/prisma.service.js';
-import { Settings } from '../common/settings.js';
+import { MODEL_SETTINGS, Settings } from '../common/settings.js';
 import {
   GlobalEventState,
   type Judgement,
@@ -92,6 +94,7 @@ export class JudgementsService {
   private readonly logger = new Logger(JudgementsService.name);
   private readonly limits: JudgementLimits;
   private readonly keyConfigured: boolean;
+  private readonly keyName: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -104,7 +107,8 @@ export class JudgementsService {
       timeoutMs: settings.get('JUDGEMENT_TIMEOUT_MS', { infer: true }),
       maxOutputTokens: settings.get('JUDGEMENT_MAX_OUTPUT_TOKENS', { infer: true }),
     };
-    this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
+    this.keyConfigured = keyConfigured(settings);
+    this.keyName = MODEL_SETTINGS[settings.get('MODEL_PROVIDER', { infer: true })].key;
   }
 
   // Judges the post of a Draft, whatever AUTOMATIC_JUDGEMENT says: the step for a later script and for the evaluation.
@@ -123,7 +127,7 @@ export class JudgementsService {
   // Answers with the post's Judgement as it now is. Another server's try that is still running is left to finish.
   async judgePost(sourcePostId: string): Promise<Judgement | null> {
     if (!this.keyConfigured) {
-      throw new Error('A Judgement needs OPENROUTER_API_KEY');
+      throw new Error(`A Judgement needs ${this.keyName}`);
     }
     const post = await this.prisma.sourcePost.findUniqueOrThrow({
       where: { id: sourcePostId },

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { generateText, Output } from 'ai';
@@ -181,7 +182,8 @@ export function readAnswer(answer: Answer, sessions: SessionToCompare[]): Sessio
 }
 
 // Asks once and never throws: a failed call, a timeout or a malformed answer is a failed choice for every session, for
-// an Administrator's queue. It is not sent again.
+// an Administrator's queue. Only a call that failed with 429 or 529 is tried once more, by the model itself within the
+// time (the adapter's retriedOnce).
 export async function chooseSameEvent(
   model: Model,
   question: SameEventQuestion,
@@ -201,7 +203,8 @@ export async function chooseSameEvent(
       maxRetries: 0,
       maxOutputTokens,
       timeout: { totalMs: timeoutMs },
-      // Only a provider that keeps to the schema, and none that trains on what it is sent.
+      // OpenRouter's: only a provider that keeps to the schema, and none that trains on what it is sent. The Anthropic
+      // path's options, the cache breakpoint at the end of INSTRUCTIONS and the effort, are chosen with the model.
       providerOptions: { openrouter: { provider: { require_parameters: true, data_collection: 'deny' } } },
     });
     return { choices: readAnswer(output, question.sessions), modelId: finalStep.response.modelId };

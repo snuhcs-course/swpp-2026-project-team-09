@@ -5,11 +5,10 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { type Settings } from '../common/settings.js';
 import { FriendsModule } from '../friends/friends.module.js';
 import { GlobalEventsModule } from '../global-events/global-events.module.js';
 import { MenusModule } from '../menus/menus.module.js';
@@ -20,10 +19,10 @@ import { TimetableModule } from '../timetable/timetable.module.js';
 import { TravelModule } from '../travel/travel.module.js';
 import { TutorialModule } from '../tutorial/tutorial.module.js';
 import { UsersModule } from '../users/users.module.js';
-import { type Model, MODEL_PORT, openRouterModel } from './adapter.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
 import { UserDayService } from './free-time/user-day.service.js';
+import { MODEL_PORT_PROVIDER } from './model-port.js';
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
 
@@ -55,15 +54,7 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
       inject: [UserDayService],
       useFactory: (days: UserDayService): FreeTimePort => userDayFreeTime(days),
     },
-    {
-      provide: MODEL_PORT,
-      inject: [ConfigService],
-      useFactory: (settings: ConfigService<Settings, true>): Model =>
-        openRouterModel(
-          settings.get('OPENROUTER_API_KEY', { infer: true }),
-          settings.get('ASSISTANT_MODEL', { infer: true }),
-        ),
-    },
+    MODEL_PORT_PROVIDER,
   ],
 })
 export class AssistantModule {}

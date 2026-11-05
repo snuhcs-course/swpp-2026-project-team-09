@@ -7,6 +7,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -48,6 +49,7 @@ import { chatAssistant } from './chat/chat-assistant.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
 import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
+import { keyConfigured } from './model-port.js';
 import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
@@ -64,6 +66,7 @@ export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
   private readonly chat: Feature;
   private readonly keyConfigured: boolean;
+  private readonly provider: string;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
 
@@ -108,7 +111,8 @@ export class AssistantService {
       },
       tutorial,
     });
-    this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
+    this.keyConfigured = keyConfigured(settings);
+    this.provider = settings.get('MODEL_PROVIDER', { infer: true });
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
     this.limits = {
       maxSteps: settings.get('ASSISTANT_MAX_STEPS', { infer: true }),
@@ -125,7 +129,7 @@ export class AssistantService {
     capabilities: readonly ClientCapability[] = [],
   ): Promise<AssistantReplyDto> {
     if (!this.keyConfigured) {
-      this.logger.warn('The Assistant did not answer: no OpenRouter key is configured');
+      this.logger.warn(`The Assistant did not answer: no ${this.provider} key is configured`);
       throw unavailable();
     }
     const now = this.clock.now();
