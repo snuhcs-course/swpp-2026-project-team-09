@@ -2205,8 +2205,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     description holds, as first given, selected from the same expressions that rank it (`common/search-sql.ts`), so a
     candidate holding none has `[]` and keeps its place. With a window, it carries `window`: `starts` when it starts in
     the window, `underWay` when it began before and overlaps it (a Quest for a Global Event, or an event). The system
-    prompt counts an `underWay` candidate as in the window, and shows one with no `matched` word, for an activity asked,
-    only when its title is clearly that activity.
+    prompt counts an `underWay` candidate as in the window, and shows one with no `matched` word, for an activity asked
+    and a search given words, only when its title is clearly that activity.
   - **`narrowBy`** (P12): with `more`, the answer adds `total` and `narrowBy`, counted by a second query over the same
     filters, uncut: how many of them are on each Board (Quests only), start on each day in Asia/Seoul and hold each of
     the `words`. No paging argument is taken: the model narrows by searching again.
