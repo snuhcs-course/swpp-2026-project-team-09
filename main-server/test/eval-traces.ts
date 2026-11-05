@@ -45,8 +45,8 @@ export interface Turn {
   mapButtons?: string[];
   proposal?: unknown;
   failure?: FailureKind;
-  // The model's own reply, when the server added the Approval line after it. Left out, the trace is one saved before
-  // the line, with neither field.
+  // The model's own reply, when the server added the Approval line after it: giving it also marks approvalLine true.
+  // Left out, the trace is one saved before the line, with neither field.
   modelText?: string;
 }
 

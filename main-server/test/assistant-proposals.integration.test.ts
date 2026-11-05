@@ -154,7 +154,7 @@ describe('proposeQuest, missing a Board', () => {
     await send(ask('점심 같이 먹을 사람 모집해줘'));
 
     expect(refused().board).toBe(
-      'Missing: a 공개 파티 is posted on a Board, meal (식사), career (진로), hobby (취미) or show (공연). Choose the one the activity plainly fits and propose at once; ask the User only when it fits none or more than one.',
+      'Missing: a 공개 파티 is posted on a Board, meal (식사), career (진로), hobby (취미) or show (공연). Choose the one the activity plainly fits, without asking, and propose once nothing else is missing; ask the User only when it fits none or more than one.',
     );
   });
 

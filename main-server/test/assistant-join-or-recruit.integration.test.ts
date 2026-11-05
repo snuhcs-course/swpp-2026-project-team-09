@@ -149,6 +149,8 @@ const searchResult = z.looseObject({
   quests: z.array(z.looseObject({ id: z.string() })).optional(),
 });
 
+type SearchResult = z.output<typeof searchResult>;
+
 const NOTE_DAY = '2083-04-02';
 const NOTE_WINDOW = { from: NOTE_DAY, to: NOTE_DAY };
 const RESOLVING: Step = { tool: 'resolvePlace', input: { words: '301동' } };
@@ -160,8 +162,6 @@ async function searchesOf(steps: Step[], messages: object[] = ask('301동 근처
   const results = model.toolResults().map((result) => searchResult.parse(result));
   return results.filter(({ result }) => result !== 'one');
 }
-
-type SearchResult = z.output<typeof searchResult>;
 
 describe('a search after resolvePlace answered one Place in the message, not given it', () => {
   let first: string;

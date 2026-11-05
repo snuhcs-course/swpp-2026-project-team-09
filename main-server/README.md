@@ -2226,7 +2226,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     before the event, as the form's `모이기`, and one after its start is refused. It answers
     `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
     the User for, except a Board: a missing one's refusal names the four Boards and tells the model to choose the one
-    the activity plainly fits and propose at once, asking only when it fits none or more than one. Or it answers
+    the activity plainly fits, without asking, and propose once nothing else is missing, asking only when it fits none
+    or more than one. Or it answers
     `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when it is called
     twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change.

@@ -34,15 +34,35 @@ Spec: `../spec.md`, "CD-1: two contract fixes" and "CD-2: the Approval line". `r
 
 ## Acceptance criteria
 
-- [ ] Assistant-over-HTTP integration tests with the model scripted:
-  - [ ] `proposeQuest` with no Board returns the new refusal, which names the four Boards and says to choose from the activity, asking only when none or more than one fits.
-  - [ ] The chat rules hold the clause with the Board exception, and no other rule tells the model to ask for a Board the activity plainly gives.
-  - [ ] After `resolvePlace` returns one Place, a search without `placeId` carries the note.
-  - [ ] A search with `placeId`, or with no `resolvePlace` before it, carries no note.
-  - [ ] With an Approval card shown and a reply holding none of the words, the line is added once.
-  - [ ] With a reply holding two of 승인, 수락 and 신청, no line is added.
-  - [ ] With an English last message, the line is in English.
-  - [ ] With only Open cards, or no cards, no line is added.
-- [ ] The eval trace records the model's own reply and a mark of whether the line was added, and the P5 report computes J9 on both the model's reply and the final reply. The eval harness's unit tests cover both.
-- [ ] The reply-text tests that exist pass, and the fixed sentence for cards is unchanged.
-- [ ] Prompt and rule text added here is general; it uses no held-out case's own sentences.
+- [x] Assistant-over-HTTP integration tests with the model scripted:
+  - [x] `proposeQuest` with no Board returns the new refusal, which names the four Boards and says to choose from the activity, asking only when none or more than one fits.
+  - [x] The chat rules hold the clause with the Board exception, and no other rule tells the model to ask for a Board the activity plainly gives.
+  - [x] After `resolvePlace` returns one Place, a search without `placeId` carries the note.
+  - [x] A search with `placeId`, or with no `resolvePlace` before it, carries no note.
+  - [x] With an Approval card shown and a reply holding none of the words, the line is added once.
+  - [x] With a reply holding two of 승인, 수락 and 신청, no line is added.
+  - [x] With an English last message, the line is in English.
+  - [x] With only Open cards, or no cards, no line is added.
+- [x] The eval trace records the model's own reply and a mark of whether the line was added, and the P5 report computes J9 on both the model's reply and the final reply. The eval harness's unit tests cover both.
+- [x] The reply-text tests that exist pass, and the fixed sentence for cards is unchanged.
+- [x] Prompt and rule text added here is general; it uses no held-out case's own sentences.
+
+## Comments
+
+### Decisions (2026-11-05)
+
+- **Approval line wording**, chosen by the owner: `승인제 파티는 참여 신청 후 파티장이 수락하면 참여돼요.` and, when the User's last message has no Hangul, `A party that needs approval takes you in once you ask to join and its leader accepts.` 파티장 is the app's word for the Leader. The Korean line holds all three words, so a reply with it passes J9's word checks.
+- **The note in `searchGlobalEvents`**, chosen by the owner: that search has no `placeId`, only `place`, words matched against the event's place text. Its note fires when `place` is not given, naming the Place resolvePlace answered (name, building number, id) and saying to pass its name or number as `place`. `searchRecruitingQuests`' note fires when `placeId` is not given. Both notes ride on a `found` or a `none` answer, as `note`; candidates and their order are unchanged.
+- **"One Place in this message"** is kept in `FoundIds` (`addResolvedPlace`), which `resolvePlace` fills on a `one` answer. Its matching and its answer are unchanged. The ids `FoundIds` already held could not tell a `one` answer from a Restaurant's Place that `findMealRestaurants` adds.
+- **The Board refusal** says to choose the Board "without asking, and propose once nothing else is missing", not "propose at once", so that it never reads as skipping a missing time (code review). `proposeQuest`'s tool description, which said to ask for every refused field, now carries the same Board exception as the chat rules, so the model reads one rule.
+- **The Approval line** is added in `runFeature` after `replyOf`, which chooses the text as before (`FIXED_SENTENCE` included and unchanged), so it reaches every feature that shows Quest cards. It reads only `Card` and the Join Policy, so no SDK type leaves the adapter.
+- **The trace and J9**: `RunObserver.replied` tells the recorder the reply's text before the line and whether it was added. The trace's reply gains `modelText` and `approvalLine`, and a run saved before P12 has neither, its text being the model's. The P05 report keeps `J9` on the reply the User saw, with its thresholds, and adds `J9-model`, the J9 cases scored again on `modelText`, with no threshold. `J9-model` is the number compared with the before set.
+
+### Re-scoring R1 (2026-11-05)
+
+The five scorecards of R1 (`eval/results/2026-11-02-e171a95c-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault{,-2,-3,-4,-5}.json`) were scored again with `pnpm eval:score`, without the model, on copies outside the repository, and compared with the committed `.md`. The only difference is a new row in the small world's scorecard, `J9-model | 2/21 (9.5%)`, the same as `J9`, since R1's traces have no line. Every other number of the five is unchanged. The committed results were not touched.
+
+### Agent usage (2026-11-05)
+
+- Agent time: about 40 minutes, one session (an estimate, waiting for the owner left out), up to opening the PR.
+- Tokens, up to opening the PR, the two `/code-review` subagents included: input 232 uncached, plus 14,387,323 cache reads and 324,159 cache writes; output 77,174. Of these, the subagents: input 32, cache reads 665,022, cache writes 128,432, output 8,589.

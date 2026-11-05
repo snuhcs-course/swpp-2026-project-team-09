@@ -10,7 +10,8 @@
 // The guard of the presenters and of proposeQuest: a card shows, and a Proposal takes, only what a lookup or a
 // resolver returned in this message. Each run of a feature keeps its own, so that an id from an earlier message, or
 // one the model made up, never reaches the screen. The lookups and resolvers record the ids they return; the
-// presenters refuse any other.
+// presenters refuse any other. It also keeps the Places resolvePlace answered alone, so that a search not given one
+// can say so (P12).
 
 // What an id names: a card's Quest, Global Event or Restaurant (by its key), or a Friend or a Place a resolver returned,
 // which are never cards, or a 관정도서관 space of the catalogue findLibrarySpace returned.
