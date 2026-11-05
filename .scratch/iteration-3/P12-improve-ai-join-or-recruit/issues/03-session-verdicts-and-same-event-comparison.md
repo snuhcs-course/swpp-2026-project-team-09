@@ -41,18 +41,62 @@ Spec: `../spec.md`, "AB-3: three verdicts" and "AB-2: raw failure text"; ADR 001
 
 ## Acceptance criteria
 
-- [ ] A unit test tables the verdict function: each check failing alone, against the three verdicts. A check name outside the `comparable` list fails `publishable` only.
-- [ ] Publication-step integration tests with a scripted Judgement and same-event choice:
-  - [ ] A comparable-only session with equal normalised title and start attaches without the AI.
-  - [ ] AI `same` with an equal start to the minute and a contained title attaches.
-  - [ ] AI `same` with another minute is held in the Same-event queue, not attached.
-  - [ ] AI `same` with titles that do not contain one another is held.
-  - [ ] AI `different` or `unsure` is held, never published.
-  - [ ] Another time on the same day is refused without asking the AI.
-  - [ ] A comparable-only session with no candidate stays a Draft with its values filled and is not published.
-  - [ ] A draftable-only session fills its Draft.
-  - [ ] A publishable session settles exactly as before.
-- [ ] A session attached on these terms can be detached as today.
-- [ ] Evaluation B's step selects through the verdict function. Its unit tests cover a comparable-only session being compared.
-- [ ] A schema failure's raw text is saved with an eval run, and the production step's log output is unchanged. Both are tested.
-- [ ] The glossary's Judgement entry says what the new behaviour does, with no implementation detail.
+- [x] A unit test tables the verdict function: each check failing alone, against the three verdicts. A check name outside the `comparable` list fails `publishable` only.
+- [x] Publication-step integration tests with a scripted Judgement and same-event choice:
+  - [x] A comparable-only session with equal normalised title and start attaches without the AI.
+  - [x] AI `same` with an equal start to the minute and a contained title attaches.
+  - [x] AI `same` with another minute is held in the Same-event queue, not attached.
+  - [x] AI `same` with titles that do not contain one another is held.
+  - [x] AI `different` or `unsure` is held, never published.
+  - [x] Another time on the same day is refused without asking the AI.
+  - [x] A comparable-only session with no candidate stays a Draft with its values filled and is not published.
+  - [x] A draftable-only session fills its Draft.
+  - [x] A publishable session settles exactly as before.
+- [x] A session attached on these terms can be detached as today.
+- [x] Evaluation B's step selects through the verdict function. Its unit tests cover a comparable-only session being compared.
+- [x] A schema failure's raw text is saved with an eval run, and the production step's log output is unchanged. Both are tested.
+- [x] The glossary's Judgement entry says what the new behaviour does, with no implementation detail.
+
+## Comments
+
+### Built (2026-11-05)
+
+Branch `3.0/P12-03-session-verdicts`, from `3.0/Main` at `9942475b` (the P12 spec and ADR 0014). `p12-x` is not merged yet; it will be once it is tagged.
+
+What was asked before building, and the owner's answers (`Jaehyun0320`, 2026-11-05):
+
+- **What a draftable-only session fills.** Only the halves whose checks all pass. The time half is `dateAgrees`, `weekdayAgrees`, `timeAgrees`, `notApplicationPeriod`, `startBeforeEnd`, `hasTimeOfDay` and `length`, and it fills `startsAt` and `endsAt`. The place half is `placeInLines` and `placeMatches`, and it fills `place` with the Place's coordinates. The rest keep what the worker read. A session with no Draft to take gets a new one. A comparable-only session fills its time only. This was not done before: a failing session wrote nothing into its Draft.
+- **A comparable-only session with no candidate** stays its own Draft, `heldFor` empty, with its time filled. It is not in the Same-event queue. Its Judgement session's `globalEventId` names that Draft.
+- **Its hold when the terms are not met.** A new `SessionHold`, `place_unchecked` (a migration, and a label in the admin queue). It holds a comparable-only session that the AI answered `different`, or `same` without ADR 0014's terms. `unsure`, a failed call and several matches keep their existing holds.
+- **How the two terms are stored.** Term (a): `attachedBy` `rule`, reason `equal_title_and_start_without_place`. Term (b): `attachedBy` `ai`, reason `same_minute_and_contained_title`. The AI's sentence stays in `same_event_answers.reason`.
+
+Decisions made while building:
+
+- **The verdict function** is `session-verdict.ts`. A check missing from a session's results counts as failed and is named in `blockedBy`. `publishable` means `blockedBy` is empty, so it equals the stored `passed`.
+- **Placement.** Publishable sessions are placed exactly as before. A comparable or draftable session then takes, from the Drafts left:
+  - its own Draft;
+  - else the post's only Draft;
+  - else a Draft with no start;
+  - else a new Draft, whenever the last Draft left must stay for a session that settles nothing.
+
+  A Draft that a session of the stored answer already fills is no longer offered. Without that, a later run over the Draft with `AUTOMATIC_PUBLICATION=off` would publish a passing session over the Draft a compared session fills. A test covers it.
+- **The link rule** counts the Drafts that these sessions add, as it counts a passing session's new event. So a stored post can now have more sessions than before, and a post linking it can become `link_not_one_to_one`. Evaluation B counts them the same way.
+- **Evaluation B.** A new post's sessions are chosen by `verdictOf`. A stored post's candidates are still only those that would be published, since in production a compared session's Draft is no candidate. Saved AI choices that do not cover a session now compared count as none. So replaying a B run saved before P12 with `--no-model` stops at that session, which is expected and not worked around.
+- **AB-2.** `rawText` is saved with a stored Judgement in the eval run only when the answer fails the schema (`NoObjectGeneratedError.text`). It is an optional field, so earlier results still read. The production log still names only the error, and a test checks that no log line holds the model's text.
+- `compared` moved from `session-settling.ts` to `session-comparison.ts` with the same behaviour, to stay within oxlint's file limit.
+- Untouched, as asked: `judgement-time.ts`, `named-place.ts`, `post-sources.ts`, `judgement-model.ts`, the AI's instructions, the refusal rules, the chat code, and the sets, labels, thresholds and freeze tags of `eval/collection`.
+
+Tests: the publication step with a scripted Judgement and choice is in `test/same-event-unplaced.integration.test.ts` (12 cases). It holds every criterion above, plus `AUTOMATIC_PUBLICATION=off`. The verdict table is in `test/session-verdict.unit.test.ts`, and placement in `test/judgement-placement.unit.test.ts`. What a Draft takes is in `test/judgement-draft-values.unit.test.ts`. Evaluation B is in `test/eval-collection-score-b-ai.unit.test.ts` and `test/eval-collection-run-unpublished.unit.test.ts`. The production log is checked in `test/judgement-failures.integration.test.ts`. The existing `same-event-*`, `publication-step` and `judgement-*` integration files pass unchanged, so detach, the pod races and the tries behave as before. Full `pnpm test`: main-server 232 files with 3,254 tests, and admin 20 files with 190 tests, all passed.
+
+Reviewed on standards and on spec before the PR. The fixes are in `3ca31593`:
+
+- a compared session had filled its place too;
+- `blockedBy` left out a missing check;
+- a few names were unclear.
+
+No real model was run. The target cases are read in ticket 06.
+
+### Agent usage (2026-11-05)
+
+- Agent time: about 1 hour 10 minutes (estimate), one session with two review subagents. That includes the time integration tests ran under the shared lock, and leaves out waiting for the owner.
+- Tokens, the two subagents included: input 364, with 29,362,492 cache reads and 402,446 cache writes shown apart; output 117,025. Counted before the PR was opened.
