@@ -105,6 +105,17 @@ describe('timesConsistent, on a day and its time written on two lines', () => {
 });
 
 describe('timesConsistent, on lines it does not compare', () => {
+  it('does not read a running order under a day line', () => {
+    const lines = [
+      '일시: 11월 12일(목) 15:00~17:00',
+      '11월 12일(목) · 1부',
+      '15:00–16:00 기조 강연',
+      '16:10–17:00 토론',
+    ];
+
+    expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual([]);
+  });
+
   it('does not read a time line under a line that writes a time too', () => {
     const lines = ['일시: 11월 12일(목) 15:00~17:00', '15:30~16:00 질의응답'];
 

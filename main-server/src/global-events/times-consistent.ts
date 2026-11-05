@@ -11,7 +11,7 @@ import { isWrittenDay, type JudgedTime, type WrittenClock, writtenDays, writtenT
 // The check timesConsistent: a post that writes the session's day twice with two times leaves it unknown which is right,
 // whichever line the model quoted. Only a line that writes a day with a time is read, so that a programme's running
 // order is not, nor is an application period. A day and its time may be written on two lines, "일시: 11월 3일" above
-// "시간: 19:00 ~ 21:00", and are then read as one.
+// "시간: 19:00 ~ 21:00", and are then read as one; times listed under a day are a running order, and are not.
 
 // The worker's line for one session of an extra.snu programme: "[2회차] 기간: …".
 const SESSION_LINE = /^\[(\d+)회차\]/u;
@@ -27,12 +27,15 @@ export function sessionNumber({ lines: quoted }: AnsweredSession, position: numb
   return carried === undefined ? position + 1 : Number(carried);
 }
 
-// The line as read: a line of a time alone under one of a day alone is read after that day.
+// A line that gives the time as a field, "시간: 19:00 ~ 21:00" or "진행 시간: …", not an item of a running order.
+const TIME_FIELD = /^[\s\-*·•※■□●○▶>]*(?:[가-힣]{1,4}\s*)?(?:시간|time)\s*[:：]/iu;
+
+// The line as read: a time field under a line of a day alone is read after that day.
 function readLine(lines: string[], index: number): string {
   const line = lines[index] ?? '';
   const above = lines[index - 1];
   const dayAlone = above !== undefined && writtenDays(above).length > 0 && writtenTimes(above).length === 0;
-  return dayAlone && writtenDays(line).length === 0 ? `${above} ${line}` : line;
+  return dayAlone && TIME_FIELD.test(line) && writtenDays(line).length === 0 ? `${above} ${line}` : line;
 }
 
 function agrees(written: WrittenClock, clock: JudgedTime['clock']): boolean {
