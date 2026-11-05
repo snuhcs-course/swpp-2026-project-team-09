@@ -37,17 +37,17 @@ It works on ticket 04's branch.
 ### The pull request
 
 - [x] After the after set, the branch merges `3.0/Main`, and `record.md` says what came in.
-- [ ] One pull request for tickets 04 to 06 goes into `3.0/Main`.
+- [x] One pull request for tickets 04 to 06 goes into `3.0/Main`.
 
 ## Comments
 
 Changes 1 to 4 ran, and only change 1 was kept; the after set ran at `bf738eb8`, whose code is change 1's. The after set's holdout has not run: it would take P11's runs over the USD 10 the PM approved, so it waits for the PM. Until it runs, the branch does not merge `3.0/Main` and the pull request is not opened. Everything is in [`record.md`](../../../../main-server/eval/p4/record.md#the-changes).
 
-Later on 2026-11-05 the PM approved the holdout. It ran at `55d882bc`, whose code is change 1's: 27/36 (75.0%), against 26/36 for the same 12 fixed-set cases, for USD 0.3128, which took P11's runs to USD 10.1710. The branch then merged `3.0/Main`, which was still at X, so nothing came in.
+Later on 2026-11-05 the PM approved the holdout. It ran at `55d882bc`, whose code is change 1's: 27/36 (75.0%), against 26/36 for the same 12 fixed-set cases, for USD 0.3128, which took P11's runs to USD 10.1710. The branch then merged `3.0/Main`, which was still at X, so nothing came in. The pull request is #204.
 
 ### Agent usage (2026-11-05)
 
-- **Agent time** (estimate): about 80 minutes: about 70 of the orchestrating session on this ticket, and about 10 for the two reviewers. The real-model runs of the changes and the after set took about 85 minutes, 04:29 to 05:59 KST, within that session's time. Time spent waiting for a person is not counted.
-- **Tokens** (measured from the transcripts, up to 06:10 KST): the orchestrating session's for all of P11, counted once here, and this ticket's two reviewers.
-  - Input: 548 not cached, 61,270,676 cache reads and 663,895 cache writes.
-  - Output: 207,341.
+- **Agent time** (estimate): about 105 minutes: about 90 of the orchestrating session on this ticket, and about 15 for its four reviewers. The real-model runs of the changes and the after set ran from 04:29 to 05:59 KST, and the holdout from 09:44 to 09:48, within that session's time. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the transcripts, up to 09:55 KST): the orchestrating session's for all of P11, counted once here, and this ticket's four reviewers.
+  - Input: 726 not cached, 74,839,653 cache reads and 1,018,796 cache writes.
+  - Output: 266,745.

@@ -172,11 +172,11 @@ Change 1's own run measured the same code at 80.0%, with all four thresholds met
 
 #### P19, three runs
 
-| Item    | Value                                                                                                                                                           |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Date    | 2026-11-05, 05:39–05:59 KST                                                                                                                                     |
-| Commit  | `bf738eb8`                                                                                                                                                      |
-| Command | `pnpm eval --model anthropic/claude-haiku-5.5 --max-output-tokens 1000 --budget 1.0 --yes`; run 3 with `--budget 0.62`, so that the total could not pass USD 10 |
+| Item    | Value                                                                                                                                                                       |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Date    | 2026-11-05, 05:39–05:59 KST                                                                                                                                                 |
+| Commit  | `bf738eb8`                                                                                                                                                                  |
+| Command | `pnpm eval --model anthropic/claude-haiku-5.5 --max-output-tokens 1000 --budget 1.0 --yes`; run 3 with `--budget 0.62`, so that the scorecards' total could not pass USD 10 |
 
 | Run | Result file                                                                                | Scored turns passed, known failures apart | Input     | Output | Cost       |
 | --- | ------------------------------------------------------------------------------------------ | ----------------------------------------- | --------- | ------ | ---------- |
