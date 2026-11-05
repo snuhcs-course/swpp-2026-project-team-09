@@ -43,8 +43,12 @@ const LABEL_LENGTH = 20;
 
 const BUILDING_NUMBER_ALONE = /^\d+(?:-\d+)?동(?:\s*(?:지하\s*)?\d+층)?(?:\s*\d+(?:-\d+)?호)?$/u;
 
+// A soft hyphen, a zero-width space and a byte-order mark show nothing, and a quote may have them or not.
 function normalised(text: string): string {
-  return text.replaceAll(/[\s ]+/gu, ' ').trim();
+  return text
+    .replaceAll(/[\u00AD\u200B\uFEFF]/gu, '')
+    .replaceAll(/[\s ]+/gu, ' ')
+    .trim();
 }
 
 // What is being checked: the post as the model read it, one line each, the Source's setting, the Places, and the time.
