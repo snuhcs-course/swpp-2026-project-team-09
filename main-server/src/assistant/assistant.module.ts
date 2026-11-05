@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
@@ -26,6 +27,7 @@ import { AssistantService } from './assistant.service.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
+import { ResolutionEventsService } from './resolution-events.service.js';
 
 @Module({
   // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule and
@@ -46,6 +48,7 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
   controllers: [AssistantController],
   providers: [
     AssistantService,
+    ResolutionEventsService,
     UserDayService,
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },

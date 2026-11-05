@@ -7,8 +7,9 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
- * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
@@ -146,6 +147,15 @@ export class GlobalEventsService {
       const event = events.find((each) => each.id === id);
       return event === undefined ? [] : [toPublishedGlobalEventDto(event)];
     });
+  }
+
+  // The events among `ids` that are published and have not ended, as the User's list serves them, in no set order.
+  async notEndedAmong(ids: readonly string[], now: Date): Promise<PublishedGlobalEventDto[]> {
+    const events = await this.prisma.globalEvent.findMany({
+      where: { id: { in: [...ids] }, state: GlobalEventState.published, AND: [notEnded(now)] },
+      include: WITH_OWN_POST,
+    });
+    return events.map((event) => toPublishedGlobalEventDto(event));
   }
 
   async listForAdministrators(state: ListedState): Promise<ListedGlobalEventDto[]> {

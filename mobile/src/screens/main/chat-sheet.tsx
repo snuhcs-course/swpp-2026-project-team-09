@@ -5,8 +5,10 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -138,7 +140,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
-  const { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish, unfinish } = chat;
+  const { bubbles, waiting, send, choose, retry, reset, addOwn, outcomes, finish, unfinish } = chat;
   const cardActions: CardActions = useMemo(
     () => ({
       events: eventCards.actions,
@@ -160,6 +162,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
         <ChatBubbles
           bubbles={bubbles}
           cardActions={cardActions}
+          onChoose={choose}
           onRetry={retry}
           onShowLayer={onShowLayer}
           under={under}

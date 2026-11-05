@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply, LibraryCardData } from '@/api/assistant-types';
@@ -90,5 +91,5 @@ export function isLibraryAsk(words: string): boolean {
 export function libraryReply(words: string): AssistantReply {
   const card = cardFor(words);
   const text = card.action === 'book' ? SHOWN : '카드에서 확인해 주세요.';
-  return { text, mapButtons: [], cards: [{ kind: 'library', library: card }], proposal: null };
+  return { text, mapButtons: [], cards: [{ kind: 'library', library: card }], proposal: null, choices: [] };
 }

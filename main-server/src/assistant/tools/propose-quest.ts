@@ -2,8 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -24,6 +27,8 @@ import {
   type QuestProposal,
   sentProposalOf,
 } from '../proposal.js';
+import { withDefaults } from './proposal-defaults.js';
+import { recordPlaceChange } from './resolved.js';
 
 // The services proposeQuest checks the resolved ids with.
 export interface ProposeQuestServices {
@@ -46,7 +51,7 @@ const input = z.object({
     .enum(JoinPolicy)
     .optional()
     .describe(
-      'open (공개, 바로 참여): anyone joins at once; approval (공개, 승인 후 참여): the User approves each; closed (비공개): only the invited Friends, on no Board.',
+      'open (공개, 바로 참여): anyone joins at once; approval (공개, 승인 후 참여): the User approves each; closed (비공개): only the invited Friends, on no Board. Left out: closed with invited Friends, else open.',
     ),
   board: z
     .enum(QuestBoard)
@@ -54,7 +59,7 @@ const input = z.object({
     .describe(
       'The Board a 공개 파티 is posted on: meal 식사, career 진로, hobby 취미 (운동 too), show 공연. None for 비공개.',
     ),
-  capacity: z.number().optional().describe('How many people the 파티 holds, the User included.'),
+  capacity: z.number().optional().describe('How many, the User included; left out, the invitees and the User, else 4.'),
   startsAt: z
     .string()
     .optional()
@@ -95,7 +100,8 @@ interface Resolved {
   failures: FieldFailures;
 }
 
-// An id is taken only when a resolver returned it in this message or it is in the last Proposal sent back.
+// An id is taken only when a resolver returned it in this message, the User chose it in their last message, or it is
+// in the last Proposal sent back.
 function accepted({ found }: ToolContext, kind: FoundKind, id: string, shownIds: readonly string[]): boolean {
   return found.has(kind, id) || shownIds.includes(id);
 }
@@ -288,10 +294,11 @@ function inThePast(startsAt: string | undefined, now: Date): FieldFailures {
 export function proposeQuest(services: ProposeQuestServices): Tool {
   return defineTool({
     description:
-      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives.',
+      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message, the one in [Chosen: …], or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives.',
     input,
-    run: async (given, context) => {
-      const resolved = await resolvedOf(given, context, services);
+    run: async (asked, context) => {
+      const resolved = await resolvedOf(asked, context, services);
+      const given = withDefaults(asked, resolved.invitees.length);
       const startsAt = startOf(given.startsAt, resolved.globalEvent);
       const failures: FieldFailures = {
         ...refusedByServer(given, startsAt),
@@ -302,13 +309,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         ...resolved.failures,
       };
       const { title, description = '', joinPolicy, board, capacity } = given;
-      if (
-        Object.keys(failures).length > 0 ||
-        title === undefined ||
-        joinPolicy === undefined ||
-        capacity === undefined ||
-        startsAt === undefined
-      ) {
+      if (Object.keys(failures).length > 0 || title === undefined || startsAt === undefined) {
         return { result: 'refused', fields: failures };
       }
       const proposal: QuestProposal = {
@@ -323,6 +324,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         invitees: resolved.invitees,
       };
       context.presented.proposal = proposal;
+      await recordPlaceChange(context, resolved.place);
       return { result: 'proposed', proposal: proposalForModel(sentProposalOf(proposal)) };
     },
   });

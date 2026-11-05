@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-29  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
@@ -57,6 +58,7 @@ describe('The chat Assistant', () => {
       mapButtons: [],
       cards: [],
       proposal: null,
+      choices: [],
     });
   });
 
@@ -76,7 +78,9 @@ describe('The chat Assistant', () => {
       { role: 'user', content: [{ type: 'text', text: '한식' }] },
     ]);
   });
+});
 
+describe('The chat Assistant, before the model', () => {
   it('refuses a request without an access token, and does not call the model', async () => {
     model.script({ text: '안녕하세요!' });
 
@@ -131,6 +135,7 @@ describe('getMenus', () => {
       mapButtons: [],
       cards: [],
       proposal: null,
+      choices: [],
     });
     expect(model.toolResults()).toEqual([{ result: 'found', date, restaurants: [studentCentre] }]);
   });
@@ -204,7 +209,13 @@ describe('showOnMap', () => {
 
     const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
 
-    expect(response.body).toEqual({ text: '오늘 메뉴예요.', mapButtons: ['dining'], cards: [], proposal: null });
+    expect(response.body).toEqual({
+      text: '오늘 메뉴예요.',
+      mapButtons: ['dining'],
+      cards: [],
+      proposal: null,
+      choices: [],
+    });
     expect(model.toolResults()).toEqual([{ result: 'shown', layer: 'dining' }]);
   });
 
@@ -231,6 +242,7 @@ describe('showOnMap', () => {
       mapButtons: [],
       cards: [],
       proposal: null,
+      choices: [],
     });
     expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
   });

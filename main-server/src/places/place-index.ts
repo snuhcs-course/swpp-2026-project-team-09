@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-26  Fable 5.1  prompted by fyoon46
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { disassemble } from 'es-hangul';
+import { normaliseWords } from '../common/normalise-words.js';
 import { abbreviations, choseongOf, isChoseongOnly, isMixedChoseong, syllablesOf } from './abbreviations.js';
 import { type PlaceDto } from './dto/place.dto.js';
 import { type AliasSource, type PlaceAliases } from './place-aliases.js';
@@ -27,7 +29,6 @@ export interface PlaceMatch {
 const NONE: PlaceMatch = { tier: null, source: null, places: [] };
 
 const SYLLABLES_ONLY = /^[가-힣]+$/u;
-const SPACES = /\s+/gu;
 
 interface Form {
   place: PlaceDto;
@@ -35,10 +36,6 @@ interface Form {
   choseong: string;
   // How many syllables of the name the form leaves out.
   skipped: number;
-}
-
-function key(text: string): string {
-  return text.normalize('NFC').replaceAll(SPACES, '').toLowerCase();
 }
 
 function push<Value>(map: Map<string, Value[]>, at: string, value: Value): void {
@@ -116,13 +113,13 @@ export class PlaceIndex {
   ) {
     for (const place of places.toSorted(byNumber)) {
       this.byId.set(place.id, place);
-      push(this.byName, key(place.name), place);
+      push(this.byName, normaliseWords(place.name), place);
       if (place.number !== null) {
         push(this.byNumber, place.number, place);
       }
-      const own = key(place.name);
+      const own = normaliseWords(place.name);
       const length = syllablesOf(own).length;
-      for (const text of [own, ...abbreviations(place.name).map((form) => key(form))]) {
+      for (const text of [own, ...abbreviations(place.name).map((form) => normaliseWords(form))]) {
         const form: Form = { place, text, choseong: choseongOf(text), skipped: length - syllablesOf(text).length };
         this.forms.push(form);
         push(this.byForm, text, form);
@@ -134,12 +131,12 @@ export class PlaceIndex {
   // The forms of a Place, for tests and measurements.
   formsOf(placeId: string): string[] {
     return this.forms
-      .filter(({ place, text }) => place.id === placeId && key(place.name) !== text)
+      .filter(({ place, text }) => place.id === placeId && normaliseWords(place.name) !== text)
       .map(({ text }) => text);
   }
 
   match(words: string, userId: string): PlaceMatch {
-    const query = key(words);
+    const query = normaliseWords(words);
     if (query === '') {
       return NONE;
     }

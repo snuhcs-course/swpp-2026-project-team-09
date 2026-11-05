@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -36,6 +37,8 @@ const LUNCH = {
   globalEvent: null,
   invitees: [],
 };
+
+const ONLY_MAP_BUTTONS = { mapButtons: ['dining'], cards: [], proposal: null, choices: [] };
 
 const model = new ScriptedModel();
 let app: INestApplication<Server>;
@@ -105,10 +108,10 @@ describe('A run that wrote no text', () => {
     const response = await send();
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ text: FIXED_SENTENCE, mapButtons: ['dining'], cards: [], proposal: null });
+    expect(response.body).toEqual({ text: FIXED_SENTENCE, ...ONLY_MAP_BUTTONS });
     expect(warnings()).toContain(
       'The Assistant answered with its fixed sentence: no step had text ' +
-        '(finish reason stop, 0 cards, 1 map buttons, no Proposal)',
+        '(finish reason stop, 0 cards, 1 map buttons, 0 choices, no Proposal)',
     );
   });
 
@@ -130,7 +133,7 @@ describe('A run that wrote no text', () => {
     });
     expect(warnings()).toContain(
       'The Assistant answered with its fixed sentence: no step had text ' +
-        '(finish reason length, 1 cards, 0 map buttons, no Proposal)',
+        '(finish reason length, 1 cards, 0 map buttons, 0 choices, no Proposal)',
     );
   });
 
@@ -141,7 +144,7 @@ describe('A run that wrote no text', () => {
     const response = await send();
 
     expect(response.body).toMatchObject({ text: FIXED_SENTENCE, proposal: { title: LUNCH.title } });
-    expect(warnings().join('\n')).toContain('(finish reason stop, 0 cards, 0 map buttons, a Proposal)');
+    expect(warnings().join('\n')).toContain('(finish reason stop, 0 cards, 0 map buttons, 0 choices, a Proposal)');
   });
 });
 

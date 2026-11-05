@@ -5,8 +5,10 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-26  Fable 5.1  prompted by fyoon46
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -48,12 +50,14 @@ import {
   type RunObserver,
 } from './adapter.js';
 import { chatAssistant } from './chat/chat-assistant.js';
-import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
-import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
+import { checkedChoice, type ChoiceServices } from './chosen.js';
+import { type AssistantReplyDto, type SentMessage } from './dto/assistant-messages.dto.js';
+import { type Asker, type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
+import { ResolutionEventsService } from './resolution-events.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
 // message cost more.
@@ -62,6 +66,14 @@ export const HISTORY_MAX = 20;
 // A day's count outlives its day in Korea, whatever the server's clock, and is then dropped.
 const COUNT_LIFETIME_SECONDS = 2 * 24 * 60 * 60;
 
+function limitsOf(settings: ConfigService<Settings, true>): RunLimits {
+  return {
+    maxSteps: settings.get('ASSISTANT_MAX_STEPS', { infer: true }),
+    timeoutMs: settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }),
+    maxOutputTokens: settings.get('ASSISTANT_MAX_OUTPUT_TOKENS', { infer: true }),
+  };
+}
+
 @Injectable()
 export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
@@ -69,6 +81,7 @@ export class AssistantService {
   private readonly keyConfigured: boolean;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
+  private readonly choiceServices: ChoiceServices;
 
   constructor(
     @Inject(MODEL_PORT) private readonly model: Model,
@@ -82,6 +95,7 @@ export class AssistantService {
     friends: FriendsService,
     places: PlacesService,
     placeMatcher: PlaceMatcher,
+    private readonly resolutionEvents: ResolutionEventsService,
     placeLookup: PlaceLookup,
     days: UserDayService,
     restaurantPlaces: RestaurantPlaces,
@@ -107,20 +121,17 @@ export class AssistantService {
       library: { catalogue, freeTime, friends, quests, users, enabled: libraryEnabled },
       tutorial,
     });
+    this.choiceServices = { places, friends, globalEvents };
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
-    this.limits = {
-      maxSteps: settings.get('ASSISTANT_MAX_STEPS', { infer: true }),
-      timeoutMs: settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }),
-      maxOutputTokens: settings.get('ASSISTANT_MAX_OUTPUT_TOKENS', { infer: true }),
-    };
+    this.limits = limitsOf(settings);
   }
 
   // The reply, or one error reply whatever failed: 503 when the Assistant cannot answer, 429 once the User's messages
   // of the day are used up. The log says why, never what anyone wrote.
   async reply(
     userId: string,
-    messages: readonly ChatMessage[],
+    messages: readonly SentMessage[],
     capabilities: readonly ClientCapability[] = [],
   ): Promise<AssistantReplyDto> {
     if (!this.keyConfigured) {
@@ -133,24 +144,50 @@ export class AssistantService {
       this.logger.log(`A User reached the daily limit of ${this.dailyMessages} messages`);
       throw new HttpException("Today's messages are used up", HttpStatus.TOO_MANY_REQUESTS);
     }
-    const latest = messages.slice(-HISTORY_MAX);
+    const asker = { userId, now, capabilities };
     try {
+      const conversation = await this.conversationOf(asker, messages.slice(-HISTORY_MAX));
+      const resolutions = this.resolutionEvents.forRun(userId);
       const reply = await runFeature(
         this.model,
         this.chat,
-        { userId, now, capabilities },
-        latest,
+        asker,
+        conversation,
         this.limits,
+        resolutions,
         this.observer,
       );
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      return { text: reply.text, mapButtons: reply.mapButtons, cards: reply.cards, proposal: reply.proposal };
+      const { text, mapButtons, cards, proposal, choices } = reply;
+      return { text, mapButtons, cards, proposal, choices };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
     }
+  }
+
+  // The conversation as the feature runs it. The candidate the User's new message answers with is checked again and
+  // recorded, or dropped when it fails the check. An earlier message's, which the app sends back with the rest of the
+  // conversation, was recorded when it was new: it is only read, with the message's text as its name.
+  private async conversationOf(asker: Asker, messages: readonly SentMessage[]): Promise<ChatMessage[]> {
+    const last = messages.at(-1);
+    const sent = last?.role === 'user' ? last.chosen : undefined;
+    const chosen = sent === undefined ? null : await checkedChoice(sent, asker, this.choiceServices);
+    if (chosen !== null) {
+      await this.resolutionEvents.chosen(asker.userId, chosen);
+    }
+    return messages.map((message): ChatMessage => {
+      if (message.role === 'assistant') {
+        return message;
+      }
+      if (message === last) {
+        return { role: 'user', text: message.text, chosen };
+      }
+      const earlier = message.chosen === undefined ? null : { ...message.chosen, label: message.text };
+      return { role: 'user', text: message.text, chosen: earlier };
+    });
   }
 
   // Counts the User's message in their day in Korea, and answers how many they have sent that day.
@@ -163,8 +200,9 @@ export class AssistantService {
 }
 
 // That a reply had no text of the model's: how many things it showed, never what they were.
-function fixedSentenceLog({ cards, mapButtons, proposal }: FeatureReply, finishReason: string): string {
-  const shown = `${cards.length} cards, ${mapButtons.length} map buttons, ${proposal === null ? 'no' : 'a'} Proposal`;
+function fixedSentenceLog({ cards, mapButtons, choices, proposal }: FeatureReply, finishReason: string): string {
+  const things = `${cards.length} cards, ${mapButtons.length} map buttons, ${choices.length} choices`;
+  const shown = `${things}, ${proposal === null ? 'no' : 'a'} Proposal`;
   return `The Assistant answered with its fixed sentence: no step had text (finish reason ${finishReason}, ${shown})`;
 }
 

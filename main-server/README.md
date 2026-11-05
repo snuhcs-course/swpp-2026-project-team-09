@@ -2131,7 +2131,8 @@ its model through OpenRouter with the Vercel AI SDK
   null when the way is unknown) and its `proposal`, the meal Quest the server filled in for the card's 파티 만들기. An APK
   from before P4 refuses a reply with such a card as its ordinary failure. The app sends a card back only
   as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
-  and never the map buttons. Nothing of a conversation is stored: the app keeps it. A `library` card
+  and never the map buttons. No conversation is stored, only the words the resolvers were given and the ids they answered
+  (`resolution_events`, below): the app keeps the conversation. A `library` card
   (`{ "kind": "library", "library": { … } }`, `src/assistant/library/library-card.ts`) holds `key`, `action`
   (`book | cancel | return | seats | myBookings`), `space` (or null) with `id`, `name`, `floor`, `placeNumber` (`62-1`),
   `unit` (`seat | room`), `roomNo`, `sectorNo`, `seatNos`, `mapImage` (`{ "width", "height" }` or null), `hours`
@@ -2147,6 +2148,24 @@ its model through OpenRouter with the Vercel AI SDK
     (`quest` or `globalEvent` by id, `restaurant` and `library` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
     out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
+  - **Choices and the chosen candidate** (P07). `choices` lists the candidates of every `several` answer of the run's
+    resolvers as `[{ "kind": "place" | "friend" | "globalEvent", "id", "label", "words" }]`, in each resolver's order,
+    at most 10 per answer and each kind and id once, `label` being the plain name or title and `words` the resolver's
+    input, trimmed; it is always there, `[]` when no resolver answered `several`. The app shows them as chips, and a tap
+    sends the label as the User's message with `"chosen": { "kind", "id", "words" }` (`words` of 1 to 50 characters,
+    not counted in the 24,000). Before the run the server checks the new message's `chosen` again: a Place of the
+    catalog, a current Friend of the User, or a published event that has not ended. A valid one goes into the run's
+    `FoundIds`, so that proposeQuest takes it with no resolver call, and the model reads the message with a line
+    `[Chosen: place <id> "학생회관" for "학관"]`, a Friend's name or an event's title inside delimiters; one that fails
+    the check is dropped, and the message stands as its text. A `chosen` on an earlier message, which the app sends
+    back with the rest of the conversation, is only read, with the message's text as the name. Each resolver call,
+    each valid `chosen` and each Proposal whose Place differs from the one sent back write one row of
+    `resolution_events` (`resolution-events.service.ts`): the User, the resolver's kind, the words normalised by
+    `normaliseWords` (`src/common/normalise-words.ts`: NFC, lower case, no whitespace) and their 초성 when they are all
+    Hangul, the result, for Places the matcher's tier and alias source, the candidate ids in order, the chosen id and
+    the outcome, `answered`, `chosen` or `edited` (`rejected` is for later). An edit's words are those last resolved to
+    a Place in the run, or empty. No sentence is stored, the rows go with the account, and a row that cannot be written
+    is logged by its cause and never fails the reply.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
     than one Proposal, or messages over 24,000 characters together, a Proposal's title, description and names included
@@ -2248,7 +2267,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     User and the invitees fit the capacity. It takes an id only when a resolver returned it in this message or it is
     in the last Proposal sent back, and checks it again every time: the Place exists, the event is published, each
     invitee is a Friend. With a Global Event and no time it starts at the event's start; a time before is a meeting
-    before the event, as the form's `모이기`, and one after its start is refused. It answers
+    before the event, as the form's `모이기`, and one after its start is refused. A Join Policy or a capacity the model
+    leaves out is filled as the form starts: 비공개 for the invited Friends and the User when Friends are invited, else
+    공개 for 4, so that a request that named what matters is proposed at once and the card takes the correction. It answers
     `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
     the User for, except a Board: a missing one's refusal names the four Boards and tells the model to choose the one
     the activity plainly fits, without asking, and propose once nothing else is missing, asking only when it fits none

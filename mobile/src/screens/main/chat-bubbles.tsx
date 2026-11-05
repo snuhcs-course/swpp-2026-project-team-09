@@ -5,17 +5,21 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useRef } from 'react';
 import { Keyboard, Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import type { MapLayer, QuestProposal } from '@/api/assistant-types';
+import type { Choice, MapLayer, QuestProposal } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { type CardActions, Cards, type ProposalActions } from './chat-cards';
+import { ChatChoices } from './chat-choices';
 import { ChatMarkdown } from './chat-markdown';
 import { ChatProposalCard } from './chat-proposal-card';
 import type { LibraryDone } from '@/library/cards/done';
@@ -136,13 +140,25 @@ interface BubbleProps {
   bubble: ChatBubble;
   // 다시 시도 under a failure the Assistant may get over, while it is the last bubble.
   onRetry: (() => void) | null;
+  // The chips of the answer's candidates, while it is the last bubble.
+  onChoose: ((choice: Choice) => void) | null;
   onShowLayer: (layer: MapLayer) => void;
   cardActions: CardActions;
 }
 
+// The model writes markdown, and the Assistant's bubbles render it; the User's words are shown as typed.
+function Words({ mine, words }: { mine: boolean; words: string }): ReactElement {
+  return mine ? (
+    <Text style={[styles.words, styles.mineWords]}>{words}</Text>
+  ) : (
+    <ChatMarkdown style={styles.words} text={words} />
+  );
+}
+
 function Bubble({
-  bubble: { id, role, text: words, cards, mapButtons, proposal, failure, own = false, done },
+  bubble: { id, role, text: words, cards, mapButtons, proposal, choices, failure, own = false, done },
   onRetry,
+  onChoose,
   onShowLayer,
   cardActions,
 }: BubbleProps): ReactElement {
@@ -156,15 +172,11 @@ function Bubble({
       style={[styles.bubble, mine ? styles.mine : styles.theirs]}
       testID={mine ? 'user-bubble' : 'assistant-bubble'}
     >
-      {/* The model writes markdown, and the Assistant's bubbles render it; the User's words are shown as typed. */}
-      {mine ? (
-        <Text style={[styles.words, styles.mineWords]}>{words}</Text>
-      ) : (
-        <ChatMarkdown style={styles.words} text={words} />
-      )}
+      <Words mine={mine} words={words} />
       {shown.length === 0 ? null : <Cards actions={cardActions} bubbleId={id} cards={shown} own={own} />}
       {done === undefined ? null : <Done actions={cardActions} done={done} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
+      {onChoose === null || choices.length === 0 ? null : <ChatChoices choices={choices} onChoose={onChoose} />}
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>
           <Button
@@ -193,6 +205,8 @@ interface ChatBubblesProps {
   bubbles: readonly ChatBubble[];
   waiting: boolean;
   onRetry: () => void;
+  // A chip of the last answer: sends its candidate as the User's choice.
+  onChoose: (choice: Choice) => void;
   // A map button: shows that layer on the map.
   onShowLayer: (layer: MapLayer) => void;
   // What the cards of the answers do.
@@ -205,7 +219,7 @@ interface ChatBubblesProps {
 // works. It keeps the latest in view. A drag puts the keyboard down, and so does a press that no button takes; a press
 // on a button sends it at once, keyboard up or not.
 export function ChatBubbles(props: ChatBubblesProps): ReactElement {
-  const { bubbles, waiting, onRetry, onShowLayer, cardActions, under } = props;
+  const { bubbles, waiting, onRetry, onChoose, onShowLayer, cardActions, under } = props;
   const scroller = useRef<ScrollView>(null);
   return (
     <ScrollView
@@ -224,6 +238,7 @@ export function ChatBubbles(props: ChatBubblesProps): ReactElement {
             bubble={bubble}
             cardActions={cardActions}
             key={bubble.id}
+            onChoose={index === bubbles.length - 1 ? onChoose : null}
             onRetry={bubble.failure === 'unavailable' && index === bubbles.length - 1 && !waiting ? onRetry : null}
             onShowLayer={onShowLayer}
           />

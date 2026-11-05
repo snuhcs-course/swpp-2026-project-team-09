@@ -3,12 +3,22 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer } from '../feature.js';
+import {
+  type Card,
+  type CardKind,
+  CARDS_MAX,
+  type Choice,
+  type ChoiceKind,
+  CLIENT_CAPABILITIES,
+  type MapLayer,
+} from '../feature.js';
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 
@@ -20,6 +30,13 @@ export const ASSISTANT_MESSAGE_MAX = 4000;
 // oldest messages to stay within it.
 export const MESSAGES_TOTAL_MAX = 24_000;
 
+// The candidate a User's message answers with, sent back from the chip they tapped: its kind and id, and the words it
+// was a candidate for, as long as a resolver takes. The server checks the id again before the model reads it.
+const chosenSchema = z.strictObject({
+  kind: z.enum(['place', 'friend', 'globalEvent'] satisfies ChoiceKind[]),
+  id: z.uuid(),
+  words: z.string().trim().min(1).max(50),
+});
 // A Restaurant's key is its name, not a UUID.
 const RESTAURANT_KEY_MAX = 200;
 
@@ -36,6 +53,7 @@ const cardReference = z.union([
 const userMessage = z.strictObject({
   role: z.literal('user'),
   text: z.string().trim().min(1).max(USER_MESSAGE_MAX),
+  chosen: chosenSchema.optional(),
 });
 
 const assistantMessage = z.strictObject({
@@ -52,9 +70,10 @@ function lengthOf(message: Message): number {
   return message.text.length + proposal;
 }
 
-// The conversation so far, as the app keeps it, the User's new message last. The server stores none of it. A request
-// over a length is refused before the model is called. `clientCapabilities` says what the app can show beside the
-// cards every version shows: ['library'] for library cards.
+// The conversation so far, as the app keeps it, the User's new message last. The server stores no message; of a
+// chosen candidate, only its id and its words, normalised. A request over a length is refused before the model is
+// called. `clientCapabilities` says what the app can show beside the cards every version shows: ['library'] for
+// library cards.
 export const assistantMessagesSchema = z.strictObject({
   clientCapabilities: z.array(z.enum(CLIENT_CAPABILITIES)).max(CLIENT_CAPABILITIES.length).default([]),
   messages: z
@@ -73,12 +92,16 @@ export const assistantMessagesSchema = z.strictObject({
 
 export type AssistantMessages = z.infer<typeof assistantMessagesSchema>;
 
+export type SentMessage = AssistantMessages['messages'][number];
+
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, filled from the database, and the Proposal it made, if any. Both lists are always there,
-// empty when there are none, and the Proposal null.
+// cards in the order shown, filled from the database, the Proposal it made, if any, and the candidates of every
+// 'several' answer of its resolvers, which the app offers as chips. The lists are always there, empty when there are
+// none, and the Proposal null.
 export interface AssistantReplyDto {
   text: string;
   mapButtons: MapLayer[];
   cards: Card[];
   proposal: QuestProposal | null;
+  choices: Choice[];
 }

@@ -4,18 +4,31 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-29  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
 import { withApprovalLine } from './approval-line.js';
-import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
+import {
+  type ChatMessage,
+  type Choice,
+  type Feature,
+  type FeatureReply,
+  type Request,
+  type ResolutionLog,
+  type ToolContext,
+} from './feature.js';
 import { FoundIds } from './found-ids.js';
+import { othersText } from './others-text.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
@@ -125,11 +138,19 @@ function toolSetOf({ tools }: Feature, context: ToolContext, observer: RunObserv
   );
 }
 
-// What the model reads of a message: an Assistant's carries a line naming the cards it showed, and one with the values
-// of the Proposal it made, which proposeQuest is given again to change it.
+// The line under a User's message that names the candidate they tapped. A Friend's name and an event's title, which
+// other people wrote, go inside delimiters.
+function chosenLine({ kind, id, label, words }: Choice): string {
+  const name = kind === 'place' ? label : othersText(kind === 'friend' ? 'friend.name' : 'globalEvent.title', label);
+  return `[Chosen: ${kind} ${id} "${name}" for "${words}"]`;
+}
+
+// What the model reads of a message: a User's carries a line naming the candidate it answers with, an Assistant's a
+// line naming the cards it showed and one with the values of the Proposal it made, which proposeQuest is given again
+// to change it.
 function contentOf(message: ChatMessage): string {
   if (message.role === 'user') {
-    return message.text;
+    return message.chosen === null ? message.text : `${message.text}\n\n${chosenLine(message.chosen)}`;
   }
   const lines = [message.text];
   if (message.cards.length > 0) {
@@ -147,27 +168,44 @@ function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
   return proposals.findLast((proposal) => proposal !== null) ?? null;
 }
 
+// The candidate the User's new message answers with, which the server checked again and proposeQuest takes as if a
+// resolver had returned it in this message. An earlier message's is only read.
+function foundChosen(messages: readonly ChatMessage[]): FoundIds {
+  const found = new FoundIds();
+  const last = messages.at(-1);
+  if (last?.role === 'user' && last.chosen !== null) {
+    found.add(last.chosen.kind, [last.chosen.id]);
+  }
+  return found;
+}
+
+function contextOf(asker: Request, messages: readonly ChatMessage[], resolutions: ResolutionLog): ToolContext {
+  return {
+    ...asker,
+    capabilities: new Set(asker.capabilities),
+    found: foundChosen(messages),
+    shown: lastShown(messages),
+    presented: { mapButtons: [], cards: [], proposal: null, choices: [] },
+    resolutions,
+    judged: new Map(),
+    restaurants: new Map(),
+  };
+}
+
 // Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and
 // what the presenters put beside it. It throws NoAnswerError when the steps ran out on tools or the run has nothing to
-// say or show, and the SDK's errors when the model fails or the time runs out. An observer, if given, is told of each
-// tool call and each step's end.
+// say or show, and the SDK's errors when the model fails or the time runs out. The resolvers record their answers in
+// `resolutions`. An observer, if given, is told of each tool call and each step's end.
 export async function runFeature(
   model: Model,
   feature: Feature,
   asker: Request,
   messages: readonly ChatMessage[],
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
+  resolutions: ResolutionLog,
   observer?: RunObserver,
 ): Promise<FeatureReply> {
-  const context: ToolContext = {
-    ...asker,
-    capabilities: new Set(asker.capabilities),
-    found: new FoundIds(),
-    shown: lastShown(messages),
-    presented: { mapButtons: [], cards: [], proposal: null },
-    judged: new Map(),
-    restaurants: new Map(),
-  };
+  const context = contextOf(asker, messages, resolutions);
   const { steps, finishReason } = await generateText({
     model,
     instructions: feature.instructions(asker.now),
@@ -216,7 +254,8 @@ function replyOf(text: string, finishReason: string, feature: Feature, context: 
   if (text !== '') {
     return { ...presented, text, noTextFinishReason: null };
   }
-  if (presented.cards.length === 0 && presented.mapButtons.length === 0 && presented.proposal === null) {
+  const { cards, mapButtons, proposal, choices } = presented;
+  if (cards.length === 0 && mapButtons.length === 0 && proposal === null && choices.length === 0) {
     return null;
   }
   return { ...presented, text: FIXED_SENTENCE, noTextFinishReason: finishReason };

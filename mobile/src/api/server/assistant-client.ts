@@ -3,13 +3,16 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
   type AssistantReply,
   type ChatCard,
+  type Choice,
   CLIENT_CAPABILITIES,
   MAP_LAYERS,
   type MapLayer,
@@ -114,25 +117,36 @@ function isChatCard(value: unknown): value is ChatCard {
   }
 }
 
+const CHOICE_KINDS = new Set<unknown>(['place', 'friend', 'globalEvent'] satisfies Choice['kind'][]);
+
+function isChoice(value: unknown): value is Choice {
+  return CHOICE_KINDS.has(field(value, 'kind')) && hasTexts(value, ['id', 'label', 'words']);
+}
+
+// A reply of a main server from before the candidates has no `choices`.
+export type AssistantAnswer = Omit<AssistantReply, 'choices'> & { choices?: Choice[] };
+
 function filled(card: ChatCard): ChatCard {
   return card.kind === 'library' ? { kind: 'library', library: withLibraryDefaults(card.library) } : card;
 }
 
-function isAssistantReply(value: unknown): value is AssistantReply {
+export function isAssistantAnswer(value: unknown): value is AssistantAnswer {
   const proposal = field(value, 'proposal');
+  const choices = field(value, 'choices');
   return (
     hasTexts(value, ['text']) &&
     listOf(isMapLayer)(field(value, 'mapButtons')) &&
     listOf(isChatCard)(field(value, 'cards')) &&
-    (isNothing(proposal) || isQuestProposal(proposal))
+    (isNothing(proposal) || isQuestProposal(proposal)) &&
+    (choices === undefined || listOf(isChoice)(choices))
   );
 }
 
 export const assistantClient: Pick<ApiClient, 'askAssistant'> = {
   askAssistant: async (messages) => {
-    const reply = await call('POST', '/assistant/messages', isAssistantReply, {
+    const { choices = [], ...reply } = await call('POST', '/assistant/messages', isAssistantAnswer, {
       body: { messages, clientCapabilities: CLIENT_CAPABILITIES },
     });
-    return { ...reply, cards: reply.cards.map(filled) };
+    return { ...reply, cards: reply.cards.map(filled), choices };
   },
 };
