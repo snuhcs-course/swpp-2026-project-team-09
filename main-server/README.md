@@ -2141,7 +2141,8 @@ its model through OpenRouter with the Vercel AI SDK
 Proposal)`.
   - **The Approval line** (P12, `approval-line.ts`): when the cards show a Quest whose Join Policy is Approval and the
     text holds fewer than two of 승인, 수락 and 신청, the server adds a line after it, fixed sentence included:
-    `승인제 파티는 참여 신청 후 파티장이 수락하면 참여돼요.`, or, when the User's last message has no Hangul,
+    `승인제 파티는 참여 신청 후 파티장이 수락하면 참여돼요.`, or, when the User's last message with letters (not
+    only `18:00` or `2`) has no Hangul,
     `A party that needs approval takes you in once you ask to join and its leader accepts.` It applies to every
     feature that shows Quest cards.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,

@@ -55,8 +55,14 @@ Spec: `../spec.md`, "CD-1: two contract fixes" and "CD-2: the Approval line". `r
 - **The note in `searchGlobalEvents`**, chosen by the owner: that search has no `placeId`, only `place`, words matched against the event's place text. Its note fires when `place` is not given, naming the Place resolvePlace answered (name, building number, id) and saying to pass its name or number as `place`. `searchRecruitingQuests`' note fires when `placeId` is not given. Both notes ride on a `found` or a `none` answer, as `note`; candidates and their order are unchanged.
 - **"One Place in this message"** is kept in `FoundIds` (`addResolvedPlace`), which `resolvePlace` fills on a `one` answer. Its matching and its answer are unchanged. The ids `FoundIds` already held could not tell a `one` answer from a Restaurant's Place that `findMealRestaurants` adds.
 - **The Board refusal** says to choose the Board "without asking, and propose once nothing else is missing", not "propose at once", so that it never reads as skipping a missing time (code review). `proposeQuest`'s tool description, which said to ask for every refused field, now carries the same Board exception as the chat rules, so the model reads one rule.
+- **The line's language** (owner's decision on review, #212): it is read from the User's last message that holds a letter, not the last message itself, so that a short answer such as `18:00` or `2` in a Korean conversation keeps the Korean line. The entry words stay the spec's three Korean words: an English reply that already explains approval still gets the English line.
 - **The Approval line** is added in `runFeature` after `replyOf`, which chooses the text as before (`FIXED_SENTENCE` included and unchanged), so it reaches every feature that shows Quest cards. It reads only `Card` and the Join Policy, so no SDK type leaves the adapter.
 - **The trace and J9**: `RunObserver.replied` tells the recorder the reply's text before the line and whether it was added. The trace's reply gains `modelText` and `approvalLine`, and a run saved before P12 has neither, its text being the model's. The P05 report keeps `J9` on the reply the User saw, with its thresholds, and adds `J9-model`, the J9 cases scored again on `modelText`, with no threshold. `J9-model` is the number compared with the before set.
+
+### Notes from review (2026-11-05)
+
+- For P20: on a later turn, `J9-model` is not purely the model's own answer, since an earlier turn's reply goes back to the model with its line. This matters only for multi-turn J9 cases.
+- `Status:` stays `ready-for-agent`, like 01 and 03, until ticket 06 flips the P12 tickets together.
 
 ### Re-scoring R1 (2026-11-05)
 

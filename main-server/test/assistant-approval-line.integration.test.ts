@@ -43,14 +43,14 @@ afterAll(async () => {
   await app.close();
 });
 
-// The model searches the day, shows `ids` and answers `text`; the reply's text, to `question`.
-async function replyText(ids: string[], text: string, question = '같이 갈 파티 있어?'): Promise<string> {
+// The model searches the day, shows `ids` and answers `text`; the reply's text, to the conversation `messages`.
+async function replyText(ids: string[], text: string, messages = ask('같이 갈 파티 있어?')): Promise<string> {
   const steps: Step[] = [{ tool: 'searchRecruitingQuests', input: { from: DAY, to: DAY } }];
   if (ids.length > 0) {
     steps.push({ tool: 'showQuests', input: { ids } });
   }
   model.script(...steps, { text });
-  const response = await postAssistantMessages(app, reader.accessToken, ask(question)).expect(200);
+  const response = await postAssistantMessages(app, reader.accessToken, messages).expect(200);
   return z.object({ text: z.string() }).parse(response.body).text;
 }
 
@@ -72,9 +72,19 @@ describe('A reply showing an Approval Quest', () => {
   });
 
   it('gets the line in English when the last message has no Hangul', async () => {
-    const reply = await replyText([approval], 'Here is one.', 'any party to join?');
+    const reply = await replyText([approval], 'Here is one.', ask('any party to join?'));
 
     expect(reply).toBe(`Here is one.\n\n${APPROVAL_LINE.english}`);
+  });
+
+  it('keeps the Korean line when the last message holds only a time, after a Korean one', async () => {
+    const reply = await replyText([approval], '이 파티 어때요?', [
+      { role: 'user', text: '저녁에 같이 갈 파티 있어?' },
+      { role: 'assistant', text: '몇 시쯤이요?', cards: [], proposal: null },
+      { role: 'user', text: '18:00' },
+    ]);
+
+    expect(reply).toBe(`이 파티 어때요?\n\n${APPROVAL_LINE.korean}`);
   });
 
   it('gets the line after the fixed sentence when the model wrote no text', async () => {

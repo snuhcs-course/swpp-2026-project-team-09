@@ -19,19 +19,22 @@ export const APPROVAL_LINE = {
 const ENTRY_WORDS = ['승인', '수락', '신청'];
 
 const HANGUL = /\p{Script=Hangul}/u;
+const LETTER = /\p{L}/u;
 
-// The reply's text with the line added, in the language of the User's last message, when a card shows an Approval
-// Quest and the text holds fewer than two of the entry words; else the text as it is.
+// The reply's text with the line added, when a card shows an Approval Quest and the text holds fewer than two of the
+// entry words; else the text as it is. The line is in the language of the User's last message with letters, so that a
+// short answer such as 18:00 or 2 keeps the conversation's language. `userTexts` are the User's messages, in order.
 export function withApprovalLine(
   text: string,
   cards: readonly Card[],
-  lastUserText: string,
+  userTexts: readonly string[],
 ): { text: string; added: boolean } {
   const approval = cards.some((card) => card.kind === 'quest' && card.quest.joinPolicy === JoinPolicy.approval);
   const told = ENTRY_WORDS.filter((word) => text.includes(word)).length >= 2;
   if (!approval || told) {
     return { text, added: false };
   }
-  const line = HANGUL.test(lastUserText) ? APPROVAL_LINE.korean : APPROVAL_LINE.english;
+  const worded = userTexts.findLast((userText) => LETTER.test(userText)) ?? userTexts.at(-1) ?? '';
+  const line = HANGUL.test(worded) ? APPROVAL_LINE.korean : APPROVAL_LINE.english;
   return { text: `${text}\n\n${line}`, added: true };
 }

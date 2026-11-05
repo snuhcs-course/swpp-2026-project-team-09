@@ -202,11 +202,10 @@ export async function runFeature(
   return withLine(reply, messages, observer);
 }
 
-// The reply with the Approval line in the language of the User's last message, when it needs one, the observer told
-// of the text before it.
+// The reply with the Approval line, when it needs one, the observer told of the text before it.
 function withLine(reply: FeatureReply, messages: readonly ChatMessage[], observer?: RunObserver): FeatureReply {
-  const lastUserText = messages.findLast((message) => message.role === 'user')?.text ?? '';
-  const { text, added } = withApprovalLine(reply.text, reply.cards, lastUserText);
+  const userTexts = messages.flatMap((message) => (message.role === 'user' ? [message.text] : []));
+  const { text, added } = withApprovalLine(reply.text, reply.cards, userTexts);
   observer?.replied({ modelText: reply.text, approvalLine: added });
   return { ...reply, text };
 }
