@@ -79,6 +79,23 @@ describe('timesConsistent', () => {
 
     expect(failingOne(lines, `2026-11-12T${clock}`, '2026-11-12T17:00')).toEqual([]);
   });
+});
+
+describe('timesConsistent, on a line of several times for the day', () => {
+  it.each(['※ 11월 12일 15:00 → 16:00으로 변경', '※ 11월 12일 16:00으로 변경 (기존 15:00)'])(
+    "fails when a line lists the session's start among starts alone, %s",
+    (notice) => {
+      const lines = ['일시: 11월 12일(목) 15:00~17:00', notice];
+
+      expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual(['timesConsistent']);
+    },
+  );
+
+  it('fails on another time in a line that holds an application word after its day', () => {
+    const lines = ['일시: 11월 12일(목) 19:00 시작', '11월 12일 14:00~16:00 (사전 예약제)'];
+
+    expect(failingOne(lines, '2026-11-12T19:00', null)).toEqual(['timesConsistent']);
+  });
 
   it('passes one of the sittings a line lists for the day', () => {
     const lines = ['일시: 11월 12일(목) 15:00~17:00', '11월 12일(목) 10:00~12:00, 15:00~17:00 (같은 내용 2회)'];
@@ -186,6 +203,13 @@ describe('timesConsistent, on the worker’s session lines of extra.snu', () => 
     ];
 
     expect(failing(post, sessions)).toEqual([[], ['timesConsistent']]);
+  });
+
+  it('takes the number of the line a quote with a zero-width space comes from', () => {
+    const answered = session(lines[1] ?? '', '2026-11-12T14:00', '2026-11-12T16:00');
+    answered.lines = { ...answered.lines, start: ['2026.11.12.\u200B 14:00'], end: ['2026.11.12. 16:00'] };
+
+    expect(failing(lines, [answered])[0]).toEqual([]);
   });
 
   it('takes the number of the line a quote comes from', () => {

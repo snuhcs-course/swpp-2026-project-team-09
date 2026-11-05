@@ -35,8 +35,8 @@ const ELSEWHERE = new RegExp(
 export type CampusDefault = 'gwanak' | null;
 
 // Names of Places that other institutions use for their own facilities, from the list of Places and the place lines of
-// the development posts of eval/collection. Where the campus is only assumed, such a name has to be all a part writes,
-// with a floor or a room at most: "OO구민체육센터 2층 체육관" is not 71동.
+// the development posts of eval/collection. Such a name after another facility's name is that facility's, even where the
+// place writes 서울대: "서울대 앞 OO스포츠센터 체육관" is not 71동.
 const GENERIC_PLACE_NAMES = new Set([
   '체육관',
   '미술관',
@@ -178,15 +178,16 @@ function restOf(part: Span, name: Span, text: string): string {
   return `${before} ${after}`.replaceAll(CAMPUS, '').replaceAll(ROOM_NAME, '');
 }
 
-// A generic name after another facility's name is that facility's: "OO스포츠센터 체육관". Where the campus is assumed,
-// it says nothing more than the campus does unless it is all the part writes.
+// Where the campus is assumed, a name says nothing more than the campus does unless it is all the part writes, with a
+// floor or a room at most: "고려대 문화관" or "OO구 문화관" is not 73동. Where it is written, a generic name after another
+// facility's name is that facility's: "서울대 앞 OO스포츠센터 체육관".
 function standsAlone(part: Span, names: NameMention[], text: string, assumed: boolean): boolean {
   return names.every((name) => {
-    if (!name.generic) {
-      return true;
+    if (assumed) {
+      return ROOM_ONLY.test(restOf(part, name, text));
     }
     const before = text.slice(part.start, name.start).replaceAll(CAMPUS, '');
-    return assumed ? ROOM_ONLY.test(restOf(part, name, text)) : !/\p{L}/u.test(before.replaceAll(AROUND, ''));
+    return !name.generic || !/\p{L}/u.test(before.replaceAll(AROUND, ''));
   });
 }
 

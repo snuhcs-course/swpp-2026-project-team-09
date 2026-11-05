@@ -209,6 +209,15 @@ describe('namedPlace, on a Source whose campus is Gwanak', () => {
   it("a unique name without the university's name → its Place", () => {
     expect(named('문화관 로비', 'gwanak')).toEqual({ number: '73', name: '문화관' });
   });
+
+  it.each([
+    ['a short university name', '한빛대 문화관 2층'],
+    ['a district alone', '한빛구 문화관 3층'],
+    ['a city', '한빛시 문화관'],
+    ['another institution', '한빛복지재단 문화관 강당'],
+  ])('a name with more than a floor or a room, after %s → no Place', (_as, text) => {
+    expect(named(text, 'gwanak')).toBeNull();
+  });
 });
 
 describe('namedPlace, on a Source whose campus is Gwanak, for a place marked elsewhere', () => {

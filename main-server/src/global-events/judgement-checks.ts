@@ -221,7 +221,13 @@ function checksOf(
     // The model may quote only "301동 117호" from "장소: 연건캠퍼스 301동 117호".
     placeMatches: named !== null && !enclosingLines(session.lines.place, lines).some((line) => isElsewhere(line)),
     newSession: isNew,
-    timesConsistent: timesConsistent(sessionNumber(session, position, lines), start, end, lines, now),
+    timesConsistent: timesConsistent(
+      sessionNumber(quotedPieces(session.lines.start), position, lines),
+      start,
+      end,
+      lines,
+      now,
+    ),
   };
 }
 
