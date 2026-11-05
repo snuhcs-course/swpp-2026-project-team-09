@@ -28,7 +28,7 @@ Spec: `../spec.md`, "Measurement".
 
   Collection uses the saved `collection-held-out-*-464ea9c5` results, since no collection code changed after that commit.
 - [ ] The replays are recorded, at no model cost: 01 alone, then 01 with 04.
-- [ ] **Settings** as the spec's Measurement: C, D and the P4 suite at 4,000 output tokens; P19 at 1,000, passed with `--max-output-tokens`. The same for before and after.
+- [ ] **Settings** as the spec's Measurement and as R1: every suite, P19 included, at 4,000 output tokens. The same for before and after.
 - [ ] **After set**, once, on `3.0/P12-after-set` after 01–05 are done, after cost approval: the same bundle, plus evaluations A and B, plus the P4 suite for 02's Approval line. The branch's head is recorded with the run. The total for before and after is about USD 9.
 - [ ] The report opens by saying two things:
   - it breaks the metrics document's rule of one change per run (4.4), as R1's did;
