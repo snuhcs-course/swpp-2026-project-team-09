@@ -5,6 +5,8 @@
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -40,6 +42,9 @@ export function resolvePlace(matcher: PlaceMatcher): Tool {
       );
       const labels = new Map(places.map(({ id, name }) => [id, name]));
       await settle(context, { kind: 'place', words, answer, labels, tier, aliasSource: source });
+      if (answer.result === 'one') {
+        context.found.addResolvedPlace(answer.candidate);
+      }
       return answer;
     },
   });

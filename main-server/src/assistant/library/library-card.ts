@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ClockRange, type EquipmentGroup, KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
@@ -97,7 +98,8 @@ function hhmm(clock: string): string {
   return clock.replace(':', '');
 }
 
-function cardSpace(space: LibrarySpace, seatNos: number[]): LibraryCardSpace | null {
+// A space as a card or the 공부공간 layer carries it; null for one the catalogue lacks the parts of.
+export function cardSpace(space: LibrarySpace, seatNos: number[]): LibraryCardSpace | null {
   const { floor, unit, roomNo, sectorNo, hours } = space;
   if (floor === null || unit === null || roomNo === null || sectorNo === null || hours === null) {
     return null;

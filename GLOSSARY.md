@@ -63,7 +63,7 @@ _Avoid_: Pending event, unverified event
 How a Global Event came to be published: by an Administrator, by the rules that read its post, or by a Judgement. Only Administrators see it.
 
 **Judgement**:
-The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. One call reads the Draft's whole Source Post, so a post has one Judgement, tried at most twice. A Judgement publishes the sessions that pass the server's checks and leaves the rest a Draft. It may read a session as running over a period, such as an exhibition open for several days.
+The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. One call reads the Draft's whole Source Post, so a post has one Judgement, tried at most twice. A Judgement publishes only the sessions that pass the server's checks. The rest stay Drafts with what could be read of them, and one whose time was read may still be attached to the same event posted elsewhere, or wait in the Same-event queue. It may read a session as running over a period, such as an exhibition open for several days.
 _Avoid_: AI verification, AI publishing
 
 **Unsettled post**:
@@ -205,6 +205,10 @@ _Avoid_: Quest, Onboarding (Onboarding is the name and department after the firs
 One page of the Tutorial, a step of campus life such as getting the student card, which a User starts and completes. It is not a Quest: it has no Holder, Board, Sub Quest or capacity.
 _Avoid_: Quest
 
+**Tutorial Category**:
+A group of Tutorial Quests about one part of campus life, such as 생활 or 이동, shown together. Every Tutorial Quest belongs to exactly one, and a category's quests come one after another.
+_Avoid_: Tutorial Layer, Quest category
+
 ### 관정도서관
 
 **Library Space**:
@@ -244,6 +248,10 @@ _Avoid_: Review list, pending posts
 **Restaurant**:
 A dining place whose daily menu a Source publishes.
 _Avoid_: Cafeteria
+
+**Study Space**:
+A place on the campus to study, such as a library's reading room, a college's 열람실 or a student lounge, shown on the 공부공간 layer under its building. Some are open only to a college, a department or graduate students; whether one is open to a User is read from 내 정보.
+_Avoid_: Library Space (a Library Space is one entry of 관정도서관's booking catalogue), study room
 
 **Travel Time**:
 The time from one Place to another, on foot or by the circular shuttle.
