@@ -754,8 +754,8 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
     its normalised title and start equal the event's (`attachedBy` `rule`, reason `equal_title_and_start_without_place`),
     or when the AI answers `same`, the starts are equal to the minute and one normalised title holds the other
     (`attachedBy` `ai`, reason `same_minute_and_contained_title`; the AI's sentence stays in `same_event_answers`).
-    Otherwise it is held with `heldFor` `place_unchecked`, or as the AI's answer says, and with no candidate it stays its
-    own Draft with its time filled;
+    Otherwise it is held with `heldFor` `place_unchecked`, or as the AI's answer says. With no candidate, or with
+    `SAME_EVENT_AI_CHOICE=off` and no title match, it stays its own Draft with its time filled;
   - one whose lines are in the post and whose time checks, or place checks, all pass fills its Draft with that time, or
     that place and its position;
   - the rest are written in the Judgement only;

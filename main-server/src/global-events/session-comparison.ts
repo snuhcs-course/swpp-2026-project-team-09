@@ -102,7 +102,8 @@ async function chosenByAi(
 }
 
 // The rules, then the answer the AI gave for the candidates they left. With both switches off nothing is looked at. A
-// session that may not be published is attached only on ADR 0014's terms, and held where one that may would be its own.
+// session that may not be published is attached only on ADR 0014's terms, and held where the AI's answer would make one
+// that may its own. With the AI off it stays its own Draft, as one that may is published.
 export async function compared(
   tx: Prisma.TransactionClient,
   session: ComparedSession,

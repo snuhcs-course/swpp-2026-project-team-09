@@ -96,7 +96,16 @@ Reviewed on standards and on spec before the PR. The fixes are in `3ca31593`:
 
 No real model was run. The target cases are read in ticket 06.
 
+### Review settled (2026-11-05)
+
+`TaeHyun79` approved #213 at `1dc106e` with two notes, neither blocking. The owner (`Jaehyun0320`) decided both:
+
+- **With `SAME_EVENT_AI_CHOICE=off`, Production's setting,** a comparable-only session that has candidates but no title match stays its own Draft, with its time filled. It is not queued and never published. This matches a publishable session with the AI off, which is published as its own. So the ticket's "otherwise it is held in the Same-event queue" holds only while the AI's choice is on.
+- **Placement stays as it is for now.** On a post with one Draft, a passing session and a session that is only compared, the passing session gives up the Draft and becomes a new event, as before. The compared session takes the Draft, which then shows that session's time with the place the worker read for the passing one. Nothing is published that way. The fix is to free the Draft only when a failing session settles nothing. It changes where a publishable session goes, so it is left for a follow-up after ticket 06's after set.
+
+The two code comments that no longer held (`placedSessions`, `compared`) and the README now say this.
+
 ### Agent usage (2026-11-05)
 
-- Agent time: about 1 hour 10 minutes (estimate), one session with two review subagents. That includes the time integration tests ran under the shared lock, and leaves out waiting for the owner.
-- Tokens, the two subagents included: input 364, with 29,362,492 cache reads and 402,446 cache writes shown apart; output 117,025. Counted before the PR was opened.
+- Agent time: about 1 hour 40 minutes (estimate), one session with two review subagents. That includes the time integration tests ran under the shared lock, the PR, CI, and settling the review. It leaves out waiting for the owner.
+- Tokens, the two subagents included: input 488, with 43,392,865 cache reads and 444,524 cache writes shown apart; output 142,986. Counted before the review fix was committed.
