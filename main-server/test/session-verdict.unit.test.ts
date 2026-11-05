@@ -8,7 +8,7 @@ import { JUDGEMENT_CHECKS } from '../src/global-events/judgement-answer.js';
 import { verdictOf } from '../src/global-events/session-verdict.js';
 
 function failing(...names: string[]): { name: string; passed: boolean }[] {
-  return [...JUDGEMENT_CHECKS, 'timesConsistent'].map((name) => ({ name, passed: !names.includes(name) }));
+  return JUDGEMENT_CHECKS.map((name) => ({ name, passed: !names.includes(name) }));
 }
 
 describe('verdictOf', () => {
@@ -29,7 +29,7 @@ describe('verdictOf', () => {
     ['placeInLines', true, true],
     ['placeMatches', true, true],
     ['newSession', false, true],
-    // A check added later counts towards publication only.
+    // A check outside the named lists, added later, counts towards publication only.
     ['timesConsistent', true, true],
   ])('with %s failing alone: compared %s, fills its Draft %s, never published', (name, comparable, draftable) => {
     expect(verdictOf(failing(name))).toEqual(

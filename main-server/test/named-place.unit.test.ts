@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: a place naming one Place, several, none or somewhere else, by README.md's rules for Global Events, on the
@@ -10,7 +11,7 @@
 import { z } from 'zod';
 import { readCampusBoundary } from '../src/common/campus-boundary.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
-import { namedPlace } from '../src/global-events/named-place.js';
+import { type CampusDefault, namedPlace } from '../src/global-events/named-place.js';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
 
 const campusMapFile = z.object({
@@ -88,8 +89,8 @@ const place132 = { number: '132', name: '뉴미디어통신공동연구소' };
 const place46 = { number: '46', name: '천문관측소' };
 
 // The Place a text names, by its number and name.
-function named(text: string | null): Pick<PlaceDto, 'number' | 'name'> | null {
-  const place = namedPlace(text, places);
+function named(text: string | null, campusDefault: CampusDefault = null): Pick<PlaceDto, 'number' | 'name'> | null {
+  const place = namedPlace(text, places, campusDefault);
   return place === null ? null : { number: place.number, name: place.name };
 }
 
@@ -166,6 +167,75 @@ describe('namedPlace, on a text that names no Place for certain', () => {
     ['two by number', '서울대학교 46동 및 132동'],
     ['a number and the name of another Place', '서울대학교 46동 뉴미디어통신공동연구소'],
   ])('several places in one text, %s → no Place', (_as, text) => {
+    expect(named(text)).toBeNull();
+  });
+});
+
+// A Source whose posts are Gwanak's unless they say otherwise. The texts are written for these tests.
+describe('namedPlace, on a Source whose campus is Gwanak', () => {
+  const gym = { number: '71', name: '체육관' };
+
+  it.each([
+    ['a district centre', '구로구민체육센터 2층 체육관'],
+    ["a school's", '한빛고등학교 체육관'],
+  ])('a generic name after another facility, %s → no Place', (_as, text) => {
+    expect(named(text, 'gwanak')).toBeNull();
+  });
+
+  it.each([
+    ['alone', '체육관'],
+    ['with a floor', '체육관 2층'],
+    ['with a room', '체육관 105호'],
+  ])('a generic name %s → its campus building', (_as, text) => {
+    expect(named(text, 'gwanak')).toEqual(gym);
+  });
+
+  it('a generic name with more than a floor or a room → no Place', () => {
+    expect(named('미술관 옆 카페', 'gwanak')).toBeNull();
+  });
+
+  it('a building number with a floor and a room → that Place', () => {
+    expect(named('301동 2층 세미나실', 'gwanak')).toEqual({ number: '301', name: '제1공학관' });
+  });
+
+  it("a unique name without the university's name → its Place", () => {
+    expect(named('문화관 로비', 'gwanak')).toEqual({ number: '73', name: '문화관' });
+  });
+});
+
+describe('namedPlace, on a Source whose campus is Gwanak, for a place marked elsewhere', () => {
+  it.each([
+    ['연건', '연건 체육관'],
+    ['시흥', '시흥캠퍼스 문화관'],
+    ['평창', '평창캠퍼스 체육관'],
+    ['수원', '수원 301동'],
+    ['보라매', '보라매 문화관'],
+    ['대학로', '대학로 문화관 2층'],
+    ['혜화', '혜화 301동'],
+    ['서울대입구', '서울대입구역 문화관'],
+    ['낙성대', '낙성대 문화관'],
+    ['의과대학', '의과대학 301동'],
+    ['간호대학', '간호대학 체육관'],
+    ['치과병원', '치과병원 문화관'],
+    ['서울대학교병원', '서울대학교병원 체육관'],
+    ['서울대병원', '서울대병원 301동'],
+    ['SNUH', 'SNUH 문화관'],
+    ['의학연구원', '의학연구원 301동'],
+    ['의학도서관', '의학도서관 문화관'],
+    ['부설', '부설 체육관'],
+    ['사대부', '사대부고 체육관'],
+    ['another university', '한빛대학교 문화관'],
+    ['another district of Seoul', '서울 마포구 문화관'],
+    ['another province', '경기도 체육관'],
+    ['a flat', '한빛아파트 301동'],
+    ['another street', '한빛로 12 문화관'],
+  ])('a place marked elsewhere, by %s → no Place', (_marker, text) => {
+    expect(named(text, 'gwanak')).toBeNull();
+  });
+});
+
+describe('namedPlace, on a Source without a campus', () => {
+  it.each(['체육관', '301동 2층 세미나실', '문화관 로비'])('%s → no Place', (text) => {
     expect(named(text)).toBeNull();
   });
 });

@@ -31,7 +31,7 @@ const RECORD = {
   modelsAnswered: [],
   limits: { timeoutMs: 1, maxOutputTokens: 1 },
   switches: {},
-  buildingNumberIsGwanak: { snu_events: true },
+  campusDefault: { snu_events: 'gwanak' },
   checks: ['announcesEvent'],
   from: null,
   usage: { calls: 0, tokens: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 }, costUsd: 0 },

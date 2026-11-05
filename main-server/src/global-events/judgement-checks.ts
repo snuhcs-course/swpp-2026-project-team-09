@@ -7,6 +7,7 @@
  ******************************************************************************/
 
 import { PlaceDto } from '../places/dto/place.dto.js';
+import { isApplicationAt } from './application-lines.js';
 import {
   type AnsweredSession,
   type JudgedSession,
@@ -28,20 +29,12 @@ import {
 import { isElsewhere, namedPlace } from './named-place.js';
 import { type PostSourceSettings } from './post-sources.js';
 import { verdictOf } from './session-verdict.js';
+import { sessionNumber, timesConsistent } from './times-consistent.js';
 
 // The server's checks of a Judgement (ADR 0008). The model decides nothing: a session is published only when every
 // check passes, and a check that cannot tell fails.
 
 const HOURS_24_MS = 24 * 60 * 60 * 1000;
-
-// What marks a line as a period to apply in, not the event's own time.
-export const APPLICATION =
-  /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|예약|appl(?:y|ication)|regist(?:er|ration)|deadline/iu;
-
-// A line this short holds a label for the next one, as "신청 기간" above its dates does.
-const LABEL_LENGTH = 20;
-
-const BUILDING_NUMBER_ALONE = /^\d+(?:-\d+)?동(?:\s*(?:지하\s*)?\d+층)?(?:\s*\d+(?:-\d+)?호)?$/u;
 
 // A soft hyphen, a zero-width space and a byte-order mark show nothing, and a quote may have them or not.
 function normalised(text: string): string {
@@ -130,14 +123,9 @@ function enclosingLines(quotes: string[], lines: string[]): string[] {
 // 11/5 14:00" does not pass.
 function notApplicationPeriod(session: AnsweredSession, lines: string[]): boolean {
   const pieces = quotedPieces([...session.lines.start, ...session.lines.end]);
-  return lines.every((line, index) => {
-    if (!pieces.some((piece) => piece !== '' && line.includes(piece))) {
-      return true;
-    }
-    const above = lines[index - 1];
-    const labelAbove = above !== undefined && above.length <= LABEL_LENGTH ? above : '';
-    return !APPLICATION.test(line) && !APPLICATION.test(labelAbove);
-  });
+  return lines.every(
+    (line, index) => !pieces.some((piece) => piece !== '' && line.includes(piece)) || !isApplicationAt(lines, index),
+  );
 }
 
 function startBeforeEnd(session: AnsweredSession, start: JudgedTime | null, end: JudgedTime | null): boolean {
@@ -200,26 +188,20 @@ function placeInLines({ place, lines }: AnsweredSession): boolean {
   return written !== '' && quotedPieces(lines.place).some((piece) => piece.includes(written));
 }
 
-// The one Place the session's place names. A building number alone says nothing of which campus, which the Source's
-// setting answers; a place that names another campus is still refused by namedPlace.
+// The one Place the session's place names. A place that does not say which campus is on the Source's campus default; a
+// place that names another campus is still refused by namedPlace.
 export function matchedPlace(
   place: string | null,
-  { buildingNumberIsGwanak }: PostSourceSettings,
+  { campusDefault }: PostSourceSettings,
   places: PlaceDto[],
 ): PlaceDto | null {
-  if (place === null) {
-    return null;
-  }
-  const written = normalised(place);
-  const onGwanak = buildingNumberIsGwanak && BUILDING_NUMBER_ALONE.test(written);
-  return namedPlace(onGwanak ? `서울대학교 ${written}` : written, places);
+  return place === null ? null : namedPlace(normalised(place), places, campusDefault);
 }
 
 function checksOf(
   session: AnsweredSession,
-  announcesEvent: boolean,
-  isNew: boolean,
-  named: PlaceDto | null,
+  position: number,
+  { announcesEvent, isNew, named }: { announcesEvent: boolean; isNew: boolean; named: PlaceDto | null },
   { post, now }: CheckContext,
 ): Record<JudgementCheck, boolean> {
   const lines = postLines(post);
@@ -239,6 +221,7 @@ function checksOf(
     // The model may quote only "301동 117호" from "장소: 연건캠퍼스 301동 117호".
     placeMatches: named !== null && !enclosingLines(session.lines.place, lines).some((line) => isElsewhere(line)),
     newSession: isNew,
+    timesConsistent: timesConsistent(sessionNumber(session, position, lines), start, end, lines, now),
   };
 }
 
@@ -246,13 +229,13 @@ function checksOf(
 // already gave its start and place.
 export function checkedSessions({ announcesEvent, sessions }: JudgementAnswer, context: CheckContext): JudgedSession[] {
   const seen = new Set<string>();
-  return sessions.map((session) => {
+  return sessions.map((session, position) => {
     const at = session.start === null ? null : (readJudgedTime(session.start)?.at ?? null);
     const key = `${at?.toISOString() ?? session.start}|${normalised(session.place ?? '')}`;
     const isNew = !seen.has(key) && !context.readStarts.some((read) => read.getTime() === at?.getTime());
     seen.add(key);
     const named = matchedPlace(session.place, context.source, context.places);
-    const passes = checksOf(session, announcesEvent, isNew, named, context);
+    const passes = checksOf(session, position, { announcesEvent, isNew, named }, context);
     const results = JUDGEMENT_CHECKS.map((name) => ({ name, passed: passes[name] }));
     return {
       ...session,
