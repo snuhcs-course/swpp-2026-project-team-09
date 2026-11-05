@@ -694,7 +694,7 @@ posts of one event on two pods the second sees the first.
 - **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
   refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`). `off` calls no model, sends nothing out and asks
   nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
-  with candidates the refusing rules left, whether the rules read them or a Judgement passed them, it makes one call,
+  with candidates the refusing rules left, whether the rules read them or a Judgement's session is compared, it makes one call,
   outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
   decided, or a post the link rule decided. An answer is stored in `same_event_answers`, one row per session named by
   its start, made before the call: of two servers one calls, and a session is never asked about twice.
@@ -705,7 +705,8 @@ posts of one event on two pods the second sees the first.
   `same-event-choice.ts`): `link_not_one_to_one`, `several_matches` (several title matches, or two sessions chose one
   event), `ai_unsure`, `ai_failed` (a failed call, a timeout, a malformed answer, a candidate not offered, or a server
   that stopped during the call), `candidates_changed` (the chosen event is no longer a candidate, or one the AI was not
-  asked about has appeared, as when another server published it meanwhile). It stays a Draft, is neither judged nor
+  asked about has appeared, as when another server published it meanwhile), `place_unchecked` (a Judgement's session
+  whose place failed the checks, which no candidate takes on ADR 0014's terms). It stays a Draft, is neither judged nor
   published, and its post finishes the step. A post another server is asking about is left to it.
 - **What an Administrator does** (`admin/global-events`, each under the step's lock, so that of two one acts and the
   other gets 409): `GET queue` lists the sessions with their candidates, worked out when asked, so a removed event goes,
@@ -743,11 +744,24 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
   taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
-  post. Failing sessions make no Draft: a post stored as one Draft keeps it for them, and a post the worker sent with a
-  Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
-  as it is, with the outcome `no_event`. A session over a period whose end is a day alone, or the 00:00 extra.snu writes
-  where it has no time, is stored as ending at 23:59 of that day in Korea, so that it stays listed through its last day
-  and its card names that day.
+  post. A post called no event stays as it is, with the outcome `no_event`. A session over a period whose end is a day
+  alone, or the 00:00 extra.snu writes where it has no time, is stored as ending at 23:59 of that day in Korea, so that
+  it stays listed through its last day and its card names that day. Failing sessions are never published
+  (`session-verdict.ts`,
+  [ADR 0014](../docs/adr/0014-a-session-whose-place-fails-is-still-compared-as-the-same-event.md)):
+  - one that fails only `length`, `placeInLines` or `placeMatches` (a named list, so a check added later only stops
+    publication) is compared with the events that exist, its place given to the AI as written. It is attached only when
+    its normalised title and start equal the event's (`attachedBy` `rule`, reason `equal_title_and_start_without_place`),
+    or when the AI answers `same`, the starts are equal to the minute and one normalised title holds the other
+    (`attachedBy` `ai`, reason `same_minute_and_contained_title`; the AI's sentence stays in `same_event_answers`).
+    Otherwise it is held with `heldFor` `place_unchecked`, or as the AI's answer says. With no candidate, or with
+    `SAME_EVENT_AI_CHOICE=off` and no title match, it stays its own Draft with its time filled;
+  - one whose lines are in the post and whose time checks, or place checks, all pass fills its Draft with that time, or
+    that place and its position;
+  - the rest are written in the Judgement only;
+  - such a session takes its own Draft, or the post's only one, or one with no start, as a passing one does. A post
+    keeps a Draft for the sessions that settle nothing, so that no time the worker read is lost: the session then gets a
+    new Draft, which the link rule counts as one of the post's sessions, as it counts a passing session's new event.
 - **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
   reads it publishes nothing of that Judgement. A post the link rule decided is not judged. With
   `AUTOMATIC_PUBLICATION=off` the Judgement and what it attaches are stored and nothing is published.
@@ -783,7 +797,7 @@ DTO the app receives carries any of it. An entry of that list:
 The `judgement` of an event's page holds `outcome` (`judged`, `no_event` for a post called no event, `failed` for one that
 could not be made, `null` while a try runs), `failure`, `attempts`, `announcesEvent`, `modelId`, `judgedAt` and `sessions`,
 each with `start`, `end`, `place`, `overPeriod`, `lines`, `placeId`, `checks` (each `name` and `passed`), `passed` and
-`globalEventId`, the event it was published as.
+`globalEventId`, the event it was published as or attached to, or the Draft it fills or waits in.
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 
