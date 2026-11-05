@@ -93,6 +93,8 @@ describe('writtenDays: a list number before a day', () => {
     ['11. 2.(월) 오후 3시', { month: 11, day: 2 }],
     ['11. 2. 14:00', { month: 11, day: 2 }],
     ['11.2.(월)', { month: 11, day: 2 }],
+    ['3. 9. 2시', { month: 3, day: 9 }],
+    ['26. 11. 2.(월)', { year: 2026, month: 11, day: 2 }],
   ])('still reads the day that starts %s', (line, expected) => {
     expect(writtenDays(line)[0]).toMatchObject(expected);
   });
@@ -166,6 +168,7 @@ describe('isWrittenClock', () => {
     ['오후 2–5시', 15, 0],
     ['오전 9–11시', 21, 0],
     ['2–5시', 14, 0],
+    ['오후 1-2시간', 13, 0],
   ])('%s does not hold %i:%i', (line, hour, minute) => {
     expect(isWrittenClock(line, { hour, minute })).toBe(false);
   });

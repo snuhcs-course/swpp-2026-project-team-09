@@ -47,6 +47,7 @@ describe('A Judgement of a time written', () => {
     ['after a list number of two digits', '12. 3월 4일(화) 14:00~17:00', '12. 3월 4일(화) 14:00~17:00'],
     ['as hours of 오후', '- 일시: 3월 4일(화) 오후 2–5시', '3월 4일(화) 오후 2–5시'],
     ['as hours of 오후 with a tilde', '- 일시: 3월 4일(화) 오후 2~5시', '3월 4일(화) 오후 2~5시'],
+    ['as hours of 오후 with a hyphen', '- 일시: 3월 4일(화) 오후 2-5시', '3월 4일(화) 오후 2-5시'],
     ['with a zero-width space', '- 일시: 3월 4일(화)\u200B 14:00~17:00', '3월 4일(화) 14:00~17:00'],
     ['with a soft hyphen', '- 일시: 3월 4일(화) 14:00~17:\u00AD00', '3월 4일(화) 14:00~17:00'],
     ['with a byte-order mark', '- 일시: 3월 4\uFEFF일(화) 14:00~17:00', '3월 4일(화) 14:00~17:00'],
@@ -59,6 +60,16 @@ describe('A Judgement of a time written', () => {
       startsAt: new Date('2081-03-04T14:00:00+09:00'),
       endsAt: new Date('2081-03-04T17:00:00+09:00'),
       place: PLACE,
+    });
+  });
+
+  it('as hours of 오전 publishes the session at their first hour', async () => {
+    const postNumber = await judged('- 일시: 3월 4일(화) 오전 9–11시', '2081-03-04T09:00', '2081-03-04T11:00');
+
+    expect(await world.onlyEvent(postNumber)).toMatchObject({
+      state: 'published',
+      startsAt: new Date('2081-03-04T09:00:00+09:00'),
+      endsAt: new Date('2081-03-04T11:00:00+09:00'),
     });
   });
 

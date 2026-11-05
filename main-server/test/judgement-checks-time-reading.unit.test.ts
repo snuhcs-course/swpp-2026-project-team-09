@@ -32,7 +32,10 @@ function failing(timeLine: string, changes: Partial<AnsweredSession>, quoted = t
       readStarts: [],
     },
   );
-  return result?.checks.filter(({ passed }) => !passed).map(({ name }) => name) ?? ['no session'];
+  if (result === undefined) {
+    throw new Error('No session');
+  }
+  return result.checks.filter(({ passed }) => !passed).map(({ name }) => name);
 }
 
 describe('checkedSessions: a list number before the day', () => {

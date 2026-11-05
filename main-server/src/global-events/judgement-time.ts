@@ -77,9 +77,9 @@ const DAY = new RegExp(
   'gu',
 );
 
-// A list's number before a line's day: "1. 3월 9일" is the 9th of March, never the 3rd of January. The "11. " of
-// "11. 2.(월)" is no list's number, since "2.(월)" is no day: it is the month of a day written with dots.
-const LIST_NUMBER = new RegExp(String.raw`^\d{1,2}\.\s+(?=${DAY.source})`, 'u');
+// A list's number before a line's day: "1. 3월 9일" is the 9th of March, never the 3rd of January. A number before a day
+// written with dots is that day's year or month: "11. 2.(월)", "3. 9. 2시", "26. 11. 2.".
+const LIST_NUMBER = new RegExp(String.raw`^\d{1,2}\.\s+(?!\d{1,2}\s*\.\s*\d)(?=${DAY.source})`, 'u');
 
 function withoutListNumber(line: string): string {
   return line.replace(LIST_NUMBER, '');
@@ -151,7 +151,7 @@ const CLOCK =
   /(오전|오후|낮|저녁|밤|새벽|AM|PM)?\s*(?<![\d:.])(\d{1,2})(?:\s*:\s*(\d{2})(?::\d{2})?|\s*시(?!간)(?:\s*(\d{1,2})\s*분|\s*(반))?)(?!\d)\s*(AM|PM)?/giu;
 
 // The first hour of "오후 2–5시" is a clock of 오후 too, read as if written "오후 2시–5시".
-const FIRST_OF_HOURS = /(오전|오후)\s*(?<![\d:.])(\d{1,2})\s*([–~-])\s*(?=\d{1,2}\s*시)/gu;
+const FIRST_OF_HOURS = /(오전|오후)\s*(?<![\d:.])(\d{1,2})\s*([–~-])\s*(?=\d{1,2}\s*시(?!간))/gu;
 
 const EARLIEST_DAYTIME_HOUR = 7;
 const LATEST_DAYTIME_HOUR = 21;
