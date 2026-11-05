@@ -98,6 +98,7 @@ function candidateOf({ quest, ...why }: Omit<Hit, 'id'> & { quest: RecruitingQue
     globalEvent: quest.globalEvent === null ? null : othersText('globalEvent.title', quest.globalEvent.title),
     // open: the User joins at once; approval: the Leader accepts each User who asks.
     joinPolicy: quest.joinPolicy,
+    // What joining takes, in the words of what the User does: askToJoin for an Approval Quest.
     join: quest.joinPolicy === 'approval' ? 'askToJoin' : 'open',
     placesLeft: quest.capacity - quest.holderCount,
     holderCount: quest.holderCount,

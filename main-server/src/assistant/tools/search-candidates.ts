@@ -52,10 +52,10 @@ export function whyFound({ matched, window }: Omit<Hit, 'id'>, words: readonly s
   return { ...(words.length === 0 ? {} : { matched }), ...(window === null ? {} : { window }) };
 }
 
-// What a search adds when it found more than it gives: how many it found, and how many of them a Board, a day or a word
-// would keep. Counts that would not tell anything are left out.
 const some = (counts: Record<string, number>): boolean => Object.keys(counts).length > 0;
 
+// What a search adds when it found more than it gives: how many it found, and how many of them a Board, a day or a word
+// would keep. Counts that would not tell anything are left out.
 export function narrowing({ total, board, day, word }: SearchCounts): object {
   return {
     total,
