@@ -16,7 +16,7 @@ import {
   type PlaceAliases,
 } from '../src/places/place-aliases.js';
 import { CuratedGroups } from '../src/places/place-groups.js';
-import { PlaceIndex } from '../src/places/place-index.js';
+import { NO_INDUCED, PlaceIndex } from '../src/places/place-index.js';
 
 // The tiered matcher (P07 ticket 01) over the campus map's names of the seed, as the resolver reads them. The tiers
 // never mix, the first with hits answers, and several hits stay several.
@@ -136,10 +136,10 @@ describe('tier 2, the sources in order', () => {
     const global = fakeSource('global', { 뷁관: [LIBRARY] });
 
     await expect(
-      new PlaceIndex(places, [personal, global], rejected([STUDENT_CENTRE])).match('뷁관', USER),
+      new PlaceIndex(places, [personal, global], NO_INDUCED, rejected([STUDENT_CENTRE])).match('뷁관', USER),
     ).resolves.toMatchObject({ source: 'global', places: [{ id: LIBRARY }] });
     await expect(
-      new PlaceIndex(places, [personal, global], rejected([STUDENT_CENTRE, LIBRARY])).match('뷁관', USER),
+      new PlaceIndex(places, [personal, global], NO_INDUCED, rejected([STUDENT_CENTRE, LIBRARY])).match('뷁관', USER),
     ).resolves.toMatchObject({ tier: null, places: [] });
   });
 

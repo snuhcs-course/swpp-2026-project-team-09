@@ -64,21 +64,29 @@ function answer(result: StageAnswer['result'], candidates: string[]): StageAnswe
 }
 
 describe("A learning curve's point", () => {
-  it('asks over every row and is right at top-1 over the rows whose User chose a Place, for each of the three', () => {
+  it('asks over every row and is right at top-1 over the rows whose User chose a Place, for each of the four', () => {
     const group = curveGroup([
       {
         truth: 'p1',
         rules: answer('several', ['p0', 'p1']),
         learned: answer('one', ['p1']),
         chained: answer('one', ['p1']),
+        induced: answer('one', ['p1']),
       },
       {
         truth: 'p2',
         rules: answer('several', ['p2', 'p0']),
         learned: answer('several', ['p2', 'p0']),
         chained: answer('one', ['p0']),
+        induced: answer('none', []),
       },
-      { truth: null, rules: answer('one', ['p3']), learned: answer('none', []), chained: answer('several', ['p3']) },
+      {
+        truth: null,
+        rules: answer('one', ['p3']),
+        learned: answer('none', []),
+        chained: answer('several', ['p3']),
+        induced: answer('several', ['p3']),
+      },
     ]);
 
     expect(group).toMatchObject({
@@ -86,9 +94,11 @@ describe("A learning curve's point", () => {
       askRules: { k: 2, n: 3 },
       askLearned: { k: 1, n: 3 },
       askChained: { k: 1, n: 3 },
+      askInduced: { k: 1, n: 3 },
       top1Rules: { k: 1, n: 2 },
       top1Learned: { k: 2, n: 2 },
       top1Chained: { k: 1, n: 2 },
+      top1Induced: { k: 1, n: 2 },
     });
   });
 });

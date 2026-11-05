@@ -12,6 +12,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
@@ -98,6 +99,11 @@ export const settingsSchema = z
     // of their id, who never receive them while they still teach, so that learning can be told from habit.
     ASSISTANT_GLOBAL_ALIASES: z.stringbool().default(true),
     ASSISTANT_ALIAS_HOLDBACK_PERCENT: percent(10),
+    // Whether the induced rules answer (P07 ticket 07): false switches their tier off at once. How many times one
+    // induction run asks the model for rules, and the OpenRouter id of the model it asks, the Assistant's when empty.
+    ASSISTANT_INDUCED_RULES: z.stringbool().default(true),
+    ASSISTANT_INDUCTION_BUDGET: count(12),
+    ASSISTANT_REFLECTOR_MODEL: z.string().default(''),
     // The share of accounts, in percent, whose grey suggestions use the base weights only, so that what the learned
     // factors add can be told from habit.
     ASSISTANT_SUGGESTION_HOLDBACK_PERCENT: percent(10),

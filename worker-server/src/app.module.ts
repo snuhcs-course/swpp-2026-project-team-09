@@ -6,6 +6,7 @@
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -19,6 +20,7 @@ import { PageFetcherModule } from './common/page-fetcher.module.js';
 import { settingsSchema } from './common/settings.js';
 import { EventModule } from './event/event.module.js';
 import { HealthModule } from './health/health.module.js';
+import { InductionModule } from './induction/induction.module.js';
 import { MenuModule } from './menu/menu.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
 
@@ -41,6 +43,8 @@ import { ShuttleModule } from './shuttle/shuttle.module.js';
     MenuModule,
     ShuttleModule,
     EventModule,
+    // Starts the main server's nightly induction of matching rules.
+    InductionModule,
   ],
 })
 export class AppModule {}

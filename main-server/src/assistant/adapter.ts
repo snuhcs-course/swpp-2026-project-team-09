@@ -7,6 +7,8 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-29  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
@@ -59,9 +61,29 @@ export interface RunLimits {
 // which also aborts them.
 const MAX_RETRIES = 0;
 
-// Course names, Friends' names and per-Friend results reach the provider, so no provider that collects data is used.
+// Course names, Friends' names, per-Friend results and the words Users typed reach the provider, so no provider that
+// collects data is used.
 // It adds no ZDR restriction, which could shrink the providers available.
 const PROVIDER_OPTIONS = { openrouter: { provider: { data_collection: 'deny' } } };
+
+// One call to the model with no tools, for the induction's reflector (P07 ticket 07): the text it answers within the
+// time given, and why it stopped (`stop`, or `length` when the tokens ran out, reasoning tokens included). Not
+// retried, as the runs are not.
+export async function completeText(
+  model: Model,
+  call: { system: string; prompt: string; maxOutputTokens: number; timeoutMs: number },
+): Promise<{ text: string; finishReason: string }> {
+  const { text, finishReason } = await generateText({
+    model,
+    instructions: call.system,
+    prompt: call.prompt,
+    maxRetries: MAX_RETRIES,
+    maxOutputTokens: call.maxOutputTokens,
+    timeout: { totalMs: call.timeoutMs },
+    providerOptions: PROVIDER_OPTIONS,
+  });
+  return { text, finishReason };
+}
 
 // What the reply says when no step wrote any text and the reply shows something beneath it.
 export const FIXED_SENTENCE = '아래에서 확인해 보세요.';

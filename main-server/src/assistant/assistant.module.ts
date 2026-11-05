@@ -6,6 +6,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
@@ -28,6 +29,9 @@ import { AliasesService } from './aliases/aliases.service.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
 import { UserDayService } from './free-time/user-day.service.js';
+import { InductionController } from './induction/induction.controller.js';
+import { InductionService } from './induction/induction.service.js';
+import { ModelReflector, REFLECTOR, type Reflector } from './induction/reflector.js';
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
@@ -53,9 +57,10 @@ import { SuggestionsService } from './suggestions/suggestions.service.js';
     TutorialModule,
     UsersModule,
   ],
-  controllers: [AssistantController, AliasesController, SuggestionsController],
+  controllers: [AssistantController, AliasesController, SuggestionsController, InductionController],
   providers: [
     AssistantService,
+    InductionService,
     ResolutionEventsService,
     UserDayService,
     AliasesService,
@@ -78,6 +83,24 @@ import { SuggestionsService } from './suggestions/suggestions.service.js';
           settings.get('OPENROUTER_API_KEY', { infer: true }),
           settings.get('ASSISTANT_MODEL', { infer: true }),
         ),
+    },
+    // The induction's reflector (P07 ticket 07) is the Assistant's model, called offline, unless
+    // ASSISTANT_REFLECTOR_MODEL names another.
+    {
+      provide: REFLECTOR,
+      inject: [MODEL_PORT, ConfigService],
+      useFactory: (model: Model, settings: ConfigService<Settings, true>): Reflector => {
+        const own = settings.get('ASSISTANT_REFLECTOR_MODEL', { infer: true });
+        const timeoutMs = settings.get('ASSISTANT_TIMEOUT_MS', { infer: true });
+        if (own === '') {
+          return new ModelReflector(model, settings.get('ASSISTANT_MODEL', { infer: true }), timeoutMs);
+        }
+        return new ModelReflector(
+          openRouterModel(settings.get('OPENROUTER_API_KEY', { infer: true }), own),
+          own,
+          timeoutMs,
+        );
+      },
     },
   ],
 })

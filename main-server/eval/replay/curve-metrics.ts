@@ -54,10 +54,11 @@ export function labelledRows(events: readonly EventRow[]): LabelledRow[] {
 export interface Replayed {
   truth: string | null;
   // The matcher with the curated groups only (stage B), with the aliases learned before the point by the count
-  // (stage C), and by the alias chain (stage D).
+  // (stage C), by the alias chain (stage D), and with the rules induced before the point (stage E).
   rules: StageAnswer;
   learned: StageAnswer;
   chained: StageAnswer;
+  induced: StageAnswer;
 }
 
 export interface CurveGroup {
@@ -66,10 +67,12 @@ export interface CurveGroup {
   askRules: Rate;
   askLearned: Rate;
   askChained: Rate;
+  askInduced: Rate;
   // The first candidate is the Place finally chosen, over the rows whose User chose one.
   top1Rules: Rate;
   top1Learned: Rate;
   top1Chained: Rate;
+  top1Induced: Rate;
 }
 
 export function curveGroup(rows: readonly Replayed[]): CurveGroup {
@@ -83,8 +86,10 @@ export function curveGroup(rows: readonly Replayed[]): CurveGroup {
     askRules: asks(({ rules }) => rules),
     askLearned: asks(({ learned }) => learned),
     askChained: asks(({ chained }) => chained),
+    askInduced: asks(({ induced }) => induced),
     top1Rules: tops(({ rules }) => rules),
     top1Learned: tops(({ learned }) => learned),
     top1Chained: tops(({ chained }) => chained),
+    top1Induced: tops(({ induced }) => induced),
   };
 }

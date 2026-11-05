@@ -13,6 +13,7 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by fyoon46
@@ -43,6 +44,9 @@ const ASSISTANT_DEFAULTS = {
   ASSISTANT_MAX_STEPS: '8',
   ASSISTANT_TIMEOUT_MS: '30000',
   ASSISTANT_MAX_OUTPUT_TOKENS: '1000',
+  ASSISTANT_INDUCED_RULES: 'true',
+  ASSISTANT_INDUCTION_BUDGET: '12',
+  ASSISTANT_REFLECTOR_MODEL: '',
   ASSISTANT_GLOBAL_ALIASES: 'true',
   ASSISTANT_ALIAS_HOLDBACK_PERCENT: '10',
   // No account is held back, so that every test's User gets the whole score. A test of the holdback starts an app with

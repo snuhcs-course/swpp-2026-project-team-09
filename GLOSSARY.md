@@ -183,6 +183,10 @@ _Avoid_: Draft (a Draft is an unpublished Global Event), suggestion
 Words that name a Place or a Friend to the Assistant by someone's say-so rather than by the catalog: a User's own, learned from one choice of theirs; everyone's, learned once enough distinct accounts chose the same Place for the same words; or curated, written by the team for groups of buildings such as 공대. An Alias points only at a catalog Place or a current Friend.
 _Avoid_: Synonym, nickname, shortcut (a Shortcut is a Suggestion)
 
+**Induced Rule**:
+A matching rule the Assistant's model wrote from the words the matcher got wrong, in a small language of restricted regular expressions over a Place's name or a User's words, and that the server put in force only after replaying it over the Resolution Events: it must fix the words of several accounts and break none. An Induced Rule never names a Place; what it writes is matched by the catalog as any words are.
+_Avoid_: Learned regex, model rule, heuristic
+
 **Suggestion**:
 The one request the server picks for the moment when a User opens the chat, shown in grey and run with a tap without the model: a Proposal or a walking route. A Shortcut is a Suggestion made from what the User did before.
 _Avoid_: Recommendation, hint, ghost text (the grey look, not the thing)

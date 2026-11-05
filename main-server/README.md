@@ -2204,6 +2204,43 @@ its model through OpenRouter with the Vercel AI SDK
     the alias stands for the others. `ASSISTANT_GLOBAL_ALIASES=false` switches everyone's aliases off at
     once, and `ASSISTANT_ALIAS_HOLDBACK_PERCENT` (10) keeps that share of Users, by the first four bytes of the
     SHA-256 of their id modulo 100 (`src/common/holdback.ts`), from receiving them while their choices still count.
+  - **Induced rules** (P07 ticket 07, `induction/`, `src/places/induced-rules.ts`). The matcher's rules are not only
+    hand-written: a reflector, the Assistant's model called offline, reads the words the matcher got wrong and writes
+    generalised matching rules, which the server replays over the labelled `resolution_events` and puts in force only
+    when they fix the words of several accounts and break none. A rule is a restricted regular expression (JavaScript's
+    with the `u` flag: literals, classes, `.`, `\d`, anchors, alternation, groups that are at most optional,
+    quantifiers on single atoms only, at most 80 characters; no backreference, lookaround or quantified group; and at
+    most 2,601 ways to try a match, the repeats of its quantifiers, `*` and `+` counting 51, times its alternatives and,
+    unless it starts with `^`, 51 starts, so that `^(.+)(.+)$` passes and `^.*.*.*!$` is refused as too slow) and a
+    replacement of literals and `$1`–`$9`: a `name` rule turns a Place's normalised name into a form students say
+    (`^(.{1,3}?)(?:과학|과|학)?대학$` → `$1대` makes 경영대 of 경영대학 and 자연대 of 자연과학대학), joining the index
+    for every Place the pattern fits; a `words` rule turns the User's words into what to look up instead (`^윗(.+)$`
+    → `상부$1`), matched by the exact, generated and induced forms. A rule never names a Place, so an induced answer is
+    a catalog id by construction. Induced hits are the `induced` tier, after `exact` and `alias` and before
+    `generated`: the exact names and what anyone taught answer first, and the rules before the generator's forms and
+    the loose tiers, whose questions and wrong answers are most of what they fix; the held-back accounts of
+    `ASSISTANT_ALIAS_HOLDBACK_PERCENT` never get the tier, and `ASSISTANT_INDUCED_RULES=false` switches it off; the
+    nightly run goes on while it is off, so that the rules are verified against the latest rows when it is on again. The
+    instances are the learning curve's labelled rows (an `answered` Place row and the Place its account then chose or
+    edited to, accounts 7 days old or more, the last 90 days), one per words and Place with its accounts, a fifth of
+    the words held out by a stable hash. The loop is GEPA's (Agrawal et al., ICLR 2026; `induction/loop.ts`,
+    `pareto.ts`): a candidate is a rule set, a parent is sampled from the Pareto front over the training instances
+    (candidates no other is right on a superset of, weighted by how many they are right on), up to 6 of its failures go
+    to the reflector (`reflector.ts`) with each one's words, the Place meant with its name and the forms the generator
+    makes of it, the current answer and the rules in force, and each rule it answers becomes a child kept only when it
+    is right on more of that minibatch than the parent, then scored on every training instance;
+    `ASSISTANT_INDUCTION_BUDGET` (12) reflector calls a run. The gate (`gate.ts`) is RuleChef's and ASI's: the best
+    candidate's new rules are tried one at a time on top of the rules in force, and a rule is promoted only when it
+    fixes at least 2 distinct words of at least 2 distinct accounts, the held-out words counting (a fix there is a
+    words the reflector never saw), and breaks no right instance, training or held out; every rule in force is then counted again (`fixed`, `broke`, `accounts`) and retired by
+    leave-one-out when the set is as good without it or it breaks one, at most 50 staying (WALL-E 2.0's budget). Rows
+    of `induced_rules` (kind, pattern, replace, an `example` words, the counts, the `model`) are never rewritten or
+    deleted: a retired rule keeps `retired_at`, and one picked again loses it. `POST /assistant/induction` with the
+    worker token runs one induction on this server (`{}` answers `{ "started": true }` at once and works on;
+    `{ "wait": true }` answers the run's report, `{ ranAt, model, seed, instances, calls, proposals, promoted,
+refused, retired, active }`); the worker server sends it at 04:00 each night, and every main server reads the
+    rules in force again each minute (`PlaceMatcher`). `pnpm eval:induce` runs the same loop against a database into a
+    file, never into it (see Replay).
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
     than one Proposal, or messages over 24,000 characters together, a Proposal's title, description and names included
@@ -2631,7 +2668,8 @@ hand-made traces (`test/eval-traces.ts`) in `pnpm test`.
 ### Replay
 
 Three commands measure the short forms, the aliases and the grey suggestions on the database's own rows, without the
-model (P07): whether the Assistant gets better with use. They only read the database at `DATABASE_URL`, from the
+model (P07): whether the Assistant gets better with use. A fourth, `pnpm eval:induce`, calls the model to induce
+matching rules from the rows into a file the first two read (ticket 07). They only read the database at `DATABASE_URL`, from the
 environment or `.env`, and are run by hand, never in CI. Each writes `eval/results/replay-<name>-<time>.json` and the
 same numbers as Markdown beside it (`.md`), and prints both paths. Every rate is given as its value, its 95% Wilson
 interval (`eval/replay/wilson.ts`) and k/n. Node starts each command, and its code runs through Vitest's module runner
@@ -2642,6 +2680,8 @@ pnpm eval:replay --development                 # the development set, with every
 pnpm eval:replay --as-of 2026-11-16            # the test set, stages C and D learning only from the rows before that day
 pnpm eval:learning-curve --from 2026-11-02 --to 2026-12-14 --step 7 --final-from 2026-12-07
 pnpm eval:suggestions --from 2026-11-02 --to 2026-12-14 --final-from 2026-12-07
+pnpm eval:induce --as-of 2026-11-16 --development --fold 1/5   # rules from the rows before that day and 4 of 5 folds of the development set
+pnpm eval:replay --development --rules eval/results/replay-induced-<time>.json   # stage E on the items the run never saw
 ```
 
 `--final-from <day>` on the two commands over the rows marks the rows from that day as the final slice: k, s, the
@@ -2649,14 +2689,16 @@ templates' thresholds and the other constants are tuned on the rows before it on
 numbers reported are the final slice's alone, so that no number is read on the rows that set it. Without the flag every
 row is one slice. The gold set's counterpart is its two sets and its fingerprint, below.
 
-`pnpm eval:replay [--gold <file>] [--as-of <day>] [--development]` answers each item of the gold file
-(`eval/gold/places.yaml` unless `--gold`) at four stages (`eval/replay/stages.ts`): A, the substring and number match
+`pnpm eval:replay [--gold <file>] [--as-of <day>] [--development] [--rules <file>]...` answers each item of the gold
+file (`eval/gold/places.yaml` unless `--gold`) at five stages (`eval/replay/stages.ts`): A, the substring and number match
 `resolvePlace` used before P07, which is `PlacesService.search` as a function; B, the tiered matcher (`PlaceIndex`) with
 the curated groups only; C, B with the personal aliases and everyone's rebuilt in memory from the `resolution_events`
 before `--as-of` (a day in Korea from its first moment; the run's start when left out) by the count of distinct
 accounts that chose each Place (`eval/replay/counted-aliases.ts`, the rule the server learned by before the chain, kept
 as the baseline); D, the same with everyone's aliases by the alias chain the server learns by (`aliases/alias-chain.ts`,
-each words' source being its reading by stage B). Nothing is written. The items are asked as an account that
+each words' source being its reading by stage B); E, B with the induced rules of the newest `--rules` file induced
+before `--as-of` that never saw the item's words (`eval/replay/induced.ts`), so that an item a run trained on is
+scored without its rules, and B itself without a file. Nothing is written. The items are asked as an account that
 taught nothing and is never held back. An item is `{ words, accept, collected, set, note? }`: `accept` lists every Place
 the words may mean by seed name, else by number, and is empty for words that name no Place (a name or number the
 catalog lacks stops the run); `collected` is the day it was collected; `set` is `development` or `test`; `from` and
@@ -2677,13 +2719,14 @@ forms, the group words and words that name no Place, chosen to tune the rules, s
 set is collected from students who are shown no official names, at least a week after the development set, each item
 with the day it was collected and `set: test`.
 
-`pnpm eval:learning-curve --from <day> --to <day> [--step 7]` replays `resolution_events` by date, at points T from
-`--from` to `--to` every `--step` days. At T it scores the `answered` Place rows of the `--step` days from T that their
+`pnpm eval:learning-curve --from <day> --to <day> [--step 7] [--rules <file>]...` replays `resolution_events` by
+date, at points T from `--from` to `--to` every `--step` days. At T it scores the `answered` Place rows of the `--step` days from T that their
 User labelled: a `chosen`, `edited` or `rejected` row of the same User and words after the row and before their next
 `answered` row of those words. Each is answered again by the matcher with the curated groups only (rules), with the
 aliases rebuilt from the rows before T by the count as for stage C (count) and by the alias chain as for stage D
-(chain), the labels being scored left out, so that a label never teaches the row it scores. Per point and arm: the
-rows, and for each of the three the ask rate (answered `several`, over the rows) and top-1
+(chain), and with the rules of the newest `--rules` file induced before T (induced; none without the flag), the labels
+being scored left out, so that a label never teaches the row it scores. Per point and arm: the rows, and for each of
+the four the ask rate (answered `several`, over the rows) and top-1
 (the first candidate is the Place the User last chose or edited to, over the rows with one). The accounts that
 `ASSISTANT_ALIAS_HOLDBACK_PERCENT` holds back (as set where the command runs; 10 by default), whom everyone's aliases
 never answer, are reported apart, and each point says which slice it is in, `tuning` or `final` (`all` without
@@ -2706,10 +2749,23 @@ reward showing almost nothing. Last, per slice, template and arm, acceptance wei
 1 / propensity over the accepted rows divided by that sum over all shown ones, so that the templates the score shows
 most do not decide the rate alone.
 
+`pnpm eval:induce [--as-of <day>] [--development [--fold i/k]] [--budget 12] [--seed 1]` runs one induction
+(`src/assistant/induction/induction.ts`, as the server runs it nightly) over the rows before `--as-of`, from no rules,
+with the model named by `OPENROUTER_API_KEY` and `ASSISTANT_REFLECTOR_MODEL`, or `ASSISTANT_MODEL` when that is
+empty, as the reflector, and writes
+`eval/results/replay-induced-<time>.json`: the rules in force after the run with what each fixed and broke, the words
+the reflector was shown (the training instances'; the held-out words are scored with the rules, though the gate read
+them, so that number is a validation score), and the run's trace (every call's minibatch and every proposal with why it was kept, dropped or refused),
+with the same as Markdown. Nothing is written to the database. With `--development` the gold development set's items
+that mean one Place join the instances, each as an account of its own, as the team wrote them; `--fold i/k` holds the
+i-th of k folds of them out (a stable hash of the words), so that k runs give k files and `pnpm eval:replay --rules`
+with all of them scores every item with the rules of the run that never saw it. It calls the model: a run is about a
+dozen short calls.
+
 `test/eval-replay-*.unit.test.ts` test the rates on hand-made rows, and `test/eval-replay.integration.test.ts` runs the
 commands' functions on a seeded database of its own: stage A against `PlacesService.search`, the gold file's Places
 against the seed, stage C and the learning curve learning only from the rows before their time, and a knowledge update
-followed: once the accounts that taught the old Place reject it, its alias is retired at once, and the new Place
+followed (`test/eval-replay-induced.integration.test.ts` does the same for stage E, from a rules file): once the accounts that taught the old Place reject it, its alias is retired at once, and the new Place
 answers once it holds the share of all who chose for the words.
 
 ## Seed data
@@ -3152,6 +3208,10 @@ so a message is stored once. Every route for the worker follows these rules.
   and stores nothing: a post is identified by its Source and key, so `/global-events/stored-posts` carries no time.
   `/global-events/stored-posts` with `{ "source": "snu_events", "keys": ["176558", "176525"] }` asks which of these posts
   are stored, and `{ "keys": ["176558"] }` answers that 176558 is, whatever became of its event. The worker asks with `MainServer.ask()`.
+- **A job**: one route starts work on this server instead of storing or answering: `POST /assistant/induction` with
+  `{}` starts a run of the induction of matching rules (Assistant, "Induced rules") and answers 200
+  `{ "started": true }` at once; with `{ "wait": true }` it answers the run's report once it is over. The worker
+  sends it nightly with `MainServer.send()`.
 - **Who may call it**: the worker alone. The request carries `Authorization: Bearer <WORKER_TOKEN>`, the secret that
   the two servers' settings share, and `WorkerGuard` in `src/auth/worker.guard.ts` answers 401 to any other request,
   a User's and an Administrator's access token included. The token is no signed token: the worker is no User.

@@ -19,6 +19,7 @@ import { substringMatch } from '../eval/replay/stages.ts';
 import { type Prisma, type PrismaClient } from '../src/generated/prisma/client.js';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
 import { connect, type SeededDatabase, seededDatabase } from './containers.js';
+import { rulesFile } from './rules-file.js';
 import { startApp } from './start-app.js';
 
 // The replay (P07 ticket 05) on a seeded database of its own, whose resolution_events and impressions are this
@@ -69,8 +70,15 @@ function accounts(count: number): Promise<string[]> {
   return Promise.all(Array.from({ length: count }, () => account()));
 }
 
-function events(rows: Omit<Prisma.ResolutionEventCreateManyInput, 'kind'>[]): Promise<Prisma.BatchPayload> {
+type Row = Omit<Prisma.ResolutionEventCreateManyInput, 'kind'>;
+
+function events(rows: Row[]): Promise<Prisma.BatchPayload> {
   return prisma.resolutionEvent.createMany({ data: rows.map((row) => ({ kind: 'place', ...row })) });
+}
+
+// The words resolved as one Place at `at`.
+function answeredOne(userId: string, words: string, placeId: string, at: Date): Row {
+  return { userId, words, outcome: 'answered', result: 'one', candidateIds: [placeId], createdAt: at };
 }
 
 function choices(userIds: string[], words: string, placeId: string, at: Date): Promise<Prisma.BatchPayload> {
@@ -124,7 +132,7 @@ describe('Stages C and D', () => {
     const then = await replayGold(prisma, items, asOf);
     const later = await replayGold(prisma, items, new Date(NOW));
 
-    expect(then.learned).toEqual({ personal: 3, counted: 1, chained: 1 });
+    expect(then.learned).toEqual({ personal: 3, counted: 1, chained: 1, induced: 0 });
     for (const stage of ['C', 'D'] as const) {
       expect(then.items[0]?.answers[stage]).toMatchObject({
         result: 'one',
@@ -146,18 +154,10 @@ describe('Stage D', () => {
   it('learns words answered none from the Place named next in the session, which the count cannot', async () => {
     const opened = new Date(NOW - DAY_MS);
     const named = new Date(opened.getTime() + 60_000);
-    const hall = idOf('학생회관');
     await events(
       (await accounts(3)).flatMap((userId) => [
         { userId, words: '뷁없', outcome: 'answered' as const, result: 'none' as const, createdAt: opened },
-        {
-          userId,
-          words: '학생회관',
-          outcome: 'answered' as const,
-          result: 'one' as const,
-          candidateIds: [hall],
-          createdAt: named,
-        },
+        answeredOne(userId, '학생회관', idOf('학생회관'), named),
       ]),
     );
 
@@ -186,12 +186,13 @@ describe('The learning curve', () => {
     const dormitory = idOf('(관악사)학부 생활관');
     await Promise.all([from, to].map((point) => askedAndChose(user, point, dormitory)));
 
-    const curve = await learningCurve(prisma, { from, to, stepDays: 7, finalFrom: to }, 0);
-    const heldBack = await learningCurve(prisma, { from, to, stepDays: 7, finalFrom: null }, 100);
+    const flags = { from, to, stepDays: 7, finalFrom: to, rules: [rulesFile(from, [])] };
+    const curve = await learningCurve(prisma, flags, 0);
+    const heldBack = await learningCurve(prisma, { from, to, stepDays: 7, finalFrom: null, rules: [] }, 100);
 
     expect(curve.points.map(({ slice, learned }) => [slice, learned])).toEqual([
-      ['tuning', { personal: 0, counted: 0, chained: 0 }],
-      ['final', { personal: 1, counted: 0, chained: 0 }],
+      ['tuning', { personal: 0, counted: 0, chained: 0, induced: 1 }],
+      ['final', { personal: 1, counted: 0, chained: 0, induced: 1 }],
     ]);
     expect(
       curve.points.map(({ learning: { n, askRules, askLearned, askChained, top1Rules, top1Learned, top1Chained } }) => [
