@@ -746,7 +746,7 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   and `OO구민체육센터 2층 체육관` are no Place. A name that other institutions use too (`GENERIC_PLACE_NAMES` in `named-place.ts`,
   such as 체육관 or 미술관) is not matched after another facility's name, 서울대 or not. `timesConsistent` reads every line that
   writes a day with a time, its start and any end, and a time field under a line of a day alone (`일시: 11월 3일` above `시간:
-  19:00 ~ 21:00`) as one line. It does not read any other line with a time and no day, such as a running order, nor one
+19:00 ~ 21:00`) as one line. It does not read any other line with a time and no day, such as a running order, nor one
   labelled an application period (`신청 마감: …`, or a short label above), and reads extra.snu's `[n회차]` line only for
   session n (the number of the line its start is quoted from, or else its place in the answer). It fails when a line for
   the session's day writes another start, or another end; a line of sittings each written from start to end,
