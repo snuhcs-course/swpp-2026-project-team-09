@@ -744,8 +744,9 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   it wrote 서울대학교: `301동 2층 세미나실` is 301동 and `문화관 로비` 문화관. A name that other institutions use too
   (`GENERIC_PLACE_NAMES` in `named-place.ts`, such as 체육관 or 미술관) is then matched only when the place writes nothing
   else but a floor or a room: `체육관 2층` is 71동, and `OO구민체육센터 2층 체육관` no Place. `timesConsistent` reads every
-  line that writes a day with a time, its start and any end; a line with a time and no day, such as a running order, and
-  an application period are not read, and extra.snu's `[n회차]` line only for session n (the number of the line its
+  line that writes a day with a time, its start and any end, and a line of a time alone under one of a day alone
+  (`일시: 11월 3일` above `시간: 19:00 ~ 21:00`) as one line; any other line with a time and no day, such as a running
+  order, and an application period are not read, and extra.snu's `[n회차]` line only for session n (the number of the line its
   start is quoted from, or else its place in the answer). It fails when a line for the session's day writes another
   start, or another end; a line with a start alone leaves the end to one that has it, and `오후 2시` is `14:00`. A
   session read as running over a period needs no time of day and may last longer than 24 hours, but it must end on two

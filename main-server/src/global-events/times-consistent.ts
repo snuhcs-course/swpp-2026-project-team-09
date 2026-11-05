@@ -4,13 +4,14 @@
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { isApplicationAt } from './application-lines.js';
+import { APPLICATION, isApplicationAt } from './application-lines.js';
 import { type AnsweredSession } from './judgement-answer.js';
-import { isWrittenDay, type JudgedTime, type WrittenClock, writtenTimes } from './judgement-time.js';
+import { isWrittenDay, type JudgedTime, type WrittenClock, writtenDays, writtenTimes } from './judgement-time.js';
 
 // The check timesConsistent: a post that writes the session's day twice with two times leaves it unknown which is right,
 // whichever line the model quoted. Only a line that writes a day with a time is read, so that a programme's running
-// order is not, nor is an application period.
+// order is not, nor is an application period. A day and its time may be written on two lines, "일시: 11월 3일" above
+// "시간: 19:00 ~ 21:00", and are then read as one.
 
 // The worker's line for one session of an extra.snu programme: "[2회차] 기간: …".
 const SESSION_LINE = /^\[(\d+)회차\]/u;
@@ -24,6 +25,14 @@ export function sessionNumber({ lines: quoted }: AnsweredSession, position: numb
     .map((line) => SESSION_LINE.exec(line)?.[1])
     .find((number) => number !== undefined);
   return carried === undefined ? position + 1 : Number(carried);
+}
+
+// The line as read: a line of a time alone under one of a day alone is read after that day.
+function readLine(lines: string[], index: number): string {
+  const line = lines[index] ?? '';
+  const above = lines[index - 1];
+  const dayAlone = above !== undefined && writtenDays(above).length > 0 && writtenTimes(above).length === 0;
+  return dayAlone && writtenDays(line).length === 0 ? `${above} ${line}` : line;
 }
 
 function agrees(written: WrittenClock, clock: JudgedTime['clock']): boolean {
@@ -42,9 +51,14 @@ export function timesConsistent(
   if (start === null || start.clock === null) {
     return true;
   }
-  return lines.every((line, index) => {
+  return lines.every((_, index) => {
+    const line = readLine(lines, index);
     const numbered = SESSION_LINE.exec(line);
-    if ((numbered !== null && Number(numbered[1]) !== number) || isApplicationAt(lines, index)) {
+    if (
+      (numbered !== null && Number(numbered[1]) !== number) ||
+      isApplicationAt(lines, index) ||
+      APPLICATION.test(line)
+    ) {
       return true;
     }
     return writtenTimes(line)

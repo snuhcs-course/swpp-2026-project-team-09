@@ -87,7 +87,30 @@ describe('timesConsistent', () => {
   });
 });
 
+describe('timesConsistent, on a day and its time written on two lines', () => {
+  it.each([
+    ['another start', '일정: 2026년 11월 12일 목요일', '진행 시간: 18:00 ~ 20:00'],
+    ['another end', '날짜: 11월 12일(목)', '시간: 15:00-19:00'],
+  ])('fails when a day line and the time line under it give %s', (_as, dayLine, timeLine) => {
+    const lines = ['[1회차] 기간: 2026.11.12. 15:00 ~ 2026.11.12. 17:00 / 장소: 301동 117호', dayLine, timeLine];
+
+    expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual(['timesConsistent']);
+  });
+
+  it('passes a day line and the time line under it that agree', () => {
+    const lines = ['일시: 11월 12일(목) 15:00~17:00', '날짜: 11월 12일(목)', '시간: 오후 3시 ~ 5시'];
+
+    expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual([]);
+  });
+});
+
 describe('timesConsistent, on lines it does not compare', () => {
+  it('does not read a time line under a line that writes a time too', () => {
+    const lines = ['일시: 11월 12일(목) 15:00~17:00', '15:30~16:00 질의응답'];
+
+    expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual([]);
+  });
+
   it('does not read a time line with no day', () => {
     const lines = ['일시: 11월 12일(목) 15:00~17:00', '15:30~16:00 질의응답', '16:00 폐회'];
 
@@ -96,6 +119,12 @@ describe('timesConsistent, on lines it does not compare', () => {
 
   it('does not read a line for another day', () => {
     const lines = ['일시: 11월 12일(목) 15:00~17:00', '예비 모임: 11월 10일 19:00'];
+
+    expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual([]);
+  });
+
+  it('does not read an application period written over two lines', () => {
+    const lines = ['일시: 11월 12일(목) 15:00~17:00', '참가 신청 마감일: 11월 12일(목)', '마감 시각: 12:00'];
 
     expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual([]);
   });
