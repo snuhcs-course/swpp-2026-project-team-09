@@ -146,6 +146,15 @@ interface BubbleProps {
   cardActions: CardActions;
 }
 
+// The model writes markdown, and the Assistant's bubbles render it; the User's words are shown as typed.
+function Words({ mine, words }: { mine: boolean; words: string }): ReactElement {
+  return mine ? (
+    <Text style={[styles.words, styles.mineWords]}>{words}</Text>
+  ) : (
+    <ChatMarkdown style={styles.words} text={words} />
+  );
+}
+
 function Bubble({
   bubble: { id, role, text: words, cards, mapButtons, proposal, choices, failure, own = false, done },
   onRetry,
@@ -163,12 +172,7 @@ function Bubble({
       style={[styles.bubble, mine ? styles.mine : styles.theirs]}
       testID={mine ? 'user-bubble' : 'assistant-bubble'}
     >
-      {/* The model writes markdown, and the Assistant's bubbles render it; the User's words are shown as typed. */}
-      {mine ? (
-        <Text style={[styles.words, styles.mineWords]}>{words}</Text>
-      ) : (
-        <ChatMarkdown style={styles.words} text={words} />
-      )}
+      <Words mine={mine} words={words} />
       {shown.length === 0 ? null : <Cards actions={cardActions} bubbleId={id} cards={shown} own={own} />}
       {done === undefined ? null : <Done actions={cardActions} done={done} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
