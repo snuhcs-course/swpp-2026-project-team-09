@@ -7,6 +7,7 @@
  ******************************************************************************/
 
 import { PlaceDto } from '../places/dto/place.dto.js';
+import { isApplicationAt } from './application-lines.js';
 import {
   type AnsweredSession,
   type JudgedSession,
@@ -33,13 +34,6 @@ import { verdictOf } from './session-verdict.js';
 // check passes, and a check that cannot tell fails.
 
 const HOURS_24_MS = 24 * 60 * 60 * 1000;
-
-// What marks a line as a period to apply in, not the event's own time.
-export const APPLICATION =
-  /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|예약|appl(?:y|ication)|regist(?:er|ration)|deadline/iu;
-
-// A line this short holds a label for the next one, as "신청 기간" above its dates does.
-const LABEL_LENGTH = 20;
 
 const BUILDING_NUMBER_ALONE = /^\d+(?:-\d+)?동(?:\s*(?:지하\s*)?\d+층)?(?:\s*\d+(?:-\d+)?호)?$/u;
 
@@ -130,14 +124,9 @@ function enclosingLines(quotes: string[], lines: string[]): string[] {
 // 11/5 14:00" does not pass.
 function notApplicationPeriod(session: AnsweredSession, lines: string[]): boolean {
   const pieces = quotedPieces([...session.lines.start, ...session.lines.end]);
-  return lines.every((line, index) => {
-    if (!pieces.some((piece) => piece !== '' && line.includes(piece))) {
-      return true;
-    }
-    const above = lines[index - 1];
-    const labelAbove = above !== undefined && above.length <= LABEL_LENGTH ? above : '';
-    return !APPLICATION.test(line) && !APPLICATION.test(labelAbove);
-  });
+  return lines.every(
+    (line, index) => !pieces.some((piece) => piece !== '' && line.includes(piece)) || !isApplicationAt(lines, index),
+  );
 }
 
 function startBeforeEnd(session: AnsweredSession, start: JudgedTime | null, end: JudgedTime | null): boolean {
