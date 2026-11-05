@@ -5,6 +5,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { type AssistantReplyDto } from '../src/assistant/dto/assistant-messages.
 import { sentProposalOf as sentBackProposal } from '../src/assistant/proposal.js';
 import { idOf } from '../src/assistant/tools/fresh-ids.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
-import { type Settings } from '../src/common/settings.js';
+import { MODEL_SETTINGS, type Settings } from '../src/common/settings.js';
 import { postAssistantMessages, type SentMessage } from '../test/assistant.js';
 import { refuseMatchServer } from '../test/match-server.js';
 import { startApp } from '../test/start-app.js';
@@ -75,7 +76,9 @@ export async function startEvalApp(
   const app = await startApp(
     {
       ...settings,
-      ASSISTANT_MODEL: options.model,
+      // The run's provider and model, a run saved before A01 having gone through OpenRouter.
+      MODEL_PROVIDER: options.provider ?? 'openrouter',
+      [MODEL_SETTINGS[options.provider ?? 'openrouter'].model]: options.model,
       ASSISTANT_DAILY_MESSAGES: RUN_DAILY_MESSAGES,
       ASSISTANT_MAX_STEPS: String(options.maxSteps),
       ASSISTANT_TIMEOUT_MS: String(options.timeoutMs),

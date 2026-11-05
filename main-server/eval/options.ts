@@ -4,13 +4,14 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { existsSync, readFileSync } from 'node:fs';
 import { parseArgs, parseEnv } from 'node:util';
 import { z } from 'zod';
 import { koreaDate } from '../src/assistant/korea-time.ts';
-import { settingsSchema } from '../src/common/settings.ts';
+import { MODEL_CACHE_MODES, MODEL_PROVIDERS, MODEL_SETTINGS, settingsSchema } from '../src/common/settings.ts';
 import { WORLDS } from './cases.ts';
 import { pricesSchema } from './cost.ts';
 
@@ -22,9 +23,14 @@ import { pricesSchema } from './cost.ts';
 export const RUN_ENV = 'EVAL_RUN';
 
 export const runOptionsSchema = z.strictObject({
-  // The OpenRouter id of the model, such as anthropic/claude-haiku-5.5.
+  // Who the model is called through, MODEL_PROVIDER or --provider, and what its requests cache, MODEL_CACHE or --cache
+  // (spec A01). Absent in a run saved before A01, which went through OpenRouter with nothing cached.
+  provider: z.enum(MODEL_PROVIDERS).optional(),
+  cache: z.enum(MODEL_CACHE_MODES).optional(),
+  // The provider's id of the model: claude-haiku-5-5 for Anthropic, anthropic/claude-haiku-5.5 for OpenRouter.
   model: z.string().min(1),
-  // Sampling, applied by the recorder's model wrapper; null leaves the provider's default.
+  // Sampling, applied by the recorder's model wrapper; null leaves the provider's default. The Anthropic path takes
+  // none: its API refuses them for the models we use.
   temperature: z.number().min(0).max(2).nullable(),
   topP: z.number().gt(0).max(1).nullable(),
   // The limits per message, given to the app as its settings.
@@ -82,12 +88,34 @@ export interface Flags {
   yes: boolean;
 }
 
+// The provider, its caching mode and its model, from the flags or else the settings. OpenRouter's requests carry no
+// cache_control, so they cache nothing; the chosen provider's model setting is empty when neither gives one, which the
+// schema refuses.
+function pathOf(
+  values: { provider?: string; cache?: string; model?: string },
+  env: Record<string, string | undefined>,
+): Pick<RunOptions, 'provider' | 'cache' | 'model'> {
+  const { shape } = settingsSchema;
+  const provider = shape.MODEL_PROVIDER.parse(values.provider ?? env.MODEL_PROVIDER);
+  if (provider === 'openrouter' && (values.cache ?? 'off') !== 'off') {
+    throw new Error('--cache is for --provider anthropic: the OpenRouter requests cache nothing');
+  }
+  const { model } = MODEL_SETTINGS[provider];
+  return {
+    provider,
+    cache: provider === 'anthropic' ? shape.MODEL_CACHE.parse(values.cache ?? env.MODEL_CACHE) : 'off',
+    model: values.model ?? shape[model].parse(env[model]),
+  };
+}
+
 // Reads the command line against the branch's settings in `env`.
 export function parseFlags(argv: string[], env: Record<string, string | undefined>): Flags {
   const { values } = parseArgs({
     args: argv,
     strict: true,
     options: {
+      provider: { type: 'string' },
+      cache: { type: 'string' },
       model: { type: 'string' },
       temperature: { type: 'string' },
       'top-p': { type: 'string' },
@@ -105,8 +133,7 @@ export function parseFlags(argv: string[], env: Record<string, string | undefine
   });
   const { shape } = settingsSchema;
   const options = runOptionsSchema.omit({ prices: true, commit: true }).parse({
-    // Empty when neither gives one, which the schema refuses.
-    model: values.model ?? shape.ASSISTANT_MODEL.parse(env.ASSISTANT_MODEL),
+    ...pathOf(values, env),
     temperature: number('temperature', values.temperature) ?? null,
     topP: number('top-p', values['top-p']) ?? null,
     maxSteps: number('max-steps', values['max-steps']) ?? shape.ASSISTANT_MAX_STEPS.parse(env.ASSISTANT_MAX_STEPS),
@@ -121,6 +148,9 @@ export function parseFlags(argv: string[], env: Record<string, string | undefine
     world: values.world ?? 'small',
     ...(values.holdout ? { holdout: true } : {}),
   });
+  if (options.provider === 'anthropic' && (options.temperature !== null || options.topP !== null)) {
+    throw new Error('--temperature and --top-p are for --provider openrouter: the Anthropic API refuses them');
+  }
   if (options.holdout === true && options.world !== 'p4') {
     throw new Error(`--holdout runs the P4 suite's, and ${options.world} has none`);
   }
@@ -136,15 +166,19 @@ export function runOptionsFromEnv(): RunOptions {
   return runOptionsSchema.parse(JSON.parse(json));
 }
 
-// What names a run's settings in its file name: s8-t30000-o1000-temp1-topp0.9, with "default" for sampling left out.
-export function settingsSlug({ maxSteps, timeoutMs, maxOutputTokens, temperature, topP }: RunOptions): string {
-  return `s${maxSteps}-t${timeoutMs}-o${maxOutputTokens}-temp${temperature ?? 'default'}-topp${topP ?? 'default'}`;
+// What names a run's settings in its file name: s8-t30000-o1000-temp1-topp0.9, with "default" for sampling left out,
+// and -cachebreakpoints for the caching mode of a run that has one.
+export function settingsSlug({ maxSteps, timeoutMs, maxOutputTokens, temperature, topP, cache }: RunOptions): string {
+  const slug = `s${maxSteps}-t${timeoutMs}-o${maxOutputTokens}-temp${temperature ?? 'default'}-topp${topP ?? 'default'}`;
+  return cache === undefined ? slug : `${slug}-cache${cache}`;
 }
 
-// The name of a run's file: <YYYY-MM-DD>-<commit>-<model>-<settings>, the day in Korea, the model's slash replaced, and
-// -holdout on a run of the holdout, so that it is not taken for the official run of that commit.
+// The name of a run's file: <YYYY-MM-DD>-<commit>-<provider>-<model>-<settings>, the day in Korea, the model's slash
+// replaced, the provider left out for a run that has none, and -holdout on a run of the holdout, so that it is not
+// taken for the official run of that commit.
 export function runName(options: RunOptions, startedAt: Date): string {
   const model = options.model.replaceAll(/[^\w.-]/gu, '_');
-  const name = `${koreaDate(startedAt)}-${options.commit}-${model}-${settingsSlug(options)}`;
+  const path = options.provider === undefined ? model : `${options.provider}-${model}`;
+  const name = `${koreaDate(startedAt)}-${options.commit}-${path}-${settingsSlug(options)}`;
   return options.holdout === true ? `${name}-holdout` : name;
 }

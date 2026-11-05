@@ -7,11 +7,13 @@
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
 import { inject } from 'vitest';
-import { openRouterModel } from '../src/assistant/adapter.js';
+import { modelThrough } from '../src/assistant/model-port.js';
+import { MODEL_SETTINGS } from '../src/common/settings.js';
 import { repetitionsOf, selectCases, sentTurnsOf, type WorldName } from './cases.ts';
 import { dotEnv, runOptionsFromEnv } from './options.ts';
 import { expectSchema } from './expect.ts';
@@ -47,15 +49,17 @@ const log = new RunLog(options);
 const started: { evalApp?: EvalApp; world?: World; names?: Names } = {};
 
 beforeAll(async () => {
-  // The team's OpenRouter key, from main-server/.env. Never printed.
-  const key = dotEnv().OPENROUTER_API_KEY ?? '';
+  // The team's key for the run's provider, from main-server/.env. Never printed.
+  const provider = options.provider ?? 'openrouter';
+  const keyName = MODEL_SETTINGS[provider].key;
+  const key = dotEnv()[keyName] ?? '';
   if (key === '') {
-    throw new Error('Set OPENROUTER_API_KEY in main-server/.env');
+    throw new Error(`Set ${keyName} in main-server/.env`);
   }
   const rawResponses = new RawResponses();
   started.evalApp = await startEvalApp(
-    { ...inject('settings'), OPENROUTER_API_KEY: key },
-    openRouterModel(key, options.model, rawResponses.fetch),
+    { ...inject('settings'), [keyName]: key },
+    modelThrough(provider, key, options.model, options.cache ?? 'off', rawResponses.fetch),
     options,
     rawResponses,
   );
