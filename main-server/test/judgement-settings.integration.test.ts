@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { type PublicationStepService } from '../src/global-events/publication-st
 import { changeState } from './global-event-changes.js';
 import { publishedAmong } from './global-event-lists.js';
 import { collectedPost, eventsMessage, postNumbersFrom } from './global-events.js';
-import { answer, draftPost, JudgementWorld } from './judgements.js';
+import { answer, answeredSession, draftPost, JudgementWorld, PLACE_LINE } from './judgements.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signalsWhile } from './signals.js';
 import { signIn } from './sign-in.js';
@@ -182,9 +183,19 @@ describe('The list of unsettled posts', () => {
 
 describe('The app', () => {
   it('receives no Judgement or route of an event a Judgement published, by its strict schema', async () => {
-    world.scripted.script(answer());
+    // A User's list leaves out ended events, so this event is years ahead, never ending while the suite is kept.
+    const line = '- 일시: 2030. 11. 7.(목) 14:00~16:00';
+    world.scripted.script(
+      answer([
+        answeredSession({
+          start: '2030-11-07T14:00',
+          end: '2030-11-07T16:00',
+          lines: { start: [line], end: [line], place: [PLACE_LINE] },
+        }),
+      ]),
+    );
     const postNumber = newPost();
-    await world.collected(draftPost(postNumber));
+    await world.collected(draftPost(postNumber, { start: '2030-11-07', description: `${line}\n${PLACE_LINE}` }));
     const { accessToken } = await signIn(world.judging);
     const { id } = await world.onlyEvent(postNumber);
 
