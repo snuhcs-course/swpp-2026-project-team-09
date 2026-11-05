@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { inject } from 'vitest';
 import { type TestUser } from './friends.js';
 import { LibraryStage } from './library.js';
-import { postTutorial, tutorialAfter } from './tutorial.js';
+import { postTutorial, QUEST_KEYS, tutorialAfter } from './tutorial.js';
 
 // getTutorial at the Assistant's endpoint, with the scripted model in the model's place: the tutorial's content from
 // tutorial.yaml and the User's progress, read without changing it.
@@ -27,10 +28,8 @@ describe('getTutorial', () => {
     expect(await stage.result(user, { tool: 'getTutorial', input: {} })).toEqual({
       result: 'found',
       state: 'off',
-      total: 5,
-      quests: ['s-card', 'admin-shuttle', 'kwanjeong', 'health-clinic', 'art-museum'].map(
-        (key) => expect.objectContaining({ key, status: 'notStarted' }) as unknown,
-      ),
+      total: 15,
+      quests: QUEST_KEYS.map((key) => expect.objectContaining({ key, status: 'notStarted' }) as unknown),
     });
     expect(
       await tutorialAfter(postTutorial(stage.app, user, 'quests/s-card/complete', { by: 'button' })),
@@ -46,11 +45,11 @@ describe('getTutorial', () => {
     expect(await stage.result(user, { tool: 'getTutorial', input: { questKey: 'health-clinic' } })).toEqual({
       result: 'found',
       state: 'active',
-      total: 5,
+      total: 15,
       quests: [
         {
           key: 'health-clinic',
-          order: 4,
+          order: 11,
           title: '서울대 보건진료소 이용',
           brief: expect.any(String) as unknown,
           body: [expect.stringContaining('학생회관(63동) 3–4층') as unknown],
@@ -76,7 +75,7 @@ describe('getTutorial refusing', () => {
   it('answers none for a quest the tutorial does not have, naming those it has', async () => {
     expect(await stage.result(user, { tool: 'getTutorial', input: { questKey: 'dormitory' } })).toEqual({
       result: 'none',
-      reason: expect.stringContaining('s-card, admin-shuttle, kwanjeong, health-clinic, art-museum') as unknown,
+      reason: expect.stringContaining(QUEST_KEYS.join(', ')) as unknown,
     });
   });
 

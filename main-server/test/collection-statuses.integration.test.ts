@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -11,7 +12,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { createDatabase } from './containers.js';
+import { createDatabase, seed } from './containers.js';
 import { signInAsAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -24,6 +25,8 @@ let drop: () => Promise<void>;
 beforeAll(async () => {
   const database = await createDatabase(inject('settings').DATABASE_URL);
   ({ prisma, drop } = database);
+  // The seed's Places, which the server's start checks the 공부공간 layer against.
+  await seed(database.url);
   app = await startApp({ ...inject('settings'), DATABASE_URL: database.url });
 });
 

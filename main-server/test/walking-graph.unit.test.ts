@@ -2,9 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { type OsmWay, type Pin, walkingGraph, walkingSeconds } from '../src/travel/walking-graph.js';
+import {
+  CLIMB_SECONDS_PER_METRE,
+  type OsmWay,
+  type Pin,
+  WALKING_METRES_PER_SECOND,
+  walkingGraph,
+  walkingSeconds,
+} from '../src/travel/walking-graph.js';
 
 // Hand-made graphs on a plane in metres, from a corner near the campus.
 const METRES_PER_DEGREE = 111_195;
@@ -51,10 +59,10 @@ function twoRoads(farY: number): OsmWay[] {
   return [footway(0, 0, 400, 0), footway(0, 0, 0, farY, 400, farY)];
 }
 
-const SPEED = 1.1;
+const SPEED = WALKING_METRES_PER_SECOND;
 
 describe('the walk between two pins', () => {
-  it('goes from the pin to the path, along it and from the path, in straight lines at 1.1 m/s', () => {
+  it('goes from the pin to the path, along it and from the path, in straight lines at the walking speed', () => {
     expect(seconds([footway(0, 0, 100, 0)], pin(0, 10), pin(100, 10))).toBeCloseTo((10 + 100 + 10) / SPEED);
   });
 
@@ -150,11 +158,11 @@ describe('joining a pin to the graph', () => {
 describe('climbing', () => {
   const path = footway(0, 0, 110, 0);
 
-  it('adds 0.5 minutes per 10 m when the destination is higher', () => {
-    expect(seconds([path], pin(0, 0, 100), pin(110, 0, 120))).toBeCloseTo(100 + 60);
+  it('adds the climb value per metre when the destination is higher', () => {
+    expect(seconds([path], pin(0, 0, 100), pin(110, 0, 120))).toBeCloseTo(110 / SPEED + 20 * CLIMB_SECONDS_PER_METRE);
   });
 
   it('adds nothing going down', () => {
-    expect(seconds([path], pin(0, 0, 120), pin(110, 0, 100))).toBeCloseTo(100);
+    expect(seconds([path], pin(0, 0, 120), pin(110, 0, 100))).toBeCloseTo(110 / SPEED);
   });
 });

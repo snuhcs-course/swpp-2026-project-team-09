@@ -11,10 +11,13 @@
  * 2026-11-02  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
+import { withApprovalLine } from './approval-line.js';
 import {
   type ChatMessage,
   type Choice,
@@ -71,12 +74,21 @@ export class NoAnswerError extends Error {
 // Injection token of the run observer, which only the benchmark (main-server/eval) binds. The server binds none.
 export const RUN_OBSERVER = 'RUN_OBSERVER';
 
-// What a run tells its observer: each tool's call with what it returned or threw, and the end of each step, which is
-// one model call. The benchmark records the tool results here, where they are produced, so that a run stopped at the
-// step cap still has its last step's. Production passes none, and a run without one does as it did before.
+// What a run tells its observer: each tool's call with what it returned or threw, the end of each step, which is one
+// model call, and the reply's text before the server added the Approval line. The benchmark records the tool results
+// here, where they are produced, so that a run stopped at the step cap still has its last step's. Production passes
+// none, and a run without one does as it did before.
 export interface RunObserver {
   toolEnded(call: ToolCallEnd): void;
   stepEnded(step: StepEnd): void;
+  replied(reply: RepliedEnd): void;
+}
+
+// The model's own reply: its steps' text, or the fixed sentence when they wrote none, as replies were before the
+// Approval line. `approvalLine` is whether the server added the line after it.
+export interface RepliedEnd {
+  modelText: string;
+  approvalLine: boolean;
 }
 
 export type ToolCallEnd = { callId: string; name: string; input: unknown } & ({ result: unknown } | { error: unknown });
@@ -225,7 +237,15 @@ export async function runFeature(
   if (reply === null) {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
-  return reply;
+  return withLine(reply, messages, observer);
+}
+
+// The reply with the Approval line, when it needs one, the observer told of the text before it.
+function withLine(reply: FeatureReply, messages: readonly ChatMessage[], observer?: RunObserver): FeatureReply {
+  const userTexts = messages.flatMap((message) => (message.role === 'user' ? [message.text] : []));
+  const { text, added } = withApprovalLine(reply.text, reply.cards, userTexts);
+  observer?.replied({ modelText: reply.text, approvalLine: added });
+  return { ...reply, text };
 }
 
 // The reply of a run that ended: the model's text, the fixed sentence over what it showed without any, or none.

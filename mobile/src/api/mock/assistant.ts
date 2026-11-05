@@ -6,6 +6,8 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage, Choice, ProposalPlace, QuestProposal } from '@/api/assistant-types';
@@ -69,6 +71,21 @@ function lunchProposal(): QuestProposal {
   };
 }
 
+// A 스터디 at 301동, whose study rooms 예약하샤 books, as the Assistant proposes "301동에서 스터디 모집해줘".
+function studyProposal(): QuestProposal {
+  return {
+    ...lunchProposal(),
+    title: '301동 스터디',
+    description: '내일 점심에 301동에서 같이 공부해요',
+    board: 'career',
+    place: {
+      id: 'place-301',
+      name: '제1공학관',
+      booking: { label: '예약하샤 스터디룸 예약', url: 'https://ssims.snu.ac.kr/index.do' },
+    },
+  };
+}
+
 // A 비공개 파티 for the mocks' first Global Event, at its start, inviting their first Friend.
 function closedProposal(): QuestProposal {
   const event = GLOBAL_EVENTS[0] ?? null;
@@ -99,6 +116,13 @@ function chosenPlace(message: ChatMessage | undefined): ProposalPlace | null {
   const { text, chosen } = message;
   const choice = HAKGWAN.find(({ id, label }) => id === chosen?.id || label === text.trim());
   return choice === undefined ? null : { id: choice.id, name: choice.label };
+}
+
+function proposalOf(asked: string): QuestProposal {
+  if (asked.includes('비공개')) {
+    return closedProposal();
+  }
+  return asked.includes('301') ? studyProposal() : lunchProposal();
 }
 
 function menusReply(): string {
@@ -148,7 +172,7 @@ export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantR
       text: PROPOSING,
       mapButtons: [],
       cards: [],
-      proposal: last.includes('비공개') ? closedProposal() : lunchProposal(),
+      proposal: proposalOf(last),
       choices: [],
     };
   }
