@@ -20,7 +20,7 @@ import { refuseKakao } from './walking-route.js';
 
 // Join if one exists, recruit if not, with the scripted model in the model's place: what the instructions tell the model
 // and what a reply holds when the model follows them. The files share the database, so each test seeds what it reads on
-// a day of 2094 or 2083 of its own, which no other file uses, and always searches on that day.
+// a day of 2083 of its own, which no other file uses, and always searches on that day.
 
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
@@ -85,7 +85,7 @@ describe('the instructions on a request to recruit', () => {
 
 describe('a reply to a request to recruit, with Quests found', () => {
   it('shows the Quests found as cards in the order given, and joins none of them', async () => {
-    const day = '2094-03-05';
+    const day = '2083-04-03';
     const fewer = await questOn(day, { capacity: 4 });
     const more = await questOn(day, { capacity: 4 });
     const joiner = await signInUser(app);
@@ -113,7 +113,7 @@ describe('a reply to a request to recruit, with Quests found', () => {
 
 describe('a reply to a request to recruit, with none found', () => {
   it('holds the Proposal and the line that none was found', async () => {
-    const day = '2094-03-06';
+    const day = '2083-04-04';
     const proposal = {
       title: '같이 가요',
       description: '같이 갈 사람 모집해요',
