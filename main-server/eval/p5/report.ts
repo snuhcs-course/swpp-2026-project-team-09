@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -11,13 +12,14 @@ import { z } from 'zod';
 import { type Expect, expectSchema } from '../expect.ts';
 import { cardsOf, type Names, namesOf } from '../normalise.ts';
 import { isRecord } from '../readers.ts';
-import { type RunScore } from '../run-score.ts';
+import { passedAsModelAnswered, type RunScore } from '../run-score.ts';
 import { type CaseScore, type ScoredTurn } from '../score.ts';
 
 // The P05 suite's numbers (metrics document, 2 C and D): what a saved run scored, read by the tags and thresholds of
 // suite.yaml, with each threshold's pass or fail. It reads only the scorer's output, so a stored run is scored again
 // without the model. k/n counts runs. A subset's cards are summed over its repetitions (micro), with the mean over its
-// cases beside them, since a case with many cards weighs more in the sum.
+// cases beside them, since a case with many cards weighs more in the sum. J9 is read on the reply the User saw, and
+// J9-model on the model's own reply, without the server's Approval line (P12, CD-2), as a run saved before it.
 
 // A tag is a case, or a (case, seed) pair once the case's answers are in.
 export const tagSchema = z.union([z.string(), z.strictObject({ case: z.string(), seed: z.string().nullable() })]);
@@ -256,6 +258,7 @@ function joinMeasures({ joins, runsTagged, names, statedDays }: Reading): Record
     J7: () => tagPassed('J7'),
     J8: () => counted(joins, (scored) => saidJoined(scored)),
     J9: () => tagPassed('J9'),
+    'J9-model': () => counted(runsTagged('J9'), ({ run }) => passedAsModelAnswered(run, names)),
     J10: () =>
       counted(runsTagged('J10'), (scored) => {
         const shown = shownOf(scored, names);
