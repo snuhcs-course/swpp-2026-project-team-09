@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type JudgedSession } from '../src/global-events/judgement-answer.js';
+import { type JudgedSession, JUDGEMENT_CHECKS } from '../src/global-events/judgement-answer.js';
 import { placedSessions } from '../src/global-events/judgement-checks.js';
 
 function judged(start: string, passed: boolean, isNew = true): JudgedSession {
@@ -97,5 +98,35 @@ describe('placedSessions, with Drafts the worker read', () => {
     const one = judged(FIRST, true);
 
     expect(placedSessions([one], [draft('d1', FIRST), draft('d2', SECOND)]).get(one)).toBe('d1');
+  });
+});
+
+// A failing session whose checks all pass but its place's: the step compares it.
+function unplaced(start: string): JudgedSession {
+  const checks = JUDGEMENT_CHECKS.map((name) => ({ name, passed: name !== 'placeMatches' }));
+  return { ...judged(start, false), placeId: null, checks };
+}
+
+describe('placedSessions, with a failing session the step compares', () => {
+  it('gives it the only Draft', () => {
+    const one = unplaced(FIRST);
+
+    expect(placedSessions([one], [draft('d')]).get(one)).toBe('d');
+  });
+
+  it('gives it the Draft with its start, after the passing sessions took theirs', () => {
+    const [one, two] = [judged(FIRST, true), unplaced(SECOND)];
+    const placed = placedSessions([one, two], [draft('d1', FIRST), draft('d2', SECOND)]);
+
+    expect(placed.get(one)).toBe('d1');
+    expect(placed.get(two)).toBe('d2');
+  });
+
+  it('gives it a new Draft when the only one left must stay for a session that settles nothing', () => {
+    const [one, two] = [unplaced(FIRST), judged(SECOND, false)];
+    const placed = placedSessions([one, two], [draft('d')]);
+
+    expect(placed.get(one)).toBeNull();
+    expect(placed.has(two)).toBe(false);
   });
 });

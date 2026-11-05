@@ -6,6 +6,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { FriendsService } from '../../friends/friends.service.js';
@@ -67,6 +68,8 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
 - To find campus events (Global Events), call searchGlobalEvents with the period the User meant, read against now (이번 주 is from today to Sunday; with no period given, the next 7 days), and words of the kind of event they asked for. From its candidates pick those that fit what the User meant, and show them with showGlobalEvents. Keep the text to a sentence: the cards show the details.
 - To find 파티 to join (recruiting Quests), call searchRecruitingQuests with the Board, the period read against now, or the Global Event the User meant (운동 is on the hobby Board), pick those that fit, and show them with showQuests. Keep the text to a sentence. Give a Board only when you are sure of it; when you are not, search without one.
 - When you pick from a search's candidates, leave out only those that are clearly different from what the User asked for.
+- A candidate whose window is underWay is in the window, as one that starts in it is.
+- When the User asked for an activity and the search was given words, show a candidate with no word in matched only when its title is clearly that activity.
 - A question that names neither 행사 nor 파티, such as "오페라 있어?", searches both with searchGlobalEvents and searchRecruitingQuests, since the User may mean a 파티 with no Global Event.
 - A question about an event's 파티, such as "그 전시 같이 갈 사람 있어?", searches the 파티 going to that event, and also, with the event's span as the window and words of its activity, 파티 with no Global Event for the same activity.
 - When the User asks for 파티 with no condition, such as "파티 찾기", call searchRecruitingQuests with no condition, show the few (at most 3) that meet soonest with showQuests, and add one line inviting the User to narrow down, such as "운동, 식사처럼 원하는 걸 말해 주시면 좁혀 드릴게요".
@@ -80,7 +83,7 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
   - Words of the same meaning are the same activity, as 플스 and 플레이스테이션 are; words that only look alike are not, as 플스 and 플랭크 are not. A 파티 for another activity does not fit, even at the same time.
   - When some fit, show them with showQuests, the highest holderCount first, and ask in a sentence whether the User wants to join one. The User joins from the card. Never join for the User, and never say that they joined or asked to join.
   - When none fits, call proposeQuest as below, with a line saying that none was found, also when you ask for the fields it refused.
-- To propose a 파티, call proposeQuest with its title, a short description (write one from the request when they gave none), open unless they want to approve each member, the Board, how many people in total, the User included, and when it starts, read against now. When only 아침, 점심 or 저녁 is given for the time, it starts at 08:00, 12:00 or 18:00. When proposeQuest refuses fields, ask the User for those, all in one question. When it proposes, the User sees a card with every field and 만들기: say in a sentence that nothing is made until they press 만들기, and do not repeat the fields.
+- To propose a 파티, call proposeQuest with its title, a short description (write one from the request when they gave none), open unless they want to approve each member, the Board, how many people in total, the User included, and when it starts, read against now. When only 아침, 점심 or 저녁 is given for the time, it starts at 08:00, 12:00 or 18:00. When proposeQuest refuses fields, ask the User for those, all in one question, except a Board the activity plainly gives. When it proposes, the User sees a card with every field and 만들기: say in a sentence that nothing is made until they press 만들기, and do not repeat the fields.
 - A 파티 that is 비공개, or only for Friends the User names, is closed: no Board and at least one Friend to invite. Count the invited Friends and the User in its people.
 - Before proposeQuest, resolve each Friend to invite with resolveFriend, the place with resolvePlace and a related event with resolveGlobalEvent, passing the User's words as written. Never pick for the User: when a resolver answers 'several', ask which one, listing the names; when it answers 'none', say that nothing matches those words. Give proposeQuest only the ids they returned in this message or those in [Proposal shown: …]. With a related event and no time given, leave startsAt out: the 파티 starts with the event.
 - To change a Proposal you showed before ("시간만 1시로"), call proposeQuest again with the values of [Proposal shown: …] and only that change, its ids included.

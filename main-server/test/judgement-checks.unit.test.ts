@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -98,8 +99,9 @@ const ONE_CHECK_FAILS: [string, Partial<AnsweredSession>, JudgementCheck[]][] = 
     ['linesInPost', 'timeAgrees'],
   ],
   ['a date the line does not write', { start: '2026-11-06T14:00', end: '2026-11-06T16:00' }, ['dateAgrees']],
-  ['an end time the line does not write', { end: '2026-11-05T17:00' }, ['timeAgrees']],
-  ['a start time the line does not write', { start: '2026-11-05T15:00' }, ['timeAgrees']],
+  // A time the line does not write is another time than the line's for that day.
+  ['an end time the line does not write', { end: '2026-11-05T17:00' }, ['timeAgrees', 'timesConsistent']],
+  ['a start time the line does not write', { start: '2026-11-05T15:00' }, ['timeAgrees', 'timesConsistent']],
   [
     'an application period',
     {
@@ -113,7 +115,11 @@ const ONE_CHECK_FAILS: [string, Partial<AnsweredSession>, JudgementCheck[]][] = 
     },
     ['notApplicationPeriod', 'length'],
   ],
-  ['an end before the start', { start: '2026-11-05T16:00', end: '2026-11-05T14:00' }, ['startBeforeEnd']],
+  [
+    'an end before the start',
+    { start: '2026-11-05T16:00', end: '2026-11-05T14:00' },
+    ['startBeforeEnd', 'timesConsistent'],
+  ],
   [
     'a day with no time of day',
     { start: '2026-11-05', end: null, lines: { start: [TIME_LINE], end: [], place: [PLACE_LINE] } },
@@ -231,15 +237,19 @@ describe('checkedSessions: whether a session is new', () => {
 });
 
 describe('matchedPlace', () => {
-  const gwanak = { buildingNumberIsGwanak: true, postKeyInLink: /x/u };
-  const elsewhere = { buildingNumberIsGwanak: false, postKeyInLink: /x/u };
+  const gwanak = { campusDefault: 'gwanak', postKeyInLink: /x/u } as const;
+  const elsewhere = { campusDefault: null, postKeyInLink: /x/u };
 
   it.each(['301동', '301동 117호', '301동 1층', '301동 지하1층 117호'])('takes %s alone as Gwanak', (place) => {
     expect(matchedPlace(place, gwanak, PLACES)?.id).toBe('b');
   });
 
-  it('does not where the Source says otherwise', () => {
-    expect(matchedPlace('301동 117호', elsewhere, PLACES)).toBeNull();
+  it('takes a name alone as Gwanak', () => {
+    expect(matchedPlace('제1공학관 117호', gwanak, PLACES)?.id).toBe('b');
+  });
+
+  it.each(['301동 117호', '제1공학관 117호'])('does not take %s as Gwanak on a Source without a campus', (place) => {
+    expect(matchedPlace(place, elsewhere, PLACES)).toBeNull();
   });
 
   it.each(['수원캠퍼스 301동 117호', '연건 301동', '정부청사 1동', '301동 117호, 132동 103호', '온라인', '301호'])(
