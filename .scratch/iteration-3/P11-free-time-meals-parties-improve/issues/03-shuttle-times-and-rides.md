@@ -46,3 +46,10 @@ Later on 2026-11-05 the PM accepted Jaehyun0320's two suggestions in the review 
 - **Tokens** (measured from the agents' transcripts; the orchestrating session's are counted once, under ticket 06):
   - Input: 212 not cached, 11,357,250 cache reads and 267,132 cache writes.
   - Output: 71,225.
+
+### Agent usage (2026-11-05, the PM's decision on review)
+
+- **Agent time** (estimate): about 15 minutes: about 11 of the orchestrating session for the shipping rule, its test and the records, and about 4 for the reviewer. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the transcripts, from 17:59 to 18:09 KST): the orchestrating session's share and the reviewer's.
+  - Input: 126 not cached, 10,592,972 cache reads and 145,721 cache writes.
+  - Output: 45,573.

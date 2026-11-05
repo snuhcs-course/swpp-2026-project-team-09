@@ -1869,13 +1869,15 @@ without an offset, stops the command. Stops are named by `loop_order`, their pla
 wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. What the file lacks,
 the fallback in that module covers. The 75% of R11 decides only what the score counts.
 
-The file holds less than is derived, as the PM decided on 2026-11-05: no wait until a third logged day agrees, so the
-fallback answers every wait, and a ride only for a pair and band logged on at least two days.
+The file holds less than is derived, as the PM decided on 2026-11-05. It holds no wait, so the fallback answers every
+wait; waits come back only by a later change, once a third logged day agrees. It holds a ride only for a pair and band
+logged on at least two days.
 
-The score holds each day out and compares it with all the times derived from the others, not with what the file holds. A stop-band or pair-band those
-days lack is predicted with the fallback. The ride compares every held-out ride with the median, by MAE and the share
-within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored stop-band of 08–19 with the
-prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs are below their baselines.
+The score holds each day out and compares it with all the times derived from the others, not with what the file holds.
+A stop-band or pair-band those days lack is predicted with the fallback. The ride compares every held-out ride with the
+median, by MAE and the share within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored
+stop-band of 08–19 with the prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs
+are below their baselines.
 
 ## Travel Time
 

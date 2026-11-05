@@ -1380,9 +1380,9 @@ TaeHyun79 rode route 41946 five times on 11-03, not on 11-02 as [the walking dia
 
 ### What the app is given (2026-11-05)
 
-Jaehyun0320 suggested two things in the review of #201, and the PM accepted both: keep the fallback waits until a third logged day agrees, and leave out what only one day logged. `pnpm shuttle:derive` now writes less than it derives:
+Jaehyun0320 suggested two things in the review of #201, and the PM accepted both: keep the fallback waits until a third logged day agrees, and leave out what only one day logged, or what has fewer than a few headways. `pnpm shuttle:derive` now writes less than it derives:
 
-- **No wait.** The fallback answers every stop and band: 3.5 minutes, and 10 minutes in 19–21. The 43 derived waits are left out, the 정문 stops' 705–739 s in 14–17 and 38동's 26 s in 19–21 among them.
-- **A ride only for a pair and band logged on at least two days.** 728 of the 731 derived rides are kept, unchanged. The 3 left out are 19–21 rides from 11-02 alone: 농생대 (3) → 38동 (4) 30 s, 농생대 (3) → 신소재공동연구소 (5) 60 s and 38동 (4) → 신소재공동연구소 (5) 30 s.
+- **No wait.** The fallback answers every stop and band: 3.5 minutes, and 10 minutes in 19–21. The 43 derived waits are left out, among them 705–739 s in 14–17 at the stops near 정문 (0 정문, 1 법과대, 2 자연대, 12 수의대, 13 경영대) and 38동's 26 s in 19–21. Waits come back only by a later change, once a third logged day agrees. With no wait given, the count of headways needs no rule of its own.
+- **A ride only for a pair and band logged on at least two days.** 728 of the 731 derived rides are kept, unchanged, each from at least 6 rides. The 3 left out are 19–21 rides from 11-02 alone: 농생대 (3) → 38동 (4) 30 s, 농생대 (3) → 신소재공동연구소 (5) 60 s and 38동 (4) → 신소재공동연구소 (5) 30 s.
 
 The score above is unchanged. It still compares each held-out day with all the times derived from the other, so a one-day fold is not emptied by the two-day rule. The waits the app gives are now the fallback, the wait's baseline of 272.2 s. The five rides' pairs are all kept, so their comparison stands at 20.0 s.

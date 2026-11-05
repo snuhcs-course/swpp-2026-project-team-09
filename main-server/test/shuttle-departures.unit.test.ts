@@ -192,7 +192,7 @@ describe('R12 ride', () => {
 describe('What the app is given', () => {
   const { day: rides } = cleaned('r12-rides');
   const { day: longVisit } = cleaned('r07-long-visit');
-  const days = [rides, { ...rides, date: '2026-11-03' }, longVisit];
+  const days = [rides, { ...rides, date: '2026-11-03' }, { ...longVisit, date: '2026-11-04' }];
 
   it('holds no wait, so the fallback answers', () => {
     expect(deriveTiming([longVisit]).waits).not.toEqual({});

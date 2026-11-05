@@ -162,7 +162,8 @@ function medianRides(rides: Ride[]): ShuttleTiming['rides'] {
   return timing;
 }
 
-// What `shuttle-timing.json` holds for these days. R11's 75% decides what is scored: the file takes any kept time.
+// All the times derived from these days, which the score reads. R11's 75% decides what is scored: a wait here takes any
+// kept time.
 export function deriveTiming(days: CleanedDay[]): ShuttleTiming {
   const waits: ShuttleTiming['waits'] = {};
   for (const { stop, band, waitSeconds, keptSeconds } of waitCells(days)) {
@@ -173,9 +174,9 @@ export function deriveTiming(days: CleanedDay[]): ShuttleTiming {
   return { days: days.map(({ date }) => date), waits, rides: medianRides(days.flatMap((day) => ridesOf(day))) };
 }
 
-// What seed/shuttle-timing.json gives the app, as the PM decided on #201 on 2026-11-05: no wait until a third logged
-// day agrees, so the fallback answers, and a ride only for a pair and band logged on at least two days. The score
-// still reads `deriveTiming`, which a held-out fold of one day needs whole.
+// What seed/shuttle-timing.json gives the app, as the PM decided on #201 on 2026-11-05: no wait, so the fallback
+// answers, until a later change brings waits back once a third logged day agrees; and a ride only for a pair and band
+// logged on at least two days. The score still reads `deriveTiming`, which a held-out fold of one day needs whole.
 export function shippedTiming(days: CleanedDay[]): ShuttleTiming {
   const daysLogged = new Map<string, number>();
   for (const day of days) {
