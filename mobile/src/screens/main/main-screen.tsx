@@ -30,11 +30,10 @@ import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { Card } from './card';
-import { useChatSheet } from './chat-sheet';
 import { FriendList } from './friend-list';
 import { listsTop, mapInset, ROUTE_PADDING, type Room, takenUnderToast, takenUnderToastOverCard } from './layout';
 import { LocationExplanation } from './location-explanation';
-import { MapBottom, openEventOf, openMenus, takenBy } from './map-bottom';
+import { MapBottom, openMenus, takenBy, useMainChat } from './map-bottom';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
 import { askAssistant, pressOnMap, useMainLayers } from './use-main-layers';
@@ -272,17 +271,18 @@ function useAskedTutorialQuest(openSheet: (key: string) => void): void {
   }, [tutorial, openSheet]);
 }
 
-// The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), and the pin
-// of its 지도에서 보기.
+// The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), the pin of its
+// 지도에서 보기, and a press on the map, which that pin takes first.
 function useMainTutorial(
   selection: Selection,
   cards: readonly CardView[],
   map: MainMap,
-): { tutorial: TutorialFlow; start: boolean; pin: TutorialPin } {
+): { tutorial: TutorialFlow; start: boolean; pin: TutorialPin; onPress: (id: string) => void } {
   const tutorial = useTutorialFlow();
   useAskedTutorialQuest(tutorial.openSheet);
   const pin = useTutorialPin({ cards, selection, goTo: map.goTo, tutorialState: tutorial.tutorial?.state });
-  return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null, pin };
+  const onPress = pressWithPin(pin, pressOnMap(cards, map, selection));
+  return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null, pin, onPress };
 }
 
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
@@ -306,17 +306,13 @@ export function MainScreen(): ReactElement {
   const selection = useSelection(cards, inFront);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
-  const chat = useChatSheet(inFront, stack.turnOn, {
-    openEventId: openEventOf(selection.selected),
-    routeTo: route.routeTo,
-  });
+  const chat = useMainChat(inFront, stack, selection.selected, route);
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
   useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
-  const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
+  const { tutorial, start, pin, onPress } = useMainTutorial(selection, cards, map);
   const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null, start);
-  const onPress = pressWithPin(pin, pressOnMap(cards, map, selection));
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>

@@ -23,7 +23,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { BottomControls } from './bottom-controls';
-import type { ChatSheetControl } from './chat-sheet';
+import { type ChatSheetControl, useChatSheet } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { AI_INPUT, CARD, LAYERS_BUTTON, type Room } from './layout';
 import { ShuttleNotice } from './shuttle-notice';
@@ -32,6 +32,7 @@ import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
 import type { TutorialFlow } from './tutorial/use-tutorial-flow';
 import type { TutorialPinTarget } from './tutorial/use-tutorial-pin';
+import type { MainRoute } from './use-route';
 
 // The menu panel at the meal served next, at a restaurant's section or at the top of the list.
 export function openMenus(restaurant?: string): void {
@@ -61,9 +62,20 @@ export interface Taken {
 }
 
 // The Global Event whose card is open, which the chat's suggestion is asked for.
-export function openEventOf(card: CardView | null): string | null {
+function openEventOf(card: CardView | null): string | null {
   const primary = card?.kind === 'global-event' ? card.primary : null;
   return primary?.action === 'recruit' ? primary.eventId : null;
+}
+
+// The chat's sheet, which the main screen holds so that a card's button can ask the Assistant. It opens from the
+// selected card: its Global Event, for the suggestion, and its 길찾기.
+export function useMainChat(
+  inFront: boolean,
+  stack: LayerStack,
+  selected: CardView | null,
+  route: MainRoute,
+): ChatSheetControl {
+  return useChatSheet(inFront, stack.turnOn, { openEventId: openEventOf(selected), routeTo: route.routeTo });
 }
 
 export function takenBy(selected: CardView | null, serviceHours: string | null): Taken {
