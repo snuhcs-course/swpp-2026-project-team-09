@@ -2505,6 +2505,14 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   extract change. `pnpm walking:build --sensitivity` writes nothing: it moves every pin 10 m and 20 m in random
   directions, 10 runs each, and prints the mean change and the Places that move most. `openstreetmap-paths.json` and
   `srtm-elevation.json` were exported once and have no name in `pnpm seed:export`, so that the table stays reproducible.
+- **Scoring a walking table**: `pnpm walking:score` scores the committed table against the 30 test walks of P04's
+  walking evaluation, and `pnpm walking:score <file>` another table the builder wrote. It calls nothing. It reads the
+  frozen pairs, with the table's and the baseline's seconds at the freeze, from `eval/walking/pairs.json` and the walked
+  times from `eval/walking/walks.json`. For the table, and beside it the baseline, it prints the MAE, the share within
+  ±2 minutes and within min(25% of the walk, 2 minutes), a difference equal to the limit counting as within, the share
+  walked more than 2 minutes longer than predicted and the MAE over the 8 pairs where the two differed by more than 2
+  minutes at the freeze; then k = Σ(walked × table) / Σ(table²), and the threshold under each tolerance: at least 70%
+  within, and the table's MAE below the baseline's.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
@@ -2731,7 +2739,7 @@ src/
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases;
-                                     also the shuttle metric's logged days
+                                     also the shuttle metric's logged days, and the walking evaluation's pairs and walks
 test/                                tests named by level; the integration tests run against PostgreSQL and Redis in
                                      containers
 ```
