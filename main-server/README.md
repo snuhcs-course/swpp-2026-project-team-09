@@ -2139,6 +2139,12 @@ its model through OpenRouter with the Vercel AI SDK
     shows cards, map buttons or a Proposal says `아래에서 확인해 보세요.` above them, and the server logs that it did, as
     `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
 Proposal)`.
+  - **The Approval line** (P12, `approval-line.ts`): when the cards show a Quest whose Join Policy is Approval and the
+    text holds fewer than two of 승인, 수락 and 신청, the server adds a line after it, fixed sentence included:
+    `승인제 파티는 참여 신청 후 파티장이 수락하면 참여돼요.`, or, when the User's last message with letters (not
+    only `18:00` or `2`) has no Hangul,
+    `A party that needs approval takes you in once you ask to join and its leader accepts.` It applies to every
+    feature that shows Quest cards.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
     a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
@@ -2194,6 +2200,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     come first, ignoring case and counting a word given twice once, ties in start order, then by title in code points.
     The rest of the window fills the places left, up to 30, with `more` when there were more. The server does not order
     by Holders.
+  - **The Place note** (P12): when `resolvePlace` answered one Place in this message (`FoundIds` keeps it) and a search
+    is not given it, `placeId` in `searchRecruitingQuests` or `place` in `searchGlobalEvents`, the answer, found or
+    "none", carries `note`: that its candidates are from any place, naming the Place, its number and its id, and how to
+    search near it. The candidates and their order are as without it. A Place of an earlier message, or of the
+    Proposal sent back, makes no note.
   - On a request to recruit, the system prompt has the model search before it proposes, unless the User said to make a
     new one in the conversation, this message included: only what the User stated is compared, what fits is shown as cards with the most
     Holders first and a question, and the User joins from the card. With nothing that fits, it proposes and says none was
@@ -2215,8 +2226,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     invitee is a Friend. With a Global Event and no time it starts at the event's start; a time before is a meeting
     before the event, as the form's `모이기`, and one after its start is refused. It answers
     `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
-    the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
-    it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
+    the User for, except a Board: a missing one's refusal names the four Boards and tells the model to choose the one
+    the activity plainly fits, without asking, and propose once nothing else is missing, asking only when it fits none
+    or more than one. Or it answers
+    `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when it is called
+    twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change.
   - **The 공강 tools** (`free-time/`, ADR 0009) work on a day from today to a week ahead, and on the items of a User's
     day: each Class meeting on that weekday and each timed Sub Quest of a Quest they hold (`UserDayService`, for any
@@ -2356,9 +2370,11 @@ its reasoning tokens and the provider's response as it came, which the benchmark
 the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
-shows its error too. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so
-production runs as before. A turn's trace ends with the reply (its text and length, cards, map buttons, Proposal) or
-the failure: STEP_LIMIT, TIMEOUT or ERROR.
+shows its error too, and of the reply's text before the Approval line. `AssistantService` passes the one bound to
+`RUN_OBSERVER`, which only the benchmark binds, so production runs as before. A turn's trace ends with the reply (its
+text and length, cards, map buttons, Proposal, and `modelText`, the model's own text, with `approvalLine`, whether the
+server added the line) or the failure: STEP_LIMIT, TIMEOUT or ERROR. A run saved before P12 has neither field, and its
+text is the model's. The P05 report reads J9 on the reply the User saw and J9-model on `modelText`.
 
 A case is a single turn, a fixed history (the earlier turns written out, the Assistant's with cards and a Proposal by
 seed name; all of them are sent in one request, and only the last turn is scored) or live (`live: true`: each User's message sent with the real replies before

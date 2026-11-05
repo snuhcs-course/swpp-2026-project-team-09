@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -10,7 +11,7 @@ import { GlobalEventsService } from '../../global-events/global-events.service.j
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
-import { CANDIDATES_MAX, DESCRIPTION_MAX, wordsInput } from './search-candidates.js';
+import { CANDIDATES_MAX, DESCRIPTION_MAX, placeNote, wordsInput } from './search-candidates.js';
 import { daysTogether, hasWindow, inOrder, WINDOW_INPUT, windowOf, windowWords } from './search-window.js';
 
 const input = z
@@ -46,12 +47,18 @@ export function searchGlobalEvents(globalEvents: GlobalEventsService): Tool {
     input,
     run: async (conditions, { now, found }) => {
       const { place, words } = conditions;
+      const note = placeNote(
+        found,
+        place !== undefined,
+        (named) =>
+          `place was not given, so these events are from any place, though resolvePlace returned a Place in this message: ${named}. To search at it, call again with its name or building number as place.`,
+      );
       const events = await globalEvents.searchRanked(
         { period: windowOf(conditions), place, words, take: CANDIDATES_MAX + 1 },
         now,
       );
       if (events.length === 0) {
-        return noneFound(reasonForNone(conditions));
+        return { ...noneFound(reasonForNone(conditions)), ...note };
       }
       const candidates = events.slice(0, CANDIDATES_MAX);
       found.add(
@@ -71,6 +78,7 @@ export function searchGlobalEvents(globalEvents: GlobalEventsService): Tool {
           place: event.place === null ? null : othersText('globalEvent.place', event.place),
           description: othersText('globalEvent.description', event.description.slice(0, DESCRIPTION_MAX)),
         })),
+        ...note,
       };
     },
   });
