@@ -76,8 +76,8 @@ Spec: `../spec.md`, "AB-4: campus default and time consistency"; ADR 0008.
 - `campusDefault` applies to Judgements only (`matchedPlace`). The rules' `namedPlace` call in `collected-posts.service.ts`
   is unchanged, as `buildingNumberIsGwanak` was Judgement-only.
 - `GENERIC_PLACE_NAMES` is a list of Places' names that other institutions use too. A generic name after another
-  facility's name is never matched. Where the campus is only assumed (no 서울대 in the place), it is matched only alone,
-  with a floor or a room at most (호, 층, 강당, 강의실, 세미나실, 회의실, 로비). Every name is a Place's name from
+  facility's name is never matched, 서울대 or not. Where the campus is only assumed (no 서울대 in the place), every
+  Place name is matched only alone, with a floor or a room at most (호, 층, 강당, 강의실, 세미나실, 회의실, 로비). Every name is a Place's name from
   `labels/places.tsv`; those also seen in a development post's place line are marked:
   체육관 (71; `금나래문화체육센터 2층 체육관`, extra-PGM012002305, snu-177311), 학생회관 (63; `학생회관 5층 대학생활문화원`,
   extra-PGM012002142), 행정대학원 (57; snu-177656), 국제대학원 (140; snu-177824), 보건대학원 (221; snu-178028),
@@ -87,9 +87,9 @@ Spec: `../spec.md`, "AB-4: campus default and time consistency"; ADR 0008.
   offices elsewhere). 도서관 is in no Place's name alone, so it needs no entry. The development posts are those of a
   `development` entry of `set-a.yaml` or `set-b.yaml` and of no `held-out` one (53 posts).
 - `timesConsistent` reads each line's times with 01's reader (`writtenTimes`, built on its `CLOCK`, `DAY`, `hoursOf`
-  and list-number handling). It skips application lines. A session's `[n회차]` number is that of the post line its
-  start is quoted from, else its place in the answer. A line that lists several times for the day passes when one of
-  them is the session's. An unnumbered line of the session's day is compared with every session, so two sessions on
+  and list-number handling). It skips a line labelled an application period. A session's `[n회차]` number is that of the post line its
+  start is quoted from, else its place in the answer. A line of sittings each written from start to end passes when
+  one of them is the session's. An unnumbered line of the session's day is compared with every session, so two sessions on
   one day on separate unnumbered lines fail each other: a C1 loss, not a C2 one.
 - "The session's end is then taken from the line that has one" is met as "does not fail": the check does not rewrite
   the session's end, which would mean changing the settle flow this ticket leaves alone. That box is left unticked.
@@ -107,12 +107,34 @@ Spec: `../spec.md`, "AB-4: campus default and time consistency"; ADR 0008.
   the list only stops publication" still passes with `timesConsistent`.
 - The admin lists checks by the name the server gives (`judgement-panel.tsx`), with no table of names to extend.
 
+### Owner's decisions (2026-11-05)
+
+Jaehyun0320 decided these, after the replay and #215's first review:
+
+- **Day and time on two lines.** Fix the rule, since a wrong publication is the worse failure. A time field under a
+  line of a day alone is read as one line with it. This departs from "Lines with a time but no date … are not
+  compared" (spec, AB-4).
+- **Place, with the campus assumed.** Every Place name, not only a generic one, must stand alone, with a floor or a
+  room at most. This closes `고려대 문화관 2층`, `OO구 문화관`, `OO시 문화관` and `OO재단 문화관 강당`. Adding markers to
+  `ELSEWHERE` was the alternative.
+- **Several times on a line.** One of a line's times may be the session's only when each of them is written from a
+  start to an end (`14:00~16:00, 17:00~18:00`). A line with a start alone, such as a change notice
+  (`15:00 → 16:00으로 변경`), must agree in each, as the spec has it.
+- **Application lines.** Only an application word before a line's first number, or a short label above it, makes
+  `timesConsistent` skip the line. `(사전 예약제)` after the day does not.
+- **"The session's end is then taken from the line that has one"** is dropped from this ticket. The check does not
+  fail on a start-only line, but it does not fill the end, which would change the settle flow. Its acceptance box is
+  left unticked for this reason.
+
+After these, the replay at `0952e036` gives the same numbers as `9085a01c` below, with nothing moved; a-017 stays a
+Draft failing `placeMatches` and `timesConsistent`.
+
 ### Replay (2026-11-05)
 
 `pnpm eval:collection --run judgement --part held-out --from eval/results/collection-held-out-judgement-464ea9c5.json
 --no-model`, on a clean tree. A development reading of the held-out set. The result files are not committed.
 
-| | 01 alone (`57e1ad3a`) | 01+03 (`c4258508`) | 01+03+04 first (`0543bc2d`) | 01+03+04 (`9085a01c`) |
+| | 01 alone (`57e1ad3a`) | 01+03 (`c4258508`) | 01+03+04 first (`0543bc2d`) | 01+03+04 (`9085a01c`, `0952e036`) |
 | --- | --- | --- | --- | --- |
 | C1 published without an Administrator | 35/64 | 35/64 | 40/64 | 40/64 |
 | C2 wrong publications | 0/35 | 0/35 | 2/42 | 0/40 |
