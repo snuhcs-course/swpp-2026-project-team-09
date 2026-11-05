@@ -8,6 +8,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
@@ -153,9 +154,11 @@ export class AssistantService {
     const asker = { userId, now, capabilities };
     try {
       const conversation = await this.conversationOf(asker, messages.slice(-HISTORY_MAX));
-      const resolutions = this.resolutionEvents.forRun(userId, (kind, words, targetId) =>
-        this.aliases.learn(userId, kind, words, targetId),
-      );
+      let taught = false;
+      const resolutions = this.resolutionEvents.forRun(userId, async (kind, words, targetId) => {
+        taught = true;
+        await this.aliases.learn(userId, kind, words, targetId);
+      });
       const reply = await runFeature(
         this.model,
         this.chat,
@@ -168,15 +171,31 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
+      const last = conversation.at(-1);
+      const reached = taught || resolutions.reachedPlace || (last?.role === 'user' && last.chosen !== null);
+      await this.learnFrom(userId, now, reply.proposal, reached);
       const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
-      if (proposal !== null) {
-        // A Proposal asked for in the chat may be one a grey suggestion would have made (suggestions.service.ts).
-        await this.suggestions.typedInstead(userId, proposal, now);
-      }
       return { text, mapButtons, cards, proposal, choices, resolvedBy };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
+    }
+  }
+
+  // What a reply teaches: a Proposal asked for in the chat may be one a grey suggestion would have made
+  // (suggestions.service.ts), and a session that may have led the User's words to a Place teaches everyone's aliases
+  // (ticket 06).
+  private async learnFrom(
+    userId: string,
+    now: Date,
+    proposal: FeatureReply['proposal'],
+    reached: boolean,
+  ): Promise<void> {
+    if (proposal !== null) {
+      await this.suggestions.typedInstead(userId, proposal, now);
+    }
+    if (reached) {
+      await this.aliases.recountSession(userId);
     }
   }
 

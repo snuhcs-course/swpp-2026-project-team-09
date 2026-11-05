@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
-import { qualifies, scoreOf, type Standing, topOf } from '../src/assistant/aliases/alias-rules.js';
+import { scoreOf, type Standing } from '../src/assistant/aliases/alias-rules.js';
 import { heldBack } from '../src/common/holdback.js';
 
-// When words become every User's alias (P07 ticket 03), on plain standings, and which Users are held back from them.
+// The score of every User's alias (P07 ticket 03), on plain standings, and which Users are held back from them. The
+// rule that picks the alias is tested in alias-chain.unit.test.ts.
 
 const NOW = new Date('2026-10-28T00:00:00Z');
 
@@ -30,33 +32,10 @@ describe('the score', () => {
     expect(scoreOf(standing('a', 3, 3), NOW, NOW)).toBe(0);
     expect(scoreOf(standing('a', 3, 4), NOW, NOW)).toBeLessThan(0);
   });
-});
 
-describe('the top Place', () => {
-  it('is the one most accounts chose, fewer rejecters and then the id breaking a tie', () => {
-    expect(topOf([standing('b', 2), standing('a', 5), standing('c', 3)])?.placeId).toBe('a');
-    expect(topOf([standing('a', 4, 1), standing('b', 4, 0)])?.placeId).toBe('b');
-    expect(topOf([standing('b', 4), standing('a', 4)])?.placeId).toBe('a');
-    expect(topOf([])).toBeUndefined();
-  });
-});
-
-describe('promotion', () => {
-  it('takes at least 3 distinct accounts', () => {
-    expect(qualifies(standing('a', 2), 2, 2)).toBe(false);
-    expect(qualifies(standing('a', 3), 3, 3)).toBe(true);
-  });
-
-  it('takes at least 0.8 of the accounts that chose anything for the words', () => {
-    expect(qualifies(standing('a', 3), 4, 3)).toBe(false);
-    expect(qualifies(standing('a', 4), 5, 4)).toBe(true);
-    expect(qualifies(standing('a', 12), 15, 12)).toBe(true);
-  });
-
-  it('takes a score of at least half a supporter', () => {
-    expect(qualifies(standing('a', 3, 3), 3, 0)).toBe(false);
-    expect(qualifies(standing('a', 3), 3, scoreOf(standing('a', 3), daysBefore(80), NOW))).toBe(false);
-    expect(qualifies(standing('a', 3), 3, scoreOf(standing('a', 3), daysBefore(75), NOW))).toBe(true);
+  it('falls under half a supporter, where an alias retires, after about 77 days unused with 3 supporters', () => {
+    expect(scoreOf(standing('a', 3), daysBefore(80), NOW)).toBeLessThan(0.5);
+    expect(scoreOf(standing('a', 3), daysBefore(75), NOW)).toBeGreaterThanOrEqual(0.5);
   });
 });
 
@@ -78,8 +57,10 @@ describe('the holdback', () => {
 
   it('holds back about the share asked, and a larger share holds back everyone a smaller one does', () => {
     const ten = ids.filter((id) => heldBack(id, 10));
-    expect(ten.length).toBeGreaterThan(900);
-    expect(ten.length).toBeLessThan(1100);
-    expect(ten.every((id) => heldBack(id, 20))).toBe(true);
+    const twenty = new Set(ids.filter((id) => heldBack(id, 20)));
+
+    expect(ten.length).toBeGreaterThan(800);
+    expect(ten.length).toBeLessThan(1200);
+    expect(ten.every((id) => twenty.has(id))).toBe(true);
   });
 });

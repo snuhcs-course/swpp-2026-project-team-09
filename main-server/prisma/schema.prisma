@@ -925,8 +925,9 @@ model UserAlias {
   @@map("user_aliases")
 }
 
-// Words that name a Place for every User (P07), once enough distinct accounts chose it for them
-// (src/assistant/aliases/alias-rules.ts). Retired rather than deleted, so that what was learned can be counted.
+// Words that name a Place for every User (P07), once enough distinct accounts led to it for them through the alias
+// chain (src/assistant/aliases/alias-chain.ts, alias-rules.ts). Retired rather than deleted, so that what was learned
+// can be counted.
 model PlaceAlias {
   id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // 1 to 50 characters, normalised.
@@ -934,11 +935,15 @@ model PlaceAlias {
   placeId    String           @map("place_id") @db.Uuid
   place      Place            @relation(fields: [placeId], references: [id], onDelete: Cascade)
   source     PlaceAliasSource
-  // Distinct accounts that chose the Place for the words, and that rejected it.
+  // Distinct accounts whose successful session with the words reached the Place, and that rejected it.
   supporters Int              @default(0)
   rejecters  Int              @default(0)
   // As of the last count or use. It decays from lastUsedAt and is computed again whenever it is read.
   score      Float            @default(0)
+  // As of the last count: Φ∞, the expected visits to the Place from the words' own reading times the Place's one-step
+  // success, and Φ₁, that reading's own one-step success, which the alias beat.
+  success    Float            @default(0)
+  ownSuccess Float            @default(0) @map("own_success")
   createdAt  DateTime         @default(now()) @map("created_at")
   // The last time it answered, or when it was made.
   lastUsedAt DateTime         @default(now()) @map("last_used_at")
