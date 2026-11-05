@@ -26,7 +26,7 @@ Spec: `../spec.md`, "CD-1: two contract fixes" and "CD-2: the Approval line". `r
 
 - `join-36`: the model should choose the Board from the activity and propose without asking. Expected to pass where R1 failed.
 - `join-31` (0/3 in R1): the model should search again with `placeId` after seeing the note. This is uncertain: it depends on the model reading the note.
-- J9 (2/21 in R1), on the final reply: expected to pass its floor deterministically. The trace should show the server's sentence on every run with an Approval card where the model did not say it.
+- J9 (2/21 in R1), on the final reply: expected to pass its floor on most runs, not all. A reply holding 승인 and 수락 but no 신청 gets no line and still fails J9's `신청` check; that is accepted, since such a reply already tells the User. The trace should show the server's sentence on every run with an Approval card where the model did not say it.
 - J9 on the model's own reply: not expected to move, since the prompt is not changed for it. It is the number compared with the before set.
 - The P4 suite: replies with no Approval card should be unchanged. Any Approval card there gets the line, and that is expected.
 

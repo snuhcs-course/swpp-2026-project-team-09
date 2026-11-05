@@ -199,7 +199,8 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 - **Starting point X.** X is `3.0/Main` with `3.0/P11-04-chat` (#204, head `4b2097cb`) merged locally.
   - **One branch and one PR per ticket.** Tickets 01–05 are built at the same time, each in its own session, on its own branch from X (`3.0/P12-NN-<slug>`). Each opens its own PR to `3.0/Main`.
   - Heavy jobs (builds, integration tests, Docker) still run one at a time across those sessions, so each session takes a shared lock before one and releases it after.
-  - The after set runs on a local merge of the five ticket branches at X, which is never pushed as a PR. The ticket PRs merge only after the after set is recorded, so that nothing of P12 reaches `3.0/Main` before it is measured.
+  - The after set runs on a merge of the five ticket branches at X, pushed as the branch `3.0/P12-after-set` with no PR, and its head is recorded with the run (metrics 4.3), so that anyone can rebuild the after set. The branch is deleted once the ticket PRs land. The ticket PRs merge only after the after set is recorded, so that nothing of P12 reaches `3.0/Main` before it is measured.
+  - The ticket PRs may change in review after the run. Ticket 06 records any difference between the measured merge and what lands on `3.0/Main`, as for #204.
   - When #204 merges, Main is merged into each ticket branch: no rebase, no force push.
   - A01 and P07 are not taken in until the after set is done.
   - If #204 changes in review, the difference is recorded. A PR opened before #204 merges says it contains P11's commits.
@@ -214,6 +215,7 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
   - After the run, an agent reads the targeted cases' traces and marks each change "as expected", "otherwise" or "cannot tell".
   - Movement in cases no change targeted is recorded as the bundle's effect.
   - The report opens by stating that it breaks rule 4.4.
+- **Settings.** The before and after sets use the same settings: the C and D suites and the P4 suite at 4,000 output tokens, `3.0/Main`'s default since #185 and P11's choice for the P4 suite; P19 at 1,000, R0's limit, passed explicitly with `--max-output-tokens`, as P11 does. The P4 suite's numbers are read against P11's after set, not against `eval/p4/record.md`'s 1,000-token runs.
 - **Budget.** About USD 9 for before and after together. Cost is approved again before each run. One heavy job (build, tests, run) at a time.
 - **Evaluations A and B are a development reading in P12.** Every collection target (a-015, a-017, a-029, a-053, a-058, a-064) and the 32 true pairs of B are in the held-out part of `set-a.yaml` and `set-b.yaml`. The failure analysis read them, and the fixes come from it. So the before and after numbers of A and B are reported as a development reading of the held-out set, said in the record's first lines and in P20's table, not as a held-out result. A fresh held-out set (posts fetched after 2026-10-31, labelled anew) is the way to a held-out reading again. It is left to a later task, since it needs a person to label it.
 - **Held-out text stays out of the code and tests.** Rules, lists and tests are general: the generic place names come from development posts and the list of Places, the prompt lines use no case's words, and the unit tests write each failing pattern in new words. Chat evaluations C and D have no held-out part; the same rule holds for their cases' words.
@@ -251,7 +253,7 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 - **Expected direction, not promises.**
   - C1 may rise from 27/64 to about 35/64 with AB-1, and towards 40/64 with AB-4. C2 and C3 must stay 0.
   - D2 and D3 should move for the first time, since the 25 pairs lost before comparison reach it. D4 may rise with the held sessions and is tuned after this.
-  - J9 should pass its floor deterministically. E4, E7 and E1 should improve partly, E9 slightly.
+  - J9 on the final reply should pass its floor on most runs, not all: the line is added when the reply holds fewer than two of 승인, 수락 and 신청, while J9 checks 신청, so a reply with 승인 and 수락 but no 신청 gets no line and still fails J9. J9 on the model's reply is not expected to move. E4, E7 and E1 should improve partly, E9 slightly.
 - **Verified while grilling.**
   - In the last evaluation B the refusal rules lost no true pair (D3 = D2 = 8/32); every miss happened before comparison.
   - The publication step skips the comparison when no Place is found for the session's `placeId`.
