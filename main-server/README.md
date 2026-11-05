@@ -2512,7 +2512,11 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   ±2 minutes and within min(25% of the walk, 2 minutes), a difference equal to the limit counting as within, the share
   walked more than 2 minutes longer than predicted and the MAE over the 8 pairs where the two differed by more than 2
   minutes at the freeze; then k = Σ(walked × table) / Σ(table²), and the threshold under each tolerance: at least 70%
-  within, and the table's MAE below the baseline's.
+  within, and the table's MAE below the baseline's. Last it fits the speed and the climb value to the 13 calibration
+  walks, by ordinary least squares with no constant term, and prints them unrounded; a climb value below 0 becomes 0
+  with that fit's speed. Each pair's path metres and climb are recovered from its seconds at the freeze, at 1.1 m/s and
+  3 s per metre of climb, and from the committed table's elevations. The builder's two constants in
+  `src/travel/walking-graph.ts` are that fit's, as P11 adopted them.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
