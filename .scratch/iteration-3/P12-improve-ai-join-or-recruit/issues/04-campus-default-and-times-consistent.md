@@ -1,12 +1,16 @@
 # 04: Places without 서울대 are read on Gwanak, and a post with conflicting times stays a Draft
 
+Status: ready-for-agent
+
+Parent: `../spec.md` (P12)
+
 **What to build:** Two changes that land together in one PR. The wider campus default without the time check would publish wrong times (a-015, a-053). They may be split into commits, but not into PRs.
 
 **Campus default.**
 
 - The Source setting `buildingNumberIsGwanak` becomes `campusDefault: 'gwanak' | null`. Both SNU Now and extra.snu are `'gwanak'`.
 - On such a Source, a place with no `ELSEWHERE` marker is matched as on Gwanak, as if it carried 서울대학교. The markers include 연건, 시흥, 서울대(학교)병원, 의과대학, another university, another district or province, and 아파트.
-- `GENERIC_PLACE_NAMES` lists common facility names (체육관, 미술관, 도서관 and others), drawn from the place lines of the stored posts. The PR lists where each came from.
+- `GENERIC_PLACE_NAMES` lists common facility names (체육관, 미술관, 도서관 and others), drawn from the place lines of the development posts and from the list of Places, never from held-out posts. The PR lists where each came from.
   - A generic name preceded on its line by another facility's name is not matched.
   - A generic name alone, with a floor or a room at most, is matched to its campus building.
 
@@ -27,15 +31,16 @@ Spec: `../spec.md`, "AB-4: campus default and time consistency"; ADR 0008.
 
 **Merge 주의:** 01 changes the same time reader and text normaliser. Whichever lands second merges the other in, and its tests for list-number lines must still pass after the merge.
 
-**Status:** ready-for-agent
-
 ## Target cases and expected result (written before implementing)
 
 - Fixed first, as unit tests that must pass before the default is widened:
-  - `금나래문화체육센터 2층 체육관` → no Place;
+  - `구로구민체육센터 2층 체육관` → no Place;
   - `체육관` → 71동;
-  - `906동 3층 세미나실` → 906동.
-- Sessions failing only on a place without 서울대, such as `행정관 앞 잔디광장` and `중앙도서관 관정관 3층`, should become published. C1 is expected to rise towards 40/64 together with 01.
+  - `301동 2층 세미나실` → 301동.
+
+  They write the patterns in new words; no held-out post's place line goes into a test.
+- Held-out sessions failing only on a place without 서울대 (a unique building or spot name with no 서울대) should become published. C1 is expected to rise towards 40/64 together with 01, as a development reading (spec, Measurement).
+- Measured also by replaying the saved Judgements with 01 and 04 together, at no model cost, and recorded beside 01's replay.
 - a-053 (table 17:00, body 19:00), a-015 session 2 (22:00 and 21:00) and a-017 (19:00 and 18:20) should stay Drafts, failing `timesConsistent`.
 - C2 and C3 must stay 0. Any session published at a wrong time or place after this ticket is a failure of the ticket, not of the bundle.
 
@@ -56,6 +61,6 @@ Spec: `../spec.md`, "AB-4: campus default and time consistency"; ADR 0008.
   - [ ] a `[n회차]` line is compared only with session n.
 - [ ] A publication-step integration test with a scripted Judgement:
   - [ ] a post with conflicting times stays a Draft and lists `timesConsistent` among its failed checks;
-  - [ ] a post at `행정관 앞 잔디광장` with consistent times is published at that Place.
+  - [ ] a post at `문화관 로비` with consistent times is published at that Place.
 - [ ] Existing named-place and Judgement tests pass, or each changed expectation is explained in the PR.
 - [ ] The generic-name list and its sources are in the PR.

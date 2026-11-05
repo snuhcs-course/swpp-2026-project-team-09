@@ -1,5 +1,9 @@
 # 05: Search results say why each candidate matched and how to narrow a broad search
 
+Status: ready-for-agent
+
+Parent: `../spec.md` (P12)
+
 **What to build:** The recruiting and Global Event searches give the model what it needs to pick cards and to narrow a search.
 
 - **Candidate fields.** Each candidate gains:
@@ -23,8 +27,6 @@ Spec: `../spec.md`, "CD-3" and "CD-4".
 **Blocked by:** None (can start immediately).
 
 **Merge 주의:** 02 changes the same search tools' results (the `placeId` note) and the reply handling. Whichever lands second merges the other in.
-
-**Status:** ready-for-agent
 
 ## Target cases and expected result (written before implementing)
 

@@ -1,5 +1,9 @@
 # 03: A session that fails only its place is still compared as the same event, and evaluation B measures it
 
+Status: ready-for-agent
+
+Parent: `../spec.md` (P12)
+
 **What to build:** The server reads each session's check results as three verdicts:
 
 - `publishable`: every check passes;
@@ -25,8 +29,6 @@ Evaluation B's same-event step selects its sessions with the same verdict functi
 Spec: `../spec.md`, "AB-3: three verdicts" and "AB-2: raw failure text"; ADR 0014; ADR 0008 still holds for publication.
 
 **Blocked by:** None (can start immediately).
-
-**Status:** ready-for-agent
 
 ## Target cases and expected result (written before implementing)
 

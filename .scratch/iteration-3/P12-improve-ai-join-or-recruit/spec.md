@@ -10,8 +10,8 @@ The spec has two strands that share one measurement: **collection** (evaluations
 
 **Collection.** Many events collected from SNU Now and extra.snu stay Drafts that an Administrator must publish by hand, even when the Judgement read them correctly:
 
-- The server's time checks misread some ways of writing a time. A numbered list line `1. 11월 2일(월) 오후 4–6시` is read as 1월 11일. In `오후 4–6시` the 4 is not taken as an afternoon clock. Invisible characters (soft hyphen, zero-width space, byte-order mark) in a post make a quoted line fail to match the post.
-- A place written without "서울대" is not taken as on the Gwanak campus unless it starts with a building number, so `행정관 앞 잔디광장` names no Place.
+- The server's time checks misread some ways of writing a time. A numbered list line of the form `N. M월 D일(요일) 오후 H–H시` is read with the list number as the month. In `오후 H–H시` the first hour is not taken as an afternoon clock. Invisible characters (soft hyphen, zero-width space, byte-order mark) in a post make a quoted line fail to match the post.
+- A place written without "서울대" is not taken as on the Gwanak campus unless it starts with a building number, so a building's name alone, followed by a spot in front of it, names no Place.
 - Nothing checks that the post's other lines agree with the session's time, so widening what counts as a Place would publish wrong times (a table says 17:00, the body 19:00).
 
 The same event posted on both Sources is seen twice by Users. In evaluation B, 25 of the 32 true pairs were never compared, because only a session the server would publish is compared, and most fail only the place checks. When a Judgement's answer breaks the schema, the eval keeps nothing of what the model wrote, so the cause cannot be found.
@@ -30,7 +30,7 @@ The same event posted on both Sources is seen twice by Users. In evaluation B, 2
 
 - The time checks read the list number, the `오전/오후 N–M시` range and invisible characters correctly.
 - A place on a Source whose posts are about Gwanak is taken as on Gwanak unless the post marks it as elsewhere (연건, 시흥, 서울대병원, another university, another district, and so on).
-- A common facility name preceded by another facility's name (`금나래문화체육센터 2층 체육관`) is not taken as the campus building.
+- A common facility name preceded by another facility's name (`구로구민체육센터 2층 체육관`) is not taken as the campus building.
 - A new check, `timesConsistent`, keeps a session a Draft when another line of the post gives the same day a different start or end.
 - The server reads each session's checks as three verdicts: whether it can be published, compared as the same event, or have its values filled into its Draft. A session that fails only the place checks or the length check is still compared with the events that exist. It is never published on its own. It is attached only on the narrow terms of ADR 0014, and otherwise waits in the Same-event queue.
 - Evaluation B chooses the sessions it compares with the same function. The collection eval saves the raw text of a schema failure.
@@ -49,10 +49,10 @@ The improvement is measured once, after every ticket is done, against a before s
 
 ### Users seeing collected events
 
-1. As a User, I want an event written as `1. 11월 2일(월) 오후 4–6시` to be published on 11월 2일 at 16:00–18:00, so that I see it without waiting for an Administrator.
+1. As a User, I want an event written as `1. 3월 9일(화) 오후 2–5시` to be published on 3월 9일 at 14:00–17:00, so that I see it without waiting for an Administrator.
 2. As a User, I want an event whose post has an invisible character in its time line to be published like any other, so that a formatting accident does not hide it.
-3. As a User, I want an event at `행정관 앞 잔디광장` or `906동 3층 세미나실` to be published at that Place, so that events on campus reach me even when the post does not say 서울대.
-4. As a User, I want an event at `금나래문화체육센터 2층 체육관` never to be placed at 71동 체육관, so that I don't go to the wrong building.
+3. As a User, I want an event at `문화관 로비` or `301동 2층 세미나실` to be published at that Place, so that events on campus reach me even when the post does not say 서울대.
+4. As a User, I want an event at `구로구민체육센터 2층 체육관` never to be placed at 71동 체육관, so that I don't go to the wrong building.
 5. As a User, I want an event at 연건, 시흥 or 서울대병원 never to be placed on the Gwanak campus, so that a Place on the map means Gwanak.
 6. As a User, I want an event whose post gives two different times for the same day to stay unpublished until an Administrator decides, so that I never see a wrong time.
 7. As a User, I want an event whose table says 14:00 and whose body says 오후 2시–4시 to be published at 14:00–16:00, so that a difference in how the time is written does not hold it back.
@@ -85,8 +85,8 @@ The improvement is measured once, after every ticket is done, against a before s
 
 ### Developers and evaluators
 
-28. As a developer, I want each time-parsing fix fixed by a unit test with the post line that failed, so that it does not come back.
-29. As a developer, I want `금나래문화체육센터 2층 체육관` → no Place, `체육관` → 71동 and `906동 3층 세미나실` → 906동 fixed by tests before the campus default is widened, so that C3 stays 0.
+28. As a developer, I want each time-parsing fix fixed by a unit test that writes the failing pattern in new words, never a held-out post's line, so that it does not come back without leaking the test set.
+29. As a developer, I want `구로구민체육센터 2층 체육관` → no Place, `체육관` → 71동 and `301동 2층 세미나실` → 301동 fixed by tests before the campus default is widened, so that C3 stays 0.
 30. As a developer, I want the three verdicts to come from one function of the checks, so that the publication step and evaluation B cannot drift apart.
 31. As an evaluator, I want evaluation B to compare exactly the sessions the publication step compares, so that B measures what runs.
 32. As an evaluator, I want the raw text of a schema-failing Judgement saved with the eval run, and never in the production log, so that I can diagnose a-005 and b-082 without leaking posts into logs.
@@ -116,7 +116,7 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 
 - A new function of a session's check results gives:
   - `publishable`: every check passes; this is today's `passed`, plus `timesConsistent` once AB-4 lands.
-  - `comparable`: every check passes except `length`, `placeInLines` and `placeMatches`.
+  - `comparable`: every check in an explicit list passes: `announcesEvent`, `linesInPost`, `dateAgrees`, `weekdayAgrees`, `timeAgrees`, `notApplicationPeriod`, `startBeforeEnd`, `hasTimeOfDay` and `newSession`. `length`, `placeInLines` and `placeMatches` are not in the list, and a check added later (such as `timesConsistent`) is not in it unless it is added by name.
   - `draftable`: `linesInPost`, and either the time checks or the place checks.
   - `blockedBy`: the failing checks.
 - The check list itself and the names the admin shows stay as they are.
@@ -138,8 +138,8 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 
 - The Source setting `buildingNumberIsGwanak: boolean` becomes `campusDefault: 'gwanak' | null`. Both SNU Now and extra.snu are `'gwanak'`.
 - With `'gwanak'`, a place with no `ELSEWHERE` marker is matched as on Gwanak, as if it carried 서울대학교. Today this is done only for a building number alone.
-- `GENERIC_PLACE_NAMES` lists common facility names (체육관, 미술관, 도서관 and others). The list is drawn from the place lines of the stored posts and reviewed in the PR.
-  - A generic name preceded on the same line by another facility's name is not matched: `금나래문화체육센터 2층 체육관` → no Place.
+- `GENERIC_PLACE_NAMES` lists common facility names (체육관, 미술관, 도서관 and others). The list is drawn from the place lines of the development posts and from the list of Places, never from held-out posts, and is reviewed in the PR with where each name came from.
+  - A generic name preceded on the same line by another facility's name is not matched: `구로구민체육센터 2층 체육관` → no Place.
   - A generic name alone, with a floor or room at most, is matched to its campus building: `체육관`, `체육관 2층` → 71동.
 - A new Judgement check, `timesConsistent`, runs over every line of the post that writes both a date and a time:
   - Lines with a time but no date, such as a programme's running order, are not compared.
@@ -160,6 +160,7 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 **CD-1: two contract fixes.**
 
 - `proposeQuest`'s refusal for a missing Board changes from "Ask the User which" to telling the model to choose 식사, 진로, 취미 or 공연 from the activity, and to ask only when the activity fits none.
+  - **To be agreed with #170 (P07-02, 윤유상) before this part lands.** #170 keeps "the Board and the time are still asked" and "When proposeQuest refuses fields, ask the User", and edits the same tool. The rule proposed to #170: the Board is chosen from the activity when it plainly fits one of the four and asked otherwise; the time is always asked. Whichever wording is agreed goes into both the refusal and the chat rules, so the model never reads two rules. Until then the rest of ticket 02 goes ahead.
 - When a recruiting or Global Event search is called without `placeId` in a message where `resolvePlace` already returned one Place, the result carries a note that `placeId` was not given.
 - `resolvePlace` itself is unchanged.
 
@@ -170,6 +171,8 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
   - the reply contains fewer than two of 승인, 수락 and 신청.
 - The sentence is in Korean, along the lines of "승인제 파티는 참여 신청 후 방장이 수락하면 참여돼요." It is in English when the User's last message has no Hangul.
 - It sits with the reply-text handling that already adds the fixed sentence for cards. It applies to every feature that shows Quest cards, not only join or recruit.
+- The eval trace records the model's own reply and whether the line was added, so J9 is reported twice: on the model's reply (what the AI does) and on the final reply (what the User sees). P20 compares the model's J9 with the before set, never a server score with a model score.
+- Which runs see it: only runs on code that holds ticket 02, which are P12's after set and every run after P12 merges. P11's after set (#204, on its own X) does not. P13's R2 and R3 must both be before P12 merges, or both after, so that the line does not land between them.
 - The prompt is not changed for J9.
 
 **CD-3: judgement fields and two picking lines.**
@@ -194,22 +197,23 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 ### Measurement
 
 - **Starting point X.** X is `3.0/Main` with `3.0/P11-04-chat` (#204, head `4b2097cb`) merged locally.
-  - Ticket branches stack on X. When #204 merges, Main is merged into them: no rebase, no force push.
+  - The integration branch is `3.0/P12-integration`, made at X. Ticket branches start from it and merge back into it. Nothing of P12 lands on `3.0/Main` before the after set has run; how it lands then (one PR or the ticket PRs in order) is the owner's call. When #204 merges, Main is merged into the integration branch: no rebase, no force push.
   - A01 and P07 are not taken in until the after set is done.
   - If #204 changes in review, the difference is recorded. A PR opened before #204 merges says it contains P11's commits.
 - **Before set.**
   - Chat only, run at X: C and D in the small and large worlds, and P19 three times (about USD 4.3).
-  - Collection uses the saved `collection-held-out-*-464ea9c5` results, since no collection code has changed since that commit.
+  - Collection uses the saved `collection-held-out-*-464ea9c5` results, since no Judgement or same-event code has changed since that commit.
 - **After set.**
   - Run once after every ticket is done: the same bundle, plus evaluations A and B, plus the P4 suite for CD-2's reach.
-  - AB-1 is also measured alone by replaying saved Judgements, at no cost.
+  - AB-1 alone, then AB-1 with AB-4, are also measured by replaying the saved Judgements, at no cost: both change only the server's checks, so the replay is deterministic. AB-3 cannot be replayed, since it asks the same-event AI about sessions it never saw.
 - **Per-change reading.**
   - Each ticket states its target cases and expected result before it is implemented.
   - After the run, an agent reads the targeted cases' traces and marks each change "as expected", "otherwise" or "cannot tell".
   - Movement in cases no change targeted is recorded as the bundle's effect.
   - The report opens by stating that it breaks rule 4.4.
 - **Budget.** About USD 9 for before and after together. Cost is approved again before each run. One heavy job (build, tests, run) at a time.
-- **Held-out cases.** They stay clean: rules and lists (the generic place names, the prompt lines) are general, never a case's own sentences or words.
+- **Evaluations A and B are a development reading in P12.** Every collection target (a-015, a-017, a-029, a-053, a-058, a-064) and the 32 true pairs of B are in the held-out part of `set-a.yaml` and `set-b.yaml`. The failure analysis read them, and the fixes come from it. So the before and after numbers of A and B are reported as a development reading of the held-out set, said in the record's first lines and in P20's table, not as a held-out result. A fresh held-out set (posts fetched after 2026-10-31, labelled anew) is the way to a held-out reading again. It is left to a later task, since it needs a person to label it.
+- **Held-out text stays out of the code and tests.** Rules, lists and tests are general: the generic place names come from development posts and the list of Places, the prompt lines use no case's words, and the unit tests write each failing pattern in new words. Chat evaluations C and D have no held-out part; the same rule holds for their cases' words.
 
 ## Testing Decisions
 
@@ -236,6 +240,7 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 - `resolvePlace` returning `one` for an exact name, and the rule for `started` Quests of an event (`large-o-05`).
 - The event definition in the Judgement instructions (AB-5, C6), the extra.snu tables outside the session list (AB-6), series (AB-7), and sending images to the Judgement.
 - A01's move to the Anthropic API and prompt caching. P12 is measured on OpenRouter, as its before set.
+- A fresh held-out set for evaluations A and B (see Measurement).
 - Any notice to Administrators about `timesConsistent` beyond its name in the check list.
 
 ## Further Notes
@@ -250,4 +255,9 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
   - Evaluation B's same-event step selects with its own `passed && number !== null && start !== null`.
   - J9 passes per tagged case only when both card and reply checks pass.
 - **Watch after AB-3.** More sessions now meet the refusal rules. The after report lists any true pair refused as another time on the same day.
+- **Order with the other work in flight** (from #206's review). Keep this order, so that no run mixes two changes it does not report:
+  1. P12's before and after sets, on OpenRouter, before A01-01, #169 and #170 merge.
+  2. P12 merges after P11's after set (#204) is recorded.
+  3. A01's baseline (A01-03) runs after P12 merges, so that its P5 and collection baselines include P12.
+  4. P13's R2 and R3, with no P12 prompt or reply change landing between them.
 - **Decision record.** ADR 0014 (0013 is reserved for A01). ADR 0008 still holds for publication.
