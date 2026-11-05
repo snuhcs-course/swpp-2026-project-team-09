@@ -1,6 +1,6 @@
 # 04: Places without 서울대 are read on Gwanak, and a post with conflicting times stays a Draft
 
-Status: ready-for-agent
+Status: done
 
 Parent: `../spec.md` (P12)
 

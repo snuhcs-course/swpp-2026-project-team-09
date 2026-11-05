@@ -1,6 +1,6 @@
 # 02: The Assistant picks the Board itself, keeps the Place it found, and says how Approval Quests are entered
 
-Status: ready-for-agent
+Status: done
 
 Parent: `../spec.md` (P12)
 

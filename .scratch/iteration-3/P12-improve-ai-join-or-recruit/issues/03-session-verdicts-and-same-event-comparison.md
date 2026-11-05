@@ -1,6 +1,6 @@
 # 03: A session that fails only its place is still compared as the same event, and evaluation B measures it
 
-Status: ready-for-agent
+Status: done
 
 Parent: `../spec.md` (P12)
 

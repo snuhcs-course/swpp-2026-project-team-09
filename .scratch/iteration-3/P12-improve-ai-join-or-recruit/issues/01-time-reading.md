@@ -1,6 +1,6 @@
 # 01: The time checks read list numbers, `오후 N–M시` and invisible characters correctly
 
-Status: ready-for-agent
+Status: done
 
 Parent: `../spec.md` (P12)
 
