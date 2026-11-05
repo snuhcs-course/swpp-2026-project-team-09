@@ -15,6 +15,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -127,6 +128,13 @@ export const settingsSchema = z
     LIBRARY_BOOKING_ENABLED: z
       .enum(['true', 'false'])
       .default('true')
+      .transform((value) => value === 'true'),
+    // Whether the tutorial's 관정 quest is completed by the phone's check of the User's library bookings (P06-05), as
+    // content/tutorial.yaml holds it, while LIBRARY_BOOKING_ENABLED is on too. "false" serves it as a button quest,
+    // completed by 완료했어요 as every other quest is (P13).
+    TUTORIAL_KWANJEONG_CHECK: z
+      .enum(['true', 'false'])
+      .default('false')
       .transform((value) => value === 'true'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),

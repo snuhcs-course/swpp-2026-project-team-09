@@ -1,0 +1,37 @@
+categories:
+  - { key: life, label: 생활 }
+  - { key: study, label: 공부·학사 }
+quests:
+  - key: s-card
+    order: 1
+    category: life
+    title: 학생증 발급받기
+    brief: 학생증을 받아 보세요.
+    body: [학생증은 학교생활 곳곳에서 써요.]
+    condition: 학생증 받기
+    completion: { kind: button }
+    completionMessage: 잘했어요!
+    places: []
+    links: []
+  - key: chatgpt-edu
+    order: 2
+    category: study
+    title: ChatGPT Edu 쓰기
+    brief: ChatGPT Edu에 로그인해 보세요.
+    body: [재학생은 쓸 수 있어요.]
+    condition: 로그인하기
+    completion: { kind: button }
+    completionMessage: 잘했어요!
+    places: []
+    links: []
+  - key: lost-and-found
+    order: 3
+    category: life
+    title: 분실물센터 알아두기
+    brief: 분실물센터를 알아 두세요.
+    body: [아시아연구소 1층에 있어요.]
+    condition: 위치 확인하기
+    completion: { kind: button }
+    completionMessage: 잘했어요!
+    places: []
+    links: []

@@ -3,12 +3,13 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useState } from 'react';
 import type { Tutorial, TutorialCompletedBy, TutorialQuest } from '@/api/tutorial-types';
 import { checkKwanjeong, type KwanjeongCheck, type ShownBooking } from '@/features/tutorial/kwanjeong-check';
-import { firstNotStarted, nextAfter } from '@/features/tutorial/rules';
+import { firstNotStarted, firstOfCategory, nextAfter } from '@/features/tutorial/rules';
 import { type TutorialActions, useTutorial, useTutorialActions } from '@/features/tutorial/use-tutorial';
 import { library } from '@/library/library';
 import { useLibrarySession } from '@/library/library-session';
@@ -37,6 +38,8 @@ export interface TutorialFlow {
   openPager: () => void;
   // ◀ is -1, ▶ is 1.
   movePager: (by: -1 | 1) => void;
+  // A Tutorial Category's chip: to its first quest not started, or to its first quest.
+  showCategory: (category: string) => void;
   closePager: () => void;
   // 퀘스트 시작: the quest goes on top of the quest list, and the pager stays on it.
   startQuest: (key: string) => void;
@@ -61,7 +64,7 @@ type SetPager = (pager: PagerView | null) => void;
 function usePager(quests: readonly TutorialQuest[] | undefined): {
   pager: PagerView | null;
   setPager: SetPager;
-} & Pick<TutorialFlow, 'openPager' | 'movePager' | 'closePager'> {
+} & Pick<TutorialFlow, 'openPager' | 'movePager' | 'showCategory' | 'closePager'> {
   const [pager, setPager] = useState<PagerView | null>(null);
   const openPager = useCallback(() => {
     setPager({ kind: 'browse', index: firstNotStarted(quests ?? []) });
@@ -78,10 +81,19 @@ function usePager(quests: readonly TutorialQuest[] | undefined): {
     },
     [quests],
   );
+  const showCategory = useCallback(
+    (category: string) => {
+      const index = firstOfCategory(quests ?? [], category);
+      if (index !== -1) {
+        setPager((shown) => (shown === null ? shown : { kind: 'browse', index }));
+      }
+    },
+    [quests],
+  );
   const closePager = useCallback(() => {
     setPager(null);
   }, []);
-  return { pager, setPager, openPager, movePager, closePager };
+  return { pager, setPager, openPager, movePager, showCategory, closePager };
 }
 
 type SheetActions = Pick<TutorialFlow, 'saidDone' | 'check' | 'skip' | 'finish' | 'forceDone'>;
@@ -161,7 +173,7 @@ function sheetActions({ sheet, setSheet, setPager, tutorial, complete, runCheck 
 export function useTutorialFlow(): TutorialFlow {
   const tutorial = useTutorial();
   const actions = useTutorialActions();
-  const { pager, setPager, openPager, movePager, closePager } = usePager(tutorial?.quests);
+  const { pager, setPager, openPager, movePager, showCategory, closePager } = usePager(tutorial?.quests);
   const [sheet, setSheet] = useState<SheetView | null>(null);
   const { logIn } = useLibrarySession();
   const openSheet = useCallback(
@@ -181,6 +193,7 @@ export function useTutorialFlow(): TutorialFlow {
     sheet,
     openPager,
     movePager,
+    showCategory,
     closePager,
     startQuest: (key) => {
       void actions.start(key);

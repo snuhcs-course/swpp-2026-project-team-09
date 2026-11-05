@@ -2,14 +2,28 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { signInUser, TestUser } from './friends.js';
+import { refuseMatchServer } from './match-server.js';
+import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
-import { BUTTON_KEYS, completeAll, getTutorial, postTutorial, statuses, tutorialAfter } from './tutorial.js';
+import {
+  BUTTON_KEYS,
+  changedTutorialFile,
+  completeAll,
+  getTutorial,
+  P06_KEYS,
+  postTutorial,
+  QUEST_KEYS,
+  statuses,
+  tutorialAfter,
+} from './tutorial.js';
+import { refuseKakao } from './walking-route.js';
 
 let app: INestApplication<Server>;
 
@@ -43,13 +57,11 @@ describe('Starting a quest', () => {
 
     const tutorial = await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/start'));
 
-    expect(statuses(tutorial)).toEqual({
-      's-card': 'started',
-      'admin-shuttle': 'notStarted',
-      kwanjeong: 'started',
-      'health-clinic': 'notStarted',
-      'art-museum': 'notStarted',
-    });
+    expect(statuses(tutorial)).toEqual(
+      Object.fromEntries(
+        QUEST_KEYS.map((key) => [key, ['s-card', 'kwanjeong'].includes(key) ? 'started' : 'notStarted']),
+      ),
+    );
   });
 
   it('answers the same when repeated, and leaves a completed quest completed', async () => {
@@ -87,16 +99,18 @@ describe('Completing a quest', () => {
 
   it('answers the same when repeated', async () => {
     const user = await enabledUser();
-    const first = await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'checked' }));
+    const first = await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'button' }));
 
-    expect(await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'checked' }))).toEqual(first);
-    expect(await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'forced' }))).toEqual(first);
+    expect(await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'button' }))).toEqual(first);
   });
 
   it.each([
     ['s-card', 'checked'],
     ['s-card', 'skipped'],
-    ['kwanjeong', 'button'],
+    ['night-shuttle', 'forced'],
+    ['kwanjeong', 'checked'],
+    ['kwanjeong', 'forced'],
+    ['kwanjeong', 'skipped'],
     ['kwanjeong', 'done'],
   ])('is refused for %s by %s', async (key, by) => {
     const user = await enabledUser();
@@ -107,14 +121,6 @@ describe('Completing a quest', () => {
     expect(statuses(await tutorialAfter(getTutorial(app, user)))[key]).toBe('notStarted');
   });
 
-  it.each(['checked', 'forced', 'skipped'])('accepts the 관정 quest by %s', async (by) => {
-    const user = await enabledUser();
-
-    const tutorial = await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by }));
-
-    expect(statuses(tutorial)['kwanjeong']).toBe('completed');
-  });
-
   it('is refused without `by`, and for a key the content does not hold', async () => {
     const user = await enabledUser();
 
@@ -123,11 +129,26 @@ describe('Completing a quest', () => {
   });
 });
 
+describe('With TUTORIAL_KWANJEONG_CHECK off, as by default', () => {
+  it('serves the 관정 quest as a button quest with its ask, and accepts it by the button', async () => {
+    const user = await enabledUser();
+    const served = await tutorialAfter(getTutorial(app, user));
+
+    expect(served.quests.find(({ key }) => key === 'kwanjeong')).toMatchObject({
+      completion: { kind: 'button' },
+      ask: '관정도서관 7층 열람실에 한 자리 예약해줘',
+      links: [],
+    });
+    const tutorial = await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'button' }));
+    expect(statuses(tutorial)['kwanjeong']).toBe('completed');
+  });
+});
+
 describe('Finishing', () => {
   it('follows the last quest completed, whichever it is', async () => {
     const user = await enabledUser();
-    await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'skipped' }));
-    for (const key of BUTTON_KEYS.slice(0, -1)) {
+    await tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'button' }));
+    for (const key of BUTTON_KEYS.filter((one) => one !== 'art-museum')) {
       // oxlint-disable-next-line no-await-in-loop -- one after another, as the User would
       expect((await tutorialAfter(postTutorial(app, user, `quests/${key}/complete`, { by: 'button' }))).state).toBe(
         'active',
@@ -145,7 +166,7 @@ describe('Finishing', () => {
 
     await Promise.all([
       ...BUTTON_KEYS.map((key) => tutorialAfter(postTutorial(app, user, `quests/${key}/complete`, { by: 'button' }))),
-      tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'checked' })),
+      tutorialAfter(postTutorial(app, user, 'quests/kwanjeong/complete', { by: 'button' })),
     ]);
 
     expect((await tutorialAfter(getTutorial(app, user))).state).toBe('finished');
@@ -191,7 +212,7 @@ describe('Stopping and turning on again', () => {
     const again = await tutorialAfter(postTutorial(app, user, 'enable'));
 
     expect(again.state).toBe('finished');
-    expect(again.quests.map(({ status }) => status)).toEqual(Array.from({ length: 5 }, () => 'completed'));
+    expect(again.quests.map(({ status }) => status)).toEqual(Array.from({ length: 15 }, () => 'completed'));
     expect((await tutorialAfter(getTutorial(app, user))).state).toBe('finished');
   });
 
@@ -201,5 +222,83 @@ describe('Stopping and turning on again', () => {
     await tutorialAfter(postTutorial(app, user, 'stop'));
 
     expect((await tutorialAfter(postTutorial(app, user, 'enable'))).state).toBe('finished');
+  });
+});
+
+describe('With TUTORIAL_KWANJEONG_CHECK on', () => {
+  let checked: INestApplication<Server>;
+
+  beforeAll(async () => {
+    checked = await startApp({ ...inject('settings'), TUTORIAL_KWANJEONG_CHECK: 'true' });
+  });
+
+  afterAll(async () => {
+    await checked.close();
+  });
+
+  it('serves the 관정 quest as the file holds it, with its skip and its ask', async () => {
+    const user = await signInUser(checked);
+
+    expect(
+      (await tutorialAfter(getTutorial(checked, user))).quests.find(({ key }) => key === 'kwanjeong'),
+    ).toMatchObject({
+      completion: { kind: 'kwanjeongCheck', skipLabel: '이미 예약 및 이용해본 적이 있어요' },
+      ask: '관정도서관 7층 열람실에 한 자리 예약해줘',
+    });
+  });
+
+  it.each(['checked', 'forced', 'skipped'])('accepts the 관정 quest by %s', async (by) => {
+    const user = await signInUser(checked);
+
+    const tutorial = await tutorialAfter(postTutorial(checked, user, 'quests/kwanjeong/complete', { by }));
+
+    expect(statuses(tutorial)['kwanjeong']).toBe('completed');
+  });
+
+  it('refuses the 관정 quest by the button', async () => {
+    const user = await signInUser(checked);
+
+    expect((await postTutorial(checked, user, 'quests/kwanjeong/complete', { by: 'button' })).status).toBe(400);
+  });
+
+  it('keeps a 관정 quest completed by the check once the check is off', async () => {
+    const user = await signInUser(checked);
+    await tutorialAfter(postTutorial(checked, user, 'quests/kwanjeong/complete', { by: 'checked' }));
+
+    expect(statuses(await tutorialAfter(getTutorial(app, user)))['kwanjeong']).toBe('completed');
+  });
+});
+
+describe('A User who finished the five quests of P06', () => {
+  it('stays finished, and gets the ten new quests on 진행하기 with the five still completed', async () => {
+    const file = await changedTutorialFile({ only: P06_KEYS });
+    const five = await startApp(
+      inject('settings'),
+      [],
+      refuseKakao,
+      refuseMatchServer,
+      new ScriptedModel().model,
+      [],
+      undefined,
+      file,
+    );
+    const user = await signInUser(five);
+    try {
+      await tutorialAfter(postTutorial(five, user, 'enable'));
+      const finished = await completeAll(five, user, {
+        keys: P06_KEYS.filter((key) => key !== 'kwanjeong'),
+      });
+      expect(finished.state).toBe('finished');
+    } finally {
+      await five.close();
+    }
+
+    expect((await tutorialAfter(getTutorial(app, user))).state).toBe('finished');
+    const again = await tutorialAfter(postTutorial(app, user, 'enable'));
+
+    expect(again.state).toBe('active');
+    expect(statuses(again)).toEqual(
+      Object.fromEntries(QUEST_KEYS.map((key) => [key, P06_KEYS.includes(key) ? 'completed' : 'notStarted'])),
+    );
   });
 });

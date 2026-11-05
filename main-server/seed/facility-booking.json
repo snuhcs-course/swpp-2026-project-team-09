@@ -1,0 +1,47 @@
+{
+  "source": "Written by hand on 2026-11-04 from the public facility list of athletics.snu.ac.kr (스포츠진흥원, /facility/list) and P13's spec, and checked against the Places of this seed. Each entry names a Place by its number, or by its name where the seed holds it without one, with the page where that Place's facilities are booked. A Place that holds several bookable facilities links athletics' list page. ssims.snu.ac.kr (예약하샤) is linked by its index until its deep links are checked in a browser.",
+  "facilities": [
+    {
+      "name": "종합운동장",
+      "site": "athletics",
+      "label": "종합운동장 예약",
+      "url": "https://athletics.snu.ac.kr/facility/list?mode=view&facility_idx=1"
+    },
+    {
+      "number": "71",
+      "site": "athletics",
+      "label": "체육시설 예약 목록",
+      "url": "https://athletics.snu.ac.kr/facility/list"
+    },
+    {
+      "number": "71-1",
+      "site": "athletics",
+      "label": "체육시설 예약 목록",
+      "url": "https://athletics.snu.ac.kr/facility/list"
+    },
+    {
+      "number": "58",
+      "site": "ssims",
+      "label": "예약하샤 스터디룸 예약",
+      "url": "https://ssims.snu.ac.kr/index.do"
+    },
+    {
+      "number": "44-1",
+      "site": "ssims",
+      "label": "예약하샤 스터디룸 예약",
+      "url": "https://ssims.snu.ac.kr/index.do"
+    },
+    {
+      "number": "300",
+      "site": "ssims",
+      "label": "예약하샤 스터디룸 예약",
+      "url": "https://ssims.snu.ac.kr/index.do"
+    },
+    {
+      "number": "301",
+      "site": "ssims",
+      "label": "예약하샤 스터디룸 예약",
+      "url": "https://ssims.snu.ac.kr/index.do"
+    }
+  ]
+}

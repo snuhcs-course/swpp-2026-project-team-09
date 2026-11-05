@@ -3,9 +3,11 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { PlaceDto } from '../places/dto/place.dto.js';
+import { isApplicationAt } from './application-lines.js';
 import {
   type AnsweredSession,
   type JudgedSession,
@@ -26,23 +28,21 @@ import {
 } from './judgement-time.js';
 import { isElsewhere, namedPlace } from './named-place.js';
 import { type PostSourceSettings } from './post-sources.js';
+import { verdictOf } from './session-verdict.js';
 
 // The server's checks of a Judgement (ADR 0008). The model decides nothing: a session is published only when every
 // check passes, and a check that cannot tell fails.
 
 const HOURS_24_MS = 24 * 60 * 60 * 1000;
 
-// What marks a line as a period to apply in, not the event's own time.
-export const APPLICATION =
-  /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|예약|appl(?:y|ication)|regist(?:er|ration)|deadline/iu;
-
-// A line this short holds a label for the next one, as "신청 기간" above its dates does.
-const LABEL_LENGTH = 20;
-
 const BUILDING_NUMBER_ALONE = /^\d+(?:-\d+)?동(?:\s*(?:지하\s*)?\d+층)?(?:\s*\d+(?:-\d+)?호)?$/u;
 
+// A soft hyphen, a zero-width space and a byte-order mark show nothing, and a quote may have them or not.
 function normalised(text: string): string {
-  return text.replaceAll(/[\s ]+/gu, ' ').trim();
+  return text
+    .replaceAll(/[\u00AD\u200B\uFEFF]/gu, '')
+    .replaceAll(/[\s ]+/gu, ' ')
+    .trim();
 }
 
 // What is being checked: the post as the model read it, one line each, the Source's setting, the Places, and the time.
@@ -124,14 +124,9 @@ function enclosingLines(quotes: string[], lines: string[]): string[] {
 // 11/5 14:00" does not pass.
 function notApplicationPeriod(session: AnsweredSession, lines: string[]): boolean {
   const pieces = quotedPieces([...session.lines.start, ...session.lines.end]);
-  return lines.every((line, index) => {
-    if (!pieces.some((piece) => piece !== '' && line.includes(piece))) {
-      return true;
-    }
-    const above = lines[index - 1];
-    const labelAbove = above !== undefined && above.length <= LABEL_LENGTH ? above : '';
-    return !APPLICATION.test(line) && !APPLICATION.test(labelAbove);
-  });
+  return lines.every(
+    (line, index) => !pieces.some((piece) => piece !== '' && line.includes(piece)) || !isApplicationAt(lines, index),
+  );
 }
 
 function startBeforeEnd(session: AnsweredSession, start: JudgedTime | null, end: JudgedTime | null): boolean {
@@ -275,8 +270,8 @@ interface PlacedDraft {
 
 // Where each passing session goes, given the post's Drafts in session order, null being a new event: the Draft the worker
 // read it into, else the post's only Draft, whose start may be only the header's date, else a Draft without a start. A
-// Draft of several with another start keeps what the worker read. Failing sessions make no Draft, and a Draft stays for
-// them: their own, or any other left. A session that is not new is no session left to look at.
+// Draft of several with another start keeps what the worker read. A Draft stays for the failing sessions: their own, or
+// any other left, which placeFailing then gives out. A session that is not new is no session left to look at.
 export function placedSessions(sessions: JudgedSession[], drafts: PlacedDraft[]): Map<JudgedSession, string | null> {
   const passing = sessions.filter(({ passed }) => passed);
   const failing = sessions.filter(
@@ -309,5 +304,30 @@ export function placedSessions(sessions: JudgedSession[], drafts: PlacedDraft[])
       placed.set(session, spare.shift()?.id ?? null);
     }
   }
+  placeFailing(failing, drafts, placed);
   return placed;
+}
+
+// A failing session that is compared or fills a Draft takes one the same way from those left, or a new one, so that one
+// stays for those that settle nothing.
+function placeFailing(
+  failing: JudgedSession[],
+  drafts: PlacedDraft[],
+  placed: Map<JudgedSession, string | null>,
+): void {
+  const settling = failing.filter(({ checks }) => verdictOf(checks).comparable || verdictOf(checks).draftable);
+  const used = new Set(placed.values());
+  const left = drafts.filter(({ id }) => !used.has(id));
+  const staysFor = failing.length - settling.length;
+  for (const session of settling) {
+    const draft =
+      left.find((each) => isDraftOf(each, session)) ??
+      (drafts.length === 1 ? left[0] : left.find(({ startsAt }) => startsAt === null));
+    if (draft === undefined || (staysFor > 0 && left.length === 1)) {
+      placed.set(session, null);
+    } else {
+      left.splice(left.indexOf(draft), 1);
+      placed.set(session, draft.id);
+    }
+  }
 }

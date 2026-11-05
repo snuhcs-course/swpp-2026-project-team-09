@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { changeState, patchGlobalEvent } from './global-event-changes.js';
@@ -19,14 +20,14 @@ import {
 const world = new JudgementWorld();
 const newPost = postNumbersFrom(982_000);
 
-const SECOND_LINE = '- 2회차: 2026. 11. 12.(목) 14:00~16:00';
-const THIRD_LINE = '- 3회차: 2026. 11. 19.(목) 14:00~16:00';
+const SECOND_LINE = '- 2회차: 2076. 11. 12.(목) 14:00~16:00';
+const THIRD_LINE = '- 3회차: 2076. 11. 19.(목) 14:00~16:00';
 const LINES = `${TIME_LINE}\n${SECOND_LINE}\n${THIRD_LINE}\n${PLACE_LINE}`;
 
 function second(): AnsweredSession {
   return answeredSession({
-    start: '2026-11-12T14:00',
-    end: '2026-11-12T16:00',
+    start: '2076-11-12T14:00',
+    end: '2076-11-12T16:00',
     lines: { start: [SECOND_LINE], end: [SECOND_LINE], place: [PLACE_LINE] },
   });
 }
@@ -34,8 +35,8 @@ function second(): AnsweredSession {
 // Its place is on no line of the post, so it fails.
 function failingThird(): AnsweredSession {
   return answeredSession({
-    start: '2026-11-19T14:00',
-    end: '2026-11-19T16:00',
+    start: '2076-11-19T14:00',
+    end: '2076-11-19T16:00',
     place: '온라인',
     lines: { start: [THIRD_LINE], end: [THIRD_LINE], place: [PLACE_LINE] },
   });
@@ -70,7 +71,7 @@ describe('A post stored as one Draft', () => {
     const published = events.filter(({ state }) => state === 'published');
     expect(
       published.map(({ startsAt }) => startsAt?.toISOString() ?? '').toSorted((a, b) => a.localeCompare(b)),
-    ).toEqual(['2026-11-05T05:00:00.000Z', '2026-11-12T05:00:00.000Z']);
+    ).toEqual(['2076-11-05T05:00:00.000Z', '2076-11-12T05:00:00.000Z']);
     expect(published.every(({ publicationRoute, version }) => publicationRoute === 'judgement' && version === 1)).toBe(
       true,
     );
@@ -101,9 +102,9 @@ describe('A post stored with a Draft per session', () => {
     world.scripted.script(answer([answeredSession(), second(), failingThird()]));
     const postNumber = newPost();
     const sessions = [
-      session(1, '2026-11-05T14:00:00+09:00', 'header', null),
-      session(2, '2026-11-12T14:00:00+09:00', 'header', null),
-      session(3, '2026-11-19T14:00:00+09:00', 'header', '어디'),
+      session(1, '2076-11-05T14:00:00+09:00', 'header', null),
+      session(2, '2076-11-12T14:00:00+09:00', 'header', null),
+      session(3, '2076-11-19T14:00:00+09:00', 'header', '어디'),
     ];
 
     await world.collected({ ...draftPost(postNumber, { description: LINES }), sessions });
@@ -114,7 +115,7 @@ describe('A post stored with a Draft per session', () => {
     expect(events.filter(({ state }) => state === 'published')).toHaveLength(2);
     expect(events.find(({ state }) => state === 'draft')).toMatchObject({
       place: '어디',
-      startsAt: new Date('2026-11-19T14:00:00+09:00'),
+      startsAt: new Date('2076-11-19T14:00:00+09:00'),
     });
   });
 
@@ -122,8 +123,8 @@ describe('A post stored with a Draft per session', () => {
     world.scripted.script(answer([answeredSession(), second()]));
     const postNumber = newPost();
     const sessions = [
-      session(1, '2026-11-05T14:00:00+09:00', 'body', PLACE_LINE.replace('- 장소: ', '')),
-      session(2, '2026-11-12T14:00:00+09:00', 'header', null),
+      session(1, '2076-11-05T14:00:00+09:00', 'body', PLACE_LINE.replace('- 장소: ', '')),
+      session(2, '2076-11-12T14:00:00+09:00', 'header', null),
     ];
 
     await world.collected({ ...draftPost(postNumber, { description: LINES }), sessions });
