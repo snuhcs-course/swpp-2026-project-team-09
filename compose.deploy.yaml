@@ -5,6 +5,7 @@
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-05  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Dev Server's stack: compose.yaml with this file over it, and the settings file as Compose's --env-file
@@ -47,7 +48,12 @@ services:
       PUBLIC_URL: ${PUBLIC_URL}
       ANDROID_CERTIFICATE_FINGERPRINTS: ${ANDROID_CERTIFICATE_FINGERPRINTS}
       MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
-      # May be absent from a settings file written before the Assistant, which is then off.
+      # May be absent from a settings file written before the Assistant, which is then off. One written before the
+      # Anthropic API (ADR 0013) lacks the provider and its two settings: the provider is then anthropic and, with no
+      # Anthropic key, the Assistant is off.
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       ASSISTANT_MODEL: ${ASSISTANT_MODEL:-}
       AUTOMATIC_PUBLICATION: ${AUTOMATIC_PUBLICATION:-on}
