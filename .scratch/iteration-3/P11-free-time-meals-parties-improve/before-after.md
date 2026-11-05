@@ -37,6 +37,8 @@ The [five real rides](../P04-free-time-meals-parties/issues/02-shuttle-log.md#th
 | --------------------------------- | -------------------- | -------------------------- |
 | MAE                               | 63.1 s               | 20.0 s                     |
 
+What the app is given is less than the derived times, as the PM decided on review of #201: no wait, so the fallback's waits stay, and a ride only for a pair and band logged on both days (728 of 731). The score above is of all the derived times and is unchanged. Recorded in [P04 ticket 02, "What the app is given"](../P04-free-time-meals-parties/issues/02-shuttle-log.md#what-the-app-is-given-2026-11-05).
+
 ## The chat
 
 Measured on `3.0/P11-04-chat`, cut from X = `74d5a0e8`. Before is X's code; after is the branch's final code, which keeps change 1 only: changes 2 to 4 made the P4 suite worse and were reverted. Recorded in [`record.md`](../../../main-server/eval/p4/record.md): [the before set](../../../main-server/eval/p4/record.md#the-before-set-at-x), [the changes](../../../main-server/eval/p4/record.md#the-changes) and [the after set](../../../main-server/eval/p4/record.md#the-after-set-at-the-branchs-final-code).
