@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -22,7 +23,7 @@ import { signInAsAdministrator } from './sign-in.js';
 import { eventsOf, holdingTheStep, type PostsWorld, send, startPostsWorld } from './source-posts.js';
 import { startApp } from './start-app.js';
 
-export const TIME_LINE = '- 일시: 2026. 11. 5.(목) 14:00~16:00';
+export const TIME_LINE = '- 일시: 2076. 11. 5.(목) 14:00~16:00';
 export const PLACE = '뉴미디어통신공동연구소 이충웅홀(132동 103호)';
 export const PLACE_LINE = `- 장소: ${PLACE}`;
 
@@ -30,7 +31,7 @@ export const PLACE_LINE = `- 장소: ${PLACE}`;
 export function draftPost(postNumber: number, changes: Record<string, unknown> = {}): Record<string, unknown> {
   return collectedPost(postNumber, {
     readFrom: 'header',
-    start: '2026-11-05',
+    start: '2076-11-05',
     place: null,
     description: `${TIME_LINE}\n${PLACE_LINE}\n문의: office@snu.ac.kr, 02-880-1234`,
     ...changes,
@@ -48,8 +49,8 @@ export interface AnsweredSession {
 // A session that agrees with draftPost.
 export function answeredSession(changes: Partial<AnsweredSession> = {}): AnsweredSession {
   return {
-    start: '2026-11-05T14:00',
-    end: '2026-11-05T16:00',
+    start: '2076-11-05T14:00',
+    end: '2076-11-05T16:00',
     place: PLACE,
     overPeriod: false,
     lines: { start: [TIME_LINE], end: [TIME_LINE], place: [PLACE_LINE] },

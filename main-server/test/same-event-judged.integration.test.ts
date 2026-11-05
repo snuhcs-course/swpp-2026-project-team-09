@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,7 +17,7 @@ import { send } from './source-posts.js';
 import { startApp } from './start-app.js';
 
 const world = new SameEventWorld(988_000);
-const JUDGED_START = '2026-11-05T14:00:00+09:00';
+const JUDGED_START = '2076-11-05T14:00:00+09:00';
 
 // A second pod on the same database, and a server with automatic publication off.
 let otherPod: INestApplication<Server>;
@@ -215,8 +216,8 @@ describe('A post of one Draft with automatic publication off', () => {
   it('keeps a session that matches nothing when the other was attached and took the Draft', async () => {
     const title = world.uniqueTitle();
     const event = await world.publishedThrough('extra_snu', world.programme(title, { start: JUDGED_START }));
-    const other = answeredSession({ start: '2026-11-05T17:00', end: '2026-11-05T18:00' });
-    const line = '- 일시: 2026. 11. 5.(목) 14:00~16:00, 17:00~18:00';
+    const other = answeredSession({ start: '2076-11-05T17:00', end: '2076-11-05T18:00' });
+    const line = '- 일시: 2076. 11. 5.(목) 14:00~16:00, 17:00~18:00';
     world.scripted.script(
       answer([
         answeredSession({ lines: { start: [line], end: [line], place: [PLACE_LINE] } }),
