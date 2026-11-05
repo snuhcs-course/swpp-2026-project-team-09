@@ -25,12 +25,61 @@ Spec: `../spec.md`, "AB-1: time parsing".
 
 ## Acceptance criteria
 
-- [ ] Unit tests of the time reader fix each pattern above, written in new words, never a held-out post's line:
+- [x] Unit tests of the time reader fix each pattern above, written in new words, never a held-out post's line:
   - `1. 3월 9일(화) 오후 2–5시` reads as 3월 9일 alone, never 1월 3일;
   - `12. ` is handled like `1. `;
   - a date that really starts a line is still read.
-- [ ] `오후 2–5시` gives a start of 14:00 that `hasTimeOfDay` and `timeAgrees` accept, and the same holds for `~` and `-`. `오전 9–11시` gives 09:00.
-- [ ] A quoted line that differs from the post only by U+00AD, U+200B or U+FEFF passes `linesInPost`.
-- [ ] A publication-step integration test with a scripted Judgement shows a post written in each of these ways published. The same test with a wrong date still fails the date check, so the fix lets nothing wrong through.
-- [ ] Existing Judgement unit and integration tests pass unchanged.
-- [ ] The replay measurement above is recorded.
+- [x] `오후 2–5시` gives a start of 14:00 that `hasTimeOfDay` and `timeAgrees` accept, and the same holds for `~` and `-`. `오전 9–11시` gives 09:00.
+- [x] A quoted line that differs from the post only by U+00AD, U+200B or U+FEFF passes `linesInPost`.
+- [x] A publication-step integration test with a scripted Judgement shows a post written in each of these ways published. The same test with a wrong date still fails the date check, so the fix lets nothing wrong through.
+- [x] Existing Judgement unit and integration tests pass unchanged.
+- [x] The replay measurement above is recorded.
+
+## Comments
+
+### Replay of the saved Judgements (2026-11-05)
+
+A development reading, not a held-out result: the target cases are held-out posts the failure analysis read (spec, Measurement). Run on a clean tree at `57e1ad3a` with
+
+```sh
+pnpm eval:collection --run judgement --part held-out --from eval/results/collection-held-out-judgement-464ea9c5.json --no-model
+```
+
+| | `464ea9c5` (saved) | `57e1ad3a` (replay) |
+|---|---:|---:|
+| C1 published without an Administrator | 27/64 | 35/64 |
+| C2 wrong publications | 0/27 | 0/35 |
+| C3 wrong places (published sessions) | 0 | 0 |
+| C3 diagnostic (sessions failing a check too) | 0 | 0 |
+
+C1 rose by 8, as expected; C2 and C3 stayed 0. The first commit, `30c63670`, gave the same numbers. The result files are not committed.
+
+### Decisions (2026-11-05)
+
+- **List numbers.** `writtenDays` and `rangesEndIn` drop a leading `N. ` (one or two digits, then a space) only when a day follows it. They keep it when what follows is a day written with dots (`9. 2`), because the number is then that day's month or year. So `11. 2.(월)`, `3. 9. 2시` and `26. 11. 2.(월)` keep their dates. The review found the dotted case, which the first commit got wrong (`3. 9. 2시` read as 9월 2일).
+- **Known gaps, unchanged.**
+  - `1.3월 9일`, with no space after the number, still reads as 1월 3일.
+  - `11. 2. 3시` already read as 2011-02-03 before this ticket, because the `DAY` rule takes `11.` for a year. It is not changed here.
+- **오전/오후 N–M시.** `isWrittenClock` reads `오전 N–M시` and `오후 N–M시`, with `–`, `~` or `-`, as if they were written `오후 N시–M시`.
+  - Only 오전 and 오후 are read this way, and only those three dashes, as the spec says.
+  - A following `시간` is not taken for a clock, so `오후 1-2시간` holds no 13:00.
+  - M keeps its existing reading as a daytime hour.
+- **Invisible characters.** `normalised` drops U+00AD, U+200B and U+FEFF before it collapses spaces.
+  - The post lines and the quotes both go through `normalised`. So do the place checks (`placeInLines`, `matchedPlace`) and the `newSession` key, which now ignore these characters too.
+  - JS's `\s` already matched U+FEFF, so a BOM between words was already handled. The change matters for one inside a word or number.
+- **Tests.**
+  - The time reader cases are in `judgement-time.unit.test.ts`.
+  - The check-level cases are in a new `judgement-checks-time-reading.unit.test.ts`, because `judgement-checks.unit.test.ts` is near the 300-line limit.
+  - The seam test is `judgement-time-reading.integration.test.ts`. It sets the CLOCK to 2081-01-15, so that a day without a year is read in 2081.
+  - Every new case fails on `origin/3.0/Main`'s source.
+- **The eval scorer.** `eval/collection/score-a.ts` also calls `writtenDays`, to find application lines, so it now drops list numbers too.
+- **Full run.** The first full `pnpm test` had 32 files fail on timeouts (hooks over 60 s, tests over 5 s) while the Mac was loaded. Those 32 files passed when rerun with `--maxWorkers=2` (614 tests), and the other 198 had passed. The unit project passes (1,021 tests), as do `tsc`, `oxlint` and `prettier`.
+
+### Agent usage (2026-11-05)
+
+- Agent time: about 35 minutes in one session, up to the PR. This is an estimate, and it includes the test runs and the lock waits.
+- Tokens, main session and its two `/code-review` subagents together:
+  - Input: 178 uncached, plus 7,752,181 cache reads and 225,987 cache writes.
+  - Output: 50,377.
+  - The two subagents' share: 34 uncached input, 644,645 cache reads, 103,567 cache writes and 9,472 output.
+
