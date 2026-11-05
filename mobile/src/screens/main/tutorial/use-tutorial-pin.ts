@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -12,6 +13,7 @@ import { metresBetween } from '@/features/quests/walking-times';
 import { type MapMarker, useMarkerImages } from '@/map';
 import type { MainMap } from '../use-main-map';
 import type { Selection } from '../use-selection';
+import { type MapTap, useMapTap } from './use-map-tap';
 
 // What 지도에서 보기 of a tutorial quest shows: the place's point and its words (`shownPlace`), and whether it is a
 // Place of the seed, where the map may have a card, or a point such as the 행정관 셔틀 정류장, where it has none.
@@ -54,6 +56,8 @@ export interface TutorialPin {
   // A press on the map's marker with this id: the pin's opens the card at its Place, if there is one, and is kept;
   // another goes to `select`.
   press: (id: string) => void;
+  // For the View around the map: a tap on the map, not on the pin, removes the pin; a pan or a pinch keeps it.
+  touches: MapTap['touches'];
 }
 
 interface PinDeps {
@@ -63,15 +67,24 @@ interface PinDeps {
   tutorialState: TutorialState | undefined;
 }
 
-// Removes the pin once another thing than the card at its Place is selected, or the tutorial is stopped.
+interface RemovalDeps {
+  selectedId: string | null;
+  ownId: string | null;
+  tutorialState: TutorialState | undefined;
+  // Whether the pin stands.
+  shown: boolean;
+}
+
+// Removes the pin once another thing than the card at its Place is selected, the tutorial is stopped, or the map is
+// tapped elsewhere than on the pin, which the pin's press tells by `keep`.
 function useRemoval(
   setTarget: (target: null) => void,
-  {
-    selectedId,
-    ownId,
-    tutorialState,
-  }: { selectedId: string | null; ownId: string | null; tutorialState: TutorialState | undefined },
-): void {
+  { selectedId, ownId, tutorialState, shown }: RemovalDeps,
+): MapTap {
+  const clear = useCallback(() => {
+    setTarget(null);
+  }, [setTarget]);
+  const tap = useMapTap(clear, shown);
   useEffect(() => {
     if (selectedId !== null && selectedId !== ownId) {
       setTarget(null);
@@ -82,10 +95,12 @@ function useRemoval(
       setTarget(null);
     }
   }, [tutorialState]);
+  return tap;
 }
 
-// The one tutorial place pin on the main map, with its words under it. Another 지도에서 보기 replaces it; selecting
-// another thing than the card at its Place, or stopping the tutorial, removes it.
+// The one tutorial place pin on the main map, with its words under it. Another 지도에서 보기 replaces it; a tap on the
+// map elsewhere than on the pin, selecting another thing than the card at its Place, or stopping the tutorial,
+// removes it. Panning or zooming the map keeps it.
 export function useTutorialPin({ cards, selection, goTo, tutorialState }: PinDeps): TutorialPin {
   const { select, close } = selection;
   const selectedId = selection.selected?.id ?? null;
@@ -93,7 +108,7 @@ export function useTutorialPin({ cards, selection, goTo, tutorialState }: PinDep
   const [image] = useMarkerImages(PIN_LOOK);
   const own = target === null ? null : cardAt(cards, target);
   const ownId = own?.id ?? null;
-  useRemoval(setTarget, { selectedId, ownId, tutorialState });
+  const { touches, keep } = useRemoval(setTarget, { selectedId, ownId, tutorialState, shown: target !== null });
   const markers = useMemo(
     (): MapMarker[] =>
       target === null || image === undefined
@@ -114,11 +129,14 @@ export function useTutorialPin({ cards, selection, goTo, tutorialState }: PinDep
     (id: string) => {
       if (id !== TUTORIAL_PIN_ID) {
         select(id);
-      } else if (ownId !== null) {
+        return;
+      }
+      keep();
+      if (ownId !== null) {
         select(ownId);
       }
     },
-    [select, ownId],
+    [select, ownId, keep],
   );
   const showOnMap = useCallback(
     (shown: TutorialPinTarget) => {
@@ -128,5 +146,5 @@ export function useTutorialPin({ cards, selection, goTo, tutorialState }: PinDep
     },
     [close, goTo],
   );
-  return { markers, showOnMap, press };
+  return { markers, showOnMap, press, touches };
 }

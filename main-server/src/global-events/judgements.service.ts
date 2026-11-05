@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -49,14 +50,16 @@ export function judgedDrafts({ sessions }: Pick<PostWithOwnSessions, 'sessions'>
   );
 }
 
-// Where each new session of a Judgement goes among the post's Drafts: those it holds are the ones to settle.
+// Where each new session of a Judgement goes among the post's Drafts: those it holds are the ones to settle. A Draft a
+// session of the answer already fills is not free.
 export function placedOfPost(
   post: Pick<PostWithOwnSessions, 'sessions'>,
   sessions: JudgedSession[],
 ): Map<JudgedSession, string | null> {
+  const filled = new Set(sessions.map(({ globalEventId }) => globalEventId));
   return placedSessions(
     sessions.filter(({ globalEventId }) => globalEventId === null),
-    judgedDrafts(post).map(({ globalEvent: { id, startsAt } }) => ({ id, startsAt })),
+    judgedDrafts(post).flatMap(({ globalEvent: { id, startsAt } }) => (filled.has(id) ? [] : [{ id, startsAt }])),
   );
 }
 

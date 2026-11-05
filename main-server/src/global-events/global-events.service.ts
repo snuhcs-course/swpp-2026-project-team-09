@@ -11,11 +11,13 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CampusBoundary } from '../common/campus-boundary.js';
 import { PrismaService } from '../common/prisma.service.js';
+import { type Hit, type SearchCounts } from '../common/search-sql.js';
 import { startOfSeoulDay } from '../common/seoul-day.js';
 import { SignalsService } from '../common/signals.service.js';
 import { GlobalEvent, GlobalEventState, Prisma, PublicationRoute } from '../generated/prisma/client.js';
@@ -36,7 +38,7 @@ import {
   WITH_OWN_POST,
   WITH_OWN_POST_AND_JUDGEMENT,
 } from './dto/global-event.dto.js';
-import { type RankedSearch, rankedSearchIds } from './ranked-search.js';
+import { type RankedSearch, rankedSearchCounts, rankedSearchHits } from './ranked-search.js';
 
 // An event has ended once its end has passed or, without an end, once the day of its start has passed in Asia/Seoul.
 function notEnded(now: Date): Prisma.GlobalEventWhereInput {
@@ -131,9 +133,23 @@ export class GlobalEventsService {
     return events.map((event) => toPublishedGlobalEventDto(event));
   }
 
-  // The published events of searchGlobalEvents that have not ended at `now`, as the User's list serves them.
-  async searchRanked(search: RankedSearch, now: Date): Promise<PublishedGlobalEventDto[]> {
-    return this.publishedAmong(await rankedSearchIds(this.prisma, search, now));
+  // The published events of searchGlobalEvents that have not ended at `now`, as the User's list serves them, each with
+  // why it was found.
+  async searchRanked(
+    search: RankedSearch,
+    now: Date,
+  ): Promise<(Omit<Hit, 'id'> & { event: PublishedGlobalEventDto })[]> {
+    const hits = await rankedSearchHits(this.prisma, search, now);
+    const published = await this.publishedAmong(hits.map(({ id }) => id));
+    return hits.flatMap(({ id, matched, window }) => {
+      const event = published.find((each) => each.id === id);
+      return event === undefined ? [] : [{ event, matched, window }];
+    });
+  }
+
+  // How many events searchGlobalEvents finds before it is cut, by day and word.
+  searchRankedCounts(search: Omit<RankedSearch, 'take'>, now: Date): Promise<SearchCounts> {
+    return rankedSearchCounts(this.prisma, search, now);
   }
 
   // The events among `ids` that are published, as the User's list serves them, in the order of `ids`.

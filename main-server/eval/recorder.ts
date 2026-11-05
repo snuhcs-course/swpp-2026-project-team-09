@@ -3,10 +3,17 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { APICallError, type LanguageModelMiddleware, wrapLanguageModel } from 'ai';
-import { type Model, type RunObserver, type StepEnd, type ToolCallEnd } from '../src/assistant/adapter.js';
+import {
+  type Model,
+  type RepliedEnd,
+  type RunObserver,
+  type StepEnd,
+  type ToolCallEnd,
+} from '../src/assistant/adapter.js';
 import { type RawResponses } from './raw-responses.ts';
 import { type StepTrace } from './trace.ts';
 
@@ -78,6 +85,7 @@ function recordResult(
 
 export class Recorder implements RunObserver {
   private steps: StepTrace[] = [];
+  private reply: RepliedEnd | null = null;
 
   constructor(
     private readonly sampling: Sampling,
@@ -89,9 +97,10 @@ export class Recorder implements RunObserver {
     return wrapLanguageModel({ model, middleware: this.middleware() });
   }
 
-  // Starts a turn, forgetting the steps before.
+  // Starts a turn, forgetting the steps and the reply before.
   begin(): void {
     this.steps = [];
+    this.reply = null;
   }
 
   // The steps of the turn so far.
@@ -99,6 +108,18 @@ export class Recorder implements RunObserver {
     const { steps } = this;
     this.steps = [];
     return steps;
+  }
+
+  // The model's own reply of the turn and whether the server added the Approval line, or null when the run answered
+  // none.
+  takeReply(): RepliedEnd | null {
+    const { reply } = this;
+    this.reply = null;
+    return reply;
+  }
+
+  replied(reply: RepliedEnd): void {
+    this.reply = reply;
   }
 
   // A call this turn's steps did not record, such as one of an earlier turn whose tool ended after its time ran out,

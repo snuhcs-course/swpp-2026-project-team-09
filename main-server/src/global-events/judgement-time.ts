@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Reads the times of a Judgement, and what a quoted line of a post writes, so that the two can be compared. It does not
@@ -76,13 +77,25 @@ const DAY = new RegExp(
   'gu',
 );
 
-export function writtenDays(line: string): WrittenDay[] {
-  return [...line.matchAll(DAY)].map(({ 1: year, 2: month, 3: day, 4: inBrackets, 5: named, 6: alone }) => ({
+// A list's number before a line's day: "1. 3월 9일" is the 9th of March, never the 3rd of January. A number before a day
+// written with dots is that day's year or month: "11. 2.(월)", "3. 9. 2시", "26. 11. 2.".
+const LIST_NUMBER = new RegExp(String.raw`^\d{1,2}\.\s+(?!\d{1,2}\s*\.\s*\d)(?=${DAY.source})`, 'u');
+
+function withoutListNumber(line: string): string {
+  return line.replace(LIST_NUMBER, '');
+}
+
+function dayOf({ 1: year, 2: month, 3: day, 4: inBrackets, 5: named, 6: alone }: RegExpExecArray): WrittenDay {
+  return {
     year: year === undefined ? null : Number(year.length === 2 ? `20${year}` : year),
     month: Number(month),
     day: Number(day),
     weekday: inBrackets ?? named ?? alone ?? null,
-  }));
+  };
+}
+
+export function writtenDays(line: string): WrittenDay[] {
+  return [...withoutListNumber(line).matchAll(DAY)].map((match) => dayOf(match));
 }
 
 const THEN_TO = /^[\s\d:시분반오전후()]*(?:[~∼〜–—-]|부터)\s*$/u;
@@ -90,7 +103,8 @@ const THEN_TO_DAY = /^[\s\d:시분반오전후()]*[~∼〜–—-]\s*(\d{1,2})�
 
 // The last days of the ranges a line writes across days: "11월 5일 ~ 11월 30일", "11/5 10:00 ~ 11/7 18:00", "11월 5일~30일",
 // "2026.11.05-2026.11.30". The hyphen of "2026-11-05" is inside a day, and that of "10:00-18:00" between no days.
-export function rangesEndIn(line: string): { month: number; day: number }[] {
+export function rangesEndIn(written: string): { month: number; day: number }[] {
+  const line = withoutListNumber(written);
   const days = [...line.matchAll(DAY)];
   return days.flatMap((match, index) => {
     const after = match.index + match[0].length;
@@ -138,6 +152,9 @@ export function isWrittenDay({ year, month, day }: WrittenDay, time: JudgedTime,
 const CLOCK =
   /(오전|오후|낮|저녁|밤|새벽|AM|PM)?\s*(?<![\d:.])(\d{1,2})(?:\s*:\s*(\d{2})(?::\d{2})?|\s*시(?!간)(?:\s*(\d{1,2})\s*분|\s*(반))?)(?!\d)\s*(AM|PM)?/giu;
 
+// The first hour of "오후 2–5시" is a clock of 오후 too, read as if written "오후 2시–5시".
+const FIRST_OF_HOURS = /(오전|오후)\s*(?<![\d:.])(\d{1,2})\s*([–~-])\s*(?=\d{1,2}\s*시(?!간))/gu;
+
 const EARLIEST_DAYTIME_HOUR = 7;
 const LATEST_DAYTIME_HOUR = 21;
 
@@ -161,12 +178,81 @@ function hoursOf(written: string, meridiem: string | undefined): number[] {
   );
 }
 
+// A clock as written, with every hour it can be.
+export interface WrittenClock {
+  hours: number[];
+  minute: number;
+}
+
+const RANGE_MARK = /^\s*(?:[~∼〜–—-]|부터)\s*$/u;
+
+// The clocks a text writes in order, each with whether a range mark joins it to the one before.
+function clocksIn(text: string): (WrittenClock & { endsRange: boolean })[] {
+  const written = text.replaceAll(FIRST_OF_HOURS, '$1 $2시$3');
+  let previousEnd: number | null = null;
+  return [...written.matchAll(CLOCK)].map(
+    ({ index, 0: whole, 1: before, 2: hour, 3: colon, 4: minutes, 5: half, 6: after }) => {
+      const endsRange = previousEnd !== null && RANGE_MARK.test(written.slice(previousEnd, index));
+      previousEnd = index + whole.length;
+      return {
+        hours: hoursOf(hour ?? '', before ?? after),
+        minute: half === undefined ? Number(colon ?? minutes ?? 0) : 30,
+        endsRange,
+      };
+    },
+  );
+}
+
 export function isWrittenClock(line: string, { hour, minute }: { hour: number; minute: number }): boolean {
   if (hour === 12 && minute === 0 && line.includes('정오')) {
     return true;
   }
-  return [...line.matchAll(CLOCK)].some(({ 1: before, 2: written, 3: colon, 4: minutes, 5: half, 6: after }) => {
-    const writtenMinute = half === undefined ? Number(colon ?? minutes ?? 0) : 30;
-    return writtenMinute === minute && hoursOf(written ?? '', before ?? after).includes(hour);
-  });
+  return clocksIn(line).some((clock) => clock.minute === minute && clock.hours.includes(hour));
+}
+
+// A day a line writes with its start, and its end where the line writes a range.
+export interface WrittenTime {
+  day: WrittenDay;
+  start: WrittenClock;
+  end: WrittenClock | null;
+}
+
+// The times a day's part of a line writes: each clock starts one, and a clock a range mark joins to it ends it.
+function timesOf(day: WrittenDay, clocks: (WrittenClock & { endsRange: boolean })[]): WrittenTime[] {
+  const times: WrittenTime[] = [];
+  for (const clock of clocks) {
+    const last = times.at(-1);
+    if (clock.endsRange && last !== undefined && last.end === null) {
+      last.end = clock;
+    } else {
+      times.push({ day, start: clock, end: null });
+    }
+  }
+  return times;
+}
+
+// The times a line writes after its days: "11월 5일 14:00~16:00", "11/5 10:00 ~ 11/7 18:00", "11/5 14:00~16:00,
+// 17:00~18:00". A clock before a range mark that a day follows starts a range whose end is the next day's first clock. A
+// clock with no day before it is not read.
+export function writtenTimes(written: string): WrittenTime[] {
+  const line = withoutListNumber(written);
+  const days = [...line.matchAll(DAY)];
+  const times: WrittenTime[] = [];
+  let open: { day: WrittenDay; start: WrittenClock } | null = null;
+  for (const [index, match] of days.entries()) {
+    const next = days[index + 1];
+    const between = line.slice(match.index + match[0].length, next?.index ?? line.length);
+    const clocks = clocksIn(between);
+    if (open !== null) {
+      times.push({ ...open, end: clocks.shift() ?? null });
+      open = null;
+    }
+    const [first] = clocks;
+    if (first !== undefined && next !== undefined && clocks.length === 1 && THEN_TO.test(between)) {
+      open = { day: dayOf(match), start: first };
+    } else {
+      times.push(...timesOf(dayOf(match), clocks));
+    }
+  }
+  return times;
 }
