@@ -11,14 +11,15 @@ Spec: `../spec.md`, "Measurement".
 **Blocked by:**
 
 - **The before set:** #204 merging, so that `p12-x` exists. It runs at `p12-x` as soon as the tag exists, while the tickets may still be in progress.
-- **The after set:** 01, 02, 03, 04 and 05, each done on its own branch with its PR open.
+- **The after set:** 01, 02, 03, 04 and 05, each approved on its own branch, so that its fixed commit is known.
 
 ## Starting point
 
 - X is the `3.0/Main` commit that holds #204 and the P12 spec, tagged `p12-x` and pushed when #204 merges. If 01–05 are done first, X is `3.0/Main` with #204's head merged locally, tagged the same way. Before tagging, check that A01-01, #169 and #170 did not land before it; if one did, ask the owner.
-- Each of 01–05 has its own branch from `3.0/Main` after the spec merges, and its own PR to `3.0/Main`, built at the same time in separate sessions. Once `p12-x` exists, each branch merges `p12-x` and nothing newer. No rebase, no force push.
-- The after set runs on a merge of the five branches, pushed as `3.0/P12-after-set` with no PR, and the ticket PRs merge only after it is recorded.
-- A01 and P07 are not taken in until the after set is done. The order with the other work in flight is the spec's (Further Notes): P12's sets before A01-01, #169 and #170 merge; P12 merges after #204's after set is recorded; A01-03's baseline after P12 merges; P13's R2 and R3 with no P12 change between them.
+- Each of 01–05 has its own branch from `3.0/Main` after the spec merges, and its own PR to `3.0/Main`, built at the same time in separate sessions. Once `p12-x` exists, each branch merges `p12-x` and nothing newer until its PR is approved. No rebase, no force push.
+- The after set runs on `p12-x` with one fixed commit per ticket merged in, pushed as `3.0/P12-after-set` with no PR: 01 `6ba13b2c`, 02 `0776393b`, 03 `120f616b`, and 04 and 05 at their heads when approved, before they take in `3.0/Main`. 04 already holds 01 and 03, and 05 holds 02.
+- **Changed plan (2026-11-05, the owner's decision).** The ticket PRs merge as soon as they are approved, without waiting for the after set. The after set therefore runs on the fixed commits, not on `3.0/Main`.
+- A01 and P07 are not taken in by the after set. The order with the other work in flight is the spec's (Further Notes): P12's sets on `p12-x` and the fixed commits; P12 merges after #204's after set is recorded; A01-03's baseline after P12 merges; P13's R2 and R3 with no P12 change between them.
 
 ## Acceptance criteria
 
