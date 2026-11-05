@@ -38,9 +38,18 @@ It starts on a new branch from `3.0/Main` after the spec's pull request has merg
 
 The results are recorded in [P04 ticket 02's `## Comments`](../../P04-free-time-meals-parties/issues/02-shuttle-log.md#the-days-the-derived-times-and-the-score-2026-11-05).
 
+Later on 2026-11-05 the PM accepted Jaehyun0320's two suggestions in the review of #201, in place of committing the derived file whatever its score: `seed/shuttle-timing.json` holds no wait until a third logged day agrees, and a ride only for a pair and band logged on at least two days. The score is unchanged. See ["What the app is given"](../../P04-free-time-meals-parties/issues/02-shuttle-log.md#what-the-app-is-given-2026-11-05).
+
 ### Agent usage (2026-11-05)
 
 - **Agent time** (estimate): about 21 minutes: about 13 for the implementing agent, about 4 for the reviewer, and about 4 of the orchestrating session. Time spent waiting for a person is not counted.
 - **Tokens** (measured from the agents' transcripts; the orchestrating session's are counted once, under ticket 06):
   - Input: 212 not cached, 11,357,250 cache reads and 267,132 cache writes.
   - Output: 71,225.
+
+### Agent usage (2026-11-05, the PM's decision on review)
+
+- **Agent time** (estimate): about 15 minutes: about 11 of the orchestrating session for the shipping rule, its test and the records, and about 4 for the reviewer. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the transcripts, from 17:59 to 18:09 KST): the orchestrating session's share and the reviewer's.
+  - Input: 126 not cached, 10,592,972 cache reads and 145,721 cache writes.
+  - Output: 45,573.
