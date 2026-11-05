@@ -25,7 +25,7 @@ It starts on a new branch from `3.0/Main` after tickets 02, 03 and 06 have merge
 
 ## Comments
 
-The table is [before-after.md](../before-after.md). Its first box stays open: the after set's holdout has not run, since it would take P11's runs over the USD 10 the PM approved.
+The table is [before-after.md](../before-after.md). At first, its first box stayed open: the after set's holdout had not run, since it would take P11's runs over the USD 10 the PM approved.
 
 Later on 2026-11-05 the PM approved the holdout, which ran at `55d882bc`. Its rates and the cost of P11's runs with it, USD 10.1710, are in the table, and the first box is ticked.
 

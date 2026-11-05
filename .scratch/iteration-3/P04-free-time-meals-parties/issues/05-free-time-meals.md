@@ -96,7 +96,7 @@ The app changes only in JavaScript. An item marked **Person** is a person's work
   - Fake-server screen tests: the Restaurant card; 파티 만들기 opening the filled form, and the form making the Quest and inviting; the dining layer and the menu panel using `placeId` from the server.
 - [x] **Landing.** With ticket 04, this lands before P05's R0 (11-02). It rebases on whatever P07 has landed, as ticket 04 does. _(They landed on 11-01, after R0. P05's R0p on `871886a` stands in, as ticket 06 recorded.)_
 - [x] **Person: the cost.** A person confirms the cost before each real-model run below. _(The PM's approval of USD 10 on 2026-11-05 for P11's runs.)_
-- [x] **After the change: regression.** _(Recorded from R0 and R0p by ticket 06, and read again in P11's after set on 2026-11-05, in [`record.md`](../../../../main-server/eval/p4/record.md#the-regression).)_
+- [x] **After the change: regression.** _(Recorded from R0 and R0p by ticket 06, and read again in P11's after set on 2026-11-05, in [`record.md`](../../../../main-server/eval/p4/record.md#the-regression). Verdict: fail, six cases, none from P11's code.)_
   - Every case of the fixed P19 set runs 3 times again, with the same model and limits as ticket 03's baseline.
   - A case newly fails when it fails in at least 2 later runs but in at most 1 baseline run. No case may newly fail.
   - Any call to a new tool in those cases is reported, with the tokens and cost per turn of both sets of runs.
