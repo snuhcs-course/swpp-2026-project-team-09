@@ -169,7 +169,11 @@ describe('a search after resolvePlace answered one Place in the message, not giv
 
   beforeAll(async () => {
     first = await questOn(NOTE_DAY, { capacity: 4 });
-    second = await questOn(NOTE_DAY, { capacity: 5 });
+    // An hour later, so that the two are in start order.
+    second = await questOn(NOTE_DAY, {
+      capacity: 5,
+      subQuest: { title: '모임', startsAt: new Date(`${NOTE_DAY}T19:00:00+09:00`).toISOString() },
+    });
   });
 
   it('says placeId was not given, naming the Place, and keeps the candidates and their order', async () => {
