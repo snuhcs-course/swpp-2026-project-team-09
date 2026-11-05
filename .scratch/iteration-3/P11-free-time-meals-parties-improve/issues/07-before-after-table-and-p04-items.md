@@ -12,7 +12,7 @@ It starts on a new branch from `3.0/Main` after tickets 02, 03 and 06 have merge
 
 ## Acceptance criteria
 
-- [ ] **The before/after table**, each number linked to where it is recorded:
+- [x] **The before/after table**, each number linked to where it is recorded:
   - the walking table: the original and the rebuilt table's MAE, the share within under both tolerances, the threshold under both, the three diagnostics, and whether the rebuilt table was adopted (P04 ticket 01);
   - the shuttle: the fallback against the derived times, the ride and wait MAEs against their baselines, the threshold, and the five rides' MAE against the logged medians and against the fallback (P04 ticket 02);
   - the chat: before and after, each threshold overall and per category, the 6 layer rates, the holdout's rates, the regression's verdict, and the cost of P11's runs (`record.md`).
@@ -26,6 +26,8 @@ It starts on a new branch from `3.0/Main` after tickets 02, 03 and 06 have merge
 ## Comments
 
 The table is [before-after.md](../before-after.md). Its first box stays open: the after set's holdout has not run, since it would take P11's runs over the USD 10 the PM approved.
+
+Later on 2026-11-05 the PM approved the holdout, which ran at `55d882bc`. Its rates and the cost of P11's runs with it, USD 10.1710, are in the table, and the first box is ticked.
 
 ### Agent usage (2026-11-05)
 
