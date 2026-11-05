@@ -80,6 +80,12 @@ describe('timesConsistent', () => {
     expect(failingOne(lines, `2026-11-12T${clock}`, '2026-11-12T17:00')).toEqual([]);
   });
 
+  it('passes one of the sittings a line lists for the day', () => {
+    const lines = ['일시: 11월 12일(목) 15:00~17:00', '11월 12일(목) 10:00~12:00, 15:00~17:00 (같은 내용 2회)'];
+
+    expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual([]);
+  });
+
   it('passes a range written across its two days', () => {
     const lines = ['기간: 2026.11.12. 15:00 ~ 2026.11.12. 17:00'];
 
@@ -105,6 +111,12 @@ describe('timesConsistent, on a day and its time written on two lines', () => {
 });
 
 describe('timesConsistent, on lines it does not compare', () => {
+  it('does not read a break time under a day line', () => {
+    const lines = ['일시: 11월 12일(목) 15:00~17:00', '날짜: 11월 12일(목)', '휴식 시간: 16:00~16:10'];
+
+    expect(failingOne(lines, '2026-11-12T15:00', '2026-11-12T17:00')).toEqual([]);
+  });
+
   it('does not read a running order under a day line', () => {
     const lines = [
       '일시: 11월 12일(목) 15:00~17:00',

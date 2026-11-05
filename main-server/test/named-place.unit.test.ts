@@ -158,6 +158,14 @@ describe('namedPlace, on a text that names no Place for certain', () => {
     expect(named(text)).toBeNull();
   });
 
+  it("a generic name after another facility's name, with the university's name → no Place", () => {
+    expect(named('서울대 앞 한빛스포츠센터 체육관')).toBeNull();
+  });
+
+  it("a generic name with the university's name and its campus → that Place", () => {
+    expect(named('서울대학교 관악캠퍼스 내 체육관')).toEqual({ number: '71', name: '체육관' });
+  });
+
   it.each(['온라인 (Zoom)', '비대면 화상 강의'])('an online event, %s → no Place', (text) => {
     expect(named(text)).toBeNull();
   });

@@ -63,6 +63,9 @@ const GENERIC_PLACE_NAMES = new Set([
   'SK텔레콤',
 ]);
 
+// Words that place the campus, not another facility: "서울대학교 관악캠퍼스 내 체육관".
+const AROUND = /캠퍼스|내|안/gu;
+
 // A room as a place writes it beside a building's name.
 const ROOM_NAME = /(?:대|소)?강당|강의실|세미나실|회의실|로비/gu;
 
@@ -175,9 +178,16 @@ function restOf(part: Span, name: Span, text: string): string {
   return `${before} ${after}`.replaceAll(CAMPUS, '').replaceAll(ROOM_NAME, '');
 }
 
-// Where the campus is assumed, a generic name says nothing more than the campus does unless it is all the part writes.
+// A generic name after another facility's name is that facility's: "OO스포츠센터 체육관". Where the campus is assumed,
+// it says nothing more than the campus does unless it is all the part writes.
 function standsAlone(part: Span, names: NameMention[], text: string, assumed: boolean): boolean {
-  return !assumed || names.every((name) => !name.generic || ROOM_ONLY.test(restOf(part, name, text)));
+  return names.every((name) => {
+    if (!name.generic) {
+      return true;
+    }
+    const before = text.slice(part.start, name.start).replaceAll(CAMPUS, '');
+    return assumed ? ROOM_ONLY.test(restOf(part, name, text)) : !/\p{L}/u.test(before.replaceAll(AROUND, ''));
+  });
 }
 
 // The Places a part names, none when it names nowhere to go, or null when it names one the list does not hold, two that
@@ -220,8 +230,8 @@ export function namedPlace(
   }
   const names = nameMentions(text, places);
   const numbers = [...text.matchAll(NUMBER)].map(({ index, 1: number }) => ({ start: index, number }));
-  const written = ON_CAMPUS.test(text);
-  const assumed = !written && campusDefault === 'gwanak';
+  const namesCampus = ON_CAMPUS.test(text);
+  const assumed = !namesCampus && campusDefault === 'gwanak';
   const named = new Map<string, PlaceDto>();
   for (const part of parts(text, names)) {
     const within = ({ start: at }: { start: number }): boolean => part.start <= at && at < part.end;
@@ -229,7 +239,7 @@ export function namedPlace(
     const partNames = names.filter((mention) => within(mention));
     const found =
       partNumbers.length > 0 || standsAlone(part, partNames, text, assumed)
-        ? partPlaces(text.slice(part.start, part.end), partNumbers, partNames, places, written || assumed)
+        ? partPlaces(text.slice(part.start, part.end), partNumbers, partNames, places, namesCampus || assumed)
         : null;
     if (found === null) {
       return null;

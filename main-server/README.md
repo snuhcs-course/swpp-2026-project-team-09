@@ -734,24 +734,24 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again, and runs outside any transaction, after the Collection's
   answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit. `judgement-model.ts` calls the
   model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
-- **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is in
-  the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
+- **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is
+  in the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
   application period, the start is before the end, it has a time of day, it lasts at most 24 hours and ends where a time
   line that runs across days ends, the place is in its lines and names exactly one Place on a line that names nowhere
   else, it is not a session the rules or the same answer already gave, and no line of the post gives its day another
   time (`timesConsistent`, `times-consistent.ts`). On a Source whose `campusDefault` is `gwanak` (both are,
-  `post-sources.ts`), a place that names no other campus, hospital, university, district or flat is read on Gwanak, as if
-  it wrote 서울대학교: `301동 2층 세미나실` is 301동 and `문화관 로비` 문화관. A name that other institutions use too
+  `post-sources.ts`), a place that names no other campus, hospital, university, district or flat is read on Gwanak, as
+  if it wrote 서울대학교: `301동 2층 세미나실` is 301동 and `문화관 로비` 문화관. A name that other institutions use too
   (`GENERIC_PLACE_NAMES` in `named-place.ts`, such as 체육관 or 미술관) is then matched only when the place writes nothing
-  else but a floor or a room: `체육관 2층` is 71동, and `OO구민체육센터 2층 체육관` no Place. `timesConsistent` reads every
-  line that writes a day with a time, its start and any end, and a time field under a line of a day alone
-  (`일시: 11월 3일` above `시간: 19:00 ~ 21:00`) as one line; any other line with a time and no day, such as a running
-  order, and an application period are not read, and extra.snu's `[n회차]` line only for session n (the number of the line its
-  start is quoted from, or else its place in the answer). It fails when a line for the session's day writes another
-  start, or another end; a line with a start alone leaves the end to one that has it, and `오후 2시` is `14:00`. A
-  session read as running over a period needs no time of day and may last longer than 24 hours, but it must end on two
-  different days, with one quoted line holding both of them. The lines' ranges may be written with `~`, `부터` or a
-  hyphen.
+  else but a floor or a room: `체육관 2층` is 71동, and `OO구민체육센터 2층 체육관` no Place. After another facility's name it is never
+  matched, 서울대 or not. `timesConsistent` reads every line that writes a day with a time, its start and any end, and a
+  time field under a line of a day alone (`일시: 11월 3일` above `시간: 19:00 ~ 21:00`) as one line; any other line with a
+  time and no day, such as a running order, and an application period are not read, and extra.snu's `[n회차]` line only
+  for session n (the number of the line its start is quoted from, or else its place in the answer). It fails when a line
+  for the session's day writes another start, or another end, and not the session's among the times it lists; a line
+  with a start alone leaves the end to one that has it, and `오후 2시` is `14:00`. A session read as running over a period
+  needs no time of day and may last longer than 24 hours, but it must end on two different days, with one quoted line
+  holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
   taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
   post. A post called no event stays as it is, with the outcome `no_event`. A session over a period whose end is a day
@@ -759,8 +759,9 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   it stays listed through its last day and its card names that day. Failing sessions are never published
   (`session-verdict.ts`,
   [ADR 0014](../docs/adr/0014-a-session-whose-place-fails-is-still-compared-as-the-same-event.md)):
-  - one that fails only `length`, `placeInLines`, `placeMatches` or `timesConsistent` (a named list, so a check added
-    later, as `timesConsistent` was, only stops publication) is compared with the events that exist, its place given to the AI as written. It is attached only when
+  - one that fails only `length`, `placeInLines`, `placeMatches` or `timesConsistent` is compared with the events that
+    exist, its place given to the AI as written. The checks it needs are a named list, which `timesConsistent` is
+    outside of, so that a check added later only stops publication. It is attached only when
     its normalised title and start equal the event's (`attachedBy` `rule`, reason `equal_title_and_start_without_place`),
     or when the AI answers `same`, the starts are equal to the minute and one normalised title holds the other
     (`attachedBy` `ai`, reason `same_minute_and_contained_title`; the AI's sentence stays in `same_event_answers`).

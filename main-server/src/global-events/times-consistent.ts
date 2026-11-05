@@ -27,8 +27,9 @@ export function sessionNumber({ lines: quoted }: AnsweredSession, position: numb
   return carried === undefined ? position + 1 : Number(carried);
 }
 
-// A line that gives the time as a field, "시간: 19:00 ~ 21:00" or "진행 시간: …", not an item of a running order.
-const TIME_FIELD = /^[\s\-*·•※■□●○▶>]*(?:[가-힣]{1,4}\s*)?(?:시간|time)\s*[:：]/iu;
+// A line that gives the time as a field, "시간: 19:00 ~ 21:00" or "진행 시간: …", not an item of a running order, nor
+// "휴식 시간: …".
+const TIME_FIELD = /^[\s\-*·•※■□●○▶>]*(?:(?:진행|행사|강의|교육|수업|활동|운영)\s*)?(?:시간|time)\s*[:：]/iu;
 
 // The line as read: a time field under a line of a day alone is read after that day.
 function readLine(lines: string[], index: number): string {
@@ -42,10 +43,10 @@ function agrees(written: WrittenClock, clock: JudgedTime['clock']): boolean {
   return clock === null || (written.minute === clock.minute && written.hours.includes(clock.hour));
 }
 
-// Fails when a line for the session's day writes another start, or another end. A line with a start alone leaves the
-// end to the line that has one, and "오후 2시" is 14:00.
+// Fails when a line for the session's day writes another start, or another end, and not the session's among the times it
+// lists for that day. A line with a start alone leaves the end to the line that has one, and "오후 2시" is 14:00.
 export function timesConsistent(
-  number: number,
+  ownNumber: number,
   start: JudgedTime | null,
   end: JudgedTime | null,
   lines: string[],
@@ -57,15 +58,17 @@ export function timesConsistent(
   return lines.every((_, index) => {
     const line = readLine(lines, index);
     const numbered = SESSION_LINE.exec(line);
-    if (
-      (numbered !== null && Number(numbered[1]) !== number) ||
-      isApplicationAt(lines, index) ||
-      APPLICATION.test(line)
-    ) {
+    // A line read with the one above may hold that line's application label.
+    const isApplication = isApplicationAt(lines, index) || APPLICATION.test(line);
+    if ((numbered !== null && Number(numbered[1]) !== ownNumber) || isApplication) {
       return true;
     }
-    return writtenTimes(line)
-      .filter(({ day }) => isWrittenDay(day, start, now))
-      .every((time) => agrees(time.start, start.clock) && (time.end === null || agrees(time.end, end?.clock ?? null)));
+    const times = writtenTimes(line).filter(({ day }) => isWrittenDay(day, start, now));
+    return (
+      times.length === 0 ||
+      times.some(
+        (time) => agrees(time.start, start.clock) && (time.end === null || agrees(time.end, end?.clock ?? null)),
+      )
+    );
   });
 }

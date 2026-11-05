@@ -217,9 +217,23 @@ export interface WrittenTime {
   end: WrittenClock | null;
 }
 
-// The times a line writes after its days: "11월 5일 14:00~16:00", "11/5 10:00 ~ 11/7 18:00", "11/5 14시, 11/6 15시". A
-// clock before a range mark that a day follows starts a range whose end is the next day's first clock. A clock with no
-// day before it is not read.
+// The times a day's part of a line writes: each clock starts one, and a clock a range mark joins to it ends it.
+function timesOf(day: WrittenDay, clocks: (WrittenClock & { endsRange: boolean })[]): WrittenTime[] {
+  const times: WrittenTime[] = [];
+  for (const clock of clocks) {
+    const last = times.at(-1);
+    if (clock.endsRange && last !== undefined && last.end === null) {
+      last.end = clock;
+    } else {
+      times.push({ day, start: clock, end: null });
+    }
+  }
+  return times;
+}
+
+// The times a line writes after its days: "11월 5일 14:00~16:00", "11/5 10:00 ~ 11/7 18:00", "11/5 14:00~16:00,
+// 17:00~18:00". A clock before a range mark that a day follows starts a range whose end is the next day's first clock. A
+// clock with no day before it is not read.
 export function writtenTimes(written: string): WrittenTime[] {
   const line = withoutListNumber(written);
   const days = [...line.matchAll(DAY)];
@@ -233,15 +247,11 @@ export function writtenTimes(written: string): WrittenTime[] {
       times.push({ ...open, end: clocks.shift() ?? null });
       open = null;
     }
-    const day = dayOf(match);
-    const [first, second] = clocks;
-    if (first === undefined) {
-      continue;
-    }
-    if (next !== undefined && clocks.length === 1 && THEN_TO.test(between)) {
-      open = { day, start: first };
+    const [first] = clocks;
+    if (first !== undefined && next !== undefined && clocks.length === 1 && THEN_TO.test(between)) {
+      open = { day: dayOf(match), start: first };
     } else {
-      times.push({ day, start: first, end: second !== undefined && second.endsRange ? second : null });
+      times.push(...timesOf(dayOf(match), clocks));
     }
   }
   return times;

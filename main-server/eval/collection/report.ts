@@ -6,6 +6,7 @@
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { type CampusDefault } from '../../src/global-events/named-place.js';
 import { type Tokens } from '../cost.ts';
 import { type RunName, type RunOutcome, type RunScore } from './run.ts';
 import { type FieldScore, type Rate, type ScoreA } from './score-a.ts';
@@ -30,7 +31,7 @@ export interface RunRecord {
   modelsAnswered: string[];
   limits: { timeoutMs: number; maxOutputTokens: number };
   switches: Record<string, boolean | string>;
-  campusDefault: Record<string, string | null>;
+  campusDefault: Record<string, CampusDefault>;
   checks: readonly string[];
   from: string | null;
   usage: { calls: number; tokens: Tokens; costUsd: number };
