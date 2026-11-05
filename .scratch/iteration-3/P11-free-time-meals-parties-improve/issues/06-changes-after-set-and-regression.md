@@ -23,20 +23,31 @@ It works on ticket 04's branch.
 
 ### The after set
 
-- [ ] At the branch's final code, with the before set's settings and ticket 04's run checks and budget rule: the P4 suite once, the holdout once, and P19 three times at 1,000 output tokens.
+- [x] At the branch's final code, with the before set's settings and ticket 04's run checks and budget rule: the P4 suite once, the holdout once, and P19 three times at 1,000 output tokens.
 - [x] **The P4 suite:** each threshold's pass or fail, overall and per category, and the 6 layer rates, before and after, in `record.md`.
-- [ ] **The holdout:** only its pass rate and layer rates are read, beside those of the same 12 fixed-set cases in the same run. No holdout failure is opened until P11 is over.
+- [x] **The holdout:** only its pass rate and layer rates are read, beside those of the same 12 fixed-set cases in the same run. No holdout failure is opened until P11 is over.
 - [x] **The regression:** the after set's P19 runs against R0's (`28c0ce1`, 1,000 output tokens) by the frozen rule.
   - A case that newly fails is charged to another task when it also fails in at least 2 of X's 3 runs.
   - A case that newly fails because of P11's code is recorded as a fail, with its cause, for P20.
   - `compound-menus-and-shuttle` and `follow-up-seven-oclock` are read again, and if they still newly fail they are recorded as fails with their cause.
 - [x] If ADR 0009's condition holds, regressions or worse tool choice left after the prompt is fixed, `record.md` gets one line saying a router is reconsidered in iteration 4. Otherwise nothing is written.
-- [ ] The after set's result files are committed, and `record.md` gets their entries as for the before set.
+- [x] The after set's result files are committed, and `record.md` gets their entries as for the before set.
 - [x] **P04 ticket 05's "After the change: regression"** is ticked: recorded from R0 and R0p by ticket 06 of P04, and read again here.
 
 ### The pull request
 
-- [ ] After the after set, the branch merges `3.0/Main`, and `record.md` says what came in.
+- [x] After the after set, the branch merges `3.0/Main`, and `record.md` says what came in.
 - [ ] One pull request for tickets 04 to 06 goes into `3.0/Main`.
 
 ## Comments
+
+Changes 1 to 4 ran, and only change 1 was kept; the after set ran at `bf738eb8`, whose code is change 1's. The after set's holdout has not run: it would take P11's runs over the USD 10 the PM approved, so it waits for the PM. Until it runs, the branch does not merge `3.0/Main` and the pull request is not opened. Everything is in [`record.md`](../../../../main-server/eval/p4/record.md#the-changes).
+
+Later on 2026-11-05 the PM approved the holdout. It ran at `55d882bc`, whose code is change 1's: 27/36 (75.0%), against 26/36 for the same 12 fixed-set cases, for USD 0.3128, which took P11's runs to USD 10.1710. The branch then merged `3.0/Main`, which was still at X, so nothing came in.
+
+### Agent usage (2026-11-05)
+
+- **Agent time** (estimate): about 80 minutes: about 70 of the orchestrating session on this ticket, and about 10 for the two reviewers. The real-model runs of the changes and the after set took about 85 minutes, 04:29 to 05:59 KST, within that session's time. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the transcripts, up to 06:10 KST): the orchestrating session's for all of P11, counted once here, and this ticket's two reviewers.
+  - Input: 548 not cached, 61,270,676 cache reads and 663,895 cache writes.
+  - Output: 207,341.

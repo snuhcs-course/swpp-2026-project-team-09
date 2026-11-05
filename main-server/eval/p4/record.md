@@ -138,7 +138,7 @@ Across these five runs of the same 40 cases, the pass rate moved between 67.5% a
 
 ### The after set, at the branch's final code
 
-The final code is change 1's: the set ran at `bf738eb8`, whose code equals `1966d8e1`'s, changes 2 to 4 being reverted.
+The final code is change 1's: the set ran at `bf738eb8` and its holdout at `55d882bc`, whose code equals `1966d8e1`'s, changes 2 to 4 being reverted. The commits after `bf738eb8` change only this record, the tickets and result files.
 
 #### The P4 suite
 
@@ -188,7 +188,30 @@ Run 2 had one ERROR, an HTTP 503 in `compound-proposal-two-friends-place-event`,
 
 #### The holdout
 
-Not run yet. P11's runs so far cost USD 9.8582 by the scorecards: USD 2.9966 for the before set, USD 4.1801 for the four changes' runs and USD 2.6815 for the after set without its holdout, and the holdout, about USD 0.34, would take them over the USD 10 the PM approved, so it waits for the PM. The same 12 cases in this set's P4 run, to set beside it: 26/36 (72.2%); 공강 파티 5/12, 공강에 밥 10/12, 공통 11/12; Action 35/36, Tools 35/36, Arguments 36/36, Cards and map buttons 32/33, Proposal 3/3, Words 23/33.
+| Item        | Value                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| Date        | 2026-11-05, 09:44–09:48 KST                                                                      |
+| Commit      | `55d882bc`                                                                                       |
+| Command     | `pnpm eval:holdout --model anthropic/claude-haiku-5.5 --budget 0.6 --yes`                        |
+| Result file | `2026-11-05-55d882bc-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault-holdout` |
+| Usage       | 36 turns; input 2,984,619, output 28,697; USD 0.3128                                             |
+
+Beside the same 12 cases in this set's P4 run, read as for the before set, and the before set's holdout:
+
+| Measure               | Holdout, after | Same 12 fixed-set cases, after | Holdout, before |
+| --------------------- | -------------- | ------------------------------ | --------------- |
+| Overall               | 27/36 (75.0%)  | 26/36 (72.2%)                  | 23/36 (63.9%)   |
+| free-time-parties     | 6/12 (50.0%)   | 5/12 (41.7%)                   | 4/12 (33.3%)    |
+| free-time-meals       | 9/12 (75.0%)   | 10/12 (83.3%)                  | 9/12 (75.0%)    |
+| free-time-common      | 12/12 (100.0%) | 11/12 (91.7%)                  | 10/12 (83.3%)   |
+| Action                | 36/36 (100.0%) | 35/36 (97.2%)                  | 36/36 (100.0%)  |
+| Tools                 | 33/36 (91.7%)  | 35/36 (97.2%)                  | 35/36 (97.2%)   |
+| Arguments             | 34/36 (94.4%)  | 36/36 (100.0%)                 | 35/36 (97.2%)   |
+| Cards and map buttons | 30/33 (90.9%)  | 32/33 (97.0%)                  | 30/33 (90.9%)   |
+| Proposal              | 3/3 (100.0%)   | 3/3 (100.0%)                   | 3/3 (100.0%)    |
+| Words                 | 24/33 (72.7%)  | 23/33 (69.7%)                  | 22/33 (66.7%)   |
+
+The holdout would take P11's runs over the USD 10 the PM had approved, and the PM approved running it on 2026-11-05. P11's runs cost USD 10.1710 by the scorecards: USD 2.9966 for the before set, USD 4.1801 for the four changes' runs and USD 2.9943 for the after set.
 
 #### The regression
 
@@ -212,6 +235,10 @@ Read by the frozen rule: the after set's three P19 runs against R0's three (`28c
 **`follow-up-seven-oclock` still newly fails**, for the same cause as at P04: the Proposal is right at 19:00, and the 2 failed runs move the time without the words 오전, 아침 or 07:00 that check it against the morning.
 
 Regressions remain after the prompt was changed, so by ADR 0009 a router is reconsidered in iteration 4.
+
+### Merging `3.0/Main`
+
+After the after set, at 09:48 KST on 2026-11-05, the branch merged `3.0/Main`. Its tip was still X, so nothing came in.
 
 ### Smoke run, not scored
 
