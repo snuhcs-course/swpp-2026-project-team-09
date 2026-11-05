@@ -10,18 +10,19 @@ Spec: `../spec.md`, "Measurement".
 
 **Blocked by:**
 
-- **The before set:** none. It runs at X as soon as X exists.
+- **The before set:** #204 merging, so that `p12-x` exists. It runs at `p12-x` as soon as the tag exists, while the tickets may still be in progress.
 - **The after set:** 01, 02, 03, 04 and 05, each done on its own branch with its PR open.
 
 ## Starting point
 
-- X is `3.0/Main` with `origin/3.0/P11-04-chat` (#204, head `4b2097cb`) merged locally. Each of 01–05 has its own branch from X and its own PR to `3.0/Main`, built at the same time in separate sessions. The after set runs on a merge of the five branches, pushed as `3.0/P12-after-set` with no PR, and the ticket PRs merge only after it is recorded.
-- When #204 merges, Main is merged into each ticket branch: no rebase, no force push. If #204 changes in review, the difference is recorded here.
+- X is the `3.0/Main` commit that holds #204 and the P12 spec, tagged `p12-x` and pushed when #204 merges. If 01–05 are done first, X is `3.0/Main` with #204's head merged locally, tagged the same way. Before tagging, check that A01-01, #169 and #170 did not land before it; if one did, ask the owner.
+- Each of 01–05 has its own branch from `3.0/Main` after the spec merges, and its own PR to `3.0/Main`, built at the same time in separate sessions. Once `p12-x` exists, each branch merges `p12-x` and nothing newer. No rebase, no force push.
+- The after set runs on a merge of the five branches, pushed as `3.0/P12-after-set` with no PR, and the ticket PRs merge only after it is recorded.
 - A01 and P07 are not taken in until the after set is done. The order with the other work in flight is the spec's (Further Notes): P12's sets before A01-01, #169 and #170 merge; P12 merges after #204's after set is recorded; A01-03's baseline after P12 merges; P13's R2 and R3 with no P12 change between them.
 
 ## Acceptance criteria
 
-- [ ] **Before set** at X, after cost approval (about USD 4.3, about 1 h 10 min):
+- [ ] **Before set** at `p12-x`, after cost approval (about USD 4.3, about 1 h 10 min):
   - C and D in the small world;
   - C and D in the large world;
   - P19 three times.

@@ -198,12 +198,12 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 
 ### Measurement
 
-- **Starting point X.** X is `3.0/Main` with `3.0/P11-04-chat` (#204, head `4b2097cb`) merged locally.
-  - **One branch and one PR per ticket.** Tickets 01–05 are built at the same time, each in its own session, on its own branch from X (`3.0/P12-NN-<slug>`). Each opens its own PR to `3.0/Main`.
+- **Starting point X.** X is the `3.0/Main` commit that holds #204 (P11-04) and this spec, tagged `p12-x`. It is tagged when #204 merges, which may be while the tickets are being built. If 01–05 are done and #204 has not merged, X is `3.0/Main` with #204's head merged locally, tagged the same way. Before tagging, check that A01-01, #169 and #170 did not land before it; if one did, ask the owner.
+  - **One branch and one PR per ticket.** Tickets 01–05 are built at the same time, each in its own session, on its own branch (`3.0/P12-NN-<slug>`) from `3.0/Main` as it is after this spec merges. Each opens its own PR to `3.0/Main`. Once `p12-x` exists, each branch merges `p12-x`, and nothing newer from `3.0/Main`, until the after set is recorded.
   - Heavy jobs (builds, integration tests, Docker) still run one at a time across those sessions, so each session takes a shared lock before one and releases it after.
-  - The after set runs on a merge of the five ticket branches at X, pushed as the branch `3.0/P12-after-set` with no PR, and its head is recorded with the run (metrics 4.3), so that anyone can rebuild the after set. The branch is deleted once the ticket PRs land. The ticket PRs merge only after the after set is recorded, so that nothing of P12 reaches `3.0/Main` before it is measured.
+  - The after set runs on a merge of the five ticket branches, each holding `p12-x`, pushed as the branch `3.0/P12-after-set` with no PR, and its head is recorded with the run (metrics 4.3), so that anyone can rebuild the after set. The branch is deleted once the ticket PRs land. The ticket PRs merge only after the after set is recorded, so that nothing of P12 reaches `3.0/Main` before it is measured.
   - The ticket PRs may change in review after the run. Ticket 06 records any difference between the measured merge and what lands on `3.0/Main`, as for #204.
-  - When #204 merges, Main is merged into each ticket branch: no rebase, no force push.
+  - No rebase and no force push. After the after set, each ticket branch merges `3.0/Main` as its PR needs.
   - A01 and P07 are not taken in until the after set is done.
   - If #204 changes in review, the difference is recorded. A PR opened before #204 merges says it contains P11's commits.
 - **Before set.**
