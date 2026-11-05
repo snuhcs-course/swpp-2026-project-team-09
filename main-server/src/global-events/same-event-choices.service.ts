@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -23,10 +24,12 @@ import {
 import { matchAmong, candidatesLeft, sameEventCandidates, type ComparedSession } from './same-event.js';
 import { chooseSameEvent, type SessionToCompare } from './same-event-choice.js';
 import { awaitsComparison } from './session-settling.js';
+import { verdictOf } from './session-verdict.js';
 
 type PostToAsk = PostWithOwnSessions & { judgement: Judgement | null };
 
-// The sessions of a post that the rules read and those a Judgement passed, that the step has not settled.
+// The sessions of a post that the rules read and those of a Judgement the step compares, that it has not settled. A
+// Judgement's session is given with its place as written.
 function sessionsOf(post: PostToAsk, judgedOnly: boolean): (ComparedSession & { place: string | null })[] {
   const byRules = post.sessions.flatMap((session) => {
     const { title, startsAt, place } = session.globalEvent;
@@ -41,10 +44,12 @@ function sessionsOf(post: PostToAsk, judgedOnly: boolean): (ComparedSession & { 
     return byRules;
   }
   const title = post.sessions[0]?.globalEvent.title ?? '';
-  const byJudgement = [...placedOfPost(post, storedSessions(judgement.sessions)).keys()].flatMap(({ start, place }) => {
-    const startsAt = readJudgedTime(start ?? '')?.at;
-    return startsAt === undefined ? [] : [{ title, startsAt, place }];
-  });
+  const byJudgement = [...placedOfPost(post, storedSessions(judgement.sessions)).keys()].flatMap(
+    ({ start, place, checks }) => {
+      const startsAt = readJudgedTime(start ?? '')?.at;
+      return startsAt === undefined || !verdictOf(checks).comparable ? [] : [{ title, startsAt, place }];
+    },
+  );
   return [...byRules, ...byJudgement];
 }
 

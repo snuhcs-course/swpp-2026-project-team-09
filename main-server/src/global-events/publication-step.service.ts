@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -36,11 +37,14 @@ import { attachLinked } from './same-event.js';
 import { SameEventChoicesService } from './same-event-choices.service.js';
 import {
   createDraft,
+  draftValues,
   publishedValues,
   settleJudgedSession,
   settleReadByRules,
-  type StepSwitches,
+  settleUnpublishedSession,
 } from './session-settling.js';
+import { type StepSwitches } from './session-comparison.js';
+import { verdictOf } from './session-verdict.js';
 import { withStepLock } from './step-lock.js';
 
 // The step after a Collection's answer, which the worker waits for only five seconds. For each post: the link rule, then
@@ -220,9 +224,10 @@ export class PublicationStepService {
   }
 
   // Compares the passing sessions of the post's Judgement with the events, and publishes those left, once. Those attached
-  // with automatic publication off keep their event, so a later run over the Draft takes up only the rest. Nothing,
-  // should an Administrator have changed any of the post's events while the model read it: they may have split off a
-  // session the answer holds too.
+  // with automatic publication off keep their event, so a later run over the Draft takes up only the rest. A session
+  // whose place or length failed is compared too, and attached or held, never published; one that the checks of its time
+  // or of its place pass fills its Draft. Nothing, should an Administrator have changed any of the post's events while
+  // the model read it: they may have split off a session the answer holds too.
   private async settleJudged(tx: Prisma.TransactionClient, sourcePostId: string): Promise<boolean> {
     const post = await tx.sourcePost.findUniqueOrThrow({ where: { id: sourcePostId }, include: WITH_OWN_SESSIONS });
     const judgement = await tx.judgement.findUnique({ where: { sourcePostId } });
@@ -248,17 +253,26 @@ export class PublicationStepService {
     for (const session of sessions) {
       const place = places.get(session.placeId ?? '');
       const draftId = placed.get(session);
-      if (place === undefined || draftId === undefined) {
+      const verdict = verdictOf(session.checks);
+      const draft = drafts.find(({ globalEventId }) => globalEventId === draftId);
+      const toSettle = { post, draft, number, switches: this.switches };
+      const settles = draftId !== undefined && (!verdict.publishable || place !== undefined);
+      if (!settles) {
         written.push(session);
-      } else {
-        const draft = drafts.find(({ globalEventId }) => globalEventId === draftId);
+      } else if (verdict.publishable && place !== undefined) {
         const values = publishedValues(session, place);
         // oxlint-disable-next-line no-await-in-loop -- one transaction runs one statement at a time
-        const settled = await settleJudgedSession(tx, { post, draft, number, values, switches: this.switches });
-        number += draft === undefined ? 1 : 0;
+        const settled = await settleJudgedSession(tx, { ...toSettle, values });
         published = published || settled.published;
         written.push({ ...session, globalEventId: settled.globalEventId });
+      } else {
+        const values = draftValues(session, verdict, place, draft?.globalEvent);
+        const { comparable } = verdict;
+        // oxlint-disable-next-line no-await-in-loop -- as above
+        const globalEventId = await settleUnpublishedSession(tx, { ...toSettle, values, comparable });
+        written.push({ ...session, globalEventId });
       }
+      number += settles && draft === undefined ? 1 : 0;
     }
     await this.keepLeftSessions(tx, post, written, places, number);
     await tx.judgement.update({ where: { sourcePostId }, data: { sessions: written } });

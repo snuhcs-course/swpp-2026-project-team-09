@@ -3,9 +3,10 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { APPLICATION } from '../../src/global-events/judgement-checks.js';
+import { APPLICATION } from '../../src/global-events/application-lines.js';
 import { isWrittenDay, readJudgedTime, writtenDays } from '../../src/global-events/judgement-time.js';
 import { type GoldPost, type GoldSession } from './gold.ts';
 import { isMalformedAnswer } from './model-calls.ts';

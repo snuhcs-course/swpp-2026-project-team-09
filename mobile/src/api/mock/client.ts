@@ -9,6 +9,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -29,6 +30,7 @@ import { mockFriendships as friendships } from './friendships';
 import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
+import { STUDY_BUILDINGS } from './data/study-spaces';
 import { mockRoom } from './room';
 import { mockTutorial } from './tutorial';
 import { mockWalkingRoute } from './walking-route';
@@ -195,6 +197,7 @@ export const mockClient: ApiClient = {
   listMenus: (date) => answer('listMenus', () => MENUS[date] ?? [], []),
   getShuttle: () => answer('getShuttle', () => SHUTTLE),
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
+  listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
   askAssistant: (messages) => answer('askAssistant', () => mockAssistantReply(messages)),
   ...mockRoom,
   ...mockParty,

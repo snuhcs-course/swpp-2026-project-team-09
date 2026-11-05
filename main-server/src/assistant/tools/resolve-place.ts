@@ -4,6 +4,8 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -37,6 +39,9 @@ export function resolvePlace(matcher: PlaceMatcher): Tool {
         `No Place is named ${words}, has the building number ${words} or is shortened to ${words}.`,
       );
       found.add('place', givenIds(answer));
+      if (answer.result === 'one') {
+        found.addResolvedPlace(answer.candidate);
+      }
       return Promise.resolve(answer);
     },
   });

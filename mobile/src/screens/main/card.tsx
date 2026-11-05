@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -14,6 +15,7 @@ import { Avatar, Button, color, font, Icon, type IconName, radius, shadow, space
 import type { CardMark, CardView } from '@/features/map/adapter';
 import { Choices, GroupMark } from './card-choices';
 import { CARD } from './layout';
+import { StudyRows } from './study-rows';
 
 export const LOOK_CLOSER = '가까이 보기';
 
@@ -41,6 +43,7 @@ const PLACE: Record<Extract<CardMark, { type: 'place' }>['place'], { tint: strin
   quest: { tint: color.quest, icon: 'flag' },
   dining: { tint: color.svcDining, icon: 'meal' },
   shuttle: { tint: color.svcShuttle, icon: 'bus' },
+  library: { tint: color.svcStudy, icon: 'book' },
 };
 
 // What stands at the card's head: a person's Avatar, with the status for a Friend, the place's icon on a round of its
@@ -60,7 +63,13 @@ function Leading({ mark }: { mark: CardMark }): ReactElement {
   }
   const { tint, icon } = PLACE[mark.place];
   return (
-    <View style={[styles.round, mark.place === 'dining' && styles.service, { backgroundColor: tint }]}>
+    <View
+      style={[
+        styles.round,
+        (mark.place === 'dining' || mark.place === 'library') && styles.service,
+        { backgroundColor: tint },
+      ]}
+    >
       <Icon color={color.onPrimary} name={icon} size={20} />
     </View>
   );
@@ -131,6 +140,7 @@ export function Card({
           ))}
         </View>
       )}
+      {card.study === undefined ? null : <StudyRows key={`study:${card.id}`} study={card.study} />}
       <Choices card={card} key={card.id} onChoose={onChoose} />
       <View style={styles.buttons}>
         {canLookCloser ? (
