@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
+import { type Hit, type SearchCounts } from '../../common/search-sql.js';
 import { type FoundIds } from '../found-ids.js';
 
 // What both search tools give the model and take from it: the most candidates, the characters of a description that
@@ -43,4 +44,21 @@ export function placeNote(
     .map(({ id, name, number }) => `${name}${number === null ? '' : ` (${number}동)`}, placeId ${id}`)
     .join('; ');
   return { note: how(named) };
+}
+
+// What a candidate tells of why it was found: the words it holds when words were given, and how it falls in the window
+// when one was asked.
+export function whyFound({ matched, window }: Omit<Hit, 'id'>, words: readonly string[] = []): object {
+  return { ...(words.length === 0 ? {} : { matched }), ...(window === null ? {} : { window }) };
+}
+
+// What a search adds when it found more than it gives: how many it found, and how many of them a Board, a day or a word
+// would keep. Counts that would not tell anything are left out.
+const some = (counts: Record<string, number>): boolean => Object.keys(counts).length > 0;
+
+export function narrowing({ total, board, day, word }: SearchCounts): object {
+  return {
+    total,
+    narrowBy: { ...(some(board) ? { board } : {}), ...(some(day) ? { day } : {}), ...(some(word) ? { word } : {}) },
+  };
 }
