@@ -153,7 +153,8 @@ servers' own `.env.example` files.
 `MATCH_DB_PASSWORD`, the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, `WORKER_TOKEN`
 and `MATCH_SERVER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
 `PUBLIC_URL` (the Dev Server's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug
-key's, which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS` and `EXTRA_SNU_COLLECTION=off`.
+key's, which signs the dev APK), `MODEL_PROVIDER=anthropic`, `ANTHROPIC_MODEL`, `ASSISTANT_MODEL`,
+`ROUND_INTERVAL_SECONDS` and `EXTRA_SNU_COLLECTION=off`.
 
 **Filled in by a person**, `CHANGE_ME` until then:
 
@@ -163,10 +164,16 @@ key's, which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS` and
 | `INITIAL_ADMINISTRATOR_EMAILS` | The four members' addresses they sign in to the admin site with, by commas | The members                           |
 | `DEMO_ACCOUNT_EMAILS`          | The four members' SNU addresses, separated by commas                       | The members                           |
 
-`OPENROUTER_API_KEY`, the Assistant's OpenRouter key (`main-server/.env.example` says how to make one), is left empty
-rather than `CHANGE_ME`: while it is empty, the Assistant answers that it is unavailable and everything else runs. A
-settings file written before the Assistant lacks it and `ASSISTANT_MODEL`: copy both lines from
-[`snu-now.env.example`](snu-now.env.example) and apply them as in [Changing a setting later](#changing-a-setting-later).
+`ANTHROPIC_API_KEY`, the Assistant's Anthropic key (`main-server/.env.example` says how to make one), is left empty
+rather than `CHANGE_ME`: while it is empty, the Assistant answers that it is unavailable and everything else runs. Use a
+key of its own for the Dev Server, never Production's, and never one that has been pasted into a chat.
+`OPENROUTER_API_KEY` is read only with `MODEL_PROVIDER=openrouter`, which rolls back to OpenRouter until Iteration 4
+([ADR 0013](../../docs/adr/0013-the-assistant-calls-claude-through-the-anthropic-api.md)).
+
+A settings file written before the Assistant lacks the five model lines, and one written before the Anthropic API lacks
+`MODEL_PROVIDER`, `ANTHROPIC_MODEL` and `ANTHROPIC_API_KEY`: without them the provider is `anthropic` and, with no
+Anthropic key, the Assistant is off. Copy the missing lines from [`snu-now.env.example`](snu-now.env.example) and apply
+them as in [Changing a setting later](#changing-a-setting-later).
 
 The file belongs to the team group, so any member edits it without `sudo`, for example with
 `nano /srv/team/snu-now-secrets/snu-now.env`. `grep CHANGE_ME /srv/team/snu-now-secrets/snu-now.env` prints nothing

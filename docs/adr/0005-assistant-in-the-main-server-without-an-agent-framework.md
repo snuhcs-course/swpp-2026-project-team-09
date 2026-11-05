@@ -1,6 +1,12 @@
+---
+status: accepted; its provider, OpenRouter, superseded by ADR-0013
+---
+
 # The Assistant runs in the main server on a thin model library, not on LangChain or LangGraph
 
 The Assistant (P07, Iteration 2) is a module of the main server. It calls the model through OpenRouter with the Vercel AI SDK, which runs the loop of model call, tool call and answer and nothing more. Each tool is a zod schema of its input and a plain function that calls the main server's services, and only one thin adapter registers the tools with the SDK.
+
+The provider is superseded: from Iteration 3 the model is called through the Anthropic API, not OpenRouter ([ADR 0013](0013-the-assistant-calls-claude-through-the-anthropic-api.md)). The rest of this decision stands.
 
 We chose this over LangChain or LangGraph, in a Python service or in the main server, because the Assistant's design leaves their distinctive features unused. A Quest the Assistant proposes is made by the app, after the User confirms it, along the path the party form already takes, so the server never pauses a run to wait for a person and needs no checkpointer. Conversations live on the phone and are not stored. Search narrows by fixed conditions, the server ranks what is left by the search words, and the model picks from those candidates, with no embeddings or vector store. One agent with about eight tools needs no orchestration of several. What makes the answers accurate is the tools themselves: resolvers that return candidates instead of letting the model invent ids, lookups that return only data matching the request or say there is none, and Proposals checked against the same rules as the app. A framework would send the same tool schemas to the same model. A Python service would also have had to forward each User's authentication to the main server and keep a second copy of every input shape.
 

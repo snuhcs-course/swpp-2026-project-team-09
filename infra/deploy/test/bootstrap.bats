@@ -5,6 +5,7 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-05  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Runs bootstrap.sh on a pretend machine under $BATS_TEST_TMPDIR: the team folder, systemd's unit folder and, through
@@ -15,9 +16,9 @@ CONTRACT=(
   COMPOSE_PROFILES DEPLOY_STATUS_DIR DEPLOY_APK_DIR
   POSTGRES_PASSWORD MAIN_DB_PASSWORD MATCH_DB_PASSWORD ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY WORKER_TOKEN
   MATCH_SERVER_TOKEN
-  PUBLIC_URL GOOGLE_APP_CLIENT_ID GOOGLE_ADMIN_CLIENT_ID ANDROID_CERTIFICATE_FINGERPRINTS ASSISTANT_MODEL
-  ROUND_INTERVAL_SECONDS EXTRA_SNU_COLLECTION
-  KAKAO_REST_API_KEY INITIAL_ADMINISTRATOR_EMAILS DEMO_ACCOUNT_EMAILS OPENROUTER_API_KEY
+  PUBLIC_URL GOOGLE_APP_CLIENT_ID GOOGLE_ADMIN_CLIENT_ID ANDROID_CERTIFICATE_FINGERPRINTS MODEL_PROVIDER ANTHROPIC_MODEL
+  ASSISTANT_MODEL ROUND_INTERVAL_SECONDS EXTRA_SNU_COLLECTION
+  KAKAO_REST_API_KEY INITIAL_ADMINISTRATOR_EMAILS DEMO_ACCOUNT_EMAILS ANTHROPIC_API_KEY OPENROUTER_API_KEY
 )
 
 # ls rather than stat, whose options differ between GNU and macOS.
@@ -80,7 +81,7 @@ example_value_of() {
   sed -n "s/^$1=//p" "$REPOSITORY/main-server/.env.example"
 }
 
-@test "a fresh settings file holds every variable of the contract; the generated values are present, non-empty and distinct; exactly KAKAO_REST_API_KEY, INITIAL_ADMINISTRATOR_EMAILS and DEMO_ACCOUNT_EMAILS are CHANGE_ME; PUBLIC_URL, the two Google client ids, the fingerprints and COMPOSE_PROFILES have the spec's fixed values" {
+@test "a fresh settings file holds every variable of the contract; the generated values are present, non-empty and distinct; exactly KAKAO_REST_API_KEY, INITIAL_ADMINISTRATOR_EMAILS and DEMO_ACCOUNT_EMAILS are CHANGE_ME; PUBLIC_URL, the two Google client ids, the fingerprints, COMPOSE_PROFILES and the model settings have the spec's fixed values, and both model keys are empty" {
   bootstrap
 
   [ "$(grep -v -e '^#' -e '^$' "$SETTINGS" | sed 's/=.*//' | sort)" = "$(printf '%s\n' "${CONTRACT[@]}" | sort)" ]
@@ -107,6 +108,11 @@ example_value_of() {
   [ "$(value_of DEPLOY_APK_DIR)" = "$BOOTSTRAP_TEAM_DIR/snu-now-apk" ]
   [ "$(value_of ROUND_INTERVAL_SECONDS)" = 60 ]
   [ "$(value_of EXTRA_SNU_COLLECTION)" = off ]
+  [ "$(value_of MODEL_PROVIDER)" = anthropic ]
+  [ "$(value_of ANTHROPIC_MODEL)" = claude-haiku-5-5 ]
+  [ "$(value_of ASSISTANT_MODEL)" = anthropic/claude-haiku-5.5 ]
+  [ -z "$(value_of ANTHROPIC_API_KEY)" ]
+  [ -z "$(value_of OPENROUTER_API_KEY)" ]
 }
 
 @test "the key pair is a P-256 pair in one-line PEM form that openssl reads back as PKCS8 private and SPKI public keys, and the public key matches the private" {

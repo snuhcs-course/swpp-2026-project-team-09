@@ -5,6 +5,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-05  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -378,6 +379,7 @@ write_secrets() {
     env+=$'\n'"MATCH_SERVER_TOKEN=$(line_parameter match-server-token)" &&
     env+=$'\n'"KAKAO_REST_API_KEY=$(line_parameter kakao-rest-api-key)" &&
     env+=$'\n'"OPENROUTER_API_KEY=$(line_parameter openrouter-api-key)" &&
+    env+=$'\n'"ANTHROPIC_API_KEY=$(line_parameter anthropic-api-key)" &&
     env+=$'\n'"INITIAL_ADMINISTRATOR_EMAILS=$(line_parameter initial-administrator-emails)" &&
     private_key=$(pem_parameter access-token-private-key) &&
     public_key=$(pem_parameter access-token-public-key) || return 1

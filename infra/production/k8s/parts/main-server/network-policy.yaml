@@ -2,11 +2,13 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-11-05  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Phones reach it through the load balancer, whose addresses are in the public subnets (network.tf); the admin site, the
 # worker, and the match server call it inside the cluster. It calls Redis, the match server, the database, and, on 443,
-# Kakao, Google's sign-in keys, and OpenRouter.
+# Kakao, Google's sign-in keys, the Anthropic API, and OpenRouter. A NetworkPolicy cannot name a host, so the last rule
+# allows 443 to the whole internet.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

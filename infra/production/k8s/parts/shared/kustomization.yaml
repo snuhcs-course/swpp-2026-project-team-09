@@ -4,6 +4,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-05  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # What every target in targets/ applies besides its servers' parts. A target holds only namespaced objects, since the
@@ -27,6 +28,10 @@ configMapGenerator:
       - MAIN_SERVER_URL=http://main-server:3000
       - MATCH_SERVER_URL=http://match-server:3003
       - ROUND_INTERVAL_SECONDS=60
+      # The Assistant's and the Judgement's model, through the Anthropic API (ADR 0013). ASSISTANT_MODEL is OpenRouter's
+      # id for it, used only with MODEL_PROVIDER=openrouter, the rollback to OpenRouter until Iteration 4.
+      - MODEL_PROVIDER=anthropic
+      - ANTHROPIC_MODEL=claude-haiku-5-5
       - ASSISTANT_MODEL=anthropic/claude-haiku-5.5
       - AUTOMATIC_PUBLICATION=on
       - AUTOMATIC_JUDGEMENT=off

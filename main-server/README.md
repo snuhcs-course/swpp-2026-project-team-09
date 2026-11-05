@@ -692,7 +692,8 @@ posts of one event on two pods the second sees the first.
   A session's `globalEventId` in a Judgement is the event it was published as or attached to, or its Draft while held.
 
 - **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
-  refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`). `off` calls no model, sends nothing out and asks
+  refuses to start without the chosen provider's key and model, as [the Assistant's settings](#assistant) say). `off`
+  calls no model, sends nothing out and asks
   nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
   with candidates the refusing rules left, whether the rules read them or a Judgement passed them, it makes one call,
   outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
@@ -723,16 +724,18 @@ queue/:sessionId/publish` publishes the Draft by an Administrator's route, or an
 left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
 session the rules did not read, one post at a time, after the posts that need no model. `off` calls no model, sends no post
 out and leaves the rules' publication alone; Drafts stored meanwhile are not judged when it is turned on. With `on`, the
-server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
+server refuses to start without the chosen provider's key and model (`ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` under
+`MODEL_PROVIDER=anthropic`, `OPENROUTER_API_KEY` and `ASSISTANT_MODEL` under `openrouter`).
 
 - **What leaves the server:** the post's title and text and the Source's name, with e-mail addresses and phone numbers
   starting with 0 masked (`judgement-post.ts`), and today's date, by which the model chooses the year of a date written
   without one. The checks compare the quoted lines with the masked text.
 - **What the model answers:** whether the post announces an event, and per session the start, end, place, whether it runs
   over a period, and the lines each came from (`judgement-answer.ts`). The call is limited by `JUDGEMENT_TIMEOUT_MS` (60,000)
-  and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again, and runs outside any transaction, after the Collection's
-  answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit. `judgement-model.ts` calls the
-  model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
+  and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again beyond the one retry of a 429 or 529 that every model call
+  gets, and runs outside any transaction, after the Collection's answer. It uses the Assistant's provider, model and
+  key, so it spends from the same account. `judgement-model.ts` calls the model library itself, because the Assistant's
+  adapter runs a User's tools and stays as the chat's evaluations measured it.
 - **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is in
   the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
   application period, the start is before the end, it has a time of day, it lasts at most 24 hours and ends where a time
@@ -2078,8 +2081,10 @@ next, and its booking party goes. Consents are deleted at `booked` and at every 
 ## Assistant
 
 The Assistant ("SNU Now AI") is the chat that the main screen's input bar opens (P07). It runs in this server and calls
-its model through OpenRouter with the Vercel AI SDK
-([ADR 0005](../docs/adr/0005-assistant-in-the-main-server-without-an-agent-framework.md)).
+its model through the Anthropic API with the Vercel AI SDK
+([ADR 0005](../docs/adr/0005-assistant-in-the-main-server-without-an-agent-framework.md),
+[ADR 0013](../docs/adr/0013-the-assistant-calls-claude-through-the-anthropic-api.md)). OpenRouter stays selectable
+until Iteration 4.
 
 - `POST /assistant/messages` with a User's access token and the conversation so far, the User's new message last:
 
@@ -2140,22 +2145,28 @@ its model through OpenRouter with the Vercel AI SDK
     `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
 Proposal)`.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
-    a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
-    or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
-    message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
+    a model error, a spend limit reached (Anthropic's 400 or 429 for the account's limits, OpenRouter's 402), the time
+    running out, the step cap reached without an answer, or a run with no text and nothing to show. The server logs the
+    cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a message's text, the model's
+    answer or an error's message or body, which can hold the request sent to the model.
 
-- `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
-  `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
-  `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds
-  what one User spends, not what all of them do.
+- `MODEL_PROVIDER` chooses the path to the model: `anthropic` (the default) or `openrouter`, which rolls back to
+  OpenRouter with this one setting until Iteration 4. Each provider has its own key and model id, so one provider's id
+  is never sent to the other: `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` (`claude-haiku-5-5`) for `anthropic`,
+  `OPENROUTER_API_KEY` and `ASSISTANT_MODEL` (`anthropic/claude-haiku-5.5`) for `openrouter`. The chosen provider's key
+  may be empty, and the server starts without it; the endpoint then answers 503. `.env.example` says how to set up a
+  key. Give the account a spend limit as well (the Claude Console's **Settings** › **Limits**, or a credit limit on
+  OpenRouter): the daily limit bounds what one User spends, not what all of them do.
 - **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
   call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
-  written in each call, reasoning included (4,000). A failed model call is not retried.
+  written in each call, reasoning included (4,000). A model call that fails with 429 or 529 is sent once more within
+  the time per message, since no router fails over to another platform; no other failure is retried, nor a 429 for a
+  spend limit.
 
 The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
-- **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
-  OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
+- **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it by
+  `MODEL_PROVIDER`, to the Anthropic API or to OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
 - **Tools** (`tools/`, and `free-time/` for the 공강 tools): each is a zod schema of its input and a plain function
   calling this server's services, made with `defineTool` (`feature.ts`). It is given the signed-in User's id and the
   time of the request. A tool answers only
@@ -2287,8 +2298,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   feature with an entry point of its own gets a definition of its own that reuses tools, so that it cannot reach
   another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
-  call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
-  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
+  call, tool call and answer within the limits per message. On the Anthropic API it caches the tools and the system
+  prompt behind an explicit breakpoint and the conversation automatically (`MODEL_CACHE`: `breakpoints`, the default,
+  `auto` or `off`), and states the effort, `medium`; it sends no sampling settings. On OpenRouter it asks for providers
+  that do not collect data (`data_collection: deny`, with no ZDR restriction, which could shrink the providers
+  available). It makes the reply's
   text from the steps' text, or the fixed sentence. `causeOf` names why a run failed for the log.
 
 ### Testing with the scripted model
@@ -2299,7 +2313,7 @@ kept. A step is a tool to call with its arguments, `{ tool, input }`, with `text
 call, the text to answer, `{ text }`, a call cut at the output limit, `{ cut }`, an error to throw as the provider
 would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
-reach OpenRouter. `test/assistant.integration.test.ts` does it this way:
+reach a real model. `test/assistant.integration.test.ts` does it this way:
 
 ```ts
 const model = new ScriptedModel();
@@ -2321,22 +2335,25 @@ User or the model receives, never the prompt's wording or a real model's prose.
 ### Benchmark
 
 `pnpm eval` puts the cases of `eval/cases/` to the real model through the real server code and records what the model
-did (P19). It calls OpenRouter with the team's key in `.env`, so it costs credit: it never runs in `pnpm test` or CI,
-which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`) on the integration tests'
-machinery: Docker, fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and the clock fixed at
-2026-10-21 (수) 14:05 in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User, with the daily
-limit raised.
+did (P19). It calls the chosen provider (`MODEL_PROVIDER`, or `--provider`) with the key in `.env`, so it costs money:
+it never runs in `pnpm test` or CI, which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`)
+on the integration tests' machinery: Docker, fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and
+the clock fixed at 2026-10-21 (수) 14:05 in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User,
+with the daily limit raised.
 
 ```sh
 pnpm eval                                    # every case, at the branch's settings
 pnpm eval --category menus --case menus-today-lunch --yes
-pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --timeout 60000
+pnpm eval --provider openrouter --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --timeout 60000
+pnpm eval --cache off --repeat 1
 ```
 
 | Flag                                                   | Left out                                                                          |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `--model <OpenRouter id>`                              | `ASSISTANT_MODEL` in `.env`                                                       |
-| `--temperature`, `--top-p`                             | the provider's default (the server passes none)                                   |
+| `--provider <anthropic \| openrouter>`                 | `MODEL_PROVIDER` in `.env`, else `anthropic`                                      |
+| `--model <id>`                                         | the provider's model setting in `.env`: `ANTHROPIC_MODEL` or `ASSISTANT_MODEL`    |
+| `--cache <breakpoints \| auto \| off>`                 | `MODEL_CACHE` in `.env`, else `breakpoints`                                       |
+| `--temperature`, `--top-p`                             | the provider's default (the server passes none); `--provider openrouter` only     |
 | `--max-steps`, `--timeout <ms>`, `--max-output-tokens` | its `ASSISTANT_*` setting in `.env`, else its default in `src/common/settings.ts` |
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
@@ -2345,10 +2362,12 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
-saved run and OpenRouter's listed prices, and asks before it starts. It then starts the Vitest project with the
-options as JSON in `EVAL_RUN`. The sampling settings are applied by the recorder's model wrapper, and the limits are
-the settings given to `startApp`. During the run the tokens the model reported are summed, and the run stops past the
-budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
+saved run and the provider's listed prices (a fixed table of Anthropic's in `eval/cost.ts`, or OpenRouter's list), and
+asks before it starts. It then starts the Vitest project with the options as JSON in `EVAL_RUN`. The sampling settings
+are applied by the recorder's model wrapper, and the limits are the settings given to `startApp`. During the run the
+tokens the model reported are summed, and the run stops past the budget. The budget is an estimate; the account's spend
+limit is the hard stop. A run's record and its results directory name the provider and the caching mode, so that runs on
+the two paths are not compared without saying so.
 
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
 reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,

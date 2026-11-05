@@ -451,7 +451,7 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    done
    ```
 
-5. **The other parameters.** Put the seven parameters under `/snunow/production/` that the database's steps did not,
+5. **The other parameters.** Put the eight parameters under `/snunow/production/` that the database's steps did not,
    with Production's own values, never the Dev Server's. The key pair is stored as PEM with real line breaks. A PEM
    starts with `-`, so it goes in as `--value=...`, which the CLI cannot take for an option. `read -rs` takes a value
    typed or pasted without showing it, and keeps it out of the shell's history:
@@ -475,6 +475,9 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    read -rs OPENROUTER_API_KEY
    aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/openrouter-api-key \
      --type SecureString --value "$OPENROUTER_API_KEY" --overwrite
+   read -rs ANTHROPIC_API_KEY
+   [ -n "$ANTHROPIC_API_KEY" ] && aws ssm put-parameter --region ap-northeast-2 \
+     --name /snunow/production/anthropic-api-key --type SecureString --value "$ANTHROPIC_API_KEY" --overwrite
    read -rs INITIAL_ADMINISTRATOR_EMAILS
    aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/initial-administrator-emails \
      --type String --value "$INITIAL_ADMINISTRATOR_EMAILS" --overwrite
@@ -482,9 +485,11 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    aws ssm get-parameters-by-path --region ap-northeast-2 --path /snunow/production --query 'Parameters[].Name'
    ```
 
-   The Kakao key is the REST API key of the team's Kakao app, and the OpenRouter key is the Assistant's
-   (`main-server/.env.example` says how to make one). The administrators' addresses are those the team members sign in
-   to the admin site with, separated by commas. The last command lists the nine parameters.
+   The Kakao key is the REST API key of the team's Kakao app. The Anthropic key is the one the Assistant and the
+   Judgement call the model with ([The Anthropic key](#the-anthropic-key)); the OpenRouter key is the one they call it
+   with under `MODEL_PROVIDER=openrouter`, which stays until Iteration 4 (`main-server/.env.example` says how to make
+   each). The administrators' addresses are those the team members sign in to the admin site with, separated by
+   commas. The last command lists the ten parameters.
 
 6. **The consoles, by hand.**
    - In the Google Cloud project, add `https://admin.snunow.com` to the admin Google client's authorized JavaScript
@@ -580,11 +585,13 @@ the rules go on publishing. Turn it on only when all of these hold (ticket 09):
 
 - masked posts may still be sent to the model provider, as Jaehyun0320 and TaeHyun79 agreed on 2026-11-01;
 - evaluation A's floors are met, on the commit being released, and recorded;
-- the OpenRouter key's credit limit allows for it, since Judgements spend the Assistant's credit, and its account allows
-  only providers that do not train on prompts.
+- the Anthropic account's monthly spend limit allows for it, since Judgements spend from the same account as the
+  Assistant ([The Anthropic key](#the-anthropic-key)). Under `MODEL_PROVIDER=openrouter` it is the OpenRouter key's
+  credit limit instead, and its account must allow only providers that do not train on prompts.
 
-Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no
-`OPENROUTER_API_KEY` or `ASSISTANT_MODEL`, so a Release with that mistake does not replace the running pods. To turn it
+Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no key or model for
+the chosen provider (`ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` under `MODEL_PROVIDER=anthropic`), so a Release with that
+mistake does not replace the running pods. To turn it
 off again at once, use the ConfigMap patch above with `AUTOMATIC_JUDGEMENT`, and also change the file. Drafts stored while
 it was off are not judged when it is turned on.
 
@@ -607,8 +614,9 @@ and also change the file.
 post leaves the server for it, and a session the rules do not attach is published as before. Turn it on only when both
 hold: evaluation B (ticket 09) has shown D1 at its floor of 0 on the commit being released, and the posts may be sent to the
 model provider. A person decides this, by setting the value to `on` in that file, merging it and releasing. With `on`, the
-server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`. It looks only at posts that go through the
-step afterwards. To turn it off at once, use the ConfigMap patch above with this name, and also change the file.
+server refuses to start without the chosen provider's key and model, as for Judgements. It looks only at posts that go
+through the step afterwards. To turn it off at once, use the ConfigMap patch above with this name, and also change the
+file.
 
 The queue, attaching, publishing from it and detaching work with the setting off too: `/queue` on the admin site. With it
 on, a model outage sends the sessions that have candidates there, each once, publishing none of them.
@@ -757,6 +765,37 @@ time.
   parameter.
 - **`initial-administrator-emails`** is read only while the database holds no Administrator. Afterwards Administrators
   register each other on the admin site.
+
+### The Anthropic key
+
+The Assistant, the Judgement and the same-event choice call Claude through the Anthropic API
+([ADR 0013](../../docs/adr/0013-the-assistant-calls-claude-through-the-anthropic-api.md)), with a key from 안진영's
+Claude Console account. `MODEL_PROVIDER=anthropic` and `ANTHROPIC_MODEL=claude-haiku-5-5` are in
+`k8s/parts/shared/kustomization.yaml`, and every Release reads the key from `/snunow/production/anthropic-api-key`: a
+Release fails at its secrets step, before it changes anything, while the parameter is missing.
+
+The key is put in by its owner. It must be a key that has never been pasted anywhere else, such as a chat: a key that
+has been is revoked in the Console first and a new one made. `read -rs` takes it without showing it or keeping it in
+the shell's history, and the guard writes nothing when the value is empty:
+
+```bash
+read -rs ANTHROPIC_API_KEY
+[ -n "$ANTHROPIC_API_KEY" ] && aws ssm put-parameter --region ap-northeast-2 \
+  --name /snunow/production/anthropic-api-key --type SecureString --value "$ANTHROPIC_API_KEY" --overwrite
+unset ANTHROPIC_API_KEY
+```
+
+Then a `main-server` or `all` Release rolls it out, as for any secret. Ask the Assistant one thing afterwards: it
+answers, and the main server's log, which names the provider and status of any failed model call, shows none.
+
+**The spend limit.** The account's monthly spend limit, USD 200, is set by 안진영 in the Console under **Settings** ›
+**Limits**. It covers the Assistant, the Judgement, the same-event choice and every eval run made with this account's
+keys. Past it, the API refuses every call until the next month or a higher limit, and every Assistant message fails.
+Raise the limit before turning on Judgements or the same-event AI choice if they would pass it.
+
+**Rolling back to OpenRouter**, until Iteration 4: set `MODEL_PROVIDER` to `openrouter` with the ConfigMap patch in
+[Stopping automatic publication](#stopping-automatic-publication), and also in that file, and merge it. The OpenRouter
+key and `ASSISTANT_MODEL` stay in place for this.
 
 ## Capacity
 
@@ -1056,7 +1095,7 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    aws ssm get-parameters-by-path --region ap-northeast-2 --path /snunow/production --query 'Parameters[].Name'
    ```
 
-   The last command lists the nine parameters in B. A's stay as they are.
+   The last command lists the ten parameters in B. A's stay as they are.
 
 5. **B's first Release.** With `kubectx snunow-production-b`, [prepare B's database](#preparing-a-new-database),
    leaving out its first command, which would point `snunow-production` at B. Its `--overwrite` puts B's new database

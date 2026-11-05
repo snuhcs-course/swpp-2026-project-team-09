@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-11-05  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Renders each target with stand-in secrets, as a Release would, and checks the objects that the cluster would receive.
@@ -46,6 +47,7 @@ WORKER_TOKEN=stand-in
 MATCH_SERVER_TOKEN=stand-in
 KAKAO_REST_API_KEY=stand-in
 OPENROUTER_API_KEY=stand-in
+ANTHROPIC_API_KEY=stand-in
 INITIAL_ADMINISTRATOR_EMAILS=stand-in@example.com
 EOF
   echo stand-in >"$secrets/access-token-private-key.pem"
@@ -113,6 +115,27 @@ names_generated_objects_as_all_does() {
 # The deploy role's rights stop at the namespace.
 holds_only_objects_in_snunow() {
   jq -e 'all(.[]; .metadata.namespace == "snunow")' "$work/$1.json" >/dev/null
+}
+
+# The main server's model settings: the provider and its model from the ConfigMap, with their values, and the key from
+# the Secret, under the names the main server reads (ADR 0013). OpenRouter's two stay until Iteration 4.
+passes_the_model_settings() {
+  jq -e '(.[] | select(.kind == "ConfigMap") | .data) as $settings
+    | (.[] | select(.kind == "Secret") | .data) as $secrets
+    | [.[] | select(.kind == "Deployment" and .metadata.name == "main-server")
+        | .spec.template.spec.containers[] | select(.name == "main-server") | .env[]
+        | {key: .name, value: (.valueFrom.configMapKeyRef // .valueFrom.secretKeyRef)}] | from_entries as $env
+    | $settings.MODEL_PROVIDER == "anthropic" and $settings.ANTHROPIC_MODEL == "claude-haiku-5-5"
+      and $settings.ASSISTANT_MODEL == "anthropic/claude-haiku-5.5"
+      and ($secrets.ANTHROPIC_API_KEY | @base64d) == "stand-in"
+      and ($secrets.OPENROUTER_API_KEY | @base64d) == "stand-in"
+      and ($env | all(
+        (.MODEL_PROVIDER.key == "MODEL_PROVIDER" and (.MODEL_PROVIDER.name | startswith("settings-"))),
+        (.ANTHROPIC_MODEL.key == "ANTHROPIC_MODEL" and (.ANTHROPIC_MODEL.name | startswith("settings-"))),
+        (.ASSISTANT_MODEL.key == "ASSISTANT_MODEL" and (.ASSISTANT_MODEL.name | startswith("settings-"))),
+        (.ANTHROPIC_API_KEY.key == "ANTHROPIC_API_KEY" and (.ANTHROPIC_API_KEY.name | startswith("secrets-"))),
+        (.OPENROUTER_API_KEY.key == "OPENROUTER_API_KEY" and (.OPENROUTER_API_KEY.name | startswith("secrets-")))
+      ; .))' "$work/$1.json" >/dev/null
 }
 
 ignored_by_git() {
@@ -185,6 +208,10 @@ kubectl patch --local --type merge --patch '{}' --filename "$k8s/database-setup.
   >"$work/database-setup.json"
 check "all's policies allow exactly the listed connections" allows_only_the_listed_connections all
 check "every Service's port is its pods' container port" serves_on_container_ports all
+for target in main-server all; do
+  check "$target passes the main server the model provider, the Anthropic key and model, and OpenRouter's" \
+    passes_the_model_settings "$target"
+done
 for file in secrets.env access-token-private-key.pem access-token-public-key.pem; do
   check "git ignores $file" ignored_by_git "parts/shared/secrets/$file"
 done

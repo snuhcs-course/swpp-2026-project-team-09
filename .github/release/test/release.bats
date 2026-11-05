@@ -5,6 +5,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-05  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
@@ -478,7 +479,8 @@ serve_parameters() {
 
 PARAMETERS=(main-db-password 'k/9Zr+Qw2=xT@4' match-db-password 0b5e3c9a7d1f42e8 access-token-private-key
   "$PRIVATE_KEY" access-token-public-key "$PUBLIC_KEY" worker-token 3f9a1c77d2e0 match-server-token 8e21b4a09c5d
-  kakao-rest-api-key 5c1d0e9f8a7b openrouter-api-key sk-or-v1-77aa initial-administrator-emails 'a@snu.ac.kr,b@snu.ac.kr')
+  kakao-rest-api-key 5c1d0e9f8a7b openrouter-api-key sk-or-v1-77aa
+  anthropic-api-key sk-ant-api03-55bb initial-administrator-emails 'a@snu.ac.kr,b@snu.ac.kr')
 
 @test "the secrets files hold every parameter, the database addresses with their passwords encoded, and the key pair with its line breaks, and no value is printed" {
   serve_parameters "${PARAMETERS[@]}"
@@ -494,12 +496,14 @@ WORKER_TOKEN=3f9a1c77d2e0
 MATCH_SERVER_TOKEN=8e21b4a09c5d
 KAKAO_REST_API_KEY=5c1d0e9f8a7b
 OPENROUTER_API_KEY=sk-or-v1-77aa
+ANTHROPIC_API_KEY=sk-ant-api03-55bb
 INITIAL_ADMINISTRATOR_EMAILS=a@snu.ac.kr,b@snu.ac.kr
 EOF
   diff "$secrets/access-token-private-key.pem" <(printf '%s\n' "$PRIVATE_KEY")
   diff "$secrets/access-token-public-key.pem" <(printf '%s\n' "$PUBLIC_KEY")
   [ "$(wc -l <"$secrets/access-token-private-key.pem")" -eq 4 ]
-  [[ "$output" != *3f9a1c77d2e0* && "$output" != *"BEGIN"* && "$output" != *0b5e3c9a7d1f42e8* ]] || false
+  [[ "$output" != *3f9a1c77d2e0* && "$output" != *"BEGIN"* && "$output" != *0b5e3c9a7d1f42e8* &&
+    "$output" != *sk-ant-api03-55bb* ]] || false
 }
 
 @test "a missing parameter, a key without line breaks, a value over two lines, or no database endpoint fails, naming the parameter and printing no value" {
@@ -509,6 +513,12 @@ EOF
   run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
   [ "$status" -eq 1 ]
   [[ "$output" == *"/snunow/production/main-db-password"* ]] || false
+
+  # The Anthropic key beside the OpenRouter key, which stays until Iteration 4.
+  serve_parameters "${PARAMETERS[@]:0:16}" "${PARAMETERS[@]:18}"
+  run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"/snunow/production/anthropic-api-key"* ]] || false
 
   serve_parameters "${PARAMETERS[@]:0:6}" access-token-public-key \
     '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n-----END PUBLIC KEY-----' "${PARAMETERS[@]:8}"

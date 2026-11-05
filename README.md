@@ -198,7 +198,7 @@ What the demo cannot show, and what is known not to work yet:
 - **SNU Now AI.** Its answers depend on the model, and how often it picks the right tools is measured only when a
   developer runs the benchmark (`pnpm eval` in `main-server/`), which no run has reported yet. Replies are not
   streamed, a conversation is lost when the app restarts, and the Assistant cannot manage an existing party or
-  activate one. Messages go to the model provider through OpenRouter, which the empty chat says.
+  activate one. Messages go to the model provider, Anthropic, which the empty chat says.
 - **Timetable reading.** Photos of a screen, a professor's name printed inside a block and two overlapping classes
   drawn side by side are not read; the last are reported as left out. A real dark-mode screenshot is not yet among the
   test screenshots.
@@ -223,7 +223,7 @@ What the project was built and run with:
 | Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                                 |
 | Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                                 |
 | Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                                        |
-| Assistant              | Vercel AI SDK 7 with the OpenRouter provider; the model set by `ASSISTANT_MODEL`                             |
+| Assistant              | Vercel AI SDK 7 with the Anthropic provider; the model set by `ANTHROPIC_MODEL`                              |
 | Admin site             | Next.js 16 with React 19, in a desktop browser                                                               |
 | App                    | Expo SDK 57, React Native 0.86, Expo Router; local Expo modules around Kakao Maps SDK and ML Kit             |
 | Android build          | JDK 17 (Temurin), Android SDK Platform and Build-Tools 36, Gradle 9.3.1 through the wrapper                  |
@@ -245,7 +245,8 @@ What the project was built and run with:
 - An ARM Android phone, or an arm64 emulator with Google Play, with a Google account signed in.
 - The team's Kakao keys (REST API, JavaScript and native app keys), which the Owner of the team's Kakao app shares
   privately, and an SNU Google account to sign in to the app.
-- For SNU Now AI only: an OpenRouter API key with a credit limit. Without it every other feature runs.
+- For SNU Now AI only: an Anthropic API key from the Claude Console, on an account with a monthly spend limit. Without
+  it every other feature runs.
 - For the device runs only: Maestro 2.11.0 ([mobile/README.md](mobile/README.md), "Device runs").
 - About 30 GB of free disk space. On one Mac the Android build's Gradle cache took about 10 GB, Docker's images and
   build cache about 15 to 20 GB, and an iOS build's Xcode cache about 3 GB. When the disk fills, Docker stops with
@@ -276,7 +277,7 @@ echo "MATCH_SERVER_TOKEN=$(openssl rand -hex 32)" >> .env
 cd ..
 ```
 
-Then open `main-server/.env`, fill in `KAKAO_REST_API_KEY` and, for SNU Now AI, `OPENROUTER_API_KEY`, and replace the
+Then open `main-server/.env`, fill in `KAKAO_REST_API_KEY` and, for SNU Now AI, `ANTHROPIC_API_KEY`, and replace the
 example address in `INITIAL_ADMINISTRATOR_EMAILS` with your Google account's address, so that you can sign in to the
 admin site. The main server reads it only when it starts on a database that holds no Administrator: once the servers
 have run with the example address, a new address is not taken until the data is deleted with `docker compose down -v`.
@@ -341,8 +342,11 @@ file's.
 | `MATCH_SERVER_URL`                 | Where the match server is reached.                                                                  |
 | `MATCH_SERVER_TOKEN`               | The secret the main and match servers send each other; generated in [Setup](#setup).                |
 | `DEMO_ACCOUNT_EMAILS`              | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.   |
-| `OPENROUTER_API_KEY`               | The OpenRouter key SNU Now AI calls its model with. Empty, the Assistant answers it is unavailable. |
-| `ASSISTANT_MODEL`                  | The OpenRouter id of the Assistant's model; `anthropic/claude-haiku-5.5` in `.env.example`.         |
+| `MODEL_PROVIDER`                   | Where SNU Now AI calls its model: `anthropic` (the default) or `openrouter`, until Iteration 4.     |
+| `ANTHROPIC_API_KEY`                | The Anthropic key SNU Now AI calls its model with. Empty, the Assistant answers it is unavailable.  |
+| `ANTHROPIC_MODEL`                  | The Anthropic id of the Assistant's model; `claude-haiku-5-5` in `.env.example`.                    |
+| `OPENROUTER_API_KEY`               | Under `MODEL_PROVIDER=openrouter` only: the OpenRouter key, as `ANTHROPIC_API_KEY` is otherwise.    |
+| `ASSISTANT_MODEL`                  | Under `MODEL_PROVIDER=openrouter` only: the OpenRouter id of the same model.                        |
 | `ASSISTANT_DAILY_MESSAGES`         | Optional: the messages a User may send in a day in Korea; 50 unless set.                            |
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                   |
@@ -617,7 +621,7 @@ Not run by `pnpm test` or CI:
   an Android emulator against the app's own mock data ([mobile/README.md](mobile/README.md), "Device runs"). At the end
   of Iteration 2, M2 on a cold start fails (see [Known limitations and todos](#known-limitations-and-todos)).
 - **The Assistant's benchmark**: `pnpm eval` in `main-server/` runs its 62 cases against the real model and spends
-  OpenRouter credit, so it runs by hand only.
+  from the Anthropic account, so it runs by hand only.
 
 ## Deployment
 
@@ -684,8 +688,9 @@ The team decided what to build, reviewed the specs and the table schemas, and ch
 also made the product decisions, such as the words party, active party and Quest, where API keys go and how much the
 Assistant's benchmark may spend. Where something was wrong, the agent rewrote it; no code was edited by hand.
 
-AI also runs inside the product: SNU Now AI calls a model through OpenRouter (Claude Haiku 5.5 in `.env.example`), and
-the timetable is read on the phone with Google ML Kit's text recognizer.
+AI also runs inside the product: SNU Now AI calls Claude Haiku 5.5 through the Anthropic API, which replaced OpenRouter
+in Iteration 3 ([ADR 0013](docs/adr/0013-the-assistant-calls-claude-through-the-anthropic-api.md)), and the timetable is
+read on the phone with Google ML Kit's text recognizer.
 
 Not AI-generated is what came from elsewhere: the skills in `.claude/skills/`, the seed data in `main-server/seed/`,
 the saved pages that the worker's tests read, the images and the font in `mobile/assets/`, and the demo videos.
@@ -697,19 +702,19 @@ tell how the work went, with the prompts in each iteration's Prompt Log.
 
 ## Data sources and attribution
 
-| Source                                                                                                                | Used for                                                                   | Terms                                           |
-| --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------- |
-| © OpenStreetMap contributors, through Overpass                                                                        | The Campus Boundary, the shuttle's line, two Places, outlines, 도보 시간   | [ODbL](https://www.openstreetmap.org/copyright) |
-| NASA SRTM 30 m, through OpenTopoData                                                                                  | The elevation of the Places and shuttle stops for 도보 시간                | Public domain                                   |
-| 국토지리정보원, 연속수치지형도 건물 (2026), from VWorld                                                               | The outlines of the campus's buildings and the Places the campus map lacks | 공공누리 제1유형 (source must be shown)         |
-| SNU campus map, `map.snu.ac.kr`                                                                                       | The Places and the shuttle stops' coordinates                              | No terms published                              |
-| Kakao                                                                                                                 | The map in the app and the admin site, and walking routes; nothing stored  | Kakao's terms and operating policy              |
-| SNU Co-op (`snuco.snu.ac.kr`), 관악학생생활관 (`snudorm.snu.ac.kr`), College of Veterinary Medicine (`vet.snu.ac.kr`) | The menus                                                                  | Collected from public pages                     |
-| SNU's events list, `www.snu.ac.kr/snunow/events`                                                                      | The Global Events                                                          | Collected from public pages                     |
-| The shuttle operator's route page and vehicle positions, `web.busin.co.kr` (route 41946)                              | The shuttle's stops, service hours and vehicles                            | Collected from public pages                     |
-| Pretendard                                                                                                            | The app's font                                                             | SIL Open Font License 1.1                       |
-| OpenRouter and the model it routes to                                                                                 | SNU Now AI's answers; conversations are not stored, locations never sent   | OpenRouter's terms                              |
-| Google ML Kit Text Recognition v2 (Korean), bundled in the app                                                        | Reading a timetable screenshot on the phone; nothing is sent               | ML Kit's terms                                  |
+| Source                                                                                                                | Used for                                                                   | Terms                                                                            |
+| --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| © OpenStreetMap contributors, through Overpass                                                                        | The Campus Boundary, the shuttle's line, two Places, outlines, 도보 시간   | [ODbL](https://www.openstreetmap.org/copyright)                                  |
+| NASA SRTM 30 m, through OpenTopoData                                                                                  | The elevation of the Places and shuttle stops for 도보 시간                | Public domain                                                                    |
+| 국토지리정보원, 연속수치지형도 건물 (2026), from VWorld                                                               | The outlines of the campus's buildings and the Places the campus map lacks | 공공누리 제1유형 (source must be shown)                                          |
+| SNU campus map, `map.snu.ac.kr`                                                                                       | The Places and the shuttle stops' coordinates                              | No terms published                                                               |
+| Kakao                                                                                                                 | The map in the app and the admin site, and walking routes; nothing stored  | Kakao's terms and operating policy                                               |
+| SNU Co-op (`snuco.snu.ac.kr`), 관악학생생활관 (`snudorm.snu.ac.kr`), College of Veterinary Medicine (`vet.snu.ac.kr`) | The menus                                                                  | Collected from public pages                                                      |
+| SNU's events list, `www.snu.ac.kr/snunow/events`                                                                      | The Global Events                                                          | Collected from public pages                                                      |
+| The shuttle operator's route page and vehicle positions, `web.busin.co.kr` (route 41946)                              | The shuttle's stops, service hours and vehicles                            | Collected from public pages                                                      |
+| Pretendard                                                                                                            | The app's font                                                             | SIL Open Font License 1.1                                                        |
+| Anthropic, the Claude API                                                                                             | SNU Now AI's answers; conversations are not stored, locations never sent   | [Anthropic's Commercial Terms](https://www.anthropic.com/legal/commercial-terms) |
+| Google ML Kit Text Recognition v2 (Korean), bundled in the app                                                        | Reading a timetable screenshot on the phone; nothing is sent               | ML Kit's terms                                                                   |
 
 The app shows "© OpenStreetMap · 국토지리정보원" on every map, with a screen that names both sources and their
 licences. Each seed file in `main-server/seed/` records where it came from and when it was exported. No coordinate
