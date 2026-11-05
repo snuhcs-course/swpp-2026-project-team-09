@@ -1869,10 +1869,15 @@ without an offset, stops the command. Stops are named by `loop_order`, their pla
 wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. What the file lacks,
 the fallback in that module covers. The 75% of R11 decides only what the score counts.
 
-The score holds each day out and compares it with the times derived from the others. A stop-band or pair-band those
-days lack is predicted with the fallback. The ride compares every held-out ride with the median, by MAE and the share
-within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored stop-band of 08–19 with the
-prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs are below their baselines.
+The file holds less than is derived, as the PM decided on 2026-11-05. It holds no wait, so the fallback answers every
+wait; waits come back only by a later change, once a third logged day agrees. It holds a ride only for a pair and band
+logged on at least two days.
+
+The score holds each day out and compares it with all the times derived from the others, not with what the file holds.
+A stop-band or pair-band those days lack is predicted with the fallback. The ride compares every held-out ride with the
+median, by MAE and the share within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored
+stop-band of 08–19 with the prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs
+are below their baselines.
 
 ## Travel Time
 
@@ -2512,7 +2517,11 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   ±2 minutes and within min(25% of the walk, 2 minutes), a difference equal to the limit counting as within, the share
   walked more than 2 minutes longer than predicted and the MAE over the 8 pairs where the two differed by more than 2
   minutes at the freeze; then k = Σ(walked × table) / Σ(table²), and the threshold under each tolerance: at least 70%
-  within, and the table's MAE below the baseline's.
+  within, and the table's MAE below the baseline's. Last it fits the speed and the climb value to the 13 calibration
+  walks, by ordinary least squares with no constant term, and prints them unrounded; a climb value below 0 becomes 0
+  with that fit's speed. Each pair's path metres and climb are recovered from its seconds at the freeze, at 1.1 m/s and
+  3 s per metre of climb, and from the committed table's elevations. The builder's two constants in
+  `src/travel/walking-graph.ts` are that fit's, as P11 adopted them.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
