@@ -1377,3 +1377,12 @@ TaeHyun79 rode route 41946 five times on 11-03, not on 11-02 as [the walking dia
 | r4   | 경영대 (13) → 농생대 (3)   |      385 |               345 |               -40 |              1,305 |        314.5 |               -70.5 |
 | r5   | 농생대 (3) → 301동 (7)     |      424 |               435 |               +11 |              1,800 |        433.7 |                +9.7 |
 | MAE  |                            |          |                   |            20.0 s |                    |              |              63.1 s |
+
+### What the app is given (2026-11-05)
+
+Jaehyun0320 suggested two things in the review of #201, and the PM accepted both: keep the fallback waits until a third logged day agrees, and leave out what only one day logged. `pnpm shuttle:derive` now writes less than it derives:
+
+- **No wait.** The fallback answers every stop and band: 3.5 minutes, and 10 minutes in 19–21. The 43 derived waits are left out, the 정문 stops' 705–739 s in 14–17 and 38동's 26 s in 19–21 among them.
+- **A ride only for a pair and band logged on at least two days.** 728 of the 731 derived rides are kept, unchanged. The 3 left out are 19–21 rides from 11-02 alone: 농생대 (3) → 38동 (4) 30 s, 농생대 (3) → 신소재공동연구소 (5) 60 s and 38동 (4) → 신소재공동연구소 (5) 30 s.
+
+The score above is unchanged. It still compares each held-out day with all the times derived from the other, so a one-day fold is not emptied by the two-day rule. The waits the app gives are now the fallback, the wait's baseline of 272.2 s. The five rides' pairs are all kept, so their comparison stands at 20.0 s.

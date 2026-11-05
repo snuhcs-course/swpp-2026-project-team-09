@@ -3,11 +3,12 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { clockTime } from '../scripts/shuttle/clock.ts';
 import { type UnknownWindow } from '../scripts/shuttle/departures.ts';
-import { deriveTiming, ridesOf, waitCells, waitReport } from '../scripts/shuttle/timing.ts';
+import { deriveTiming, ridesOf, shippedTiming, waitCells, waitReport } from '../scripts/shuttle/timing.ts';
 import { cleaned, cleanedLog, logFile, reasons } from './shuttle-fixtures.ts';
 
 const ALL_STOPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
@@ -185,5 +186,29 @@ describe('R12 ride', () => {
       { rule: 'R7', reason: 'LONG visit', detail: '4531 at stop 5, 11:04:30' },
     ]);
     expect(reasons(report)).toHaveLength(3);
+  });
+});
+
+describe('What the app is given', () => {
+  const { day: rides } = cleaned('r12-rides');
+  const { day: longVisit } = cleaned('r07-long-visit');
+  const days = [rides, { ...rides, date: '2026-11-03' }, longVisit];
+
+  it('holds no wait, so the fallback answers', () => {
+    expect(deriveTiming([longVisit]).waits).not.toEqual({});
+    expect(shippedTiming(days).waits).toEqual({});
+  });
+
+  it('holds a ride only for a pair and band logged on at least two days', () => {
+    expect(shippedTiming(days).rides).toEqual({
+      '1': { '2': { '08-11': 60 } },
+      '4': { '5': { '11-14': 60 } },
+      '6': { '7': { '11-14': 60 } },
+    });
+    expect(deriveTiming(days).rides['5']?.['6']).toEqual({ '08-11': 435 });
+  });
+
+  it('keeps the days it was derived from', () => {
+    expect(shippedTiming(days).days).toEqual(deriveTiming(days).days);
   });
 });
