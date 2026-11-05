@@ -4,6 +4,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -11,15 +12,12 @@ import { ConfigService } from '@nestjs/config';
 import { databaseCauseOf } from '../../common/database-cause.js';
 import { PrismaService } from '../../common/prisma.service.js';
 import { type Settings } from '../../common/settings.js';
-import { type Prisma, SuggestionOutcome } from '../../generated/prisma/client.js';
+import { SuggestionMoment, SuggestionOutcome } from '../../generated/prisma/client.js';
 import { CLOCK, type Clock } from '../../quests/clock.js';
 import { conflict, notFound } from '../../quests/refusals.js';
 import { type QuestProposal } from '../proposal.js';
 import {
-  ACCEPTANCE_WINDOW_DAYS,
   COOLDOWN_AFTER_SECOND_HOURS,
-  IGNORED_AFTER_MINUTES,
-  RECEPTIVENESS_IMPRESSIONS,
   RECEPTIVENESS_WINDOW_DAYS,
   REPEAT_WINDOW_DAYS,
   TEMPLATES,
@@ -27,11 +25,11 @@ import {
 } from './constants.js';
 import { type SuggestionAnswerDto, type SuggestionOutcomeDto, type SuggestionQuery } from './dto/suggestion.dto.js';
 import { heldBack } from './holdback.js';
+import { impressionsIn, recentlyShown } from './impression-reads.js';
 import { koreaMidnight, koreaMinutes } from './korea-day.js';
 import { type RandomSource, SUGGESTION_RANDOM } from './random.js';
 import {
   acceptanceOf,
-  type Bucket,
   bucketOf,
   draw,
   fatigueAt,
@@ -97,8 +95,8 @@ export class SuggestionsService {
     const bucket = bucketOf(koreaMinutes(now));
     const [eligible, impressions, recent] = await Promise.all([
       this.candidates.eligible(userId, now, query, history.madeFromSuggestions),
-      this.impressionsIn(bucket, now),
-      this.recentlyShown(userId, now),
+      impressionsIn(this.prisma, bucket, now),
+      recentlyShown(this.prisma, userId, SuggestionMoment.open, RECEPTIVENESS_WINDOW_DAYS, now),
     ]);
     const holdback = heldBack(userId, this.holdbackPercent);
     // A User who ignored or dismissed the last suggestions is shown nothing, whatever the templates score, and the row
@@ -170,6 +168,7 @@ export class SuggestionsService {
       const row = await this.prisma.suggestionImpression.findFirst({
         where: {
           userId,
+          moment: SuggestionMoment.open,
           typedTemplate: null,
           shownAt: { gt: new Date(now.getTime() - TYPED_WITHIN_MINUTES * MINUTE_MS), lte: now },
         },
@@ -210,31 +209,6 @@ export class SuggestionsService {
       );
   }
 
-  // The User's newest shown impressions of the last week whose outcome is settled, one still shown ten minutes on
-  // having been ignored, by which their receptiveness is read; a confirmation counts as accepted.
-  private async recentlyShown(userId: string, now: Date): Promise<Impressions> {
-    const rows = await this.prisma.suggestionImpression.findMany({
-      where: {
-        userId,
-        template: { not: null },
-        shownAt: { gte: new Date(now.getTime() - RECEPTIVENESS_WINDOW_DAYS * DAY_MS), lte: now },
-        OR: [
-          { outcome: { not: SuggestionOutcome.shown } },
-          { shownAt: { lte: new Date(now.getTime() - IGNORED_AFTER_MINUTES * MINUTE_MS) } },
-        ],
-      },
-      orderBy: { shownAt: 'desc' },
-      take: RECEPTIVENESS_IMPRESSIONS,
-      select: { outcome: true },
-    });
-    return {
-      shown: rows.length,
-      accepted: rows.filter(
-        ({ outcome }) => outcome === SuggestionOutcome.accepted || outcome === SuggestionOutcome.confirmed,
-      ).length,
-    };
-  }
-
   // A dismissal before the day of six hours ago can hold nothing back now. A Quest made from a suggestion starts
   // within a day of it, so those of the repeat window and a day are enough.
   private async historyOf(userId: string, now: Date): Promise<History> {
@@ -263,33 +237,5 @@ export class SuggestionsService {
       ),
       madeFromSuggestions: new Set(rows.flatMap(({ questId }) => (questId === null ? [] : [questId]))),
     };
-  }
-
-  // Each template's impressions of all Users in this bucket over the last 30 days, a confirmation counted as accepted.
-  // Silent rows showed no template, so they count for none.
-  private async impressionsIn(bucket: Bucket, now: Date): Promise<Map<string, Impressions>> {
-    const shown: Prisma.SuggestionImpressionWhereInput = {
-      bucket,
-      template: { not: null },
-      shownAt: { gte: new Date(now.getTime() - ACCEPTANCE_WINDOW_DAYS * DAY_MS), lte: now },
-    };
-    const groups = await this.prisma.suggestionImpression.groupBy({
-      by: ['template', 'outcome'],
-      where: shown,
-      _count: { id: true },
-    });
-    const counts = new Map<string, Impressions>();
-    for (const { template, outcome, _count } of groups) {
-      if (template === null) {
-        continue;
-      }
-      const counted = counts.get(template) ?? { shown: 0, accepted: 0 };
-      counted.shown += _count.id;
-      if (outcome === SuggestionOutcome.accepted || outcome === SuggestionOutcome.confirmed) {
-        counted.accepted += _count.id;
-      }
-      counts.set(template, counted);
-    }
-    return counts;
   }
 }

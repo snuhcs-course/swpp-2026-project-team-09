@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
@@ -237,6 +238,14 @@ export function referenceOf(card: ChatCard): CardReference {
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
 // cards in the order shown, the Proposal it made, or null, the candidates it asks the User to choose among, and the
 // words it read through an alias.
+// What an answer leaves to ask next, in grey in the empty input: the sentence, the impression's id, which an outcome
+// names, and the candidate its words stand for, which goes with the sentence when it is sent unchanged.
+export interface NextLine {
+  id: string;
+  text: string;
+  chosen: Chosen | null;
+}
+
 export interface AssistantReply {
   text: string;
   mapButtons: MapLayer[];
@@ -244,4 +253,5 @@ export interface AssistantReply {
   proposal: QuestProposal | null;
   choices: Choice[];
   resolvedBy: ResolvedBy[];
+  nextLine: NextLine | null;
 }

@@ -4,6 +4,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { koreaTime } from '../../src/assistant/korea-time.js';
@@ -51,6 +52,7 @@ export async function suggestionCurves(
   const impressions = await prisma.suggestionImpression.findMany({
     where: { shownAt: { gte: from, lt: new Date(end) } },
     select: {
+      moment: true,
       template: true,
       eligible: true,
       propensity: true,

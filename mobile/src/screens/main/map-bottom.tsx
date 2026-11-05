@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
@@ -124,6 +125,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         onHeight={setInputHeight}
         onOpen={chat.open}
         onSend={chat.chat.send}
+        fill={chat.fill}
         placeholder={chat.placeholder}
         waiting={chat.chat.waiting}
       />

@@ -98,5 +98,6 @@ export function libraryReply(words: string): AssistantReply {
     proposal: null,
     choices: [],
     resolvedBy: [],
+    nextLine: null,
   };
 }

@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -11,7 +12,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
-import { ask, postAssistantMessages } from './assistant.js';
+import { ask, besideNextLine, postAssistantMessages } from './assistant.js';
 import { publishedAmong } from './global-event-lists.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
@@ -149,7 +150,7 @@ describe('searchGlobalEvents, with text by others', () => {
 });
 
 // What a reply holds beside its text when it shows nothing.
-const NOTHING_SHOWN = { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] };
+const NOTHING_SHOWN = { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [], nextLine: null };
 
 describe('showGlobalEvents', () => {
   it('puts the events the search gave in the reply as cards, in the order given, as the 행사 tab lists them', async () => {
@@ -164,7 +165,7 @@ describe('showGlobalEvents', () => {
     const response = await postAssistantMessages(app, accessToken, ask('그 주말에 공연 있어?'));
 
     const [listedFirst, listedSecond] = await publishedAmong(app, accessToken, [first.id, second.id]);
-    expect(response.body).toEqual({
+    expect(besideNextLine(response.body)).toEqual({
       text: '공연 두 개가 있어요.',
       mapButtons: [],
       cards: [

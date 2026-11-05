@@ -11,7 +11,7 @@ import { inject } from 'vitest';
 import { FIXED_SENTENCE } from '../src/assistant/adapter.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
-import { ask, postAssistantMessages } from './assistant.js';
+import { ask, besideNextLine, postAssistantMessages } from './assistant.js';
 import { refuseMatchServer } from './match-server.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
@@ -108,7 +108,7 @@ describe('A run that wrote no text', () => {
     const response = await send();
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ text: FIXED_SENTENCE, ...ONLY_MAP_BUTTONS });
+    expect(besideNextLine(response.body)).toEqual({ text: FIXED_SENTENCE, ...ONLY_MAP_BUTTONS });
     expect(warnings()).toContain(
       'The Assistant answered with its fixed sentence: no step had text ' +
         '(finish reason stop, 0 cards, 1 map buttons, 0 choices, no Proposal)',

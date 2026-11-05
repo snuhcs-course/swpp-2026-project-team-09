@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -161,7 +162,7 @@ describe('searchRecruitingQuests, with text by others', () => {
 });
 
 // What a reply holds beside its text when it shows nothing.
-const NOTHING_SHOWN = { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] };
+const NOTHING_SHOWN = { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [], nextLine: null };
 
 describe('showQuests', () => {
   it("puts the Quests the search gave in the reply as cards, in the order given, as the Boards' list serves them", async () => {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Choice } from '@/api/assistant-types';
@@ -26,6 +27,7 @@ function bubble(role: ChatBubble['role'], text: string, more: Partial<ChatBubble
     choices: [],
     chosen: null,
     resolvedBy: [],
+    nextLine: null,
     failure: null,
     ...more,
   };

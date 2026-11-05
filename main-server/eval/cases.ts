@@ -5,6 +5,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
@@ -90,6 +91,8 @@ const proposalSchema = z.strictObject({
 
 const userTurnSchema = z.strictObject({
   user: z.string().min(1),
+  // The candidate the message answers with, as a chip or a next line sends it.
+  chosen: z.strictObject({ kind: z.literal('globalEvent'), seed: seedName, words: z.string().min(1) }).optional(),
   // A live case's expectation of this turn.
   expect: expectSchema.optional(),
 });

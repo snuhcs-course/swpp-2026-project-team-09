@@ -20,6 +20,7 @@
 // 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-01  Fable 5.1  prompted by fyoon46
 // 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-01  Opus 5.5   prompted by fyoon46
 // 2026-11-01  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-02  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-05  Opus 5.5   prompted by Jaehyun0320
@@ -1050,6 +1051,7 @@ model SuggestionImpression {
   id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId        String            @map("user_id") @db.Uuid
   user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moment        SuggestionMoment  @default(open)
   // One row for each answer of GET /assistant/suggestion: the template shown, such as lunch_with_free_friend, or null
   // when nothing was shown; every template that was eligible, the best score first; and the ids each eligible
   // template's action would take, as "<template> <kind>:<id>", by which a request the User typed instead is matched.
@@ -1083,6 +1085,14 @@ model SuggestionImpression {
   @@index([userId, shownAt])
   @@index([bucket, shownAt])
   @@map("suggestion_impressions")
+}
+
+// When a suggestion was decided: the chat opened, or an answer left a next line (P07 ticket 09).
+enum SuggestionMoment {
+  open
+  answer
+
+  @@map("suggestion_moment")
 }
 
 // An impression still shown 10 minutes after it was shown was ignored, which is read when it is analysed, not stored.

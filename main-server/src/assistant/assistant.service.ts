@@ -9,6 +9,7 @@
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
@@ -61,6 +62,7 @@ import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
+import { NextLines } from './suggestions/next-lines.service.js';
 import { SuggestionsService } from './suggestions/suggestions.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
@@ -101,6 +103,7 @@ export class AssistantService {
     placeMatcher: PlaceMatcher,
     private readonly resolutionEvents: ResolutionEventsService,
     private readonly aliases: AliasesService,
+    private readonly nextLines: NextLines,
     private readonly suggestions: SuggestionsService,
     placeLookup: PlaceLookup,
     days: UserDayService,
@@ -175,7 +178,8 @@ export class AssistantService {
       const reached = taught || resolutions.reachedPlace || (last?.role === 'user' && last.chosen !== null);
       await this.learnFrom(userId, now, reply.proposal, reached);
       const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
-      return { text, mapButtons, cards, proposal, choices, resolvedBy };
+      const nextLine = await this.nextLines.of(userId, reply);
+      return { text, mapButtons, cards, proposal, choices, resolvedBy, nextLine };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();

@@ -5,6 +5,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -15,7 +16,7 @@ import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type QuestProposal } from '../src/assistant/proposal.js';
-import { ask, postAssistantMessages } from './assistant.js';
+import { ask, besideNextLine, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { connectToDatabase, getQuests } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
@@ -91,7 +92,7 @@ describe('proposeQuest, with a complete Open Proposal', () => {
     const response = await send(ask('내일 점심에 학식 같이 먹을 사람 4명 모집해줘, 식사 게시판에'));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({
+    expect(besideNextLine(response.body)).toEqual({
       text: '만들기를 누르면 파티가 만들어져요.',
       mapButtons: [],
       cards: [],

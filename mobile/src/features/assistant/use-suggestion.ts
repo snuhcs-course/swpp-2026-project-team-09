@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -32,6 +33,11 @@ type Held = Pick<Suggestion, 'held' | 'opened' | 'closed'> & { drop: () => void 
 // An outcome only counts toward the main server's choice of suggestions, so one that does not reach it is let go.
 function tell(suggestionId: string, outcome: SuggestionOutcome): void {
   void apiClient.sendSuggestionOutcome(suggestionId, outcome).catch(() => null);
+}
+
+// 채우기 put the next line in the input.
+export function tookNextLine(id: string): void {
+  tell(id, { outcome: 'accepted' });
 }
 
 // The suggestion asked for when the sheet opens on the empty chat, held while it stays open. One that cannot be had,

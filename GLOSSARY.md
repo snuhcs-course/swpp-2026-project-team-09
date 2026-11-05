@@ -188,7 +188,7 @@ A matching rule the Assistant's model wrote from the words the matcher got wrong
 _Avoid_: Learned regex, model rule, heuristic
 
 **Suggestion**:
-The one request the server picks for the moment when a User opens the chat, shown in grey and run with a tap without the model: a Proposal or a walking route. A Shortcut is a Suggestion made from what the User did before.
+The one request the server picks for the moment when a User opens the chat, shown in grey and run with a tap without the model: a Proposal or a walking route. A Shortcut is a Suggestion made from what the User did before. After an answer, the Suggestion is the next line: a sentence shown in grey in the empty input, which 채우기 puts there to send.
 _Avoid_: Recommendation, hint, ghost text (the grey look, not the thing)
 
 **Resolution Event**:

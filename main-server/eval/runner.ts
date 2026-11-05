@@ -3,8 +3,10 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -23,8 +25,6 @@ import { startApp } from '../test/start-app.js';
 import { refuseKakao } from '../test/walking-route.js';
 import {
   type CaseKind,
-  type CaseProposal,
-  type CaseTurn,
   type EvalCase,
   kindOf,
   nowOf,
@@ -39,7 +39,8 @@ import { type RawResponses } from './raw-responses.ts';
 import { Recorder } from './recorder.ts';
 import { runObserverModule } from './run-observer.module.ts';
 import { failureOf, type ReplyTrace, type TurnTrace, usageOf } from './trace.ts';
-import { type Seeded, seedOf, type World } from './world.ts';
+import { requestMessages, type SentAssistant } from './request-messages.ts';
+import { type Seeded, type World } from './world.ts';
 
 // The runner (spec P19, ticket 01): the app started as the e2e tests start it, with the model behind the recorder and
 // the clock fixed, each case's turns sent to POST /assistant/messages as the app sends them, and the run saved as
@@ -100,35 +101,6 @@ export async function startEvalApp(
       now = next;
     },
   };
-}
-
-type SentAssistant = Extract<SentMessage, { role: 'assistant' }>;
-
-function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['proposal'] {
-  const { place, globalEvent, invitees, ...values } = proposal;
-  return {
-    ...values,
-    place: place === null ? null : { id: seedOf(world.seeds, 'place', place).id, name: place },
-    globalEvent:
-      globalEvent === null ? null : { id: seedOf(world.seeds, 'globalEvent', globalEvent).id, title: globalEvent },
-    invitees: invitees.map((name) => ({ id: seedOf(world.seeds, 'friend', name).id, name })),
-  };
-}
-
-// A case's turns as the app sends them, its seed names turned into the world's ids.
-export function requestMessages(turns: readonly CaseTurn[], world: World): SentMessage[] {
-  return turns.map((turn): SentMessage => {
-    if ('user' in turn) {
-      return { role: 'user', text: turn.user };
-    }
-    const { text, cards, proposal } = turn.assistant;
-    return {
-      role: 'assistant',
-      text,
-      cards: cards.map(({ kind, seed }) => ({ kind, id: seedOf(world.seeds, kind, seed).id })),
-      proposal: proposal === null ? null : sentProposalOf(proposal, world),
-    };
-  });
 }
 
 // The reply sent back with the next message, as the app does: the cards by reference, the Proposal by its values.

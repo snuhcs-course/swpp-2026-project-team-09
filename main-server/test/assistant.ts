@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
@@ -10,7 +11,7 @@
 import { INestApplication, Logger } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
-import { type z } from 'zod';
+import { z } from 'zod';
 import { type assistantMessagesSchema } from '../src/assistant/dto/assistant-messages.dto.js';
 import { withAccessToken } from './sign-in.js';
 
@@ -34,6 +35,13 @@ export function postAssistantMessages(
 // One message of the User's.
 export function ask(text: string): SentMessage[] {
   return [{ role: 'user', text }];
+}
+
+// A reply without its next line, which depends on what other tests left in the shared table of impressions; what it
+// says is tested in next-lines.integration.test.ts.
+export function besideNextLine(body: unknown): object {
+  const { nextLine: _ignored, ...rest } = z.object({ nextLine: z.unknown() }).loose().parse(body);
+  return rest;
 }
 
 // Everything written to the server's log, to the console and to the process's output, from now on.

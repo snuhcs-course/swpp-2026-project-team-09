@@ -7,6 +7,7 @@
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
@@ -35,6 +36,7 @@ import { ModelReflector, REFLECTOR, type Reflector } from './induction/reflector
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
+import { NextLines } from './suggestions/next-lines.service.js';
 import { SUGGESTION_RANDOM, systemRandom } from './suggestions/random.js';
 import { SuggestionCandidates } from './suggestions/suggestion-candidates.service.js';
 import { SuggestionsController } from './suggestions/suggestions.controller.js';
@@ -65,6 +67,7 @@ import { SuggestionsService } from './suggestions/suggestions.service.js';
     UserDayService,
     AliasesService,
     SuggestionsService,
+    NextLines,
     SuggestionCandidates,
     { provide: SUGGESTION_RANDOM, useFactory: systemRandom },
     // The space catalogue is read once, at start; a bad file stops the start.

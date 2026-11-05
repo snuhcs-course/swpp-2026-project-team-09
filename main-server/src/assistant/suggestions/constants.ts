@@ -4,6 +4,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The numbers of the grey suggestions, each with its reason. They are starting points: no precedent publishes its
@@ -74,6 +75,20 @@ export const RECEPTIVENESS_WINDOW_DAYS = 7;
 // A suggestion still shown this long after it was shown was ignored, as the replay reads it; a younger one is not yet
 // counted toward the User's receptiveness.
 export const IGNORED_AFTER_MINUTES = 10;
+
+// The next lines after an answer (P07 ticket 09), in the order they are likeliest.
+export const NEXT_LINE_TEMPLATES = ['change_shown_proposal', 'party_for_shown_event', 'party_after_menus'] as const;
+
+export type NextLineTemplate = (typeof NEXT_LINE_TEMPLATES)[number];
+
+// The least acceptance that shows a next line. Most are passed by, as Claude Code's are, and one costs a glance at an
+// empty input, so only a line almost nobody takes goes.
+export const NEXT_LINE_THRESHOLD = 0.05;
+
+// Ten next lines in a row not taken read 1 / 12 and silence them, nine read 1 / 11 and do not, and a day without any
+// brings the prior back: a chat runs many more lines than it has openings.
+export const NEXT_LINE_RECEPTIVENESS_THRESHOLD = 0.09;
+export const NEXT_LINE_RECEPTIVENESS_DAYS = 1;
 
 // Cooldowns after a dismissal, longer after the second of a day in Korea, and none shown after the third that day.
 export const COOLDOWN_AFTER_FIRST_HOURS = 2;

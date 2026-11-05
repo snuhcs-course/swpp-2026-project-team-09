@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject, type ProvidedContext } from 'vitest';
 import { type EvalCase, loadCases } from '../eval/cases.ts';
 import { FALLBACK_PRICES } from '../eval/cost.ts';
 import { type RunOptions } from '../eval/options.ts';
-import { type EvalApp, requestMessages, runCase, startEvalApp } from '../eval/runner.ts';
+import { requestMessages } from '../eval/request-messages.ts';
+import { type EvalApp, runCase, startEvalApp } from '../eval/runner.ts';
 import { seedWorld, type World } from '../eval/world.ts';
 import { type SeededDatabase, seededDatabase } from './containers.js';
 import { signInUser } from './friends.js';

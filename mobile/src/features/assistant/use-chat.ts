@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -18,6 +19,7 @@ import {
   lengthOf,
   type MapLayer,
   MESSAGES_TOTAL_MAX,
+  type NextLine,
   type QuestProposal,
   referenceOf,
   type ResolvedBy,
@@ -27,6 +29,7 @@ import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
+import { useAddOwn, useOutcomes } from './use-card-outcomes';
 import { useRejectAlias } from './use-reject-alias';
 
 // Why the Assistant gave no answer: it could not answer now, which 다시 시도 sends again, or the User's messages of
@@ -51,6 +54,8 @@ export interface ChatBubble {
   chosen: Chosen | null;
   // The words an Assistant's answer read through an alias, each shown with 아니에요 until the User presses it.
   resolvedBy: readonly ResolvedBy[];
+  // What an Assistant's answer leaves to ask next, while it is the last bubble.
+  nextLine: NextLine | null;
   failure: ChatFailure | null;
   // The app's own bubble, never sent to the Assistant: what a library card says once it acted, or the card it gave.
   own?: boolean;
@@ -78,6 +83,9 @@ export interface Chat {
   bubbles: readonly ChatBubble[];
   // While the Assistant works on the User's last message: the "···" bubble, and nothing more is sent.
   waiting: boolean;
+  // What the last answer leaves to ask next, or null.
+  nextLine: NextLine | null;
+  // Sends the User's message: the next line's candidate goes with it when it is that line, unchanged.
   send: (text: string) => void;
   // A chip pressed: sends its label as the User's message, with the candidate it chose.
   choose: (choice: Choice) => void;
@@ -139,8 +147,19 @@ type NewBubble = Omit<ChatBubble, 'id'>;
 async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
   try {
     const reply = await apiClient.askAssistant(messages);
-    const { text, cards, mapButtons, proposal, choices, resolvedBy } = reply;
-    return { role: 'assistant', text, cards, mapButtons, proposal, choices, chosen: null, resolvedBy, failure: null };
+    const { text, cards, mapButtons, proposal, choices, resolvedBy, nextLine } = reply;
+    return {
+      role: 'assistant',
+      text,
+      cards,
+      mapButtons,
+      proposal,
+      choices,
+      chosen: null,
+      resolvedBy,
+      nextLine,
+      failure: null,
+    };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     const text = FAILURE_TEXT[failure];
@@ -153,6 +172,7 @@ async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
       choices: [],
       chosen: null,
       resolvedBy: [],
+      nextLine: null,
       failure,
     };
   }
@@ -168,6 +188,7 @@ function userBubble(text: string, chosen: Chosen | null): NewBubble {
     choices: [],
     chosen,
     resolvedBy: [],
+    nextLine: null,
     failure: null,
   };
 }
@@ -197,47 +218,6 @@ function useBubbles(): Bubbles {
     [show],
   );
   return { bubbles, said, show, add };
-}
-
-// The app's own bubbles, added after what was said.
-function useAddOwn(add: Bubbles['add']): Chat['addOwn'] {
-  return useCallback(
-    ({ text, cards = [], done }: OwnBubble): void => {
-      add({
-        role: 'assistant',
-        text,
-        cards,
-        mapButtons: [],
-        proposal: null,
-        choices: [],
-        chosen: null,
-        resolvedBy: [],
-        failure: null,
-        own: true,
-        done,
-      });
-    },
-    [add],
-  );
-}
-
-// How the library cards ended, kept with the conversation.
-function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forget: () => void } {
-  const [outcomes, setOutcomes] = useState<ReadonlyMap<string, CardOutcome>>(new Map());
-  const finish = useCallback((card: string, outcome: CardOutcome): void => {
-    setOutcomes((last) => new Map(last).set(card, outcome));
-  }, []);
-  const unfinish = useCallback((card: string): void => {
-    setOutcomes((last) => {
-      const next = new Map(last);
-      next.delete(card);
-      return next;
-    });
-  }, []);
-  const forget = useCallback((): void => {
-    setOutcomes(new Map());
-  }, []);
-  return { outcomes, finish, unfinish, forget };
 }
 
 // Asking the Assistant: the request for the conversation as it stands, the User's message last, with 다시 시도 and
@@ -290,6 +270,7 @@ function proposedBubble(text: string, proposal: QuestProposal): NewBubble {
     choices: [],
     chosen: null,
     resolvedBy: [],
+    nextLine: null,
     failure: null,
   };
 }
@@ -304,10 +285,11 @@ export function useChat(): Chat {
 
   const send = useCallback(
     (text: string): void => {
-      add(userBubble(text, null));
+      const line = said.current.at(-1)?.nextLine ?? null;
+      add(userBubble(text, line?.text === text ? line.chosen : null));
       ask();
     },
-    [add, ask],
+    [add, ask, said],
   );
 
   const choose = useCallback(
@@ -326,9 +308,12 @@ export function useChat(): Chat {
   const addOwn = useAddOwn(add);
   const rejectAlias = useRejectAlias({ said, show });
 
+  const nextLine = waiting ? null : (held.bubbles.at(-1)?.nextLine ?? null);
+
   return {
     bubbles: held.bubbles,
     waiting,
+    nextLine,
     send,
     choose,
     retry,
