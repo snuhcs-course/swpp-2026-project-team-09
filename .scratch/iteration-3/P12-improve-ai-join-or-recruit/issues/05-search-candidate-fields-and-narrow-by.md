@@ -4,7 +4,7 @@ Status: ready-for-agent
 
 Parent: `../spec.md` (P12)
 
-Branch and PR: its own branch from `3.0/Main` after the spec merges, merging the tag `p12-x` (X) once it exists and nothing newer (`3.0/P12-05-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The PR merges only after ticket 06's after set is recorded. Heavy jobs take the shared lock (spec, Measurement).
+Branch and PR: its own branch from `3.0/Main` after the spec merges, merging the tag `p12-x` (X) once it exists and nothing newer (`3.0/P12-05-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The after set measures this PR at a fixed commit on `p12-x`, never on `3.0/Main`. So the PR may merge before the after set is recorded. Before merging, it is updated from `3.0/Main`, and ticket 06 records any change between the measured commit and what lands. Heavy jobs take the shared lock (spec, Measurement).
 
 **What to build:** The recruiting and Global Event searches give the model what it needs to pick cards and to narrow a search.
 
@@ -40,13 +40,37 @@ Spec: `../spec.md`, "CD-3" and "CD-4".
 
 ## Acceptance criteria
 
-- [ ] Assistant-over-HTTP integration tests with the model scripted:
-  - [ ] `matched` lists exactly the words found;
-  - [ ] a candidate matching no word has an empty `matched`, and its rank is unchanged from today;
-  - [ ] `window` is `underWay` for a Quest or Global Event that began before the window and overlaps it, and `starts` otherwise;
-  - [ ] `join` follows the Join Policy;
-  - [ ] with more candidates than the limit, `total` and every count in `narrowBy` equal the counts of the full filtered set;
-  - [ ] with fewer candidates, no `narrowBy` is given.
-- [ ] Adding the fields changes neither which candidates are returned nor their order: the existing search tests pass unchanged.
+- [x] Assistant-over-HTTP integration tests with the model scripted:
+  - [x] `matched` lists exactly the words found;
+  - [x] a candidate matching no word has an empty `matched`, and its rank is unchanged from today;
+  - [x] `window` is `underWay` for a Quest or Global Event that began before the window and overlaps it, and `starts` otherwise;
+  - [x] `join` follows the Join Policy;
+  - [x] with more candidates than the limit, `total` and every count in `narrowBy` equal the counts of the full filtered set;
+  - [x] with fewer candidates, no `narrowBy` is given.
+- [x] Adding the fields changes neither which candidates are returned nor their order: the existing search tests pass unchanged.
 - [ ] The large world's server-recall test in CI still passes.
-- [ ] The two prompt lines are general and use no held-out case's words.
+- [x] The two prompt lines are general and use no held-out case's words.
+
+## Comments
+
+### Decisions (2026-11-05)
+
+- Built on `3.0/P12-05-search-fields-and-narrow-by`, from the tag `p12-x`, with ticket 02's head `0776393b` (#212) merged first, since both change the search tools' results.
+- `matched` is selected from the same per-word ILIKE expressions that `moreWordsFirst` adds for the ranking (`wordsHeld` in `common/search-sql.ts`), with the words as parameters. A word given twice counts once and is listed as first given. `matched` is left out when the search was given no words, and `window` when no window was asked, to keep the result short.
+- `window` compares the candidate's start with the window's start: before it is `underWay`, otherwise `starts`. The searches' filters already keep only candidates that overlap the window.
+- `join` is on Quest candidates only, since a Global Event has no Join Policy. `joinPolicy` stays beside it, because the ticket says candidates gain the field (the owner agreed to keep both).
+- `narrowBy` comes from a second query, run only when `more` is true, over the same FROM and WHERE as the search, uncut. It counts by Board (Quests only), by start day in Asia/Seoul and by word, and leaves out empty groups. A candidate already under way is counted on its start day, as the spec says, even when that day is before the window (the owner agreed).
+- The second picking line applies only to a search that was given words ("When the User asked for an activity and the search was given words, …"). Without words, `matched` is absent, and the line would otherwise drop candidates that fit, such as those of a search made with only a Board. The reviewer raised this on #214, and the owner agreed to the change.
+- The two tool descriptions each gained one sentence on `matched`, `window` and `narrowBy`, so that the model knows to search again by them. The owner agreed to keep these sentences. The chat rules gained only the ticket's two lines.
+- `searchPublished` and `searched` (used by resolveGlobalEvent and the free-time candidates) are unchanged.
+- Two existing exact-shape expectations (`assistant-recruiting-quests`, `assistant-global-events`) gained the new fields. Every existing test keeps its candidates and their order unchanged.
+- No real model run was made. Ticket 06 measures the bundle.
+
+### Agent usage (2026-11-05)
+
+- Agent time: about 30 minutes (estimate), one session plus two review subagents. Time spent waiting for answers, CI and the shared lock is not counted.
+- Tokens, main session plus the two `/code-review` subagents:
+  - input: 168 uncached;
+  - output: 59,217;
+  - cache reads: 7,927,972;
+  - cache writes: 270,941.

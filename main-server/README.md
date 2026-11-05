@@ -2223,11 +2223,21 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     map, or its Global Event's, and a Quest with words only is left out. A `placeId` that names no Place answers "none",
     with that as the reason. Without a window every other such Quest is a candidate,
     those without a start last. Each carries its title, Board, Global Event, Join Policy, the places left, the number of
-    Holders, the first Sub Quest's start, end and place, and the first 150 characters of its description.
+    Holders, the first Sub Quest's start, end and place, and the first 150 characters of its description, and `join`:
+    `open` for an Open Quest, `askToJoin` for an Approval one.
   - In both searches `words` (at most ten) rank and drop nothing: those whose title or description holds more of them
     come first, ignoring case and counting a word given twice once, ties in start order, then by title in code points.
     The rest of the window fills the places left, up to 30, with `more` when there were more. The server does not order
     by Holders.
+  - **Why a candidate was found** (P12): with `words`, each candidate carries `matched`, the words its title or
+    description holds, as first given, selected from the same expressions that rank it (`common/search-sql.ts`), so a
+    candidate holding none has `[]` and keeps its place. With a window, it carries `window`: `starts` when it starts in
+    the window, `underWay` when it began before and overlaps it (a Quest for a Global Event, or an event). The system
+    prompt counts an `underWay` candidate as in the window, and shows one with no `matched` word, for an activity asked
+    and a search given words, only when its title is clearly that activity.
+  - **`narrowBy`** (P12): with `more`, the answer adds `total` and `narrowBy`, counted by a second query over the same
+    filters, uncut: how many of them are on each Board (Quests only), start on each day in Asia/Seoul and hold each of
+    the `words`. No paging argument is taken: the model narrows by searching again.
   - **The Place note** (P12): when `resolvePlace` answered one Place in this message (`FoundIds` keeps it) and a search
     is not given it, `placeId` in `searchRecruitingQuests` or `place` in `searchGlobalEvents`, the answer, found or
     "none", carries `note`: that its candidates are from any place, naming the Place, its number and its id, and how to
