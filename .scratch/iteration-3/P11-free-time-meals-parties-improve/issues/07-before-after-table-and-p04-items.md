@@ -31,7 +31,7 @@ Later on 2026-11-05 the PM approved the holdout, which ran at `55d882bc`. Its ra
 
 ### Agent usage (2026-11-05)
 
-- **Agent time** (estimate): about 23 minutes so far: about 20 of the orchestrating session and about 3 for the reviewer. Time spent waiting for a person is not counted.
+- **Agent time** (estimate): about 28 minutes: about 25 of the orchestrating session, the holdout's entry included, and about 3 for the reviewer. Time spent waiting for a person is not counted.
 - **Tokens** (the reviewer's, measured from its transcript; the orchestrating session's are counted once, under ticket 06):
   - Input: 38 not cached, 1,544,542 cache reads and 77,674 cache writes.
   - Output: 13,455.
