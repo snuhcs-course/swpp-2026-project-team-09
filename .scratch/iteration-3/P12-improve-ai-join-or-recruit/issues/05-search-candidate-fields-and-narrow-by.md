@@ -1,6 +1,6 @@
 # 05: Search results say why each candidate matched and how to narrow a broad search
 
-Status: ready-for-agent
+Status: done
 
 Parent: `../spec.md` (P12)
 

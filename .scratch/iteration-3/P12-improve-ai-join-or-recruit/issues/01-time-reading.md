@@ -1,10 +1,10 @@
 # 01: The time checks read list numbers, `오후 N–M시` and invisible characters correctly
 
-Status: ready-for-agent
+Status: done
 
 Parent: `../spec.md` (P12)
 
-Branch and PR: its own branch from `3.0/Main` after the spec merges, merging the tag `p12-x` (X) once it exists and nothing newer (`3.0/P12-01-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The PR merges only after ticket 06's after set is recorded. Heavy jobs take the shared lock (spec, Measurement).
+Branch and PR: its own branch from `3.0/Main` after the spec merges, merging the tag `p12-x` (X) once it exists and nothing newer (`3.0/P12-01-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The PR merges as soon as it is approved; ticket 06's after set measures its head at approval, before it takes in `3.0/Main` (spec, Measurement, changed plan). Heavy jobs take the shared lock (spec, Measurement).
 
 **What to build:** A session whose time the Judgement read correctly is no longer held back because the server's time checks misread its line. Three ways of writing a time are affected:
 
