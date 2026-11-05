@@ -1,0 +1,467 @@
+{
+  "source": "The walking evaluation's 30 test pairs and 13 calibration pairs as frozen on 2026-11-01, in .scratch/iteration-3/P04-free-time-meals-parties/evidence/01-walking-evaluation.md. The table's and the baseline's seconds are those at the freeze. Each Place's id is its id in seed/walking-table.json.",
+  "test": [
+    {
+      "pair": "1",
+      "chain": "A",
+      "from": "63동 학생회관",
+      "to": "56동 자연과학관10",
+      "straightLineMetres": 194,
+      "tableSeconds": 278,
+      "baselineSeconds": 266,
+      "fromPlaceId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+      "toPlaceId": "2abdf168-b84e-5c44-aae7-0eb031fe2018"
+    },
+    {
+      "pair": "2",
+      "chain": "A",
+      "from": "56동 자연과학관10",
+      "to": "43-1동 이공계멀티미디어강의동",
+      "straightLineMetres": 115,
+      "tableSeconds": 120,
+      "baselineSeconds": 180,
+      "fromPlaceId": "2abdf168-b84e-5c44-aae7-0eb031fe2018",
+      "toPlaceId": "984e635d-aa89-5413-bb89-acbbedafb514"
+    },
+    {
+      "pair": "3",
+      "chain": "A",
+      "from": "43-1동 이공계멀티미디어강의동",
+      "to": "38동 글로벌공학교육센터",
+      "straightLineMetres": 210,
+      "tableSeconds": 260,
+      "baselineSeconds": 284,
+      "fromPlaceId": "984e635d-aa89-5413-bb89-acbbedafb514",
+      "toPlaceId": "6c8a4291-b1d2-5fc2-a2e8-9252798ca2d2"
+    },
+    {
+      "pair": "4",
+      "chain": "A",
+      "from": "38동 글로벌공학교육센터",
+      "to": "131동 신소재공동연구소",
+      "straightLineMetres": 147,
+      "tableSeconds": 304,
+      "baselineSeconds": 215,
+      "fromPlaceId": "6c8a4291-b1d2-5fc2-a2e8-9252798ca2d2",
+      "toPlaceId": "a9d7336f-b5be-5561-bb5f-9dcf33914386"
+    },
+    {
+      "pair": "5",
+      "chain": "A",
+      "from": "131동 신소재공동연구소",
+      "to": "301동 제1공학관",
+      "straightLineMetres": 411,
+      "tableSeconds": 734,
+      "baselineSeconds": 503,
+      "fromPlaceId": "a9d7336f-b5be-5561-bb5f-9dcf33914386",
+      "toPlaceId": "1a242be2-05c6-5185-bcd1-0b78bc358f88"
+    },
+    {
+      "pair": "6",
+      "chain": "A",
+      "from": "301동 제1공학관",
+      "to": "302동 제2공학관",
+      "straightLineMetres": 144,
+      "tableSeconds": 279,
+      "baselineSeconds": 211,
+      "fromPlaceId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+      "toPlaceId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3"
+    },
+    {
+      "pair": "7",
+      "chain": "A",
+      "from": "302동 제2공학관",
+      "to": "301동 제1공학관",
+      "straightLineMetres": 144,
+      "tableSeconds": 204,
+      "baselineSeconds": 211,
+      "fromPlaceId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+      "toPlaceId": "1a242be2-05c6-5185-bcd1-0b78bc358f88"
+    },
+    {
+      "pair": "8",
+      "chain": "A",
+      "from": "301동 제1공학관",
+      "to": "104동 반도체공동연구소",
+      "straightLineMetres": 514,
+      "tableSeconds": 588,
+      "baselineSeconds": 615,
+      "fromPlaceId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+      "toPlaceId": "5895e85a-f684-5e35-a00e-23b798b1be2c"
+    },
+    {
+      "pair": "9",
+      "chain": "A",
+      "from": "104동 반도체공동연구소",
+      "to": "105동 유전공학연구소",
+      "straightLineMetres": 75,
+      "tableSeconds": 141,
+      "baselineSeconds": 136,
+      "fromPlaceId": "5895e85a-f684-5e35-a00e-23b798b1be2c",
+      "toPlaceId": "608d6cd6-5e07-5f25-a9d1-46f893ef5031"
+    },
+    {
+      "pair": "10",
+      "chain": "A",
+      "from": "105동 유전공학연구소",
+      "to": "65동 교수회관",
+      "straightLineMetres": 389,
+      "tableSeconds": 479,
+      "baselineSeconds": 478,
+      "fromPlaceId": "608d6cd6-5e07-5f25-a9d1-46f893ef5031",
+      "toPlaceId": "b1921173-61f7-5aec-8865-c782af294129"
+    },
+    {
+      "pair": "11",
+      "chain": "A",
+      "from": "65동 교수회관",
+      "to": "76동 제4식당(서당골)",
+      "straightLineMetres": 363,
+      "tableSeconds": 849,
+      "baselineSeconds": 450,
+      "fromPlaceId": "b1921173-61f7-5aec-8865-c782af294129",
+      "toPlaceId": "ccd87151-bc67-5e24-b62a-5a1b7a62595a"
+    },
+    {
+      "pair": "12",
+      "chain": "A",
+      "from": "76동 제4식당(서당골)",
+      "to": "902동 (관악사)대학원 생활관",
+      "straightLineMetres": 168,
+      "tableSeconds": 215,
+      "baselineSeconds": 238,
+      "fromPlaceId": "ccd87151-bc67-5e24-b62a-5a1b7a62595a",
+      "toPlaceId": "e47a4d98-5d50-56bc-b071-42c4890a4202"
+    },
+    {
+      "pair": "13",
+      "chain": "A",
+      "from": "902동 (관악사)대학원 생활관",
+      "to": "919동 (관악사)학부 생활관",
+      "straightLineMetres": 209,
+      "tableSeconds": 242,
+      "baselineSeconds": 283,
+      "fromPlaceId": "e47a4d98-5d50-56bc-b071-42c4890a4202",
+      "toPlaceId": "1c5519cf-9daf-52e2-8700-7ee18e3e6a8f"
+    },
+    {
+      "pair": "14",
+      "chain": "A",
+      "from": "919동 (관악사)학부 생활관",
+      "to": "920동 관악사후생관",
+      "straightLineMetres": 102,
+      "tableSeconds": 119,
+      "baselineSeconds": 166,
+      "fromPlaceId": "1c5519cf-9daf-52e2-8700-7ee18e3e6a8f",
+      "toPlaceId": "1733f7bd-b30b-5b38-8ced-25d4d5dde2a9"
+    },
+    {
+      "pair": "15",
+      "chain": "A",
+      "from": "920동 관악사후생관",
+      "to": "140동 국제대학원",
+      "straightLineMetres": 371,
+      "tableSeconds": 815,
+      "baselineSeconds": 459,
+      "fromPlaceId": "1733f7bd-b30b-5b38-8ced-25d4d5dde2a9",
+      "toPlaceId": "b38b9df6-bbc3-5dab-93dc-fdbb1a86b46b"
+    },
+    {
+      "pair": "16",
+      "chain": "A",
+      "from": "140동 국제대학원",
+      "to": "222동 생활과학대학",
+      "straightLineMetres": 150,
+      "tableSeconds": 209,
+      "baselineSeconds": 218,
+      "fromPlaceId": "b38b9df6-bbc3-5dab-93dc-fdbb1a86b46b",
+      "toPlaceId": "3cd56d26-dcc7-513c-adb7-dc4ca0e46d37"
+    },
+    {
+      "pair": "17",
+      "chain": "A",
+      "from": "222동 생활과학대학",
+      "to": "70동 박물관",
+      "straightLineMetres": 76,
+      "tableSeconds": 133,
+      "baselineSeconds": 137,
+      "fromPlaceId": "3cd56d26-dcc7-513c-adb7-dc4ca0e46d37",
+      "toPlaceId": "7df6d4d7-b4c3-5548-a54f-ba558d90bf60"
+    },
+    {
+      "pair": "18",
+      "chain": "A",
+      "from": "70동 박물관",
+      "to": "83동 인문사회계멀티미디어강의동",
+      "straightLineMetres": 136,
+      "tableSeconds": 288,
+      "baselineSeconds": 203,
+      "fromPlaceId": "7df6d4d7-b4c3-5548-a54f-ba558d90bf60",
+      "toPlaceId": "44871e9c-c0f5-511e-85e2-e8f05c5f0aca"
+    },
+    {
+      "pair": "19",
+      "chain": "A",
+      "from": "83동 인문사회계멀티미디어강의동",
+      "to": "15동 법학관1",
+      "straightLineMetres": 124,
+      "tableSeconds": 166,
+      "baselineSeconds": 189,
+      "fromPlaceId": "44871e9c-c0f5-511e-85e2-e8f05c5f0aca",
+      "toPlaceId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a"
+    },
+    {
+      "pair": "20",
+      "chain": "A",
+      "from": "15동 법학관1",
+      "to": "3동 인문관3",
+      "straightLineMetres": 241,
+      "tableSeconds": 450,
+      "baselineSeconds": 317,
+      "fromPlaceId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+      "toPlaceId": "0da679fd-e23b-5fb2-a25d-d2c98c0d2b15"
+    },
+    {
+      "pair": "21",
+      "chain": "A",
+      "from": "3동 인문관3",
+      "to": "63동 학생회관",
+      "straightLineMetres": 304,
+      "tableSeconds": 327,
+      "baselineSeconds": 387,
+      "fromPlaceId": "0da679fd-e23b-5fb2-a25d-d2c98c0d2b15",
+      "toPlaceId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b"
+    },
+    {
+      "pair": "22",
+      "chain": "B",
+      "from": "63동 학생회관",
+      "to": "302동 제2공학관",
+      "straightLineMetres": 1176,
+      "tableSeconds": 1652,
+      "baselineSeconds": 1338,
+      "fromPlaceId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+      "toPlaceId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3"
+    },
+    {
+      "pair": "23",
+      "chain": "B",
+      "from": "302동 제2공학관",
+      "to": "919동 (관악사)학부 생활관",
+      "straightLineMetres": 1666,
+      "tableSeconds": 1693,
+      "baselineSeconds": 1872,
+      "fromPlaceId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+      "toPlaceId": "1c5519cf-9daf-52e2-8700-7ee18e3e6a8f"
+    },
+    {
+      "pair": "24",
+      "chain": "B",
+      "from": "919동 (관악사)학부 생활관",
+      "to": "서울대 정문",
+      "straightLineMetres": 977,
+      "tableSeconds": 1294,
+      "baselineSeconds": 1120,
+      "fromPlaceId": "1c5519cf-9daf-52e2-8700-7ee18e3e6a8f",
+      "toPlaceId": "14579830-1b41-5d76-96f9-163fce5e5ffc"
+    },
+    {
+      "pair": "25",
+      "chain": "B",
+      "from": "서울대 정문",
+      "to": "58동 SK경영관",
+      "straightLineMetres": 325,
+      "tableSeconds": 419,
+      "baselineSeconds": 410,
+      "fromPlaceId": "14579830-1b41-5d76-96f9-163fce5e5ffc",
+      "toPlaceId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2"
+    },
+    {
+      "pair": "26",
+      "chain": "B",
+      "from": "58동 SK경영관",
+      "to": "59동 LG경영관(경영연구관및산학협동관)",
+      "straightLineMetres": 114,
+      "tableSeconds": 298,
+      "baselineSeconds": 179,
+      "fromPlaceId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+      "toPlaceId": "210a6f68-5600-51d8-b96b-5f093d8c252d"
+    },
+    {
+      "pair": "27",
+      "chain": "B",
+      "from": "59동 LG경영관(경영연구관및산학협동관)",
+      "to": "16동 사회과학관",
+      "straightLineMetres": 240,
+      "tableSeconds": 566,
+      "baselineSeconds": 316,
+      "fromPlaceId": "210a6f68-5600-51d8-b96b-5f093d8c252d",
+      "toPlaceId": "74c76d85-d0d8-5d0b-a52c-9dcf9a6a4c04"
+    },
+    {
+      "pair": "28",
+      "chain": "B",
+      "from": "16동 사회과학관",
+      "to": "73동 문화관",
+      "straightLineMetres": 216,
+      "tableSeconds": 235,
+      "baselineSeconds": 290,
+      "fromPlaceId": "74c76d85-d0d8-5d0b-a52c-9dcf9a6a4c04",
+      "toPlaceId": "1d3c1a4b-333a-50a9-b092-e142be72e481"
+    },
+    {
+      "pair": "29",
+      "chain": "B",
+      "from": "73동 문화관",
+      "to": "60동 행정관",
+      "straightLineMetres": 176,
+      "tableSeconds": 226,
+      "baselineSeconds": 247,
+      "fromPlaceId": "1d3c1a4b-333a-50a9-b092-e142be72e481",
+      "toPlaceId": "ac40a633-9e6b-54f8-bcab-3534ec470127"
+    },
+    {
+      "pair": "30",
+      "chain": "B",
+      "from": "60동 행정관",
+      "to": "63동 학생회관",
+      "straightLineMetres": 100,
+      "tableSeconds": 110,
+      "baselineSeconds": 164,
+      "fromPlaceId": "ac40a633-9e6b-54f8-bcab-3534ec470127",
+      "toPlaceId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b"
+    }
+  ],
+  "calibration": [
+    {
+      "pair": "C1",
+      "from": "7동 인문관6",
+      "to": "12동 사범교육협력센터",
+      "straightLineMetres": 77,
+      "tableSeconds": 99,
+      "baselineSeconds": 138,
+      "fromPlaceId": "69ff419a-00a7-5b1f-8126-ea65ddf8b084",
+      "toPlaceId": "d8cf61f5-3467-5972-a19e-eda4f3a9507b"
+    },
+    {
+      "pair": "C2",
+      "from": "24동 자연과학관6",
+      "to": "200동 농업생명과학대학",
+      "straightLineMetres": 220,
+      "tableSeconds": 252,
+      "baselineSeconds": 295,
+      "fromPlaceId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+      "toPlaceId": "b2f9f126-d6a0-5f22-b1e8-1024e1f78073"
+    },
+    {
+      "pair": "C3",
+      "from": "75동 복지관",
+      "to": "32동 공학관3",
+      "straightLineMetres": 98,
+      "tableSeconds": 124,
+      "baselineSeconds": 162,
+      "fromPlaceId": "7d269465-b1ff-57f9-9282-7165c812ffec",
+      "toPlaceId": "a47cdc35-f38f-5671-b62a-a2999737b879"
+    },
+    {
+      "pair": "C4",
+      "from": "30-2동 공대간이식당",
+      "to": "44-1동 신양학술정보관",
+      "straightLineMetres": 256,
+      "tableSeconds": 321,
+      "baselineSeconds": 334,
+      "fromPlaceId": "dff169ad-f28c-5dbc-a70a-c14822fa97de",
+      "toPlaceId": "13840a0a-8aa4-5015-95ea-1632fc1d954b"
+    },
+    {
+      "pair": "C5",
+      "from": "139동 공동기기원",
+      "to": "142동 약학관5",
+      "straightLineMetres": 134,
+      "tableSeconds": 174,
+      "baselineSeconds": 201,
+      "fromPlaceId": "763a0b9a-9630-5230-879a-f32155a16b66",
+      "toPlaceId": "f7007179-3ce2-5535-ab4e-66fdfdeabcbf"
+    },
+    {
+      "pair": "C6",
+      "from": "100동 버들골 풍산마당",
+      "to": "111동 사범대학 간이식당",
+      "straightLineMetres": 83,
+      "tableSeconds": 96,
+      "baselineSeconds": 145,
+      "fromPlaceId": "9bf575bc-ee5b-563d-9809-b1a4491cdd73",
+      "toPlaceId": "340b5b70-79c1-54d9-a16c-05495b16d6e2"
+    },
+    {
+      "pair": "C7",
+      "from": "82동 환경대학원",
+      "to": "74동 예술복합연구동",
+      "straightLineMetres": 99,
+      "tableSeconds": 93,
+      "baselineSeconds": 162,
+      "fromPlaceId": "63185fa4-2b2f-573c-956c-d6e9c1766283",
+      "toPlaceId": "3f7005d2-7891-5b3c-b88e-ff898d3a134b"
+    },
+    {
+      "pair": "C8",
+      "from": "903동 (관악사)대학원 생활관",
+      "to": "905동 (관악사)대학원 생활관",
+      "straightLineMetres": 83,
+      "tableSeconds": 136,
+      "baselineSeconds": 145,
+      "fromPlaceId": "917b0611-9eb8-5eb0-8e8a-6a57428088ed",
+      "toPlaceId": "0f906d78-7bd3-583d-a874-98e95a92bed0"
+    },
+    {
+      "pair": "C9",
+      "from": "153동 우정원 글로벌사회공헌센터",
+      "to": "57동 행정대학원",
+      "straightLineMetres": 126,
+      "tableSeconds": 239,
+      "baselineSeconds": 192,
+      "fromPlaceId": "b09945e3-d53f-5e1b-8f0a-a6ea39829f81",
+      "toPlaceId": "35f320b9-1ee8-513d-bfdc-e313893a06bd"
+    },
+    {
+      "pair": "C10",
+      "from": "313동 정밀기계공동연구소",
+      "to": "300동 유회진 학술정보관",
+      "straightLineMetres": 72,
+      "tableSeconds": 237,
+      "baselineSeconds": 133,
+      "fromPlaceId": "f3111ece-879d-59fc-9da3-ac5ed8354626",
+      "toPlaceId": "41f4e514-f152-558d-8801-2fe1d75df3f8"
+    },
+    {
+      "pair": "C11",
+      "from": "300동 유회진 학술정보관",
+      "to": "313동 정밀기계공동연구소",
+      "straightLineMetres": 72,
+      "tableSeconds": 191,
+      "baselineSeconds": 133,
+      "fromPlaceId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+      "toPlaceId": "f3111ece-879d-59fc-9da3-ac5ed8354626"
+    },
+    {
+      "pair": "C12",
+      "from": "22동 자연과학관4",
+      "to": "20동 약학관3",
+      "straightLineMetres": 191,
+      "tableSeconds": 293,
+      "baselineSeconds": 263,
+      "fromPlaceId": "53473bf7-a0e3-5e2d-ad05-54093b9ace2a",
+      "toPlaceId": "6fed110f-99d8-50e9-a7e7-5888ba936f14"
+    },
+    {
+      "pair": "C13",
+      "from": "20동 약학관3",
+      "to": "22동 자연과학관4",
+      "straightLineMetres": 191,
+      "tableSeconds": 228,
+      "baselineSeconds": 263,
+      "fromPlaceId": "6fed110f-99d8-50e9-a7e7-5888ba936f14",
+      "toPlaceId": "53473bf7-a0e3-5e2d-ad05-54093b9ace2a"
+    }
+  ]
+}
