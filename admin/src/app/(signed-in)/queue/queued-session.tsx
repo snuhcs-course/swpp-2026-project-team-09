@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 'use client';
@@ -21,6 +22,7 @@ const WHY_HELD: Record<SessionHold, string> = {
   ai_unsure: 'The AI is unsure.',
   ai_failed: 'The AI could not answer.',
   candidates_changed: 'The candidates changed after the AI answered.',
+  place_unchecked: 'Its place failed the checks, and no candidate is certainly the same event.',
 };
 
 const NOT_LIVE: Partial<Record<GlobalEventState, string>> = {
