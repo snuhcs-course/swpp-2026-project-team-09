@@ -1,0 +1,351 @@
+{
+  "source": "The walks recorded in P04 ticket 01's Comments, .scratch/iteration-3/P04-free-time-meals-parties/issues/01-travel-times.md: \"The walks\" and \"The calibration walks\", both of 2026-11-02. Dates and start times are in Korea. walkedSeconds has the late presses taken off, and secondsTakenOff is what was taken off.",
+  "test": [
+    {
+      "pair": "1",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "01:58",
+      "walkedSeconds": 187,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "2",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "02:02",
+      "walkedSeconds": 102,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "3",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "02:04",
+      "walkedSeconds": 154,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "4",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "02:07",
+      "walkedSeconds": 182,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "5",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "02:11",
+      "walkedSeconds": 516,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "6",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:00",
+      "walkedSeconds": 121,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "7",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:02",
+      "walkedSeconds": 115,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "8",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:05",
+      "walkedSeconds": 390,
+      "secondsTakenOff": 95
+    },
+    {
+      "pair": "9",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:14",
+      "walkedSeconds": 80,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "10",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:16",
+      "walkedSeconds": 311,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "11",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:22",
+      "walkedSeconds": 330,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "12",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:28",
+      "walkedSeconds": 158,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "13",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:31",
+      "walkedSeconds": 205,
+      "secondsTakenOff": 15
+    },
+    {
+      "pair": "14",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:35",
+      "walkedSeconds": 58,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "15",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:36",
+      "walkedSeconds": 582,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "16",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:47",
+      "walkedSeconds": 224,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "17",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:51",
+      "walkedSeconds": 97,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "18",
+      "walker": "TaeHyun79",
+      "date": "2026-11-01",
+      "started": "23:54",
+      "walkedSeconds": 109,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "19",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "00:03",
+      "walkedSeconds": 119,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "20",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "00:06",
+      "walkedSeconds": 194,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "21",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "00:09",
+      "walkedSeconds": 221,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "22",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "00:17",
+      "walkedSeconds": 1074,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "23",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "00:57",
+      "walkedSeconds": 1149,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "24",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "01:16",
+      "walkedSeconds": 1140,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "25",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "01:38",
+      "walkedSeconds": 264,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "26",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "01:43",
+      "walkedSeconds": 103,
+      "secondsTakenOff": 30
+    },
+    {
+      "pair": "27",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "01:46",
+      "walkedSeconds": 186,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "28",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "01:50",
+      "walkedSeconds": 151,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "29",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "01:54",
+      "walkedSeconds": 77,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "30",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "01:55",
+      "walkedSeconds": 70,
+      "secondsTakenOff": 0
+    }
+  ],
+  "calibration": [
+    {
+      "pair": "C1",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "18:54",
+      "walkedSeconds": 64,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C2",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "18:13",
+      "walkedSeconds": 218,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C3",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "18:21",
+      "walkedSeconds": 95,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C4",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "18:25",
+      "walkedSeconds": 227,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C5",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "18:36",
+      "walkedSeconds": 170,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C6",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "18:58",
+      "walkedSeconds": 83,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C7",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "19:15",
+      "walkedSeconds": 83,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C8",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "19:06",
+      "walkedSeconds": 45,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C9",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "19:23",
+      "walkedSeconds": 91,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C10",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "17:26",
+      "walkedSeconds": 164,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C11",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "17:22",
+      "walkedSeconds": 156,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C12",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "18:47",
+      "walkedSeconds": 169,
+      "secondsTakenOff": 0
+    },
+    {
+      "pair": "C13",
+      "walker": "TaeHyun79",
+      "date": "2026-11-02",
+      "started": "18:44",
+      "walkedSeconds": 146,
+      "secondsTakenOff": 0
+    }
+  ]
+}
