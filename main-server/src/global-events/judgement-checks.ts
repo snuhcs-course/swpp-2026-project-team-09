@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { PlaceDto } from '../places/dto/place.dto.js';
@@ -26,6 +27,7 @@ import {
 } from './judgement-time.js';
 import { isElsewhere, namedPlace } from './named-place.js';
 import { type PostSourceSettings } from './post-sources.js';
+import { verdictOf } from './session-verdict.js';
 
 // The server's checks of a Judgement (ADR 0008). The model decides nothing: a session is published only when every
 // check passes, and a check that cannot tell fails.
@@ -276,7 +278,9 @@ interface PlacedDraft {
 // Where each passing session goes, given the post's Drafts in session order, null being a new event: the Draft the worker
 // read it into, else the post's only Draft, whose start may be only the header's date, else a Draft without a start. A
 // Draft of several with another start keeps what the worker read. Failing sessions make no Draft, and a Draft stays for
-// them: their own, or any other left. A session that is not new is no session left to look at.
+// them: their own, or any other left. A session that is not new is no session left to look at. A failing session that is
+// compared or fills a Draft then takes a Draft the same way from those left, or a new one, so that one stays for those
+// that settle nothing.
 export function placedSessions(sessions: JudgedSession[], drafts: PlacedDraft[]): Map<JudgedSession, string | null> {
   const passing = sessions.filter(({ passed }) => passed);
   const failing = sessions.filter(
@@ -309,5 +313,28 @@ export function placedSessions(sessions: JudgedSession[], drafts: PlacedDraft[])
       placed.set(session, spare.shift()?.id ?? null);
     }
   }
+  placeFailing(failing, drafts, placed);
   return placed;
+}
+
+function placeFailing(
+  failing: JudgedSession[],
+  drafts: PlacedDraft[],
+  placed: Map<JudgedSession, string | null>,
+): void {
+  const settling = failing.filter(({ checks }) => verdictOf(checks).comparable || verdictOf(checks).draftable);
+  const used = new Set(placed.values());
+  const left = drafts.filter(({ id }) => !used.has(id));
+  const staysFor = failing.length - settling.length;
+  for (const session of settling) {
+    const draft =
+      left.find((each) => isDraftOf(each, session)) ??
+      (drafts.length === 1 ? left[0] : left.find(({ startsAt }) => startsAt === null));
+    if (draft === undefined || (staysFor > 0 && left.length === 1)) {
+      placed.set(session, null);
+    } else {
+      left.splice(left.indexOf(draft), 1);
+      placed.set(session, draft.id);
+    }
+  }
 }

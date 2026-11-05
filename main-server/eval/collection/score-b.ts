@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type GoldPair, type PairSide } from './gold.ts';
@@ -11,6 +12,7 @@ import { type Rate } from './score-a.ts';
 import {
   type AskAboutPost,
   comparableSessions,
+  publishedSessions,
   isRefused,
   type NewPost,
   type Partner,
@@ -135,12 +137,12 @@ function causeOfTruePair(
     return '후보 단계 누락';
   }
   const { stored, fresh } = storedAndNew(pair);
-  const sessionsOf = (post: string): ReturnType<typeof comparableSessions> => {
+  const sessionsOf = (post: string, of: typeof comparableSessions): ReturnType<typeof comparableSessions> => {
     const reading = readings.get(post);
-    return reading === undefined ? [] : comparableSessions(reading);
+    return reading === undefined ? [] : of(reading);
   };
-  const theirs = sessionsOf(stored.post);
-  if (sessionsOf(fresh.post).every((one) => theirs.every((other) => isRefused(one, other)))) {
+  const theirs = sessionsOf(stored.post, publishedSessions);
+  if (sessionsOf(fresh.post, comparableSessions).every((one) => theirs.every((other) => isRefused(one, other)))) {
     return '금지 규칙';
   }
   if (pair.chosenAs === 'many-to-one') {
