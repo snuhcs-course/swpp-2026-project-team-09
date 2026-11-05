@@ -240,6 +240,8 @@ Regressions remain after the prompt was changed, so by ADR 0009 a router is reco
 
 After the after set, at 09:48 KST on 2026-11-05, the branch merged `3.0/Main`. Its tip was still X, so nothing came in.
 
+At 18:12 KST the branch merged `3.0/Main` again, to pass CI after the Judgement tests' dates were fixed. In came the walking scorer (#200), those tests' new dates (#208) and P12's spec (#206). None of them changes `src/`, so the code measured above is the code this branch brings.
+
 ### Smoke run, not scored
 
 | Item        | Value                                                                                                                                       |
