@@ -4,6 +4,8 @@ Status: ready-for-agent
 
 Parent: `../spec.md` (P12)
 
+Branch and PR: its own branch from X (`3.0/P12-02-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The PR merges only after ticket 06's after set is recorded. Heavy jobs take the shared lock (spec, Measurement).
+
 **What to build:** Three small changes to what the Assistant's tools and replies tell the model and the User.
 
 - **Board refusal.** When `proposeQuest` refuses a Quest with no Board, the refusal tells the model to choose 식사, 진로, 취미 or 공연 from the activity, and to ask the User only when the activity fits none.

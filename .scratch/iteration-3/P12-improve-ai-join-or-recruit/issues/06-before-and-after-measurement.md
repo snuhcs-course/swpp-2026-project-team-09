@@ -11,12 +11,12 @@ Spec: `../spec.md`, "Measurement".
 **Blocked by:**
 
 - **The before set:** none. It runs at X as soon as X exists.
-- **The after set:** 01, 02, 03, 04 and 05, all merged into the integration branch.
+- **The after set:** 01, 02, 03, 04 and 05, each done on its own branch with its PR open.
 
 ## Starting point
 
-- X is `3.0/Main` with `origin/3.0/P11-04-chat` (#204, head `4b2097cb`) merged locally. The integration branch `3.0/P12-integration` is made at X, and the ticket branches start from it and merge back into it.
-- When #204 merges, Main is merged in: no rebase, no force push. If #204 changes in review, the difference is recorded here.
+- X is `3.0/Main` with `origin/3.0/P11-04-chat` (#204, head `4b2097cb`) merged locally. Each of 01–05 has its own branch from X and its own PR to `3.0/Main`, built at the same time in separate sessions. The after set runs on a local merge of the five branches, never pushed as a PR, and the ticket PRs merge only after it is recorded.
+- When #204 merges, Main is merged into each ticket branch: no rebase, no force push. If #204 changes in review, the difference is recorded here.
 - A01 and P07 are not taken in until the after set is done. The order with the other work in flight is the spec's (Further Notes): P12's sets before A01-01, #169 and #170 merge; P12 merges after #204's after set is recorded; A01-03's baseline after P12 merges; P13's R2 and R3 with no P12 change between them.
 
 ## Acceptance criteria

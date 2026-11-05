@@ -197,7 +197,10 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 ### Measurement
 
 - **Starting point X.** X is `3.0/Main` with `3.0/P11-04-chat` (#204, head `4b2097cb`) merged locally.
-  - The integration branch is `3.0/P12-integration`, made at X. Ticket branches start from it and merge back into it. Nothing of P12 lands on `3.0/Main` before the after set has run; how it lands then (one PR or the ticket PRs in order) is the owner's call. When #204 merges, Main is merged into the integration branch: no rebase, no force push.
+  - **One branch and one PR per ticket.** Tickets 01–05 are built at the same time, each in its own session, on its own branch from X (`3.0/P12-NN-<slug>`). Each opens its own PR to `3.0/Main`.
+  - Heavy jobs (builds, integration tests, Docker) still run one at a time across those sessions, so each session takes a shared lock before one and releases it after.
+  - The after set runs on a local merge of the five ticket branches at X, which is never pushed as a PR. The ticket PRs merge only after the after set is recorded, so that nothing of P12 reaches `3.0/Main` before it is measured.
+  - When #204 merges, Main is merged into each ticket branch: no rebase, no force push.
   - A01 and P07 are not taken in until the after set is done.
   - If #204 changes in review, the difference is recorded. A PR opened before #204 merges says it contains P11's commits.
 - **Before set.**

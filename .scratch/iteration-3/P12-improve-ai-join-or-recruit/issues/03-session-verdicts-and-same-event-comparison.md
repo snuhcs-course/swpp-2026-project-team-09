@@ -4,6 +4,8 @@ Status: ready-for-agent
 
 Parent: `../spec.md` (P12)
 
+Branch and PR: its own branch from X (`3.0/P12-03-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The PR merges only after ticket 06's after set is recorded. Heavy jobs take the shared lock (spec, Measurement).
+
 **What to build:** The server reads each session's check results as three verdicts:
 
 - `publishable`: every check passes;

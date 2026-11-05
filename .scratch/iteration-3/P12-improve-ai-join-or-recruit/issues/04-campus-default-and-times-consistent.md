@@ -4,6 +4,8 @@ Status: ready-for-agent
 
 Parent: `../spec.md` (P12)
 
+Branch and PR: its own branch from X (`3.0/P12-04-…`) and its own PR to `3.0/Main`, built in its own session at the same time as the other code tickets. The PR merges only after ticket 06's after set is recorded. Heavy jobs take the shared lock (spec, Measurement).
+
 **What to build:** Two changes that land together in one PR. The wider campus default without the time check would publish wrong times (a-015, a-053). They may be split into commits, but not into PRs.
 
 **Campus default.**
