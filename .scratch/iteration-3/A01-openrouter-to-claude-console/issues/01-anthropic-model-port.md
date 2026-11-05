@@ -37,7 +37,6 @@ The main server and the eval runners call Claude Haiku 5.5 through the Anthropic
 - The test settings (`test/global-setup.ts`) now hold the Anthropic settings too, with `MODEL_PROVIDER=anthropic`. Three existing tests were edited, because the default provider changed:
   - the 503 test now empties `ANTHROPIC_API_KEY`;
   - `eval-options` and `eval-p4-holdout` give `ANTHROPIC_MODEL`, or pass `--provider openrouter`.
-- Already failing before this ticket, and depends on the date: `judgement-settings.integration` "The app receives no Judgement…" fails with its file as at the base commit (the run used this branch's source) after 2026-11-05 16:00 KST. Its fixture's event (`2026-11-05T14:00–16:00`) has ended by then, so it no longer lists as upcoming.
 
 ### Manual check (2026-11-05, real key, `claude-haiku-5-5`, `MODEL_CACHE=breakpoints`)
 
