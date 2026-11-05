@@ -72,7 +72,7 @@ The improvement is measured once, after every ticket is done, against a before s
 ### Users of the Assistant
 
 17. As a User, I want to say "점심 같이 먹을 사람 모집해 줘" and get a 식사 Quest proposed without being asked which Board, so that recruiting takes one message.
-18. As a User, I want the Assistant to be asked which Board only when the activity fits none of 식사, 진로, 취미 and 공연, so that the question is asked when it is needed.
+18. As a User, I want to be asked which Board only when the activity fits none of 식사, 진로, 취미 and 공연, or more than one, so that the question is asked when it is needed.
 19. As a User, I want a search for Quests "at 301동" to search at 301동 after the Assistant found that Place, so that I don't get Quests from all over the campus.
 20. As a User, I want the reply to tell me that an Approval Quest needs the Leader's acceptance whenever one is among the cards, so that I know my request may wait.
 21. As a User, I want that line not to be repeated when the Assistant already explained it, so that the reply does not say it twice.
@@ -159,8 +159,10 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 
 **CD-1: two contract fixes.**
 
-- `proposeQuest`'s refusal for a missing Board changes from "Ask the User which" to telling the model to choose 식사, 진로, 취미 or 공연 from the activity, and to ask only when the activity fits none.
-  - **To be agreed with #170 (P07-02, 윤유상) before this part lands.** #170 keeps "the Board and the time are still asked" and "When proposeQuest refuses fields, ask the User", and edits the same tool. The rule proposed to #170: the Board is chosen from the activity when it plainly fits one of the four and asked otherwise; the time is always asked. Whichever wording is agreed goes into both the refusal and the chat rules, so the model never reads two rules. Until then the rest of ticket 02 goes ahead.
+- The Board rule: when the activity plainly fits one of 식사, 진로, 취미 and 공연, the model chooses it and proposes at once; when it fits none, or more than one, it asks the User. A missing time is always asked.
+  - `proposeQuest`'s refusal for a missing Board changes from "Ask the User which" to this rule: it names the four Boards and says to choose from the activity, asking only when none or more than one fits.
+  - The chat rules' clause becomes "When proposeQuest refuses fields, ask the User for those, all in one question, except a Board the activity plainly gives", so the model never reads two rules.
+  - Agreed with 윤유상 on #170 (2026-11-05): the wording lands here in P12, not in #170, since P12's after set runs on X, which does not hold #170. #170 changes neither the Board refusal nor the clause "When proposeQuest refuses fields, ask the User for those, all in one question". Merge note: both PRs edit the chat rules' bullet that starts "To propose a 파티". Whichever lands second keeps #170's Join Policy and capacity wording at its start and P12's refusal clause at its end.
 - When a recruiting or Global Event search is called without `placeId` in a message where `resolvePlace` already returned one Place, the result carries a note that `placeId` was not given.
 - `resolvePlace` itself is unchanged.
 

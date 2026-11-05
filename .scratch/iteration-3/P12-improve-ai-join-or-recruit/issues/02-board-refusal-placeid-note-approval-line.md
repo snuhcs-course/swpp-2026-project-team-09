@@ -8,7 +8,7 @@ Branch and PR: its own branch from X (`3.0/P12-02-…`) and its own PR to `3.0/M
 
 **What to build:** Three small changes to what the Assistant's tools and replies tell the model and the User.
 
-- **Board refusal.** When `proposeQuest` refuses a Quest with no Board, the refusal tells the model to choose 식사, 진로, 취미 or 공연 from the activity, and to ask the User only when the activity fits none.
+- **Board refusal.** When `proposeQuest` refuses a Quest with no Board, the refusal names the four Boards (식사, 진로, 취미, 공연) and tells the model to choose the one the activity plainly fits and propose at once, asking the User only when it fits none or more than one. The chat rules' clause becomes "When proposeQuest refuses fields, ask the User for those, all in one question, except a Board the activity plainly gives". A missing time is always asked.
 - **`placeId` note.** When `resolvePlace` returned one Place in a message and a recruiting or Global Event search is then called without `placeId`, the search result carries a note that `placeId` was not given.
 - **Approval line.** After the loop, the server adds one sentence to the reply when both of these hold:
   - the cards shown include a Quest whose Join Policy is Approval;
@@ -18,7 +18,9 @@ Branch and PR: its own branch from X (`3.0/P12-02-…`) and its own PR to `3.0/M
 
 Spec: `../spec.md`, "CD-1: two contract fixes" and "CD-2: the Approval line". `resolvePlace` and the system prompt are not changed here.
 
-**Blocked by:** None (can start immediately). The Board refusal part alone waits for the rule agreed with #170 (P07-02, 윤유상): #170 keeps "the Board and the time are still asked" and edits the same tool. The rule proposed to #170: the Board is chosen from the activity when it plainly fits one of the four and asked otherwise; the time is always asked. The agreed wording goes into both the refusal and the chat rules.
+**Blocked by:** None (can start immediately).
+
+**#170:** Agreed with 윤유상 on #170 (2026-11-05): the wording lands here in P12, not in #170, since P12's after set runs on X, which does not hold #170. #170 changes neither the Board refusal nor the clause "When proposeQuest refuses fields, ask the User for those, all in one question". Merge note: both PRs edit the chat rules' bullet that starts "To propose a 파티". Whichever lands second keeps #170's Join Policy and capacity wording at its start and P12's refusal clause at its end.
 
 **Merge 주의:** 05 changes the same search tools' results and the chat rules. Whichever lands second merges the other in.
 
@@ -33,7 +35,8 @@ Spec: `../spec.md`, "CD-1: two contract fixes" and "CD-2: the Approval line". `r
 ## Acceptance criteria
 
 - [ ] Assistant-over-HTTP integration tests with the model scripted:
-  - [ ] `proposeQuest` with no Board returns the new refusal, which names the four Boards and the activity.
+  - [ ] `proposeQuest` with no Board returns the new refusal, which names the four Boards and says to choose from the activity, asking only when none or more than one fits.
+  - [ ] The chat rules hold the clause with the Board exception, and no other rule tells the model to ask for a Board the activity plainly gives.
   - [ ] After `resolvePlace` returns one Place, a search without `placeId` carries the note.
   - [ ] A search with `placeId`, or with no `resolvePlace` before it, carries no note.
   - [ ] With an Approval card shown and a reply holding none of the words, the line is added once.
