@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -53,9 +54,9 @@ function recordOf(options: CollectionOptions, outcome: RunOutcome, startedAt: st
     modelsAnswered: outcome.modelIds,
     limits: { timeoutMs: options.timeoutMs, maxOutputTokens: options.maxOutputTokens },
     switches: RUN_SWITCHES[options.run],
-    buildingNumberIsGwanak: {
-      snu_events: POST_SOURCES.snu_events.buildingNumberIsGwanak,
-      extra_snu: POST_SOURCES.extra_snu.buildingNumberIsGwanak,
+    campusDefault: {
+      snu_events: POST_SOURCES.snu_events.campusDefault,
+      extra_snu: POST_SOURCES.extra_snu.campusDefault,
     },
     checks: JUDGEMENT_CHECKS,
     from: options.from,
