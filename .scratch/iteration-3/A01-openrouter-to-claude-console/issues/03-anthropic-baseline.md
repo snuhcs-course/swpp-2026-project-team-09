@@ -12,6 +12,7 @@ One run of every suite on the Anthropic path, recorded beside the last OpenRoute
 
 - [ ] The cost of the runs is estimated from the last runs' tokens and the Anthropic prices with caching, and 안진영 approves it before anything runs (estimate on 2026-11-02: about USD 1.5–2 for the chat suites; this ticket adds the collection evaluations' share, and states the basis: the system-prompt breakpoint read by every case after the first, and the steps of a message reading each other).
 - [ ] P19, P4, P5 (small and large worlds), P6 and the collection evaluations A and B (`pnpm eval:collection`, the Judgement and the same-event choice) run once each on one commit, on the caching mode ticket 04 chose, with today's limits (8 steps, 30 s, 4,000 output tokens; the collection runs with their own).
+- [ ] The estimate uses today's per-turn input, not the older runs': after P06-07 a chat turn reads about 70k input tokens, up from 44k (`eval/p6/r1.md`). P13 ticket 05 measures where the growth comes from; if it has landed, use its numbers.
 - [ ] The estimate allows for P4's cases that set their own `now`: they miss the system-prompt breakpoint, so P4 caches less than the other suites. The collection runs' records name A01's retry as a changed condition.
 - [ ] Each suite's record gets an "Anthropic baseline" entry beside its last OpenRouter run, marked as a different condition (metrics 4.3): pass rates, the cache hit rate, cost per turn and time.
 - [ ] Any metric that moves past the noise the suite's records already show is read, and the record says what it found.

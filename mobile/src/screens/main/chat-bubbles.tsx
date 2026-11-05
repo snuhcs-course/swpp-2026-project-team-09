@@ -11,6 +11,8 @@
  * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useRef } from 'react';
@@ -20,6 +22,7 @@ import { Button, color, font, type IconName, radius, space, text } from '@/desig
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { type CardActions, Cards, type ProposalActions } from './chat-cards';
 import { ChatChoices } from './chat-choices';
+import { ChatMarkdown } from './chat-markdown';
 import { ChatProposalCard } from './chat-proposal-card';
 import { ChatResolvedBy } from './chat-resolved-by';
 import type { LibraryDone } from '@/library/cards/done';
@@ -110,7 +113,12 @@ function Bubble({
       style={[styles.bubble, mine ? styles.mine : styles.theirs]}
       testID={mine ? 'user-bubble' : 'assistant-bubble'}
     >
-      <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
+      {/* The model writes markdown, and the Assistant's bubbles render it; the User's words are shown as typed. */}
+      {mine ? (
+        <Text style={[styles.words, styles.mineWords]}>{words}</Text>
+      ) : (
+        <ChatMarkdown style={styles.words} text={words} />
+      )}
       {shown.length === 0 ? null : <Cards actions={cardActions} bubbleId={id} cards={shown} own={own} />}
       {done === undefined ? null : <Done actions={cardActions} done={done} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}

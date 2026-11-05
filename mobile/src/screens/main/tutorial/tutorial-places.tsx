@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { placesQuery } from '@/api/queries';
 import type { TutorialPlace, TutorialQuest } from '@/api/tutorial-types';
 import type { LatLng, Place } from '@/api/types';
+import type { TutorialPinTarget } from './use-tutorial-pin';
 import { Button, color, Icon, space, text, tutorialTone } from '@/design-system';
 
 // A quest's places, each with 지도에서 보기, and its links, opened with expo-web-browser (MainTutorialSheet).
@@ -27,13 +29,13 @@ function shownPlace(entry: TutorialPlace, places: readonly Place[]): { words: st
   return { words: name, position: place ?? null };
 }
 
-// The places with 지도에서 보기, which focuses the main map on one, and the links.
+// The places with 지도에서 보기, which focuses the main map on one and drops the tutorial place pin there, and the links.
 export function Places({
   quest,
   onShowOnMap,
 }: {
   quest: TutorialQuest;
-  onShowOnMap: (position: LatLng) => void;
+  onShowOnMap: (target: TutorialPinTarget) => void;
 }): ReactElement {
   const places = useQuery(placesQuery).data ?? [];
   return (
@@ -48,7 +50,11 @@ export function Places({
               <Button
                 label={`${words} 지도에서 보기`}
                 onPress={() => {
-                  onShowOnMap({ latitude: position.latitude, longitude: position.longitude });
+                  onShowOnMap({
+                    position: { latitude: position.latitude, longitude: position.longitude },
+                    words,
+                    atPlace: !('point' in entry),
+                  });
                 }}
                 variant="secondary"
               >
