@@ -2,10 +2,21 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { METRES_PER_DEGREE } from '../common/geometry.js';
-import { eventLastsUntil, eventOverlaps, moreWordsFirst, timestamp } from '../common/search-sql.js';
+import {
+  countsOf,
+  eventLastsUntil,
+  eventOverlaps,
+  type Hit,
+  moreWordsFirst,
+  type SearchCounts,
+  timestamp,
+  windowOfStart,
+  wordsMatched,
+} from '../common/search-sql.js';
 import { Prisma, QuestBoard } from '../generated/prisma/client.js';
 
 // What the Assistant's searchRecruitingQuests asks for: the Quests the reader could enter, in the window [from, to) when
@@ -56,7 +67,7 @@ function asItsStart(now: Date, window: RecruitingSearch['window']): Prisma.Sql {
         AND first_sub.starts_at < ${timestamp(window.to)}`;
 }
 
-function conditionsOf(readerId: string, search: RecruitingSearch, now: Date): Prisma.Sql[] {
+function conditionsOf(readerId: string, search: Omit<RecruitingSearch, 'take'>, now: Date): Prisma.Sql[] {
   const { window, board, globalEventId, minPlacesLeft = 1, capacity, near } = search;
   return [
     Prisma.sql`q.join_policy IN ('open', 'approval')`,
@@ -77,21 +88,14 @@ function conditionsOf(readerId: string, search: RecruitingSearch, now: Date): Pr
   ];
 }
 
-// The ids of the Quests found: those holding more of the words first, then in start order, those without a start last.
-// Every filter is here, before the list is cut, so that a search stays quick however many Quests there are. The first
-// Sub Quest is in the order that QUEST_INCLUDE reads them, and the attending one takes its time and position from the
-// Global Event as it is now. Ties go by title in code points, which keeps Hangul in 가나다 order, so that every database
-// gives the same list.
-export async function recruitingSearchIds(
-  prisma: Pick<Prisma.TransactionClient, '$queryRaw'>,
-  readerId: string,
-  search: RecruitingSearch,
-  now: Date,
-): Promise<string[]> {
-  const { words = [], near } = search;
-  const rows = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT q.id
-    FROM quests q
+// A Quest's start: its Global Event's for the attending Sub Quest, else its first Sub Quest's.
+const QUEST_START = Prisma.sql`COALESCE(e.starts_at, first_sub.starts_at)`;
+
+// The rows of the Quests found, from FROM to WHERE. The first Sub Quest is in the order that QUEST_INCLUDE reads them,
+// and the attending one takes its time and position from the Global Event as it is now.
+function foundFrom(readerId: string, search: Omit<RecruitingSearch, 'take'>, now: Date): Prisma.Sql {
+  const { near } = search;
+  return Prisma.sql`FROM quests q
     JOIN LATERAL (
       SELECT s.attending, s.starts_at, s.ends_at, s.place_id, s.latitude, s.longitude FROM sub_quests s
       WHERE s.quest_id = q.id
@@ -101,9 +105,41 @@ export async function recruitingSearchIds(
     LEFT JOIN global_events e ON first_sub.attending AND e.id = q.global_event_id
     LEFT JOIN places p ON p.id = first_sub.place_id
     ${near === undefined ? Prisma.empty : Prisma.sql`JOIN places near ON near.id = ${near.placeId}::uuid`}
-    WHERE ${Prisma.join(conditionsOf(readerId, search, now), ' AND ')}
+    WHERE ${Prisma.join(conditionsOf(readerId, search, now), ' AND ')}`;
+}
+
+// The Quests found, with why: those holding more of the words first, then in start order, those without a start last.
+// Every filter is here, before the list is cut, so that a search stays quick however many Quests there are. Ties go by
+// title in code points, which keeps Hangul in 가나다 order, so that every database gives the same list.
+export function recruitingSearchHits(
+  prisma: Pick<Prisma.TransactionClient, '$queryRaw'>,
+  readerId: string,
+  search: RecruitingSearch,
+  now: Date,
+): Promise<Hit[]> {
+  const { words = [], window } = search;
+  return prisma.$queryRaw<Hit[]>`
+    SELECT q.id, ${wordsMatched(words, Prisma.sql`q.title`, Prisma.sql`q.description`)} AS matched,
+      ${windowOfStart(QUEST_START, window)} AS "window"
+    ${foundFrom(readerId, search, now)}
     ORDER BY ${moreWordsFirst(words, Prisma.sql`q.title`, Prisma.sql`q.description`)}
-      COALESCE(e.starts_at, first_sub.starts_at) ASC NULLS LAST, q.title COLLATE "C" ASC, q.id ASC
+      ${QUEST_START} ASC NULLS LAST, q.title COLLATE "C" ASC, q.id ASC
     LIMIT ${search.take}`;
-  return rows.map(({ id }) => id);
+}
+
+// The counts of every Quest the search finds, uncut.
+export function recruitingSearchCounts(
+  prisma: Pick<Prisma.TransactionClient, '$queryRaw'>,
+  readerId: string,
+  search: Omit<RecruitingSearch, 'take'>,
+  now: Date,
+): Promise<SearchCounts> {
+  const { words = [] } = search;
+  return countsOf(
+    prisma,
+    Prisma.sql`SELECT q.board AS board, ${QUEST_START} AS start,
+      ${wordsMatched(words, Prisma.sql`q.title`, Prisma.sql`q.description`)} AS matched
+    ${foundFrom(readerId, search, now)}`,
+    words,
+  );
 }

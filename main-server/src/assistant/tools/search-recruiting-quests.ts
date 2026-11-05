@@ -8,13 +8,14 @@
 
 import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
+import { type Hit } from '../../common/search-sql.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
-import { CANDIDATES_MAX, DESCRIPTION_MAX, placeNote, wordsInput } from './search-candidates.js';
+import { CANDIDATES_MAX, DESCRIPTION_MAX, narrowing, placeNote, whyFound, wordsInput } from './search-candidates.js';
 import { daysTogether, inOrder, WINDOW_INPUT, windowOf, windowWords } from './search-window.js';
 
 // How near a Place a 파티 counts as being there, when the model names no other radius.
@@ -88,7 +89,7 @@ function reasonForNone(conditions: Conditions): string {
 }
 
 // What the model reads of a Quest. Its text reaches the model inside delimiters.
-function candidateOf(quest: RecruitingQuestDto): object {
+function candidateOf({ quest, ...why }: Omit<Hit, 'id'> & { quest: RecruitingQuestDto }, words?: string[]): object {
   const { startsAt, endsAt, place } = quest.nextSubQuest;
   return {
     id: quest.id,
@@ -97,6 +98,8 @@ function candidateOf(quest: RecruitingQuestDto): object {
     globalEvent: quest.globalEvent === null ? null : othersText('globalEvent.title', quest.globalEvent.title),
     // open: the User joins at once; approval: the Leader accepts each User who asks.
     joinPolicy: quest.joinPolicy,
+    // What joining takes, in the words of what the User does: askToJoin for an Approval Quest.
+    join: quest.joinPolicy === 'approval' ? 'askToJoin' : 'open',
     placesLeft: quest.capacity - quest.holderCount,
     holderCount: quest.holderCount,
     next: {
@@ -105,6 +108,7 @@ function candidateOf(quest: RecruitingQuestDto): object {
       place: place === null ? null : othersText('quest.place', place.label),
     },
     description: othersText('quest.description', quest.description.slice(0, DESCRIPTION_MAX)),
+    ...whyFound(why, words),
   };
 }
 
@@ -115,7 +119,7 @@ function candidateOf(quest: RecruitingQuestDto): object {
 export function searchRecruitingQuests(recruiting: RecruitingService, places: PlacesService): Tool {
   return defineTool({
     description:
-      "Searches the recruiting 파티 (Quests) on the Boards that the User can enter, optionally of one Board, in a time window, whether it is whole days (from, to) or times (after, before), going to a Global Event, or at or near a Place. The server already leaves out 파티 that are full, already started (a 파티 for a Global Event stays until the event ends), or that the User already asked to join or cannot enter. A 파티 for a Global Event is in the window while the event overlaps it; any other 파티 when it starts in it. Answers candidates, those holding more of the words first, then the soonest to start, with the time in Korean time and place, the Join Policy, the places left and the number of Holders, or result 'none' with the reason. Words only rank, so a candidate may hold none of them and still fit, and may be something else: read each one. Pick those that fit what the User asked for, then show them with showQuests.",
+      "Searches the recruiting 파티 (Quests) on the Boards that the User can enter, optionally of one Board, in a time window, whether it is whole days (from, to) or times (after, before), going to a Global Event, or at or near a Place. The server already leaves out 파티 that are full, already started (a 파티 for a Global Event stays until the event ends), or that the User already asked to join or cannot enter. A 파티 for a Global Event is in the window while the event overlaps it; any other 파티 when it starts in it. Answers candidates, those holding more of the words first, then the soonest to start, with the time in Korean time and place, the Join Policy, the places left and the number of Holders, or result 'none' with the reason. Words only rank, so a candidate may hold none of them and still fit, and may be something else: read each one. Each candidate gives matched, the words it holds, and window: starts if it starts in the window, underWay if it began before it and is still on. With more: true, total and narrowBy count every 파티 found by Board, day and word, to search again by one of them. Pick those that fit what the User asked for, then show them with showQuests.",
     input,
     run: async (conditions, { userId, found }) => {
       const { board, globalEventId, minPlacesLeft, capacity, words, placeId, radius = RADIUS_METRES } = conditions;
@@ -125,7 +129,7 @@ export function searchRecruitingQuests(recruiting: RecruitingService, places: Pl
         (named) =>
           `placeId was not given, so these 파티 are from any place, though resolvePlace returned a Place in this message: ${named}. To search near it, call again with its placeId.`,
       );
-      const quests = await recruiting.search(userId, {
+      const search = {
         window: windowOf(conditions),
         board,
         globalEventId,
@@ -133,8 +137,8 @@ export function searchRecruitingQuests(recruiting: RecruitingService, places: Pl
         capacity,
         words,
         near: placeId === undefined ? undefined : { placeId, metres: radius },
-        take: CANDIDATES_MAX + 1,
-      });
+      };
+      const quests = await recruiting.search(userId, { ...search, take: CANDIDATES_MAX + 1 });
       if (quests.length === 0) {
         const noSuchPlace = placeId !== undefined && !(await places.exists(placeId));
         return { ...noneFound(noSuchPlace ? 'There is no such Place.' : reasonForNone(conditions)), ...note };
@@ -142,13 +146,15 @@ export function searchRecruitingQuests(recruiting: RecruitingService, places: Pl
       const candidates = quests.slice(0, CANDIDATES_MAX);
       found.add(
         'quest',
-        candidates.map(({ id }) => id),
+        candidates.map(({ quest }) => quest.id),
       );
+      // More Quests match than were given: a Board, a day or a word narrows them.
+      const more = quests.length > CANDIDATES_MAX;
       return {
         result: 'found',
-        // More Quests match than were given: a Board or a shorter window narrows them.
-        more: quests.length > CANDIDATES_MAX,
-        quests: candidates.map((quest) => candidateOf(quest)),
+        more,
+        ...(more ? narrowing(await recruiting.searchCounts(userId, search)) : {}),
+        quests: candidates.map((candidate) => candidateOf(candidate, words)),
         ...note,
       };
     },
