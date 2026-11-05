@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
@@ -22,6 +23,7 @@ import { type CardActions, Cards, type ProposalActions } from './chat-cards';
 import { ChatChoices } from './chat-choices';
 import { ChatMarkdown } from './chat-markdown';
 import { ChatProposalCard } from './chat-proposal-card';
+import { ChatResolvedBy } from './chat-resolved-by';
 import type { LibraryDone } from '@/library/cards/done';
 import { LibraryDoneRows } from './library/library-done';
 
@@ -156,7 +158,7 @@ function Words({ mine, words }: { mine: boolean; words: string }): ReactElement 
 }
 
 function Bubble({
-  bubble: { id, role, text: words, cards, mapButtons, proposal, choices, failure, own = false, done },
+  bubble: { id, role, text: words, cards, mapButtons, proposal, choices, resolvedBy, failure, own = false, done },
   onRetry,
   onChoose,
   onShowLayer,
@@ -177,6 +179,7 @@ function Bubble({
       {done === undefined ? null : <Done actions={cardActions} done={done} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
       {onChoose === null || choices.length === 0 ? null : <ChatChoices choices={choices} onChoose={onChoose} />}
+      <ChatResolvedBy onReject={(reading) => cardActions.rejectAlias(id, reading)} readings={resolvedBy} />
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>
           <Button

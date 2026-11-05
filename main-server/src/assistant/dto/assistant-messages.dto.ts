@@ -18,6 +18,7 @@ import {
   type ChoiceKind,
   CLIENT_CAPABILITIES,
   type MapLayer,
+  type ResolvedBy,
 } from '../feature.js';
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
@@ -95,13 +96,14 @@ export type AssistantMessages = z.infer<typeof assistantMessagesSchema>;
 export type SentMessage = AssistantMessages['messages'][number];
 
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, filled from the database, the Proposal it made, if any, and the candidates of every
-// 'several' answer of its resolvers, which the app offers as chips. The lists are always there, empty when there are
-// none, and the Proposal null.
+// cards in the order shown, filled from the database, the Proposal it made, if any, the candidates of every 'several'
+// answer of its resolvers, which the app offers as chips, and the answers they read from an alias. The lists are
+// always there, empty when there are none, and the Proposal null.
 export interface AssistantReplyDto {
   text: string;
   mapButtons: MapLayer[];
   cards: Card[];
   proposal: QuestProposal | null;
   choices: Choice[];
+  resolvedBy: ResolvedBy[];
 }

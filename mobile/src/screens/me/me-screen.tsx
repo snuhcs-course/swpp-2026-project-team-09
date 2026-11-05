@@ -4,13 +4,16 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { type ReactElement, type RefObject, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { friendsQuery, lobbyQuery, questsQuery } from '@/api/queries';
 import type { Friend, Profile, Quest } from '@/api/types';
@@ -40,12 +43,10 @@ import { TabScreen } from '../shell/tab-screen';
 import { SharingCard } from './sharing-card';
 import { TutorialRow } from './tutorial-row';
 import { useSharingSwitch } from './use-sharing-switch';
+import { useShowSharing } from './use-show-sharing';
 import { LibraryCard } from './library-card';
 import { thisVersionLine } from './version-line';
 import { WeekCard } from './week-card';
-
-// How long the 위치 공유 card stays outlined after the friend panel's "공유 설정".
-const OUTLINE_MS = 1200;
 
 // The bell on the app bar, with the number of 알림's rows in red.
 function Bell(): ReactElement {
@@ -146,6 +147,7 @@ function ActivityCard(): ReactElement {
         }}
         value={friends}
       />
+      <ActivityRow icon="chat" label="내가 가르친 말" onPress={openAliases} value="" />
       <ActivityRow
         icon="users"
         label="참여 중인 파티"
@@ -204,41 +206,20 @@ function SignOut(): ReactElement {
   );
 }
 
-// Scrolls to the 위치 공유 card while the address asks for it, and gives back that the card was shown after a while.
-function useShowSharing(
-  show: boolean,
-  onShown: () => void,
-): { scroll: RefObject<ScrollView | null>; setTop: (top: number) => void } {
-  const scroll = useRef<ScrollView>(null);
-  const [top, setTop] = useState<number | null>(null);
-  const shown = useEffectEvent(onShown);
-  useEffect(() => {
-    if (show && top !== null) {
-      scroll.current?.scrollTo({ y: Math.max(0, top - space[3]) });
-    }
-  }, [show, top]);
-  useEffect((): (() => void) | void => {
-    if (!show) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      shown();
-    }, OUTLINE_MS);
-    return (): void => {
-      clearTimeout(timer);
-    };
-  }, [show]);
-  return { scroll, setTop };
-}
-
 interface MeScreenProps {
   // The address asks for the 위치 공유 card, as the friend panel's "공유 설정" does.
   showSharing: boolean;
   onSharingShown: () => void;
 }
 
+// 내가 가르친 말, the words the User taught the Assistant (P07).
+function openAliases(): void {
+  router.push('/me/aliases');
+}
+
 // The 내 정보 tab, the `Profile` frame: the User's profile, the 새내기 튜토리얼 row, the week, the Master Switch, the ways to
-// the User's Friends, Parties and Quests, the library's login, the sign-out, and below it the build and update the phone runs.
+// the User's Friends, the words they taught the Assistant, their Parties and Quests, the library's login, the sign-out,
+// and below it the build and update the phone runs.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();

@@ -54,8 +54,10 @@ beforeAll(async () => {
   });
 });
 
+// A choice also teaches the User an alias (P07 ticket 03), which would answer the next test's words.
 beforeEach(async () => {
   await prisma.resolutionEvent.deleteMany({ where: { userId: user.id } });
+  await prisma.userAlias.deleteMany({ where: { userId: user.id } });
 });
 
 afterEach(() => {

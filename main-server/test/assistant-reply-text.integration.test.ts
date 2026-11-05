@@ -38,7 +38,7 @@ const LUNCH = {
   invitees: [],
 };
 
-const ONLY_MAP_BUTTONS = { mapButtons: ['dining'], cards: [], proposal: null, choices: [] };
+const ONLY_MAP_BUTTONS = { mapButtons: ['dining'], cards: [], proposal: null, choices: [], resolvedBy: [] };
 
 const model = new ScriptedModel();
 let app: INestApplication<Server>;

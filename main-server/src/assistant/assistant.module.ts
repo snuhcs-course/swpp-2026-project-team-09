@@ -22,6 +22,8 @@ import { TravelModule } from '../travel/travel.module.js';
 import { TutorialModule } from '../tutorial/tutorial.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { type Model, MODEL_PORT, openRouterModel } from './adapter.js';
+import { AliasesController } from './aliases/aliases.controller.js';
+import { AliasesService } from './aliases/aliases.service.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
 import { UserDayService } from './free-time/user-day.service.js';
@@ -45,11 +47,12 @@ import { ResolutionEventsService } from './resolution-events.service.js';
     TutorialModule,
     UsersModule,
   ],
-  controllers: [AssistantController],
+  controllers: [AssistantController, AliasesController],
   providers: [
     AssistantService,
     ResolutionEventsService,
     UserDayService,
+    AliasesService,
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     // The P6 eval world binds a day of its own here.

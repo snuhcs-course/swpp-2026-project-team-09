@@ -25,6 +25,7 @@ function bubble(role: ChatBubble['role'], text: string, more: Partial<ChatBubble
     proposal: null,
     choices: [],
     chosen: null,
+    resolvedBy: [],
     failure: null,
     ...more,
   };

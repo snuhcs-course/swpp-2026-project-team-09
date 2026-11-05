@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { type QuestProposal, referenceOf } from '@/api/assistant-types';
 import type { ShownChatCard } from '@/api/quest-parts-types';
+import type { Chat } from '@/features/assistant/use-chat';
 import { ChatEventCards, type EventCardActions } from './chat-event-cards';
 import type { ProposalMaking } from './chat-proposal-card';
 import { ChatQuestCards, type QuestCardActions } from './chat-quest-cards';
@@ -29,6 +31,8 @@ export interface CardActions {
   proposals: ProposalActions;
   // A Restaurant card's 파티 만들기.
   openPartyForm: (proposal: QuestProposal) => void;
+  // 아니에요 under the words an answer read through an alias.
+  rejectAlias: Chat['rejectAlias'];
   // What the library cards add to the chat.
   library: LibraryCardActions;
 }

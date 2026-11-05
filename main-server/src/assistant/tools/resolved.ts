@@ -44,7 +44,7 @@ export function givenIds<Candidate extends { id: string }>(answer: Resolved<Cand
 }
 
 // A resolver's answer with what goes with it: the words as the model passed them, each candidate's plain name or
-// title by id, and for Places the matcher's tier.
+// title by id, for Places the matcher's tier, and whose alias answered, if one did.
 export interface Settled<Candidate> {
   kind: ChoiceKind;
   words: string;
@@ -55,7 +55,8 @@ export interface Settled<Candidate> {
 }
 
 // What a resolver does with its answer before the model reads it: the ids go to FoundIds, so that proposeQuest takes
-// them; the candidates of a 'several' answer become the reply's choices, each kind and id once; and the answer is
+// them; the candidates of a 'several' answer become the reply's choices, each kind and id once; an answer of one
+// candidate read from an alias goes under the reply, so that the User sees it and can say 아니에요; and the answer is
 // recorded as a resolution event.
 export async function settle<Candidate extends { id: string }>(
   { found, presented, resolutions }: ToolContext,
@@ -68,6 +69,12 @@ export async function settle<Candidate extends { id: string }>(
       if (!presented.choices.some((choice) => choice.kind === kind && choice.id === id)) {
         presented.choices.push({ kind, id, label: labels.get(id) ?? '', words });
       }
+    }
+  }
+  if (answer.result === 'one' && aliasSource !== null) {
+    const { id } = answer.candidate;
+    if (!presented.resolvedBy.some((entry) => entry.kind === kind && entry.id === id && entry.words === words)) {
+      presented.resolvedBy.push({ kind, words, id, label: labels.get(id) ?? '', source: aliasSource });
     }
   }
   await resolutions.answered({ kind, words, result: answer.result, candidateIds: ids, tier, aliasSource });

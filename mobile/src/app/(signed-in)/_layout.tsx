@@ -7,6 +7,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -39,6 +40,7 @@ const ABOVE_TABS: readonly (readonly [name: string, edge: Edge])[] = [
   ['me/friends/requests', 'right'],
   ['me/friends/add', 'right'],
   ['me/parties', 'right'],
+  ['me/aliases', 'right'],
   ['me/timetable/index', 'right'],
   ['me/timetable/class', 'right'],
   ['invite/[token]', 'bottom'],

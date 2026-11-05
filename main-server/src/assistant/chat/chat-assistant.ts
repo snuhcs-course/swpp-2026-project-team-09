@@ -21,6 +21,7 @@ import { PlaceMatcher } from '../../places/place-matcher.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
+import { AliasesService } from '../aliases/aliases.service.js';
 import { type Feature } from '../feature.js';
 import { FREE_TIME_RULES } from '../free-time/free-time-rules.js';
 import { type FreeTimeServices } from '../free-time/free-time-services.js';
@@ -54,6 +55,7 @@ export interface ChatAssistantServices {
   friends: FriendsService;
   places: PlacesService;
   placeMatcher: PlaceMatcher;
+  aliases: AliasesService;
   freeTime: FreeTimeServices;
   library: LibraryServices;
   tutorial: TutorialService;
@@ -110,6 +112,7 @@ export function chatAssistant({
   friends,
   places,
   placeMatcher,
+  aliases,
   freeTime,
   library,
   tutorial,
@@ -127,7 +130,7 @@ export function chatAssistant({
       showGlobalEvents: showGlobalEvents(globalEvents),
       searchRecruitingQuests: searchRecruitingQuests(recruiting, places),
       showQuests: showQuests(recruiting),
-      resolveFriend: resolveFriend(friends),
+      resolveFriend: resolveFriend(friends, aliases),
       resolvePlace: resolvePlace(placeMatcher),
       resolveGlobalEvent: resolveGlobalEvent(globalEvents),
       proposeQuest: proposeQuest({ friends, places, globalEvents }),

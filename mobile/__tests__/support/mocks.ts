@@ -5,10 +5,12 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { resetMockAliases } from '@/api/mock/aliases';
 import { forgetMockSwitch } from '@/api/mock/client';
 import { resetMockFriendships } from '@/api/mock/friendships';
 import { resetMockTimetable } from '@/api/mock/timetable';
@@ -26,8 +28,8 @@ const SETTINGS = [
   'EXPO_PUBLIC_SOCKET_SERVER_URL',
 ] as const;
 
-// A phone that keeps nothing, an app started without development settings and the mock's friendships and classes as
-// they start.
+// A phone that keeps nothing, an app started without development settings and the mock's friendships, classes and
+// taught words as they start.
 export async function startFresh(): Promise<void> {
   resetMockFriendships();
   resetMockTimetable();
@@ -37,6 +39,7 @@ export async function startFresh(): Promise<void> {
   await AsyncStorage.clear();
   forgetMockSwitch();
   forgetMockMatching();
+  resetMockAliases();
   resetMockTutorial();
 }
 

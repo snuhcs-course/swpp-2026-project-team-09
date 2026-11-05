@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -17,11 +18,13 @@ import {
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
+  type ResolvedBy,
   type RestaurantCard,
   type RestaurantTravel,
   type TravelBox,
 } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
+import { isResolvedBy } from './alias-client';
 import { field, hasTexts, isBoard, isJoinPolicy, isNothing, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isGlobalEvent } from './event-client';
 import { isLibraryCardData, withLibraryDefaults } from './library-card-answers';
@@ -123,8 +126,11 @@ function isChoice(value: unknown): value is Choice {
   return CHOICE_KINDS.has(field(value, 'kind')) && hasTexts(value, ['id', 'label', 'words']);
 }
 
-// A reply of a main server from before the candidates has no `choices`.
-export type AssistantAnswer = Omit<AssistantReply, 'choices'> & { choices?: Choice[] };
+// A reply of a main server from before the candidates has no `choices`, and one from before aliases no `resolvedBy`.
+export type AssistantAnswer = Omit<AssistantReply, 'choices' | 'resolvedBy'> & {
+  choices?: Choice[];
+  resolvedBy?: ResolvedBy[];
+};
 
 function filled(card: ChatCard): ChatCard {
   return card.kind === 'library' ? { kind: 'library', library: withLibraryDefaults(card.library) } : card;
@@ -133,20 +139,23 @@ function filled(card: ChatCard): ChatCard {
 export function isAssistantAnswer(value: unknown): value is AssistantAnswer {
   const proposal = field(value, 'proposal');
   const choices = field(value, 'choices');
+  const resolvedBy = field(value, 'resolvedBy');
   return (
     hasTexts(value, ['text']) &&
     listOf(isMapLayer)(field(value, 'mapButtons')) &&
     listOf(isChatCard)(field(value, 'cards')) &&
     (isNothing(proposal) || isQuestProposal(proposal)) &&
-    (choices === undefined || listOf(isChoice)(choices))
+    (choices === undefined || listOf(isChoice)(choices)) &&
+    (resolvedBy === undefined || listOf(isResolvedBy)(resolvedBy))
   );
 }
 
 export const assistantClient: Pick<ApiClient, 'askAssistant'> = {
   askAssistant: async (messages) => {
-    const { choices = [], ...reply } = await call('POST', '/assistant/messages', isAssistantAnswer, {
+    const answer = await call('POST', '/assistant/messages', isAssistantAnswer, {
       body: { messages, clientCapabilities: CLIENT_CAPABILITIES },
     });
-    return { ...reply, cards: reply.cards.map(filled), choices };
+    const { choices = [], resolvedBy = [], ...reply } = answer;
+    return { ...reply, cards: reply.cards.map(filled), choices, resolvedBy };
   },
 };

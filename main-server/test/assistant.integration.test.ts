@@ -59,6 +59,7 @@ describe('The chat Assistant', () => {
       cards: [],
       proposal: null,
       choices: [],
+      resolvedBy: [],
     });
   });
 
@@ -136,6 +137,7 @@ describe('getMenus', () => {
       cards: [],
       proposal: null,
       choices: [],
+      resolvedBy: [],
     });
     expect(model.toolResults()).toEqual([{ result: 'found', date, restaurants: [studentCentre] }]);
   });
@@ -215,6 +217,7 @@ describe('showOnMap', () => {
       cards: [],
       proposal: null,
       choices: [],
+      resolvedBy: [],
     });
     expect(model.toolResults()).toEqual([{ result: 'shown', layer: 'dining' }]);
   });
@@ -243,6 +246,7 @@ describe('showOnMap', () => {
       cards: [],
       proposal: null,
       choices: [],
+      resolvedBy: [],
     });
     expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
   });

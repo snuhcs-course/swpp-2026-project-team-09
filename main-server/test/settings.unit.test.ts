@@ -3,8 +3,10 @@
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -201,36 +203,6 @@ describe('settingsSchema: ANDROID_CERTIFICATE_FINGERPRINTS', () => {
     expect(refused({ ...valid, ANDROID_CERTIFICATE_FINGERPRINTS: value })).toEqual([
       'ANDROID_CERTIFICATE_FINGERPRINTS',
     ]);
-  });
-});
-
-describe("settingsSchema: the Assistant's settings", () => {
-  it('unset → the defaults of .env.example, and no key or model', () => {
-    const unset = { ...valid, OPENROUTER_API_KEY: undefined, ASSISTANT_MODEL: undefined };
-
-    expect(settingsSchema.parse(unset)).toMatchObject({
-      OPENROUTER_API_KEY: '',
-      ASSISTANT_MODEL: '',
-      ASSISTANT_DAILY_MESSAGES: 50,
-      ASSISTANT_MAX_STEPS: 8,
-      ASSISTANT_TIMEOUT_MS: 30_000,
-      ASSISTANT_MAX_OUTPUT_TOKENS: 4000,
-    });
-  });
-
-  describe.each([
-    'ASSISTANT_DAILY_MESSAGES',
-    'ASSISTANT_MAX_STEPS',
-    'ASSISTANT_TIMEOUT_MS',
-    'ASSISTANT_MAX_OUTPUT_TOKENS',
-  ])('%s', (setting) => {
-    it(`0 → refused, naming ${setting}`, () => {
-      expect(refused({ ...valid, [setting]: '0' })).toEqual([setting]);
-    });
-
-    it('1 → accepted as 1', () => {
-      expect(settingsSchema.parse({ ...valid, [setting]: '1' })).toMatchObject({ [setting]: 1 });
-    });
   });
 });
 

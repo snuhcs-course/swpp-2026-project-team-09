@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -30,6 +31,7 @@ import { ChatBubbles, ChatEmpty } from './chat-bubbles';
 import type { CardActions, ProposalActions } from './chat-cards';
 import type { EventCardActions } from './chat-event-cards';
 import type { QuestCardActions } from './chat-quest-cards';
+import type { LibraryCardActions } from './library/use-library-call';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 interface ChatSheetProps {
@@ -134,22 +136,32 @@ function useQuestCards(onOpenPost: (questId: string) => void): {
 // puts the keyboard down, and the sheet stays: the header and the conversation each see to it. The sheet itself takes
 // no touch: on Android a JS responder around the conversation's scroll view takes the drag from it, and the
 // conversation stopped scrolling while the keyboard was down.
+// What the library cards do with the chat: add the app's own bubbles and keep how each card ended.
+function useLibraryActions({ addOwn, outcomes, finish, unfinish }: Chat): LibraryCardActions {
+  return useMemo(
+    () => ({ addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish, unfinish }),
+    [addOwn, outcomes, finish, unfinish],
+  );
+}
+
 export function ChatSheet(props: ChatSheetProps): ReactElement {
   const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, onOpenPartyForm, proposals, inputTop } = props;
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
-  const { bubbles, waiting, send, choose, retry, reset, addOwn, outcomes, finish, unfinish } = chat;
+  const { bubbles, waiting, send, choose, retry, reset } = chat;
+  const library = useLibraryActions(chat);
   const cardActions: CardActions = useMemo(
     () => ({
       events: eventCards.actions,
       quests: questCards.actions,
       proposals,
+      rejectAlias: chat.rejectAlias,
       openPartyForm: onOpenPartyForm,
-      library: { addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish, unfinish },
+      library,
     }),
-    [eventCards.actions, questCards.actions, proposals, onOpenPartyForm, addOwn, outcomes, finish, unfinish],
+    [eventCards.actions, questCards.actions, proposals, chat.rejectAlias, onOpenPartyForm, library],
   );
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = inputTop + OVER_INPUT;

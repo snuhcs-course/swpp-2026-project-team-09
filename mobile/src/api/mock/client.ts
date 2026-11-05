@@ -8,6 +8,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
@@ -17,6 +18,7 @@ import { ApiError } from '@/api/errors';
 import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
+import { mockAliases } from './aliases';
 import { answer } from './answer';
 import { mockAssistantReply } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
@@ -202,5 +204,6 @@ export const mockClient: ApiClient = {
   ...mockRoom,
   ...mockParty,
   ...mockEvents,
+  ...mockAliases,
   ...mockTutorial,
 };
