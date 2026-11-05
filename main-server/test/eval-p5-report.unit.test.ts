@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { p5Report, type Suite } from '../eval/p5/report.ts';
@@ -19,7 +20,7 @@ const SEEDS = {
 
 const SUITE: Suite = {
   world: 'p5',
-  tags: { L: ['s1'], E: ['s2'], J10: ['j1', 'j2'] },
+  tags: { L: ['s1'], E: ['s2'], J10: ['j1', 'j2'], J9: ['j3'] },
   j10StatesDay: ['j2'],
   thresholds: [
     { metric: 'E2', kind: 'floor', comparator: '>=', value: 0.7 },
@@ -47,12 +48,15 @@ interface RunWritten {
   seeds: string[];
   shown: ReturnType<typeof turn>;
   repetition?: number;
+  // Words the reply must hold.
+  mentions?: string[];
 }
 
-function runOf({ id, category = 'search', seeds, shown, repetition = 1 }: RunWritten): object {
+function runOf({ id, category = 'search', seeds, shown, repetition = 1, mentions }: RunWritten): object {
   const written = {
     actions: ['TOOL'],
     cards: [{ kind: 'quest', seeds, max: seeds.length }],
+    ...(mentions === undefined ? {} : { text: { mentions } }),
   };
   return {
     id,
@@ -167,5 +171,29 @@ describe('J10', () => {
     ]);
 
     expect(metrics.find(({ metric }) => metric === 'J10')).toMatchObject({ k: 0, n: 2 });
+  });
+});
+
+// A run of the J9 case j3 over an Approval Quest's card, its reply `text`, the model's own `modelText` when the server
+// added the line.
+const j9 = (repetition: number, text: string, modelText?: string): RunWritten => ({
+  id: 'j3',
+  category: 'join-or-recruit',
+  seeds: ['가'],
+  shown: turn({ text, modelText, cards: [questCard('가')] }),
+  repetition,
+  mentions: ['신청'],
+});
+
+describe('J9', () => {
+  it("is read on the reply the User saw, and as J9-model on the model's own reply before the Approval line", () => {
+    const { metrics } = report([
+      j9(1, '있어요.\n\n승인제 파티는 참여 신청 후 파티장이 수락하면 참여돼요.', '있어요.'),
+      j9(2, '참여 신청을 보내 보세요.'),
+      j9(3, '있어요.'),
+    ]);
+
+    expect(metrics.find(({ metric }) => metric === 'J9')).toMatchObject({ k: 2, n: 3 });
+    expect(metrics.find(({ metric }) => metric === 'J9-model')).toMatchObject({ k: 1, n: 3 });
   });
 });

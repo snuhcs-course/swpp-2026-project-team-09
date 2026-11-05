@@ -2,15 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
 import { addTokens, costOf, NO_TOKENS, pricesSchema, type Tokens } from './cost.ts';
 import { KINDS, type Kind, kindsOf } from './expect.ts';
-import { namesOf } from './normalise.ts';
+import { type Names, namesOf } from './normalise.ts';
 import type { CaseRun } from './runner.ts';
 import { type CaseScore, type Check, scoreCase, type TurnScore } from './score.ts';
-import { type FailureKind, usageOf } from './trace.ts';
+import { asModelAnswered, type FailureKind, usageOf } from './trace.ts';
 
 // A run scored (spec P19, "The scorecard"): its cases by the scorer's rules (eval/score.ts), summed into the
 // scorecard's numbers. It reads the raw JSON the runner saved, so a saved run is scored again without the model.
@@ -248,4 +249,9 @@ export function settingsOf(score: RunScore): [string, string][] {
   return Object.entries(score.saved.options)
     .filter(([name]) => name !== 'prices')
     .map(([name, value]) => [name, shownSetting(value)]);
+}
+
+// Whether the case passes on the model's own replies, without the server's Approval line (P12, CD-2).
+export function passedAsModelAnswered(run: CaseRun, names: Names): boolean {
+  return scoreCase({ ...run, turns: run.turns.map((turn) => asModelAnswered(turn)) }, names).passed;
 }
