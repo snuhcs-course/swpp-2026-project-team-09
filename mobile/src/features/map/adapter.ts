@@ -10,8 +10,10 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import type { LibrarySpace } from '@/api/assistant-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import type { GlobalEvent, LatLng, MyParty, Party, Position, Presence, Quest } from '@/api/types';
 import { eventTime, recruitingCounts } from '@/features/events/adapter';
@@ -38,7 +40,7 @@ export type CardMark =
   | { type: 'group'; kinds: readonly PlaceKind[] };
 
 // The kinds of a place in the design system.
-export type PlaceKind = 'official' | 'party' | 'quest' | 'dining' | 'shuttle';
+export type PlaceKind = 'official' | 'party' | 'quest' | 'dining' | 'shuttle' | 'library';
 
 // The thing's marker on the map, beside its `mark` and its `position`.
 export interface CardMarker {
@@ -60,7 +62,8 @@ export interface CardView {
   id: string;
   // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the
   // Place of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is
-  // on. `place-group` is a place on the map where two or more things stand, which its card lists.
+  // on. `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a
+  // building of the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view.
   kind:
     | 'global-event'
     | 'place-group'
@@ -70,7 +73,9 @@ export interface CardView {
     | 'party-member'
     | 'dining'
     | 'shuttle-stop'
-    | 'shuttle-vehicle';
+    | 'shuttle-vehicle'
+    | 'study'
+    | 'study-cluster';
   mark: CardMark;
   marker: CardMarker;
   // "공식 행사 · 컴퓨터공학부 공지"
@@ -79,10 +84,11 @@ export interface CardView {
   lines: { icon: CardIcon; text: string }[];
   // `route` draws the way there; `room` opens the Quest's room; `active-party` opens the room of the User's Party's
   // Quest; `recruit` opens 파티 만들기 for the Global Event; `private-party` opens it as 비공개 with the Friend invited.
-  // `menu` opens the menu panel at the restaurant. `shuttle-line` shows the shuttle's whole line. `not-ready` says "준비 중이에요":
+  // `menu` opens the menu panel at the restaurant. `shuttle-line` shows the shuttle's whole line. `library-seats` asks
+  // the Assistant for 관정관's seats in the chat. `not-ready` says "준비 중이에요":
   // the feature belongs to another task. Null for a card without one.
   primary:
-    | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' }
+    | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' | 'library-seats' }
     | { label: string; action: 'menu'; restaurant: string }
     | { label: string; action: 'room'; questId: string }
     | { label: string; action: 'recruit'; eventId: string }
@@ -99,6 +105,29 @@ export interface CardView {
   // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
   // such as its time.
   choices?: { id: string; kind: PlaceKind; title: string; detail: string }[];
+  // For a building of the 공부공간 layer: its Study Spaces, and 관정관's seat sectors.
+  study?: StudyDetail;
+  // For merged study pins: where each building stands, which a press brings into view.
+  cluster?: readonly LatLng[];
+  // Drawn in a translucent grey: a building none of whose Study Spaces the User may use.
+  muted?: boolean;
+}
+
+// One Study Space as its building's card lists it. `refusal` is what a press on a space the User may not use says,
+// "경영대학 학생만 사용할 수 있어요"; null for one the User may use.
+export interface StudyRow {
+  key: string;
+  name: string;
+  // "07:00–23:00", or "운영 시간 확인 필요".
+  hours: string;
+  link: string | null;
+  refusal: string | null;
+}
+
+export interface StudyDetail {
+  rows: StudyRow[];
+  // 관정관's seat sectors the User may book, which the phone reads through the Library Session; null elsewhere.
+  sectors: readonly LibrarySpace[] | null;
 }
 
 // A card's id from the id of what it shows, for a part of a screen that holds the thing and not its card.
@@ -111,6 +140,7 @@ export const cardId = {
   dining: (placeId: string): string => `dining:${placeId}`,
   shuttleStop: (stopId: string): string => `shuttle-stop:${stopId}`,
   shuttleVehicle: (carId: string): string => `shuttle-vehicle:${carId}`,
+  study: (placeId: string): string => `study:${placeId}`,
 } as const;
 
 type Line = CardView['lines'][number];

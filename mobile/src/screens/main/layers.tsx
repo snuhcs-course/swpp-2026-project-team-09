@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useState } from 'react';
@@ -18,6 +19,7 @@ import { LAYER_STACK, LAYERS_BUTTON } from './layout';
 export interface Layers {
   dining: boolean;
   shuttle: boolean;
+  study: boolean;
 }
 
 export interface LayerStack {
@@ -27,6 +29,7 @@ export interface LayerStack {
   close: () => void;
   toggleDining: () => void;
   toggleShuttle: () => void;
+  toggleStudy: () => void;
   // Turns the layer on, and leaves it on if it is: a map button of the chat.
   turnOn: (layer: keyof Layers) => void;
 }
@@ -34,7 +37,7 @@ export interface LayerStack {
 // The stack's state. Android's back button closes the stack while the map is `inFront`, before a card under it.
 export function useLayerStack(inFront: boolean): LayerStack {
   const [open, setOpen] = useState(false);
-  const [layers, setLayers] = useState<Layers>({ dining: false, shuttle: false });
+  const [layers, setLayers] = useState<Layers>({ dining: false, shuttle: false, study: false });
   const close = useCallback(() => {
     setOpen(false);
   }, []);
@@ -54,6 +57,9 @@ export function useLayerStack(inFront: boolean): LayerStack {
     },
     toggleShuttle: () => {
       setLayers((now) => ({ ...now, shuttle: !now.shuttle }));
+    },
+    toggleStudy: () => {
+      setLayers((now) => ({ ...now, study: !now.study }));
     },
     turnOn,
   };
@@ -86,23 +92,8 @@ function LayerToggle({ label, icon, tint, on, onPress }: Toggle): ReactElement {
 
 interface LayerControlsProps {
   stack: LayerStack;
-  onMenus: () => void;
   // How much higher than its place the button stands, with the stack over it: above the shuttle's notice.
   lift?: number;
-}
-
-function MenuTile({ onPress }: { onPress: () => void }): ReactElement {
-  return (
-    <Pressable
-      accessibilityLabel="메뉴 보기"
-      accessibilityRole="button"
-      onPress={onPress}
-      style={[styles.tile, styles.menus]}
-    >
-      <Icon color={color.svcDining} name="meal" size={22} />
-      <Text style={[styles.label, { color: color.svcDining }]}>메뉴</Text>
-    </Pressable>
-  );
 }
 
 // The button, navy while the stack is open, with a dot in the colour of each layer that is on.
@@ -119,7 +110,7 @@ function LayersButton({
 }): ReactElement {
   return (
     <Pressable
-      accessibilityLabel="편의기능 (식당 · 셔틀버스)"
+      accessibilityLabel="편의기능 (식당 · 셔틀버스 · 공부공간)"
       accessibilityRole="button"
       accessibilityState={{ expanded: open }}
       aria-expanded={open}
@@ -137,12 +128,13 @@ function LayersButton({
 }
 
 // The 편의기능 button and the stack of the `MainLayers` frame, which rises above it: the toggles from the bottom up,
-// 식당 then 셔틀버스, and the 메뉴 tile, which opens the menu panel. A transparent scrim over the map closes it.
-export function LayerControls({ stack, onMenus, lift = 0 }: LayerControlsProps): ReactElement {
+// 식당, 셔틀버스 and 공부공간. The menus open from a 식당 pin's 메뉴 보기. A transparent scrim over the map closes it.
+export function LayerControls({ stack, lift = 0 }: LayerControlsProps): ReactElement {
   const { shown, progress } = useSlide(stack.open);
   const toggles: Toggle[] = [
     { label: '식당', icon: 'meal', tint: color.svcDining, on: stack.layers.dining, onPress: stack.toggleDining },
     { label: '셔틀버스', icon: 'bus', tint: color.svcShuttle, on: stack.layers.shuttle, onPress: stack.toggleShuttle },
+    { label: '공부공간', icon: 'book', tint: color.svcStudy, on: stack.layers.study, onPress: stack.toggleStudy },
   ];
   const rise = progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] });
   return (
@@ -167,12 +159,6 @@ export function LayerControls({ stack, onMenus, lift = 0 }: LayerControlsProps):
           {toggles.map((toggle) => (
             <LayerToggle key={toggle.label} {...toggle} />
           ))}
-          <MenuTile
-            onPress={() => {
-              stack.close();
-              onMenus();
-            }}
-          />
         </Animated.View>
       ) : null}
       <LayersButton lift={lift} on={toggles.filter(({ on }) => on)} onPress={stack.toggleOpen} open={stack.open} />
@@ -204,7 +190,6 @@ const styles = StyleSheet.create({
     height: TILE.height,
     borderRadius: 14,
   },
-  menus: { backgroundColor: color.svcDiningSoft },
   label: { fontFamily: font.semiBold, fontSize: 11, lineHeight: 14 },
   state: { fontFamily: font.bold, fontSize: 9, lineHeight: 12, letterSpacing: 0.54, opacity: 0.9 },
   stateOff: { opacity: 0.7 },

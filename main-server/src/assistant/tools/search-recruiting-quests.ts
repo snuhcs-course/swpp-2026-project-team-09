@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -13,7 +14,7 @@ import { RecruitingService } from '../../quests/recruiting.service.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
-import { CANDIDATES_MAX, DESCRIPTION_MAX, wordsInput } from './search-candidates.js';
+import { CANDIDATES_MAX, DESCRIPTION_MAX, placeNote, wordsInput } from './search-candidates.js';
 import { daysTogether, inOrder, WINDOW_INPUT, windowOf, windowWords } from './search-window.js';
 
 // How near a Place a 파티 counts as being there, when the model names no other radius.
@@ -118,6 +119,12 @@ export function searchRecruitingQuests(recruiting: RecruitingService, places: Pl
     input,
     run: async (conditions, { userId, found }) => {
       const { board, globalEventId, minPlacesLeft, capacity, words, placeId, radius = RADIUS_METRES } = conditions;
+      const note = placeNote(
+        found,
+        placeId !== undefined,
+        (named) =>
+          `placeId was not given, so these 파티 are from any place, though resolvePlace returned a Place in this message: ${named}. To search near it, call again with its placeId.`,
+      );
       const quests = await recruiting.search(userId, {
         window: windowOf(conditions),
         board,
@@ -130,7 +137,7 @@ export function searchRecruitingQuests(recruiting: RecruitingService, places: Pl
       });
       if (quests.length === 0) {
         const noSuchPlace = placeId !== undefined && !(await places.exists(placeId));
-        return noneFound(noSuchPlace ? 'There is no such Place.' : reasonForNone(conditions));
+        return { ...noneFound(noSuchPlace ? 'There is no such Place.' : reasonForNone(conditions)), ...note };
       }
       const candidates = quests.slice(0, CANDIDATES_MAX);
       found.add(
@@ -142,6 +149,7 @@ export function searchRecruitingQuests(recruiting: RecruitingService, places: Pl
         // More Quests match than were given: a Board or a shorter window narrows them.
         more: quests.length > CANDIDATES_MAX,
         quests: candidates.map((quest) => candidateOf(quest)),
+        ...note,
       };
     },
   });
