@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -143,6 +144,35 @@ describe('proposeQuest, refusing a field', () => {
 
     expect(refusedFields()).toEqual(['capacity']);
     expect(response.body).toMatchObject({ proposal: null });
+  });
+});
+
+describe('proposeQuest, missing a Board', () => {
+  it('tells the model to choose the Board from the activity, naming the four, and to ask only when none or several fit', async () => {
+    scriptProposal(lunch({ board: undefined }));
+
+    await send(ask('점심 같이 먹을 사람 모집해줘'));
+
+    expect(refused().board).toBe(
+      'Missing: a 공개 파티 is posted on a Board, meal (식사), career (진로), hobby (취미) or show (공연). Choose the one the activity plainly fits and propose at once; ask the User only when it fits none or more than one.',
+    );
+  });
+
+  it('is asked of the User, by the chat rules and by the tool, except a Board the activity plainly gives', async () => {
+    scriptProposal(lunch({ board: undefined }));
+
+    await send(ask('점심 같이 먹을 사람 모집해줘'));
+
+    const [call] = model.received();
+    const tool = call?.tools?.find((given) => given.name === 'proposeQuest');
+    expect(model.system()).toContain(
+      'When proposeQuest refuses fields, ask the User for those, all in one question, except a Board the activity plainly gives.',
+    );
+    expect(tool?.type === 'function' ? tool.description : '').toContain(
+      'ask the User for the fields it names, except a Board the activity plainly gives',
+    );
+    // The clause as it was, which would be a second rule.
+    expect(model.system()).not.toContain('all in one question. ');
   });
 });
 

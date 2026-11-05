@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The guard of the presenters and of proposeQuest: a card shows, and a Proposal takes, only what a lookup or a
@@ -15,6 +16,13 @@
 // which are never cards, or a 관정도서관 space of the catalogue findLibrarySpace returned.
 export type FoundKind = 'quest' | 'globalEvent' | 'restaurant' | 'friend' | 'place' | 'librarySpace';
 
+// A Place resolvePlace answered alone, which a search of the same message is meant to be near.
+export interface ResolvedPlace {
+  id: string;
+  name: string;
+  number: string | null;
+}
+
 export class FoundIds {
   private readonly found: Record<FoundKind, Set<string>> = {
     quest: new Set(),
@@ -25,6 +33,8 @@ export class FoundIds {
     librarySpace: new Set(),
   };
 
+  private readonly places: ResolvedPlace[] = [];
+
   // The ids a lookup or a resolver returned to the model.
   add(kind: FoundKind, ids: Iterable<string>): void {
     for (const id of ids) {
@@ -34,6 +44,18 @@ export class FoundIds {
 
   has(kind: FoundKind, id: string): boolean {
     return this.found[kind].has(id);
+  }
+
+  // A Place resolvePlace answered 'one' with, so that a search not given it can say so.
+  addResolvedPlace(place: ResolvedPlace): void {
+    if (!this.places.some(({ id }) => id === place.id)) {
+      this.places.push(place);
+    }
+  }
+
+  // The Places resolvePlace answered alone in this message, in order.
+  resolvedPlaces(): readonly ResolvedPlace[] {
+    return this.places;
   }
 
   // Throws unless every id was returned in this message, naming those that were not. The SDK gives the error back to

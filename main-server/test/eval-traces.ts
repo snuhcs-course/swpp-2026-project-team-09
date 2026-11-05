@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Expect, expectSchema } from '../eval/expect.ts';
@@ -44,6 +45,9 @@ export interface Turn {
   mapButtons?: string[];
   proposal?: unknown;
   failure?: FailureKind;
+  // The model's own reply, when the server added the Approval line after it. Left out, the trace is one saved before
+  // the line, with neither field.
+  modelText?: string;
 }
 
 // A turn's trace: each step 500 ms and 1000 tokens in, 400 of them read from the cache and 100 written, 50 out.
@@ -54,6 +58,7 @@ export function turn({
   mapButtons = [],
   proposal = null,
   failure,
+  modelText,
 }: Turn): TurnTrace {
   const traced = [...steps, []].map((toolCalls, index, all) => ({
     toolCalls,
@@ -68,7 +73,17 @@ export function turn({
     status: failure === undefined ? 200 : 503,
     latencyMs: 500 * traced.length,
     steps: traced,
-    reply: failure === undefined ? { text, textLength: text.length, cards, mapButtons, proposal } : null,
+    reply:
+      failure === undefined
+        ? {
+            text,
+            textLength: text.length,
+            cards,
+            mapButtons,
+            proposal,
+            ...(modelText === undefined ? {} : { modelText, approvalLine: true }),
+          }
+        : null,
     failure: failure ?? null,
     errorBody: null,
   };

@@ -2,28 +2,31 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
+import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { refuseMatchServer } from './match-server.js';
 import { connectToDatabase, joinQuest, ownQuest } from './quests.js';
-import { ScriptedModel } from './scripted-model.js';
+import { ScriptedModel, type Step } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
 
 // Join if one exists, recruit if not, with the scripted model in the model's place: what the instructions tell the model
 // and what a reply holds when the model follows them. The files share the database, so each test seeds what it reads on
-// a day of 2094 of its own, which no other file uses, and always searches on that day.
+// a day of 2094 or 2083 of its own, which no other file uses, and always searches on that day.
 
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
 let leader: TestUser;
 let reader: TestUser;
+let place301: string;
 const model = new ScriptedModel();
 
 beforeAll(async () => {
@@ -31,6 +34,7 @@ beforeAll(async () => {
   prisma = connectToDatabase();
   leader = await signInUser(app);
   reader = await signInUser(app);
+  place301 = (await prisma.place.findFirstOrThrow({ where: { number: '301' } })).id;
 });
 
 afterAll(async () => {
@@ -135,5 +139,89 @@ describe('a reply to a request to recruit, with none found', () => {
       cards: [],
       proposal: { title: '같이 가요', capacity: 4 },
     });
+  });
+});
+
+// What a search returned to the model, as far as the note goes.
+const searchResult = z.looseObject({
+  result: z.string(),
+  note: z.string().optional(),
+  quests: z.array(z.looseObject({ id: z.string() })).optional(),
+});
+
+const NOTE_DAY = '2083-04-02';
+const NOTE_WINDOW = { from: NOTE_DAY, to: NOTE_DAY };
+const RESOLVING: Step = { tool: 'resolvePlace', input: { words: '301동' } };
+
+// What each search returned to the model, after the script ran on the conversation; resolvers' answers left out.
+async function searchesOf(steps: Step[], messages: object[] = ask('301동 근처 파티 있어?')): Promise<SearchResult[]> {
+  model.script(...steps, { text: '…' });
+  await postAssistantMessages(app, reader.accessToken, messages).expect(200);
+  const results = model.toolResults().map((result) => searchResult.parse(result));
+  return results.filter(({ result }) => result !== 'one');
+}
+
+type SearchResult = z.output<typeof searchResult>;
+
+describe('a search after resolvePlace answered one Place in the message, not given it', () => {
+  let first: string;
+  let second: string;
+
+  beforeAll(async () => {
+    first = await questOn(NOTE_DAY, { capacity: 4 });
+    second = await questOn(NOTE_DAY, { capacity: 5 });
+  });
+
+  it('says placeId was not given, naming the Place, and keeps the candidates and their order', async () => {
+    const [noted] = await searchesOf([RESOLVING, { tool: 'searchRecruitingQuests', input: NOTE_WINDOW }]);
+    const [plain] = await searchesOf([{ tool: 'searchRecruitingQuests', input: NOTE_WINDOW }]);
+
+    expect(noted?.note).toContain('placeId was not given');
+    expect(noted?.note).toContain(`제1공학관 (301동), placeId ${place301}`);
+    expect({ ...noted, note: undefined }).toEqual({ ...plain, note: undefined });
+    expect(plain?.quests?.map(({ id }) => id)).toEqual([first, second]);
+    expect(plain?.note).toBeUndefined();
+  });
+
+  it('says so of a search of Global Events with no place, also when it found none', async () => {
+    const [noted] = await searchesOf([RESOLVING, { tool: 'searchGlobalEvents', input: NOTE_WINDOW }]);
+
+    expect(noted?.result).toBe('none');
+    expect(noted?.note).toContain('place was not given');
+    expect(noted?.note).toContain('제1공학관 (301동)');
+  });
+});
+
+describe('a search with no note', () => {
+  it('is one given the Place resolvePlace answered', async () => {
+    const searches = await searchesOf([
+      RESOLVING,
+      { tool: 'searchRecruitingQuests', input: { ...NOTE_WINDOW, placeId: place301 } },
+      { tool: 'searchGlobalEvents', input: { ...NOTE_WINDOW, place: '301동' } },
+    ]);
+
+    expect(searches.map(({ note }) => note)).toEqual([undefined, undefined]);
+  });
+
+  it("is one in a message with no resolvePlace, though an earlier message's Proposal holds a Place", async () => {
+    const proposal = {
+      title: '저녁 같이 먹어요',
+      description: '저녁 같이 먹어요',
+      joinPolicy: 'open',
+      board: 'meal',
+      capacity: 4,
+      startsAt: `${NOTE_DAY}T18:00:00+09:00`,
+      place: { id: place301, name: '제1공학관' },
+    };
+    const searches = await searchesOf(
+      [{ tool: 'searchRecruitingQuests', input: NOTE_WINDOW }],
+      [
+        { role: 'user', text: '301동에서 저녁 먹을 사람 모집해 줘' },
+        { role: 'assistant', text: '만들기를 누르면 파티가 만들어져요.', cards: [], proposal },
+        { role: 'user', text: '그 전에 들어갈 파티 있어?' },
+      ],
+    );
+
+    expect(searches.map(({ note }) => note)).toEqual([undefined]);
   });
 });
