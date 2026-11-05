@@ -47,7 +47,7 @@ Later on 2026-11-05 the PM approved the holdout. It ran at `55d882bc`, whose cod
 
 ### Agent usage (2026-11-05)
 
-- **Agent time** (estimate): about 80 minutes: about 70 of the orchestrating session on this ticket, and about 10 for the two reviewers. The real-model runs of the changes and the after set took about 85 minutes, 04:29 to 05:59 KST, within that session's time. Time spent waiting for a person is not counted.
-- **Tokens** (measured from the transcripts, up to 06:10 KST): the orchestrating session's for all of P11, counted once here, and this ticket's two reviewers.
-  - Input: 548 not cached, 61,270,676 cache reads and 663,895 cache writes.
-  - Output: 207,341.
+- **Agent time** (estimate): about 105 minutes: about 90 of the orchestrating session on this ticket, and about 15 for its four reviewers. The real-model runs of the changes and the after set ran from 04:29 to 05:59 KST, and the holdout from 09:44 to 09:48, within that session's time. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the transcripts, up to 09:55 KST): the orchestrating session's for all of P11, counted once here, and this ticket's four reviewers.
+  - Input: 726 not cached, 74,839,653 cache reads and 1,018,796 cache writes.
+  - Output: 266,745.

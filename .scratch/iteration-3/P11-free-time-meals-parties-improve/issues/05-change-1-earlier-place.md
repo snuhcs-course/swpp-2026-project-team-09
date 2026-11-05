@@ -27,6 +27,8 @@ It works on ticket 04's branch, which goes into `3.0/Main` as one pull request a
 
 Change 1 is `1966d8e1`. Its P4 suite run went from the before set's 70.8% to 80.0%, and it was kept. Its line is in [`record.md`](../../../../main-server/eval/p4/record.md#the-changes).
 
+The new sentence says "a Place or a single clock time named in an earlier turn", not a Place alone as the spec words it, because the rule it extends already makes a Proposal of a request that names either. The follow-up rule now names follow-ups on Restaurant cards.
+
 ### Agent usage (2026-11-05)
 
 - **Agent time** (estimate): about 10 minutes of the orchestrating session. The run took 12 minutes, 04:29 to 04:41 KST. Time spent waiting for a person is not counted.
