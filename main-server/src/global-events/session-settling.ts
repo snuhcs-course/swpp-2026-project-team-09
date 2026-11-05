@@ -52,7 +52,7 @@ export function publishedValues(session: JudgedSession, { latitude, longitude }:
 }
 
 // What a Judgement read of a session it does not publish, over what its Draft holds: the time, when the checks of the
-// time pass or the session is compared, and the place, when the checks of the place pass.
+// time pass or the session is compared, and the place, when the checks of the place pass and it is not compared.
 export function draftValues(
   session: JudgedSession,
   { comparable, timeRead, placeRead }: SessionVerdict,
@@ -60,12 +60,12 @@ export function draftValues(
   draft: DraftValues | undefined,
 ): DraftValues {
   const { startsAt, endsAt } = judgedTimes(session);
-  const held = draft ?? { startsAt: null, endsAt: null, place: null, latitude: null, longitude: null };
-  const time = comparable || timeRead ? { startsAt, endsAt } : { startsAt: held.startsAt, endsAt: held.endsAt };
+  const kept = draft ?? { startsAt: null, endsAt: null, place: null, latitude: null, longitude: null };
+  const time = comparable || timeRead ? { startsAt, endsAt } : { startsAt: kept.startsAt, endsAt: kept.endsAt };
   const placed =
-    placeRead && place !== undefined
+    !comparable && placeRead && place !== undefined
       ? { place: session.place, latitude: place.latitude, longitude: place.longitude }
-      : { place: held.place, latitude: held.latitude, longitude: held.longitude };
+      : { place: kept.place, latitude: kept.latitude, longitude: kept.longitude };
   return { ...time, ...placed };
 }
 

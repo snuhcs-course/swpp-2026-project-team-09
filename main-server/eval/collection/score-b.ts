@@ -137,9 +137,9 @@ function causeOfTruePair(
     return '후보 단계 누락';
   }
   const { stored, fresh } = storedAndNew(pair);
-  const sessionsOf = (post: string, of: typeof comparableSessions): ReturnType<typeof comparableSessions> => {
+  const sessionsOf = (post: string, select: typeof comparableSessions): ReturnType<typeof comparableSessions> => {
     const reading = readings.get(post);
-    return reading === undefined ? [] : of(reading);
+    return reading === undefined ? [] : select(reading);
   };
   const theirs = sessionsOf(stored.post, publishedSessions);
   if (sessionsOf(fresh.post, comparableSessions).every((one) => theirs.every((other) => isRefused(one, other)))) {

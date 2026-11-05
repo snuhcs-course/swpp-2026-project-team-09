@@ -744,7 +744,11 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
   taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
-  post. Failing sessions are never published (`session-verdict.ts`, [ADR 0014](../docs/adr/0014-a-session-whose-place-fails-is-still-compared-as-the-same-event.md)):
+  post. A post called no event stays as it is, with the outcome `no_event`. A session over a period whose end is a day
+  alone, or the 00:00 extra.snu writes where it has no time, is stored as ending at 23:59 of that day in Korea, so that
+  it stays listed through its last day and its card names that day. Failing sessions are never published
+  (`session-verdict.ts`,
+  [ADR 0014](../docs/adr/0014-a-session-whose-place-fails-is-still-compared-as-the-same-event.md)):
   - one that fails only `length`, `placeInLines` or `placeMatches` (a named list, so a check added later only stops
     publication) is compared with the events that exist, its place given to the AI as written. It is attached only when
     its normalised title and start equal the event's (`attachedBy` `rule`, reason `equal_title_and_start_without_place`),
@@ -754,15 +758,10 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
     own Draft with its time filled;
   - one whose lines are in the post and whose time checks, or place checks, all pass fills its Draft with that time, or
     that place and its position;
-  - the rest are written in the Judgement only.
-
-  Such a session takes its own Draft, or the post's only one, or one with no start, as a passing one does, but a post
-  keeps a Draft for the sessions that settle nothing, so that no time the worker read is lost: the session gets a new
-  Draft instead. A post called no event stays
-  as it is, with the outcome `no_event`. A session over a period whose end is a day alone, or the 00:00 extra.snu writes
-  where it has no time, is stored as ending at 23:59 of that day in Korea, so that it stays listed through its last day
-  and its card names that day.
-
+  - the rest are written in the Judgement only;
+  - such a session takes its own Draft, or the post's only one, or one with no start, as a passing one does. A post
+    keeps a Draft for the sessions that settle nothing, so that no time the worker read is lost: the session then gets a
+    new Draft, which the link rule counts as one of the post's sessions, as it counts a passing session's new event.
 - **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
   reads it publishes nothing of that Judgement. A post the link rule decided is not judged. With
   `AUTOMATIC_PUBLICATION=off` the Judgement and what it attaches are stored and nothing is published.

@@ -278,9 +278,7 @@ interface PlacedDraft {
 // Where each passing session goes, given the post's Drafts in session order, null being a new event: the Draft the worker
 // read it into, else the post's only Draft, whose start may be only the header's date, else a Draft without a start. A
 // Draft of several with another start keeps what the worker read. Failing sessions make no Draft, and a Draft stays for
-// them: their own, or any other left. A session that is not new is no session left to look at. A failing session that is
-// compared or fills a Draft then takes a Draft the same way from those left, or a new one, so that one stays for those
-// that settle nothing.
+// them: their own, or any other left. A session that is not new is no session left to look at.
 export function placedSessions(sessions: JudgedSession[], drafts: PlacedDraft[]): Map<JudgedSession, string | null> {
   const passing = sessions.filter(({ passed }) => passed);
   const failing = sessions.filter(
@@ -317,6 +315,8 @@ export function placedSessions(sessions: JudgedSession[], drafts: PlacedDraft[])
   return placed;
 }
 
+// A failing session that is compared or fills a Draft takes one the same way from those left, or a new one, so that one
+// stays for those that settle nothing.
 function placeFailing(
   failing: JudgedSession[],
   drafts: PlacedDraft[],

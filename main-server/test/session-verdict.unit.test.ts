@@ -49,6 +49,6 @@ describe('verdictOf', () => {
   it('counts a check missing from the results as failed', () => {
     const checks = failing().filter(({ name }) => name !== 'newSession');
 
-    expect(verdictOf(checks)).toMatchObject({ publishable: false, comparable: false, blockedBy: [] });
+    expect(verdictOf(checks)).toMatchObject({ publishable: false, comparable: false, blockedBy: ['newSession'] });
   });
 });
