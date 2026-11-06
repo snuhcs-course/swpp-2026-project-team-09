@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -11,6 +12,7 @@ import {
   type SameEventQuestion,
   type SessionChoice,
   type SessionToCompare,
+  type StoredChoice,
 } from '../../src/global-events/same-event-choice.js';
 import {
   candidatesLeft,
@@ -20,6 +22,7 @@ import {
   normalisedTitle,
   refusalOf,
 } from '../../src/global-events/same-event.js';
+import { attachesWithoutPlace } from '../../src/global-events/session-comparison.js';
 import { GlobalEventState, SessionHold } from '../../src/generated/prisma/client.js';
 import { type PostReading } from './reading.ts';
 
@@ -44,16 +47,26 @@ export function sessionId(post: string, number: number): string {
   return `${post}#${number}`;
 }
 
-// A session the step can compare: the rules or a Judgement passed it, so it has a start and would be published.
+// A session the step compares, as the verdict of its checks says: the rules or a Judgement passed it, or it failed only
+// where it may still be compared. Only one that passed would be published.
 export interface ComparableSession extends ComparedSession {
   number: number;
   place: string | null;
+  publishable: boolean;
 }
 
 export function comparableSessions({ outputs }: PostReading): ComparableSession[] {
-  return outputs.flatMap(({ passed, number, start, title, place }) =>
-    passed && number !== null && start !== null ? [{ number, title, startsAt: start, place }] : [],
+  return outputs.flatMap(({ passed, comparable, number, start, title, place }) =>
+    comparable && number !== null && start !== null
+      ? [{ number, title, startsAt: start, place, publishable: passed }]
+      : [],
   );
+}
+
+// The sessions of a stored post a later one may meet: those that would be published. One the step only compared is
+// attached, and so is in its event already, or stays a Draft, which is no candidate.
+export function publishedSessions(reading: PostReading): ComparableSession[] {
+  return comparableSessions(reading).filter(({ publishable }) => publishable);
 }
 
 // A post before this one that the set pairs with it, and those of its sessions the pair is about, or all.
@@ -88,7 +101,7 @@ function isIn(scope: number[] | null, number: number): boolean {
 function candidatesOf({ partners }: NewPost, { startsAt }: ComparableSession): CandidateEvent[] {
   const events = new Map<string, CandidateEvent>();
   for (const { reading, sessions } of partners) {
-    for (const session of comparableSessions(reading)) {
+    for (const session of publishedSessions(reading)) {
       if (isIn(sessions, session.number) && Math.abs(session.startsAt.getTime() - startsAt.getTime()) <= A_DAY) {
         const event = candidateOf(reading, session);
         events.set(event.id, event);
@@ -137,7 +150,7 @@ function naiveFate(session: ComparableSession, events: CandidateEvent[]): Sessio
 // A stored post's sessions as attachLinked counts them: those the worker sent, and those a Judgement added.
 function storedNumbers(reading: PostReading): number[] {
   const parsed = reading.post.sessions.map(({ number }) => number);
-  const judged = comparableSessions(reading).map(({ number }) => number);
+  const judged = reading.outputs.flatMap(({ number }) => (number === null ? [] : [number]));
   return [...new Set([...parsed, ...judged])].toSorted((one, other) => one - other);
 }
 
@@ -170,7 +183,7 @@ function linkFates({ reading: { post }, partners }: NewPost): SessionFate[] | nu
     }));
   }
   // A linked event no one read a time for takes nothing.
-  const read = new Set(comparableSessions(only.reading).map(({ number }) => number));
+  const read = new Set(publishedSessions(only.reading).map(({ number }) => number));
   if (!numbers.every((number) => read.has(number))) {
     return null;
   }
@@ -214,14 +227,30 @@ interface Settled {
   question: SameEventQuestion | null;
 }
 
-// What the step does with a session it compares, as `compared` in session-settling.ts does.
+// What the AI answered of a session, as the step reads it from its row, or none.
+function storedChoiceOf(session: ComparableSession, { question, choices }: Settled): StoredChoice | null {
+  const at = session.startsAt.getTime();
+  const asked = question?.sessions.find(({ startsAt }) => startsAt.getTime() === at);
+  const choice = choices.find(({ startsAt }) => startsAt.getTime() === at);
+  return choice === undefined || asked === undefined
+    ? null
+    : {
+        outcome: choice.outcome,
+        askedEventIds: asked.candidates.map(({ id }) => id),
+        chosenEventId: choice.globalEventId,
+        reason: choice.reason,
+      };
+}
+
+// What the step does with a session it compares, as `compared` in session-comparison.ts does. One that would not be
+// published is attached only on ADR 0014's terms, and held where one that would be is its own.
 function comparedFate(
   session: ComparableSession,
   events: CandidateEvent[],
   mode: StepMode,
   settled: Settled,
 ): SessionFate {
-  const { number } = session;
+  const { number, publishable } = session;
   const candidates = events.map(({ id }) => id);
   const held = (heldFor: SessionHold): SessionFate => ({ number, kind: 'held', heldFor, candidates });
   const attached = (to: string, by: Attachment): SessionFate => {
@@ -243,23 +272,19 @@ function comparedFate(
   if (!isAi || (asked === undefined && left.length === 0)) {
     return { number, kind: 'own', candidates };
   }
-  const choice = settled.choices.find(({ startsAt }) => startsAt.getTime() === session.startsAt.getTime());
   const applied = appliedChoice(
-    choice === undefined || asked === undefined
-      ? null
-      : {
-          outcome: choice.outcome,
-          askedEventIds: asked.candidates.map(({ id }) => id),
-          chosenEventId: choice.globalEventId,
-          reason: choice.reason,
-        },
+    storedChoiceOf(session, settled),
     left.map(({ id }) => id),
   );
-  if (applied.kind === 'own') {
-    return { number, kind: 'own', candidates };
-  }
   if (applied.kind === 'hold') {
     return held(applied.heldFor);
+  }
+  const chosen = applied.kind === 'attach' ? events.find(({ id }) => id === applied.globalEventId) : undefined;
+  if (!publishable && (chosen === undefined || !attachesWithoutPlace(session, chosen))) {
+    return held(SessionHold.place_unchecked);
+  }
+  if (applied.kind === 'own') {
+    return { number, kind: 'own', candidates };
   }
   return settled.taken.has(applied.globalEventId)
     ? held(SessionHold.several_matches)

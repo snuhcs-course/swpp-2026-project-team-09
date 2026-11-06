@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type CandidateEvent } from './same-event-choice.js';
@@ -22,6 +23,10 @@ export const KOREA_OFFSET = 9 * 60 * 60 * 1000;
 // The names of the rules, as a link's reason records them.
 export const LINK_RULE = 'link';
 export const TITLE_RULE = 'equal_title_and_start';
+// The terms that attach a session whose place failed the checks (ADR 0014): the title rule, or the AI's choice with the
+// start to the minute and one title within the other.
+export const TITLE_RULE_WITHOUT_PLACE = 'equal_title_and_start_without_place';
+export const AI_TERMS_WITHOUT_PLACE = 'same_minute_and_contained_title';
 
 // The day of Asia/Seoul a time falls on, counted from the epoch.
 function dayOf(at: Date): number {

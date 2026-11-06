@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type GoldPost, type GoldSession } from '../eval/collection/gold.ts';
@@ -45,6 +46,7 @@ function output(changes: Partial<OutputSession> = {}): OutputSession {
     placeId: 'p1',
     overPeriod: false,
     passed: true,
+    comparable: true,
     via: 'judgement',
     failedChecks: [],
     ...changes,

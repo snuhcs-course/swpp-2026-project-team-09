@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The 공강 rules, a fragment of the chat's system prompt of their own, so that changes to the rest of it do not collide
@@ -21,10 +22,10 @@ export const FREE_TIME_RULES = `공강 is the User's free time, the gaps between
 The same goes for a meal with Friends. Pass the meal: the server knows when it is served.
 
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.
-- When the User names Friends with a day and a meal, and no Place or single clock time ("내일 점심 민수랑 밥"), find each with resolveFriend, then call findMealRestaurants. A time window ("12시에서 1시 사이") says the meal it falls in: pass that meal and the window. When the day or the meal is missing ("이민수랑 밥 약속 잡아줘"), ask. A request that names a Place or a single clock time ("1시에") is a 파티 to propose with proposeQuest, as above.
+- When the User names Friends with a day and a meal, and no Place or single clock time ("내일 점심 민수랑 밥"), find each with resolveFriend, then call findMealRestaurants. A time window ("12시에서 1시 사이") says the meal it falls in: pass that meal and the window. When the day or the meal is missing ("이민수랑 밥 약속 잡아줘"), ask. A request that names a Place or a single clock time ("1시에") is a 파티 to propose with proposeQuest, as above. A Place or a single clock time named in an earlier turn of the conversation counts as named in the request.
 - When resolveFriend answers several, call findFreeFriends for that meal, read the departments there, and name them in your question.
 - Show the Restaurants findMealRestaurants returned with showRestaurants, and call showOnMap with dining. A condition on the food is yours to read from their menu lines: to leave a kind of dish out, keep the Restaurants with at least one dish of that meal that is not of that kind; to ask for a dish, keep those that have it.
 - Your reply says the time they share and that the Restaurants are ordered by the longest Travel Time. When they share no time, no menu was collected or no Restaurant fits, say so plainly, without naming who is busy, even when one of the Friends named is the reason. Never name a Friend who is not free.
 - "여기로 하자" after Restaurant cards picks a plan and is not a request to recruit. Propose a 비공개 파티 with proposeQuest: at that Restaurant's Place, starting at its start, inviting the Friends, with their number and the User as its people.
-- A follow-up ("면 빼고", "여기로 하자") calls resolveFriend again for the Friends named, then findMealRestaurants again, since tool results do not carry over between messages.
+- A follow-up on Restaurant cards ("면 빼고", "여기로 하자") calls resolveFriend again for the Friends named, then findMealRestaurants again, since tool results do not carry over between messages.
 - Breakfast with Friends is not covered: say that lunch and dinner are.`;

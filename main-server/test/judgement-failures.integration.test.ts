@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { Logger } from '@nestjs/common';
 import { type Step } from './scripted-model.js';
 import { eventsMessage, postNumbersFrom } from './global-events.js';
 import { answer, draftPost, JudgementWorld } from './judgements.js';
@@ -79,6 +81,24 @@ describe('The second try', () => {
     await world.collected(draftPost(postNumber));
 
     expect((await world.judgementOf(postNumber))?.failure).toBe('Error');
+  });
+});
+
+describe('The log of an answer off the schema', () => {
+  it('names the failure, and holds none of the text the model wrote', async () => {
+    const written = '2085년 11월 5일 오후 두 시쯤일 것 같습니다';
+    const logs = (['log', 'warn', 'error', 'debug', 'verbose'] as const).map((level) =>
+      vi.spyOn(Logger.prototype, level),
+    );
+    world.scripted.script({ text: written });
+    const postNumber = newPost();
+
+    await world.collected(draftPost(postNumber, { start: '2085-11-05' }));
+
+    const { id } = await world.sourcePost(postNumber);
+    const lines = logs.flatMap((spy) => spy.mock.calls.map((call) => call.map(String).join(' ')));
+    expect(lines).toContain(`The Judgement of Source Post ${id} could not be made: AI_NoObjectGeneratedError`);
+    expect(lines.filter((line) => line.includes('오후 두 시'))).toEqual([]);
   });
 });
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import {
@@ -161,7 +162,8 @@ function medianRides(rides: Ride[]): ShuttleTiming['rides'] {
   return timing;
 }
 
-// What `shuttle-timing.json` holds for these days. R11's 75% decides what is scored: the file takes any kept time.
+// All the times derived from these days, which the score reads. R11's 75% decides what is scored: a wait here takes any
+// kept time.
 export function deriveTiming(days: CleanedDay[]): ShuttleTiming {
   const waits: ShuttleTiming['waits'] = {};
   for (const { stop, band, waitSeconds, keptSeconds } of waitCells(days)) {
@@ -170,4 +172,29 @@ export function deriveTiming(days: CleanedDay[]): ShuttleTiming {
     }
   }
   return { days: days.map(({ date }) => date), waits, rides: medianRides(days.flatMap((day) => ridesOf(day))) };
+}
+
+// What seed/shuttle-timing.json gives the app, as the PM decided on #201 on 2026-11-05: no wait, so the fallback
+// answers, until a later change brings waits back once a third logged day agrees; and a ride only for a pair and band
+// logged on at least two days. The score still reads `deriveTiming`, which a held-out fold of one day needs whole.
+export function shippedTiming(days: CleanedDay[]): ShuttleTiming {
+  const daysLogged = new Map<string, number>();
+  for (const day of days) {
+    for (const key of new Set(ridesOf(day).map(({ from, to, band }) => `${from} ${to} ${band}`))) {
+      daysLogged.set(key, (daysLogged.get(key) ?? 0) + 1);
+    }
+  }
+  const timing = deriveTiming(days);
+  const rides: ShuttleTiming['rides'] = {};
+  for (const [from, ends] of Object.entries(timing.rides)) {
+    for (const [to, bands] of Object.entries(ends)) {
+      for (const band of SHUTTLE_BANDS) {
+        const seconds = bands[band];
+        if (seconds !== undefined && (daysLogged.get(`${from} ${to} ${band}`) ?? 0) >= 2) {
+          (rides[from] ??= {})[to] = { ...rides[from]?.[to], [band]: seconds };
+        }
+      }
+    }
+  }
+  return { days: timing.days, waits: {}, rides };
 }

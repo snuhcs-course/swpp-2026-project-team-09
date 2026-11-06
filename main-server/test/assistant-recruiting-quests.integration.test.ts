@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -80,10 +81,12 @@ describe('searchRecruitingQuests, by Board', () => {
             board: 'meal',
             globalEvent: null,
             joinPolicy: 'open',
+            join: 'open',
             placesLeft: 3,
             holderCount: 1,
             next: { startsAt: '2097-01-05T18:00:00+09:00', endsAt: '2097-01-05T20:00:00+09:00', place: null },
             description: '<data label="quest.description"></data>',
+            window: 'starts',
           },
         ],
       },

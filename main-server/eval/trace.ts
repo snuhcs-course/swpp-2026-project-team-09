@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The trace of a turn (spec P19, "The recorder"): what the model did in it, step by step, and how the turn ended. A
@@ -53,13 +54,17 @@ export interface StepTrace {
 // per message ran out. ERROR: anything else, such as the provider failing or a refused request.
 export type FailureKind = 'STEP_LIMIT' | 'TIMEOUT' | 'ERROR';
 
-// The reply as the endpoint sent it, and the length of its text.
+// The reply as the endpoint sent it, and the length of its text. `modelText` is the model's own reply, before the server
+// added the Approval line, and `approvalLine` whether it did; a run saved before P12 has neither, and its text is the
+// model's.
 export interface ReplyTrace {
   text: string;
   textLength: number;
   mapButtons: string[];
   cards: { kind: string }[];
   proposal: unknown;
+  modelText?: string;
+  approvalLine?: boolean;
 }
 
 export interface TurnTrace {
@@ -102,6 +107,12 @@ export function failureOf(
   }
   const timedOut = steps.some(({ error }) => error !== undefined && TIME_ERRORS.has(error));
   return timedOut || latencyMs >= limits.timeoutMs ? 'TIMEOUT' : 'ERROR';
+}
+
+// The turn as the model answered it: its reply's text the model's own, without the Approval line.
+export function asModelAnswered(turn: TurnTrace): TurnTrace {
+  const { reply } = turn;
+  return reply === null ? turn : { ...turn, reply: { ...reply, text: reply.modelText ?? reply.text } };
 }
 
 function sum(values: (number | null)[]): number | null {

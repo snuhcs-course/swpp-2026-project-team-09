@@ -37,7 +37,7 @@ Declared in a new evidence file beside the walking evaluation, which does not ch
   - At least 2 rides include the longest segment, 신소재공동연구소 → 302동 (1,096 m).
   - Each ride records the date, the rider, the boarding and alighting stops, and the times of reaching the stop, boarding and alighting.
   - Only the ride, boarding to alighting, is compared: with the logged median of that pair and band, and with the fallback, as an error per ride and an MAE. A wait is recorded and not compared, since 5 waits depend too much on the headway.
-- [ ] **Person: the rides.** TaeHyun79 rides on 11-02 and records the times under ticket 02's `## Comments`. The comparison follows after the collection ends.
+- [x] **Person: the rides.** TaeHyun79 rides on 11-02 and records the times under ticket 02's `## Comments`. The comparison follows after the collection ends. _(Ridden on 11-03 and recorded in [ticket 02](02-shuttle-log.md#the-five-rides-2026-11-05).)_
 
 ### Part 2: before the first official run of the P4 suite
 

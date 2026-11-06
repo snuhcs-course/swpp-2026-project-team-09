@@ -104,7 +104,7 @@ The app changes only in JavaScript.
     - `data_collection: deny` reaching the model call;
     - the cards' 이동 시간 fields and their order across kinds.
   - A fake-server screen test of the 이동 시간 box in its forms.
-- [ ] **Landing.** With ticket 05, this lands before P05's R0 (11-02), so that P05's R0 and R1 differ only by P05's own change. It rebases on whatever P07 has landed on the Feature definition, the adapter and the request DTO, and reuses P07's Korea time helpers.
+- [x] **Landing.** With ticket 05, this lands before P05's R0 (11-02), so that P05's R0 and R1 differ only by P05's own change. It rebases on whatever P07 has landed on the Feature definition, the adapter and the request DTO, and reuses P07's Korea time helpers. _(They landed on 11-01, after R0. P05's R0p on `871886a` stands in, as ticket 06 recorded.)_
 
 ## Comments
 

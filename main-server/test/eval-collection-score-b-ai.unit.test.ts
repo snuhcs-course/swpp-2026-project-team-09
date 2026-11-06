@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type GoldPair } from '../eval/collection/gold.ts';
@@ -93,6 +94,41 @@ describe("08b's AI choice: one question", () => {
       'rules',
       NEVER_ASKED,
     );
+    expect(pairs[0]).toMatchObject({ result: 'none', reached: false });
+  });
+});
+
+describe("08b's AI choice: a session whose place failed", () => {
+  const stored = reading(STORED, { title: '목공 교실' });
+
+  it('is compared, and attached by an equal title and start without the AI', async () => {
+    const world = worldOf(stored, reading(NEW, { title: '목공 교실', placeFailed: true }));
+    const { pairs } = await scoreB([pair('b-1', STORED, NEW, true)], world, 'ai', NEVER_ASKED);
+    expect(pairs[0]).toMatchObject({ result: 'attached', by: 'title', reached: true });
+  });
+
+  it("is attached on the AI's choice when one title holds the other at the same minute", async () => {
+    const world = worldOf(stored, reading(NEW, { title: '목공 교실 참가 안내', placeFailed: true }));
+    const { pairs } = await scoreB([pair('b-1', STORED, NEW, true)], world, 'ai', answering('chosen', `${STORED}#1`));
+    expect(pairs[0]).toMatchObject({ result: 'attached', by: 'ai' });
+  });
+
+  it.each([
+    ['chooses a title that holds no other', '도예 체험', answering('chosen', `${STORED}#1`)],
+    ['chooses none', '도예 체험', answering('none')],
+  ])('is held when the AI %s, never its own', async (_, title, ask) => {
+    const world = worldOf(stored, reading(NEW, { title, placeFailed: true }));
+    const { pairs, d4 } = await scoreB([pair('b-1', STORED, NEW, true)], world, 'ai', ask);
+    expect(pairs[0]?.result).toBe('held');
+    expect(d4.byHold).toEqual({ place_unchecked: 1 });
+  });
+
+  it('is no candidate of a later post', async () => {
+    const world = worldOf(
+      reading(STORED, { title: '목공 교실', placeFailed: true }),
+      reading(NEW, { title: '목공 교실' }),
+    );
+    const { pairs } = await scoreB([pair('b-1', STORED, NEW, true)], world, 'ai', NEVER_ASKED);
     expect(pairs[0]).toMatchObject({ result: 'none', reached: false });
   });
 });

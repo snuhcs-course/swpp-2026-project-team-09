@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import 'server-only';
@@ -102,7 +103,8 @@ export interface UnsettledPost {
 }
 
 // Why a session waits for an Administrator.
-export type SessionHold = 'link_not_one_to_one' | 'several_matches' | 'ai_unsure' | 'ai_failed' | 'candidates_changed';
+export type SessionHold =
+  'link_not_one_to_one' | 'several_matches' | 'ai_unsure' | 'ai_failed' | 'candidates_changed' | 'place_unchecked';
 
 export interface QueueCandidate {
   id: string;

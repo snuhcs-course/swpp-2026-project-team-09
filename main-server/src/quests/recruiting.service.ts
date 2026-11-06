@@ -8,10 +8,12 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
+import { type Hit, type SearchCounts } from '../common/search-sql.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, Prisma, Quest, QuestBoard } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
@@ -28,7 +30,7 @@ import {
   toRecruitingQuestDto,
 } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
-import { type RecruitingSearch, recruitingSearchIds } from './recruiting-search.js';
+import { type RecruitingSearch, recruitingSearchCounts, recruitingSearchHits } from './recruiting-search.js';
 import { alreadyHolder, conflict, notRecruiting, sharedQuestHeld } from './refusals.js';
 
 // A Quest of the list that the reader can still enter, with all its Sub Quests.
@@ -66,9 +68,25 @@ export class RecruitingService {
     return ids.flatMap((id) => listed.find((quest) => quest.id === id) ?? []);
   }
 
-  // The Quests of the search, as the list gives them, in the search's order.
-  async search(readerId: string, search: RecruitingSearch): Promise<RecruitingQuestDto[]> {
-    return this.listedAmong(readerId, await recruitingSearchIds(this.prisma, readerId, search, this.clock.now()));
+  // The Quests of the search, as the list gives them, in the search's order, each with why it was found.
+  async search(
+    readerId: string,
+    search: RecruitingSearch,
+  ): Promise<(Omit<Hit, 'id'> & { quest: RecruitingQuestDto })[]> {
+    const hits = await recruitingSearchHits(this.prisma, readerId, search, this.clock.now());
+    const listed = await this.listedAmong(
+      readerId,
+      hits.map(({ id }) => id),
+    );
+    return hits.flatMap(({ id, matched, window }) => {
+      const quest = listed.find((each) => each.id === id);
+      return quest === undefined ? [] : [{ quest, matched, window }];
+    });
+  }
+
+  // How many Quests the search finds before it is cut, by Board, day and word.
+  searchCounts(readerId: string, search: Omit<RecruitingSearch, 'take'>): Promise<SearchCounts> {
+    return recruitingSearchCounts(this.prisma, readerId, search, this.clock.now());
   }
 
   // The Quests the list gives the reader, of that Board, that they have not asked for and entering would not refuse.

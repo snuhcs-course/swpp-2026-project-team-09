@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -77,6 +78,32 @@ describe('writtenDays', () => {
   });
 });
 
+describe('writtenDays: a list number before a day', () => {
+  it.each([
+    ['1. 3월 9일(화) 오후 2–5시', { year: null, month: 3, day: 9, weekday: '화' }],
+    ['12. 3월 9일(화) 오후 2–5시', { year: null, month: 3, day: 9, weekday: '화' }],
+    ['4. 2026. 3. 9.(월) 10:00', { year: 2026, month: 3, day: 9, weekday: '월' }],
+    ['2. 3/9(월) 10:00', { year: null, month: 3, day: 9, weekday: '월' }],
+  ])('reads %s as its day alone', (line, expected) => {
+    expect(writtenDays(line)).toEqual([expected]);
+  });
+
+  it.each([
+    ['3월 9일(화) 오후 2–5시', { month: 3, day: 9 }],
+    ['11. 2.(월) 오후 3시', { month: 11, day: 2 }],
+    ['11. 2. 14:00', { month: 11, day: 2 }],
+    ['11.2.(월)', { month: 11, day: 2 }],
+    ['3. 9. 2시', { month: 3, day: 9 }],
+    ['26. 11. 2.(월)', { year: 2026, month: 11, day: 2 }],
+  ])('still reads the day that starts %s', (line, expected) => {
+    expect(writtenDays(line)[0]).toMatchObject(expected);
+  });
+
+  it('reads the range after a list number', () => {
+    expect(rangesEndIn('3. 3월 9일 ~ 3월 12일')).toEqual([{ month: 3, day: 12 }]);
+  });
+});
+
 describe('isWrittenDay', () => {
   it('takes a day without a year as the one nearest to now', () => {
     const [written] = writtenDays('1월 5일');
@@ -115,6 +142,14 @@ describe('isWrittenClock', () => {
     ['2시', 14, 0],
     ['9시', 9, 0],
     ['8시', 20, 0],
+    // The first of the hours takes the 오전 or 오후 before it.
+    ['오후 2–5시', 14, 0],
+    ['오후 2~5시', 14, 0],
+    ['오후 2-5시', 14, 0],
+    ['오후 2 – 5시', 14, 0],
+    ['오후 2–5시', 17, 0],
+    ['오전 9–11시', 9, 0],
+    ['오전 9~11시', 11, 0],
   ])('%s holds %i:%i', (line, hour, minute) => {
     expect(isWrittenClock(line, { hour, minute })).toBe(true);
   });
@@ -129,6 +164,11 @@ describe('isWrittenClock', () => {
     ['11.14', 11, 14],
     ['25시', 1, 0],
     ['총 2시간', 14, 0],
+    ['오후 2–5시', 2, 0],
+    ['오후 2–5시', 15, 0],
+    ['오전 9–11시', 21, 0],
+    ['2–5시', 14, 0],
+    ['오후 1-2시간', 13, 0],
   ])('%s does not hold %i:%i', (line, hour, minute) => {
     expect(isWrittenClock(line, { hour, minute })).toBe(false);
   });

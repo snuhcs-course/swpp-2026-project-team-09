@@ -5,6 +5,7 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { PlaceDto } from '../places/dto/place.dto.js';
@@ -29,6 +30,44 @@ const ELSEWHERE = new RegExp(
   ].join('|'),
   'iu',
 );
+
+// The campus a Source's places are on unless they say otherwise.
+export type CampusDefault = 'gwanak' | null;
+
+// Names of Places that other institutions use for their own facilities, from the list of Places and the place lines of
+// the development posts of eval/collection. Such a name after another facility's name is that facility's, even where the
+// place writes 서울대: "서울대 앞 OO스포츠센터 체육관" is not 71동.
+const GENERIC_PLACE_NAMES = new Set([
+  '체육관',
+  '미술관',
+  '박물관',
+  '학생회관',
+  '교수회관',
+  '행정관',
+  '복지관',
+  '학군단',
+  '언어교육원',
+  '종합운동장',
+  '야구장',
+  '테니스장',
+  '게스트하우스',
+  '컨벤션센타',
+  '주차건물',
+  '행정대학원',
+  '환경대학원',
+  '국제대학원',
+  '보건대학원',
+  '수의과대학',
+  '생활과학대학',
+  '농업생명과학대학',
+  'SK텔레콤',
+]);
+
+// Words that place the campus, not another facility: "서울대학교 관악캠퍼스 내 체육관".
+const AROUND = /캠퍼스|내|안/gu;
+
+// A room as a place writes it beside a building's name.
+const ROOM_NAME = /(?:대|소)?강당|강의실|세미나실|회의실|로비/gu;
 
 // A street address. The campus's own is 관악로 1.
 const STREET = /([가-힣\d]+)(?:로|길)\s*\d+/gu;
@@ -58,6 +97,7 @@ interface Span {
 // Places a name of the place names, where the place writes it.
 interface NameMention extends Span {
   places: PlaceDto[];
+  generic: boolean;
 }
 
 function escaped(text: string): string {
@@ -108,8 +148,9 @@ function nameMentions(text: string, places: PlaceDto[]): NameMention[] {
   );
   const bySpan = new Map<string, NameMention>();
   for (const { start, end, place } of kept) {
-    const mention = bySpan.get(`${start}:${end}`) ?? { start, end, places: [] };
+    const mention = bySpan.get(`${start}:${end}`) ?? { start, end, places: [], generic: false };
     mention.places.push(...seriesOf(place, places));
+    mention.generic ||= GENERIC_PLACE_NAMES.has(place.name);
     bySpan.set(`${start}:${end}`, mention);
   }
   return [...bySpan.values()];
@@ -128,6 +169,26 @@ function parts(text: string, names: Span[]): Span[] {
   }
   spans.push({ start, end: text.length });
   return spans;
+}
+
+// What a part writes once its campus, a name of it, its floors and its rooms are taken out.
+function restOf(part: Span, name: Span, text: string): string {
+  const before = text.slice(part.start, name.start);
+  const after = text.slice(name.end, part.end);
+  return `${before} ${after}`.replaceAll(CAMPUS, '').replaceAll(ROOM_NAME, '');
+}
+
+// Where the campus is assumed, a name says nothing more than the campus does unless it is all the part writes, with a
+// floor or a room at most: "고려대 문화관" or "OO구 문화관" is not 73동. Where it is written, a generic name after another
+// facility's name is that facility's: "서울대 앞 OO스포츠센터 체육관".
+function standsAlone(part: Span, names: NameMention[], text: string, assumed: boolean): boolean {
+  return names.every((name) => {
+    if (assumed) {
+      return ROOM_ONLY.test(restOf(part, name, text));
+    }
+    const before = text.slice(part.start, name.start).replaceAll(CAMPUS, '');
+    return !name.generic || !/\p{L}/u.test(before.replaceAll(AROUND, ''));
+  });
 }
 
 // The Places a part names, none when it names nowhere to go, or null when it names one the list does not hold, two that
@@ -155,7 +216,12 @@ function partPlaces(
   return ONLINE.test(rest) || ROOM_ONLY.test(rest) ? [] : null;
 }
 
-export function namedPlace(placeText: string | null, places: PlaceDto[]): PlaceDto | null {
+// The one Place a place names. With a campus default, a place that names nowhere else is read as on that campus.
+export function namedPlace(
+  placeText: string | null,
+  places: PlaceDto[],
+  campusDefault: CampusDefault = null,
+): PlaceDto | null {
   if (placeText === null) {
     return null;
   }
@@ -165,17 +231,17 @@ export function namedPlace(placeText: string | null, places: PlaceDto[]): PlaceD
   }
   const names = nameMentions(text, places);
   const numbers = [...text.matchAll(NUMBER)].map(({ index, 1: number }) => ({ start: index, number }));
-  const onCampus = ON_CAMPUS.test(text);
+  const namesCampus = ON_CAMPUS.test(text);
+  const assumed = !namesCampus && campusDefault === 'gwanak';
   const named = new Map<string, PlaceDto>();
-  for (const { start, end } of parts(text, names)) {
-    const within = ({ start: at }: { start: number }): boolean => start <= at && at < end;
-    const found = partPlaces(
-      text.slice(start, end),
-      numbers.filter((mention) => within(mention)).map(({ number }) => number),
-      names.filter((mention) => within(mention)),
-      places,
-      onCampus,
-    );
+  for (const part of parts(text, names)) {
+    const within = ({ start: at }: { start: number }): boolean => part.start <= at && at < part.end;
+    const partNumbers = numbers.filter((mention) => within(mention)).map(({ number }) => number);
+    const partNames = names.filter((mention) => within(mention));
+    const found =
+      partNumbers.length > 0 || standsAlone(part, partNames, text, assumed)
+        ? partPlaces(text.slice(part.start, part.end), partNumbers, partNames, places, namesCampus || assumed)
+        : null;
     if (found === null) {
       return null;
     }

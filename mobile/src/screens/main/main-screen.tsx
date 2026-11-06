@@ -11,6 +11,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -195,23 +196,25 @@ interface MainMapViewProps {
 }
 
 // The map with the things of the cards, the tutorial place pin, the User's own Avatar and the lines. Its credit opens
-// the sources of its data.
+// the sources of its data. The View around it watches its touches for a tap, which removes the pin.
 function MainMapView({ map, me, things, lines, room, pin, onPress }: MainMapViewProps): ReactElement {
   return (
-    <Map
-      avatars={[...things.avatars, ...me.avatars]}
-      {...CAMPUS_CAMERA}
-      inset={mapInset(room.cardHeight, room.tutorialStart)}
-      markers={[...things.markers, ...pin.markers]}
-      onCameraIdle={map.onCameraIdle}
-      onCreditPress={() => {
-        router.push('/map-sources');
-      }}
-      onFitZoom={map.onFitZoom}
-      onPress={onPress}
-      lines={lines}
-      ref={map.ref}
-    />
+    <View style={styles.map} testID="main-map-touches" {...pin.touches}>
+      <Map
+        avatars={[...things.avatars, ...me.avatars]}
+        {...CAMPUS_CAMERA}
+        inset={mapInset(room.cardHeight, room.tutorialStart)}
+        markers={[...things.markers, ...pin.markers]}
+        onCameraIdle={map.onCameraIdle}
+        onCreditPress={() => {
+          router.push('/map-sources');
+        }}
+        onFitZoom={map.onFitZoom}
+        onPress={onPress}
+        lines={lines}
+        ref={map.ref}
+      />
+    </View>
   );
 }
 
@@ -346,6 +349,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface },
   // The map and what floats over it. It ends at the navigation's top, so that the map's credit stays uncovered.
   stage: { flex: 1 },
+  map: { flex: 1 },
   overMap: { position: 'absolute', right: 0, bottom: 0, left: 0, pointerEvents: 'box-none' },
   lists: { ...StyleSheet.absoluteFill, pointerEvents: 'box-none' },
   hidden: { display: 'none' },

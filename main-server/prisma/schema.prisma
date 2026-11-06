@@ -20,6 +20,7 @@
 // 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-01  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+// 2026-11-05  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -331,6 +332,9 @@ enum SessionHold {
   ai_failed
   // The event the AI chose can no longer be chosen, or an event it was not asked about has appeared.
   candidates_changed
+  // Its place failed the checks, so it cannot be published as its own, and it met no candidate on the narrow terms that
+  // attach such a session.
+  place_unchecked
 
   @@map("session_hold")
 }

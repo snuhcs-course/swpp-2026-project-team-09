@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -226,7 +227,8 @@ function unready(given: Input, startsAt: string | undefined, invitees: number): 
       failures.description = 'Missing: a 공개 파티 needs a recruiting text. Write a short one from the request.';
     }
     if (board === undefined) {
-      failures.board = 'Missing: a 공개 파티 is posted on a Board. Ask the User which.';
+      failures.board =
+        'Missing: a 공개 파티 is posted on a Board, meal (식사), career (진로), hobby (취미) or show (공연). Choose the one the activity plainly fits, without asking, and propose once nothing else is missing; ask the User only when it fits none or more than one.';
     }
   }
   if (capacity === undefined) {
@@ -286,7 +288,7 @@ function inThePast(startsAt: string | undefined, now: Date): FieldFailures {
 export function proposeQuest(services: ProposeQuestServices): Tool {
   return defineTool({
     description:
-      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. When it answers "refused", ask the User for the fields it names.',
+      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives.',
     input,
     run: async (given, context) => {
       const resolved = await resolvedOf(given, context, services);

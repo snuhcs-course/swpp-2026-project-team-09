@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type GoldPair } from '../eval/collection/gold.ts';
@@ -19,30 +20,40 @@ interface PostFixture {
   links?: string[];
   starts?: (Date | null)[];
   titles?: string[];
+  // A Judgement read the sessions, and they failed only their place: compared, never published.
+  placeFailed?: boolean;
+}
+
+function outputOf(number: number, title: string, start: Date, placeFailed: boolean): OutputSession {
+  return {
+    number,
+    title,
+    start,
+    end: null,
+    place: '장소',
+    placeId: placeFailed ? null : 'p',
+    overPeriod: false,
+    passed: !placeFailed,
+    comparable: true,
+    via: placeFailed ? 'judgement' : 'rules',
+    failedChecks: placeFailed ? ['placeMatches'] : [],
+  };
 }
 
 export function reading(
   post: string,
-  { title = '같은 행사', description = '본문', links = [], starts = [START], titles }: PostFixture = {},
+  {
+    title = '같은 행사',
+    description = '본문',
+    links = [],
+    starts = [START],
+    titles,
+    placeFailed = false,
+  }: PostFixture = {},
 ): PostReading {
   const key = post.replace(/^(?:snu|extra)-/u, '');
-  const outputs: OutputSession[] = starts.flatMap((start, index) =>
-    start === null
-      ? []
-      : [
-          {
-            number: index + 1,
-            title: titles?.[index] ?? title,
-            start,
-            end: null,
-            place: '장소',
-            placeId: 'p',
-            overPeriod: false,
-            passed: true,
-            via: 'rules' as const,
-            failedChecks: [],
-          },
-        ],
+  const outputs = starts.flatMap((start, index) =>
+    start === null ? [] : [outputOf(index + 1, titles?.[index] ?? title, start, placeFailed)],
   );
   const read: ReadPost = {
     post,
@@ -59,7 +70,7 @@ export function reading(
       endsAt: null,
       place: '장소',
       placeId: 'p',
-      readByRules: start !== null,
+      readByRules: start !== null && !placeFailed,
     })),
   };
   return { post: read, judgement: null, outputs };
