@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+# 2026-10-26  Fable 5.1  prompted by fyoon46
 ################################################################################
 
 # Making a Quest: a Proposal with the right fields. P07's open questions: 아침, 점심 and 저녁 start at 08:00, 12:00 and
@@ -93,23 +94,22 @@
       startsAt: '2026-10-22 19:00'
       globalEvent: 가을 재즈 콘서트
 
-# "학관" is 학생회관 (63동) to students, but resolvePlace matches substrings: 학관 names 약학관, 공학관, 법학관 and more,
-# and not 학생회관.
+# "학관" is 학생회관 (63동) to students. resolvePlace reads the short form (P07 ticket 01) and answers several, since the
+# 관악사 학부 생활관 buildings and 유회진 학술정보관 shorten to it too, so the Assistant asks which one, naming 학생회관,
+# and never picks.
 - id: making-parties-abbreviation-hakgwan
   category: making-parties
-  knownFailure: '"학관" is not read as 학생회관 (63동): resolvePlace matches substrings, and 학생회관 does not hold 학관'
   turns:
     - user: 내일 점심 학관에서 이민수랑 밥 약속 잡아줘
   expect:
-    actions: [PROPOSE]
+    actions: [ASK]
     tools:
-      required: [resolveFriend, resolvePlace, proposeQuest]
-    proposal:
-      joinPolicy: closed
-      capacity: 2
-      startsAt: '2026-10-22 12:00'
-      place: 학생회관
-      invitees: [이민수]
+      required: [resolvePlace]
+      allowed: [resolveFriend, proposeQuest]
+    args:
+      resolvePlace: { words: 학관 }
+    text:
+      mentions: [학생회관]
 
 # A weekday read against now: this Friday is 2026-10-23. (That the reply states the date with its weekday waits for
 # P20's 3-5, since the prompt now says not to repeat a Proposal's fields.)

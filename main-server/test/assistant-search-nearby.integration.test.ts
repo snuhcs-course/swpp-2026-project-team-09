@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,7 @@ import { Place, PrismaClient } from '../src/generated/prisma/client.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { refuseMatchServer } from './match-server.js';
-import { connectToDatabase, ownQuest, storeEvent, subQuestIn } from './quests.js';
+import { connectToDatabase, inBatches, ownQuest, storeEvent, subQuestIn } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -152,7 +153,7 @@ describe('searchRecruitingQuests, given a Place, among other Quests', () => {
   });
 
   it('finds the later Quest past those farther away that are more than the list holds', async () => {
-    await Promise.all(Array.from({ length: 31 }, () => questAt('2091-01-10T09:00:00', point(north(400)))));
+    await inBatches(31, () => questAt('2091-01-10T09:00:00', point(north(400))));
     const later = await questAt('2091-01-10T18:00:00', point(north(100)));
 
     expect(await questsFound({ from: '2091-01-10', to: '2091-01-10', placeId: engineering.id })).toEqual([later]);

@@ -4,9 +4,11 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -27,6 +29,7 @@ import { MenusService } from '../menus/menus.service.js';
 import { RestaurantPlaces } from '../menus/restaurant-places.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
 import { PlaceLookup } from '../places/place-lookup.js';
+import { PlaceMatcher } from '../places/place-matcher.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { QuestsService } from '../quests/quests.service.js';
@@ -78,6 +81,7 @@ export class AssistantService {
     recruiting: RecruitingService,
     friends: FriendsService,
     places: PlacesService,
+    placeMatcher: PlaceMatcher,
     placeLookup: PlaceLookup,
     days: UserDayService,
     restaurantPlaces: RestaurantPlaces,
@@ -90,6 +94,7 @@ export class AssistantService {
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
+    const libraryEnabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     this.chat = chatAssistant({
       menus,
       shuttle,
@@ -97,15 +102,9 @@ export class AssistantService {
       recruiting,
       friends,
       places,
+      placeMatcher,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
-      library: {
-        catalogue,
-        freeTime,
-        friends,
-        quests,
-        users,
-        enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
-      },
+      library: { catalogue, freeTime, friends, quests, users, enabled: libraryEnabled },
       tutorial,
     });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
