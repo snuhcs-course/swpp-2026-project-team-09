@@ -125,7 +125,8 @@ P11's walking and shuttle times and P12's changes to the searches and the recrui
     or position;
   - **관정도서관**: free seats, seat maps with seat numbers, and booking, cancelling and returning seats and rooms from
     cards that the phone fills and sends; a group study room is booked with Friends, each asked to share their 학번;
-  - answers about the 새내기 튜토리얼's quests, from the tutorial's text;
+  - answers about the 새내기 튜토리얼's quests, from the tutorial's text (measured on its first five quests, before ten
+    more were added);
   - a Proposal at a Place with an online booking page carries a 시설 예약하기 link.
 - **새내기 튜토리얼**: fifteen tutorial quests in five categories (생활, 공부·학사, 이동, 건강, 문화·여가) in a pager,
   offered to Users whose admission year is this year or later or whose 소속 is 교환학생, and turned on by anyone from
@@ -204,7 +205,8 @@ The Iteration 3 demo is [Team09 iteration3 demo](https://www.youtube.com/watch?v
 ## Evaluation
 
 Every AI feature of Iteration 3 has an evaluation set frozen before its first run, with thresholds declared in advance;
-it was measured, improved from its failures and measured again. A **development** reading scores the set the changes
+it was measured, improved from its failures and measured again; 관정도서관 and the tutorial were measured only before
+their tools existed and once they were built. A **development** reading scores the set the changes
 were chosen from; a **held-out** reading scores cases no change was made from. All model runs used Claude Haiku 5.5
 through OpenRouter with the provider's default decoding. Each row's record holds the commits, commands, costs and every
 failure. The P11 and P12 figures measure code merged after Release `snunow/all/26.11.04-1`: it is on `3.0/Main`, not
@@ -219,7 +221,7 @@ yet in Production.
 | Join or recruit, and search: 100 cases in the small world, 80 in the large | Development  | Small world 118/300 → 227/300 (P05), 225/300 → 246/300 (P12); large world 55/240 → 160/240 (P05), 156/240 → 162/240 (P12)        | A floor and a target per measure                                                    | Every floor but two: the model's own reply on approval parties, 8/21 (≥ 0.7), and searches narrowed by a condition the User never said, 3/12 (≤ 0.1); several targets missed | [p5/r1.md](main-server/eval/p5/r1.md) (P05), [p5/p12.md](main-server/eval/p5/p12.md) (P12)             |
 | Automatic publication: Judgements of Drafts, 64 sessions in 60 posts       | Development  | Published without an Administrator 27/64 → 40/64; wrongly published 0/27 → 1/41, 0/41 once a-021's answer-key error is corrected | ≥ 60% published, none wrongly                                                       | Yes, once corrected; C6's floor (events over a period) missed, 61/85                                                                                                         | [p5/p12.md](main-server/eval/p5/p12.md), [collection/README.md](main-server/eval/collection/README.md) |
 | The same event posted twice, 32 true pairs                                 | Development  | Pairs reaching comparison 8/32 → 10/32; found, queue included, 8/32 → 9/32; wrong merges 0                                       | ≥ 95% reaching comparison, ≥ 80% found, no wrong merge                              | Only no wrong merge                                                                                                                                                          | [p5/p12.md](main-server/eval/p5/p12.md), [collection/README.md](main-server/eval/collection/README.md) |
-| 관정도서관 and the tutorial, 64 cases × 3                                  | Development  | 4/192 (2.1%, before the tools existed) → 140/192 (72.9%)                                                                         | 9 thresholds                                                                        | 5 of 9, provisionally (2026-11-02)                                                                                                                                           | [p6/r1.md](main-server/eval/p6/r1.md)                                                                  |
+| 관정도서관 and the tutorial, 64 cases × 3                                  | Development  | 4/192 (2.1%, before the tools existed) → 140/192 (72.9%); the tutorial's first five quests only                                  | 9 thresholds                                                                        | 5 of 9, provisionally (2026-11-02); the rescoring is in #193                                                                                                                 | [p6/r1.md](main-server/eval/p6/r1.md)                                                                  |
 
 The join suite runs in two worlds of test data, which never reach a server: the small world, about 90 parties and events
 of its own, and the large world, 1,000 parties and 307 events. The two collection rows (automatic publication and the
@@ -725,9 +727,11 @@ Not run by `pnpm test` or CI:
   only, in `main-server/`. `pnpm eval` runs the Assistant's 62 P19 cases, and
   `pnpm eval --world <p4|p5|large-world-v1|p6>` one Iteration 3 suite; `pnpm eval:holdout` runs the P4 holdout;
   `pnpm eval:collection --run <name> --part held-out` runs evaluations A and B on saved posts, and B's runs (`r0b`,
-  `title-rule`, `ai-choice`) also take `--from <a saved Judgement run.json>`. `pnpm eval:score` and
-  `pnpm eval:compare` score and compare saved runs, and `pnpm walking:score` and `pnpm shuttle:score` the walking
-  table and the shuttle's times, all without the model. The chat and collection suites' rules and records are in
+  `title-rule`, `ai-choice`) also take `--from <a saved Judgement run.json>`; it loads worker-server's parser, so
+  worker-server needs `pnpm install` too. Its held-out part is read as a development reading, since the failure
+  analysis read those cases (`eval/p5/p12.md`). `pnpm eval:score` and `pnpm eval:compare` score and compare saved
+  runs, and `pnpm walking:score` and `pnpm shuttle:score` the walking table and the shuttle's times, all without the
+  model. The chat and collection suites' rules and records are in
   `main-server/eval/`; `eval/walking` and `eval/shuttle-days` hold only data, and their record is
   [P11's before-after](.scratch/iteration-3/P11-free-time-meals-parties-improve/before-after.md).
 
@@ -757,7 +761,8 @@ journal, redeploy by hand, move `development`, restore a dump and add an APK.
 It runs on Amazon EKS in AWS's Seoul Region, built with Terraform, and answers at `https://api.snunow.com` for the app
 and at `https://admin.snunow.com` for the admin site. It starts with only the seed data and never carries Demo Data.
 It changes only with a Release: a tag `snunow/<target>/YY.MM.DD-N` on a reviewed commit of the iteration branch, which
-deploys one server, or all five with `all`, once every CI job has passed on that commit
+deploys one server, or all five (the four servers and the admin site) with `all`, once every CI job has passed on
+that commit
 ([ADR 0006](docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)); `all` also publishes the app's bundle,
 and `app` publishes only the bundle. A Release of `app` or `all` that changes the native part also builds the
 Production APK and attaches it to that tag's release page. What Production runs now, and its switches, are under
