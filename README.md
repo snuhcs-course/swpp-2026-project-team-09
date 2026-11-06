@@ -26,7 +26,8 @@ The fastest way to try the app needs no build and no server of your own:
    [`snunow-app-26.11.03-2.apk`](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/snunow/app/26.11.03-2/snunow-app-26.11.03-2.apk),
    on an ARM Android phone ([APKs](#apks)). It talks to Production at `https://api.snunow.com` and updates its
    JavaScript by itself.
-2. Sign in with an SNU Google account, on the Gwanak campus: nobody is shown outside the Campus Boundary.
+2. Sign in with an SNU Google account, on the Gwanak campus
+   ([Known limitations and todos](#known-limitations-and-todos)).
 3. Alone, you can try the 새내기 튜토리얼 (offered when the admission year is this year or later or the 소속 is
    교환학생, or turned on from 내 정보), 관정도서관 booking (with an SNU account that can log in to the library), SNU
    Now AI's answers about menus, the shuttle, events and parties, 공강 파티 (with today's classes in the timetable and a
@@ -125,8 +126,7 @@ P11's walking and shuttle times and P12's changes to the searches and the recrui
     or position;
   - **관정도서관**: free seats, seat maps with seat numbers, and booking, cancelling and returning seats and rooms from
     cards that the phone fills and sends; a group study room is booked with Friends, each asked to share their 학번;
-  - answers about the 새내기 튜토리얼's quests, from the tutorial's text (measured on its first five quests, before ten
-    more were added);
+  - answers about the 새내기 튜토리얼's quests, from the tutorial's text;
   - a Proposal at a Place with an online booking page carries a 시설 예약하기 link.
 - **새내기 튜토리얼**: fifteen tutorial quests in five categories (생활, 공부·학사, 이동, 건강, 문화·여가) in a pager,
   offered to Users whose admission year is this year or later or whose 소속 is 교환학생, and turned on by anyone from
@@ -157,13 +157,13 @@ P11's walking and shuttle times and P12's changes to the searches and the recrui
 Each flow is what Users do with the app on campus. Each says what it needs; the Production APK
 ([Quick start](#quick-start)) runs all three.
 
-1. **새내기 튜토리얼 and 관정도서관**: a User with this year's admission year opens 새내기 튜토리얼 시작하기, browses
+1. **새내기 튜토리얼 and 관정도서관**: a User the tutorial is offered to opens 새내기 튜토리얼 시작하기, browses
    the tutorial quests by category and starts some; 지도에서 보기 drops a pin on a tutorial quest's place, and
    완료했어요 completes it. The User asks SNU Now AI about a tutorial quest, then "7A 열람실 2 구역 오늘 5시부터 두 시간
    잡아줘", logs in on the library's own page, sees the free seats on the seat map, taps a seat and presses 예약하기.
    Later, "취소해줘" cancels the booking.
-   - Needs: one SNU Google account whose admission year is this year (or with the tutorial turned on from 내 정보),
-     and an SNU account that can log in to the library.
+   - Needs: one SNU Google account whose admission year is this year or later, or whose 소속 is 교환학생 (or with the
+     tutorial turned on from 내 정보), and an SNU account that can log in to the library.
 2. **공강에 밥 and 공강 파티**: two Friends with timetables. One asks "오늘 점심에 누구 돼?" and the Assistant names the
    Friend who is free; "(the Friend's name)랑 밥" gives the time they share and Restaurant cards with menus and walking
    times. 파티 만들기 opens a filled-in 비공개 파티 with the Friend invited. Then "오늘 (one class)이랑 (the next
@@ -221,7 +221,7 @@ yet in Production.
 | Join or recruit, and search: 100 cases in the small world, 80 in the large | Development  | Small world 118/300 → 227/300 (P05), 225/300 → 246/300 (P12); large world 55/240 → 160/240 (P05), 156/240 → 162/240 (P12)        | A floor and a target per measure                                                    | Every floor but two: the model's own reply on approval parties, 8/21 (≥ 0.7), and searches narrowed by a condition the User never said, 3/12 (≤ 0.1); several targets missed | [p5/r1.md](main-server/eval/p5/r1.md) (P05), [p5/p12.md](main-server/eval/p5/p12.md) (P12)             |
 | Automatic publication: Judgements of Drafts, 64 sessions in 60 posts       | Development  | Published without an Administrator 27/64 → 40/64; wrongly published 0/27 → 1/41, 0/41 once a-021's answer-key error is corrected | ≥ 60% published, none wrongly                                                       | Yes, once corrected; C6's floor (events over a period) missed, 61/85                                                                                                         | [p5/p12.md](main-server/eval/p5/p12.md), [collection/README.md](main-server/eval/collection/README.md) |
 | The same event posted twice, 32 true pairs                                 | Development  | Pairs reaching comparison 8/32 → 10/32; found, queue included, 8/32 → 9/32; wrong merges 0                                       | ≥ 95% reaching comparison, ≥ 80% found, no wrong merge                              | Only no wrong merge                                                                                                                                                          | [p5/p12.md](main-server/eval/p5/p12.md), [collection/README.md](main-server/eval/collection/README.md) |
-| 관정도서관 and the tutorial, 64 cases × 3                                  | Development  | 4/192 (2.1%, before the tools existed) → 140/192 (72.9%); the tutorial's first five quests only                                  | 9 thresholds                                                                        | 5 of 9, provisionally (2026-11-02); the rescoring is in #193                                                                                                                 | [p6/r1.md](main-server/eval/p6/r1.md)                                                                  |
+| 관정도서관 and the tutorial, 64 cases × 3                                  | Development  | 4/192 (2.1%, before the tools existed) → 140/192 (72.9%); the tutorial's first five quests only                                  | 9 thresholds                                                                        | 5 of 9, provisionally (2026-11-02); the rescoring is in open PR #193                                                                                                         | [p6/r1.md](main-server/eval/p6/r1.md)                                                                  |
 
 The join suite runs in two worlds of test data, which never reach a server: the small world, about 90 parties and events
 of its own, and the large world, 1,000 parties and 307 events. The two collection rows (automatic publication and the
@@ -628,8 +628,6 @@ A debug build loads its JavaScript from the development server on the computer (
 starts: keep its terminal open, and keep the phone on the cable or on the same network as the computer. Without it the
 app shows an error screen, on iOS "No script URL provided".
 
-Positions are shared only inside the Campus Boundary, so the flows are run on campus.
-
 ### Keys registered with the signing key
 
 Google and Kakao accept the app only when they know the key that signed it:
@@ -794,11 +792,11 @@ hand, and move Production to another AWS account.
 
 Everything the team wrote in this repository is AI-generated: the code, the tests, the CI workflow, the specs and
 tickets in `.scratch/`, and the documents, this one among them. The exception is the gold labels of evaluations A and B
-(below). It was written with Claude Code (Claude Fable 5.1 and Claude Opus 5.5) from 2026-09-28 on, and the wireframes
-were drawn with Claude Design. Each source file starts with a box comment headed `AI-generated with Claude`, with a row
-for each day an agent changed the file: the date, the Claude model, and the GitHub ID of the team member who prompted
-it. Markdown, JSON, lockfiles, Prisma migrations, and test fixtures carry no box and are marked by this section, and
-every commit of the team carries a `Co-Authored-By: Claude` trailer.
+(below). The repository was written with Claude Code (Claude Fable 5.1 and Claude Opus 5.5) from 2026-09-28 on, and the
+wireframes were drawn with Claude Design. Each source file starts with a box comment headed `AI-generated with Claude`,
+with a row for each day an agent changed the file: the date, the Claude model, and the GitHub ID of the team member who
+prompted it. Markdown, JSON, lockfiles, Prisma migrations, and test fixtures carry no box and are marked by this
+section, and every commit of the team carries a `Co-Authored-By: Claude` trailer.
 
 The team decided what to build, reviewed the specs and the table schemas, and checked the result on phones. People
 also made the product decisions, such as the words party, active party and Quest, where API keys go and how much the
