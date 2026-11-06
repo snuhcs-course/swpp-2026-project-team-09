@@ -2,16 +2,18 @@
 
 SNU Now is a social map for Seoul National University's Gwanak campus. A student signs in with an SNU Google account
 and sees, on Kakao's map of the campus, the Global Events that an Administrator checked, their Friends and the members
-of their active party moving as Avatars, the places of today's classes, today's menus and the shuttle. A student who
+of their active party moving as Avatars, the places of today's classes, today's menus, the shuttle and the places to
+study (공부공간). A student who
 wants company for an event joins or opens a party (파티) for it, on a Board or among invited Friends; Friends plan
 together in a private party (비공개 파티) with a place and a time. About to meet, any member activates the party
 (활성 파티), and those who accept see each other on the map until they part. An AI assistant, "SNU Now AI", answers
-about menus, the shuttle, events and recruiting parties and sets up a party from one sentence, and a screenshot of a
-timetable becomes classes, read on the phone. The app's screens are in Korean.
+about menus, the shuttle, events and recruiting parties, looks for a party to join before it sets up a new one from
+one sentence, finds what fits a gap between classes (공강 파티) and the Friends free for a meal (공강에 밥), and books
+관정도서관 seats and rooms. New students get a 새내기 튜토리얼 of fifteen quests. A screenshot of a timetable becomes
+classes, read on the phone. The app's screens are in Korean.
 
-In this README, as in the team's documents, a **party** is any gathering of Users, its **active party** is the members
-who share their locations now, and a **Quest** is only an item of the User's to-do list. The code, the API and the
-database keep their Iteration 1 names, and so does [GLOSSARY.md](GLOSSARY.md), which defines them: a party is a Quest
+In this README, as in the team's documents, a **party** is any gathering of Users, and a **Quest** is only an item of
+the User's to-do list. The code, the API and the database keep their Iteration 1 names, and so does [GLOSSARY.md](GLOSSARY.md), which defines them: a party is a Quest
 (`quests`), its members are Holders, its steps (일정) are Sub Quests, and an active party is a Party (`parties`).
 
 The system is an Android and iOS app, four servers (main, socket, worker and match) with PostgreSQL and Redis, and an
@@ -21,6 +23,7 @@ admin site for Administrators.
 
 - [What the demo demonstrates](#what-the-demo-demonstrates)
 - [Demo video](#demo-video)
+- [Evaluation](#evaluation)
 - [Known limitations and todos](#known-limitations-and-todos)
 - [Development and execution environment](#development-and-execution-environment)
 - [Requirements](#requirements)
@@ -38,27 +41,32 @@ admin site for Administrators.
 
 ## What the demo demonstrates
 
-### Goal of Iteration 2
+### Goal of Iteration 3
 
-The Iteration 1 review asked for more technical depth in one main feature, ideally solved with AI, and a clearer story
-about Friends and parties. Iteration 2 answered it, and its work was merged into `2.0/Main` between 2026-10-17 and
-2026-10-23. It was meant to show that:
+Iteration 3, from 2026-10-24 to 2026-11-06, was "Advanced Testing and Evaluation". Its work was merged into
+`3.0/Main` between 2026-10-27 and 2026-11-06. Each AI feature was built against an evaluation set frozen before its
+first run, with thresholds fixed in advance, then measured, improved from its failures and measured again. It was
+meant to show that:
 
-- a student can ask in their own words instead of finding the screen: the Assistant answers from the collected data,
-  shows events and parties as the app's own cards, and fills in a party that the User makes with one press, while the
-  model never writes anything and never receives a location;
-- a timetable screenshot can become classes on the phone, in light and dark mode, without sending the image anywhere;
-- a plan with a Friend is a party like any other: the Meetup was retired, and a Friend's card opens a 비공개 파티 with
-  the Friend invited;
-- the 파티 tab, the party form, the room and the to-do list follow the wireframes;
-- the system runs outside a laptop: the Dev Server deploys `development` by itself once its server checks pass, and
-  Production runs on Amazon EKS in AWS, deployed by Release tags.
+- the Assistant handles concrete scenarios of a student's day: a party in a gap between classes (공강 파티), lunch
+  with the Friends who are free (공강에 밥), joining a party before recruiting a new one, and 관정도서관 bookings, while
+  the server, not the model, computes free time, walking times and what fits;
+- a new student is walked through campus life by the 새내기 튜토리얼, and the Assistant answers about its quests from
+  the tutorial's own text;
+- collected events are published without an Administrator when the server can check their time and place, and an
+  Administrator sees how each event was published;
+- the app's JavaScript reaches phones by OTA update, without a new APK;
+- each of these is measured, with the before and after numbers recorded in the repository
+  ([Evaluation](#evaluation)).
 
-### Features at the end of Iteration 2
+### Features at the end of Iteration 3
 
 - **Sign-in and Onboarding**: Sign in with Google, for SNU accounts only; a consent screen; Onboarding with a name and
   department suggested from the Google account; one Session per User, so a sign-in on another phone signs the first one
-  out.
+  out. 프로필 편집 keeps a 학번, a 학적상 이름 and a 소속 privately, for group study rooms and the tutorial.
+- **Updates**: the app takes its JavaScript from EAS Update and runs a new bundle from its next start; when a newer
+  native build is out, it says 업데이트가 필요합니다 at its start. 내 정보 shows the app's version and the Release it
+  runs.
 - **The map**: Kakao's map of the campus with the User's Avatar, Friends, the active party's members, Global Events and
   the User's parties, the Places' outlines, the 퀘스트 list of today's classes and parties, a card for whatever is
   pressed, one marker for everything at one place (events, parties, restaurants and shuttle stops) whose card lists
@@ -81,40 +89,76 @@ about Friends and parties. Iteration 2 answered it, and its work was merged into
   open panel or sheet; inputs rise above the keyboard everywhere.
 - **SNU Now AI**: a chat sheet from the map's input bar that answers about today's menus and the shuttle, finds Global
   Events and recruiting parties, and turns one sentence into a Proposal that the
-  User makes or edits. 50 messages per User a day; the conversation stays on the phone.
+  User makes or edits. 50 messages per User a day; the conversation stays on the phone. Its replies render bold,
+  lists and links. Added in Iteration 3:
+  - searches take a time window and leave out full parties, parties already started and those the User cannot enter;
+    each result says which words it matched, and a search with too many results says how to narrow it;
+  - asked to recruit, it first shows the parties with room that the User could join, and makes a Proposal only when
+    none fits or the User asks for a new one; when an approval party is shown, the reply says the Leader accepts each
+    request;
+  - **공강 파티**: the parties and events the User can reach in a gap between two classes and still be back in time,
+    each card with a 이동 시간 box, on foot or by shuttle;
+  - **공강에 밥**: the Friends free at lunch or dinner, the time they share, and Restaurant cards with the menu and each
+    person's walking time; 파티 만들기 fills in a 비공개 파티 there with them invited. It never tells a Friend's classes
+    or position;
+  - **관정도서관**: free seats, seat maps with seat numbers, and booking, cancelling and returning seats and rooms from
+    cards that the phone fills and sends; a group study room is booked with Friends, each asked to share their 학번;
+  - answers about the 새내기 튜토리얼's quests, from the tutorial's text;
+  - a Proposal at a Place with an online booking page carries a 시설 예약하기 link.
+- **새내기 튜토리얼**: fifteen quests in five categories (생활, 공부·학사, 이동, 건강, 문화·여가) in a pager, offered to
+  Users whose admission year is this year or later or whose 소속 is 교환학생, and turned on by anyone from 내 정보. A
+  started quest goes to the quest list; 지도에서 보기 drops a pin on its place; 완료했어요 completes it. Progress is kept
+  on the server.
+- **관정도서관 login**: the library's own login page in the app; the library session stays on the phone and never
+  reaches the servers or the model, and it ends when the User signs out.
 - **Timetable**: classes entered with their times and Places, or imported from an SNUTT or 에브리타임 screenshot read
   on the phone; up to 10 timetable versions on the phone; a week grid from 09 to 22 on 내 정보; today's classes appear
   as Quests on the map.
 - **Global Events and the admin site**: events collected four times a day from the university's events list and
-  published shortly after each Collection when their time and place are read; on the admin site, Administrators review Drafts, correct and publish
-  them, create and cancel events, see the Places on a map, see each Source's Collection status, and make or end
-  friendships between Users for demo accounts.
-- **Dining and shuttle**: a dining layer with today's menus of the Co-op's restaurants, the dormitory and the
-  veterinary college, a menu panel for the next seven days, and a shuttle layer with the loop's stops, its line and the
-  vehicles moving from stop to stop.
+  published shortly after each Collection when the rules read their time and place; an event over a period is
+  published too, and its card reads M월 D일까지. On the admin site, Administrators review Drafts, correct and publish
+  them, create and cancel events, see the Places on a map, see each Source's Collection status and the posts left
+  unsettled, see each published event's Publication Route (an Administrator, a Rule or a Judgement) and filter by it,
+  work the same-event queue, detach a Source Post attached by mistake, and make or end friendships between Users for
+  demo accounts.
+- **Dining, shuttle and study spaces**: the 편의기능 layers 식당, 셔틀버스 and 공부공간. The dining layer shows today's
+  menus of the Co-op's restaurants, the dormitory and the veterinary college, and a 식당 pin's 메뉴 보기 opens the menus
+  of the next seven days; the 메뉴 tile is gone. The shuttle layer shows the loop's stops, its line and the vehicles
+  moving from stop to stop. The 공부공간 layer pins the campus's study spaces by building, with their hours and who may
+  use them; one the User's 내 정보 does not qualify for is grey, and 관정관 shows its free seats when the User is logged
+  in to the library.
 - **Demo data**: a Compose profile that fills the system with demo Users, events, parties on every Board, an active
   party, menus and moving Avatars, so that every screen has something to show with a single phone.
-
-AI 매칭, which grouped strangers interested in the same event, was frozen in Iteration 2: its button still shows on the
-행사 tab and the match server still runs, but no user story describes it and it gets no new work. Whether it is removed
-is an open decision.
 
 ### The three demo flows
 
 Each flow is what a User does with the app on campus, on two phones, or on one phone with the demo data.
 
-1. **Event**: two Users sign in. An Administrator publishes a Global Event on the admin site. One User posts a 공개 파티
-   for the event and the other joins it. One activates the party and the other joins in. Each sees the other's Avatar
-   move on the map. One taps the party and sees the walking route to the event.
-2. **Friend**: one User sends an Invite Link through a messenger. The other opens it and accepts. Both see each
-   other's Avatar. One makes a 비공개 파티 from the other's card and the other accepts the invitation. Both see the
-   party under 내 파티.
-3. **Campus services**: a User turns on the dining layer and reads today's menus. The User turns on the shuttle layer
-   and watches a vehicle move along the route (weekdays from 08:00 to 21:00, or at any time with the demo data).
+1. **새내기 튜토리얼 and 관정도서관**: a User with this year's admission year opens 새내기 튜토리얼 시작하기, browses
+   the quests by category and starts some; 지도에서 보기 drops a pin on a quest's place, and 완료했어요 completes it.
+   The User asks SNU Now AI about a quest, then "7층 열람실 5시부터 두 시간 잡아줘", logs in on the library's own page,
+   sees the free seats on the seat map, taps a seat and presses 예약하기. Later, "반납해줘" returns it.
+2. **공강에 밥 and 공강 파티**: two Friends with timetables. One asks "오늘 점심에 누구 돼?" and the Assistant names the
+   Friend who is free; "민수랑 밥" gives the time they share and Restaurant cards with menus and walking times. 파티
+   만들기 opens a filled-in 비공개 파티 with the Friend invited. Then "오늘 두 수업 사이에 갈 수 있는 파티 있어?" lists
+   the parties and events that fit the gap, each with its 이동 시간, and the User joins one from its card.
+3. **Join or recruit**: a collected event is published on its own, and the admin site shows its Publication Route.
+   A User asks the Assistant to recruit for it. The Assistant first shows a party for the event with room left, and
+   the User joins it from the card; a second User who says to make a new one gets a Proposal, posts it on a Board,
+   and a third joins. Members activate the party and see each other on the map.
 
 To run the demo yourself: [Setup](#setup), [Running the servers](#running-the-servers) with the
 [demo data](#demo-data), [Running the admin site](#running-the-admin-site) to publish an event, and
-[Running the app](#running-the-app) on a phone on campus.
+[Running the app](#running-the-app) on a phone on campus. The Assistant's flows need an OpenRouter key, and 관정's an
+SNU account that can log in to the library.
+
+### Iteration 2, as history
+
+The Iteration 1 review asked for more technical depth in one main feature, ideally solved with AI, and a clearer story
+about Friends and parties. Iteration 2, merged into `2.0/Main` between 2026-10-17 and 2026-10-23, added SNU Now AI,
+the timetable read from a screenshot on the phone, the 파티 tab and the room as in the wireframes, a 비공개 파티 in
+place of the Meetup, the Dev Server's own deployments and Production on Amazon EKS. Its demo flows (an event, a
+Friend, campus services) still run as they did.
 
 ### Iteration 1, as history
 
@@ -126,16 +170,27 @@ Iteration 2, and its Matching became the frozen AI 매칭.
 
 ## Demo video
 
-The Iteration 2 demo is in [this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6),
-the same folder as Iteration 1's videos.
-In this video:
+The Iteration 3 demo is [Team09 iteration3 demo](https://www.youtube.com/watch?v=PB54HriEl-8) on YouTube. It shows
+[the three demo flows](#the-three-demo-flows). The Iteration 1 and 2 videos are in
+[this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6).
 
-- Checking friends' status
-- Campus info (menus and the shuttle bus)
-- Accepting a party request from a friend
-- Looking for events
-- My page (내 정보)
-- Making an appointment using the AI assistant
+## Evaluation
+
+Every AI feature of Iteration 3 has an evaluation set frozen before its first run, with thresholds declared in advance.
+A **development** reading scores the set the changes were chosen from; a **held-out** reading scores cases no change was
+made from. All model runs used Claude Haiku 5.5 through OpenRouter with the provider's default decoding. The records
+hold the commits, commands, costs and every failure.
+
+| Suite                                         | Reading                                   | Before → after                                                                                                        |
+| --------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| P4: 공강 파티 and 공강에 밥, 40 cases × 3     | Development                               | 85/120 (70.8%) → 92/120 (76.7%); wanted ≥ 80%, missed. 공강 파티 60.0% → 57.8%, missed; 공강에 밥 75.6% → 91.1%       |
+| P4 holdout, 12 reworded cases × 3             | Held-out                                  | 23/36 (63.9%) → 27/36 (75.0%)                                                                                         |
+| Walking table, 30 test walks                  | Held-out: the fit used 13 other walks     | MAE 168.5 s → 70.4 s (straight line 124.6 s); within ±2 min 14 → 24 of 30, met; within min(25%, 2 min) 3 → 16, missed |
+| Shuttle times, leave-one-day-out over 2 days  | Held-out day                              | Ride MAE 55.7 s → 30.8 s; wait MAE 272.2 s → 347.0 s, worse, so the app keeps the fixed waits                         |
+| C and D: join or recruit and search, chat     | Development                               | P05: 118/300 → 227/300 (small world), 55/240 → 160/240 (large); P12: 225/300 → 246/300, 156/240 → 162/240             |
+| A: Judgements of Drafts, 60 posts             | Held-out at first; development after P12  | Published without an Administrator 27/64 → 40/64; wrongly published 0/27 → 1/41                                       |
+| B: the same event posted twice, 32 true pairs | Held-out at first; development after P12  | Pairs reaching comparison 8/32 → 10/32; found, queue included, 8/32 → 9/32; wrong merges 0                            |
+| P6: 관정도서관 and the tutorial, 64 cases × 3 | First reading after the feature was built | 4/192 (2.1%, before the tools existed) → 140/192 (72.9%); 5 of 9 thresholds met                                       |
 
 ## Known limitations and todos
 
@@ -143,7 +198,11 @@ What the demo cannot show, and what is known not to work yet:
 
 - **No background sharing on iOS.** The app runs on Android and iOS (see [mobile/README.md](mobile/README.md), "Build
   the app for iOS"), and the Iteration 1 videos were recorded on an iPhone, but sharing in the background is built for
-  Android alone, and the APKs are Android builds.
+  Android alone, and the APKs are Android builds. The iOS build is made by hand, and its update notice has nothing to
+  download.
+- **Production is behind `3.0/Main`.** The last Release, `snunow/all/26.11.04-1`, deployed `803490b5` of 2026-11-04.
+  What merged after it is not in Production yet: P11's walking table, shuttle times and chat fix, P12's collection and
+  chat changes, and the fix that removes the tutorial's place pin on a tap.
 - **ARM only.** Kakao's map SDK ships ARM libraries only, so the app is built for `arm64-v8a` alone. It runs on an
   ARM phone or an arm64 emulator (an Apple Silicon Mac). On the x86_64 emulator of an Intel Mac or most Windows PCs, a
   development build made with `ANDROID_X86_64=1` adds `x86_64` and runs everything but Kakao's map; for the map, use a
@@ -160,8 +219,10 @@ What the demo cannot show, and what is known not to work yet:
   in the operator's service hours, weekdays from 08:00 to 21:00 in term time.
 - **Collected events wait for an Administrator** unless the rules read both their time and their place: a start
   with a time of day from the post's body, and a place that names exactly one Place. Every other collected event is a
-  Draft until an Administrator publishes it on the admin site. A post is read once, so a later edit at the source is
-  not seen, and a post of the events list that describes several sessions is one event.
+  Draft until an Administrator publishes it on the admin site: Judgements, which would read them with the AI, are
+  built but off in Production ([Evaluation](#evaluation)). A post is read once, so a later edit at the source is
+  not seen, and a post of the events list that describes several sessions is one event. With the same-event rules off,
+  extra.snu is not collected, so its programmes are not shown.
 - **Users outside the Campus Boundary are hidden** from everyone, by design: a demo must be run on campus. The app's
   development settings can replace the phone's position with a walk on campus ([mobile/README.md](mobile/README.md),
   "Development settings").
@@ -169,10 +230,10 @@ What the demo cannot show, and what is known not to work yet:
   route and the shuttle's line are solid in a build.
 - **An Invite Link that starts the stopped app opens the map** instead of the accept screen, on Android. With the app
   running, the same link opens the accept screen. The device run M2 found it at the end of Iteration 2 (Testing
-  Documentation, 2.2); it is to be fixed in Iteration 3.
+  Documentation, 2.2); it is not fixed yet.
 - **Targets not yet measured on phones.** The latency, scalability and stopping times of the non-functional
   requirements (a position on a viewer's map within 2 seconds, 10 Users at once, an Avatar removed within 2 seconds)
-  are stated and not measured; they are measured in Iteration 3.
+  are stated and not measured; they are to be measured in Iteration 4.
 - **Registrations a person makes at Google and Kakao.** A build signed with any key other than the shared debug key
   needs that key registered: its SHA-1 in an Android OAuth client of the Google Cloud project, with the package name
   `com.bonnieandclaude.snunow`; its key hash at Kakao under the app's Android platform; and its SHA-256 in the main
@@ -195,20 +256,31 @@ What the demo cannot show, and what is known not to work yet:
   them: the main server stores none of them yet, so other members do not see them. Timetable versions other than the
   current one belong to one phone, and while a switch runs the server's timetable is empty or partial for a few
   seconds. The + button (올리기) answers "준비 중이에요", and the legal texts of the consent screen are being written.
-- **SNU Now AI.** Its answers depend on the model, and how often it picks the right tools is measured only when a
-  developer runs the benchmark (`pnpm eval` in `main-server/`), which no run has reported yet. Replies are not
-  streamed, a conversation is lost when the app restarts, and the Assistant cannot manage an existing party or
-  activate one. Messages go to the model provider through OpenRouter, which the empty chat says.
+- **SNU Now AI.** Its answers depend on the model and vary between runs of the same question; several suites still
+  miss thresholds ([Evaluation](#evaluation)). They are measured only when a developer runs them, by hand. Replies
+  are not streamed, a conversation is lost when the app restarts, and the Assistant cannot manage an existing party or
+  activate one. Messages go to the model provider through OpenRouter, which the empty chat says; the move to the
+  Anthropic API (A01) is in review. A meeting place and time proposed for an existing party is not built; for a meal,
+  공강에 밥 proposes a Restaurant and a time.
+- **Walking and shuttle times are estimates.** Walking times come from a table on OpenStreetMap's paths, within 2
+  minutes on 24 of 30 test walks. The shuttle's rides come from two logged days, and its waits are still the operator's
+  fixed values ([Evaluation](#evaluation)).
+- **관정도서관.** The library's cards need the app 1.0.1 or later, whose native part has the web view. Booking works
+  only for the spaces in the catalogue: a space that cannot be booked online gets a 현장 이용 answer, others 아직
+  미구현. A party holds at most 8, so a group study room for 9 or more is refused and the 20인실 is not offered. The
+  tutorial's 관정 quest is completed by 완료했어요; the phone's check of the User's bookings is off. A forgotten seat is
+  not announced, since there are no push notifications.
 - **Timetable reading.** Photos of a screen, a professor's name printed inside a block and two overlapping classes
   drawn side by side are not read; the last are reported as left out. A real dark-mode screenshot is not yet among the
   test screenshots.
 - **Left in the code.** AI 매칭 and the match server are frozen: they run in every deployment and are still tested.
   The active party's own join request and invitation routes and the `meetups` table remain, unused. Redis runs
   without a password.
-- **Planned for later iterations**: reading university notices with AI; a meeting place and time proposed for a party
-  from the members' free time and walking times on the campus's slopes; push notifications; Private Events, Private
-  Zones and blocking; organizer accounts and study spaces; cafés and other restaurants in the dining layer; arrival
-  estimates for the shuttle.
+- **Planned for later iterations**: switching on Judgements, the same-event rules and extra.snu once they reach their
+  thresholds; a meeting place and time proposed for a party's members; the app's results shown on the map to explore;
+  push notifications; Private Events, Private Zones and blocking; searching parties by meaning on the server; iOS
+  builds through TestFlight or the App Store; usage data and a better admin site; organizer accounts; cafés and other
+  restaurants in the dining layer; arrival estimates for the shuttle.
 - **Slow tests under load.** A few Jest tests of the app can exceed their 60 seconds on a busy machine; they pass when
   their file is run alone.
 
@@ -216,22 +288,22 @@ What the demo cannot show, and what is known not to work yet:
 
 What the project was built and run with:
 
-| Part                   | Used                                                                                                         |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Development machine    | macOS on Apple Silicon                                                                                       |
-| Node.js and pnpm       | Node.js 24.14.0, the version in `.nvmrc`; pnpm 12.6.0                                                        |
-| Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                                 |
-| Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                                 |
-| Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                                        |
-| Assistant              | Vercel AI SDK 7 with the OpenRouter provider; the model set by `ASSISTANT_MODEL`                             |
-| Admin site             | Next.js 16 with React 19, in a desktop browser                                                               |
-| App                    | Expo SDK 57, React Native 0.86, Expo Router; local Expo modules around Kakao Maps SDK and ML Kit             |
-| Android build          | JDK 17 (Temurin), Android SDK Platform and Build-Tools 36, Gradle 9.3.1 through the wrapper                  |
-| Android devices        | Emulator: Android 16 (API 36), Google Play, `arm64-v8a`; ARM Android phones                                  |
-| Device runs            | Maestro 2.11.0 on the Android emulator (API 36, `arm64-v8a`)                                                 |
-| iOS build (not demo)   | Xcode 27 with the iOS 27 simulator, CocoaPods 1.17                                                           |
-| Continuous integration | GitHub Actions on `ubuntu-latest`, on each push: every project's four checks, `flow-tests`, the infra checks |
-| Deployment             | Dev Server: Docker Compose and Caddy; Production: Terraform, Amazon EKS in AWS's Seoul Region                |
+| Part                   | Used                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Development machine    | macOS on Apple Silicon                                                                                      |
+| Node.js and pnpm       | Node.js 24.14.0, the version in `.nvmrc`; pnpm 12.6.0                                                       |
+| Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                                |
+| Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                                |
+| Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                                       |
+| Assistant              | Vercel AI SDK 7 with the OpenRouter provider; the model set by `ASSISTANT_MODEL`                            |
+| Admin site             | Next.js 16 with React 19, in a desktop browser                                                              |
+| App                    | Expo SDK 57, React Native 0.86, Expo Router, expo-updates; local modules: Kakao Maps SDK, ML Kit, cookies   |
+| Android build          | JDK 17 (Temurin), Android SDK Platform and Build-Tools 36, Gradle 9.3.1 through the wrapper                 |
+| Android devices        | Emulator: Android 16 (API 36), Google Play, `arm64-v8a`; ARM Android phones                                 |
+| Device runs            | Maestro 2.11.0 on the Android emulator (API 36, `arm64-v8a`)                                                |
+| iOS build (not demo)   | Xcode 27 with the iOS 27 simulator, CocoaPods 1.17                                                          |
+| Continuous integration | GitHub Actions on `ubuntu-latest`, each push: four checks, `flow-tests`, infra, Release script, fingerprint |
+| Deployment             | Dev Server: Docker Compose, Caddy; Production: Terraform, Amazon EKS in Seoul; the app: EAS Update          |
 
 ## Requirements
 
@@ -246,6 +318,7 @@ What the project was built and run with:
 - The team's Kakao keys (REST API, JavaScript and native app keys), which the Owner of the team's Kakao app shares
   privately, and an SNU Google account to sign in to the app.
 - For SNU Now AI only: an OpenRouter API key with a credit limit. Without it every other feature runs.
+- For 관정도서관 booking only: an SNU account that can log in to the library's booking site, on the phone.
 - For the device runs only: Maestro 2.11.0 ([mobile/README.md](mobile/README.md), "Device runs").
 - About 30 GB of free disk space. On one Mac the Android build's Gradle cache took about 10 GB, Docker's images and
   build cache about 15 to 20 GB, and an iOS build's Xcode cache about 3 GB. When the disk fills, Docker stops with
@@ -347,11 +420,14 @@ file's.
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                   |
 | `ASSISTANT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in each call; 4000 unless set.                             |
+| `AUTOMATIC_PUBLICATION`            | Optional: `off` keeps every collected session a Draft, to stop publication; `on` unless set.        |
 | `AUTOMATIC_JUDGEMENT`              | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.       |
 | `SAME_EVENT_TITLE_RULE`            | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.       |
 | `SAME_EVENT_AI_CHOICE`             | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set. |
 | `JUDGEMENT_TIMEOUT_MS`             | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                           |
 | `JUDGEMENT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in a Judgement; 4000 unless set.                           |
+| `LIBRARY_BOOKING_ENABLED`          | Optional: `false` answers library requests with the official site and no card; `true` unless set.   |
+| `TUTORIAL_KWANJEONG_CHECK`         | Optional: `true` completes the 관정 quest by the phone's booking check; `false` unless set.         |
 
 ### socket-server
 
@@ -400,6 +476,9 @@ file's.
 | `EXPO_PUBLIC_SOCKET_SERVER_URL`    | The socket server's address as the phone reaches it.                                                                                                                |
 | `INVITE_LINK_HOST`                 | The host of the main server's `PUBLIC_URL`, for Invite Links' App Links; read when the build is made.                                                               |
 | `KAKAO_NATIVE_APP_KEY`             | The native app key of the team's Kakao app, for the map; the Owner shares it; read when the build is made.                                                          |
+| `UPDATE_CHANNEL`                   | The EAS Update channel the build asks for bundles; read when the build is made; `production` when empty.                                                            |
+| `EXPO_PUBLIC_RELEASE_TAG`          | The Release tag the JavaScript was built from, shown in 내 정보; a Release sets it; empty, 내 정보 shows 개발 빌드.                                                 |
+| `EXPO_PUBLIC_RELEASE_COMMIT`       | The commit of the same Release, shown beside it.                                                                                                                    |
 | `ANDROID_X86_64`                   | `1` adds `x86_64` to a development build, for an x86_64 emulator, where everything but Kakao's map runs; given on the prebuild command line, not in `.env.example`. |
 
 The app also takes development settings when it is started, such as answers that fail on purpose; they are in
@@ -537,24 +616,25 @@ alone and signed with the shared debug key, so Google and Kakao accept it as the
 needs a build of the app or a development server.
 
 - **Production**: the app for `https://api.snunow.com`, the APK for testers:
-  `snunow-app-26.10.23-1.apk` on the
-  [snunow/app/26.10.23-1 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/snunow/app/26.10.23-1),
-  built from `51ce92f` with every Iteration 2 feature. Invite Links under `https://api.snunow.com/invite/` open it. A
-  phone that installed an earlier Production APK before Production was up should install this one, so that Android
-  checks the Invite Links' App Link again. Later Production APKs are attached to the release page of their own
-  `snunow/app/YY.MM.DD-N` tag ([Deployment](#deployment)).
+  [`snunow-app-26.11.03-2.apk`](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/snunow/app/26.11.03-2/snunow-app-26.11.03-2.apk)
+  on the
+  [snunow/app/26.11.03-2 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/snunow/app/26.11.03-2),
+  the app's version 1.0.1, built in CI from `0e08f839`. It is the first build with the web view that 관정도서관 needs.
+  Its JavaScript is updated by OTA, so it runs the latest Release's code, not only its own. Invite Links under
+  `https://api.snunow.com/invite/` open it. A phone with an older Production APK should
+  install this one. Later Production APKs are attached to the release page of their own `snunow/app/YY.MM.DD-N` tag
+  ([Deployment](#deployment)).
 - **Dev Server**: the app for the Dev Server, attached to a `dev-YYYY-MM-DD` release and listed at the Dev Server's
   [`/apk/`](http://swpp26t09.147-46-242-174.sslip.io/apk/) for a phone's browser.
-- **Iteration 1 demo**: `snu-now-iteration-1.apk`, attached to the
-  [Iteration 1 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/iteration-1), for the
-  servers on your own computer. It is Iteration 1's app, with the Meetup and without the Iteration 2 features.
 
 The Production app updates itself. A Release that changes only JavaScript publishes the app's bundle to EAS Update,
 and an installed app downloads it when it starts and runs it from its next start, with no new APK. A change to the
 native part, such as a native dependency, a config plugin or `app.json`, needs a native Release instead: `version` is
-raised, a new APK and iOS build are made, and `app-version.json` is replaced, so that older builds show
-업데이트가 필요합니다 at their start. [infra/production/README.md](infra/production/README.md), "The Production APK" and
-"The Production iOS build", has the steps.
+raised, the Release workflow builds the new APK in CI and attaches it, the iOS build is made by hand, and
+`app-version.json` is replaced, so that older builds show 업데이트가 필요합니다 at their start. Bundles reach only the
+builds whose fingerprint, a hash of the native part, is their own.
+[infra/production/README.md](infra/production/README.md), "The Production APK" and "The Production iOS build", has the
+steps.
 
 The Iteration 1 APK reaches the main server at `http://localhost:3000` and the socket server at
 `http://localhost:3001`, on the phone itself. With the servers running on your computer
@@ -573,9 +653,13 @@ campus is shown to nobody: on an emulator, set the location to a point on campus
 
 ## Running the tests
 
-Each project has the same four checks, which CI runs on every push. A test's level, unit, integration or end-to-end,
-is in its file name ([ADR 0007](docs/adr/0007-test-levels-by-what-a-test-starts.md)). Run them in the project's
-folder:
+Each project has the same four checks, which CI runs on every push. A test's level, unit, integration or end-to-end, is
+in its file name ([ADR 0007](docs/adr/0007-test-levels-by-what-a-test-starts.md)), and follows what the test starts: a
+unit test (`.unit.test.ts(x)`) calls one module with stand-ins and does no I/O; an integration test
+(`.integration.test.ts(x)`) joins two of our layers or crosses a real boundary, such as a database container or a
+started server; an end-to-end test (`.e2e.test.ts`) drives the whole system from outside, through a screen or the
+servers' public interfaces. A Maestro flow's level is its folder. Each runner picks up only its own level's suffix. Run
+them in the project's folder:
 
 ```bash
 pnpm lint
@@ -608,16 +692,22 @@ their own, which no project runs. From the repository root:
 node --test 'scripts/test/*.test.ts'
 ```
 
+The Release script has Bats tests, which CI runs: `bats --recursive .github/release`.
+
 Not run by `pnpm test` or CI:
 
 - **Coverage**: `pnpm test:cov` runs a project's whole suite with coverage, and `pnpm test:cov:unit` its unit tests
   only. The goals and the Iteration 2 figures, every one met, are in the
   [Testing Documentation](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/Testing-Documentation).
 - **Device runs**: `pnpm build:mock-apk`, then `pnpm test:device` in `mobile/`, run the M1 and M2 flows with Maestro on
-  an Android emulator against the app's own mock data ([mobile/README.md](mobile/README.md), "Device runs"). At the end
-  of Iteration 2, M2 on a cold start fails (see [Known limitations and todos](#known-limitations-and-todos)).
-- **The Assistant's benchmark**: `pnpm eval` in `main-server/` runs its 62 cases against the real model and spends
-  OpenRouter credit, so it runs by hand only.
+  an Android emulator against the app's own mock data ([mobile/README.md](mobile/README.md), "Device runs"). M2 on a
+  cold start still fails (see [Known limitations and todos](#known-limitations-and-todos)).
+- **The evaluations** ([Evaluation](#evaluation)) call the real model and spend OpenRouter credit, so they run by hand
+  only, in `main-server/`. `pnpm eval` runs the Assistant's 62 P19 cases, and
+  `pnpm eval --world <p4|p5|large-world-v1|p6>` one Iteration 3 suite; `pnpm eval:holdout` runs the P4 holdout;
+  `pnpm eval:collection --run <name> --part held-out` runs evaluations A and B on saved posts. `pnpm eval:score` and
+  `pnpm eval:compare` score and compare saved runs, and `pnpm walking:score` and `pnpm shuttle:score` the walking
+  table and the shuttle's times, all without the model. Each suite's rules and record are in `main-server/eval/`.
 
 ## Deployment
 
@@ -628,7 +718,7 @@ servers, PostgreSQL, Redis and the [Demo Data](#demo-data) under Docker Compose,
 It follows the `development` branch by itself: every minute it fetches the branch and, once a new commit's server
 checks have passed in CI, rebuilds and restarts what changed. Nothing pushes to it
 ([ADR 0003](docs/adr/0003-the-dev-server-pulls-its-deployments.md)). No pull request targets `development`: a team
-member fast-forwards it to `2.0/Main` from a checkout.
+member fast-forwards it to the iteration branch, now `3.0/Main`, from a checkout.
 
 - `/deploy-status` shows the deployed commit and the last run's result, and `/apk/` lists the dev APKs for a
   phone's browser.
@@ -644,30 +734,35 @@ It runs on Amazon EKS in AWS's Seoul Region, built with Terraform, and answers a
 and at `https://admin.snunow.com` for the admin site. It starts with only the seed data and never carries Demo Data.
 It changes only with a Release: a tag `snunow/<target>/YY.MM.DD-N` on a reviewed commit of the iteration branch, which
 deploys one server, or all five with `all`, once every CI job has passed on that commit
-([ADR 0006](docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)). The first Release,
-`snunow/all/26.10.22-1`, deployed everything on 2026-10-22. Two `t4g.small` nodes run the servers, the admin site and
+([ADR 0006](docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)); `all` also publishes the app's
+bundle, and `app` publishes only the bundle. The first Release, `snunow/all/26.10.22-1`, deployed everything on
+2026-10-22; the latest, `snunow/all/26.11.04-1`, deployed `803490b5` on 2026-11-04. In Production,
+`AUTOMATIC_PUBLICATION` is on, and `AUTOMATIC_JUDGEMENT`, `SAME_EVENT_TITLE_RULE`, `SAME_EVENT_AI_CHOICE` and
+`EXTRA_SNU_COLLECTION` are off (`infra/production/k8s/parts/shared/kustomization.yaml`); `LIBRARY_BOOKING_ENABLED`
+and `TUTORIAL_KWANJEONG_CHECK` are left at their defaults, on and off. The runbook says how to turn each on, and how
+to stop automatic publication at once. Two `t4g.small` nodes run the servers, the admin site and
 Redis, the main and match databases are on RDS for PostgreSQL 18, and network policies allow only the listed
 connections between pods. The Production APK is attached to the GitHub release page of its `snunow/app/YY.MM.DD-N`
 tag. The runbook and the tool guide,
 [infra/production/README.md](infra/production/README.md), say how to set up a laptop, release, deploy an earlier
-Release again, rotate a secret, and move Production to another AWS account.
+Release again, rotate a secret, publish the app's bundle by hand, and move Production to another AWS account.
 
 ## Repository layout
 
 | Folder           | What it holds                                                                                     |
 | ---------------- | ------------------------------------------------------------------------------------------------- |
-| `main-server/`   | The main server: sign-in, Users, Friends, parties, Location Sharing, events, SNU Now AI, the seed |
+| `main-server/`   | The main server: sign-in, Users, Friends, parties, sharing, events, SNU Now AI, tutorial, `eval/` |
 | `socket-server/` | The socket server: pushes positions and signals to the apps over Socket.IO, keeps no data         |
 | `worker-server/` | The worker server: collects the events list, the menus and the shuttle on a schedule              |
 | `match-server/`  | The match server of the frozen AI 매칭: keeps its requests and groups them in rounds              |
 | `admin/`         | The admin site for Administrators                                                                 |
-| `mobile/`        | The app; its native map and OCR modules in `modules/`, its Maestro flows in `maestro/`            |
+| `mobile/`        | The app; its native map, OCR and cookie modules in `modules/`, its Maestro flows in `maestro/`    |
 | `flow-tests/`    | End-to-end tests across the four servers, and of the admin site in a browser                      |
 | `scripts/`       | The level check every project's `pnpm lint` runs (ADR 0007), the coverage sums, their tests       |
 | `infra/`         | The PostgreSQL image, the Dev Server (`deploy/`, `proxy/`), and Production (`production/`)        |
 | `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`)     |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                                   |
-| `.github/`       | The CI and Release workflows, the pull request template, and the code owners                      |
+| `.github/`       | The CI and Release workflows and script, the pull request template, and the code owners           |
 | `.claude/`       | Shared skills for coding agents; `.agents/` links to them                                         |
 
 ## AI-generated code
@@ -684,15 +779,17 @@ The team decided what to build, reviewed the specs and the table schemas, and ch
 also made the product decisions, such as the words party, active party and Quest, where API keys go and how much the
 Assistant's benchmark may spend. Where something was wrong, the agent rewrote it; no code was edited by hand.
 
-AI also runs inside the product: SNU Now AI calls a model through OpenRouter (Claude Haiku 5.5 in `.env.example`), and
-the timetable is read on the phone with Google ML Kit's text recognizer.
+AI also runs inside the product: SNU Now AI calls a model through OpenRouter (Claude Haiku 5.5 in `.env.example`),
+and so would Judgements and the same-event choice, which are off in Production. The timetable is read on the phone
+with Google ML Kit's text recognizer.
 
 Not AI-generated is what came from elsewhere: the skills in `.claude/skills/`, the seed data in `main-server/seed/`,
 the saved pages that the worker's tests read, the images and the font in `mobile/assets/`, and the demo videos.
 
 The AI Collaboration Reports on the Wiki, for
-[Iteration 1](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/AI-Collaboration-Report-%E2%80%93-Iteration-1)
-and [Iteration 2](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/AI-Collaboration-Report-%E2%80%93-Iteration-2),
+[Iteration 1](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/AI-Collaboration-Report-%E2%80%93-Iteration-1),
+[Iteration 2](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/AI-Collaboration-Report-%E2%80%93-Iteration-2)
+and [Iteration 3](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/AI-Collaboration-Report-%E2%80%93-Iteration-3),
 tell how the work went, with the prompts in each iteration's Prompt Log.
 
 ## Data sources and attribution
@@ -709,6 +806,9 @@ tell how the work went, with the prompts in each iteration's Prompt Log.
 | The shuttle operator's route page and vehicle positions, `web.busin.co.kr` (route 41946)                              | The shuttle's stops, service hours and vehicles                            | Collected from public pages                     |
 | Pretendard                                                                                                            | The app's font                                                             | SIL Open Font License 1.1                       |
 | OpenRouter and the model it routes to                                                                                 | SNU Now AI's answers; conversations are not stored, locations never sent   | OpenRouter's terms                              |
+| 관정도서관's booking site, `k-rsv.snu.ac.kr`, called from the phone with the User's own session                       | Free seats, seat maps and the User's bookings; nothing reaches our servers | The library's terms                             |
+| SNU's public pages for students, read by hand                                                                         | The tutorial's quests, the study spaces and the facility booking links     | Facts checked by hand, with their sources       |
+| The shuttle's vehicle positions, logged on the Dev Server on 2026-11-02 and 11-03                                     | The shuttle's ride times                                                   | Collected from public pages                     |
 | Google ML Kit Text Recognition v2 (Korean), bundled in the app                                                        | Reading a timetable screenshot on the phone; nothing is sent               | ML Kit's terms                                  |
 
 The app shows "© OpenStreetMap · 국토지리정보원" on every map, with a screen that names both sources and their
