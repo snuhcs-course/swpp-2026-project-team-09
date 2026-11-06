@@ -199,12 +199,13 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
 ### Measurement
 
 - **Starting point X.** X is the `3.0/Main` commit that holds #204 (P11-04) and this spec, tagged `p12-x`. It is tagged when #204 merges, which may be while the tickets are being built. If 01–05 are done and #204 has not merged, X is `3.0/Main` with #204's head merged locally, tagged the same way. Before tagging, check that A01-01, #169 and #170 did not land before it; if one did, ask the owner.
-  - **One branch and one PR per ticket.** Tickets 01–05 are built at the same time, each in its own session, on its own branch (`3.0/P12-NN-<slug>`) from `3.0/Main` as it is after this spec merges. Each opens its own PR to `3.0/Main`. Once `p12-x` exists, each branch merges `p12-x`, and nothing newer from `3.0/Main`, until the after set is recorded.
+  - **One branch and one PR per ticket.** Tickets 01–05 are built at the same time, each in its own session, on its own branch (`3.0/P12-NN-<slug>`) from `3.0/Main` as it is after this spec merges. Each opens its own PR to `3.0/Main`. Once `p12-x` exists, each branch merges `p12-x`, and nothing newer from `3.0/Main`, until its PR is approved.
   - Heavy jobs (builds, integration tests, Docker) still run one at a time across those sessions, so each session takes a shared lock before one and releases it after.
-  - The after set runs on a merge of the five ticket branches, each holding `p12-x`, pushed as the branch `3.0/P12-after-set` with no PR, and its head is recorded with the run (metrics 4.3), so that anyone can rebuild the after set. The branch is deleted once the ticket PRs land. The ticket PRs merge only after the after set is recorded, so that nothing of P12 reaches `3.0/Main` before it is measured.
-  - The ticket PRs may change in review after the run. Ticket 06 records any difference between the measured merge and what lands on `3.0/Main`, as for #204.
-  - No rebase and no force push. After the after set, each ticket branch merges `3.0/Main` as its PR needs.
-  - A01 and P07 are not taken in until the after set is done.
+  - The after set runs on `p12-x` with one fixed commit per ticket merged in, never on `3.0/Main`: 01 `6ba13b2c`, 02 `0776393b`, 03 `120f616b`, and 04 and 05 at their heads just before they took in `3.0/Main` (`90936469`, `cc218cdd`). The merge is pushed as the branch `3.0/P12-after-set` with no PR, and its head is recorded with the run (metrics 4.3), so that anyone can rebuild the after set. The branch is deleted once the ticket PRs land.
+  - **Changed plan (2026-11-05, the owner's decision).** The ticket PRs merge as soon as they are approved, without waiting for the after set, so P12 may reach `3.0/Main` before it is measured. The fixed commits keep the after set on `p12-x`, so what `3.0/Main` takes in after X does not reach it.
+  - The ticket PRs may change in review after their fixed commit. Ticket 06 records any difference between the measured merge and what lands on `3.0/Main`, as for #204.
+  - No rebase and no force push. After approval, each ticket branch merges `3.0/Main` as its PR needs.
+  - A01 and P07 are not taken in by the after set.
   - If #204 changes in review, the difference is recorded. A PR opened before #204 merges says it contains P11's commits.
 - **Before set.**
   - Chat only, run at X: C and D in the small and large worlds, and P19 three times (about USD 4.3).
@@ -263,7 +264,7 @@ The scope is the redesign's '중간' bundle: AB-1 to AB-4 and CD-1 to CD-4, as b
   - J9 passes per tagged case only when both card and reply checks pass.
 - **Watch after AB-3.** More sessions now meet the refusal rules. The after report lists any true pair refused as another time on the same day.
 - **Order with the other work in flight** (from #206's review). Keep this order, so that no run mixes two changes it does not report:
-  1. P12's before and after sets, on OpenRouter, before A01-01, #169 and #170 merge.
+  1. P12's before and after sets, on OpenRouter, on `p12-x` and the fixed commits (Measurement), so that A01-01, #169 and #170 do not reach them even when they merge first.
   2. P12 merges after P11's after set (#204) is recorded.
   3. A01's baseline (A01-03) runs after P12 merges, so that its P5 and collection baselines include P12.
   4. P13's R2 and R3, with no P12 prompt or reply change landing between them.

@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -73,8 +74,9 @@ describe('searchGlobalEvents, by period', () => {
             endsAt: '2098-01-10T12:00:00+09:00',
             place: '<data label="globalEvent.place">뉴미디어통신공동연구소 이충웅홀(132동 103호)</data>',
             description: '<data label="globalEvent.description"></data>',
+            window: 'underWay',
           },
-          expect.objectContaining({ id: inside.id, endsAt: null }),
+          expect.objectContaining({ id: inside.id, endsAt: null, window: 'starts' }),
         ],
       },
     ]);

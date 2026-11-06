@@ -694,7 +694,7 @@ posts of one event on two pods the second sees the first.
 - **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
   refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`). `off` calls no model, sends nothing out and asks
   nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
-  with candidates the refusing rules left, whether the rules read them or a Judgement passed them, it makes one call,
+  with candidates the refusing rules left, whether the rules read them or a Judgement's session is compared, it makes one call,
   outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
   decided, or a post the link rule decided. An answer is stored in `same_event_answers`, one row per session named by
   its start, made before the call: of two servers one calls, and a session is never asked about twice.
@@ -705,7 +705,8 @@ posts of one event on two pods the second sees the first.
   `same-event-choice.ts`): `link_not_one_to_one`, `several_matches` (several title matches, or two sessions chose one
   event), `ai_unsure`, `ai_failed` (a failed call, a timeout, a malformed answer, a candidate not offered, or a server
   that stopped during the call), `candidates_changed` (the chosen event is no longer a candidate, or one the AI was not
-  asked about has appeared, as when another server published it meanwhile). It stays a Draft, is neither judged nor
+  asked about has appeared, as when another server published it meanwhile), `place_unchecked` (a Judgement's session
+  whose place failed the checks, which no candidate takes on ADR 0014's terms). It stays a Draft, is neither judged nor
   published, and its post finishes the step. A post another server is asking about is left to it.
 - **What an Administrator does** (`admin/global-events`, each under the step's lock, so that of two one acts and the
   other gets 409): `GET queue` lists the sessions with their candidates, worked out when asked, so a removed event goes,
@@ -733,21 +734,48 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again, and runs outside any transaction, after the Collection's
   answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit. `judgement-model.ts` calls the
   model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
-- **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is in
-  the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
+- **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is
+  in the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
   application period, the start is before the end, it has a time of day, it lasts at most 24 hours and ends where a time
   line that runs across days ends, the place is in its lines and names exactly one Place on a line that names nowhere
-  else, and it is not a session the rules or the same answer already gave. A place that is a
-  building number alone is taken as Gwanak where the Source's setting says so. A session read as running over a period
-  needs no time of day and may last longer than 24 hours, but it must end on two different days, with one quoted line
-  holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
+  else, it is not a session the rules or the same answer already gave, and no line of the post gives its day another
+  time (`timesConsistent`, `times-consistent.ts`). On a Source whose `campusDefault` is `gwanak` (both are,
+  `post-sources.ts`), a place that does not write 서울대 is read on Gwanak when it holds none of `ELSEWHERE`'s markers
+  (another campus, a hospital, a station, a `…대학교`, a district of Seoul, a province, a flat, another street) and writes
+  nothing beside a Place's name or number but a floor or a room: `301동 2층 세미나실` is 301동 and `문화관 로비` 문화관, but `고려대 문화관`
+  and `OO구민체육센터 2층 체육관` are no Place. A name that other institutions use too (`GENERIC_PLACE_NAMES` in `named-place.ts`,
+  such as 체육관 or 미술관) is not matched after another facility's name, 서울대 or not. `timesConsistent` reads every line that
+  writes a day with a time, its start and any end, and a time field under a line of a day alone (`일시: 11월 3일` above `시간:
+19:00 ~ 21:00`) as one line. It does not read any other line with a time and no day, such as a running order, nor one
+  labelled an application period (`신청 마감: …`, or a short label above), and reads extra.snu's `[n회차]` line only for
+  session n (the number of the line its start is quoted from, or else its place in the answer). It fails when a line for
+  the session's day writes another start, or another end; a line of sittings each written from start to end,
+  `14:00~16:00, 17:00~18:00`, needs only one of them to be the session's. A line with a start alone leaves the end to
+  one that has it, and `오후 2시` is `14:00`. A session failing only this check still fills its Draft with the time it was
+  read at. A session read as running over a period needs no time of day and may last longer than 24 hours, but it must
+  end on two different days, with one quoted line holding both of them. The lines' ranges may be written with `~`, `부터`
+  or a hyphen.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
   taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
-  post. Failing sessions make no Draft: a post stored as one Draft keeps it for them, and a post the worker sent with a
-  Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
-  as it is, with the outcome `no_event`. A session over a period whose end is a day alone, or the 00:00 extra.snu writes
-  where it has no time, is stored as ending at 23:59 of that day in Korea, so that it stays listed through its last day
-  and its card names that day.
+  post. A post called no event stays as it is, with the outcome `no_event`. A session over a period whose end is a day
+  alone, or the 00:00 extra.snu writes where it has no time, is stored as ending at 23:59 of that day in Korea, so that
+  it stays listed through its last day and its card names that day. Failing sessions are never published
+  (`session-verdict.ts`,
+  [ADR 0014](../docs/adr/0014-a-session-whose-place-fails-is-still-compared-as-the-same-event.md)):
+  - one that fails only `length`, `placeInLines`, `placeMatches` or `timesConsistent` is compared with the events that
+    exist, its place given to the AI as written. The checks it needs are a named list, which `timesConsistent` is
+    outside of, so that a check added later only stops publication. It is attached only when
+    its normalised title and start equal the event's (`attachedBy` `rule`, reason `equal_title_and_start_without_place`),
+    or when the AI answers `same`, the starts are equal to the minute and one normalised title holds the other
+    (`attachedBy` `ai`, reason `same_minute_and_contained_title`; the AI's sentence stays in `same_event_answers`).
+    Otherwise it is held with `heldFor` `place_unchecked`, or as the AI's answer says. With no candidate, or with
+    `SAME_EVENT_AI_CHOICE=off` and no title match, it stays its own Draft with its time filled;
+  - one whose lines are in the post and whose time checks, or place checks, all pass fills its Draft with that time, or
+    that place and its position;
+  - the rest are written in the Judgement only;
+  - such a session takes its own Draft, or the post's only one, or one with no start, as a passing one does. A post
+    keeps a Draft for the sessions that settle nothing, so that no time the worker read is lost: the session then gets a
+    new Draft, which the link rule counts as one of the post's sessions, as it counts a passing session's new event.
 - **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
   reads it publishes nothing of that Judgement. A post the link rule decided is not judged. With
   `AUTOMATIC_PUBLICATION=off` the Judgement and what it attaches are stored and nothing is published.
@@ -783,7 +811,7 @@ DTO the app receives carries any of it. An entry of that list:
 The `judgement` of an event's page holds `outcome` (`judged`, `no_event` for a post called no event, `failed` for one that
 could not be made, `null` while a try runs), `failure`, `attempts`, `announcesEvent`, `modelId`, `judgedAt` and `sessions`,
 each with `start`, `end`, `place`, `overPeriod`, `lines`, `placeId`, `checks` (each `name` and `passed`), `passed` and
-`globalEventId`, the event it was published as.
+`globalEventId`, the event it was published as or attached to, or the Draft it fills or waits in.
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 
@@ -1869,10 +1897,15 @@ without an offset, stops the command. Stops are named by `loop_order`, their pla
 wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. What the file lacks,
 the fallback in that module covers. The 75% of R11 decides only what the score counts.
 
-The score holds each day out and compares it with the times derived from the others. A stop-band or pair-band those
-days lack is predicted with the fallback. The ride compares every held-out ride with the median, by MAE and the share
-within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored stop-band of 08–19 with the
-prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs are below their baselines.
+The file holds less than is derived, as the PM decided on 2026-11-05. It holds no wait, so the fallback answers every
+wait; waits come back only by a later change, once a third logged day agrees. It holds a ride only for a pair and band
+logged on at least two days.
+
+The score holds each day out and compares it with all the times derived from the others, not with what the file holds.
+A stop-band or pair-band those days lack is predicted with the fallback. The ride compares every held-out ride with the
+median, by MAE and the share within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored
+stop-band of 08–19 with the prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs
+are below their baselines.
 
 ## Travel Time
 
@@ -2139,6 +2172,12 @@ its model through OpenRouter with the Vercel AI SDK
     shows cards, map buttons or a Proposal says `아래에서 확인해 보세요.` above them, and the server logs that it did, as
     `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
 Proposal)`.
+  - **The Approval line** (P12, `approval-line.ts`): when the cards show a Quest whose Join Policy is Approval and the
+    text holds fewer than two of 승인, 수락 and 신청, the server adds a line after it, fixed sentence included:
+    `승인제 파티는 참여 신청 후 파티장이 수락하면 참여돼요.`, or, when the User's last message with letters (not
+    only `18:00` or `2`) has no Hangul,
+    `A party that needs approval takes you in once you ask to join and its leader accepts.` It applies to every
+    feature that shows Quest cards.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
     a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
@@ -2189,11 +2228,26 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     map, or its Global Event's, and a Quest with words only is left out. A `placeId` that names no Place answers "none",
     with that as the reason. Without a window every other such Quest is a candidate,
     those without a start last. Each carries its title, Board, Global Event, Join Policy, the places left, the number of
-    Holders, the first Sub Quest's start, end and place, and the first 150 characters of its description.
+    Holders, the first Sub Quest's start, end and place, and the first 150 characters of its description, and `join`:
+    `open` for an Open Quest, `askToJoin` for an Approval one.
   - In both searches `words` (at most ten) rank and drop nothing: those whose title or description holds more of them
     come first, ignoring case and counting a word given twice once, ties in start order, then by title in code points.
     The rest of the window fills the places left, up to 30, with `more` when there were more. The server does not order
     by Holders.
+  - **Why a candidate was found** (P12): with `words`, each candidate carries `matched`, the words its title or
+    description holds, as first given, selected from the same expressions that rank it (`common/search-sql.ts`), so a
+    candidate holding none has `[]` and keeps its place. With a window, it carries `window`: `starts` when it starts in
+    the window, `underWay` when it began before and overlaps it (a Quest for a Global Event, or an event). The system
+    prompt counts an `underWay` candidate as in the window, and shows one with no `matched` word, for an activity asked
+    and a search given words, only when its title is clearly that activity.
+  - **`narrowBy`** (P12): with `more`, the answer adds `total` and `narrowBy`, counted by a second query over the same
+    filters, uncut: how many of them are on each Board (Quests only), start on each day in Asia/Seoul and hold each of
+    the `words`. No paging argument is taken: the model narrows by searching again.
+  - **The Place note** (P12): when `resolvePlace` answered one Place in this message (`FoundIds` keeps it) and a search
+    is not given it, `placeId` in `searchRecruitingQuests` or `place` in `searchGlobalEvents`, the answer, found or
+    "none", carries `note`: that its candidates are from any place, naming the Place, its number and its id, and how to
+    search near it. The candidates and their order are as without it. A Place of an earlier message, or of the
+    Proposal sent back, makes no note.
   - On a request to recruit, the system prompt has the model search before it proposes, unless the User said to make a
     new one in the conversation, this message included: only what the User stated is compared, what fits is shown as cards with the most
     Holders first and a question, and the User joins from the card. With nothing that fits, it proposes and says none was
@@ -2215,8 +2269,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     invitee is a Friend. With a Global Event and no time it starts at the event's start; a time before is a meeting
     before the event, as the form's `모이기`, and one after its start is refused. It answers
     `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
-    the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
-    it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
+    the User for, except a Board: a missing one's refusal names the four Boards and tells the model to choose the one
+    the activity plainly fits, without asking, and propose once nothing else is missing, asking only when it fits none
+    or more than one. Or it answers
+    `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when it is called
+    twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change.
   - **The 공강 tools** (`free-time/`, ADR 0009) work on a day from today to a week ahead, and on the items of a User's
     day: each Class meeting on that weekday and each timed Sub Quest of a Quest they hold (`UserDayService`, for any
@@ -2356,9 +2413,11 @@ its reasoning tokens and the provider's response as it came, which the benchmark
 the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
-shows its error too. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so
-production runs as before. A turn's trace ends with the reply (its text and length, cards, map buttons, Proposal) or
-the failure: STEP_LIMIT, TIMEOUT or ERROR.
+shows its error too, and of the reply's text before the Approval line. `AssistantService` passes the one bound to
+`RUN_OBSERVER`, which only the benchmark binds, so production runs as before. A turn's trace ends with the reply (its
+text and length, cards, map buttons, Proposal, and `modelText`, the model's own text, with `approvalLine`, whether the
+server added the line) or the failure: STEP_LIMIT, TIMEOUT or ERROR. A run saved before P12 has neither field, and its
+text is the model's. The P05 report reads J9 on the reply the User saw and J9-model on `modelText`.
 
 A case is a single turn, a fixed history (the earlier turns written out, the Assistant's with cards and a Proposal by
 seed name; all of them are sent in one request, and only the last turn is scored) or live (`live: true`: each User's message sent with the real replies before
@@ -2512,7 +2571,11 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   ±2 minutes and within min(25% of the walk, 2 minutes), a difference equal to the limit counting as within, the share
   walked more than 2 minutes longer than predicted and the MAE over the 8 pairs where the two differed by more than 2
   minutes at the freeze; then k = Σ(walked × table) / Σ(table²), and the threshold under each tolerance: at least 70%
-  within, and the table's MAE below the baseline's.
+  within, and the table's MAE below the baseline's. Last it fits the speed and the climb value to the 13 calibration
+  walks, by ordinary least squares with no constant term, and prints them unrounded; a climb value below 0 becomes 0
+  with that fit's speed. Each pair's path metres and climb are recovered from its seconds at the freeze, at 1.1 m/s and
+  3 s per metre of climb, and from the committed table's elevations. The builder's two constants in
+  `src/travel/walking-graph.ts` are that fit's, as P11 adopted them.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.

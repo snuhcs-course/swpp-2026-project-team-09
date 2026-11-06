@@ -25,7 +25,7 @@ This ticket changes no prompt. The Assistant reads the new quests through `getTu
 - [x] Quests gain an optional `ask`; 관정's is "관정도서관 7층 열람실에 한 자리 예약해줘". `servedContent` drops it when `LIBRARY_BOOKING_ENABLED` is off. The sheet shows 어시스턴트에게 예약 부탁하기 for any quest with `ask` (while `TUTORIAL_SHEET_FLAGS.askAssistantToBook` is on), and the skip text button only for `kwanjeongCheck`.
 - [x] The pager keeps "새내기 튜토리얼 n/N" over all fifteen, shows a row of the five category chips that moves to that category's first quest not started (or its first quest), and shows the category's label above the title. The quest list's kicker and the sheet's kicker read "새내기 튜토리얼 · {category} · n/N".
 - [x] Existing progress is kept: completed quests stay completed, and a User finished at five quests gets "새 퀘스트가 있어요" and the new quests on 진행하기.
-- [ ] 지도에서 보기 puts one tutorial place pin on the main map at the place's point: a red teardrop with a white circle as in `references/tutorial-place-pin.png`, in `color.danger` and `color.surface`, as a new marker look of `@/map`, with the place's words (`shownPlace`) under it. Another 지도에서 보기 replaces it; a tap on the map away from it, selecting another thing, or stopping the tutorial removes it.
+- [x] 지도에서 보기 puts one tutorial place pin on the main map at the place's point: a red teardrop with a white circle as in `references/tutorial-place-pin.png`, in `color.danger` and `color.surface`, as a new marker look of `@/map`, with the place's words (`shownPlace`) under it. Another 지도에서 보기 replaces it; a tap on the map away from it, selecting another thing, or stopping the tutorial removes it. (2026-11-05: the tap on the map is told in JS, without a native change; see the implementation notes of 2026-11-05.)
 - [x] A tap on the pin at a Place where the map has a card (a 식당, a 공부공간 building once 02 is in, a place group or any thing there) selects that card, as a tap on its marker does. At a Place with no card, or a point such as the 행정관 셔틀 정류장, the tap opens nothing; the pin and its label stay.
 - [x] `GLOSSARY.md` gains **Tutorial Category**.
 - [x] Tests, named by ADR 0007: `main-server/test/tutorial-content.unit.test.ts` (the category rules, fifteen quests load), `tutorial-content.integration.test.ts` (every Place exists), `tutorial-progress.integration.test.ts` (관정 by button with the flag off, by check with it on; a finished User sees the new quests); `mobile/__tests__/tutorial-pager.integration.test.tsx` (chips, captions), `tutorial-sheet.integration.test.tsx` (관정 served as a button: 완료했어요 and 어시스턴트에게 예약 부탁하기, no skip), `tutorial-kwanjeong-check.integration.test.tsx` still passing with the quest served as `kwanjeongCheck`, and `mobile/__tests__/tutorial-place-pin.integration.test.tsx` (one pin with its words; a second replaces it; a tap at a Place with a 식당 card opens it; a tap on the 행정관 셔틀 정류장's pin opens nothing).
@@ -51,8 +51,26 @@ This ticket changes no prompt. The Assistant reads the new quests through `getTu
 - **Wireframe**: read at version 1793787519-2c48 (last reviewed 1793724381-9465). Its tutorial frames still have no
   categories, so the chips and captions follow the current tutorial UI, as the PM decided.
 
+### Implementation notes (2026-11-05)
+
+- **Pin removal by a tap on the map, met without a native change**: a View around the main map watches its touches
+  with `onTouchStart`/`onTouchEnd`, which see them without taking the responder, so the native map still pans and
+  zooms (`src/screens/main/tutorial/use-map-tap.ts`). A touch of one finger that lasts 250 ms or less and moves 10 points
+  or less is a tap; 180 ms after it the pin goes, unless the pin's own marker press (`onThingPress`) comes within that
+  time before or after it, which keeps the pin and opens the card at its Place as before. A second finger (a pinch),
+  a drag (a pan), a long press and a cancelled touch never remove it. On Android the module's view only calls
+  `super.dispatchTouchEvent` and never takes the gesture from React Native, so the touches reach JS; it needs a check
+  on a phone. Tests: `mobile/__tests__/map-tap.unit.test.ts` and three new cases in
+  `tutorial-place-pin.integration.test.tsx`.
+
 ### Agent usage (2026-11-04)
 
 - Agent time: about 2 hours 30 minutes over two sessions (the first stopped by the VM crash). An estimate.
 - Tokens: about 6.5M input, of which about 6.0M cache reads and 0.4M cache writes, and about 120k output, subagents
   included (none were used). An estimate.
+
+### Agent usage (2026-11-05)
+
+- Agent time: about 35 minutes in one session, for the pin's removal on a tap on the map. An estimate.
+- Tokens: about 1.6M input, of which about 1.5M cache reads and 60k cache writes, and about 25k output, no
+  subagents. An estimate.

@@ -156,3 +156,87 @@ The two pairs more than 2 minutes off, C9 and C12, have their route lines. C12's
 | C13  | 20동 약학관3                    | 22동 자연과학관4            |        146 |       228 |          263 |                +82 | 18:44   |               |
 
 The fit has not run yet: speed and the climb value by ordinary least squares over these 13 pairs, then the rebuilt table scored on the same 30 walked times as a new entry. Both go here when they do.
+
+### The calibration (2026-11-05)
+
+The fit of [evidence/06's calibration](../evidence/06-walking-and-ride-diagnostics.md#calibration), as [P11's revision](../../P11-free-time-meals-parties-improve/evidence/01-walking-criterion-revision.md#the-calibration-fit-as-read-here) reads it, ran once in P11's ticket 02, by `pnpm walking:score`: seconds = path metres ÷ speed + climb × climb seconds per metre, climb = max(0, destination elevation − origin elevation), by ordinary least squares with no constant term over all 13 calibration pairs and none of the test pairs.
+
+**The inputs** are recovered from the frozen build, not exposed by the builder. Each pair's climb comes from the two Places' elevations in `seed/walking-table.json`, the ones the build used. Its path metres are (its table seconds at the freeze − 3 × climb) × 1.1. The table's seconds are whole seconds, so each metres value is within ±0.55 m of the build's (0.5 s at 1.1 m/s), at most 0.7% of these pairs' 87 to 291 m; the climbs are exact. To first order that moves the fitted speed by at most ±0.0044 m/s and the climb value by at most ±0.051 s per metre, so the climb value is below 0 whatever the rounding.
+
+| Pair | From → to elevation (m) | Climb (m) | Table at the freeze (s) | Path metres | Walked (s) |
+| ---- | ----------------------: | --------: | ----------------------: | ----------: | ---------: |
+| C1   |           111.4 → 118.0 |       6.6 |                      99 |       87.12 |         64 |
+| C2   |             96.1 → 97.3 |       1.2 |                     252 |      273.24 |        218 |
+| C3   |           101.4 → 107.8 |       6.4 |                     124 |      115.28 |         95 |
+| C4   |           111.5 → 130.3 |      18.8 |                     321 |      291.06 |        227 |
+| C5   |           167.5 → 161.4 |       0.0 |                     174 |      191.40 |        170 |
+| C6   |           136.7 → 127.3 |       0.0 |                      96 |      105.60 |         83 |
+| C7   |           125.6 → 111.4 |       0.0 |                      93 |      102.30 |         83 |
+| C8   |           134.2 → 135.4 |       1.2 |                     136 |      145.64 |         45 |
+| C9   |            85.5 → 100.4 |      14.9 |                     239 |      213.73 |         91 |
+| C10  |           170.7 → 185.8 |      15.1 |                     237 |      210.87 |        164 |
+| C11  |           185.8 → 170.7 |       0.0 |                     191 |      210.10 |        156 |
+| C12  |           107.7 → 129.5 |      21.8 |                     293 |      250.36 |        169 |
+| C13  |           129.5 → 107.7 |       0.0 |                     228 |      250.80 |        146 |
+
+**The fitted values**, unrounded: a speed of 1.3966856966974264 m/s and a climb value of −0.40634283201311705 s per metre. The climb value is below 0, so it becomes 0, and the speed stays that same fit's. It was not fitted again.
+
+**As used** in the rebuilt table: `WALKING_METRES_PER_SECOND = 1.3966856966974264` and `CLIMB_SECONDS_PER_METRE = 0` in `src/travel/walking-graph.ts`. Neither is rounded. The builder rounds each pair's seconds to the whole second, as before. Nothing else changed: the graph, the pins, the elevations and the join rule are the same, and k is not applied. The rebuilt table's Places, stops and elevations equal the original's; 59,110 of its 59,340 seconds changed.
+
+**The result** on the same 30 walked times, beside the original result, which stays. The baseline is the frozen one.
+
+|                                              |   Original table (11-02) |      Rebuilt table (11-05) |                   Baseline |
+| -------------------------------------------- | -----------------------: | -------------------------: | -------------------------: |
+| MAE                                          |                  168.5 s |                     70.4 s |                    124.6 s |
+| Within ±2 minutes                            |          14 / 30 (46.7%) |            24 / 30 (80.0%) |            18 / 30 (60.0%) |
+| Within min(25%, 2 minutes)                   |           3 / 30 (10.0%) |            16 / 30 (53.3%) |             4 / 30 (13.3%) |
+| Threshold under ±2 minutes                   |                   missed |                        met |                            |
+| Threshold under min(25%, 2 minutes)          |                   missed |                     missed |                            |
+| Late risk                                    |                   0 / 30 | 1 / 30 (pair 24, by 121 s) | 1 / 30 (pair 15, by 123 s) |
+| k                                            |                    0.663 |                      0.909 |                            |
+| MAE over pairs 5, 11, 15, 20, 22, 23, 24, 27 | 360.2 s (exactly 360.25) |                    156.6 s |                    189.5 s |
+
+- Under ±2 minutes the rebuilt table meets the threshold: 80.0% within, and its MAE below the baseline's.
+- Under the revised tolerance, the threshold from 11-05, it misses it: 53.3% within, below 70%, though its MAE is below the baseline's. Within that tolerance are pairs 1, 2, 4, 5, 8, 10, 12, 13, 15, 17, 19, 21, 22, 25, 28 and 30.
+- On the other 22 pairs its MAE is 39.0 s, against the baseline's 101.0 s.
+
+Per pair, the rebuilt table's seconds, with positive differences where it reads longer than the walk:
+
+| Pair | Walked (s) | Original (s) | Rebuilt (s) | Rebuilt − walked (s) |
+| ---- | ---------: | -----------: | ----------: | -------------------: |
+| 1    |        187 |          278 |         182 |                   −5 |
+| 2    |        102 |          120 |          86 |                  −16 |
+| 3    |        154 |          260 |         193 |                  +39 |
+| 4    |        182 |          304 |         194 |                  +12 |
+| 5    |        516 |          734 |         421 |                  −95 |
+| 6    |        121 |          279 |         160 |                  +39 |
+| 7    |        115 |          204 |         160 |                  +45 |
+| 8    |        390 |          588 |         463 |                  +73 |
+| 9    |         80 |          141 |         106 |                  +26 |
+| 10   |        311 |          479 |         359 |                  +48 |
+| 11   |        330 |          849 |         669 |                 +339 |
+| 12   |        158 |          215 |         152 |                   −6 |
+| 13   |        205 |          242 |         191 |                  −14 |
+| 14   |         58 |          119 |          94 |                  +36 |
+| 15   |        582 |          815 |         622 |                  +40 |
+| 16   |        224 |          209 |         165 |                  −59 |
+| 17   |         97 |          133 |         105 |                   +8 |
+| 18   |        109 |          288 |         227 |                 +118 |
+| 19   |        119 |          166 |         130 |                  +11 |
+| 20   |        194 |          450 |         315 |                 +121 |
+| 21   |        221 |          327 |         258 |                  +37 |
+| 22   |       1074 |         1652 |         981 |                  −93 |
+| 23   |       1149 |         1693 |        1333 |                 +184 |
+| 24   |       1140 |         1294 |        1019 |                 −121 |
+| 25   |        264 |          419 |         277 |                  +13 |
+| 26   |        103 |          298 |         226 |                 +123 |
+| 27   |        186 |          566 |         446 |                 +260 |
+| 28   |        151 |          235 |         182 |                  +31 |
+| 29   |         77 |          226 |         160 |                  +83 |
+| 30   |         70 |          110 |          87 |                  +17 |
+
+**Adopted.** By [the revision's rule](../../P11-free-time-meals-parties-improve/evidence/01-walking-criterion-revision.md#adopting-the-calibrated-table), the rebuilt table replaces the committed walking table because its MAE over the 30 pairs, 70.4 s, is lower than the original's 168.5 s, whatever either threshold says. `seed/walking-table.json` and the two constants are the rebuilt ones from P11's ticket 02. The table reaches the Dev Server with the merge and Production with the next regular Release. It also changes the walking legs of shuttle travel, and no rule changes with it. Pairs still far off, such as 11, 23 and 27, stay off: the graph, the pins and the elevations are not edited from the test walks.
+
+### The owed route lines (2026-11-05)
+
+The 15 route lines marked `owed` above are not written, as the PM decided on 2026-11-05 ([P11's revision](../../P11-free-time-meals-parties-improve/evidence/01-walking-criterion-revision.md)); pair 20's line and C12's stay as written.

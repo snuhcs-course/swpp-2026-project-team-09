@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -35,6 +36,9 @@ export function resolvePlace(places: PlacesService): Tool {
         `No Place has a name holding ${words} or the building number ${words}.`,
       );
       found.add('place', givenIds(answer));
+      if (answer.result === 'one') {
+        found.addResolvedPlace(answer.candidate);
+      }
       return answer;
     },
   });
