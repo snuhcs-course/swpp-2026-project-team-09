@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { generateText, Output } from 'ai';
@@ -37,8 +38,9 @@ export interface JudgementLimits {
   maxOutputTokens: number;
 }
 
-// Throws what the SDK throws when the model fails, the time runs out or the answer does not follow the schema. A failed
-// call is not sent again here: the next Collection tries the Judgement once more.
+// Throws what the SDK throws when the model fails, the time runs out or the answer does not follow the schema. The model
+// itself tries a call that failed with 429 or 529 once more, within the time (the adapter's retriedOnce); any other
+// failure is not sent again here: the next Collection tries the Judgement once more.
 export async function askForJudgement(
   model: Model,
   { title, text }: JudgedPost,
@@ -59,7 +61,8 @@ export async function askForJudgement(
     maxRetries: 0,
     maxOutputTokens,
     timeout: { totalMs: timeoutMs },
-    // Only a provider that keeps to the schema, and none that trains on what it is sent.
+    // OpenRouter's: only a provider that keeps to the schema, and none that trains on what it is sent. The Anthropic
+    // path's options, the cache breakpoint at the end of INSTRUCTIONS and the effort, are chosen with the model.
     providerOptions: { openrouter: { provider: { require_parameters: true, data_collection: 'deny' } } },
   });
   return { answer: output, modelId: finalStep.response.modelId };

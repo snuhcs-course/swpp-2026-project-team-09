@@ -14,6 +14,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -46,6 +47,18 @@ function es256Key(type: 'private' | 'public'): z.ZodString {
   }, `Expected a P-256 ${type} key in PEM, beginning with ${header}`);
 }
 
+export const MODEL_PROVIDERS = ['anthropic', 'openrouter'] as const;
+export type ModelProvider = (typeof MODEL_PROVIDERS)[number];
+
+export const MODEL_CACHE_MODES = ['breakpoints', 'auto', 'off'] as const;
+export type ModelCache = (typeof MODEL_CACHE_MODES)[number];
+
+// The settings that hold each provider's key and model id.
+export const MODEL_SETTINGS = {
+  anthropic: { key: 'ANTHROPIC_API_KEY', model: 'ANTHROPIC_MODEL' },
+  openrouter: { key: 'OPENROUTER_API_KEY', model: 'ASSISTANT_MODEL' },
+} as const;
+
 // Every setting arrives as a string from the environment; the schema converts it to the type the code uses.
 export const settingsSchema = z
   .object({
@@ -75,10 +88,18 @@ export const settingsSchema = z
     MATCH_SERVER_URL: z.url(),
     // The secret that this server and the match server send with each call to the other.
     MATCH_SERVER_TOKEN: z.string().min(32),
-    // The Assistant's (README.md: Assistant): the OpenRouter key, empty when there is none, and the OpenRouter id of
-    // the model, such as anthropic/claude-haiku-5.5.
+    // Who the model is called through (README.md: Assistant, spec A01): the Anthropic API, or OpenRouter until
+    // Iteration 4. Each has its own key, empty when there is none, and its own model id, so that one provider's id is
+    // never sent to the other: claude-haiku-5-5 for Anthropic, anthropic/claude-haiku-5.5 for OpenRouter.
+    MODEL_PROVIDER: z.enum(MODEL_PROVIDERS).default('anthropic'),
+    ANTHROPIC_API_KEY: z.string().default(''),
+    ANTHROPIC_MODEL: z.string().default(''),
     OPENROUTER_API_KEY: z.string().default(''),
     ASSISTANT_MODEL: z.string().default(''),
+    // What the Anthropic requests cache: "breakpoints" marks the end of the constant prompt and caches the chat's
+    // conversation automatically, "auto" caches every request automatically only, "off" caches nothing. Production
+    // keeps the default; the others are there for A01's caching experiment.
+    MODEL_CACHE: z.enum(MODEL_CACHE_MODES).default('breakpoints'),
     // The Assistant's limits: the messages a User may send in a day in Korea, and per message the model calls, the
     // time in milliseconds and the tokens the model may write in each call. Its reasoning counts towards those tokens,
     // and at 1,000 it could use them all and leave no answer (eval/p5/r0a.md).
@@ -139,17 +160,19 @@ export const settingsSchema = z
       when: ({ issues }) => issues.length === 0,
     },
   )
-  // Refused at the start, so that a Release shows the mistake and no try of a Judgement is used on it.
-  .refine(
-    ({ AUTOMATIC_JUDGEMENT, OPENROUTER_API_KEY, ASSISTANT_MODEL }) =>
-      !AUTOMATIC_JUDGEMENT || (OPENROUTER_API_KEY !== '' && ASSISTANT_MODEL !== ''),
-    { path: ['AUTOMATIC_JUDGEMENT'], message: 'Needs OPENROUTER_API_KEY and ASSISTANT_MODEL' },
-  )
-  .refine(
-    ({ SAME_EVENT_AI_CHOICE, OPENROUTER_API_KEY, ASSISTANT_MODEL }) =>
-      !SAME_EVENT_AI_CHOICE || (OPENROUTER_API_KEY !== '' && ASSISTANT_MODEL !== ''),
-    { path: ['SAME_EVENT_AI_CHOICE'], message: 'Needs OPENROUTER_API_KEY and ASSISTANT_MODEL' },
-  )
+  // Refused at the start, so that a Release shows the mistake and no try of a Judgement is used on it: the chosen
+  // provider's key and model.
+  .superRefine((settings, context) => {
+    const { key, model } = MODEL_SETTINGS[settings.MODEL_PROVIDER];
+    if (settings[key] !== '' && settings[model] !== '') {
+      return;
+    }
+    for (const step of ['AUTOMATIC_JUDGEMENT', 'SAME_EVENT_AI_CHOICE'] as const) {
+      if (settings[step]) {
+        context.addIssue({ code: 'custom', path: [step], message: `Needs ${key} and ${model}` });
+      }
+    }
+  })
   // With one client ID in both settings, either sign-in would accept the other's ID token.
   .refine((settings) => settings.GOOGLE_APP_CLIENT_ID !== settings.GOOGLE_ADMIN_CLIENT_ID, {
     path: ['GOOGLE_ADMIN_CLIENT_ID'],

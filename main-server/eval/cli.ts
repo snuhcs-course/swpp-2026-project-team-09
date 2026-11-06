@@ -5,6 +5,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { execFileSync } from 'node:child_process';
@@ -12,16 +13,18 @@ import { createInterface } from 'node:readline/promises';
 import { startVitest } from 'vitest/node';
 import { repetitionsOf, selectCases, sentTurnsOf, unlabelled } from './cases.ts';
 import { costOf, pricesOf, tokensPerTurn } from './cost.ts';
+import { MODEL_SETTINGS } from '../src/common/settings.ts';
 import { dotEnv, parseFlags, RUN_ENV, type RunOptions } from './options.ts';
 import { casesToRun } from './p4/holdout.ts';
 
 // `pnpm eval [flags]`: reads the flags against the branch's settings, shows what the run will cost and asks first,
 // then starts the benchmark's Vitest project (eval/vitest.config.ts) with the options in EVAL_RUN. See README.md,
-// "Benchmark". It never prints the OpenRouter key.
+// "Benchmark". It never prints the provider's key.
 
 const RESULTS = new URL('results/', import.meta.url);
 
 const PRICES_FROM = {
+  anthropic: "Anthropic's listed prices (eval/cost.ts)",
   openrouter: "OpenRouter's prices",
   fallback: "fallback prices (USD 5 and 25 per million tokens), the model not being in OpenRouter's list",
 };
@@ -49,12 +52,14 @@ async function confirmed(): Promise<boolean> {
 
 async function main(): Promise<number> {
   const env = dotEnv();
-  if ((env.OPENROUTER_API_KEY ?? '') === '') {
-    console.error('Set OPENROUTER_API_KEY in main-server/.env.');
+  const { options: flags, yes } = parseFlags(process.argv.slice(2), env);
+  const provider = flags.provider ?? 'openrouter';
+  const { key } = MODEL_SETTINGS[provider];
+  if ((env[key] ?? '') === '') {
+    console.error(`Set ${key} in main-server/.env.`);
     return 1;
   }
-  const { options: flags, yes } = parseFlags(process.argv.slice(2), env);
-  const options: RunOptions = { ...flags, prices: await pricesOf(flags.model), commit: commit() };
+  const options: RunOptions = { ...flags, prices: await pricesOf(provider, flags.model), commit: commit() };
   const cases = selectCases(casesToRun(options), options.categories, options.caseIds);
   // A suite before its labels are drafted (eval/p6/ before C0) loads and runs, but scores nothing: say so first.
   const unscored = unlabelled(cases).length;
@@ -75,10 +80,11 @@ async function main(): Promise<number> {
     },
     options.prices,
   );
-  const { model, temperature, topP, maxSteps, timeoutMs, maxOutputTokens } = options;
+  const { model, cache, temperature, topP, maxSteps, timeoutMs, maxOutputTokens } = options;
   console.log(
     [
-      `Model ${model}, temperature ${temperature ?? 'default'}, top-p ${topP ?? 'default'}`,
+      `Model ${model} through ${provider}, cache ${cache ?? 'off'}, ` +
+        `temperature ${temperature ?? 'default'}, top-p ${topP ?? 'default'}`,
       `Limits: ${maxSteps} steps, ${timeoutMs} ms, ${maxOutputTokens} output tokens per call`,
       `${cases.length} cases, ${turns} turns, about ${Math.round(perTurn.inputTokens)} input and ` +
         `${Math.round(perTurn.outputTokens)} output tokens a turn`,

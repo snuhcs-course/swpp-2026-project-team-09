@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -115,6 +116,50 @@ describe('The service step over one Draft, with AUTOMATIC_JUDGEMENT off', () => 
     const { id } = await world.prisma.globalEvent.create({ data: { title: '직접 만든 행사', description: '' } });
 
     await expect(judgements.judgeDraft(id)).rejects.toThrow('no post of its own');
+  });
+});
+
+describe('With only the Anthropic key', () => {
+  it('the Judgement runs', async () => {
+    const anthropicOnly = await startApp(
+      { ...world.posts.settings, MODEL_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: 'key', OPENROUTER_API_KEY: '' },
+      [],
+      undefined,
+      undefined,
+      silent.model,
+    );
+    const service = anthropicOnly.get((await import('../src/global-events/judgements.service.js')).JudgementsService);
+    const { id } = await storedDraft();
+    silent.script(answer());
+
+    let judgement;
+    try {
+      judgement = await service.judgeDraft(id);
+    } finally {
+      await anthropicOnly.close();
+    }
+
+    expect(judgement).toMatchObject({ outcome: 'judged', attempts: 1 });
+  });
+
+  it("without it, OpenRouter's being set, the Judgement is refused naming the key", async () => {
+    const keyless = await startApp(
+      { ...world.posts.settings, MODEL_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: '', OPENROUTER_API_KEY: 'key' },
+      [],
+      undefined,
+      undefined,
+      silent.model,
+    );
+    const service = keyless.get((await import('../src/global-events/judgements.service.js')).JudgementsService);
+    const { id } = await storedDraft();
+    silent.script();
+
+    try {
+      await expect(service.judgeDraft(id)).rejects.toThrow('ANTHROPIC_API_KEY');
+    } finally {
+      await keyless.close();
+    }
+    expect(silent.received()).toEqual([]);
   });
 });
 

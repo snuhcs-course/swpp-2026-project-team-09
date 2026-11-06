@@ -3,9 +3,11 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { type ModelCache, type ModelProvider } from '../../src/common/settings.ts';
 import { type CampusDefault } from '../../src/global-events/named-place.js';
 import { type Tokens } from '../cost.ts';
 import { type RunName, type RunOutcome, type RunScore } from './run.ts';
@@ -26,6 +28,10 @@ export interface RunRecord {
   startedAt: string;
   endedAt: string;
   part: string;
+  // Who the model was called through and what its requests cached (spec A01). Absent in a run before A01, which went
+  // through OpenRouter with nothing cached.
+  provider?: ModelProvider;
+  cache?: ModelCache;
   modelAsked: string;
   canonicalSlug: string | null;
   modelsAnswered: string[];
@@ -119,8 +125,9 @@ function recordLines(record: RunRecord): string[] {
     `| 커밋 | \`${record.commit}\` |`,
     `| 고정 세트 | 태그 \`${record.c0Tag}\`의 후손: ${record.isDescendantOfC0 ? '예' : '아니요'}. 정렬한 id의 SHA-256 \`${record.setHash}\`, ${record.part} |`,
     `| threshold 파일 | blob \`${record.thresholdsBlob}\` |`,
+    `| 경로 | ${record.provider ?? 'openrouter'}, 캐시 ${record.cache ?? 'off'} |`,
     `| 모델 | 요청 \`${record.modelAsked}\`, 목록의 canonical \`${record.canonicalSlug ?? '없음'}\`, 응답 \`${record.modelsAnswered.join(', ') || '없음'}\` |`,
-    `| 실행 제한 | ${record.limits.timeoutMs} ms, 출력 ${record.limits.maxOutputTokens} 토큰, 재시도 없음, 글당 한 번. 공급자 기본 디코딩 |`,
+    `| 실행 제한 | ${record.limits.timeoutMs} ms, 출력 ${record.limits.maxOutputTokens} 토큰, 429·529에만 한 번 재시도, 글당 한 번. 공급자 기본 디코딩 |`,
     `| 켠 설정 | ${JSON.stringify(record.switches)} |`,
     `| 캠퍼스 설정 | campusDefault ${JSON.stringify(record.campusDefault)} |`,
     `| 켠 검사 | ${record.checks.join(', ')} |`,

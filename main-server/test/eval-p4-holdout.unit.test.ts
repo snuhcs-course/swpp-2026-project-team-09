@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { casesIn, type EvalCase, loadCases } from '../eval/cases.ts';
@@ -88,12 +89,12 @@ describe('Kept apart', () => {
 
   it('runs its own 12 cases, and only with its own flag', () => {
     expect(casesToRun({ world: 'p4', holdout: true }).map(({ id }) => id)).toEqual(holdout.map(({ id }) => id));
-    expect(parseFlags(['--world', 'p4', '--holdout'], { ASSISTANT_MODEL: 'test/model' }).options.holdout).toBe(true);
-    expect(parseFlags(['--world', 'p4'], { ASSISTANT_MODEL: 'test/model' }).options.holdout).toBeUndefined();
+    expect(parseFlags(['--world', 'p4', '--holdout'], { ANTHROPIC_MODEL: 'test-model' }).options.holdout).toBe(true);
+    expect(parseFlags(['--world', 'p4'], { ANTHROPIC_MODEL: 'test-model' }).options.holdout).toBeUndefined();
   });
 
   it('refuses a holdout of a world that has none', () => {
-    expect(() => parseFlags(['--holdout'], { ASSISTANT_MODEL: 'test/model' })).toThrow('--holdout');
+    expect(() => parseFlags(['--holdout'], { ANTHROPIC_MODEL: 'test-model' })).toThrow('--holdout');
   });
 
   it('names its run apart from the official run of that commit', () => {

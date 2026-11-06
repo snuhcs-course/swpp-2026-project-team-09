@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
@@ -31,12 +32,15 @@ import { failureOf, type StepTrace } from '../eval/trace.ts';
 describe('The command line, from the settings', () => {
   it("takes each value left out from the branch's settings: .env, else the settings' defaults", () => {
     const { options, yes } = parseFlags([], {
+      ANTHROPIC_MODEL: 'claude-haiku-5-5',
       ASSISTANT_MODEL: 'anthropic/claude-haiku-5.5',
       ASSISTANT_MAX_STEPS: '30',
     });
 
     expect(options).toEqual({
-      model: 'anthropic/claude-haiku-5.5',
+      provider: 'anthropic',
+      cache: 'breakpoints',
+      model: 'claude-haiku-5-5',
       temperature: null,
       topP: null,
       maxSteps: 30,
@@ -57,7 +61,7 @@ describe('The command line, from the flags', () => {
     const { options, yes } = parseFlags(
       // prettier-ignore
       [
-        '--model', 'openai/gpt-x', '--temperature', '0.2', '--top-p', '0.9', '--max-steps', '30',
+        '--provider', 'openrouter', '--model', 'openai/gpt-x', '--temperature', '0.2', '--top-p', '0.9', '--max-steps', '30',
         '--timeout', '60000', '--max-output-tokens', '2000', '--repeat', '5', '--budget', '1.5',
         '--category', 'menus,shuttle', '--category', 'small-talk', '--case', 'menus-today-lunch', '--yes',
         '--world', 'p4',
@@ -66,6 +70,8 @@ describe('The command line, from the flags', () => {
     );
 
     expect(options).toEqual({
+      provider: 'openrouter',
+      cache: 'off',
       model: 'openai/gpt-x',
       temperature: 0.2,
       topP: 0.9,
@@ -88,7 +94,7 @@ describe('The command line, from the flags', () => {
     [['--unknown']],
     [['--world', 'large']],
   ])('refuses %j', (argv) => {
-    expect(() => parseFlags(argv, { ASSISTANT_MODEL: 'a/b' })).toThrow();
+    expect(() => parseFlags(argv, { ANTHROPIC_MODEL: 'm', ASSISTANT_MODEL: 'a/b' })).toThrow();
   });
 
   it('refuses a run with no model', () => {
