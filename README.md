@@ -27,9 +27,10 @@ The fastest way to try the app needs no build and no server of your own:
    on an ARM Android phone ([APKs](#apks)). It talks to Production at `https://api.snunow.com` and updates its
    JavaScript by itself.
 2. Sign in with an SNU Google account, on the Gwanak campus: nobody is shown outside the Campus Boundary.
-3. Alone, you can try the 새내기 튜토리얼 (offered to this year's students, or turned on from 내 정보), 관정도서관
-   booking (with an SNU account that can log in to the library), SNU Now AI's answers about menus, the shuttle, events
-   and parties, the map's 식당, 셔틀버스 and 공부공간 layers, the timetable and opening a party.
+3. Alone, you can try the 새내기 튜토리얼 (offered when the admission year is this year or later or the 소속 is
+   교환학생, or turned on from 내 정보), 관정도서관 booking (with an SNU account that can log in to the library), SNU
+   Now AI's answers about menus, the shuttle, events and parties, 공강 파티 (with today's classes in the timetable and a
+   party or event in a gap), the map's 식당, 셔틀버스 and 공부공간 layers, the timetable and opening a party.
 4. With a second account you can try Friends, Location Sharing, 공강에 밥, joining a party and an active party.
    [The three demo flows](#the-three-demo-flows) say what each flow needs.
 
@@ -64,27 +65,20 @@ and [Running the app](#running-the-app); the build needs the team's Kakao keys.
 ### New in Iteration 3
 
 Iteration 3, "Advanced Testing and Evaluation", ran from 2026-10-24 to 2026-11-06, and its work was merged into
-`3.0/Main` between 2026-10-27 and 2026-11-06. What it added, each AI feature with its measured result:
+`3.0/Main` between 2026-10-27 and 2026-11-06. What it added is described once, in
+[Features](#features-at-the-end-of-iteration-3), and measured in [Evaluation](#evaluation):
 
-- **공강 파티 and 공강에 밥**: the Assistant finds what fits a gap between two classes and the Friends free for a meal,
-  while the server computes the free time, the walking times and what fits; 75.0% of 120 runs, target 80% missed
-  ([Evaluation](#evaluation)).
-- **Join or recruit**: asked to recruit, the Assistant first shows a party the User could join; searches take a time
-  window and say what they matched; 118 → 246 of 300 runs in the small world ([Evaluation](#evaluation)).
-- **관정도서관**: free seats, seat maps, booking, cancelling and returning from cards the phone fills, after the
-  library's own login; 140 of 192 runs, 5 of 9 thresholds met, provisionally ([Evaluation](#evaluation)).
-- **새내기 튜토리얼**: fifteen tutorial quests in five categories, with a pin at each one's place; the Assistant answers
-  about them from the tutorial's text, measured with 관정도서관 ([Evaluation](#evaluation)).
-- **Automatic publication**: a collected event whose time and place the rules read is published without an
-  Administrator, an event over a period too, and the admin site shows each event's Publication Route
-  ([Evaluation](#evaluation) measures the Judgements and same-event rules that would go further).
-- **Walking and shuttle times**: a walking table fitted to calibration walks, within 2 minutes on 24 of 30 test walks,
-  and shuttle rides from two logged days; on `3.0/Main`, not released yet ([Evaluation](#evaluation)).
-- **The 공부공간 layer**: the campus's study spaces by building, with their hours, who may use them and 관정관's free
-  seats.
-- **프로필 편집**: a 학번, a 학적상 이름 and a 소속, kept privately, for group study rooms and the tutorial.
-- **OTA updates**: the app's JavaScript reaches phones by EAS Update, without a new APK.
-- **시설 예약하기**: a Proposal at a Place with an online booking page links to it.
+- 공강 파티 and 공강에 밥, join or recruit, 관정도서관 booking and the answers about the tutorial: SNU Now AI's
+  "Added in Iteration 3" items.
+- The 새내기 튜토리얼 and the 관정도서관 login: their own entries.
+- Automatic publication, events over a period and the Publication Route: Global Events and the admin site.
+- The 공부공간 layer: Dining, shuttle and study spaces.
+- 프로필 편집: Sign-in and Onboarding.
+- OTA updates: Updates.
+- 시설 예약하기: SNU Now AI's last item.
+
+What merged after the last Release, `snunow/all/26.11.04-1` (`803490b5`), is on `3.0/Main` and not released yet:
+P11's walking and shuttle times and P12's changes to the searches and the recruiting replies. Features marks each.
 
 ### Features at the end of Iteration 3
 
@@ -118,18 +112,20 @@ Iteration 3, "Advanced Testing and Evaluation", ran from 2026-10-24 to 2026-11-0
   Events and recruiting parties, and turns one sentence into a Proposal that the User makes or edits. 50 messages per
   User a day; the conversation stays on the phone. Its replies render bold, lists and links. Added in Iteration 3:
   - searches take a time window and leave out full parties, parties already started and those the User cannot enter;
-    each result says which words it matched, and a search with too many results says how to narrow it;
+    on `3.0/Main`, not released yet, each result says which words it matched, and a search with too many results
+    says how to narrow it;
   - asked to recruit, it first shows the parties with room that the User could join, and makes a Proposal only when
-    none fits or the User asks for a new one; when an approval party is shown, the reply says the Leader accepts each
-    request;
+    none fits or the User asks for a new one; on `3.0/Main`, not released yet, when an approval party is shown, the
+    reply says the Leader accepts each request;
   - **공강 파티**: the parties and events the User can reach in a gap between two classes and still be back in time,
-    each card with a 이동 시간 box, on foot or by shuttle;
+    each card with a 이동 시간 box, on foot or by shuttle; the walking table fitted to calibration walks and the
+    shuttle rides from two logged days are on `3.0/Main`, not released yet;
   - **공강에 밥**: the Friends free at lunch or dinner, the time they share, and Restaurant cards with the menu and each
     person's walking time; 파티 만들기 fills in a 비공개 파티 there with them invited. It never tells a Friend's classes
     or position;
   - **관정도서관**: free seats, seat maps with seat numbers, and booking, cancelling and returning seats and rooms from
     cards that the phone fills and sends; a group study room is booked with Friends, each asked to share their 학번;
-  - answers about the 새내기 튜토리얼's tutorial quests, from the tutorial's text;
+  - answers about the 새내기 튜토리얼's quests, from the tutorial's text;
   - a Proposal at a Place with an online booking page carries a 시설 예약하기 link.
 - **새내기 튜토리얼**: fifteen tutorial quests in five categories (생활, 공부·학사, 이동, 건강, 문화·여가) in a pager,
   offered to Users whose admission year is this year or later or whose 소속 is 교환학생, and turned on by anyone from
@@ -164,13 +160,14 @@ Each flow is what Users do with the app on campus. Each says what it needs; the 
    the tutorial quests by category and starts some; 지도에서 보기 drops a pin on a tutorial quest's place, and
    완료했어요 completes it. The User asks SNU Now AI about a tutorial quest, then "7A 열람실 2 구역 오늘 5시부터 두 시간
    잡아줘", logs in on the library's own page, sees the free seats on the seat map, taps a seat and presses 예약하기.
-   Later, "반납해줘" returns it.
+   Later, "취소해줘" cancels the booking.
    - Needs: one SNU Google account whose admission year is this year (or with the tutorial turned on from 내 정보),
      and an SNU account that can log in to the library.
 2. **공강에 밥 and 공강 파티**: two Friends with timetables. One asks "오늘 점심에 누구 돼?" and the Assistant names the
    Friend who is free; "(the Friend's name)랑 밥" gives the time they share and Restaurant cards with menus and walking
-   times. 파티 만들기 opens a filled-in 비공개 파티 with the Friend invited. Then "오늘 두 수업 사이에 갈 수 있는 파티
-   있어?" lists the parties and events that fit the gap, each with its 이동 시간, and the User joins one from its card.
+   times. 파티 만들기 opens a filled-in 비공개 파티 with the Friend invited. Then "오늘 (one class)이랑 (the next
+   class) 사이에 갈 수 있는 파티 있어?" lists the parties and events that fit the gap, each with its 이동 시간, and the
+   User joins one from its card.
    - Needs: two SNU Google accounts that are Friends, each with today's classes in its timetable (the demo data makes
      no classes), and a recruiting party or an event in the gap.
 3. **Join or recruit**: a collected event is published on its own after a Collection, and the admin site shows its
@@ -210,23 +207,26 @@ Every AI feature of Iteration 3 has an evaluation set frozen before its first ru
 it was measured, improved from its failures and measured again. A **development** reading scores the set the changes
 were chosen from; a **held-out** reading scores cases no change was made from. All model runs used Claude Haiku 5.5
 through OpenRouter with the provider's default decoding. Each row's record holds the commits, commands, costs and every
-failure.
+failure. The P11 and P12 figures measure code merged after Release `snunow/all/26.11.04-1`: it is on `3.0/Main`, not
+yet in Production.
 
-| What it tests                                                        | Reading      | Before → after                                                                                                                   | Target                                                 | Met                                                                       | Record                                                                                                 |
-| -------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 공강 파티 · 공강에 밥, 40 cases × 3                                  | Development  | 85/120 (70.8%) → 92/120 (76.7%) in P11; 90/120 (75.0%) on the latest run, with 공강 파티 32/45 and 공강에 밥 37/45               | ≥ 80% overall, ≥ 70% each category                     | Overall no, categories yes; runs of the same code range from 67.5% to 80% | [p4/record.md](main-server/eval/p4/record.md), [p5/p12.md](main-server/eval/p5/p12.md) (P4 suite)      |
-| The same, 12 reworded cases × 3                                      | Held-out     | 23/36 (63.9%) → 27/36 (75.0%)                                                                                                    | None: read only                                        | —                                                                         | [p4/record.md](main-server/eval/p4/record.md) (The holdout)                                            |
-| Walking times, 30 test walks                                         | Held-out     | MAE 168.5 s → 70.4 s (straight line 124.6 s); within ±2 min 14 → 24 of 30; within min(25%, 2 min) 3 → 16 of 30                   | ≥ 70% within ±2 min and MAE below the straight line's  | Yes; the stricter min(25%, 2 min) no                                      | [P11 before-after](.scratch/iteration-3/P11-free-time-meals-parties-improve/before-after.md)           |
-| Shuttle times, leave-one-day-out over 2 logged days                  | Held-out day | Ride MAE 55.7 s → 30.8 s; wait MAE 272.2 s → 347.0 s                                                                             | Each MAE below its baseline                            | No: the wait is worse, so the app keeps the fixed waits                   | [P11 before-after](.scratch/iteration-3/P11-free-time-meals-parties-improve/before-after.md)           |
-| Join or recruit, and search: 100 small-world, 80 large-world cases   | Development  | Small world 118/300 → 227/300 (P05), 225/300 → 246/300 (P12); large world 55/240 → 160/240 (P05), 156/240 → 162/240 (P12)        | A floor and a target per measure                       | Every floor but J9's model answer and J10; several targets missed         | [p5/r1.md](main-server/eval/p5/r1.md) (P05), [p5/p12.md](main-server/eval/p5/p12.md) (P12)             |
-| Automatic publication: Judgements of Drafts, 64 sessions in 60 posts | Development  | Published without an Administrator 27/64 → 40/64; wrongly published 0/27 → 1/41, 0/41 once a-021's answer-key error is corrected | ≥ 60% published, none wrongly                          | Yes, once corrected                                                       | [p5/p12.md](main-server/eval/p5/p12.md), [collection/README.md](main-server/eval/collection/README.md) |
-| The same event posted twice, 32 true pairs                           | Development  | Pairs reaching comparison 8/32 → 10/32; found, queue included, 8/32 → 9/32; wrong merges 0                                       | ≥ 95% reaching comparison, ≥ 80% found, no wrong merge | Only no wrong merge                                                       | [p5/p12.md](main-server/eval/p5/p12.md), [collection/README.md](main-server/eval/collection/README.md) |
-| 관정도서관 and the tutorial, 64 cases × 3                            | Development  | 4/192 (2.1%, before the tools existed) → 140/192 (72.9%)                                                                         | 9 thresholds                                           | 5 of 9, provisionally (2026-11-02)                                        | [p6/r1.md](main-server/eval/p6/r1.md)                                                                  |
+| What it tests                                                              | Reading      | Before → after                                                                                                                   | Target                                                                              | Met                                                                                                                                                                          | Record                                                                                                 |
+| -------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 공강 파티 · 공강에 밥, 40 cases × 3                                        | Development  | 85/120 (70.8%) → 92/120 (76.7%) in P11; 90/120 (75.0%) on the latest run, with 공강 파티 32/45 and 공강에 밥 37/45               | ≥ 80% overall, ≥ 70% each category                                                  | Overall no, categories yes; runs of the same 40 cases range from 67.5% to 80%; change 1's code, run twice, gave 80.0% and 76.7%                                              | [p4/record.md](main-server/eval/p4/record.md), [p5/p12.md](main-server/eval/p5/p12.md) (P4 suite)      |
+| The same, 12 reworded cases × 3                                            | Held-out     | 23/36 (63.9%) → 27/36 (75.0%)                                                                                                    | None: read only                                                                     | —                                                                                                                                                                            | [p4/record.md](main-server/eval/p4/record.md) (The holdout)                                            |
+| Walking times, 30 test walks                                               | Held-out     | MAE 168.5 s → 70.4 s (straight line 124.6 s); within min(25%, 2 min) 3 → 16 of 30 (within ±2 min, beside it: 14 → 24)            | ≥ 70% within min(25%, 2 min) and MAE below the straight line's (revised 2026-11-05) | No: 16/30; MAE met; under the original ±2 min, 24/30                                                                                                                         | [P11 before-after](.scratch/iteration-3/P11-free-time-meals-parties-improve/before-after.md)           |
+| Shuttle times, leave-one-day-out over 2 logged days                        | Held-out day | Ride MAE 55.7 s → 30.8 s; wait MAE 272.2 s → 347.0 s                                                                             | Each MAE below its baseline                                                         | No: the wait is worse, so the app keeps the fixed waits                                                                                                                      | [P11 before-after](.scratch/iteration-3/P11-free-time-meals-parties-improve/before-after.md)           |
+| Join or recruit, and search: 100 cases in the small world, 80 in the large | Development  | Small world 118/300 → 227/300 (P05), 225/300 → 246/300 (P12); large world 55/240 → 160/240 (P05), 156/240 → 162/240 (P12)        | A floor and a target per measure                                                    | Every floor but two: the model's own reply on approval parties, 8/21 (≥ 0.7), and searches narrowed by a condition the User never said, 3/12 (≤ 0.1); several targets missed | [p5/r1.md](main-server/eval/p5/r1.md) (P05), [p5/p12.md](main-server/eval/p5/p12.md) (P12)             |
+| Automatic publication: Judgements of Drafts, 64 sessions in 60 posts       | Development  | Published without an Administrator 27/64 → 40/64; wrongly published 0/27 → 1/41, 0/41 once a-021's answer-key error is corrected | ≥ 60% published, none wrongly                                                       | Yes, once corrected; C6's floor (events over a period) missed, 61/85                                                                                                         | [p5/p12.md](main-server/eval/p5/p12.md), [collection/README.md](main-server/eval/collection/README.md) |
+| The same event posted twice, 32 true pairs                                 | Development  | Pairs reaching comparison 8/32 → 10/32; found, queue included, 8/32 → 9/32; wrong merges 0                                       | ≥ 95% reaching comparison, ≥ 80% found, no wrong merge                              | Only no wrong merge                                                                                                                                                          | [p5/p12.md](main-server/eval/p5/p12.md), [collection/README.md](main-server/eval/collection/README.md) |
+| 관정도서관 and the tutorial, 64 cases × 3                                  | Development  | 4/192 (2.1%, before the tools existed) → 140/192 (72.9%)                                                                         | 9 thresholds                                                                        | 5 of 9, provisionally (2026-11-02)                                                                                                                                           | [p6/r1.md](main-server/eval/p6/r1.md)                                                                  |
 
-The last two collection rows measure code that is off in Production: the Judgements ran with `AUTOMATIC_JUDGEMENT`
-on, and the same-event rows with `SAME_EVENT_TITLE_RULE` and `SAME_EVENT_AI_CHOICE` on. Production publishes by the
-rules alone ([Known limitations and todos](#known-limitations-and-todos)). Case a-021 was ruled an answer-key error
-on 2026-11-06 (151 미술관 is the right place), which is why `AUTOMATIC_PUBLICATION` stays on.
+The join suite runs in two worlds of test data, which never reach a server: the small world, about 90 parties and events
+of its own, and the large world, 1,000 parties and 307 events. The two collection rows (automatic publication and the
+same event) measure code that is off in Production: the Judgements ran with `AUTOMATIC_JUDGEMENT` on, and the same-event
+row with `SAME_EVENT_TITLE_RULE` and `SAME_EVENT_AI_CHOICE` on; Production's switches are in [Known limitations and
+todos](#known-limitations-and-todos). Case a-021 was ruled an answer-key error on 2026-11-06 (151 미술관 is the right
+place), which is why `AUTOMATIC_PUBLICATION` stays on.
 
 ## Known limitations and todos
 
@@ -292,13 +292,13 @@ What the demo cannot show, and what is known not to work yet:
   Anthropic API (A01) is in review. A meeting place and time proposed for an existing party is not built; for a meal,
   공강에 밥 proposes a Restaurant and a time.
 - **Walking and shuttle times are estimates** ([Evaluation](#evaluation)). The figures there are for `3.0/Main` and
-  not released yet: Production still uses the earlier walking table, within 2 minutes on 14 of 30 test walks, and has
-  no logged shuttle times. The shuttle's waits are the operator's fixed values in both.
-- **관정도서관.** The library's cards need the app 1.0.1 or later, whose native part has the web view. Booking works
-  only for the spaces in the catalogue: a space that cannot be booked online gets a 현장 이용 answer, others 아직
-  미구현. A party holds at most 8, so a group study room for 9 or more is refused and the 20인실 is not offered. The
-  tutorial's 관정 tutorial quest is completed by 완료했어요; the phone's check of the User's bookings is off. A
-  forgotten seat is not announced, since there are no push notifications.
+  not released yet: Production still uses the earlier walking table, within min(25%, 2 min) on 3 of 30 test walks
+  (±2 min: 14), and has no logged shuttle times. The shuttle's waits are the operator's fixed values in both.
+- **관정도서관.** The library's cards need the app 1.0.1 or later, whose native part has the web view. Booking works only for
+  the spaces in the catalogue: a space that cannot be booked online gets a 현장 이용 answer, others 아직 미구현. A party holds at
+  most 8, so a group study room for 9 or more is refused and the 20인실 is not offered. The tutorial's 관정 quest is
+  completed by 완료했어요; the phone's check of the User's bookings is off. A forgotten seat is not announced, since there
+  are no push notifications.
 - **Timetable reading.** Photos of a screen, a professor's name printed inside a block and two overlapping classes
   drawn side by side are not read; the last are reported as left out. A real dark-mode screenshot is not yet among the
   test screenshots.
@@ -787,13 +787,13 @@ hand, and move Production to another AWS account.
 
 ## AI-generated code
 
-Everything the team wrote in this repository is AI-generated, except the gold labels of evaluations A and B: the code,
-the tests, the CI workflow, the specs and tickets in `.scratch/`, and the documents, this one among them. It was
-written with Claude Code (Claude Fable 5.1 and Claude Opus 5.5) from 2026-09-28 on, and the wireframes were drawn with
-Claude Design. Each source file starts with a box comment headed `AI-generated with Claude`, with a row for each day an
-agent changed the file: the date, the Claude model, and the GitHub ID of the team member who prompted it. Markdown,
-JSON, lockfiles, Prisma migrations, and test fixtures carry no box and are marked by this section, and every commit of
-the team carries a `Co-Authored-By: Claude` trailer.
+Everything the team wrote in this repository is AI-generated: the code, the tests, the CI workflow, the specs and
+tickets in `.scratch/`, and the documents, this one among them. The exception is the gold labels of evaluations A and B
+(below). It was written with Claude Code (Claude Fable 5.1 and Claude Opus 5.5) from 2026-09-28 on, and the wireframes
+were drawn with Claude Design. Each source file starts with a box comment headed `AI-generated with Claude`, with a row
+for each day an agent changed the file: the date, the Claude model, and the GitHub ID of the team member who prompted
+it. Markdown, JSON, lockfiles, Prisma migrations, and test fixtures carry no box and are marked by this section, and
+every commit of the team carries a `Co-Authored-By: Claude` trailer.
 
 The team decided what to build, reviewed the specs and the table schemas, and checked the result on phones. People
 also made the product decisions, such as the words party, active party and Quest, where API keys go and how much the
