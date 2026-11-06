@@ -6,6 +6,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -172,7 +173,7 @@ async function sendTurn(
   const ok = response.status === 200;
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the endpoint's reply, which its e2e tests check
   const body = response.body as AssistantReplyDto;
-  const reply: ReplyTrace | null = ok ? { ...body, textLength: body.text.length } : null;
+  const reply: ReplyTrace | null = ok ? { ...body, textLength: body.text.length, ...recorder.takeReply() } : null;
   const last = messages.at(-1);
   const trace: TurnTrace = {
     user: last?.role === 'user' ? last.text : '',

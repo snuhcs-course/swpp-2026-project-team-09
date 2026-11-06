@@ -3,8 +3,10 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { NoObjectGeneratedError } from 'ai';
 import { z } from 'zod';
 import { causeOf, type Model } from '../../src/assistant/adapter.js';
 import { judgementAnswerSchema } from '../../src/global-events/judgement-answer.js';
@@ -28,6 +30,8 @@ export const storedJudgementSchema = z.strictObject({
   answer: judgementAnswerSchema.nullable(),
   failure: z.string().nullable(),
   modelId: z.string().nullable(),
+  // What the model wrote when its answer failed the schema, for the failure analysis. Runs saved before it have none.
+  rawText: z.string().nullable().optional(),
 });
 
 export type StoredJudgement = z.infer<typeof storedJudgementSchema>;
@@ -98,16 +102,22 @@ export class ModelCalls {
         const call = await askForJudgement(model, masked, post.source, post.now, this.settings.limits);
         return { answer: call.answer, failure: null, modelId: call.modelId };
       } catch (error) {
-        return { answer: null, failure: causeOf(error), modelId: null };
+        const rawText = NoObjectGeneratedError.isInstance(error) ? (error.text ?? null) : null;
+        return { answer: null, failure: causeOf(error), modelId: null, rawText };
       }
     });
     this.judgements.set(post.post, stored);
     return stored;
   }
 
+  // Saved choices that leave out a session asked about now, as one the step did not compare before, are none.
   async sameEvent(post: string, question: SameEventQuestion): Promise<SessionChoice[]> {
     const saved = this.choices.get(post);
-    if (saved !== undefined) {
+    const covers = (choices: SessionChoice[]): boolean =>
+      question.sessions.every(({ startsAt }) =>
+        choices.some((choice) => choice.startsAt.getTime() === startsAt.getTime()),
+      );
+    if (saved !== undefined && covers(saved.choices)) {
       return saved.choices;
     }
     const model = this.available(post);
