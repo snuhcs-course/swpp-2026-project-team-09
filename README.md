@@ -13,8 +13,9 @@ one sentence, finds what fits a gap between classes (공강 파티) and the Frie
 classes, read on the phone. The app's screens are in Korean.
 
 In this README, as in the team's documents, a **party** is any gathering of Users, and a **Quest** is only an item of
-the User's to-do list. The code, the API and the database keep their Iteration 1 names, and so does [GLOSSARY.md](GLOSSARY.md), which defines them: a party is a Quest
-(`quests`), its members are Holders, its steps (일정) are Sub Quests, and an active party is a Party (`parties`).
+the User's to-do list. The code, the API and the database keep their Iteration 1 names, and so does
+[GLOSSARY.md](GLOSSARY.md), which defines them: a party is a Quest (`quests`), its members are Holders, its steps (일정)
+are Sub Quests, and an active party is a Party (`parties`).
 
 The system is an Android and iOS app, four servers (main, socket, worker and match) with PostgreSQL and Redis, and an
 admin site for Administrators.
