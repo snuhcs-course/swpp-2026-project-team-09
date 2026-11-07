@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type CardsExpectation, type LibraryConditions } from './expect.ts';
@@ -11,8 +12,10 @@ import { dayOf, isRecord, minutesOf, spaceIdOf, startOf, wordsOf } from './reade
 // The library card of a reply (P06 spec, "Cards and the API contract"), read one way, and the matcher of the
 // `expect.cards` kind `library`. A card is `{ kind: 'library', library: { key, action, space: { id, … }, date, start,
 // minutes, seat, useDesc, companions: [{ friendId, name }], questId, target } }`; a field the card lacks is read from its
-// key, `<action>:<space id>:<YYYY-MM-DD>:<HHMM>:<minutes>`, such as book:7F-7A-zone2:2026-11-04:1700:60. Friends and
-// the Quest are read as seed names, dates as YYYY-MM-DD and starts as HH:MM.
+// key, `<action>:<space id>:<YYYY-MM-DD>:<HHMM>:<minutes>`, such as book:7F-7A-zone2:2026-11-04:1700:60, which may end
+// in the optional segments `s=<seat>` and `e=<equipment>` that src/assistant/library/library-card.ts writes, such as
+// book:7F-7A-zone2:2026-11-04:1800:180:s=7300. Friends and the Quest are read as seed names, dates as YYYY-MM-DD and
+// starts as HH:MM.
 
 export interface LibraryCardSeen {
   action: unknown;
@@ -28,13 +31,29 @@ export interface LibraryCardSeen {
   target: { date: unknown; space: unknown; start: unknown } | null;
 }
 
+type KeyPart = 'action' | 'space' | 'date' | 'start' | 'minutes' | 'seat' | 'equipment';
+
+// The optional segments after the five fixed ones, by their prefix.
+const NAMED: Record<string, KeyPart> = { 's=': 'seat', 'e=': 'equipment' };
+
 // The parts of a card's key, those it lacks left out.
-function keyParts(key: unknown): Partial<Record<'action' | 'space' | 'date' | 'start' | 'minutes', string>> {
+function keyParts(key: unknown): Partial<Record<KeyPart, string>> {
   if (typeof key !== 'string') {
     return {};
   }
-  const [action, space, date, start, minutes] = key.split(':');
-  const given = { action, space, date, start, minutes };
+  const [action, space, date, start, minutes, ...rest] = key.split(':');
+  const named = Object.entries(NAMED).map(([prefix, part]): [KeyPart, string | undefined] => [
+    part,
+    rest.find((segment) => segment.startsWith(prefix))?.slice(prefix.length),
+  ]);
+  const given: Record<string, string | undefined> = {
+    action,
+    space,
+    date,
+    start,
+    minutes,
+    ...Object.fromEntries(named),
+  };
   return Object.fromEntries(Object.entries(given).filter(([, part]) => part !== undefined && part !== ''));
 }
 
@@ -65,9 +84,13 @@ function targetOf(target: unknown): LibraryCardSeen['target'] {
   };
 }
 
-function equipmentOf(card: Record<string, unknown>, space: unknown): unknown {
-  if (card.equipment !== undefined) {
+// The card's equipment field, else its key's, else the space's group.
+function equipmentOf(card: Record<string, unknown>, space: unknown, fromKey: string | undefined): unknown {
+  if (card.equipment !== undefined && card.equipment !== null) {
     return wordsOf(card.equipment);
+  }
+  if (fromKey !== undefined) {
+    return wordsOf(fromKey);
   }
   return isRecord(space) ? (wordsOf(space.equipment ?? space.group) ?? null) : null;
 }
@@ -87,8 +110,8 @@ export function libraryCardOf(card: unknown, names: Names): LibraryCardSeen | nu
     date: orNull(dayOf(library.date ?? fromKey.date)),
     start: orNull(startOf(library.start ?? fromKey.start)),
     minutes: orNull(minutesOf(library.minutes ?? fromKey.minutes)),
-    seat: orNull(wordsOf(library.seat)),
-    equipment: orNull(equipmentOf(library, space)),
+    seat: orNull(wordsOf(library.seat ?? fromKey.seat)),
+    equipment: orNull(equipmentOf(library, space, fromKey.equipment)),
     useDesc: orNull(wordsOf(library.useDesc)),
     companions: companionsOf(library.companions, names),
     quest: seedOrId(library.questId, names),

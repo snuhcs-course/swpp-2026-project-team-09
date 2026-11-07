@@ -2490,6 +2490,7 @@ worlds. The record is in `eval/p5/README.md`.
 
 ```sh
 pnpm eval:score eval/results/<run>.json             # score a saved run again, writing <run>.md beside it
+pnpm eval:score --revised eval/results/<run>.json   # against the case files' labels now, revisions included: <run>.revised.md
 pnpm eval:compare eval/results/<a>.json eval/results/<b>.json   # two runs side by side, with the differences
 ```
 

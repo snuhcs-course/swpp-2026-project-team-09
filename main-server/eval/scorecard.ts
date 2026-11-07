@@ -5,6 +5,7 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { LARGE_WORLD } from './p5/large-world/world-data.ts';
@@ -14,6 +15,7 @@ import { p4Report } from './p4/report.ts';
 import { holdoutScorecard, p4Section } from './p4/report-section.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { outcomeOf } from './normalise.ts';
+import { withCurrentLabels } from './relabel.ts';
 import {
   allCategories,
   averagesOf,
@@ -307,10 +309,12 @@ export function scorecard(score: RunScore): string {
   return `${sections.filter((section) => section !== '').join('\n\n')}\n`;
 }
 
-// Scores a saved raw run again and writes its scorecard beside it, as <run>.md; answers the file.
-export function saveScorecard(file: URL): URL {
-  const score = scoreRun(JSON.parse(readFileSync(file, 'utf8')));
-  const written = new URL(file.href.replace(/\.json$/u, '.md'));
+// Scores a saved raw run again and writes its scorecard beside it, as <run>.md; answers the file. With `revised`, it
+// scores the run against the case files' labels as they are now (eval/relabel.ts) and writes <run>.revised.md.
+export function saveScorecard(file: URL, { revised = false }: { revised?: boolean } = {}): URL {
+  const saved: unknown = JSON.parse(readFileSync(file, 'utf8'));
+  const score = scoreRun(revised ? withCurrentLabels(saved) : saved);
+  const written = new URL(file.href.replace(/\.json$/u, revised ? '.revised.md' : '.md'));
   writeFileSync(written, scorecard(score));
   return written;
 }
