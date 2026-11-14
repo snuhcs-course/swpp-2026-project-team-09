@@ -23,12 +23,14 @@ PR approval pairs: B's two people approve each other's PRs, and C and D approve 
 - What runs for real on two phones by Sunday night is one path: two people eating together. Asking, drawing on the map, dragging the time band, inviting, and accepting.
 - Re-planning after a decline and "5분 늦어" (I'm 5 minutes late) are nice to have by Sunday. Gatherings of three or more, mixing in the shuttle, count circles for grouped results (design section 5, Many results on the map), the Avatar's three looks (a green ring with a live dot for exact location, a green ring on the building for the building level, and a dashed ring for Timetable only), dashed lines, push notifications, interests, and first run come after Sunday.
 
-## 3. What to settle first (by Saturday noon, in one PR by A)
+## 3. What to settle first (on Saturday, in A's first PR)
+
+Every package builds against real answers from the real server. No package builds against a fake response.
 
 1. Contract types: the request context (my location, the visible map area, the tapped building or person, the condition chips, and the plan id), the answer (AnswerReply), the map scene (MapScene), and the plan (Plan) with its input (PlanInput). The files are `mobile/src/api/assistant-types.ts` and `main-server/src/assistant/dto/assistant-messages.dto.ts`.
-2. One mock: "화 11:50 배고파, 민수랑 같이" (Tue 11:50, I'm hungry, with Minsu). A fake server response with the same shape as the app's mock (`mobile/src/api/mock/assistant.ts`).
-3. The promises between packages, as types and empty functions that return fake responses: FriendView, `POST /plans`, `GET /quest-invitations/:id`, `POST /quests/:id/late`, the notification service (schedule, replace, cancel), the address a notification opens, `/main?card=<kind>:<id>`, and the signal names (invitation-accepted, invitation-declined, plan-changed, late, notice).
-4. Empty slots each package fills on its own: a mock scene file per package, answer rule files, signal handler files, and empty module registrations. This cuts the times one person has to ask another for a line in their file.
+2. One example, computed for real: "화 11:50 배고파, 민수랑 같이" (Tue 11:50, I'm hungry, with Minsu). A's first PR makes the server return the real answer for it. The app's mock data (`mobile/src/api/mock/assistant.ts`), which only the tests, Expo Go, and the web use, is a copy of that real answer.
+3. The promises between packages, as types: FriendView, `POST /plans`, `GET /quest-invitations/:id`, `POST /quests/:id/late`, the notification service (schedule, replace, cancel), the address a notification opens, `/main?card=<kind>:<id>`, and the signal names (invitation-accepted, invitation-declined, plan-changed, late, notice). Each owner builds the real one, and nothing returns a fake response in its place.
+4. Empty slots each package fills on its own: a test-data file per package, answer rule files, signal handler files, and empty module registrations. This cuts the times one person has to ask another for a line in their file.
 5. Test setup: two test accounts that are Friends of each other, and the Tuesday example Timetables (me: building 301 11:00–11:50, next class 13:00 in building 24. Minsu (민수): building 302 11:00–12:15).
 
 The five states of a party member map onto today's tables like this: invited is a pending invitation, accepted is a member, declined is a decline record, N minutes late is the member's late minutes, and dropped out is removal from the members.
@@ -48,8 +50,8 @@ The five states of a party member map onto today's tables like this: invited is 
 
 | | A. Engine and contract | B. The answer screen on the map | C. Invitations, parties, and Friends' locations | D. Notifications, bookings, and interests |
 |---|---|---|---|---|
-| Sat noon | Merge the contract PR | Read the contract and the mock | Read the contract | Read the contract |
-| Sat night | The gathering calculation (with a test of the Tue 11:50 example), an endpoint that recalculates without the model, the tools return real answers | The answer frame on a phone from the mock: solid colored routes, numbered dots, time flags, fitting between the pill and the card, hiding the list | `POST /plans` (the party, its two steps, and the invitations at once), reading an invitation, the accept and decline signals | Row 2's seat card filled with the longest time, counted from the arrival, the skeleton of the notification service |
+| Sat afternoon | The first PR: the contract types, and the gathering calculation that returns the real answer for the Tue 11:50 example, with its test | The answer frame (the pill, the card, and hiding the lists) with today's real answers inside the new card | Read the contract | Read the contract |
+| Sat night | An endpoint that recalculates without the model, the tools return real answers | A's real answer drawn on a phone: solid colored routes, numbered dots, time flags, fitting between the pill and the card, hiding the list | `POST /plans` (the party, its two steps, and the invitations at once), reading an invitation, the accept and decline signals | Row 2's seat card filled with the longest time, counted from the arrival, the skeleton of the notification service |
 | Sun 15:00 | Connect everything end to end once, midway | Connect it with A | | |
 | Sun night | The tools read Friends only through FriendView, integration | The time band (dropping it recalculates), the condition chips and "＋ 같이" (+ together), "이대로 초대" (invite as is), the card of a received invitation | Carrying the member states on the party, FriendView (read from today's on and off) | Check that a received invitation shows in today's notification list, the text of each notification kind |
 | Nice to have | Re-planning after a decline, the preview and confirmation of being late | The one-line plan after closing | Reporting lateness | Keeping the time to leave in the list |
