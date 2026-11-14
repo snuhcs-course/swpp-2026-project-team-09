@@ -93,7 +93,13 @@ export class InviteeTimeToLeave implements OnModuleInit {
     if (leaveAt === null || walkMinutes === null || walkMinutes === 0) {
       return null;
     }
-    const placeName = placeLabel(placeOf(destination.placeId));
+    const placeName = mealPlaceOf(destination.title) ?? placeLabel(placeOf(destination.placeId));
     return { told: { kind: 'leave-by', questId, placeLabel: placeName, walkMinutes }, at: new Date(leaveAt) };
   }
+}
+
+// A Plan's meal step is titled "<Restaurant>에서 식사", and the Leader's line names the Restaurant, so the invitee's
+// names it too.
+function mealPlaceOf(title: string): string | null {
+  return /^(?<place>.+)에서 식사$/u.exec(title)?.groups?.place ?? null;
 }

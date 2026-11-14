@@ -3150,8 +3150,8 @@ party's do. `InvitationsService` tells the listeners given to its `onAccepted()`
 signalled, so that the Quests' module need not import the Plans' module. `InviteeTimeToLeave` from
 `src/plans/invitee-time-to-leave.service.ts` is one: it works out the User's own way as the invitation's card does, from
 their Timetable alone since the accept carries no position, and leaves the Quest's own steps out of their day. It
-schedules the `leave-by` for the time that way sets out, with the gathering's Place as `placeLabel()` names it and the
-walking minutes of the whole way, without the answer waiting for it; a failure is logged as a warning. None is kept
+schedules the `leave-by` for the time that way sets out, with the Restaurant of a Plan's meal step (its title, "<Restaurant>에서
+식사") or else the gathering's Place as `placeLabel()` names it, and the walking minutes of the whole way, without the answer waiting for it; a failure is logged as a warning. None is kept
 when the way has no time to set out or the walk is 0 minutes.
 
 A User has one `leave-by` for a party. It is cancelled when the User leaves the Quest, by dropping it or by the Leader's

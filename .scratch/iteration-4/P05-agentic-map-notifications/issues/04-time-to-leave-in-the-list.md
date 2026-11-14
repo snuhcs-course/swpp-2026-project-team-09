@@ -68,7 +68,7 @@ Details the ticket left to the implementation, listed so that any of them can be
 8. **An invited User's time to leave** is kept by `InviteeTimeToLeave`, a provider of the Plans' module that registers with `InvitationsService.onAccepted()`; the listeners are called once the acceptance is stored and signalled, so the Quests' module never imports the Plans' module.
 9. **It is kept for any Quest whose steps give a gathering**, not only a party made from a Plan.
 10. **Their way** is worked out as their invitation's card works it out, at the accept's time and from their Timetable alone, with the Quest's own steps, which their day holds once they enter it, left out.
-11. **The Place** is named as the card names the gathering's, by `placeLabel()` ("63동" for the Student Center), since the Quest keeps no Restaurant's name.
+11. **The Place** is the Restaurant's name, read from the meal step's title ("학생회관식당에서 식사"), as the Leader's line names it; a step titled otherwise is named by `placeLabel()`, as the card names the gathering's.
 12. **The walk** is the minutes of the whole way, through the Merging Point when they take it. None is kept when the way has no time to set out or a walk of 0 minutes.
 13. **Leaving the Quest**, by dropping it or by the Leader's removal, cancels that User's `leave-by` with the warning "A Holder's time to leave was not cancelled"; a Leader who drops it loses theirs too. `LeaderService.forgetTimeToLeave()` does it for an end, a removal, and a drop, which the route calls after `QuestsService.drop()`, since that file has no line left under `max-lines`.
 14. **The warning** when an invited User's is not kept is "An invited User's time to leave was not kept", with the error.

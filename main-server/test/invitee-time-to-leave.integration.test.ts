@@ -92,7 +92,7 @@ describe('An invited User who accepts the party of 민수 and 지은', () => {
           kind: 'leave-by',
           title: '지금 나서요',
           ahead: '12:15 나설 시각',
-          line: '63동까지 걸어서 18분',
+          line: '학생회관식당까지 걸어서 18분',
           at: `${date}T12:15:00+09:00`,
           url: `/main?card=party:${questId}`,
         },
