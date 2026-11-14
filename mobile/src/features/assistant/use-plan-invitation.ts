@@ -27,7 +27,7 @@ export interface PlanInvitation {
   invite: () => void;
 }
 
-// Where the User is, which the request sends, and how a refusal is told.
+// Where the User is, which the request sends, and how a refusal or a Quest made out of sight is told.
 export interface Inviting {
   location: LatLng | null;
   say: (message: string) => void;
@@ -35,13 +35,14 @@ export interface Inviting {
 
 const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
 const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요';
+const SENT = '파티를 만들고 초대를 보냈어요';
 
 interface InvitationState {
   answer: AnswerReply | null;
+  // By Plan id: made at the first press for a Plan of this answer, and kept while the answer is on screen, so that a
+  // press again, also after another Plan was shown, repeats the request.
+  keys: ReadonlyMap<string, string>;
   planId: string | null;
-  // Made at the first press for this answer and Plan, and kept, so that a press again repeats the request.
-  key: string | null;
-  sending: boolean;
   made: PlanQuest | null;
   heard: HeardAnswer[];
 }
@@ -52,7 +53,15 @@ type SetStored = (update: (last: InvitationState) => InvitationState) => void;
 const NO_STANDINGS: ReadonlyMap<string, Standing> = new Map();
 
 function fresh(answer: AnswerReply | null, planId: string | null): InvitationState {
-  return { answer, planId, key: null, sending: false, made: null, heard: [] };
+  return { answer, keys: new Map(), planId, made: null, heard: [] };
+}
+
+// What is held for the answer and the Plan on screen: another answer drops everything, another Plan what was made.
+function heldFor(stored: InvitationState, answer: AnswerReply | null, planId: string | null): InvitationState {
+  if (stored.answer !== answer) {
+    return fresh(answer, planId);
+  }
+  return stored.planId === planId ? stored : { ...stored, planId, made: null, heard: [] };
 }
 
 function useMembers(made: PlanQuest | null): ReadMembers | null {
@@ -84,36 +93,48 @@ function useHeard(made: PlanQuest | null, setStored: SetStored): void {
   );
 }
 
-// Sends the Plan on screen to be made into a Quest, unless a request is on its way or the Quest is made. A reply, or
-// a refusal, counts only while the request's key is still the one held: another answer or Plan on screen drops it.
-function useInvite(current: InvitationState, shown: OnScreen, setStored: SetStored, inviting: Inviting): () => void {
+// Sends the Plan on screen to be made into a Quest, unless a request of this hook is on its way or the Quest is made.
+// A Quest that comes while its answer and Plan are still on screen is held; otherwise it is only told, for it is among
+// the User's Quests. A refusal counts only while its answer and Plan are on screen.
+function useInvite(
+  current: InvitationState,
+  shown: OnScreen,
+  setStored: SetStored,
+  inviting: Inviting,
+): { sending: boolean; invite: () => void } {
   const live = useRef({ current, shown, inviting });
-  const flight = useRef<string | null>(null);
+  const flight = useRef(false);
+  const [sending, setSending] = useState(false);
   useEffect(() => {
     live.current = { current, shown, inviting };
   });
-  return () => {
+  const invite = (): void => {
     const { current: state, shown: now, inviting: how } = live.current;
     const { answer, plan } = now;
-    if (answer === null || plan === null || state.made !== null || flight.current !== null) {
+    if (answer === null || plan === null || state.made !== null || flight.current) {
       return;
     }
-    const key = state.key ?? newIdempotencyKey();
-    flight.current = key;
-    setStored((last) => (last.answer === answer && last.planId === plan.id ? { ...last, key, sending: true } : last));
-    const settle = (made: PlanQuest | null): boolean => {
-      flight.current = null;
-      setStored((last) => (last.key === key ? { ...last, sending: false, made } : last));
+    const key = state.keys.get(plan.id) ?? newIdempotencyKey();
+    flight.current = true;
+    setSending(true);
+    setStored((last) => (last.answer === answer ? { ...last, keys: new Map(last.keys).set(plan.id, key) } : last));
+    const settle = (): boolean => {
+      flight.current = false;
+      setSending(false);
       const { shown: after } = live.current;
       return after.answer === answer && after.plan?.id === plan.id;
     };
     const making = { input: answer.input, planId: plan.id, startAt: plan.startAt, location: how.location };
     apiClient.makePlanQuest(making, key).then(
       (made) => {
-        settle(made);
+        if (settle()) {
+          setStored((last) => (last.answer === answer && last.planId === plan.id ? { ...last, made } : last));
+        } else {
+          live.current.inviting.say(SENT);
+        }
       },
       (error: unknown) => {
-        if (!settle(null)) {
+        if (!settle()) {
           return;
         }
         if (isRefusal(error, 409, 'PLAN_CHANGED')) {
@@ -125,19 +146,20 @@ function useInvite(current: InvitationState, shown: OnScreen, setStored: SetStor
       },
     );
   };
+  return { sending, invite };
 }
 
-// The Quest made from the Plan on screen by "이대로 초대", and how each invited Friend stands: by the signals heard for
-// the Quest since, by its members once the User's Quests hold it, and otherwise invited. A new answer or another Plan
-// on screen drops it, and the Quest stays among the User's Quests.
+// The Quest made from the Plan on screen by "이대로 초대", and how each invited Friend stands: by the latest of the
+// signals heard for the Quest since and its members as the User's Quests hold them, and otherwise invited. A new answer
+// or another Plan on screen drops it, and the Quest stays among the User's Quests.
 export function usePlanInvitation(shown: OnScreen, inviting: Inviting): PlanInvitation {
   const planId = shown.plan?.id ?? null;
   const [stored, setStored] = useState<InvitationState>(() => fresh(shown.answer, planId));
-  const current = stored.answer === shown.answer && stored.planId === planId ? stored : fresh(shown.answer, planId);
+  const current = heldFor(stored, shown.answer, planId);
   if (current !== stored) {
     setStored(current);
   }
-  const invite = useInvite(current, shown, setStored, inviting);
+  const { sending, invite } = useInvite(current, shown, setStored, inviting);
   const { made, heard } = current;
   const members = useMembers(made);
   useHeard(made, setStored);
@@ -145,5 +167,5 @@ export function usePlanInvitation(shown: OnScreen, inviting: Inviting): PlanInvi
     () => (made === null ? NO_STANDINGS : friendStandings(made, members, heard)),
     [made, members, heard],
   );
-  return { sending: current.sending, made, standings, invite };
+  return { sending, made, standings, invite };
 }

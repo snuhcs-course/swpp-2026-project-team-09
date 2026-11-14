@@ -59,8 +59,9 @@ describe('a press of "이대로 초대"', () => {
   });
 });
 
-// Partitions: a press after a failure; the same answer with another Plan; another answer. Expected values: the
-// spec's rule that the key belongs to the Plan on screen.
+// Partitions: a press after a failure; the same answer with another Plan; a Plan come back to after another; another
+// answer (a recalculation). Expected values: the spec's rule that each Plan of the answer on screen keeps its key until
+// another answer is on screen.
 describe('the idempotency key', () => {
   it('is repeated by a press after a failure, and new for another Plan', async () => {
     make.mockRejectedValue(new ApiError(500));
@@ -74,6 +75,33 @@ describe('the idempotency key', () => {
     const [first, again, other] = keys(make);
     expect(again).toBe(first);
     expect(other).not.toBe(first);
+  });
+
+  it('is the same for a Plan after another Plan was on screen in between', async () => {
+    make.mockRejectedValue(new ApiError(500));
+    const held = await hold(onScreen(MEAL_ANSWER, MEAL_PLAN_1));
+
+    await pressed(held);
+    await held.rerender(onScreen(MEAL_ANSWER, MEAL_PLAN_2));
+    await held.rerender(onScreen(MEAL_ANSWER, MEAL_PLAN_1));
+    await pressed(held);
+
+    const [first, back] = keys(make);
+    expect(back).toBe(first);
+  });
+
+  it('is new for the same Plan after a recalculation', async () => {
+    make.mockRejectedValue(new ApiError(500));
+    // A recalculation puts a new answer object on screen, here with the same content.
+    const recalculated = { ...MEAL_ANSWER };
+    const held = await hold(onScreen(MEAL_ANSWER, MEAL_PLAN_1));
+
+    await pressed(held);
+    await held.rerender(onScreen(recalculated, MEAL_PLAN_1));
+    await pressed(held);
+
+    const [first, after] = keys(make);
+    expect(after).not.toBe(first);
   });
 });
 

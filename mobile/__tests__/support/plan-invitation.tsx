@@ -18,6 +18,7 @@ import { HERE } from './shown-answer';
 export const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
 export const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
 export const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요';
+export const SENT = '파티를 만들고 초대를 보냈어요';
 
 type OnScreen = Pick<ShownAnswer, 'answer' | 'plan'>;
 type Change = jest.Mock<void, Parameters<ShownAnswer['change']>>;
@@ -64,7 +65,7 @@ export function keys(make: Make): string[] {
   return make.mock.calls.map(([, key]) => key);
 }
 
-// The next request's reply, which the test lets come when it chooses.
+// The next request's reply, which the test lets come when it chooses, and the User's Quests then read (real timers).
 export function heldBack(make: Make): { come: (made: PlanQuest) => Promise<void> } {
   let resolve: ((made: PlanQuest) => void) | null = null;
   make.mockImplementationOnce(
@@ -78,6 +79,11 @@ export function heldBack(make: Make): { come: (made: PlanQuest) => Promise<void>
       await act(async () => {
         resolve?.(made);
         await Promise.resolve();
+      });
+      await act(async () => {
+        await new Promise((done) => {
+          setTimeout(done, 0);
+        });
       });
     },
   };
