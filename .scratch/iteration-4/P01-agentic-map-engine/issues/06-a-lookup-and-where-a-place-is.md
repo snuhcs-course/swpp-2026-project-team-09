@@ -66,9 +66,8 @@ These are the details the design leaves open. Any of them can be vetoed.
 8. **How Places are called** is shared: `Naming`'s Place half became `PlaceNaming`, which the meal's words and the way's both use.
 9. **The app's chat** keeps a reply's Lookup in its bubble (`lookup`), as it keeps the answer. The mock answers a message holding "어디" sent with a context with the copied Lookup, after the words it already knows.
 10. **The copy of a real Lookup** (`mobile/src/api/mock/data/way-lookup.json`) was written by the server's `wayAnswer`, the function the endpoint's `WayService` calls, over the seed's Places and walking table, for board q1 on Tuesday 2026-11-17, with the asker's id of the meal copies.
+11. **A Place named exactly the User's words.** `resolvePlace` answers the one Place whose name is the words, ignoring case, or whose number they are, when there is exactly one such Place; otherwise every Place that holds the words, as before. So "문화관" is 문화관(73동), not also 해동학술문화관, and board q1 needs no question back. The preference sits in `resolvePlace` only (`exactlyNamed`): `PlacesService.search` also serves the app's search of Places (`GET /places/search`), where typing "문화관" should still list 해동학술문화관.
 
 The walking table gives 301동 → 문화관 1,066 seconds, 18 minutes as the board says.
-
-Left open: `resolvePlace` answers "several" for "문화관" (문화관, 해동학술문화관, …), so the real model may ask the User which one before calling findWay.
 
 The endpoint's integration tests (`assistant-way.integration.test.ts` and the six endpoint tests that now expect `lookup: null`) were written but not run on the build machine, whose lock for runs with containers was held by another session; GitHub CI runs them.
