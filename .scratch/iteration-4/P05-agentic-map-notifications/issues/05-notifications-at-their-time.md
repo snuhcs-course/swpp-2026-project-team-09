@@ -28,14 +28,45 @@ A Notification is a row of a table, and one that rings a phone is sent when its 
 ## Acceptance criteria
 
 - [ ] One migration, the only one in the pull request, made from the schema of the iteration's Main at merge time.
-- [ ] Everything the service's integration tests of tickets 01 and 04 check holds against the table, with Redis holding nothing of a Notification.
-- [ ] A `leave-by` whose time has not come sends nothing at a step; once the clock passes its time one step sends exactly one push to the stand-in for Expo, with the title, the body, and `data.url` of the Notification, and a second step sends nothing.
-- [ ] A `leave-by` rescheduled to a later time after it was sent is sent again at the new time.
-- [ ] An `accepted` Notification is never pushed.
-- [ ] Two steps run at once send a Notification once.
-- [ ] A step deletes a Notification whose time is 31 days ago and keeps one of 29 days ago.
-- [ ] With the setting at 0 no timer runs; the settings' test covers the new setting.
-- [ ] The README's "Notifications" says the table, the sender, the interval, what rings a phone, and that a Notification is sent at most once.
-- [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `main-server/`.
+- [x] Everything the service's integration tests of tickets 01 and 04 check holds against the table, with Redis holding nothing of a Notification.
+- [x] A `leave-by` whose time has not come sends nothing at a step; once the clock passes its time one step sends exactly one push to the stand-in for Expo, with the title, the body, and `data.url` of the Notification, and a second step sends nothing.
+- [x] A `leave-by` rescheduled to a later time after it was sent is sent again at the new time.
+- [x] An `accepted` Notification is never pushed.
+- [x] Two steps run at once send a Notification once.
+- [x] A step deletes a Notification whose time is 31 days ago and keeps one of 29 days ago.
+- [x] With the setting at 0 no timer runs; the settings' test covers the new setting.
+- [x] The README's "Notifications" says the table, the sender, the interval, what rings a phone, and that a Notification is sent at most once.
+- [x] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `main-server/`.
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+Details the ticket left to the implementation, listed so that any of them can be vetoed.
+
+1. **Column types.** `at` and `sent_at` hold a time with its zone, since the sender's statement compares and sets them
+   with a time from the server; `created_at` is as in every other table.
+2. **A replace and the sent mark.** A replace that keeps the time leaves a sent Notification sent, so the change is not
+   pushed twice; one that moves the time clears the mark, so it is sent at the new time. A schedule always clears it.
+3. **A row of a kind this version does not know** is left out of `GET /notifications`.
+4. **The list's order**: the latest time first, then the latest made.
+5. **The sender.** A row whose push cannot be made is logged and the others are sent; a ringing kind without a body is
+   pushed with an empty one; the rows of more than 30 days ago are deleted only after a step's claim succeeded; a
+   failure logs the error's name only.
+6. **The setting.** An empty `NOTIFICATIONS_TICK_SECONDS` is refused at start-up instead of being read as 0, which
+   would stop the sending without a word.
+7. **Tests.** A step claims and deletes the rows of every User, so the sender's integration tests keep their
+   Notifications in January 2000, before every other test file's. The interval is a unit test of the timer on fake
+   timers, not a wait on a real one.
+8. **The migration** in the branch is made from the schema of the time it was written. It is made again from the
+   iteration's Main when the package's turn to change the schema comes.
+
+### Agent usage (2026-11-15)
+
+Up to the review, before the migration is made again. One implementing subagent (Opus 5.5) wrote the table, the
+store, the sender, and their tests; the review's changes were made in the reviewing session.
+
+- Agent time: about 17 minutes for the subagent, an estimate from the transcript's timestamps; the review's share is
+  counted with the package's last ticket.
+- Tokens (the subagent): output 63,676; input 14,230,447, of which 14,055,909 were cache reads, 174,360 cache
+  writes, and 178 uncached. Without cache reads: 238,214.
