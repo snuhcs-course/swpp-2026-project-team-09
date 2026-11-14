@@ -6,6 +6,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -131,7 +132,10 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
-function copyFor({ people, window: { from } }: PlanInput): AnswerReply {
+// The mock holds copies of meal answers only, so other conditions are read as a meal of the User alone.
+function copyFor(input: PlanInput): AnswerReply {
+  const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
+  const from = input.kind === 'meal' ? input.window.from : null;
   if (people.length <= 1) {
     return MEAL_ANSWER_ALONE;
   }

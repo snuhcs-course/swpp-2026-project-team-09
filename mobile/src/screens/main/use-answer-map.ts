@@ -109,7 +109,7 @@ function addOnPress({ change }: ShownAnswer, id: string): void {
   if (userId === null) {
     return;
   }
-  change((input) => (input.people.some((person) => person.userId === userId) ? input : withPerson(input, userId)));
+  change((input) => withPerson(input, userId));
 }
 
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the
