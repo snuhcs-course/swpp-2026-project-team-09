@@ -44,6 +44,18 @@ A User whose phone has the switch on opens an invitation, from "알림" or from 
 16. An invitation whose card was selected and left the cards while the switch stayed on is told with "이미 끝난 초대예요"; the selection itself drops the card. One answered on this phone leaves without that word, though the list may come back before its card is closed, and with the switch turned off the cards leave without a word too.
 17. With the switch on and the cards known, an address of an invitation no card holds says "이미 끝난 초대예요" and stays on the map.
 18. The camera's top room for an invitation is the status bar's inset and the room the marks need above, in place of the pill's.
+19. The camera worked out for an invitation was right: the scene's top-most point, 63동, is a point of the drawing, and the way's south end stood where the camera put it. Kakao's map behind the Android module showed every camera closer than sent once the tab bar gave way, by the binary logarithm of the view's heights (914 over 826 on the emulator, 10%), because the module sets the camera's height by a scale it measures once, when the map opens, and Kakao's camera shows as much from top to bottom at one height whatever the view's height. An answer's Plan was as much too close, which its rule of keeping the pick's side hid. On Android, `native-map.tsx` sends a zoom less that logarithm, the view's height at the module's first report standing for its height at the opening, and lowers the module's lowest zoom by as much, so that the camera shown is the one asked, at the lowest zoom too. The Android module measuring its scale again where the camera rests, as the iOS one does, belongs to the next native release, which drops this.
+20. The way's lines of a received invitation read as body text after the route arrow, which the wireframe draws there and the design system has (it has no walking icon), their strong words in the key colour and the semibold weight: `AnswerLines` takes `way`.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625) with the mock's stored card of 민수:
+
+- `snunow://main?card=invitation:qi-1` opened the card with the tab bar gone: "유상의 파티 초대" with ✕, "12:33 학생회관식당에서 식사", "유상과 함께", the way's line, the two steps, "수락" and "거절", and the line that only the User's own way is shown.
+- The map drew 민수's dot at 302동 with "나 · 18분", the navy line by 301동, under the flag "12:18 유상과 만남", to 63동 with "12:33 학생회관식당에서 식사" under it, and no one else's Avatar.
+- "거절" closed the card to the everyday map with the tab bar back.
+
+Fixed after the check: 63동 stood under the status bar (decision 19), and the way's line wrapped its last word alone at the answer's size (decision 20). Neither fix has been run on the emulator yet.
 
 ### Agent usage (2026-11-15)
 
