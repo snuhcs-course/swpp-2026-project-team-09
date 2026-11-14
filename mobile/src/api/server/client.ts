@@ -11,6 +11,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -86,8 +87,8 @@ export const serverClient: ApiClient = {
   },
   uploadPosition: (position) => call('POST', '/positions', isPositionKept, { body: position }),
   listFriends: () => call('GET', '/friends', isFriends),
-  setFriendSharing: async (userId, on) => {
-    await call('PUT', `/friends/${encodeURIComponent(userId)}/sharing`, isNothing, { body: { on } });
+  setFriendLevel: async (userId, level) => {
+    await call('PUT', `/friends/${encodeURIComponent(userId)}/level`, isNothing, { body: { level } });
   },
   endFriendship: async (userId) => {
     await call('DELETE', `/friends/${encodeURIComponent(userId)}`, isNothing);

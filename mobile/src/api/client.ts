@@ -14,6 +14,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -29,6 +30,7 @@ import type {
   ClassSave,
   Footprints,
   Friend,
+  FriendLevel,
   FriendStatus,
   GlobalEvent,
   InviteLink,
@@ -73,8 +75,8 @@ export interface ApiClient {
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
   listFriends: () => Promise<Friend[]>;
-  // Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
-  setFriendSharing: (userId: string, on: boolean) => Promise<void>;
+  // The User's own end of the friendship. Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
+  setFriendLevel: (userId: string, level: FriendLevel) => Promise<void>;
   endFriendship: (userId: string) => Promise<void>;
   // Refused with 404 FRIEND_ID_NOT_FOUND.
   findFriendId: (friendId: string) => Promise<UserSummary>;
@@ -216,7 +218,7 @@ export const apiClient: ShownClient = {
   registerPushToken: (token) => chosen().registerPushToken(token),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
-  setFriendSharing: (userId, on) => chosen().setFriendSharing(userId, on),
+  setFriendLevel: (userId, level) => chosen().setFriendLevel(userId, level),
   endFriendship: (userId) => chosen().endFriendship(userId),
   findFriendId: (friendId) => chosen().findFriendId(friendId),
   sendFriendRequest: (friendId) => chosen().sendFriendRequest(friendId),

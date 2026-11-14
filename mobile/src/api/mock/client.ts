@@ -12,6 +12,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -134,9 +135,9 @@ export const mockClient: ApiClient = {
       return { offCampus: !isInside(position, CAMPUS_BOUNDS) };
     }),
   listFriends: () => answer('listFriends', friendships.listFriends, []),
-  setFriendSharing: async (userId, on) => {
-    await answer('setFriendSharing', () => {
-      friendships.setFriendSharing(userId, on);
+  setFriendLevel: async (userId, level) => {
+    await answer('setFriendLevel', () => {
+      friendships.setFriendLevel(userId, level);
     });
   },
   endFriendship: async (userId) => {

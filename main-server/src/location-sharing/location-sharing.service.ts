@@ -2,15 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpStatus, Injectable } from '@nestjs/common';
 import { CampusBoundary } from '../common/campus-boundary.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
+import { PlaceLookup } from '../places/place-lookup.js';
 import { PositionDto, UploadedPositionDto, UploadPositionDto } from './dto/position.dto.js';
-import { PositionStore } from './position-store.js';
-import { VisibilityService } from './visibility.service.js';
+import { PositionStore, type StoredPosition } from './position-store.js';
+import { type SeenLevel, VisibilityService } from './visibility.service.js';
 
 // Provisional until P17 has checked them on a phone.
 const MAX_POSITION_AGE_MS = 60_000;
@@ -28,6 +30,7 @@ export class LocationSharingService {
     private readonly positions: PositionStore,
     private readonly visibility: VisibilityService,
     private readonly signals: SignalsService,
+    private readonly places: PlaceLookup,
   ) {}
 
   // Turning it off clears the User's position.
@@ -79,24 +82,32 @@ export class LocationSharingService {
       await this.clearPosition(userId);
       return { offCampus: true };
     }
-    const position: PositionDto = { userId, latitude, longitude, measuredAt: measured.toISOString() };
-    await this.positions.store(userId, { latitude, longitude, measuredAt: position.measuredAt });
-    this.signals.send(await this.visibility.viewersOf(userId), 'position', position);
+    const placeId = this.places.at({ latitude, longitude })?.place.id ?? null;
+    await this.keep(userId, { latitude, longitude, measuredAt: measured.toISOString(), placeId });
     return { offCampus: false };
   }
 
   async visiblePositions(viewerId: string): Promise<PositionDto[]> {
-    const positions = await this.positions.read(await this.visibility.visibleTo(viewerId));
-    return [...positions].map(([userId, { latitude, longitude, measuredAt }]) => ({
-      userId,
-      latitude,
-      longitude,
-      measuredAt,
-    }));
+    return [...(await this.visibility.visibleTo(viewerId)).values()];
   }
 
   // Also when the User's session ends, so that the phone's last position does not linger.
   clearPosition(userId: string): Promise<void> {
     return this.visibility.announceRemovals(userId, () => this.positions.clear(userId));
+  }
+
+  // Stores the position and pushes it to whoever may see the User now: the position to a viewer at 'exact', and to one
+  // at 'building' the Place only when it differs from the Place stored before, or `position-removed` when the User has
+  // left every Place.
+  private async keep(userId: string, position: StoredPosition): Promise<void> {
+    const before = (await this.positions.read([userId])).get(userId)?.placeId ?? null;
+    await this.positions.store(userId, position);
+    const viewers = [...(await this.visibility.viewersOf(userId))];
+    const at = (level: SeenLevel): string[] => viewers.filter(([, seen]) => seen === level).map(([id]) => id);
+    this.signals.send(at('exact'), 'position', this.visibility.shown(userId, 'exact', position));
+    if (position.placeId !== before) {
+      const place = this.visibility.shown(userId, 'building', position);
+      this.signals.send(at('building'), place === null ? 'position-removed' : 'position', place ?? { userId });
+    }
   }
 }

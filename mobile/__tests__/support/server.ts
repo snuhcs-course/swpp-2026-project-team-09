@@ -8,6 +8,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
@@ -52,6 +53,7 @@ export const MIN_JUN: Friend = {
   id: '6d1c3f5e-1111-4a5b-8c9d-000000000001',
   name: '김민준',
   department: '컴퓨터공학부',
+  level: 'exact',
   sharing: true,
   visible: true,
 };
@@ -60,6 +62,7 @@ export const JI_WOO: Friend = {
   id: '6d1c3f5e-2222-4a5b-8c9d-000000000002',
   name: '서지우',
   department: '경영학과',
+  level: 'exact',
   sharing: true,
   visible: false,
 };

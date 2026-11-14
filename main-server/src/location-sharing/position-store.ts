@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -13,7 +14,14 @@ import { REDIS } from '../common/redis.module.js';
 // the lifetime from when the position was stored.
 const POSITION_LIFETIME = 10 * 60 * 1000;
 
-const storedPositionSchema = z.object({ latitude: z.number(), longitude: z.number(), measuredAt: z.string() });
+const storedPositionSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+  measuredAt: z.string(),
+  // The Place the position is in, kept so that a viewer at the building is told only when it changes. A position kept
+  // before the levels has none.
+  placeId: z.string().nullable().default(null),
+});
 
 export type StoredPosition = z.infer<typeof storedPositionSchema>;
 

@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine } from './menu-types';
@@ -327,8 +328,9 @@ export interface MapScene {
     userId: string;
     name: string;
     me: boolean;
+    // At 'building', the point of the Place the person is in.
     at: LatLng;
-    source: 'exact' | 'timetable';
+    source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
   places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];

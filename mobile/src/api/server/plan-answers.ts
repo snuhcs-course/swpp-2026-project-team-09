@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -140,7 +141,7 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
     hasTexts(value, ['userId', 'name']) &&
     isBoolean(field(value, 'me')) &&
     isLatLng(field(value, 'at')) &&
-    isOneOf(['exact', 'timetable'])(field(value, 'source')) &&
+    isOneOf(['exact', 'building', 'timetable'])(field(value, 'source')) &&
     isTextOrNull(field(value, 'tag'))
   );
 }

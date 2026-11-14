@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -122,8 +123,9 @@ export interface MapScene {
     userId: string;
     name: string;
     me: boolean;
+    // At 'building', the point of the Place the person is in.
     at: Position;
-    source: 'exact' | 'timetable';
+    source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
   places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
