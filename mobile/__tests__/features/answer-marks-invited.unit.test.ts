@@ -13,7 +13,7 @@ function minsuAs(standing: Standing): Map<string, Standing> {
   return new Map([[MINSU_ID, standing]]);
 }
 
-// Partitions of a Friend's state after inviting: invited, accepted, declined, and late; the User's own dot beside
+// Partitions of a Friend's state after inviting: invited, accepted, late, declined, and dropped; the User's own dot beside
 // them. Expected values: the P02 spec, "How each Friend stands", over the first Plan of the stored answer to
 // "배고파, 민수랑 같이", where 민수's dashed face has its label at the right.
 describe("the faces of the answer's first Plan after inviting", () => {
@@ -38,9 +38,18 @@ describe("the faces of the answer's first Plan after inviting", () => {
     });
   });
 
+  it('give 민수\'s face a "✓" and the name with "5분 늦음" when late, for a late Friend is in', () => {
+    const drawing = drawingOf(MEAL_ANSWER, 0, minsuAs({ state: 'late', lateMinutes: 5 }));
+
+    expect(seen(drawing, `answer:person:${MINSU_ID}`)).toMatchObject({
+      name: '민수 · 5분 늦음',
+      symbol: { type: 'face', name: '민수', dashed: true, badge: 'accepted' },
+    });
+  });
+
   it.each([
     [{ state: 'declined', lateMinutes: null }, '민수 · 거절'],
-    [{ state: 'late', lateMinutes: 5 }, '민수 · 5분 늦음'],
+    [{ state: 'dropped', lateMinutes: null }, '민수 · 빠짐'],
   ] as const)('give no badge for %o, and the name "%s"', (standing, name) => {
     const drawing = drawingOf(MEAL_ANSWER, 0, minsuAs(standing));
 

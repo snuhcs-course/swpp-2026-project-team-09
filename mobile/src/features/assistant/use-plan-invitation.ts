@@ -13,8 +13,8 @@ import { newIdempotencyKey } from '@/api/idempotency-key';
 import type { PlanQuest } from '@/api/plan-quest-types';
 import { questsQuery } from '@/api/queries';
 import type { LatLng, Quest } from '@/api/types';
-import { type InvitationAnswer, onInvitationAnswer } from '@/live/invitation-answers';
-import { friendStandings, type Standing } from './invited-friends';
+import { onInvitationAnswer } from '@/live/invitation-answers';
+import { friendStandings, type HeardAnswer, type ReadMembers, type Standing } from './invited-friends';
 import type { ShownAnswer } from './use-shown-answer';
 
 export interface PlanInvitation {
@@ -43,7 +43,7 @@ interface InvitationState {
   key: string | null;
   sending: boolean;
   made: PlanQuest | null;
-  heard: InvitationAnswer[];
+  heard: HeardAnswer[];
 }
 
 type OnScreen = Pick<ShownAnswer, 'answer' | 'plan' | 'change'>;
@@ -55,13 +55,14 @@ function fresh(answer: AnswerReply | null, planId: string | null): InvitationSta
   return { answer, planId, key: null, sending: false, made: null, heard: [] };
 }
 
-function useMembers(made: PlanQuest | null): Quest['members'] {
+function useMembers(made: PlanQuest | null): ReadMembers | null {
   const questId = made?.quest.id;
-  return useQuery({
+  const { data: members, dataUpdatedAt } = useQuery({
     ...questsQuery,
     enabled: questId !== undefined,
     select: (quests: Quest[]) => quests.find(({ id }) => id === questId)?.members,
-  }).data;
+  });
+  return useMemo(() => (members === undefined ? null : { members, readAt: dataUpdatedAt }), [members, dataUpdatedAt]);
 }
 
 function useHeard(made: PlanQuest | null, setStored: SetStored): void {
@@ -73,7 +74,9 @@ function useHeard(made: PlanQuest | null, setStored: SetStored): void {
         : onInvitationAnswer((answer) => {
             if (answer.questId === questId) {
               setStored((last) =>
-                last.made?.quest.id === questId ? { ...last, heard: [...last.heard, answer] } : last,
+                last.made?.quest.id === questId
+                  ? { ...last, heard: [...last.heard, { ...answer, heardAt: Date.now() }] }
+                  : last,
               );
             }
           }),
