@@ -9,7 +9,7 @@ import { apiClient } from '@/api/client';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_PLAN_1 } from '@/api/mock/data/meal-answer-plan-1';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
-import { tellInvitationAnswer } from '@/live/invitation-answers';
+import { type InvitationAnswer, tellInvitationAnswer } from '@/live/invitation-answers';
 import { hold, MINSU, onScreen, pressed } from '../support/plan-invitation';
 import { settle } from '../support/queries';
 
@@ -17,6 +17,20 @@ import { settle } from '../support/queries';
 // Friend stands"), with the API client stood in. The reply is the stored one to POST /plans, with 민수 invited.
 
 jest.mock('@/api/client', () => ({ apiClient: { makePlanQuest: jest.fn(), listQuests: jest.fn() } }));
+
+// Each listener the hook gives is wrapped, so that a test can see whether a signal still reaches it.
+const listeners: jest.Mock<void, [InvitationAnswer]>[] = [];
+jest.mock('@/live/invitation-answers', () => {
+  const actual = jest.requireActual<typeof import('@/live/invitation-answers')>('@/live/invitation-answers');
+  return {
+    ...actual,
+    onInvitationAnswer: (listener: (answer: InvitationAnswer) => void): (() => void) => {
+      const heard = jest.fn(listener);
+      listeners.push(heard);
+      return actual.onInvitationAnswer(heard);
+    },
+  };
+});
 
 const QUEST_ID = PLAN_QUEST.quest.id;
 const ASKER = { id: '11ca538e-e4ef-48d9-9a1f-b7160c553bee', name: '유상', department: '컴퓨터공학부' };
@@ -28,6 +42,7 @@ async function heard(name: string, payload: object): Promise<void> {
 }
 
 beforeEach(() => {
+  listeners.length = 0;
   jest.useFakeTimers();
   jest.mocked(apiClient.makePlanQuest).mockReset().mockResolvedValue(PLAN_QUEST);
   jest.mocked(apiClient.listQuests).mockReset().mockResolvedValue([]);
@@ -61,12 +76,14 @@ describe('a signal of an answer to an invitation', () => {
   it('is no longer heard once the Quest is dropped with the answer', async () => {
     const held = await hold(onScreen(MEAL_ANSWER, MEAL_PLAN_1));
     await pressed(held);
+    expect(listeners).not.toHaveLength(0);
     await held.rerender(onScreen(null, null));
 
     await heard('invitation-accepted', { questId: QUEST_ID, userId: MINSU });
-    await held.rerender(onScreen(MEAL_ANSWER, MEAL_PLAN_1));
 
-    expect(held.invitation().standings).toEqual(new Map());
+    for (const listener of listeners) {
+      expect(listener).not.toHaveBeenCalled();
+    }
   });
 });
 

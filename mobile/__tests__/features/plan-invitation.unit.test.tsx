@@ -156,8 +156,7 @@ describe('the Quest made', () => {
 
     await held.rerender(onScreen(null, null));
     await reply.come(PLAN_QUEST);
-    await held.rerender(onScreen(MEAL_ANSWER, MEAL_PLAN_1));
 
-    expect(held.invitation().made).toBeNull();
+    expect(held.invitation()).toMatchObject({ sending: false, made: null, standings: new Map() });
   });
 });
