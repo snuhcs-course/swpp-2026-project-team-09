@@ -18,11 +18,10 @@ import type { CardActions } from '../chat-cards';
 import { ChatMarkdown } from '../chat-markdown';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
-import { listsTop, type Room } from '../layout';
+import { ANSWER_PILL, listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
 import { PlanCard } from './plan-card';
 
-export const PILL_HEIGHT = 48;
 const CLOSE = 36;
 
 // What the User asked, on one line, with the chat icon and ✕, which forgets the conversation.
@@ -172,8 +171,8 @@ export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: A
 const styles = StyleSheet.create({
   pillRow: {
     position: 'absolute',
-    right: space[4],
-    left: space[4],
+    right: ANSWER_PILL.side,
+    left: ANSWER_PILL.side,
     alignItems: 'flex-start',
     pointerEvents: 'box-none',
   },
@@ -182,7 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[2],
     maxWidth: '100%',
-    height: PILL_HEIGHT,
+    height: ANSWER_PILL.height,
     paddingLeft: space[4],
     paddingRight: space[1],
     borderRadius: radius.full,

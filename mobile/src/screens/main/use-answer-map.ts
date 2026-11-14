@@ -11,8 +11,7 @@ import { drawingOf, looksOf } from '@/features/assistant/answer-marks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { CardView } from '@/features/map/adapter';
 import { type FitPadding, type MapAvatar, type MapLine, type MapMarker, type MarkerLook, useMarkerImages } from '@/map';
-import { PILL_HEIGHT } from './answer/answer-frame';
-import { listsTop, type Room } from './layout';
+import { ANSWER_PILL, listsTop, type Room } from './layout';
 import type { MainMap } from './use-main-map';
 
 // What the map draws: its markers, its Avatars, and its lines.
@@ -33,7 +32,7 @@ const NO_POINTS: readonly LatLng[] = [];
 // label.
 function paddingOf(top: number, cardHeight: number | null): FitPadding {
   return {
-    top: top + listsTop(top) + PILL_HEIGHT + LABEL_ROOM,
+    top: top + listsTop(top) + ANSWER_PILL.height + LABEL_ROOM,
     right: SIDE,
     bottom: (cardHeight ?? 0) + LABEL_ROOM,
     left: SIDE,
