@@ -9,7 +9,7 @@ import { type ReactElement, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
-import { Button, color, Icon, space, text } from '@/design-system';
+import { Button, color, Icon, size, space, text } from '@/design-system';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { AnswerLines } from './answer-lines';
 import { ConditionChips } from './condition-chips';
@@ -17,7 +17,12 @@ import { FriendChoices } from './friend-choices';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
 
-const ARROW = 44;
+// The arrows are as high as the buttons beside them, and their touch area reaches the design system's minimum.
+const ARROW = 40;
+const ARROW_SLOP = (size.touchMin - ARROW) / 2;
+const UNDO_WIDTH = 96;
+// The count stands in a box of its own, so that it never moves.
+const COUNT_WIDTH = 36;
 // A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
 const SWIPE_STARTS = 10;
 const SWIPE_COUNTS = 48;
@@ -66,16 +71,17 @@ function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; 
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
+      hitSlop={ARROW_SLOP}
       onPress={onPress}
       style={({ pressed }) => [styles.arrow, pressed && styles.pressed]}
     >
-      <Icon color={disabled ? color.inkMuted : color.ink} name={next ? 'chevronRight' : 'chevronLeft'} size={22} />
+      <Icon color={disabled ? color.inkMuted : color.ink} name={next ? 'chevronRight' : 'chevronLeft'} size={20} />
     </Pressable>
   );
 }
 
-// The arrows at the row's two ends when the answer has more than one Plan, and between them "되돌리기" while a drag
-// is kept and the count.
+// The arrows at the row's two ends when the answer has more than one Plan, the count right before "›", and the
+// middle from the start: "되돌리기" at a fixed width while a drag is kept, and room for the card's main button.
 function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactElement | null {
   const { index, browse, recalculating, ghost, undo } = shown;
   const arrows = count > 1;
@@ -93,14 +99,20 @@ function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactEl
           }}
         />
       ) : null}
-      <View style={[styles.middle, arrows && styles.centred]}>
+      <View style={styles.middle}>
         {ghost === null ? null : (
-          <Button disabled={recalculating} onPress={undo} variant="secondary">
-            되돌리기
-          </Button>
+          <View style={styles.undo}>
+            <Button disabled={recalculating} full onPress={undo} variant="secondary">
+              되돌리기
+            </Button>
+          </View>
         )}
-        {arrows ? <Text style={styles.count}>{`${index + 1}/${count}`}</Text> : null}
       </View>
+      {arrows ? (
+        <Text style={styles.count} testID="plan-count">
+          {`${index + 1}/${count}`}
+        </Text>
+      ) : null}
       {arrows ? (
         <Arrow
           disabled={recalculating}
@@ -188,6 +200,12 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.85 },
   middle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  centred: { justifyContent: 'center' },
-  count: { ...text.label, color: color.ink },
+  undo: { width: UNDO_WIDTH },
+  count: {
+    ...text.label,
+    width: COUNT_WIDTH,
+    color: color.ink,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
 });
