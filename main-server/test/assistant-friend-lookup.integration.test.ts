@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { type AnswerReply, type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { FRIEND_RULES } from '../src/assistant/lookup/friend-tools.js';
 import { signInUser } from './friends.js';
-import { expectStatus, keptButHidden, keptPositionIn, setMasterSwitch, uploadPosition } from './location-sharing.js';
+import { expectStatus, keptButHidden, keptPositionIn, shareAt, uploadPosition } from './location-sharing.js';
 import { MealPlanStage, type Named, resolve } from './meal-plan.js';
 import { type Step } from './scripted-model.js';
 
@@ -116,8 +116,7 @@ describe('민수 at the Timetable only, after his last Class', () => {
 describe('민수 at his exact location (board q5)', () => {
   it('is drawn where he is, tagged with the Place he is in', async () => {
     const minsu = await minsuAt('2082-01-20', '12:30');
-    await expectStatus(setMasterSwitch(stage.app, stage.asker, true), 204);
-    await expectStatus(setMasterSwitch(stage.app, minsu, true), 204);
+    await shareAt(stage.app, stage.asker, minsu, 'exact');
     const { latitude, longitude } = await stage.numbered('63');
     await expectStatus(uploadPosition(stage.app, minsu, { latitude, longitude }), 200);
 
@@ -134,6 +133,36 @@ describe('민수 at his exact location (board q5)', () => {
       ],
     ]);
     expect(lookup.basis).toEqual(['민수는 내게 정확한 위치를 보여 줘요']);
+  });
+});
+
+describe('민수 at the building he is in (board q6)', () => {
+  it('is drawn at that building with a plain border, and the map does not say more', async () => {
+    const minsu = await minsuAt('2082-02-10', '12:30');
+    await shareAt(stage.app, stage.asker, minsu, 'building');
+    const { latitude, longitude } = await stage.numbered('63');
+    await expectStatus(uploadPosition(stage.app, minsu, { latitude, longitude }), 200);
+
+    const response = await stage.send([resolve('민수'), findFriend(minsu.id), { text: '…' }]);
+
+    const lookup = lookupIn(response.body);
+    expect(lookup.scene.people).toEqual([
+      {
+        userId: minsu.id,
+        name: '민수',
+        me: false,
+        at: { latitude, longitude },
+        source: 'building',
+        tag: '민수 · 지금 63동',
+      },
+    ]);
+    expect(lookup.lines).toEqual([
+      [
+        { text: '민수', strong: true },
+        { text: '는 지금 63동이에요', strong: false },
+      ],
+    ]);
+    expect(lookup.basis).toEqual(['민수는 내게 지금 있는 건물까지 보여 줘요']);
   });
 });
 
