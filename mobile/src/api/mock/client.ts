@@ -12,6 +12,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -30,6 +31,7 @@ import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
+import { mockInterests } from './interests';
 import { mockParty } from './party';
 import { mockPlanQuest } from './plan-quest';
 import { mockTimetable as timetable } from './timetable';
@@ -213,4 +215,5 @@ export const mockClient: ApiClient = {
   ...mockParty,
   ...mockEvents,
   ...mockTutorial,
+  ...mockInterests,
 };
