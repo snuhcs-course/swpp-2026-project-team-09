@@ -4,7 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
@@ -23,7 +23,15 @@ let app: INestApplication<Server>;
 let prisma: PrismaClient;
 let push: PushService;
 
+// What the server logs, kept in place of printing it.
+const logged: string[] = [];
+
 beforeAll(async () => {
+  for (const level of ['log', 'warn', 'debug', 'error'] as const) {
+    vi.spyOn(Logger.prototype, level).mockImplementation((message: unknown) => {
+      logged.push(String(message));
+    });
+  }
   app = await startApp(inject('settings'), [], undefined, undefined, undefined, [], undefined, undefined, {
     fetchExpo: expo.fetch,
   });
@@ -38,8 +46,14 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
+  logged.length = 0;
   expo.reset();
   expo.answers(savedAnswer('expo-push-ok'));
+});
+
+afterEach(async () => {
+  await push.settled();
+  expect(logged.filter((line) => line.includes('PushToken['))).toEqual([]);
 });
 
 function settled(): Promise<void> {
@@ -150,6 +164,7 @@ describe('A token Expo reports as DeviceNotRegistered', () => {
     expect((await invite(app, leader, questId, friend.id)).status).toBe(204);
     await settled();
     expect(expo.requests).toHaveLength(1);
+    expect(logged).toContainEqual(expect.stringMatching(/^Push token [\da-f-]{36} deleted: DeviceNotRegistered$/u));
     expo.reset();
 
     expect((await invite(app, leader, secondQuestId, friend.id)).status).toBe(204);

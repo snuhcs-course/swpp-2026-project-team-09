@@ -11,13 +11,14 @@ export const FETCH_EXPO = 'FETCH_EXPO';
 
 export const EXPO_PUSH_SEND = 'https://exp.host/--/api/v2/push/send';
 
-// Expo's `message` and `details` are never read: they hold the whole token.
+// Of `details` only the code is read. `message` and the rest of `details` hold the whole token.
 const ticketSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('ok'), id: z.string() }),
   z.object({ status: z.literal('error'), details: z.object({ error: z.string().optional() }).optional() }),
 ]);
 
-const ticketsAnswerSchema = z.object({ data: z.array(ticketSchema) });
+// Each ticket is read on its own, so that one unreadable ticket leaves the others.
+const ticketsAnswerSchema = z.object({ data: z.array(z.unknown()) });
 
 const errorsAnswerSchema = z.object({ errors: z.array(z.object({ code: z.string() })) });
 
@@ -55,12 +56,15 @@ export function readAnswer(status: number, body: unknown, rows: readonly { id: s
     };
   }
   const reading: AnswerReading = { dropped: [], logs: [] };
-  answer.data.data.forEach((ticket, index) => {
+  answer.data.data.forEach((data, index) => {
     const row = rows[index];
     if (row === undefined) {
       return;
     }
-    if (ticket.status === 'ok') {
+    const ticket = ticketSchema.safeParse(data).data;
+    if (ticket === undefined) {
+      reading.logs.push({ level: 'warn', text: `Push token ${row.id}: unreadable ticket` });
+    } else if (ticket.status === 'ok') {
       reading.logs.push({ level: 'debug', text: `Push token ${row.id} sent, receipt ${loggable(ticket.id)}` });
     } else if (ticket.details?.error === 'DeviceNotRegistered') {
       reading.dropped.push(row.id);

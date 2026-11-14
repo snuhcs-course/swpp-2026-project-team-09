@@ -122,11 +122,11 @@ export class PushService {
     } catch (error) {
       reading = { dropped: [], logs: [requestFailure(error)] };
     }
-    if (reading.dropped.length > 0) {
-      await this.prisma.pushToken.deleteMany({ where: { id: { in: reading.dropped } } });
-    }
     for (const { level, text } of reading.logs) {
       this.logger[level](text);
+    }
+    if (reading.dropped.length > 0) {
+      await this.prisma.pushToken.deleteMany({ where: { id: { in: reading.dropped } } });
     }
   }
 }

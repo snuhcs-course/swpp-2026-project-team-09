@@ -98,6 +98,13 @@ describe('The tickets of Expo’s answer', () => {
     });
   });
 
+  it('reads the others when one ticket is unreadable', () => {
+    const reading = readAnswer(200, ticketsAnswer({ status: 'later' }, deviceNotRegisteredTicket), ROWS);
+
+    expect(reading.dropped).toEqual(['row-2']);
+    expect(reading.logs[0]).toEqual({ level: 'warn', text: textMatching(/row-1/u) });
+  });
+
   it('as Expo answered a made-up token drops it', () => {
     const reading = readAnswer(200, JSON.parse(savedAnswer('expo-push-device-not-registered')), ROWS.slice(0, 1));
 

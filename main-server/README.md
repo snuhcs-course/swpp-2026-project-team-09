@@ -2861,6 +2861,7 @@ src/
 │                                    hours, and the vehicles the worker collects, served and sent to the socket server
 ├── timetable/                       a feature: a User's timetable, the classes and their times
 ├── tutorial/                        a feature: the 새내기 튜토리얼's content and each User's progress
+├── push/                            a feature: each Session's Expo push token, and the one sender of pushes
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
