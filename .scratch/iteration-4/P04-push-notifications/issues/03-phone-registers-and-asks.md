@@ -37,7 +37,7 @@ Change:
 - The sheet's words are the design's: "나설 시각을 휴대폰으로 알려 드릴까요?" (Shall I notify your phone at leave-by time?), "나설 시각, 초대, 예약, 관심만 보내요." (Only leave-by times, invitations, bookings, and interests are sent.), "알림 받기", "나중에", and "나중에를 고르면 알림 목록에만 남아요." (If you choose later, they stay only in the notification list.).
 - "알림 받기" calls `askPushPermission()` and closes the sheet. On `granted` it registers the token at once.
 - The sheet appears after the action succeeded, so it never blocks or undoes the action.
-- When `unregisterPush()` does not go through, the phone keeps `pushUnregisterOwed`, and the sign-out or the end goes on. With nobody signed in, the app tries it again at a start and each time it comes to the front, until it goes through. What is owed goes before a registration, and a registration that goes through clears it.
+- When `unregisterPush()` does not go through, the phone keeps `pushUnregisterOwed`, and the sign-out or the end goes on. While no Session is ready on the phone (nobody signed in, or a User still at the consent or in Onboarding), the app tries it again at a start and each time it comes to the front, until it goes through. What is owed goes before a registration, and a registration that goes through clears it.
 - Nothing is asked at app start, at sign-in, at Onboarding, or in first run.
 
 ## Must not change

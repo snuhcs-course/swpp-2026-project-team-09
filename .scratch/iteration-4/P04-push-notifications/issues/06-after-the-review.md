@@ -13,7 +13,7 @@ Tickets 01 to 04 are merged. Their review fixed what blocked the merge. This tic
 
 1. **A `DeviceNotRegistered` answer deletes only the row that still holds the token sent.** Registering upserts by Session, so a Session that registers another token keeps its row's id. When it does so while a send to its old token is in flight, the answer for the old token must not delete the row, which holds the new token by then. The delete matches the row's id and the token that was sent.
 2. **Nothing about push is asked or registered on iOS.** The iOS build holds the notifications module but no push entitlement, so no push can arrive there. The one condition the registration and the sheet go through also requires Android.
-3. **An unregistering that did not go through is tried again.** Unregistering is Firebase's delete of the phone's token and needs the network, so a sign-out with no network left the phone registered. The wrapper's `unregisterPush()` now answers whether it went through. When it did not, the phone keeps `pushUnregisterOwed`, and with nobody signed in the app tries again at a start and each time it comes to the front, until it goes through. What is owed also goes before a registration, one call at a time, so a new Session's token is fetched only after the old one is deleted. A registration that goes through clears what was owed, since the main server then moved the phone's token to the new Session; a sign-in alone clears nothing. No token of the ended Session is kept for this.
+3. **An unregistering that did not go through is tried again.** Unregistering is Firebase's delete of the phone's token and needs the network, so a sign-out with no network left the phone registered. The wrapper's `unregisterPush()` now answers whether it went through. When it did not, the phone keeps `pushUnregisterOwed`, and while no Session is ready on the phone (nobody signed in, or a User still at the consent or in Onboarding) the app tries again at a start and each time it comes to the front, until it goes through. What is owed also goes before a registration, one call at a time, so a new Session's token is fetched only after the old one is deleted. A registration that goes through clears what was owed, since the main server then moved the phone's token to the new Session; a sign-in alone clears nothing. No token of the ended Session is kept for this.
 
 ## Acceptance criteria
 
@@ -21,6 +21,7 @@ Tickets 01 to 04 are merged. Their review fixed what blocked the merge. This tic
 - [x] On iOS, a Party sent with a Friend shows no sheet and reads no permission, and nothing is registered at a start.
 - [x] `unregisterPush()` answers true when the phone is unregistered or has no native module, and false when the library call fails or does not answer within 3 seconds.
 - [x] After a sign-out whose unregistering failed, the phone keeps `pushUnregisterOwed`. With nobody signed in, the app unregisters once when it next comes to the front and once at a start, and no more after it went through.
+- [x] With a User signed in whose Onboarding is unfinished, a start with `pushUnregisterOwed` kept unregisters the phone.
 - [x] At a sign-in after a failed unregistering, the phone unregisters before it fetches the token, registers the token for the new Session, keeps `pushUnregisterOwed` false, and nothing unregisters it afterwards.
 - [x] A registration that goes through clears `pushUnregisterOwed` even while the unregistering still fails, and a registration the main server refuses leaves it owed.
 - [x] A sign-in while the owed unregistering is still running registers only after it.
@@ -82,5 +83,5 @@ Tickets 01 to 04 are merged. Their review fixed what blocked the merge. This tic
 
 Up to the commit that answers the pull request's review. The session that reviewed and merged tickets 01 to 04, from the last of those merges on, with two Opus 5.5 subagents (the main server's fix; the app's fixes, the split of two test files, and the changes the review asked for). The review that found these points is recorded on tickets 01 to 04.
 
-- Agent time: about 51 minutes, an estimate from the transcripts' timestamps (the session's and the subagents' active stretches together, gaps of five minutes or more left out).
-- Tokens: output 151,617; input 58,871,384, of which 58,438,432 were cache reads, 432,640 cache writes, and 312 uncached. Without cache reads: 584,569.
+- Agent time: about 61 minutes, an estimate from the transcripts' timestamps (the session's and the subagents' active stretches together, gaps of five minutes or more left out).
+- Tokens: output 178,855; input 84,230,067, of which 83,624,474 were cache reads, 605,195 cache writes, and 398 uncached. Without cache reads: 784,448.
