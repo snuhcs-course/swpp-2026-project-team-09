@@ -45,6 +45,8 @@ export interface MainMap {
   fitTo: (points: readonly LatLng[], padding: FitPadding) => void;
   // The same for an answer drawn on the map, no closer than the "close" level.
   fitAnswer: (points: readonly LatLng[], padding: FitPadding) => void;
+  // To a centre, keeping the zoom where the camera rests.
+  centreAt: (centre: LatLng) => void;
 }
 
 // A fit that comes no closer than `offset` above the fit zoom.
@@ -96,8 +98,14 @@ export function useMainMap(): MainMap {
   const showCampus = useCallback(() => {
     move((fit) => ({ centre: centreOf(CAMPUS_BOUNDS), zoom: fit }));
   }, [move]);
+  const centreAt = useCallback(
+    (centre: LatLng) => {
+      move((_fit, zoomNow) => ({ centre, zoom: zoomNow }));
+    },
+    [move],
+  );
   const fitTo = useFit(fitInto, ZOOM_OFFSET.pins);
   const fitAnswer = useFit(fitInto, ZOOM_OFFSET.close);
   const detail = camera === null || fitZoom === null ? 'overview' : zoomDetail(camera.zoom, fitZoom);
-  return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo, fitAnswer };
+  return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo, fitAnswer, centreAt };
 }

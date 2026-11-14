@@ -4,13 +4,23 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
-import { drawingOf, looksOf } from '@/features/assistant/answer-marks';
+import { correctedCentre, type ViewArea } from '@/features/assistant/answer-camera';
+import { type AnswerDrawing, drawingOf, looksOf } from '@/features/assistant/answer-marks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { CardView } from '@/features/map/adapter';
-import { type FitPadding, type MapAvatar, type MapLine, type MapMarker, type MarkerLook, useMarkerImages } from '@/map';
+import {
+  type FitPadding,
+  type MapAvatar,
+  type MapCamera,
+  type MapLine,
+  type MapMarker,
+  type MarkerLook,
+  type Size,
+  useMarkerImages,
+} from '@/map';
 import { ANSWER_PILL, listsTop, type Room } from './layout';
 import type { MainMap } from './use-main-map';
 
@@ -39,18 +49,48 @@ function paddingOf(top: number, cardHeight: number | null): FitPadding {
   };
 }
 
+// The area the padding leaves of a view of `size`.
+function areaOf({ top, right, bottom, left }: FitPadding, size: Size): ViewArea {
+  return { top, right: size.width - right, bottom: size.height - bottom, left };
+}
+
 // Fits the points when they come, and again when the card's height or the stage's size changes. No points move
-// nothing, so closing the answer leaves the camera where it is.
-function useAnswerFit(points: readonly LatLng[], map: MainMap, { answerHeight, stage }: Room): void {
+// nothing, so closing the answer leaves the camera where it is. A map may stop short of the fit, held by its lowest
+// zoom: the camera's first rest after a fit is checked once, and moved so that the Plan shows (`correctedCentre`).
+function useAnswerCamera(drawing: AnswerDrawing | null, map: MainMap, { answerHeight, stage }: Room): void {
   const { top } = useSafeAreaInsets();
-  const { fitAnswer } = map;
+  const { fitAnswer, centreAt, camera } = map;
+  const points = drawing?.points ?? NO_POINTS;
   const width = stage?.width;
   const height = stage?.height;
+  // The camera as it was when the last fit was asked, until the camera's next rest.
+  const fitFrom = useRef<{ camera: MapCamera | null } | null>(null);
+  const fit = useEffectEvent(() => {
+    fitAnswer(points, paddingOf(top, answerHeight));
+    fitFrom.current = { camera };
+  });
   useEffect(() => {
     if (points.length > 0) {
-      fitAnswer(points, paddingOf(top, answerHeight));
+      fit();
     }
-  }, [points, fitAnswer, top, answerHeight, width, height]);
+  }, [points, top, answerHeight, width, height]);
+  const correct = useEffectEvent((now: MapCamera) => {
+    if (fitFrom.current === null || fitFrom.current.camera === now || drawing === null || stage === null) {
+      return;
+    }
+    fitFrom.current = null;
+    // The map lies under the status bar too.
+    const size = { width: stage.width, height: stage.height + top };
+    const centre = correctedCentre(drawing, now, size, areaOf(paddingOf(top, answerHeight), size));
+    if (centre !== null) {
+      centreAt(centre);
+    }
+  });
+  useEffect(() => {
+    if (camera !== null) {
+      correct(camera);
+    }
+  }, [camera]);
 }
 
 // The Avatars of people the Plan does not draw: Friends and members, not the User's own nor the shuttle's vehicles.
@@ -81,7 +121,7 @@ export function useAnswerMap(
   const looks = useMemo(() => (answer === null ? NO_LOOKS : looksOf(answer)), [answer]);
   const things = drawing?.things ?? [];
   const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
-  useAnswerFit(drawing?.points ?? NO_POINTS, map, room);
+  useAnswerCamera(drawing, map, room);
   if (drawing === null || things.length === 0) {
     return null;
   }

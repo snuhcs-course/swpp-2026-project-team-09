@@ -5,9 +5,10 @@
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
-import { StyleSheet, type ViewStyle } from 'react-native';
+import { Dimensions, StyleSheet, type ViewStyle } from 'react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { color } from '@/design-system';
+import * as answerCamera from '@/features/assistant/answer-camera';
 import * as projection from '@/map/projection';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -17,7 +18,7 @@ import { answerDining, ENGINEERING } from './support/dining';
 import { answerEvents } from './support/events';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT, LAYERS } from './support/lists';
+import { AI_INPUT, LAYERS, layStage } from './support/lists';
 import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -246,5 +247,19 @@ describe('the camera', () => {
     await user.press(screen.getByRole('button', { name: CLOSE }));
 
     expect(fit.mock.calls).toHaveLength(before + 1);
+  });
+
+  it('moves no further on the plain map, which has no floor that keeps a point out of view', async () => {
+    const fit = jest.spyOn(projection, 'fit');
+    const corrected = jest.spyOn(answerCamera, 'correctedCentre');
+    const { width, height } = Dimensions.get('window');
+
+    await askOnMap(server, MEAL_ANSWER_REPLY, async () => {
+      await layStage(width, height);
+    });
+
+    expect(fit).toHaveBeenCalledTimes(1);
+    expect(corrected).toHaveBeenCalledTimes(1);
+    expect(corrected).toHaveLastReturnedWith(null);
   });
 });

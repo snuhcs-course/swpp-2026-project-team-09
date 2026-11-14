@@ -168,3 +168,17 @@ describe("a fit of the main screen's camera for an answer", () => {
     ]);
   });
 });
+
+// Partitions: a move to a centre that keeps the zoom where the camera rests, after a fit that came to rest further out.
+describe("a move of the main screen's camera to a centre", () => {
+  it('keeps the zoom where the camera rests', async () => {
+    const { map, moves, ready, rest } = await open();
+    await ready();
+    map().fitAnswer([CENTRE, LIBRARY], { top: 156, right: 64, bottom: 330, left: 64 });
+    await rest(FIT + 0.3);
+
+    map().centreAt(LIBRARY);
+
+    expect(moves).toEqual([{ centre: LIBRARY, zoom: FIT + 0.3, animated: true }]);
+  });
+});
