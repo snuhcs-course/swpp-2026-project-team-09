@@ -6,6 +6,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,7 +38,13 @@ afterEach(() => {
 const NO_BACKGROUND = { masterSwitch: false, backgroundChosen: false, backgroundRunning: false };
 
 // What versions since the location explanation added, which nothing here changes.
-const NOTHING_LATER = { ...NO_BACKGROUND, declinedParties: [], answerOnMap: false, pushAsked: false };
+const NOTHING_LATER = {
+  ...NO_BACKGROUND,
+  declinedParties: [],
+  answerOnMap: false,
+  pushAsked: false,
+  pushUnregisterOwed: false,
+};
 
 const FIRST_STATE = {
   signedIn: false,
@@ -51,6 +58,7 @@ const FIRST_STATE = {
   declinedParties: [],
   answerOnMap: false,
   pushAsked: false,
+  pushUnregisterOwed: false,
 };
 
 describe('sign-in', () => {
@@ -73,6 +81,7 @@ describe('sign-in', () => {
       declinedParties: [],
       answerOnMap: false,
       pushAsked: false,
+      pushUnregisterOwed: false,
     });
   });
 
@@ -111,6 +120,7 @@ describe('what the phone keeps', () => {
       declinedParties: [],
       answerOnMap: false,
       pushAsked: false,
+      pushUnregisterOwed: false,
     });
   });
 

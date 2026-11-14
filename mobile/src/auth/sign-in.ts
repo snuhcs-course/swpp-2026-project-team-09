@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -42,7 +43,11 @@ async function enter(suggestion: Suggestion): Promise<SignInResult> {
   // A User who finished Onboarding on this phone before has finished it, as an account on the main server has.
   const { onboardingCompleted } = await readKept();
   const onboarding: Onboarding = onboardingCompleted ? { completed: true } : { completed: false, suggestion };
-  await keep({ signedIn: true, suggestion: onboarding.completed ? null : onboarding.suggestion });
+  await keep({
+    signedIn: true,
+    pushUnregisterOwed: false,
+    suggestion: onboarding.completed ? null : onboarding.suggestion,
+  });
   return { outcome: 'signed-in', onboarding };
 }
 
@@ -75,6 +80,7 @@ async function enterMainServer(idToken: string): Promise<SignInResult> {
     : { completed: false, suggestion: answer.onboarding.suggestion ?? { name: null, department: null } };
   await keep({
     signedIn: true,
+    pushUnregisterOwed: false,
     onboardingCompleted: onboarding.completed,
     suggestion: onboarding.completed ? null : onboarding.suggestion,
   });
@@ -129,7 +135,9 @@ async function signOutOfMainServer(): Promise<void> {
     // Nothing to do.
   }
   // Whatever the main server answered, so that a phone it could not tell receives nothing.
-  await unregisterPush();
+  if (!(await unregisterPush())) {
+    await keep({ pushUnregisterOwed: true });
+  }
   await forgetTokens();
 }
 

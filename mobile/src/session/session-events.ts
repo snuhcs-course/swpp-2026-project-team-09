@@ -5,6 +5,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Suggestion } from '@/api/types';
@@ -40,7 +41,9 @@ export function announce(event: SessionEvent): void {
 // show the sign-in screen. The library session ends right after the tokens go, whether or not the User logged in to
 // it, without the end waiting on the library's site.
 export async function endSession(replaced: boolean): Promise<void> {
-  await unregisterPush();
+  if (!(await unregisterPush())) {
+    await keep({ pushUnregisterOwed: true });
+  }
   await forgetTokens();
   endLibrarySessionInBackground();
   await keep({ signedIn: false, suggestion: null });

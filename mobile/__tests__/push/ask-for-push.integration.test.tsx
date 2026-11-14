@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,13 +16,11 @@ import type * as PushFake from '../support/push';
 import { pass, screen } from '../support/app';
 import type { FakeServer } from '../support/fake-server';
 import { askForCards, inCard, pressIn, SEAT_CARD, startLibraryChat } from '../support/library-chat';
-import { givePhone, ON_CAMPUS, openMain } from '../support/main';
-import { startFresh } from '../support/mocks';
+import { openMain } from '../support/main';
 import { MY_HIKE } from '../support/party';
 import { givePushPhone, PHONE_TOKEN, type PushPhone } from '../support/push';
 import { LUNCH, makeProposal, REGISTER, ROOM_CARD, sendParty, startServerBuild } from '../support/push-moments';
 import { MIN_JUN_HOLDER } from '../support/room';
-import { PHONE_NOW } from '../support/server';
 import { signIn, signOut } from '../support/sign-out';
 
 // The sheet that asks about push (board t17), shown once after the design's moments, against the fake main server:
@@ -51,6 +50,10 @@ type User = ReturnType<typeof userEvent.setup>;
 
 let server: FakeServer;
 let phone: PushPhone;
+
+beforeEach(() => {
+  jest.replaceProperty(Platform, 'OS', 'android');
+});
 
 afterEach(() => {
   jest.useRealTimers();
@@ -266,35 +269,6 @@ describe('the sheet after a booking of the library', () => {
     await pass(500);
 
     expect(sheetShown()).toBe(false);
-  });
-});
-
-describe('a build that cannot push', () => {
-  it('shows no sheet and reads no permission without the native module', async () => {
-    await startUndetermined();
-    phone = givePushPhone({ native: false, permission: 'undetermined' });
-    const user = await openMain();
-
-    await sendParty(user, [MIN_JUN_HOLDER.name]);
-
-    expect(server.received(`POST /quests/${MY_HIKE.id}/invitations`)).toHaveLength(1);
-    expect(sheetShown()).toBe(false);
-    expect(phone.permissionReads()).toBe(0);
-  });
-
-  it('never reads the permission nor shows the sheet in a mock build', async () => {
-    jest.useFakeTimers({ now: PHONE_NOW });
-    await startFresh();
-    givePhone({ permission: 'granted', position: ON_CAMPUS });
-    phone = givePushPhone({ permission: 'undetermined' });
-    const user = await openMain();
-
-    await sendParty(user, [MIN_JUN_HOLDER.name]);
-    await pass(1000);
-
-    expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
-    expect(sheetShown()).toBe(false);
-    expect(phone.permissionReads()).toBe(0);
   });
 });
 

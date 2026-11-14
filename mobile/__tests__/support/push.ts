@@ -33,6 +33,8 @@ interface PhoneState {
   permissionReads: number;
   prompts: number;
   unregisters: number;
+  // The unregister call fails, as without the network.
+  unregisterFails: boolean;
   listeners: Set<TokenListener>;
   onUnregister: () => void;
 }
@@ -67,6 +69,7 @@ const phone: PhoneState = {
   permissionReads: 0,
   prompts: 0,
   unregisters: 0,
+  unregisterFails: false,
   listeners: new Set(),
   onUnregister: doNothing,
 };
@@ -77,6 +80,7 @@ interface Given {
   // Left out, false for a denial and true otherwise.
   canAskAgain?: boolean;
   prompt?: 'granted' | 'denied';
+  unregisterFails?: boolean;
 }
 
 export interface PushPhone {
@@ -92,6 +96,8 @@ export interface PushPhone {
   changeToken: (token: string) => Promise<void>;
   // Runs at each unregistering, to see what the app still holds then.
   whenUnregistered: (does: () => void) => void;
+  // The unregister call works again, as once the network is back.
+  letUnregisterWork: () => void;
 }
 
 export function givePushPhone(given: Given = {}): PushPhone {
@@ -104,6 +110,7 @@ export function givePushPhone(given: Given = {}): PushPhone {
   phone.permissionReads = 0;
   phone.prompts = 0;
   phone.unregisters = 0;
+  phone.unregisterFails = given.unregisterFails ?? false;
   phone.listeners.clear();
   phone.onUnregister = doNothing;
   return {
@@ -121,6 +128,9 @@ export function givePushPhone(given: Given = {}): PushPhone {
     },
     whenUnregistered: (does): void => {
       phone.onUnregister = does;
+    },
+    letUnregisterWork: (): void => {
+      phone.unregisterFails = false;
     },
   };
 }
@@ -181,6 +191,9 @@ export const notificationsModule = {
   },
   unregisterForNotificationsAsync: (): Promise<null> => {
     phone.unregisters += 1;
+    if (phone.unregisterFails) {
+      return Promise.reject(new Error('Network request failed'));
+    }
     phone.deviceToken = freshDeviceToken();
     phone.onUnregister();
     return Promise.resolve(null);
