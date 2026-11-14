@@ -647,11 +647,14 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   else of the everyday map: each mark is an `answer` look, one symbol at a point and its label at the first free side,
   and a candidate's mark takes a press, which shows its Plan; each route is a straight, solid line. The markers of
   events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
-  the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and members stay, but for those
-  of the Plan's people, whom the marks draw. The looks of every Plan are asked for when the answer comes. The camera
+  the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
+  User's Party stay, but for those of the Plan's people, whom the marks draw. The looks of every Plan are asked for when the answer comes. The camera
   fits the Plan's points (`fitAnswer`, no closer than the "close" level) between the pill and the card, with room for
   a label above and below and 64 at the sides, when the answer comes, when the Plan on screen changes, and when the
-  card's height or the stage's size changes; closing the answer moves nothing. The card shows "근거" (or "근거 접기")
+  card's height or the stage's size changes; closing the answer moves nothing. Kakao's map goes no further out than
+  its level 15, so the camera's first rest after a fit is checked once (`correctedCentre`): when a point lies outside
+  what the pill and the card leave, the camera moves at the same zoom so that the Plan's own points are centred there,
+  or, when they do not fit either, so that the picked Restaurant's side stays in view. The card shows "근거" (or "근거 접기")
   at the right of its first row, the Plan's two lines, the basis while it is open, and "‹" ("이전 후보"), the count
   ("3/5"), and "›" ("다음 후보") when the answer has more than one Plan; the arrows go round, and a new Plan closes
   the basis. An answer without a Plan draws nothing and keeps the everyday map.

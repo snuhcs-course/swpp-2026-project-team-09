@@ -93,7 +93,8 @@ function useAnswerCamera(drawing: AnswerDrawing | null, map: MainMap, { answerHe
   }, [camera]);
 }
 
-// The Avatars of people the Plan does not draw: Friends and members, not the User's own nor the shuttle's vehicles.
+// The Avatars of people the Plan does not draw: Friends and the other people of the User's Party, not the User's own
+// nor the shuttle's vehicles.
 function othersOf(avatars: readonly MapAvatar[], cards: readonly CardView[], userIds: readonly string[]): MapAvatar[] {
   const others = new Set(
     cards.flatMap(({ id, mark }) => (mark.type === 'person' && !userIds.includes(mark.id) ? [id] : [])),
