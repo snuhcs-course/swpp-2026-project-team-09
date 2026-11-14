@@ -31,6 +31,7 @@ import { UserDayService } from './free-time/user-day.service.js';
 import { MealPlanService } from './gathering/meal-plan.service.js';
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
+import { WayService } from './lookup/way.service.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 import { NewQuestPlanService } from './recruiting/new-quest-plan.service.js';
 import { QuestsPlanService } from './recruiting/quests-plan.service.js';
@@ -57,6 +58,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     AssistantService,
     UserDayService,
     MealPlanService,
+    WayService,
     EventsPlanService,
     QuestsPlanService,
     NewQuestPlanService,

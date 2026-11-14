@@ -1,7 +1,7 @@
 # 05: Other answers on the map
 
 Parent: [P01 spec](../spec.md) ("The contract", "The Assistant")
-Status: needs-triage
+Status: ready-for-agent
 Blocked by: 03
 
 ## What to build
@@ -16,3 +16,17 @@ The Assistant's other answers that involve a Place (where a Place is, the minute
 - [ ] Unit tests for each scene and integration tests at the Assistant's endpoint.
 
 ## Comments
+
+### Triage (2026-11-15)
+
+Split by wireframe row 7's boards into [06](06-a-lookup-and-where-a-place-is.md) (a Lookup, and where a Place is: q1), [07](07-minutes-and-lateness.md) (minutes and lateness: q2, q3, q15), [08](08-shuttle-or-walk.md) (shuttle or walk: q4), [09](09-a-menu-on-the-map.md) (a menu: q8), [10](10-where-a-friend-is.md) (where a Friend is: q5 to q7, after package C's Friend view), and [11](11-the-answer-screen-draws-a-lookup.md) (the app draws a Lookup, after package B's pull requests 245 and 246). This ticket is done when they are.
+
+The first criterion's answer: an answer without a Plan is a **Lookup**, sent as the reply's `lookup` beside `answer` (ticket 06 gives the shape). The existing shape could not carry these boards as a Plan, since a Plan holds a recalculated input, people's parts, and the Sub Quests of the Quest it becomes.
+
+Row 7's other boards are not in these tickets:
+
+- q9 (a café on the way), q10 to q12 (the Tutorial Quests in order, a Tutorial question answered in words first, and the way there and back before a Class), and q14 (today's Classes): no ticket yet. The Tutorial needs data that does not exist (how long each Tutorial Quest takes) and the ordering tool of the freshman package (design section 6.5).
+- q13 (Kwanjeong's free seats): package D's row 2.
+- q16 (this week's performances): package C's row 4.
+- q17 to q19 (Friends free for a meal, and grouping many results into circles): `findFreeFriends` exists. The circles are package B's (work split section 8).
+
