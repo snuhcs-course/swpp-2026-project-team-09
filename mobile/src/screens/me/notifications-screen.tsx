@@ -28,6 +28,7 @@ import {
 import { openAddress } from '@/features/notifications/address';
 import { type NoticeKind, type NoticeView, waitingNotices } from '@/features/notifications/adapter';
 import { useNotices } from '@/features/notifications/use-notices';
+import { PartyOnButton } from './party-on-button';
 
 const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   party: 'navy',
@@ -74,7 +75,10 @@ function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }
         notice.time === null ? (
           <Icon color={color.inkFaint} name="chevronRight" size={16} />
         ) : (
-          <Text style={styles.time}>{notice.time}</Text>
+          <View style={styles.aside}>
+            <Text style={styles.time}>{notice.time}</Text>
+            {notice.kind === 'leave-by' && notice.questId !== null ? <PartyOnButton questId={notice.questId} /> : null}
+          </View>
         )
       }
     />
@@ -123,5 +127,6 @@ export function NotificationsScreen(): ReactElement {
 const styles = StyleSheet.create({
   body: { padding: space[4] },
   card: { paddingVertical: 0 },
+  aside: { alignItems: 'flex-end', gap: space[1], paddingVertical: space[2] },
   time: { ...text.label, color: color.inkFaint },
 });

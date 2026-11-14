@@ -7,16 +7,18 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { Prisma, User } from '../generated/prisma/client.js';
+import { FriendLevel, Prisma, User } from '../generated/prisma/client.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import {
+  endOf,
   FriendDto,
   FriendRequestsDto,
   SentFriendRequestDto,
@@ -78,7 +80,7 @@ const alreadyFriends = (): ConflictException =>
     message: 'This User is already your Friend.',
   });
 
-const friendNotFound = (): NotFoundException =>
+export const friendNotFound = (): NotFoundException =>
   new NotFoundException({
     statusCode: HttpStatus.NOT_FOUND,
     error: 'Not Found',
@@ -204,12 +206,11 @@ export class FriendsService {
       where: { acceptedAt: { not: null }, ...ofUser(userId) },
       include: { userA: USER_SUMMARY, userB: USER_SUMMARY },
     });
-    const visible = new Set(await this.visibility.visibleTo(userId));
+    const visible = await this.visibility.visibleTo(userId);
     return rows
       .map((row) => {
         const friend = otherOf(row, userId);
-        const sharing = row.userAId === userId ? row.userASharing : row.userBSharing;
-        return toFriendDto(friend, sharing, visible.has(friend.id));
+        return toFriendDto(friend, endOf(row, userId), visible.has(friend.id));
       })
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }
@@ -228,10 +229,10 @@ export class FriendsService {
     await this.roomRequests.friendshipEnded(userId, friendUserId);
   }
 
-  // The User's switch for Location Sharing at their own end of the friendship.
-  async setSharing(userId: string, friendUserId: string, on: boolean): Promise<void> {
+  // What the User lets the Friend see of where they are, at their own end of the friendship.
+  async setLevel(userId: string, friendUserId: string, level: FriendLevel): Promise<void> {
     const pair = pairOf(userId, friendUserId);
-    const data = userId === pair.userAId ? { userASharing: on } : { userBSharing: on };
+    const data = userId === pair.userAId ? { userALevel: level } : { userBLevel: level };
     await this.visibility.announceRemovals(userId, async () => {
       const { count } = await this.prisma.friendship.updateMany({
         where: { ...pair, acceptedAt: { not: null } },

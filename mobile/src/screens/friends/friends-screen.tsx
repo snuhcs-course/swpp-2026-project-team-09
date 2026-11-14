@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { isRefusal } from '@/api/errors';
+import type { FriendLevel } from '@/api/types';
 import {
   Avatar,
   color,
@@ -16,13 +18,11 @@ import {
   font,
   FullScreenPanel,
   Icon,
-  ListRow,
   LoadingState,
   RoundIcon,
   SearchField,
   SectionHeader,
   space,
-  Switch,
   text,
   useToast,
 } from '@/design-system';
@@ -31,6 +31,9 @@ import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { useFriendRequests } from '@/features/friends/use-friend-requests';
 import { useFriends } from '@/features/friends/use-friends';
 import { EndFriendship } from './end-friendship';
+import { LevelTrack } from './level-track';
+import { OffQuestion } from './off-question';
+import { useLevels } from './use-levels';
 import { NO_ANSWER } from './words';
 
 // A search by name and department, where spaces do not count, as in the frame.
@@ -69,47 +72,35 @@ function Entries({ received }: { received: number | undefined }): ReactElement {
   );
 }
 
-// The User's switch for one friendship: shown at once, turned back with a toast when the change fails. Gives the
-// switch's value for a Friend and what a press does.
-function useSharingSwitches(): [(friend: FriendView) => boolean, (friend: FriendView, on: boolean) => void] {
-  const changes = useFriendChanges();
-  const showToast = useToast();
-  const [turning, setTurning] = useState<ReadonlyMap<string, boolean>>(new Map());
-  const settle = (userId: string): void => {
-    setTurning((now) => new Map([...now].filter(([id]) => id !== userId)));
-  };
-  const turn = (friend: FriendView, on: boolean): void => {
-    setTurning((now) => new Map(now).set(friend.id, on));
-    changes.setSharing(friend.id, on).then(
-      () => {
-        settle(friend.id);
-      },
-      () => {
-        settle(friend.id);
-        showToast('위치 공유를 바꾸지 못했어요');
-      },
-    );
-  };
-  return [(friend) => turning.get(friend.id) ?? friend.sharing, turn];
-}
-
 interface FriendRowProps {
   friend: FriendView;
-  sharing: boolean;
-  onTurn: (on: boolean) => void;
+  level: FriendLevel;
+  onChoose: (level: FriendLevel) => void;
   onPress: () => void;
 }
 
-function FriendRow({ friend, sharing, onTurn, onPress }: FriendRowProps): ReactElement {
+// A Friend, with the three levels the User may let them see under the name.
+function FriendRow({ friend, level, onChoose, onPress }: FriendRowProps): ReactElement {
   return (
-    <ListRow
-      label={friend.name}
-      leading={<Avatar name={friend.name} source={friend.photo === null ? undefined : { uri: friend.photo }} />}
-      lines={[friend.visible ? friend.department : `${friend.department} · 위치 꺼짐`]}
-      onPress={onPress}
-      title={friend.name}
-      trailing={<Switch label={`${friend.name}님과 위치 공유`} onValueChange={onTurn} value={sharing} />}
-    />
+    <View style={styles.friend}>
+      <Pressable
+        accessibilityLabel={friend.name}
+        accessibilityRole="button"
+        onPress={onPress}
+        style={({ pressed }) => [styles.who, pressed && styles.pressed]}
+      >
+        <Avatar name={friend.name} source={friend.photo === null ? undefined : { uri: friend.photo }} />
+        <View style={styles.words}>
+          <Text numberOfLines={1} style={styles.name}>
+            {friend.name}
+          </Text>
+          <Text numberOfLines={1} style={styles.line}>
+            {friend.visible ? friend.department : `${friend.department} · 위치 꺼짐`}
+          </Text>
+        </View>
+      </Pressable>
+      <LevelTrack label={`${friend.name}님에게 보일 위치`} level={level} onChoose={onChoose} />
+    </View>
   );
 }
 
@@ -119,13 +110,14 @@ interface ListProps {
   onPress: (friend: FriendView) => void;
 }
 
+// The list, and the question before a Friend's location is turned off the first time.
 function Friends({ friends, query, onPress }: ListProps): ReactElement {
-  const [sharingOf, turn] = useSharingSwitches();
+  const { levelOf, choose, asked, answer } = useLevels();
   const shown = friends.filter((friend) => found(friend, query));
   return (
     <>
       <SectionHeader>{`친구 ${friends.length}`}</SectionHeader>
-      <Text style={styles.note}>위치 공유를 끄면 서로의 위치가 보이지 않아요</Text>
+      <Text style={styles.note}>둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요</Text>
       {friends.length === 0 ? <EmptyState words="아직 친구가 없어요" /> : null}
       {friends.length > 0 && shown.length === 0 ? <EmptyState words="결과 없음" /> : null}
       {shown.map((friend) => (
@@ -135,12 +127,13 @@ function Friends({ friends, query, onPress }: ListProps): ReactElement {
           onPress={() => {
             onPress(friend);
           }}
-          onTurn={(on) => {
-            turn(friend, on);
+          level={levelOf(friend)}
+          onChoose={(level) => {
+            choose(friend, level);
           }}
-          sharing={sharingOf(friend)}
         />
       ))}
+      <OffQuestion name={asked?.friend.name ?? null} onAnswer={answer} open={asked?.open === true} />
     </>
   );
 }
@@ -164,8 +157,8 @@ function useEnd(): (friend: FriendView) => void {
   };
 }
 
-// 친구 관리, the `Friends` frame's list: 친구 추가, the entry to 친구 요청, and every Friend with the switch of the
-// friendship. A press on a Friend offers to end the friendship.
+// 친구 관리, the `Friends` frame's list: 친구 추가, the entry to 친구 요청, and every Friend with the level the User
+// lets them see. A press on a Friend offers to end the friendship.
 export function FriendsScreen(): ReactElement {
   const friends = useFriends();
   const received = useFriendRequests().data?.received.length;
@@ -217,4 +210,9 @@ const styles = StyleSheet.create({
   entryLabel: { flex: 1, fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: color.ink },
   entryCount: { ...text.label, color: color.inkMuted },
   note: { ...text.caption, paddingBottom: space[1], color: color.inkMuted },
+  friend: { paddingBottom: space[3], borderBottomWidth: 1, borderBottomColor: color.border },
+  who: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 64 },
+  words: { flex: 1, gap: 1 },
+  name: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
+  line: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
 });

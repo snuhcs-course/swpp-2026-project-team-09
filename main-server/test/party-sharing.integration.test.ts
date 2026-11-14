@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -91,7 +92,7 @@ describe('Members of a Party', () => {
 
     await vi.waitFor(() => {
       expect(received(leader, 'position')).toEqual([
-        { userIds: [leader.id], payload: { userId: member.id, ...ON_CAMPUS, measuredAt } },
+        { userIds: [leader.id], payload: { userId: member.id, ...ON_CAMPUS, measuredAt, level: 'exact' } },
       ]);
     });
   });

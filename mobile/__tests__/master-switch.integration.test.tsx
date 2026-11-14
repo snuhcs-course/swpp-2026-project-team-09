@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -70,12 +71,13 @@ describe('the Master Switch with the permission granted', () => {
     expect(await lobbySwitch()).toBe(true);
   });
 
-  it('turns off again', async () => {
-    await openMe();
+  it('turns off again once the first question is answered', async () => {
+    const user = await openMe();
     await turn(true);
     await pass(300);
 
     await turn(false);
+    await user.press(screen.getByRole('button', { name: '위치 끄기' }));
     await pass(300);
 
     expect(screen.getByRole('switch', { name: SWITCH })).not.toBeChecked();

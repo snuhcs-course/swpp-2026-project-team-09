@@ -38,6 +38,8 @@ import { alreadyHolder, conflict, notFound } from './refusals.js';
 
 export type CreatedInvitation = Prisma.QuestInvitationGetPayload<{ include: typeof WAITING_INCLUDE }>;
 
+export type AcceptedListener = (userId: string, questId: string) => void;
+
 const invitationNotFound = (): NotFoundException => notFound('QUEST_INVITATION_NOT_FOUND', 'No such invitation waits.');
 
 // The Leader's invitations of Friends. An invitation admits whatever the Join Policy is, waits until the invited User
@@ -45,6 +47,7 @@ const invitationNotFound = (): NotFoundException => notFound('QUEST_INVITATION_N
 @Injectable()
 export class InvitationsService {
   private readonly logger = new Logger(InvitationsService.name);
+  private readonly accepted: AcceptedListener[] = [];
 
   constructor(
     private readonly prisma: PrismaService,
@@ -155,8 +158,17 @@ export class InvitationsService {
       friendId: userId,
       friendName: answered.user.name,
     });
+    this.accepted.forEach((listener) => {
+      listener(userId, questId);
+    });
     await this.roomRequests.questChanged(questId);
     return this.quests.read(userId, questId);
+  }
+
+  // For a module this one cannot import: each listener hears of an acceptance once it is stored and signalled, and
+  // must not throw.
+  onAccepted(listener: AcceptedListener): void {
+    this.accepted.push(listener);
   }
 
   // Keeps the decline in place of the invitation. Tells the Holders too, whose members list the User as declined.

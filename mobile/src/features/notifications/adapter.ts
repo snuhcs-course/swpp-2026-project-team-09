@@ -39,7 +39,8 @@ export interface NoticeView {
   title: string;
   // "산업공학과"
   sub: string;
-  // The Quest whose room the row opens: a running Party's, or the one others ask to join. Null for the others.
+  // The Quest whose room the row opens: a running Party's, or the one others ask to join. The time to leave's opens
+  // its card, and names the Quest whose Party it turns on. Null for the others.
   questId: string | null;
   // The card's address the row opens, `/main?card=<kind>:<id>`. Null for a row that leads elsewhere.
   address: string | null;
@@ -102,7 +103,7 @@ function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[]
       icon: keptIcon(notification),
       title: keptTitle(notification, now),
       sub: notification.line,
-      questId: null,
+      questId: notification.kind === 'leave-by' ? (readCardAddress(notification.url)?.id ?? null) : null,
       address: notification.url,
       time: timeOf(notification.at, now),
     }));

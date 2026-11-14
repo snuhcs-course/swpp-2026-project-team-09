@@ -38,26 +38,36 @@ function unregisterIfOwed(): Promise<void> {
   return unregistering;
 }
 
-// Sends the phone's token to the main server. The token is null unless the permission is granted. A failure is left
-// for the next start.
+// Whether the ready Session's token reached the main server in this run of the app, and whether a registration runs.
+let registered = false;
+let registering = false;
+
+// Sends the phone's token to the main server. The token is null unless the permission is granted. A failure is tried
+// again when the app comes back to the front.
 export async function registerPush(): Promise<void> {
+  registering = true;
   try {
     // An unregistering finishing later would delete the token fetched here.
     await unregisterIfOwed();
     const token = await expoPushToken();
     if (token !== null) {
       await apiClient.registerPushToken(token);
+      registered = true;
       // The main server moved the token to this Session, so nothing of the earlier one reaches the phone.
       if ((await readKeptAfterChanges()).pushUnregisterOwed) {
         await keep({ pushUnregisterOwed: false });
       }
     }
   } catch {
-    // The next start tries again.
+    // Tried again when the app comes back to the front.
+  } finally {
+    registering = false;
   }
 }
 
-// Registers the phone at every start and sign-in, and whenever its token changes. It never asks for the permission.
+// Registers the phone at every start and sign-in, whenever its token changes, and when the app comes back to the front
+// while that has not gone through yet (a failure, or notifications allowed later in the phone's settings). It never
+// asks for the permission.
 // Before the Session is ready, it tries an unregistering owed at a start and whenever the app comes back to the front.
 export function PushRegistration(): null {
   const { status } = useSession();
@@ -81,10 +91,20 @@ export function PushRegistration(): null {
     if (!usable) {
       return;
     }
+    registered = false;
     void registerPush();
-    return onPushTokenChange(() => {
+    const stopTokenWatch = onPushTokenChange(() => {
       void registerPush();
     });
+    const watch = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && !registered && !registering) {
+        void registerPush();
+      }
+    });
+    return () => {
+      stopTokenWatch();
+      watch.remove();
+    };
   }, [usable]);
   return null;
 }

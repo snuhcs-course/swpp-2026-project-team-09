@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, fireEvent } from '@testing-library/react-native';
+import { act, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { pass, screen } from './support/app';
 import { friendRows, openFriendScreen } from './support/friends';
@@ -22,7 +23,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const MIN_JUN_SWITCH = '김민준님과 위치 공유';
+const MIN_JUN_LEVELS = '김민준님에게 보일 위치';
 
 beforeEach(async () => {
   jest.useFakeTimers();
@@ -35,8 +36,9 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-async function turn(on: boolean): Promise<void> {
-  await fireEvent(screen.getByRole('switch', { name: MIN_JUN_SWITCH }), 'valueChange', on);
+// 김민준's choice of the level named.
+function choice(words: string): ReturnType<typeof screen.getByRole> {
+  return within(screen.getByLabelText(MIN_JUN_LEVELS)).getByRole('radio', { name: words });
 }
 
 describe('친구 관리', () => {
@@ -49,7 +51,7 @@ describe('친구 관리', () => {
     expect(friendRows()).toHaveLength(12);
     expect(friendRows()[0]).toBe('강도윤');
     expect(screen.getByText('심리학과 · 위치 꺼짐')).toBeVisible();
-    expect(screen.getByText('위치 공유를 끄면 서로의 위치가 보이지 않아요')).toBeVisible();
+    expect(screen.getByText('둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요')).toBeVisible();
   });
 
   it('searches by name and department, and says so when nobody is found', async () => {
@@ -85,32 +87,37 @@ describe('친구 관리 when empty or failing', () => {
   });
 });
 
-describe("친구 관리's switches", () => {
-  it("turns a friendship's sharing off and on, and the Friend's Avatar goes and comes", async () => {
-    await openFriendScreen('/me/friends');
-    expect(screen.getByRole('switch', { name: MIN_JUN_SWITCH })).toBeChecked();
+describe("친구 관리's levels", () => {
+  it("offers three levels for each Friend, and the Friend's Avatar goes at 시간표만 and comes back above it", async () => {
+    const user = await openFriendScreen('/me/friends');
+    expect(choice('시간표만')).not.toBeChecked();
+    expect(choice('지금 있는 건물')).not.toBeChecked();
+    expect(choice('정확한 위치')).toBeChecked();
 
-    await turn(false);
-    expect(screen.getByRole('switch', { name: MIN_JUN_SWITCH })).not.toBeChecked();
+    await user.press(choice('시간표만'));
+    await user.press(screen.getByRole('button', { name: '위치 끄기' }));
+    expect(choice('시간표만')).toBeChecked();
     await pass(1000);
     expect(screen.getByText('컴퓨터공학부 · 위치 꺼짐')).toBeVisible();
     // The map lies under this screen.
     expect(screen.queryByRole('button', { name: FRIEND, hidden: true })).toBeNull();
 
-    await turn(true);
+    await user.press(choice('지금 있는 건물'));
     await pass(1000);
-    expect(screen.getByRole('switch', { name: MIN_JUN_SWITCH })).toBeChecked();
+    expect(choice('지금 있는 건물')).toBeChecked();
+    expect(choice('정확한 위치')).not.toBeChecked();
     expect(screen.getByRole('button', { name: FRIEND, hidden: true })).toBeTruthy();
   });
 
-  it('turns the switch back and says so when the change fails', async () => {
-    process.env.EXPO_PUBLIC_MOCK_FAIL = 'setFriendSharing';
-    await openFriendScreen('/me/friends');
+  it('turns the choice back and says so when the change fails', async () => {
+    process.env.EXPO_PUBLIC_MOCK_FAIL = 'setFriendLevel';
+    const user = await openFriendScreen('/me/friends');
 
-    await turn(false);
+    await user.press(choice('시간표만'));
+    await user.press(screen.getByRole('button', { name: '위치 끄기' }));
     await pass(1000);
 
-    expect(screen.getByRole('switch', { name: MIN_JUN_SWITCH })).toBeChecked();
+    expect(choice('정확한 위치')).toBeChecked();
     expect(screen.getByText('위치 공유를 바꾸지 못했어요')).toBeVisible();
   });
 });

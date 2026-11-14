@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Redirect } from 'expo-router';
@@ -11,7 +12,7 @@ import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatars, Badges, Buttons, Chips, Icons, MapPins } from '@/catalogue/basics';
 import { BottomNavs, ChatInputs, Dialogs, EventCards, TextFields, Toasts } from '@/catalogue/composites';
-import { AppBars, Filters, FullScreenPanels, ListRows, Panels, States } from '@/catalogue/screens';
+import { AppBars, ChoiceGrids, Filters, FullScreenPanels, ListRows, Panels, States } from '@/catalogue/screens';
 import { color, space, text } from '@/design-system';
 
 // Every shared component in every variant, to compare with the design system's own previews. For developers: a
@@ -41,6 +42,7 @@ export default function CatalogueScreen(): ReactElement {
         <Panels />
         <Filters />
         <ListRows />
+        <ChoiceGrids />
         <States />
       </ScrollView>
     </SafeAreaView>
