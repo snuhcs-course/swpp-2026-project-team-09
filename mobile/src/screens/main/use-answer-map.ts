@@ -40,7 +40,7 @@ const SIDE = 64;
 
 // A Plan may span the campus, and on a phone Kakao's level 15, where a campus map's pinch out stops, is closer than
 // the lowest zoom of the camera's rules: while a Plan is drawn, a native map may go one level further out.
-const ANSWER_MIN_LEVEL = NATIVE_MIN_LEVEL - 1;
+export const ANSWER_MIN_LEVEL = NATIVE_MIN_LEVEL - 1;
 
 const NO_LOOKS: readonly MarkerLook[] = [];
 
@@ -134,7 +134,11 @@ function useAnswerCamera(
 // The Avatars of people the Plan does not draw: Friends and the other people of the User's Party, not the User's own
 // nor the shuttle's vehicles. One near one of the Plan's own marks gives way too: the map draws every Avatar above
 // every marker, so it would lie over the mark or its words.
-function othersOf(avatars: readonly MapAvatar[], cards: readonly CardView[], drawing: AnswerDrawing): MapAvatar[] {
+export function othersOf(
+  avatars: readonly MapAvatar[],
+  cards: readonly CardView[],
+  drawing: AnswerDrawing,
+): MapAvatar[] {
   const others = new Set(
     cards.flatMap(({ id, mark }) => (mark.type === 'person' && !drawing.userIds.includes(mark.id) ? [id] : [])),
   );
@@ -150,12 +154,12 @@ export interface AnswerMap {
 }
 
 // The everyday map's Avatars, and the cards that say whose they are.
-type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
+export type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
 
 // A drawing's markers and lines on the map in place of the everyday map's markers, lines, and the User's own Avatar,
 // with the camera of an answer, under the answer's `pill` or none. Null while there is nothing to draw. `looks` are
 // asked for with the drawing's own, so that a change of drawing never waits for a picture.
-function useDrawnMap(
+export function useDrawnMap(
   drawing: AnswerDrawing | null,
   answer: AnswerReply | null,
   looks: readonly MarkerLook[],

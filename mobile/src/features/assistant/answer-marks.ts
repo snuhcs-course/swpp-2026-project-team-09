@@ -12,7 +12,16 @@ import { type AnswerLabel, type AnswerSymbol, type FaceBadge, type LabelSide } f
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
-import { DRAW_ORDER, type Group, OWN, ROUTE_STYLES, SIDE_ORDER, SIDES, SYMBOL_ORDER } from './answer-groups';
+import {
+  DRAW_ORDER,
+  FLAG_TONES,
+  type Group,
+  OWN,
+  ROUTE_STYLES,
+  SIDE_ORDER,
+  SIDES,
+  SYMBOL_ORDER,
+} from './answer-groups';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -70,11 +79,13 @@ function faceTitle(name: string, tag: string): string | null {
   if (Array.from(name).length > FACE_LETTERS) {
     return tag;
   }
-  if (tag === name) {
-    return null;
-  }
+  return tag === name ? null : restOf(name, tag);
+}
+
+// Words without the name they start with, which the mark says already.
+function restOf(name: string, words: string): string {
   const lead = `${name} · `;
-  return tag.startsWith(lead) ? tag.slice(lead.length) : tag;
+  return words.startsWith(lead) ? words.slice(lead.length) : words;
 }
 
 // A Friend who was invited is named with how they stand, in place of the tag.
@@ -108,6 +119,23 @@ export interface SceneSetting {
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
+// A shuttle stop: its name as the title, and the rest of its tag, such as the shuttle's time, as the line.
+function stopDraft({ place, tag }: MapScene['places'][number]): Draft {
+  const { label, latitude, longitude } = place;
+  return {
+    id: `answer:stop:${place.placeId}`,
+    name: tag ?? label,
+    position: { latitude, longitude },
+    planId: null,
+    group: 'stop',
+    symbol: { type: 'dot', role: 'stop', number: null },
+    tone: 'stop',
+    title: label,
+    line: tag === null || tag === label ? null : restOf(label, tag),
+    number: null,
+  };
+}
+
 function placeDraft(
   { number: pickNumber, plans }: SceneSetting,
   scene: MapScene,
@@ -119,7 +147,8 @@ function placeDraft(
   const base = { position, planId: null, title, line: null, number: null };
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
-    const name = flag === undefined ? title : `${title} · ${flag.text}`;
+    const line = flag === undefined ? null : restOf(title, flag.text);
+    const name = line === null ? title : `${title} · ${line}`;
     const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     return {
       ...base,
@@ -128,7 +157,7 @@ function placeDraft(
       group: role,
       symbol,
       tone: role,
-      line: flag?.text ?? null,
+      line,
       number: pickNumber,
     };
   }
@@ -149,9 +178,8 @@ function placeDraft(
       number,
     };
   }
-  // A stop is not drawn until its look is settled (P01 ticket 11).
-  if (role === 'meeting' || role === 'stop') {
-    return null;
+  if (role === 'stop' || role === 'meeting') {
+    return role === 'stop' ? stopDraft(item) : null;
   }
   const id = role === 'next' ? `answer:next:${place.placeId}` : `answer:dropped:${place.label}`;
   return { ...base, id, name: title, group: role, symbol: { type: 'dot', role, number: null }, tone: role };
@@ -167,7 +195,7 @@ function flagDrafts(scene: MapScene): Draft[] {
     ) {
       return [];
     }
-    const tone = role === 'meeting' ? 'meeting' : 'pick';
+    const tone = FLAG_TONES[role];
     return [
       {
         id: `answer:meeting:${index}`,

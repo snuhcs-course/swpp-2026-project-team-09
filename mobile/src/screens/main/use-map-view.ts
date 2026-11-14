@@ -11,6 +11,7 @@ import { type MapAvatar, type MapLine, NATIVE_MIN_LEVEL } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
 import { ignorePress, type MapContents, useAnswerMap, useInvitationMap } from './use-answer-map';
+import { useLookupMap } from './use-lookup-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
 import type { Me } from './use-me';
@@ -58,7 +59,8 @@ export function useMapView(
   invitation: ReceivedInvitation,
 ): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
-  const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
+  const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards });
+  const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const way = useInvitationMap(invitation.shown ? invitation.drawing : null, map, room);
   if (answer !== null) {
     return answer;

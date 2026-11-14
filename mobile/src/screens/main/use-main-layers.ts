@@ -9,7 +9,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { questInvitationsQuery } from '@/api/queries';
-import type { LatLng } from '@/api/types';
 import { useKeptAnswerSwitch } from '@/features/assistant/answer-switch';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
@@ -23,6 +22,8 @@ import { type ChatSheetControl, useChatSheet } from './chat-sheet';
 import { type LayerStack, useLayerStack } from './layers';
 import { ROUTE_PADDING } from './layout';
 import type { MainMap } from './use-main-map';
+import type { Me } from './use-me';
+import { type MainRoute, useRoute } from './use-route';
 import type { Selection } from './use-selection';
 
 const NO_CARDS: readonly CardView[] = [];
@@ -97,14 +98,18 @@ export interface MainLayers {
   cards: readonly CardView[];
   ready: boolean;
   chat: ChatSheetControl;
+  // The main screen's one route, whose guidance a Lookup's "길 안내" starts too.
+  route: MainRoute;
 }
 
 // The 편의기능 stack and what its layers put on the map, with the map's own cards, and the chat's sheet, which turns a
-// layer on from a map button and which a card's button may ask. The Assistant is told the User's `position`.
-export function useMainLayers(inFront: boolean, map: MainMap, position: LatLng | null): MainLayers {
+// layer on from a map button and which a card's button may ask, and the main screen's route. The Assistant is told
+// where the User is (`me`), and a Lookup's "길 안내" starts the route's guidance.
+export function useMainLayers(inFront: boolean, map: MainMap, me: Me): MainLayers {
   const stack = useLayerStack(inFront);
   const shuttle = useShuttle(stack.layers.shuttle);
   const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map));
-  const chat = useChatSheet(inFront, stack.turnOn, position);
-  return { stack, shuttle, cards, ready, chat };
+  const route = useRoute(map, me);
+  const chat = useChatSheet(inFront, stack.turnOn, me.position, route.routeTo);
+  return { stack, shuttle, cards, ready, chat, route };
 }

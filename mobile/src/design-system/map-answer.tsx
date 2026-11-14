@@ -16,7 +16,7 @@ export type AnswerSymbol =
   // `dashed`: the position comes from the Timetable. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's
   // upper right; the caller says what it means.
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge }
-  | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next'; number: number | null };
+  | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop'; number: number | null };
 
 export type FaceBadge = 'waiting' | 'accepted';
 
@@ -24,7 +24,8 @@ export type LabelSide = 'above' | 'below' | 'left' | 'right';
 
 export interface AnswerLabel {
   side: LabelSide;
-  tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting';
+  // `stop` is a shuttle stop's; `leave`, `late`, and `shuttle` are a way's flags.
+  tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'leave' | 'late' | 'shuttle';
   title: string;
   // A second line, under the title.
   line: string | null;
@@ -87,6 +88,8 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
         line !== null && styles.twoLines,
         tone === 'pick' && styles.pickLabel,
         tone === 'meeting' && styles.meetingLabel,
+        tone === 'late' && styles.lateLabel,
+        tone === 'shuttle' && styles.shuttleLabel,
       ]}
       testID={partOf(testID, 'label')}
     >
@@ -102,12 +105,18 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
             tone === 'pick' ? styles.pickTitle : styles.title,
             tone === 'meeting' && styles.meetingTitle,
             tone === 'dropped' && styles.droppedTitle,
+            WAY_FLAGS.has(tone) && styles.flagTitle,
+            tone === 'late' && styles.lateTitle,
+            tone === 'shuttle' && styles.shuttleTitle,
           ]}
         >
           {title}
         </Text>
         {line === null ? null : (
-          <Text numberOfLines={1} style={[styles.line, tone === 'pick' && styles.pickLine]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.line, tone === 'pick' && styles.pickLine, tone === 'stop' && styles.stopLine]}
+          >
             {line}
           </Text>
         )}
@@ -146,6 +155,7 @@ const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const BADGE = 16;
 const FACE_BADGE = 14;
+const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
 
 const styles = StyleSheet.create({
   mark: { alignSelf: 'flex-start', alignItems: 'center', gap: GAP },
@@ -174,6 +184,7 @@ const styles = StyleSheet.create({
   candidate: { width: CANDIDATE_DOT, height: CANDIDATE_DOT, backgroundColor: color.inkSubtle },
   dropped: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.border },
   next: { width: NEXT_SQUARE, height: NEXT_SQUARE, borderRadius: radius.sm, backgroundColor: color.snuBlue },
+  stop: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.svcShuttle },
   faceBadge: {
     position: 'absolute',
     top: 0,
@@ -209,11 +220,17 @@ const styles = StyleSheet.create({
   twoLines: { paddingVertical: space[1], borderRadius: radius.md },
   pickLabel: { borderWidth: RING, borderColor: color.quest },
   meetingLabel: { backgroundColor: color.ink },
+  lateLabel: { backgroundColor: color.dangerSoft },
+  shuttleLabel: { backgroundColor: color.svcShuttleSoft },
   words: { flexShrink: 1 },
   title: { ...mapText.rowLine, color: color.ink },
   pickTitle: { ...mapText.buttonTitle, color: color.ink },
   meetingTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.onPrimary },
   droppedTitle: { color: color.inkMuted },
+  flagTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.ink },
+  lateTitle: { color: color.danger },
+  shuttleTitle: { color: color.svcShuttle },
   line: { ...mapText.rowLine, color: color.inkMuted },
   pickLine: { color: color.quest },
+  stopLine: { color: color.svcShuttle },
 });
