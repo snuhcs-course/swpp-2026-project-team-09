@@ -1671,7 +1671,8 @@ web-cookies.ts       the JS wrapper of modules/snu-now-web-cookies
 errors.ts            the failure kinds and what a card says for each
 press.ts             the confirm press that a write needs
 room-bookings.ts     the phone's map from a room booking's BSEQNO to its room request
-cards/               the library cards' logic: the payloads, seats, rooms, bookings, times and the done message
+cards/               the library cards' logic: the payloads, seats, rooms, bookings, times, the done message and a room
+                     request's companions
 ```
 
 ### The endpoints
@@ -1781,12 +1782,17 @@ A group study room with companions goes through a room request on the main serve
 main-server `src/library/`), the app's routes and never the Assistant's: `POST /library/room-requests` with an
 `Idempotency-Key`, `GET /library/room-requests` (the requests that ask the User, and the one-time notices),
 `GET /library/room-requests/:id` (which the booker's card polls), `POST …/:id/consent`, `POST …/:id/decline` (거절 and
-철회), `GET …/:id/companions`, `POST …/:id/result { ok, failedUserId? }`, `POST …/:id/cancelled` and
-`POST /library/room-notices/:id/seen`. Once every companion consents, the booker's phone reads the companions' names and
-학번 (the one reply that holds them, `Cache-Control: no-store`), checks each with `getUserCheck`, books with
-`setRoomBooking` and reports only `ok` or the companion the library did not know. The BSEQNO stays on the phone, in
-`room-bookings.ts`'s map, so that a later cancel can tell the server "the booking of request X was cancelled" with no
-body.
+철회), `GET …/:id/companions`, `POST …/:id/companions { friendId }` with an `Idempotency-Key` (one more Friend),
+`POST …/:id/result { ok, failedUserId? }`, `POST …/:id/cancelled` and `POST /library/room-notices/:id/seen`. A
+companion who declines, or does not answer by 20:00 the day before, goes out and the request keeps gathering. The
+booker's card then says who consented, who is asked and who is out (`companions`), and "N명 더 필요해요"
+(`moreNeeded`); while a request made for booking gathers, it offers "친구 한 명 더 부르기", the party form's Friend
+picker for one Friend (`room-ask-more.tsx`). From a server that sends neither field, the card reads `consents` alone.
+In the mock build (`src/api/mock/room-requests.ts`) every companion still asked consents by the second look.
+Once the request is ready, the booker's phone reads the companions' names and 학번 (the one reply that holds them,
+`Cache-Control: no-store`), checks each with `getUserCheck`, books with `setRoomBooking` and reports only `ok` or the
+companion the library did not know. The BSEQNO stays on the phone, in `room-bookings.ts`'s map, so that a later cancel
+can tell the server "the booking of request X was cancelled" with no body.
 
 ### Privacy
 
