@@ -77,7 +77,7 @@ With the switch off, the app is today's: the same chat sheet, the same request, 
 - **The input** is the same bar, with the placeholder "이어서 말하기" while the frame is shown. While the keyboard is up, the card's content gives way and the bar stands over the keyboard, so the map's answer stays visible.
 - A card that leads elsewhere (an event to the 행사 tab, a Quest to its post, the party form, and a Proposal once made) leaves the frame as it is. A map button closes the frame and turns its layer on.
 - Every way of asking the Assistant from the main screen shows the frame: the bar, 관정관's "좌석 현황", and the tutorial's ask.
-- "대화 내용은 AI 제공자에게 전송돼요", which the empty chat shows today, stands above the bar while the bar has the focus and nothing is asked yet.
+- "대화 내용은 AI 제공자에게 전송돼요", which the empty chat shows today, stands above the bar while the keyboard is up and nothing is asked yet.
 - A toast sits above the card.
 
 ### The request context

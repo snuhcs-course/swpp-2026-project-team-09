@@ -637,8 +637,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   (`answer-lines.tsx`) in place of the model's sentence. The lists, the row of buttons, 편의기능, the zoom control, the
   shuttle's notice, the selected thing's card, and the tabs give way, and a marker takes no press. ✕ and Android's back
   button forget the conversation; a map button forgets it and turns its layer on; another card leads where it does and
-  leaves the frame as it is. Every request then carries a context with the User's position on campus and the
-  capability `answer`.
+  leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it is laid
+  out. Turning the switch either way closes the chat sheet and forgets the conversation. Every request then carries a
+  context with the User's position on campus and the capability `answer`.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
