@@ -41,6 +41,7 @@ import { useSession } from '@/session/session';
 import { endSession } from '@/session/session-events';
 import { openLiveConnection } from './connection';
 import { tellInvitationAnswer } from './invitation-answers';
+import { tellLateReport } from './late-reports';
 
 // What each signal of the main server makes the app fetch again.
 const REFETCH: Record<string, readonly QueryKey[]> = {
@@ -62,6 +63,7 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   notice: [NOTIFICATIONS_KEY],
   'invitation-accepted': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   'invitation-declined': [QUESTS_KEY, SENT_INVITATIONS_KEY],
+  late: [QUESTS_KEY],
   'plan-changed': [QUESTS_KEY, QUEST_INVITATIONS_KEY],
 };
 
@@ -147,6 +149,7 @@ function openFor(queryClient: QueryClient): () => void {
     onSignal: (name, payload) => {
       refetch(queryClient, REFETCH[name] ?? []);
       tellInvitationAnswer(name, payload);
+      tellLateReport(name, payload);
     },
   });
 }

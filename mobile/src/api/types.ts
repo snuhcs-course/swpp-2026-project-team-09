@@ -219,12 +219,11 @@ export interface Quest {
   description: string;
   // Null for a Class Quest.
   createdAt: string | null;
-  // The Holders in the order they entered, then the invited; none for a Class Quest. A main server before members
-  // sends none.
+  // The Holders in the order they entered, then the invited, then the declined; none for a Class Quest. A main server
+  // before members sends none.
   members?: QuestMember[];
 }
 
-// 'late' and 'declined' come once the main server keeps them.
 export type MemberState = 'invited' | 'accepted' | 'late' | 'declined';
 
 export interface QuestMember {
