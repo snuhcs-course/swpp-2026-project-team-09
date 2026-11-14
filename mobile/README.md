@@ -651,7 +651,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
   the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
   User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
-  marks, which they would lie over (`nearOwnMark`). The looks of every Plan are asked for when the answer comes. The camera
+  marks, which they would lie over (`nearOwnMark`). A face shows two characters of the name, so its tag leaves out a
+  name that short ("18분" beside the face "민수"). The looks of every Plan are asked for when the answer comes. The camera
   goes in one glide to where `answerCamera` (`src/features/assistant/answer-camera.ts`) works it out for the view:
   the fit of the answer's points between the pill and the card, with the room the marks there need (`roomsOf`) and 64
   at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the Plan's
@@ -659,14 +660,19 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   again when the Plan on screen changes and when the card's height or the stage's size changes; closing the answer
   moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its lowest in place of 15, which on a
   phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기")
-  at the right of its row of chips, the Plan's two lines, the basis while it is open, and, when the answer has more than one
-  Plan, round buttons "‹" ("이전 후보") and "›" ("다음 후보") at the two ends of the last row with "되돌리기" while a drag
-  is kept and the count ("3/5") between them; a sideways swipe over the two lines does the same, to the left the next Plan and to the right the
+  at the right of its chips' first line, the Plan's two lines, the basis while it is open, and, when the answer has more than one
+  Plan, round buttons "‹" ("이전 후보") and "›" ("다음 후보") at the two ends of the last row, 40 high as its buttons are,
+  with "되돌리기" at a fixed width at the row's start while a drag is kept and the count ("3/5") in a box of its own
+  right before "›"; a sideways swipe over the two lines does the same, to the left the next Plan and to the right the
   previous one. The arrows and the swipe go round, and a new Plan closes the basis. An answer without a Plan draws nothing and keeps the everyday map.
 - **Correcting the answer** (`answer/plan-card.tsx`, `answer/use-corrections.ts`). The card's first row holds the
-  answer's chips (`condition-chips.tsx`) and "＋ 같이". The ✕ of a person's chip takes the person out; "＋ 같이" lists
-  in the card the User's Friends who are not in the conditions, each with the Friend list's line, in place of the
-  time band and the arrows, and a press adds the Friend, as does a press on a Friend's Avatar on the map; the origin
+  answer's chips (`condition-chips.tsx`) and "＋ 같이", in lines that wrap so that no chip is cut. The ✕ of a person's
+  chip takes the person out; "＋ 같이" lists in the card the User's Friends who are not in the conditions in the design
+  system's `ChoiceGrid` (`friend-choices.tsx`): two columns of equal cells, each with the given name and the distance
+  to the picked Restaurant ("350m", "1.2km"), "N분 전" for an old position, or "자리 모름", nearest first. While the
+  list is open the card's lines ask "누구와 같이 먹을까요?", "그대로" stands where "근거" did and closes it, the band,
+  the arrows, and the input give way, and the grid shows at most four whole rows that scroll inside, with a fade
+  while more are below. A press adds the Friend, as does a press on a Friend's Avatar on the map; the origin
   chip opens 장소 선택's map view, and a Place chosen there becomes the User's own `from` (a point that is no Place
   says "건물을 골라 주세요"); the time chip closes the list and puts the focus on the band's end handle for two seconds. Letting go of a
   handle of the time band (`time-band.tsx`), dragged or stepped by a screen reader, fixes that bound of the window.
