@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 
-Schedule row: Iteration 4, package D of the agentic map (push notifications). The server-side member builds all of it. The native part ships in the one native Release on 2026-11-19, which the builder makes; the server part merges after the 11/18 acceptance test, and the app parts follow the native part.
+Schedule row: Iteration 4, package D of the agentic map (push notifications). The server-side member builds all of it. The native part ships in the one native Release on 2026-11-19, which the builder makes; the server part merges once its review passes, and the app parts follow the native part.
 
 References:
 - `.scratch/iteration-4/agentic-map-design.md`: section 5 ("Notifications", "Parties and invitations", "A late member"), section 7 (what is never recorded or sent), and section 8 (turning notifications off by kind is left out).
@@ -99,7 +99,7 @@ Before the Release, the in-app list stands in for push, as it does today.
 
 - When a Leader invites a Friend into a Quest, the invitee gets a push after the invitation is stored: title "<Leader's name>님의 파티 초대" (<Leader>'s party invitation), body the Quest's title, address `/main?card=invitation:<invitationId>`. These are the words of the invitation's row in "알림". Board t3 draws a richer title (the meeting time and Place) and a body about the plan; that text needs a Plan and comes with `POST /plans`.
 - The invitation is created with the fields the message needs, inside the same transaction, so the message never depends on a second read that could find the invitation already answered.
-- Every invitation is created through the one service that creates invitations today. A later `POST /plans` creates its invitations through it too, and so pushes them.
+- Every invitation a Leader sends is created through the one service that sends invitations today. A later `POST /plans` creates its invitations through it too, and so pushes them. A room booking made with Friends creates its booking Party's invitations itself, beside the request that asks each companion. Those are not pushed here: they come with the booking's notifications.
 - An accepted invitation sends no push. By the wireframe's rule (2) an acceptance stays only in the list. The Leader sees it on the map and in the Quest. Keeping it as a row of "알림" needs the stored notification table and comes with it.
 - A declined invitation sends no push. By the design a decline is pushed only when a better option exists, which needs planning again after a decline. That is not built.
 - Friend Requests, requests to join a Quest, and a Party turned on send no push. They are not moments the Assistant speaks first, and the permission sheet does not name them.
@@ -126,7 +126,7 @@ Before the Release, the in-app list stands in for push, as it does today.
 ### Ownership and merge order
 
 - `main-server/src/quests/invitations.service.ts` and the app's real-time signal handling (`mobile/src/live/live-updates.tsx`) are package C's files, and `mobile/src/screens/main/main-screen.tsx` is package B's. The tickets change only the lines they name in them, and their pull requests name the owner as a reviewer.
-- The push tokens migration is a schema change. By the work split, the schema is changed by one person at a time, and only package C's late-minutes column goes in before 11/18. Ticket 02 therefore merges after the 11/18 acceptance test, and no Release carries it before 11/19. If package C's migration is open when ticket 02 is ready, C's merges first, and ticket 02's migration is made again from the new schema.
+- The push tokens migration is a schema change, and by the work split the schema is changed by one person at a time. Ticket 02 merges once its review passes, and no Release carries it before 11/19. A schema change that is still open then, such as package C's late-minutes column, is made from the schema that holds the push tokens table.
 - Nothing native merges before the 11/18 acceptance test: ticket 01's pull request stays a draft until then, and the builder merges it and makes the Release. Tickets 03 and 04 are built on ticket 01's branch and merge after it.
 
 ### What stays as it is
