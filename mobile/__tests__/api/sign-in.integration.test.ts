@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -35,6 +36,9 @@ afterEach(() => {
 // What the background sharing keeps, which nothing here changes.
 const NO_BACKGROUND = { masterSwitch: false, backgroundChosen: false, backgroundRunning: false };
 
+// What versions since the location explanation added, which nothing here changes.
+const NOTHING_LATER = { ...NO_BACKGROUND, declinedParties: [], answerOnMap: false, pushAsked: false };
+
 const FIRST_STATE = {
   signedIn: false,
   consented: false,
@@ -45,6 +49,7 @@ const FIRST_STATE = {
   inviteToken: null,
   ...NO_BACKGROUND,
   declinedParties: [],
+  answerOnMap: false,
   pushAsked: false,
 };
 
@@ -66,6 +71,7 @@ describe('sign-in', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
+      answerOnMap: false,
       pushAsked: false,
     });
   });
@@ -103,6 +109,7 @@ describe('what the phone keeps', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
+      answerOnMap: false,
       pushAsked: false,
     });
   });
@@ -144,9 +151,7 @@ describe('what the phone keeps of the consent', () => {
       consented: false,
       locationExplained: false,
       inviteToken: null,
-      ...NO_BACKGROUND,
-      declinedParties: [],
-      pushAsked: false,
+      ...NOTHING_LATER,
     });
   });
 
@@ -158,18 +163,14 @@ describe('what the phone keeps of the consent', () => {
       ...stored,
       locationExplained: false,
       inviteToken: null,
-      ...NO_BACKGROUND,
-      declinedParties: [],
-      pushAsked: false,
+      ...NOTHING_LATER,
     });
     expect((await keep({ locationExplained: true })).locationExplained).toBe(true);
     expect(await readKept()).toEqual({
       ...stored,
       locationExplained: true,
       inviteToken: null,
-      ...NO_BACKGROUND,
-      declinedParties: [],
-      pushAsked: false,
+      ...NOTHING_LATER,
     });
   });
 
@@ -179,9 +180,7 @@ describe('what the phone keeps of the consent', () => {
 
     expect((await readKept()).consented).toBe(true);
   });
-});
 
-describe('changes to what the phone keeps', () => {
   it('keeps both of two changes made at once', async () => {
     await Promise.all([keep({ signedIn: true }), keep({ onboardingCompleted: true })]);
 

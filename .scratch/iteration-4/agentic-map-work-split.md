@@ -62,14 +62,14 @@ The new answer screen sits behind one switch. The old chat screen is not deleted
 
 ### What the three teammates do meanwhile
 
-A PR does not merge without a teammate's approval, so approvals set the pace of the build. The rest of the work below needs no new build; `metrics-revision.md` gives the reasons and the full list.
+A PR does not merge without a teammate's approval, so approvals set the pace of the build. Apart from push notifications, the work below needs no new build; `metrics-revision.md` gives the reasons and the full list.
 
 | Who | Work |
 |---|---|
-| The PM of this iteration (app side) | Owns the acceptance tests of 11/16 and 11/18, which run on today's app: adds SUS, the usefulness question, and the time and help columns to the sheet, runs the sessions, and writes the one-page report. Closes the schedule's Iteration 4 rows and gives every measuring task an ID for the Iteration 5 kickoff on 11/21 |
-| The other app-side member | Observes the acceptance sessions. Measures on two phones the non-functional requirements owed since Iteration 3. Writes up the heuristic-evaluation fixes. Writes and pilots the lab-study protocol, and recruits participants and beta testers |
-| The server-side member | Approves the builder's PRs quickly. Builds the location question set, the reference solver, the two baselines, and the thresholds, and makes the one freeze commit before any run. Writes the truth table of what each level shows and the leak cases. Decides the crash reporter for the native Release on 11/19 |
-| The builder | Builds the first path, and pushes each Release tag after approval |
+| The PM of this iteration (app side) | Owns the acceptance tests of 11/16 and 11/18, which run on today's app: adds SUS, the usefulness question, and the time and help columns to the sheet, runs the sessions, writes the one-page report, and puts the results into the Wiki. Closes the schedule's Iteration 4 rows and gives every measuring task an ID for the Iteration 5 kickoff on 11/21. In Iteration 5, reads every condition label |
+| The other app-side member | Observes the acceptance sessions, and produces the coverage results for the 11/20 submission. If time allows, measures on two phones the owed non-functional requirements that need no server reading. In Iteration 5, checks the reference solver by hand, drafts the condition utterances, writes and pilots the lab-study protocol, and recruits participants and beta testers |
+| The server-side member | Approves the builder's PRs quickly, and builds push notifications through the native Release (`P04-push-notifications`). In Iteration 5, builds the location question set, the reference solver and the checker, the two baselines, the scoring code, and the thresholds, makes the one freeze commit before any run (by 11/25), and writes the table of what the asker's map shows and the leak cases |
+| The builder | Builds the first path, re-runs the existing AI suites on the submission commit, and pushes each Release tag after approval |
 
 The path is checked at a time of day when a cafeteria is open, with test Timetables that have a next class.
 
@@ -110,5 +110,5 @@ The freshman package (design section 6.5; rows 7 and 12) is a major storyline an
 - A: polishing re-planning, lateness told in words, and shuttle estimates (row 7).
 - B: cluster circles on every map, the Avatar's three shapes and badges, dashed lines and dimming, the building fact card (row 6), the failure cases (row 8), and removing the old chat screen.
 - C: the answers for events and parties (rows 4–5), storing the three Friend levels and sending the location at the building level, asking once, and the "파티 켜기" (party on) button on the leave-by notification.
-- D: the notification table and sending at the right time, push notifications, keeping the study room plan and the booking window (row 3), storing and matching interests (row 10), and first run (row 12).
-- After that: run the location measures against the two baselines on the frozen set, and run the lab study (`metrics-revision.md`).
+- D: the notification table and sending each kind at the right time as a push notification, keeping the study room plan and the booking window (row 3), storing and matching interests (row 10), and first run (row 12).
+- Measures: the location question set and its one freeze commit by 11/25, before anything runs on it; then run the location measures on the frozen set, with the two baselines as design section 5 sets them, and run the lab study (`metrics-revision.md`).

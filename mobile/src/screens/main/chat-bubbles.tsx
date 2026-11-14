@@ -8,6 +8,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useRef } from 'react';
@@ -132,36 +133,32 @@ function Done({ done, actions }: { done: LibraryDone; actions: CardActions }): R
   );
 }
 
-interface BubbleProps {
+interface BubblePartsProps {
   bubble: ChatBubble;
+  // What the bubble says, before its cards.
+  words: ReactNode;
   // 다시 시도 under a failure the Assistant may get over, while it is the last bubble.
   onRetry: (() => void) | null;
   onShowLayer: (layer: MapLayer) => void;
   cardActions: CardActions;
 }
 
-function Bubble({
-  bubble: { id, role, text: words, cards, mapButtons, proposal, failure, own = false, done },
+// What a bubble holds: its words, then its cards, a booking's done message, its Proposal, its map buttons and 다시 시도.
+// The answer frame draws them without a bubble around them.
+export function BubbleParts({
+  bubble: { id, cards, mapButtons, proposal, failure, own = false, done },
+  words,
   onRetry,
   onShowLayer,
   cardActions,
-}: BubbleProps): ReactElement {
-  const mine = role === 'user';
+}: BubblePartsProps): ReactElement {
   // Only under an answer: a failure has none.
   const layers = failure === null ? mapButtons : [];
   const shown = failure === null ? cards : [];
   const proposed = failure === null ? proposal : null;
   return (
-    <View
-      style={[styles.bubble, mine ? styles.mine : styles.theirs]}
-      testID={mine ? 'user-bubble' : 'assistant-bubble'}
-    >
-      {/* The model writes markdown, and the Assistant's bubbles render it; the User's words are shown as typed. */}
-      {mine ? (
-        <Text style={[styles.words, styles.mineWords]}>{words}</Text>
-      ) : (
-        <ChatMarkdown style={styles.words} text={words} />
-      )}
+    <>
+      {words}
       {shown.length === 0 ? null : <Cards actions={cardActions} bubbleId={id} cards={shown} own={own} />}
       {done === undefined ? null : <Done actions={cardActions} done={done} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
@@ -185,6 +182,33 @@ function Bubble({
           </Button>
         </View>
       )}
+    </>
+  );
+}
+
+type BubbleProps = Omit<BubblePartsProps, 'words'>;
+
+function Bubble({ bubble, onRetry, onShowLayer, cardActions }: BubbleProps): ReactElement {
+  const mine = bubble.role === 'user';
+  return (
+    <View
+      style={[styles.bubble, mine ? styles.mine : styles.theirs]}
+      testID={mine ? 'user-bubble' : 'assistant-bubble'}
+    >
+      <BubbleParts
+        bubble={bubble}
+        cardActions={cardActions}
+        onRetry={onRetry}
+        onShowLayer={onShowLayer}
+        words={
+          // The model writes markdown, and the Assistant's bubbles render it; the User's words are shown as typed.
+          mine ? (
+            <Text style={[styles.words, styles.mineWords]}>{bubble.text}</Text>
+          ) : (
+            <ChatMarkdown style={styles.words} text={bubble.text} />
+          )
+        }
+      />
     </View>
   );
 }

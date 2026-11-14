@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
+import type { LatLng } from '@/api/types';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
 import { groupedByPlace } from '@/features/map/place-groups';
@@ -12,6 +14,7 @@ import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
 import { clusteredStudy, studyMerges } from '@/features/study/adapter';
 import { useStudyCards } from '@/features/study/use-study';
+import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import { type ChatSheetControl, useChatSheet } from './chat-sheet';
 import { type LayerStack, useLayerStack } from './layers';
 import { ROUTE_PADDING } from './layout';
@@ -79,11 +82,13 @@ export interface MainLayers {
 }
 
 // The 편의기능 stack and what its layers put on the map, with the map's own cards, and the chat's sheet, which turns a
-// layer on from a map button and which a card's button may ask.
-export function useMainLayers(inFront: boolean, map: MainMap): MainLayers {
+// layer on from a map button and which a card's button may ask. The Assistant is told the User's `position`. The tab
+// bar gives way to the answer frame.
+export function useMainLayers(inFront: boolean, map: MainMap, position: LatLng | null): MainLayers {
   const stack = useLayerStack(inFront);
   const shuttle = useShuttle(stack.layers.shuttle);
   const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map));
-  const chat = useChatSheet(inFront, stack.turnOn);
+  const chat = useChatSheet(inFront, stack.turnOn, position);
+  useHideTabBarOnMain(chat.framed);
   return { stack, shuttle, cards, ready, chat };
 }

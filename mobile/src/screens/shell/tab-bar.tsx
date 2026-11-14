@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { BottomTabBarProps } from 'expo-router/tabs';
@@ -11,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNav, type BottomNavItem, color, shadow, useNotReadyToast } from '@/design-system';
 import { usePartyBadge } from '@/features/notifications/use-notices';
 import { navPaddingBottom } from './layout';
+import { useTabBarHiddenOnMain } from './main-tab-bar';
 
 // The frames' five slots and the tab each opens. 올리기 is the action in the middle and opens no tab.
 const SLOTS = [
@@ -29,12 +31,16 @@ function itemsWith(partyBadge: number): BottomNavItem[] {
 
 // The tabs' bottom navigation, as the frames draw it: no line on top but a soft shadow, and 16 under the items, or
 // the phone's own bar where that is higher. A slot shows its tab; 올리기 belongs to another task and says that it is
-// not ready. Each tab tells the toast where to sit while it is in front.
-export function TabBar({ state, navigation }: BottomTabBarProps): ReactElement {
+// not ready. Each tab tells the toast where to sit while it is in front. It gives way to the answer frame on 지도.
+export function TabBar({ state, navigation }: BottomTabBarProps): ReactElement | null {
   const partyBadge = usePartyBadge();
   const showNotReady = useNotReadyToast();
   const { bottom } = useSafeAreaInsets();
+  const hiddenOnMain = useTabBarHiddenOnMain();
   const current = state.routes[state.index]?.name;
+  if (hiddenOnMain && current === 'main') {
+    return null;
+  }
   return (
     <View style={[styles.bar, { paddingBottom: navPaddingBottom(bottom) }]}>
       <BottomNav
