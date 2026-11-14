@@ -9,6 +9,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -74,6 +75,9 @@ export const serverClient: ApiClient = {
   getProfile: () => call('GET', '/users/me/profile', isProfile),
   setMasterSwitch: async (on) => {
     await call('PUT', '/users/me/master-switch', isNothing, { body: { on } });
+  },
+  registerPushToken: async (token) => {
+    await call('PUT', '/users/me/push-token', isNothing, { body: { token } });
   },
   uploadPosition: (position) => call('POST', '/positions', isPositionKept, { body: position }),
   listFriends: () => call('GET', '/friends', isFriends),
