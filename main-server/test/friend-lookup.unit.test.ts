@@ -197,7 +197,8 @@ describe('What the model is given of 민수', () => {
 });
 
 describe('A Friend read through the Friend view at the Timetable only', () => {
-  // 민수 also holds a Sub Quest at 두산인문관 (8동), which is no part of his Timetable.
+  // 민수 also holds a Sub Quest at 두산인문관 (8동), which is no part of his Timetable. Asked at 12:20, his Class ended 5
+  // minutes ago while the Sub Quest goes on, so reading his Quests would draw him at 8동.
   const sources = {
     friends: { list: (): Promise<FriendView[]> => Promise.resolve([minsu()]) },
     days: {
@@ -211,7 +212,7 @@ describe('A Friend read through the Friend view at the Timetable only', () => {
   };
 
   it('holds no position and no Place beyond his Timetable in the Lookup or what the model is given', async () => {
-    const answer = await friendLookup(sources, ME, MINSU, onDay(TUESDAY, '12:05'));
+    const answer = await friendLookup(sources, ME, MINSU, onDay(TUESDAY, '12:20'));
 
     const text = JSON.stringify(answer);
     const { latitude, longitude } = position('두산인문관');

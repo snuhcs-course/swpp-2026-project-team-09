@@ -51,6 +51,8 @@ const isRouteRole = isKeyOf<Role<'routes'>>({ me: true, friend: true, next: true
 
 const isFlagRole = isKeyOf<Role<'flags'>>({ place: true, meeting: true, leave: true, late: true, shuttle: true });
 
+const isPersonSource = isKeyOf<MapScene['people'][number]['source']>({ exact: true, building: true, timetable: true });
+
 function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
@@ -163,7 +165,7 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
     hasTexts(value, ['userId', 'name']) &&
     isBoolean(field(value, 'me')) &&
     isLatLng(field(value, 'at')) &&
-    isOneOf(['exact', 'building', 'timetable'])(field(value, 'source')) &&
+    isPersonSource(field(value, 'source')) &&
     isTextOrNull(field(value, 'tag'))
   );
 }

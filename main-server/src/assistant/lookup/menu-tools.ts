@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { mealWindow } from '../free-time/meal-fit.js';
 import { dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
@@ -35,12 +36,19 @@ const clock = (time: string): string => time.slice(11, 16);
 
 const menuLines = (lines: readonly MenuLineDto[]): string[] => lines.map(({ text }) => othersText('menu.line', text));
 
-function reasonOf({ reason }: Extract<MenuFound, { result: 'none' }>, key: string, meal: string, date: string): string {
+function reasonOf(
+  { reason }: Extract<MenuFound, { result: 'none' }>,
+  key: string,
+  { date, meal, now }: { date: string; meal: 'lunch' | 'dinner'; now: Date },
+): string {
   if (reason === 'no-menu') {
     return `No ${meal} menu of ${key} was collected for ${date}.`;
   }
   if (reason === 'closed') {
     return `${key} serves no ${meal} on ${date}: its ${meal} menu holds only notes.`;
+  }
+  if (mealWindow(date, meal).end <= now) {
+    return `The ${meal} of ${date} is over; ${key}'s menu is in lines.`;
   }
   return `The User has no free time during ${meal} on ${date} to be at ${key} and eat; its menu is in lines.`;
 }
@@ -78,7 +86,7 @@ export function findMenu(menus: MenuLookupService): Tool {
       const key = chosen.candidate.name;
       const found = await menus.find(userId, { date, meal, key }, { now, location: context.location });
       if (found.result === 'none') {
-        return { ...noneFound(reasonOf(found, key, meal, date)), lines: menuLines(found.lines) };
+        return { ...noneFound(reasonOf(found, key, { date, meal, now })), lines: menuLines(found.lines) };
       }
       const { collectedAt, lines, plan, lookup } = found;
       presented.lookup = lookup;

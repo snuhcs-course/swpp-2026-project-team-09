@@ -155,6 +155,16 @@ describe('The time to eat', () => {
     expect(lookup.chips).toEqual([{ kind: 'origin', text: '301동에서', userId: null }]);
   });
 
+  it("ends when the next Class starts when that Class is in the Restaurant's building, with no walk on to name", () => {
+    const lookup = lookupOf('301동식당', '제1공학관', [
+      classAt('11:00', '11:50', '제1공학관'),
+      classAt('13:00', '13:50', '제1공학관'),
+    ]);
+
+    expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('13:00') });
+    expect(lookup.basis).toEqual(['13:00에 나서요']);
+  });
+
   it('is none when no break during the meal leaves the User time to be there and eat', () => {
     const items = [
       classAt('11:00', '12:15', '제1공학관'),

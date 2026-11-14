@@ -76,7 +76,9 @@ function basisOf({ key, meal }: MenuArgs, plan: Plan): string[] {
   const nextPlace = mine?.next?.place ?? null;
   return [
     ...lines,
-    nextPlace === null ? leaving : `${nextPlace.label}까지 걸어서 ${onward?.minutes ?? 0}분이라 ${leaving}`,
+    nextPlace === null || onward === undefined
+      ? leaving
+      : `${nextPlace.label}까지 걸어서 ${onward.minutes}분이라 ${leaving}`,
   ];
 }
 
