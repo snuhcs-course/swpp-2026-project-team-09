@@ -31,3 +31,10 @@ After a Friend declines, the Leader's app asks the main server whether the peopl
 - The making and the change share `PlansService.replanned` (plan again, refuse a date out of reach, find the Plan by id and start) and `subQuestsOf`, and both write the Sub Quests in order through `inOrder` of `quests/sub-quest-order.ts`; the change replaces the Quest's title and Sub Quests in one update. The making now refuses `PLAN_ALONE` before it plans, not after: both refusals are 400s, and a Plan alone is no longer planned for nothing.
 - `plan-changed` and `quests-changed` go once to the Leader, the other Holders, and every User whose invitation waits, read inside the transaction.
 - The app's mock answers `getBetterPlan` and `changePlanQuest` from the main server's real replies for the worked example after 지은 declined, whatever Quest is asked about.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). The session that wrote the spec, reviewed each ticket, and opened the pull requests is counted once, under ticket 07.
+
+- Agent time: about 33 minutes, an estimate from the transcript's timestamps; it includes waits for the machine's shared test lock.
+- Tokens: output 85,817; input 24,233,532, of which 23,781,860 were cache reads, 451,420 cache writes, and 252 uncached. Without cache reads: 537,489.
