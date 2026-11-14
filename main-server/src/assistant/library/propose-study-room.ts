@@ -107,7 +107,7 @@ async function companionsOf(
 ): Promise<LibraryCompanion[]> {
   const ids = [...new Set(friendIds)];
   context.found.refuseUnfound('friend', ids);
-  const names = new Map((await friends.listFriends(context.userId)).map(({ id, name }) => [id, name]));
+  const names = new Map((await friends.list(context.userId)).map(({ id, name }) => [id, name]));
   return ids.flatMap((id) => {
     const name = names.get(id);
     return name === undefined ? [] : [{ friendId: id, name }];
