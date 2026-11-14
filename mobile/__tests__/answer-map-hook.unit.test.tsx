@@ -11,6 +11,7 @@ import { createRef } from 'react';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
 import { drawingOf } from '@/features/assistant/answer-marks';
+import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { inView, type MapCamera, type MapHandle, type MarkerLook } from '@/map';
 import type * as MarkerImages from '@/map/marker-images';
@@ -94,9 +95,13 @@ interface Given {
 
 const FIRST: Given = { shown: shownAt(0), room: ROOM, fitZoom: FIT_ZOOM };
 
+// No Plan made into a Quest.
+const NOT_INVITED = { sending: false, made: null, standings: NO_STANDINGS };
+
 async function render(asked: Asked, given: Given = FIRST): Promise<(next: Given) => Promise<void>> {
   const { rerender } = await renderHook(
-    ({ shown, room, fitZoom }: Given) => useAnswerMap(shown, mapOf(fitZoom, asked), room, { avatars: [], cards: [] }),
+    ({ shown, room, fitZoom }: Given) =>
+      useAnswerMap(shown, mapOf(fitZoom, asked), room, { avatars: [], cards: [] }, NOT_INVITED),
     { initialProps: given },
   );
   return async (next): Promise<void> => {

@@ -11,7 +11,7 @@ import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
 import type { MapLine, MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
-import { type Standing, standingWords } from './invited-friends';
+import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export interface AnswerThing {
   // Unique within a drawing.
@@ -263,8 +263,6 @@ function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
     side === null ? null : { side, tone, title, line, number: symbol === null ? number : null };
   return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
 }
-
-const NO_STANDINGS: ReadonlyMap<string, Standing> = new Map();
 
 // What the map shows for the Plan at `planIndex` of an answer: its marks, its lines, and the points the camera fits.
 // `standings` holds how each invited Friend stands, by user id, once the Plan was made into a Quest.

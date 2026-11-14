@@ -14,7 +14,7 @@ import type { PlanQuest } from '@/api/plan-quest-types';
 import { questsQuery } from '@/api/queries';
 import type { LatLng, Quest } from '@/api/types';
 import { onInvitationAnswer } from '@/live/invitation-answers';
-import { friendStandings, type HeardAnswer, type ReadMembers, type Standing } from './invited-friends';
+import { friendStandings, type HeardAnswer, NO_STANDINGS, type ReadMembers, type Standing } from './invited-friends';
 import type { ShownAnswer } from './use-shown-answer';
 
 export interface PlanInvitation {
@@ -49,8 +49,6 @@ interface InvitationState {
 
 type OnScreen = Pick<ShownAnswer, 'answer' | 'plan' | 'change'>;
 type SetStored = (update: (last: InvitationState) => InvitationState) => void;
-
-const NO_STANDINGS: ReadonlyMap<string, Standing> = new Map();
 
 function fresh(answer: AnswerReply | null, planId: string | null): InvitationState {
   return { answer, keys: new Map(), planId, made: null, heard: [] };

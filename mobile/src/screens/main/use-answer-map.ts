@@ -44,8 +44,6 @@ const NO_LOOKS: readonly MarkerLook[] = [];
 
 type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings'>;
 
-const NOT_INVITED: Invited = { sending: false, made: null, standings: new Map() };
-
 // What the pill covers at the top, under a status bar `top` high, and the card at the bottom, each with the room the
 // drawing's marks there need.
 function paddingOf(top: number, cardHeight: number | null, drawing: AnswerDrawing): FitPadding {
@@ -123,7 +121,7 @@ export function useAnswerMap(
   map: MainMap,
   room: Room,
   everyday: { avatars: readonly MapAvatar[]; cards: readonly CardView[] },
-  { sending, made, standings }: Invited = NOT_INVITED,
+  { sending, made, standings }: Invited,
 ): AnswerMap | null {
   const { answer, index, show } = shown;
   const drawing = useMemo(
