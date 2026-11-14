@@ -8,7 +8,9 @@ References:
 - `.scratch/iteration-4/agentic-map-design.md`: the design. Section 4 (the answer frame), section 5 ("The time band", "Many results on the map", and "Screen words"), and section 6.1 (the lunch storyline).
 - `.scratch/iteration-4/agentic-map-work-split.md`: sections 4 (who changes which files), 5 (the first path), and 7 (what stands in until the native Release).
 - `.scratch/iteration-4/P01-agentic-map-engine/spec.md`: the contract the screen draws, the recalculation, and how words change a Plan.
-- The team wireframe canvas, rows "0. 틀" and "1. 배고파".
+- `.scratch/iteration-4/P03-agentic-map-invitations/spec.md`: a Plan made into a Quest (`POST /plans`), the invitee's own way (`GET /quest-invitations/:id`), a Quest's members, and the signals of an answer to an invitation.
+- `.scratch/iteration-4/P05-agentic-map-notifications/spec.md`: a Notification's address, `/main?card=<kind>:<id>`, which opens a card of the main screen.
+- The team wireframe canvas, rows "0. 틀" and "1. 배고파" (for the invitation, boards "같이 ⑪" to "⑬").
 - ADR 0007 (test levels).
 
 ## Problem Statement
@@ -56,6 +58,11 @@ With the switch off, the app is today's: the same chat sheet, the same request, 
 31. As a developer of invitations, I want the Plan on screen and its conditions held in one place, so that the card's main button can be added there.
 32. As a developer, I want the app's mock data for a recalculation to be copies of real answers, so that the screen never meets a shape the server does not send.
 33. As a User of a screen reader, I want each mark on the map and each control of the card to have a name.
+34. As an SNU student, I want one press of "이대로 초대" to make the Quest and send every invitation, so that I do not type the Plan again.
+35. As an SNU student, I want a second press to make no second Quest, and a Plan that changed while I looked to be shown again and not sent.
+36. As an SNU student, I want the chip of each Friend to say whether they have seen, accepted, or declined, and to change while I look.
+37. As an invited Friend, I want the invitation to open on the map with my own way and when to set out, so that I can answer at once.
+38. As an invited Friend, I want to accept or decline on that card, and to see nobody else's location on it.
 
 ## Implementation Decisions
 
@@ -123,6 +130,25 @@ With the switch off, the app is today's: the same chat sheet, the same request, 
 
 Pure functions, so that the screen and the tests share them: a person taken out, a Friend added with no constraints, a bound of the window set, and the User's `from` constraint replaced. Everything else of the conditions is carried over as it is.
 
+### Inviting as it is
+
+- **The main button.** The card of a Plan with at least one Friend has "이대로 초대" in its last row, between the arrows, with the count after it. A Plan of the User alone has none: "여기로" is package D's.
+- **The press** makes the Quest from the Plan on screen in one request (`POST /plans`): the answer's `input`, the Plan's id and start, and the User's position, as a recalculation sends it. It carries an idempotency key that belongs to the Plan on screen: a second press, or a press after a failure, repeats the key, and a changed answer or another Plan takes a new one. While the request is on its way the button says so, and the chips, the handles, the arrows, and the swipe take nothing.
+- **A Plan that changed** (409 `PLAN_CHANGED`): the app recalculates from the same conditions, shows the answer as it is now, and says "계획이 바뀌었어요. 다시 확인해 주세요". Any other failure says "초대하지 못했어요. 잠시 후 다시 시도해 주세요" and leaves the card as it was.
+- **After inviting** the card is the invited Quest's: its two lines say that the Quest was made and the invitations sent, and when to be there ("파티를 만들고 초대를 보냈어요", "답이 없어도 12:33에 가면 돼요", the time being the Plan's start); under them the Quest's steps in order, each with its start; and "닫기", which closes the answer. The time band, the arrows, the swipe, "＋ 같이", and the ✕ of the person chips are gone, and the chips of where from and until when take no press: the Plan is sent.
+- **How each Friend stands.** A person's chip reads the name and the state: "민수 · 아직 안 봄" for an invitation that waits, "지은 · 수락" for a Friend who is in, and "민수 · 거절" for one who declined; a late Holder reads "민수 · 5분 늦음". The face of that person on the map carries the same: a "?" while the invitation waits and a ✓ once accepted. The states start from the request's reply (every Friend invited), follow the Quest's members whenever the Quests are read again, and change at once on the signal of an acceptance or a decline that names the Quest and the User.
+- The invited state belongs to the answer on screen: a new reply or ✕ leaves it, and the Quest stays among the User's Quests. Opening it again from the everyday map is ticket 07's.
+- Words typed after inviting go to the Assistant as before.
+
+### A received invitation
+
+- **A card of the main screen.** With the switch on, each invitation the User received is a card of the main screen whose id is `invitation:<invitationId>`, so that a Notification's address opens it. With the switch off there is no such card, and the address leads to the "파티" tab's invitations as today.
+- **The frame without a pill.** The card nobody asked for is shown as the bottom card alone: no pill, and ✕ at the card's own corner. The lists, the bottom controls, and the tab bar give way as for an answer.
+- **The map** draws the scene the server gives for the invitee (`GET /quest-invitations/:id`, with the phone's position while it is on campus): the User's own dot, a line for each leg of their way, the flags at the Merging Point and at the destination, and the Place of what follows, by the marks, the rule of labels, and the camera of an answer. Nobody else is drawn.
+- **The card** shows whose invitation it is ("유상의 파티 초대"), the destination step's start and title ("12:33 학생회관식당에서 점심"), who is in so far ("유상, 지은과 함께"), the way's lines as the server wrote them, the Quest's steps in order, "수락" as the main button with "거절" beside it, and "초대장에는 내 길만 보여요. 다른 사람의 위치는 파티를 켠 뒤에 보여요."
+- **수락** accepts and **거절** declines, each with the endpoints the "파티" tab uses today. After either the card closes to the everyday map, and a toast says what happened. A failure says so and leaves the card.
+- **An invitation that waits no more** (404): the card says "이미 끝난 초대예요" and closes.
+
 ## Testing Decisions
 
 A good test states a behaviour a User depends on, through a seam a User or another package meets, with expected values taken from a real answer of the server or chosen by hand, never recomputed the way the code does.
@@ -130,6 +156,7 @@ A good test states a behaviour a User depends on, through a seam a User or anoth
 - **The main screen, integration tests.** The seam is the started app's main screen over the fake main server, as the chat's tests are today. They cover: the old path with the flag off, down to the request's body; the frame's parts and what gives way; today's cards inside the card; the Plan's marks, lines, and camera fit on the plain map, by the marks' names; the arrows and a press on a candidate; the chips, the Friend list, the handles, and "되돌리기", each down to the body of the request it sends; a failed recalculation; and words sent with the Plan's context.
 - **The marks, unit tests.** The seam is the function from an answer to its marks. The stored copies of real answers are its input, and the expected sides and numbers are worked out by hand from the rule above. Boundaries: two marks at one point, three, a point whose sides are all taken, an answer with a Restaurant that does not fit, and an answer without a Plan.
 - **The band's arithmetic and the changes to the conditions, unit tests**, with boundaries: a drag to each end of the range, a drag past the other handle, a time between two steps, and a person who is not in the conditions.
+- **Inviting and a received invitation, integration tests** at the main screen over the fake main server: the press down to the body and the key of `POST /plans`, a second press, each refusal, the card after inviting, a signal that changes a chip; the address that opens an invitation's card, its marks, and both buttons down to their requests. The replies are the stored copies of the main server's real replies that package C keeps.
 - **The switch, unit and integration tests**: what the phone keeps, and the long press with its toast.
 - **The marks' looks, unit tests**: each look's name, and that two looks that draw the same picture share one.
 - Prior art: the chat's integration tests and their fake main server, the route and marker tests of the main screen, the marker look and marker image unit tests, and the app's API answer tests.
@@ -138,7 +165,7 @@ A good test states a behaviour a User depends on, through a seam a User or anoth
 
 ## Out of Scope
 
-- "이대로 초대", the card of a received invitation, the person chips' accepted and not-yet states, the flag of a party on the everyday map, and the one line above the input after closing: they need the making of a Quest from a Plan, which is package C's.
+- The flag of a made Quest on the everyday map and the one line above the input after closing: ticket 07. "계획 바꾸기" and "카톡으로도 보내기" of the card after inviting, the report of being late, and the offer after a decline.
 - "여기로", the leave-by notification, and "파티 켜기": package D's.
 - Dashed routes, a press on empty ground or on a building, and dimming the base map: the native Release. Until then the routes are solid, a Place is chosen in the map view of 장소 선택, and the usual markers are hidden.
 - The count circles for many results, the "+" badge on a Friend who can be added, and the icons of the pill for a pressed building or Friend.
