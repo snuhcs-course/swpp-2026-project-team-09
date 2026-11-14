@@ -53,3 +53,10 @@ Change:
 3. Accept on device 2 and tap the old push again from the notification list if it is still there: the app opens the invitations tab without the invitation, and nothing breaks.
 
 ## Comments
+
+### Agent usage (2026-11-14, review)
+
+The review before the merge: two Opus 5.5 reviewers of this pull request (the ticket and the repository's rules; correctness and security), one Opus 5.5 subagent for the review's fix of a tap made above the tabs, and a quarter of the session that read the four pull requests of P04 and decided what merges, up to this commit. The implementation's own usage is not in these numbers.
+
+- Agent time: about 20 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time, with the fixer's; the reviewers ran inside it).
+- Tokens: output 104,209; input 21,817,018, of which 21,452,366 were cache reads, 364,430 cache writes, and 222 uncached. Without cache reads: 468,861.
