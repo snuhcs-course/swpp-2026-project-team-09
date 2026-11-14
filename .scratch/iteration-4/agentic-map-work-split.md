@@ -1,6 +1,6 @@
 # The agentic map: work split
 
-This document splits the work of building the agentic map design (`agentic-map-design.md`, the thirteen rows below the divider on the team canvas) into four packages. It gives the goals up to Sunday (11/15) night and the work after it.
+This document splits the work of building the agentic map design (`agentic-map-design.md`, the thirteen rows below the divider on the team canvas) into four packages. It gives the first path, which one person builds, and the work after it.
 
 The screen words stay in Korean. A "계획" (plan) is what an answer proposes and what `POST /plans` turns into a party. A "파티" (party) on screen is a Quest that several Users hold, and its "단계" (steps) are its Sub Quests. "파티 켜기" (party on) is the glossary's Party.
 
@@ -10,20 +10,20 @@ The screen words stay in Korean. A "계획" (plan) is what an answer proposes an
 |---|---|---|---|
 | A. Engine and contract | The server calculation that picks the place, the time, and the merging point from several Users' Timetables and locations. The contract the other packages rely on | 1 Lunch, 7 Other questions | One person with development experience |
 | B. The answer screen on the map | The frame of a pill at the top and one card at the bottom, drawing the answer on the map, the time band | 0 Frame, 6 Asking on the map, 8 What cannot be answered and what does not work | The two app-side people as a pair |
-| C. Invitations, parties, and Friends' locations | Turning a "계획" (plan) into a "파티" (party) and inviting to it; accepting, declining, and being late; and the single entry point for reading Friends | 4 Events, 5 Parties, 9 Friends and location | One server-side person |
-| D. Notifications, bookings, interests, and first run | The in-app notification list, Kwanjeong Library (관정) seats and study rooms, watching interests, and first run | 2–3 A seat to study, 10 Watching interests, 11 Notifications, 12 First run | One server-side person |
+| C. Invitations, parties, and Friends' locations | Turning a "계획" (plan) into a "파티" (party) and inviting to it; accepting, declining, and being late; and the single entry point for reading Friends | 4 Events, 5 Parties, 9 Friends and location | The server-side member |
+| D. Notifications, bookings, interests, and first run | The in-app notification list, Kwanjeong Library (관정) seats and study rooms, watching interests, and first run | 2–3 A seat to study, 10 Watching interests, 11 Notifications, 12 First run | The owner of A after the first path, with the server-side member |
 
 Row 1, Lunch, is the "배고파" (I'm hungry) scene.
 
-PR approval pairs: B's two people approve each other's PRs, and C and D approve each other's. C or D approves A's server PRs, and B approves A's app PRs. A personally reviews only the PRs that change the contract.
+PR approval pairs: the two app-side members approve each other's PRs. The server-side member approves the server PRs of A's owner, and A's owner approves the server-side member's. One of the app-side members approves the app PRs of A's owner.
 
 ## 2. The size, plainly
 
 - Estimated from reading the code, the killer feature alone takes one person 16–20 days. All thirteen rows run into Iteration 5 (11/21–12/04).
-- What runs for real on two phones by Sunday night is one path: two people eating together. Asking, drawing on the map, dragging the time band, inviting, and accepting.
-- Re-planning after a decline and "5분 늦어" (I'm 5 minutes late) are nice to have by Sunday. Gatherings of three or more, mixing in the shuttle, count circles for grouped results (design section 5, Many results on the map), the Avatar's three looks (a green ring with a live dot for exact location, a green ring on the building for the building level, and a dashed ring for Timetable only), dashed lines, push notifications, interests, and first run come after Sunday.
+- The first thing that runs for real on two phones is one path: two people eating together. Asking, drawing on the map, dragging the time band, inviting, and accepting.
+- Re-planning after a decline and "5분 늦어" (I'm 5 minutes late) are nice to have on the first path. Gatherings of three or more, mixing in the shuttle, count circles for grouped results (design section 5, Many results on the map), the Avatar's three looks (a green ring with a live dot for exact location, a green ring on the building for the building level, and a dashed ring for Timetable only), dashed lines, push notifications, interests, and first run come after it.
 
-## 3. What to settle first (on Saturday, in A's first PR)
+## 3. What to settle first (in A's first PR)
 
 Every package builds against real answers from the real server. No package builds against a fake response.
 
@@ -44,39 +44,38 @@ The five states of a party member map onto today's tables like this: invited is 
 | C | In `main-server/src/location-sharing/`: visibility.service.ts and location-sharing.service.ts. `main-server/src/friends/friends.service.ts`. In `main-server/src/quests/`: invitations.service.ts and dto/quest.dto.ts. `mobile/src/features/friends/adapter.ts`, and real-time signal handling |
 | D | `main-server/src/app.module.ts`, `main-server/src/library/room-request-sync.service.ts`, `main-server/src/assistant/library/library-card.ts`, and `mobile/src/features/notifications/` |
 
-`main-server/prisma/schema.prisma` is changed by one person at a time, in a set order. Until Sunday only one column goes in: the member's late minutes (C). The Friend levels and the notification table go in after 11/18.
+`main-server/prisma/schema.prisma` is changed by one person at a time, in a set order. On the first path only one column goes in: the member's late minutes (C). The Friend levels and the notification table go in after 11/18.
 
-## 5. Up to Sunday night
+## 5. The first path
 
-Through Sunday one person, the owner of package A, builds the whole path with agents, from A's column to D's. The table shows which package each part of the path belongs to. From Iteration 5 each package goes to its owner.
+One person, the owner of package A, builds the whole first path with agents, from A's column to D's. The table shows which package each part of the path belongs to. Each package goes to its owner once the path runs.
 
 | | A. Engine and contract | B. The answer screen on the map | C. Invitations, parties, and Friends' locations | D. Notifications, bookings, and interests |
 |---|---|---|---|---|
-| Sat afternoon | The first PR: the contract types, and the gathering calculation that returns the real answer for the Tue 11:50 example, with its test | The answer frame (the pill, the card, and hiding the lists) with today's real answers inside the new card | Read the contract | Read the contract |
-| Sat night | An endpoint that recalculates without the model, the tools return real answers | A's real answer drawn on a phone: solid colored routes, numbered dots, time flags, fitting between the pill and the card, hiding the list | `POST /plans` (the party, its two steps, and the invitations at once), reading an invitation, the accept and decline signals | Row 2's seat card filled with the longest time, counted from the arrival, the skeleton of the notification service |
-| Sun 15:00 | Connect everything end to end once, midway | Connect it with A | | |
-| Sun night | The tools read Friends only through FriendView, integration | The time band (dropping it recalculates), the condition chips and "＋ 같이" (+ together), "이대로 초대" (invite as is), the card of a received invitation | Carrying the member states on the party, FriendView (read from today's on and off) | Check that a received invitation shows in today's notification list, the text of each notification kind |
+| First | The first PR: the contract types, and the gathering calculation that returns the real answer for the Tue 11:50 example, with its test | The answer frame (the pill, the card, and hiding the lists) with today's real answers inside the new card | Read the contract | Read the contract |
+| Second | An endpoint that recalculates without the model, the tools return real answers | A's real answer drawn on a phone: solid colored routes, numbered dots, time flags, fitting between the pill and the card, hiding the list | `POST /plans` (the party, its two steps, and the invitations at once), reading an invitation, the accept and decline signals | Row 2's seat card filled with the longest time, counted from the arrival, the skeleton of the notification service |
+| Then | Connect everything end to end once, midway | Connect it with A | | |
+| Last | The tools read Friends only through FriendView, integration | The time band (dropping it recalculates), the condition chips and "＋ 같이" (+ together), "이대로 초대" (invite as is), the card of a received invitation | Carrying the member states on the party, FriendView (read from today's on and off) | Check that a received invitation shows in today's notification list, the text of each notification kind |
 | Nice to have | Re-planning after a decline, the preview and confirmation of being late | The one-line plan after closing | Reporting lateness | Keeping the time to leave in the list |
 
 The new answer screen sits behind one switch. The old chat screen is not deleted, and the old answers (the event, Kwanjeong, and Quest cards) go inside the new card as they are.
 
-### What only people can do
+### What the three teammates do meanwhile
 
-A PR does not merge without a teammate's approval, so approvals set the pace of the build.
+A PR does not merge without a teammate's approval, so approvals set the pace of the build. The rest of the work below needs no new build; `metrics-revision.md` gives the reasons and the full list.
 
-| Who | What only people can do |
+| Who | Work |
 |---|---|
-| App-side member 1 | Approves app PRs, within 30 minutes on Saturday and Sunday. Keeps phone 1 on today's Production APK, checks that each over-the-air update arrives, and records the screen of each step that works |
-| App-side member 2 | Keeps phone 2. Makes two test accounts that are Friends of each other, and enters Timetables that fit the time of the check. Revises the acceptance-test sheet if the Sunday check passes |
-| Server-side member 1 | Approves server PRs, within 30 minutes. Sets up the Firebase project and its push credentials before the native Release on 11/19 |
-| Server-side member 2 | Finds testers and runs the acceptance tests on 11/16 and 11/18. Checks on site how the library counts the 30 minutes for confirming a seat and when the room-booking window opens. Keeps the standup log and records the demo video |
-| The builder | Builds the path, and pushes each Release tag after approval |
+| The PM of this iteration (app side) | Owns the acceptance tests of 11/16 and 11/18, which run on today's app: adds SUS, the usefulness question, and the time and help columns to the sheet, runs the sessions, and writes the one-page report. Closes the schedule's Iteration 4 rows and gives every measuring task an ID for the Iteration 5 kickoff on 11/21 |
+| The other app-side member | Observes the acceptance sessions. Measures on two phones the non-functional requirements owed since Iteration 3. Writes up the heuristic-evaluation fixes. Writes and pilots the lab-study protocol, and recruits participants and beta testers |
+| The server-side member | Approves the builder's PRs quickly. Builds the location question set, the reference solver, the two baselines, and the thresholds, and makes the one freeze commit before any run. Writes the truth table of what each level shows and the leak cases. Decides the crash reporter for the native Release on 11/19 |
+| The builder | Builds the first path, and pushes each Release tag after approval |
 
-The question of the check needs a cafeteria that is open and a next class at that time of day, so the time of the check is fixed together with the test Timetables.
+The path is checked at a time of day when a cafeteria is open, with test Timetables that have a next class.
 
-## 6. The Sunday 21:00 check
+## 6. The check of the first path
 
-The check runs on two phones with today's Production APK installed, using only what they download, with no native build.
+When the path runs, it is checked on two phones with today's Production APK installed, using only what they download, with no native build.
 
 1. Phone 1 asks "배고파, 민수랑 같이" (I'm hungry, with Minsu).
 2. The place and time the server picked, both people's routes, and the flag at the merging point show between the pill and the card.
@@ -86,8 +85,8 @@ The check runs on two phones with today's Production APK installed, using only w
 6. When phone 2 opens it, it shows its own route and leave-by time.
 7. When phone 2 accepts, the person chip on phone 1 turns to ✓.
 
-- The check passes when the seven steps run without a break. Then the acceptance test document can be changed to fit the new screen and the tests run on the new app (the TA's guidance).
-- If it does not pass, the switch stays off and the acceptance tests (11/16, 11/18) run on today's app. New work is not released until 11/18.
+- The check passes when the seven steps run without a break.
+- The acceptance tests (11/16, 11/18) run on today's app unless the path has passed before them. Until 11/18 the switch stays off and new work is not released.
 - Every PR is merged only after CI's app-fingerprint check passes.
 
 ## 7. The native release (11/19, after the acceptance tests, once, by A)
