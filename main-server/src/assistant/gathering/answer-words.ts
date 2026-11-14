@@ -39,8 +39,9 @@ export interface MealAnswerArgs {
   // The asker's longest meal alone under the same conditions, when Friends are in the plan; null otherwise or when
   // none fits.
   aloneMinutes: number | null;
-  // No menu collected for the day, menus but no Restaurant with a Place open for the meal, or open ones.
-  menus: 'none' | 'closed' | 'open';
+  // No menu collected for the day, menus but no Restaurant with a Place open for the meal, open ones but none at the
+  // Place the User fixed, or open ones.
+  menus: 'none' | 'closed' | 'closed-at-place' | 'open';
   placeOf: (placeId: string) => PlaceDto;
 }
 
@@ -49,7 +50,7 @@ const HANGUL_FIRST = 0xac_00;
 const HANGUL_SYLLABLES = 11_172;
 const FINALS = 28;
 
-// Whether the last syllable of a word has a final consonant, which picks 은 over 는 and 과 over 와.
+// Whether the last syllable of a word has a final consonant, which picks 은 over 는, 과 over 와, and 이 over 가.
 function hasFinal(word: string): boolean {
   const syllable = (word.at(-1)?.codePointAt(0) ?? 0) - HANGUL_FIRST;
   return syllable >= 0 && syllable < HANGUL_SYLLABLES && syllable % FINALS !== 0;
@@ -58,6 +59,8 @@ function hasFinal(word: string): boolean {
 export const withTopic = (word: string): string => `${word}${hasFinal(word) ? '은' : '는'}`;
 
 export const withAnd = (word: string): string => `${word}${hasFinal(word) ? '과' : '와'}`;
+
+export const withSubject = (word: string): string => `${word}${hasFinal(word) ? '이' : '가'}`;
 
 // The item a person was busy with up to `readyAt`.
 export function itemBefore(items: readonly DayItem[], readyAt: Date): DayItem | null {

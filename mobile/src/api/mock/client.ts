@@ -19,7 +19,7 @@ import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
-import { mockAssistantReply } from './assistant';
+import { mockAssistantReply, mockRecalculation } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { MENUS } from './data/menus';
@@ -200,6 +200,7 @@ export const mockClient: ApiClient = {
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
+  recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
   ...mockRoom,
   ...mockParty,
   ...mockEvents,

@@ -185,6 +185,14 @@ export const requestContextSchema = z.strictObject({
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
 }) satisfies z.ZodType<RequestContext>;
 
+// The body of a recalculation: the changed input, and where the asker is now.
+export const recalculationSchema = z.strictObject({
+  input: planInputSchema,
+  location: z.strictObject({ latitude, longitude }).nullable().default(null),
+});
+
+export type Recalculation = z.infer<typeof recalculationSchema>;
+
 export const NO_CONTEXT: RequestContext = {
   location: null,
   viewport: null,

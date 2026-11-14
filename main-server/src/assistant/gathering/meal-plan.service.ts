@@ -17,19 +17,22 @@ import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
 import { type AnswerReply, type PlanInput } from '../dto/answer.dto.js';
 import { freeTimeOf } from '../free-time/free-time.js';
-import { mealWindow } from '../free-time/meal-fit.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { gather, type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
+import { conditionsOf, windowOf } from './plan-conditions.js';
 
 // The one place that gathers what a meal's plan needs: the tool, the recalculation, and the making of a Quest call it,
 // so that the three agree.
-const menusOf = (collected: number, open: number): MealAnswerArgs['menus'] => {
+const menusOf = (collected: number, open: number, there: number): MealAnswerArgs['menus'] => {
   if (collected === 0) {
     return 'none';
   }
-  return open === 0 ? 'closed' : 'open';
+  if (open === 0) {
+    return 'closed';
+  }
+  return there === 0 ? 'closed-at-place' : 'open';
 };
 
 @Injectable()
@@ -47,25 +50,28 @@ export class MealPlanService {
 
   async plan(askerId: string, input: PlanInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
     const friends = await this.friendsOf(askerId, input);
+    this.refuseUnknownPlaces(input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date, meal } = input;
     const [people, collected] = await Promise.all([
       this.peopleOf(askerId, friends, date, at.location),
       this.menus.findByDate(date),
     ]);
-    const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }): GatheringPerson => ({
+    const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }, index): GatheringPerson => ({
       id: userId,
       free: freeTimeOf(items, date, now),
       locationPlaceId: this.placeIdAt(position),
+      ...conditionsOf(input.people[index]?.constraints ?? [], date),
     }));
     if (askerPerson === undefined) {
       throw new Error('A plan has its asker');
     }
-    const candidates = openRestaurants(collected, meal, this.restaurantPlaces).map(({ key, place }) => ({
+    const open = openRestaurants(collected, meal, this.restaurantPlaces).map(({ key, place }) => ({
       key,
       placeId: place.id,
     }));
-    const when = { window: mealWindow(date, meal), now };
+    const candidates = input.placeId === null ? open : open.filter(({ placeId }) => placeId === input.placeId);
+    const when = { window: windowOf(input), now };
     const gathering = gather([askerPerson, ...friendPeople], candidates, when, this.travel);
     const aloneMinutes =
       friendPeople.length === 0
@@ -77,16 +83,23 @@ export class MealPlanService {
       people,
       gathering,
       aloneMinutes,
-      menus: menusOf(collected.length, candidates.length),
+      menus: menusOf(collected.length, open.length, candidates.length),
       placeOf: (placeId) => this.placeOf(placeId),
     });
   }
 
-  // The Friends of the plan, in its order, refusing a plan that does not start with the asker or names anyone else.
+  // The Friends of the plan, in its order, refusing a plan that does not start with the asker, names anyone else or
+  // anyone twice, or holds a constraint the asker did not set.
   private async friendsOf(askerId: string, input: PlanInput): Promise<FriendDto[]> {
     const [first, ...others] = input.people;
     if (first?.userId !== askerId) {
       throw new BadRequestException('The first person of a plan is the asker');
+    }
+    if (new Set(input.people.map(({ userId }) => userId)).size < input.people.length) {
+      throw new BadRequestException('A person is in a plan once');
+    }
+    if (input.people.some(({ constraints }) => constraints.some(({ source }) => source !== 'asker'))) {
+      throw new BadRequestException('Only the asker sets constraints');
     }
     const listed = await this.friends.listFriends(askerId);
     return others.map(({ userId }) => {
@@ -96,6 +109,15 @@ export class MealPlanService {
       }
       return friend;
     });
+  }
+
+  private refuseUnknownPlaces({ placeId, people }: PlanInput): void {
+    const placeIds = people.flatMap(({ constraints }) =>
+      constraints.flatMap((constraint) => (constraint.kind === 'from' ? [constraint.placeId] : [])),
+    );
+    if ([...placeIds, ...(placeId === null ? [] : [placeId])].some((id) => this.places.byId(id) === null)) {
+      throw new BadRequestException('No such Place');
+    }
   }
 
   private async peopleOf(

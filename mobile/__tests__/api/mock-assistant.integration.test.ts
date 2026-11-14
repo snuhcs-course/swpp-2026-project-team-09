@@ -5,9 +5,9 @@
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
-import type { ChatMessage, RequestContext } from '@/api/assistant-types';
+import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-types';
 import { mockClient } from '@/api/mock/client';
-import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 
 // The mock of the Assistant, where the app asks no main server: asked to eat together with what the app knew, it
 // answers with the main server's real answer drawn on the map; anything else as it did before.
@@ -54,5 +54,13 @@ describe('the mock of an answer drawn on the map', () => {
 
     expect(withContext).toEqual(without);
     expect(withContext).not.toHaveProperty('answer');
+  });
+});
+
+describe('the mock of a recalculation', () => {
+  it("answers with the main server's real answer, holding the input it was given", async () => {
+    const input: PlanInput = { ...MEAL_ANSWER.input, window: { from: '12:40', until: null } };
+
+    await expect(answered(mockClient.recalculateAnswer(input, null))).resolves.toEqual({ ...MEAL_ANSWER, input });
   });
 });
