@@ -4,10 +4,10 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
 
-import { ChoiceGrid, color, type GridChoice } from '@/design-system';
+import { ChoiceGrid, choiceRowsWithin, color, type GridChoice } from '@/design-system';
 
 type Props = ComponentProps<typeof ChoiceGrid>;
 
@@ -89,6 +89,75 @@ describe('ChoiceGrid shown', () => {
     expect(screen.getByRole('button', { name: '하은, 160m, 추가' })).toHaveTextContent('하은160m');
     expect(screen.getByText('160m')).toHaveStyle({ color: color.inkMuted, textAlign: 'right' });
     expect(screen.getByText('자리 모름')).toHaveStyle({ color: color.inkSubtle });
+  });
+});
+
+// Nine cells, five rows: 5 × 44 + 4 × 8 = 252 high.
+const NINE: GridChoice[] = Array.from({ length: 9 }, (_, index) => ({
+  key: `k${index}`,
+  name: `친구${index}`,
+  value: `${(index + 1) * 100}m`,
+  faint: false,
+  label: `친구${index}, ${(index + 1) * 100}m, 추가`,
+}));
+
+// The grid's window laid out `view` high around content `content` high, scrolled down by `offset`.
+async function scrolled(view: number, content: number, offset: number): Promise<void> {
+  const shown = screen.getByTestId('choice-grid-window');
+  await fireEvent(shown, 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 343, height: view } } });
+  await fireEvent(shown, 'contentSizeChange', 343, content);
+  await fireEvent.scroll(shown, {
+    nativeEvent: {
+      contentOffset: { x: 0, y: offset },
+      contentSize: { width: 343, height: content },
+      layoutMeasurement: { width: 343, height: view },
+    },
+  });
+}
+
+describe('ChoiceGrid with a row limit', () => {
+  // Partitions: no limit; a limit of four over five rows, at the top and scrolled to the end; three rows under a
+  // limit of four. The rule: fix 2 of the design review, at most that many whole rows (4 × 44 + 3 × 8 = 200) that
+  // scroll inside, and a fade at the bottom while more rows are below.
+  it('draws every row with no window without a limit', async () => {
+    await show({ choices: NINE });
+
+    expect(screen.queryByTestId('choice-grid-window')).toBeNull();
+  });
+
+  it('shows four whole rows of five in a window 200 high that scrolls inside the card', async () => {
+    await show({ choices: NINE, rows: 4 });
+
+    expect(screen.getByTestId('choice-grid-window')).toHaveStyle({ maxHeight: 200 });
+    expect(screen.getByTestId('choice-grid-window')).toHaveProp('nestedScrollEnabled', true);
+  });
+
+  it('fades the bottom while more rows are below, and not once scrolled to the end', async () => {
+    await show({ choices: NINE, rows: 4 });
+
+    await scrolled(200, 252, 0);
+    expect(screen.getByTestId('choice-grid-fade')).toBeOnTheScreen();
+
+    await scrolled(200, 252, 52);
+    expect(screen.queryByTestId('choice-grid-fade')).toBeNull();
+  });
+
+  it('draws no fade when every row fits', async () => {
+    // Three rows: 3 × 44 + 2 × 8 = 148.
+    await show({ choices: NINE.slice(0, 6), rows: 4 });
+
+    await scrolled(148, 148, 0);
+
+    expect(screen.queryByTestId('choice-grid-fade')).toBeNull();
+  });
+
+  it.each([
+    [200, 4],
+    [199, 3],
+    [96, 2],
+    [95, 1],
+  ])('counts the whole rows within %d as %d', (height, rows) => {
+    expect(choiceRowsWithin(height)).toBe(rows);
   });
 });
 
