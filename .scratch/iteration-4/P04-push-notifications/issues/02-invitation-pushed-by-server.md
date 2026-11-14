@@ -3,7 +3,7 @@
 Parent: [spec](../spec.md) ("Tokens on the server", "Sending", "The received invitation", "Ownership and merge order")
 Status: ready-for-agent
 Who: the server-side member
-Blocked by: None (can start immediately). Merges only after the 11/18 acceptance test. No main-server or `all` Release carries it before 11/19.
+Blocked by: None (can start immediately). It merges once its review passes. No main-server or `all` Release carries it before 11/19.
 Native files: no
 
 ## What to build
@@ -88,3 +88,10 @@ Change:
 4. On the local stack, sign in with a test account, register a made-up token with curl, invite that account from another, and read the server's log: either an info line with the row id and `DeviceNotRegistered`, or a warning with the code Expo gave. Neither holds the token.
 
 ## Comments
+
+### Agent usage (2026-11-14, review)
+
+The review before the merge: two Opus 5.5 reviewers of this pull request (the ticket and the repository's rules; correctness and security over time), and a quarter of the session that read the four pull requests of P04 and decided what merges, up to this commit. The implementation's own usage is not in these numbers.
+
+- Agent time: about 7 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time; the reviewers ran inside it).
+- Tokens: output 58,382; input 7,112,482, of which 6,852,679 were cache reads, 259,705 cache writes, and 98 uncached. Without cache reads: 318,185.

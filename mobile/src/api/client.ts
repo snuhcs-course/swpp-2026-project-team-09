@@ -13,6 +13,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -54,6 +55,7 @@ import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
 import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
+import type { MakePlanQuest, PlanQuest } from './plan-quest-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
 
@@ -65,6 +67,8 @@ export interface ApiClient {
   updateProfile: (change: ProfileChange) => Promise<Profile>;
   getProfile: () => Promise<Profile>;
   setMasterSwitch: (on: boolean) => Promise<void>;
+  // The phone's Expo push token, for the signed-in Session.
+  registerPushToken: (token: string) => Promise<void>;
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
   listFriends: () => Promise<Friend[]>;
@@ -177,6 +181,9 @@ export interface ApiClient {
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
   // An answer drawn on the map, recalculated from its changed input and where the User is now, without the model.
   recalculateAnswer: (input: PlanInput, location: LatLng | null) => Promise<AnswerReply>;
+  // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
+  // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
+  makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
   // The 새내기 튜토리얼: its content and the User's progress. Each change answers with the new tutorial, and each is
   // idempotent. A key that is no quest is refused with 404; a `by` that does not fit the quest's completion with 400.
   getTutorial: () => Promise<Tutorial>;
@@ -201,6 +208,7 @@ export const apiClient: ShownClient = {
   updateProfile: (change) => chosen().updateProfile(change),
   getProfile: () => chosen().getProfile(),
   setMasterSwitch: (on) => chosen().setMasterSwitch(on),
+  registerPushToken: (token) => chosen().registerPushToken(token),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
   setFriendSharing: (userId, on) => chosen().setFriendSharing(userId, on),
@@ -284,6 +292,7 @@ export const apiClient: ShownClient = {
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
+  makePlanQuest: (making, key) => chosen().makePlanQuest(making, key),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),
   stopTutorial: () => chosen().stopTutorial(),

@@ -13,6 +13,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
@@ -41,7 +42,7 @@ import { askAssistant, useMainLayers } from './use-main-layers';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
-import { useAskedPerson } from './use-asked-person';
+import { useAskedByAddress } from './use-asked-card';
 import { type MainRoute, useRoute } from './use-route';
 import { useMapView } from './use-map-view';
 import { useRoom } from './use-room';
@@ -284,7 +285,7 @@ export function MainScreen(): ReactElement {
   const route = useRoute(map, me);
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
-  useAskedPerson(ready ? cards : null, map, selection);
+  useAskedByAddress(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { room, setStage, setCardHeight, heights } = useRoom(taken, start, chat.framed);
