@@ -15,6 +15,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -285,7 +286,7 @@ export function MainScreen(): ReactElement {
   const route = useRoute(map, me);
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
-  useAskedByAddress(ready ? cards : null, map, selection);
+  useAskedByAddress(ready ? cards : null, map, selection, chat);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { room, setStage, setCardHeight, heights } = useRoom(taken, start, chat.framed);

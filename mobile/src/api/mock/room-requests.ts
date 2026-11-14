@@ -8,6 +8,7 @@
 import { ApiError } from '@/api/errors';
 import { newIdempotencyKey } from '@/api/idempotency-key';
 import type { RoomRequest, RoomRequestsClient } from '@/api/room-requests';
+import { bookKeyOf } from '@/library/cards/room-window';
 
 // The mock build's: every companion still asked consents by the second look, with the mock's own names and 학번.
 const made = new Map<string, RoomRequest>();
@@ -41,7 +42,7 @@ function mockAskRefusal(request: RoomRequest, friendId: string): ApiError | null
 
 export const mockRoomRequests: RoomRequestsClient = {
   make: (making) => {
-    const [, spaceId = '', date = '', time = '', minutes = '0'] = making.key.split(':');
+    const { spaceId = '', date = '', start = '', minutes = 0 } = bookKeyOf(making.key) ?? {};
     const friendIds = 'friendIds' in making ? making.friendIds : ['mock-holder'];
     const request: RoomRequest = {
       id: newIdempotencyKey(),
@@ -51,8 +52,8 @@ export const mockRoomRequests: RoomRequestsClient = {
       requester: { userId: 'me', name: '나' },
       space: { id: spaceId, name: spaceId },
       date,
-      start: `${time.slice(0, 2)}:${time.slice(2)}`,
-      minutes: Number(minutes),
+      start,
+      minutes,
       useDesc: making.useDesc ?? null,
       reason: null,
       failed: null,

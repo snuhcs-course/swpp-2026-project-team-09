@@ -32,9 +32,17 @@ const POLL_MS = 3000;
 // The request of each card, by its place in the chat, while the app runs: the sheet may mount the card anew.
 const requestOfCard = new Map<string, string>();
 
+// A request kept on the phone for a card shown again, by the card's key (`./waiting-room.ts`).
+const requestOfKey = new Map<string, string>();
+
+export function bindPartyRequest(cardKey: string, requestId: string): void {
+  requestOfKey.set(cardKey, requestId);
+}
+
 // For the tests: no card has a request.
 export function forgetPartyRequests(): void {
   requestOfCard.clear();
+  requestOfKey.clear();
 }
 
 export interface PartyRequest {
@@ -55,8 +63,13 @@ function makingOf(card: LibraryCardData, useDesc: string | null): Parameters<typ
     : { key: card.key, questId: card.questId, ...extra };
 }
 
-export function usePartyRequest(card: LibraryCardData, place: string, useDesc: string | null): PartyRequest {
-  const [id, setId] = useState<string | null>(requestOfCard.get(place) ?? null);
+export function usePartyRequest(
+  card: LibraryCardData,
+  place: string,
+  useDesc: string | null,
+  onMade?: (made: RoomRequest) => void,
+): PartyRequest {
+  const [id, setId] = useState<string | null>(requestOfCard.get(place) ?? requestOfKey.get(card.key) ?? null);
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
   const [key] = useState(newIdempotencyKey);
@@ -77,6 +90,7 @@ export function usePartyRequest(card: LibraryCardData, place: string, useDesc: s
       const made = await roomRequests.make(makingOf(card, useDesc), key);
       requestOfCard.set(place, made.id);
       setId(made.id);
+      onMade?.(made);
     } catch {
       setFailed(true);
     } finally {

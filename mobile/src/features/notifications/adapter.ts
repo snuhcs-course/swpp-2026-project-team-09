@@ -13,7 +13,16 @@ import { koreaCalendar, koreaClock, sameKoreaDay } from '@/korea-time';
 import { cardAddress } from './address';
 
 // The kinds of the Notifications the main server keeps; `notice` stands for a kind this app does not know yet.
-type KeptKind = 'accepted' | 'declined' | 'leave-by' | 'notice';
+const KEPT_KINDS = [
+  'accepted',
+  'declined',
+  'leave-by',
+  'room-declined',
+  'room-agreed',
+  'room-ending',
+  'room-window',
+] as const;
+type KeptKind = (typeof KEPT_KINDS)[number] | 'notice';
 
 // What a row of 알림 is about. Every kind but `friend-request` concerns 파티.
 export type NoticeKind = 'party' | 'friend-request' | 'invitation' | 'join-requests' | KeptKind;
@@ -49,8 +58,16 @@ export interface NoticeSources {
 }
 
 function keptKind(kind: string): KeptKind {
-  return kind === 'accepted' || kind === 'declined' || kind === 'leave-by' ? kind : 'notice';
+  return KEPT_KINDS.find((known) => known === kind) ?? 'notice';
 }
+
+// A time comes with the clock; a room request's companion out with a person, and all agreed with the group.
+const KEPT_ICONS: Partial<Record<KeptKind, NoticeView['icon']>> = {
+  'leave-by': 'clock',
+  'room-ending': 'clock',
+  'room-declined': 'user',
+  'room-agreed': 'users',
+};
 
 // `ahead` while the time is still to come, as the main server reads no clock.
 function keptTitle({ title, ahead, at }: KeptNotification, now: Date): string {
@@ -72,7 +89,7 @@ function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[]
     .map((notification) => ({
       key: `notice-${notification.id}`,
       kind: keptKind(notification.kind),
-      icon: notification.kind === 'leave-by' ? 'clock' : 'calendar',
+      icon: KEPT_ICONS[keptKind(notification.kind)] ?? 'calendar',
       title: keptTitle(notification, now),
       sub: notification.line,
       questId: null,
