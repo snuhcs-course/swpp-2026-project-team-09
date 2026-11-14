@@ -128,3 +128,75 @@ export async function unregisterPush(): Promise<void> {
     // The Session ends whatever the phone answered.
   }
 }
+
+// The response to the tap that started the app, until it is cleared.
+export function lastPushTap(): ExpoNotifications.NotificationResponse | null {
+  const library = notifications();
+  if (library === null) {
+    return null;
+  }
+  try {
+    return library.getLastNotificationResponse();
+  } catch {
+    return null;
+  }
+}
+
+// So that the same tap does not open again at the next start.
+export function clearLastPushTap(): void {
+  try {
+    notifications()?.clearLastNotificationResponse();
+  } catch {
+    // Nothing more to do: the address it opens is harmless.
+  }
+}
+
+export function onPushTap(listener: (response: ExpoNotifications.NotificationResponse) => void): () => void {
+  const library = notifications();
+  if (library === null) {
+    return stopNothing;
+  }
+  try {
+    const subscription = library.addNotificationResponseReceivedListener(listener);
+    return () => {
+      subscription.remove();
+    };
+  } catch {
+    return stopNothing;
+  }
+}
+
+export function onPushArrival(listener: () => void): () => void {
+  const library = notifications();
+  if (library === null) {
+    return stopNothing;
+  }
+  try {
+    const subscription = library.addNotificationReceivedListener(() => {
+      listener();
+    });
+    return () => {
+      subscription.remove();
+    };
+  } catch {
+    return stopNothing;
+  }
+}
+
+// A push while the app is in front goes to the notification list only. On Android a banner cannot show without
+// sound, and the open app shows the change itself.
+export function quietPushesInFront(): void {
+  try {
+    notifications()?.setNotificationHandler({
+      handleNotification: () =>
+        Promise.resolve({
+          shouldShowBanner: false,
+          shouldShowList: true,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+        }),
+    });
+  } catch {
+    // The library's default then shows nothing in front.
+  }
+}

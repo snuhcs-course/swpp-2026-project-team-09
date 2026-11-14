@@ -12,6 +12,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -37,7 +38,7 @@ import { askAssistant, pressOnMap, useMainLayers } from './use-main-layers';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
-import { useAskedPerson } from './use-asked-person';
+import { useAskedByAddress } from './use-asked-card';
 import { type MainRoute, useRoute } from './use-route';
 import { type Selection, useSelection } from './use-selection';
 import { type Things, useThings } from './use-things';
@@ -304,7 +305,7 @@ export function MainScreen(): ReactElement {
   const route = useRoute(map, me);
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
-  useAskedPerson(ready ? cards : null, map, selection);
+  useAskedByAddress(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null, start);

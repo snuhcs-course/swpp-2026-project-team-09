@@ -1572,6 +1572,16 @@ in the background. It arrives with the app's icon in the channel "알림", and t
 A token shown on `/push-check` is never pasted into issues, pull requests, or chats: anyone holding it can push to
 that phone.
 
+- **A tap.** A push's data carries one address, `/main?card=<kind>:<id>` (`src/push/card-address.ts`); any other data
+  is ignored. The signed-in layout reads the tap that started the app and each tap while it runs, once the User is
+  past the loading screen, the consent and Onboarding, as Invite Links are (`src/push/use-notification-links.ts`). A
+  tap opens once, then the library forgets it, so the next start does not open it again. `/main` reads `card` once:
+  the map moves to the card with that id and opens it, and without one the app opens the screen of the matching row
+  of "알림". For an invitation that is the "파티" tab's invitations, `/party?tab=invites`.
+- **A push in front.** While the app is open, a push drops no banner and plays no sound; it goes to the phone's
+  notification list. On Android a banner cannot show without sound. The app instead fetches again the lists "알림"
+  and the "파티" badge are made from (`src/push/push-arrivals.tsx`).
+
 ## 관정도서관 (P06)
 
 The app books 관정도서관 itself, as the User, through the library's booking site `k-rsv.snu.ac.kr`. Why the library
