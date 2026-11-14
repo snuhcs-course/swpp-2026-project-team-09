@@ -9,6 +9,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -218,6 +219,18 @@ export interface Quest {
   description: string;
   // Null for a Class Quest.
   createdAt: string | null;
+  // The Holders in the order they entered, then the invited, then the declined; none for a Class Quest. A main server
+  // before members sends none.
+  members?: QuestMember[];
+}
+
+export type MemberState = 'invited' | 'accepted' | 'late' | 'declined';
+
+export interface QuestMember {
+  user: Person;
+  state: MemberState;
+  // Set with 'late' only.
+  lateMinutes: number | null;
 }
 
 // --- What is on the map ---

@@ -33,7 +33,7 @@ jest.mock('react-native-safe-area-context', () => ({
 // 574; for the third Plan 24 and 24 (302동's labels are at its sides). A campus map of that view goes no further out
 // than zoom 15.26 (see `answer-camera.unit.test.ts`).
 const SIZE = { width: 411, height: 914 };
-const ROOM: Room = { stage: SIZE, cardHeight: null, answerHeight: 274, tutorialStart: false };
+const ROOM: Room = { stage: SIZE, cardHeight: null, answerHeight: 274, tutorialStart: false, interestsHint: false };
 const FIT_ZOOM = 15.26;
 
 function nothing(): void {

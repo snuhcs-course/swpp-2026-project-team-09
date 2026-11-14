@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -78,6 +79,7 @@ describe('Making a Quest of one’s own', () => {
       ],
       classQuest: false,
       waitingJoinRequests: 0,
+      members: [{ user: holder, state: 'accepted', lateMinutes: null }],
     });
     expect((await getQuests(app, user)).body).toEqual([response.body]);
   });

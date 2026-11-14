@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -53,6 +54,28 @@ export class ExpoPushStub {
           reject(reason instanceof Error ? reason : new Error(String(reason)));
         });
       });
+  }
+
+  // Answers no request until the test calls the returned function with the answer. A call given up first ends as
+  // fetch ends it, so that nothing is left pending.
+  holds(): (body: string, status?: number) => void {
+    let release!: (answer: { body: string; status: number }) => void;
+    const held = new Promise<{ body: string; status: number }>((resolve) => {
+      release = resolve;
+    });
+    this.respond = (signal): Promise<Response> =>
+      new Promise((resolve, reject) => {
+        signal?.addEventListener('abort', () => {
+          const reason: unknown = signal.reason;
+          reject(reason instanceof Error ? reason : new Error(String(reason)));
+        });
+        void held.then(({ body, status }) => {
+          resolve(new Response(body, { status, headers: { 'Content-Type': 'application/json' } }));
+        });
+      });
+    return (body, status = 200) => {
+      release({ body, status });
+    };
   }
 
   // Give it to startApp in place of fetch.

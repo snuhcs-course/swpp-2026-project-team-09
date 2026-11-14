@@ -147,8 +147,8 @@ interface QuestMember {
 ```
 
 - The Holders come first, in the order they entered, then the invited, then the declined, each by when the invitation was sent.
-- The design's five states map onto the tables as the work split says: invited is a waiting invitation; accepted is a Holder; N minutes late is a Holder's late minutes; declined is a declined invitation; and a member who dropped out is no longer listed, as is a User whose invitation the Leader cancelled.
-- `late` and `declined` are sent once the schema holds them (below). Until then a declined invitation is not listed.
+- The design's five states map onto the tables as the work split says: invited is a waiting invitation; accepted is a Holder; N minutes late is a Holder's late minutes; declined is the record of a decline; and a member who dropped out is no longer listed, as is a User whose invitation the Leader cancelled.
+- `late` and `declined` are sent once the schema holds them (below). Until then a User who declined is not listed.
 - A Class Quest has no members. An app before this change ignores the field, and the app takes a Quest without it.
 - **Accepting** sends the Leader `invitation-accepted` with `{ questId, userId }`, and **declining** `invitation-declined` with the same, beside the `quests-changed` each sends today. An acceptance by the Leader's own doing sends none. A decline also sends `quests-changed` to the other Holders, whose members changed.
 - **The app** passes a signal's payload on. `invitation-accepted` and `invitation-declined` fetch the Quests and the sent invitations again, and reach whoever listens with the Quest and the User they name, so that the screen of a Plan can mark the chip before the fetch answers.
@@ -158,7 +158,7 @@ interface QuestMember {
 `POST /quests/:questId/late` with `{ minutes, location }`: a Holder reports being late.
 
 - `minutes` is a whole number from 1 to 120. The Quest keeps it on the Holder, and a later report replaces it.
-- The server answers with the Holder's own way as it now is (`OwnWay`), set out `minutes` later than they would be ready, from the location given.
+- The server answers with the Holder's own way as it now is (`OwnWay`): they set out `minutes` later than their way without the lateness has them set out, and the way is worked out again from then, from the location given. The Quest's own Sub Quests are left out of the Holder's day for it.
 - The other Holders are told with `late` and `{ questId, userId, minutes, arriveAt }`: the minutes and the arrival that follows, and nothing of where the Holder is. Every Holder is told with `quests-changed`.
 - The preview before the report, and what changes for each other Holder, are package A's.
 
@@ -175,8 +175,10 @@ interface QuestMember {
 
 One migration, in this package's place in the order of schema changes, made from the schema on the iteration branch at that moment:
 
-- `quest_holders.late_minutes`, an integer or null.
-- `quest_invitations.declined_at`, a time or null. A declined invitation stays as a row with the time set, and is no longer listed as waiting, accepted, or cancelled; inviting the User again clears the time and sends the invitation anew.
+- `quest_holders.late_minutes`, an integer from 1 to 120 or null.
+- `quest_declines`, one row for a User who declined the Leader's invitation into a Quest, with the time. A decline deletes the invitation, as today, and writes the row; the row goes when the User is invited again or enters the Quest, and with the Quest.
+
+A decline is kept in a table of its own, not as a mark on the invitation: the library's room requests create and read invitations themselves, and every reader of invitations takes a row for an invitation that waits.
 
 Everything up to "A late Holder" is built on the schema as it is.
 
@@ -239,4 +241,4 @@ A good test states a behaviour a User or another package depends on, through a p
 - The invitee's way uses the calculation's rules, so for an invitee who is where the Plan took them to be it gives the Plan's own numbers: 민수 sets out at 12:15 and walks 18 minutes through 301동, as the Plan's part of him says.
 - An invitee the Plan did not put at the Merging Point takes it when it lies on their way, and one the Plan did put there goes straight when they cannot reach it in time. The step's title still names whom the Plan put there.
 - The first person chip states of the wireframe, "아직 안 봄" and "수락", are the states `invited` and `accepted`. Whether an invitation was opened is not recorded.
-- Until the schema holds a declined invitation, the Leader's app learns of a decline from the signal alone.
+- Until the schema holds a decline, the Leader's app learns of one from the signal alone.
