@@ -666,7 +666,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   in the card the User's Friends who are not in the conditions, each with the Friend list's line, in place of the
   time band and the arrows, and a press adds the Friend, as does a press on a Friend's Avatar on the map; the origin
   chip opens 장소 선택's map view, and a Place chosen there becomes the User's own `from` (a point that is no Place
-  says "건물을 골라 주세요"); the time chip puts the focus on the band's end handle for two seconds. Letting go of a
+  says "건물을 골라 주세요"); the time chip closes the list and puts the focus on the band's end handle for two seconds. Letting go of a
   handle of the time band (`time-band.tsx`), dragged or stepped by a screen reader, fixes that bound of the window.
   Each change goes to `POST /assistant/answers` with the User's position (`change` of `useShownAnswer`, the changes
   in `src/features/assistant/plan-input.ts`), one at a time: meanwhile the chips, the Friends, the handles, the arrows,
