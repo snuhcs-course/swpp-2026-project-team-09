@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -16,19 +17,16 @@ import { type Position } from '../common/geometry.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { type Prisma } from '../generated/prisma/client.js';
-import { type PlaceDto } from '../places/dto/place.dto.js';
-import { PlaceLookup } from '../places/place-lookup.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { QUEST_INCLUDE, type QuestDto, type StoredQuest, toSubQuestDto } from '../quests/dto/quest.dto.js';
+import { QUEST_INCLUDE, type QuestDto, type StoredQuest } from '../quests/dto/quest.dto.js';
 import { LeaderService } from '../quests/leader.service.js';
 import { QuestsService } from '../quests/quests.service.js';
 import { inOrder } from '../quests/sub-quest-order.js';
 import { conflict } from '../quests/refusals.js';
-import { TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
 import { type BetterPlanDto } from './dto/better-plan.dto.js';
 import { type PlanQuestBody } from './dto/plan-quest.dto.js';
-import { toCardStep } from './invitation-card.service.js';
-import { gatheringOf, placePoint } from './own-way.js';
+import { placePoint } from './own-way.js';
+import { OwnWayReader } from './own-way-reader.service.js';
 import { PlansService, subQuestsOf } from './plans.service.js';
 
 const MEALS = ['lunch', 'dinner'] as const;
@@ -65,8 +63,7 @@ export class BetterPlanService {
     private readonly quests: QuestsService,
     private readonly leaders: LeaderService,
     private readonly signals: SignalsService,
-    private readonly places: PlaceLookup,
-    @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
+    private readonly ways: OwnWayReader,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -74,10 +71,7 @@ export class BetterPlanService {
     await this.leaders.ledBy(questId, userId);
     const quest = await this.stored(questId);
     const now = this.clock.now();
-    const steps = quest.subQuests.map((subQuest) =>
-      toCardStep(toSubQuestDto(subQuest, quest.globalEvent, userId, now)),
-    );
-    const destination = gatheringOf(steps, this.travel)?.destination;
+    const destination = this.ways.stepsOf(quest, userId, now).gathered?.destination;
     if (destination === undefined || destination.end === null) {
       return NONE;
     }
@@ -99,7 +93,7 @@ export class BetterPlanService {
       placeId: null,
     };
     const current = {
-      place: placePoint(placeId, (id) => this.placeOf(id)),
+      place: placePoint(placeId, this.ways.placeOf),
       startAt: koreaTime(start),
       endAt: koreaTime(end),
       togetherMinutes: Math.floor((end.getTime() - start.getTime()) / MINUTE_MS),
@@ -157,13 +151,5 @@ export class BetterPlanService {
 
   private stored(questId: string, tx: Prisma.TransactionClient = this.prisma): Promise<StoredQuest> {
     return tx.quest.findUniqueOrThrow({ where: { id: questId }, include: QUEST_INCLUDE });
-  }
-
-  private placeOf(placeId: string): PlaceDto {
-    const place = this.places.byId(placeId);
-    if (place === null) {
-      throw new Error(`No Place ${placeId}`);
-    }
-    return place;
   }
 }
