@@ -183,6 +183,18 @@ export interface ChatSheetControl {
   leaving: CardLeaving & { showLayer: (layer: MapLayer) => void };
 }
 
+// A change of the switch of the answer on the map closes the sheet and forgets the conversation.
+function useForgottenOnSwitchChange(closeSheet: () => void, reset: () => void): void {
+  useEffect(
+    () =>
+      onAnswerSwitchChange(() => {
+        closeSheet();
+        reset();
+      }),
+    [closeSheet, reset],
+  );
+}
+
 function stay(): void {
   // A card that leads elsewhere leaves the answer frame as it is.
 }
@@ -219,15 +231,7 @@ export function useChatSheet(
     Keyboard.dismiss();
     setShown(false);
   }, []);
-  const { reset } = chat;
-  useEffect(
-    () =>
-      onAnswerSwitchChange(() => {
-        closeSheet();
-        reset();
-      }),
-    [closeSheet, reset],
-  );
+  useForgottenOnSwitchChange(closeSheet, chat.reset);
   const close = onMap ? stay : closeSheet;
   const { showLayer, openEvent, openQuestPost, openPartyForm } = useLeaving(close, turnOn);
   const proposals = useProposalMaking(close);

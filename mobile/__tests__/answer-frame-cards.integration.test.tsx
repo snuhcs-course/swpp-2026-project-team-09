@@ -177,6 +177,19 @@ describe('a Proposal in the frame', () => {
   });
 });
 
+// Opens the main screen with the switch on, opens a Quest's card 180 high, and asks.
+async function askOverCard(): Promise<User> {
+  const user = await openMain({ answerOnMap: true });
+  await press(user, DINNER_MARKER);
+  await fireEvent(screen.getByTestId('map-card'), 'layout', {
+    nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },
+  });
+  await user.type(screen.getByLabelText(AI_INPUT), ASKED);
+  await user.press(screen.getByRole('button', { name: '보내기' }));
+  await pass(500);
+  return user;
+}
+
 // Partitions: the frame's card not laid out yet after another card was; laid out; closed with a selected card back.
 describe('a toast while the frame is shown', () => {
   beforeEach(() => {
@@ -184,19 +197,6 @@ describe('a toast while the frame is shown', () => {
     server.on('POST /assistant/messages', { status: 200, body: PROPOSED });
     server.on('POST /quests/own', refusal(409, 'BOARD_REQUIRED'));
   });
-
-  // Opens the main screen with the switch on, opens a Quest's card 180 high, and asks.
-  async function askOverCard(): Promise<User> {
-    const user = await openMain({ answerOnMap: true });
-    await press(user, DINNER_MARKER);
-    await fireEvent(screen.getByTestId('map-card'), 'layout', {
-      nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },
-    });
-    await user.type(screen.getByLabelText(AI_INPUT), ASKED);
-    await user.press(screen.getByRole('button', { name: '보내기' }));
-    await pass(500);
-    return user;
-  }
 
   it("sits where it sits without a card until the frame's card is laid out", async () => {
     const user = await askOverCard();

@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToastAbove } from '@/design-system';
 import { type Room, takenUnderToast, takenUnderToastOverAnswer, takenUnderToastOverCard } from './layout';
+import type { Taken } from './map-bottom';
 
 // While the map is in front, a toast sits over the row of buttons or above an open card; while the answer frame is
 // shown, above its card once that is laid out, and where it sits without a card until then.
@@ -23,17 +24,19 @@ function useToastOverMap({ cardHeight, answerHeight }: Room, framed: boolean): v
 
 // The room the parts over the map have, and the toast's place. What is at the bottom card's place counts: a card at
 // the bottom, or the shuttle's notice; one that appears counts from the last one's height until it is laid out. The
-// answer frame's card counts on its own while `framed`, from its first layout on.
+// answer frame's card counts on its own while `framed`, from its first layout on. `heights` are the bottom's parts'
+// callbacks: the shuttle's notice's and the answer frame's card's.
 export function useRoom(
-  atBottom: boolean,
+  { bottomCard, notice }: Taken,
   tutorialStart: boolean,
   framed: boolean,
 ): {
   room: Room;
   setStage: (stage: Room['stage']) => void;
   setCardHeight: (height: number) => void;
-  setAnswerHeight: (height: number) => void;
+  heights: { onNoticeHeight: (height: number) => void; onAnswerHeight: (height: number) => void };
 } {
+  const atBottom = bottomCard || notice !== null;
   const [cardHeight, setCardHeight] = useState(0);
   const [answerHeight, setAnswerHeight] = useState<number | null>(null);
   const [stage, setStage] = useState<Room['stage']>(null);
@@ -47,5 +50,10 @@ export function useRoom(
     tutorialStart: tutorialStart && !atBottom,
   };
   useToastOverMap(room, framed);
-  return { room, setStage, setCardHeight, setAnswerHeight };
+  return {
+    room,
+    setStage,
+    setCardHeight,
+    heights: { onNoticeHeight: setCardHeight, onAnswerHeight: setAnswerHeight },
+  };
 }

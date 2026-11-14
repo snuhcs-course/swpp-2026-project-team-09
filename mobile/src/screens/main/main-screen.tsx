@@ -156,6 +156,11 @@ function zoomShown({ bottomCard, notice }: Taken, stackOpen: boolean, framed: bo
   return !bottomCard && notice === null && !stackOpen && !framed;
 }
 
+// The lists give way to a 식당's card at the top and to the answer frame.
+function listsHidden({ topCard }: Taken, { framed }: ChatSheetControl): boolean {
+  return topCard || framed;
+}
+
 function ignorePress(): void {
   // While the answer frame is shown, a marker opens no card.
 }
@@ -294,24 +299,14 @@ export function MainScreen(): ReactElement {
   useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { room, setStage, setCardHeight, setAnswerHeight } = useRoom(
-    taken.bottomCard || taken.notice !== null,
-    start,
-    chat.framed,
-  );
+  const { room, setStage, setCardHeight, heights } = useRoom(taken, start, chat.framed);
   const onPress = chat.framed ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection));
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView lines={lines} map={map} me={me} onPress={onPress} pin={pin} room={room} things={things} />
         <OverMap onStage={setStage}>
-          <Lists
-            hidden={taken.topCard || chat.framed}
-            map={map}
-            room={room}
-            selection={selection}
-            tutorial={tutorial}
-          />
+          <Lists hidden={listsHidden(taken, chat)} map={map} room={room} selection={selection} tutorial={tutorial} />
           {zoomShown(taken, stack.open, chat.framed) ? <MainZoomControl map={map} me={me} /> : null}
           <SelectedCard
             chat={chat}
@@ -324,9 +319,8 @@ export function MainScreen(): ReactElement {
             top={taken.topCard}
           />
           <MapBottom
+            {...heights}
             chat={chat}
-            onAnswerHeight={setAnswerHeight}
-            onNoticeHeight={setCardHeight}
             onParty={party.open}
             onShowOnMap={pin.showOnMap}
             room={room}

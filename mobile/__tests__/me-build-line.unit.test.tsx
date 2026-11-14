@@ -16,8 +16,6 @@ import { type Kept, keep, readKept } from '@/storage/kept';
 
 jest.mock('@/storage/kept', () => ({ readKept: jest.fn(), keep: jest.fn() }));
 
-const unhandled = jest.fn();
-
 // Another reader of the switch, as the main screen is.
 function Reader(): ReactElement {
   return <Text testID="reader">{useAnswerSwitch() ? 'on' : 'off'}</Text>;
@@ -28,12 +26,6 @@ beforeEach(() => {
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the switch reads only this field of what is kept
   jest.mocked(readKept).mockResolvedValue({ answerOnMap: false } as Kept);
   jest.mocked(keep).mockRejectedValue(new Error('the phone could not be written'));
-  process.on('unhandledRejection', unhandled);
-});
-
-afterEach(() => {
-  process.off('unhandledRejection', unhandled);
-  unhandled.mockReset();
 });
 
 // Partitions: a phone that cannot be written.
@@ -54,7 +46,7 @@ describe('the build line, when the phone cannot keep the switch', () => {
     });
 
     expect(keep).toHaveBeenCalledWith({ answerOnMap: true });
+    // A rejection left unhandled fails the test.
     expect(screen.getByTestId('reader')).toHaveTextContent('on');
-    expect(unhandled).not.toHaveBeenCalled();
   });
 });

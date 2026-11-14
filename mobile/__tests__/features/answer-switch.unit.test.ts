@@ -90,7 +90,7 @@ describe('the switch of the answer on the map, when the phone cannot be read', (
 });
 
 // Partitions: a change made by one reader seen by another; a change made before the phone's answer comes; a new start
-// of the app after a change; the first read of the phone, which is not a change, then a change.
+// of the app after a change.
 describe('a change of the switch of the answer on the map', () => {
   it('tells every reader of a change at once, and the phone keeps it', async () => {
     phoneKeeps(false);
@@ -133,10 +133,13 @@ describe('a change of the switch of the answer on the map', () => {
     expect(result.current).toBe(false);
     expect(readKept).toHaveBeenCalledTimes(1);
   });
+});
 
+// Partitions: the first read of the phone, which is not a change, then a change.
+describe('watching for a change of the switch of the answer on the map', () => {
   it('tells those who watch for a change of each change, and not of the first read of the phone', async () => {
     phoneKeeps(true);
-    const watcher = jest.fn();
+    const watcher = jest.fn<void, []>();
     const stop = onAnswerSwitchChange(watcher);
     await renderHook(() => useAnswerSwitch());
     await act(async () => {
