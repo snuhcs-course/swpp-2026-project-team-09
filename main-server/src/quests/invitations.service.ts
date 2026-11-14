@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -11,6 +12,8 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { invitationMessage } from '../push/messages.js';
+import { PushService } from '../push/push.service.js';
 import { QuestDto } from './dto/quest.dto.js';
 import {
   toWaitingDto,
@@ -39,10 +42,11 @@ export class InvitationsService {
     private readonly friends: FriendsService,
     private readonly signals: SignalsService,
     private readonly roomRequests: RoomRequestSync,
+    private readonly push: PushService,
   ) {}
 
   async invite(leaderId: string, questId: string, userId: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx) => {
       await this.leader.lockLed(questId, leaderId, tx);
       if ((await this.quests.holderIds(questId, tx)).includes(userId)) {
         throw alreadyHolder();
@@ -53,9 +57,10 @@ export class InvitationsService {
       if ((await tx.questInvitation.findUnique({ where: { questId_userId: { questId, userId } } })) !== null) {
         throw conflict('QUEST_INVITATION_ALREADY_SENT', 'An invitation of this User into the Quest is waiting.');
       }
-      await tx.questInvitation.create({ data: { questId, userId } });
+      return tx.questInvitation.create({ data: { questId, userId }, include: WAITING_INCLUDE });
     });
     this.signals.send([userId], 'quests-changed');
+    void this.push.send([userId], invitationMessage(toWaitingDto(created)));
   }
 
   // The User's invitations, the newest first.

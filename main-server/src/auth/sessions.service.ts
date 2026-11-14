@@ -4,6 +4,7 @@
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -57,6 +58,7 @@ export class SessionsService {
       where: { sessionId: { in: sessionIds }, revokedAt: null },
       data: { revokedAt: endedAt },
     });
+    await tx.pushToken.deleteMany({ where: { sessionId: { in: sessionIds } } });
     return sessionIds;
   }
 

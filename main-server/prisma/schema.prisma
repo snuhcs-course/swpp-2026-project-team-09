@@ -21,6 +21,7 @@
 // 2026-11-01  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-02  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-14  Opus 5.5   prompted by TaeHyun79
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -174,6 +175,7 @@ model Session {
   endedAt       DateTime?         @map("ended_at")
   endReason     SessionEndReason? @map("end_reason")
   refreshTokens RefreshToken[]
+  pushToken     PushToken?
 
   @@unique([userId], where: { endedAt: null })
   @@map("sessions")
@@ -201,6 +203,17 @@ model RefreshToken {
 
   @@index([sessionId])
   @@map("refresh_tokens")
+}
+
+// The Expo push token of a Session's phone. Deleted in the transaction that ends its Session.
+model PushToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String   @unique @map("session_id") @db.Uuid
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("push_tokens")
 }
 
 // A team member who signs in to the admin site. Not a User, even when the same person also uses the app.
