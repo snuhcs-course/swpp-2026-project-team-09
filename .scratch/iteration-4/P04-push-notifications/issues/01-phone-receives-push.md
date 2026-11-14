@@ -70,3 +70,10 @@ Change:
 4. After the Release, install the APK from the Release page over the old one, and check that it starts and signs in.
 
 ## Comments
+
+### Agent usage (2026-11-14, review)
+
+The review before the merge: two Opus 5.5 reviewers of this pull request (the native part and the repository's rules; the wrapper and its tests), one Opus 5.5 subagent for the review's two fixes in the wrapper, and a quarter of the session that read the four pull requests of P04, ran the prebuild checks for Android and iOS, and decided what merges, up to this commit. The implementation's own usage is not in these numbers.
+
+- Agent time: about 15 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time, with the fixer's; the reviewers ran inside it).
+- Tokens: output 96,087; input 16,413,738, of which 15,994,978 were cache reads, 418,580 cache writes, and 180 uncached. Without cache reads: 514,847.
