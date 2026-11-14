@@ -42,8 +42,10 @@ import { mockRoom } from './room';
 import { mockTutorial } from './tutorial';
 import { mockWalkingRoute } from './walking-route';
 
-// The Master Switch, which the main server keeps on the User. The mock keeps it in memory: off at each start.
+// The Master Switch, which the main server keeps on the User, and whether the app asked before it was turned off. The
+// mock keeps them in memory: off and not asked at each start.
 let masterSwitchOn = false;
+let masterOffAsked = false;
 
 // The 학번, the 학적상 이름 and the 소속, which Onboarding does not ask. The mock keeps them in memory, as the switch.
 type LibraryDetails = Pick<Profile, 'studentNumber' | 'registeredName' | 'affiliation'>;
@@ -53,6 +55,7 @@ let libraryDetails = NO_LIBRARY_DETAILS;
 // For the tests: a new start of the app.
 export function forgetMockSwitch(): void {
   masterSwitchOn = false;
+  masterOffAsked = false;
   libraryDetails = NO_LIBRARY_DETAILS;
 }
 
@@ -109,7 +112,11 @@ export const mockClient: ApiClient = {
     });
   },
   enterLobby: () =>
-    answer('enterLobby', async () => ({ profile: profileOf(await onboardingAnswers()), masterSwitch: masterSwitchOn })),
+    answer('enterLobby', async () => ({
+      profile: profileOf(await onboardingAnswers()),
+      masterSwitch: masterSwitchOn,
+      masterOffAsked,
+    })),
   // The profile is the Onboarding's answers on the phone, so the next Lobby holds the change, and the library's
   // details in memory.
   updateProfile: (change) =>
@@ -145,6 +152,21 @@ export const mockClient: ApiClient = {
   endFriendship: async (userId) => {
     await answer('endFriendship', () => {
       friendships.endFriendship(userId);
+    });
+  },
+  recordFriendsAsked: async (userIds, moment) => {
+    await answer('recordFriendsAsked', () => {
+      friendships.recordAsked(userIds, moment);
+    });
+  },
+  recordMasterOffAsked: async () => {
+    await answer('recordMasterOffAsked', () => {
+      masterOffAsked = true;
+    });
+  },
+  lowerFriendLevels: async (level) => {
+    await answer('lowerFriendLevels', () => {
+      friendships.lowerLevels(level);
     });
   },
   findFriendId: (friendId) => answer('findFriendId', () => friendships.findFriendId(friendId)),

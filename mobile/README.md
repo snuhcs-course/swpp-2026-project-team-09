@@ -751,7 +751,13 @@ slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to wh
   that Friend as three cells of one width in a row, "시간표만", "지금 있는 건물", and "정확한 위치"
   ("{이름}님에게 보일 위치"), with the note "둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요". A choice shows at
   once, sends `setFriendLevel`, and turns back with "위치 공유를 바꾸지 못했어요" when that fails; the Friends and the
-  positions are fetched again after it. A press on a Friend opens a bottom sheet with
+  positions are fetched again after it. The first "시간표만" for a Friend above it asks first, in a bottom sheet
+  (`off-question.tsx`): "{이름}에게는 지금 있는 건물만 보여 줄 수도 있어요." over "어느 쪽을 골라도 {이름}에게는 아무
+  표시도 가지 않아요.", the cells "위치 끄기", "건물까지만", and "취소" of one width, and "시간표는 계속 보여요" under
+  them. "위치 끄기" sets `timetable` ("껐어요 · {이름}에게 알림은 가지 않아요"), "건물까지만" `building` ("{이름}에게
+  지금 있는 건물까지만 보여요"), and "취소" or closing the sheet nothing; each records the question with
+  `recordFriendsAsked([id], 'off')`, and a Friend whose `askedOff` is true is not asked again. A press on a Friend opens
+  a bottom sheet with
   "친구 끊기", which a danger dialog confirms; the Friend then leaves the list, the friend panel and the map. A
   friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
 - **친구 요청** (`/me/friends/requests`, also from a Friend Request in 알림): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
@@ -765,6 +771,15 @@ slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to wh
 
 Only the friend panel's "+ 친구 추가" opens one of them in the app so far: 내 정보 and its 알림 lead to the others when
 they are built.
+
+**After a Plan became a Quest**, whatever screen made it, `apiClient.makePlanQuest` tells `src/api/plan-asks.ts` the
+Friends the reply's `askLevels` names, and `PlanLevelsQuestion` (`src/screens/friends/plan-levels-question.tsx`,
+inside the overlay host beside the push sheet) asks once: "{이름들}에게 평소에 어디까지 보일까요?", a line of what they
+see now ("지금은 둘에게 시간표만 보여요. 뺀 친구는 그대로 둬요."), each name a chip with an ×, the three levels as
+cells of one width with the current one chosen when all are at it, "넘기기", and "넘기면 지금처럼 둬요. 친구에게
+알림은 가지 않아요". A level sets it with `setFriendLevel` for the Friends left ("{이름들}에게 지금 있는 건물까지
+보여요"); a removed Friend stays as they are. An answer, a skip, and closing the sheet record the question for every
+Friend named with `recordFriendsAsked(ids, 'plan')`.
 
 **An Invite Link** is `<PUBLIC_URL>/invite/<token>`, and the main server's page opens `snunow://invite/<token>` where a
 messenger shows the address in its own browser. Both reach the route `/invite/[token]`. A link opened before the User
@@ -803,8 +818,12 @@ cards from the top:
   Friends, and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off campus. Turning it on without the
   location permission shows the map's explanation and the system's prompt first; a refusal leaves it off with
   "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
-  못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
-  it for 1.2 s;
+  못했어요" when the main server did not take it. While the Lobby's `masterOffAsked` is false, turning it off asks
+  first with the Friends' question in the words "모든 친구에게는 지금 있는 건물만 보여 줄 수도 있어요." and "어느 쪽을
+  골라도 친구에게는 아무 표시도 가지 않아요.": "위치 끄기" turns it off ("껐어요 · 친구에게 알림은 가지 않아요"),
+  "건물까지만" leaves it on and sends `lowerFriendLevels('building')` ("모든 친구에게 지금 있는 건물까지만 보여요"),
+  and "취소" leaves it on; each sends `recordMasterOffAsked`. At `/me?show=sharing` the screen scrolls to the card and
+  outlines it for 1.2 s;
 - "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티), "내 퀘스트" (the Quest list on the
   whole screen), and "관심사 {n}" (관심사, with the number of watched interests).
 
@@ -1084,6 +1103,8 @@ Behind a hook are three layers:
 | `uploadPosition`                                                     | Whether the position was off campus                          | `POST /positions`                                                       |
 | `listFriends`                                                        | The Friends                                                  | `GET /friends`                                                          |
 | `setFriendLevel`, `endFriendship`                                    | Nothing                                                      | `PUT /friends/:userId/level`, `DELETE /friends/:userId`                 |
+| `recordFriendsAsked`, `recordMasterOffAsked`                         | Nothing                                                      | `POST /friends/asked`, `POST /users/me/master-switch/asked`             |
+| `lowerFriendLevels`                                                  | Nothing                                                      | `PUT /users/me/friend-levels`                                           |
 | `findFriendId`                                                       | The owner of a Friend ID                                     | `GET /friend-ids/:friendId`                                             |
 | `sendFriendRequest`                                                  | Whether the request waits or made two Friends                | `POST /friend-requests`                                                 |
 | `listFriendRequests`                                                 | The Friend Requests received and sent                        | `GET /friend-requests`                                                  |

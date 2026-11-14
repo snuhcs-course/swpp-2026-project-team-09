@@ -31,6 +31,8 @@ function friend(
     level: 'exact',
     sharing: true,
     visible: at !== null,
+    askedOff: false,
+    askedPlan: false,
     latitude: at?.[0] ?? null,
     longitude: at?.[1] ?? null,
     // The frame shows a photo for two Friends. The app has no pictures of people yet, so every Friend shows letters.
@@ -123,14 +125,18 @@ const PARTY_MEMBER_POSITION: Position = {
   measuredAt: FRAME_NOW,
 };
 
-export const FRIENDS: Friend[] = MOCK_FRIENDS.map(({ id, name, department, level, sharing, visible }) => ({
-  id,
-  name,
-  department,
-  level,
-  sharing,
-  visible,
-}));
+export const FRIENDS: Friend[] = MOCK_FRIENDS.map(
+  ({ id, name, department, level, sharing, visible, askedOff, askedPlan }) => ({
+    id,
+    name,
+    department,
+    level,
+    sharing,
+    visible,
+    askedOff,
+    askedPlan,
+  }),
+);
 
 export const POSITIONS: Position[] = [
   ...MOCK_FRIENDS.flatMap(({ id, latitude, longitude }) =>

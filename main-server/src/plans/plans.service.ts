@@ -11,6 +11,7 @@ import { outOfReach } from '../assistant/free-time/tool-parts.js';
 import { MealPlanService } from '../assistant/gathering/meal-plan.service.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
+import { FriendAsksService } from '../friends/friend-asks.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { InvitationsService } from '../quests/invitations.service.js';
@@ -44,6 +45,7 @@ export class PlansService {
     private readonly invitations: InvitationsService,
     private readonly signals: SignalsService,
     private readonly notifications: NotificationsService,
+    private readonly asks: FriendAsksService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -75,9 +77,14 @@ export class PlansService {
       this.invitations.announce(invitation);
     });
     this.keepTimeToLeave(userId, questId, plan);
+    const invitations = created.map(({ id, userId: invitee }) => ({ id, userId: invitee }));
     return {
       quest: await this.quests.read(userId, questId),
-      invitations: created.map(({ id, userId: invitee }) => ({ id, userId: invitee })),
+      invitations,
+      askLevels: await this.asks.notAskedAfterPlan(
+        userId,
+        invitations.map(({ userId: invitee }) => invitee),
+      ),
     };
   }
 

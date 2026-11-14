@@ -3,11 +3,12 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
-import type { BetterPlan, PlanQuest } from '@/api/plan-quest-types';
-import { field, hasTexts, isNumber, listOf } from './answers';
+import type { AskLevel, BetterPlan, PlanQuest } from '@/api/plan-quest-types';
+import { field, hasTexts, isFriendLevel, isNumber, listOf } from './answers';
 import { call } from './http';
 import { isInput, isPlacePoint, isPlan } from './plan-answers';
 import { isQuest } from './quest-answers';
@@ -16,8 +17,16 @@ function isInvitation(value: unknown): value is PlanQuest['invitations'][number]
   return hasTexts(value, ['id', 'userId']);
 }
 
+function isAskLevel(value: unknown): value is AskLevel {
+  return hasTexts(value, ['userId', 'name']) && isFriendLevel(field(value, 'level'));
+}
+
 export function isPlanQuest(value: unknown): value is PlanQuest {
-  return isQuest(field(value, 'quest')) && listOf(isInvitation)(field(value, 'invitations'));
+  return (
+    isQuest(field(value, 'quest')) &&
+    listOf(isInvitation)(field(value, 'invitations')) &&
+    listOf(isAskLevel)(field(value, 'askLevels'))
+  );
 }
 
 function isCurrent(value: unknown): value is BetterPlan['current'] {

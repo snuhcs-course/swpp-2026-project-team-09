@@ -15,6 +15,7 @@ import type {
   Board,
   ClassTime,
   Friend,
+  FriendLevel,
   InviteLink,
   Lobby,
   MyParty,
@@ -106,7 +107,11 @@ export function isProfile(value: unknown): value is Profile {
 }
 
 export function isLobby(value: unknown): value is Lobby {
-  return isProfile(field(value, 'profile')) && typeof field(value, 'masterSwitch') === 'boolean';
+  return (
+    isProfile(field(value, 'profile')) &&
+    typeof field(value, 'masterSwitch') === 'boolean' &&
+    typeof field(value, 'masterOffAsked') === 'boolean'
+  );
 }
 
 export function isPositionKept(value: unknown): value is PositionKept {
@@ -115,12 +120,15 @@ export function isPositionKept(value: unknown): value is PositionKept {
 
 const FRIEND_LEVELS = new Set<unknown>(['timetable', 'building', 'exact']);
 
+export function isFriendLevel(value: unknown): value is FriendLevel {
+  return FRIEND_LEVELS.has(value);
+}
+
 function isFriend(value: unknown): value is Friend {
   return (
     hasTexts(value, ['id', 'name', 'department']) &&
-    FRIEND_LEVELS.has(field(value, 'level')) &&
-    typeof field(value, 'sharing') === 'boolean' &&
-    typeof field(value, 'visible') === 'boolean'
+    isFriendLevel(field(value, 'level')) &&
+    ['sharing', 'visible', 'askedOff', 'askedPlan'].every((name) => typeof field(value, name) === 'boolean')
   );
 }
 
