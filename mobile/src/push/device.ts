@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { requireOptionalNativeModule } from 'expo';
 import Constants from 'expo-constants';
 import type * as ExpoNotifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 type Notifications = typeof ExpoNotifications;
 
@@ -51,8 +53,14 @@ async function createChannel(library: Notifications): Promise<void> {
 
 async function permissionOf(library: Notifications): Promise<PushPermission> {
   try {
-    const { status } = await library.getPermissionsAsync();
-    return status;
+    const { status, canAskAgain } = await library.getPermissionsAsync();
+    const reported: PushPermission = status;
+    // Android 13+ reports a never-asked permission as denied, since notifications start disabled. JS cannot tell that
+    // from a denial once; ticket 03's `pushAsked` keeps its sheet to one showing.
+    if (Platform.OS === 'android' && reported === 'denied' && canAskAgain) {
+      return 'undetermined';
+    }
+    return reported;
   } catch {
     return 'unavailable';
   }
@@ -99,6 +107,10 @@ export async function expoPushToken(): Promise<string | null> {
   }
 }
 
+// The library sends its token event after every fetch of the token, changed or not, so only a token that differs from
+// the last one the phone gave counts as a change.
+let lastDeviceToken: string | null = null;
+
 // The phone's token can change, after a restore for example. The listener then asks for the Expo push token again.
 export function onPushTokenChange(listener: () => void): () => void {
   const library = notifications();
@@ -106,8 +118,16 @@ export function onPushTokenChange(listener: () => void): () => void {
     return stopNothing;
   }
   try {
-    const subscription = library.addPushTokenListener(() => {
-      listener();
+    const subscription = library.addPushTokenListener((token) => {
+      const data: unknown = token.data;
+      if (typeof data !== 'string' || data === lastDeviceToken) {
+        return;
+      }
+      const hadToken = lastDeviceToken !== null;
+      lastDeviceToken = data;
+      if (hadToken) {
+        listener();
+      }
     });
     return () => {
       subscription.remove();
@@ -117,15 +137,26 @@ export function onPushTokenChange(listener: () => void): () => void {
   }
 }
 
+// Android's unregister call needs the network, and a sign-out waits for it.
+const UNREGISTER_TIMEOUT_MS = 3000;
+
 export async function unregisterPush(): Promise<void> {
   const library = notifications();
   if (library === null) {
     return;
   }
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    await library.unregisterForNotificationsAsync();
+    await Promise.race([
+      library.unregisterForNotificationsAsync(),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, UNREGISTER_TIMEOUT_MS);
+      }),
+    ]);
   } catch {
     // The Session ends whatever the phone answered.
+  } finally {
+    clearTimeout(timer);
   }
 }
 
