@@ -13,9 +13,9 @@ function minsuAs(standing: Standing): Map<string, Standing> {
   return new Map([[MINSU_ID, standing]]);
 }
 
-// Partitions of a Friend's state after inviting: invited, accepted, late, declined, and dropped; the User's own dot beside
-// them. Expected values: the P02 spec, "How each Friend stands", over the first Plan of the stored answer to
-// "배고파, 민수랑 같이", where 민수's dashed face has its label at the right.
+// Partitions of a Friend's state after inviting that carry a badge: invited, accepted, and late. Expected values: the
+// P02 spec, "How each Friend stands", over the first Plan of the stored answer to "배고파, 민수랑 같이", where 민수's
+// dashed face has its label at the right.
 describe("the faces of the answer's first Plan after inviting", () => {
   it('give 민수\'s face a "?" and the name with "아직 안 봄" while the invitation waits', () => {
     const drawing = drawingOf(MEAL_ANSWER, 0, minsuAs({ state: 'invited', lateMinutes: null }));
@@ -46,7 +46,10 @@ describe("the faces of the answer's first Plan after inviting", () => {
       symbol: { type: 'face', name: '민수', dashed: true, badge: 'accepted' },
     });
   });
+});
 
+// Partitions: the states without a badge, declined and dropped; the User's own dot. Expected values as above.
+describe("the faces of the answer's first Plan without a badge after inviting", () => {
   it.each([
     [{ state: 'declined', lateMinutes: null }, '민수 · 거절'],
     [{ state: 'dropped', lateMinutes: null }, '민수 · 빠짐'],

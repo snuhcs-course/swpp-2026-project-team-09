@@ -100,15 +100,11 @@ describe('how 민수 stands after inviting', () => {
     expect(card().getByText('민수 · 거절')).toBeVisible();
   });
 
-  it("reads \"수락\" once the User's Quests are read again with the Quest's members", async () => {
+  it('reads "수락" once the User\'s Quests are read again with the Quest\'s members', async () => {
     await invited();
-    // The stored Quest with the members the main server gives once the asker and 민수 accepted, and the parts a Quest
-    // of GET /quests has beyond the reply to POST /plans.
+    // The stored reply's Quest with `members` added: the asker accepted and 민수 accepted.
     const withMembers: Quest = {
       ...PLAN_QUEST.quest,
-      photo: null,
-      tags: [],
-      faces: [],
       members: [
         { user: ASKER, state: 'accepted', lateMinutes: null },
         { user: { id: MINSU, name: '민수', department: '컴퓨터공학부' }, state: 'accepted', lateMinutes: null },

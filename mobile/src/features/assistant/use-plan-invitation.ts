@@ -91,6 +91,16 @@ function useHeard(made: PlanQuest | null, setStored: SetStored): void {
   );
 }
 
+// A Plan that changed is recalculated from conditions equal to the same, as a new object, for a change must differ.
+function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['change']): void {
+  if (isRefusal(error, 409, 'PLAN_CHANGED')) {
+    say(CHANGED);
+    change((input) => ({ ...input }));
+  } else {
+    say(FAILED);
+  }
+}
+
 // Sends the Plan on screen to be made into a Quest, unless a request of this hook is on its way or the Quest is made.
 // A Quest that comes while its answer and Plan are still on screen is held; otherwise it is only told, for it is among
 // the User's Quests. A refusal counts only while its answer and Plan are on screen.
@@ -132,14 +142,8 @@ function useInvite(
         }
       },
       (error: unknown) => {
-        if (!settle()) {
-          return;
-        }
-        if (isRefusal(error, 409, 'PLAN_CHANGED')) {
-          how.say(CHANGED);
-          live.current.shown.change((input) => ({ ...input }));
-        } else {
-          how.say(FAILED);
+        if (settle()) {
+          tellRefusal(error, how.say, live.current.shown.change);
         }
       },
     );

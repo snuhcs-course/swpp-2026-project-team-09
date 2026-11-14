@@ -9,6 +9,7 @@ import { apiClient } from '@/api/client';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_PLAN_1 } from '@/api/mock/data/meal-answer-plan-1';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import type * as InvitationAnswers from '@/live/invitation-answers';
 import { type InvitationAnswer, tellInvitationAnswer } from '@/live/invitation-answers';
 import { hold, MINSU, onScreen, pressed } from '../support/plan-invitation';
 import { settle } from '../support/queries';
@@ -21,13 +22,13 @@ jest.mock('@/api/client', () => ({ apiClient: { makePlanQuest: jest.fn(), listQu
 // Each listener the hook gives is wrapped, so that a test can see whether a signal still reaches it.
 const listeners: jest.Mock<void, [InvitationAnswer]>[] = [];
 jest.mock('@/live/invitation-answers', () => {
-  const actual = jest.requireActual<typeof import('@/live/invitation-answers')>('@/live/invitation-answers');
+  const actual = jest.requireActual<typeof InvitationAnswers>('@/live/invitation-answers');
   return {
     ...actual,
     onInvitationAnswer: (listener: (answer: InvitationAnswer) => void): (() => void) => {
-      const heard = jest.fn(listener);
-      listeners.push(heard);
-      return actual.onInvitationAnswer(heard);
+      const wrapped = jest.fn(listener);
+      listeners.push(wrapped);
+      return actual.onInvitationAnswer(wrapped);
     },
   };
 });

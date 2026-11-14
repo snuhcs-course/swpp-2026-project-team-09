@@ -106,7 +106,11 @@ export function nearOwnMark({ own }: Pick<AnswerDrawing, 'own'>, position: LatLn
   });
 }
 
-const BADGES: Partial<Record<Standing['state'], FaceBadge>> = { invited: 'waiting', accepted: 'accepted', late: 'accepted' };
+const BADGES: Partial<Record<Standing['state'], FaceBadge>> = {
+  invited: 'waiting',
+  accepted: 'accepted',
+  late: 'accepted',
+};
 
 function faceOf(name: string, dashed: boolean, standing: Standing | undefined): AnswerSymbol {
   const badge = standing === undefined ? undefined : BADGES[standing.state];
