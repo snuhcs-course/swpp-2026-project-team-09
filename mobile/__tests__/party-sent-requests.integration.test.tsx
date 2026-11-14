@@ -19,7 +19,7 @@ import { answerParty, CODING, JAZZ, openAt, requestFor } from './support/party';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
 // 보낸 신청 under 초대, against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea: the User's waiting
-// requests to join, each opening its post and withdrawn with 신청 취소 (P06 ticket 04, HE H1 and H2).
+// requests to join, each opening its post and withdrawn with 신청 취소.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({

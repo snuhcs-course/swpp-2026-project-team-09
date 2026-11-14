@@ -53,7 +53,7 @@ export function showMine(): void {
 // Accepting and declining both delete a request, so a withdrawal after either is refused with the same not-found, and
 // only the User's Quests tell them apart: holding the Quest now means the Leader accepted. Null when the Quests do not
 // come either, and for any other refusal.
-async function answeredFirst(queryClient: QueryClient, questId: string, error: unknown): Promise<string | null> {
+async function answeredFirstWords(queryClient: QueryClient, questId: string, error: unknown): Promise<string | null> {
   if (!(error instanceof ApiError && error.code === 'QUEST_JOIN_REQUEST_NOT_FOUND')) {
     return null;
   }
@@ -102,7 +102,7 @@ export function usePartyActions(): PartyActions {
         await run(
           () => apiClient.withdrawJoinRequest(requestId),
           '신청을 취소했어요',
-          (error) => answeredFirst(queryClient, questId, error),
+          (error) => answeredFirstWords(queryClient, questId, error),
         );
       },
       accept: async ({ id }) => {

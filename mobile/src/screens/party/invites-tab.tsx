@@ -13,7 +13,18 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ShownQuestInvitation } from '@/api/quest-parts-types';
 import type { MyJoinRequest } from '@/api/waiting-types';
 import { now } from '@/clock';
-import { Avatar, Button, cardStyles, color, EmptyState, ErrorState, font, LoadingState, space } from '@/design-system';
+import {
+  Avatar,
+  Button,
+  cardStyles,
+  color,
+  EmptyState,
+  ErrorState,
+  font,
+  LoadingState,
+  space,
+  text,
+} from '@/design-system';
 import { whenOf } from '@/features/party/posts';
 import { useInvitations, useSentRequests } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
@@ -107,7 +118,7 @@ function withdrawAsk({ id, quest }: MyJoinRequest, actions: PartyActions): Ask {
   };
 }
 
-// `보낸 신청`: the User's waiting requests to join, the newest first, beside the invitations received (HE H1, H2).
+// `보낸 신청`: the User's waiting requests to join, the newest first, beside the invitations received.
 function SentRequests({ actions }: { actions: PartyActions }): ReactElement {
   const { data: requests, isPending, refetch } = useSentRequests();
   const [ask, setAsk] = useState<Ask | null>(null);
@@ -178,5 +189,5 @@ const styles = StyleSheet.create({
   button: { flex: 1 },
   sent: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   sentWords: { flex: 1, gap: space[1] },
-  sentTitle: { fontFamily: font.semiBold, fontSize: 16, lineHeight: 22, color: color.ink },
+  sentTitle: { ...text.label, color: color.ink },
 });
