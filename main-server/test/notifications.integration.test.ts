@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -72,6 +73,7 @@ describe('GET /notifications', () => {
         id: 'declined:party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
         kind: 'declined',
         title: '지은이 못 온대요',
+        ahead: null,
         line: '점심',
         at: '2026-11-14T12:10:00+09:00',
         url: '/main?card=party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
@@ -80,6 +82,7 @@ describe('GET /notifications', () => {
         id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
         kind: 'accepted',
         title: '민수가 수락했어요',
+        ahead: null,
         line: '저녁 같이',
         at: '2026-11-14T11:58:00+09:00',
         url: '/main?card=party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b',
@@ -251,6 +254,27 @@ describe('What the service refuses and leaves out', () => {
       expect.objectContaining({
         id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
       }),
+    ]);
+  });
+});
+
+describe('A Notification kept before `ahead` was', () => {
+  it('answers `ahead` null', async () => {
+    const user = await signInUser(app);
+    await redis.hset(
+      `notifications:${user.id}`,
+      'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
+      JSON.stringify({
+        kind: 'accepted',
+        card: { kind: 'party', id: QUEST_ID },
+        at: '2026-11-14T02:58:00.000Z',
+        title: '민수가 수락했어요',
+        line: '저녁 같이',
+      }),
+    );
+
+    expect((await getNotifications(user)).body).toEqual([
+      expect.objectContaining({ title: '민수가 수락했어요', ahead: null }),
     ]);
   });
 });
