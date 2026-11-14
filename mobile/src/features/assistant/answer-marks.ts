@@ -152,7 +152,7 @@ function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>)
       group: 'person',
       symbol: me ? { type: 'me' } : faceOf(name, source === 'timetable', standing),
       tone: 'person',
-      title: me || standing !== undefined ? said : faceTitle(name, said),
+      title: me ? said : faceTitle(name, said),
       line: null,
       number: null,
     };
