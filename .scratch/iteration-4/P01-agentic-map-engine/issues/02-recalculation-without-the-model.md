@@ -48,8 +48,8 @@ The worked example of the design's section 6.1 under conditions, on the seed's w
 
 ### Agent usage (2026-11-14)
 
-Up to this ticket's commit. The same session as ticket 01, with one more subagent for this ticket.
+Up to the review's fixes. The same session as ticket 01, with three more subagents for this ticket (the implementation, a two-axis review, and the review's fixes).
 
-- Agent time: about 14 minutes, an estimate from the transcripts' timestamps.
-- Tokens: output 76,280; input 28,481,622, of which 28,199,003 were cache reads, 282,461 cache writes, and 158 uncached. Without cache reads: 358,899.
+- Agent time: about 27 minutes, an estimate from the transcripts' timestamps.
+- Tokens: output 148,798; input 57,155,971, of which 56,645,163 were cache reads, 510,520 cache writes, and 288 uncached. Without cache reads: 659,606.
 
