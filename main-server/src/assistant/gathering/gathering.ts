@@ -16,6 +16,10 @@ export interface GatheringPerson {
   free: readonly FreeInterval[];
   // The Place of the position the asker may use for them now, or null.
   locationPlaceId: string | null;
+  // What the asker fixed for them: where they set out from, the earliest they are ready, and the latest they leave.
+  chosenPlaceId?: string;
+  notBefore?: Date;
+  leaveBy?: Date;
 }
 
 export interface GatheringPlace {
@@ -23,7 +27,7 @@ export interface GatheringPlace {
   placeId: string;
 }
 
-export type OriginBasis = 'timetable' | 'location';
+export type OriginBasis = 'timetable' | 'location' | 'chosen';
 
 export interface PersonPart {
   personId: string;
@@ -47,6 +51,8 @@ export interface GatheringSide {
   readyAt: Date;
   origin: PersonPart['origin'];
   next: { start: Date; placeId: string | null } | null;
+  // The latest the asker fixed for them to leave.
+  leaveBy?: Date;
 }
 
 export interface GatheringFit {
@@ -152,6 +158,9 @@ function minutes(from: string, to: string, travel: Walking): number {
 }
 
 function originOf(person: GatheringPerson, { start, previous }: FreeInterval, now: Date): PersonPart['origin'] {
+  if (person.chosenPlaceId !== undefined) {
+    return { placeId: person.chosenPlaceId, basis: 'chosen' };
+  }
   const placeId = previous?.placeId ?? null;
   const timetable = placeId === null ? null : { placeId, basis: 'timetable' as const };
   if (start > now) {
@@ -168,9 +177,10 @@ function sideOf(person: GatheringPerson, stretch: Interval, now: Date): Gatherin
   const { start, next } = around;
   return {
     personId: person.id,
-    readyAt: start,
+    readyAt: person.notBefore === undefined ? start : latest([start, person.notBefore]),
     origin: originOf(person, around, now),
     next: next === null ? null : { start: next.start, placeId: next.placeId },
+    leaveBy: person.leaveBy,
   };
 }
 
@@ -181,8 +191,13 @@ function nextOf(next: GatheringSide['next'], placeId: string, travel: Walking): 
   return { ...next, walkMinutes: next.placeId === null ? null : minutes(placeId, next.placeId, travel) };
 }
 
-const leaveByOf = (next: PersonPart['next']): Date | null =>
-  next === null ? null : plusMinutes(next.start, -(next.walkMinutes ?? 0));
+function leaveByOf(next: PersonPart['next'], fixed: Date | undefined): Date | null {
+  const own = next === null ? null : plusMinutes(next.start, -(next.walkMinutes ?? 0));
+  if (own === null || fixed === undefined) {
+    return own ?? fixed ?? null;
+  }
+  return earliest([own, fixed]);
+}
 
 type Meeting = NonNullable<GatheringFit['meeting']>;
 
@@ -224,7 +239,7 @@ function partOf(
   travel: Walking,
 ): Omit<PersonPart, 'leaveAt'> {
   const next = nextOf(side.next, placeId, travel);
-  const known = { ...side, next, leaveBy: leaveByOf(next) };
+  const known = { ...side, next, leaveBy: leaveByOf(next, side.leaveBy) };
   if (side.origin === null) {
     return { ...known, walkMinutes: null, canArriveAt: null };
   }

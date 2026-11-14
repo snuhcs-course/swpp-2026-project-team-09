@@ -109,9 +109,10 @@ export function plan(
   people: [GatheringPerson, ...GatheringPerson[]],
   candidates = restaurants(),
   now = NOW,
+  window = mealWindow(DATE, 'lunch'),
 ): Gathering {
   if (travel === null) {
     throw new Error('Read the world first');
   }
-  return gather(people, candidates, { window: mealWindow(DATE, 'lunch'), now }, travel);
+  return gather(people, candidates, { window, now }, travel);
 }

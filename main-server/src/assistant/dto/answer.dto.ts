@@ -161,7 +161,9 @@ export const planInputSchema = z.strictObject({
     .array(z.strictObject({ userId: z.uuid(), constraints: z.array(personConstraintSchema).max(CONSTRAINTS_MAX) }))
     .min(1)
     .max(PEOPLE_MAX),
-  window: z.strictObject({ from: clockTime.nullable(), until: clockTime.nullable() }),
+  window: z
+    .strictObject({ from: clockTime.nullable(), until: clockTime.nullable() })
+    .refine(({ from, until }) => from === null || until === null || from < until, 'Expected from before until'),
   placeId: z.uuid().nullable(),
 });
 
@@ -184,6 +186,14 @@ export const requestContextSchema = z.strictObject({
   conditions: planInputSchema.nullable().default(null),
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
 }) satisfies z.ZodType<RequestContext>;
+
+// The body of a recalculation: the changed input, and where the asker is now.
+export const recalculationSchema = z.strictObject({
+  input: planInputSchema,
+  location: z.strictObject({ latitude, longitude }).nullable().default(null),
+});
+
+export type Recalculation = z.infer<typeof recalculationSchema>;
 
 export const NO_CONTEXT: RequestContext = {
   location: null,

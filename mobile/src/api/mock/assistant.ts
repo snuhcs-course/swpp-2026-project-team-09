@@ -8,14 +8,21 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AssistantReply, ChatMessage, QuestProposal, RequestContext } from '@/api/assistant-types';
+import type {
+  AnswerReply,
+  AssistantReply,
+  ChatMessage,
+  PlanInput,
+  QuestProposal,
+  RequestContext,
+} from '@/api/assistant-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { now } from '@/clock';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
-import { MEAL_ANSWER_REPLY } from './data/meal-answer';
+import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
 
@@ -116,6 +123,12 @@ function menusReply(): string {
     return `- ${name}: ${dishes.join(', ')}`;
   });
   return ['오늘 메뉴예요.', ...lines].join('\n');
+}
+
+// A recalculation without a main server: the mock does not calculate, so it answers with the stored copy of the main
+// server's real answer, holding the input it was given.
+export function mockRecalculation(input: PlanInput): AnswerReply {
+  return { ...MEAL_ANSWER, input };
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {

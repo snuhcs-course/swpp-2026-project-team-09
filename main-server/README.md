@@ -2194,6 +2194,42 @@ Proposal)`.
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
 
+- `POST /assistant/answers` with a User's access token, the `input` of an answer changed as the User dragged the time
+  band or added or removed a Friend, and where the User is now (`location`, `{ "latitude", "longitude" }`, null or left
+  out when unknown):
+
+  ```json
+  {
+    "input": {
+      "kind": "meal",
+      "date": "2026-11-17",
+      "meal": "lunch",
+      "people": [
+        { "userId": "…", "constraints": [] },
+        { "userId": "…", "constraints": [{ "kind": "notBefore", "time": "12:20", "source": "asker" }] }
+      ],
+      "window": { "from": null, "until": "12:50" },
+      "placeId": null
+    },
+    "location": null
+  }
+  ```
+
+  answers `200` with the recalculated answer, in the shape of the reply's `answer`. It is planned by the service
+  `planMeal` calls (`src/assistant/gathering/meal-plan.service.ts`), so the `input` of an answer posted back unchanged at
+  the same time gives the same answer. The model is not called, and the User's daily messages are not counted.
+
+  - **What the User fixed.** `window.from` and `window.until` narrow the meal's window; a plan that starts later than
+    `from` or ends earlier than `until` says what holds it: who arrives last or leaves first, and when, or the meal's
+    own serving time. `placeId` plans only the open Restaurants at that Place, and the answer says `그곳에는 여는 식당이 없어요`
+    when none is. A person's constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
+    are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
+    they leave).
+  - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
+    person is not the User, a person who is not the User's Friend, the same User twice, a day before today or more than
+    a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown
+    Place in a `from` or in `placeId`.
+
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
   `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
   `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds

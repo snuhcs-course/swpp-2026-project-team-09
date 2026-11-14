@@ -6,6 +6,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -71,5 +72,7 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
         ),
     },
   ],
+  // The making of a Quest from a Plan plans through the same service as the tool and the recalculation.
+  exports: [MealPlanService],
 })
 export class AssistantModule {}

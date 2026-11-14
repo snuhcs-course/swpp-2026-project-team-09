@@ -2,14 +2,26 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan, type PlanPart } from '../dto/answer.dto.js';
-import { clockOf } from '../free-time/free-time.js';
+import { clockOf, onDay } from '../free-time/free-time.js';
+import { mealWindow } from '../free-time/meal-fit.js';
 import { koreaTime } from '../korea-time.js';
-import { itemAt, itemBefore, type MealAnswerArgs, mergingLegs, Naming, wayOn, withTopic } from './answer-words.js';
-import { type GatheringFit, type PersonPart } from './gathering.js';
+import {
+  itemAt,
+  itemBefore,
+  type MealAnswerArgs,
+  mergingLegs,
+  Naming,
+  wayOn,
+  withSubject,
+  withTopic,
+} from './answer-words.js';
+import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
 import { bandOf, sceneOf } from './meal-scene.js';
+import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
 
 export { type AnswerPerson, type MealAnswerArgs } from './answer-words.js';
 
@@ -19,20 +31,42 @@ const timeOf = (at: Date | null): string | null => (at === null ? null : koreaTi
 
 const plain = (text: string): AnswerLine => [{ text, strong: false }];
 
-// From the sides: where the asker sets out, until when, and each Friend, marked when their origin is unknown. With no
-// time shared there are no sides, and the chips are the Friends' names only.
+// What the User fixed for the asker: their conditions, and the earliest of the window's end and their own leave-by.
+function askerFixed({ date, window, people }: MealAnswerArgs['input']): PersonConditions & { end: Date | null } {
+  const conditions = conditionsOf(people[0]?.constraints ?? [], date);
+  const ends = [conditions.leaveBy, window.until === null ? undefined : onDay(date, window.until)];
+  const end = ends.filter((at) => at !== undefined).toSorted((a, b) => a.getTime() - b.getTime())[0] ?? null;
+  return { ...conditions, end };
+}
+
+// The asker's chosen origin, else the one of their side.
+function originChip(naming: Naming, mine: GatheringSide | undefined): ConditionChip | null {
+  const placeId = askerFixed(naming.args.input).chosenPlaceId ?? mine?.origin?.placeId ?? null;
+  return placeId === null ? null : { kind: 'origin', text: `${naming.placeLabel(placeId)}에서`, userId: null };
+}
+
+// The end the User fixed when it is earlier than both the asker's next item and the meal's own end, else that item.
+function untilChip(naming: Naming, mine: GatheringSide | undefined): ConditionChip | null {
+  const { input } = naming.args;
+  const until = mine === undefined ? null : itemAt(naming.asker.items, mine.next);
+  const { end } = askerFixed(input);
+  const mealEnd = mealWindow(input.date, input.meal).end;
+  if (end !== null && end < mealEnd && (until === null || end < until.start)) {
+    return { kind: 'until', text: `${clockOf(end)}까지`, userId: null };
+  }
+  if (until === null) {
+    return null;
+  }
+  const clock = clockOf(until.start);
+  return { kind: 'until', text: until.isClass ? `${clock} 수업까지` : `${clock}까지`, userId: null };
+}
+
+// From the sides, and from the input for what the User fixed: where the asker sets out, until when, and each Friend,
+// marked when their origin is unknown. With no time shared there are no sides.
 function chipsOf(naming: Naming): ConditionChip[] {
   const { people, gathering } = naming.args;
   const [mine, ...theirs] = gathering.sides;
-  const chips: ConditionChip[] = [];
-  if (mine !== undefined && mine.origin !== null) {
-    chips.push({ kind: 'origin', text: `${naming.placeLabel(mine.origin.placeId)}에서`, userId: null });
-  }
-  const until = mine === undefined ? null : itemAt(naming.asker.items, mine.next);
-  if (until !== null) {
-    const clock = clockOf(until.start);
-    chips.push({ kind: 'until', text: until.isClass ? `${clock} 수업까지` : `${clock}까지`, userId: null });
-  }
+  const chips = [originChip(naming, mine), untilChip(naming, mine)].filter((chip) => chip !== null);
   people.slice(1).forEach((friend, index) => {
     const side = theirs[index];
     const text = side === undefined || side.origin !== null ? friend.name : `${friend.name} · 자리 모름`;
@@ -47,6 +81,9 @@ function noPlanOf({ menus, gathering, people }: MealAnswerArgs): AnswerReply['no
   }
   if (menus === 'closed') {
     return { reason: 'no-menu', lines: [plain('그 끼니에 여는 식당이 없어요')] };
+  }
+  if (menus === 'closed-at-place') {
+    return { reason: 'no-fit', lines: [plain('그곳에는 여는 식당이 없어요')] };
   }
   if (gathering.shared === null) {
     const text = people.length > 1 ? '그 시간에는 같이 비는 시간이 없어요' : '그 시간에는 비는 시간이 없어요';
@@ -93,20 +130,64 @@ function aloneLine(mine: PersonPart | undefined): string | null {
   return walk > 0 ? `걸어서 ${walk}분이에요` : null;
 }
 
-function linesOf(
-  { key, start, togetherMinutes, parts }: GatheringFit,
-  { people, aloneMinutes }: MealAnswerArgs,
-): AnswerLine[] {
+// The first of the parts by `at`, the earlier person on a tie.
+function firstBy(parts: readonly PersonPart[], at: (part: PersonPart) => number): PersonPart | undefined {
+  return parts.toSorted((a, b) => at(a) - at(b))[0];
+}
+
+// When a person reaches the place on their own: ready, plus their whole walk; ready alone when their origin is unknown.
+const ownArrival = ({ readyAt, walkMinutes }: PersonPart): number => readyAt.getTime() + (walkMinutes ?? 0) * 60_000;
+
+// Who keeps the plan from the window the User fixed, or the meal's own window when it, not a person, does: the start
+// first, then the end.
+function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string | null {
+  const { input } = naming.args;
+  const { date, window } = input;
+  const held = windowOf(input);
+  const meal = naming.mealWord();
+  if (window.from !== null) {
+    if (start > held.start) {
+      const last = firstBy(parts, (part) => -ownArrival(part));
+      const { me, name } = naming.personOf(last?.personId ?? naming.asker.userId);
+      const clock = clockOf(start);
+      if (me) {
+        return `${clock}에야 도착해요`;
+      }
+      return last?.origin === null
+        ? `${withTopic(name)} ${clock}부터 가능해요`
+        : `${withSubject(name)} ${clock}에 도착해요`;
+    }
+    if (held.start > onDay(date, window.from)) {
+      return `${withTopic(meal)} ${clockOf(held.start)}부터예요`;
+    }
+  }
+  if (window.until !== null) {
+    if (end < held.end) {
+      const first = firstBy(parts, (part) => (part.leaveBy ?? end).getTime());
+      const { me, name } = naming.personOf(first?.personId ?? naming.asker.userId);
+      return me ? `${clockOf(end)}엔 나서야 해요` : `${withTopic(name)} ${clockOf(end)}에 나서야 해요`;
+    }
+    if (held.end < onDay(date, window.until)) {
+      return `${withTopic(meal)} ${clockOf(held.end)}까지예요`;
+    }
+  }
+  return null;
+}
+
+function linesOf(fit: GatheringFit, naming: Naming): AnswerLine[] {
+  const { key, start, togetherMinutes, parts } = fit;
+  const { people, aloneMinutes } = naming.args;
+  const missed = missedLine(fit, naming);
   if (people.length > 1) {
     const fewer = aloneMinutes === null ? 0 : aloneMinutes - togetherMinutes;
-    const second = fewer > 0 ? `같이 먹으면 식사가 ${fewer}분 줄어요` : `식사 ${togetherMinutes}분`;
+    const second = missed ?? (fewer > 0 ? `같이 먹으면 식사가 ${fewer}분 줄어요` : `식사 ${togetherMinutes}분`);
     return [[{ text: `${clockOf(start)} ${key}`, strong: true }], plain(second)];
   }
   const first: AnswerLine = [
     { text: key, strong: true },
     { text: ` · 식사 ${togetherMinutes}분`, strong: false },
   ];
-  const second = aloneLine(parts[0]);
+  const second = missed ?? aloneLine(parts[0]);
   return second === null ? [first] : [first, plain(second)];
 }
 
@@ -118,12 +199,20 @@ function friendBasis(part: PersonPart, { key, meeting }: GatheringFit, naming: N
   }
   const from = naming.placeLabel(origin.placeId);
   const pieces: string[] = [];
+  const { now } = naming.args;
+  const before = itemBefore(items, readyAt);
   if (origin.basis === 'location') {
     pieces.push(`${name} 지금 ${from}`);
+  } else if (origin.basis === 'chosen') {
+    pieces.push(`${name} ${from}에서`);
   } else {
-    const ended = (itemBefore(items, readyAt)?.isClass ?? true) ? '수업 끝' : '일정 끝';
-    const later = readyAt > naming.args.now ? ` ${clockOf(readyAt)}` : '';
-    pieces.push(`${name}${later} ${from} ${ended}`);
+    const ended = (before?.isClass ?? true) ? '수업 끝' : '일정 끝';
+    const endedAt = before !== null && before.end > now ? ` ${clockOf(before.end)}` : '';
+    pieces.push(`${name}${endedAt} ${from} ${ended}`);
+  }
+  // Ready later than their own day allows: the asker's "not before" moved it.
+  if (readyAt > now && (before === null || readyAt > before.end)) {
+    pieces.push(`${clockOf(readyAt)}부터 가능`);
   }
   const legs = mergingLegs(part, meeting);
   if (legs !== null && legs.toMeeting === 0) {
@@ -177,7 +266,7 @@ function planOf(fit: GatheringFit, naming: Naming): Plan {
         : { place: naming.placePoint(meeting.placeId), at: koreaTime(meeting.at), userIds: meeting.personIds },
     parts: fit.parts.map((part) => partOf(part, naming)),
     subQuests: subQuestsOf(fit, naming),
-    lines: linesOf(fit, naming.args),
+    lines: linesOf(fit, naming),
     basis: basisOf(fit, naming),
     scene: sceneOf(fit, naming),
     band: bandOf(fit, naming),

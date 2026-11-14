@@ -4,10 +4,16 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type AnswerReply, type PlacePoint, type PlanInput } from '../src/assistant/dto/answer.dto.js';
+import {
+  type AnswerReply,
+  type PersonConstraint,
+  type PlacePoint,
+  type PlanInput,
+} from '../src/assistant/dto/answer.dto.js';
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
 import { type GatheringPlace } from '../src/assistant/gathering/gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from '../src/assistant/gathering/meal-answer.js';
+import { conditionsOf, windowOf } from '../src/assistant/gathering/plan-conditions.js';
 import { type Position } from '../src/common/geometry.js';
 import {
   DATE,
@@ -44,13 +50,20 @@ export const jieun = (): AnswerPerson => person(JIEUN, '지은', jieunDay());
 // Free all day, with no position the asker may see.
 export const haeun = (): AnswerPerson => person(HAEUN, '하은', []);
 
-const inputOf = (people: readonly AnswerPerson[]): PlanInput => ({
+// What the User fixed: the window, the Place, and each person's constraints by their id.
+export interface Fixed {
+  window?: PlanInput['window'];
+  placeId?: string | null;
+  constraints?: Record<string, PersonConstraint[]>;
+}
+
+const inputOf = (people: readonly AnswerPerson[], fixed: Fixed): PlanInput => ({
   kind: 'meal',
   date: DATE,
   meal: 'lunch',
-  people: people.map(({ userId }) => ({ userId, constraints: [] })),
-  window: { from: null, until: null },
-  placeId: null,
+  people: people.map(({ userId }) => ({ userId, constraints: fixed.constraints?.[userId] ?? [] })),
+  window: fixed.window ?? { from: null, until: null },
+  placeId: fixed.placeId ?? null,
 });
 
 interface AnswerOptions {
@@ -58,21 +71,26 @@ interface AnswerOptions {
   menus?: MealAnswerArgs['menus'];
   candidates?: GatheringPlace[];
   now?: Date;
+  fixed?: Fixed;
 }
 
 export function answerOf(
   people: [AnswerPerson, ...AnswerPerson[]],
-  { aloneMinutes = null, menus = 'open', candidates = restaurants(), now = NOW }: AnswerOptions = {},
+  { aloneMinutes = null, menus = 'open', candidates = restaurants(), now = NOW, fixed = {} }: AnswerOptions = {},
 ): AnswerReply {
-  const [first, ...rest] = people.map(({ userId, items }) => gatheringPerson(userId, items, null, now));
+  const input = inputOf(people, fixed);
+  const [first, ...rest] = people.map(({ userId, items }, index) => ({
+    ...gatheringPerson(userId, items, null, now),
+    ...conditionsOf(input.people[index]?.constraints ?? [], DATE),
+  }));
   if (first === undefined) {
     throw new Error('No asker');
   }
   return mealAnswer({
-    input: inputOf(people),
+    input,
     now,
     people,
-    gathering: plan([first, ...rest], candidates, now),
+    gathering: plan([first, ...rest], candidates, now, windowOf(input)),
     aloneMinutes,
     menus,
     placeOf,

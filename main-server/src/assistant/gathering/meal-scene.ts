@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
-import { byStart, clockOf } from '../free-time/free-time.js';
+import { byStart, clockOf, onDay } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
 import { itemAt, mergingLegs, type Naming, wayOn, withAnd } from './answer-words.js';
 import { type GatheringFit, MINUTE_MS, type PersonPart } from './gathering.js';
@@ -123,12 +123,20 @@ export function sceneOf(fit: GatheringFit, naming: Naming): MapScene {
 }
 
 // From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after half
-// an hour past its end. `now` is given as it is, even outside the range.
+// an hour past its end, reaching out to the half hours around the window the User fixed. `now` is given as it is, even
+// outside the range.
 export function bandOf({ start, end, togetherMinutes }: GatheringFit, naming: Naming): TimeBand {
-  const { now, people } = naming.args;
-  const opens = Math.max(now.getTime(), start.getTime() - BAND_BEFORE_MS);
-  const from = new Date(Math.floor(opens / HALF_HOUR_MS) * HALF_HOUR_MS);
-  const until = new Date(Math.ceil((end.getTime() + BAND_AFTER_MS) / HALF_HOUR_MS) * HALF_HOUR_MS);
+  const { now, people, input } = naming.args;
+  const opens = [Math.max(now.getTime(), start.getTime() - BAND_BEFORE_MS)];
+  const closes = [end.getTime() + BAND_AFTER_MS];
+  if (input.window.from !== null) {
+    opens.push(onDay(input.date, input.window.from).getTime());
+  }
+  if (input.window.until !== null) {
+    closes.push(onDay(input.date, input.window.until).getTime());
+  }
+  const from = new Date(Math.floor(Math.min(...opens) / HALF_HOUR_MS) * HALF_HOUR_MS);
+  const until = new Date(Math.ceil(Math.max(...closes) / HALF_HOUR_MS) * HALF_HOUR_MS);
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),

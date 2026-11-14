@@ -7,7 +7,7 @@
 import type * as SecureStoreFake from '../support/secure-store';
 import { startFresh } from '../support/mocks';
 import { askMainServer, PHONE_NOW } from '../support/server';
-import type { ChatMessage, RequestContext } from '@/api/assistant-types';
+import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { googleAvailable } from '@/auth/google';
@@ -90,6 +90,32 @@ describe("the Assistant's reply from the main server", () => {
     server.on('POST /assistant/messages', { status: 200, body: { ...MEAL_ANSWER_REPLY, answer: malformed } });
 
     await expect(apiClient.askAssistant(MESSAGES, CONTEXT)).rejects.toMatchObject({
+      status: 0,
+      code: 'UNEXPECTED_ANSWER',
+    });
+  });
+});
+
+describe('a recalculation by the main server', () => {
+  const INPUT: PlanInput = { ...MEAL_ANSWER.input, window: { from: '12:40', until: null } };
+  const LOCATION = { latitude: 37.45016, longitude: 126.95259 };
+
+  it('posts the input and the location, and gives the answer', async () => {
+    const server = await askMainServer({ signedIn: true });
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER });
+
+    await expect(apiClient.recalculateAnswer(INPUT, LOCATION)).resolves.toEqual(MEAL_ANSWER);
+    expect(server.received('POST /assistant/answers').map(({ body }) => body)).toEqual([
+      { input: INPUT, location: LOCATION },
+    ]);
+  });
+
+  it('is refused with an answer of another shape', async () => {
+    const server = await askMainServer({ signedIn: true });
+    const { chips: _chips, ...malformed } = MEAL_ANSWER;
+    server.on('POST /assistant/answers', { status: 200, body: malformed });
+
+    await expect(apiClient.recalculateAnswer(INPUT, null)).rejects.toMatchObject({
       status: 0,
       code: 'UNEXPECTED_ANSWER',
     });
