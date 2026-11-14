@@ -45,12 +45,14 @@ interface Shown {
 }
 
 interface AnswerState extends Shown {
+  // The id of the conversation's last reply bubble, or null without one.
+  replyId: number | null;
   source: AnswerReply | null;
   basisOpen: boolean;
   // What was shown before the last drag.
   kept: Shown | null;
   recalculating: boolean;
-  // Counts the sources: an answer that comes for an earlier one is dropped.
+  // Counts the replies: an answer that comes for an earlier one is dropped.
   epoch: number;
 }
 
@@ -63,13 +65,22 @@ type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 const NO_RECALCULATION: Recalculation = { location: null, onFailed: sayNothing };
 
 // A failure and the app's own bubble are no reply.
-function sourceOf(bubbles: readonly ChatBubble[]): AnswerReply | null {
-  const reply = bubbles.findLast(({ role, failure, own = false }) => role === 'assistant' && failure === null && !own);
-  return reply?.answer ?? null;
+function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefined {
+  return bubbles.findLast(({ role, failure, own = false }) => role === 'assistant' && failure === null && !own);
 }
 
-function fresh(source: AnswerReply | null, epoch: number): AnswerState {
-  return { source, answer: source, index: 0, basisOpen: false, kept: null, recalculating: false, epoch };
+function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
+  const source = reply?.answer ?? null;
+  return {
+    replyId: reply?.id ?? null,
+    source,
+    answer: source,
+    index: 0,
+    basisOpen: false,
+    kept: null,
+    recalculating: false,
+    epoch,
+  };
 }
 
 function withPlan(state: AnswerState, index: number): AnswerState {
@@ -161,21 +172,22 @@ function useChange(epoch: number, setStored: SetStored, { location, onFailed }: 
 }
 
 // The answer on screen and the Plan on screen, which the map and the card read. The conversation's last reply gives
-// the source: a new one shows its first Plan with the basis closed and drops anything a recalculation brought. A
-// recalculation's answer replaces the one on screen, unless the source changed while it was on its way.
+// the source: a new one, told by its bubble since a reply may bring the same object again, shows its first Plan with
+// the basis closed and drops anything a recalculation brought. A recalculation's answer replaces the one on screen,
+// unless a new reply came while it was on its way.
 export function useShownAnswer(
   bubbles: readonly ChatBubble[],
   { location, onFailed }: Recalculation = NO_RECALCULATION,
 ): ShownAnswer {
-  const source = sourceOf(bubbles);
-  const [stored, setStored] = useState<AnswerState>(() => fresh(source, 0));
-  const current = stored.source === source ? stored : fresh(source, stored.epoch + 1);
+  const reply = lastReply(bubbles);
+  const [stored, setStored] = useState<AnswerState>(() => fresh(reply, 0));
+  const current = stored.replyId === (reply?.id ?? null) ? stored : fresh(reply, stored.epoch + 1);
   if (current !== stored) {
     setStored(current);
   }
   const change = useChange(current.epoch, setStored, { location, onFailed });
   return {
-    source,
+    source: current.source,
     answer: current.answer,
     plan: current.answer?.plans[current.index] ?? null,
     index: current.index,

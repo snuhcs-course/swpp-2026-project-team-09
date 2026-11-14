@@ -46,7 +46,13 @@ describe('the answer on screen, by the last reply', () => {
     const held = await hold([...ANSWERED, said(3, '지은이도'), replied(4, MEAL_ANSWER_THREE)]);
     expect(held.shown().answer).toBe(MEAL_ANSWER_THREE);
 
-    await held.rerender([...ANSWERED, said(3, '고마워'), replied(4, null)]);
+    await held.rerender([
+      ...ANSWERED,
+      said(3, '지은이도'),
+      replied(4, MEAL_ANSWER_THREE),
+      said(5, '고마워'),
+      replied(6, null),
+    ]);
     expect(held.shown().answer).toBeNull();
 
     await held.rerender([]);
