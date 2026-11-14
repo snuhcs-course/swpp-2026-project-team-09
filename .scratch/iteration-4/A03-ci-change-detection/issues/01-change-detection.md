@@ -25,3 +25,19 @@ Blocked by: None (can start immediately)
 - [ ] Each changed source file has its AI-generated row.
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+- The merge queue's trigger went in with this ticket, so that ticket 02 needs only the ruleset. The push trigger names `tags: ['**']` beside `branches-ignore`, because a branch filter alone stops runs on tags, and the Release gate waits for the tag's run.
+- "Already on Main" means on any branch named `<line>/Main`, `main` or `development` (`git for-each-ref --contains`), not only the branch's own line's Main. A branch named for the wrong line would otherwise skip work on a commit that the gates may take.
+- The Release and Dev Server gates stay as they are. They take a run with skipped work only when a procedure is broken: a working branch's commit pushed straight onto a Main by someone who can bypass the ruleset, `development` moved to a commit that is not on a Main, or a Release tag on such a commit. If that ever needs a guard, the Release gate's `read_ci_jobs` can count only the runs of the tag, of a Main, of `main` and of `development`, and the Dev Server gate can read check suites, which carry their branch.
+- `concurrency.queue: max` is not used. A pending Main run replaced by a newer push is covered by the newer Main commit, and whether `queue: max` accepts a `cancel-in-progress` expression that is true on other branches is not documented.
+- A squash commit on a Main must not carry `[skip ci]`: branches that skip work lean on Main's full run.
+- `scripts/**` stays mapped to the seven package checks, although only `scripts/check-test-levels.ts` runs in CI today.
+
+### Agent usage (2026-11-15)
+
+One session wrote the tickets, reviewed, replayed, ran the trial and opened the pull request; one implementing subagent and three reviewing subagents (path map, GitHub Actions, git and the gates) ran on Opus 5.5. The earlier measurements and the first draft were made by the orchestrating session and are not counted here.
+
+- Agent time: about 64 minutes, an estimate from the transcripts' timestamps (the union of active stretches of the session and its subagents), up to the last push; reading the trial runs afterwards adds a few minutes.
+- Tokens: output 387,099; input 52,388,173, of which 50,981,735 were cache reads, 1,405,834 cache writes, and 604 uncached. Without cache reads: 1,793,537.
