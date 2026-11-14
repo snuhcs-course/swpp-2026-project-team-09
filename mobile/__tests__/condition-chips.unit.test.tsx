@@ -36,7 +36,7 @@ async function show(props: Partial<Props> = {}): Promise<void> {
 
 describe('ConditionChips shown', () => {
   // Partitions: each kind of chip (origin, until, person with and without a userId), "＋ 같이" closed and open, and
-  // the basis closed and open.
+  // the basis closed, open, and none to open.
   it("shows the answer's chips, then ＋ 같이, with 근거", async () => {
     await show();
 
@@ -60,6 +60,14 @@ describe('ConditionChips shown', () => {
     await show({ adding: true });
 
     expect(screen.getByRole('button', { name: '같이 먹을 친구 추가' })).toBeSelected();
+  });
+
+  it('draws no 근거 without a basis to open', async () => {
+    await show({ onBasis: null });
+
+    expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '근거 접기' })).toBeNull();
+    expect(screen.getByRole('button', { name: '같이 먹을 친구 추가' })).toBeVisible();
   });
 
   it('says 근거 접기 while the basis is open', async () => {

@@ -20,7 +20,8 @@ interface ConditionChipsProps {
   onUntil: () => void;
   onRemove: (userId: string) => void;
   onAdd: () => void;
-  onBasis: () => void;
+  // Null for an answer without a Plan, which has no basis: no "근거" is drawn.
+  onBasis: (() => void) | null;
 }
 
 const CHIP_HEIGHT = 34;
@@ -103,7 +104,7 @@ function AddChip({ adding, disabled, onAdd }: { adding: boolean; disabled: boole
 }
 
 // The first row of the answer's card: the conditions the answer used, each a control that corrects it, then
-// "＋ 같이", with "근거" fixed at the row's right.
+// "＋ 같이", with "근거" fixed at the row's right when there is a basis to open.
 export function ConditionChips({ chips, basisOpen, adding, disabled, ...on }: ConditionChipsProps): ReactElement {
   const basis = basisOpen ? '근거 접기' : '근거';
   return (
@@ -133,16 +134,18 @@ export function ConditionChips({ chips, basisOpen, adding, disabled, ...on }: Co
         )}
         <AddChip adding={adding} disabled={disabled} onAdd={on.onAdd} />
       </ScrollView>
-      <Pressable
-        accessibilityLabel={basis}
-        accessibilityRole="button"
-        hitSlop={HIT_SLOP}
-        onPress={on.onBasis}
-        style={pressedStyle(styles.basis)}
-      >
-        <Text style={styles.basisLabel}>{basis}</Text>
-        <Icon color={color.blue600} name={basisOpen ? 'chevronUp' : 'chevronRight'} size={14} />
-      </Pressable>
+      {on.onBasis === null ? null : (
+        <Pressable
+          accessibilityLabel={basis}
+          accessibilityRole="button"
+          hitSlop={HIT_SLOP}
+          onPress={on.onBasis}
+          style={pressedStyle(styles.basis)}
+        >
+          <Text style={styles.basisLabel}>{basis}</Text>
+          <Icon color={color.blue600} name={basisOpen ? 'chevronUp' : 'chevronRight'} size={14} />
+        </Pressable>
+      )}
     </View>
   );
 }

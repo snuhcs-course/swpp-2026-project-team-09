@@ -15,10 +15,6 @@ import { FriendChoices } from './friend-choices';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
 
-function nothingToOpen(): void {
-  // An answer without a Plan has no basis.
-}
-
 // "되돌리기" while a drag is kept, and the arrows with the count when the answer has more than one Plan.
 function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactElement | null {
   const { index, browse, recalculating, ghost, undo } = shown;
@@ -96,7 +92,7 @@ export function PlanCard({ shown, answer }: { shown: ShownAnswer; answer: Answer
         chips={answer.chips}
         disabled={recalculating}
         onAdd={fix.toggleAdding}
-        onBasis={plan === null ? nothingToOpen : toggleBasis}
+        onBasis={plan === null ? null : toggleBasis}
         onOrigin={fix.chooseOrigin}
         onRemove={fix.remove}
         onUntil={fix.focusUntil}

@@ -42,7 +42,7 @@ Details the spec left to the implementation, listed so that any of them can be v
 4. **The failure's toast is given to the hook** (`useShownAnswer(bubbles, { location, onFailed })`), which the chat control fills with `useToast`, so that the hook needs no toast provider.
 5. **The outline of a drag is kept when the drag's answer comes**, as the band of the Plan shown just before it; a failed drag adds none and keeps the one there.
 6. **"되돌리기" takes no press while a recalculation is on its way**, and it closes the basis.
-7. **For an answer without a Plan, "근거" stays in the row of chips** (the component always draws it) but opens nothing.
+7. **An answer without a Plan draws no "근거"**: it has no basis to open, so the card gives `ConditionChips` no `onBasis` (null), and the row holds the chips and "＋ 같이" alone.
 8. **The time chip draws the end handle in focus for two seconds**, a press anew starting the two seconds again; the screen reader's focus is not moved.
 9. **The Friends of "＋ 같이" are those `useFriends` gives**, so the list is empty, "더 넣을 친구가 없어요", while they load or fail.
 10. **A press on the map adds a Friend when the marker id is `friend:<userId>`** and the conditions do not hold that user; it goes through the same `change`, which ignores it while a recalculation is on its way.
