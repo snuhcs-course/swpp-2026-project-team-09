@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -16,6 +17,7 @@ import {
   color,
   Icon,
   ICON_NAMES,
+  MapAnswerMark,
   MapDot,
   MapRestaurant,
   MapPerson,
@@ -140,6 +142,46 @@ export function Avatars(): ReactElement {
   );
 }
 
+// The marks of an answer on the map, as the stored answer to "배고파, 민수랑 같이" draws them.
+function AnswerMarks(): ReactElement {
+  return (
+    <>
+      <MapAnswerMark
+        label={{ side: 'right', tone: 'person', title: '나 · 15분', line: null, number: null }}
+        symbol={{ type: 'me' }}
+      />
+      <MapAnswerMark
+        label={{ side: 'right', tone: 'person', title: '민수 · 18분', line: null, number: null }}
+        symbol={{ type: 'face', name: '민수', dashed: true }}
+      />
+      <MapAnswerMark
+        label={{ side: 'below', tone: 'pick', title: '학생회관식당', line: '12:33 점심', number: null }}
+        symbol={{ type: 'dot', role: 'pick', number: 1 }}
+      />
+      <MapAnswerMark
+        label={{ side: 'left', tone: 'candidate', title: '301동식당', line: null, number: 2 }}
+        symbol={null}
+      />
+      <MapAnswerMark
+        label={{ side: 'left', tone: 'candidate', title: '3식당', line: null, number: null }}
+        symbol={{ type: 'dot', role: 'candidate', number: 3 }}
+      />
+      <MapAnswerMark
+        label={{ side: 'left', tone: 'dropped', title: '3식당 · 14분밖에 못 있어요', line: null, number: null }}
+        symbol={{ type: 'dot', role: 'dropped', number: null }}
+      />
+      <MapAnswerMark
+        label={{ side: 'left', tone: 'next', title: '13:00 수업 · 24동', line: null, number: null }}
+        symbol={{ type: 'dot', role: 'next', number: null }}
+      />
+      <MapAnswerMark
+        label={{ side: 'above', tone: 'meeting', title: '12:18 민수와 만남', line: null, number: null }}
+        symbol={null}
+      />
+    </>
+  );
+}
+
 export function MapPins(): ReactElement {
   return (
     <Section name="MapPin">
@@ -165,6 +207,7 @@ export function MapPins(): ReactElement {
         <MapPerson name="정하은" tone="class" />
         <MapPerson name="임채원" selected tone="moving" />
         <MapPerson name="오현우" tone="member" />
+        <AnswerMarks />
       </View>
     </Section>
   );

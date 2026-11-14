@@ -12,6 +12,7 @@
 import { Module } from '@nestjs/common';
 import { FriendsModule } from '../friends/friends.module.js';
 import { RoomRequestSyncModule } from '../library/room-request-sync.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 import { PushModule } from '../push/push.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';
 import { UsersModule } from '../users/users.module.js';
@@ -29,7 +30,7 @@ import { RecruitingService } from './recruiting.service.js';
 import { SubQuestsService } from './sub-quests.service.js';
 
 @Module({
-  imports: [UsersModule, FriendsModule, TimetableModule, RoomRequestSyncModule, PushModule],
+  imports: [UsersModule, FriendsModule, TimetableModule, RoomRequestSyncModule, PushModule, NotificationsModule],
   controllers: [QuestsController, JoinRequestsController, InvitationsController],
   providers: [
     QuestsService,

@@ -7,10 +7,16 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import {
+  ANSWER_SYMBOL_BOX,
+  type AnswerLabel,
+  type AnswerSymbol,
+  type LabelSide,
+  MapAnswerMark,
   MapDot,
   MapGroupDot,
   MapGroupPin,
@@ -22,6 +28,7 @@ import {
   MapTutorialPin,
   type PersonTone,
 } from '@/design-system';
+import type { Size } from './projection';
 
 // How something on the map looks. One picture is made for each look and kept under the look's name, so two things
 // that look the same share one, and the number of pictures is the number of names:
@@ -72,10 +79,23 @@ export type MarkerLook =
   // Things of several kinds at one place: a small round for each kind, in the order given.
   | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean }
   // The place 지도에서 보기 of a tutorial quest shows: a red teardrop with a white circle, at every level of detail.
-  | { kind: 'tutorialPlace' };
+  | { kind: 'tutorialPlace' }
+  // A mark of an answer: its symbol and its label, words included, in one picture.
+  | { kind: 'answer'; symbol: AnswerSymbol | null; label: AnswerLabel | null };
 
 function parts(...names: (string | false)[]): string {
   return names.filter((name) => name !== false).join(':');
+}
+
+// Words may hold the separator of `parts`, so an answer's look is named by a list of what it draws, in a fixed order.
+function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): string {
+  const drawn = [
+    symbol?.type ?? null,
+    symbol?.type === 'face' ? [symbol.name, symbol.dashed] : null,
+    symbol?.type === 'dot' ? [symbol.role, symbol.number] : null,
+    label === null ? null : [label.side, label.tone, label.title, label.line, label.number],
+  ];
+  return `answer:${JSON.stringify(drawn)}`;
 }
 
 // The look's name: the key its picture is kept under. Two looks that draw the same picture have the same name.
@@ -85,6 +105,9 @@ export function lookName(look: MarkerLook): string {
   }
   if (look.kind === 'tutorialPlace') {
     return 'tutorialPlace';
+  }
+  if (look.kind === 'answer') {
+    return answerName(look.symbol, look.label);
   }
   const selected = look.selected === true && 'selected';
   if (look.kind === 'restaurant') {
@@ -112,10 +135,29 @@ export function hasPhoto(look: MarkerLook): boolean {
 // A pin and a person's marker stand on their tip, the bottom of their view. Everything else, a round thing, sits on
 // its middle.
 export function standsOnTip(look: MarkerLook): boolean {
-  if (look.kind === 'me' || look.kind === 'study-cluster') {
+  if (look.kind === 'me' || look.kind === 'study-cluster' || look.kind === 'answer') {
     return false;
   }
   return look.kind === 'person' || look.kind === 'restaurant' || look.kind === 'tutorialPlace' || look.form === 'pin';
+}
+
+// The point of a look's box that stands on its position, as shares of the box's width and height: the tip, the
+// middle, or for an answer's look the centre of its symbol box. A box not laid out yet stands on its middle.
+export function anchorShare(look: MarkerLook, { width, height }: Size): { x: number; y: number } {
+  if (look.kind !== 'answer' || look.label === null) {
+    return { x: 0.5, y: standsOnTip(look) ? 1 : 0.5 };
+  }
+  if (width <= 0 || height <= 0) {
+    return { x: 0.5, y: 0.5 };
+  }
+  const centre = ANSWER_SYMBOL_BOX / 2;
+  const shares: Record<LabelSide, { x: number; y: number }> = {
+    right: { x: centre / width, y: 0.5 },
+    left: { x: 1 - centre / width, y: 0.5 },
+    below: { x: 0.5, y: centre / height },
+    above: { x: 0.5, y: 1 - centre / height },
+  };
+  return shares[look.label.side];
 }
 
 // The design system's view of a look.
@@ -141,6 +183,9 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
   }
   if (look.kind === 'tutorialPlace') {
     return <MapTutorialPin />;
+  }
+  if (look.kind === 'answer') {
+    return <MapAnswerMark label={look.label} symbol={look.symbol} />;
   }
   if (look.kind === 'group') {
     return look.form === 'dot' ? (
