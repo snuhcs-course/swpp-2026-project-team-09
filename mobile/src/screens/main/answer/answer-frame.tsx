@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -23,6 +24,8 @@ import { AnswerLines } from './answer-lines';
 import { PlanCard } from './plan-card';
 
 const CLOSE = 36;
+// Above the first of the card's parts.
+const CONTENT_TOP = space[5];
 
 // What the User asked, on one line, with the chat icon and ✕, which forgets the conversation.
 function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }): ReactElement {
@@ -42,12 +45,13 @@ function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }):
   );
 }
 
-// A reply's words: the card of the Plan on screen for the answer on screen, else the lines of its answer's first Plan,
-// or those that say why it has none, in place of the model's sentence; otherwise the sentence as Markdown.
-function Words({ bubble, shown }: { bubble: ChatBubble; shown: ShownAnswer }): ReactElement {
+// A reply's words: the card of the answer on screen for the reply it came from, else the lines of its answer's first
+// Plan, or those that say why it has none, in place of the model's sentence; otherwise the sentence as Markdown.
+// `room` is how high the Plan's card may stand before the card scrolls, null until it is known.
+function Words({ bubble, shown, room }: { bubble: ChatBubble; shown: ShownAnswer; room: number | null }): ReactElement {
   const { answer } = bubble;
-  if (answer === shown.answer && shown.plan !== null) {
-    return <PlanCard shown={shown} />;
+  if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
+    return <PlanCard answer={shown.answer} room={room} shown={shown} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
@@ -92,7 +96,13 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                 cardActions={cardActions}
                 onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting ? retry : null}
                 onShowLayer={control.leaving.showLayer}
-                words={<Words bubble={bubble} shown={control.answer} />}
+                words={
+                  <Words
+                    bubble={bubble}
+                    room={contentMax === null ? null : contentMax - CONTENT_TOP}
+                    shown={control.answer}
+                  />
+                }
               />
             </View>
           ))}
@@ -207,7 +217,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.sheet,
   },
-  content: { gap: space[3], paddingTop: space[5], paddingHorizontal: space[4] },
+  content: { gap: space[3], paddingTop: CONTENT_TOP, paddingHorizontal: space[4] },
   part: { gap: space[2] },
   words: { ...text.bodyLg, color: color.ink },
   notice: { ...text.caption, position: 'absolute', right: space[4], left: space[4], color: color.inkMuted },
