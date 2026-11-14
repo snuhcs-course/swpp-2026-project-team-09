@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -28,9 +29,14 @@ export function useNotificationLinks(here: boolean): void {
         return;
       }
       handled.current = identifier;
-      // Not `dismissTo`: on the tabs it reaches the tab navigator, which ignores it. `navigate` also closes the
-      // screens above the tabs.
-      router.navigate({ pathname: '/main', params: { card: `${address.kind}:${address.id}` } });
+      const target = { pathname: '/main', params: { card: `${address.kind}:${address.id}` } } as const;
+      // `navigate` from a screen above the tabs pushes a second tab navigator over it, and `dismissTo` from the tabs
+      // reaches the tab navigator, which ignores it.
+      if (router.canDismiss()) {
+        router.dismissTo(target);
+      } else {
+        router.navigate(target);
+      }
       clearLastPushTap();
     };
     open(lastPushTap());

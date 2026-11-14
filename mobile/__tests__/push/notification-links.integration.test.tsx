@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -189,7 +190,8 @@ describe('a push tapped while the app runs', () => {
 
     await tap(tapOn(`/main?card=friend:${MIN_JUN.id}`));
 
-    expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
+    expect(screen.queryByRole('header', { name: /^알림/u, includeHiddenElements: true })).toBeNull();
+    expect(router.canDismiss()).toBe(false);
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
   });
 });

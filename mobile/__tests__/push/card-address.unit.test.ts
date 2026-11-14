@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fallbackFor, readCardAddress } from '@/push/card-address';
@@ -19,12 +20,27 @@ describe("a push's address", () => {
     expect(readCardAddress(url)).toEqual({ kind, id });
   });
 
-  it.each([['/me'], ['https://example.com'], ['/main?card='], ['/main?card=friend'], [42], [null]])(
-    'refuses %p',
-    (url) => {
-      expect(readCardAddress(url)).toBeNull();
-    },
-  );
+  it.each([
+    ['/me'],
+    ['https://example.com'],
+    ['/main?card='],
+    ['/main?card=friend'],
+    [42],
+    [null],
+    ['/main?card=friend:abc&x=1'],
+    ['/main?card=friend:abc&card=place:1,2'],
+    ['/main?card=friend%3Aabc'],
+    ['/main?card=friend:abc\n'],
+    ['/main?card=friend:a\nbc'],
+    ['/main?card=friend:abc#x'],
+    ['/main?card=Friend:abc'],
+    ['/main?card=friend2:abc'],
+    ['/main?card=friend:'],
+    [['/main?card=friend:abc']],
+    [{ url: '/main?card=friend:abc' }],
+  ])('refuses %p', (url) => {
+    expect(readCardAddress(url)).toBeNull();
+  });
 });
 
 describe('where a card not on the map falls back to', () => {
