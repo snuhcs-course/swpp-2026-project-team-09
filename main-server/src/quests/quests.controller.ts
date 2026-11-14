@@ -5,6 +5,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query } from '@nestjs/common';
@@ -73,8 +74,12 @@ export class QuestsController {
 
   @Delete(':questId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  drop(@CurrentUser() user: SignedInUser, @Param('questId', { schema: z.uuid() }) questId: string): Promise<void> {
-    return this.quests.drop(user.id, questId);
+  async drop(
+    @CurrentUser() user: SignedInUser,
+    @Param('questId', { schema: z.uuid() }) questId: string,
+  ): Promise<void> {
+    await this.quests.drop(user.id, questId);
+    this.leader.forgetTimeToLeave(user.id, questId);
   }
 
   @Patch(':questId')

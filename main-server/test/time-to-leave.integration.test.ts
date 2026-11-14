@@ -6,10 +6,9 @@
 
 import { Logger } from '@nestjs/common';
 import request from 'supertest';
-import { z } from 'zod';
 import { type TestUser } from './friends.js';
 import { MealPlanStage } from './meal-plan.js';
-import { inputOf, jieun, makePlanQuest, minsu, workedExample } from './plan-quests.js';
+import { firstPlan, jieun, minsu, partyOf, workedExample } from './plan-quests.js';
 import { withAccessToken } from './sign-in.js';
 
 // The Leader's time to leave, kept in GET /notifications when POST /plans makes a party from the design's worked
@@ -26,30 +25,12 @@ afterAll(async () => {
   await stage.stop();
 });
 
-const madeSchema = z.object({ quest: z.object({ id: z.string() }) });
-const planSchema = z.object({
-  id: z.string(),
-  startAt: z.string(),
-  parts: z.array(z.object({ me: z.boolean(), origin: z.unknown(), walkMinutes: z.number().nullable() })),
-});
-
 function getNotifications(user: TestUser): request.Test {
   return withAccessToken(request(stage.app.getHttpServer()).get('/notifications'), user.accessToken);
 }
 
 async function makeParty(date: string, people: string[], planId: string, startAt: string): Promise<string> {
-  const response = await makePlanQuest(stage, { input: inputOf(date, people), planId, startAt, location: null });
-  expect(response.status).toBe(201);
-  return madeSchema.parse(response.body).quest.id;
-}
-
-// The first Plan the recalculation answers, as the app would show it.
-async function firstPlan(date: string, people: string[]): Promise<z.infer<typeof planSchema>> {
-  const response = await withAccessToken(
-    request(stage.app.getHttpServer()).post('/assistant/answers'),
-    stage.asker.accessToken,
-  ).send({ input: inputOf(date, people), location: null });
-  return z.object({ plans: z.array(planSchema).min(1) }).parse(response.body).plans[0];
+  return (await partyOf(stage, { date, people, planId, startAt })).quest.id;
 }
 
 describe('A party made from the worked example with 민수 and 지은', () => {
@@ -111,7 +92,7 @@ describe('A party whose Leader has no time to leave', () => {
   ])('keeps none for a Leader %s', async (_case, date, from, walkMinutes) => {
     await workedExample(stage, date, from);
     const people = [stage.asker.id, (await minsu(stage)).id];
-    const plan = await firstPlan(date, people);
+    const plan = await firstPlan(stage, date, people);
     const leader = plan.parts.find(({ me }) => me);
     expect(leader?.walkMinutes).toBe(walkMinutes);
     const { NotificationsService } = await import('../src/notifications/notifications.service.js');
