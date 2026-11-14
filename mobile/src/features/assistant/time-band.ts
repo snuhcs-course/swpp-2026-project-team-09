@@ -87,14 +87,14 @@ export function onBandDay(clock: string, band: { startAt: string }): string {
 
 export function clashes(
   busy: readonly Stretch[],
-  window: PlanInput['window'],
+  fixed: PlanInput['window'],
   band: { startAt: string; endAt: string },
 ): Stretch[] {
-  if (window.from === null && window.until === null) {
+  if (fixed.from === null && fixed.until === null) {
     return [];
   }
-  const askedStart = window.from === null ? band.startAt : onBandDay(window.from, band);
-  const askedEnd = window.until === null ? band.endAt : onBandDay(window.until, band);
+  const askedStart = fixed.from === null ? band.startAt : onBandDay(fixed.from, band);
+  const askedEnd = fixed.until === null ? band.endAt : onBandDay(fixed.until, band);
   return busy.flatMap(({ startAt, endAt }) => {
     const start = msOf(startAt) < msOf(askedStart) ? askedStart : startAt;
     const end = msOf(endAt) > msOf(askedEnd) ? askedEnd : endAt;

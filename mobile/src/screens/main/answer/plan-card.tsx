@@ -70,7 +70,7 @@ function Below({ shown, answer, fix }: { shown: ShownAnswer; answer: AnswerReply
           focus={fix.focus}
           ghost={ghost}
           onDrop={fix.drop}
-          window={answer.input.window}
+          fixed={answer.input.window}
         />
       )}
       <Steps count={answer.plans.length} shown={shown} />

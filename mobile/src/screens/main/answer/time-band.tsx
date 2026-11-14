@@ -21,10 +21,9 @@ import {
 } from '@/features/assistant/time-band';
 
 interface TimeBandProps {
-  // Of the Plan on screen.
   band: TimeBandData;
-  // What the User fixed, for the clashes.
-  window: PlanInput['window'];
+  // What the User fixed: the window of the conditions, for the clashes.
+  fixed: PlanInput['window'];
   // Where the band was before a drag: a dashed outline.
   ghost: Stretch | null;
   // A handle drawn emphasised.
@@ -115,7 +114,7 @@ function Handle({ bound, band, shown, trackWidth, focused, disabled, onMove, onL
   );
 }
 
-function Lanes({ band, window }: { band: TimeBandData; window: PlanInput['window'] }): ReactElement {
+function Lanes({ band, fixed }: { band: TimeBandData; fixed: PlanInput['window'] }): ReactElement {
   return (
     <>
       {band.lanes.map(({ userId, busy }) => (
@@ -124,7 +123,7 @@ function Lanes({ band, window }: { band: TimeBandData; window: PlanInput['window
             {busy.map((stretch) => (
               <View key={stretch.startAt} style={[styles.busy, placeOf(stretch, band.range)]} />
             ))}
-            {clashes(busy, window, band).map((stretch) => (
+            {clashes(busy, fixed, band).map((stretch) => (
               <View
                 key={stretch.startAt}
                 style={[styles.clash, placeOf(stretch, band.range)]}
@@ -185,7 +184,7 @@ function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandPro
 
 // The time band of the answer's card: each person's busy stretches, the line of now, and the Plan's band with a
 // handle at each end, which a drag or a screen reader's step moves by five minutes.
-export function TimeBand({ band, window, ghost, focus, disabled, onDrop }: TimeBandProps): ReactElement {
+export function TimeBand({ band, fixed, ghost, focus, disabled, onDrop }: TimeBandProps): ReactElement {
   const [trackWidth, setTrackWidth] = useState(0);
   const moved = useMovedBand(band, disabled, onDrop);
   const handle = (bound: BandBound): ReactElement => (
@@ -215,7 +214,7 @@ export function TimeBand({ band, window, ghost, focus, disabled, onDrop }: TimeB
           style={styles.track}
           testID="time-band-track"
         >
-          <Lanes band={band} window={window} />
+          <Lanes band={band} fixed={fixed} />
           {ghost === null ? null : <View style={[styles.ghost, placeOf(ghost, band.range)]} testID="time-band-ghost" />}
           <View style={[styles.band, placeOf(moved.shown, band.range)]} />
           {handle('from')}

@@ -33,7 +33,7 @@ function element(props: Partial<Props>): React.ReactElement {
       focus={null}
       ghost={null}
       onDrop={noop}
-      window={{ from: null, until: null }}
+      fixed={{ from: null, until: null }}
       {...props}
     />
   );
@@ -92,7 +92,7 @@ describe('TimeBand drawn', () => {
 
   it('draws a busy stretch inside the fixed window in the warning colour', async () => {
     // A window fixed to end at 13:10: 나's class from 13:00 lies inside it.
-    await show({ window: { from: null, until: '13:10' } });
+    await show({ fixed: { from: null, until: '13:10' } });
 
     expect(screen.getAllByTestId('time-band-clash')).toHaveLength(1);
     expect(screen.getByTestId('time-band-clash')).toHaveStyle({ backgroundColor: color.warning });
