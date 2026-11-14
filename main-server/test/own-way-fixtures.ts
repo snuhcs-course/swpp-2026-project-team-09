@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
@@ -21,22 +22,26 @@ export const step = (title: string, start: Date | null, end: Date | null, placeI
   ended: false,
 });
 
-export type WayCall = Partial<Omit<OwnWayArgs, 'gathered' | 'items'>> & Pick<OwnWayArgs, 'travel' | 'placeOf' | 'now'>;
+export type WayCall = Partial<Omit<OwnWayArgs, 'gathered' | 'items'>> &
+  Pick<OwnWayArgs, 'travel' | 'placeOf' | 'now'> & { lateMinutes?: number };
 
 // The way of the invitee 민수 with the Leader 유상, unless `more` says otherwise.
-export function wayOf(steps: CardStep[], items: DayItem[], more: WayCall): OwnWay {
+export function wayOf(steps: CardStep[], items: DayItem[], { lateMinutes, ...more }: WayCall): OwnWay {
   const gathered = gatheringOf(steps, more.travel);
   if (gathered === null) {
     throw new Error('The steps have no gathering');
   }
-  return ownWay({
-    gathered,
-    items,
-    invitee: { id: 'invitee', name: '민수' },
-    leaderName: '유상',
-    location: null,
-    ...more,
-  });
+  return ownWay(
+    {
+      gathered,
+      items,
+      invitee: { id: 'invitee', name: '민수' },
+      leaderName: '유상',
+      location: null,
+      ...more,
+    },
+    lateMinutes,
+  );
 }
 
 // Hand-made Places: the invitee's Class at O, the meeting at M, the meal at P, the next item at N, and a location at L.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type MapScene, type PlacePoint } from '../assistant/dto/answer.dto.js';
@@ -14,8 +15,8 @@ import { type PlaceDto } from '../places/dto/place.dto.js';
 import { shownMinutes, type TravelProvider } from '../travel/travel.js';
 import { type OwnWay } from './dto/invitation-card.dto.js';
 
-// The invitee's own way to a Quest's gathering, worked out from the Quest's steps, their own day, and their own
-// location by the gathering calculation's rules. It knows nothing of the database.
+// A person's own way to a Quest's gathering from the Quest's steps, their day, and their location, by the gathering
+// calculation's rules; a late Holder sets out `lateMinutes` after the way on time. It knows nothing of the database.
 
 type Walking = Pick<TravelProvider, 'walkingSeconds'>;
 
@@ -113,7 +114,7 @@ interface Way {
 
 const NO_WAY = { origin: null, leaveAt: null, arriveAt: null, legs: [], meeting: null };
 
-type Going = Pick<Way, 'leaveAt' | 'arriveAt' | 'legs' | 'meeting'>;
+type Going = Pick<Way, 'arriveAt' | 'legs' | 'meeting'> & { leaveAt: Date };
 
 // Through the Merging Point when it lies on their way and they can be there by its start; straight otherwise, as late
 // as still has them there at the start, or as soon as they are ready.
@@ -145,7 +146,7 @@ function goingFrom(from: string, readyAt: Date, { destination, meeting }: Gather
   };
 }
 
-function wayOf({ gathered, invitee, items, location, now, travel }: OwnWayArgs): Way {
+function wayOf({ gathered, invitee, items, location, now, travel }: OwnWayArgs, late?: number): Way {
   const { destination } = gathered;
   const window = { start: destination.start, end: destination.end ?? plusMinutes(destination.start, 1) };
   const person = {
@@ -169,10 +170,11 @@ function wayOf({ gathered, invitee, items, location, now, travel }: OwnWayArgs):
     return { status, ...NO_WAY, next, leaveBy };
   }
   const { placeId, basis } = side.origin;
+  const going = goingFrom(placeId, side.readyAt, gathered, travel);
   return {
     status: 'ok',
     origin: { placeId, basis: basis === 'location' ? 'location' : 'timetable' },
-    ...goingFrom(placeId, side.readyAt, gathered, travel),
+    ...(late === undefined ? going : goingFrom(placeId, plusMinutes(going.leaveAt, late), gathered, travel)),
     next,
     leaveBy,
   };
@@ -290,8 +292,8 @@ function sceneOf(way: Way, walkMinutes: number, args: OwnWayArgs): MapScene {
 
 const timeOrNull = (at: Date | null): string | null => (at === null ? null : koreaTime(at));
 
-export function ownWay(args: OwnWayArgs): OwnWay {
-  const way = wayOf(args);
+export function ownWay(args: OwnWayArgs, lateMinutes?: number): OwnWay {
+  const way = wayOf(args, lateMinutes);
   const { placeOf } = args;
   const walkMinutes = way.legs.reduce((total, leg) => total + leg.minutes, 0);
   return {

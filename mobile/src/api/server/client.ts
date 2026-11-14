@@ -46,6 +46,7 @@ import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
 import { invitationCardClient } from './invitation-card-client';
+import { lateClient } from './late-client';
 import { partyClient } from './party-client';
 import { planQuestClient } from './plan-quest-client';
 import { roomClient } from './room-client';
@@ -61,6 +62,7 @@ export const serverClient: ApiClient = {
   ...assistantClient,
   ...planQuestClient,
   ...invitationCardClient,
+  ...lateClient,
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone

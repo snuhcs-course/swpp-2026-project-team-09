@@ -22,6 +22,7 @@
 // 2026-11-02  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-05  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-14  Opus 5.5   prompted by TaeHyun79
+// 2026-11-14  Opus 5.5   prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -70,6 +71,7 @@ model User {
   ledQuests         Quest[]
   questJoinRequests QuestJoinRequest[]
   questInvitations  QuestInvitation[]
+  questDeclines     QuestDecline[]
   meetupsProposed   Meetup[]           @relation("MeetupProposer")
   meetupsReceived   Meetup[]           @relation("MeetupReceiver")
   partyMember       PartyMember?
@@ -462,6 +464,7 @@ model Quest {
   subQuests     SubQuest[]
   joinRequests  QuestJoinRequest[]
   invitations   QuestInvitation[]
+  declines      QuestDecline[]
   party         Party?
 
   @@index([globalEventId])
@@ -504,6 +507,9 @@ model QuestHolder {
   // Read when the row is written, so that the order of the times is the order of entry. In microseconds, so that the
   // Holders a Quest is created with keep the order they were given in.
   joinedAt      DateTime           @default(dbgenerated("clock_timestamp()")) @map("joined_at") @db.Timestamp(6)
+  // How many minutes late the Holder last reported, from 1 to 120, which the migration checks. Empty while they
+  // reported none.
+  lateMinutes   Int?               @map("late_minutes")
   progress      SubQuestProgress[]
 
   @@unique([questId, userId])
@@ -577,6 +583,21 @@ model QuestInvitation {
   @@unique([questId, userId])
   @@index([userId])
   @@map("quest_invitations")
+}
+
+// A User who declined the Leader's invitation into a Quest. It goes when the User is invited into the Quest again or
+// enters it, and with the Quest.
+model QuestDecline {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId    String   @map("quest_id") @db.Uuid
+  quest      Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id])
+  declinedAt DateTime @default(now()) @map("declined_at")
+
+  @@unique([questId, userId])
+  @@index([userId])
+  @@map("quest_declines")
 }
 
 // A group of Users who are together now (README.md: Party). It ends, and its row is deleted, when its last member

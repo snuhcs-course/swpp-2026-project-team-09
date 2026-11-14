@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
-import type { InvitationCard } from './invitation-card-types';
+import type { InvitationCard, OwnWay } from './invitation-card-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
@@ -179,6 +179,8 @@ export interface ApiClient {
   declineInvitation: (invitationId: string) => Promise<void>;
   // A received invitation with the User's own way to it, worked out from where the User is now when the app knows.
   getInvitationCard: (invitationId: string, location: LatLng | null) => Promise<InvitationCard>;
+  // A Holder reports being late by a whole number of minutes from 1 to 120, and gets their own way as it now is.
+  reportLate: (questId: string, minutes: number, location: LatLng | null) => Promise<OwnWay>;
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked when it gives that.
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
@@ -297,6 +299,7 @@ export const apiClient: ShownClient = {
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
   makePlanQuest: (making, key) => chosen().makePlanQuest(making, key),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
+  reportLate: (questId, minutes, location) => chosen().reportLate(questId, minutes, location),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),
   stopTutorial: () => chosen().stopTutorial(),

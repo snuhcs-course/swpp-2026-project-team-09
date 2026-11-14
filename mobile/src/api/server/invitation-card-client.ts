@@ -44,7 +44,7 @@ function isMeeting(value: unknown): value is OwnWay['meeting'] {
   return value === null || (isPlacePoint(field(value, 'place')) && isText(field(value, 'at')));
 }
 
-function isWay(value: unknown): value is InvitationCard['way'] {
+export function isWay(value: unknown): value is InvitationCard['way'] {
   if (value === null) {
     return true;
   }

@@ -72,13 +72,17 @@ describe('The members of a Quest', () => {
     expect((await getQuest(app, minsu, questId)).body).toMatchObject({ members });
   });
 
-  it('leave out a User who declined', async () => {
+  it('list a User who declined as declined', async () => {
     const { leader, minsu, jieun, questId, minsuInvitation, jieunInvitation } = await invitedTwo();
     await answerInvitation(app, minsu, minsuInvitation, 'accept');
 
     await answerInvitation(app, jieun, jieunInvitation, 'decline');
 
-    const members = [member(leader, '유상', 'accepted'), member(minsu, '민수', 'accepted')];
+    const members = [
+      member(leader, '유상', 'accepted'),
+      member(minsu, '민수', 'accepted'),
+      member(jieun, '지은', 'declined'),
+    ];
     expect((await getQuest(app, leader, questId)).body).toMatchObject({ members });
     expect((await getQuests(app, minsu)).body).toMatchObject([{ id: questId, members }]);
   });
