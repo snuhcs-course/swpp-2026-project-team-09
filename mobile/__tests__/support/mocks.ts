@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +15,7 @@ import { resetMockFriendships } from '@/api/mock/friendships';
 import { resetMockTimetable } from '@/api/mock/timetable';
 import { forgetMockMatching } from '@/api/mock/events';
 import { resetMockTutorial } from '@/api/mock/tutorial';
+import { forgetAnswerSwitch } from '@/features/assistant/answer-switch';
 
 const SETTINGS = [
   'EXPO_PUBLIC_SIGN_IN_ENDING',
@@ -26,8 +28,8 @@ const SETTINGS = [
   'EXPO_PUBLIC_SOCKET_SERVER_URL',
 ] as const;
 
-// A phone that keeps nothing, an app started without development settings and the mock's friendships and classes as
-// they start.
+// A phone that keeps nothing, an app started without development settings, the mock's friendships and classes as
+// they start, and the switch of the answer on the map not yet read.
 export async function startFresh(): Promise<void> {
   resetMockFriendships();
   resetMockTimetable();
@@ -38,6 +40,7 @@ export async function startFresh(): Promise<void> {
   forgetMockSwitch();
   forgetMockMatching();
   resetMockTutorial();
+  forgetAnswerSwitch();
 }
 
 // Lets a mock's wait pass and gives its answer. Use with Jest's fake timers.
