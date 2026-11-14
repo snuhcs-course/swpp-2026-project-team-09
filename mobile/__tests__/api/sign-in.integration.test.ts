@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -44,6 +45,7 @@ const FIRST_STATE = {
   inviteToken: null,
   ...NO_BACKGROUND,
   declinedParties: [],
+  answerOnMap: false,
 };
 
 describe('sign-in', () => {
@@ -64,6 +66,7 @@ describe('sign-in', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
+      answerOnMap: false,
     });
   });
 
@@ -100,6 +103,7 @@ describe('what the phone keeps', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
+      answerOnMap: false,
     });
   });
 
@@ -142,6 +146,7 @@ describe('what the phone keeps of the consent', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
+      answerOnMap: false,
     });
   });
 
@@ -155,6 +160,7 @@ describe('what the phone keeps of the consent', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
+      answerOnMap: false,
     });
     expect((await keep({ locationExplained: true })).locationExplained).toBe(true);
     expect(await readKept()).toEqual({
@@ -163,6 +169,7 @@ describe('what the phone keeps of the consent', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
+      answerOnMap: false,
     });
   });
 
