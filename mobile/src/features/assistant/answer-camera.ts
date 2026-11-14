@@ -20,8 +20,9 @@ import {
   unproject,
 } from '@/map';
 import { fit, settle } from '@/map/projection';
-import { ANSWER_SYMBOL_BOX } from '@/design-system';
-import { type AnswerDrawing, offset } from './answer-marks';
+import { ANSWER_SYMBOL_BOX, answerLabelBox } from '@/design-system';
+import { offset } from './answer-labels';
+import type { AnswerDrawing } from './answer-marks';
 
 // What the pill and the card leave of the map, with the room for labels, in points of the map's view: each edge as a
 // distance from the view's top or left.
@@ -32,26 +33,19 @@ export interface ViewArea {
   left: number;
 }
 
-// The heights of what `MapAnswerMark` draws at a point, in points. A label of one line: the pick's title, 18 high
-// (`mapText.buttonTitle`), the tallest of a one-line label, with a padding of 2 and the pick's border of 2 at the top
-// and at the bottom. A label of two lines: that title and its line, 16 (`mapText.rowLine`), with a padding of 4
-// (`space[1]`) and the border. The gap of 2 between the symbol box and the label.
-const ONE_LINE_LABEL = 18 + 2 * 2 + 2 * 2;
-const TWO_LINE_LABEL = 18 + 16 + 2 * 4 + 2 * 2;
-const LABEL_GAP = 2;
 // More ground a point than a campus map shows on any phone, so that a room is never too small.
 const METRES_PER_POINT = 4.5;
 // Half the symbol box and a margin of 6.
 const LEAST_ROOM = ANSWER_SYMBOL_BOX / 2 + 6;
 
-// The room a mark needs on one side of its point: half its symbol box, and its label's when the label is there.
+// The room a mark needs on one side of its point: half its symbol box, or its label's box when the label is there.
 function needOn(side: 'above' | 'below', { look }: AnswerDrawing['things'][number]): number {
   const label = look.kind === 'answer' ? look.label : null;
-  const half = ANSWER_SYMBOL_BOX / 2;
   if (label?.side !== side) {
-    return half;
+    return ANSWER_SYMBOL_BOX / 2;
   }
-  return half + LABEL_GAP + (label.line === null ? ONE_LINE_LABEL : TWO_LINE_LABEL);
+  const box = answerLabelBox(label);
+  return side === 'above' ? -box.top : box.bottom;
 }
 
 // The room the marks of a drawing need above its top-most point and below its bottom-most, in points: a mark that

@@ -59,7 +59,7 @@ export function useMapView(
 ): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
-  const way = useInvitationMap(invitation.shown ? invitation.drawing : null, map, room);
+  const way = useInvitationMap(invitation.shown ? invitation.scene : null, map, room);
   if (answer !== null) {
     return answer;
   }

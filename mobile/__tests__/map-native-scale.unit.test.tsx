@@ -49,14 +49,14 @@ jest.mock('expo', (): object => ({
 
 // The emulator's numbers: a view 411 wide, 826 high over the tab bar (its 64 and the phone's own bar of 24) when the
 // map opened, and 914 once the tab bar gave way to a received invitation's card, which took 411 of it, under a status
-// bar of 24. What the card leaves for the way runs from 24 + 24 for the marks' room (half the symbol box of 36, and 6)
-// to 914 - 411 - 24.
+// bar of 24. What the card leaves for the way runs from 24 + 8 + 24 for ticket 08's area and the marks' room (half the
+// symbol box of 36, and 6) to 914 - 411 - 8 - 24.
 const WIDTH = 411;
 const OPENED = 826;
 const FRAMED = 914;
 const STATUS_BAR = 24;
 const CARD = 411;
-const AREA = { top: 48, bottom: 479 };
+const AREA = { top: 56, bottom: 471 };
 
 // What the Android module shows for a camera it was sent (`SnuNowMapView.kt`): a zoom no lower than its lowest zoom,
 // placed through the camera's height by a scale it measured when it opened. Kakao's camera shows as much from top to
@@ -166,7 +166,8 @@ describe('the camera asked of the Android module in a view grown since it opened
     await layOut(FRAMED);
     const { points } = wayDrawing();
 
-    map.ref.current?.fitTo(points, { padding: { top: 48, right: 64, bottom: 435, left: 64 }, animated: true });
+    // The padding of the area above, with the 8 of ticket 08's area.
+    map.ref.current?.fitTo(points, { padding: { top: 56, right: 64, bottom: 443, left: 64 }, animated: true });
 
     const ys = heightsOf(points, shownBy(mockMoveCamera.mock.lastCall?.[0], OPENED, FRAMED));
     expect(Math.min(...ys)).toBeGreaterThanOrEqual(AREA.top - 1);

@@ -1,0 +1,92 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
+import { drawingOf } from '@/features/assistant/answer-marks';
+import { NO_STANDINGS } from '@/features/assistant/invited-friends';
+import { inView } from '@/map';
+import { MINSU_ID, NEXT_CLASS, seen } from '../support/answer-marks';
+import {
+  AREA,
+  cameraPutting,
+  placeMoved,
+  positionAt,
+  SIZE,
+  THIRD_CAMERA,
+  viewAt,
+  withScene,
+} from '../support/answer-view';
+
+// The third Plan under a card of 274 on a phone without a status bar: the pill ends at 0 + 52 + 48 = 100, so the area
+// runs from 108 to 914 − 274 − 8 = 632. All the points, 425.7 high at the lowest zoom, fit the 476 from 132 to
+// 914 − 274 − 8 − 24 = 608, so the camera comes closer, to 15.2601 + log2(476 / 425.7) = 15.4212, with 자하연식당 2층
+// (37.46098) at 132 and the middle of the points across (126.95058) at 205.5. There 301동 stands at (268.2, 557.3) and
+// 302동 at (270.1, 608.0): 50.7 apart up and down and 1.9 across.
+const CLOSER = cameraPutting({ latitude: 37.46098, longitude: 126.95058 }, { x: 205.5, y: 132 }, 15.4212);
+const UNDER_274 = { ...AREA, bottom: SIZE.height - 274 - 8 };
+
+// Partitions: two labels at the left and two at the right of neighbouring marks, the one nearer its mark moving.
+describe('labels at one side of neighbouring marks', () => {
+  const drawing = drawingOf(MEAL_ANSWER, 2, NO_STANDINGS, viewAt(CLOSER, UNDER_274));
+
+  it('end the labels of 301동식당 and 302동식당 on one right edge: 302동식당 moves 2 away from its mark', () => {
+    // Their right edges, 20 left of their points, are 248.2 and 250.1; the furthest out is 248.2.
+    expect(seen(drawing, 'answer:candidate:301동식당').label).toMatchObject({ side: 'left' });
+    expect(seen(drawing, 'answer:candidate:301동식당').label).not.toHaveProperty('shift');
+    expect(seen(drawing, 'answer:candidate:302동식당').label).toMatchObject({ side: 'left', shift: 2 });
+  });
+
+  it("start the User's and 민수's tags on one left edge: the User's moves 2 away from its mark", () => {
+    // Their left edges are 288.2 and 290.1; the furthest out is 290.1.
+    expect(seen(drawing, 'answer:me').label).toMatchObject({ side: 'right', shift: 2 });
+    expect(seen(drawing, `answer:person:${MINSU_ID}`).label).not.toHaveProperty('shift');
+  });
+});
+
+// At the third Plan's camera on the emulator, 3식당 stands at (128.5, 235.7) with "3식당", 45 wide, at its left: its
+// right edge at 108.5. A Place moved to a point of the view this far from it takes its left side too.
+const AT_3 = inView({ latitude: 37.45647, longitude: 126.94851 }, THIRD_CAMERA, SIZE);
+
+function drawnWith(label: string, across: number, down: number): ReturnType<typeof drawingOf> {
+  // Changed from the stored copy: the Place stands that far right of and below 3식당 in the view.
+  const at = positionAt(THIRD_CAMERA, { x: AT_3.x + across, y: AT_3.y + down });
+  return drawingOf(withScene(MEAL_ANSWER, 2, placeMoved(label, at)), 2, NO_STANDINGS, viewAt(THIRD_CAMERA));
+}
+
+// Partitions: marks 59.5 points apart up and down (in) and 60.5 (out); 20 apart across (in) and 36.5 (out); a move
+// that the area's left edge cuts short.
+describe('the bounds of neighbouring marks', () => {
+  it("moves the label of 자하연식당 2층, 59.5 below and 20 right of 3식당, 20 away to 3식당's right edge", () => {
+    // Its right edge would be at 128.5; moved to 108.5, its 91 run from 17.5, inside 16.
+    expect(seen(drawnWith('자하연식당 2층', 20, 59.5), 'answer:candidate:자하연식당 2층').label).toMatchObject({
+      side: 'left',
+      shift: 20,
+    });
+  });
+
+  it.each([
+    ['60.5 below', 20, 60.5],
+    ['36.5 to the right', 36.5, 30],
+  ])('leaves the label of 자하연식당 2층 %s 3식당 where it is', (_, across, down) => {
+    const { label } = seen(drawnWith('자하연식당 2층', across, down), 'answer:candidate:자하연식당 2층');
+
+    expect(label).toMatchObject({ side: 'left' });
+    expect(label).not.toHaveProperty('shift');
+  });
+
+  it('moves a label only as far as the left edge of the area lets it', () => {
+    // The next Class 24동, 40 below and 30 right of 3식당, at (158.5, 275.7): "13:00 수업 · 24동", 113 wide, runs
+    // from 25.5 to 138.5. To end on 108.5 it would start at -4.5, so it moves 25.5 − 16 = 9.5, in whole points 9.
+    expect(seen(drawnWith('24동', 30, 40), NEXT_CLASS).label).toMatchObject({ side: 'left', shift: 9 });
+  });
+});
+
+// Partitions: no view, as before the camera is known.
+describe('labels drawn without a view', () => {
+  it('move no label', () => {
+    expect(seen(drawingOf(MEAL_ANSWER, 2), 'answer:candidate:302동식당').label).not.toHaveProperty('shift');
+  });
+});
