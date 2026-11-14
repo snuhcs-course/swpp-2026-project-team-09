@@ -3083,11 +3083,14 @@ and do not await it: it never throws, and a User with no usable token is skipped
 
 Pushed today:
 
-| When                      | To          | Title                           | Body              | Address                      |
-| ------------------------- | ----------- | ------------------------------- | ----------------- | ---------------------------- |
-| A Leader invites a Friend | The invitee | `<Leader's name>님의 파티 초대` | The Quest's title | `/main?card=invitation:<id>` |
+| When                      | To          | Title                           | Body                              | Address                      |
+| ------------------------- | ----------- | ------------------------------- | --------------------------------- | ---------------------------- |
+| A Leader invites a Friend | The invitee | `<Leader's name>님의 파티 초대` | The Quest's title                 | `/main?card=invitation:<id>` |
+| The time to leave comes   | The User    | `지금 나서요`                   | `<Place>까지 걸어서 <N>분이에요.` | `/main?card=party:<questId>` |
 
-Accepting, declining or cancelling an invitation, Friend Requests, requests to join and Parties push nothing.
+The time to leave is a [Notification](#notifications) that rings a phone, sent by the Notifications' sender with the
+words of its kind. Accepting, declining or cancelling an invitation, Friend Requests, requests to join and Parties push
+nothing.
 
 Expo's answer holds a ticket for each message, in message order. A `DeviceNotRegistered` ticket deletes its row and
 logs an info line; the row goes only while it still holds the token that was sent. Any other ticket error, an answer
@@ -3140,20 +3143,24 @@ a User has at most one Notification of a kind about a card, and two Friends who 
 words and gives it its address. A feature imports `NotificationsModule` and calls:
 
 - `schedule(userId, told, at)` keeps the Notification for the time `at`, overwriting one kept under the same identity.
+  One that was sent is sent again at `at`.
 - `replace(userId, told, at)` does the same only when one is kept under that identity, and answers whether it did, so
-  that a change arriving after a cancel keeps nothing.
+  that a change arriving after a cancel keeps nothing. One that was sent is sent again only when `at` changes.
 - `cancel(userId, kind, card, about?)` forgets it; `about` is the person of a kind kept for each one.
 
 `told` holds the facts of a kind, never text. The caller gives the time, and the service reads no clock. After each
 call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing sends
-none. `schedule` and `replace` refuse, by throwing, a card no address opens. The calls throw when Redis fails too, so
-a caller that must not fail catches and logs.
+none. `schedule` and `replace` refuse, by throwing, a card no address opens. The calls throw when the database fails
+too, so a caller that must not fail catches and logs.
 
-| Kind       | Told to    | When                     | Title                 | Ahead               | Line                       | Card              |
-| ---------- | ---------- | ------------------------ | --------------------- | ------------------- | -------------------------- | ----------------- |
-| `accepted` | The Leader | An invited User accepts  | `<name>가 수락했어요` | None                | The Quest's title          | `party:<questId>` |
-| `declined` | The Leader | An invited User declines | `<name>이 못 온대요`  | None                | The Quest's title          | `party:<questId>` |
-| `leave-by` | The Leader | A Plan becomes a party   | `지금 나서요`         | `<HH:MM> 나설 시각` | `<Place>까지 걸어서 <N>분` | `party:<questId>` |
+| Kind       | Told to    | When                     | Title                 | Ahead               | Line                       | Card              | Rings |
+| ---------- | ---------- | ------------------------ | --------------------- | ------------------- | -------------------------- | ----------------- | ----- |
+| `accepted` | The Leader | An invited User accepts  | `<name>가 수락했어요` | None                | The Quest's title          | `party:<questId>` | No    |
+| `declined` | The Leader | An invited User declines | `<name>이 못 온대요`  | None                | The Quest's title          | `party:<questId>` | No    |
+| `leave-by` | The Leader | A Plan becomes a party   | `지금 나서요`         | `<HH:MM> 나설 시각` | `<Place>까지 걸어서 <N>분` | `party:<questId>` | Yes   |
+
+A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
+`leave-by`, `<Place>까지 걸어서 <N>분이에요.` A kind that does not ring has no body.
 
 The name is the User's name as stored, with the subject particle that fits its last syllable (이 or 가). An invitation
 the Leader cancels tells nobody. `InvitationsService` tells the Leader after the invitation's change is stored and
@@ -3166,11 +3173,41 @@ signals, without the answer waiting for it; a failure is logged as a warning. No
 Place is unknown or the walk is 0 minutes. A User has one for a party. When the Leader ends the Quest, `LeaderService`
 cancels the `leave-by` of every Holder it had, in the same way.
 
-A User's Notifications are kept in Redis, in one hash `notifications:<userId>` with the identity as the field,
-`<kind>:<card kind>:<card id>` followed by `:<user id>` of the person it is about when the kind has one, and the
-Notification as JSON. A User keeps at most 100: one more drops the one with the earliest time. Each Notification kept sets the hash to expire 7 days later, by Redis's own expiry. No
-table holds them. A stored Notification this version cannot read, such as one of a kind a later version kept, is left
-out of the list.
+The table `notifications` holds them, one row a Notification, deleted with its User:
+
+| Column       | Holds                                                        |
+| ------------ | ------------------------------------------------------------ |
+| `id`         | The row's id                                                 |
+| `user_id`    | The User it is told to                                       |
+| `kind`       | Its kind                                                     |
+| `card_kind`  | The kind of the card it opens                                |
+| `card_id`    | The id of that card                                          |
+| `about`      | The person it is about, or empty when the kind has none      |
+| `at`         | The time it is for                                           |
+| `title`      | The title once its time has come                             |
+| `ahead`      | The title while its time is still to come, or null           |
+| `line`       | The line under the title                                     |
+| `body`       | The push's body, or null for a kind that does not ring       |
+| `rings`      | Whether it is pushed to the User's phone when its time comes |
+| `sent_at`    | When the sender took it to push, or null                     |
+| `created_at` | When the row was first stored                                |
+
+`user_id`, `kind`, `card_kind`, `card_id` and `about` are unique together: that is the identity. A row of a kind this
+version does not know, such as one a later version kept, is left out of the list.
+
+**The sender.** `NotificationSender.sendDue()` from `src/notifications/notification-sender.ts` is one step. By the
+Quests' `CLOCK`, in one statement it marks as sent at most 100 rows that ring, are not sent and whose time has come,
+the earliest first, skipping rows another transaction holds, so that every pod of the main server can run it. Then,
+outside the transaction, it sends each through `PushService.send` with its title, body and address, and the signal
+`notice` to its User. A Notification is sent at most once: it is marked before it is pushed, so a pod that stops in
+between sends nothing, and it stays in the list. The step also deletes the rows whose time is more than 30 days ago.
+It never throws: a failure is logged as a warning and the next step runs. It answers how many it sent.
+
+**The interval.** `NotificationSenderModule` runs the step every `NOTIFICATIONS_TICK_SECONDS` seconds, a whole number
+from 0 to 3600, 15 by default; an empty value is refused at start-up. 0 runs no step; the tests' settings give 0, and a
+test moves the clock with `vi.spyOn(app.get(CLOCK), 'now')` and calls `sendDue()` itself. A step claims and deletes
+the rows of every User, so the sender's tests keep their Notifications in a year before every other test file's. The
+timer does not keep the process alive and stops at shutdown.
 
 `GET /notifications` answers the signed-in User's Notifications, the latest time first, and 401 without a sign-in. One
 whose time is still to come is in the answer:
@@ -3193,13 +3230,12 @@ whose time is still to come is in the answer:
 `/main?card=<kind>:<id>`. `cardAddress()` from `src/notifications/card-address.ts` makes it and refuses a card kind
 outside lowercase letters and `-`, or an id outside letters, digits, `-`, `.` and `,`. `ahead` is the title while `at`
 is still to come, with `at` in Korea in it, and null for a kind that has none: the service reads no clock, and the
-phone shows `ahead` while `at` is after its own now. A Notification kept without `ahead` answers null.
+phone shows `ahead` while `at` is after its own now.
 
-Nothing is pushed from this service: a Notification stays in the list only.
-
-**A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its title ahead, its card
-and whom it is about to `wordsOf()` in `src/notifications/notification-words.ts`, its kind to the stored schema in
-`src/notifications/notification-store.ts`, and its caller in the feature it belongs to.
+**A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its title ahead, its card,
+whom it is about, whether it rings and its push's body to `wordsOf()` in `src/notifications/notification-words.ts`,
+its kind to the kinds the list reads in `src/notifications/notifications.service.ts`, and its caller in the feature it
+belongs to.
 
 ## Requests from the worker server
 

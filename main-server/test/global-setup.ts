@@ -13,6 +13,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -74,6 +75,8 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     JUDGEMENT_MAX_OUTPUT_TOKENS: '4000',
     LIBRARY_BOOKING_ENABLED: 'true',
     TUTORIAL_KWANJEONG_CHECK: 'false',
+    // No timer: a test calls NotificationSender.sendDue() itself.
+    NOTIFICATIONS_TICK_SECONDS: '0',
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);

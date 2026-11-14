@@ -5,83 +5,63 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Inject, Injectable } from '@nestjs/common';
-import { Redis } from 'ioredis';
-import { z } from 'zod';
-import { REDIS } from '../common/redis.module.js';
-import { type KeptNotification } from './notification.js';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../common/prisma.service.js';
+import { type Notification } from '../generated/prisma/client.js';
+import { type Card } from './card-address.js';
+import { type NotificationKind, type NotificationWords } from './notification.js';
 
-const LIFETIME_SECONDS = 7 * 24 * 60 * 60;
-const MOST_KEPT = 100;
-
-const storedSchema = z.object({
-  kind: z.enum(['accepted', 'declined', 'leave-by']),
-  card: z.object({ kind: z.string(), id: z.string() }),
-  at: z.iso.datetime(),
-  title: z.string(),
-  // Absent from one kept before the field was.
-  ahead: z.string().nullable().default(null),
-  line: z.string(),
-});
-
-// Sets the field only when it is there, so that a replace arriving after a cancel keeps nothing.
-const REPLACE_SCRIPT = `
-if redis.call('HEXISTS', KEYS[1], ARGV[1]) == 0 then return 0 end
-redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])
-redis.call('EXPIRE', KEYS[1], ARGV[3])
-return 1`;
-
-function keyOf(userId: string): string {
-  return `notifications:${userId}`;
+// A Notification as the service gives it to be kept: its kind, its time and its words.
+export interface Kept extends NotificationWords {
+  kind: NotificationKind;
+  at: Date;
 }
 
-function serialize(notification: KeptNotification): string {
-  return JSON.stringify({ ...notification, at: notification.at.toISOString() });
+type Key = Pick<Notification, 'userId' | 'kind' | 'cardKind' | 'cardId' | 'about'>;
+type Fields = Pick<Notification, 'at' | 'title' | 'ahead' | 'line' | 'body' | 'rings'>;
+
+function keyOf(userId: string, kind: string, card: Card, about: string | null): Key {
+  return { userId, kind, cardKind: card.kind, cardId: card.id, about: about ?? '' };
 }
 
-// Each User's Notifications in one Redis hash, the field being the Notification's identity. The hash is forgotten 7
-// days after the last Notification was kept in it.
+function fieldsOf({ at, title, ahead, line, body, rings }: Kept): Fields {
+  return { at, title, ahead, line, body, rings };
+}
+
+// The table `notifications`, one row a Notification.
 @Injectable()
 export class NotificationStore {
-  constructor(@Inject(REDIS) private readonly redis: Redis) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async keep(userId: string, identity: string, notification: KeptNotification): Promise<void> {
-    const key = keyOf(userId);
-    await this.redis.multi().hset(key, identity, serialize(notification)).expire(key, LIFETIME_SECONDS).exec();
-    if ((await this.redis.hlen(key)) > MOST_KEPT) {
-      const dropped = (await this.readAll(userId)).slice(MOST_KEPT).map(({ identity: field }) => field);
-      await this.redis.hdel(key, ...dropped);
-    }
+  // A schedule makes it to be sent again, even when it was sent.
+  async keep(userId: string, kept: Kept): Promise<void> {
+    const key = keyOf(userId, kept.kind, kept.card, kept.about);
+    await this.prisma.notification.upsert({
+      where: { userId_kind_cardKind_cardId_about: key },
+      create: { ...key, ...fieldsOf(kept) },
+      update: { ...fieldsOf(kept), sentAt: null },
+    });
   }
 
-  async replace(userId: string, identity: string, notification: KeptNotification): Promise<boolean> {
-    const replaced = await this.redis.eval(
-      REPLACE_SCRIPT,
-      1,
-      keyOf(userId),
-      identity,
-      serialize(notification),
-      LIFETIME_SECONDS,
-    );
-    return replaced === 1;
+  // A replace keeping the time does not send a sent one again; one that moves the time does, at the new time.
+  async replace(userId: string, kept: Kept): Promise<boolean> {
+    const key = keyOf(userId, kept.kind, kept.card, kept.about);
+    const [sameTime, newTime] = await this.prisma.$transaction([
+      this.prisma.notification.updateMany({ where: { ...key, at: kept.at }, data: fieldsOf(kept) }),
+      this.prisma.notification.updateMany({
+        where: { ...key, at: { not: kept.at } },
+        data: { ...fieldsOf(kept), sentAt: null },
+      }),
+    ]);
+    return sameTime.count + newTime.count > 0;
   }
 
-  async forget(userId: string, identity: string): Promise<void> {
-    await this.redis.hdel(keyOf(userId), identity);
+  async forget(userId: string, kind: NotificationKind, card: Card, about: string | null): Promise<void> {
+    await this.prisma.notification.deleteMany({ where: keyOf(userId, kind, card, about) });
   }
 
-  // The latest time first. One this version cannot read, such as a kind a later version kept, is left out.
-  async readAll(userId: string): Promise<(KeptNotification & { identity: string })[]> {
-    const fields = await this.redis.hgetall(keyOf(userId));
-    return Object.entries(fields)
-      .flatMap(([identity, value]) => {
-        const stored = storedSchema.safeParse(JSON.parse(value));
-        if (!stored.success) {
-          return [];
-        }
-        const { kind, card, at, title, ahead, line } = stored.data;
-        return [{ identity, kind, card, at: new Date(at), title, ahead, line }];
-      })
-      .toSorted((a, b) => b.at.getTime() - a.at.getTime());
+  // The latest time first.
+  readAll(userId: string): Promise<Notification[]> {
+    return this.prisma.notification.findMany({ where: { userId }, orderBy: [{ at: 'desc' }, { createdAt: 'desc' }] });
   }
 }
