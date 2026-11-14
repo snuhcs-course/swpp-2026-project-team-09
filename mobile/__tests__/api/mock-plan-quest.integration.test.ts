@@ -26,6 +26,7 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+// Partitions: the reply; the User's Quests before any Quest was made, and after one was.
 describe('the mock of a Plan made into a Quest', () => {
   it("answers with the main server's real reply", async () => {
     const making = { input: MEAL_ANSWER.input, planId: MEAL_PLAN_1.id, startAt: MEAL_PLAN_1.startAt, location: null };
@@ -33,7 +34,6 @@ describe('the mock of a Plan made into a Quest', () => {
     await expect(answered(mockClient.makePlanQuest(making, 'key'))).resolves.toEqual(PLAN_QUEST);
   });
 
-  // Partitions: the User's Quests before any Quest was made, and after one was.
   it("lists the Quest it made among the User's, led by the mock's User, and none before", async () => {
     const making = { input: MEAL_ANSWER.input, planId: MEAL_PLAN_1.id, startAt: MEAL_PLAN_1.startAt, location: null };
     const before = await answered(mockClient.listQuests());
