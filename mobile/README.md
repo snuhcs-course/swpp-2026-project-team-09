@@ -1568,6 +1568,8 @@ and none throws.
 - **Channel.** One Android channel, id `default`, named "알림", with high importance. The config plugin's default
   channel, the wrapper's channel creation and the main server's `channelId` use the same id. The channel is created
   before the permission is asked, since Android 13 shows no prompt before a channel exists.
+- **Permission.** Android 13 and later report a permission that was never asked as denied but still askable. On
+  Android the wrapper reads that as `undetermined`, so `undetermined` means the phone's own prompt can still show.
 - **Icon.** `assets/images/notification-icon.png`, 96 by 96, white on transparent, drawn from the app icon's shape.
   Android tints it with the plugin's `color`, `#208AEF`.
 - **Firebase.** `google-services.json` is Firebase's Android settings file for `com.bonnieandclaude.snunow` in the
