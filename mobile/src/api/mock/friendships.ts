@@ -2,10 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
-import type { Friend, InviteLink, OpenedInviteLink, Position, SentFriendRequest, UserSummary } from '@/api/types';
+import type {
+  Friend,
+  FriendLevel,
+  InviteLink,
+  OpenedInviteLink,
+  Position,
+  SentFriendRequest,
+  UserSummary,
+} from '@/api/types';
 import type { FriendRequests } from '@/api/waiting-types';
 import { now } from '@/clock';
 import {
@@ -98,13 +107,12 @@ function hasPosition(id: string): boolean {
   return POSITIONS.some(({ userId }) => userId === id);
 }
 
-// Both switches start on, so a new Friend is seen when the mock has a position for them.
+// A new friendship starts at the building, so a new Friend is seen when the mock has a position for them.
 function befriend(id: string): void {
   const { name, department } = personOf(id);
   state.requests = state.requests.filter(({ from, to }) => from !== id && to !== id);
-  state.friends = [...state.friends, { id, name, department, sharing: true, visible: hasPosition(id) }].toSorted(
-    (one, other) => one.name.localeCompare(other.name, 'ko'),
-  );
+  const friend: Friend = { id, name, department, level: 'building', sharing: true, visible: hasPosition(id) };
+  state.friends = [...state.friends, friend].toSorted((one, other) => one.name.localeCompare(other.name, 'ko'));
 }
 
 function friendOrRefuse(userId: string): Friend {
@@ -163,10 +171,12 @@ export const mockFriendships = {
       ({ userId }) =>
         !FRIENDS.some(({ id }) => id === userId) || state.friends.some(({ id, visible }) => id === userId && visible),
     ),
-  setFriendSharing: (userId: string, on: boolean): void => {
+  // The mock keeps the User's end only, and takes the Friend's to be as high.
+  setFriendLevel: (userId: string, level: FriendLevel): void => {
     const friend = friendOrRefuse(userId);
+    const sharing = level !== 'timetable';
     state.friends = state.friends.map((other) =>
-      other === friend ? { ...friend, sharing: on, visible: on && hasPosition(userId) } : other,
+      other === friend ? { ...friend, level, sharing, visible: sharing && hasPosition(userId) } : other,
     );
   },
   endFriendship: (userId: string): void => {

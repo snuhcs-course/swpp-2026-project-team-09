@@ -10,7 +10,7 @@ import { type ComponentProps, useEffect, useState } from 'react';
 import type { PlanInput } from '@/api/assistant-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
-import { withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
+import { peopleOf, withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
 import type { BandBound } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
@@ -39,7 +39,7 @@ export interface Corrections {
 function useChoices(input: PlanInput): Choice[] {
   const { data = [] } = useFriends();
   return data
-    .filter(({ id }) => !input.people.some(({ userId }) => userId === id))
+    .filter(({ id }) => !peopleOf(input).some(({ userId }) => userId === id))
     .map(({ id, name, position, minutesOld }) => ({ id, name, position, minutesOld }));
 }
 

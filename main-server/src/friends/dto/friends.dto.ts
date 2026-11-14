@@ -4,10 +4,11 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { User } from '../../generated/prisma/client.js';
+import { FriendLevel, User } from '../../generated/prisma/client.js';
 
 // Read in capitals, so that a Friend ID typed in small letters is found too. Any other text is a Friend ID nobody holds.
 export const friendIdSchema = z.string().trim().toUpperCase().min(1);
@@ -35,21 +36,27 @@ export interface FriendRequestsDto {
   sent: { id: string; receiver: UserSummaryDto; sentAt: string }[];
 }
 
-// id is the Friend's User id, which ending the friendship names. sharing is the User's own switch for the friendship,
-// and visible whether the User can see the Friend now, never why not.
+// id is the Friend's User id, which ending the friendship names. level is the User's own end of the friendship, and
+// sharing whether it is above the Timetable, for an app of before. visible is whether the User sees the Friend's
+// position or Place now, never why not.
 export interface FriendDto extends UserSummaryDto {
   id: string;
+  level: FriendLevel;
   sharing: boolean;
   visible: boolean;
 }
 
 export function toFriendDto(
   user: Pick<User, 'id' | 'name' | 'department'>,
-  sharing: boolean,
+  level: FriendLevel,
   visible: boolean,
 ): FriendDto {
-  return { id: user.id, ...toUserSummaryDto(user), sharing, visible };
+  return { id: user.id, ...toUserSummaryDto(user), level, sharing: level !== FriendLevel.timetable, visible };
 }
+
+export const friendLevelSchema = z.strictObject({ level: z.enum(FriendLevel) });
+
+export type FriendLevelDto = z.infer<typeof friendLevelSchema>;
 
 // The order of a User's Friends, as `GET /friends` lists them: by name in the Korean order.
 export function byName(a: Pick<User, 'id' | 'name'>, b: Pick<User, 'id' | 'name'>): number {

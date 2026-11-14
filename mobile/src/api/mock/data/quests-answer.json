@@ -1,0 +1,177 @@
+{
+  "input": {
+    "kind": "quests",
+    "globalEventId": null,
+    "questIds": ["bfc099b2-c099-40f2-9cc2-b747f2455b4a", "2330b2fb-1b51-4dc4-a987-ac0b845b3765"]
+  },
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    }
+  ],
+  "plans": [
+    {
+      "id": "2330b2fb-1b51-4dc4-a987-ac0b845b3765",
+      "title": "배드민턴 한 게임",
+      "place": {
+        "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+        "label": "체육관",
+        "latitude": 37.4676,
+        "longitude": 126.95238
+      },
+      "startAt": "2026-11-19T18:00:00+09:00",
+      "endAt": "2026-11-19T18:30:00+09:00",
+      "togetherMinutes": 30,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-19T17:43:00+09:00",
+          "walkMinutes": 17,
+          "leaveBy": null,
+          "next": null,
+          "mode": "shuttle"
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "18:00 체육관",
+            "strong": true
+          },
+          {
+            "text": " · 17:43에 나서요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["301동에서 체육관까지 셔틀로 17분, 17:43에 나서요"],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "timetable",
+            "tag": "나 · 17분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+              "label": "체육관",
+              "latitude": 37.4676,
+              "longitude": 126.95238
+            },
+            "role": "pick",
+            "tag": "배드민턴 한 게임"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.4676,
+              "longitude": 126.95238
+            },
+            "minutes": 17,
+            "mode": "shuttle"
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.4676,
+              "longitude": 126.95238
+            },
+            "text": "18:00 배드민턴 한 게임",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-19T17:00:00+09:00",
+          "endAt": "2026-11-19T19:00:00+09:00"
+        },
+        "now": "2026-11-19T16:45:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": []
+          }
+        ],
+        "startAt": "2026-11-19T18:00:00+09:00",
+        "endAt": "2026-11-19T18:30:00+09:00",
+        "text": "18:00–18:30 · 30분"
+      },
+      "quest": {
+        "id": "2330b2fb-1b51-4dc4-a987-ac0b845b3765",
+        "title": "배드민턴 한 게임",
+        "globalEvent": null,
+        "leader": {
+          "id": "496dd534-191c-4d88-961c-b4fdb4b10919",
+          "name": "여섯",
+          "department": "경영학과"
+        },
+        "holderCount": 3,
+        "capacity": 4,
+        "joinPolicy": "open",
+        "board": "hobby",
+        "description": "같이 쳐요",
+        "createdAt": "2026-11-14T17:09:35.575Z",
+        "nextSubQuest": {
+          "id": "fc82da45-eba7-4e11-b016-331fbe14ff58",
+          "attending": false,
+          "title": "배드민턴 한 게임",
+          "startsAt": "2026-11-19T09:00:00.000Z",
+          "endsAt": null,
+          "place": {
+            "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+            "label": "체육관",
+            "latitude": 37.4676,
+            "longitude": 126.95238
+          }
+        }
+      },
+      "friendNames": []
+    }
+  ],
+  "dropped": [
+    {
+      "place": {
+        "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+        "label": "체육관",
+        "latitude": 37.4676,
+        "longitude": 126.95238
+      },
+      "reason": "17:00 파티는 17:02에야 도착해요"
+    }
+  ],
+  "noPlan": null
+}

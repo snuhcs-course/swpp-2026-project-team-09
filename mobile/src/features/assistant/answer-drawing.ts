@@ -33,3 +33,18 @@ export interface AnswerDrawing {
   // The people the scene draws, the User included.
   userIds: string[];
 }
+
+const METRES_PER_DEGREE = 111_320;
+
+// The metres east and north from one position to another.
+export function offset(from: LatLng, to: LatLng): { east: number; north: number } {
+  const north = (to.latitude - from.latitude) * METRES_PER_DEGREE;
+  const east = (to.longitude - from.longitude) * METRES_PER_DEGREE * Math.cos((from.latitude * Math.PI) / 180);
+  return { east, north };
+}
+
+// The metres in a straight line from one position to another.
+export function metresBetween(from: LatLng, to: LatLng): number {
+  const { east, north } = offset(from, to);
+  return Math.hypot(east, north);
+}

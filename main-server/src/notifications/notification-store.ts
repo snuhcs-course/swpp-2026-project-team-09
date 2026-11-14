@@ -66,8 +66,9 @@ export class NotificationStore {
     return replaced === 1;
   }
 
-  async forget(userId: string, identity: string): Promise<void> {
-    await this.redis.hdel(keyOf(userId), identity);
+  // Whether one was kept.
+  async forget(userId: string, identity: string): Promise<boolean> {
+    return (await this.redis.hdel(keyOf(userId), identity)) > 0;
   }
 
   // The latest time first. One this version cannot read, such as a kind a later version kept, is left out.

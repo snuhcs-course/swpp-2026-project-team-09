@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: a 401 met with no refresh token, with a malformed renewal answer, and with no answer to the renewal.
@@ -19,7 +20,7 @@ jest.mock('@/auth/tokens', () => ({ heldTokens: jest.fn(), keepTokens: jest.fn()
 jest.mock('@/session/session-events', () => ({ endSession: jest.fn(), requireOnboarding: jest.fn() }));
 
 const TOKENS = { accessToken: 'expired-access', refreshToken: 'refresh-1' };
-const FRIENDS = [{ id: 'f1', name: '김민준', department: '경영학과', sharing: true, visible: false }];
+const FRIENDS = [{ id: 'f1', name: '김민준', department: '경영학과', level: 'exact', sharing: true, visible: false }];
 
 let server: FakeServer;
 

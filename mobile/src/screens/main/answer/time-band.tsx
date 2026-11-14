@@ -8,7 +8,7 @@
 import { type ReactElement, useMemo, useState } from 'react';
 import { type DimensionValue, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import type { PlanInput, TimeBand as TimeBandData } from '@/api/assistant-types';
+import type { MealInput, TimeBand as TimeBandData } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
 import {
   type BandBound,
@@ -24,7 +24,7 @@ import {
 interface TimeBandProps {
   band: TimeBandData;
   // What the User fixed: the window of the conditions, for the clashes.
-  fixed: PlanInput['window'];
+  fixed: MealInput['window'];
   // Where the band was before a drag: a dashed outline.
   ghost: Stretch | null;
   // A handle drawn emphasised.
@@ -115,7 +115,7 @@ function Handle({ bound, band, shown, trackWidth, focused, disabled, onMove, onL
   );
 }
 
-function Lanes({ band, fixed }: { band: TimeBandData; fixed: PlanInput['window'] }): ReactElement {
+function Lanes({ band, fixed }: { band: TimeBandData; fixed: MealInput['window'] }): ReactElement {
   return (
     <>
       {band.lanes.map(({ userId, busy }) => (

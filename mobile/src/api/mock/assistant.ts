@@ -6,6 +6,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -23,6 +24,7 @@ import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
+import { WAY_LOOKUP_REPLY } from './data/way-lookup';
 import {
   MEAL_ANSWER_ALONE,
   MEAL_ANSWER_FIXED_START,
@@ -38,7 +40,7 @@ import { isLibraryAsk, libraryReply } from './library-replies';
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
-// the map.
+// the map, and asked where something is (어디) with a context, with the main server's real Lookup of 문화관.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -131,7 +133,10 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
-function copyFor({ people, window: { from } }: PlanInput): AnswerReply {
+// The mock holds copies of meal answers only, so other conditions are read as a meal of the User alone.
+function copyFor(input: PlanInput): AnswerReply {
+  const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
+  const from = input.kind === 'meal' ? input.window.from : null;
   if (people.length <= 1) {
     return MEAL_ANSWER_ALONE;
   }
@@ -188,6 +193,9 @@ export function mockAssistantReply(messages: readonly ChatMessage[], context?: R
   }
   if (MENU_WORDS.some((word) => last.includes(word))) {
     return { text: menusReply(), mapButtons: ['dining'], cards: [], proposal: null };
+  }
+  if (context !== undefined && last.includes('어디')) {
+    return WAY_LOOKUP_REPLY;
   }
   return {
     text: '데모에서는 오늘 메뉴와 셔틀, 행사, 파티만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.',

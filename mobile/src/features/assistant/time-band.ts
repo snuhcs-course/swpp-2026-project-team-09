@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { PlanInput } from '@/api/assistant-types';
+import type { MealInput } from '@/api/assistant-types';
 import { koreaClock } from '@/korea-time';
 
 // The time band's arithmetic. Its times are Korea time with the offset, and the window's are "HH:MM".
@@ -87,7 +88,7 @@ export function onBandDay(clock: string, band: { startAt: string }): string {
 
 export function clashes(
   busy: readonly Stretch[],
-  fixed: PlanInput['window'],
+  fixed: MealInput['window'],
   band: { startAt: string; endAt: string },
 ): Stretch[] {
   if (fixed.from === null && fixed.until === null) {
