@@ -108,6 +108,7 @@ describe('What the model is given of a way', () => {
       to: '문화관(73동)',
       fromIs: 'where the User is now',
       walkMinutes: 18,
+      deadline: null,
     });
   });
 });

@@ -25,7 +25,7 @@ function whereIsCultureHall(): Lookup {
       name: '유상',
       items: [classAt(TUESDAY, '11:00', '11:50', '제1공학관'), classAt(TUESDAY, '13:00', '13:50', '자연과학관6')],
     },
-    location: { at: AT_301, placeId: id('제1공학관') },
+    location: { at: AT_301, placeId: id('제1공학관'), onCampus: true },
     toPlaceId: id('문화관'),
   });
   if (answer.result !== 'found') {

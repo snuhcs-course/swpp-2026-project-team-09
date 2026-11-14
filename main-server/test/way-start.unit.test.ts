@@ -39,7 +39,7 @@ describe('Where the User sets out from', () => {
     const answer = wayFor(NOW, {
       ...toCultureHall(),
       fromPlaceId: id('제2공학관'),
-      location: { at: AT_301, placeId: id('제1공학관') },
+      location: { at: AT_301, placeId: id('제1공학관'), onCampus: true },
     });
 
     expect(startWords(answer)).toEqual({ chip: '302동에서', line: '302동에서 걸어서 20분' });
@@ -49,7 +49,7 @@ describe('Where the User sets out from', () => {
     const answer = wayFor(NOW, {
       ...toCultureHall(),
       me: me([classAt(TUESDAY, '11:00', '11:50', '자연과학관6')]),
-      location: { at: AT_301, placeId: id('제1공학관') },
+      location: { at: AT_301, placeId: id('제1공학관'), onCampus: true },
     });
 
     expect(startWords(answer)).toEqual({ chip: '301동에서', line: '지금 있는 301동에서 걸어서 18분' });
@@ -61,7 +61,7 @@ describe('Where the User sets out from, without a Place of their location', () =
     const answer = wayFor(NOW, {
       ...toCultureHall(),
       me: me([classAt(TUESDAY, '09:00', '09:50', '자연과학관6'), classAt(TUESDAY, '11:00', '11:50', '제1공학관')]),
-      location: { at: NOWHERE, placeId: null },
+      location: { at: NOWHERE, placeId: null, onCampus: true },
     });
 
     expect(startWords(answer)).toEqual({ chip: '301동에서', line: '301동에서 걸어서 18분' });

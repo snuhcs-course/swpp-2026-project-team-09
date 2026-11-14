@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
+import { CampusBoundary } from '../../common/campus-boundary.js';
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
@@ -14,19 +15,24 @@ import { UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
 import { wayAnswer, type WayAnswer } from './way-lookup.js';
 
-// What a way needs that the server reads itself: the User's name and day, and the Place of their location.
+// The Place a way from off campus starts at.
+const MAIN_GATE = '서울대 정문';
+
+// What a way needs that the server reads itself: the User's name and day, the Place of their location and whether it
+// is on campus, and the main gate.
 @Injectable()
 export class WayService {
   constructor(
     private readonly days: UserDayService,
     private readonly users: UsersService,
     private readonly places: PlaceLookup,
+    private readonly campus: CampusBoundary,
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
   async find(
     userId: string,
-    ask: { fromPlaceId: string | null; toPlaceId: string },
+    ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null },
     at: { now: Date; location: Position | null },
   ): Promise<WayAnswer> {
     const { now, location } = at;
@@ -34,11 +40,23 @@ export class WayService {
     return wayAnswer({
       now,
       me: { userId, name: user.name, items },
-      location: location === null ? null : { at: location, placeId: this.placeIdAt(location) },
+      location:
+        location === null
+          ? null
+          : { at: location, placeId: this.placeIdAt(location), onCampus: this.campus.contains(location) },
       ...ask,
+      gatePlaceId: this.gatePlaceId(),
       travel: this.travel,
       placeOf: (placeId) => this.placeOf(placeId),
     });
+  }
+
+  private gatePlaceId(): string {
+    const placeId = this.places.placeIdOf({ placeId: null, label: MAIN_GATE, latitude: null, longitude: null });
+    if (placeId === null) {
+      throw new Error(`No Place ${MAIN_GATE}`);
+    }
+    return placeId;
   }
 
   // The Place the position is in, or the nearest within 150 m.

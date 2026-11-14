@@ -10,12 +10,12 @@ The User asks "24동까지 몇 분? 늦나" or "9시 수업인데 늦나". The A
 
 ## Acceptance criteria
 
-- [ ] The way's deadline is the time the User named ("2시까지"); else, when the Place is that of the User's next item today, that item's start. Without either, there is no deadline (ticket 06).
-- [ ] Tuesday 12:40 at building 301, next Class 13:00 in building 24: "24동까지 걸어서 **15분**" / "**12:45**에 나서면 13:00에 맞아요", the band from 12:45 to 13:00 ("12:45 나서기 · 걸어서 15분"), a flag "12:45 나서기" at the start, and a leave-by notification at 12:45 as the main action.
-- [ ] The same at 12:50: "지금 가도 **13:05** 도착" / "5분 늦어요", the band from 12:50 to 13:05, a flag "13:05 도착 · 5분 늦어요" at the Place, the basis open on the reason, and route guidance as the main action.
-- [ ] Asked with no Place ("늦나", "다음 수업까지 몇 분?"), the way goes to the User's next item today that has a Place; with none, the tool answers none.
-- [ ] From off campus (the User's location outside the campus boundary), the way is counted from the main gate, and the location is not used: Wednesday 08:35, Class 09:00 in building 24, "정문을 **08:50**까지 지나면" / "09:00 수업에 맞아요", with the basis saying that the location off campus was not used.
-- [ ] Unit tests for the deadline, the leave-by time, and lateness at the boundaries (on time to the minute, one minute late); integration tests at the endpoint with the scripted model.
+- [x] The way's deadline is the time the User named ("2시까지"); else, when the Place is that of the User's next item today, that item's start. Without either, there is no deadline (ticket 06).
+- [x] Tuesday 12:40 at building 301, next Class 13:00 in building 24: "24동까지 걸어서 **15분**" / "**12:45**에 나서면 13:00에 맞아요", the band from 12:45 to 13:00 ("12:45 나서기 · 걸어서 15분"), a flag "12:45 나서기" at the start, and a leave-by notification at 12:45 as the main action.
+- [x] The same at 12:50: "지금 가도 **13:05** 도착" / "5분 늦어요", the band from 12:50 to 13:05, a flag "13:05 도착 · 5분 늦어요" at the Place, the basis open on the reason, and route guidance as the main action.
+- [x] Asked with no Place ("늦나", "다음 수업까지 몇 분?"), the way goes to the User's next item today that has a Place; with none, the tool answers none.
+- [x] From off campus (the User's location outside the campus boundary), the way is counted from the main gate, and the location is not used: Wednesday 08:35, Class 09:00 in building 24, "정문을 **08:50**까지 지나면" / "09:00 수업에 맞아요", with the basis saying that the location off campus was not used.
+- [x] Unit tests for the deadline, the leave-by time, and lateness at the boundaries (on time to the minute, one minute late); integration tests at the endpoint with the scripted model.
 
 ## Decisions (2026-11-15)
 
@@ -27,3 +27,23 @@ The User asks "24동까지 몇 분? 늦나" or "9시 수업인데 늦나". The A
 6. **Off campus** means outside the campus boundary the server already reads (`CampusBoundary`). The main gate is the Place "서울대 정문". With no location and no Class that ended today, the tool answers none (ticket 06).
 
 ## Comments
+
+### Decisions taken in the build (2026-11-15)
+
+1. **The next item** is the User's next item today that has a Place and starts later than now, both for a way with no Place and for the deadline of a Place they named. An item without a Place is passed over.
+2. **A time the User named** (`by`) is today in Korea, and it is the deadline even when the Place is that of the next item. The next item is still drawn as the next item then.
+3. **How the Place is called.** The Place of the next item is called as the spec's wording says ("24동까지"), as this ticket's lines have it. Ticket 06's "name(N동)" form stays for a Place that is not the next item's ("문화관(73동)까지 걸어서 18분").
+4. **The main gate** is the Place "서울대 정문", called "정문" in the words, as the boards call it. Off campus, the User is drawn at the gate ("timetable"), not at their location, as ticket 06's decision 4 says for a start that is not the location.
+5. **Late from off campus**, which no board shows: "지금 정문을 지나도 **09:05** 도착" / "5분 늦어요".
+6. **The band's text** on time is the flag and the walk: "12:45 나서기 · 걸어서 15분", and off campus "08:50까지 정문 통과 · 걸어서 10분". Late, it is the stretch and the walk: "12:50–13:05 · 걸어서 15분".
+7. **The lane** holds the User's items in the band's range of decision 2. On board q2 the range is 12:30–13:00, where no Class falls, so the lane is empty although the board draws the Classes; on board q3 it holds the 13:00 Class, cut at 13:30.
+8. **The leave-by notification's `text`** is what the notification says: "지금 나서면 13:00 수업에 맞아요 · 24동까지 걸어서 15분", and off campus "지금 정문을 지나면 …". Route guidance follows it as the second button.
+9. **"Still ahead"** means later than now rounded up to the minute: at 12:45, for a leave-by time of 12:45, route guidance is the action.
+10. **The basis.** On time, it is "301동 → 24동 걸어서 15분", without "· 앱의 도보표", as boards q2 and q15 write it; a Lookup without a deadline keeps it, as board q1 does. Late, it is the reason, "걸어서 15분 · 지금 12:50". Opening the basis on screen when late is the app's part: the contract has no field for it.
+11. **No location and no next item**: the tool answers that there is no next item, since the way has nowhere to go.
+12. **What the model is given** gains `deadline`: the time, whether it is a Class, the leave-by time, the arrival if the User sets out now, and the minutes late.
+13. **The band's half hours and lane** are shared with the meal's band (`halfHoursAround` and `busyIn` in `meal-scene.ts`).
+
+The walking table gives the boards' minutes: 301동 → 24동 895 seconds (15 minutes, q2 and q3) and 서울대 정문 → 24동 600 seconds (10 minutes, q15).
+
+The endpoint's integration tests (`assistant-way-time.integration.test.ts`) were written but not run on the build machine, whose lock for runs with containers was held by another session; GitHub CI runs them.
