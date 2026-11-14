@@ -24,7 +24,7 @@ import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { type MealPlanService } from '../gathering/meal-plan.service.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { koreaNow } from '../korea-time.js';
-import { LIBRARY_RULES } from '../library/library-rules.js';
+import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
 import { DELIMITER } from '../others-text.js';
 import { getMenus } from '../tools/get-menus.js';
@@ -61,8 +61,8 @@ export interface ChatAssistantOptions {
   drawsAnswers: boolean;
 }
 
-function instructionsOf(freeTimeRules: readonly string[]): (now: Date) => string {
-  return (now) => [chatRules(now), ...freeTimeRules, LIBRARY_RULES, TUTORIAL_RULES].join('\n\n');
+function instructionsOf(freeTimeRules: readonly string[], libraryRules: string): (now: Date) => string {
+  return (now) => [chatRules(now), ...freeTimeRules, libraryRules, TUTORIAL_RULES].join('\n\n');
 }
 
 function chatRules(now: Date): string {
@@ -127,7 +127,9 @@ export function chatAssistant(
     ? { planMeal: planMeal(mealPlans) }
     : { findMealRestaurants, showRestaurants };
   return {
-    instructions: instructionsOf(drawsAnswers ? [FREE_TIME_EVENT_RULES, PLAN_RULES] : [FREE_TIME_RULES]),
+    instructions: drawsAnswers
+      ? instructionsOf([FREE_TIME_EVENT_RULES, PLAN_RULES], LIBRARY_ANSWER_RULES)
+      : instructionsOf([FREE_TIME_RULES], LIBRARY_RULES),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
       getMenus: getMenus(menus),
@@ -147,7 +149,7 @@ export function chatAssistant(
       ...meal,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
       // showLibrarySeats and showMyLibraryBookings.
-      ...libraryTools(library),
+      ...libraryTools(library, { fillsSeatTime: drawsAnswers }),
       getTutorial: getTutorial(tutorial),
     },
   };
