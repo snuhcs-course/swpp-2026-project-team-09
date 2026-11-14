@@ -628,6 +628,17 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - The conversation lives in memory in `useChat()` (`src/features/assistant/use-chat.ts`), held by the main screen,
     so closing the sheet keeps it while the app runs and restarting the app loses it. "새 대화" also drops a reply
     still on its way. The server stores none of it.
+- **The answer frame** (`answer/answer-frame.tsx`), behind a switch that is off on every phone. A long press on the
+  build line at the bottom of 내 정보 turns it on or off and says which in a toast (`answerOnMap`, read by
+  `useAnswerSwitch` in `src/features/assistant/answer-switch.ts`); the main screen follows at once. With it on, the
+  chat sheet never opens: what the User asked last stands as a pill at the top left with "답 닫기" (✕), and one white
+  card at the bottom of the screen holds the rest of the turn (`turn.ts`) without bubbles, "보는 중이에요" while the
+  Assistant works, with the bar under it ("이어서 말하기"). A reply whose answer has a Plan shows the Plan's two lines
+  (`answer-lines.tsx`) in place of the model's sentence. The lists, the row of buttons, 편의기능, the zoom control, the
+  shuttle's notice, the selected thing's card, and the tabs give way, and a marker takes no press. ✕ and Android's back
+  button forget the conversation; a map button forgets it and turns its layer on; another card leads where it does and
+  leaves the frame as it is. Every request then carries a context with the User's position on campus and the
+  capability `answer`.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
@@ -1075,7 +1086,8 @@ that the screens read as the wireframe on any day.
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
 Onboarding, whether Onboarding is finished and its answers, that the User answered the explanation before the
 location prompt (`locationExplained`), the token of an Invite Link until its accept screen shows it (`inviteToken`),
-and the running Parties whose 활성화 the User declined (`declinedParties`) (`src/storage/kept.ts`). A value stored by
+the running Parties whose 활성화 the User declined (`declinedParties`), and the switch of the answer frame
+(`answerOnMap`) (`src/storage/kept.ts`). A value stored by
 an older version, without a newer
 field, reads as "not yet" for that field. `openKept()` is the read for the start of the app: it is the one that
 honours `EXPO_PUBLIC_FIRST_STATE`, which clears all of it.

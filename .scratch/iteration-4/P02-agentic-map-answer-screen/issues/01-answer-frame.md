@@ -27,3 +27,18 @@ A User whose phone has the switch on asks the Assistant from the bar on the map,
 - [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass; and no native file of the app changed.
 
 ## Comments
+
+### Decisions (2026-11-14)
+
+Details the spec left to the implementation, listed so that any of them can be vetoed.
+
+1. **The card leaves the User's words out.** They are in the pill, so the card draws only what came after them in the turn: the reply, a failure, and the app's own bubbles.
+2. **Where the switch lives.** `answerOnMap` in what the phone keeps, read once per start by `useAnswerSwitch` (`src/features/assistant/answer-switch.ts`), which every reader follows at once. The long press on 내 정보's build line moved that line into `build-line.tsx`, with its style.
+3. **"대화 내용은 AI 제공자에게 전송돼요" follows the keyboard**, not the field's focus: it stands above the bar while the keyboard is up and nothing is asked.
+4. **✕ also puts the keyboard down.** A map button forgets the conversation without doing so; the card's content is hidden while the keyboard is up, so its buttons cannot be pressed then.
+5. **Android's back button closes the frame, a swipe from the edge does not**: the frame lies on the map and leaves its edges to the map's drags (`useBackToClose` with `edge: false`).
+6. **The card's height takes the place of the shuttle's notice's** in the main screen's room while the frame is shown (the notice is hidden then), and the toast sits 8 above the card. The lists' rows and the map's inset do not count the card yet; ticket 02's camera fit decides them.
+7. **The tab bar is hidden by a small store** (`src/screens/shell/main-tab-bar.ts`) that the main screen sets while the frame is shown; the tab bar draws nothing then while 지도 is in front.
+8. **A selected thing's card stays selected** while the frame is shown, hidden, and comes back when the frame closes; a press on a marker in the frame selects nothing.
+9. **Code moved for the 300-line limit, unchanged**: the event and Quest cards' hooks to `chat-card-actions.tsx` (with a shared `useCardActions` the sheet and the frame use), the main screen's `useRoom` to `use-room.ts`, and a bubble's parts to `BubbleParts` in `chat-bubbles.tsx`.
+10. **관정관's 좌석 현황** asks from the selected card, which now takes the chat control instead of an `onAsk` callback.
