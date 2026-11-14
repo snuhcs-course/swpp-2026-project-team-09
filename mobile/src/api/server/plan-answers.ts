@@ -59,7 +59,7 @@ function isPerson(value: unknown): value is PlanPerson {
   return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
 }
 
-function isInput(value: unknown): value is PlanInput {
+export function isInput(value: unknown): value is PlanInput {
   const window = field(value, 'window');
   return (
     field(value, 'kind') === 'meal' &&
@@ -80,13 +80,13 @@ function isChip(value: unknown): value is ConditionChip {
   );
 }
 
-function isLine(value: unknown): value is AnswerLine {
+export function isLine(value: unknown): value is AnswerLine {
   return listOf((part): part is AnswerLine[number] => isText(field(part, 'text')) && isBoolean(field(part, 'strong')))(
     value,
   );
 }
 
-function isPlacePoint(value: unknown): value is PlacePoint {
+export function isPlacePoint(value: unknown): value is PlacePoint {
   return hasTexts(value, ['placeId', 'label']) && isLatLng(value);
 }
 
@@ -115,7 +115,7 @@ function isOrigin(value: unknown): value is PlanPart['origin'] {
   );
 }
 
-function isNext(value: unknown): value is PlanPart['next'] {
+export function isNext(value: unknown): value is PlanPart['next'] {
   const place = field(value, 'place');
   return value === null || (isText(field(value, 'startAt')) && (place === null || isPlacePoint(place)));
 }
@@ -169,7 +169,7 @@ function isFlag(value: unknown): value is MapScene['flags'][number] {
   );
 }
 
-function isScene(value: unknown): value is MapScene {
+export function isScene(value: unknown): value is MapScene {
   return (
     listOf(isScenePerson)(field(value, 'people')) &&
     listOf(isScenePlace)(field(value, 'places')) &&
@@ -194,7 +194,7 @@ function isBand(value: unknown): value is TimeBand {
   );
 }
 
-function isPlan(value: unknown): value is Plan {
+export function isPlan(value: unknown): value is Plan {
   return (
     hasTexts(value, ['id', 'title', 'startAt', 'endAt']) &&
     isPlacePoint(field(value, 'place')) &&

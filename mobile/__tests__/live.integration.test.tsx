@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -18,6 +19,7 @@ import { startFresh } from './support/mocks';
 import {
   answerMainScreen,
   askMainServer,
+  DINNER,
   JI_WOO,
   LIBRARY_POSITION,
   MIN_JUN,
@@ -26,6 +28,9 @@ import {
   TOKENS,
 } from './support/server';
 import { heldTokens } from '@/auth/tokens';
+import type { LateSignal } from '@/api/late-types';
+import { type InvitationAnswer, onInvitationAnswer } from '@/live/invitation-answers';
+import { onLateReport } from '@/live/late-reports';
 
 // The one connection to the socket server: what arrives over it, and how it opens again at the token's expiry.
 
@@ -154,6 +159,60 @@ describe('signals over the connection', () => {
     });
 
     expect(routes.map((route) => server.received(route).length)).toEqual(before.map((count) => count + 1));
+  });
+});
+
+describe('an answer to an invitation over the connection', () => {
+  it.each([
+    ['invitation-accepted', 'accepted'],
+    ['invitation-declined', 'declined'],
+  ])('fetches the Quests again on %s, and tells a listener', async (signal, kind) => {
+    const socket = await openLive();
+    const listener = jest.fn<undefined, [InvitationAnswer]>();
+    const unsubscribe = onInvitationAnswer(listener);
+    const before = server.received('GET /quests').length;
+
+    await socketServer(() => {
+      socket.send(signal, { questId: DINNER.id, userId: MIN_JUN.id });
+    });
+
+    expect(server.received('GET /quests')).toHaveLength(before + 1);
+    expect(listener).toHaveBeenCalledWith({ kind, questId: DINNER.id, userId: MIN_JUN.id });
+    unsubscribe();
+  });
+});
+
+describe("a Holder's late report over the connection", () => {
+  it('fetches the Quests again, and tells a listener the minutes and the arrival', async () => {
+    const socket = await openLive();
+    const listener = jest.fn<undefined, [LateSignal]>();
+    const unsubscribe = onLateReport(listener);
+    const before = server.received('GET /quests').length;
+    const late = { questId: DINNER.id, userId: MIN_JUN.id, minutes: 5, arriveAt: '2026-11-17T12:37:00+09:00' };
+
+    await socketServer(() => {
+      socket.send('late', late);
+    });
+
+    expect(server.received('GET /quests')).toHaveLength(before + 1);
+    expect(listener).toHaveBeenCalledWith(late);
+    unsubscribe();
+  });
+});
+
+describe('a Quest changed to a better Plan over the connection', () => {
+  it('fetches the Quests and the invitations again on plan-changed', async () => {
+    const socket = await openLive();
+    const before = [server.received('GET /quests').length, server.received('GET /quest-invitations').length];
+
+    await socketServer(() => {
+      socket.send('plan-changed', { questId: DINNER.id });
+    });
+
+    expect([server.received('GET /quests').length, server.received('GET /quest-invitations').length]).toEqual([
+      before[0] + 1,
+      before[1] + 1,
+    ]);
   });
 });
 

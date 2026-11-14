@@ -2,23 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions, for each check of an answer about Quests: the documented shape, each checked field left out, null and of
 // another type, and null where it is allowed. Expected values: main-server's README (Quests) and GLOSSARY (Sub Quest).
 
 import { omit, type Variant, wrongFields } from '../support/answer-variants';
-import {
-  type Guard,
-  isBoard,
-  isEventName,
-  isHolder,
-  isJoinPolicy,
-  isPlace,
-  isQuest,
-  isQuests,
-  isSubQuest,
-} from '@/api/server/answers';
+import { type Guard, isBoard, isEventName, isHolder, isJoinPolicy, isPlace, isSubQuest } from '@/api/server/answers';
+import { isQuest, isQuests } from '@/api/server/quest-answers';
 
 function checks<Answer>(guard: Guard<Answer>, accepted: readonly Variant[], refused: readonly Variant[]): void {
   it.each(accepted)('%s → accepted', (_, answer) => {
@@ -175,6 +167,37 @@ describe('isQuest', () => {
       },
       ['globalEvent', 'leader', 'board', 'createdAt'],
     ),
+  );
+});
+
+const MEMBER = { user: HOLDER, state: 'accepted', lateMinutes: null };
+
+describe('isQuest with its members', () => {
+  checks(
+    isQuest,
+    [
+      ['no members, from a main server before them', QUEST],
+      ['no member, a Class Quest', { ...QUEST, members: [] }],
+      [
+        'a member in each state',
+        {
+          ...QUEST,
+          members: [
+            MEMBER,
+            { ...MEMBER, state: 'invited' },
+            { ...MEMBER, state: 'late', lateMinutes: 5 },
+            { ...MEMBER, state: 'declined' },
+          ],
+        },
+      ],
+    ],
+    [
+      ['members null', { ...QUEST, members: null }],
+      ['members not a list', { ...QUEST, members: MEMBER }],
+      ...wrongFields(MEMBER, { user: [{ id: 'u1' }], state: ['maybe'], lateMinutes: ['5'] }, ['lateMinutes']).map(
+        ([label, member]): Variant => [`a member with ${label}`, { ...QUEST, members: [MEMBER, member] }],
+      ),
+    ],
   );
 });
 

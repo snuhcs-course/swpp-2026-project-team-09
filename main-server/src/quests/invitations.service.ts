@@ -7,6 +7,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -81,6 +82,7 @@ export class InvitationsService {
     if ((await tx.questInvitation.findUnique({ where: { questId_userId: { questId, userId } } })) !== null) {
       throw conflict('QUEST_INVITATION_ALREADY_SENT', 'An invitation of this User into the Quest is waiting.');
     }
+    await tx.questDecline.deleteMany({ where: { questId, userId } });
     return tx.questInvitation.create({ data: { questId, userId }, include: WAITING_INCLUDE });
   }
 
@@ -144,6 +146,7 @@ export class InvitationsService {
       return { questId: invitation.questId, holderIds: entered, answered: invitation };
     });
     this.signals.send(holderIds, 'quests-changed');
+    this.signals.send([answered.quest.leaderId], 'invitation-accepted', { questId, userId });
     this.tellLeader(answered.quest.leaderId, {
       kind: 'accepted',
       questId,
@@ -155,27 +158,33 @@ export class InvitationsService {
     return this.quests.read(userId, questId);
   }
 
-  // Tells the Leader too, whose list drops the invitation.
+  // Keeps the decline in place of the invitation. Tells the Holders too, whose members list the User as declined.
   async decline(userId: string, invitationId: string): Promise<void> {
     const invitation = await this.prisma.questInvitation.findFirst({
       where: { id: invitationId, userId },
-      include: { quest: true, user: { select: { name: true } } },
+      include: { quest: { include: { holders: { select: { userId: true } } } }, user: { select: { name: true } } },
     });
-    if (
-      invitation === null ||
-      (await this.prisma.questInvitation.deleteMany({ where: { id: invitationId, userId } })).count === 0
-    ) {
+    if (invitation === null) {
       throw invitationNotFound();
     }
-    this.signals.send([userId, invitation.quest.leaderId], 'quests-changed');
-    this.tellLeader(invitation.quest.leaderId, {
+    const { questId, quest } = invitation;
+    await this.prisma.$transaction(async (tx) => {
+      if ((await tx.questInvitation.deleteMany({ where: { id: invitationId, userId } })).count === 0) {
+        throw invitationNotFound();
+      }
+      await tx.questDecline.deleteMany({ where: { questId, userId } });
+      await tx.questDecline.create({ data: { questId, userId } });
+    });
+    this.signals.send([userId, ...quest.holders.map((holder) => holder.userId)], 'quests-changed');
+    this.signals.send([quest.leaderId], 'invitation-declined', { questId, userId });
+    this.tellLeader(quest.leaderId, {
       kind: 'declined',
-      questId: invitation.questId,
-      questTitle: invitation.quest.title,
+      questId,
+      questTitle: quest.title,
       friendId: userId,
       friendName: invitation.user.name,
     });
-    await this.roomRequests.questChanged(invitation.questId);
+    await this.roomRequests.questChanged(questId);
   }
 
   // Not awaited: the Leader's Notification never fails the invited User's answer.

@@ -7,6 +7,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -52,6 +53,15 @@ export interface HolderDto {
   department: string;
 }
 
+export type MemberState = 'invited' | 'accepted' | 'late' | 'declined';
+
+export interface QuestMemberDto {
+  user: HolderDto;
+  state: MemberState;
+  // Set with 'late' only.
+  lateMinutes: number | null;
+}
+
 export interface QuestDto {
   id: string;
   title: string;
@@ -72,6 +82,9 @@ export interface QuestDto {
   classQuest: boolean;
   // The requests to join waiting for the Leader's answer, when the User who reads it leads it; 0 otherwise.
   waitingJoinRequests: number;
+  // The Holders in the order they entered, then the Users whose invitation waits, by when it was sent, then the Users
+  // who declined, by when they declined. None for a Class Quest.
+  members: QuestMemberDto[];
 }
 
 // A Quest as a User who does not hold it reads it: in the list of recruiting Quests, in a request to join it and in an
@@ -119,6 +132,8 @@ export const QUEST_INCLUDE = {
   leader: { select: HOLDER_SELECT },
   holders: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }] },
   subQuests: { include: SUB_QUEST_INCLUDE, orderBy: [{ attending: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }] },
+  invitations: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ sentAt: 'asc' }, { id: 'asc' }] },
+  declines: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ declinedAt: 'asc' }, { id: 'asc' }] },
   _count: { select: { joinRequests: true } },
 } satisfies Prisma.QuestInclude;
 
@@ -219,6 +234,15 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
     classQuest: false,
     waitingJoinRequests: quest.leaderId === userId ? _count.joinRequests : 0,
+    members: [
+      ...quest.holders.map(({ user, lateMinutes }): QuestMemberDto => ({
+        user,
+        state: lateMinutes === null ? 'accepted' : 'late',
+        lateMinutes,
+      })),
+      ...quest.invitations.map(({ user }): QuestMemberDto => ({ user, state: 'invited', lateMinutes: null })),
+      ...quest.declines.map(({ user }): QuestMemberDto => ({ user, state: 'declined', lateMinutes: null })),
+    ],
   };
 }
 

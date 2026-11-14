@@ -17,6 +17,7 @@
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
+import type { InvitationCard, OwnWay } from './invitation-card-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
@@ -55,7 +56,7 @@ import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
 import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
-import type { MakePlanQuest, PlanQuest } from './plan-quest-types';
+import type { BetterPlan, MakePlanQuest, PlanQuest } from './plan-quest-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
 
@@ -176,6 +177,10 @@ export interface ApiClient {
   inviteToQuest: (questId: string, userId: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<Quest>;
   declineInvitation: (invitationId: string) => Promise<void>;
+  // A received invitation with the User's own way to it, worked out from where the User is now when the app knows.
+  getInvitationCard: (invitationId: string, location: LatLng | null) => Promise<InvitationCard>;
+  // A Holder reports being late by a whole number of minutes from 1 to 120, and gets their own way as it now is.
+  reportLate: (questId: string, minutes: number, location: LatLng | null) => Promise<OwnWay>;
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked when it gives that.
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
@@ -184,6 +189,12 @@ export interface ApiClient {
   // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
   // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
   makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
+  // For the Leader after a decline: whether the people left have a better Plan than the Quest as it stands, worked
+  // out from where the Leader is now when the app knows.
+  getBetterPlan: (questId: string, location: LatLng | null) => Promise<BetterPlan>;
+  // The Quest changed to the Plan named, its Holders and waiting invitations kept. Refused with 409 PLAN_CHANGED as
+  // the making is, and with 400 PLAN_PEOPLE_CHANGED when the input is not for the Quest's people.
+  changePlanQuest: (questId: string, making: MakePlanQuest) => Promise<Quest>;
   // The 새내기 튜토리얼: its content and the User's progress. Each change answers with the new tutorial, and each is
   // idempotent. A key that is no quest is refused with 404; a `by` that does not fit the quest's completion with 400.
   getTutorial: () => Promise<Tutorial>;
@@ -293,6 +304,10 @@ export const apiClient: ShownClient = {
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
   makePlanQuest: (making, key) => chosen().makePlanQuest(making, key),
+  getBetterPlan: (questId, location) => chosen().getBetterPlan(questId, location),
+  changePlanQuest: (questId, making) => chosen().changePlanQuest(questId, making),
+  getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
+  reportLate: (questId, minutes, location) => chosen().reportLate(questId, minutes, location),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),
   stopTutorial: () => chosen().stopTutorial(),
