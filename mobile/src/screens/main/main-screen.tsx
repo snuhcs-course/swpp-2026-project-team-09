@@ -30,6 +30,7 @@ import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
+import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import { Card } from './card';
 import { FriendList } from './friend-list';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
@@ -46,7 +47,7 @@ import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import { type MainRoute, useRoute } from './use-route';
 import { useMapView } from './use-map-view';
-import { useFramed } from './use-received-invitation';
+import { type ReceivedInvitation, useReceivedInvitation } from './use-received-invitation';
 import { useRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
@@ -251,6 +252,19 @@ function useAskedTutorialQuest(openSheet: (key: string) => void): void {
       openSheet(tutorial);
     }
   }, [tutorial, openSheet]);
+}
+
+// The received invitation, and whether the answer frame or its card is shown, which the tab bar gives way to.
+function useFramed(
+  selection: Selection,
+  cards: readonly CardView[],
+  me: Me,
+  chatFramed: boolean,
+): { invitation: ReceivedInvitation; framed: boolean } {
+  const invitation = useReceivedInvitation(selection, cards, me, chatFramed);
+  const framed = chatFramed || invitation.shown;
+  useHideTabBarOnMain(framed);
+  return { invitation, framed };
 }
 
 // The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), and the pin

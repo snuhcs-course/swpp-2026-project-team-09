@@ -126,9 +126,10 @@ function useDrawnMap(
   if (drawing === null || things.length === 0) {
     return null;
   }
-  const markers = things.flatMap(({ id, name, position, planId, order }, at): MapMarker[] => {
+  const markers = things.flatMap((thing, at): MapMarker[] => {
     const image = images[at];
-    return image === undefined ? [] : [{ id, name, position, image, order, passive: planId === null }];
+    const { id, position, planId, order } = thing;
+    return image === undefined ? [] : [{ id, name: thing.name, position, image, order, passive: planId === null }];
   });
   return { markers, lines: drawing.lines };
 }

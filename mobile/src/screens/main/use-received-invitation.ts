@@ -15,7 +15,6 @@ import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-
 import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type CardView, cardId, invitationIdOf } from '@/features/map/adapter';
 import { type PartyActions, usePartyActions } from '../party/use-party-actions';
-import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import type { Me } from './use-me';
 import type { Selection } from './use-selection';
 
@@ -34,7 +33,7 @@ export interface ReceivedInvitation {
   busy: boolean;
   accept: () => void;
   decline: () => void;
-  close: () => void;
+  closeCard: () => void;
 }
 
 export const INVITATION_GONE = '이미 끝난 초대예요';
@@ -132,18 +131,18 @@ export function useReceivedInvitation(
   { position, offCampus }: Pick<Me, 'position' | 'offCampus'>,
   framed: boolean,
 ): ReceivedInvitation {
-  const { selected, close } = selection;
+  const { selected, close: closeCard } = selection;
   const selectedId = selected?.id ?? null;
   const selectedInvitation = selectedId === null ? null : invitationIdOf(selectedId);
   const invitationId = framed ? null : selectedInvitation;
   const read = useCardRead(invitationId, position);
   const gone = read.error instanceof ApiError && read.error.status === 404;
-  useGoneOnRead(gone, close);
+  useGoneOnRead(gone, closeCard);
   useEndedOnList(selectedInvitation === null ? null : selectedId, cards);
   const card = invitationId === null ? null : (read.data ?? null);
   const way = card?.way ?? null;
   const drawing = useMemo(() => (way === null ? null : drawingOfScene(way.scene)), [way]);
-  const answers = useAnswers(card, selectedId, close);
+  const answers = useAnswers(card, selectedId, closeCard);
   return {
     shown: invitationId !== null,
     card,
@@ -152,19 +151,6 @@ export function useReceivedInvitation(
     offCampus,
     drawing,
     ...answers,
-    close,
+    closeCard,
   };
-}
-
-// The received invitation, and whether the answer frame or its card is shown, which the tab bar gives way to.
-export function useFramed(
-  selection: Selection,
-  cards: readonly CardView[],
-  me: Pick<Me, 'position' | 'offCampus'>,
-  chatFramed: boolean,
-): { invitation: ReceivedInvitation; framed: boolean } {
-  const invitation = useReceivedInvitation(selection, cards, me, chatFramed);
-  const framed = chatFramed || invitation.shown;
-  useHideTabBarOnMain(framed);
-  return { invitation, framed };
 }

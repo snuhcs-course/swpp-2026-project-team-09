@@ -76,7 +76,7 @@ interface InvitationProps extends ButtonsProps {
 
 function Invitation({ card, offCampus, busy, onAccept, onDecline }: InvitationProps): ReactElement {
   const { time, title } = titleOf(card);
-  const holders = card.holders.map(({ name }) => name).join(', ');
+  const holders = card.holders.map((holder) => holder.name).join(', ');
   const lines = wayLines(card, offCampus);
   return (
     <>
@@ -159,7 +159,7 @@ export function InvitationFrame({ invitation, room, onHeight }: InvitationFrameP
   const { bottom } = useSafeAreaInsets();
   const barRoom = bottom + space[4];
   const stageHeight = room.stage?.height ?? null;
-  const { card, failed, offCampus, busy, accept, decline, close, retry } = invitation;
+  const { card, failed, offCampus, busy, accept, decline, closeCard, retry } = invitation;
   return (
     <FrameCard
       barRoom={barRoom}
@@ -173,7 +173,7 @@ export function InvitationFrame({ invitation, room, onHeight }: InvitationFrameP
         failed={failed}
         offCampus={offCampus}
         onAccept={accept}
-        onClose={close}
+        onClose={closeCard}
         onDecline={decline}
         onRetry={retry}
       />
