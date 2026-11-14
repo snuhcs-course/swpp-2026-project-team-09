@@ -2,7 +2,7 @@
 
 Parent: [P01 spec](../spec.md) ("The contract"), split from [05](05-other-answers-on-the-map.md)
 Status: ready-for-agent
-Blocked by: 06, and package B's pull requests 245 and 246 on `4.0/Main`
+Blocked by: 06, and package B's pull requests 245 and 246 and its ticket 06 (the received invitation's card, which draws a scene without a Plan) on `4.0/Main`
 
 ## What to build
 
@@ -18,7 +18,8 @@ A reply with a Lookup is drawn in the answer frame the way a Plan is: the scene 
 
 ## Decisions (2026-11-15)
 
-1. **Built after B's two open pull requests are merged**, on top of them, so that their rework of the frame is not done twice.
-2. **No new screen piece**: the Lookup's card is the Plan's card without the arrows and without "이대로 초대".
+1. **Built after B's open pull requests are merged**, on top of them, so that their rework of the frame is not done twice. The scene is drawn with B's `drawingOfScene` (`mobile/src/features/assistant/answer-marks.ts`, P02 ticket 06), and the camera with B's one-scene version of `use-answer-map.ts`. The building card of row 6 is B's, built on this ticket.
+2. **New roles get their looks here.** Until this ticket the app's drawing leaves a shuttle stop out and draws the new flags in the pick's tone. The looks of a stop, the shuttle's ride, the faded walk, and the flags for setting out, being late, and the shuttle are settled with package B in this ticket's pull request.
+3. **No new screen piece**: the Lookup's card is the Plan's card without the arrows and without "이대로 초대".
 
 ## Comments
