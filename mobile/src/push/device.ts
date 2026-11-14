@@ -58,9 +58,9 @@ async function permissionOf(library: Notifications): Promise<PushPermission> {
   }
 }
 
-export async function pushPermission(): Promise<PushPermission> {
+export function pushPermission(): Promise<PushPermission> {
   const library = notifications();
-  return library === null ? 'unavailable' : permissionOf(library);
+  return library === null ? Promise.resolve('unavailable') : permissionOf(library);
 }
 
 export async function askPushPermission(): Promise<Exclude<PushPermission, 'undetermined'>> {
