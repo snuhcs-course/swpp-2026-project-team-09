@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
-import { type ReactElement, useCallback } from 'react';
+import { type ReactElement, type ReactNode, useCallback } from 'react';
 import { type LayoutChangeEvent, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
@@ -87,27 +87,51 @@ interface AnswerCardProps {
   onClose: () => void;
 }
 
-// The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중이에요", and under them the room
-// of the bar. Its content scrolls inside it, and gives way to the keyboard.
-function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, cardActions, barRoom, contentMax, keyboardUp, onHeight, onClose } = props;
-  const { bubbles, waiting, retry } = control.chat;
-  const after = turnOf(bubbles)?.after ?? [];
-  const last = bubbles.at(-1);
+interface FrameCardProps {
+  // From the stage's bottom: the room the card keeps under its content.
+  barRoom: number;
+  // The most the content takes, null until the stage is laid out.
+  contentMax: number | null;
+  onHeight: (height: number) => void;
+  testID: string;
+  // Null leaves the card empty, as while the keyboard is up.
+  children: ReactNode;
+}
+
+// The frame's card, attached to the bottom of the screen. Its content scrolls inside it.
+export function FrameCard({ barRoom, contentMax, onHeight, testID, children }: FrameCardProps): ReactElement {
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
       style={[styles.card, { paddingBottom: barRoom }]}
-      testID="answer-card"
+      testID={testID}
     >
-      {keyboardUp ? null : (
+      {children === null ? null : (
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           style={contentMax === null ? undefined : { maxHeight: contentMax }}
         >
+          {children}
+        </ScrollView>
+      )}
+    </View>
+  );
+}
+
+// The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중이에요", and under them the room
+// of the bar. Its content gives way to the keyboard.
+function AnswerCard(props: AnswerCardProps): ReactElement {
+  const { control, cardActions, barRoom, contentMax, keyboardUp, onHeight, onClose } = props;
+  const { bubbles, waiting, retry } = control.chat;
+  const after = turnOf(bubbles)?.after ?? [];
+  const last = bubbles.at(-1);
+  return (
+    <FrameCard barRoom={barRoom} contentMax={contentMax} onHeight={onHeight} testID="answer-card">
+      {keyboardUp ? null : (
+        <>
           {after.map((bubble) => (
             <View key={bubble.id} style={styles.part}>
               <BubbleParts
@@ -122,9 +146,9 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
             </View>
           ))}
           {waiting ? <Text style={styles.words}>보는 중이에요</Text> : null}
-        </ScrollView>
+        </>
       )}
-    </View>
+    </FrameCard>
   );
 }
 

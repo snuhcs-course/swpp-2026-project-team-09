@@ -6,10 +6,14 @@
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { InvitationCard } from '@/api/invitation-card-types';
 import { Button, color, font, Icon, radius, space, text } from '@/design-system';
 import { withParticle } from '@/features/map/short-name';
 import { koreaClock } from '@/korea-time';
+import type { Room } from '../layout';
+import type { ReceivedInvitation } from '../use-received-invitation';
+import { FrameCard } from './answer-frame';
 import { AnswerLines } from './answer-lines';
 import { QuestSteps } from './quest-steps';
 
@@ -121,6 +125,38 @@ export function ReceivedInvitationCard(props: ReceivedInvitationCardProps): Reac
       <Heading onClose={onClose} words={`${card.quest.leader.name}의 파티 초대`} />
       <Invitation busy={busy} card={card} onAccept={onAccept} onDecline={onDecline} />
     </View>
+  );
+}
+
+interface InvitationFrameProps {
+  invitation: ReceivedInvitation;
+  room: Room;
+  onHeight: (height: number) => void;
+}
+
+// The card of a received invitation in the answer frame's card, without a pill, the input, or the tab bar under it.
+export function InvitationFrame({ invitation, room, onHeight }: InvitationFrameProps): ReactElement {
+  const { bottom } = useSafeAreaInsets();
+  const barRoom = bottom + space[4];
+  const stageHeight = room.stage?.height ?? null;
+  const { card, failed, busy, accept, decline, close, retry } = invitation;
+  return (
+    <FrameCard
+      barRoom={barRoom}
+      contentMax={stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom)}
+      onHeight={onHeight}
+      testID="invitation-frame"
+    >
+      <ReceivedInvitationCard
+        busy={busy}
+        card={card}
+        failed={failed}
+        onAccept={accept}
+        onClose={close}
+        onDecline={decline}
+        onRetry={retry}
+      />
+    </FrameCard>
   );
 }
 

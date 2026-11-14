@@ -15,6 +15,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -29,6 +30,8 @@ import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
+import { useHideTabBarOnMain } from '../shell/main-tab-bar';
+import { InvitationFrame } from './answer/received-invitation-card';
 import { Card } from './card';
 import { FriendList } from './friend-list';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
@@ -45,6 +48,7 @@ import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import { type MainRoute, useRoute } from './use-route';
 import { useMapView } from './use-map-view';
+import { useReceivedInvitation } from './use-received-invitation';
 import { useRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
 import { useThings } from './use-things';
@@ -110,7 +114,7 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const openPartyCreate = useOpenPartyCreate();
   const { top: inset } = useSafeAreaInsets();
   const { selected: card, close: onClose } = selection;
-  if (card === null || chat.framed) {
+  if (card === null || chat.framed || card.kind === 'invitation') {
     return null;
   }
   const { primary } = card;
@@ -160,8 +164,8 @@ function zoomShown({ bottomCard, notice }: Taken, stackOpen: boolean, framed: bo
   return !bottomCard && notice === null && !stackOpen && !framed;
 }
 
-// The lists give way to a 식당's card at the top and to the answer frame.
-function listsHidden({ topCard }: Taken, { framed }: ChatSheetControl): boolean {
+// The lists give way to a 식당's card at the top, and to the answer frame or a received invitation's card.
+function listsHidden({ topCard }: Taken, framed: boolean): boolean {
   return topCard || framed;
 }
 
@@ -274,7 +278,8 @@ function useMainTutorial(
 // cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
 // itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
 // the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing; while
-// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`).
+// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`). A received invitation's
+// card is shown the same way, with the invitee's own way on the map, and the tab bar gives way to either.
 export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
@@ -288,15 +293,18 @@ export function MainScreen(): ReactElement {
   useAskedByAddress(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { room, setStage, setCardHeight, heights } = useRoom(taken, start, chat.framed);
-  const view = useMapView(chat, map, room, { things, me, pin, lines, cards, selection });
+  const invitation = useReceivedInvitation(selection, me.position, chat.framed);
+  const framed = chat.framed || invitation.shown;
+  useHideTabBarOnMain(framed);
+  const { room, setStage, setCardHeight, heights } = useRoom(taken, start, framed);
+  const view = useMapView(chat, map, room, { things, me, pin, lines, cards, selection }, invitation);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView {...view} map={map} pin={pin} room={room} />
         <OverMap onStage={setStage}>
-          <Lists hidden={listsHidden(taken, chat)} map={map} room={room} selection={selection} tutorial={tutorial} />
-          {zoomShown(taken, stack.open, chat.framed) ? <MainZoomControl map={map} me={me} /> : null}
+          <Lists hidden={listsHidden(taken, framed)} map={map} room={room} selection={selection} tutorial={tutorial} />
+          {zoomShown(taken, stack.open, framed) ? <MainZoomControl map={map} me={me} /> : null}
           <SelectedCard
             chat={chat}
             map={map}
@@ -310,6 +318,11 @@ export function MainScreen(): ReactElement {
           <MapBottom
             {...heights}
             chat={chat}
+            invitation={
+              invitation.shown ? (
+                <InvitationFrame invitation={invitation} onHeight={heights.onAnswerHeight} room={room} />
+              ) : null
+            }
             onParty={party.open}
             onShowOnMap={pin.showOnMap}
             room={room}

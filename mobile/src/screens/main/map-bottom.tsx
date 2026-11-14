@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -91,6 +92,8 @@ interface MapBottomProps {
   onShowOnMap: (target: TutorialPinTarget) => void;
   // The chat's sheet, which the main screen holds, so that a card's button can ask the Assistant.
   chat: ChatSheetControl;
+  // A received invitation's card, which stands at the bottom in place of everything else there.
+  invitation: ReactElement | null;
 }
 
 // What is at the bottom of the map: the shuttle's notice, the row of buttons, the 편의기능 button and the AI input. A
@@ -100,11 +103,12 @@ interface MapBottomProps {
 // it, and the chat keeps its last bubble clear of it there. The conversation is kept while the app runs.
 // With the switch of the answer on the map on, the answer frame takes the sheet's place, and the input is its card's.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, onAnswerHeight, room, stack, tutorial, onShowOnMap, chat } = props;
+  const { taken, onParty, onNoticeHeight, onAnswerHeight, room, stack, tutorial, onShowOnMap, chat, invitation } =
+    props;
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const { bottomCard, notice } = taken;
-  const under = !chat.shown && !chat.framed;
+  const under = !chat.shown && !chat.framed && invitation === null;
   const inputTop = AI_INPUT.bottom + lift + inputHeight;
   return (
     <>
@@ -116,15 +120,17 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
       {chat.sheet(inputTop)}
       <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
-      <AiInput
-        chatOpen={chat.shown}
-        lift={lift}
-        onHeight={setInputHeight}
-        onOpen={chat.open}
-        placeholder={chat.framed ? '이어서 말하기' : undefined}
-        onSend={chat.onMap ? sendWithKeyboardDown(chat.chat.send) : chat.chat.send}
-        waiting={chat.chat.waiting}
-      />
+      {invitation ?? (
+        <AiInput
+          chatOpen={chat.shown}
+          lift={lift}
+          onHeight={setInputHeight}
+          onOpen={chat.open}
+          placeholder={chat.framed ? '이어서 말하기' : undefined}
+          onSend={chat.onMap ? sendWithKeyboardDown(chat.chat.send) : chat.chat.send}
+          waiting={chat.chat.waiting}
+        />
+      )}
       <TutorialPager flow={tutorial} />
       <TutorialSheet
         flow={tutorial}
