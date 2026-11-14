@@ -34,6 +34,9 @@ export class AssistantController {
     @CurrentUser() user: SignedInUser,
     @Body({ schema: assistantMessagesSchema }) { messages, clientCapabilities, context }: AssistantMessages,
   ): Promise<AssistantReplyDto> {
+    if (context.conditions !== null && context.conditions.people[0]?.userId !== user.id) {
+      throw new BadRequestException('The first person of a plan is the asker');
+    }
     return this.assistant.reply(user.id, messages, clientCapabilities, context);
   }
 

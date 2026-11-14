@@ -2160,10 +2160,17 @@ its model through OpenRouter with the Vercel AI SDK
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
   `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
   `conditions` (the `PlanInput` of the answer on screen), and `planId` (the plan on screen). Every tool is given it, and
-  `planMeal` reads its `location`. An app that sends `"clientCapabilities": ["answer"]` draws an answer on the map. The
-  reply always carries `answer`, `null` when there is none: the plans of a meal, each with its place, times, each
-  person's part (`parts`), the Sub Quests of the Quest it becomes (`subQuests`), map scene, and time band; the condition
-  chips; the dropped places; and the `input` to send back changed to recalculate. The full shape of both is in
+  `planMeal` reads its `location`. For an app that draws answers, the model reads the User's new message followed by a
+  line `[Plan on screen: {"plan", "date", "meal", "friendIds", "from", "until", "placeId"}]` when `conditions` is sent
+  (`friendIds` being the people after the asker), and a line `[Tapped: friend <userId>]` or `[Tapped: place <placeId>]`
+  when `tapped` is (`context-lines.ts`). `planMeal` takes the conditions back with a change: beside `date`, `meal`, and
+  `friendIds` it takes `from` and `until` (`HH:MM`, the start and the end the User fixed, `from` before `until`) and
+  `placeId` (the Place to eat at), keeps each person's constraints of the conditions on screen while the date and meal
+  stay the same, and accepts a Friend or a Place a resolver returned in this message, one of the conditions on screen
+  other than the asker, or the one tapped. An app that sends `"clientCapabilities": ["answer"]` draws an answer on the
+  map. The reply always carries `answer`, `null` when there is none: the plans of a meal, each with its place, times,
+  each person's part (`parts`), the Sub Quests of the Quest it becomes (`subQuests`), map scene, and time band; the
+  condition chips; the dropped places; and the `input` to send back changed to recalculate. The full shape of both is in
   `src/assistant/dto/answer.dto.ts`.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
@@ -2174,8 +2181,9 @@ its model through OpenRouter with the Vercel AI SDK
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
     than one Proposal, messages over 24,000 characters together, a Proposal's title, description and names included,
-    or a `context` of another shape, such as a latitude out of range or more than 8 people
-    (`dto/assistant-messages.dto.ts`, `dto/answer.dto.ts`).
+    a `context` of another shape, such as a latitude out of range or more than 8 people
+    (`dto/assistant-messages.dto.ts`, `dto/answer.dto.ts`), or a `context` whose `conditions` start with someone
+    other than the User, before the message is counted.
   - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
     (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
   - **The reply's text** is the text of the model's steps in order, a step that repeats the one before it left out,
