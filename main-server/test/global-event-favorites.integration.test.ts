@@ -29,6 +29,7 @@ afterAll(async () => {
   await app.close();
 });
 
+// Whether the User's list shows the event as a Favorite Event; undefined when the list does not hold it.
 async function favoriteOf(accessToken: string, id: string): Promise<boolean | undefined> {
   return (await publishedAmong(app, accessToken, [id])).at(0)?.favorite;
 }
@@ -75,7 +76,7 @@ describe('A Favorite Event', () => {
   });
 });
 
-describe('A Favorite Event', () => {
+describe("A Favorite Event's star", () => {
   it('is gone with its event', async () => {
     const { accessToken } = await signIn(app);
     const event = await storeEvent(prisma);

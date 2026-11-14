@@ -9,7 +9,8 @@ import { ApiError } from '@/api/errors';
 import { answer } from './answer';
 import { GLOBAL_EVENTS } from './data/quests';
 
-// The Favorite Events as the main server keeps them, in memory: none at each start.
+// The User's list of Global Events, with the Favorite Events as the main server keeps them, in memory: none at each
+// start.
 const favorites = new Set<string>();
 
 // For the tests: a new start of the app.
@@ -17,7 +18,7 @@ export function forgetMockFavorites(): void {
   favorites.clear();
 }
 
-export const mockFavorites: Pick<ApiClient, 'listGlobalEvents' | 'setFavoriteEvent'> = {
+export const mockGlobalEvents: Pick<ApiClient, 'listGlobalEvents' | 'setFavoriteEvent'> = {
   // The main server records no publishing time yet.
   listGlobalEvents: () =>
     answer(

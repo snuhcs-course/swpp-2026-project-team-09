@@ -17,7 +17,7 @@ import { resetMockFriendships } from '@/api/mock/friendships';
 import { resetMockInterests } from '@/api/mock/interests';
 import { resetMockTimetable } from '@/api/mock/timetable';
 import { forgetMockMatching } from '@/api/mock/events';
-import { forgetMockFavorites } from '@/api/mock/favorites';
+import { forgetMockFavorites } from '@/api/mock/global-events';
 import { resetMockTutorial } from '@/api/mock/tutorial';
 import { forgetAnswerSwitch } from '@/features/assistant/answer-switch';
 

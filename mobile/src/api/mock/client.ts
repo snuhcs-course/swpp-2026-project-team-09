@@ -31,7 +31,7 @@ import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
-import { mockFavorites } from './favorites';
+import { mockGlobalEvents } from './global-events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
@@ -196,7 +196,7 @@ export const mockClient: ApiClient = {
   },
   listPlaces: () => answer('listPlaces', () => PLACES, []),
   searchPlaces: (words) => answer('searchPlaces', () => timetable.searchPlaces(words), []),
-  ...mockFavorites,
+  ...mockGlobalEvents,
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),
   getMyParty: () => answer('getMyParty', () => MY_PARTY, null),

@@ -16,7 +16,8 @@ export const FAVORITE_NOT_CHANGED = '즐겨찾기를 바꾸지 못했어요';
 export interface Favorite {
   // The User starred the event. An event the User's list does not hold is not starred.
   on: boolean;
-  // Shows the new state at once, and the old one again with a toast when the main server did not take it.
+  // Shows the new state at once, and the old one again with a toast when the main server did not take it; the list is
+  // then fetched again, so that quick taps of which one failed end as the main server holds them.
   turn: (on: boolean) => void;
 }
 
@@ -42,6 +43,7 @@ export function useFavorite(eventId: string): Favorite {
       apiClient.setFavoriteEvent(eventId, next).catch(() => {
         show(!next);
         showToast(FAVORITE_NOT_CHANGED);
+        void queryClient.invalidateQueries({ queryKey: GLOBAL_EVENTS_KEY });
       });
     },
     [eventId, queryClient, showToast],
