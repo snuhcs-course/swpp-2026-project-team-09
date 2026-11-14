@@ -16,7 +16,7 @@ A User who invited Friends from a Plan and closed the answer still sees the Ques
 - [x] The flag and the line follow the Quest: an acceptance changes the count at once, and they go when the Quest ends, is left, or is deleted.
 - [x] With the switch off nothing is drawn.
 - [x] Tests at the main screen over the fake main server for each of the above, and the app's README.
-- [ ] The screen is run on an Android emulator, and the pull request carries its screen.
+- [x] The screen is run on an Android emulator, and the pull request carries its screen.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
@@ -41,3 +41,21 @@ A User who invited Friends from a Plan and closed the answer still sees the Ques
 16. **The User's dot after a cold start.** When the card opens before the phone's position is known, the first position known after is drawn, and then kept.
 17. **The flag's words come from the step it stands at.** The meal the Quest's title names is said while the destination is the Quest's last step, as a Plan's meal is; with the meal cancelled the flag stands at the meeting step and says that step's title: "12:18 유상, 민수: 301동 앞에서 만나기 · 수락 0/1".
 18. **The flag draws its words in two lines.** The pick's label is at most 180 points wide whatever the phone (`design-system/map-answer.tsx`), so in one line it cut the stored Quest's "11월 17일 (화) 12:15 점심 · 수락 0/1" with "…" on a 411-point phone. The label's title is the destination's start and step, "12:15 점심", and its second line, which the label already has, the day when it is not today and the count: "11월 17일 (화) · 수락 0/1", "내일 · 수락 0/1", or "수락 0/1" today (`flagWords`' `flag`, carried to the look by the card's `flag`). The flag's name read aloud, the line above the input, and the destination's words under the card after inviting keep the words in one line. A meeting step's long title (decision 17) can still be cut on the flag, whose name says it whole.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build answering from the stored copies of real replies, with the switch on:
+
+- After "배고파, 민수랑 같이", "이대로 초대", and "닫기", the flag stood at 제2공학관 in place of the Quest's own marker, reading "12:15 점심" over "11월 17일 (화) · 수락 0/1", and the line "11월 17일 (화) 12:15 점심 · 수락 0/1" stood above the interests' hint.
+- A press on the line and a press on the flag each opened the card after inviting ("민수 · 아직 안 봄", the two lines, the step, "닫기") with no tab bar and no input, the map drawing the destination and "나" alone; "닫기" and Android's back each closed it.
+- With the input focused the line was gone.
+- `snunow://main?card=party:<id>` opened the Quest's own card, "302동식당에서 점심" with "길찾기".
+
+Fixed after the check: the flag's words were cut in one line (decision 18). Seen and left: a Friend's Avatar standing near the flag can lie over its words, since the native map draws every Avatar above every marker. Not seen on the emulator, because the mock sends no signal and starts with a known position: a count changed by an acceptance while the card is open, and the User's dot drawn on a cold start; the tests cover both.
+
+### Agent usage (2026-11-15)
+
+One session with five subagents for this ticket (the implementation, two reviewers, the reviews' fixes, and the flag's two lines); the session's own time counted is the emulator check and the pull request.
+
+- Agent time: about 87 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 479,482; input 132,148,767, of which 130,799,143 were cache reads, 1,348,586 cache writes, and 1,038 uncached. Without cache reads: 1,829,106.
