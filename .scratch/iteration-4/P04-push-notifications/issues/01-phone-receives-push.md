@@ -1,9 +1,9 @@
 # 01: The phone can receive a push (the native part, 11/19 Release)
 
 Parent: [spec](../spec.md) ("The native part")
-Status: ready-for-human
-Who: the builder
-Blocked by: None (can start immediately). Merges only after the 11/18 acceptance test, and ships in the 11/19 native Release.
+Status: ready-for-agent
+Who: the server-side member implements it. The builder runs the checks that need a Mac or a phone and makes the Release.
+Blocked by: None (can start immediately). Its pull request stays a draft until the 11/18 acceptance test, and ships in the 11/19 native Release.
 Native files: yes
 
 ## What to build
@@ -13,7 +13,7 @@ An APK from the 11/19 Release that can receive a push. On a development build, t
 ## Files
 
 Create:
-- `mobile/google-services.json`: downloaded by the builder from the Firebase console, for the Android app `com.bonnieandclaude.snunow` in the project `snunow-b5827`, and committed. It holds no secret. Committing it gives CI's `app-fingerprint` job, the Release workflow, the dev APK, and every developer the same bytes, which the fingerprint needs.
+- `mobile/google-services.json`: downloaded from the Firebase console (Project settings, General, Your apps) by a member of the project, for the Android app `com.bonnieandclaude.snunow` in the project `snunow-b5827`, and committed. It holds no secret. Committing it gives CI's `app-fingerprint` job, the Release workflow, the dev APK, and every developer the same bytes, which the fingerprint needs.
 - `mobile/assets/images/notification-icon.png`: 96 by 96, white on transparent. Derive it from `android-icon-monochrome.png` if that file is white on transparent; otherwise draw it from the app icon's shape.
 - `mobile/plugins/ios-without-push.ts`: an iOS config plugin that deletes `aps-environment` from the entitlements with `withEntitlementsPlist`, with the AI-generated box. Import from `expo/config-plugins.js`, as `mobile/plugins/ios-scene-life-cycle.ts` does, since eas-cli loads plugins through Node's ESM loader. One comment says why it is listed before `expo-notifications`.
 - `mobile/src/push/device.ts`: the thin wrapper (below), with the box.
@@ -54,12 +54,12 @@ Change:
 - [ ] `mobile/google-services.json` is committed and `android.googleServicesFile` points at it.
 - [ ] Before the Release, a person has restricted the file's Android API key by API in the Google Cloud console to the FCM Registration API and the Firebase Installations API, and a development build still gets a token after the restriction.
 - [ ] After `CI=1 pnpm expo prebuild --platform android --no-install`, the manifest has the default notification icon, color, and channel `default`, and the Gradle files apply the Google services plugin.
-- [ ] On the pull request, before it merges, `CI=1 pnpm expo prebuild --platform ios` leaves no `aps-environment` in the generated entitlements file. If it is there, the plugin order is wrong. Xcode builds and signs with the free team as `infra/production/README.md` describes.
+- [ ] On the pull request, before it merges, `CI=1 pnpm expo prebuild --platform ios` leaves no `aps-environment` in the generated entitlements file. If it is there, the plugin order is wrong. Xcode builds and signs with the free team as `infra/production/README.md` describes. This check needs a Mac: the builder runs it when the implementer has none.
 - [ ] `version` is raised once for the Release, and CI's `app-fingerprint` job passes with the notice that the native part changed and needs a build.
 - [ ] Unit tests with `expo-notifications` mocked: the channel is created before the permission is asked and before the token is asked; the token call gets the project id; a failing token call gives null; `unregisterPush` calls the library once. For "unavailable", the test mocks `expo` so that `requireOptionalNativeModule` returns null, and every function reports unavailable without throwing.
 - [ ] The whole mobile suite passes unchanged.
 - [ ] On a development build on a phone, or an emulator with a Google Play image, `/push-check` shows the permission, asks for it, and shows the token. A push sent to that token from Expo's push tool arrives with the notification icon. The app's notification settings list the channel "알림" and no "Miscellaneous" channel. Tapping the push opens the app.
-- [ ] The pull request merges only after the 11/18 acceptance test. The merged commit is tagged `snunow/app/26.11.19-N`, the `release app` job builds the APK in CI, which installs over the 1.0.1 APK, and `app-version.json` names the new version. The iOS build is then made by hand and its fingerprint checked against `fingerprint.ios`, as "The iOS fingerprint" in `infra/production/README.md` describes.
+- [ ] The pull request is opened as a draft and is marked ready only after the 11/18 acceptance test. The builder merges it, and the merged commit is tagged `snunow/app/26.11.19-N`, the `release app` job builds the APK in CI, which installs over the 1.0.1 APK, and `app-version.json` names the new version. The iOS build is then made by hand and its fingerprint checked against `fingerprint.ios`, as "The iOS fingerprint" in `infra/production/README.md` describes.
 - [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `mobile/`.
 
 ## How a reviewer checks it
