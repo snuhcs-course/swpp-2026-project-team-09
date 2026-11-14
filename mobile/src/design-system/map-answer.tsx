@@ -13,8 +13,8 @@ import { color, mapText, radius, shadow, space, text } from './tokens';
 
 export type AnswerSymbol =
   | { type: 'me' }
-  // `dashed`: the position comes from the Timetable. `badge`: how the Friend answered an invitation, "?" while it
-  // waits and "✓" once accepted.
+  // `dashed`: the position comes from the Timetable. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's
+  // upper right; the caller says what it means.
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge }
   | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next'; number: number | null };
 
