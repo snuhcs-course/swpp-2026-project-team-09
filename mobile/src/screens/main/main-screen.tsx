@@ -293,7 +293,7 @@ export function MainScreen(): ReactElement {
   useAskedByAddress(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { invitation, framed } = useFramed(selection, me, chat.framed);
+  const { invitation, framed } = useFramed(selection, cards, me, chat.framed);
   const { room, setStage, setCardHeight, heights } = useRoom(taken, start, framed);
   const view = useMapView(chat, map, room, { me, pin, lines, cards, selection }, invitation);
   return (

@@ -4,15 +4,16 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { InvitationCard } from '@/api/invitation-card-types';
+import { invitationCardQuery, QUEST_INVITATIONS_KEY } from '@/api/queries';
 import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
 import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
-import { cardId, invitationIdOf } from '@/features/map/adapter';
+import { useAnswerSwitch } from '@/features/assistant/answer-switch';
+import { type CardView, cardId, invitationIdOf } from '@/features/map/adapter';
 import { type PartyActions, usePartyActions } from '../party/use-party-actions';
 import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import type { Me } from './use-me';
@@ -36,8 +37,7 @@ export interface ReceivedInvitation {
   close: () => void;
 }
 
-const CARD_KEY = 'invitation-card';
-const GONE = '이미 끝난 초대예요';
+export const INVITATION_GONE = '이미 끝난 초대예요';
 const DECLINED = '초대를 거절했어요';
 
 // The invitation's card is read with the User's position at that moment, while the User is on campus.
@@ -47,10 +47,25 @@ function useCardRead(invitationId: string | null, position: LatLng | null): UseQ
     where.current = position;
   });
   return useQuery({
-    queryKey: [CARD_KEY, invitationId],
-    queryFn: () => apiClient.getInvitationCard(invitationId ?? '', where.current),
+    ...invitationCardQuery(invitationId ?? '', () => where.current),
     enabled: invitationId !== null,
   });
+}
+
+// The selected invitation's card left the cards while the switch stayed on: the list of invitations came again
+// without it, as after the Leader cancelled it or it was answered on another device. The selection drops the card
+// itself. `selectedId` is the selected invitation's card id.
+function useEndedOnList(selectedId: string | null, cards: readonly CardView[]): void {
+  const on = useAnswerSwitch();
+  const showToast = useToast();
+  const before = useRef(selectedId);
+  useEffect(() => {
+    const was = before.current;
+    before.current = selectedId;
+    if (on && was !== null && was !== selectedId && !cards.some(({ id }) => id === was)) {
+      showToast(INVITATION_GONE);
+    }
+  }, [selectedId, cards, on, showToast]);
 }
 
 // 수락 and 거절, each as the 파티 tab's buttons do it, once for each invitation at a time. Done, the toast says so, and
@@ -95,25 +110,36 @@ function useAnswers(
   };
 }
 
+// A read refused with 404: the invitation waits no more. The card closes with a toast, and the list of invitations is
+// read again, so that the invitation leaves the 파티 tab and the cards.
+function useGoneOnRead(gone: boolean, closeCard: () => void): void {
+  const queryClient = useQueryClient();
+  const showToast = useToast();
+  useEffect(() => {
+    if (gone) {
+      showToast(INVITATION_GONE);
+      closeCard();
+      void queryClient.invalidateQueries({ queryKey: QUEST_INVITATIONS_KEY, exact: true });
+    }
+  }, [gone, showToast, closeCard, queryClient]);
+}
+
 // The invitation the User received whose card is selected, shown while the answer frame is not: its card, read
 // from the main server, and the invitee's own way drawn. An invitation that waits no more closes with a toast.
 export function useReceivedInvitation(
   selection: Selection,
+  cards: readonly CardView[],
   { position, offCampus }: Pick<Me, 'position' | 'offCampus'>,
   framed: boolean,
 ): ReceivedInvitation {
   const { selected, close } = selection;
   const selectedId = selected?.id ?? null;
-  const invitationId = selectedId === null || framed ? null : invitationIdOf(selectedId);
+  const selectedInvitation = selectedId === null ? null : invitationIdOf(selectedId);
+  const invitationId = framed ? null : selectedInvitation;
   const read = useCardRead(invitationId, position);
-  const showToast = useToast();
   const gone = read.error instanceof ApiError && read.error.status === 404;
-  useEffect(() => {
-    if (gone) {
-      showToast(GONE);
-      close();
-    }
-  }, [gone, showToast, close]);
+  useGoneOnRead(gone, close);
+  useEndedOnList(selectedInvitation === null ? null : selectedId, cards);
   const card = invitationId === null ? null : (read.data ?? null);
   const way = card?.way ?? null;
   const drawing = useMemo(() => (way === null ? null : drawingOfScene(way.scene)), [way]);
@@ -133,10 +159,11 @@ export function useReceivedInvitation(
 // The received invitation, and whether the answer frame or its card is shown, which the tab bar gives way to.
 export function useFramed(
   selection: Selection,
+  cards: readonly CardView[],
   me: Pick<Me, 'position' | 'offCampus'>,
   chatFramed: boolean,
 ): { invitation: ReceivedInvitation; framed: boolean } {
-  const invitation = useReceivedInvitation(selection, me, chatFramed);
+  const invitation = useReceivedInvitation(selection, cards, me, chatFramed);
   const framed = chatFramed || invitation.shown;
   useHideTabBarOnMain(framed);
   return { invitation, framed };

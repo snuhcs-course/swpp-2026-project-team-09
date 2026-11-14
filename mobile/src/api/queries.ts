@@ -9,13 +9,15 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
+import type { InvitationCard } from './invitation-card-types';
 import type { RestaurantMenus } from './menu-types';
 import type { PartyMessage, ShownJoinRequest, ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
-import type { Board, Person, Place } from './types';
+import type { Board, LatLng, Person, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -78,6 +80,17 @@ export const questInvitationsQuery = queryOptions({
   queryKey: QUEST_INVITATIONS_KEY,
   queryFn: () => apiClient.listQuestInvitations(),
 });
+// A received invitation's card, read with the User's position at that moment. Under the key of the invitations, so
+// that whatever fetches them again reads it again too: the Leader may have changed the steps.
+export function invitationCardQuery(
+  invitationId: string,
+  location: () => LatLng | null,
+): UseQueryOptions<InvitationCard, Error, InvitationCard, string[]> {
+  return {
+    queryKey: [...QUEST_INVITATIONS_KEY, invitationId],
+    queryFn: () => apiClient.getInvitationCard(invitationId, location()),
+  };
+}
 // One entry for each Quest the User leads, all under one key, so that a signal fetches them all again.
 export function joinRequestsQuery(
   questId: string,
