@@ -2159,10 +2159,11 @@ its model through OpenRouter with the Vercel AI SDK
   Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
   `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
-  `conditions` (the `PlanInput` of the answer on screen) and `planId` (the plan on screen). Every tool reads it. An app
-  that sends `"clientCapabilities": ["answer"]` draws an answer on the map. The reply always carries `answer`, `null`
-  when there is none: the plans of a meal with their places, times, members, map scene and time band, the condition
-  chips, the dropped places and the `input` to send back changed to recalculate. The full shape of both is in
+  `conditions` (the `PlanInput` of the answer on screen), and `planId` (the plan on screen). Every tool is given it, and
+  `planMeal` reads its `location`. An app that sends `"clientCapabilities": ["answer"]` draws an answer on the map. The
+  reply always carries `answer`, `null` when there is none: the plans of a meal, each with its place, times, each
+  person's part (`parts`), the Sub Quests of the Quest it becomes (`subQuests`), map scene, and time band; the condition
+  chips; the dropped places; and the `input` to send back changed to recalculate. The full shape of both is in
   `src/assistant/dto/answer.dto.ts`.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
@@ -2205,9 +2206,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 - **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
   OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
-- **Tools** (`tools/`, and `free-time/` for the 공강 tools): each is a zod schema of its input and a plain function
-  calling this server's services, made with `defineTool` (`feature.ts`). It is given the signed-in User's id and the
-  time of the request. A tool answers only
+- **Tools** (`tools/`, `free-time/` for the 공강 tools, and `gathering/` for `planMeal`): each is a zod schema of its
+  input and a plain function calling this server's services, made with `defineTool` (`feature.ts`). It is given the
+  signed-in User's id, the time of the request, and the request context. A tool answers only
   what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
   there is none instead of answering from elsewhere.
   - `getMenus(date, meal?, restaurant?)` answers the menus of that day only, each restaurant with `collectedAt` in
@@ -2316,10 +2317,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
     - `planMeal(date, meal, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
       `PLAN_RULES` that of the meal part of the 공강 rules, for an app that sends `answer` (`gathering/`). It plans the
-      meal on the map: `MealPlanService` reads each person's day, the asker's location from the request context and a
+      meal on the map: `MealPlanService` reads each person's day, the asker's location from the request context, and a
       Friend's position only as the asker's map shows it, computes the plans and words them, and the tool puts them in
-      the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting and each
-      person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names
+      the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
+      person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
       or rooms.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called

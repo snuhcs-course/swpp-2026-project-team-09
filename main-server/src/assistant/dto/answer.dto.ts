@@ -82,7 +82,7 @@ export interface DroppedPlace {
 export interface Plan {
   // Unique within the answer.
   id: string;
-  // The party's title.
+  // The title of the Quest the plan becomes.
   title: string;
   place: PlacePoint;
   // When everyone is there.
@@ -92,10 +92,10 @@ export interface Plan {
   togetherMinutes: number;
   // The merging point.
   meeting: { place: PlacePoint; at: string; userIds: string[] } | null;
-  // The asker first.
-  members: PlanMember[];
-  // The party's steps.
-  steps: { at: string; placeId: string; title: string }[];
+  // Each person's part of the plan, the asker first.
+  parts: PlanPart[];
+  // The Sub Quests of the Quest the plan becomes.
+  subQuests: { at: string; placeId: string; title: string }[];
   // At most two.
   lines: AnswerLine[];
   basis: string[];
@@ -103,7 +103,7 @@ export interface Plan {
   band: TimeBand;
 }
 
-export interface PlanMember {
+export interface PlanPart {
   userId: string;
   name: string;
   me: boolean;
@@ -111,13 +111,12 @@ export interface PlanMember {
   origin: { place: PlacePoint; basis: 'timetable' | 'location' | 'chosen' } | null;
   leaveAt: string | null;
   walkMinutes: number | null;
-  arriveAt: string | null;
   // Null when nothing follows.
   leaveBy: string | null;
   next: { startAt: string; place: PlacePoint | null } | null;
 }
 
-// What the map draws, by meaning. The app decides colours, camera and label sides.
+// What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {
   people: {
     userId: string;

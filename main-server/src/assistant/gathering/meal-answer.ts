@@ -4,27 +4,11 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import {
-  type AnswerLine,
-  type AnswerReply,
-  type ConditionChip,
-  type Plan,
-  type PlanMember,
-} from '../dto/answer.dto.js';
-import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
+import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan, type PlanPart } from '../dto/answer.dto.js';
+import { clockOf } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
-import {
-  type AnswerPerson,
-  itemAt,
-  itemBefore,
-  type MealAnswerArgs,
-  mergingLegs,
-  minutesBetween,
-  Naming,
-  wayOn,
-  withTopic,
-} from './answer-words.js';
-import { type Gathering, type GatheringFit, type MemberPart, RECENT_CLASS_MINUTES } from './gathering.js';
+import { itemAt, itemBefore, type MealAnswerArgs, mergingLegs, Naming, wayOn, withTopic } from './answer-words.js';
+import { type GatheringFit, type PersonPart } from './gathering.js';
 import { bandOf, sceneOf } from './meal-scene.js';
 
 export { type AnswerPerson, type MealAnswerArgs } from './answer-words.js';
@@ -35,59 +19,34 @@ const timeOf = (at: Date | null): string | null => (at === null ? null : koreaTi
 
 const plain = (text: string): AnswerLine => [{ text, strong: false }];
 
-// Where a person sets out from and what follows, as the conditions say them.
-interface Around {
-  originPlaceId: string | null;
-  originKnown: boolean;
-  next: DayItem | null;
-}
-
-// Without a plan the conditions are read from the items around the shared time, or around now without one.
-function aroundWithoutPlan(person: AnswerPerson, { shared }: Gathering, now: Date): Around {
-  const { start, end } = shared ?? { start: now, end: now };
-  const previous = itemBefore(person.items, start);
-  const recent = previous !== null && minutesBetween(previous.end, now) <= RECENT_CLASS_MINUTES;
-  const originPlaceId = recent ? previous.placeId : null;
-  return {
-    originPlaceId,
-    originKnown: originPlaceId !== null || person.position !== null,
-    next: person.items.toSorted(byStart).find((item) => item.start >= end) ?? null,
-  };
-}
-
+// From the sides: where the asker sets out, until when, and each Friend, marked when their origin is unknown. With no
+// time shared there are no sides, and the chips are the Friends' names only.
 function chipsOf(naming: Naming): ConditionChip[] {
-  const { people, gathering, now } = naming.args;
-  const [first] = gathering.fits;
-  const [mine, ...theirs] = people.map((person, index): Around => {
-    const part = first?.parts[index];
-    if (part === undefined) {
-      return aroundWithoutPlan(person, gathering, now);
-    }
-    const { origin, next } = part;
-    return { originPlaceId: origin?.placeId ?? null, originKnown: origin !== null, next: itemAt(person.items, next) };
-  });
+  const { people, gathering } = naming.args;
+  const [mine, ...theirs] = gathering.sides;
   const chips: ConditionChip[] = [];
-  if (mine !== undefined && mine.originPlaceId !== null) {
-    chips.push({ kind: 'origin', text: `${naming.building(mine.originPlaceId)}에서`, userId: null });
+  if (mine !== undefined && mine.origin !== null) {
+    chips.push({ kind: 'origin', text: `${naming.placeLabel(mine.origin.placeId)}에서`, userId: null });
   }
-  if (mine !== undefined && mine.next !== null) {
-    const clock = clockOf(mine.next.start);
-    chips.push({ kind: 'until', text: mine.next.isClass ? `${clock} 수업까지` : `${clock}까지`, userId: null });
+  const until = mine === undefined ? null : itemAt(naming.asker.items, mine.next);
+  if (until !== null) {
+    const clock = clockOf(until.start);
+    chips.push({ kind: 'until', text: until.isClass ? `${clock} 수업까지` : `${clock}까지`, userId: null });
   }
-  const friends = people.slice(1);
-  theirs.forEach(({ originKnown }, index) => {
-    const friend = friends[index];
-    if (friend !== undefined) {
-      const text = originKnown ? friend.name : `${friend.name} · 자리 모름`;
-      chips.push({ kind: 'person', text, userId: friend.userId });
-    }
+  people.slice(1).forEach((friend, index) => {
+    const side = theirs[index];
+    const text = side === undefined || side.origin !== null ? friend.name : `${friend.name} · 자리 모름`;
+    chips.push({ kind: 'person', text, userId: friend.userId });
   });
   return chips;
 }
 
-function noPlanOf({ menusCollected, gathering, people }: MealAnswerArgs): AnswerReply['noPlan'] {
-  if (!menusCollected) {
+function noPlanOf({ menus, gathering, people }: MealAnswerArgs): AnswerReply['noPlan'] {
+  if (menus === 'none') {
     return { reason: 'no-menu', lines: [plain('그날은 수집된 메뉴가 없어요')] };
+  }
+  if (menus === 'closed') {
+    return { reason: 'no-menu', lines: [plain('그 끼니에 여는 식당이 없어요')] };
   }
   if (gathering.shared === null) {
     const text = people.length > 1 ? '그 시간에는 같이 비는 시간이 없어요' : '그 시간에는 비는 시간이 없어요';
@@ -96,37 +55,36 @@ function noPlanOf({ menusCollected, gathering, people }: MealAnswerArgs): Answer
   return { reason: 'no-fit', lines: [plain('시간 안에 다녀올 수 있는 식당이 없어요')] };
 }
 
-function memberOf(part: MemberPart, naming: Naming): PlanMember {
-  const { userId, name, me } = naming.personOf(part.memberId);
+function partOf(part: PersonPart, naming: Naming): PlanPart {
+  const { userId, name, me } = naming.personOf(part.personId);
   const { origin, next } = part;
   return {
     userId,
     name,
     me,
-    origin: origin === null ? null : { place: naming.buildingPoint(origin.placeId), basis: origin.basis },
+    origin: origin === null ? null : { place: naming.placePoint(origin.placeId), basis: origin.basis },
     leaveAt: timeOf(part.leaveAt),
     walkMinutes: part.walkMinutes,
-    arriveAt: timeOf(part.arriveAt),
     leaveBy: timeOf(part.leaveBy),
     next:
       next === null
         ? null
-        : { startAt: koreaTime(next.start), place: next.placeId === null ? null : naming.buildingPoint(next.placeId) },
+        : { startAt: koreaTime(next.start), place: next.placeId === null ? null : naming.placePoint(next.placeId) },
   };
 }
 
-function stepsOf({ key, placeId, start, meeting }: GatheringFit, naming: Naming): Plan['steps'] {
+function subQuestsOf({ key, placeId, start, meeting }: GatheringFit, naming: Naming): Plan['subQuests'] {
   const meal = { at: koreaTime(start), placeId, title: `${key}에서 식사` };
   if (meeting === null) {
     return [meal];
   }
-  const names = meeting.memberIds.map((memberId) => naming.personOf(memberId).name).join(', ');
-  const title = `${names}: ${naming.building(meeting.placeId)} 앞에서 만나기`;
+  const names = meeting.personIds.map((personId) => naming.personOf(personId).name).join(', ');
+  const title = `${names}: ${naming.placeLabel(meeting.placeId)} 앞에서 만나기`;
   return [{ at: koreaTime(meeting.at), placeId: meeting.placeId, title }, meal];
 }
 
 // The second line of a plan alone: how long the asker walks and when they must leave.
-function aloneLine(mine: MemberPart | undefined): string | null {
+function aloneLine(mine: PersonPart | undefined): string | null {
   const walk = mine?.walkMinutes ?? 0;
   const leaveBy = mine?.leaveBy ?? null;
   if (leaveBy !== null) {
@@ -152,24 +110,26 @@ function linesOf(
   return second === null ? [first] : [first, plain(second)];
 }
 
-function friendBasis(part: MemberPart, { key, meeting }: GatheringFit, naming: Naming): string {
-  const { name, items } = naming.personOf(part.memberId);
+function friendBasis(part: PersonPart, { key, meeting }: GatheringFit, naming: Naming): string {
+  const { name, items } = naming.personOf(part.personId);
   const { origin, readyAt, walkMinutes, leaveBy } = part;
   if (origin === null) {
     return `${withTopic(name)} 지금 어디 있는지 몰라요`;
   }
-  const building = naming.building(origin.placeId);
+  const from = naming.placeLabel(origin.placeId);
   const pieces: string[] = [];
   if (origin.basis === 'location') {
-    pieces.push(`${name} 지금 ${building}`);
+    pieces.push(`${name} 지금 ${from}`);
   } else {
     const ended = (itemBefore(items, readyAt)?.isClass ?? true) ? '수업 끝' : '일정 끝';
     const later = readyAt > naming.args.now ? ` ${clockOf(readyAt)}` : '';
-    pieces.push(`${name}${later} ${building} ${ended}`);
+    pieces.push(`${name}${later} ${from} ${ended}`);
   }
   const legs = mergingLegs(part, meeting);
-  if (legs !== null && meeting !== null) {
-    pieces.push(`${naming.building(meeting.placeId)}까지 걸어서 ${legs.toMeeting}분, 같이 ${legs.onward}분`);
+  if (legs !== null && legs.toMeeting === 0) {
+    pieces.push(`같이 걸어서 ${legs.onward}분`);
+  } else if (legs !== null && meeting !== null) {
+    pieces.push(`${naming.placeLabel(meeting.placeId)}까지 걸어서 ${legs.toMeeting}분, 같이 ${legs.onward}분`);
   } else if (walkMinutes !== null && walkMinutes > 0) {
     pieces.push(`${key}까지 걸어서 ${walkMinutes}분`);
   }
@@ -188,7 +148,7 @@ function basisOf(fit: GatheringFit, naming: Naming): string[] {
   }
   const { origin, walkMinutes, leaveBy } = mine;
   if (fit.meeting === null && origin !== null && walkMinutes !== null && walkMinutes > 0) {
-    lines.push(`${naming.building(origin.placeId)} → ${fit.key} 걸어서 ${walkMinutes}분`);
+    lines.push(`${naming.placeLabel(origin.placeId)} → ${fit.key} 걸어서 ${walkMinutes}분`);
   }
   if (leaveBy !== null) {
     const leaving = `${clockOf(leaveBy)}에 나서요`;
@@ -196,7 +156,7 @@ function basisOf(fit: GatheringFit, naming: Naming): string[] {
     lines.push(
       onward === null
         ? leaving
-        : `${fit.key} → ${naming.building(onward.placeId)} 걸어서 ${onward.minutes}분, 그래서 ${leaving}`,
+        : `${fit.key} → ${naming.placeLabel(onward.placeId)} 걸어서 ${onward.minutes}분, 그래서 ${leaving}`,
     );
   }
   return lines;
@@ -207,16 +167,16 @@ function planOf(fit: GatheringFit, naming: Naming): Plan {
   return {
     id: key,
     title: `${key}에서 ${naming.mealWord()}`,
-    place: naming.keyPoint(placeId, key),
+    place: naming.labelledPoint(placeId, key),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     togetherMinutes,
     meeting:
       meeting === null
         ? null
-        : { place: naming.buildingPoint(meeting.placeId), at: koreaTime(meeting.at), userIds: meeting.memberIds },
-    members: fit.parts.map((part) => memberOf(part, naming)),
-    steps: stepsOf(fit, naming),
+        : { place: naming.placePoint(meeting.placeId), at: koreaTime(meeting.at), userIds: meeting.personIds },
+    parts: fit.parts.map((part) => partOf(part, naming)),
+    subQuests: subQuestsOf(fit, naming),
     lines: linesOf(fit, naming.args),
     basis: basisOf(fit, naming),
     scene: sceneOf(fit, naming),
@@ -232,7 +192,7 @@ export function mealAnswer(args: MealAnswerArgs): AnswerReply {
     chips: chipsOf(naming),
     plans,
     dropped: args.gathering.dropped.map((drop) => ({
-      place: naming.keyPoint(drop.placeId, drop.key),
+      place: naming.labelledPoint(drop.placeId, drop.key),
       reason: naming.dropReason(drop),
     })),
     noPlan: plans.length > 0 ? null : noPlanOf(args),

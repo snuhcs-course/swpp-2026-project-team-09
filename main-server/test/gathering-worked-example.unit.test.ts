@@ -5,78 +5,17 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
-import { clockOf, type DayItem, freeTimeOf, onDay } from '../src/assistant/free-time/free-time.js';
-import { mealWindow } from '../src/assistant/free-time/meal-fit.js';
-import {
-  type Gathering,
-  gather,
-  type GatheringMember,
-  type GatheringPlace,
-} from '../src/assistant/gathering/gathering.js';
-import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
-import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
-import { WALKING_TABLE_FILE, walkingTableSchema } from '../src/travel/walking-table.js';
+import { clockOf } from '../src/assistant/free-time/free-time.js';
+import { type Gathering, type GatheringPerson } from '../src/assistant/gathering/gathering.js';
+import { at, gatheringPerson, id, jieunDay, minsuDay, myDay, plan, readWorld } from './worked-example.js';
 
 // The design's worked example: lunch on Tuesday 2026-11-17, asked at 11:50, on the seed's walking table.
-const DATE = '2026-11-17';
-const at = (clock: string): Date => onDay(DATE, clock);
-const when = { window: mealWindow(DATE, 'lunch'), now: at('11:50') };
 
-let travel: SeedTravel;
-const placeOf = new Map<string, string>();
+beforeAll(() => readWorld());
 
-beforeAll(async () => {
-  travel = await readSeedTravel(SEED_DIRECTORY);
-  const table = await readSeedFile(SEED_DIRECTORY, WALKING_TABLE_FILE, walkingTableSchema);
-  for (const { id, name } of table.places) {
-    placeOf.set(name, id);
-  }
-});
-
-const id = (name: string): string => {
-  const found = placeOf.get(name);
-  if (found === undefined) {
-    throw new Error(`The walking table has no ${name}`);
-  }
-  return found;
-};
-
-const classAt = (start: string, end: string, building: string): DayItem => ({
-  id: `${building} ${start}`,
-  name: 'Class',
-  start: at(start),
-  end: at(end),
-  placeId: id(building),
-  isClass: true,
-});
-
-const me = (): GatheringMember => ({
-  id: '나',
-  free: freeTimeOf([classAt('11:00', '11:50', '제1공학관'), classAt('13:00', '13:50', '자연과학관6')], DATE, when.now),
-  locationPlaceId: null,
-});
-
-const minsu = (): GatheringMember => ({
-  id: '민수',
-  free: freeTimeOf([classAt('11:00', '12:15', '제2공학관')], DATE, when.now),
-  locationPlaceId: null,
-});
-
-const jieun = (): GatheringMember => ({
-  id: '지은',
-  free: freeTimeOf([classAt('11:00', '12:15', '두산인문관'), classAt('13:00', '14:15', '두산인문관')], DATE, when.now),
-  locationPlaceId: null,
-});
-
-const places = (): GatheringPlace[] => [
-  { key: '301동식당', placeId: id('제1공학관') },
-  { key: '302동식당', placeId: id('제2공학관') },
-  { key: '학생회관식당', placeId: id('학생회관') },
-  { key: '3식당', placeId: id('제3학생식당') },
-  { key: '자하연식당', placeId: id('자하연식당') },
-];
-
-const plan = (members: [GatheringMember, ...GatheringMember[]]): Gathering => gather(members, places(), when, travel);
+const me = (): GatheringPerson => gatheringPerson('나', myDay());
+const minsu = (): GatheringPerson => gatheringPerson('민수', minsuDay());
+const jieun = (): GatheringPerson => gatheringPerson('지은', jieunDay());
 
 // Each fit as "key start–end (minutes)".
 const lines = ({ fits }: Gathering): string[] =>
@@ -96,7 +35,7 @@ describe('Lunch alone', () => {
     ]);
   });
 
-  it('sets out from building 301 by the timetable, with no merging point', () => {
+  it('sets out from 301동 by the timetable, with no merging point', () => {
     const { fits } = plan([me()]);
 
     expect(fits.map(({ meeting }) => meeting)).toEqual([null, null, null, null, null]);
@@ -115,7 +54,7 @@ describe('Lunch with 민수', () => {
     ]);
   });
 
-  it('meets nowhere at the two buildings of their Classes', () => {
+  it('meets nowhere at the two Places of their Classes', () => {
     const gathering = plan([me(), minsu()]);
 
     expect(fitOf(gathering, '302동식당')).toMatchObject({
@@ -128,9 +67,9 @@ describe('Lunch with 민수', () => {
     });
   });
 
-  it('meets at building 301 at 12:18 on the way to the Student Center', () => {
+  it('meets at 301동 at 12:18 on the way to the Student Center', () => {
     expect(fitOf(plan([me(), minsu()]), '학생회관식당')).toMatchObject({
-      meeting: { placeId: id('제1공학관'), at: at('12:18'), memberIds: ['나', '민수'] },
+      meeting: { placeId: id('제1공학관'), at: at('12:18'), personIds: ['나', '민수'] },
       parts: [
         { walkMinutes: 15, leaveAt: at('12:18') },
         { walkMinutes: 18, leaveAt: at('12:15') },
@@ -138,9 +77,9 @@ describe('Lunch with 민수', () => {
     });
   });
 
-  it('meets at building 301 at 12:18 on the way to Cafeteria 3 and the Jahayeon cafeteria', () => {
+  it('meets at 301동 at 12:18 on the way to Cafeteria 3 and the Jahayeon cafeteria', () => {
     const gathering = plan([me(), minsu()]);
-    const meeting = { placeId: id('제1공학관'), at: at('12:18'), memberIds: ['나', '민수'] };
+    const meeting = { placeId: id('제1공학관'), at: at('12:18'), personIds: ['나', '민수'] };
 
     expect(fitOf(gathering, '3식당')?.meeting).toEqual({ ...meeting, onwardMinutes: 13 });
     expect(fitOf(gathering, '자하연식당')?.meeting).toEqual({ ...meeting, onwardMinutes: 17 });
@@ -159,12 +98,12 @@ describe('Lunch with 지은', () => {
     expect(gathering.fits.map(({ meeting }) => meeting)).toEqual([null, null, null]);
   });
 
-  // At building 301 지은 arrives at 12:31 and must leave at 12:44.
-  it('drops the two engineering buildings, 지은 having 13 minutes at building 301', () => {
+  // At 301동 지은 arrives at 12:31 and must leave at 12:44.
+  it('drops the two engineering Places, 지은 having 13 minutes at 301동', () => {
     const { dropped } = plan([me(), jieun()]);
 
     expect(dropped.map(({ key }) => key)).toEqual(['301동식당', '302동식당']);
-    expect(dropped[0]?.shortest).toEqual({ memberId: '지은', minutes: 13 });
+    expect(dropped[0]?.shortest).toEqual({ personId: '지은', minutes: 13 });
   });
 });
 
@@ -177,18 +116,18 @@ describe('Lunch with 민수 and 지은', () => {
     ]);
   });
 
-  it('meets 민수 at building 301 at 12:18 on the way to the Student Center, 지은 coming on her own', () => {
+  it('meets 민수 at 301동 at 12:18 on the way to the Student Center, 지은 coming on her own', () => {
     expect(fitOf(plan([me(), minsu(), jieun()]), '학생회관식당')).toMatchObject({
-      meeting: { placeId: id('제1공학관'), at: at('12:18'), memberIds: ['나', '민수'] },
-      parts: [{}, {}, { walkMinutes: 5, arriveAt: at('12:20'), leaveAt: at('12:28'), leaveBy: at('12:55') }],
+      meeting: { placeId: id('제1공학관'), at: at('12:18'), personIds: ['나', '민수'] },
+      parts: [{}, {}, { walkMinutes: 5, canArriveAt: at('12:20'), leaveAt: at('12:28'), leaveBy: at('12:55') }],
     });
   });
 
-  it('meets at building 301 at 12:18 on the way to the Jahayeon cafeteria', () => {
+  it('meets at 301동 at 12:18 on the way to the Jahayeon cafeteria', () => {
     expect(fitOf(plan([me(), minsu(), jieun()]), '자하연식당')?.meeting).toMatchObject({ at: at('12:18') });
   });
 
-  it('drops the two engineering buildings', () => {
+  it('drops the two engineering Places', () => {
     expect(plan([me(), minsu(), jieun()]).dropped.map(({ key }) => key)).toEqual(['301동식당', '302동식당']);
   });
 });

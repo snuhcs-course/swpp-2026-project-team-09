@@ -11,7 +11,7 @@ import { defineTool, type Feature, type Request } from '../src/assistant/feature
 import { ScriptedModel } from './scripted-model.js';
 
 // What a run carries between the request and the reply for an answer drawn on the map: the request context every tool
-// reads, and the answer a tool puts in the reply.
+// is given, and the answer a tool puts in the reply.
 
 const LIMITS = { maxSteps: 4, timeoutMs: 5000, maxOutputTokens: 1000 };
 

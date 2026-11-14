@@ -22,7 +22,7 @@ import { refuseKakao } from './walking-route.js';
 import { sendAsWorker } from './worker.js';
 
 // The stage of the tests of a meal's plan at the Assistant's endpoint: the app with the scripted model, the seed's
-// walking table and Places, on a clock each test stands on a time of a day of its own. The files share the database,
+// walking table, and Places, on a clock each test stands on a time of a day of its own. The files share the database,
 // so each test works on a Tuesday of 2087, which no other file posts menus for, and asks as a new User.
 
 // A course name and a room of every Class here, which neither the model nor the reply may hold.

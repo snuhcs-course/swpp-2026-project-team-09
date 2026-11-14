@@ -10,7 +10,13 @@ import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type PlanInput, type PlacePoint } from '../dto/answer.dto.js';
 import { type DayItem } from '../free-time/free-time.js';
-import { type Gathering, type GatheringDrop, type GatheringFit, type MemberPart } from './gathering.js';
+import {
+  type Gathering,
+  type GatheringDrop,
+  type GatheringFit,
+  type GatheringSide,
+  type PersonPart,
+} from './gathering.js';
 
 // What the words of a meal's answer share: who is who, how a Place is called, and the pieces of a way.
 
@@ -33,18 +39,15 @@ export interface MealAnswerArgs {
   // The asker's longest meal alone under the same conditions, when Friends are in the plan; null otherwise or when
   // none fits.
   aloneMinutes: number | null;
-  // Whether any menu was collected for the day.
-  menusCollected: boolean;
+  // No menu collected for the day, menus but no Restaurant with a Place open for the meal, or open ones.
+  menus: 'none' | 'closed' | 'open';
   placeOf: (placeId: string) => PlaceDto;
 }
 
-const MINUTE_MS = 60 * 1000;
 const SHORTEST_MEAL_MINUTES = SHORTEST_MEAL_SECONDS / 60;
 const HANGUL_FIRST = 0xac_00;
 const HANGUL_SYLLABLES = 11_172;
 const FINALS = 28;
-
-export const minutesBetween = (from: Date, to: Date): number => Math.round((to.getTime() - from.getTime()) / MINUTE_MS);
 
 // Whether the last syllable of a word has a final consonant, which picks 은 over 는 and 과 over 와.
 function hasFinal(word: string): boolean {
@@ -63,7 +66,7 @@ export function itemBefore(items: readonly DayItem[], readyAt: Date): DayItem | 
 }
 
 // The item a part's next start is, or one standing for it that is not a Class.
-export function itemAt(items: readonly DayItem[], next: MemberPart['next']): DayItem | null {
+export function itemAt(items: readonly DayItem[], next: GatheringSide['next']): DayItem | null {
   if (next === null) {
     return null;
   }
@@ -73,26 +76,26 @@ export function itemAt(items: readonly DayItem[], next: MemberPart['next']): Day
 
 // A Friend's way to the merging point and on from there, or null when they do not merge.
 export function mergingLegs(
-  { memberId, walkMinutes }: MemberPart,
+  { personId, walkMinutes }: PersonPart,
   meeting: GatheringFit['meeting'],
 ): { toMeeting: number; onward: number } | null {
-  if (meeting === null || !meeting.memberIds.includes(memberId) || walkMinutes === null) {
+  if (meeting === null || !meeting.personIds.includes(personId) || walkMinutes === null) {
     return null;
   }
   return { toMeeting: walkMinutes - meeting.onwardMinutes, onward: meeting.onwardMinutes };
 }
 
 // The asker's walk from the place to their next item's Place, when it has one.
-export function wayOn(part: MemberPart | undefined): { placeId: string; minutes: number } | null {
-  const placeId = part?.next?.placeId ?? null;
-  if (part === undefined || part.leaveBy === null || part.next === null || placeId === null) {
+export function wayOn(part: PersonPart | undefined): { placeId: string; minutes: number } | null {
+  const next = part?.next ?? null;
+  if (next === null || next.placeId === null || next.walkMinutes === null) {
     return null;
   }
-  return { placeId, minutes: minutesBetween(part.leaveBy, part.next.start) };
+  return { placeId: next.placeId, minutes: next.walkMinutes };
 }
 
-// Who is who and how Places are called. A building is called by its number, as the app calls it, and otherwise by its
-// name; a Restaurant by its key.
+// Who is who and how Places are called. A Place is called by its number, as the app calls it (301동), and otherwise by
+// its name; a Restaurant by its key.
 export class Naming {
   constructor(readonly args: MealAnswerArgs) {}
 
@@ -108,7 +111,7 @@ export class Naming {
     return person;
   }
 
-  building(placeId: string): string {
+  placeLabel(placeId: string): string {
     const { number, name } = this.args.placeOf(placeId);
     return number === null ? name : `${number}동`;
   }
@@ -118,11 +121,11 @@ export class Naming {
     return { latitude, longitude };
   }
 
-  buildingPoint(placeId: string): PlacePoint {
-    return this.keyPoint(placeId, this.building(placeId));
+  placePoint(placeId: string): PlacePoint {
+    return this.labelledPoint(placeId, this.placeLabel(placeId));
   }
 
-  keyPoint(placeId: string, label: string): PlacePoint {
+  labelledPoint(placeId: string, label: string): PlacePoint {
     return { placeId, label, ...this.position(placeId) };
   }
 
@@ -134,7 +137,7 @@ export class Naming {
     if (shortest.minutes >= SHORTEST_MEAL_MINUTES) {
       return `같이 있는 시간이 ${togetherMinutes}분뿐이에요`;
     }
-    const person = this.personOf(shortest.memberId);
+    const person = this.personOf(shortest.personId);
     const stay = `${shortest.minutes}분밖에 못 있어요`;
     return person.me ? stay : `${withTopic(person.name)} ${stay}`;
   }

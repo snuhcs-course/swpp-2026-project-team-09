@@ -9,7 +9,7 @@ import { mealWindow } from '../src/assistant/free-time/meal-fit.js';
 import {
   type Gathering,
   gather,
-  type GatheringMember,
+  type GatheringPerson,
   type GatheringPlace,
 } from '../src/assistant/gathering/gathering.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
@@ -25,8 +25,6 @@ export const DATE = '2026-11-17';
 export const at = (clock: string): Date => onDay(DATE, clock);
 
 export const NOW = at('11:50');
-
-const when = { window: mealWindow(DATE, 'lunch'), now: NOW };
 
 // The seven Places of the example, with their numbers and positions as the campus map gives them.
 const PLACES = [
@@ -70,12 +68,12 @@ export function placeOf(placeId: string): PlaceDto {
   return found;
 }
 
-export const classAt = (start: string, end: string, building: string): DayItem => ({
-  id: `${building} ${start}`,
+export const classAt = (start: string, end: string, placeName: string): DayItem => ({
+  id: `${placeName} ${start}`,
   name: 'Class',
   start: at(start),
   end: at(end),
-  placeId: id(building),
+  placeId: id(placeName),
   isClass: true,
 });
 
@@ -92,11 +90,12 @@ export const jieunDay = (): DayItem[] => [
   classAt('13:00', '14:15', '두산인문관'),
 ];
 
-export const memberOf = (
-  memberId: string,
+export const gatheringPerson = (
+  personId: string,
   items: readonly DayItem[],
   locationPlaceId: string | null = null,
-): GatheringMember => ({ id: memberId, free: freeTimeOf(items, DATE, NOW), locationPlaceId });
+  now = NOW,
+): GatheringPerson => ({ id: personId, free: freeTimeOf(items, DATE, now), locationPlaceId });
 
 export const restaurants = (): GatheringPlace[] => [
   { key: '301동식당', placeId: id('제1공학관') },
@@ -106,9 +105,13 @@ export const restaurants = (): GatheringPlace[] => [
   { key: '자하연식당', placeId: id('자하연식당') },
 ];
 
-export function plan(members: [GatheringMember, ...GatheringMember[]], candidates = restaurants()): Gathering {
+export function plan(
+  people: [GatheringPerson, ...GatheringPerson[]],
+  candidates = restaurants(),
+  now = NOW,
+): Gathering {
   if (travel === null) {
     throw new Error('Read the world first');
   }
-  return gather(members, candidates, when, travel);
+  return gather(people, candidates, { window: mealWindow(DATE, 'lunch'), now }, travel);
 }

@@ -20,13 +20,18 @@ import { freeTimeOf } from '../free-time/free-time.js';
 import { mealWindow } from '../free-time/meal-fit.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { UserDayService } from '../free-time/user-day.service.js';
-import { gather, type GatheringMember } from './gathering.js';
-import { type AnswerPerson, mealAnswer } from './meal-answer.js';
+import { gather, type GatheringPerson, MINUTE_MS } from './gathering.js';
+import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
 
-const MINUTE_MS = 60 * 1000;
-
-// The one place that gathers what a meal's plan needs: the tool, the recalculation and the making of a party call it,
+// The one place that gathers what a meal's plan needs: the tool, the recalculation, and the making of a Quest call it,
 // so that the three agree.
+const menusOf = (collected: number, open: number): MealAnswerArgs['menus'] => {
+  if (collected === 0) {
+    return 'none';
+  }
+  return open === 0 ? 'closed' : 'open';
+};
+
 @Injectable()
 export class MealPlanService {
   constructor(
@@ -48,12 +53,12 @@ export class MealPlanService {
       this.peopleOf(askerId, friends, date, at.location),
       this.menus.findByDate(date),
     ]);
-    const [askerMember, ...friendMembers] = people.map(({ userId, items, position }): GatheringMember => ({
+    const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }): GatheringPerson => ({
       id: userId,
       free: freeTimeOf(items, date, now),
       locationPlaceId: this.placeIdAt(position),
     }));
-    if (askerMember === undefined) {
+    if (askerPerson === undefined) {
       throw new Error('A plan has its asker');
     }
     const candidates = openRestaurants(collected, meal, this.restaurantPlaces).map(({ key, place }) => ({
@@ -61,18 +66,18 @@ export class MealPlanService {
       placeId: place.id,
     }));
     const when = { window: mealWindow(date, meal), now };
-    const gathering = gather([askerMember, ...friendMembers], candidates, when, this.travel);
+    const gathering = gather([askerPerson, ...friendPeople], candidates, when, this.travel);
     const aloneMinutes =
-      friendMembers.length === 0
+      friendPeople.length === 0
         ? null
-        : (gather([askerMember], candidates, when, this.travel).fits[0]?.togetherMinutes ?? null);
+        : (gather([askerPerson], candidates, when, this.travel).fits[0]?.togetherMinutes ?? null);
     return mealAnswer({
       input,
       now,
       people,
       gathering,
       aloneMinutes,
-      menusCollected: collected.length > 0,
+      menus: menusOf(collected.length, candidates.length),
       placeOf: (placeId) => this.placeOf(placeId),
     });
   }

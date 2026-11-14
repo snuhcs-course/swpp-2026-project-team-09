@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
+import { type AnswerPerson } from '../src/assistant/gathering/meal-answer.js';
 import {
   answerOf,
   firstPlan,
@@ -31,7 +32,7 @@ beforeAll(() => readWorld());
 const withHaeun = (): AnswerReply => answerOf([me(), haeun()], { aloneMinutes: 55 });
 
 describe('Lunch alone', () => {
-  it('gives the place and the minutes, then when to leave, without walking at building 301', () => {
+  it('gives the place and the minutes, then when to leave, without walking at 301동', () => {
     const { plans } = answerOf([me()]);
 
     expect(plans[0]?.lines).toEqual([[strong('301동식당'), plain(' · 식사 55분')], [plain('12:45엔 나서야 해요')]]);
@@ -55,7 +56,7 @@ describe('Lunch alone', () => {
 });
 
 describe('Lunch with 민수', () => {
-  it('says how much shorter the meal is at building 301 than alone', () => {
+  it('says how much shorter the meal is at 301동 than alone', () => {
     const { plans } = answerOf([me(), minsu()], { aloneMinutes: 55 });
     const at301 = plans.find(({ id: key }) => key === '301동식당');
 
@@ -87,23 +88,42 @@ describe('A meeting, when a Friend who comes on their own arrives last', () => {
     const asker = person(ME, '유상', [classAt('11:00', '11:50', '제1공학관')]);
     const late = person(JIEUN, '지은', [classAt('12:00', '12:50', '두산인문관')]);
 
-    const { id: key, startAt, meeting, steps, basis, scene } = firstPlan(answerOf([asker, minsu(), late]));
+    const { id: key, startAt, meeting, subQuests, basis, scene } = firstPlan(answerOf([asker, minsu(), late]));
 
     expect({ key, startAt }).toEqual({ key: '자하연식당', startAt: time('12:53') });
     expect(meeting?.at).toBe(time('12:36'));
-    expect(steps[0]).toMatchObject({ at: time('12:36'), title: '유상, 민수: 301동 앞에서 만나기' });
+    expect(subQuests[0]).toMatchObject({ at: time('12:36'), title: '유상, 민수: 301동 앞에서 만나기' });
     expect(basis[0]).toBe('민수 12:15 302동 수업 끝 · 301동까지 걸어서 3분, 같이 17분');
     expect(scene.routes[0]).toMatchObject({ role: 'friend', minutes: 3 });
     expect(scene.flags[1]?.text).toBe('12:36 민수와 만남');
   });
 });
 
+describe('A Friend who sets out from the asker’s own Place', () => {
+  it('walks the whole way with the asker', () => {
+    const neighbour = person(MINSU, '민수', [classAt('11:00', '11:50', '제1공학관')]);
+
+    const { basis } = firstPlan(
+      answerOf([me(), neighbour], { candidates: [{ key: '학생회관식당', placeId: id('학생회관') }] }),
+    );
+
+    expect(basis[0]).toBe('민수 301동 수업 끝 · 같이 걸어서 15분');
+  });
+});
+
 describe('No plan', () => {
   it('says that no menu was collected that day', () => {
-    const { plans, noPlan } = answerOf([me()], { menusCollected: false, candidates: [] });
+    const { plans, noPlan } = answerOf([me()], { menus: 'none', candidates: [] });
 
     expect(plans).toEqual([]);
     expect(noPlan).toEqual({ reason: 'no-menu', lines: [[plain('그날은 수집된 메뉴가 없어요')]] });
+  });
+
+  it('says that no Restaurant is open for that meal', () => {
+    const { plans, noPlan } = answerOf([me()], { menus: 'closed', candidates: [] });
+
+    expect(plans).toEqual([]);
+    expect(noPlan).toEqual({ reason: 'no-menu', lines: [[plain('그 끼니에 여는 식당이 없어요')]] });
   });
 
   it('says that they share no free time then', () => {
@@ -132,13 +152,31 @@ describe('No plan', () => {
       lines: [[plain('시간 안에 다녀올 수 있는 식당이 없어요')]],
     });
   });
+});
 
-  it('still gives the chips of the conditions, from the items around the shared time', () => {
-    const late = person(ME, '유상', [classAt('11:00', '12:10', '제1공학관'), classAt('12:30', '14:30', '제1공학관')]);
+// Classes in 301동 until 12:10 and from 12:30: nowhere is reached in between.
+const late = (): AnswerPerson =>
+  person(ME, '유상', [classAt('11:00', '12:10', '제1공학관'), classAt('12:30', '14:30', '제1공학관')]);
 
-    expect(answerOf([late], { candidates: [] }).chips).toEqual([
+describe('The chips without a plan', () => {
+  it('come from the sides of the shared time when nothing fits', () => {
+    expect(answerOf([late()], { candidates: [] }).chips).toEqual([
       { kind: 'origin', text: '301동에서', userId: null },
       { kind: 'until', text: '12:30 수업까지', userId: null },
     ]);
+  });
+
+  it('read 자리 모름 for a Friend whose origin is unknown when nothing fits', () => {
+    expect(answerOf([late(), haeun()], { candidates: [] }).chips).toEqual([
+      { kind: 'origin', text: '301동에서', userId: null },
+      { kind: 'until', text: '12:30 수업까지', userId: null },
+      { kind: 'person', text: '하은 · 자리 모름', userId: HAEUN },
+    ]);
+  });
+
+  it("are the Friends' names only when no time is shared", () => {
+    const busy = person(MINSU, '민수', [classAt('11:00', '14:30', '제2공학관')]);
+
+    expect(answerOf([me(), busy]).chips).toEqual([{ kind: 'person', text: '민수', userId: MINSU }]);
   });
 });

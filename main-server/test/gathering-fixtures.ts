@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { type DayItem, type FreeInterval } from '../src/assistant/free-time/free-time.js';
-import { type GatheringMember, type GatheringPlace } from '../src/assistant/gathering/gathering.js';
+import { type GatheringPerson, type GatheringPlace } from '../src/assistant/gathering/gathering.js';
 
 // Hand-made days for the gathering's unit tests, on Tuesday 2026-11-17 in Korea.
 
@@ -45,11 +45,11 @@ export const free = (start: string, end: string, previous: DayItem | null, next:
   next,
 });
 
-export const member = (
+export const person = (
   id: string,
   intervals: FreeInterval[],
   locationPlaceId: string | null = null,
-): GatheringMember => ({
+): GatheringPerson => ({
   id,
   free: intervals,
   locationPlaceId,

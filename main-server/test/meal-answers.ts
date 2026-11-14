@@ -7,9 +7,20 @@
 import { type AnswerReply, type PlacePoint, type PlanInput } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
 import { type GatheringPlace } from '../src/assistant/gathering/gathering.js';
-import { type AnswerPerson, mealAnswer } from '../src/assistant/gathering/meal-answer.js';
+import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from '../src/assistant/gathering/meal-answer.js';
 import { type Position } from '../src/common/geometry.js';
-import { DATE, id, jieunDay, memberOf, minsuDay, myDay, NOW, plan, placeOf, restaurants } from './worked-example.js';
+import {
+  DATE,
+  id,
+  jieunDay,
+  gatheringPerson,
+  minsuDay,
+  myDay,
+  NOW,
+  plan,
+  placeOf,
+  restaurants,
+} from './worked-example.js';
 
 // The people of the worked example as the wording takes them, and an answer for them. Call `readWorld` in a beforeAll
 // first.
@@ -44,25 +55,26 @@ const inputOf = (people: readonly AnswerPerson[]): PlanInput => ({
 
 interface AnswerOptions {
   aloneMinutes?: number | null;
-  menusCollected?: boolean;
+  menus?: MealAnswerArgs['menus'];
   candidates?: GatheringPlace[];
+  now?: Date;
 }
 
 export function answerOf(
   people: [AnswerPerson, ...AnswerPerson[]],
-  { aloneMinutes = null, menusCollected = true, candidates = restaurants() }: AnswerOptions = {},
+  { aloneMinutes = null, menus = 'open', candidates = restaurants(), now = NOW }: AnswerOptions = {},
 ): AnswerReply {
-  const [first, ...rest] = people.map(({ userId, items }) => memberOf(userId, items));
+  const [first, ...rest] = people.map(({ userId, items }) => gatheringPerson(userId, items, null, now));
   if (first === undefined) {
     throw new Error('No asker');
   }
   return mealAnswer({
     input: inputOf(people),
-    now: NOW,
+    now,
     people,
-    gathering: plan([first, ...rest], candidates),
+    gathering: plan([first, ...rest], candidates, now),
     aloneMinutes,
-    menusCollected,
+    menus,
     placeOf,
   });
 }
@@ -87,5 +99,5 @@ export function firstPlan(answer: AnswerReply): AnswerReply['plans'][number] {
   return first;
 }
 
-// The answer for the asker, 민수 and 지은, the asker's meal alone being 55 minutes.
+// The answer for the asker, 민수, and 지은, the asker's meal alone being 55 minutes.
 export const withBoth = (): AnswerReply => answerOf([me(), minsu(), jieun()], { aloneMinutes: 55 });

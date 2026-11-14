@@ -5,25 +5,26 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
-import { gather, type GatheringMember, type GatheringPlace } from '../src/assistant/gathering/gathering.js';
-import { at, free, item, member, place, walks, window } from './gathering-fixtures.js';
+import { gather, type GatheringPerson, type GatheringPlace } from '../src/assistant/gathering/gathering.js';
+import { at, free, item, person, place, walks, window } from './gathering-fixtures.js';
 
 describe('Shared time', () => {
   const travel = walks(['A', 'P', 60]);
 
   it('gives nothing when the people share no time in the window', () => {
-    const asker = member('me', [free('11:00', '12:00', null, null)]);
-    const friend = member('friend', [free('13:00', '14:00', null, null)]);
+    const asker = person('me', [free('11:00', '12:00', null, null)]);
+    const friend = person('friend', [free('13:00', '14:00', null, null)]);
 
     expect(gather([asker, friend], [place('cafe', 'A')], { window, now: at('10:00') }, travel)).toEqual({
       shared: null,
+      sides: [],
       fits: [],
       dropped: [],
     });
   });
 
   it('plans in a later stretch when nothing fits in the first one', () => {
-    const asker = member('me', [
+    const asker = person('me', [
       free('11:00', '11:10', null, item('11:10', '12:00', 'A')),
       free('12:00', '14:30', item('11:10', '12:00', 'A'), null),
     ]);
@@ -38,7 +39,7 @@ describe('Shared time', () => {
 
 describe('Minutes on foot', () => {
   const travel = walks(['A', 'P', 60], ['A', 'Q', 61], ['A', 'A', 300]);
-  const asker = member('me', [free('12:00', '14:30', item('11:00', '12:00', 'A'), null)]);
+  const asker = person('me', [free('12:00', '14:30', item('11:00', '12:00', 'A'), null)]);
   const walkTo = (placeId: string): number | null =>
     gather([asker], [place('cafe', placeId)], { window, now: at('11:30') }, travel).fits[0]?.parts[0]?.walkMinutes ??
     null;
@@ -56,69 +57,69 @@ describe('Minutes on foot', () => {
   });
 });
 
-describe('Where a member sets out from', () => {
+describe('Where a person sets out from', () => {
   const travel = walks(['A', 'P', 60], ['L', 'P', 120]);
-  const originOf = (asker: GatheringMember, now: string): object | null =>
+  const originOf = (asker: GatheringPerson, now: string): object | null =>
     gather([asker], [place('cafe', 'P')], { window, now: at(now) }, travel).fits[0]?.parts[0]?.origin ?? null;
 
   it('is the Place of the Class they are busy with until the stretch starts', () => {
-    const asker = member('me', [free('12:00', '14:30', item('11:00', '12:00', 'A'), null)], 'L');
+    const asker = person('me', [free('12:00', '14:30', item('11:00', '12:00', 'A'), null)], 'L');
 
     expect(originOf(asker, '11:30')).toEqual({ placeId: 'A', basis: 'timetable' });
   });
 
   it('is their location when they are free now, even when a Class ended a minute ago', () => {
-    const asker = member('me', [free('12:00', '14:30', item('11:00', '11:59', 'A'), null)], 'L');
+    const asker = person('me', [free('12:00', '14:30', item('11:00', '11:59', 'A'), null)], 'L');
 
     expect(originOf(asker, '12:00')).toEqual({ placeId: 'L', basis: 'location' });
   });
 
   it('is the Place of a Class that ended 15 minutes ago when they are free now without a location', () => {
-    const asker = member('me', [free('12:00', '14:30', item('11:00', '11:45', 'A'), null)]);
+    const asker = person('me', [free('12:00', '14:30', item('11:00', '11:45', 'A'), null)]);
 
     expect(originOf(asker, '12:00')).toEqual({ placeId: 'A', basis: 'timetable' });
   });
 
   it('is unknown when the Class ended 16 minutes ago', () => {
-    const asker = member('me', [free('12:00', '14:30', item('11:00', '11:44', 'A'), null)]);
+    const asker = person('me', [free('12:00', '14:30', item('11:00', '11:44', 'A'), null)]);
 
     expect(originOf(asker, '12:00')).toBeNull();
   });
 
   it('is unknown when no item came before', () => {
-    const asker = member('me', [free('12:00', '14:30', null, null)]);
+    const asker = person('me', [free('12:00', '14:30', null, null)]);
 
     expect(originOf(asker, '12:00')).toBeNull();
   });
 });
 
-describe('A member', () => {
+describe('A person', () => {
   const travel = walks(['A', 'P', 300], ['B', 'P', 120], ['A', 'B', 600]);
-  const asker = member('me', [free('12:00', '14:30', item('11:00', '12:00', 'A'), null)]);
+  const asker = person('me', [free('12:00', '14:30', item('11:00', '12:00', 'A'), null)]);
 
   it('sets out at the latest time that still has them there at the start', () => {
-    const friend = member('friend', [free('12:10', '14:30', item('11:00', '12:10', 'B'), null)]);
+    const friend = person('friend', [free('12:10', '14:30', item('11:00', '12:10', 'B'), null)]);
 
     const [fit] = gather([asker, friend], [place('cafe', 'P')], { window, now: at('11:30') }, travel).fits;
 
     expect(fit?.start).toEqual(at('12:12'));
     expect(fit?.parts).toMatchObject([
-      { memberId: 'me', walkMinutes: 5, arriveAt: at('12:05'), leaveAt: at('12:07') },
-      { memberId: 'friend', walkMinutes: 2, arriveAt: at('12:12'), leaveAt: at('12:10') },
+      { personId: 'me', walkMinutes: 5, canArriveAt: at('12:05'), leaveAt: at('12:07') },
+      { personId: 'friend', walkMinutes: 2, canArriveAt: at('12:12'), leaveAt: at('12:10') },
     ]);
   });
 
   it('whose origin is unknown has no walk and counts from when they are ready, their next item still limiting', () => {
-    const friend = member('friend', [free('12:20', '13:00', null, item('13:00', '14:00', 'B'))]);
+    const friend = person('friend', [free('12:20', '13:00', null, item('13:00', '14:00', 'B'))]);
 
     const [fit] = gather([asker, friend], [place('cafe', 'P')], { window, now: at('11:30') }, travel).fits;
 
     expect(fit).toMatchObject({ start: at('12:20'), end: at('12:58') });
-    expect(fit?.parts[1]).toMatchObject({ origin: null, walkMinutes: null, arriveAt: null, leaveAt: null });
+    expect(fit?.parts[1]).toMatchObject({ origin: null, walkMinutes: null, canArriveAt: null, leaveAt: null });
   });
 
   it('reaches a next item without a Place at its start', () => {
-    const busy = member('me', [free('12:00', '13:00', item('11:00', '12:00', 'A'), item('13:00', '14:00', null))]);
+    const busy = person('me', [free('12:00', '13:00', item('11:00', '12:00', 'A'), item('13:00', '14:00', null))]);
 
     const [fit] = gather([busy], [place('cafe', 'P')], { window, now: at('11:30') }, travel).fits;
 
@@ -134,18 +135,18 @@ describe('A member', () => {
   });
 
   it('arriving before the window opens has the plan start when it opens', () => {
-    const early = member('me', [free('10:00', '14:30', item('09:00', '10:00', 'A'), null)]);
+    const early = person('me', [free('10:00', '14:30', item('09:00', '10:00', 'A'), null)]);
 
     const [fit] = gather([early], [place('cafe', 'P')], { window, now: at('09:30') }, travel).fits;
 
     expect(fit?.start).toEqual(at('11:00'));
-    expect(fit?.parts[0]?.arriveAt).toEqual(at('10:05'));
+    expect(fit?.parts[0]?.canArriveAt).toEqual(at('10:05'));
   });
 });
 
 // Class at A until 12:00, the next at A, the place P a minute away.
-const alone = (nextStart: string): GatheringMember =>
-  member('me', [free('12:00', nextStart, item('11:00', '12:00', 'A'), item(nextStart, '13:00', 'A'))]);
+const alone = (nextStart: string): GatheringPerson =>
+  person('me', [free('12:00', nextStart, item('11:00', '12:00', 'A'), item(nextStart, '13:00', 'A'))]);
 
 describe('Time together', () => {
   const travel = walks(['A', 'P', 60]);
@@ -161,7 +162,7 @@ describe('Time together', () => {
 
     expect(fits).toEqual([]);
     expect(dropped).toEqual([
-      { key: 'cafe', placeId: 'P', togetherMinutes: 14, shortest: { memberId: 'me', minutes: 14 } },
+      { key: 'cafe', placeId: 'P', togetherMinutes: 14, shortest: { personId: 'me', minutes: 14 } },
     ]);
   });
 });
@@ -169,7 +170,7 @@ describe('Time together', () => {
 describe('The order of the plans', () => {
   // From A at 12:00 to the next Class at B at 13:00: P is 1 minute in and 3 out, R 2 in and 2 out.
   const travel = walks(['A', 'P', 60], ['P', 'B', 180], ['A', 'R', 120], ['R', 'B', 120]);
-  const asker = member('me', [free('12:00', '13:00', item('11:00', '12:00', 'A'), item('13:00', '14:00', 'B'))]);
+  const asker = person('me', [free('12:00', '13:00', item('11:00', '12:00', 'A'), item('13:00', '14:00', 'B'))]);
   const keysOf = (places: GatheringPlace[]): string[] =>
     gather([asker], places, { window, now: at('11:30') }, travel).fits.map(({ key }) => key);
 
@@ -185,18 +186,18 @@ describe('The order of the plans', () => {
 describe('Nobody on time', () => {
   const travel = walks(['A', 'P', 60], ['A', 'R', 120]);
   const first = item('12:14', '14:20', 'A');
-  const asker = member('me', [
+  const asker = person('me', [
     free('12:00', '12:14', item('11:00', '12:00', 'A'), first),
     free('14:20', '14:30', first, null),
   ]);
 
-  it('fits nothing, keeps the first stretch and drops every place in the order given', () => {
-    expect(gather([asker], [place('r', 'R'), place('p', 'P')], { window, now: at('11:30') }, travel)).toEqual({
+  it('fits nothing, keeps the first stretch, and drops every place in the order given', () => {
+    expect(gather([asker], [place('r', 'R'), place('p', 'P')], { window, now: at('11:30') }, travel)).toMatchObject({
       shared: { start: at('12:00'), end: at('12:14') },
       fits: [],
       dropped: [
-        { key: 'r', placeId: 'R', togetherMinutes: 10, shortest: { memberId: 'me', minutes: 10 } },
-        { key: 'p', placeId: 'P', togetherMinutes: 12, shortest: { memberId: 'me', minutes: 12 } },
+        { key: 'r', placeId: 'R', togetherMinutes: 10, shortest: { personId: 'me', minutes: 10 } },
+        { key: 'p', placeId: 'P', togetherMinutes: 12, shortest: { personId: 'me', minutes: 12 } },
       ],
     });
   });
@@ -219,21 +220,21 @@ const throughS = walks(
   ['Q', 'S', 600],
   ['Z', 'S', 0],
 );
-const ready = (id: string, placeId: string | null): GatheringMember =>
-  member(id, [free('12:00', '14:30', placeId === null ? null : item('11:00', '12:00', placeId), null)]);
-const early = (id: string, placeId: string): GatheringMember =>
-  member(id, [free('10:00', '14:30', item('09:00', '10:00', placeId), null)]);
-const plan = (members: [GatheringMember, ...GatheringMember[]], placeId: string): object | undefined =>
-  gather(members, [place('cafe', placeId)], { window, now: at('11:30') }, throughS).fits[0];
+const ready = (id: string, placeId: string | null): GatheringPerson =>
+  person(id, [free('12:00', '14:30', placeId === null ? null : item('11:00', '12:00', placeId), null)]);
+const early = (id: string, placeId: string): GatheringPerson =>
+  person(id, [free('10:00', '14:30', item('09:00', '10:00', placeId), null)]);
+const plan = (people: [GatheringPerson, ...GatheringPerson[]], placeId: string): object | undefined =>
+  gather(people, [place('cafe', placeId)], { window, now: at('11:30') }, throughS).fits[0];
 
 describe('The merging point', () => {
   it('is the asker’s origin when going by it takes the Friend 1 minute longer', () => {
     expect(plan([ready('me', 'S'), ready('friend', 'O')], 'P')).toMatchObject({
       start: at('12:08'),
-      meeting: { placeId: 'S', at: at('12:03'), memberIds: ['me', 'friend'] },
+      meeting: { placeId: 'S', at: at('12:03'), personIds: ['me', 'friend'] },
       parts: [
-        { walkMinutes: 5, arriveAt: at('12:08'), leaveAt: at('12:03') },
-        { walkMinutes: 8, arriveAt: at('12:08'), leaveAt: at('12:00') },
+        { walkMinutes: 5, canArriveAt: at('12:08'), leaveAt: at('12:03') },
+        { walkMinutes: 8, canArriveAt: at('12:08'), leaveAt: at('12:00') },
       ],
     });
   });
@@ -241,11 +242,11 @@ describe('The merging point', () => {
   it('with two merging Friends has them set out when the later one is there', () => {
     expect(plan([ready('me', 'S'), ready('near', 'O'), ready('far', 'T')], 'P')).toMatchObject({
       start: at('12:11'),
-      meeting: { placeId: 'S', at: at('12:06'), memberIds: ['me', 'near', 'far'] },
+      meeting: { placeId: 'S', at: at('12:06'), personIds: ['me', 'near', 'far'] },
       parts: [
-        { walkMinutes: 5, arriveAt: at('12:11'), leaveAt: at('12:06') },
-        { walkMinutes: 8, arriveAt: at('12:11'), leaveAt: at('12:03') },
-        { walkMinutes: 11, arriveAt: at('12:11'), leaveAt: at('12:00') },
+        { walkMinutes: 5, canArriveAt: at('12:11'), leaveAt: at('12:06') },
+        { walkMinutes: 8, canArriveAt: at('12:11'), leaveAt: at('12:03') },
+        { walkMinutes: 11, canArriveAt: at('12:11'), leaveAt: at('12:00') },
       ],
     });
   });
@@ -259,8 +260,8 @@ describe('The merging point', () => {
       start: at('11:00'),
       meeting: { placeId: 'S', at: at('10:55') },
       parts: [
-        { walkMinutes: 5, arriveAt: at('10:08'), leaveAt: at('10:55') },
-        { walkMinutes: 8, arriveAt: at('10:08'), leaveAt: at('10:52') },
+        { walkMinutes: 5, canArriveAt: at('10:08'), leaveAt: at('10:55') },
+        { walkMinutes: 8, canArriveAt: at('10:08'), leaveAt: at('10:52') },
       ],
     });
   });

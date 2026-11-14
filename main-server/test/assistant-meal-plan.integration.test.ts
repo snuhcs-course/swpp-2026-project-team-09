@@ -11,7 +11,7 @@ import { PLAN_RULES } from '../src/assistant/gathering/plan-tools.js';
 import { expectStatus, setFriendSharing, setMasterSwitch, uploadPosition } from './location-sharing.js';
 import { COURSE, MealPlanStage, type Named, planMeal, resolve, ROOM } from './meal-plan.js';
 
-// A meal planned on the map, at the Assistant's endpoint with the scripted model, the seed's walking table and Places:
+// A meal planned on the map, at the Assistant's endpoint with the scripted model, the seed's walking table, and Places:
 // the design's worked example (a Tuesday at 11:50), what the model is given, whose position is used, and an app that
 // does not draw answers.
 
@@ -42,7 +42,7 @@ const timeOn =
 const summary = ({ plans }: AnswerReply): string[] =>
   plans.map(({ id, startAt, endAt, togetherMinutes }) => `${id} ${startAt}–${endAt} (${togetherMinutes})`);
 
-// The asker of the worked example: Classes in building 301 until 11:50 and in building 24 from 13:00.
+// The asker of the worked example: Classes in 301동 until 11:50 and in 24동 from 13:00.
 async function workedExample(date: string): Promise<void> {
   await stage.asking(date, '11:50');
   await stage.menusOn(date, RESTAURANTS);
@@ -64,7 +64,7 @@ async function jieun(): Promise<Named> {
 }
 
 describe('Lunch with 민수 (the worked example)', () => {
-  it('plans every Restaurant, the longest time together first, meeting at building 301 on the way', async () => {
+  it('plans every Restaurant, the longest time together first, meeting at 301동 on the way', async () => {
     const date = '2087-01-07';
     const time = timeOn(date);
     await workedExample(date);
@@ -91,7 +91,7 @@ describe('Lunch with 민수 (the worked example)', () => {
 });
 
 describe('Lunch with 민수 and 지은 (the worked example)', () => {
-  it('plans the Student Center first, meeting 민수 at 12:18, and drops building 301 for 지은', async () => {
+  it('plans the Student Center first, meeting 민수 at 12:18, and drops 301동 for 지은', async () => {
     const date = '2087-01-14';
     const time = timeOn(date);
     await workedExample(date);
@@ -106,15 +106,15 @@ describe('Lunch with 민수 and 지은 (the worked example)', () => {
 
     expect(response.status).toBe(200);
     const answer = answerIn(response.body);
-    const [studentCenter, building301] = [await stage.numbered('63'), await stage.numbered('301')];
+    const [studentCenter, place301] = [await stage.numbered('63'), await stage.numbered('301')];
     expect(answer.plans[0]).toMatchObject({
       id: '학생회관식당',
       startAt: time('12:33'),
       endAt: time('12:55'),
       togetherMinutes: 22,
       meeting: { at: time('12:18') },
-      steps: [
-        { at: time('12:18'), placeId: building301.id, title: '유상, 민수: 301동 앞에서 만나기' },
+      subQuests: [
+        { at: time('12:18'), placeId: place301.id, title: '유상, 민수: 301동 앞에서 만나기' },
         { at: time('12:33'), placeId: studentCenter.id, title: '학생회관식당에서 식사' },
       ],
     });
@@ -124,7 +124,7 @@ describe('Lunch with 민수 and 지은 (the worked example)', () => {
 });
 
 describe('What the model is given', () => {
-  it('holds no coordinates, course names or rooms, and the reply no course names or rooms', async () => {
+  it('holds no coordinates, course names, or rooms, and the reply no course names or rooms', async () => {
     const date = '2087-01-21';
     await workedExample(date);
     const friend = await minsu();
@@ -197,8 +197,8 @@ describe("A Friend's position", () => {
     const response = await stage.send([resolve('하은'), planMeal(date, [friend.id]), { text: '…' }]);
 
     const plan = answerIn(response.body).plans[0];
-    expect(plan?.members[1]).toMatchObject({ origin: { basis: 'location', place: { label: '63동' } } });
-    expect(plan?.members[1]?.walkMinutes).not.toBeNull();
+    expect(plan?.parts[1]).toMatchObject({ origin: { basis: 'location', place: { label: '63동' } } });
+    expect(plan?.parts[1]?.walkMinutes).not.toBeNull();
     expect(plan?.scene.people.find(({ userId }) => userId === friend.id)).toMatchObject({ at, source: 'exact' });
   });
 
@@ -210,7 +210,7 @@ describe("A Friend's position", () => {
     const response = await stage.send([resolve('하은'), planMeal(date, [friend.id]), { text: '…' }]);
 
     const answer = answerIn(response.body);
-    expect(answer.plans[0]?.members[1]?.origin).toBeNull();
+    expect(answer.plans[0]?.parts[1]?.origin).toBeNull();
     expect(answer.chips.at(-1)).toEqual({ kind: 'person', text: '하은 · 자리 모름', userId: friend.id });
   });
 });
@@ -228,7 +228,7 @@ describe("The asker's location", () => {
     });
 
     const answer = answerIn(response.body);
-    expect(answer.plans[0]?.members[0]).toMatchObject({ origin: { basis: 'location', place: { label: '301동' } } });
+    expect(answer.plans[0]?.parts[0]).toMatchObject({ origin: { basis: 'location', place: { label: '301동' } } });
     expect(answer.chips[0]).toEqual({ kind: 'origin', text: '301동에서', userId: null });
   });
 });
