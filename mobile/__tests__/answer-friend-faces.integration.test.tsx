@@ -104,6 +104,19 @@ describe('the + on a face', () => {
   });
 });
 
+// Partitions: a Friend selected on the everyday map before asking, whose card the answer frame hides.
+describe('a face selected before asking', () => {
+  it('carries the + and is not lit: only the add on its way lights a face', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY, async (opened) => {
+      await press(opened, MIN_JUN.name);
+      expect(lookOf(MIN_JUN.name)).toMatch(/:selected$/u);
+    });
+
+    expect(lookOf(MIN_JUN.name)).toMatch(ADDABLE);
+    expect(lookOf(MIN_JUN.name)).not.toMatch(/selected/u);
+  });
+});
+
 // The stored answer for three with its third person's user id changed to 김민준's, in the conditions and on the chip
 // "지은": the answer to adding him.
 function threeWithMinJun(): AnswerReply {

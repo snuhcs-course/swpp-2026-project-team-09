@@ -201,21 +201,26 @@ function addOnPress({ add }: ShownAnswer, id: string): void {
 }
 
 // The face a Friend's Avatar shows while an answer is on screen: the selected look while their add is on its way, and
-// a "+" while a press would add them. Anyone else's, and every face once the Plan is sent, is the everyday map's.
+// a "+" while a press would add them. Anyone else's, and every face once the Plan is sent, is the everyday map's look
+// unselected: a selection made before asking stands behind the frame, and only the add lights a face.
 function faceOf(
   { id, image: { view } }: MapAvatar,
   input: PlanInput,
   pendingAdd: string | null,
   sent: boolean,
 ): MarkerLook {
-  const userId = friendIdOf(id);
-  if (view.kind !== 'person' || userId === null || sent) {
+  if (view.kind !== 'person') {
     return view;
   }
-  if (userId === pendingAdd) {
-    return { ...view, selected: true };
+  const face = { ...view, selected: false };
+  const userId = friendIdOf(id);
+  if (userId === null || sent) {
+    return face;
   }
-  return input.people.some((person) => person.userId === userId) ? view : { ...view, addable: true };
+  if (userId === pendingAdd) {
+    return { ...face, selected: true };
+  }
+  return input.people.some((person) => person.userId === userId) ? face : { ...face, addable: true };
 }
 
 // The Avatars the Plan leaves, with their faces, the lit one above the others. The selected look of each face with a
@@ -234,7 +239,7 @@ function useFaces(avatars: readonly MapAvatar[], { answer, pendingAdd }: ShownAn
     const look = looks[at];
     const made = image === undefined || (image.uri === null && avatar.image.uri !== null) ? avatar.image : image;
     const lit = look?.kind === 'person' && look.selected === true;
-    return { ...avatar, image: made, order: lit ? SELECTED_ORDER : avatar.order };
+    return { ...avatar, image: made, order: lit ? SELECTED_ORDER : 0 };
   });
 }
 
