@@ -94,9 +94,14 @@ export function offset(from: LatLng, to: LatLng): { east: number; north: number 
   return { east, north };
 }
 
+// The metres in a straight line from one position to another.
+export function metresBetween(from: LatLng, to: LatLng): number {
+  const { east, north } = offset(from, to);
+  return Math.hypot(east, north);
+}
+
 function samePoint(one: LatLng, other: LatLng): boolean {
-  const { east, north } = offset(one, other);
-  return Math.hypot(east, north) <= ONE_POINT;
+  return metresBetween(one, other) <= ONE_POINT;
 }
 
 // Whether a position is so near one of the Plan's own marks that a picture drawn there would lie over the mark or

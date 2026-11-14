@@ -2,13 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import { type ComponentProps, useEffect, useState } from 'react';
 import type { PlanInput } from '@/api/assistant-types';
 import { useToast } from '@/design-system';
-import { withAge } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 import { withBound, withOrigin, withoutPerson, withPerson } from '@/features/assistant/plan-input';
 import type { BandBound } from '@/features/assistant/time-band';
@@ -39,7 +39,7 @@ function useChoices(input: PlanInput): Choice[] {
   const { data = [] } = useFriends();
   return data
     .filter(({ id }) => !input.people.some(({ userId }) => userId === id))
-    .map(({ id, name, line, minutesOld }) => ({ id, name, line: withAge(line, minutesOld) }));
+    .map(({ id, name, position, minutesOld }) => ({ id, name, position, minutesOld }));
 }
 
 // The band's end handle in focus for a while after the time chip is pressed, a press anew starting the while again.

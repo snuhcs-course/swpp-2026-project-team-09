@@ -131,7 +131,13 @@ function Below({ shown, answer, fix }: { shown: ShownAnswer; answer: AnswerReply
   const { plan, recalculating, ghost } = shown;
   if (fix.adding) {
     return (
-      <FriendChoices disabled={recalculating} friends={fix.choices} onChoose={fix.choose} onClose={fix.toggleAdding} />
+      <FriendChoices
+        disabled={recalculating}
+        friends={fix.choices}
+        onChoose={fix.choose}
+        onClose={fix.toggleAdding}
+        pick={plan?.place ?? null}
+      />
     );
   }
   return (
