@@ -10,17 +10,17 @@ A User whose phone has the switch on opens an invitation, from "알림" or from 
 
 ## Acceptance criteria
 
-- [ ] **The card's id.** Each invitation the User received is a card of the main screen with the id `invitation:<invitationId>`, so that the address `/main?card=invitation:<invitationId>` opens it, once the phone's switch is read; with the switch off no such card exists, and the address opens the "파티" tab's invitations as today.
-- [ ] **The map** draws the scene the server gives for the invitee: their own dot, one line for each leg of their way, the flags at the Merging Point and at the destination, and the Place of what follows, by the marks and the camera of an answer; the everyday map's things give way as for a Plan, and no Avatar of anyone else is drawn. The address itself moves no camera.
-- [ ] **The card** shows: whose invitation ("유상의 파티 초대"), the time and the title of the destination step, who is in so far, the way's lines as the server wrote them, the steps in order, "수락" as the main button and "거절" beside it, and the line that says that only the User's own way is shown.
-- [ ] **A way that cannot be drawn** (off campus, busy, or unknown): the card shows the server's line, or none, and the map draws what the scene holds. Off campus, where the app sends no position and the server answers `unknown`, the card shows the server's words for a phone off campus.
-- [ ] **수락** accepts the invitation; the card then says so and closes to the everyday map with the Quest among the User's Quests. **거절** declines it and closes the card. Each takes one press for its invitation, a reply closes only its own card, and a failure shows a toast and leaves the card.
-- [ ] **An invitation that waits no more** (cancelled, or answered elsewhere): the card says so and closes, whether a read says 404, the list of invitations is read again without it, or an address names one the list does not hold.
-- [ ] The phone's position goes with the request only while the User is on campus, as a recalculation sends it.
-- [ ] **Tests**: unit tests for the card's lines from the stored copies of the server's real replies; integration tests at the main screen over the fake main server: the address opening the card, the marks, both buttons down to their requests, a failure, and an invitation that waits no more.
-- [ ] The app's README says how a received invitation is shown.
+- [x] **The card's id.** Each invitation the User received is a card of the main screen with the id `invitation:<invitationId>`, so that the address `/main?card=invitation:<invitationId>` opens it, once the phone's switch is read; with the switch off no such card exists, and the address opens the "파티" tab's invitations as today.
+- [x] **The map** draws the scene the server gives for the invitee: their own dot, one line for each leg of their way, the flags at the Merging Point and at the destination, and the Place of what follows, by the marks and the camera of an answer; the everyday map's things give way as for a Plan, and no Avatar of anyone else is drawn. The address itself moves no camera.
+- [x] **The card** shows: whose invitation ("유상의 파티 초대"), the time and the title of the destination step, who is in so far, the way's lines as the server wrote them, the steps in order, "수락" as the main button and "거절" beside it, and the line that says that only the User's own way is shown.
+- [x] **A way that cannot be drawn** (off campus, busy, or unknown): the card shows the server's line, or none, and the map draws what the scene holds. Off campus, where the app sends no position and the server answers `unknown`, the card shows the server's words for a phone off campus.
+- [x] **수락** accepts the invitation; the card then says so and closes to the everyday map with the Quest among the User's Quests. **거절** declines it and closes the card. Each takes one press for its invitation, a reply closes only its own card, and a failure shows a toast and leaves the card.
+- [x] **An invitation that waits no more** (cancelled, or answered elsewhere): the card says so and closes, whether a read says 404, the list of invitations is read again without it, or an address names one the list does not hold.
+- [x] The phone's position goes with the request only while the User is on campus, as a recalculation sends it.
+- [x] **Tests**: unit tests for the card's lines from the stored copies of the server's real replies; integration tests at the main screen over the fake main server: the address opening the card, the marks, both buttons down to their requests, a failure, and an invitation that waits no more.
+- [x] The app's README says how a received invitation is shown.
 - [ ] The screen is run on an Android emulator, and the pull request carries the screen of a received invitation.
-- [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
+- [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
 
@@ -44,3 +44,10 @@ A User whose phone has the switch on opens an invitation, from "알림" or from 
 16. An invitation whose card was selected and left the cards while the switch stayed on is told with "이미 끝난 초대예요"; the selection itself drops the card. One answered on this phone leaves without that word, though the list may come back before its card is closed, and with the switch turned off the cards leave without a word too.
 17. With the switch on and the cards known, an address of an invitation no card holds says "이미 끝난 초대예요" and stays on the map.
 18. The camera's top room for an invitation is the status bar's inset and the room the marks need above, in place of the pill's.
+
+### Agent usage (2026-11-15)
+
+From the opening of ticket 05's pull request to the opening of this one. One session with four subagents for this ticket (the implementation, two reviewers, and the reviews' fixes). The session's own time in that stretch also holds the answers to the reviews of pull requests 245 and 246, the rules of the shared Mac, and the design review of the answer card's screens.
+
+- Agent time: about 145 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 430,049; input 168,193,314, of which 165,232,977 were cache reads, 2,959,333 cache writes, and 1,004 uncached. Without cache reads: 3,390,386.
