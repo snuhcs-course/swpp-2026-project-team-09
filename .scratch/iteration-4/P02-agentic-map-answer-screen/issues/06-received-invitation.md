@@ -63,3 +63,10 @@ From the opening of ticket 05's pull request to the opening of this one. One ses
 
 - Agent time: about 145 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
 - Tokens: output 430,049; input 168,193,314, of which 165,232,977 were cache reads, 2,959,333 cache writes, and 1,004 uncached. Without cache reads: 3,390,386.
+
+### Agent usage (2026-11-15, after the pull request opened)
+
+Taking ticket 05's branch and `4.0/Main` in, the camera and the way's lines found on the emulator, and the second emulator check. One session with two subagents (the merge, and the fixes); the session's own time in that stretch also holds the merges of pull requests 245 and 246.
+
+- Agent time: about 76 minutes, an estimate from the transcripts' timestamps, as above.
+- Tokens: output 270,362; input 133,351,863, of which 132,386,171 were cache reads, 965,038 cache writes, and 654 uncached. Without cache reads: 1,236,054.
