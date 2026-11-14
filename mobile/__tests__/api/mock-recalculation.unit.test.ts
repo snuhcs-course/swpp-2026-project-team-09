@@ -7,7 +7,12 @@
 import type { PlanInput } from '@/api/assistant-types';
 import { mockRecalculation } from '@/api/mock/assistant';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
-import { MEAL_ANSWER_ALONE, MEAL_ANSWER_OTHER_ORIGIN, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
+import {
+  MEAL_ANSWER_ALONE,
+  MEAL_ANSWER_FIXED_START,
+  MEAL_ANSWER_OTHER_ORIGIN,
+  MEAL_ANSWER_THREE,
+} from '@/api/mock/data/meal-answers';
 
 // The mock's choice of a stored copy for a recalculation (P02 spec, "The mock client"), each holding the conditions
 // it was given. The inputs are the stored copies' own.
@@ -51,5 +56,26 @@ describe('the mock of a recalculation', () => {
 
   it('answers two people without a start of their own with the first copy', () => {
     expect(mockRecalculation(MEAL_ANSWER.input)).toEqual(MEAL_ANSWER);
+  });
+});
+
+// Partitions: a fixed start; a fixed start with the User's own start; only the end fixed.
+describe('the mock of a recalculation with a window', () => {
+  it('answers a fixed start with the copy for a fixed start', () => {
+    expect(mockRecalculation(MEAL_ANSWER_FIXED_START.input)).toEqual(MEAL_ANSWER_FIXED_START);
+  });
+
+  it("answers a fixed start with the copy for a fixed start, also with the User's own start", () => {
+    // The other-origin copy's input with the start of the fixed-start copy's window.
+    const input: PlanInput = { ...MEAL_ANSWER_OTHER_ORIGIN.input, window: MEAL_ANSWER_FIXED_START.input.window };
+
+    expect(mockRecalculation(input)).toEqual({ ...MEAL_ANSWER_FIXED_START, input });
+  });
+
+  it('answers a window that fixes only its end with the first copy', () => {
+    // The first copy's input with its end fixed at 13:00, which takes no copy of its own.
+    const input: PlanInput = { ...MEAL_ANSWER.input, window: { from: null, until: '13:00' } };
+
+    expect(mockRecalculation(input)).toEqual({ ...MEAL_ANSWER, input });
   });
 });

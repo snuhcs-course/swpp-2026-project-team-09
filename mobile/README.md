@@ -676,7 +676,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   dashed outline, and "되돌리기" brings back what was shown before the drag without a request; any other change or a
   new reply drops it. Words sent while an answer is on screen carry its `input` and the id of the Plan on screen in
   the request context, and the reply's answer replaces the one on screen. The mock answers a recalculation from the
-  stored copies of real answers by who is in the conditions and where the User sets out from.
+  stored copies of real answers by who is in the conditions, whether the window's start is fixed, and where the User
+  sets out from.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
