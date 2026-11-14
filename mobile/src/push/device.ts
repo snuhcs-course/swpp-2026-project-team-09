@@ -49,17 +49,18 @@ async function createChannel(library: Notifications): Promise<void> {
   });
 }
 
-export async function pushPermission(): Promise<PushPermission> {
-  const library = notifications();
-  if (library === null) {
-    return 'unavailable';
-  }
+async function permissionOf(library: Notifications): Promise<PushPermission> {
   try {
     const { status } = await library.getPermissionsAsync();
     return status;
   } catch {
     return 'unavailable';
   }
+}
+
+export async function pushPermission(): Promise<PushPermission> {
+  const library = notifications();
+  return library === null ? 'unavailable' : permissionOf(library);
 }
 
 export async function askPushPermission(): Promise<Exclude<PushPermission, 'undetermined'>> {
@@ -86,7 +87,7 @@ function projectId(): string | undefined {
 
 export async function expoPushToken(): Promise<string | null> {
   const library = notifications();
-  if (library === null || (await pushPermission()) !== 'granted') {
+  if (library === null || (await permissionOf(library)) !== 'granted') {
     return null;
   }
   try {

@@ -807,9 +807,9 @@ app takes an update only when the update's runtime version, a **fingerprint** of
 `INVITE_LINK_HOST`, `GOOGLE_IOS_URL_SCHEME`, `ANDROID_X86_64`, `UPDATE_CHANNEL` and `version` change the app's
 configuration and so the fingerprint, as does any edit to a config plugin's file, comments included: an update made with any of them different reaches no installed app.
 `mobile/google-services.json`, Firebase's Android settings file, is part of the native part too: its bytes are in the
-fingerprint. The `EXPO_PUBLIC_*` values and the
-Kakao key leave the fingerprint alone, measured with `@expo/fingerprint`, but the `EXPO_PUBLIC_*` values are baked
-into the JavaScript, so an update with other ones would point the app elsewhere.
+fingerprint. The `EXPO_PUBLIC_*` values and the Kakao key leave the fingerprint alone, measured with
+`@expo/fingerprint`, but the `EXPO_PUBLIC_*` values are baked into the JavaScript, so an update with other ones would
+point the app elsewhere.
 
 ### `version` and `app-version.json`
 

@@ -11,29 +11,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, color, space, text } from '@/design-system';
 import { askPushPermission, expoPushToken, type PushPermission, pushPermission } from '@/push/device';
 
-interface Check {
+interface PushState {
   permission: PushPermission | 'checking';
   token: string | null;
 }
 
-async function read(): Promise<Check> {
+async function readPushState(): Promise<PushState> {
   const permission = await pushPermission();
   return { permission, token: permission === 'granted' ? await expoPushToken() : null };
 }
 
 // The development screen of push: the permission, a button that asks for it, and the phone's Expo push token, to
-// send a test push to from Expo's push tool. The token is never pasted into issues, pull requests or chats.
+// send a test push to from Expo's push tool.
 export function PushCheckScreen(): ReactElement {
-  const [state, setState] = useState<Check>({ permission: 'checking', token: null });
+  const [state, setState] = useState<PushState>({ permission: 'checking', token: null });
 
   useEffect(() => {
-    void read().then(setState);
+    void readPushState().then(setState);
   }, []);
 
   const ask = async (): Promise<void> => {
     setState({ permission: 'checking', token: null });
     await askPushPermission();
-    setState(await read());
+    setState(await readPushState());
   };
 
   const { permission, token } = state;
