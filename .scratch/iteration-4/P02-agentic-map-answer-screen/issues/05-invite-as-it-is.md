@@ -29,3 +29,18 @@ The card of a Plan with at least one Friend has its main button, "이대로 초�
 "계획 바꾸기" and "카톡으로도 보내기" of the card after inviting; the flag of a Quest on the everyday map and the one line above the input after closing (ticket 07).
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+1. The Quest made from a Plan is held by `usePlanInvitation` (`src/features/assistant/use-plan-invitation.ts`) beside the answer on screen, in `useChatSheet`, and reaches the card and the map as `invitation` of the chat control.
+2. The key, the request on its way, and the made Quest belong to one answer object and one Plan id; when either changes on screen they are dropped at once, so that going back to the same Plan later takes a new key.
+3. A reply or a refusal that comes after the answer or the Plan on screen changed is dropped, and its toast is not shown.
+4. On `PLAN_CHANGED` the recalculation goes through the card's own `change`, with conditions equal to the answer's and a new object; it is a change that is no drag, so the first Plan of the new answer is shown. While another recalculation is on its way, `change` ignores it as it ignores any second change.
+5. "이대로 초대" takes no press while a recalculation is on its way either: it would send a Plan about to be replaced.
+6. The card after inviting is a read-only component of its own (`answer/invited-card.tsx`, with its own chip row), not a mode of `ConditionChips`: no chip there takes a press, and keeping `ConditionChips` as it is keeps both simple. A person's chip in the accepted state takes the person chip's blue; the others the plain chip's look.
+7. The Quest's steps read the start in Korea time and the title as the reply gave them; a step without a start reads its title alone.
+8. A Friend's state comes, per invitation of the reply, from the last signal heard for that Quest and Friend, else the Quest's member of that id in the User's Quests, else invited. Only the reply's invitations are listed: the User is never given a state.
+9. The members are read with the app's own Quests query while a Quest is made; nothing fetches it on purpose, since the signals and `quests-changed` already fetch the Quests again.
+10. A face on the map carries the state in its label and its screen-reader name as the chip does ("민수 · 아직 안 봄", "민수 · 수락", "민수 · 거절", "민수 · 5분 늦음"), in place of the tag the scene gave, as the wireframe of the card after inviting shows. The badge is "?" on a grey round for invited and "✓" on a Friend-green round for accepted, 14 points, at the symbol box's upper right.
+11. While "이대로 초대" is on its way and after the Quest is made, a press on the map (a candidate or a Friend's Avatar) does nothing: the Plan is sent.
+12. "닫기" is the frame's own close, the same as ✕ and Android's back button: it forgets the conversation.
