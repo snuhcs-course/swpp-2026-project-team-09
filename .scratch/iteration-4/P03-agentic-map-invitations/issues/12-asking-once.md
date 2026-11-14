@@ -10,7 +10,7 @@ The app asks once at the two moments the design names, and the server remembers 
 
 ## Acceptance criteria
 
-- [ ] The same migration as ticket 11 (or the next, at this package's turn) keeps `off_asked_at` and `plan_asked_at` on each end of a friendship and `users.master_off_asked_at`.
+- [x] The same migration as ticket 11 (or the next, at this package's turn) keeps `off_asked_at` and `plan_asked_at` on each end of a friendship and `users.master_off_asked_at`.
 - [x] `GET /friends` gives `askedOff` and `askedPlan`, and the Lobby `masterOffAsked`. `POST /friends/asked` with `{ userIds, moment }` records the moment for those Friends; turning the Master Switch off records its own.
 - [x] `PUT /users/me/friend-levels` with `{ level: 'building' }` lowers every Friend above it.
 - [x] The reply of `POST /plans` names the Friends of the Plan not yet asked about, with their current level (`askLevels`).
@@ -20,7 +20,7 @@ The app asks once at the two moments the design names, and the server remembers 
 
 ## Comments
 
-- The migration, `20261115053528_add_friend_asks`, is provisional, as ticket 11's is: it comes after ticket 11's and is made again from the iteration branch's schema at this package's turn. The first box stays open until then.
+- The migration, `20261115073542_add_friend_asks`, is made from the iteration branch's schema after ticket 11 merged. It sorts after package D's `20261115072042_add_notifications` (PR 262), which merges first, and touches other tables.
 - Tests: `main-server/test/friend-asks.integration.test.ts` (each route, its refusals, the lowering with what each Friend is told, and no signal to the other User), `main-server/test/plan-ask-levels.integration.test.ts` (`askLevels`, the moments it leaves out, and nothing of it in the invitees' signals), `mobile/__tests__/location-off-question.integration.test.tsx` (the Friend's and the Master Switch's question, each answer's requests, asked once), and `mobile/__tests__/plan-levels-question.integration.test.tsx` (the question after a Plan, a removed name, a skip, mixed levels, and nobody named).
 - `test/friends.integration.test.ts` and `test/friend-answers.integration.test.ts` compared `GET /friends` without `level` and failed on ticket 11's branch; they now compare the whole new shape.
 
@@ -30,6 +30,7 @@ The app asks once at the two moments the design names, and the server remembers 
 - The asking routes are in `FriendAsksController` and `FriendAsksService` (`src/friends/`), since `FriendsService` is at the 300-line limit; `PlansModule` imports `FriendsModule` for `askLevels`.
 - `POST /friends/asked` takes 1 to 8 User ids, as many as a Plan has people, and refuses the whole body with 404 `FRIEND_NOT_FOUND` when one is no Friend. Each moment keeps the first time it was recorded, so a repeat changes nothing; `POST /users/me/master-switch/asked` likewise.
 - `PUT /users/me/friend-levels` takes any level and lowers each accepted friendship above it at the User's end, inside `announceRemovals` as a change of one level is: a Friend who saw the position gets the Place.
+- `askLevels` is given by `PlansService.made`, which every Quest made from a Plan goes through (a meal, a new recruiting Quest, a Global Event's), so the question comes after any of them.
 - `askLevels` names the invited Friends in the Plan's order with the User's own end as `level`, which is what the question's cells set. A repeat of `POST /plans` with the same Idempotency-Key answers the first reply.
 - Every answer is recorded, "취소", "넘기기", and closing a sheet included, so each question is asked once; a record that fails is ignored and the question comes again later. The Master Switch's is also kept in the Lobby's cache at once.
 - The words are section 7's; the wireframe row 9 (boards 4, 5, 7, 7-2, 6, 6-1, 6-2, 6-3) adds the line under each title (for the Master Switch "어느 쪽을 골라도 친구에게는 아무 표시도 가지 않아요."), the kicker "내 파티에 처음 들어왔어요", "넘기기", and the toast after an answer that changes something ("껐어요 · {이름}에게 알림은 가지 않아요", "{이름}에게 지금 있는 건물까지만 보여요", "껐어요 · 친구에게 알림은 가지 않아요", "모든 친구에게 지금 있는 건물까지만 보여요", "{이름들}에게 지금 있는 건물까지 보여요").
