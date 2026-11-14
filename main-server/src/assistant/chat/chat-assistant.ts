@@ -30,6 +30,8 @@ import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { findWay, WAY_RULES } from '../lookup/way-tools.js';
+import { type WayService } from '../lookup/way.service.js';
 import { DELIMITER } from '../others-text.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
@@ -59,10 +61,12 @@ export interface ChatAssistantServices {
   tutorial: TutorialService;
   // The planners of each kind of answer drawn on the map.
   plans: PlanAnswersService;
+  ways: WayService;
 }
 
 export interface ChatAssistantOptions {
-  // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards.
+  // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards, and a way to a
+  // Place is drawn there.
   drawsAnswers: boolean;
   // With drawsAnswers, it also draws the events of a day and recruiting Quests planned there.
   drawsEvents?: boolean;
@@ -136,6 +140,18 @@ function plannedOnMap(
   };
 }
 
+// An app that draws answers also gets the way to a Place drawn on the map.
+function withWays(
+  planned: { rules: string[]; tools: Record<string, Tool> },
+  ways: WayService,
+  drawsAnswers: boolean,
+): { rules: string[]; tools: Record<string, Tool> } {
+  if (!drawsAnswers) {
+    return planned;
+  }
+  return { rules: [...planned.rules, WAY_RULES], tools: { ...planned.tools, findWay: findWay(ways) } };
+}
+
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
 export function chatAssistant(
   {
@@ -149,13 +165,14 @@ export function chatAssistant(
     library,
     tutorial,
     plans,
+    ways,
   }: ChatAssistantServices,
   options?: ChatAssistantOptions,
 ): Feature {
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const drawsAnswers = options?.drawsAnswers ?? false;
-  const planned = plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options);
+  const planned = withWays(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), ways, drawsAnswers);
   return {
     instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),

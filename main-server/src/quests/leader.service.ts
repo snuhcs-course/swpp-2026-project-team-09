@@ -95,9 +95,7 @@ export class LeaderService {
     });
     this.signals.send([...new Set(told)], 'quests-changed');
     holderIds.forEach((holderId) => {
-      this.notifications.cancel(holderId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
-        this.logger.warn(`A Holder's time to leave was not cancelled: ${String(error)}`);
-      });
+      this.forgetTimeToLeave(holderId, questId);
     });
     await this.roomRequests.questChanged(questId);
   }
@@ -125,7 +123,16 @@ export class LeaderService {
       },
       holderId,
     );
+    this.forgetTimeToLeave(holderId, questId);
     await this.roomRequests.questChanged(questId);
+  }
+
+  // A Holder's time to leave goes with them: when the Quest ends, and when they are removed or drop it. Not awaited, so
+  // that it never fails the change.
+  forgetTimeToLeave(holderId: string, questId: string): void {
+    this.notifications.cancel(holderId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
+      this.logger.warn(`A Holder's time to leave was not cancelled: ${String(error)}`);
+    });
   }
 
   // Locks the User the change is about, if any, then the Quest, checks that the actor leads it and makes the change.

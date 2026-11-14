@@ -6,12 +6,13 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer } from '../feature.js';
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
-import { type AnswerReply, NO_CONTEXT, requestContextSchema } from './answer.dto.js';
+import { type AnswerReply, type Lookup, NO_CONTEXT, requestContextSchema } from './answer.dto.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
@@ -78,12 +79,14 @@ export const assistantMessagesSchema = z.strictObject({
 export type AssistantMessages = z.infer<typeof assistantMessagesSchema>;
 
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, filled from the database, the Proposal it made, if any, and the answer it drew on the map,
-// if any. Both lists are always there, empty when there are none, and the Proposal and the answer null.
+// cards in the order shown, filled from the database, the Proposal it made, if any, and the answer or the Lookup it
+// drew on the map, if any. Both lists are always there, empty when there are none, and the Proposal, the answer, and
+// the Lookup null.
 export interface AssistantReplyDto {
   text: string;
   mapButtons: MapLayer[];
   cards: Card[];
   proposal: QuestProposal | null;
   answer: AnswerReply | null;
+  lookup: Lookup | null;
 }
