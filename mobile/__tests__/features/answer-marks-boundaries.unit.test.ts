@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_PLAN_1 } from '@/api/mock/data/meal-answer-plan-1';
-import { drawingOf, looksOf } from '@/features/assistant/answer-marks';
+import { drawingOf, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import { lookName } from '@/map/marker-looks';
 import { MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
 
@@ -158,6 +159,33 @@ describe("a Place's flag away from the pick", () => {
     });
     expect(seen(drawing, 'answer:pick')).toMatchObject({ name: '302동식당', label: { line: null } });
     expect(sideOf(drawing, NEXT_CLASS)).toBe('left');
+  });
+});
+
+// Partitions: a position at an own mark, and at each edge of its clear room (150 metres sideways, 120 up or down),
+// just inside and just outside; a mark that is not the Plan's own; a drawing of nothing. Expected values: the spec's
+// reach of a label above or below. The User stands at 301동, and the other own marks of the first Plan are 143
+// metres south of it or more than a kilometre north.
+describe("a position near one of the Plan's own marks", () => {
+  const drawing = drawingOf(MEAL_ANSWER, 0);
+
+  it.each([
+    ['where the User stands', AT_301, true],
+    ['149.99 metres to the left', west(AT_301, 149.99), true],
+    ['150.01 metres to the left', west(AT_301, 150.01), false],
+    ['119.99 metres up', north(AT_301, 119.99), true],
+    ['120.01 metres up', north(AT_301, 120.01), false],
+  ] as const)('%s', (_, position, near) => {
+    expect(nearOwnMark(drawing, position)).toBe(near);
+  });
+
+  it('is not near for a candidate, which is not of the Plan itself, or for a drawing of nothing', () => {
+    // 3식당 is a candidate of the first Plan, far from the Plan's own marks.
+    const candidate = drawing.things.find(({ id }) => id === 'answer:candidate:3식당');
+
+    expect(candidate).toBeDefined();
+    expect(nearOwnMark(drawing, candidate?.position ?? AT_301)).toBe(false);
+    expect(nearOwnMark(drawingOf(MEAL_ANSWER, 5), AT_301)).toBe(false);
   });
 });
 

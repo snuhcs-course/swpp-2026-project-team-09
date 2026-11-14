@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { type RefObject, useCallback, useRef, useState } from 'react';
@@ -45,8 +46,8 @@ export interface MainMap {
   fitTo: (points: readonly LatLng[], padding: FitPadding) => void;
   // The same for an answer drawn on the map, no closer than the "close" level.
   fitAnswer: (points: readonly LatLng[], padding: FitPadding) => void;
-  // To a centre, keeping the zoom where the camera rests.
-  centreAt: (centre: LatLng) => void;
+  // To a camera.
+  moveTo: (camera: MapCamera) => void;
 }
 
 // A fit that comes no closer than `offset` above the fit zoom.
@@ -59,10 +60,10 @@ function useFit(fit: CameraMoves['fit'], offset: number): MainMap['fitTo'] {
   );
 }
 
-function useCentreAt(move: CameraMoves['move']): MainMap['centreAt'] {
+function useMoveTo(move: CameraMoves['move']): MainMap['moveTo'] {
   return useCallback(
-    (centre: LatLng) => {
-      move((_fit, zoomNow) => ({ centre, zoom: zoomNow }));
+    (camera: MapCamera) => {
+      move(() => camera);
     },
     [move],
   );
@@ -108,7 +109,7 @@ export function useMainMap(): MainMap {
     move((fit) => ({ centre: centreOf(CAMPUS_BOUNDS), zoom: fit }));
   }, [move]);
   const fitTo = useFit(fitInto, ZOOM_OFFSET.pins);
-  const answerMoves = { fitAnswer: useFit(fitInto, ZOOM_OFFSET.close), centreAt: useCentreAt(move) };
+  const answerMoves = { fitAnswer: useFit(fitInto, ZOOM_OFFSET.close), moveTo: useMoveTo(move) };
   const detail = camera === null || fitZoom === null ? 'overview' : zoomDetail(camera.zoom, fitZoom);
   return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo, ...answerMoves };
 }

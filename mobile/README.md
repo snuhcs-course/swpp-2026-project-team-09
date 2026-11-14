@@ -648,13 +648,15 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   and a candidate's mark takes a press, which shows its Plan; each route is a straight, solid line. The markers of
   events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
   the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
-  User's Party stay, but for those of the Plan's people, whom the marks draw. The looks of every Plan are asked for when the answer comes. The camera
-  fits the Plan's points (`fitAnswer`, no closer than the "close" level) between the pill and the card, with room for
-  a label above and below and 64 at the sides, when the answer comes, when the Plan on screen changes, and when the
-  card's height or the stage's size changes; closing the answer moves nothing. Kakao's map goes no further out than
-  its level 15, so the camera's first rest after a fit is checked once (`correctedCentre`): when a point lies outside
-  what the pill and the card leave, the camera moves at the same zoom so that the Plan's own points are centred there,
-  or, when they do not fit either, so that the picked Restaurant's side stays in view. The card shows "근거" (or "근거 접기")
+  User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
+  marks, which they would lie over (`nearOwnMark`). The looks of every Plan are asked for when the answer comes. The camera
+  goes in one glide to where `answerCamera` (`src/features/assistant/answer-camera.ts`) works it out for the view:
+  the fit of the answer's points between the pill and the card, with room for a label above and below and 64 at the
+  sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the Plan's
+  own points centred there, or, when they do not fit either, the picked Restaurant's side kept in view. It moves
+  again when the Plan on screen changes and when the card's height or the stage's size changes; closing the answer
+  moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its lowest in place of 15, which on a
+  phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기")
   at the right of its first row, the Plan's two lines, the basis while it is open, and "‹" ("이전 후보"), the count
   ("3/5"), and "›" ("다음 후보") when the answer has more than one Plan; the arrows go round, and a new Plan closes
   the basis. An answer without a Plan draws nothing and keeps the everyday map.

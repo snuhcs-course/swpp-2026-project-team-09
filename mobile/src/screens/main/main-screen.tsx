@@ -13,6 +13,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -185,11 +186,12 @@ interface MainMapViewProps {
   pin: TutorialPin;
   // What a press on a marker does: the tutorial pin's press for its own marker, else the things'.
   onPress: (id: string) => void;
+  nativeMinLevel: number;
 }
 
 // The map with what it draws. Its credit opens the sources of its data. The View around it watches its touches for a
 // tap, which removes the pin.
-function MainMapView({ map, contents, room, pin, onPress }: MainMapViewProps): ReactElement {
+function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel }: MainMapViewProps): ReactElement {
   return (
     <View style={styles.map} testID="main-map-touches" {...pin.touches}>
       <Map
@@ -197,6 +199,7 @@ function MainMapView({ map, contents, room, pin, onPress }: MainMapViewProps): R
         {...CAMPUS_CAMERA}
         inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight)}
         markers={contents.markers}
+        nativeMinLevel={nativeMinLevel}
         onCameraIdle={map.onCameraIdle}
         onCreditPress={() => {
           router.push('/map-sources');
@@ -285,11 +288,11 @@ export function MainScreen(): ReactElement {
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { room, setStage, setCardHeight, heights } = useRoom(taken, start, chat.framed);
-  const { contents, onPress } = useMapView(chat, map, room, { things, me, pin, lines, cards, selection });
+  const view = useMapView(chat, map, room, { things, me, pin, lines, cards, selection });
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
-        <MainMapView contents={contents} map={map} onPress={onPress} pin={pin} room={room} />
+        <MainMapView {...view} map={map} pin={pin} room={room} />
         <OverMap onStage={setStage}>
           <Lists hidden={listsHidden(taken, chat)} map={map} room={room} selection={selection} tutorial={tutorial} />
           {zoomShown(taken, stack.open, chat.framed) ? <MainZoomControl map={map} me={me} /> : null}
