@@ -3,7 +3,7 @@
     "name": "SNU Now",
     "slug": "snu-now",
     "owner": "snu-now",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
@@ -24,6 +24,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
+      "googleServicesFile": "./google-services.json",
       "permissions": ["RECEIVE_BOOT_COMPLETED"]
     },
     "web": {
@@ -71,7 +72,16 @@
         }
       ],
       "./modules/snu-now-map/app.plugin.ts",
-      "./plugins/ios-scene-life-cycle.ts"
+      "./plugins/ios-scene-life-cycle.ts",
+      "./plugins/ios-without-push.ts",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#208AEF",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
