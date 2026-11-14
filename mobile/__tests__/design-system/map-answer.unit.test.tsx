@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -44,6 +45,28 @@ describe("MapAnswerMark: a person's symbol", () => {
     await render(<MapAnswerMark label={null} symbol={{ type: 'face', name: '민수', dashed: true }} testID="mark" />);
 
     expect(screen.getByTestId('mark:face')).toHaveStyle({ borderStyle: 'dashed' });
+  });
+});
+
+// Partitions: a face without a badge, with "?" for an invitation that waits, and with "✓" for an acceptance.
+// Expected values: the P02 spec, "How each Friend stands", and the wireframe of the card after inviting.
+describe("MapAnswerMark: a Friend's badge", () => {
+  it('draws no badge on a face without one', async () => {
+    await render(<MapAnswerMark label={null} symbol={{ type: 'face', name: '민수', dashed: true }} testID="mark" />);
+
+    expect(screen.queryByTestId('mark:badge')).toBeNull();
+  });
+
+  it.each([
+    ['waiting', '?', color.inkMuted],
+    ['accepted', '✓', color.friend],
+  ] as const)('draws the badge %s as "%s" at the upper right of the symbol box', async (badge, sign, tone) => {
+    await render(
+      <MapAnswerMark label={null} symbol={{ type: 'face', name: '민수', dashed: true, badge }} testID="mark" />,
+    );
+
+    expect(screen.getByText(sign)).toBeVisible();
+    expect(screen.getByTestId('mark:badge')).toHaveStyle({ position: 'absolute', top: 0, right: 0, backgroundColor: tone });
   });
 });
 
