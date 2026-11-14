@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MarkerLook } from '@/map';
@@ -41,6 +42,11 @@ describe("a person's look on the map", () => {
       'person:full:class:f2:photo',
       'person:full:free:f3:photo',
     ]);
+  });
+
+  it('has another name with the "+" of a Friend who can be added to the answer on screen', () => {
+    expect(lookName({ ...SEO_YEON, addable: true })).toBe('person:full:free:f2:photo:addable');
+    expect(lookName({ ...SEO_YEON, addable: false })).toBe(lookName(SEO_YEON));
   });
 });
 

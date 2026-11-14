@@ -3,12 +3,13 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { type ImageSourcePropType, StyleSheet, View, type ViewStyle } from 'react-native';
+import { type ImageSourcePropType, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { Avatar } from './avatar';
-import { color, presence, radius, shadow } from './tokens';
+import { color, mapText, presence, radius, shadow, text } from './tokens';
 
 // What fills a person's marker: a Friend's status, or `member` for a member of the User's Party who is no Friend.
 export type PersonTone = keyof typeof presence;
@@ -24,6 +25,8 @@ interface MapPersonProps {
   selected?: boolean;
   // Dimmed: the position it stands on is old.
   stale?: boolean;
+  // A "+" at the face's upper right, as an answer's face carries "?" and "✓": a press adds the person.
+  addable?: boolean;
   // Called once the photo is shown or has failed, for a caller that waits for the finished look.
   onPhotoSettled?: () => void;
   testID?: string;
@@ -34,6 +37,7 @@ const SMALL_SIDE = 24;
 // The face is the small Avatar, drawn smaller still in the small marker.
 const SMALL_FACE = 0.68;
 const SELECTED = 1.18;
+const BADGE = 14;
 // A square turned by 45° reaches (√2 − 1) / 2 of its side below its own box: the marker's tip.
 const TIP = (Math.SQRT2 - 1) / 2;
 
@@ -58,6 +62,7 @@ export function MapPerson({
   small = false,
   selected = false,
   stale = false,
+  addable = false,
   onPhotoSettled,
   testID,
 }: MapPersonProps): ReactElement {
@@ -78,6 +83,11 @@ export function MapPerson({
           <Avatar name={name} onPhotoSettled={onPhotoSettled} size="sm" source={source} />
         </View>
       </View>
+      {addable ? (
+        <View style={styles.badge} testID={testID === undefined ? undefined : `${testID}:badge`}>
+          <Text style={styles.plus}>+</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -98,4 +108,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     boxShadow: `0 0 0 2px ${color.surface}`,
   },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: BADGE,
+    height: BADGE,
+    borderRadius: radius.full,
+    backgroundColor: color.snuBlue,
+  },
+  plus: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
 });
