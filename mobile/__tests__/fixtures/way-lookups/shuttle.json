@@ -1,0 +1,260 @@
+{
+  "kind": "way",
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    },
+    {
+      "kind": "until",
+      "text": "17:00 수업까지",
+      "userId": null
+    }
+  ],
+  "lines": [
+    [
+      {
+        "text": "셔틀",
+        "strong": true
+      },
+      {
+        "text": "이 12분 빨라요",
+        "strong": false
+      }
+    ],
+    [
+      {
+        "text": "16:43",
+        "strong": true
+      },
+      {
+        "text": "에 나서면 16:53 도착",
+        "strong": false
+      }
+    ]
+  ],
+  "basis": [
+    "16:43에 나서 정류장까지 2분 · 16:45 셔틀, 약 5분 뒤",
+    "타는 시간 7분 · 내려서 걷기 1분 · 모두 10분",
+    "지금 걸어 나서면 25분 · 17:05 도착, 5분 늦어요",
+    "셔틀은 걷기보다 3분 이상 빠를 때만 권해요 (평일 8–21시)"
+  ],
+  "scene": {
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "name": "유상",
+        "me": true,
+        "at": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "source": "exact",
+        "tag": "나"
+      }
+    ],
+    "places": [
+      {
+        "place": {
+          "placeId": "stop 8",
+          "label": "301동 정류장",
+          "latitude": 37.4513145395911,
+          "longitude": 126.952504907509
+        },
+        "role": "stop",
+        "tag": "301동 정류장 · 16:45 셔틀"
+      },
+      {
+        "place": {
+          "placeId": "stop 14",
+          "label": "경영대 정류장",
+          "latitude": 37.4660256749621,
+          "longitude": 126.952148009596
+        },
+        "role": "stop",
+        "tag": "경영대 정류장"
+      },
+      {
+        "place": {
+          "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+          "label": "58동",
+          "latitude": 37.46568,
+          "longitude": 126.95203
+        },
+        "role": "next",
+        "tag": "17:00 수업 · 58동"
+      }
+    ],
+    "routes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "alt",
+        "from": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "to": {
+          "latitude": 37.46568,
+          "longitude": 126.95203
+        },
+        "minutes": 25
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "me",
+        "from": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "to": {
+          "latitude": 37.4513145395911,
+          "longitude": 126.952504907509
+        },
+        "minutes": 2
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "shuttle",
+        "from": {
+          "latitude": 37.4513145395911,
+          "longitude": 126.952504907509
+        },
+        "to": {
+          "latitude": 37.4542028545218,
+          "longitude": 126.953938443076
+        },
+        "minutes": 2
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "shuttle",
+        "from": {
+          "latitude": 37.4542028545218,
+          "longitude": 126.953938443076
+        },
+        "to": {
+          "latitude": 37.455989614862,
+          "longitude": 126.955245592118
+        },
+        "minutes": 1
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "shuttle",
+        "from": {
+          "latitude": 37.455989614862,
+          "longitude": 126.955245592118
+        },
+        "to": {
+          "latitude": 37.4608353336368,
+          "longitude": 126.956652761066
+        },
+        "minutes": 1
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "shuttle",
+        "from": {
+          "latitude": 37.4608353336368,
+          "longitude": 126.956652761066
+        },
+        "to": {
+          "latitude": 37.4641527874505,
+          "longitude": 126.955252030382
+        },
+        "minutes": 2
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "shuttle",
+        "from": {
+          "latitude": 37.4641527874505,
+          "longitude": 126.955252030382
+        },
+        "to": {
+          "latitude": 37.4661190061983,
+          "longitude": 126.954626320475
+        },
+        "minutes": 1
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "shuttle",
+        "from": {
+          "latitude": 37.4661190061983,
+          "longitude": 126.954626320475
+        },
+        "to": {
+          "latitude": 37.4660256749621,
+          "longitude": 126.952148009596
+        },
+        "minutes": 0
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "me",
+        "from": {
+          "latitude": 37.4660256749621,
+          "longitude": 126.952148009596
+        },
+        "to": {
+          "latitude": 37.46568,
+          "longitude": 126.95203
+        },
+        "minutes": 1
+      }
+    ],
+    "flags": [
+      {
+        "at": {
+          "latitude": 37.4535571226189,
+          "longitude": 126.950220492609
+        },
+        "text": "셔틀 · 신소재공동연구소 지남",
+        "role": "shuttle"
+      },
+      {
+        "at": {
+          "latitude": 37.46568,
+          "longitude": 126.95203
+        },
+        "text": "16:53 도착",
+        "role": "place"
+      }
+    ]
+  },
+  "band": {
+    "range": {
+      "startAt": "2026-11-17T16:30:00+09:00",
+      "endAt": "2026-11-17T17:00:00+09:00"
+    },
+    "now": "2026-11-17T16:40:00+09:00",
+    "lanes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "name": "나",
+        "busy": []
+      }
+    ],
+    "startAt": "2026-11-17T16:43:00+09:00",
+    "endAt": "2026-11-17T16:53:00+09:00",
+    "text": "16:43 나서기 · 셔틀로 10분"
+  },
+  "actions": [
+    {
+      "kind": "remind",
+      "at": "2026-11-17T16:43:00+09:00",
+      "text": "지금 나서면 16:45 셔틀로 17:00 수업에 맞아요 · 301동 정류장까지 걸어서 2분"
+    },
+    {
+      "kind": "guide",
+      "to": {
+        "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+        "label": "58동",
+        "latitude": 37.46568,
+        "longitude": 126.95203
+      }
+    }
+  ]
+}

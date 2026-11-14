@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -136,6 +137,13 @@ describe('resolvePlace', () => {
     expect(await resolve('resolvePlace', { words: '301동' })).toEqual({
       result: 'one',
       candidate: { id: expect.any(String) as unknown, name: '제1공학관', number: '301' },
+    });
+  });
+
+  it('answers the one Place named exactly the words, though another holds them (board q1)', async () => {
+    expect(await resolve('resolvePlace', { words: '문화관' }, '문화관이 어디야?')).toEqual({
+      result: 'one',
+      candidate: { id: expect.any(String) as unknown, name: '문화관', number: '73' },
     });
   });
 

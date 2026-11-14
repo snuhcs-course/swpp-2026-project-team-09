@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerReply, PlanInput } from '@/api/assistant-types';
 import { answerCamera, roomsOf } from '@/features/assistant/answer-camera';
 import { type AnswerDrawing, drawingOf, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
+import { peopleOf } from '@/features/assistant/plan-input';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type CardView, friendIdOf } from '@/features/map/adapter';
@@ -220,7 +221,7 @@ function faceOf(
   if (userId === pendingAdd) {
     return { ...face, selected: true };
   }
-  return input.people.some((person) => person.userId === userId) ? face : { ...face, addable: true };
+  return peopleOf(input).some((person) => person.userId === userId) ? face : { ...face, addable: true };
 }
 
 // The Avatars the Plan leaves, with their faces, the lit one above the others. The selected look of each face with a

@@ -8,6 +8,7 @@ import type { AnswerReply } from '@/api/assistant-types';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import { peopleOf } from '@/features/assistant/plan-input';
 import type * as MarkerImages from '@/map/marker-images';
 import { useMarkerImages } from '@/map/marker-images';
 import { lookName } from '@/map/marker-looks';
@@ -146,7 +147,7 @@ describe('a wrong add', () => {
     await pass(500);
 
     expect(recalculations(server).at(-1)).toEqual({
-      input: { ...three.input, people: three.input.people.slice(0, 2) },
+      input: { ...three.input, people: peopleOf(three.input).slice(0, 2) },
       location: ON_CAMPUS,
     });
     expect(card().getByText('12:15 302동식당')).toBeVisible();

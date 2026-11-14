@@ -188,6 +188,18 @@ describe('A cancel through the service', () => {
       }),
     ]);
   });
+
+  it('tells nobody on a cancel without a kept one', async () => {
+    const user = await signInUser(app);
+    await notifications.schedule(user.id, accepted('지은', OTHER_QUEST_ID), new Date('2026-11-14T03:00:00Z'));
+
+    const notices = await noticesWhile(user, () =>
+      notifications.cancel(user.id, 'leave-by', { kind: 'party', id: OTHER_QUEST_ID }),
+    );
+
+    expect(notices).toBe(0);
+    expect((await getNotifications(user)).body).toHaveLength(1);
+  });
 });
 
 describe('What the service keeps of a User', () => {

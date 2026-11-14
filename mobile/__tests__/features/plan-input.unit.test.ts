@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput } from '@/api/assistant-types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
-import { withBound, withOrigin, withoutPerson, withPerson } from '@/features/assistant/plan-input';
+import { peopleOf, withBound, withOrigin, withoutPerson, withPerson } from '@/features/assistant/plan-input';
 
 const ME = '11ca538e-e4ef-48d9-9a1f-b7160c553bee';
 const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
@@ -120,21 +121,21 @@ describe('withOrigin', () => {
   });
 
   it('replaces an earlier `from` of the asker', () => {
-    expect(withOrigin(FROM_63, PLACE_301).people[0]).toEqual({
+    expect(peopleOf(withOrigin(FROM_63, PLACE_301))[0]).toEqual({
       userId: ME,
       constraints: [{ kind: 'from', placeId: PLACE_301, source: 'asker' }],
     });
   });
 
   it("keeps the asker's other constraints", () => {
-    expect(withOrigin(LEAVING, PLACE_301).people[0]?.constraints).toEqual([
+    expect(peopleOf(withOrigin(LEAVING, PLACE_301))[0]?.constraints).toEqual([
       { kind: 'notBefore', time: '12:00', source: 'asker' },
       { kind: 'from', placeId: PLACE_301, source: 'asker' },
     ]);
   });
 
   it("keeps a Friend's constraints", () => {
-    expect(withOrigin(FRIEND_FROM, PLACE_301).people[1]).toEqual({
+    expect(peopleOf(withOrigin(FRIEND_FROM, PLACE_301))[1]).toEqual({
       userId: MINSU,
       constraints: [{ kind: 'from', placeId: PLACE_63, source: 'person' }],
     });

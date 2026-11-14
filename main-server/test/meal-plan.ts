@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -10,6 +11,7 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
+import { type TravelProvider } from '../src/travel/travel.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { befriend, signInUser, type TestUser } from './friends.js';
 import { refuseMatchServer } from './match-server.js';
@@ -48,8 +50,12 @@ export class MealPlanStage {
   private now = new Date('2087-01-06T09:00:00+09:00');
   private places: Place[] = [];
 
+  // A travel provider of the test's own in place of the seed's.
+  constructor(private readonly travel?: TravelProvider) {}
+
   async start(): Promise<void> {
-    this.app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, this.model.model);
+    const { model } = this.model;
+    this.app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model, [], this.travel);
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockImplementation(() => this.now);
   }
 
@@ -70,11 +76,9 @@ export class MealPlanStage {
     return friend;
   }
 
-  // Adds a Tuesday Class in the building of that number.
-  async classAt(user: TestUser, start: string, end: string, number: string): Promise<void> {
-    const times = [
-      { weekday: 'tuesday', startTime: start, endTime: end, placeId: (await this.numbered(number)).id, room: ROOM },
-    ];
+  // Adds a Class in the building of that number, on Tuesdays unless another day is given.
+  async classAt(user: TestUser, start: string, end: string, number: string, weekday = 'tuesday'): Promise<void> {
+    const times = [{ weekday, startTime: start, endTime: end, placeId: (await this.numbered(number)).id, room: ROOM }];
     await addClass(this.app, user.accessToken, { courseName: COURSE, times });
   }
 
@@ -98,9 +102,9 @@ export class MealPlanStage {
   }
 
   // Sends one message of the asker's from an app that draws answers, for the model to take these steps.
-  send(steps: Step[], more: object = {}): request.Test {
+  send(steps: Step[], more: object = {}, text = '배고파'): request.Test {
     this.model.script(...steps);
-    return postAssistantMessages(this.app, this.asker.accessToken, ask('배고파'), {
+    return postAssistantMessages(this.app, this.asker.accessToken, ask(text), {
       clientCapabilities: ['library', 'answer'],
       ...more,
     });

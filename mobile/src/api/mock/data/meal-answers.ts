@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerReply } from '@/api/assistant-types';
+import type { AnswerReply, MealInput } from '@/api/assistant-types';
 import { isAnswerReply } from '@/api/server/plan-answers';
 import alone from './meal-answer-alone.json';
 import fixedStart from './meal-answer-fixed-start.json';
@@ -14,11 +15,11 @@ import three from './meal-answer-three.json';
 // The main server's answers from `POST /assistant/answers`, asked on Tuesday 2026-11-17 at 11:50 and copied whole,
 // with the users' ids renamed to those of `meal-answer.ts`.
 
-function checked(copy: unknown, name: string): AnswerReply {
-  if (!isAnswerReply(copy)) {
+function checked(copy: unknown, name: string): AnswerReply & { input: MealInput } {
+  if (!isAnswerReply(copy) || copy.input.kind !== 'meal') {
     throw new Error(`The stored answer ${name} fails the check of a reply`);
   }
-  return copy;
+  return { ...copy, input: copy.input };
 }
 
 // The User alone.
