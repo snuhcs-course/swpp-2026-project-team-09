@@ -58,13 +58,13 @@ export async function registerPush(): Promise<void> {
 }
 
 // Registers the phone at every start and sign-in, and whenever its token changes. It never asks for the permission.
-// Signed out, it tries an unregistering owed at a start and whenever the app comes back to the front.
+// Before the Session is ready, it tries an unregistering owed at a start and whenever the app comes back to the front.
 export function PushRegistration(): null {
   const { status } = useSession();
   const usable = pushUsable(status === 'ready');
-  const signedOut = status === 'signed-out' && pushUsable(true);
+  const notReady = status !== 'loading' && status !== 'ready' && pushUsable(true);
   useEffect((): (() => void) | void => {
-    if (!signedOut) {
+    if (!notReady) {
       return;
     }
     void unregisterIfOwed();
@@ -76,7 +76,7 @@ export function PushRegistration(): null {
     return () => {
       watch.remove();
     };
-  }, [signedOut]);
+  }, [notReady]);
   useEffect((): (() => void) | void => {
     if (!usable) {
       return;

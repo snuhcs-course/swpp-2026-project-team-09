@@ -15,6 +15,7 @@ import { sockets } from '../support/fake-socket';
 import { SIGN_IN } from '../support/live';
 import { givePhone, ON_CAMPUS, openMain, type Phone } from '../support/main';
 import { startFresh } from '../support/mocks';
+import { ONBOARDING } from '../support/onboarding';
 import { givePushPhone, PHONE_TOKEN } from '../support/push';
 import { REGISTER } from '../support/push-moments';
 import { signIn, signOut } from '../support/sign-out';
@@ -89,6 +90,20 @@ describe('an unregistering that did not go through', () => {
     await pass(1000);
 
     expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
+    expect(phone.unregisters()).toBe(1);
+    expect((await readKeptAfterChanges()).pushUnregisterOwed).toBe(false);
+  });
+
+  it('tries it at a start on the Onboarding screen', async () => {
+    const phone = givePushPhone({ permission: 'granted' });
+    const onboarding = { completed: false, suggestion: { name: '홍길동', department: null } };
+    server.on('POST /lobby', refusal(403, 'ONBOARDING_REQUIRED', { onboarding }));
+    await keep({ signedIn: true, consented: true, onboardingCompleted: true, pushUnregisterOwed: true });
+
+    await startApp();
+    await pass(1000);
+
+    expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(phone.unregisters()).toBe(1);
     expect((await readKeptAfterChanges()).pushUnregisterOwed).toBe(false);
   });
