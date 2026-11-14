@@ -99,7 +99,8 @@ describe('the booker’s room card with a companion out', () => {
     expect(shown.getByText('김민준님이 동의했어요')).toBeVisible();
     expect(shown.getByText('서지우님은 못 와요')).toBeVisible();
     expect(shown.getByText('1명 더 필요해요')).toBeVisible();
-    expect(shown.getByText(/친구들의 동의를 기다리고 있어요 \(1\/1\)/u)).toBeVisible();
+    expect(shown.getByText('친구를 더 불러 주세요')).toBeVisible();
+    expect(shown.queryByText(/친구들의 동의를 기다리고 있어요/u)).toBeNull();
     expect(shown.getByRole('button', { name: '예약하기' })).toBeDisabled();
     expect(shown.getByRole('button', { name: ASK_ONE_MORE })).toBeEnabled();
   });

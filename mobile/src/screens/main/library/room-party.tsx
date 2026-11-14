@@ -25,6 +25,7 @@ import { AskOneMore } from './room-ask-more';
 export const SEND_ASK = '동의 요청 보내기';
 export const ALL_CONSENTED = '모두 동의했어요';
 export const WAITING = '친구들의 동의를 기다리고 있어요';
+export const MORE_FRIENDS = '친구를 더 불러 주세요';
 
 const POLL_MS = 3000;
 
@@ -106,8 +107,10 @@ function statusWords(request: RoomRequest, view: CompanionsView | null): string 
   }
   const consented = request.consents.filter(({ consented: answer }) => answer === true).length;
   const count = view === null ? `${consented}/${request.consents.length}` : `${view.consented}/${view.inRequest}`;
+  // Everyone still in has consented and only the room's minimum is short: nobody's answer is awaited.
+  const short = view !== null && view.consented === view.inRequest;
   const words: Record<RoomRequest['status'], string> = {
-    gathering: `${WAITING} (${count})`,
+    gathering: short ? MORE_FRIENDS : `${WAITING} (${count})`,
     ready: ALL_CONSENTED,
     dissolved: request.reason ?? '파티 구성원이 제안을 거절했습니다',
     expired: '예약 시간이 지나 요청이 끝났어요',
