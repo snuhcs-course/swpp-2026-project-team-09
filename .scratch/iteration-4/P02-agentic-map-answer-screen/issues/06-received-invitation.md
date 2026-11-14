@@ -23,3 +23,19 @@ A User whose phone has the switch on opens an invitation, from "알림" or from 
 - [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+1. `drawingOfScene(scene, setting)` in `answer-marks.ts` draws a bare scene; `drawingOf` calls it with the Plan's number on the pick and the answer's Plans as candidates. An invitation's pick carries no number, as the wireframe draws it.
+2. The invitation's card position is the campus's centre (`centreOf(CAMPUS_BOUNDS)`): the list of received invitations gives the Quest's Place only as a label, with no position.
+3. Invitation cards stand apart from the Place groups and the study clusters, and `useThings` draws no marker for them. The main screen counts its cards ready once the invitations are known too while the switch is on, so that an address waits for them.
+4. The card shows only while the answer frame is not shown, as every selected card; the frame wins, and the card appears once the frame is closed.
+5. While the card is shown a press on the map opens no card, as while the frame is shown.
+6. The read takes the User's on-campus position at the moment of the read; a later move of the phone does not read the card again.
+7. The destination step is the step that starts at the gathering's start at the gathering's Place; without one the title line falls back to the Quest's title after the time.
+8. 수락 and 거절 reuse the 파티 tab's `usePartyActions`, whose `accept` and `decline` now give whether the main server did it. The tab's own words are kept: "파티에 참여했어요" after an acceptance (not "파티에 들어왔어요"), and its refusal words, "요청하지 못했어요. 다시 시도해 주세요" for an unknown failure (not "처리하지 못했어요. 잠시 후 다시 시도해 주세요"). The tab says nothing after a decline, so the card says "초대를 거절했어요".
+9. Any 404 of the read counts as an invitation that waits no more. A failure of the main server's own is asked once more before "초대를 불러오지 못했어요", as every query of the app is.
+10. The tab bar's giving way moved from `useMainLayers` to the main screen, which knows both the frame and the invitation's card.
+11. The steps' list of the card after inviting moved to `answer/quest-steps.tsx`, which both cards draw.
+12. Android's back button needed nothing new: the selection's own back handler closes the invitation's card.
+13. To keep the main screen within lint's 50 lines a function, `useThings` is called inside `useMapView`, and `useRoute` inside the screen's `useLines`; `useFramed` (beside `useReceivedInvitation`) gives the invitation and whether the frame or its card is shown.

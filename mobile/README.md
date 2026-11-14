@@ -695,6 +695,17 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   ("빠짐" for a Friend no longer among them), else the reply's invitations; a Friend's face on the map carries "?"
   while invited and "✓" once in (accepted or late), and its name the state. A new answer, another Plan, or ✕ drops
   the made Quest from the screen.
+- **A received invitation** (`use-received-invitation.ts`, `answer/received-invitation-card.tsx`). With the switch
+  on, each invitation of `GET /quest-invitations` is a card of the main screen, `invitation:<invitationId>`, with no
+  marker, so `/main?card=invitation:<id>` opens it; with the switch off that address opens 파티's 초대 as before. While
+  its card is open (and no answer frame is), the app reads `GET /quest-invitations/:id` with the User's position on
+  campus, draws the invitee's own way by the marks and the camera of an answer (`drawingOfScene`), and the lists,
+  the bottom controls, the zoom control, the AI input, and the tab bar give way, without a pill. The card in the
+  frame's card container shows "유상의 파티 초대" with ✕, the destination step's start and title, "유상과 함께", the
+  way's lines, the steps, "수락" and "거절", and that only the User's own way is shown. 수락 and 거절 use the 파티
+  tab's endpoints, toasts, and fetches again ("파티에 참여했어요", or "초대를 거절했어요"), one at a time, and close
+  the card; a 404 read says "이미 끝난 초대예요" and closes it; another failure offers "다시 시도". Android's back
+  button closes it as ✕ does.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
