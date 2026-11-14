@@ -4,10 +4,12 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
 import {
+  type AnswerReply,
   CHAT_HISTORY_MAX,
   type ChatMessage,
   lengthOf,
@@ -15,6 +17,7 @@ import {
   MESSAGES_TOTAL_MAX,
   type QuestProposal,
   referenceOf,
+  type RequestContext,
   sentProposalOf,
 } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
@@ -43,6 +46,8 @@ export interface ChatBubble {
   own?: boolean;
   // A booking a library card made, as its done message shows it.
   done?: LibraryDone;
+  // The answer an Assistant's reply drew on the map, or null. It is not sent back.
+  answer?: AnswerReply | null;
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
@@ -114,12 +119,15 @@ export function messagesToSend(bubbles: readonly ChatBubble[]): ChatMessage[] {
 
 type NewBubble = Omit<ChatBubble, 'id'>;
 
-// The Assistant's bubble for the conversation: its reply, or the failure.
-async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
+// The Assistant's bubble for the conversation: its reply, or the failure. A request without a context is sent as
+// before the answer on the map.
+async function answerTo(messages: ChatMessage[], context: RequestContext | undefined): Promise<NewBubble> {
   try {
-    const reply = await apiClient.askAssistant(messages);
-    const { text, cards, mapButtons, proposal } = reply;
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null };
+    const reply = await (context === undefined
+      ? apiClient.askAssistant(messages)
+      : apiClient.askAssistant(messages, context));
+    const { text, cards, mapButtons, proposal, answer = null } = reply;
+    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, answer };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };
@@ -182,9 +190,12 @@ function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forge
 }
 
 // The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
-// message sends the conversation, and the reply is shown whole.
-export function useChat(): Chat {
+// message sends the conversation, and the reply is shown whole. `readContext` gives what the app knows when a request
+// is sent, 다시 시도's included; without one, or while it gives none, the request carries no context.
+export function useChat(readContext?: () => RequestContext | undefined): Chat {
   const { bubbles, said, show, add } = useBubbles();
+  const context = useRef(readContext);
+  context.current = readContext;
   const [waiting, setWaiting] = useState(false);
   // Which conversation a reply belongs to: 새 대화 starts another, and a reply to the one before is dropped.
   const conversation = useRef(0);
@@ -193,7 +204,7 @@ export function useChat(): Chat {
   const ask = useCallback((): void => {
     const asked = conversation.current;
     setWaiting(true);
-    void answerTo(messagesToSend(said.current)).then((answer) => {
+    void answerTo(messagesToSend(said.current), context.current?.()).then((answer) => {
       if (asked === conversation.current) {
         add(answer);
         setWaiting(false);
