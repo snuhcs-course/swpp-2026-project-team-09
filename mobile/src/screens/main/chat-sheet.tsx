@@ -176,11 +176,11 @@ export interface ChatSheetControl {
   // The sheet while it is open, under an AI input whose top stands that high above the sheet's bottom.
   sheet: (inputTop: number) => ReactElement | null;
   // The switch of the answer on the map is on: the sheet never opens, and the answer frame shows the conversation.
-  frame: boolean;
+  onMap: boolean;
   // The answer frame is shown: the switch is on and the conversation holds something.
   framed: boolean;
   // Where the answer frame's cards lead, and its map buttons.
-  answer: CardLeaving & { showLayer: (layer: MapLayer) => void };
+  leaving: CardLeaving & { showLayer: (layer: MapLayer) => void };
 }
 
 function stay(): void {
@@ -207,14 +207,14 @@ export function useChatSheet(
   turnOn: (layer: MapLayer) => void,
   position: LatLng | null,
 ): ChatSheetControl {
-  const frame = useAnswerSwitch();
-  const chat = useChat(frame ? (): RequestContext => contextAt(position) : undefined);
+  const onMap = useAnswerSwitch();
+  const chat = useChat(onMap ? (): RequestContext => contextAt(position) : undefined);
   const [shown, setShown] = useState(false);
   const open = useCallback((): void => {
-    if (!frame) {
+    if (!onMap) {
       setShown(true);
     }
-  }, [frame]);
+  }, [onMap]);
   const closeSheet = useCallback((): void => {
     Keyboard.dismiss();
     setShown(false);
@@ -228,21 +228,21 @@ export function useChatSheet(
       }),
     [closeSheet, reset],
   );
-  const close = frame ? stay : closeSheet;
+  const close = onMap ? stay : closeSheet;
   const { showLayer, openEvent, openQuestPost, openPartyForm } = useLeaving(close, turnOn);
   const proposals = useProposalMaking(close);
   const forgetAndShow = (layer: MapLayer): void => {
     chat.reset();
     turnOn(layer);
   };
-  const sheetShown = shown && !frame;
+  const sheetShown = shown && !onMap;
   return {
     chat,
     shown: sheetShown,
     open,
-    frame,
-    framed: frame && (chat.bubbles.length > 0 || chat.waiting),
-    answer: { showLayer: forgetAndShow, openEvent, openQuestPost, openPartyForm, proposals },
+    onMap,
+    framed: onMap && (chat.bubbles.length > 0 || chat.waiting),
+    leaving: { showLayer: forgetAndShow, openEvent, openQuestPost, openPartyForm, proposals },
     sheet: (inputTop) =>
       sheetShown ? (
         <ChatSheet

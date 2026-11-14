@@ -79,8 +79,6 @@ export interface MainLayers {
   cards: readonly CardView[];
   ready: boolean;
   chat: ChatSheetControl;
-  // The answer frame is shown.
-  framed: boolean;
 }
 
 // The 편의기능 stack and what its layers put on the map, with the map's own cards, and the chat's sheet, which turns a
@@ -92,5 +90,5 @@ export function useMainLayers(inFront: boolean, map: MainMap, position: LatLng |
   const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map));
   const chat = useChatSheet(inFront, stack.turnOn, position);
   useHideTabBarOnMain(chat.framed);
-  return { stack, shuttle, cards, ready, chat, framed: chat.framed };
+  return { stack, shuttle, cards, ready, chat };
 }

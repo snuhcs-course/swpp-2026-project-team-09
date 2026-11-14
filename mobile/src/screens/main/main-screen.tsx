@@ -285,7 +285,7 @@ export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
   const me = useMe(map);
-  const { stack, shuttle, cards, ready, chat, framed } = useMainLayers(inFront, map, me.position);
+  const { stack, shuttle, cards, ready, chat } = useMainLayers(inFront, map, me.position);
   const selection = useSelection(cards, inFront);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
@@ -294,15 +294,25 @@ export function MainScreen(): ReactElement {
   useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { room, setStage, setCardHeight, setAnswerHeight } = useRoom(taken.bottomCard || taken.notice !== null, start, framed);
-  const onPress = framed ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection));
+  const { room, setStage, setCardHeight, setAnswerHeight } = useRoom(
+    taken.bottomCard || taken.notice !== null,
+    start,
+    chat.framed,
+  );
+  const onPress = chat.framed ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection));
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView lines={lines} map={map} me={me} onPress={onPress} pin={pin} room={room} things={things} />
         <OverMap onStage={setStage}>
-          <Lists hidden={taken.topCard || framed} map={map} room={room} selection={selection} tutorial={tutorial} />
-          {zoomShown(taken, stack.open, framed) ? <MainZoomControl map={map} me={me} /> : null}
+          <Lists
+            hidden={taken.topCard || chat.framed}
+            map={map}
+            room={room}
+            selection={selection}
+            tutorial={tutorial}
+          />
+          {zoomShown(taken, stack.open, chat.framed) ? <MainZoomControl map={map} me={me} /> : null}
           <SelectedCard
             chat={chat}
             map={map}

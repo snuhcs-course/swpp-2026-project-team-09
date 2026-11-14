@@ -87,7 +87,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                 bubble={bubble}
                 cardActions={cardActions}
                 onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting ? retry : null}
-                onShowLayer={control.answer.showLayer}
+                onShowLayer={control.leaving.showLayer}
                 words={<Words bubble={bubble} />}
               />
             </View>
@@ -111,14 +111,14 @@ interface FramedProps {
 // The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
 // ✕ and Android's back button forget the conversation, a reply on its way included.
 function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
-  const { chat, answer } = control;
+  const { chat, leaving } = control;
   const { reset } = chat;
   const close = useCallback((): void => {
     Keyboard.dismiss();
     reset();
   }, [reset]);
   useBackToClose(useIsFocused(), close, { edge: false });
-  const { actions, sheets } = useCardActions(chat, answer);
+  const { actions, sheets } = useCardActions(chat, leaving);
   return (
     <>
       <AnswerPill asked={turnOf(chat.bubbles)?.asked ?? ''} onClose={close} />
@@ -147,7 +147,7 @@ interface AnswerFrameProps {
 // The answer frame over the map while the switch is on and the conversation holds something. Before anything is
 // asked, while the bar has the keyboard, where the conversation goes stands above it.
 export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: AnswerFrameProps): ReactElement | null {
-  const { frame, framed } = control;
+  const { onMap, framed } = control;
   if (framed) {
     return (
       <Framed
@@ -159,7 +159,7 @@ export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: A
       />
     );
   }
-  return frame && keyboardUp ? (
+  return onMap && keyboardUp ? (
     <Text style={[styles.notice, { bottom: inputTop + space[2] }]}>대화 내용은 AI 제공자에게 전송돼요</Text>
   ) : null;
 }
