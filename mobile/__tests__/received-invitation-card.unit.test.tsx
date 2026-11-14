@@ -9,6 +9,7 @@ import type { ComponentProps } from 'react';
 
 import { INVITATION_CARD } from '@/api/mock/data/invitation-card';
 import { ReceivedInvitationCard } from '@/screens/main/answer/received-invitation-card';
+import { UNKNOWN_WAY_CARD } from './support/invitation-cards';
 
 type Props = ComponentProps<typeof ReceivedInvitationCard>;
 
@@ -20,6 +21,7 @@ async function show(props: Partial<Props> = {}): Promise<void> {
       busy={false}
       card={INVITATION_CARD}
       failed={false}
+      offCampus={false}
       onAccept={noop}
       onClose={noop}
       onDecline={noop}
@@ -66,7 +68,8 @@ describe('the card of a received invitation', () => {
 });
 
 // Partitions of who is in: one holder (above), two with the last name ending in a final consonant, and two ending in
-// an open syllable; of the gathering: none. Expected values: the P02 spec's "유상, 지은과 함께" and Korean's 와/과.
+// an open syllable; of the gathering: none, and one at a Place where no step is. Expected values: the P02 spec's
+// "유상, 지은과 함께", Korean's 와/과, and the stored card's gathering time and Quest title.
 describe('the lines of a card that differs from the stored one', () => {
   it('names two holders with 과 after a final consonant', async () => {
     // Changed for the boundary: a second holder.
@@ -89,6 +92,42 @@ describe('the lines of a card that differs from the stored one', () => {
     expect(screen.getByTestId('invitation-title')).toHaveTextContent('점심', { exact: true });
     expect(screen.queryByTestId('answer-lines')).toBeNull();
   });
+
+  it("says the gathering's start with the Quest's title when no step starts there then", async () => {
+    const { gathering } = INVITATION_CARD;
+    if (gathering === null) {
+      throw new Error('The stored card has a gathering');
+    }
+    // Changed for the boundary: the gathering at a Place where no step is.
+    await show({ card: { ...INVITATION_CARD, gathering: { ...gathering, place: { ...gathering.place, placeId: 'p' } } } });
+
+    expect(screen.getByTestId('invitation-title')).toHaveTextContent('12:33 점심', { exact: true });
+  });
+});
+
+// Partitions of the way's words: a way the server could not tell with the phone off campus, the same with the phone
+// on campus or unknown, and a way the server told with the phone off campus. Expected values: the main server's words
+// for a phone off campus (main-server `plans/own-way.ts`) and the stored card's.
+describe("the way's words of a received invitation", () => {
+  it('says off campus that the way cannot be drawn when the server could not tell it', async () => {
+    await show({ card: UNKNOWN_WAY_CARD, offCampus: true });
+
+    expect(screen.getByTestId('answer-lines')).toHaveTextContent('캠퍼스 밖이라 길은 그리지 못해요.', { exact: true });
+  });
+
+  it('says nothing of the way on campus when the server could not tell it', async () => {
+    await show({ card: UNKNOWN_WAY_CARD });
+
+    expect(screen.queryByTestId('answer-lines')).toBeNull();
+  });
+
+  it("says the server's own lines off campus when the server told the way", async () => {
+    await show({ offCampus: true });
+
+    expect(screen.getByTestId('answer-lines')).toHaveTextContent(
+      '12:15에 수업이 끝나면 바로 나서면 돼요. 걸어서 18분.',
+    );
+  });
 });
 
 // Partitions of the read: on its way, failed; and of the buttons: a press of each, and while one is on its way.
@@ -110,19 +149,31 @@ describe('the card while it is read, and its buttons', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it('accepts, declines, and closes with its buttons', async () => {
-    const [onAccept, onDecline, onClose] = [
-      jest.fn<undefined, []>(),
-      jest.fn<undefined, []>(),
-      jest.fn<undefined, []>(),
-    ];
-    await show({ onAccept, onDecline, onClose });
+  it('accepts with 수락', async () => {
+    const onAccept = jest.fn<undefined, []>();
+    await show({ onAccept });
 
     await userEvent.press(screen.getByRole('button', { name: '수락' }));
+
+    expect(onAccept).toHaveBeenCalledTimes(1);
+  });
+
+  it('declines with 거절', async () => {
+    const onDecline = jest.fn<undefined, []>();
+    await show({ onDecline });
+
     await userEvent.press(screen.getByRole('button', { name: '거절' }));
+
+    expect(onDecline).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes with ✕', async () => {
+    const onClose = jest.fn<undefined, []>();
+    await show({ onClose });
+
     await userEvent.press(screen.getByRole('button', { name: '초대 닫기' }));
 
-    expect([onAccept, onDecline, onClose].map(({ mock }) => mock.calls.length)).toEqual([1, 1, 1]);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('takes no press of 수락 or 거절 while one is on its way', async () => {

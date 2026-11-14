@@ -14,10 +14,13 @@ import { sockets } from './support/fake-socket';
 import {
   ACCEPT_ROUTE,
   answerInvitation,
+  answerTwoInvitations,
   CARD_ROUTE,
   DECLINE_ROUTE,
   invitationCard,
   openInvitation,
+  SECOND_CARD_ROUTE,
+  SECOND_RECEIVED,
 } from './support/invitation';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { DINNER } from './support/markers';
@@ -43,6 +46,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const HELD_MS = 3000;
+const GONE = '이미 끝난 초대예요';
 
 let server: FakeServer;
 
@@ -133,6 +137,28 @@ describe('수락 and 거절 that do not go through', () => {
   });
 });
 
+// Partitions: a reply that comes after its card was closed and another invitation's card opened.
+describe('수락 of one invitation while another is shown', () => {
+  it("closes only its own card, says it accepted, and leaves the other's buttons free", async () => {
+    answerTwoInvitations(server);
+    server.on(ACCEPT_ROUTE, { status: 201, body: DINNER_QUEST, afterMs: HELD_MS });
+    const user = await openMain({ answerOnMap: true });
+    await openInvitation();
+    await user.press(invitationCard().getByRole('button', { name: '수락' }));
+    server.on('GET /quest-invitations', { status: 200, body: [SECOND_RECEIVED] });
+    await user.press(invitationCard().getByRole('button', { name: '초대 닫기' }));
+
+    await openInvitation(SECOND_RECEIVED.id);
+    expect(invitationCard().getByRole('button', { name: '수락' })).toBeEnabled();
+    await pass(HELD_MS);
+
+    expect(screen.getByText('파티에 참여했어요')).toBeVisible();
+    expect(screen.queryByText(GONE)).toBeNull();
+    expect(invitationCard().getByRole('button', { name: '거절' })).toBeEnabled();
+    expect(server.received(SECOND_CARD_ROUTE).length).toBeGreaterThan(0);
+  });
+});
+
 // Partitions of the read: on its way, an invitation that waits no more (404), and another failure.
 describe('the read of the card', () => {
   it('says the invitation is being read while the reply is held back', async () => {
@@ -146,15 +172,17 @@ describe('the read of the card', () => {
     expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
   });
 
-  it('says an invitation that waits no more is over, and closes the card', async () => {
+  it('says an invitation that waits no more is over, closes the card, and reads the list again', async () => {
     answerInvitation(server, refusal(404, 'QUEST_INVITATION_NOT_FOUND'));
     await openMain({ answerOnMap: true });
+    const listsBefore = server.received('GET /quest-invitations').length;
 
     await openInvitation();
 
-    expect(screen.getByText('이미 끝난 초대예요')).toBeVisible();
+    expect(screen.getByText(GONE)).toBeVisible();
     expect(screen.queryByTestId('invitation-card')).toBeNull();
     expect(mapThings()).toContain(DINNER);
+    expect(server.received('GET /quest-invitations').length).toBeGreaterThan(listsBefore);
   });
 
   it('says another failure, and 다시 시도 reads the card again', async () => {
