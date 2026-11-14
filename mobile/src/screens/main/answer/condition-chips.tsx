@@ -10,7 +10,6 @@ import type { ConditionChip } from '@/api/assistant-types';
 import { color, Icon, radius, size, space, text } from '@/design-system';
 
 interface ConditionChipsProps {
-  // The answer's.
   chips: readonly ConditionChip[];
   basisOpen: boolean;
   // The list of Friends is open.

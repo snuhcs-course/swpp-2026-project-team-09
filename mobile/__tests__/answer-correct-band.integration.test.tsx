@@ -128,7 +128,8 @@ describe('after a drag', () => {
   });
 });
 
-// Partitions: the time chip pressed, and the while after it.
+// Partitions: the time chip pressed, the while after it, a press anew within it, and a press while the list of
+// Friends is open.
 describe('the time chip', () => {
   it('puts the focus on the end handle for a while and sends nothing', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -140,5 +141,28 @@ describe('the time chip', () => {
     expect(recalculations(server)).toEqual([]);
     await pass(2500);
     expect(handle('until')).not.toHaveStyle({ borderColor: color.focusRing });
+  });
+
+  it('starts the while again when it is pressed anew', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await user.press(card().getByRole('button', { name: '13:00 수업까지' }));
+    await pass(1500);
+    await user.press(card().getByRole('button', { name: '13:00 수업까지' }));
+    await pass(1500);
+
+    expect(handle('until')).toHaveStyle({ borderColor: color.focusRing });
+    await pass(600);
+    expect(handle('until')).not.toHaveStyle({ borderColor: color.focusRing });
+  });
+
+  it('closes the list of Friends, so that the band with the end handle in focus is shown', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await user.press(card().getByRole('button', { name: '같이 먹을 친구 추가' }));
+
+    await user.press(card().getByRole('button', { name: '13:00 수업까지' }));
+
+    expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
+    expect(handle('until')).toHaveStyle({ borderColor: color.focusRing });
   });
 });

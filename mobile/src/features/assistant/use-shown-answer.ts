@@ -194,12 +194,13 @@ export function useShownAnswer(
     setStored(current);
   }
   const change = useChange(current, setStored, { location, onFailed });
+  const browsing = useBrowsing(setStored);
   return {
     source: current.source,
     answer: current.answer,
     plan: current.answer?.plans[current.index] ?? null,
     index: current.index,
-    ...useBrowsing(setStored),
+    ...browsing,
     basisOpen: current.basisOpen,
     recalculating: current.recalculating,
     change,

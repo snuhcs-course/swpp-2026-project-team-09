@@ -75,7 +75,11 @@ describe('a recalculation on its way', () => {
 
   it('is dropped when the answer is closed before it comes', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE, afterMs: HELD_MS });
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    const everyday: string[] = [];
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, async () => {
+      await pass(0);
+      everyday.push(...mapThings());
+    });
     await user.press(card().getByRole('button', { name: '민수 빼기' }));
 
     await user.press(screen.getByRole('button', { name: '답 닫기' }));
@@ -83,7 +87,9 @@ describe('a recalculation on its way', () => {
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByText('301동식당')).toBeNull();
     expect(mapThings().filter((name) => FIRST_PLAN_MARKS.includes(name))).toEqual([]);
+    expect(mapThings()).toEqual(everyday);
   });
 });
 

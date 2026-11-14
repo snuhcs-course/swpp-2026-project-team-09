@@ -66,16 +66,19 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
   };
 }
 
-// What the card's controls do to the conditions of the answer on screen: each change asks for a recalculation.
+// What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
+// recalculation. The list of Friends leaves out those `input` holds.
 export function useCorrections({ change }: ShownAnswer, input: PlanInput): Corrections {
   const [adding, setAdding] = useState(false);
   const showToast = useToast();
+  const choices = useChoices(input);
+  const { focus, focusUntil } = useFocus();
   return {
     adding,
     toggleAdding: () => {
       setAdding((open) => !open);
     },
-    choices: useChoices(input),
+    choices,
     choose: (userId) => {
       setAdding(false);
       change((shown) => withPerson(shown, userId));
@@ -93,7 +96,11 @@ export function useCorrections({ change }: ShownAnswer, input: PlanInput): Corre
       });
       router.push('/place-map');
     },
-    ...useFocus(),
+    focus,
+    focusUntil: () => {
+      setAdding(false);
+      focusUntil();
+    },
     drop: (bound, time) => {
       change((shown) => withBound(shown, bound, time), 'drag');
     },
