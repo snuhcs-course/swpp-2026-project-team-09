@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -11,7 +12,7 @@ import { InvitationsService } from '../quests/invitations.service.js';
 import { conflict } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
 import { type RoomRequestDto } from './dto/room-request.dto.js';
-import { ACTIVE, DECLINED, notInStatus, requestNotFound, settleAsked } from './room-request-parts.js';
+import { ACTIVE, isIn, notInStatus, requestNotFound, settleAsked } from './room-request-parts.js';
 import { RoomRequestSync } from './room-request-sync.service.js';
 import { RoomRequestsService } from './room-requests.service.js';
 
@@ -37,7 +38,7 @@ export class RoomConsentsService {
       throw conflict('STUDENT_NUMBER_MISSING', 'Save the 학번 in 내 정보 first.');
     }
     const request = await this.prisma.roomRequest.findUnique({ where: { id: requestId }, include: { consents: true } });
-    if (request === null || !request.consents.some((consent) => consent.userId === userId)) {
+    if (request === null || !request.consents.some((consent) => consent.userId === userId && isIn(consent))) {
       return requestNotFound();
     }
     if (!ACTIVE.includes(request.status)) {
@@ -67,9 +68,11 @@ export class RoomConsentsService {
     return this.requests.read(userId, requestId);
   }
 
-  // 거절, or 철회 after consenting: the request is dissolved.
+  // 거절, or 철회 after consenting: the User goes out of the request, which stays for the others.
   async decline(userId: string, requestId: string): Promise<void> {
     await this.sync.expireDue(this.clock.now());
-    await settleAsked(this.sync, userId, requestId, (settling, held) => this.sync.dissolve(settling, held, DECLINED));
+    await settleAsked(this.sync, userId, requestId, (settling, held) =>
+      this.sync.reconcile(settling, held, [{ userId, answered: true }]),
+    );
   }
 }
