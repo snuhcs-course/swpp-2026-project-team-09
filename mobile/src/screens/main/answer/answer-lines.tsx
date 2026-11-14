@@ -30,6 +30,6 @@ export function AnswerLines({ lines }: { lines: readonly AnswerLine[] }): ReactE
 }
 
 const styles = StyleSheet.create({
-  line: { ...text.bodyLg, fontFamily: font.semiBold, fontSize: 17, color: color.ink },
+  line: { ...text.title, color: color.ink },
   strong: { fontFamily: font.bold, color: color.snuBlue },
 });
