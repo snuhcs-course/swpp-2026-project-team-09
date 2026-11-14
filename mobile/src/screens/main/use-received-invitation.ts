@@ -12,7 +12,7 @@ import type { InvitationCard } from '@/api/invitation-card-types';
 import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
 import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
-import { invitationIdOf } from '@/features/map/adapter';
+import { cardId, invitationIdOf } from '@/features/map/adapter';
 import { type PartyActions, usePartyActions } from '../party/use-party-actions';
 import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import type { Selection } from './use-selection';
@@ -26,7 +26,7 @@ export interface ReceivedInvitation {
   retry: () => void;
   // The invitee's own way, null without one.
   drawing: AnswerDrawing | null;
-  // 수락 or 거절 is on its way: neither takes a press.
+  // 수락 or 거절 of this invitation is on its way: neither takes a press.
   busy: boolean;
   accept: () => void;
   decline: () => void;
@@ -50,33 +50,43 @@ function useCardRead(invitationId: string | null, position: LatLng | null): UseQ
   });
 }
 
-// 수락 and 거절, each as the 파티 tab's buttons do it, one at a time. Done, the card closes.
+// 수락 and 거절, each as the 파티 tab's buttons do it, once for each invitation at a time. Done, the toast says so, and
+// the card closes while that invitation's card is still the one selected (`selectedId`, a card's id).
 function useAnswers(
   card: InvitationCard | null,
-  close: () => void,
+  selectedId: string | null,
+  closeCard: () => void,
 ): Pick<ReceivedInvitation, 'busy' | 'accept' | 'decline'> {
   const actions = usePartyActions();
   const showToast = useToast();
-  const [busy, setBusy] = useState(false);
-  const sending = useRef(false);
+  const [sending, setSending] = useState<readonly string[]>([]);
+  const going = useRef(new Set<string>());
+  const selected = useRef(selectedId);
+  useEffect(() => {
+    selected.current = selectedId;
+  });
   const answer = async (does: PartyActions['accept'], done: string | null): Promise<void> => {
-    if (card === null || sending.current) {
+    if (card === null || going.current.has(card.id)) {
       return;
     }
-    sending.current = true;
-    setBusy(true);
+    const { id } = card;
+    going.current.add(id);
+    setSending((ids) => [...ids, id]);
     const answered = await does(card);
-    sending.current = false;
-    setBusy(false);
-    if (answered) {
-      if (done !== null) {
-        showToast(done);
-      }
-      close();
+    going.current.delete(id);
+    setSending((ids) => ids.filter((each) => each !== id));
+    if (!answered) {
+      return;
+    }
+    if (done !== null) {
+      showToast(done);
+    }
+    if (selected.current === cardId.invitation(id)) {
+      closeCard();
     }
   };
   return {
-    busy,
+    busy: card !== null && sending.includes(card.id),
     accept: () => void answer(actions.accept, null),
     decline: () => void answer(actions.decline, DECLINED),
   };
@@ -90,7 +100,8 @@ export function useReceivedInvitation(
   framed: boolean,
 ): ReceivedInvitation {
   const { selected, close } = selection;
-  const invitationId = selected === null || framed ? null : invitationIdOf(selected.id);
+  const selectedId = selected?.id ?? null;
+  const invitationId = selectedId === null || framed ? null : invitationIdOf(selectedId);
   const read = useCardRead(invitationId, position);
   const showToast = useToast();
   const gone = read.error instanceof ApiError && read.error.status === 404;
@@ -103,13 +114,14 @@ export function useReceivedInvitation(
   const card = invitationId === null ? null : (read.data ?? null);
   const way = card?.way ?? null;
   const drawing = useMemo(() => (way === null ? null : drawingOfScene(way.scene)), [way]);
+  const answers = useAnswers(card, selectedId, close);
   return {
     shown: invitationId !== null,
     card,
     failed: read.isError && !gone,
     retry: () => void read.refetch(),
     drawing,
-    ...useAnswers(card, close),
+    ...answers,
     close,
   };
 }
