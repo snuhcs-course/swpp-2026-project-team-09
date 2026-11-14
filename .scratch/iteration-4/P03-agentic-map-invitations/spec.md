@@ -204,6 +204,26 @@ interface FriendView {
 - A Plan's scene marks a Friend by the level the view gave. With today's switches that is exact or the Timetable, which the scene already tells apart; the mark of the building level comes with the levels.
 - The map's own answers (`GET /friends`, `GET /positions`, and the `position` signal) stay as they are: they already follow the visibility rule the view reads.
 
+### The three Friend levels
+
+Above the Timetable, each User chooses for each Friend what that Friend sees of them: `timetable` (the Timetable only; the screens' "시간표만", location off), `building` (the Place they are in now; "지금 있는 건물"), or `exact` (their position; "정확한 위치"). The design's section 7 decides the behaviour; this section says how it is stored and sent.
+
+- **Stored** on each end of a friendship, `user_a_level` and `user_b_level`, in place of today's two sharing switches. The migration turns a switch that is on into `exact` and one that is off into `timetable`, so that nobody sees more or less than before. A new friendship starts at `building` on both ends.
+- **What a viewer sees of a Friend** is the lower of the two ends' levels, and `timetable` while either Master Switch is off. Members of a common Party who both share with it see each other `exact`, whatever the levels, as today. The rule stays in the one visibility service, and the Friend view reads it.
+- **Sent at the building level**: no position of the person leaves the server. A viewer at `building` receives `{ userId, placeId, latitude, longitude, measuredAt, level: 'building' }` with the Place's own point, when the person is in a Place, and nothing when they are in none. A viewer at `exact` receives what they receive today with `level: 'exact'`. `GET /positions` and the `position` signal both follow this. A viewer is told again only when what they see changes: a building viewer when the Place changes, and `position-removed` when the person leaves every Place. An app of before draws a building viewer's Friend at the Place's point, which is what that viewer may see.
+- **Changing a level** works at once and tells the other User nothing but what their map now shows: lowering from `exact` to `building` replaces the position with the Place, and lowering to `timetable` removes it.
+- **The routes**: `PUT /friends/:userId/level` with `{ level }`. `PUT /friends/:userId/sharing` with `{ on }` stays for an app of before: on is `exact` and off is `timetable`. `GET /friends` gives each Friend's `level` (the User's own end) beside `sharing` (true unless the level is `timetable`) and `visible`.
+- **The Friend view** gives `building` with the Place and no position. A meal's Plan sets such a Friend out from that Place, and its scene marks them `building`: `MapScene` people gain the source `building`, drawn at the Place's point.
+
+### Asking once
+
+The Assistant asks at two moments and remembers that it asked (design section 7, "The two moments the Assistant asks"). The server keeps when each question was asked; the app asks.
+
+- **Turning location off**: before a Friend's level is set to `timetable` from above it, the app asks once for that Friend, and before the Master Switch is turned off, once for the Master Switch. "건물까지만" from a Friend's question sets that Friend to `building`; from the Master Switch's question it lowers every Friend at `exact` to `building` and leaves the Master Switch on. Stored: `off_asked_at` on each end of a friendship, and `users.master_off_asked_at`.
+- **The first plan with a Friend**: when a Plan the User made becomes a Quest, the reply of `POST /plans` names the Friends of it whom the User was not asked about yet, with each one's current level (`askLevels: [{ userId, name, level }]`). The app asks once ("민수, 지은에게 평소에 어디까지 보일까요?"), each name removable. Answering or skipping is recorded with `POST /friends/asked` and `{ userIds, moment: 'plan' }`; a chosen level is set with the level route. Stored: `plan_asked_at` on each end. Accepting an invitation never asks.
+- `GET /friends` gives `askedOff` and `askedPlan` for each Friend, and the Lobby `masterOffAsked`, so that the app knows whether to ask.
+- `PUT /users/me/friend-levels` with `{ level: 'building' }` lowers every Friend above that level to it, for the Master Switch's "건물까지만".
+
 ### The app
 
 - The contract is declared in the app as it is in the server: the body and reply of `POST /plans`, the invitation's card, a Quest's members, and the signals' payloads.
@@ -230,7 +250,7 @@ A good test states a behaviour a User or another package depends on, through a p
 - The buttons and cards that show any of this: "이대로 초대", the card of a received invitation, the person chips, the flag of a Quest on the everyday map, and the question after a decline. Package B's.
 - The push of an invitation and its richer words, the leave-by notification, the notification list's stored rows, and "파티 켜기" on a notification. Packages D and P04.
 - The preview of being late, what changes for each other Holder when one is late, and the question whether to go anyway or drop out. Package A's.
-- Storing the three Friend levels, sending a location at the building level, and the two moments the Assistant asks. Iteration 5.
+- Lowering by place: a Private Zone, and buildings whose name reveals a situation. A position off campus is already never kept.
 - The answers for events and recruiting Quests (rows 4 and 5), a recruiting Quest made from a Plan, and the start rounded up to ten minutes.
 - An invitation link sent through a messenger.
 - A constraint an invited person sets, and keeping the asker's conditions with a Quest.
