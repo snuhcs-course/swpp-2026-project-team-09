@@ -32,7 +32,7 @@ export const MIN_ZOOM = 14;
 export const MAX_ZOOM = 19;
 
 // The lowest level of Kakao's SDK, which takes whole levels only: pinching out stops there instead of snapping back
-// from below the lowest zoom. A hair closer than the lowest zoom of 14.97.
+// from below the lowest zoom. On the emulator it shows zoom 15.515 (`nativeLevelZoom`).
 export const NATIVE_MIN_LEVEL = 15;
 
 // The zoom a level of Kakao's SDK shows. The native module measures it on each phone and keeps it to itself; on the

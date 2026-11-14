@@ -81,7 +81,8 @@ function wayDrawing(): AnswerDrawing {
   return drawingOfScene(way.scene);
 }
 
-// The camera the main screen works out for the stored card's way under a card `card` high (`useAnswerCamera`).
+// The camera `answerCamera` works out for the stored card's way under a card `card` high, on a map that goes no further
+// out than its fit zoom.
 function askedFor(card: number, fitZoom: number): MapCamera {
   const drawing = wayDrawing();
   const padding = paddingOf(STATUS_BAR, card, drawing, false);
@@ -148,7 +149,7 @@ describe('the camera asked of the Android module in a view grown since it opened
     expect(Math.max(...ys)).toBeLessThanOrEqual(AREA.bottom + 1);
   });
 
-  it("keeps the destination at the area's top where the map cannot go out far enough: under a card of 480", async () => {
+  it("keeps the destination at the area's top where the fit zoom is too close: under a card of 480", async () => {
     const map = await openedAt(OPENED);
     await layOut(FRAMED);
     const asked = askedFor(480, map.fitZoom());

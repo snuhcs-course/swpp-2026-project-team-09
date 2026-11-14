@@ -172,8 +172,8 @@ export interface MapProps {
   // The lowest level of a native map's SDK, which takes whole levels only: pinching out stops there. The plain map
   // has no levels and keeps to the camera's rules alone. Left out, the SDK's own.
   nativeMinLevel?: number;
-  // A zoom further out than the camera's rules allow that the camera may then go to, as it does while the main
-  // screen draws an answer (`outerRules`). The fit zoom stays the rules' own. Left out, the rules' lowest zoom.
+  // A zoom further out than the camera's rules allow, to which the camera may then go, its view kept inside `bounds`
+  // alone (`outerRules`). The fit zoom stays the rules' own. Left out, the rules' lowest zoom.
   outerZoom?: number;
   maxZoom: number;
   markers: readonly MapMarker[];

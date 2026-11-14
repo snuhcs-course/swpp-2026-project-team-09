@@ -91,8 +91,8 @@ export function PlainMap(props: MapProps): ReactElement {
   // Until the ground is laid out it counts as large as the window, so that it is ready at once.
   const [laidOut, setLaidOut] = useState<Size | null>(null);
   const size = laidOut ?? { width: window.width, height: window.height };
-  const reports = { onCameraIdle, onFitZoom, outerZoom: props.outerZoom };
-  const camera = useCamera({ bounds, fitBounds, minZoom, maxZoom, size }, ref, reports);
+  const cameraProps = { onCameraIdle, onFitZoom, outerZoom: props.outerZoom };
+  const camera = useCamera({ bounds, fitBounds, minZoom, maxZoom, size }, ref, cameraProps);
   const gliding = useMotionAllowed();
   const place = (position: LatLng): Point => inView(position, camera, size);
   return (
