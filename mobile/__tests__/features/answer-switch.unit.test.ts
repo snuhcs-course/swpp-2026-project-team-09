@@ -26,9 +26,8 @@ beforeEach(() => {
   jest.mocked(keep).mockResolvedValue({} as Kept);
 });
 
-// Partitions: before the phone has said, after it said on, after it said off; a change made by one reader seen by
-// another; a change made before the phone's answer comes; a new start of the app after a change.
-describe('the switch of the answer on the map', () => {
+// Partitions: before the phone has said, after it said on, after it said off.
+describe('the switch of the answer on the map, as the phone kept it', () => {
   it('is off until the phone has said', async () => {
     jest.mocked(readKept).mockReturnValue(
       new Promise(() => {
@@ -62,7 +61,11 @@ describe('the switch of the answer on the map', () => {
 
     expect(result.current).toBe(false);
   });
+});
 
+// Partitions: a change made by one reader seen by another; a change made before the phone's answer comes; a new start
+// of the app after a change.
+describe('a change of the switch of the answer on the map', () => {
   it('tells every reader of a change at once, and the phone keeps it', async () => {
     phoneKeeps(false);
     const first = await renderHook(() => useAnswerSwitch());
