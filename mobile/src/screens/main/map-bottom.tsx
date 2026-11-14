@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -17,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
 import { space } from '@/design-system';
 import { nextMeal } from '@/features/dining/adapter';
+import type { FirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
@@ -25,7 +27,9 @@ import { AnswerFrame } from './answer/answer-frame';
 import { BottomControls } from './bottom-controls';
 import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
-import { AI_INPUT, CARD, LAYERS_BUTTON, type Room } from './layout';
+import { FirstRunAsk } from './first-run/first-run-ask';
+import { InterestsHint } from './first-run/interests-hint';
+import { AI_INPUT, CARD, interestsHintBottom, LAYERS_BUTTON, type Room } from './layout';
 import { ShuttleNotice } from './shuttle-notice';
 import { TutorialPager } from './tutorial/tutorial-pager';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
@@ -62,18 +66,23 @@ function sendWithKeyboardDown(send: (text: string) => void): (text: string) => v
   };
 }
 
-// What the open card and the shuttle's notice take. A 식당's card sits at the top: the lists give way to it, and what
-// is at the bottom stays. The notice, the shuttle's service hours, gives way to any open card; what a card at the
-// bottom hides gives way to the notice too, and the 편의기능 button stands above it.
+// What the open card, the first run's card, and the shuttle's notice take. A 식당's card sits at the top: the lists
+// give way to it, and what is at the bottom stays. The first run's card is shown only while nothing is selected, and
+// takes the bottom as a card does. The notice, the shuttle's service hours, gives way to either card; what a card at
+// the bottom hides gives way to the notice too, and the 편의기능 button stands above it.
 export interface Taken {
   topCard: boolean;
   bottomCard: boolean;
   notice: string | null;
 }
 
-export function takenBy(selected: CardView | null, serviceHours: string | null): Taken {
+export function takenBy(selected: CardView | null, serviceHours: string | null, firstRun = false): Taken {
   const topCard = selected?.kind === 'dining';
-  return { topCard, bottomCard: selected !== null && !topCard, notice: selected === null ? serviceHours : null };
+  return {
+    topCard,
+    bottomCard: (selected !== null && !topCard) || firstRun,
+    notice: selected === null && !firstRun ? serviceHours : null,
+  };
 }
 
 interface MapBottomProps {
@@ -91,6 +100,8 @@ interface MapBottomProps {
   onShowOnMap: (target: TutorialPinTarget) => void;
   // The chat's sheet, which the main screen holds, so that a card's button can ask the Assistant.
   chat: ChatSheetControl;
+  // The first run's card to show, null while another thing takes the bottom, and the line that asks for interests.
+  firstRun: Pick<FirstRun, 'card' | 'answer' | 'openInterests'>;
 }
 
 // What is at the bottom of the map: the shuttle's notice, the row of buttons, the 편의기능 button and the AI input. A
@@ -99,8 +110,10 @@ interface MapBottomProps {
 // in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input stands right above
 // it, and the chat keeps its last bubble clear of it there. The conversation is kept while the app runs.
 // With the switch of the answer on the map on, the answer frame takes the sheet's place, and the input is its card's.
+// The first run's card stands at the bottom card's place, and its line that asks for interests at the left above the
+// row of buttons.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, onAnswerHeight, room, stack, tutorial, onShowOnMap, chat } = props;
+  const { taken, onParty, onNoticeHeight, onAnswerHeight, room, stack, tutorial, onShowOnMap, chat, firstRun } = props;
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const { bottomCard, notice } = taken;
@@ -114,6 +127,12 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} stack={stack} />
       ) : null}
       {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
+      {under && firstRun.card !== null ? (
+        <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
+      ) : null}
+      {under && room.interestsHint ? (
+        <InterestsHint bottom={interestsHintBottom(room.tutorialStart)} onPress={firstRun.openInterests} />
+      ) : null}
       {chat.sheet(inputTop)}
       <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
       <AiInput

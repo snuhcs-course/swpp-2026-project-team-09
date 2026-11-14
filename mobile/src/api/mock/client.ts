@@ -12,6 +12,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -23,6 +24,7 @@ import { answer } from './answer';
 import { mockAssistantReply, mockRecalculation } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
+import { LATE_WAY } from './data/late-way';
 import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
@@ -30,6 +32,7 @@ import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
+import { mockInterests } from './interests';
 import { mockParty } from './party';
 import { mockBetterPlan, mockChangedPlanQuest, mockPlanQuest } from './plan-quest';
 import { mockTimetable as timetable } from './timetable';
@@ -211,8 +214,11 @@ export const mockClient: ApiClient = {
   getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
   changePlanQuest: () => answer('changePlanQuest', mockChangedPlanQuest),
   getInvitationCard: (invitationId) => answer('getInvitationCard', () => mockInvitationCard(invitationId)),
+  // The mock does not calculate: the main server's real way for 민수 5 minutes late, whatever is reported.
+  reportLate: () => answer('reportLate', () => LATE_WAY),
   ...mockRoom,
   ...mockParty,
   ...mockEvents,
   ...mockTutorial,
+  ...mockInterests,
 };

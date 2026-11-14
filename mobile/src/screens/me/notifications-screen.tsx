@@ -41,6 +41,7 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   'room-agreed': 'invitation',
   'room-ending': 'navy',
   'room-window': 'request',
+  'interest-new': 'navy',
   notice: 'invitation',
 };
 

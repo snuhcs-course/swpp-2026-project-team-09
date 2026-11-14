@@ -24,6 +24,7 @@ import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
 import { color, useNotReadyToast } from '@/design-system';
+import { type FirstRun, useFirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
@@ -199,7 +200,7 @@ function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel }: Main
       <Map
         avatars={contents.avatars}
         {...CAMPUS_CAMERA}
-        inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight)}
+        inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight, room.interestsHint)}
         markers={contents.markers}
         nativeMinLevel={nativeMinLevel}
         onCameraIdle={map.onCameraIdle}
@@ -261,6 +262,21 @@ function useMainTutorial(
   return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null, pin };
 }
 
+// What takes the bottom of the map, and the room the rest has. The first run's card shows while nothing is selected
+// and neither the chat nor the answer frame is shown.
+function useBottomRoom(
+  selection: Selection,
+  chat: ChatSheetControl,
+  shuttle: ShuttleLayer,
+  tutorialStart: boolean,
+): ReturnType<typeof useRoom> & { taken: Taken; firstRun: FirstRun } {
+  const asked = useFirstRun();
+  const free = selection.selected === null && !chat.shown && !chat.framed;
+  const firstRun = { ...asked, card: free ? asked.card : null };
+  const taken = takenBy(selection.selected, shuttle.serviceHours, firstRun.card !== null);
+  return { taken, firstRun, ...useRoom(taken, tutorialStart, chat.framed, asked.asksForInterests) };
+}
+
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
 // and the route; over it the friend list, the Quest list, the zoom control or the selected thing's card, and the
 // controls above the navigation. It is the first tab: the bottom navigation under it is the tabs', and it stays
@@ -275,7 +291,8 @@ function useMainTutorial(
 // cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
 // itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
 // the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing; while
-// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`).
+// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`). After Onboarding on this
+// phone the first run asks its three things, one card at a time, while nothing else takes the bottom (`useFirstRun`).
 export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
@@ -287,9 +304,8 @@ export function MainScreen(): ReactElement {
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection, chat);
-  const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { room, setStage, setCardHeight, heights } = useRoom(taken, start, chat.framed);
+  const { taken, firstRun, room, setStage, setCardHeight, heights } = useBottomRoom(selection, chat, shuttle, start);
   const view = useMapView(chat, map, room, { things, me, pin, lines, cards, selection });
   return (
     <View style={styles.screen}>
@@ -311,6 +327,7 @@ export function MainScreen(): ReactElement {
           <MapBottom
             {...heights}
             chat={chat}
+            firstRun={firstRun}
             onParty={party.open}
             onShowOnMap={pin.showOnMap}
             room={room}

@@ -7,11 +7,13 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { forgetMockSwitch } from '@/api/mock/client';
 import { resetMockFriendships } from '@/api/mock/friendships';
+import { resetMockInterests } from '@/api/mock/interests';
 import { resetMockTimetable } from '@/api/mock/timetable';
 import { forgetMockMatching } from '@/api/mock/events';
 import { resetMockTutorial } from '@/api/mock/tutorial';
@@ -28,11 +30,12 @@ const SETTINGS = [
   'EXPO_PUBLIC_SOCKET_SERVER_URL',
 ] as const;
 
-// A phone that keeps nothing, an app started without development settings, the mock's friendships and classes as
-// they start, and the switch of the answer on the map not yet read.
+// A phone that keeps nothing, an app started without development settings, the mock's friendships, classes, and
+// watched interests as they start, and the switch of the answer on the map not yet read.
 export async function startFresh(): Promise<void> {
   resetMockFriendships();
   resetMockTimetable();
+  resetMockInterests();
   for (const setting of SETTINGS) {
     Reflect.deleteProperty(process.env, setting);
   }

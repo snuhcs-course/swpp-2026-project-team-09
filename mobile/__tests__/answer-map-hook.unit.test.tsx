@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -30,7 +31,7 @@ jest.mock('react-native-safe-area-context', () => ({
 // label take 156 at the top, and the card with its room 346 at the bottom: the area is from 156 to 568. A campus map
 // of that view goes no further out than zoom 15.26 (see `answer-camera.unit.test.ts`).
 const SIZE = { width: 411, height: 914 };
-const ROOM: Room = { stage: SIZE, cardHeight: null, answerHeight: 274, tutorialStart: false };
+const ROOM: Room = { stage: SIZE, cardHeight: null, answerHeight: 274, tutorialStart: false, interestsHint: false };
 const FIT_ZOOM = 15.26;
 
 function nothing(): void {
