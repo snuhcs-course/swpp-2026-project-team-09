@@ -2861,6 +2861,7 @@ src/
 │                                    hours, and the vehicles the worker collects, served and sent to the socket server
 ├── timetable/                       a feature: a User's timetable, the classes and their times
 ├── tutorial/                        a feature: the 새내기 튜토리얼's content and each User's progress
+├── push/                            a feature: each Session's Expo push token, and the one sender of pushes
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
@@ -3017,6 +3018,87 @@ this.signals.send('everyone', 'global-events-changed');
 
 `session-ended` and `shuttle-vehicles-updated` are events of their own, not signals, which the socket server handles by
 name (see [Sign-in](#sign-in) and [Shuttle](#shuttle)).
+
+## Push notifications
+
+The main server sends pushes through Expo's push service, which passes them to Firebase Cloud Messaging. It holds no
+Firebase key and no Expo access token: enhanced push security is off, so there is no setting for push.
+
+- `PUT /users/me/push-token` with `{ "token": "ExponentPushToken[…]" }` and a User's access token registers the
+  phone's Expo push token for the signed-in Session and answers 204. The token must read `ExponentPushToken[…]` or
+  `ExpoPushToken[…]`, at most 199 characters, or the answer is 400. A second token from the same Session replaces the
+  first, and the same token under another Session moves to this one, so a phone passed to another User sends nothing
+  more to the first.
+
+The table `push_tokens`:
+
+| Column       | Holds                                                            |
+| ------------ | ---------------------------------------------------------------- |
+| `id`         | The row's id, the only name of a token in the logs               |
+| `session_id` | The Session the token belongs to, one token per Session (unique) |
+| `token`      | The Expo push token, held by one Session at a time (unique)      |
+| `created_at` | When the row was first stored                                    |
+
+A row goes in the transaction that ends its Session: a sign-out, a sign-in on another phone (`replaced`) or a reused
+refresh token (`refresh_token_reused`). It also goes with its Session (cascade), and when Expo reports its token as
+`DeviceNotRegistered`. A row stays but is not used while its Session has no refresh token that is neither revoked nor
+expired, since a Session whose refresh token expired is never marked ended. There is no route to remove a token.
+
+`PushService` from `src/push/push.service.ts` is the one sender. `send(userIds, message)` reads the tokens of the
+Users' usable Sessions and posts them to `https://exp.host/--/api/v2/push/send`, at most 100 messages a request, with
+a 5-second timeout. Each message is `{ to, title, body, data: { url }, channelId: 'default', priority: 'high' }`. The
+messages are the closed list in `src/push/messages.ts`; `data` holds only the address the app opens,
+`/main?card=<kind>:<id>`, and never anyone's position, route or arrival time. Call it after the transaction commits
+and do not await it: it never throws, and a User with no usable token is skipped.
+
+Pushed today:
+
+| When                      | To          | Title                           | Body              | Address                      |
+| ------------------------- | ----------- | ------------------------------- | ----------------- | ---------------------------- |
+| A Leader invites a Friend | The invitee | `<Leader's name>님의 파티 초대` | The Quest's title | `/main?card=invitation:<id>` |
+
+Accepting, declining or cancelling an invitation, Friend Requests, requests to join and Parties push nothing.
+
+Expo's answer holds a ticket for each message, in message order. A `DeviceNotRegistered` ticket deletes its row and
+logs an info line. Any other ticket error, an answer outside 2xx (with its `errors[].code` values), a timeout or a
+network failure logs a warning. An ok ticket's receipt id is logged at debug level. A log line holds only row ids,
+error codes, receipt ids and the HTTP status: never a token, Expo's `message` or `details`, the request body or the
+response body, because Expo's texts quote the whole token and a leaked token lets anyone push to that phone.
+
+Nothing is retried, and receipts are not read in code, on purpose: the invitation stays in the app's "알림" whatever
+happens to the push. Errors such as wrong FCM credentials (`InvalidCredentials`) appear only in a receipt, so read it
+by hand. To send a test push to a phone, with the token the development build's `/push-check` screen shows:
+
+```bash
+curl -sS -H 'content-type: application/json' \
+  -d '[{"to":"ExponentPushToken[…]","title":"테스트","body":"테스트 알림","channelId":"default","priority":"high"}]' \
+  https://exp.host/--/api/v2/push/send
+```
+
+The answer's ticket carries the receipt id, which Expo answers for about a day after the send:
+
+```bash
+curl -sS -H 'content-type: application/json' -d '{"ids":["XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"]}' \
+  https://exp.host/--/api/v2/push/getReceipts
+```
+
+Keep a real token out of commits, issues and chats.
+
+In a test, give `startApp` an `ExpoPushStub` from `test/expo-push.ts` through its last parameter, and await the
+service's `settled()` before checking what the stub received and before closing the app:
+
+```ts
+const expo = new ExpoPushStub();
+const app = await startApp(inject('settings'), [], undefined, undefined, undefined, [], undefined, undefined, {
+  fetchExpo: expo.fetch,
+});
+const push = await pushServiceOf(app);
+expo.answers(savedAnswer('expo-push-ok'));
+```
+
+Without a stub, every call to Expo fails. `test/answers/expo-push-device-not-registered.json` is Expo's real answer
+to a made-up token, captured once on 2026-11-14; `test/answers/expo-push-ok.json` is an ok ticket in Expo's documented
+format.
 
 ## Requests from the worker server
 
