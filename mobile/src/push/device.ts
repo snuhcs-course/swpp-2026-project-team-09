@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { requireOptionalNativeModule } from 'expo';
@@ -106,6 +107,10 @@ export async function expoPushToken(): Promise<string | null> {
   }
 }
 
+// The library sends its token event after every fetch of the token, changed or not, so only a token that differs from
+// the last one the phone gave counts as a change.
+let lastDeviceToken: string | null = null;
+
 // The phone's token can change, after a restore for example. The listener then asks for the Expo push token again.
 export function onPushTokenChange(listener: () => void): () => void {
   const library = notifications();
@@ -113,8 +118,16 @@ export function onPushTokenChange(listener: () => void): () => void {
     return stopNothing;
   }
   try {
-    const subscription = library.addPushTokenListener(() => {
-      listener();
+    const subscription = library.addPushTokenListener((token) => {
+      const data: unknown = token.data;
+      if (typeof data !== 'string' || data === lastDeviceToken) {
+        return;
+      }
+      const hadToken = lastDeviceToken !== null;
+      lastDeviceToken = data;
+      if (hadToken) {
+        listener();
+      }
     });
     return () => {
       subscription.remove();
@@ -124,14 +137,25 @@ export function onPushTokenChange(listener: () => void): () => void {
   }
 }
 
+// Android's unregister call needs the network, and a sign-out waits for it.
+const UNREGISTER_TIMEOUT_MS = 3000;
+
 export async function unregisterPush(): Promise<void> {
   const library = notifications();
   if (library === null) {
     return;
   }
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    await library.unregisterForNotificationsAsync();
+    await Promise.race([
+      library.unregisterForNotificationsAsync(),
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, UNREGISTER_TIMEOUT_MS);
+      }),
+    ]);
   } catch {
     // The Session ends whatever the phone answered.
+  } finally {
+    clearTimeout(timer);
   }
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Platform } from 'react-native';
@@ -32,8 +33,12 @@ const mockCalls: string[] = [];
 let mockPermission: Permission = { status: 'undetermined', granted: false };
 let mockPermissionFails = false;
 let mockTokenFails = false;
+let mockPermissionRefused = false;
+let mockChannelFails = false;
 // The listener the library was given, to play a token change.
 let mockTokenListener: ((token: Token) => void) | null = null;
+// What the library's unregister call returns.
+let mockUnregister: () => Promise<void> = () => Promise.resolve();
 
 function mockAnswer<T>(call: string, answer: T, fails = false): Promise<T> {
   mockCalls.push(call);
@@ -51,11 +56,15 @@ jest.mock('expo-constants', () => ({
 jest.mock('expo-notifications', () => ({
   AndroidImportance: { HIGH: 5 },
   setNotificationChannelAsync: (id: string, channel: { name: string; importance: number }): Promise<null> =>
-    mockAnswer(`setNotificationChannelAsync(${id}, ${channel.name}, ${channel.importance})`, null),
+    mockAnswer(`setNotificationChannelAsync(${id}, ${channel.name}, ${channel.importance})`, null, mockChannelFails),
   getPermissionsAsync: (): Promise<Permission> =>
     mockAnswer('getPermissionsAsync()', mockPermission, mockPermissionFails),
   requestPermissionsAsync: (): Promise<Permission> =>
-    mockAnswer('requestPermissionsAsync()', { status: 'granted', granted: true }, mockPermissionFails),
+    mockAnswer(
+      'requestPermissionsAsync()',
+      mockPermissionRefused ? { status: 'denied', granted: false } : { status: 'granted', granted: true },
+      mockPermissionFails,
+    ),
   getExpoPushTokenAsync: (options: { projectId: string }): Promise<Token> =>
     mockAnswer(
       `getExpoPushTokenAsync(${options.projectId})`,
@@ -68,16 +77,29 @@ jest.mock('expo-notifications', () => ({
     return {
       remove: (): void => {
         mockCalls.push('remove()');
+        mockTokenListener = null;
       },
     };
   },
   unregisterForNotificationsAsync: (): Promise<void> => {
     mockCalls.push('unregisterForNotificationsAsync()');
-    return Promise.resolve();
+    return mockUnregister();
   },
 }));
 
 const GRANTED: Permission = { status: 'granted', granted: true };
+
+// The wrapper keeps the last token the phone gave, so a test of the token listener starts from a fresh copy.
+function freshDevice(): typeof PushDevice {
+  let fresh: typeof PushDevice | undefined;
+  jest.isolateModules(() => {
+    fresh = jest.requireActual<typeof PushDevice>('@/push/device');
+  });
+  if (fresh === undefined) {
+    throw new Error('The wrapper did not load');
+  }
+  return fresh;
+}
 
 afterEach(() => {
   mockTokenManager = null;
@@ -85,7 +107,11 @@ afterEach(() => {
   mockPermission = { status: 'undetermined', granted: false };
   mockPermissionFails = false;
   mockTokenFails = false;
+  mockPermissionRefused = false;
+  mockChannelFails = false;
   mockTokenListener = null;
+  mockUnregister = (): Promise<void> => Promise.resolve();
+  jest.useRealTimers();
   jest.restoreAllMocks();
 });
 
@@ -121,6 +147,20 @@ describe('the push wrapper asking', () => {
     await expect(askPushPermission()).resolves.toBe('unavailable');
     await expect(expoPushToken()).resolves.toBeNull();
   });
+
+  it('reports "denied" when the User refuses the prompt', async () => {
+    mockPermissionRefused = true;
+
+    await expect(askPushPermission()).resolves.toBe('denied');
+  });
+
+  it('reports "unavailable" and gives no token when the channel cannot be created', async () => {
+    mockPermission = GRANTED;
+    mockChannelFails = true;
+
+    await expect(askPushPermission()).resolves.toBe('unavailable');
+    await expect(expoPushToken()).resolves.toBeNull();
+  });
 });
 
 describe('the push wrapper and the token', () => {
@@ -152,22 +192,76 @@ describe('the push wrapper and the token', () => {
     await expect(expoPushToken()).resolves.toBeNull();
     expect(mockCalls).toEqual(['getPermissionsAsync()']);
   });
+});
 
-  it("tells the listener when the phone's token changes, until it unsubscribes", () => {
+describe("the push wrapper and a change of the phone's token", () => {
+  beforeEach(() => {
+    mockTokenManager = {};
+  });
+
+  it('does not tell the listener of the token the phone already had', () => {
     let changes = 0;
-    const unsubscribe = onPushTokenChange(() => {
+    freshDevice().onPushTokenChange(() => {
       changes += 1;
     });
     mockTokenListener?.({ type: 'android', data: 'device-token' });
+    mockTokenListener?.({ type: 'android', data: 'device-token' });
+
+    expect(changes).toBe(0);
+  });
+
+  it("tells the listener once when the phone's token changes, until it unsubscribes", () => {
+    let changes = 0;
+    const unsubscribe = freshDevice().onPushTokenChange(() => {
+      changes += 1;
+    });
+    mockTokenListener?.({ type: 'android', data: 'device-token' });
+    mockTokenListener?.({ type: 'android', data: 'new-device-token' });
+    mockTokenListener?.({ type: 'android', data: 'new-device-token' });
+    expect(changes).toBe(1);
+
     unsubscribe();
+    mockTokenListener?.({ type: 'android', data: 'another-device-token' });
 
     expect(changes).toBe(1);
     expect(mockCalls).toEqual(['addPushTokenListener()', 'remove()']);
   });
+});
+
+describe('the push wrapper unregistering', () => {
+  beforeEach(() => {
+    mockTokenManager = {};
+  });
 
   it('unregisters the phone from push once', async () => {
+    jest.useFakeTimers();
+
     await expect(unregisterPush()).resolves.toBeUndefined();
     expect(mockCalls).toEqual(['unregisterForNotificationsAsync()']);
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('unregisters without throwing when the library call fails', async () => {
+    mockUnregister = (): Promise<void> => Promise.reject(new Error('Network request failed'));
+
+    await expect(unregisterPush()).resolves.toBeUndefined();
+  });
+
+  it('stops waiting for the library after 3 seconds', async () => {
+    jest.useFakeTimers();
+    mockUnregister = (): Promise<void> =>
+      new Promise<void>(() => {
+        // The phone never answers.
+      });
+    let finished = false;
+    void unregisterPush().then(() => {
+      finished = true;
+    });
+
+    await jest.advanceTimersByTimeAsync(2999);
+    expect(finished).toBe(false);
+    await jest.advanceTimersByTimeAsync(1);
+    expect(finished).toBe(true);
   });
 });
 
