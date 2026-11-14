@@ -5,11 +5,13 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import type { RecruitingQuest } from '@/api/party-types';
-import { field, isNothing, isPlace, isQuest, hasTexts, isTextOrNull, listOf } from './answers';
+import { field, isNothing, isPlace, hasTexts, isTextOrNull, listOf } from './answers';
+import { isQuest } from './quest-answers';
 import { isQuestInvitations, isQuestSummary, isQuestWaiting } from './waiting-answers';
 import { call } from './http';
 

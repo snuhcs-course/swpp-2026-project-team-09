@@ -10,6 +10,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -30,7 +31,6 @@ import {
   isPositionKept,
   isPositions,
   isProfile,
-  isQuests,
   isSentFriendRequest,
   isTimetableClass,
   isTimetableClasses,
@@ -38,6 +38,7 @@ import {
   isWalkingRoute,
 } from './answers';
 import { isMenus } from './menu-answers';
+import { isQuests } from './quest-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isStudyBuildings } from './study-answers';
 import { isFriendRequests, isJoinRequests, isQuestInvitations } from './waiting-answers';
