@@ -640,6 +640,21 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it is laid
   out. Turning the switch either way closes the chat sheet and forgets the conversation. Every request then carries a
   context with the User's position on campus and the capability `answer`.
+- **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the latest
+  bubble of the turn that has one, held with the index of the Plan on screen and whether its basis is open
+  (`useShownAnswer` in `src/features/assistant/use-shown-answer.ts`, read through the chat control's `answer`). While
+  it has a Plan, the map draws what `drawingOf` (`src/features/assistant/answer-marks.ts`) gives for it, and nothing
+  else of the everyday map: each mark is an `answer` look, one symbol at a point and its label at the first free side,
+  and a candidate's mark takes a press, which shows its Plan; each route is a straight, solid line. The markers of
+  events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
+  the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and members stay, but for those
+  of the Plan's people, whom the marks draw. The looks of every Plan are asked for when the answer comes. The camera
+  fits the Plan's points (`fitAnswer`, no closer than the "close" level) between the pill and the card, with room for
+  a label above and below and 64 at the sides, when the answer comes, when the Plan on screen changes, and when the
+  card's height or the stage's size changes; closing the answer moves nothing. The card shows "근거" (or "근거 접기")
+  at the right of its first row, the Plan's two lines, the basis while it is open, and "‹" ("이전 후보"), the count
+  ("3/5"), and "›" ("다음 후보") when the answer has more than one Plan; the arrows go round, and a new Plan closes
+  the basis. An answer without a Plan draws nothing and keeps the everyday map.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
@@ -1409,18 +1424,19 @@ The component chooses while the app runs (`src/map/map.tsx`), by whether the bui
 A native map draws images, not React views. An image is a picture of the design system's own marker view, made once
 for each look and kept for as long as the app runs:
 
-- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is one of three:
+- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is one of four:
   - the User's own Avatar: `MapPin` of the kind `me`, and its `small` form under the name `me:small`;
   - a person: `MapPerson` with the letters or the photo, in a `tone` (a status, or `member`), `small` or at full
     size, `selected` or not, named by the person's `id` and by whether there is a photo, such as
     `person:full:free:f1`, `person:full:free:f2:photo` and `person:small:member:pm1:selected`. The photo's address,
     which is new with every answer of the server, is no part of the name;
   - a place of each kind of the design system, as a `dot` from far away or a `pin` from close, a pin with its
-    `count` when it has one, `selected` or not, such as `official:dot`, `party:pin:4` and `party:pin:4:selected`.
+    `count` when it has one, `selected` or not, such as `official:dot`, `party:pin:4` and `party:pin:4:selected`;
+  - a mark of an answer (`answer`): `MapAnswerMark`, a symbol box of 36, which may be empty, and a label at one side
+    of it, words included, named by what it draws, such as `answer:[…]`. It stands on the centre of its symbol box.
 - Two looks that draw the same picture have the same name, so the pictures stay few: two for each person in each
   tone the person was seen in, a dot and a pin for each kind of place and count, and the selected look of the one
-  thing that is selected. No look has
-  a label: a name is the map's own text.
+  thing that is selected. No look but an answer's has a label: a name is the map's own text.
 - A person's marker and a pin stand on their tip, the bottom of their view; a dot and the User's own Avatar sit on
   their middle (`anchor`).
 - The main screen asks for every unselected look of its cards when the cards come, so that a change of the level of

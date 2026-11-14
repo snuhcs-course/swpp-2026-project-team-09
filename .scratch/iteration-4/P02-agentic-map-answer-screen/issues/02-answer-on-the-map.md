@@ -26,3 +26,18 @@ A User whose phone has the switch on asks "배고파, 민수랑 같이", and the
 - [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass; and no native file of the app changed.
 
 ## Comments
+
+### Decisions (2026-11-14)
+
+Details the spec left to the implementation, listed so that any of them can be vetoed.
+
+1. **The answer on screen is held by the chat control** (`answer`, from `useShownAnswer` in `src/features/assistant/use-shown-answer.ts`), fed the conversation only while the switch is on, so that with the switch off no answer is ever on screen.
+2. **A new answer is told by its object**: a reply whose answer is another object shows its first Plan with the basis closed. A press on a mark or an arrow that would show the Plan already on screen leaves the basis as it is.
+3. **While a follow-up waits for its reply, the map is the everyday one**: the turn then holds no answer. Ticket 03, which sends words with the Plan on screen, may keep the earlier answer instead.
+4. **Of the Avatars, those of people stay**: Friends and the members of the User's Party, but for the people the Plan draws, by user id. The shuttle's vehicles and the User's own Avatar give way, and so does the tutorial's place pin.
+5. **The camera's padding**: at the top the status bar's inset, the pill's place under it (`listsTop`) and its 48, and 56 for a label above a point; at the bottom the card's laid-out height (0 until it is laid out) and 56 for a label below a point; 64 at each side. 56 is half the symbol box and a label of two lines.
+6. **The camera fits again** when the safe area's top changes too, besides the answer, the Plan on screen, the card's height, and the stage's size.
+7. **A mark without a Plan takes no press** (`passive`): the people, the pick, the next Class, the flags, and a Restaurant that does not fit, so that a press on one reaches the map.
+8. **"근거" is the design system's ghost button**, and the arrows its `IconButton` with the chevrons, named "이전 후보" and "다음 후보", with the count between them.
+9. **The card of a Plan replaces the lines only for the reply whose answer is on screen**; an earlier reply of the same turn with an answer, which the server does not send today, keeps ticket 01's lines.
+10. **Code moved for the 300-line limit**: the main screen's press handlers (`ignorePress`, `pressWithPin`) and what the map draws (`useMapView`) to `use-map-view.ts`; `useMainMap`'s two fits share `useFit`.
