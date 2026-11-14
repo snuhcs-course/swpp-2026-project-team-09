@@ -8,9 +8,10 @@
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, color, type LabelSide } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
 import type { MapLine, MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
+import { type Standing, standingWords } from './invited-friends';
 
 export interface AnswerThing {
   // Unique within a drawing.
@@ -105,17 +106,26 @@ export function nearOwnMark({ own }: Pick<AnswerDrawing, 'own'>, position: LatLn
   });
 }
 
-function personDrafts(scene: MapScene): Draft[] {
+const BADGES: Partial<Record<Standing['state'], FaceBadge>> = { invited: 'waiting', accepted: 'accepted' };
+
+function faceOf(name: string, dashed: boolean, standing: Standing | undefined): AnswerSymbol {
+  const badge = standing === undefined ? undefined : BADGES[standing.state];
+  return badge === undefined ? { type: 'face', name, dashed } : { type: 'face', name, dashed, badge };
+}
+
+// A Friend who was invited is named with how they stand, in place of the tag.
+function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>): Draft[] {
   const people = [...scene.people.filter((person) => person.me), ...scene.people.filter((person) => !person.me)];
   return people.map(({ userId, name, me, at, source, tag }) => {
-    const title = tag ?? (me ? '나' : name);
+    const standing = me ? undefined : standings.get(userId);
+    const title = standing === undefined ? (tag ?? (me ? '나' : name)) : `${name} · ${standingWords(standing)}`;
     return {
       id: me ? 'answer:me' : `answer:person:${userId}`,
       name: title,
       position: at,
       planId: null,
       group: 'person',
-      symbol: me ? { type: 'me' } : { type: 'face', name, dashed: source === 'timetable' },
+      symbol: me ? { type: 'me' } : faceOf(name, source === 'timetable', standing),
       tone: 'person',
       title,
       line: null,
@@ -254,15 +264,22 @@ function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
   return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
 }
 
+const NO_STANDINGS: ReadonlyMap<string, Standing> = new Map();
+
 // What the map shows for the Plan at `planIndex` of an answer: its marks, its lines, and the points the camera fits.
-export function drawingOf(answer: AnswerReply, planIndex: number): AnswerDrawing {
+// `standings` holds how each invited Friend stands, by user id, once the Plan was made into a Quest.
+export function drawingOf(
+  answer: AnswerReply,
+  planIndex: number,
+  standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
+): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
     return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
   const { scene } = plan;
   const drafts = [
-    ...personDrafts(scene),
+    ...personDrafts(scene, standings),
     ...scene.places.flatMap((place) => placeDraft(answer, planIndex, scene, place) ?? []),
     ...flagDrafts(scene),
   ];
