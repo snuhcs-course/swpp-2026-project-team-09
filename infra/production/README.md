@@ -805,7 +805,9 @@ EXPO_PUBLIC_RELEASE_COMMIT=<the tag's full commit>
 An update published later must be made with the same settings, and the Release workflow uses the same values. The
 app takes an update only when the update's runtime version, a **fingerprint** of the native part, equals its own.
 `INVITE_LINK_HOST`, `GOOGLE_IOS_URL_SCHEME`, `ANDROID_X86_64`, `UPDATE_CHANNEL` and `version` change the app's
-configuration and so the fingerprint, as does any edit to a config plugin's file, comments included: an update made with any of them different reaches no installed app. The `EXPO_PUBLIC_*` values and the
+configuration and so the fingerprint, as does any edit to a config plugin's file, comments included: an update made with any of them different reaches no installed app.
+`mobile/google-services.json`, Firebase's Android settings file, is part of the native part too: its bytes are in the
+fingerprint. The `EXPO_PUBLIC_*` values and the
 Kakao key leave the fingerprint alone, measured with `@expo/fingerprint`, but the `EXPO_PUBLIC_*` values are baked
 into the JavaScript, so an update with other ones would point the app elsewhere.
 
@@ -907,8 +909,9 @@ An installed app downloads it the next time it starts and runs it from the start
 
 The iOS counterpart of the APK, built and installed by the Mac owner with Xcode, on an iPhone or, without one, on the
 simulator. It is not distributed, through TestFlight or otherwise, so `download.ios` in `app-version.json` is `null`.
-It takes the same bundles from EAS Update as the APK. The Mac's tools, and why the checkout stays out of iCloud Drive,
-are in [mobile/README.md](../../mobile/README.md), "Build the app for iOS".
+It takes the same bundles from EAS Update as the APK. It has no push entitlement: `mobile/plugins/ios-without-push.ts`
+removes `aps-environment`, which a free team cannot sign, so the iOS build receives no push. The Mac's tools, and why
+the checkout stays out of iCloud Drive, are in [mobile/README.md](../../mobile/README.md), "Build the app for iOS".
 
 ### The iOS build's settings
 
