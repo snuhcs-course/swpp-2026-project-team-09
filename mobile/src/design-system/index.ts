@@ -9,6 +9,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
@@ -22,6 +23,7 @@ export { Button } from './button';
 export { cardStyles } from './card';
 export { DayTile } from './day-tile';
 export { ChatInput } from './chat-input';
+export { ChoiceGrid, choiceRowsWithin, type GridChoice } from './choice-grid';
 export { Chip } from './chip';
 export { type CountedChip, ChipRow } from './chip-row';
 export { Dialog } from './dialog';
