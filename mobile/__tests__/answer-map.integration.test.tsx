@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -208,9 +209,9 @@ const FIRST_PLAN_POINTS = distinct([
 ]);
 
 // The test's phone has no status bar: the pill's 52 from the top and its 48, and room of 56 for a label above a point;
-// below, the card and room of 56 for a label under a point; 64 at each side.
+// below, the card and room of 72 for the two lines of a label under a point; 64 at each side.
 function padding(cardHeight: number): object {
-  return { top: 52 + 48 + 56, right: 64, bottom: cardHeight + 56, left: 64 };
+  return { top: 52 + 48 + 56, right: 64, bottom: cardHeight + 72, left: 64 };
 }
 
 // Partitions: the answer comes before the card is laid out, and the card is laid out.
@@ -276,7 +277,10 @@ describe('the camera after the answer came', () => {
     });
 
     expect(fit).toHaveBeenCalledTimes(1);
-    expect(corrected).toHaveBeenCalledTimes(1);
-    expect(corrected).toHaveLastReturnedWith(null);
+    // The plain map tells of its rest at once, sooner than a fit's glide can end, so its place may not be checked at
+    // all; where it is, nothing is to move.
+    expect(corrected.mock.results.map(({ value }: { value: unknown }) => value)).toEqual(
+      corrected.mock.results.map(() => null),
+    );
   });
 });

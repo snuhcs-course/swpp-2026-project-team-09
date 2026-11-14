@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
@@ -31,9 +32,15 @@ export interface MapContents {
   lines: readonly MapLine[];
 }
 
-// Room for a label above or below a point: half the symbol box and a label of two lines.
-const LABEL_ROOM = 56;
+// Room for a label above a point, a flag of one line, and below one, the picked Restaurant's two lines, each with
+// half the symbol box.
+const ROOM_ABOVE = 56;
+const ROOM_BELOW = 72;
 const SIDE = 64;
+// A fit glides for 300 milliseconds, and the map tells of its rest later than that. A rest told sooner belongs to
+// an earlier move, such as the view's change of size when the frame appears, and one told much later to the User.
+const FIT_RESTS_AFTER_MS = 500;
+const FIT_RESTS_WITHIN_MS = 3000;
 
 const NO_LOOKS: readonly MarkerLook[] = [];
 const NO_POINTS: readonly LatLng[] = [];
@@ -42,9 +49,9 @@ const NO_POINTS: readonly LatLng[] = [];
 // label.
 function paddingOf(top: number, cardHeight: number | null): FitPadding {
   return {
-    top: top + listsTop(top) + ANSWER_PILL.height + LABEL_ROOM,
+    top: top + listsTop(top) + ANSWER_PILL.height + ROOM_ABOVE,
     right: SIDE,
-    bottom: (cardHeight ?? 0) + LABEL_ROOM,
+    bottom: (cardHeight ?? 0) + ROOM_BELOW,
     left: SIDE,
   };
 }
@@ -56,29 +63,33 @@ function areaOf({ top, right, bottom, left }: FitPadding, size: Size): ViewArea 
 
 // Fits the points when they come, and again when the card's height or the stage's size changes. No points move
 // nothing, so closing the answer leaves the camera where it is. A map may stop short of the fit, held by its lowest
-// zoom: the camera's first rest after a fit is checked once, and moved so that the Plan shows (`correctedCentre`).
+// zoom: where the camera rests after a fit is checked once, and moved so that the Plan shows (`correctedCentre`).
 function useAnswerCamera(drawing: AnswerDrawing | null, map: MainMap, { answerHeight, stage }: Room): void {
   const { top } = useSafeAreaInsets();
   const { fitAnswer, centreAt, camera } = map;
   const points = drawing?.points ?? NO_POINTS;
   const width = stage?.width;
   const height = stage?.height;
-  // The camera as it was when the last fit was asked, until the camera's next rest.
-  const fitFrom = useRef<{ camera: MapCamera | null } | null>(null);
+  // When the last fit was asked, until where it came to rest is checked.
+  const fitAt = useRef<number | null>(null);
   const fit = useEffectEvent(() => {
     fitAnswer(points, paddingOf(top, answerHeight));
-    fitFrom.current = { camera };
+    fitAt.current = Date.now();
   });
   useEffect(() => {
     if (points.length > 0) {
       fit();
     }
   }, [points, top, answerHeight, width, height]);
-  const correct = useEffectEvent((now: MapCamera) => {
-    if (fitFrom.current === null || fitFrom.current.camera === now || drawing === null || stage === null) {
+  const check = useEffectEvent((now: MapCamera) => {
+    const since = fitAt.current === null ? null : Date.now() - fitAt.current;
+    if (since === null || since < FIT_RESTS_AFTER_MS || drawing === null || stage === null) {
       return;
     }
-    fitFrom.current = null;
+    fitAt.current = null;
+    if (since > FIT_RESTS_WITHIN_MS) {
+      return;
+    }
     // The map lies under the status bar too.
     const size = { width: stage.width, height: stage.height + top };
     const centre = correctedCentre(drawing, now, size, areaOf(paddingOf(top, answerHeight), size));
@@ -88,7 +99,7 @@ function useAnswerCamera(drawing: AnswerDrawing | null, map: MainMap, { answerHe
   });
   useEffect(() => {
     if (camera !== null) {
-      correct(camera);
+      check(camera);
     }
   }, [camera]);
 }

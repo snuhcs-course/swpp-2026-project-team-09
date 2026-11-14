@@ -144,11 +144,11 @@ A good test states a behaviour a User depends on, through a seam a User or anoth
 - The count circles for many results, the "+" badge on a Friend who can be added, and the icons of the pill for a pressed building or Friend.
 - The card of a pressed building and of a pressed Friend, the visible area as "이 근처", and what was tapped in the request context (row "지도에서 묻기").
 - The cases of row "답할 수 없는 말과 안 되는 경우" beyond a failed request.
-- Removing the chat sheet.
+- Removing the chat sheet and the switch: ticket 04, once the acceptance tests are over and a Plan can become a Quest.
 - The answers on the map other than a meal's Plan.
 
 ## Further Notes
 
-- The frame is not released before 2026-11-18: the acceptance tests run on today's app. The switch stays off by default after that until the first path has passed its check.
+- The frame is not released before 2026-11-18: the acceptance tests run on today's app. The switch stays off by default after that until the first path has passed its check; ticket 04 then makes the frame the only screen and removes the switch and the chat sheet.
 - No native file of the app changes. The marks are pictures made in JavaScript, as today's looks are, and the lines are the map's own solid lines.
 - A straight line stands for a route: the scene gives a route's two ends and its minutes, not its path.
