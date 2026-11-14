@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine } from './menu-types';
@@ -137,11 +138,13 @@ export interface RestaurantCard {
 // A space of 관정도서관 as the server's catalogue gives it: a reading room's sector, booked by the seat, or a room
 // sector (a group study room or a media room), booked by the room. `seatNos` are the sector's rooms, or an equipment
 // group's when one was asked for. `mapImage` is the size of a reading room's seat map in image pixels. `hours` are
-// "HH:MM" to "HH:MM" and the minutes are the booking's shortest, longest and step.
+// "HH:MM" to "HH:MM" and the minutes are the booking's shortest, longest and step. `kind` is the catalogue's kind of
+// space ('reading-room', 'notebook-zone', …), which a server before the seat card's room chip does not send.
 export interface LibrarySpace {
   id: string;
   name: string;
   floor: number;
+  kind?: string;
   placeNumber: string;
   unit: 'seat' | 'room';
   roomNo: number;

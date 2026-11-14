@@ -26,7 +26,7 @@ import { type MealPlanService } from '../gathering/meal-plan.service.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { koreaNow } from '../korea-time.js';
 import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js';
-import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { answeringOptions, type LibraryServices, libraryTools } from '../library/library-tools.js';
 import { DELIMITER } from '../others-text.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
@@ -150,7 +150,7 @@ export function chatAssistant(
       ...meal,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
       // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom for an app that draws answers.
-      ...libraryTools(library, { fillsSeatTime: drawsAnswers, picksStudyTime: drawsAnswers }),
+      ...libraryTools(library, answeringOptions(drawsAnswers)),
       getTutorial: getTutorial(tutorial),
     },
   };

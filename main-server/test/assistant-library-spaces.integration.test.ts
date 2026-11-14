@@ -2,14 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
 import { type TestUser } from './friends.js';
-import { find, LibraryStage } from './library.js';
+import { find, libraryCards, LibraryStage } from './library.js';
 
 // findLibrarySpace at the Assistant's endpoint, with the scripted model in the model's place: each id the model read
 // the User's words as is answered with its status and catalogue facts, or 'several' when more than one can be booked.
+// For an app that draws answers, several seat spaces give the first of them instead.
 
 const stage = new LibraryStage();
 let user: TestUser;
@@ -97,5 +99,59 @@ describe('findLibrarySpace on rooms', () => {
     expect(await stage.result(user, find(['4F-group-6']))).toMatchObject({
       spaces: [{ equipment: [{ id: 'with-monitor', rooms: ['G405', 'G407', 'G411', 'G413'] }, {}, {}] }],
     });
+  });
+});
+
+const ANSWER = { clientCapabilities: ['library', 'answer'] };
+
+describe('findLibrarySpace for an app that draws answers', () => {
+  it.each([
+    ['7층 열람실', ['7F-7A-zone1-notebook', '7F-notebook-171', '7F-7B-notebook', '7F-7A-zone2'], '7F-7A-zone2'],
+    ['노트북존', ['8F-8A-zone2-notebook', '7F-notebook-171', '7F-7A-zone1-notebook'], '7F-7A-zone1-notebook'],
+    ['8층 노트북존', ['8F-notebook-181', '8F-8A-zone2-notebook'], '8F-8A-zone2-notebook'],
+  ])('fills the first seat space "%s" fits, in catalogue order with 7F-7A-zone2 first', async (words, ids, first) => {
+    expect(await stage.result(user, find(ids, words), ANSWER)).toEqual({
+      result: 'found',
+      spaces: [expect.objectContaining({ id: first, status: 'implemented', unit: 'seat' })],
+    });
+  });
+
+  it('still asks when several rooms fit', async () => {
+    expect(await stage.result(user, find(['6F-studio', '6F-creative-media-studio'], '스튜디오'), ANSWER)).toEqual({
+      result: 'several',
+      candidates: [
+        expect.objectContaining({ id: '6F-studio' }),
+        expect.objectContaining({ id: '6F-creative-media-studio' }),
+      ],
+    });
+  });
+});
+
+describe('The card of a seat space filled for an app that draws answers', () => {
+  it("shows the filled space's card with its kind, saying that it took the first of those that fit", async () => {
+    const seat = { spaceId: '7F-7A-zone1-notebook', date: '2026-11-04', start: '11:00', minutes: 60 };
+    const ids = ['7F-notebook-171', '7F-7A-zone1-notebook'];
+    const response = await stage.send(
+      user,
+      [find(ids, '노트북존'), { tool: 'proposeLibraryBooking', input: seat }, { text: '…' }],
+      ANSWER,
+    );
+
+    const cards = libraryCards(response.body);
+    expect(cards).toMatchObject([
+      { key: 'book:7F-7A-zone1-notebook:2026-11-04:1100:60', space: { kind: 'notebook-zone', floor: 7 } },
+    ]);
+    expect(cards[0]?.notes[0]).toBe('맞는 곳이 2곳이라 첫 곳으로 채웠어요');
+  });
+
+  it('says nothing of several for one space that fits', async () => {
+    const seat = { spaceId: '7F-7B-notebook', date: '2026-11-04', start: '11:00', minutes: 60 };
+    const response = await stage.send(
+      user,
+      [find(['7F-7B-notebook'], '7B 노트북존'), { tool: 'proposeLibraryBooking', input: seat }, { text: '…' }],
+      ANSWER,
+    );
+
+    expect(libraryCards(response.body)[0]?.notes.some((note) => note.includes('첫 곳'))).toBe(false);
   });
 });

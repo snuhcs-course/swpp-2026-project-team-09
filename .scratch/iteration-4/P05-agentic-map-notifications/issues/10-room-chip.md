@@ -45,12 +45,31 @@ The list's cells: row 1 열람실 | 정숙 열람실, row 2 노트북존 | 노�
 
 ## Acceptance criteria
 
-- [ ] Unit tests: the label of a floor and kind; the pick of a cell's space (the most free seats of that kind on that floor; the largest without counts); the full-room swap (same kind first, else the most free seats; none when all are full).
-- [ ] App integration test: the chip opens the list with two columns and the counts from the fake library, a tap switches the room and reloads its seats, the named seat is cleared, "되돌리기" returns, a "만석" cell cannot be tapped, a failed read shows "—", and without a session the cells show names.
-- [ ] App integration test: a filled space that is full swaps to the same kind's space with the most free seats, with "…은 그 시간에 다 찼어요" and no 되돌리기.
-- [ ] Main server integration test: with the `answer` capability, words that fit several seat spaces fill the first in catalogue order; without it, the Assistant still asks which one, and the instructions and tools equal today's.
-- [ ] The card's space carries `kind`.
-- [ ] The design document's sentences are changed.
-- [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass.
+- [x] Unit tests: the label of a floor and kind; the pick of a cell's space (the most free seats of that kind on that floor; the largest without counts); the full-room swap (same kind first, else the most free seats; none when all are full).
+- [x] App integration test: the chip opens the list with two columns and the counts from the fake library, a tap switches the room and reloads its seats, the named seat is cleared, "되돌리기" returns, a "만석" cell cannot be tapped, a failed read shows "—", and without a session the cells show names.
+- [x] App integration test: a filled space that is full swaps to the same kind's space with the most free seats, with "…은 그 시간에 다 찼어요" and no 되돌리기.
+- [x] Main server integration test: with the `answer` capability, words that fit several seat spaces fill the first in catalogue order; without it, the Assistant still asks which one, and the instructions and tools equal today's.
+- [x] The card's space carries `kind`.
+- [x] The design document's sentences are changed.
+- [x] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass.
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+1. Several seat spaces are filled in the catalogue's order with `7F-7A-zone2` first. The catalogue lists `7F-7A-zone1-notebook` first, and reordering it would change the text chat's `findLibrarySpace` description, which stays as it was.
+2. The first is filled only when every bookable space that fits is a seat space; a room among them keeps `several`.
+3. `findLibrarySpace` then answers only the filled space, and only its id counts as found in that message.
+4. The card of a space filled as the first of several has the note "맞는 곳이 N곳이라 첫 곳으로 채웠어요" before the site's notes.
+5. The app's `kind` is optional in its type and its check, so that cards from a server without it still show; such a card has no room chip.
+6. The room chip shows on a seat card the Assistant gave for one of the eight seat spaces the phone's table names; the app's own cards (a tapped seat) have none.
+7. The chip is navy when the User's words of that turn name a floor, a kind or a seat space, brown while the room on screen is not the card's own, and plain otherwise.
+8. The seat card keeps its row of the full space name and the seat; above it one line names the seat space by its short name with its free seats ("7A 노트북존 · 빈 자리 31석"), then the full room's line and the basis lines.
+9. The basis lines show only when the space on screen has the most free seats of a room that holds several spaces, every count read.
+10. The largest space of a room is by the catalogue's seat count, kept in the phone's table with the short names.
+11. A cell whose read is pending or failed can be tapped: it fills the counted space with the most free seats, else the largest.
+12. The list reads the counts each time it opens; the swap reads them once when the card's own room shows no free seat.
+13. The swap applies only to the room the card came with, not after the User's own switch.
+14. The room shown is kept with the chat by the card's place, as a card's outcome is, and later requests send the card by the book key of that room (space, date, start and minutes, no seat), which the server's key grammar accepts.
+15. Going back to the card's own room brings back the seat it named.
+16. Without a library session the list still lists the sectors of the 공부공간 layer and reads nothing from the library.

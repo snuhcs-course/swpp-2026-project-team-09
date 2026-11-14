@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -31,6 +32,8 @@ const AT_24 = { latitude: 37.45942, longitude: 126.94989 };
 const ANSWER = { clientCapabilities: ['library', 'answer'] };
 const TODAY_ASK_RULE =
   '- When the User gave no time, ask for it, together with anything else missing, in one question ("몇 시부터 몇 시까지 예약할까요?"), and call no tool first.';
+const TODAY_SPACE_RESULTS =
+  "Answers result 'several' with the candidates when two or more bookable spaces fit (ask which one, listing the names); 'found' with each space's status and facts (implemented: bookable here; notOnline: used on site only; unsupported: 아직 미구현; notEligible: for graduate students only); or 'unsupported' when no id was given.";
 const TODAY_DESCRIPTION =
   "Checks a 관정도서관 booking and shows a book card, which books nothing until the User presses 예약하기 on it. Give the space's id from findLibrarySpace, the day, start, and minutes or end, as the User said them, and only what they said of the seat, the room's equipment, the 사용용도 and companions. Answers 'shown' with a summary; 'refused' with every refusal at once, each with its reason and bound; or the space's status with its reason.";
 
@@ -214,9 +217,15 @@ describe('An app that does not draw answers', () => {
     expect(shared).toContain('proposeLibraryBooking');
     for (const name of shared) {
       expect(answering.get(name)?.inputSchema).toEqual(today.get(name)?.inputSchema);
-      if (name !== 'proposeLibraryBooking') {
+      if (name !== 'proposeLibraryBooking' && name !== 'findLibrarySpace') {
         expect(answering.get(name)?.description).toBe(today.get(name)?.description);
       }
     }
+    // findLibrarySpace differs only in what it answers when several seat spaces fit.
+    const todaySpaces = today.get('findLibrarySpace')?.description ?? '';
+    const answeringSpaces = answering.get('findLibrarySpace')?.description ?? '';
+    expect(todaySpaces.endsWith(TODAY_SPACE_RESULTS)).toBe(true);
+    expect(answeringSpaces.startsWith(todaySpaces.slice(0, -TODAY_SPACE_RESULTS.length))).toBe(true);
+    expect(answeringSpaces).toContain("the first of them in the catalogue's order");
   });
 });

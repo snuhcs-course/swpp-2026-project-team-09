@@ -14,6 +14,7 @@ import { shownMinutes } from '../../travel/travel.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
 import { checkBooking, type CheckedBooking, clockOfMinutes, minutesOfClock, type Refusal } from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
+import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
 import { bookableSpace, dayWords, type LibraryServices, refused, showCard, spaceIdInput } from './library-parts.js';
 import { type Arrival, fillSeat, type LeaveBy, leaveByOf, type SeatFacts, type SeatFill } from './seat-arrival.js';
@@ -177,7 +178,7 @@ export function proposeLibraryBooking(services: LibraryServices, options?: Booki
           ...booking,
           companions: party.companions,
           questId: party.questId,
-          notes: filling === null ? [] : [filling.fill.note],
+          notes: [...(filling === null ? [] : [filling.fill.note]), ...firstOfSeveralNote(context, space.id)],
         }),
       );
       if (filling === null) {
