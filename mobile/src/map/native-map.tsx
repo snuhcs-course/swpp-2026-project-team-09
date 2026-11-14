@@ -7,6 +7,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { requireNativeView } from 'expo';
@@ -21,7 +22,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import type { LatLng } from '@/api/types';
 import { color, text } from '@/design-system';
 import { useMotionAllowed } from '@/hooks/use-reduce-motion';
@@ -48,7 +49,8 @@ import type {
 // - a passive marker's press, which the module sends and this file drops;
 // - the rectangle the lowest zoom fits (`fitBounds`), which the module does not take: once the view's size is known,
 //   the module is handed the fit zoom as its `minZoom`, so that its own rule, the view inside `bounds` and no lower
-//   than `minZoom`, comes to the interface's.
+//   than `minZoom`, comes to the interface's;
+// - on Android, a zoom in a view whose height changed since the module opened (`useScaleShift`).
 // A line's dashes are the module's to draw: it draws a solid line in the colour and the width it is given.
 // `inset` is handed over with all four sides; the module places Kakao's logo 8 from the bottom right of what it leaves.
 
@@ -194,20 +196,42 @@ function useReports(
   };
 }
 
+// The Android module places its camera through the camera's height, by a scale it measures once, when it opens, and
+// Kakao's camera shows as much from top to bottom at one height whatever the view's height. In a view taller than
+// when the module opened, as when the tab bar gives way to the answer frame, every camera it places is closer than
+// sent by the binary logarithm of the heights' ratio (10% on a phone 914 high whose tab bar is 88), and in a lower
+// one further out. `shift` is that logarithm: a zoom sent is lowered by it, and the module's lowest zoom with it, so
+// that the camera shown is the one asked. The view's height when the module first reports its camera stands for its
+// height when it opened. The iOS module measures its scale again after each move.
+function useScaleShift(size: Size | null): { shift: number; reported: () => void } {
+  const [opened, setOpened] = useState<number | null>(null);
+  const shift = Platform.OS === 'android' && opened !== null && size !== null ? Math.log2(size.height / opened) : 0;
+  return {
+    shift,
+    reported: () => {
+      if (opened === null && size !== null) {
+        setOpened(size.height);
+      }
+    },
+  };
+}
+
 // The interface's handle on the module's view. A fit is worked out here, by `fit` of `projection.ts`, and sent as a
 // move of the camera, because the module's own `fitTo` takes neither a padding for each edge nor a closest zoom.
 // Until the view is laid out its size is not known here, and the module's `fitTo` is asked with the largest side of
-// the padding.
+// the padding. A zoom is sent less the scale's `shift`.
 function useHandle(
   ref: Ref<MapHandle> | undefined,
   view: RefObject<NativeMapView | null>,
   rules: CameraRules | null,
+  shift: number,
 ): void {
   useImperativeHandle(
     ref,
     () => ({
       moveCamera: ({ centre, zoom, animated }): void => {
-        void view.current?.moveCamera({ ...centre, zoom, animated: animated ?? false });
+        const sent = zoom === undefined ? undefined : zoom - shift;
+        void view.current?.moveCamera({ ...centre, zoom: sent, animated: animated ?? false });
       },
       fitTo: (points, options): void => {
         const animated = options?.animated ?? false;
@@ -217,11 +241,11 @@ function useHandle(
         }
         const camera = fit(points, options ?? {}, rules);
         if (camera !== null) {
-          void view.current?.moveCamera({ ...camera.centre, zoom: camera.zoom, animated });
+          void view.current?.moveCamera({ ...camera.centre, zoom: camera.zoom - shift, animated });
         }
       },
     }),
-    [view, rules],
+    [view, rules, shift],
   );
 }
 
@@ -238,7 +262,8 @@ export default function NativeMap(props: MapProps): ReactElement {
     [bounds, fitBounds, minZoom, maxZoom, size],
   );
   const report = useReports(rules, props);
-  useHandle(ref, view, rules);
+  const { shift, reported } = useScaleShift(size);
+  useHandle(ref, view, rules, shift);
   const inset = useInset(props.inset);
   const passive = new Set([...markers, ...avatars].filter((one) => one.passive === true).map(({ id }) => id));
   return (
@@ -261,8 +286,9 @@ export default function NativeMap(props: MapProps): ReactElement {
         markers={markers.map((marker) => thing(marker, 0))}
         maxZoom={maxZoom}
         minLevel={nativeMinLevel ?? null}
-        minZoom={rules === null ? minZoom : lowestZoom(rules)}
+        minZoom={rules === null ? minZoom : lowestZoom(rules) - Math.max(0, shift)}
         onCameraIdle={({ nativeEvent: { latitude, longitude, zoom } }) => {
+          reported();
           report({ centre: { latitude, longitude }, zoom });
         }}
         onThingPress={({ nativeEvent: { id } }) => {

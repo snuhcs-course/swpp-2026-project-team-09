@@ -1567,7 +1567,7 @@ of the design system's tokens. How it keeps the rules:
 
 - **Zoom**: the SDK takes whole levels only. The module measures the Web Mercator zoom from what the view's width
   shows, and sets a fractional zoom through the camera's height, whose relation to the zoom it measures once when the
-  map is ready.
+  map is ready, which holds only while the view keeps its height (see "In TypeScript" below).
 - **The rectangle**: the SDK does not keep the camera inside one. When a move ends outside the rules, the module
   moves the camera back inside, at once, and reports only a camera inside them.
 - **Markers and Avatars** are labels on two layers, the Avatars' above the markers', ranked by `order` and their
@@ -1588,6 +1588,13 @@ of the design system's tokens. How it keeps the rules:
   - a fit, worked out once the view's size is known and sent as the module's `moveCamera`, so that a padding for
     each edge and `maxZoom` hold. Before that, the module's own `fitTo`, which takes one number, is asked with the
     largest side of the padding;
+  - on Android, a camera in a view whose height changed since the module opened. The module measures how the
+    camera's height gives the zoom once, and Kakao's camera shows as much from top to bottom at one height whatever
+    the view's height: in a view taller than then, as when the tab bar gives way to the answer frame or a received
+    invitation's card, every camera would show closer than asked by the binary logarithm of the heights' ratio (10% on
+    a phone 914 high over a tab bar of 88). A zoom is sent less that logarithm, and the module's lowest zoom is lowered
+    by as much; the view's height at the module's first report stands for its height when it opened. The module's
+    next native release can measure the scale again where the camera rests, as the iOS module does, and drop this;
   - a passive marker's press, which the module sends, is dropped. A marker under a passive one still cannot be
     pressed on a phone: that is the module's to add.
     None of this was checked on a phone.
