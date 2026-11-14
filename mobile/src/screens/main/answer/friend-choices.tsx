@@ -9,7 +9,7 @@ import { type ReactElement, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';
 import { ChoiceGrid, choiceRowsWithin, color, type GridChoice, text } from '@/design-system';
-import { metresBetween } from '@/features/assistant/answer-marks';
+import { metresBetween } from '@/features/assistant/answer-drawing';
 import { givenName } from '@/features/map/short-name';
 
 interface FriendChoice {
