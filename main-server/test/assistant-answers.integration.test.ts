@@ -10,6 +10,7 @@ import request from 'supertest';
 import { z } from 'zod';
 import { type AnswerReply, type PersonConstraint, type PlanInput } from '../src/assistant/dto/answer.dto.js';
 import { REDIS } from '../src/common/redis.module.js';
+import { keptButHidden, keptPositionIn } from './location-sharing.js';
 import { MealPlanStage, type Named, planMeal, resolve } from './meal-plan.js';
 import { withAccessToken } from './sign-in.js';
 
@@ -125,6 +126,25 @@ describe('What the User fixed', () => {
     const response = await recalculate({ input });
 
     expect(summary(answerIn(response.body))[0]).toBe(`302동식당 ${time('12:20')}–${time('12:43')} (23)`);
+  });
+});
+
+describe('A Friend the Friend view puts at the Timetable, whose position is kept', () => {
+  it('is recalculated from their Timetable alone, and the reply holds nothing of the position', async () => {
+    const date = '2088-07-13';
+    const friend = await withMinsu(date);
+    await keptButHidden(stage.app, stage.asker, friend);
+
+    const response = await recalculate({ input: inputOf(date, [friend.id]), location: null });
+
+    expect(response.status).toBe(200);
+    const answer = answerIn(response.body);
+    expect(answer.plans.length).toBeGreaterThan(0);
+    for (const plan of answer.plans) {
+      expect(plan.parts[1]?.origin).toMatchObject({ basis: 'timetable', place: { label: '302동' } });
+      expect(plan.scene.people.find(({ userId }) => userId === friend.id)?.source ?? 'timetable').toBe('timetable');
+    }
+    expect(keptPositionIn(response.body)).toEqual([]);
   });
 });
 

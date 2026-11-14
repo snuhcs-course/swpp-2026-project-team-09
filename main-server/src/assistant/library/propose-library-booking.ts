@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -65,7 +66,7 @@ async function partyOf(
   }
   const ids = [...new Set(friendIds)];
   context.found.refuseUnfound('friend', ids);
-  const names = new Map((await friends.listFriends(context.userId)).map(({ id, name }) => [id, name]));
+  const names = new Map((await friends.list(context.userId)).map(({ id, name }) => [id, name]));
   const companions = ids.flatMap((id) => {
     const name = names.get(id);
     return name === undefined ? [] : [{ friendId: id, name }];
