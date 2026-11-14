@@ -537,7 +537,10 @@ origin/4.0/Main at ${base:0:7}" ]
   ci_checkout 4.0/deployed
   expect_full_run 'the commit is already on origin/development'
 
-  push_documents_branch 4.0/old
+  # Another path than 4.0/deployed's, or both commits could be one when made within the same second.
+  branch_off 4.0/old
+  commit docs/old.md
+  publish 4.0/old
   git -C "$WORK" branch main 4.0/old
   publish main
   ci_checkout 4.0/old
