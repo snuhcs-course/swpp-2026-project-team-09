@@ -3,12 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type QueryKey, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { apiClient } from '@/api/client';
+import { ApiError } from '@/api/errors';
 import {
   COMPANION_SEEKERS_KEY,
   HIDDEN_POSTS_KEY,
@@ -16,6 +18,7 @@ import {
   OFFICIAL_RECRUITING_KEY,
   QUEST_INVITATIONS_KEY,
   QUESTS_KEY,
+  questsQuery,
   RECRUITING_KEY,
 } from '@/api/queries';
 import type { CompanionSeeker, OfficialRecruiting } from '@/api/quest-parts-types';
@@ -32,7 +35,8 @@ const PARTY_KEYS: readonly QueryKey[] = [RECRUITING_KEY, QUESTS_KEY, MY_JOIN_REQ
 export interface PartyActions {
   // Joins an Open Quest and shows 내 파티, or asks to join an Approval one.
   join: (post: PostView) => Promise<void>;
-  withdraw: (requestId: string) => Promise<void>;
+  // Withdraws the request to join the Quest `questId`, from 보낸 신청 or the post.
+  withdraw: (requestId: string, questId: string) => Promise<void>;
   accept: (invitation: QuestInvitation) => Promise<void>;
   decline: (invitation: QuestInvitation) => Promise<void>;
 }
@@ -46,11 +50,31 @@ export function showMine(): void {
   }
 }
 
+// Accepting and declining both delete a request, so a withdrawal after either is refused with the same not-found, and
+// only the User's Quests tell them apart: holding the Quest now means the Leader accepted. Null when the Quests do not
+// come either, and for any other refusal.
+async function answeredFirst(queryClient: QueryClient, questId: string, error: unknown): Promise<string | null> {
+  if (!(error instanceof ApiError && error.code === 'QUEST_JOIN_REQUEST_NOT_FOUND')) {
+    return null;
+  }
+  try {
+    const quests = await queryClient.query({ ...questsQuery, staleTime: 0 });
+    return quests.some(({ id }) => id === questId) ? '이미 파티에 들어갔어요' : '파티장이 신청을 받지 않았어요';
+  } catch {
+    return null;
+  }
+}
+
 export function usePartyActions(): PartyActions {
   const queryClient = useQueryClient();
   const showToast = useToast();
   return useMemo(() => {
-    const run = async (requests: () => Promise<unknown>, done: string | null): Promise<boolean> => {
+    // `refused` may give words of its own for a refusal; otherwise the table's are shown.
+    const run = async (
+      requests: () => Promise<unknown>,
+      done: string | null,
+      refused?: (error: unknown) => Promise<string | null>,
+    ): Promise<boolean> => {
       try {
         await requests();
         if (done !== null) {
@@ -58,7 +82,7 @@ export function usePartyActions(): PartyActions {
         }
         return true;
       } catch (error) {
-        showToast(refusalWords(error, ENTERING));
+        showToast((await refused?.(error)) ?? refusalWords(error, ENTERING));
         return false;
       } finally {
         for (const queryKey of PARTY_KEYS) {
@@ -74,8 +98,12 @@ export function usePartyActions(): PartyActions {
           showMine();
         }
       },
-      withdraw: async (requestId) => {
-        await run(() => apiClient.withdrawJoinRequest(requestId), null);
+      withdraw: async (requestId, questId) => {
+        await run(
+          () => apiClient.withdrawJoinRequest(requestId),
+          '신청을 취소했어요',
+          (error) => answeredFirst(queryClient, questId, error),
+        );
       },
       accept: async ({ id }) => {
         await run(() => apiClient.acceptInvitation(id), '파티에 참여했어요');
