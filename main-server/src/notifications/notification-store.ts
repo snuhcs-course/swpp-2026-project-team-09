@@ -15,7 +15,7 @@ const LIFETIME_SECONDS = 7 * 24 * 60 * 60;
 const MOST_KEPT = 100;
 
 const storedSchema = z.object({
-  kind: z.enum(['accepted', 'declined', 'leave-by']),
+  kind: z.enum(['accepted', 'declined', 'leave-by', 'interest-new']),
   card: z.object({ kind: z.string(), id: z.string() }),
   at: z.iso.datetime(),
   title: z.string(),

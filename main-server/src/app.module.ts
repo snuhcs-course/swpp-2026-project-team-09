@@ -18,6 +18,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
@@ -40,6 +41,7 @@ import { SignalsModule } from './common/signals.module.js';
 import { FriendsModule } from './friends/friends.module.js';
 import { GlobalEventsModule } from './global-events/global-events.module.js';
 import { HealthModule } from './health/health.module.js';
+import { InterestsModule } from './interests/interests.module.js';
 import { InviteLinksModule } from './invite-links/invite-links.module.js';
 import { RoomRequestsModule } from './library/room-requests.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
@@ -108,6 +110,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     StudySpacesModule,
     PushModule,
     NotificationsModule,
+    InterestsModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).
