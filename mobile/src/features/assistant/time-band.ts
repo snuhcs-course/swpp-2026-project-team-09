@@ -52,6 +52,17 @@ function kept(ms: number, bound: BandBound, band: Band): number {
   return Math.min(Math.max(ms, lowest), highest);
 }
 
+// The handle moved from `own` toward `wanted`, where it may stand. For a band off the steps the nearest step it may
+// take can lie behind its own time: it then stays.
+function moved(own: number, wanted: number, bound: BandBound, band: Band): string {
+  const time = kept(wanted, bound, band);
+  return clockAt((wanted - own) * (time - own) < 0 ? own : time);
+}
+
+function ownOf(bound: BandBound, band: Band): number {
+  return msOf(bound === 'from' ? band.startAt : band.endAt);
+}
+
 export function shareOf(time: string, range: Stretch): number {
   const start = msOf(range.startAt);
   const share = (msOf(time) - start) / (msOf(range.endAt) - start);
@@ -61,13 +72,12 @@ export function shareOf(time: string, range: Stretch): number {
 export function droppedAt(bound: BandBound, share: number, band: Band): string {
   const start = msOf(band.range.startAt);
   const time = start + share * (msOf(band.range.endAt) - start);
-  return clockAt(kept(Math.floor(time / STEP_MS + 0.5) * STEP_MS, bound, band));
+  return moved(ownOf(bound, band), Math.floor(time / STEP_MS + 0.5) * STEP_MS, bound, band);
 }
 
 export function stepped(bound: BandBound, direction: 1 | -1, band: Band): string {
-  const time = msOf(bound === 'from' ? band.startAt : band.endAt);
-  const next = direction === 1 ? stepDown(time) + STEP_MS : stepUp(time) - STEP_MS;
-  return clockAt(kept(next, bound, band));
+  const time = ownOf(bound, band);
+  return moved(time, direction === 1 ? stepDown(time) + STEP_MS : stepUp(time) - STEP_MS, bound, band);
 }
 
 // A clock time of the window on the band's day, with Korea's offset.

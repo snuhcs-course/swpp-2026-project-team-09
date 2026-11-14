@@ -86,6 +86,31 @@ describe('stepped', () => {
   });
 });
 
+describe('a band off the five-minute steps', () => {
+  // Partitions: each handle stepped each way, and dragged past its limit each way, where the nearest step that keeps
+  // 15 minutes to the other handle lies on the wrong side of the handle's own time (it stays) or on the right side.
+  // The stored band with its two ends moved to 12:41 and 12:57, off the steps, inside the range 11:30 to 13:30.
+  const offSteps = { ...band, startAt: at('12:41'), endAt: at('12:57') };
+
+  it.each([
+    ['from', 1, '12:41'],
+    ['from', -1, '12:40'],
+    ['until', 1, '13:00'],
+    ['until', -1, '12:57'],
+  ] as const)('steps the %s handle by %d to %s', (bound, direction, clock) => {
+    expect(stepped(bound, direction, offSteps)).toBe(clock);
+  });
+
+  it.each([
+    ['from', 1, '12:41'],
+    ['from', -0.1, '11:30'],
+    ['until', 0, '12:57'],
+    ['until', 1.1, '13:30'],
+  ] as const)('drops the %s handle dragged to a share of %d at %s', (bound, share, clock) => {
+    expect(droppedAt(bound, share, offSteps)).toBe(clock);
+  });
+});
+
 describe('clashes', () => {
   // Partitions: a fixed start (a busy stretch across it, one before it, one after the band), a fixed end (a busy
   // stretch across it), and neither fixed (nothing).
