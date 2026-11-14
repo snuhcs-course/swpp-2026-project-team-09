@@ -7,6 +7,7 @@
 import { requireOptionalNativeModule } from 'expo';
 import Constants from 'expo-constants';
 import type * as ExpoNotifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 type Notifications = typeof ExpoNotifications;
 
@@ -51,8 +52,14 @@ async function createChannel(library: Notifications): Promise<void> {
 
 async function permissionOf(library: Notifications): Promise<PushPermission> {
   try {
-    const { status } = await library.getPermissionsAsync();
-    return status;
+    const { status, canAskAgain } = await library.getPermissionsAsync();
+    const reported: PushPermission = status;
+    // Android 13+ reports a never-asked permission as denied, since notifications start disabled. JS cannot tell that
+    // from a denial once; ticket 03's `pushAsked` keeps its sheet to one showing.
+    if (Platform.OS === 'android' && reported === 'denied' && canAskAgain) {
+      return 'undetermined';
+    }
+    return reported;
   } catch {
     return 'unavailable';
   }

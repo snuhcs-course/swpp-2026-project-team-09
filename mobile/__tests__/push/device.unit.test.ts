@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { Platform } from 'react-native';
 import * as PushDevice from '@/push/device';
 
 const { askPushPermission, expoPushToken, onPushTokenChange, pushAvailable, pushPermission, unregisterPush } =
@@ -15,6 +16,7 @@ jest.mock('@/push/device', () => jest.requireActual<typeof PushDevice>('@/push/d
 interface Permission {
   status: string;
   granted: boolean;
+  canAskAgain?: boolean;
 }
 
 interface Token {
@@ -84,6 +86,7 @@ afterEach(() => {
   mockPermissionFails = false;
   mockTokenFails = false;
   mockTokenListener = null;
+  jest.restoreAllMocks();
 });
 
 describe('the push wrapper without the native module', () => {
@@ -165,5 +168,41 @@ describe('the push wrapper and the token', () => {
   it('unregisters the phone from push once', async () => {
     await expect(unregisterPush()).resolves.toBeUndefined();
     expect(mockCalls).toEqual(['unregisterForNotificationsAsync()']);
+  });
+});
+
+describe('the push wrapper reading the permission', () => {
+  beforeEach(() => {
+    mockTokenManager = {};
+  });
+
+  it('reads a permission Android 13+ reports as denied, but can still ask, as not yet asked', async () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    mockPermission = { status: 'denied', granted: false, canAskAgain: true };
+
+    await expect(pushPermission()).resolves.toBe('undetermined');
+  });
+
+  it('reads a permission Android can no longer ask for as denied', async () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    mockPermission = { status: 'denied', granted: false, canAskAgain: false };
+
+    await expect(pushPermission()).resolves.toBe('denied');
+  });
+
+  it('reads a granted permission on Android as granted', async () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    mockPermission = { status: 'granted', granted: true, canAskAgain: true };
+
+    await expect(pushPermission()).resolves.toBe('granted');
+  });
+
+  it('keeps a denied permission on iOS denied, whether or not it can ask again', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    mockPermission = { status: 'denied', granted: false, canAskAgain: true };
+    await expect(pushPermission()).resolves.toBe('denied');
+
+    mockPermission = { status: 'denied', granted: false, canAskAgain: false };
+    await expect(pushPermission()).resolves.toBe('denied');
   });
 });
