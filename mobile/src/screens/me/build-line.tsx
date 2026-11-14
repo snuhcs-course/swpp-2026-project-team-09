@@ -19,7 +19,8 @@ export function BuildLine(): ReactElement {
     <Text
       onLongPress={() => {
         const on = !answerOnMap;
-        void setAnswerSwitch(on);
+        // A phone that cannot keep it still has the switch changed until the app starts again.
+        void setAnswerSwitch(on).catch(() => null);
         showToast(on ? '지도 위의 답을 켰어요' : '지도 위의 답을 껐어요');
       }}
       style={styles.version}

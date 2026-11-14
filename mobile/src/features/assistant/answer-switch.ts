@@ -10,7 +10,7 @@ import { keep, readKept } from '@/storage/kept';
 // The switch of the answer on the map, which the phone keeps: null until the phone has said.
 let known: boolean | null = null;
 // Which start of the app a read of the phone belongs to: a read from before `forgetAnswerSwitch` is dropped.
-let start = 0;
+let appStarts = 0;
 let reading = false;
 const readers = new Set<() => void>();
 
@@ -36,13 +36,21 @@ function readOnce(): void {
     return;
   }
   reading = true;
-  const asked = start;
-  void readKept().then(({ answerOnMap }) => {
-    if (asked === start && known === null) {
-      known = answerOnMap;
-      tell();
-    }
-  });
+  const asked = appStarts;
+  void readKept().then(
+    ({ answerOnMap }) => {
+      if (asked === appStarts && known === null) {
+        known = answerOnMap;
+        tell();
+      }
+    },
+    () => {
+      // A phone that cannot be read counts as off, and a later reader reads it again.
+      if (asked === appStarts) {
+        reading = false;
+      }
+    },
+  );
 }
 
 // Whether the answer is shown on the map, off until the phone has said. Every reader follows a change at once.
@@ -61,5 +69,5 @@ export async function setAnswerSwitch(on: boolean): Promise<void> {
 export function forgetAnswerSwitch(): void {
   known = null;
   reading = false;
-  start += 1;
+  appStarts += 1;
 }

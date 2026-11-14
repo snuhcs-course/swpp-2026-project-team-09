@@ -63,6 +63,27 @@ describe('the switch of the answer on the map, as the phone kept it', () => {
   });
 });
 
+// Partitions: a phone that cannot be read, then a later reader whose read succeeds.
+describe('the switch of the answer on the map, when the phone cannot be read', () => {
+  it('is off, and a later reader reads the phone again', async () => {
+    jest.mocked(readKept).mockRejectedValueOnce(new Error('the phone could not be read'));
+    const first = await renderHook(() => useAnswerSwitch());
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(first.result.current).toBe(false);
+    phoneKeeps(true);
+
+    const later = await renderHook(() => useAnswerSwitch());
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(later.result.current).toBe(true);
+    expect(readKept).toHaveBeenCalledTimes(2);
+  });
+});
+
 // Partitions: a change made by one reader seen by another; a change made before the phone's answer comes; a new start
 // of the app after a change.
 describe('a change of the switch of the answer on the map', () => {
