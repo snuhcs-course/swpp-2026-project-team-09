@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -12,7 +13,7 @@ import { pass, screen, shownAddress } from './support/app';
 import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
-import { ACCEPTED, answerMainScreen, askMainServer, INVITATION, PHONE_NOW } from './support/server';
+import { ACCEPTED, answerMainScreen, askMainServer, INVITATION, LEAVE_BY, PHONE_NOW } from './support/server';
 
 // The Notifications the main server keeps, in 알림: their rows, where a press on one goes, and what counts them.
 
@@ -101,5 +102,22 @@ describe('a kept Notification in 알림', () => {
     expect(screen.getByRole('header', { name: '알림 1' })).toBeVisible();
     expect(screen.getByRole('button', { name: ROW })).toBeVisible();
     expect(screen.getByRole('tab', { name: '파티, 새 소식 1개', includeHiddenElements: true })).toBeOnTheScreen();
+  });
+});
+
+describe('the time to leave in 알림', () => {
+  it("shows its time while it is still to come, and opens the party's card when pressed", async () => {
+    jest.setSystemTime(new Date('2026-10-06T12:10:00+09:00'));
+    server.on('GET /notifications', { status: 200, body: [LEAVE_BY] });
+    const user = await openNotifications('알림');
+
+    const row = screen.getByRole('button', { name: '12:18 나설 시각 · 학생회관식당까지 걸어서 15분 · 12:18' });
+    expect(screen.getByText('12:18 나설 시각')).toBeVisible();
+    expect(screen.getByText('학생회관식당까지 걸어서 15분')).toBeVisible();
+    await user.press(row);
+    await pass(500);
+
+    expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
+    expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
   });
 });

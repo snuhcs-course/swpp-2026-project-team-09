@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -14,10 +15,12 @@ const LIFETIME_SECONDS = 7 * 24 * 60 * 60;
 const MOST_KEPT = 100;
 
 const storedSchema = z.object({
-  kind: z.enum(['accepted', 'declined']),
+  kind: z.enum(['accepted', 'declined', 'leave-by']),
   card: z.object({ kind: z.string(), id: z.string() }),
   at: z.iso.datetime(),
   title: z.string(),
+  // Absent from one kept before the field was.
+  ahead: z.string().nullable().default(null),
   line: z.string(),
 });
 
@@ -76,8 +79,8 @@ export class NotificationStore {
         if (!stored.success) {
           return [];
         }
-        const { kind, card, at, title, line } = stored.data;
-        return [{ identity, kind, card, at: new Date(at), title, line }];
+        const { kind, card, at, title, ahead, line } = stored.data;
+        return [{ identity, kind, card, at: new Date(at), title, ahead, line }];
       })
       .toSorted((a, b) => b.at.getTime() - a.at.getTime());
   }

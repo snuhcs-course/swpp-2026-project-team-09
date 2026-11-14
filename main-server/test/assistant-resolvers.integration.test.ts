@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -13,6 +14,7 @@ import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { befriend, signInUser, TestUser } from './friends.js';
+import { keptButHidden, keptPositionIn } from './location-sharing.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
@@ -113,6 +115,20 @@ describe('resolveFriend', () => {
       result: 'none',
       reason: `No Friend of the User has a name holding ${ONLY_STRANGER}.`,
     });
+  });
+});
+
+describe('resolveFriend, for a Friend the Friend view puts at the Timetable whose position is kept', () => {
+  it('answers them by name and id, and nothing of where they are reaches the model or the reply', async () => {
+    const friend = await named('칠하은');
+    await befriend(app, user, friend);
+    await keptButHidden(app, user, friend);
+    model.script({ tool: 'resolveFriend', input: { name: '칠하은' } }, { text: '…' });
+
+    const response = await postAssistantMessages(app, user.accessToken, ask('칠하은 초대해줘'));
+
+    expect(model.toolResults()).toEqual([{ result: 'one', candidate: { id: friend.id, name: friendName('칠하은') } }]);
+    expect(keptPositionIn(model.received(), response.body)).toEqual([]);
   });
 });
 
