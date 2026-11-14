@@ -88,3 +88,23 @@ describe('the open list of Friends', () => {
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
   });
 });
+
+// Partitions: the list open over an answer without a Plan, which draws nothing, so the map takes no press on a face.
+describe('the open list of Friends over an answer without a Plan', () => {
+  it('says only that the nearest come first', async () => {
+    // No stored reply is without a Plan: the stored one with its Plans emptied, and the lines of a day without a menu.
+    const answer = {
+      ...MEAL_ANSWER_REPLY.answer,
+      plans: [],
+      noPlan: { reason: 'no-menu', lines: [[{ text: '오늘은 여는 식당이 없어요', strong: false }]] },
+    };
+    const user = await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer });
+
+    await user.press(card().getByRole('button', { name: ADD }));
+
+    const lines = within(card().getByTestId('answer-lines'));
+    expect(lines.getByText('누구와 같이 먹을까요?')).toBeVisible();
+    expect(lines.getByText('가까운 친구부터 보여요')).toBeVisible();
+    expect(lines.queryByText('지도의 얼굴을 누르거나 아래에서 골라요')).toBeNull();
+  });
+});
