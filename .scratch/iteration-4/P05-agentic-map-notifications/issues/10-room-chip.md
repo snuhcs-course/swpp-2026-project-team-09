@@ -73,3 +73,13 @@ The list's cells: row 1 열람실 | 정숙 열람실, row 2 노트북존 | 노�
 14. The room shown is kept with the chat by the card's place, as a card's outcome is, and later requests send the card by the book key of that room (space, date, start and minutes, no seat), which the server's key grammar accepts.
 15. Going back to the card's own room brings back the seat it named.
 16. Without a library session the list still lists the sectors of the 공부공간 layer and reads nothing from the library.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5) built the main server's part, the app's part, and the design document's
+sentences.
+
+- Agent time: about 57 minutes, an estimate from the transcript's timestamps; part of it was waiting for the shared
+  check slots.
+- Tokens: output 237,426; input 81,126,953, of which 80,168,582 were cache reads, 957,905 cache writes, and 466
+  uncached. Without cache reads: 1,195,797.
