@@ -31,3 +31,10 @@ A Quest, as a Holder reads it, lists its members with the state of each: accepte
 - The app's check of a Quest moved, unchanged but for `members`, from `mobile/src/api/server/answers.ts` to a new `quest-answers.ts` beside it: `answers.ts` was at the lint's limit of 300 lines.
 - The app's integration test checks the refetch of `GET /quests` and the listener; the main screen it starts shows no sent invitations, so the refetch of `SENT_INVITATIONS_KEY` is read from the `REFETCH` table, not observed.
 - The `socket-server/README.md` rows keep the table's width, so that no other row of the table changes.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). The session that wrote the spec, reviewed each ticket, and opened the pull requests is counted once, under ticket 07.
+
+- Agent time: about 50 minutes, an estimate from the transcript's timestamps; it includes waits for the machine's shared test lock.
+- Tokens: output 58,228; input 15,660,616, of which 15,159,147 were cache reads, 501,257 cache writes, and 212 uncached. Without cache reads: 559,697.

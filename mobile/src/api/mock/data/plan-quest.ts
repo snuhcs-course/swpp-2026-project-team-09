@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanQuest } from '@/api/plan-quest-types';
 
 // The main server's reply to POST /plans for the first Plan of the answer in `meal-answer.ts` (302동식당, Tuesday
-// 2026-11-17, asked at 11:50), copied whole, with the asker's and 민수's ids those of that answer.
+// 2026-11-17, asked at 11:50), copied whole, with the asker's and 민수's ids those of that answer, and its members as
+// the main server lists them.
 
 const ASKER_ID = '11ca538e-e4ef-48d9-9a1f-b7160c553bee';
 const MINSU_ID = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
@@ -45,6 +47,10 @@ export const PLAN_QUEST: PlanQuest = {
     ],
     classQuest: false,
     waitingJoinRequests: 0,
+    members: [
+      { user: { id: ASKER_ID, name: '유상', department: '컴퓨터공학부' }, state: 'accepted', lateMinutes: null },
+      { user: { id: MINSU_ID, name: '민수', department: '컴퓨터공학부' }, state: 'invited', lateMinutes: null },
+    ],
   },
   invitations: [{ id: 'e8467ebb-6d3a-4cce-98c9-90bedca58d47', userId: MINSU_ID }],
 };
