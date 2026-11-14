@@ -8,7 +8,7 @@ Native files: no
 
 ## What to build
 
-A signed-in User who sends a Party that invites a Friend, from the Party form or from the Assistant's Proposal card, or who books a seat or a room, sees once the sheet of board t17. "알림 받기" (get notifications) leads to the phone's prompt. Once allowed, the phone's Expo push token reaches the main server, at this and every later start and sign-in, and whenever the token changes. From then on, invitations to that User arrive as push. "나중에" (later) closes the sheet for good, and the User keeps the list only. When the Session ends on the phone, the phone unregisters from push before it forgets its tokens, so a signed-out phone receives nothing even when the server could not be told. Mock builds and the existing tests never ask and never register.
+A signed-in User who sends a Party that invites a Friend, from the Party form or from the Assistant's Proposal card, or who books a seat or a room, sees once the sheet of board t17. "알림 받기" (get notifications) leads to the phone's prompt. Once allowed, the phone's Expo push token reaches the main server, at this and every later start and sign-in, and whenever the token changes. From then on, invitations to that User arrive as push. "나중에" (later) closes the sheet for good, and the User keeps the list only. When the Session ends on the phone, the phone unregisters from push before it forgets its tokens, so a signed-out phone receives nothing even when the main server could not be told, as long as the phone reached Firebase. Mock builds and the existing tests never ask and never register.
 
 ## Files
 
@@ -33,7 +33,7 @@ Change:
 ## Behavior
 
 - `PushRegistration` runs only when `useSession().status === 'ready'`, `asksMainServer()` is true, and `pushAvailable()` is true. Then, when `pushPermission()` is `granted`, it gets `expoPushToken()` and calls `apiClient.registerPushToken`. It does so on mount, when the Session becomes ready (a sign-in), and from `onPushTokenChange`. A failure is ignored; the next start tries again. It never asks for the permission itself.
-- `askForPush()` shows the sheet only when the same three conditions hold, the permission is `undetermined`, and `pushAsked` is false. It sets `pushAsked` when the sheet shows. When the permission is already `granted` (Android 12 and below), it registers the token at once without the sheet.
+- `askForPush()` shows the sheet only when the same three conditions hold, `pushPermission()` answers `undetermined`, and `pushAsked` is false. `undetermined` means the phone's own prompt can still show: a permission that was never asked, which Android 13 and later report as denied but still askable and the wrapper reads as `undetermined`. It sets `pushAsked` when the sheet shows. When the permission is already `granted` (Android 12 and below), it registers the token at once without the sheet.
 - The sheet's words are the design's: "나설 시각을 휴대폰으로 알려 드릴까요?" (Shall I notify your phone at leave-by time?), "나설 시각, 초대, 예약, 관심만 보내요." (Only leave-by times, invitations, bookings, and interests are sent.), "알림 받기", "나중에", and "나중에를 고르면 알림 목록에만 남아요." (If you choose later, they stay only in the notification list.).
 - "알림 받기" calls `askPushPermission()` and closes the sheet. On `granted` it registers the token at once.
 - The sheet appears after the action succeeded, so it never blocks or undoes the action.
@@ -60,7 +60,9 @@ Change:
 - [ ] A booked seat or room shows the sheet under the same rules.
 - [ ] Sending a Party without a Friend does not show the sheet.
 - [ ] An older stored `Kept` value without `pushAsked` reads as false.
-- [ ] The whole mobile suite passes, with no change to existing tests.
+- [ ] On Android, with the permission reported as denied but still askable, the sheet shows, and "알림 받기" leads to the prompt and the registration.
+- [ ] The app registers once at a start, though the phone tells of its token after every fetch of it.
+- [ ] The whole mobile suite passes. The one existing test that changes is `__tests__/api/sign-in.integration.test.ts`, whose expectations list every field the phone keeps and gain `pushAsked: false`.
 - [ ] On a development build of this branch on a phone, against the local stack running ticket 02, a phone that allowed notifications receives a push when a second test account (on another phone, an emulator, or curl) invites it. The receipt of that send, read with curl from `https://exp.host/--/api/v2/push/getReceipts` about 15 minutes later, is `ok`, and its result is recorded under Comments. The real ok answer replaces `expo-push-ok.json`.
 - [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `mobile/` and `main-server/`; CI's `app-fingerprint` passes without a native change.
 
@@ -69,6 +71,6 @@ Change:
 1. Read CI's `app-fingerprint` result: it must say the native part did not change.
 2. On a development build against the local stack with ticket 02, sign in on two devices with two test accounts that are Friends. On device 1, send a Party that invites device 2's User; device 1 sees the sheet once.
 3. On device 2, send a Party with a Friend and choose "알림 받기". Close the app on device 2, invite it from device 1, and see the push arrive.
-4. Turn off the network on device 2, sign out, turn the network back on, and invite it again: no push arrives.
+4. Stop the local stack's main server, sign out on device 2, start the server again, and invite device 2 again: no push arrives, since the phone unregistered itself through Firebase. A sign-out with no network at all cannot unregister (the spec, "Tokens on the server").
 
 ## Comments
