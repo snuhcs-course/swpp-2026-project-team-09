@@ -23,6 +23,7 @@
 // 2026-11-05  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-14  Opus 5.5   prompted by TaeHyun79
 // 2026-11-14  Opus 5.5   prompted by fyoon46
+// 2026-11-15  Opus 5.5   prompted by fyoon46
 // 2026-11-15  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
@@ -103,23 +104,32 @@ enum Affiliation {
 // Users in the order of their ids, so that the database allows one of them between two Users: two Friend Requests that
 // cross, or two answers to one, cannot leave two.
 model Friendship {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // The migration checks that userAId is less than userBId.
-  userAId      String    @map("user_a_id") @db.Uuid
-  userA        User      @relation("FriendshipUserA", fields: [userAId], references: [id])
-  userBId      String    @map("user_b_id") @db.Uuid
-  userB        User      @relation("FriendshipUserB", fields: [userBId], references: [id])
+  userAId    String      @map("user_a_id") @db.Uuid
+  userA      User        @relation("FriendshipUserA", fields: [userAId], references: [id])
+  userBId    String      @map("user_b_id") @db.Uuid
+  userB      User        @relation("FriendshipUserB", fields: [userBId], references: [id])
   // One of the two, who sent the Friend Request.
-  senderId     String    @map("sender_id") @db.Uuid
-  sentAt       DateTime  @default(now()) @map("sent_at")
-  acceptedAt   DateTime? @map("accepted_at")
-  // Each User's switch for Location Sharing on this friendship, at their own end.
-  userASharing Boolean   @default(true) @map("user_a_sharing")
-  userBSharing Boolean   @default(true) @map("user_b_sharing")
+  senderId   String      @map("sender_id") @db.Uuid
+  sentAt     DateTime    @default(now()) @map("sent_at")
+  acceptedAt DateTime?   @map("accepted_at")
+  // What each User lets the other see of where they are, at their own end. The other sees the lower of the two.
+  userALevel FriendLevel @default(building) @map("user_a_level")
+  userBLevel FriendLevel @default(building) @map("user_b_level")
 
   @@unique([userAId, userBId])
   @@index([userBId])
   @@map("friendships")
+}
+
+// Above the Timetable, which every Friend sees: the Place a User is in now, or their position.
+enum FriendLevel {
+  timetable
+  building
+  exact
+
+  @@map("friend_level")
 }
 
 // A link a User sends through any messenger, so that whoever accepts it becomes their Friend. It works once.

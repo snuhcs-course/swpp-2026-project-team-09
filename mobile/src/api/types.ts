@@ -10,6 +10,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -97,13 +98,19 @@ export type ProfileChange = Partial<
 
 // --- Friends and their positions ---
 
+// What a User lets a Friend see of where they are, above the Timetable every Friend sees: "시간표만", "지금 있는 건물",
+// or "정확한 위치". The Friend sees the lower of the two ends.
+export type FriendLevel = 'timetable' | 'building' | 'exact';
+
 // GET /friends, in the order of the names.
 export interface Friend {
   // The Friend's User id.
   id: string;
   name: string;
   department: string;
-  // The User's own switch for this friendship.
+  // The User's own end of this friendship.
+  level: FriendLevel;
+  // Whether the User's end is above the Timetable.
   sharing: boolean;
   // Whether the User can see the Friend on the map now, never why not.
   visible: boolean;
@@ -139,6 +146,9 @@ export interface Position {
   latitude: number;
   longitude: number;
   measuredAt: string;
+  // At 'building' the User sees only the Place the Friend is in: the point is the Place's own, and `placeId` names it.
+  level?: 'building' | 'exact';
+  placeId?: string;
 }
 
 // POST /positions: the User's own position. `accuracy` is the radius in metres the phone places itself within, and

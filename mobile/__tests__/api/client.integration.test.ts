@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -37,6 +38,7 @@ describe('the mock of Friends', () => {
       id: 'f1',
       name: '김민준',
       department: '컴퓨터공학부',
+      level: 'exact',
       sharing: true,
       visible: true,
     });

@@ -8,6 +8,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -19,6 +20,7 @@ import type { LatLng } from '@/api/types';
 import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type Chat, type ChatBubble, useChat } from '@/features/assistant/use-chat';
+import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { openPost } from '../party/post-card';
@@ -184,6 +186,8 @@ export interface ChatSheetControl {
   leaving: CardLeaving & { showLayer: (layer: MapLayer) => void };
   // The answer on screen and its Plan, which the map and the frame's card draw: none while the switch is off.
   answer: ShownAnswer;
+  // The Quest "이대로 초대" made from the Plan on screen, and how each invited Friend stands.
+  invitation: PlanInvitation;
 }
 
 // A change of the switch of the answer on the map closes the sheet and forgets the conversation.
@@ -222,13 +226,14 @@ function forgettingFor(reset: () => void, turnOn: (layer: MapLayer) => void): (l
 
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
-// The answer on screen, none while the switch is off, kept in `shownNow` for the context of the next request.
+// The answer on screen, none while the switch is off, kept in `shownNow` for the context of the next request, and
+// the Quest made from its Plan.
 function useAnswerOnScreen(
   onMap: boolean,
   bubbles: readonly ChatBubble[],
   position: LatLng | null,
   shownNow: RefObject<ShownAnswer | null>,
-): ShownAnswer {
+): { answer: ShownAnswer; invitation: PlanInvitation } {
   const showToast = useToast();
   const shown = useShownAnswer(onMap ? bubbles : NO_BUBBLES, {
     location: position,
@@ -236,10 +241,11 @@ function useAnswerOnScreen(
       showToast(NOT_RECALCULATED);
     },
   });
+  const invitation = usePlanInvitation(shown, { location: position, say: showToast });
   useEffect(() => {
     shownNow.current = shown;
   });
-  return shown;
+  return { answer: shown, invitation };
 }
 
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
@@ -282,7 +288,7 @@ export function useChatSheet(
     onMap,
     framed: onMap && (chat.bubbles.length > 0 || chat.waiting),
     leaving: { showLayer: forgettingFor(chat.reset, turnOn), openEvent, openQuestPost, openPartyForm, proposals },
-    answer: useAnswerOnScreen(onMap, chat.bubbles, position, shownNow),
+    ...useAnswerOnScreen(onMap, chat.bubbles, position, shownNow),
     sheet: (inputTop) =>
       sheetShown ? (
         <ChatSheet

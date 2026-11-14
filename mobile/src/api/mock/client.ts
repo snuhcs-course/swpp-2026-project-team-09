@@ -139,9 +139,9 @@ export const mockClient: ApiClient = {
       return { offCampus: !isInside(position, CAMPUS_BOUNDS) };
     }),
   listFriends: () => answer('listFriends', friendships.listFriends, []),
-  setFriendSharing: async (userId, on) => {
-    await answer('setFriendSharing', () => {
-      friendships.setFriendSharing(userId, on);
+  setFriendLevel: async (userId, level) => {
+    await answer('setFriendLevel', () => {
+      friendships.setFriendLevel(userId, level);
     });
   },
   endFriendship: async (userId) => {

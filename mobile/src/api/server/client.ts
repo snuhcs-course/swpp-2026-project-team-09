@@ -91,8 +91,8 @@ export const serverClient: ApiClient = {
   },
   uploadPosition: (position) => call('POST', '/positions', isPositionKept, { body: position }),
   listFriends: () => call('GET', '/friends', isFriends),
-  setFriendSharing: async (userId, on) => {
-    await call('PUT', `/friends/${encodeURIComponent(userId)}/sharing`, isNothing, { body: { on } });
+  setFriendLevel: async (userId, level) => {
+    await call('PUT', `/friends/${encodeURIComponent(userId)}/level`, isNothing, { body: { level } });
   },
   endFriendship: async (userId) => {
     await call('DELETE', `/friends/${encodeURIComponent(userId)}`, isNothing);
