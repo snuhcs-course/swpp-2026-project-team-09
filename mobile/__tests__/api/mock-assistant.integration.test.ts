@@ -8,6 +8,7 @@ import { answered, startFresh } from '../support/mocks';
 import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-types';
 import { mockClient } from '@/api/mock/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 
 // The mock of the Assistant, where the app asks no main server: asked to eat together with what the app knew, it
 // answers with the main server's real answer drawn on the map; anything else as it did before.
@@ -59,8 +60,24 @@ describe('the mock of an answer drawn on the map', () => {
 
 describe('the mock of a recalculation', () => {
   it("answers with the main server's real answer, holding the input it was given", async () => {
-    const input: PlanInput = { ...MEAL_ANSWER.input, window: { from: '12:40', until: null } };
+    // The first copy's input with its date moved a day on, a field that chooses no other copy.
+    const input: PlanInput = { ...MEAL_ANSWER.input, date: '2026-11-18' };
 
     await expect(answered(mockClient.recalculateAnswer(input, null))).resolves.toEqual({ ...MEAL_ANSWER, input });
+  });
+
+  it('answers a fixed start with the stored copy for a fixed start, holding the input it was given', async () => {
+    const input: PlanInput = { ...MEAL_ANSWER.input, window: { from: '12:40', until: null } };
+
+    await expect(answered(mockClient.recalculateAnswer(input, null))).resolves.toEqual({
+      ...MEAL_ANSWER_FIXED_START,
+      input,
+    });
+  });
+
+  it('answers the User alone with the stored copy for the User alone', async () => {
+    await expect(answered(mockClient.recalculateAnswer(MEAL_ANSWER_ALONE.input, null))).resolves.toEqual(
+      MEAL_ANSWER_ALONE,
+    );
   });
 });

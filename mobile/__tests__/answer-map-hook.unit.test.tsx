@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -26,9 +27,11 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));
 
-// The emulator's numbers: a stage of 411 by 914 under no status bar, and a card of 274. The pill and the room for a
-// label take 156 at the top, and the card with its room 346 at the bottom: the area is from 156 to 568. A campus map
-// of that view goes no further out than zoom 15.26 (see `answer-camera.unit.test.ts`).
+// The emulator's numbers: a stage of 411 by 914 under no status bar, and a card of 274. The pill takes 100 at the top
+// and the card 274 at the bottom, each with the room the marks there need: for the first Plan 24 above (자하연식당
+// 2층's label is at its left) and 66 below (the pick's two lines under 302동, 18 + 2 + 46), so the area is from 124 to
+// 574; for the third Plan 24 and 24 (302동's labels are at its sides). A campus map of that view goes no further out
+// than zoom 15.26 (see `answer-camera.unit.test.ts`).
 const SIZE = { width: 411, height: 914 };
 const ROOM: Room = { stage: SIZE, cardHeight: null, answerHeight: 274, tutorialStart: false };
 const FIT_ZOOM = 15.26;
@@ -65,6 +68,7 @@ function mapOf(fitZoom: number | null, asked: Asked): MainMap {
 }
 
 const NO_ANSWER: ShownAnswer = {
+  source: null,
   answer: null,
   plan: null,
   index: 0,
@@ -72,10 +76,14 @@ const NO_ANSWER: ShownAnswer = {
   show: nothing,
   basisOpen: false,
   toggleBasis: nothing,
+  recalculating: false,
+  change: nothing,
+  ghost: null,
+  undo: nothing,
 };
 
 function shownAt(index: number): ShownAnswer {
-  return { ...NO_ANSWER, answer: MEAL_ANSWER, plan: MEAL_ANSWER.plans[index] ?? null, index };
+  return { ...NO_ANSWER, source: MEAL_ANSWER, answer: MEAL_ANSWER, plan: MEAL_ANSWER.plans[index] ?? null, index };
 }
 
 interface Given {
@@ -106,17 +114,19 @@ function spanIn(points: readonly LatLng[], camera: MapCamera | undefined): { top
 }
 
 // Partitions: the answer comes; the Plan on screen changes; the card grows; the answer is closed. Expected values:
-// the Plans' own points are 370.8 high at the lowest zoom (see `answer-camera.unit.test.ts`), which the area of 412
-// holds and an area of 306, under a card of 380, does not.
+// at the lowest zoom every point is 425.7 high and the Plans' own points 370.8 (see `answer-camera.unit.test.ts`).
+// The first Plan's area of 450 holds every point; the third Plan's under a card of 380, from 124 to 510, holds only
+// its own.
 describe("the answer's camera", () => {
-  it("goes in one move to where the Plan's own points are centred, and asks the map for no fit", async () => {
+  it('goes in one move to the fit of every point of the first Plan, and asks the map for no fit', async () => {
     const asked: Asked = { fits: 0, cameras: [] };
     await render(asked);
 
     expect(asked.fits).toBe(0);
     expect(asked.cameras).toHaveLength(1);
-    const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 0).own, asked.cameras[0]);
-    expect((top + bottom) / 2).toBeCloseTo(362, 0);
+    const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 0).points, asked.cameras[0]);
+    expect(top).toBeCloseTo(124, 0);
+    expect(bottom).toBeCloseTo(574, 0);
   });
 
   it('moves again for another Plan, and when the card grows', async () => {
@@ -128,8 +138,9 @@ describe("the answer's camera", () => {
 
     await rerender({ ...FIRST, shown: shownAt(2), room: { ...ROOM, answerHeight: 380 } });
     expect(asked.cameras).toHaveLength(3);
-    // The third Plan's pick is near its north end, which stays at the area's top.
-    expect(spanIn(drawingOf(MEAL_ANSWER, 2).own, asked.cameras[2]).top).toBeCloseTo(156, 0);
+    // The third Plan's own points, 370.8 high, are centred in the area from 124 to 510, on 317.
+    const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 2).own, asked.cameras[2]);
+    expect((top + bottom) / 2).toBeCloseTo(317, 0);
   });
 
   it('moves nothing when the answer is closed', async () => {

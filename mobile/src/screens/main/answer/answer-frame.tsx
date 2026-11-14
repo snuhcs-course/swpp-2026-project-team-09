@@ -42,12 +42,12 @@ function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }):
   );
 }
 
-// A reply's words: the card of the Plan on screen for the answer on screen, else the lines of its answer's first Plan,
-// or those that say why it has none, in place of the model's sentence; otherwise the sentence as Markdown.
+// A reply's words: the card of the answer on screen for the reply it came from, else the lines of its answer's first
+// Plan, or those that say why it has none, in place of the model's sentence; otherwise the sentence as Markdown.
 function Words({ bubble, shown }: { bubble: ChatBubble; shown: ShownAnswer }): ReactElement {
   const { answer } = bubble;
-  if (answer === shown.answer && shown.plan !== null) {
-    return <PlanCard shown={shown} />;
+  if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
+    return <PlanCard answer={shown.answer} shown={shown} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;

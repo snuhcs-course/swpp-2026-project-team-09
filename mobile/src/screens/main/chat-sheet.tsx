@@ -11,12 +11,12 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, useCallback, useEffect, useState } from 'react';
+import { type ReactElement, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal, RequestContext } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { Button, color, font, Icon, space } from '@/design-system';
+import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type Chat, type ChatBubble, useChat } from '@/features/assistant/use-chat';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -204,9 +204,42 @@ function stay(): void {
   // A card that leads elsewhere leaves the answer frame as it is.
 }
 
-// What the app knows when the User asks: where the User is on campus, and nothing of an answer on screen yet.
-function contextAt(position: LatLng | null): RequestContext {
-  return { location: position, viewport: null, tapped: null, conditions: null, planId: null };
+// What the app knows when the User asks: where the User is on campus, and the conditions and the Plan of the answer
+// on screen.
+function contextAt(position: LatLng | null, shown: ShownAnswer | null): RequestContext {
+  const conditions = shown?.answer?.input ?? null;
+  const planId = shown?.plan?.id ?? null;
+  return { location: position, viewport: null, tapped: null, conditions, planId };
+}
+
+// A map button of the answer frame: forgets the conversation and turns its layer on.
+function forgettingFor(reset: () => void, turnOn: (layer: MapLayer) => void): (layer: MapLayer) => void {
+  return (layer) => {
+    reset();
+    turnOn(layer);
+  };
+}
+
+const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
+
+// The answer on screen, none while the switch is off, kept in `shownNow` for the context of the next request.
+function useAnswerOnScreen(
+  onMap: boolean,
+  bubbles: readonly ChatBubble[],
+  position: LatLng | null,
+  shownNow: RefObject<ShownAnswer | null>,
+): ShownAnswer {
+  const showToast = useToast();
+  const shown = useShownAnswer(onMap ? bubbles : NO_BUBBLES, {
+    location: position,
+    onFailed: () => {
+      showToast(NOT_RECALCULATED);
+    },
+  });
+  useEffect(() => {
+    shownNow.current = shown;
+  });
+  return shown;
 }
 
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
@@ -225,7 +258,8 @@ export function useChatSheet(
   position: LatLng | null,
 ): ChatSheetControl {
   const onMap = useAnswerSwitch();
-  const chat = useChat(onMap ? (): RequestContext => contextAt(position) : undefined);
+  const shownNow = useRef<ShownAnswer | null>(null);
+  const chat = useChat(onMap ? (): RequestContext => contextAt(position, shownNow.current) : undefined);
   const [shown, setShown] = useState(false);
   const open = useCallback((): void => {
     if (!onMap) {
@@ -240,10 +274,6 @@ export function useChatSheet(
   const close = onMap ? stay : closeSheet;
   const { showLayer, openEvent, openQuestPost, openPartyForm } = useLeaving(close, turnOn);
   const proposals = useProposalMaking(close);
-  const forgetAndShow = (layer: MapLayer): void => {
-    chat.reset();
-    turnOn(layer);
-  };
   const sheetShown = shown && !onMap;
   return {
     chat,
@@ -251,8 +281,8 @@ export function useChatSheet(
     open,
     onMap,
     framed: onMap && (chat.bubbles.length > 0 || chat.waiting),
-    leaving: { showLayer: forgetAndShow, openEvent, openQuestPost, openPartyForm, proposals },
-    answer: useShownAnswer(onMap ? chat.bubbles : NO_BUBBLES),
+    leaving: { showLayer: forgettingFor(chat.reset, turnOn), openEvent, openQuestPost, openPartyForm, proposals },
+    answer: useAnswerOnScreen(onMap, chat.bubbles, position, shownNow),
     sheet: (inputTop) =>
       sheetShown ? (
         <ChatSheet

@@ -4,12 +4,15 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
-import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
+import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap, card } from './support/answer-map';
+import { step } from './support/answer-correct';
+import { pass } from './support/app';
+import { swipe } from './support/swipe';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -60,7 +63,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// Partitions: the first Plan; forward twice; back from the first.
+// Partitions: the first Plan; forward twice; back from the first; the row with "되돌리기" after a drag.
 describe('the arrows and the count', () => {
   it('show the first Plan as 1/5', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -90,6 +93,64 @@ describe('the arrows and the count', () => {
     await user.press(card().getByRole('button', { name: BEFORE }));
 
     expect(card().getByText('5/5')).toBeVisible();
+  });
+
+  it('stand at the two ends of their row, with "되돌리기" and the count between them', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    await step('from', 'increment');
+
+    const row = within(card().getByTestId('plan-steps'));
+    const names = [BEFORE, '되돌리기', NEXT];
+    const inOrder = row
+      .getAllByRole('button')
+      .map((button) => names.find((name) => row.getByRole('button', { name }) === button));
+
+    expect(inOrder).toEqual([BEFORE, '되돌리기', NEXT]);
+    expect(row.getByText('1/2')).toBeVisible();
+  });
+});
+
+// Partitions: 60 to the left and to the right, round from the first; 30, under the 48 that counts; a swipe while a
+// recalculation is held back.
+describe("a swipe over the answer's lines", () => {
+  it('to the left shows the next Plan', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await swipe('plan-swipe', { fromX: 200, dx: -60 });
+
+    expect(card().getByText('12:18 301동식당')).toBeVisible();
+    expect(card().getByText('2/5')).toBeVisible();
+  });
+
+  it('to the right from the first Plan goes round to the last', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await swipe('plan-swipe', { fromX: 200, dx: 60 });
+
+    expect(card().getByText('12:35 자하연식당 2층')).toBeVisible();
+    expect(card().getByText('5/5')).toBeVisible();
+  });
+
+  it('of 30 changes nothing', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await swipe('plan-swipe', { fromX: 200, dx: -30 });
+
+    expect(card().getByText('12:15 302동식당')).toBeVisible();
+    expect(card().getByText('1/5')).toBeVisible();
+  });
+
+  it('changes nothing while a recalculation is on its way', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE, afterMs: 3000 });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+
+    await swipe('plan-swipe', { fromX: 200, dx: -60 });
+
+    expect(card().getByText('12:15 302동식당')).toBeVisible();
+    expect(card().getByText('1/5')).toBeVisible();
+    await pass(3000);
   });
 });
 

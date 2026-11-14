@@ -641,8 +641,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it is laid
   out. Turning the switch either way closes the chat sheet and forgets the conversation. Every request then carries a
   context with the User's position on campus and the capability `answer`.
-- **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the latest
-  bubble of the turn that has one, held with the index of the Plan on screen and whether its basis is open
+- **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the
+  conversation's last reply (a failure and the app's own bubble are none), so it stays while a follow-up waits or has
+  failed, or a recalculation that replaced it, held with the index of the Plan on screen and whether its basis is open
   (`useShownAnswer` in `src/features/assistant/use-shown-answer.ts`, read through the chat control's `answer`). While
   it has a Plan, the map draws what `drawingOf` (`src/features/assistant/answer-marks.ts`) gives for it, and nothing
   else of the everyday map: each mark is an `answer` look, one symbol at a point and its label at the first free side,
@@ -652,15 +653,33 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
   marks, which they would lie over (`nearOwnMark`). The looks of every Plan are asked for when the answer comes. The camera
   goes in one glide to where `answerCamera` (`src/features/assistant/answer-camera.ts`) works it out for the view:
-  the fit of the answer's points between the pill and the card, with room for a label above and below and 64 at the
-  sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the Plan's
+  the fit of the answer's points between the pill and the card, with the room the marks there need (`roomsOf`) and 64
+  at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the Plan's
   own points centred there, or, when they do not fit either, the picked Restaurant's side kept in view. It moves
   again when the Plan on screen changes and when the card's height or the stage's size changes; closing the answer
   moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its lowest in place of 15, which on a
   phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기")
-  at the right of its first row, the Plan's two lines, the basis while it is open, and "‹" ("이전 후보"), the count
-  ("3/5"), and "›" ("다음 후보") when the answer has more than one Plan; the arrows go round, and a new Plan closes
-  the basis. An answer without a Plan draws nothing and keeps the everyday map.
+  at the right of its row of chips, the Plan's two lines, the basis while it is open, and, when the answer has more than one
+  Plan, round buttons "‹" ("이전 후보") and "›" ("다음 후보") at the two ends of the last row with "되돌리기" while a drag
+  is kept and the count ("3/5") between them; a sideways swipe over the two lines does the same, to the left the next Plan and to the right the
+  previous one. The arrows and the swipe go round, and a new Plan closes the basis. An answer without a Plan draws nothing and keeps the everyday map.
+- **Correcting the answer** (`answer/plan-card.tsx`, `answer/use-corrections.ts`). The card's first row holds the
+  answer's chips (`condition-chips.tsx`) and "＋ 같이". The ✕ of a person's chip takes the person out; "＋ 같이" lists
+  in the card the User's Friends who are not in the conditions, each with the Friend list's line, in place of the
+  time band and the arrows, and a press adds the Friend, as does a press on a Friend's Avatar on the map; the origin
+  chip opens 장소 선택's map view, and a Place chosen there becomes the User's own `from` (a point that is no Place
+  says "건물을 골라 주세요"); the time chip closes the list and puts the focus on the band's end handle for two seconds. Letting go of a
+  handle of the time band (`time-band.tsx`), dragged or stepped by a screen reader, fixes that bound of the window.
+  Each change goes to `POST /assistant/answers` with the User's position (`change` of `useShownAnswer`, the changes
+  in `src/features/assistant/plan-input.ts`), one at a time: meanwhile the chips, the Friends, the handles, the arrows,
+  and "되돌리기" take no press. Its answer replaces the one on screen: after a drag, keeping the Plan with the same
+  id or else the first; after any other change, showing the first; a failure says "다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요" and changes nothing, and an answer that
+  comes after the conversation was forgotten or replaced is dropped. After a drag the band before it stays as a
+  dashed outline, and "되돌리기" brings back what was shown before the drag without a request; any other change or a
+  new reply drops it. Words sent while an answer is on screen carry its `input` and the id of the Plan on screen in
+  the request context, and the reply's answer replaces the one on screen. The mock answers a recalculation from the
+  stored copies of real answers by who is in the conditions, whether the window's start is fixed, and where the User
+  sets out from.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
