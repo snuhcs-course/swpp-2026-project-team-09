@@ -816,8 +816,9 @@ Iteration 2 (P06), and commit `2f4f201` holds its code.
 
 알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its
-time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A kind the app does not know shows as
-an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
+time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A Notification whose time is still to
+come shows its title for that (`ahead`), such as "12:18 나설 시각" for the time to leave (`leave-by`, a clock on the
+navy round), and its own title once the time has come. A kind the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Quest the User leads with Approval ("참여 신청 {n}명"). A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
 (`src/features/notifications/address.ts`): a kept Notification's address is the main server's, and an invitation's is
