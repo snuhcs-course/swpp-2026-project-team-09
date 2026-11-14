@@ -7,27 +7,23 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { type ReactElement, useCallback, useMemo, useState } from 'react';
+import { type ReactElement, useCallback, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { MapLayer, QuestProposal } from '@/api/assistant-types';
-import { questsQuery } from '@/api/queries';
+import type { MapLayer, QuestProposal, RequestContext } from '@/api/assistant-types';
+import type { LatLng } from '@/api/types';
 import { Button, color, font, Icon, space } from '@/design-system';
+import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
-import type { PostView } from '@/features/party/posts';
-import { EventSheets, useEventSheets } from '../events/event-sheets';
-import { JoinSheet } from '../party/join-sheet';
 import { openPost } from '../party/post-card';
-import { usePartyActions } from '../party/use-party-actions';
 import { ChatBubbles, ChatEmpty } from './chat-bubbles';
-import type { CardActions, ProposalActions } from './chat-cards';
-import type { EventCardActions } from './chat-event-cards';
-import type { QuestCardActions } from './chat-quest-cards';
+import { type CardLeaving, useCardActions } from './chat-card-actions';
+import type { ProposalActions } from './chat-cards';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 interface ChatSheetProps {
@@ -89,43 +85,6 @@ function ChatHeader({ onReset, onClose }: ChatHeaderProps): ReactElement {
   );
 }
 
-// What the event cards of the answers do. Their 파티 찾기/모집 and AI 매칭 open the 행사 tab's own sheets over the chat,
-// which stays open under them, and what those sheets open next lies over the main screen as it does over the tab.
-function useEventCards(onOpenEvent: (globalEventId: string) => void): {
-  actions: EventCardActions;
-  sheets: ReactElement;
-} {
-  const sheets = useEventSheets();
-  const quests = useQuery(questsQuery).data ?? [];
-  const { setRecruitEvent, setMatchEvent } = sheets;
-  const actions = useMemo(
-    () => ({ open: onOpenEvent, recruit: setRecruitEvent, match: setMatchEvent }),
-    [onOpenEvent, setMatchEvent, setRecruitEvent],
-  );
-  return { actions, sheets: <EventSheets quests={quests} sheets={sheets} /> };
-}
-
-// What the Quest cards of the answers do. Their join button opens 찾기's join confirmation over the chat, which stays
-// open under it, and joining an Open Quest shows 내 파티 over the main screen, as it does from 찾기.
-function useQuestCards(onOpenPost: (questId: string) => void): {
-  actions: QuestCardActions;
-  sheet: ReactElement;
-} {
-  const [joining, setJoining] = useState<PostView | null>(null);
-  const partyActions = usePartyActions();
-  const actions = useMemo(() => ({ open: onOpenPost, join: setJoining }), [onOpenPost]);
-  const sheet = (
-    <JoinSheet
-      onClose={() => {
-        setJoining(null);
-      }}
-      onJoin={(chosen) => void partyActions.join(chosen)}
-      post={joining}
-    />
-  );
-  return { actions, sheet };
-}
-
 // The chat with the Assistant, the `MainChat` frame: a translucent sheet from the top of the screen to the
 // navigation, over the map and the lists. The AI input stays at the bottom over it as the chat's input. The
 // conversation is the main screen's, so that the sheet only shows it. A press on the sheet that nothing in it takes
@@ -136,19 +95,13 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, onOpenPartyForm, proposals, inputTop } = props;
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
-  const eventCards = useEventCards(onOpenEvent);
-  const questCards = useQuestCards(onOpenPost);
-  const { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish, unfinish } = chat;
-  const cardActions: CardActions = useMemo(
-    () => ({
-      events: eventCards.actions,
-      quests: questCards.actions,
-      proposals,
-      openPartyForm: onOpenPartyForm,
-      library: { addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish, unfinish },
-    }),
-    [eventCards.actions, questCards.actions, proposals, onOpenPartyForm, addOwn, outcomes, finish, unfinish],
-  );
+  const { actions: cardActions, sheets } = useCardActions(chat, {
+    openEvent: onOpenEvent,
+    openQuestPost: onOpenPost,
+    openPartyForm: onOpenPartyForm,
+    proposals,
+  });
+  const { bubbles, waiting, send, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = inputTop + OVER_INPUT;
   return (
@@ -166,8 +119,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
           waiting={waiting}
         />
       )}
-      {eventCards.sheets}
-      {questCards.sheet}
+      {sheets}
     </View>
   );
 }
@@ -223,6 +175,21 @@ export interface ChatSheetControl {
   open: () => void;
   // The sheet while it is open, under an AI input whose top stands that high above the sheet's bottom.
   sheet: (inputTop: number) => ReactElement | null;
+  // The switch of the answer on the map is on: the sheet never opens, and the answer frame shows the conversation.
+  frame: boolean;
+  // The answer frame is shown: the switch is on and the conversation holds something.
+  framed: boolean;
+  // Where the answer frame's cards lead, and its map buttons.
+  answer: CardLeaving & { showLayer: (layer: MapLayer) => void };
+}
+
+function stay(): void {
+  // A card that leads elsewhere leaves the answer frame as it is.
+}
+
+// What the app knows when the User asks: where the User is on campus, and nothing of an answer on screen yet.
+function contextAt(position: LatLng | null): RequestContext {
+  return { location: position, viewport: null, tapped: null, conditions: null, planId: null };
 }
 
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
@@ -231,29 +198,48 @@ export interface ChatSheetControl {
 // once made, closes it and shows 내 파티, as the party form does, and its 수정, like a Restaurant card's 파티 만들기, closes
 // it and opens that form. However the sheet closes, the keyboard goes down with it: the AI input would keep the focus
 // otherwise.
-export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
-  const chat = useChat();
+// With the switch of the answer on the map on, every request carries the context at the User's `position`, the sheet
+// never opens, and the answer frame shows the conversation instead: a card that leads elsewhere leaves the frame as
+// it is, and a map button forgets the conversation and turns its layer on.
+export function useChatSheet(
+  inFront: boolean,
+  turnOn: (layer: MapLayer) => void,
+  position: LatLng | null,
+): ChatSheetControl {
+  const frame = useAnswerSwitch();
+  const chat = useChat(frame ? (): RequestContext => contextAt(position) : undefined);
   const [shown, setShown] = useState(false);
   const open = useCallback((): void => {
-    setShown(true);
-  }, []);
-  const close = useCallback((): void => {
+    if (!frame) {
+      setShown(true);
+    }
+  }, [frame]);
+  const closeSheet = useCallback((): void => {
     Keyboard.dismiss();
     setShown(false);
   }, []);
+  const close = frame ? stay : closeSheet;
   const { showLayer, openEvent, openQuestPost, openPartyForm } = useLeaving(close, turnOn);
   const proposals = useProposalMaking(close);
+  const forgetAndShow = (layer: MapLayer): void => {
+    chat.reset();
+    turnOn(layer);
+  };
+  const sheetShown = shown && !frame;
   return {
     chat,
-    shown,
+    shown: sheetShown,
     open,
+    frame,
+    framed: frame && (chat.bubbles.length > 0 || chat.waiting),
+    answer: { showLayer: forgetAndShow, openEvent, openQuestPost, openPartyForm, proposals },
     sheet: (inputTop) =>
-      shown ? (
+      sheetShown ? (
         <ChatSheet
           chat={chat}
           inFront={inFront}
           inputTop={inputTop}
-          onClose={close}
+          onClose={closeSheet}
           onOpenEvent={openEvent}
           onOpenPartyForm={openPartyForm}
           onOpenPost={openQuestPost}
