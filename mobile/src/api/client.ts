@@ -56,6 +56,7 @@ import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
 import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
+import type { MakePlanQuest, PlanQuest } from './plan-quest-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
 
@@ -183,6 +184,9 @@ export interface ApiClient {
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
   // An answer drawn on the map, recalculated from its changed input and where the User is now, without the model.
   recalculateAnswer: (input: PlanInput, location: LatLng | null) => Promise<AnswerReply>;
+  // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
+  // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
+  makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
   // The 새내기 튜토리얼: its content and the User's progress. Each change answers with the new tutorial, and each is
   // idempotent. A key that is no quest is refused with 404; a `by` that does not fit the quest's completion with 400.
   getTutorial: () => Promise<Tutorial>;
@@ -291,6 +295,7 @@ export const apiClient: ShownClient = {
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
+  makePlanQuest: (making, key) => chosen().makePlanQuest(making, key),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),

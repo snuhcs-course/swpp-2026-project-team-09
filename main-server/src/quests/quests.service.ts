@@ -10,6 +10,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -192,6 +193,20 @@ export class QuestsService {
     return this.create({ title, globalEventId: null, subQuest }, holderIds, settings, tx);
   }
 
+  // A Quest without a Global Event, with these Sub Quests in the order given and these Holders in the order given.
+  createWithSubQuests(
+    title: string,
+    subQuests: readonly SubQuestColumns[],
+    holderIds: readonly string[],
+    tx: Prisma.TransactionClient,
+    settings: QuestSettings = {},
+  ): Promise<string> {
+    // Sub Quests are read in the order they were created, and the rows of one transaction share its now().
+    const start = Date.now();
+    const ordered = subQuests.map((subQuest, index) => ({ ...subQuest, createdAt: new Date(start + index) }));
+    return this.create({ title, globalEventId: null, subQuest: ordered }, holderIds, settings, tx);
+  }
+
   // Removes the Holder with the Holder's progress, and the Quest with its Sub Quests when nobody holds it any more.
   // When the Leader goes, the Holder who entered earliest leads. Lock the Quest first.
   async removeHolder(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<void> {
@@ -263,7 +278,7 @@ export class QuestsService {
       title: string;
       globalEventId: string | null;
       matchId?: string;
-      subQuest: Prisma.SubQuestCreateWithoutQuestInput;
+      subQuest: Prisma.SubQuestCreateWithoutQuestInput | Prisma.SubQuestCreateWithoutQuestInput[];
     },
     holderIds: readonly string[],
     { leaderId = holderIds[0], ...settings }: QuestSettings,

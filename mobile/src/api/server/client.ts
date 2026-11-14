@@ -47,6 +47,7 @@ import { eventClient } from './event-client';
 import { call } from './http';
 import { invitationCardClient } from './invitation-card-client';
 import { partyClient } from './party-client';
+import { planQuestClient } from './plan-quest-client';
 import { roomClient } from './room-client';
 import { TUTORIAL_SERVED, tutorialClient } from './tutorial-client';
 
@@ -58,6 +59,7 @@ export const serverClient: ApiClient = {
   ...partyClient,
   ...eventClient,
   ...assistantClient,
+  ...planQuestClient,
   ...invitationCardClient,
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),

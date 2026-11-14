@@ -102,6 +102,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     TravelModule,
     TutorialModule,
     AssistantModule,
+    PlansModule,
     RoomRequestsModule,
     StudySpacesModule,
     PushModule,
