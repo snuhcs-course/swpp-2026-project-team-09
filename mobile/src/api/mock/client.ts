@@ -29,6 +29,7 @@ import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } fro
 import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
+import { mockInvitationCard } from './invitation-card';
 import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
@@ -204,6 +205,7 @@ export const mockClient: ApiClient = {
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
+  getInvitationCard: (invitationId) => answer('getInvitationCard', () => mockInvitationCard(invitationId)),
   ...mockRoom,
   ...mockParty,
   ...mockEvents,

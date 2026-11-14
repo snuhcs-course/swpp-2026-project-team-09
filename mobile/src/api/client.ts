@@ -17,6 +17,7 @@
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
+import type { InvitationCard } from './invitation-card-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
@@ -175,6 +176,8 @@ export interface ApiClient {
   inviteToQuest: (questId: string, userId: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<Quest>;
   declineInvitation: (invitationId: string) => Promise<void>;
+  // A received invitation with the User's own way to it, worked out from where the User is now when the app knows.
+  getInvitationCard: (invitationId: string, location: LatLng | null) => Promise<InvitationCard>;
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked when it gives that.
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
@@ -288,6 +291,7 @@ export const apiClient: ShownClient = {
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
+  getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),
   stopTutorial: () => chosen().stopTutorial(),
