@@ -1,0 +1,65 @@
+# 03: A seat asked without a time gets a card filled from the arrival (main server)
+
+Parent: [P05 spec](../spec.md) ("The seat card")
+Status: ready-for-agent
+Blocked by: None (can start immediately)
+Native files: no
+
+## What to build
+
+A User whose app draws answers on the map says "공부할 자리" and gets a booking card for a 관정관 reading-room seat without being asked the hours. The card starts at the first 30-minute mark at or after the User's arrival at 관정관 and runs for the longest time the space allows. Its first note says what it was filled for, and the reply can say when the User arrives and when to leave for the next Class. An app that does not draw answers is asked for the time, as today.
+
+The design's example: Wednesday 13:50, a Class in 24동 has just ended, 24동 to 관정관 is 4 minutes on foot, and the next Class is at 16:00 in 두산인문관, 4 minutes from 관정관. The card is 14:00 to 20:00 (6 hours), the note is "13:54 도착에 맞춰 최대 시간으로 채웠어요", and the time to leave is 15:56.
+
+## Files
+
+Create (each with the AI-generated box):
+- `main-server/src/assistant/library/seat-arrival.ts`: pure functions. The arrival from the day's items, the Place of the position, now, and the walking minutes; and the filled start and length from the arrival, the space, and what the User named.
+- `main-server/test/seat-arrival.unit.test.ts` and `main-server/test/assistant-library-seat-arrival.integration.test.ts`.
+
+Change:
+- `main-server/src/assistant/library/library-parts.ts`: the library services gain what the arrival reads: the User's day, the Place lookup, and the Travel Time provider.
+- `main-server/src/assistant/library/propose-library-booking.ts`: with the filling on, a seat asked for today without a start is filled before it is checked, the card gets its first note, and the answer gains the arrival and the time to leave.
+- `main-server/src/assistant/library/library-card.ts`: a booking card takes a note of its own, placed before the site's notes.
+- `main-server/src/assistant/library/library-tools.ts` and `library-rules.ts`: a second form of the tools and of the rules for an app that draws answers. The form of today stays as it is, character for character.
+- `main-server/src/assistant/chat/chat-assistant.ts` and `main-server/src/assistant/assistant.service.ts`: an app that draws answers gets the second form; the services are passed. These are package A's: change only these lines.
+- `main-server/src/assistant/gathering/gathering.ts`: export the rule of where a person sets out from, unchanged, so that the seat's arrival uses the same one. Package A's: one line.
+- `main-server/README.md`: the Assistant's library section says when the time is filled and how.
+
+## Behaviour
+
+- **The rules of an app that draws answers** replace one rule of today's: for a seat the User gave no time for, do not ask, and call `proposeLibraryBooking` without a start; for a room, ask as today. Words that name no space ("공부할 자리", "자리 잡아 줘", "아무 자리") mean `7F-7A-zone2`.
+- **The filling applies** when the space's unit is a seat, the date is today, and no start is given. Otherwise the request is checked as today.
+- **Ready.** From the User's Free Time today: the User is ready now when free now, and at the end of the item under way otherwise.
+- **Where from.** The rule of a Plan: for a User ready later, the Place of the item under way; for a User free now, the Place of the position the request's context holds, and without one the Place of an item that ended at most 15 minutes ago; otherwise unknown.
+- **The arrival** is the ready time plus the walking minutes from there to Place 62-1, shown as whole minutes rounded up, and the ready time when the User is at 62-1 or the Place is unknown.
+- **The start** is the first step mark at or after the arrival, and not before the space opens.
+- **The length** is `minutes` or `end` when given. Otherwise it is the space's maximum, cut to the closing time, rounded down to a step.
+- The filled request goes through today's check. Its refusals are today's.
+- **The note**, first on the card: "<HH:MM> 도착에 맞춰 최대 시간으로 채웠어요"; with a named length "<HH:MM> 도착에 맞춰 채웠어요"; without a known Place "지금부터 최대 시간으로 채웠어요" or "지금부터 채웠어요".
+- **The answer to the model** is `shown` with the summary and two more fields: `arrival` (`at`, `from` as the Place's name or null, and `walkMinutes` or null) and `leaveBy` (`at` and what it is for: "수업" for a Class and "일정" for a Sub Quest, with its start), or null when nothing with a Place follows before the booking ends. The summary adds "<HH:MM>에 도착해요." and "<HH:MM> 수업이라 <HH:MM>엔 나서요." No coordinate and no Place id of the User is in the answer.
+
+## Must not change
+
+- For an app without the `answer` capability: the system prompt, and every tool's description, input, and answers. A test compares them with today's.
+- The card's key grammar and the card's shape.
+- `main-server/eval/` and the frozen acceptance-test flows.
+- The app.
+
+## Acceptance criteria
+
+- [ ] Unit tests of the arrival and the filling, with expected values worked out by hand from the walking minutes given to the test: the design's example (13:50, 4 minutes: arrival 13:54, 14:00 for 360 minutes); an arrival exactly at 14:00 (starts 14:00); an arrival at 14:01 (starts 14:30); a User in a Class until 13:50 asked at 13:40 (arrival 13:54); a User already at 관정관 (arrival is now); no known Place (arrival is now); an arrival at 19:10 with closing at 23:00 (19:30 for 210 minutes); a named length of 120 minutes; an arrival before opening (starts at opening); and an arrival after the last start that fits (refused by today's check).
+- [ ] Integration test, with the `answer` capability and the scripted model: `proposeLibraryBooking` for `7F-7A-zone2` today without a start shows one card with the filled start and minutes, whose first note is the arrival's, and answers `shown` with `arrival` and `leaveBy`.
+- [ ] Integration test: the same with `minutes: 120` gives that length from the arrival.
+- [ ] Integration test: with the capability, a named start, a room without a start, and a seat for tomorrow behave as today.
+- [ ] Integration test: without the capability, a seat without a start is refused with "몇 시부터 예약할지 알려 주세요", and the instructions and the tools' descriptions and inputs equal those of today's form.
+- [ ] No test calls the language model; nothing under `main-server/eval/` changes.
+- [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `main-server/`.
+
+## How a reviewer checks it
+
+1. Run the unit tests and read the table of cases.
+2. On the local stack, with the answer switch on, say "공부할 자리": the card's time starts at the first half hour after the arrival and runs to the longest time, and the first note names the arrival.
+3. With the switch off, say the same: the Assistant asks for the time.
+
+## Comments
