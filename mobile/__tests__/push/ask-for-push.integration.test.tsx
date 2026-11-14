@@ -7,7 +7,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { userEvent } from '@testing-library/react-native';
 import type * as PushDevice from '@/push/device';
-import { readKept } from '@/storage/kept';
+import { keep, readKept } from '@/storage/kept';
 import type * as SecureStoreFake from '../support/secure-store';
 import type * as FakeSocketModule from '../support/fake-socket';
 import type * as PushFake from '../support/push';
@@ -190,6 +190,15 @@ describe('the sheet after the Proposal card', () => {
     expect(registered()).toEqual([{ token: PHONE_TOKEN }]);
   });
 
+  it('does not show once the sheet was shown on the phone', async () => {
+    await keep({ pushAsked: true });
+
+    await makeProposal(server, LUNCH);
+
+    expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
+    expect(sheetShown()).toBe(false);
+  });
+
   it('does not show for a Proposal without a Friend', async () => {
     await makeProposal(server, { ...LUNCH, invitees: [] });
 
@@ -241,8 +250,20 @@ describe('the sheet after a booking of the library', () => {
   });
 });
 
-describe('a mock build', () => {
-  it('never reads the permission nor shows the sheet', async () => {
+describe('a build that cannot push', () => {
+  it('shows no sheet and reads no permission without the native module', async () => {
+    await startUndetermined();
+    phone = givePushPhone({ native: false, permission: 'undetermined' });
+    const user = await openMain();
+
+    await sendParty(user, [MIN_JUN_HOLDER.name]);
+
+    expect(server.received(`POST /quests/${MY_HIKE.id}/invitations`)).toHaveLength(1);
+    expect(sheetShown()).toBe(false);
+    expect(phone.permissionReads()).toBe(0);
+  });
+
+  it('never reads the permission nor shows the sheet in a mock build', async () => {
     jest.useFakeTimers({ now: PHONE_NOW });
     await startFresh();
     givePhone({ permission: 'granted', position: ON_CAMPUS });

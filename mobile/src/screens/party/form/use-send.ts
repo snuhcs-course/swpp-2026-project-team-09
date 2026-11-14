@@ -118,11 +118,12 @@ export function useSendParty(
       }
     }
     const missed = await invite(questId, friends);
+    const invited = friends.length - missed;
     refetch();
-    if (friends.length - missed > 0) {
+    if (invited > 0) {
       askForPush();
     }
-    return { sent: 'taken', questId, toast: toastOf(form, quest !== null, friends.length - missed, missed) };
+    return { sent: 'taken', questId, toast: toastOf(form, quest !== null, invited, missed) };
   };
 }
 

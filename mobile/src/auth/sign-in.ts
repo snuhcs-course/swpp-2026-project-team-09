@@ -128,7 +128,7 @@ async function signOutOfMainServer(): Promise<void> {
   } catch {
     // Nothing to do.
   }
-  // Before the tokens go, so that a phone the main server could not tell receives nothing.
+  // Whatever the main server answered, so that a phone it could not tell receives nothing.
   await unregisterPush();
   await forgetTokens();
 }

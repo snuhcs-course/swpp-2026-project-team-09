@@ -25,9 +25,9 @@ export function useAskForPush(): AskForPush {
   return use(AskForPushContext);
 }
 
-// Whether the sheet may show: the permission undetermined and the sheet never shown on this phone. Granted without a
-// prompt (Android 12 and below), the phone registers at once.
-async function shouldShow(): Promise<boolean> {
+// Answers an ask: true when the sheet is to show, the permission undetermined and the sheet never shown on this phone,
+// which then counts as shown. Granted without a prompt (Android 12 and below), the phone registers at once instead.
+async function decideSheet(): Promise<boolean> {
   const permission = await pushPermission();
   if (permission === 'granted') {
     await registerPush();
@@ -43,11 +43,13 @@ async function shouldShow(): Promise<boolean> {
 function PushSheet({ open, onClose }: { open: boolean; onClose: () => void }): ReactElement {
   const allow = (): void => {
     onClose();
-    void askPushPermission().then(async (permission) => {
-      if (permission === 'granted') {
-        await registerPush();
-      }
-    });
+    void askPushPermission()
+      .then(async (permission) => {
+        if (permission === 'granted') {
+          await registerPush();
+        }
+      })
+      .catch(() => null);
   };
   return (
     <BottomSheet label="푸시 알림" onClose={onClose} open={open}>
@@ -81,7 +83,7 @@ export function PushAskHost({ children }: { children: ReactNode }): ReactElement
       return;
     }
     asking.current = true;
-    void shouldShow()
+    void decideSheet()
       .then((show) => {
         if (show) {
           setOpen(true);

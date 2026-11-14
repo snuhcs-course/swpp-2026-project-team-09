@@ -36,7 +36,7 @@ export function announce(event: SessionEvent): void {
   }
 }
 
-// The Session is over: the tokens are forgotten, the phone no longer keeps that the User signed in, and the screens
+// The Session is over: the phone is unregistered from push, the tokens are forgotten, the phone no longer keeps that the User signed in, and the screens
 // show the sign-in screen. The library session ends right after the tokens go, whether or not the User logged in to
 // it, without the end waiting on the library's site.
 export async function endSession(replaced: boolean): Promise<void> {

@@ -15,8 +15,10 @@ import { openLive, SIGN_IN, socketServer } from '../support/live';
 import { givePhone, ON_CAMPUS, openMain } from '../support/main';
 import { startFresh } from '../support/mocks';
 import { CHANGED_TOKEN, givePushPhone, PHONE_TOKEN } from '../support/push';
+import { REGISTER } from '../support/push-moments';
 import { signIn, signOut } from '../support/sign-out';
 import { answerMainScreen, askMainServer, PHONE_NOW } from '../support/server';
+import { heldTokens } from '@/auth/tokens';
 
 // The phone's registration for push against the fake main server: the real push wrapper over a mocked
 // `expo-notifications`.
@@ -37,8 +39,6 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 jest.mock('@/push/device', () => jest.requireActual<typeof PushDevice>('@/push/device'));
 jest.mock('expo', () => jest.requireActual<typeof PushFake>('../support/push').expoModule);
 jest.mock('expo-notifications', () => jest.requireActual<typeof PushFake>('../support/push').notificationsModule);
-
-const REGISTER = 'PUT /users/me/push-token';
 
 let server: FakeServer;
 
@@ -137,9 +137,16 @@ describe('the end of the Session on the phone', () => {
     const phone = givePushPhone({ permission: 'granted' });
     const user = await openMain();
 
+    const held: boolean[] = [];
+    phone.whenUnregistered(() => {
+      held.push(heldTokens() !== null);
+    });
+
     await signOut(user, server);
 
     expect(phone.unregisters()).toBe(1);
+    // Before the tokens are forgotten.
+    expect(held).toEqual([true]);
     expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
   });
 

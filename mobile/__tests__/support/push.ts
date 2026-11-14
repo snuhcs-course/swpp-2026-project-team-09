@@ -9,9 +9,9 @@ import type * as Expo from 'expo';
 
 // A phone behind `expo-notifications`, with the real push wrapper. A test file that uses it opts in:
 //
-//   jest.mock('@/push/device', () => jest.requireActual('@/push/device'));
-//   jest.mock('expo', () => jest.requireActual<typeof PushFake>('./support/push').expoModule);
-//   jest.mock('expo-notifications', () => jest.requireActual<typeof PushFake>('./support/push').notificationsModule);
+//   jest.mock('@/push/device', () => jest.requireActual<typeof PushDevice>('@/push/device'));
+//   jest.mock('expo', () => jest.requireActual<typeof PushFake>('../support/push').expoModule);
+//   jest.mock('expo-notifications', () => jest.requireActual<typeof PushFake>('../support/push').notificationsModule);
 
 type Status = 'granted' | 'denied' | 'undetermined';
 
@@ -26,11 +26,16 @@ interface PhoneState {
   prompts: number;
   unregisters: number;
   listeners: Set<() => void>;
+  onUnregister: () => void;
 }
 
 // Made-up tokens: a real one must never be written down.
 export const PHONE_TOKEN = 'ExponentPushToken[made-up-phone-1]';
 export const CHANGED_TOKEN = 'ExponentPushToken[made-up-phone-2]';
+
+function doNothing(): void {
+  // Nothing is watched.
+}
 
 const phone: PhoneState = {
   native: true,
@@ -41,6 +46,7 @@ const phone: PhoneState = {
   prompts: 0,
   unregisters: 0,
   listeners: new Set(),
+  onUnregister: doNothing,
 };
 
 interface Given {
@@ -58,6 +64,8 @@ export interface PushPhone {
   unregisters: () => number;
   // The phone's token changes, as after a restore.
   changeToken: (token: string) => Promise<void>;
+  // Runs at each unregistering, to see what the app still holds then.
+  whenUnregistered: (does: () => void) => void;
 }
 
 export function givePushPhone(given: Given = {}): PushPhone {
@@ -69,6 +77,7 @@ export function givePushPhone(given: Given = {}): PushPhone {
   phone.prompts = 0;
   phone.unregisters = 0;
   phone.listeners.clear();
+  phone.onUnregister = doNothing;
   return {
     permissionReads: () => phone.permissionReads,
     prompts: () => phone.prompts,
@@ -81,6 +90,9 @@ export function givePushPhone(given: Given = {}): PushPhone {
         }
         await jest.advanceTimersByTimeAsync(0);
       });
+    },
+    whenUnregistered: (does): void => {
+      phone.onUnregister = does;
     },
   };
 }
@@ -121,6 +133,7 @@ export const notificationsModule = {
   },
   unregisterForNotificationsAsync: (): Promise<null> => {
     phone.unregisters += 1;
+    phone.onUnregister();
     return Promise.resolve(null);
   },
 };
