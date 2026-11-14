@@ -28,3 +28,8 @@ The one migration of this feature lands here with both changes: `global_events.p
 - [ ] The "Events on the map" row of `he-revision-log.md` gets this pull request.
 
 ## Comments
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 2.5 hours in one session, an estimate. Most of it went to running tests: one parallel run of 45 app integration files timed out under load and was dropped, and only the changed files were run after that.
+- Tokens: the two review subagents (Standards and Spec) used about 81k and 85k tokens. The main session's input and output counts, with cache reads and cache writes, are not visible to the agent. Read them from the session's usage report and add them here.
