@@ -55,6 +55,7 @@ export function planEvents(plans: EventsPlanService): Tool {
       const planInput: EventsInput = { kind: 'events', date, eventIds: eventIds ?? null };
       const { answer, planning } = await plans.planned(userId, planInput, { now, location: context.location });
       presented.answer = answer;
+      presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
         return noneFound('No event of that day can be attended between the User’s Classes and Quests.');

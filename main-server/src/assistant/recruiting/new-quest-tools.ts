@@ -147,6 +147,7 @@ export function planNewQuest(plans: PlanAnswersService): Tool {
         answer = await plans.newQuests.plan(userId, inputOf(userId, given, placeId, friendIds), at);
       }
       presented.answer = answer;
+      presented.lookup = null;
       presented.mapButtons.length = 0;
       const [plan] = answer.plans;
       if (plan === undefined) {

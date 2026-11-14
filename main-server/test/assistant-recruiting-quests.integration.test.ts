@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -180,12 +181,10 @@ describe('showQuests', () => {
     expect(response.body).toEqual({
       text: '운동 파티 두 개가 있어요.',
       mapButtons: [],
-      cards: [
-        { kind: 'quest', quest: listedOf(second) },
-        { kind: 'quest', quest: listedOf(first) },
-      ],
+      cards: [second, first].map((id) => ({ kind: 'quest', quest: listedOf(id) })),
       proposal: null,
       answer: null,
+      lookup: null,
     });
     expect(listedOf(first)).toBeDefined();
     expect(model.toolResults().at(-1)).toEqual({ result: 'shown', ids: [second, first] });
@@ -207,7 +206,7 @@ describe('showQuests', () => {
       { role: 'user', text: '7월 5일은?' },
     ]);
 
-    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null, answer: null });
+    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null, answer: null, lookup: null });
     expect(model.toolResults().at(-1)).toEqual(
       expect.stringContaining(`No tool returned these ids in this message: ${other}`),
     );

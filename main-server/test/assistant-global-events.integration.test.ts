@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -179,6 +180,7 @@ describe('showGlobalEvents', () => {
       ],
       proposal: null,
       answer: null,
+      lookup: null,
     });
     expect(model.toolResults().at(-1)).toEqual({ result: 'shown', ids: [second.id, first.id] });
   });
@@ -199,7 +201,7 @@ describe('showGlobalEvents', () => {
       { role: 'user', text: '7월 5일은?' },
     ]);
 
-    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null, answer: null });
+    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null, answer: null, lookup: null });
     expect(model.toolResults().at(-1)).toEqual(
       expect.stringContaining(`No tool returned these ids in this message: ${other.id}`),
     );
