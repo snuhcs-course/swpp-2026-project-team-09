@@ -3,7 +3,7 @@
 Parent: [spec](../spec.md) ("The app: registration and the permission", "Tokens on the server")
 Status: ready-for-agent
 Who: the server-side member
-Blocked by: 01 (the native module and the wrapper), 02 (the route)
+Blocked by: 01 (the native module and the wrapper), 02 (the route). It can be built on ticket 01's branch before 01 merges; its pull request merges after 01 and 02.
 Native files: no
 
 ## What to build

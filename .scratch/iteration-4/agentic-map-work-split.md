@@ -91,7 +91,7 @@ When the path runs, it is checked on two phones with today's Production APK inst
 
 ## 7. The native release (11/19, after the acceptance tests, once, by A)
 
-What goes in: dashed lines on the map, tapping empty ground, and dimming the base map; push notifications (expo-notifications, FCM); and the location permission text for catching arrival at and leaving Kwanjeong. D writes the checklist, and A merges it once B approves, as for A's other app PRs. Until then nobody touches the native files.
+What goes in: dashed lines on the map, tapping empty ground, and dimming the base map; push notifications (expo-notifications, FCM; ticket 01 of `P04-push-notifications`, written by the server-side member as a draft pull request); and the location permission text for catching arrival at and leaving Kwanjeong. D writes the checklist, and A merges it once B approves, as for A's other app PRs. Until then no change to the native files merges.
 
 What stands in until then:
 
