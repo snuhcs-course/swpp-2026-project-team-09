@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -10,9 +11,9 @@ import { z } from 'zod';
 import { type PlanInput } from '../src/assistant/dto/answer.dto.js';
 import { type QuestDto } from '../src/quests/dto/quest.dto.js';
 import { MealPlanStage, type Named } from './meal-plan.js';
+import * as planQuests from './plan-quests.js';
 import { getInvitations } from './quest-recruiting.js';
 import { getQuests } from './quests.js';
-import { withAccessToken } from './sign-in.js';
 import { ANY_STRING, refused, SignalWatcher, signalsWhile } from './signals.js';
 
 // A Plan made into a Quest with its invitations, at POST /plans over the started server with the scripted model, the
@@ -31,8 +32,6 @@ afterAll(async () => {
   await stage.stop();
 });
 
-const RESTAURANTS = ['301동식당', '302동식당', '학생회관식당', '3식당', '자하연식당 2층'];
-
 const replySchema = z.object({
   quest: z.custom<QuestDto>(),
   invitations: z.array(z.object({ id: z.string(), userId: z.string() })),
@@ -43,41 +42,11 @@ const instantOn =
   (clock) =>
     new Date(`${date}T${clock}:00+09:00`).toISOString();
 
-function makePlanQuest(body: object, key: string = randomUUID()): request.Test {
-  return withAccessToken(request(stage.app.getHttpServer()).post('/plans'), stage.asker.accessToken)
-    .set('Idempotency-Key', key)
-    .send(body);
-}
-
-// The asker of the worked example: Classes in 301동 until 11:50 and in 24동 from 13:00.
-async function workedExample(date: string): Promise<void> {
-  await stage.asking(date, '11:50');
-  await stage.menusOn(date, RESTAURANTS);
-  await stage.classAt(stage.asker, '11:00', '11:50', '301');
-  await stage.classAt(stage.asker, '13:00', '13:50', '24');
-}
-
-async function minsu(): Promise<Named> {
-  const friend = await stage.friend('민수');
-  await stage.classAt(friend, '11:00', '12:15', '302');
-  return friend;
-}
-
-async function jieun(): Promise<Named> {
-  const friend = await stage.friend('지은');
-  await stage.classAt(friend, '11:00', '12:15', '8');
-  await stage.classAt(friend, '13:00', '14:15', '8');
-  return friend;
-}
-
-const inputOf = (date: string, people: string[]): PlanInput => ({
-  kind: 'meal',
-  date,
-  meal: 'lunch',
-  people: people.map((userId) => ({ userId, constraints: [] })),
-  window: { from: null, until: null },
-  placeId: null,
-});
+const { inputOf } = planQuests;
+const makePlanQuest = (body: object, key?: string): request.Test => planQuests.makePlanQuest(stage, body, key);
+const workedExample = (date: string): Promise<void> => planQuests.workedExample(stage, date);
+const minsu = (): Promise<Named> => planQuests.minsu(stage);
+const jieun = (): Promise<Named> => planQuests.jieun(stage);
 
 // The Quests the User holds, without the day's Class Quests.
 async function storedQuests(user: Named): Promise<QuestDto[]> {

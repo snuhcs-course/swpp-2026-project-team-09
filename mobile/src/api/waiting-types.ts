@@ -6,6 +6,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Board, JoinPolicy, Person, UserSummary } from './types';
@@ -54,12 +55,14 @@ export interface JoinRequest {
 }
 
 // GET /notifications, the latest first: the Notifications the main server keeps for the User. `at` is Korea's time with
-// its offset, and `url` the card's address, `/main?card=<kind>:<id>`. Kinds: `accepted` and `declined`, with more to
-// come.
+// its offset, and `url` the card's address, `/main?card=<kind>:<id>`. Kinds: `accepted`, `declined` and `leave-by`, with
+// more to come.
 export interface KeptNotification {
   id: string;
   kind: string;
   title: string;
+  // The title while `at` is still to come. Null for a kind that has none; absent from an older main server.
+  ahead?: string | null;
   line: string;
   at: string;
   url: string;

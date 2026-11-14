@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -64,4 +65,25 @@ export async function sharingFriends(app: INestApplication<Server>): Promise<[Te
     expectStatus(setMasterSwitch(app, friend, true), 204),
   ]);
   return [user, friend];
+}
+
+// On campus at 두산인문관 (8동), with more digits than the seed gives any Place, so that a text holding it is found.
+export const KEPT_POSITION = { latitude: 37.4601612345, longitude: 126.9539812345 };
+
+// The Friend's position is kept, uploaded with both Master Switches on, and the Friend has then turned their sharing
+// with the viewer off: the store still holds the position, and the Friend view answers "Timetable only".
+export async function keptButHidden(app: INestApplication<Server>, viewer: TestUser, friend: TestUser): Promise<void> {
+  await Promise.all([
+    expectStatus(setMasterSwitch(app, viewer, true), 204),
+    expectStatus(setMasterSwitch(app, friend, true), 204),
+  ]);
+  await expectStatus(uploadPosition(app, friend, KEPT_POSITION), 200);
+  await expectStatus(setFriendSharing(app, friend, viewer.id, false), 204);
+}
+
+// What the values hold of KEPT_POSITION: its coordinates, or its Place by name or label.
+export function keptPositionIn(...values: unknown[]): string[] {
+  const text = JSON.stringify(values);
+  const found = ['37.46016', '126.95398', '두산인문관'].filter((secret) => text.includes(secret));
+  return /(?<!\d)8동/u.test(text) ? [...found, '8동'] : found;
 }
