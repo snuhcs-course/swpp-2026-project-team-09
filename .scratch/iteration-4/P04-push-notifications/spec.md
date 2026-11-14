@@ -155,7 +155,7 @@ A good test states a behavior a User or a reviewer depends on, through a public 
 - **Per-kind settings.** The design leaves them out. The phone's permission is the only switch.
 - **Buttons on the push itself** ("파티 켜기" (party on), "늦어요" (I'm late), "바꾸기" (change)). They belong to kinds that are out of scope. Every tap opens the card.
 - **Reading receipts in code, retries, and an Expo access token.**
-- **Crash reporting.** It is not part of push. Ticket 05 describes an optional short trial in the same Release, which may be dropped.
+- **Crash reporting.** It is not part of push, and it is not in the 11/19 Release: React Native Firebase's setup changes how the iOS pods are linked and needs an iOS settings file (ticket 05).
 
 ## Further Notes
 

@@ -1,7 +1,7 @@
 # 05 (optional): A short trial of crash reporting in the same Release
 
 Parent: [spec](../spec.md) ("Out of Scope": crash reporting)
-Status: ready-for-human
+Status: wontfix
 Who: the builder
 Blocked by: None. It lands only together with 01, in the 11/19 Release, or it is dropped.
 Native files: yes
@@ -42,3 +42,16 @@ The trial adds Firebase Crashlytics through React Native Firebase on Android:
 Read the Comments: the check on paper with its page, each check above with its result, and either the commits that joined 01's pull request or the reason the trial was dropped.
 
 ## Comments
+
+### Check on paper (2026-11-14)
+
+The check fails, so the trial is dropped: Crashlytics is not in the 11/19 Release.
+
+- React Native Firebase's Expo setup changes how the iOS pods are linked: it sets `useFrameworks` to `dynamic` through `expo-build-properties` (https://rnfirebase.io/, the Expo section).
+- It needs an iOS `GoogleService-Info.plist` beside `google-services.json` (the same page).
+- The current release line names Expo 58 and React Native 0.88 as the versions it is tested on; the app is on Expo 57 and React Native 0.86.
+
+### Agent usage (2026-11-14)
+
+- Agent time: about 1 minute (an estimate). One agent read the two documentation pages.
+- Tokens: input 56,798 (cache reads 29,426, cache writes 27,364, and 8 uncached), output 3,536. The main session's share is not counted.
