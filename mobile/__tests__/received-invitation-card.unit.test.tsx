@@ -52,9 +52,11 @@ describe('the card of a received invitation', () => {
     );
     const steps = within(screen.getByTestId('quest-steps'));
     expect(steps.getByText('1')).toBeVisible();
-    expect(steps.getByText('12:18 유상, 민수: 301동 앞에서 만나기')).toBeVisible();
+    expect(steps.getByText('12:18')).toBeVisible();
+    expect(steps.getByText('유상, 민수: 301동 앞에서 만나기')).toBeVisible();
     expect(steps.getByText('2')).toBeVisible();
-    expect(steps.getByText('12:33 학생회관식당에서 식사')).toBeVisible();
+    expect(steps.getByText('12:33')).toBeVisible();
+    expect(steps.getByText('학생회관식당에서 식사')).toBeVisible();
   });
 
   it('has 수락, 거절, ✕, and the line that only my own way is shown', async () => {

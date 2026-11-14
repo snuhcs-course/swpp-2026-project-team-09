@@ -70,7 +70,8 @@ describe('the address of a received invitation, with the switch on', () => {
     expect(invitationCard().getByTestId('invitation-title')).toHaveTextContent('12:33 학생회관식당에서 식사');
     expect(invitationCard().getByText('유상과 함께')).toBeVisible();
     expect(invitationCard().getByText('12:15에 수업이 끝나면 바로 나서면 돼요.')).toBeVisible();
-    expect(invitationCard().getByText('12:18 유상, 민수: 301동 앞에서 만나기')).toBeVisible();
+    expect(invitationCard().getByText('12:18')).toBeVisible();
+    expect(invitationCard().getByText('유상, 민수: 301동 앞에서 만나기')).toBeVisible();
     expect(invitationCard().getByRole('button', { name: '수락' })).toBeEnabled();
     expect(invitationCard().getByRole('button', { name: '거절' })).toBeEnabled();
   });
