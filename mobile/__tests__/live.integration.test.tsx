@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -18,6 +19,7 @@ import { startFresh } from './support/mocks';
 import {
   answerMainScreen,
   askMainServer,
+  DINNER,
   JI_WOO,
   LIBRARY_POSITION,
   MIN_JUN,
@@ -26,6 +28,7 @@ import {
   TOKENS,
 } from './support/server';
 import { heldTokens } from '@/auth/tokens';
+import { type InvitationAnswer, onInvitationAnswer } from '@/live/invitation-answers';
 
 // The one connection to the socket server: what arrives over it, and how it opens again at the token's expiry.
 
@@ -154,6 +157,26 @@ describe('signals over the connection', () => {
     });
 
     expect(routes.map((route) => server.received(route).length)).toEqual(before.map((count) => count + 1));
+  });
+});
+
+describe('an answer to an invitation over the connection', () => {
+  it.each([
+    ['invitation-accepted', 'accepted'],
+    ['invitation-declined', 'declined'],
+  ])('fetches the Quests again on %s, and tells a listener', async (signal, kind) => {
+    const socket = await openLive();
+    const listener = jest.fn<undefined, [InvitationAnswer]>();
+    const unsubscribe = onInvitationAnswer(listener);
+    const before = server.received('GET /quests').length;
+
+    await socketServer(() => {
+      socket.send(signal, { questId: DINNER.id, userId: MIN_JUN.id });
+    });
+
+    expect(server.received('GET /quests')).toHaveLength(before + 1);
+    expect(listener).toHaveBeenCalledWith({ kind, questId: DINNER.id, userId: MIN_JUN.id });
+    unsubscribe();
   });
 });
 

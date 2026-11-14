@@ -438,8 +438,8 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   its native view, its camera, the open card, the route and the collapsed lists. The bar has no line on top but the
   frames' shadow (`shadow.nav`), and under its items 16 or the phone's own inset, whichever is larger
   (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is `usePartyBadge()`: the rows of 알림
-  that concern 파티, every row but the Friend Requests. While the lists load, and when every one failed, there is no
-  badge.
+  that wait for the User and concern 파티, every row but the kept Notifications and the Friend Requests. While the
+  lists load, and when every one failed, there is no badge.
 - 파티, 행사 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
   파티 has "+ 만들기" and the tabs 찾기, 내 파티 and 초대; its address names the tab (`/party?tab=invites`). 내 정보's
   address can ask for its 위치 공유 card (`/me?show=sharing`), and 행사's marks one Global Event (`/events?focus=<id>`).
@@ -767,7 +767,8 @@ Quest list on the map carries out as a press of its own row; any other row opens
 Quest it says "퀘스트가 없어요"; while the Quests load and after a failure it shows the shared states.
 
 **내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has the bell, "알림" or "알림 {n}개" with the
-number of 알림's rows in red ("9+" above nine), and four cards from the top:
+number of rows of 알림 that wait for the User in red, the kept Notifications left out ("9+" above nine), and four
+cards from the top:
 
 - the profile from the Lobby: the Avatar, the name, "컴퓨터공학부 · 22학번" (the department alone without an
   admission year), "SNU 계정 인증됨" and "프로필 편집";
@@ -814,11 +815,15 @@ A plan with a Friend is a 비공개 파티: the Meetup of Iteration 1, with its 
 Iteration 2 (P06), and commit `2f4f201` holds its code.
 
 알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
-feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요"), a Friend
-Request received, a Quest invitation ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with
-Approval ("참여 신청 {n}명"). An invitation's row opens 파티 at 초대, a Friend Request's 친구 요청, and a running
-Party's and the requests' the Quest's room. A list that failed is left out; when every one failed it shows the error
-state. The main server names each Party's Leader, and an answer of `GET /parties` with a Party without one is refused
+feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its
+time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A kind the app does not know shows as
+an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
+holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
+the requests to join each Quest the User leads with Approval ("참여 신청 {n}명"). A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
+(`src/features/notifications/address.ts`): a kept Notification's address is the main server's, and an invitation's is
+`/main?card=invitation:<id>`, which ends at 파티's 초대 while the map holds no invitation card. A Friend Request's row
+opens 친구 요청, and a running Party's and the requests' the Quest's room. The count in the panel's title is of the rows
+that wait. A list that failed is left out; when every one failed it shows the error state. The main server names each Party's Leader, and an answer of `GET /parties` with a Party without one is refused
 whole, so 알림 then leaves out every Party. Without rows it says "새 알림이 없어요".
 
 **The menu panel** (`src/screens/menus/`, `/menus`) has no frame. It is a `FullScreenPanel` that comes up from the
@@ -1214,7 +1219,8 @@ socket server's README describes:
   `quests-changed` the Quests (the open room's Quest among them), the invitations, the requests to join and the
   Leader's invitations, the recruiting Quests and the User's requests to join,
   `party-changed` the Parties and the positions, `global-events-changed` the Global Events and the Quests,
-  `matching-changed` the requests for Matching, the Quests and the recruiting Quests. When the app returns to the
+  `matching-changed` the requests for Matching, the Quests and the recruiting Quests, `notice` the kept
+  Notifications of 알림, which are also fetched again when the connection opens again. When the app returns to the
   front, the lists of 알림, the Friend Requests among them, are fetched again too.
 - `shuttle-vehicles-updated` replaces the shuttle's vehicles in the cache of `GET /shuttle/vehicles` while the
   shuttle layer is on, which is while that query is in use; a set that comes while it is off is dropped. When the
@@ -1622,8 +1628,9 @@ that phone.
 
 ### When the app asks, registers, and unregisters
 
-All three happen only in a build that asks the main server, holds the native module, and has a ready Session. A mock
-build never asks and never registers, and its `registerPushToken` does nothing.
+Asking and registering happen only on Android, in a build that asks the main server, holds the native module, and has
+a ready Session. The iOS build has no push entitlement, so nothing is asked or registered there. A mock build never
+asks and never registers, and its `registerPushToken` does nothing.
 
 - **Asking.** Nothing is asked at app start, at sign-in, at Onboarding, or in first run. `PushAskHost`
   (`src/push/push-ask-host.tsx`, inside the overlay host) shows the sheet of board t17 ("나설 시각을 휴대폰으로 알려
@@ -1640,8 +1647,11 @@ build never asks and never registers, and its `registerPushToken` does nothing.
   permission.
 - **Unregistering.** When the Session ends on the phone, by a sign-out or by the main server's word, the app calls
   `unregisterPush()` before it forgets its tokens, whatever the main server answered, so a signed-out phone receives
-  nothing even when the server could not be told. Unregistering goes through Firebase: a sign-out with no network at
-  all leaves the phone registered until the next User signs in on it or its Session can no longer refresh.
+  nothing even when the server could not be told. Unregistering goes through Firebase and needs the network. When it
+  does not go through, the phone keeps `pushUnregisterOwed` and tries again at a start and each time the app comes
+  to the front while no Session is ready on it (nobody signed in, or a User still at the consent or in Onboarding).
+  No token of the ended Session is kept for this. What is owed goes before the next registration, and a registration
+  that goes through clears it.
 
 ## 관정도서관 (P06)
 

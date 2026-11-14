@@ -73,6 +73,6 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
     },
   ],
   // The making of a Quest from a Plan plans through the same service as the tool and the recalculation.
-  exports: [MealPlanService],
+  exports: [MealPlanService, UserDayService],
 })
 export class AssistantModule {}
