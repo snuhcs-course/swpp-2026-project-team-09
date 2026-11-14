@@ -6,6 +6,7 @@
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
+import type { LabelSide } from '@/design-system';
 import { placeLabels, type Words } from '@/features/assistant/answer-labels';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
@@ -128,5 +129,69 @@ describe('a label moving to share an edge', () => {
 
     expect(moved).toMatchObject({ side: 'left' });
     expect(moved).not.toHaveProperty('shift');
+  });
+});
+
+// "3식당" labels, 45 by 26, at points of the view, each with the one side or the sides given, in that order.
+function threes(
+  marks: readonly { at: readonly [number, number]; sides: readonly LabelSide[] }[],
+): ReturnType<typeof placeLabels> {
+  const placed = marks.map(({ at: [x, y], sides }, point) => ({
+    point,
+    position: seenAt(x, y),
+    words: words('3식당'),
+    sides,
+  }));
+  return placeLabels(
+    placed.map(({ position }) => ({ position, symbol: position })),
+    placed,
+    viewAt(THIRD_AT_LOWEST),
+  );
+}
+
+// Labels at the right of the point (100, 300), from 120 to 165 and 287 to 313, and of its neighbour (110, 260), from
+// 130 to 175 and 247 to 273: the first moves 10 to start on 130, from 130 to 175. Symbol boxes are 36 square on their
+// points.
+const SHARING_RIGHT = [
+  { at: [100, 300], sides: ['right'] },
+  { at: [110, 260], sides: ['right'] },
+] as const;
+
+// Partitions: a side covering only a label placed before it; a move onto a label that stays; two moves towards each
+// other across a gap of 10, each clear of the other's label where it stood.
+describe('labels placed one by one at points of a view', () => {
+  it('takes the next side when the first covers only a label placed before it', () => {
+    // At (190, 300) the left side, 125 to 170, covers the label at the right of (100, 300), 120 to 165, and neither
+    // a symbol (82 to 118) nor the area's edge; the right, 210 to 255, covers nothing.
+    const [, next] = threes([
+      { at: [100, 300], sides: ['right'] },
+      { at: [190, 300], sides: ['left', 'right'] },
+    ]);
+
+    expect(next).toMatchObject({ side: 'right' });
+  });
+
+  it('stays where it is when the move would cover a label that stays, from 170 to 215', () => {
+    // The label at the left of (235, 300), 170 to 215, has no neighbour; the move to 130 to 175 would cover it, and
+    // no symbol (217 to 253).
+    const [moving] = threes([...SHARING_RIGHT, { at: [235, 300], sides: ['left'] }]);
+
+    expect(moving).toMatchObject({ side: 'right' });
+    expect(moving).not.toHaveProperty('shift');
+  });
+
+  it('moves only the first of two labels that would move towards each other into one place', () => {
+    // At the left of (240, 300), 175 to 220, and of its neighbour (230, 340), 165 to 210 and 327 to 353, the first
+    // moves 10 to end on 210, from 165 to 210. Each move alone clears the other label where it stood (130 to 175
+    // against 175 to 220, and 165 to 210 against 120 to 165), but both would cover each other from 165 to 175.
+    const [right, , left] = threes([
+      ...SHARING_RIGHT,
+      { at: [240, 300], sides: ['left'] },
+      { at: [230, 340], sides: ['left'] },
+    ]);
+
+    expect(right).toMatchObject({ side: 'right', shift: 10 });
+    expect(left).toMatchObject({ side: 'left' });
+    expect(left).not.toHaveProperty('shift');
   });
 });

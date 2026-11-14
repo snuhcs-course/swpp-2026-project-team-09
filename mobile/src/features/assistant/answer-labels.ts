@@ -16,8 +16,9 @@ const SIDE_REACH = { along: 400, across: 50 };
 export const UPRIGHT_REACH = { along: 120, across: 150 };
 // Labels at one side of marks this near each other share that side's outer edge.
 const NEIGHBOURS = { upAndDown: 60, across: ANSWER_SYMBOL_BOX };
-// A box this near the area's edge is inside it: a camera's fit rests in its last digits.
-const ONE_POINT = 1;
+// A box or a point this near the area's edge is inside it, and a move of less is none: a camera's fit rests in its
+// last digits.
+export const ONE_POINT = 1;
 
 // The metres east and north from one position to another.
 export function offset(from: LatLng, to: LatLng): { east: number; north: number } {
@@ -75,7 +76,7 @@ function symbolBox(view: LabelView, position: LatLng): ViewArea {
   return { top: y - half, right: x + half, bottom: y + half, left: x - half };
 }
 
-function inside({ top, right, bottom, left }: ViewArea, area: ViewArea): boolean {
+export function inside({ top, right, bottom, left }: ViewArea, area: ViewArea): boolean {
   return (
     left >= area.left - ONE_POINT &&
     right <= area.right + ONE_POINT &&
@@ -88,7 +89,6 @@ function overlaps(one: ViewArea, other: ViewArea): boolean {
   return one.left < other.right && other.left < one.right && one.top < other.bottom && other.top < one.bottom;
 }
 
-// The symbol boxes at the points other than `point`.
 function othersThan(symbols: readonly (ViewArea | null)[], point: number): ViewArea[] {
   return symbols.filter((box, at): box is ViewArea => box !== null && at !== point);
 }
@@ -151,8 +151,9 @@ function shiftOf(one: Laid, all: readonly (Laid | null)[], area: ViewArea): numb
   return Math.min(Math.round(edge - one.box.left), Math.floor(area.right - one.box.right));
 }
 
-// The labels with the edges they share at the left and the right of their marks: a label that moves carries its
-// `shift`, unless it would then cover another point's symbol or another label.
+// The labels with the edges they share at the left and the right of their marks, taken in order: a label that moves
+// carries its `shift`, unless it would then cover another point's symbol or another label where that label stands
+// then, moved or not.
 function sharedEdges(
   view: LabelView,
   marks: readonly Unplaced[],
@@ -178,8 +179,11 @@ function sharedEdges(
     const moved = { ...label, shift };
     const box = boxIn(view, mark.position, moved);
     const others = boxes.filter((other, otherAt): other is ViewArea => other !== null && otherAt !== index);
-    const covering = [...othersThan(symbols, mark.point), ...others];
-    return covering.some((other) => overlaps(box, other)) ? label : moved;
+    if ([...othersThan(symbols, mark.point), ...others].some((other) => overlaps(box, other))) {
+      return label;
+    }
+    boxes[index] = box;
+    return moved;
   });
 }
 
