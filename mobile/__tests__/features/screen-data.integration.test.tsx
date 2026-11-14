@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -192,6 +193,7 @@ describe('the cards of the map', () => {
       primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1' },
       secondary: null,
       position: { latitude: 37.45016, longitude: 126.95259 },
+      event: { id: 'e1', favorite: false },
     });
   });
 });

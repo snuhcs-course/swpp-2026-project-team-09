@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,7 @@ import { inject } from 'vitest';
 import { z } from 'zod';
 import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { ask, postAssistantMessages } from './assistant.js';
-import { publishedAmong } from './global-event-lists.js';
+import { type PublishedEvent, publishedAmong } from './global-event-lists.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
@@ -50,6 +51,12 @@ function storeAt(koreaTime: string, changes: Parameters<typeof storeEvent>[1] = 
 function candidateIds(): string[] {
   const [result] = z.array(z.object({ events: z.array(z.object({ id: z.string() })) })).parse(model.toolResults());
   return result?.events.map(({ id }) => id) ?? [];
+}
+
+// The User's list of events as the Assistant's cards carry them: without what is the User's own, which the chat reads
+// from the list.
+function asCards(events: PublishedEvent[]): Omit<PublishedEvent, 'publishedAt' | 'favorite'>[] {
+  return events.map(({ publishedAt: _publishedAt, favorite: _favorite, ...event }) => event);
 }
 
 describe('searchGlobalEvents, by period', () => {
@@ -162,7 +169,7 @@ describe('showGlobalEvents', () => {
 
     const response = await postAssistantMessages(app, accessToken, ask('그 주말에 공연 있어?'));
 
-    const [listedFirst, listedSecond] = await publishedAmong(app, accessToken, [first.id, second.id]);
+    const [listedFirst, listedSecond] = asCards(await publishedAmong(app, accessToken, [first.id, second.id]));
     expect(response.body).toEqual({
       text: '공연 두 개가 있어요.',
       mapButtons: [],
