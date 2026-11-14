@@ -1,9 +1,9 @@
 # 04: A tapped notification opens its card (app)
 
 Parent: [spec](../spec.md) ("The app: opening a tapped notification")
-Status: ready-for-agent
+Status: done
 Who: the server-side member
-Blocked by: 01 (the native module, the wrapper, and the test setup's default mock). 02 sends the address the check on a phone uses; the tests do not need it. It can be built on ticket 01's branch before 01 merges; its pull request merges after 01.
+Blocked by: None: 01 is on the iteration's Main, and so is this ticket. The check on a phone in "How a reviewer checks it" needs 02 and 03 on two devices.
 Native files: no
 
 ## What to build
@@ -36,15 +36,15 @@ Change:
 
 ## Acceptance criteria
 
-- [ ] Unit tests: `/main?card=invitation:<uuid>`, `/main?card=friend:<uuid>`, and `/main?card=place:37.4592,126.9524` are read; `/me`, `https://example.com`, `/main?card=`, `/main?card=friend`, a number, and null are refused; `invitation` falls back to the invitations tab, and an unknown kind to the main map.
-- [ ] Integration test: the app started signed in with a last response whose address is `/main?card=invitation:<id>` ends at `/party?tab=invites` only after the loading screen, and the last response is cleared.
-- [ ] Integration test: a last response present while Onboarding is unfinished opens its address after Onboarding ends.
-- [ ] Integration test: with a Friend on the map, a response to `/main?card=friend:<id>` received while the app runs moves the map to that Friend and opens the Friend's card, and `card` is gone from the address.
-- [ ] Integration test: the same response given both as the last response and through the listener (the test captures the listener passed to the mocked `addNotificationResponseReceivedListener` and calls it) navigates once.
-- [ ] Integration test: a response whose data is not a valid address leaves the app where it was.
-- [ ] Integration test: a push received while the app runs (the test calls the listener captured from the mocked `addNotificationReceivedListener`) makes the app fetch the invitations again from the fake main server.
-- [ ] The whole mobile suite passes, with no change to existing tests.
-- [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `mobile/`; CI's `app-fingerprint` passes without a native change.
+- [x] Unit tests: `/main?card=invitation:<uuid>`, `/main?card=friend:<uuid>`, and `/main?card=place:37.4592,126.9524` are read; `/me`, `https://example.com`, `/main?card=`, `/main?card=friend`, a number, and null are refused; `invitation` falls back to the invitations tab, and an unknown kind to the main map.
+- [x] Integration test: the app started signed in with a last response whose address is `/main?card=invitation:<id>` ends at `/party?tab=invites` only after the loading screen, and the last response is cleared.
+- [x] Integration test: a last response present while Onboarding is unfinished opens its address after Onboarding ends.
+- [x] Integration test: with a Friend on the map, a response to `/main?card=friend:<id>` received while the app runs moves the map to that Friend and opens the Friend's card, and `card` is gone from the address.
+- [x] Integration test: the same response given both as the last response and through the listener (the test captures the listener passed to the mocked `addNotificationResponseReceivedListener` and calls it) navigates once.
+- [x] Integration test: a response whose data is not a valid address leaves the app where it was.
+- [x] Integration test: a push received while the app runs (the test calls the listener captured from the mocked `addNotificationReceivedListener`) makes the app fetch the invitations again from the fake main server.
+- [x] The whole mobile suite passes, with no change to existing tests.
+- [x] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `mobile/`; CI's `app-fingerprint` passes without a native change.
 
 ## How a reviewer checks it
 
@@ -60,3 +60,7 @@ The review before the merge: two Opus 5.5 reviewers of this pull request (the ti
 
 - Agent time: about 20 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time, with the fixer's; the reviewers ran inside it).
 - Tokens: output 104,209; input 21,817,018, of which 21,452,366 were cache reads, 364,430 cache writes, and 222 uncached. Without cache reads: 468,861.
+
+### Agent usage (implementation)
+
+Not recorded yet. The sessions that built this ticket add their time and tokens here; the review's part is above.
