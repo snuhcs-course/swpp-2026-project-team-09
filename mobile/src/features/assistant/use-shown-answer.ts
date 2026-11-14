@@ -22,7 +22,8 @@ export interface ShownAnswer {
   toggleBasis: () => void;
 }
 
-interface Held {
+// The answer, the index of its Plan on screen, and whether that Plan's basis is open.
+interface AnswerState {
   answer: AnswerReply | null;
   index: number;
   basisOpen: boolean;
@@ -32,41 +33,41 @@ function answerOf(bubbles: readonly ChatBubble[]): AnswerReply | null {
   return turnOf(bubbles)?.after.findLast(({ answer }) => answer !== undefined && answer !== null)?.answer ?? null;
 }
 
-function at(held: Held, index: number): Held {
-  return index === held.index ? held : { ...held, index, basisOpen: false };
+function withPlan(state: AnswerState, index: number): AnswerState {
+  return index === state.index ? state : { ...state, index, basisOpen: false };
 }
 
 // The answer on screen and the Plan on screen, which the map and the card read. A new answer shows its first Plan
 // with the basis closed, and a change of the Plan closes the basis.
 export function useShownAnswer(bubbles: readonly ChatBubble[]): ShownAnswer {
   const answer = answerOf(bubbles);
-  const [kept, setKept] = useState<Held>({ answer, index: 0, basisOpen: false });
-  const held = kept.answer === answer ? kept : { answer, index: 0, basisOpen: false };
-  if (held !== kept) {
-    setKept(held);
+  const [stored, setStored] = useState<AnswerState>({ answer, index: 0, basisOpen: false });
+  const current = stored.answer === answer ? stored : { answer, index: 0, basisOpen: false };
+  if (current !== stored) {
+    setStored(current);
   }
   const browse = useCallback((step: 1 | -1): void => {
-    setKept((last) => {
+    setStored((last) => {
       const count = last.answer?.plans.length ?? 0;
-      return count === 0 ? last : at(last, (last.index + step + count) % count);
+      return count === 0 ? last : withPlan(last, (last.index + step + count) % count);
     });
   }, []);
   const show = useCallback((planId: string): void => {
-    setKept((last) => {
+    setStored((last) => {
       const index = last.answer?.plans.findIndex(({ id }) => id === planId) ?? -1;
-      return index < 0 ? last : at(last, index);
+      return index < 0 ? last : withPlan(last, index);
     });
   }, []);
   const toggleBasis = useCallback((): void => {
-    setKept((last) => ({ ...last, basisOpen: !last.basisOpen }));
+    setStored((last) => ({ ...last, basisOpen: !last.basisOpen }));
   }, []);
   return {
     answer,
-    plan: answer?.plans[held.index] ?? null,
-    index: held.index,
+    plan: answer?.plans[current.index] ?? null,
+    index: current.index,
     browse,
     show,
-    basisOpen: held.basisOpen,
+    basisOpen: current.basisOpen,
     toggleBasis,
   };
 }

@@ -12,6 +12,8 @@ import { drawingOf, looksOf } from '@/features/assistant/answer-marks';
 import { lookName } from '@/map/marker-looks';
 import { MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
 
+// Distances are built with the spec's flat map ("Where the words go"): a degree of latitude is 111,320 metres, and a
+// degree of longitude that times the cosine of the latitude. The code counts with the same definition.
 const METRES_PER_DEGREE = 111_320;
 const AT_301 = { latitude: 37.45016, longitude: 126.95259 };
 const AT_302 = { latitude: 37.44887, longitude: 126.95265 };
@@ -70,6 +72,31 @@ describe('a point where every side of a label is taken', () => {
       planId: null,
       label: { number: null },
     });
+  });
+});
+
+// Partitions: a point alone whose every side is blocked by a neighbouring point, none taken at the point itself.
+// Expected values: the spec's rule, "the first side of its list that no earlier label took"; a candidate's list
+// starts at the left.
+describe('a label whose every side is blocked by a neighbour', () => {
+  it('takes the first side of its list', () => {
+    // Four candidates without a Plan are added around 학생회관, each within the reach of one side: 100 metres to the
+    // left and to the right, and 60 metres above and below.
+    const around = [
+      west(AT_STUDENT_HALL, 100),
+      west(AT_STUDENT_HALL, -100),
+      north(AT_STUDENT_HALL, 60),
+      north(AT_STUDENT_HALL, -60),
+    ];
+    const drawing = drawingOf(
+      withScene((scene) => ({
+        ...scene,
+        places: [...scene.places, ...around.map((at, index) => candidateAt(at, `둘레 ${index}`))],
+      })),
+      0,
+    );
+
+    expect(sideOf(drawing, 'answer:candidate:학생회관식당')).toBe('left');
   });
 });
 
@@ -137,7 +164,7 @@ describe("a Place's flag away from the pick", () => {
 // Partitions: an answer without Plans, an index equal to the number of Plans, a negative index, and the looks of
 // every Plan. Expected values: the brief's contract of `drawingOf` and `looksOf`.
 describe('an answer that draws nothing', () => {
-  const nothing = { things: [], lines: [], points: [], userIds: [] };
+  const nothing = { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
 
   it('draws nothing for an answer with no Plan', () => {
     // The stored answer's Plans are taken out, and its noPlan set, as the server answers when nothing fits.

@@ -37,6 +37,10 @@ const DIRECTION: Record<LabelSide, ViewStyle['flexDirection']> = {
   above: 'column-reverse',
 };
 
+function partOf(testID: string | undefined, part: string): string | undefined {
+  return testID === undefined ? undefined : `${testID}:${part}`;
+}
+
 function Dot({ role, number, testID }: Extract<AnswerSymbol, { type: 'dot' }> & { testID?: string }): ReactElement {
   return (
     <View style={[styles.dot, styles[role]]} testID={testID}>
@@ -54,13 +58,13 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
     return (
       <View
         style={[styles.face, { borderStyle: symbol.dashed ? 'dashed' : 'solid' }]}
-        testID={testID === undefined ? undefined : `${testID}:face`}
+        testID={partOf(testID, 'face')}
       >
         <Text style={styles.letters}>{Array.from(symbol.name).slice(0, 2).join('')}</Text>
       </View>
     );
   }
-  return <Dot {...symbol} testID={testID === undefined ? undefined : `${testID}:dot`} />;
+  return <Dot {...symbol} testID={partOf(testID, 'dot')} />;
 }
 
 function Label({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
@@ -73,7 +77,7 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
         tone === 'pick' && styles.pickLabel,
         tone === 'meeting' && styles.meetingLabel,
       ]}
-      testID={testID === undefined ? undefined : `${testID}:label`}
+      testID={partOf(testID, 'label')}
     >
       {number === null ? null : (
         <View style={[styles.badge, tone === 'pick' ? styles.pick : styles.candidate]}>
@@ -114,7 +118,7 @@ export function MapAnswerMark({
 }): ReactElement {
   return (
     <View style={[styles.mark, { flexDirection: DIRECTION[label?.side ?? 'right'] }]} testID={testID}>
-      <View style={styles.box} testID={testID === undefined ? undefined : `${testID}:symbol`}>
+      <View style={styles.box} testID={partOf(testID, 'symbol')}>
         {symbol === null ? null : <MarkSymbol symbol={symbol} testID={testID} />}
       </View>
       {label === null ? null : <Label label={label} testID={testID} />}
