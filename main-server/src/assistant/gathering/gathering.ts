@@ -157,7 +157,7 @@ function minutes(from: string, to: string, travel: Walking): number {
   return from === to ? 0 : shownMinutes(travel.walkingSeconds(from, to));
 }
 
-function originOf(person: GatheringPerson, { start, previous }: FreeInterval, now: Date): PersonPart['origin'] {
+export function originOf(person: GatheringPerson, { start, previous }: FreeInterval, now: Date): PersonPart['origin'] {
   if (person.chosenPlaceId !== undefined) {
     return { placeId: person.chosenPlaceId, basis: 'chosen' };
   }
