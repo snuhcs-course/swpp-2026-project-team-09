@@ -5,14 +5,15 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AnswerLine, ConditionChip } from '@/api/assistant-types';
 import type { PlanQuest } from '@/api/plan-quest-types';
-import { Button, color, radius, space, text } from '@/design-system';
+import { Button, space } from '@/design-system';
 import { type Standing, standingWords } from '@/features/assistant/invited-friends';
 import { koreaClock } from '@/korea-time';
 import { AnswerLines } from './answer-lines';
 import { ReadOnlyChip } from './condition-chips';
+import { QuestSteps } from './quest-steps';
 
 interface InvitedCardProps {
   chips: readonly ConditionChip[];
@@ -22,8 +23,6 @@ interface InvitedCardProps {
   standings: ReadonlyMap<string, Standing>;
   onClose: () => void;
 }
-
-const STEP_NUMBER = 22;
 
 function linesOf(startAt: string): AnswerLine[] {
   return [
@@ -62,16 +61,7 @@ export function InvitedCard({ chips, startAt, made, standings, onClose }: Invite
     <View style={styles.card} testID="invited-card">
       <SentChips chips={chips} standings={standings} />
       <AnswerLines lines={linesOf(startAt)} />
-      <View style={styles.steps}>
-        {made.quest.subQuests.map(({ id, title, startsAt }, index) => (
-          <View key={id} style={styles.step}>
-            <View style={styles.number}>
-              <Text style={styles.numberLabel}>{index + 1}</Text>
-            </View>
-            <Text style={styles.stepLabel}>{startsAt === null ? title : `${koreaClock(startsAt)} ${title}`}</Text>
-          </View>
-        ))}
-      </View>
+      <QuestSteps steps={made.quest.subQuests} />
       <View style={styles.buttons}>
         <Button onPress={onClose} variant="secondary">
           닫기
@@ -84,17 +74,5 @@ export function InvitedCard({ chips, startAt, made, standings, onClose }: Invite
 const styles = StyleSheet.create({
   card: { gap: space[3] },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  steps: { gap: space[2] },
-  step: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  number: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: STEP_NUMBER,
-    height: STEP_NUMBER,
-    borderRadius: radius.full,
-    backgroundColor: color.surfaceSunken,
-  },
-  numberLabel: { ...text.caption, color: color.ink },
-  stepLabel: { ...text.body, flexShrink: 1, color: color.ink },
   buttons: { flexDirection: 'row' },
 });
