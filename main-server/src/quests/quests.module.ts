@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -41,6 +42,6 @@ import { SubQuestsService } from './sub-quests.service.js';
     MatchingQuestsService,
     { provide: CLOCK, useValue: systemClock },
   ],
-  exports: [QuestsService, RecruitingService, InvitationsService, CLOCK, MatchingQuestsService],
+  exports: [QuestsService, RecruitingService, InvitationsService, CLOCK, MatchingQuestsService, LeaderService],
 })
 export class QuestsModule {}

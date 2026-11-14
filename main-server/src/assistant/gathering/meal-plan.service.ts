@@ -48,7 +48,12 @@ export class MealPlanService {
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
-  async plan(askerId: string, input: PlanInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
+  // `leftOut` names Sub Quests that stand in nobody's way: a Quest being planned again leaves its own out.
+  async plan(
+    askerId: string,
+    input: PlanInput,
+    at: { now: Date; location: Position | null; leftOut?: readonly string[] },
+  ): Promise<AnswerReply> {
     const friends = await this.friendsOf(askerId, input);
     this.refuseUnknownPlaces(input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
@@ -57,6 +62,10 @@ export class MealPlanService {
       this.peopleOf(askerId, friends, date, at.location),
       this.menus.findByDate(date),
     ]);
+    const leftOut = new Set(at.leftOut);
+    for (const person of people) {
+      person.items = person.items.filter(({ id }) => !leftOut.has(id));
+    }
     const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }, index): GatheringPerson => ({
       id: userId,
       free: freeTimeOf(items, date, now),

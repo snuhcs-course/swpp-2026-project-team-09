@@ -20,7 +20,7 @@ import { type PlanQuestBody, type PlanQuestDto } from './dto/plan-quest.dto.js';
 const CAPACITY_MIN = 4;
 
 // The Sub Quests of a Plan, each ending where the next starts and the last at the Plan's end.
-const subQuestsOf = ({ subQuests, endAt }: Plan): SubQuestColumns[] =>
+export const subQuestsOf = ({ subQuests, endAt }: Plan): SubQuestColumns[] =>
   subQuests.map(({ at, placeId, title }, index) => ({
     title,
     startsAt: new Date(at),
@@ -44,13 +44,8 @@ export class PlansService {
 
   // Plans again as the recalculation does, and makes the Plan named into a Quest the asker leads, inviting everyone
   // else of it.
-  async make(userId: string, { input, planId, startAt, location }: PlanQuestBody): Promise<PlanQuestDto> {
-    const now = this.clock.now();
-    if (outOfReach(input.date, now)) {
-      throw new BadRequestException('A plan is for a day from today to a week ahead');
-    }
-    const { plans } = await this.mealPlans.plan(userId, input, { now, location });
-    if (input.people.length < 2) {
+  async make(userId: string, making: PlanQuestBody): Promise<PlanQuestDto> {
+    if (making.input.people.length < 2) {
       throw new BadRequestException({
         statusCode: HttpStatus.BAD_REQUEST,
         error: 'Bad Request',
@@ -58,10 +53,7 @@ export class PlansService {
         message: 'A plan with no Friend makes no Quest.',
       });
     }
-    const plan = plans.find(({ id }) => id === planId);
-    if (plan === undefined || new Date(plan.startAt).getTime() !== new Date(startAt).getTime()) {
-      throw conflict('PLAN_CHANGED', 'The plan is no longer the one shown. Recalculate it.');
-    }
+    const plan = await this.replanned(userId, making, []);
     const { questId, created } = await this.prisma.$transaction(async (tx) => {
       const made = await this.quests.createWithSubQuests(plan.title, subQuestsOf(plan), [userId], tx, {
         capacity: Math.max(CAPACITY_MIN, plan.parts.length),
@@ -81,5 +73,23 @@ export class PlansService {
       quest: await this.quests.read(userId, questId),
       invitations: created.map(({ id, userId: invitee }) => ({ id, userId: invitee })),
     };
+  }
+
+  // Plans again as the recalculation does, with these Sub Quests left out of everyone's day, and answers the Plan named.
+  async replanned(
+    userId: string,
+    { input, planId, startAt, location }: PlanQuestBody,
+    leftOut: readonly string[],
+  ): Promise<Plan> {
+    const now = this.clock.now();
+    if (outOfReach(input.date, now)) {
+      throw new BadRequestException('A plan is for a day from today to a week ahead');
+    }
+    const { plans } = await this.mealPlans.plan(userId, input, { now, location, leftOut });
+    const plan = plans.find(({ id }) => id === planId);
+    if (plan === undefined || new Date(plan.startAt).getTime() !== new Date(startAt).getTime()) {
+      throw conflict('PLAN_CHANGED', 'The plan is no longer the one shown. Recalculate it.');
+    }
+    return plan;
   }
 }

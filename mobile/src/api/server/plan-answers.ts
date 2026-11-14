@@ -59,7 +59,7 @@ function isPerson(value: unknown): value is PlanPerson {
   return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
 }
 
-function isInput(value: unknown): value is PlanInput {
+export function isInput(value: unknown): value is PlanInput {
   const window = field(value, 'window');
   return (
     field(value, 'kind') === 'meal' &&
@@ -194,7 +194,7 @@ function isBand(value: unknown): value is TimeBand {
   );
 }
 
-function isPlan(value: unknown): value is Plan {
+export function isPlan(value: unknown): value is Plan {
   return (
     hasTexts(value, ['id', 'title', 'startAt', 'endAt']) &&
     isPlacePoint(field(value, 'place')) &&

@@ -23,7 +23,7 @@ import { type CardStep, type Gathered, gatheringOf, ownWay, placePoint } from '.
 const startOf = ({ startsAt }: Pick<SubQuestDto, 'startsAt'>): number =>
   startsAt === null ? Number.POSITIVE_INFINITY : new Date(startsAt).getTime();
 
-function toCardStep({ id, title, startsAt, endsAt, place, ended }: SubQuestDto): CardStep {
+export function toCardStep({ id, title, startsAt, endsAt, place, ended }: SubQuestDto): CardStep {
   return {
     id,
     title,
