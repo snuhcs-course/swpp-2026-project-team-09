@@ -9,6 +9,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ export const MY_PARTY_KEY = ['my-party'] as const;
 export const PARTIES_KEY = ['parties'] as const;
 export const FRIEND_REQUESTS_KEY = ['friend-requests'] as const;
 export const QUEST_INVITATIONS_KEY = ['quest-invitations'] as const;
+export const NOTIFICATIONS_KEY = ['notifications'] as const;
 export const JOIN_REQUESTS_KEY = ['join-requests'] as const;
 export const SENT_INVITATIONS_KEY = ['sent-invitations'] as const;
 export const DECLINED_PARTIES_KEY = ['declined-parties'] as const;
@@ -77,6 +79,10 @@ export const friendRequestsQuery = queryOptions({
 export const questInvitationsQuery = queryOptions({
   queryKey: QUEST_INVITATIONS_KEY,
   queryFn: () => apiClient.listQuestInvitations(),
+});
+export const notificationsQuery = queryOptions({
+  queryKey: NOTIFICATIONS_KEY,
+  queryFn: () => apiClient.listNotifications(),
 });
 // One entry for each Quest the User leads, all under one key, so that a signal fetches them all again.
 export function joinRequestsQuery(

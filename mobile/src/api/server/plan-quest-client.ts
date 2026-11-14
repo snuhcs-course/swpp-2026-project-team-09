@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import type { PlanQuest } from '@/api/plan-quest-types';
-import { field, hasTexts, isQuest, listOf } from './answers';
+import { field, hasTexts, listOf } from './answers';
 import { call } from './http';
+import { isQuest } from './quest-answers';
 
 function isInvitation(value: unknown): value is PlanQuest['invitations'][number] {
   return hasTexts(value, ['id', 'userId']);

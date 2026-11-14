@@ -29,6 +29,7 @@ import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } fro
 import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
+import { mockInvitationCard } from './invitation-card';
 import { mockParty } from './party';
 import { mockPlanQuest } from './plan-quest';
 import { mockTimetable as timetable } from './timetable';
@@ -172,6 +173,7 @@ export const mockClient: ApiClient = {
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
   listQuests: () => answer('listQuests', () => QUESTS, []),
   listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
+  listNotifications: () => answer('listNotifications', () => [], []),
   // The User leads no Quest of the mock's.
   listJoinRequests: () => answer('listJoinRequests', () => [], []),
   listClasses: () => answer('listClasses', timetable.listClasses, []),
@@ -206,6 +208,7 @@ export const mockClient: ApiClient = {
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
   makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
+  getInvitationCard: (invitationId) => answer('getInvitationCard', () => mockInvitationCard(invitationId)),
   ...mockRoom,
   ...mockParty,
   ...mockEvents,

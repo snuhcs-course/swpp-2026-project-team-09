@@ -31,7 +31,6 @@ import {
   isPositionKept,
   isPositions,
   isProfile,
-  isQuests,
   isSentFriendRequest,
   isTimetableClass,
   isTimetableClasses,
@@ -39,12 +38,14 @@ import {
   isWalkingRoute,
 } from './answers';
 import { isMenus } from './menu-answers';
+import { isQuests } from './quest-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isStudyBuildings } from './study-answers';
-import { isFriendRequests, isJoinRequests, isQuestInvitations } from './waiting-answers';
+import { isFriendRequests, isJoinRequests, isKeptNotifications, isQuestInvitations } from './waiting-answers';
 import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
+import { invitationCardClient } from './invitation-card-client';
 import { partyClient } from './party-client';
 import { planQuestClient } from './plan-quest-client';
 import { roomClient } from './room-client';
@@ -59,6 +60,7 @@ export const serverClient: ApiClient = {
   ...eventClient,
   ...assistantClient,
   ...planQuestClient,
+  ...invitationCardClient,
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
@@ -110,6 +112,7 @@ export const serverClient: ApiClient = {
   listPositions: () => call('GET', '/positions', isPositions),
   listQuests: () => call('GET', '/quests', isQuests),
   listQuestInvitations: () => call('GET', '/quest-invitations', isQuestInvitations),
+  listNotifications: () => call('GET', '/notifications', isKeptNotifications),
   listJoinRequests: (questId) => call('GET', `/quests/${encodeURIComponent(questId)}/join-requests`, isJoinRequests),
   listClasses: () => call('GET', '/timetable/classes', isTimetableClasses),
   // Sent once for each press of 저장, so its key is new each time unless the caller keeps one to send again.
