@@ -52,10 +52,12 @@ export class NotificationsService {
     return replaced;
   }
 
-  // `about` names the person of a kind that is kept for each one, such as the Friend who answered.
+  // `about` names the person of a kind that is kept for each one, such as the Friend who answered. Tells the User only
+  // when one was kept.
   async cancel(userId: string, kind: NotificationKind, card: Card, about: string | null = null): Promise<void> {
-    await this.store.forget(userId, kind, card, about);
-    this.signals.send([userId], 'notice');
+    if (await this.store.forget(userId, kind, card, about)) {
+      this.signals.send([userId], 'notice');
+    }
   }
 
   async listFor(userId: string): Promise<NotificationDto[]> {

@@ -56,8 +56,9 @@ export class NotificationStore {
     return sameTime.count + newTime.count > 0;
   }
 
-  async forget(userId: string, kind: NotificationKind, card: Card, about: string | null): Promise<void> {
-    await this.prisma.notification.deleteMany({ where: keyOf(userId, kind, card, about) });
+  // Whether one was kept.
+  async forget(userId: string, kind: NotificationKind, card: Card, about: string | null): Promise<boolean> {
+    return (await this.prisma.notification.deleteMany({ where: keyOf(userId, kind, card, about) })).count > 0;
   }
 
   // The latest time first.

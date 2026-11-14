@@ -3149,15 +3149,15 @@ words and gives it its address. A feature imports `NotificationsModule` and call
 - `cancel(userId, kind, card, about?)` forgets it; `about` is the person of a kind kept for each one.
 
 `told` holds the facts of a kind, never text. The caller gives the time, and the service reads no clock. After each
-call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing sends
-none. `schedule` and `replace` refuse, by throwing, a card no address opens. The calls throw when the database fails
-too, so a caller that must not fail catches and logs.
+call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing, or a
+`cancel` that forgot nothing, sends none. `schedule` and `replace` refuse, by throwing, a card no address opens. The
+calls throw when the database fails too, so a caller that must not fail catches and logs.
 
-| Kind       | Told to    | When                     | Title                 | Ahead               | Line                       | Card              | Rings |
-| ---------- | ---------- | ------------------------ | --------------------- | ------------------- | -------------------------- | ----------------- | ----- |
-| `accepted` | The Leader | An invited User accepts  | `<name>가 수락했어요` | None                | The Quest's title          | `party:<questId>` | No    |
-| `declined` | The Leader | An invited User declines | `<name>이 못 온대요`  | None                | The Quest's title          | `party:<questId>` | No    |
-| `leave-by` | The Leader | A Plan becomes a party   | `지금 나서요`         | `<HH:MM> 나설 시각` | `<Place>까지 걸어서 <N>분` | `party:<questId>` | Yes   |
+| Kind       | Told to                                       | When                                        | Title                 | Ahead               | Line                       | Card              | Rings |
+| ---------- | --------------------------------------------- | ------------------------------------------- | --------------------- | ------------------- | -------------------------- | ----------------- | ----- |
+| `accepted` | The Leader                                    | An invited User accepts                     | `<name>가 수락했어요` | None                | The Quest's title          | `party:<questId>` | No    |
+| `declined` | The Leader                                    | An invited User declines                    | `<name>이 못 온대요`  | None                | The Quest's title          | `party:<questId>` | No    |
+| `leave-by` | The Leader, and each invited User who accepts | A Plan becomes a party, or the User accepts | `지금 나서요`         | `<HH:MM> 나설 시각` | `<Place>까지 걸어서 <N>분` | `party:<questId>` | Yes   |
 
 A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
 `leave-by`, `<Place>까지 걸어서 <N>분이에요.` A kind that does not ring has no body.
@@ -3170,8 +3170,21 @@ warning and the answer stays as it is.
 `leave-by` is kept when `POST /plans` makes a party: `PlansService` schedules the Leader's for the time the Leader's
 part of the Plan sets out, with the Plan's Place and the Leader's own walking minutes, after the transaction and its
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
-Place is unknown or the walk is 0 minutes. A User has one for a party. When the Leader ends the Quest, `LeaderService`
-cancels the `leave-by` of every Holder it had, in the same way.
+Place is unknown or the walk is 0 minutes.
+
+An invited User's `leave-by` is kept when they accept an invitation into a Quest whose steps give a gathering, as a
+party's do. `InvitationsService` tells the listeners given to its `onAccepted()` once the acceptance is stored and
+signalled, so that the Quests' module need not import the Plans' module. `InviteeTimeToLeave` from
+`src/plans/invitee-time-to-leave.service.ts` is one: it works out the User's own way as the invitation's card does, from
+their Timetable alone since the accept carries no position, and leaves the Quest's own steps out of their day. It
+schedules the `leave-by` for the time that way sets out, with the Restaurant of a Plan's meal step (its title reads
+"<Restaurant>에서 식사") or else the gathering's Place as `placeLabel()` names it, and the walking minutes of the whole
+way, without the answer waiting for it; a failure is logged as a warning. None is kept when the way has no time to set
+out or the walk is 0 minutes.
+
+A User has one `leave-by` for a party. It is cancelled when the User leaves the Quest, by dropping it or by the Leader's
+removal, and when the Leader ends the Quest, for every Holder it had. No answer waits for a cancel, and a failure is
+logged as a warning.
 
 The table `notifications` holds them, one row a Notification, deleted with its User:
 
