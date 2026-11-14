@@ -79,9 +79,9 @@ async function inviteAndClose(): Promise<void> {
   await pass(500);
 }
 
-// Partitions: a Quest made from a Plan on this phone, and one that was not; made now, and after a restart of the app.
-// Expected values: the ticket's "12:33 점심 · 수락 1/2" with the stored Quest's day and start, its meal, and 민수
-// invited.
+// Partitions: a Quest made from a Plan on this phone, and one that was not; made now, and after a restart of the app;
+// the words its name says and those its look draws. Expected values: the ticket's "12:33 점심 · 수락 1/2" with the
+// stored Quest's day and start, its meal, and 민수 invited, and its decision 18: the look draws them in two lines.
 describe('the flag of a made Quest, with the switch on', () => {
   it("stands on the everyday map in place of the Quest's own marker, and the dinner keeps its own", async () => {
     await openMain(KEPT_MADE);
@@ -89,6 +89,14 @@ describe('the flag of a made Quest, with the switch on', () => {
     expect(mapThings()).toContain(FLAG);
     expect(mapThings()).not.toContain(OWN_MARKER);
     expect(mapThings()).toContain(DINNER);
+  });
+
+  it('draws its start and meal over its day and count, which its name says whole', async () => {
+    await openMain(KEPT_MADE);
+
+    const flag = within(within(screen.getByTestId('main-map-touches')).getByRole('button', { name: FLAG }));
+    expect(flag.getByText('12:15 점심', { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(flag.getByText('11월 17일 (화) · 수락 0/1', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
   it('stands where the answer was after "이대로 초대" and "닫기", the phone keeping the Quest\'s id', async () => {

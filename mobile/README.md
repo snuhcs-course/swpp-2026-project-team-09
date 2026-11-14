@@ -709,11 +709,12 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   `POST /plans` made (`Kept.madeQuests`); with the switch on, a Quest whose id is kept, which the User leads, and whose
   destination (the last step not cancelled with a start and a point) has not ended by the clock when the Quests were
   read counts as made from a Plan. Ids of Quests gone or ended are dropped when the Quests are read. It is drawn as a
-  flag at its destination, the pick's dot with "12:15 점심 · 수락 0/1" above it (the day when not today, the start, the
-  meal the title names after "에서" or a meeting step's title once the meal was cancelled, and the Friends accepted or
-  late out of all in its members): a card of kind `made-quest`, `made-quest:<id>`, outside the place groups, with the
-  Quest's own card `party:<id>` within it, which an address or a row of the Quest list opens with its "길찾기" as
-  before. The first made Quest's line says the same at the left above the row of buttons (and above the start button
+  flag at its destination, the pick's dot with two lines above it, "12:15 점심" over "수락 0/1" (the start and the meal
+  the title names after "에서", or a meeting step's title once the meal was cancelled, over the day when not today and
+  the Friends accepted or late out of all in its members; its name says them in one line): a card of kind
+  `made-quest`, `made-quest:<id>`, outside the place groups, with the Quest's own card `party:<id>` within it, which
+  an address or a row of the Quest list opens with its "길찾기" as before. The first made Quest's line says the same
+  in one line at the left above the row of buttons (and above the start button
   and the line that asks for interests), and gives way to the keyboard, a card at the bottom, and the answer frame. A
   press on either opens the card after inviting again, built from the Quest: a chip for each Friend with the state,
   the lines with the destination's start, the steps, and "닫기"; without a pill, the input, or the tab bar, as a

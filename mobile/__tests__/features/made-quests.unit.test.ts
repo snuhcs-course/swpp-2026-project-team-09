@@ -68,7 +68,8 @@ describe('the Quests made from a Plan', () => {
       step: MEAL,
       startsAt: '2026-11-17T03:15:00.000Z',
       at: { latitude: 37.44887, longitude: 126.95265 },
-      words: '12:15 점심',
+      day: null,
+      title: '12:15 점심',
     });
     expect(made?.friends.map(({ name }) => name)).toEqual(['민수']);
   });
@@ -132,31 +133,42 @@ describe('a Quest made from a Plan that ended', () => {
 
 // Partitions: nobody accepted; accepted; late counts as in; a decline stays among those invited; the destination today,
 // tomorrow, and a later day; a title without "에서"; the meal cancelled, so that the flag stands at the meeting step.
+// The words in one line, and the flag's two: the start and the step over the day and the count.
 // Expected values: the design's "12:33 점심 · 수락 1/2", the stored Quest's 12:15 and its title "302동식당에서 점심",
-// which the server writes as the Plan's, and the day as the Quest's own card says it ("내일", "11월 17일 (화)").
+// which the server writes as the Plan's, the day as the Quest's own card says it ("내일", "11월 17일 (화)"), and
+// ticket 07's decision 18: the flag's one line cut the stored Quest's words on a phone, so it says them in two.
 describe("a made Quest's words", () => {
-  it('say the start, the meal, and that nobody accepted yet', () => {
-    expect(flagWords(onlyMade(MADE), standings('invited'))).toBe('12:15 점심 · 수락 0/1');
+  it('say the start, the meal, and that nobody accepted yet, the flag the start and the meal over the count', () => {
+    expect(flagWords(onlyMade(MADE), standings('invited'))).toEqual({
+      words: '12:15 점심 · 수락 0/1',
+      flag: { title: '12:15 점심', line: '수락 0/1' },
+    });
   });
 
   it('count a Friend who accepted or is late, out of every Friend invited, a decline included', () => {
     const made = onlyMade(MADE);
 
-    expect(flagWords(made, standings('accepted'))).toBe('12:15 점심 · 수락 1/1');
-    expect(flagWords(made, standings('late'))).toBe('12:15 점심 · 수락 1/1');
-    expect(flagWords(made, standings('declined'))).toBe('12:15 점심 · 수락 0/1');
+    expect(flagWords(made, standings('accepted')).words).toBe('12:15 점심 · 수락 1/1');
+    expect(flagWords(made, standings('late')).flag.line).toBe('수락 1/1');
+    expect(flagWords(made, standings('declined')).words).toBe('12:15 점심 · 수락 0/1');
   });
 
-  it('say the day before the start when the destination is not today', () => {
+  it('say the day before the start when the destination is not today, on the flag before the count', () => {
     const dayBefore = new Date('2026-11-16T02:50:00.000Z');
     const weekBefore = new Date('2026-11-10T02:50:00.000Z');
 
-    expect(flagWords(onlyMade(MADE, dayBefore), standings('invited'))).toBe('내일 12:15 점심 · 수락 0/1');
-    expect(flagWords(onlyMade(MADE, weekBefore), standings('invited'))).toBe('11월 17일 (화) 12:15 점심 · 수락 0/1');
+    expect(flagWords(onlyMade(MADE, dayBefore), standings('invited'))).toEqual({
+      words: '내일 12:15 점심 · 수락 0/1',
+      flag: { title: '12:15 점심', line: '내일 · 수락 0/1' },
+    });
+    expect(flagWords(onlyMade(MADE, weekBefore), standings('invited'))).toEqual({
+      words: '11월 17일 (화) 12:15 점심 · 수락 0/1',
+      flag: { title: '12:15 점심', line: '11월 17일 (화) · 수락 0/1' },
+    });
   });
 
   it('say the whole title when it has no "에서", as the stored card\'s "점심"', () => {
-    expect(flagWords(onlyMade(TWO_STEPS), standings('invited'))).toBe('12:33 점심 · 수락 0/1');
+    expect(flagWords(onlyMade(TWO_STEPS), standings('invited')).words).toBe('12:33 점심 · 수락 0/1');
   });
 
   it("stand at the meeting step and say that step's title once the meal was cancelled", () => {
@@ -165,6 +177,7 @@ describe("a made Quest's words", () => {
     const made = onlyMade(withoutMeal);
 
     expect(made.destination.step.title).toBe('유상, 민수: 301동 앞에서 만나기');
-    expect(flagWords(made, standings('invited'))).toBe('12:18 유상, 민수: 301동 앞에서 만나기 · 수락 0/1');
+    expect(flagWords(made, standings('invited')).words).toBe('12:18 유상, 민수: 301동 앞에서 만나기 · 수락 0/1');
+    expect(flagWords(made, standings('invited')).flag.title).toBe('12:18 유상, 민수: 301동 앞에서 만나기');
   });
 });

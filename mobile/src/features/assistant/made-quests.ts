@@ -14,8 +14,9 @@ import type { Standing } from './invited-friends';
 export interface MadeQuest {
   quest: Quest;
   // Where everyone is together: the last step not cancelled that has a start and a point. A Plan writes its meeting
-  // steps before the meal. Its `words` say when and what: "12:33 점심", after its day when that is not today.
-  destination: { step: SubQuest; startsAt: string; at: LatLng; words: string };
+  // steps before the meal. Its `title` says when and what, "12:33 점심", and its `day` the day when that is not today,
+  // as the Quest's own card says a day, "내일" or "11월 17일 (화)"; null today.
+  destination: { step: SubQuest; startsAt: string; at: LatLng; day: string | null; title: string };
   // The members but the User: the Friends invited, whatever they answered.
   friends: Person[];
 }
@@ -33,10 +34,13 @@ function startOf({ startsAt }: SubQuest): number {
   return startsAt === null ? Number.NEGATIVE_INFINITY : Date.parse(startsAt);
 }
 
-// "12:33", or "내일 12:33" and "11월 17일 (화) 12:33" for another day, as the Quest's own card says a day.
-function whenWords(startsAt: string, now: Date): string {
-  const clock = koreaClock(startsAt);
-  return koreaDaysAfter(now, new Date(startsAt)) === 0 ? clock : `${koreaDay(startsAt, now)} ${clock}`;
+function dayOf(startsAt: string, now: Date): string | null {
+  return koreaDaysAfter(now, new Date(startsAt)) === 0 ? null : koreaDay(startsAt, now);
+}
+
+// "12:33 점심", or "11월 17일 (화) 12:33 점심" on another day.
+function destinationWords({ day, title }: MadeQuest['destination']): string {
+  return day === null ? title : `${day} ${title}`;
 }
 
 // What the step a flag stands at is: the meal the Quest's title names when it is the Quest's last step, as a Plan's
@@ -55,7 +59,8 @@ function destinationOf(quest: Quest, now: Date): MadeQuest['destination'] | null
   if (last === undefined || last.step.ended || Date.parse(last.step.endsAt ?? last.startsAt) <= now.getTime()) {
     return null;
   }
-  return { ...last, words: `${whenWords(last.startsAt, now)} ${stepWord(quest, last.step)}` };
+  const title = `${koreaClock(last.startsAt)} ${stepWord(quest, last.step)}`;
+  return { ...last, day: dayOf(last.startsAt, now), title };
 }
 
 // The Quests made from a Plan among the User's: those whose id the phone kept (`ids`), which the User leads and whose
@@ -84,14 +89,27 @@ export function endedIds(quests: readonly Quest[], ids: readonly string[], now: 
   });
 }
 
-// "12:33 점심 · 수락 1/2": the destination's words, and how many Friends are in, accepted or late, out of every Friend
-// invited, one who declined included.
-export function flagWords({ destination, friends }: MadeQuest, standings: ReadonlyMap<string, Standing>): string {
+// What a made Quest's flag and its line say: `words` in one line, "11월 17일 (화) 12:15 점심 · 수락 0/1", as the line
+// above the input and the flag's name say it. The flag's label is 180 points wide at most and would cut that, so it
+// draws `flag`: the destination's title, "12:15 점심", over its day when that is not today and the count,
+// "11월 17일 (화) · 수락 0/1".
+export interface FlagWords {
+  words: string;
+  flag: { title: string; line: string };
+}
+
+// The destination's words, and how many Friends are in, accepted or late, out of every Friend invited, one who
+// declined included: "12:33 점심 · 수락 1/2".
+export function flagWords({ destination, friends }: MadeQuest, standings: ReadonlyMap<string, Standing>): FlagWords {
   const accepted = friends.filter(({ id }) => {
     const standing = standings.get(id);
     return standing !== undefined && IN.has(standing.state);
   }).length;
-  return `${destination.words} · 수락 ${accepted}/${friends.length}`;
+  const count = `수락 ${accepted}/${friends.length}`;
+  return {
+    words: `${destinationWords(destination)} · ${count}`,
+    flag: { title: destination.title, line: destination.day === null ? count : `${destination.day} · ${count}` },
+  };
 }
 
 // The person chips of the card after inviting, one for each Friend invited.
@@ -106,7 +124,7 @@ function stepWords({ startsAt, title }: SubQuest): string {
 // What the map draws for a made Quest: the User at `me`, the destination with its words, and a dark flag at each other
 // step's Place with its start and title. Nobody else, no route, and nothing that a Friend's answer changes.
 export function madeQuestScene({ quest, destination }: MadeQuest, me: { userId: string; at: LatLng | null }): MapScene {
-  const { step, at, words } = destination;
+  const { step, at } = destination;
   const steps = quest.subQuests.flatMap((other) => {
     const point = pointOf(other.place);
     return other === step || other.cancelled || point === null
@@ -119,6 +137,6 @@ export function madeQuestScene({ quest, destination }: MadeQuest, me: { userId: 
       { place: { placeId: step.place?.placeId ?? '', label: step.place?.label ?? '', ...at }, role: 'pick', tag: null },
     ],
     routes: [],
-    flags: [{ at, text: words, role: 'place' }, ...steps],
+    flags: [{ at, text: destinationWords(destination), role: 'place' }, ...steps],
   };
 }

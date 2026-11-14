@@ -109,6 +109,8 @@ export interface CardView {
   // For a thing at a place with others: the id of the place's card, whose marker stands for the thing. The thing has
   // no marker of its own, and its card opens from the place's. For a Quest made from a Plan: the id of its flag.
   within?: string;
+  // For the flag of a Quest made from a Plan: its two lines, the start and the step over the day and the count.
+  flag?: { title: string; line: string };
   // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
   // such as its time.
   choices?: { id: string; kind: PlaceKind; title: string; detail: string }[];

@@ -14,13 +14,11 @@ import { onInvitationAnswer } from '@/live/invitation-answers';
 import { useAnswerSwitch } from './answer-switch';
 import { friendStandings, type HeardAnswer, type Standing } from './invited-friends';
 import { madeQuestIdsQuery, useDropMadeQuests } from './made-quest-ids';
-import { endedIds, flagWords, type MadeQuest, madeQuests } from './made-quests';
+import { endedIds, type FlagWords, flagWords, type MadeQuest, madeQuests } from './made-quests';
 
-export interface MadeQuestView extends MadeQuest {
+export interface MadeQuestView extends MadeQuest, FlagWords {
   // How each invited Friend stands, by user id.
   standings: ReadonlyMap<string, Standing>;
-  // What its flag and its line say: "12:33 점심 · 수락 1/2".
-  words: string;
 }
 
 // What a read of the User's Quests says of the ids the phone kept: the made Quests, and the ids it no longer needs.
@@ -87,7 +85,7 @@ export function useMadeQuests(): readonly MadeQuestView[] {
       const invited = { quest: made.quest, invitations: made.friends.map(({ id }) => ({ userId: id })) };
       const read = { members: made.quest.members ?? [], readAt: dataUpdatedAt };
       const standings = friendStandings(invited, read, heard);
-      return { ...made, standings, words: flagWords(made, standings) };
+      return { ...made, standings, ...flagWords(made, standings) };
     });
   }, [on, data, dataUpdatedAt, heard]);
 }

@@ -33,11 +33,12 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // vehicle a pin, so that a vehicle standing at its stop is seen, and stops at one place stay a dot. A study building
 // none of whose spaces the User may use is grey, and study pins merged at the overview level are their cluster.
 // Things of several kinds at one place are a group's dot or pin. A Quest made from a Plan is its flag at every level:
-// the dot in the Quest colour with its words, its marker's name, above it, as an answer draws its pick.
-function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
+// the dot in the Quest colour with its two lines above it, as an answer draws its pick.
+function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (kind === 'made-quest') {
-    const label = { side: 'above', tone: 'pick', title: marker.name, line: null, number: null } as const;
+    const { title, line } = flag ?? { title: marker.name, line: null };
+    const label = { side: 'above', tone: 'pick', title, line, number: null } as const;
     return { kind: 'answer', symbol: { type: 'dot', role: 'pick', number: null }, label };
   }
   if (kind === 'study-cluster') {

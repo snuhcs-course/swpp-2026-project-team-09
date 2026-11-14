@@ -11,11 +11,12 @@ import { shortTitle } from './short-name';
 // The flag of each Quest made from a Plan, at its destination, apart from the place groups: its card is the one after
 // inviting.
 export function madeQuestCards(made: readonly MadeQuestView[]): CardView[] {
-  return made.map(({ quest, destination, words }) => ({
+  return made.map(({ quest, destination, words, flag }) => ({
     id: cardId.madeQuest(quest.id),
     kind: 'made-quest',
     mark: { type: 'place', place: 'party' },
     marker: { name: words, short: shortTitle(quest.title), count: 0, minutesOld: null },
+    flag,
     subLabel: '비공개 파티',
     title: quest.title,
     lines: [],
