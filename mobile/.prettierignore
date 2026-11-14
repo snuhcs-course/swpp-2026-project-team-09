@@ -1,1 +1,3 @@
 pnpm-lock.yaml
+# Firebase's file, committed byte for byte: its bytes are in the app's fingerprint.
+google-services.json

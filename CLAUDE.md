@@ -52,6 +52,7 @@ The app takes its JavaScript over the air from EAS Update, but only while the na
 
 - `mobile/app.json`;
 - `mobile/app.config.ts`'s settings;
+- `mobile/google-services.json`, whose bytes are in the fingerprint;
 - the config plugins (`mobile/plugins/`, `mobile/modules/*/app.plugin.ts`);
 - native dependencies.
 
