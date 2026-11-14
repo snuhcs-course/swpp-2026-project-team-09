@@ -522,6 +522,28 @@ origin/4.0/Main at ${base:0:7}" ]
   expect_full_run 'the commit is already on origin/4.0/Main'
 }
 
+@test "a commit already on another line's Main, on development or on main runs every job" {
+  branch_off 5.0/Main
+  commit admin/next.ts
+  publish 5.0/Main
+  git -C "$WORK" branch 4.0/late 5.0/Main
+  publish 4.0/late
+  ci_checkout 4.0/late
+  expect_full_run 'the commit is already on origin/5.0/Main'
+
+  push_documents_branch 4.0/deployed
+  git -C "$WORK" branch development 4.0/deployed
+  publish development
+  ci_checkout 4.0/deployed
+  expect_full_run 'the commit is already on origin/development'
+
+  push_documents_branch 4.0/old
+  git -C "$WORK" branch main 4.0/old
+  publish main
+  ci_checkout 4.0/old
+  expect_full_run 'the commit is already on origin/main'
+}
+
 @test "a branch that shares no history with Main runs every job" {
   git -C "$WORK" checkout --quiet --orphan 4.0/orphan
   commit docs/guide.md
@@ -572,11 +594,11 @@ origin/4.0/Main at ${base:0:7}" ]
   [ "$output" = 'The job without a key does its work: no job key was given' ]
 }
 
-@test "git failing for merge-base, for merge-base --all or for diff runs every job" {
+@test "git failing for for-each-ref --contains, for merge-base --all or for diff runs every job" {
   push_documents_branch 4.0/documents
 
-  fake_git_failing_on merge-base 2
-  expect_full_run 'git could not tell whether the commit is on origin/4.0/Main'
+  fake_git_failing_on --contains 129
+  expect_full_run 'git could not tell which branches hold the commit'
   fake_git_failing_on --all 128
   expect_full_run 'git could not find where 4.0/documents left origin/4.0/Main'
   fake_git_failing_on diff 128

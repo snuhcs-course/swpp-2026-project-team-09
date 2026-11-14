@@ -21,7 +21,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # A Main's runs finish, since a job that skips on a branch leans on its Main's last full run.
+  # A Main's run in progress is not cancelled, since a job that skips on a branch leans on its Main's last full run.
   cancel-in-progress: ${{ !endsWith(github.ref, '/Main') }}
 
 permissions:

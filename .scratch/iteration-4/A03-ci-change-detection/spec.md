@@ -46,7 +46,8 @@ Every job does its work when:
 
 - the run was not started by a push, or the ref is not a branch (a Release tag);
 - the branch name has no slash, or is itself `<line>/Main` (`main`, `development`, the iteration branches);
-- `origin/<line>/Main` is missing or unreadable, the commit is already on it, or the two share no history;
+- `origin/<line>/Main` is missing or unreadable, or the two share no history;
+- the commit is already on a Main of any line, on `main` or on `development`;
 - any git command fails, a changed path matches no rule, the job key is unknown, or the script fails in any way.
 
 In doubt, the job runs. The workflow skips a step only when the script's output is exactly `false`.
@@ -73,7 +74,7 @@ The workflow also answers a merge queue now: `merge_group` is a trigger, and pus
 
 ## Risks
 
-- The Release gate (`.github/release/release.sh`, `summarize_jobs`) and the Dev Server gate (`infra/deploy/deploy.sh`, `summarize_checks`) count a check as passed when any CI run of the commit passed it. A commit that is already on its Main always runs every job, tags and `development` always run every job, and squash merges make every Main commit new, so a gated commit has no run with skipped work unless a tag or `development` is put on a commit that never reached Main, which the Release and Dev Server procedures forbid.
+- The Release gate (`.github/release/release.sh`, `summarize_jobs`) and the Dev Server gate (`infra/deploy/deploy.sh`, `summarize_checks`) count a check as passed when any CI run of the commit passed it. A commit already on a Main of any line, on `main` or on `development` runs every job wherever it is pushed; tags and those branches always run every job; and squash merges make every Main commit new. So a gated commit has a run with skipped work only when a procedure is broken: a working branch's commit pushed straight onto a Main by someone who can bypass the ruleset, `development` moved to a commit that is not on Main, or a Release tag put on such a commit. In those cases the branch's earlier run, with skipped work, could pass a check that the full run failed.
 - Inputs no path covers change only what a working job sees, and Main's full runs see them: repository variables, the published `app-version.json`, floating base images and action majors, and the unpinned `shellcheck` and `bats` from apt.
 
 ## Out of Scope

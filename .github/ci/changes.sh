@@ -37,7 +37,7 @@ reach() {
     socket-server/*) reached='socket-server flow-tests' ;;
     worker-server/*) reached='worker-server flow-tests' ;;
     match-server/*) reached='match-server flow-tests' ;;
-    admin/*) reached=admin ;;
+    admin/*) reached='admin' ;;
     mobile/*) reached='mobile mobile-tests app-fingerprint' ;;
     flow-tests/* | compose.yaml | compose.deploy.yaml | infra/proxy/*) reached=flow-tests ;;
     # Their tests build the database's image.
@@ -69,7 +69,8 @@ reaches() {
 
 # Sets `run` and `why` for the job.
 decide() {
-  local job=$1 known='' one branch line main main_commit sha shallow status bases base at='' path count=0 paths hit=''
+  local job=$1 known='' one branch line main main_commit sha shallow holders holder status bases base at='' path count=0
+  local paths hit=''
   run=true
   if [[ -z $job ]]; then
     why='no job key was given'
@@ -119,19 +120,20 @@ decide() {
     why="the pushed commit ${GITHUB_SHA:-(unset)} cannot be read"
     return
   fi
-  # The Release and Dev Server gates take any passed run of a commit, so a commit on a Main never skips.
-  git merge-base --is-ancestor "$sha" "$main_commit" && status=0 || status=$?
-  case $status in
-    0)
-      why="the commit is already on $main"
-      return
-      ;;
-    1) ;;
-    *)
-      why="git could not tell whether the commit is on $main"
-      return
-      ;;
-  esac
+  # The Release and Dev Server gates take any passed run of a commit, so a commit already on a Main of any line, on main
+  # or on development never skips.
+  if ! holders=$(git for-each-ref --contains "$sha" --format='%(refname)' refs/remotes/origin); then
+    why='git could not tell which branches hold the commit'
+    return
+  fi
+  while IFS= read -r holder; do
+    case ${holder#refs/remotes/origin/} in
+      */Main | main | development)
+        why="the commit is already on ${holder#refs/remotes/}"
+        return
+        ;;
+    esac
+  done <<<"$holders"
   bases=$(git merge-base --all "$main_commit" "$sha") && status=0 || status=$?
   if ((status == 1)) && [[ -z $bases ]]; then
     why="the commit shares no history with $main"
