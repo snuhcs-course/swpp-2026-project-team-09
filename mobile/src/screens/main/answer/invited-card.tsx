@@ -12,6 +12,7 @@ import { Button, color, radius, space, text } from '@/design-system';
 import { type Standing, standingWords } from '@/features/assistant/invited-friends';
 import { koreaClock } from '@/korea-time';
 import { AnswerLines } from './answer-lines';
+import { ReadOnlyChip } from './condition-chips';
 
 interface InvitedCardProps {
   chips: readonly ConditionChip[];
@@ -42,13 +43,12 @@ function SentChips({ chips, standings }: Pick<InvitedCardProps, 'chips' | 'stand
       {chips.map((chip) => {
         const standing = chip.userId === null ? undefined : standings.get(chip.userId);
         const words = standing === undefined ? chip.text : `${chip.text} · ${standingWords(standing)}`;
-        const accepted = standing?.state === 'accepted';
         return (
-          <View key={`${chip.kind}-${chip.userId ?? chip.text}`} style={[styles.chip, accepted && styles.accepted]}>
-            <Text numberOfLines={1} style={[styles.chipLabel, accepted && styles.acceptedLabel]}>
-              {words}
-            </Text>
-          </View>
+          <ReadOnlyChip
+            key={`${chip.kind}-${chip.userId ?? chip.text}`}
+            label={words}
+            marked={standing?.state === 'accepted'}
+          />
         );
       })}
     </ScrollView>
@@ -84,18 +84,6 @@ export function InvitedCard({ chips, startAt, made, standings, onClose }: Invite
 const styles = StyleSheet.create({
   card: { gap: space[3] },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  chip: {
-    justifyContent: 'center',
-    height: 34,
-    paddingHorizontal: space[3],
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: color.borderStrong,
-    backgroundColor: color.surface,
-  },
-  accepted: { borderColor: color.snuBlue, backgroundColor: color.blue50 },
-  chipLabel: { ...text.label, color: color.ink },
-  acceptedLabel: { color: color.snuBlue },
   steps: { gap: space[2] },
   step: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   number: {
