@@ -143,7 +143,7 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
     hasTexts(value, ['userId', 'name']) &&
     isBoolean(field(value, 'me')) &&
     isLatLng(field(value, 'at')) &&
-    isOneOf(['exact', 'timetable'])(field(value, 'source')) &&
+    isOneOf(['exact', 'building', 'timetable'])(field(value, 'source')) &&
     isTextOrNull(field(value, 'tag'))
   );
 }
@@ -151,7 +151,7 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
 function isScenePlace(value: unknown): value is MapScene['places'][number] {
   return (
     isPlacePoint(field(value, 'place')) &&
-    isOneOf(['pick', 'candidate', 'dropped', 'next', 'meeting'])(field(value, 'role')) &&
+    isOneOf(['pick', 'candidate', 'dropped', 'next', 'meeting', 'stop'])(field(value, 'role')) &&
     isTextOrNull(field(value, 'tag'))
   );
 }
@@ -159,7 +159,7 @@ function isScenePlace(value: unknown): value is MapScene['places'][number] {
 function isRoute(value: unknown): value is MapScene['routes'][number] {
   return (
     isText(field(value, 'userId')) &&
-    isOneOf(['me', 'friend', 'next'])(field(value, 'role')) &&
+    isOneOf(['me', 'friend', 'next', 'shuttle', 'alt'])(field(value, 'role')) &&
     isLatLng(field(value, 'from')) &&
     isLatLng(field(value, 'to')) &&
     isNumber(field(value, 'minutes'))
@@ -168,7 +168,9 @@ function isRoute(value: unknown): value is MapScene['routes'][number] {
 
 function isFlag(value: unknown): value is MapScene['flags'][number] {
   return (
-    isLatLng(field(value, 'at')) && isText(field(value, 'text')) && isOneOf(['place', 'meeting'])(field(value, 'role'))
+    isLatLng(field(value, 'at')) &&
+    isText(field(value, 'text')) &&
+    isOneOf(['place', 'meeting', 'leave', 'late', 'shuttle'])(field(value, 'role'))
   );
 }
 

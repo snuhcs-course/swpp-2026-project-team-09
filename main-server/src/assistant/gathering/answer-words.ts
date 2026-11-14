@@ -64,6 +64,8 @@ export const withAnd = (word: string): string => `${word}${hasFinal(word) ? '과
 
 export const withSubject = (word: string): string => `${word}${hasFinal(word) ? '이' : '가'}`;
 
+export const withCopula = (word: string): string => `${word}${hasFinal(word) ? '이에요' : '예요'}`;
+
 // The item a person was busy with up to `readyAt`.
 export function itemBefore(items: readonly DayItem[], readyAt: Date): DayItem | null {
   const before = items.filter(({ end }) => end <= readyAt).toSorted((a, b) => a.end.getTime() - b.end.getTime());

@@ -27,6 +27,8 @@ import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { koreaNow } from '../korea-time.js';
 import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
+import { type FriendLookupService } from '../lookup/friend.service.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
 import { type MenuLookupService } from '../lookup/menu.service.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
@@ -61,19 +63,28 @@ export interface ChatAssistantServices {
   mealPlans: MealPlanService;
   ways: WayService;
   menuLookups: MenuLookupService;
+  friendLookups: FriendLookupService;
 }
 
 export interface ChatAssistantOptions {
   // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards, and a way to a
-  // Place and a Restaurant's menu are drawn there.
+  // Place, a Restaurant's menu, and where a Friend is are drawn there.
   drawsAnswers: boolean;
 }
 
-function instructionsOf(freeTimeRules: readonly string[], libraryRules: string): (now: Date) => string {
-  return (now) => [chatRules(now), ...freeTimeRules, libraryRules, TUTORIAL_RULES].join('\n\n');
+function instructionsOf(
+  freeTimeRules: readonly string[],
+  libraryRules: string,
+  drawsAnswers: boolean,
+): (now: Date) => string {
+  return (now) => [chatRules(now, drawsAnswers), ...freeTimeRules, libraryRules, TUTORIAL_RULES].join('\n\n');
 }
 
-function chatRules(now: Date): string {
+// In the chat of an app that draws answers, findFriend answers where a Friend is.
+const NO_POSITIONS = `
+- You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.`;
+
+function chatRules(now: Date, drawsAnswers: boolean): string {
   return `You are SNU Now AI, the assistant in SNU Now, an app for campus life at Seoul National University.
 
 Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
@@ -108,38 +119,32 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
 - Keep answers short, a few sentences or a short list, since they are read on a phone.
 - What you write beside a tool call reaches the User as part of the answer. In the last step, do not repeat it: add only what is new, or nothing.
 - Keep small talk short. To recommend a meal, first ask what the User feels like (한식, 일식, 양식, …), then recommend from that day's menus from getMenus.
-- Politely decline long general work, such as writing a report or an essay, or writing or fixing code, and say what you can help with on campus.
-- You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.`;
+- Politely decline long general work, such as writing a report or an essay, or writing or fixing code, and say what you can help with on campus.${drawsAnswers ? '' : NO_POSITIONS}`;
 }
 
+// The tools of an app that draws answers on the map, which plan a meal there instead of showing Restaurant cards.
+function answerTools({ mealPlans, ways, menuLookups, friendLookups }: ChatAssistantServices): Record<string, Tool> {
+  return {
+    planMeal: planMeal(mealPlans),
+    findWay: findWay(ways),
+    findMenu: findMenu(menuLookups),
+    findFriend: findFriend(friendLookups),
+  };
+}
+
+const ANSWER_RULES = [FREE_TIME_EVENT_RULES, PLAN_RULES, WAY_RULES, MENU_RULES, FRIEND_RULES];
+
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
-export function chatAssistant(
-  {
-    menus,
-    shuttle,
-    globalEvents,
-    recruiting,
-    friends,
-    places,
-    freeTime,
-    library,
-    tutorial,
-    mealPlans,
-    ways,
-    menuLookups,
-  }: ChatAssistantServices,
-  options?: ChatAssistantOptions,
-): Feature {
+export function chatAssistant(services: ChatAssistantServices, options?: ChatAssistantOptions): Feature {
+  const { menus, shuttle, globalEvents, recruiting, friends, places, freeTime, library, tutorial } = services;
   const drawsAnswers = options?.drawsAnswers ?? false;
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
-  const answers: Record<string, Tool> = drawsAnswers
-    ? { planMeal: planMeal(mealPlans), findWay: findWay(ways), findMenu: findMenu(menuLookups) }
-    : { findMealRestaurants, showRestaurants };
+  const answers: Record<string, Tool> = drawsAnswers ? answerTools(services) : { findMealRestaurants, showRestaurants };
   return {
     instructions: drawsAnswers
-      ? instructionsOf([FREE_TIME_EVENT_RULES, PLAN_RULES, WAY_RULES, MENU_RULES], LIBRARY_ANSWER_RULES)
-      : instructionsOf([FREE_TIME_RULES], LIBRARY_RULES),
+      ? instructionsOf(ANSWER_RULES, LIBRARY_ANSWER_RULES, true)
+      : instructionsOf([FREE_TIME_RULES], LIBRARY_RULES, false),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
       getMenus: getMenus(menus),

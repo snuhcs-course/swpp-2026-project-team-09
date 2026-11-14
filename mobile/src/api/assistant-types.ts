@@ -338,7 +338,8 @@ export interface MapScene {
     name: string;
     me: boolean;
     at: LatLng;
-    source: 'exact' | 'timetable';
+    // `building`: a Friend at the building they are in, as the Friend view shows them.
+    source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
   places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
