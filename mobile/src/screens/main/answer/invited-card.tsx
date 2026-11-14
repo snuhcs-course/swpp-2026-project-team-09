@@ -1,0 +1,115 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import type { ReactElement } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { AnswerLine, ConditionChip } from '@/api/assistant-types';
+import type { PlanQuest } from '@/api/plan-quest-types';
+import { Button, color, radius, space, text } from '@/design-system';
+import { type Standing, standingWords } from '@/features/assistant/invited-friends';
+import { koreaClock } from '@/korea-time';
+import { AnswerLines } from './answer-lines';
+
+interface InvitedCardProps {
+  chips: readonly ConditionChip[];
+  // The start of the Plan that was sent.
+  startAt: string;
+  made: PlanQuest;
+  standings: ReadonlyMap<string, Standing>;
+  onClose: () => void;
+}
+
+const STEP_NUMBER = 22;
+
+function linesOf(startAt: string): AnswerLine[] {
+  return [
+    [{ text: '파티를 만들고 초대를 보냈어요', strong: false }],
+    [
+      { text: '답이 없어도 ', strong: false },
+      { text: koreaClock(startAt), strong: true },
+      { text: '에 가면 돼요', strong: false },
+    ],
+  ];
+}
+
+// The conditions as they were sent: no chip takes a press, and a person's chip says how the Friend stands.
+function SentChips({
+  chips,
+  standings,
+}: Pick<InvitedCardProps, 'chips' | 'standings'>): ReactElement {
+  return (
+    <ScrollView contentContainerStyle={styles.chips} horizontal showsHorizontalScrollIndicator={false}>
+      {chips.map((chip) => {
+        const standing = chip.userId === null ? undefined : standings.get(chip.userId);
+        const words = standing === undefined ? chip.text : `${chip.text} · ${standingWords(standing)}`;
+        const accepted = standing?.state === 'accepted';
+        return (
+          <View key={`${chip.kind}-${chip.userId ?? chip.text}`} style={[styles.chip, accepted && styles.accepted]}>
+            <Text numberOfLines={1} style={[styles.chipLabel, accepted && styles.acceptedLabel]}>
+              {words}
+            </Text>
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+// The card of the answer on screen once its Plan was made into a Quest: the conditions with how each Friend stands,
+// two lines that say the invitations went out and when to be there, the Quest's steps in order, and "닫기".
+export function InvitedCard({ chips, startAt, made, standings, onClose }: InvitedCardProps): ReactElement {
+  return (
+    <View style={styles.card} testID="invited-card">
+      <SentChips chips={chips} standings={standings} />
+      <AnswerLines lines={linesOf(startAt)} />
+      <View style={styles.steps}>
+        {made.quest.subQuests.map(({ id, title, startsAt }, index) => (
+          <View key={id} style={styles.step}>
+            <View style={styles.number}>
+              <Text style={styles.numberLabel}>{index + 1}</Text>
+            </View>
+            <Text style={styles.stepLabel}>{startsAt === null ? title : `${koreaClock(startsAt)} ${title}`}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={styles.buttons}>
+        <Button onPress={onClose} variant="secondary">
+          닫기
+        </Button>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: { gap: space[3] },
+  chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  chip: {
+    justifyContent: 'center',
+    height: 34,
+    paddingHorizontal: space[3],
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: color.borderStrong,
+    backgroundColor: color.surface,
+  },
+  accepted: { borderColor: color.snuBlue, backgroundColor: color.blue50 },
+  chipLabel: { ...text.label, color: color.ink },
+  acceptedLabel: { color: color.snuBlue },
+  steps: { gap: space[2] },
+  step: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  number: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: STEP_NUMBER,
+    height: STEP_NUMBER,
+    borderRadius: radius.full,
+    backgroundColor: color.surfaceSunken,
+  },
+  numberLabel: { ...text.caption, color: color.ink },
+  stepLabel: { ...text.body, flexShrink: 1, color: color.ink },
+  buttons: { flexDirection: 'row' },
+});

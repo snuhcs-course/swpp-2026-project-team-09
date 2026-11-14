@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { answerCamera, roomsOf } from '@/features/assistant/answer-camera';
 import { type AnswerDrawing, drawingOf, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import { withPerson } from '@/features/assistant/plan-input';
+import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type CardView, friendIdOf } from '@/features/map/adapter';
 import {
@@ -40,6 +41,10 @@ const SIDE = 64;
 const ANSWER_MIN_LEVEL = NATIVE_MIN_LEVEL - 1;
 
 const NO_LOOKS: readonly MarkerLook[] = [];
+
+type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings'>;
+
+const NOT_INVITED: Invited = { sending: false, made: null, standings: new Map() };
 
 // What the pill covers at the top, under a status bar `top` high, and the card at the bottom, each with the room the
 // drawing's marks there need.
@@ -111,15 +116,20 @@ function addOnPress({ change }: ShownAnswer, id: string): void {
 
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the
 // Avatars of the people it draws. Null while no Plan is shown. The looks of every Plan are asked for when the answer
-// comes, so that the arrows never wait for a picture.
+// comes, so that the arrows never wait for a picture. Once "이대로 초대" is pressed the faces say how each invited
+// Friend stands, and a press changes nothing: the Plan is sent.
 export function useAnswerMap(
   shown: ShownAnswer,
   map: MainMap,
   room: Room,
   everyday: { avatars: readonly MapAvatar[]; cards: readonly CardView[] },
+  { sending, made, standings }: Invited = NOT_INVITED,
 ): AnswerMap | null {
   const { answer, index, show } = shown;
-  const drawing = useMemo(() => (answer === null ? null : drawingOf(answer, index)), [answer, index]);
+  const drawing = useMemo(
+    () => (answer === null ? null : drawingOf(answer, index, standings)),
+    [answer, index, standings],
+  );
   const looks = useMemo(() => (answer === null ? NO_LOOKS : looksOf(answer)), [answer]);
   const things = drawing?.things ?? [];
   const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
@@ -138,6 +148,9 @@ export function useAnswerMap(
       lines: drawing.lines,
     },
     onPress: (id) => {
+      if (sending || made !== null) {
+        return;
+      }
       const planId = things.find((thing) => thing.id === id)?.planId ?? null;
       if (planId === null) {
         addOnPress(shown, id);
