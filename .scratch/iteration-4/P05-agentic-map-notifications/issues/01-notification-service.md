@@ -32,9 +32,9 @@ Change:
 ## Behaviour
 
 - `schedule` keeps the Notification under its User, kind, and card, overwriting one kept there. `replace` overwrites only when one is kept there, and answers whether it did. `cancel` forgets it. Each then sends the signal `notice` to that User; `replace` sends none when it kept nothing.
-- A Notification is kept for 7 days after its time. A User keeps at most 100; the one with the earliest time goes first.
+- A User keeps at most 100 Notifications; the one with the earliest time goes first. The User's hash expires 7 days after the last Notification was kept in it, by Redis's own expiry, so the service reads no clock.
 - `GET /notifications` answers `[{ id, kind, title, line, at, url }]`, the latest `at` first: `id` is the identity as one string, `at` is Korea time with the offset, and `url` is the address. A Notification whose time is still to come is in the answer.
-- The time of a Notification scheduled "for now" is the server's clock, the one the Quests read, so a test can set it.
+- The caller gives the time. `accept()` and `decline()` give the server's clock, the one the Quests read, so a test can set it.
 - `accept()` tells the Leader `accepted` with the accepting User's name, and `decline()` tells the Leader `declined`. Each runs after the transaction and after today's signal, is not awaited by the route's answer, and logs a warning when it fails. `cancel()` of an invitation tells nobody.
 - The title's name takes the subject particle of its last syllable: "민수가 수락했어요", "지은이 수락했어요", "민수가 못 온대요", and "지은이 못 온대요".
 
@@ -53,7 +53,7 @@ Change:
 - [ ] The Leader receives the signal `notice` after each; the route answers as before when Redis fails the keeping.
 - [ ] `GET /notifications` answers only the signed-in User's, the latest first, and 401 without a sign-in.
 - [ ] Through the service: a second `schedule` under the same identity overwrites; `replace` without a kept one keeps nothing and answers false; `replace` with one changes its time and words and answers true; `cancel` forgets.
-- [ ] A Notification whose time is more than 7 days ago is not listed. With 100 kept, one more drops the earliest.
+- [ ] With 100 kept, one more drops the one with the earliest time. After a `schedule`, the User's hash has a time to live of 7 days.
 - [ ] Unit tests: the words of both kinds for a name with and without a final consonant; the address, and its refusals (an uppercase kind, an empty id, and an id with `/` or a space).
 - [ ] No schema change, no new setting, and no push from this service.
 - [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `main-server/`.
