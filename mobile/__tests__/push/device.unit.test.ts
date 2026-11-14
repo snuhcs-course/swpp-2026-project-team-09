@@ -226,6 +226,18 @@ describe("the push wrapper and a change of the phone's token", () => {
     expect(changes).toBe(1);
     expect(mockCalls).toEqual(['addPushTokenListener()', 'remove()']);
   });
+
+  it("takes the phone's first token after an unregistering as its first, not as a change", async () => {
+    const device = freshDevice();
+    const told = jest.fn<void, []>();
+    device.onPushTokenChange(told);
+    mockTokenListener?.({ type: 'android', data: 'device-token-a' });
+    await device.unregisterPush();
+    mockTokenListener?.({ type: 'android', data: 'device-token-b' });
+    expect(told).not.toHaveBeenCalled();
+    mockTokenListener?.({ type: 'android', data: 'device-token-c' });
+    expect(told).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('the push wrapper unregistering', () => {

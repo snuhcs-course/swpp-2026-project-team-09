@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -18,6 +19,7 @@ import { library } from '@/library/library';
 import type { LibraryRoomTimes } from '@/library/replies';
 import { keepRoomBooking, reportRoomBooked } from '@/library/room-bookings';
 import { roomCancelCardOf } from '@/library/cards/made';
+import { useAskForPush } from '@/push/push-ask-host';
 import { type RoomRequest, roomRequests } from '@/api/room-requests';
 import { BOOK_FAILED, CLOSED, type Closed, NOT_BOOKED } from './book-seat-card';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
@@ -221,8 +223,12 @@ function LiveRoomCard(props: BookRoomCardProps): ReactElement {
   const { card, space } = props;
   const [slot, setSlot] = useState<Slot>(() => slotOf(card));
   const [chosen, setChosen] = useState<string | null>(null);
+  const askForPush = useAskForPush();
   const setClosed = (closed: Closed): void => {
     props.actions.finish(props.place, CLOSED[closed]);
+    if (closed === 'booked') {
+      askForPush();
+    }
   };
   const { loaded, reload } = useLibraryLoad(() => roomTimesFor(space, slot.date), slot.date);
   const logIn = useLogInReload(reload);
