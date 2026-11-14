@@ -54,7 +54,7 @@ The app takes over the decisions of a day on campus, from classes until going ho
 | Evening | "배드민턴 칠 사람" (Anyone for badminton?) | Recruiting parties I can reach before they start come first; tapping "새로 모집" (recruit anew) gives a new recruiting party with the place and time filled in | Invite Friends who are free at that time; with the party on, members see each other's locations and arrival times |
 
 - Events have two stories: a career fair for a veteran student, and the university festival for a freshman.
-- The freshman package stays outside the day.
+- The freshman package is the fifth storyline: the Tutorial's quests are placed on my own day (section 6.5).
 
 ## 4. The answer frame
 
@@ -124,6 +124,7 @@ The map changes only when the answer needs a place, a route, or people. A questi
 ### Scope
 
 - The two main scenes are "배고파" (I'm hungry) and "공부할 자리" (a seat to study).
+- The freshman package is a major storyline as well: it puts the Tutorial on the map (section 6.5).
 - The scenes of coming to campus and going home are left out. Locations off campus are not handled.
 - Every row of the wireframes is built, and the scope is not narrowed. Much of the code underneath exists already.
 - Effort goes to the big picture and the killer feature. Detailed settings unrelated to the big picture are left out, since they only add work.
@@ -248,9 +249,9 @@ The map changes only when the answer needs a place, a route, or people. A questi
 - The baselines compared against are answers from the model alone and a rule that picks the nearest place. The five measures are compared against these two baselines, and a small comparison with Users is added.
 - The targets are reviewed once after the set is built.
 
-## 6. The four scenes
+## 6. The five storylines
 
-Each scene starts with what I say. The alone version is the baseline, and the Assistant says what changes when Friends join. Walking minutes in the examples are the app's walking table values, and class times are real SNU class slots.
+Each storyline starts with what I say. The alone version is the baseline, and the Assistant says what changes when Friends join. The fifth, the freshman package, has no together version. Walking minutes in the examples are the app's walking table values, and class times are real SNU class slots.
 
 ### 6.1 Lunch: "배고파" (I'm hungry)
 
@@ -448,6 +449,32 @@ Walking: building 301 to the gymnasium 28 minutes, building 24 to the gymnasium 
 - Today's new-party card uses the time and place the User said. The new flow fills in a time and place the User did not say.
 - My recruiting party appears on the map of everyone who watches the same interest.
 
+### 6.5 The freshman package
+
+The freshman package is the Tutorial (새내기 튜토리얼) of today's app and its Tutorial Quests, such as getting the student card. The agentic map places those quests on my own day: the Assistant orders the ones I have left so that they fit before my next class, numbers them on the map with times, answers how each one works, and guides me there.
+
+**Example.** My class in building 24 ends at 13:50, and my next class is at 17:00 in building 58. Three Tutorial Quests are left: the health clinic (보건진료소) on the 3rd floor of the Student Center, the student card (학생증) on the 2nd floor of Dure Arts Hall, and the lost-and-found (분실물센터) on the 1st floor of the Asia Center (아시아연구소).
+
+| Step | What I do | What the Assistant does | What the map shows |
+|---|---|---|---|
+| 1 | I open the app for the first time | It asks for the Timetable first and says why: plans are fitted between classes | The map and one card |
+| 2 | I say "새내기 퀘스트 뭐부터?" (which Tutorial Quest first?) | It orders the three places so that all fit before the 17:00 class: the health clinic at 13:51, the student card at 14:04, and the lost-and-found at 14:15, done by 14:20. It says first what decides the order ("학생증은 MySNU 신청 다음 날부터 받아요", the student card can be collected from the day after applying on MySNU) | The three places numbered in order with their times, and the 17:00 class |
+| 3 | I tap "1번부터 길 안내" (guide me from no. 1) | It guides me to the first place | My route |
+| 4 | I say "학생증 어디서 받아?" (where do I get my student card?) | It answers with the facts first: the place, how to apply, and the opening hours. A "가는 길 보기" (show the way) button follows | The answer as text |
+| 5 | I tap "가는 길 보기" | It compares the shuttle with walking and says when I arrive and that I am back before my next class (the shuttle is 4 minutes faster: arrive at 12:08, back before the 13:00 class) | The way there and back to my class |
+
+**Rules**
+
+- A quest is marked done by the User in the quest itself. The Assistant does not mark it.
+- The order is the one that fits before the next class.
+- A question about one quest gets the facts first and the route when asked.
+
+**What changes in the app**
+
+- Today the Tutorial shows its quests by category, and "지도에서 보기" (show on the map) drops a pin at one quest's place. The new flow orders several quests on my day, draws the order on the map, and answers with the route and the time.
+
+The wireframes are row 7, boards 10 to 12, and row 12.
+
 ## 7. The location model
 
 **What Friends always see.** Friends see each other's Timetable: the building of each class and the time it ends ("12:15 302동 수업 끝", class in building 302 ends at 12:15). They never see the course name or the room. The Timetable stays visible when a Friend is off campus, inside a Private Zone, or has turned location off.
@@ -523,7 +550,7 @@ These are left out of this design and looked at again after the build.
 - "쓸수록 똑똑해지는 입력" (input that gets smarter with use). It is not a core feature.
 - From a plan that stays alive after it is set: scheduling across a week, remembering "이때는 안 돼요" (that time doesn't work for me), and rescheduling when a Timetable changes. The member who is late on the day is in this design (section 6.1).
 - The day's first screen: with the day starting around 06:00, the first time the app opens that day it shows today's classes and today's events. It is one form of watching that speaks first when the time comes.
-- A Timetable change for one date only, receiving text through the phone's share sheet, and where the freshman package fits.
+- A Timetable change for one date only, and receiving text through the phone's share sheet.
 
 ## 10. The wireframes
 

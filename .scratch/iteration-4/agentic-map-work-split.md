@@ -48,6 +48,8 @@ The five states of a party member map onto today's tables like this: invited is 
 
 ## 5. Up to Sunday night
 
+Through Sunday one person, the owner of package A, builds the whole path with agents, from A's column to D's. The table shows which package each part of the path belongs to. From Iteration 5 each package goes to its owner.
+
 | | A. Engine and contract | B. The answer screen on the map | C. Invitations, parties, and Friends' locations | D. Notifications, bookings, and interests |
 |---|---|---|---|---|
 | Sat afternoon | The first PR: the contract types, and the gathering calculation that returns the real answer for the Tue 11:50 example, with its test | The answer frame (the pill, the card, and hiding the lists) with today's real answers inside the new card | Read the contract | Read the contract |
@@ -57,6 +59,20 @@ The five states of a party member map onto today's tables like this: invited is 
 | Nice to have | Re-planning after a decline, the preview and confirmation of being late | The one-line plan after closing | Reporting lateness | Keeping the time to leave in the list |
 
 The new answer screen sits behind one switch. The old chat screen is not deleted, and the old answers (the event, Kwanjeong, and Quest cards) go inside the new card as they are.
+
+### What only people can do
+
+A PR does not merge without a teammate's approval, so approvals set the pace of the build.
+
+| Who | What only people can do |
+|---|---|
+| App-side member 1 | Approves app PRs, within 30 minutes on Saturday and Sunday. Keeps phone 1 on today's Production APK, checks that each over-the-air update arrives, and records the screen of each step that works |
+| App-side member 2 | Keeps phone 2. Makes two test accounts that are Friends of each other, and enters Timetables that fit the time of the check. Revises the acceptance-test sheet if the Sunday check passes |
+| Server-side member 1 | Approves server PRs, within 30 minutes. Sets up the Firebase project and its push credentials before the native Release on 11/19 |
+| Server-side member 2 | Finds testers and runs the acceptance tests on 11/16 and 11/18. Checks on site how the library counts the 30 minutes for confirming a seat and when the room-booking window opens. Keeps the standup log and records the demo video |
+| The builder | Builds the path, and pushes each Release tag after approval |
+
+The question of the check needs a cafeteria that is open and a next class at that time of day, so the time of the check is fixed together with the test Timetables.
 
 ## 6. The Sunday 21:00 check
 
@@ -89,6 +105,8 @@ What stands in until then:
 | Catching arrival and leaving by location | Notifications at set times |
 
 ## 8. Iteration 5 (11/21–12/04)
+
+The freshman package (design section 6.5; rows 7 and 12) is a major storyline and is built first after the lunch path.
 
 - A: polishing re-planning, lateness told in words, shuttle estimates (row 7), and the set of location questions and two baselines.
 - B: cluster circles on every map, the Avatar's three shapes and badges, dashed lines and dimming, the building fact card (row 6), the failure cases (row 8), and removing the old chat screen.
