@@ -8,6 +8,7 @@ import { render, screen, userEvent, within } from '@testing-library/react-native
 import type { ComponentProps } from 'react';
 
 import { INVITATION_CARD } from '@/api/mock/data/invitation-card';
+import { color, font } from '@/design-system';
 import { ReceivedInvitationCard } from '@/screens/main/answer/received-invitation-card';
 import { UNKNOWN_WAY_CARD } from './support/invitation-cards';
 
@@ -131,6 +132,31 @@ describe("the way's words of a received invitation", () => {
     expect(screen.getByTestId('answer-lines')).toHaveTextContent(
       '12:15에 수업이 끝나면 바로 나서면 돼요. 걸어서 18분.',
     );
+  });
+});
+
+// Partitions of the stored card's way line: the whole line, and its strong part. Expected values: the wireframe
+// (AmHungry-g5), which draws the line in body text, 15 on 22, after the route arrow; the strong words in the key colour
+// and the semibold weight.
+describe("the way's line of a received invitation", () => {
+  it('is drawn at body size after the route arrow', async () => {
+    await show();
+
+    const lines = within(screen.getByTestId('answer-lines'));
+    expect(lines.getByText('12:15에 수업이 끝나면 바로 나서면 돼요. 걸어서 18분.')).toHaveStyle({
+      fontSize: 15,
+      lineHeight: 22,
+    });
+    expect(lines.getByTestId('way-icon', { includeHiddenElements: true })).toBeOnTheScreen();
+  });
+
+  it('draws its strong words in the key colour and the semibold weight', async () => {
+    await show();
+
+    expect(screen.getByText('12:15에 수업이 끝나면 바로 나서면 돼요.')).toHaveStyle({
+      color: color.snuBlue,
+      fontFamily: font.semiBold,
+    });
   });
 });
 

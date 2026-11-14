@@ -82,7 +82,7 @@ function Invitation({ card, offCampus, busy, onAccept, onDecline }: InvitationPr
         {title}
       </Text>
       {holders === '' ? null : <Text style={styles.with}>{`${withParticle(holders)} 함께`}</Text>}
-      {lines.length === 0 ? null : <AnswerLines lines={lines} />}
+      {lines.length === 0 ? null : <AnswerLines lines={lines} way />}
       <View style={styles.steps}>
         <QuestSteps steps={card.steps} />
       </View>
