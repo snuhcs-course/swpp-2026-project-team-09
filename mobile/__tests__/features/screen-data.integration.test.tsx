@@ -52,6 +52,7 @@ describe('the friend list', () => {
       visible: true,
       level: 'exact',
       sharing: true,
+      askedOff: false,
     });
   });
 

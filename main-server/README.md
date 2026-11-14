@@ -136,8 +136,9 @@ lobby, which gives it what it needs to run, after a sign-in or a start with stor
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are required, and the
    profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false }`, the profile as
-   `GET /users/me/profile` gives it and whether the User's [Master Switch](#location-sharing) is on. Later features add
+4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false }`,
+   the profile as `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, and
+   whether the app has asked the User before they turned it off (see [Asking once](#asking-once)). Later features add
    what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
@@ -193,9 +194,11 @@ Request to it. The routes, all a User's:
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
 - `GET /friends` answers the User's Friends in the order of their names:
-  `[{ "id", "name", "department", "level", "sharing", "visible" }]`, where `id` is the Friend's User id, `level` the
-  User's own end of the friendship, `sharing` whether it is above `timetable`, and `visible` whether the User sees the
-  Friend's position or Place on the map now, never why not (see [Location Sharing](#location-sharing)).
+  `[{ "id", "name", "department", "level", "sharing", "visible", "askedOff", "askedPlan" }]`, where `id` is the
+  Friend's User id, `level` the User's own end of the friendship, `sharing` whether it is above `timetable`, `visible`
+  whether the User sees the Friend's position or Place on the map now, never why not (see
+  [Location Sharing](#location-sharing)), and `askedOff` and `askedPlan` whether the app has asked the User about the
+  Friend (see [Asking once](#asking-once)).
 - `DELETE /friends/:userId` ends the friendship for both and answers 204.
 - `PUT /friends/:userId/level` with `{ "level": "timetable" }`, `"building"`, or `"exact"` sets what the User lets the
   Friend see of where they are, and answers 204. It changes the User's own end only.
@@ -229,6 +232,28 @@ when a friendship ends. It carries nothing, and the app fetches `GET /friends` a
 
 A friendship starts at `building` on both ends, so accepting a Friend Request starts Location Sharing between the two
 at the building. The table keeps each User's level at their own end, in `user_a_level` and `user_b_level`.
+
+### Asking once
+
+The app asks a User at two moments and asks each once; the server keeps when it first asked
+(`src/friends/friend-asks.service.ts`). Nothing about a question reaches the other User, and none of these routes sends
+a signal of its own.
+
+- **Before turning location off**: before a Friend's level is set to `timetable` from above it, the app asks about that
+  Friend, and before the Master Switch is turned off, about the Master Switch. Each answer, "취소" included, is recorded:
+  `POST /friends/asked` with `{ "userIds": ["..."], "moment": "off" }`, or `POST /users/me/master-switch/asked` with no
+  body. The Master Switch's "건물까지만" sends `PUT /users/me/friend-levels` with `{ "level": "building" }`, which
+  lowers every Friend above that level to it at the User's end, with the announcements a change of each level sends.
+- **After a first Plan with a Friend**: the reply of `POST /plans` gains
+  `"askLevels": [{ "userId", "name", "level" }]`, the Friends of the Plan whom the User was not asked about yet, in the
+  Plan's order, each with the User's end; none once all were asked. The app records an answer or a skip with
+  `POST /friends/asked` and `"moment": "plan"`, and sets a chosen level with `PUT /friends/:userId/level`. Accepting an
+  invitation never asks.
+
+Each answers 204, and a repeat keeps the first time. `POST /friends/asked` takes 1 to 8 User ids and is refused with
+`FRIEND_NOT_FOUND` when one is no Friend, recording nothing. Stored: `off_asked_at` and `plan_asked_at` at each end of a
+friendship (`user_a_off_asked_at`, …), and `users.master_off_asked_at`. `GET /friends` gives them as `askedOff` and
+`askedPlan`, and the lobby as `masterOffAsked`.
 
 An Administrator sets up demo accounts through `src/friends/admin-friends.controller.ts`, whose routes need an
 Administrator's access token (see [Administrators](#administrators)). Nothing else about a User is read or changed

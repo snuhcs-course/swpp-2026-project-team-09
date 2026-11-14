@@ -122,12 +122,13 @@ export function answerParty(server: FakeServer, answers: Answers = {}): (next: A
   server.on('GET /quests', () => ({ status: 200, body: held.quests }));
   server.on('GET /quest-join-requests', () => ({ status: 200, body: held.requests }));
   server.on('GET /quest-invitations', () => ({ status: 200, body: held.invitations }));
+  const exact = { level: 'exact', sharing: true, askedOff: false, askedPlan: false };
   server.on('GET /friends', {
     status: 200,
     body: [
-      { ...MIN_JUN_HOLDER, level: 'exact', sharing: true, visible: true },
-      { ...SEO_YEON_HOLDER, level: 'exact', sharing: true, visible: false },
-      { ...YU_NA, level: 'exact', sharing: true, visible: false },
+      { ...MIN_JUN_HOLDER, ...exact, visible: true },
+      { ...SEO_YEON_HOLDER, ...exact, visible: false },
+      { ...YU_NA, ...exact, visible: false },
     ],
   });
   return set;

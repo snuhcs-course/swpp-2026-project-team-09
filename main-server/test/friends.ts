@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,6 +17,9 @@ export const FRIEND_ID = /^[2-9A-HJKMNP-Z]{8}$/u;
 
 // Matches any Friend ID in an expected value. Typed, so that lint lets it into an object.
 export const A_FRIEND_ID: unknown = expect.stringMatching(FRIEND_ID);
+
+// What GET /friends gives of a new friendship besides the Friend, while the User sees nothing of them.
+export const NEW_FRIENDSHIP = { level: 'building', sharing: true, visible: false, askedOff: false, askedPlan: false };
 
 export interface TestUser {
   id: string;

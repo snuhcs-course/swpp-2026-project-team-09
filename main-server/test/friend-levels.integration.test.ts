@@ -52,6 +52,8 @@ const friendOf = (friend: TestUser, level: FriendLevel, sharing: boolean, visibl
   level,
   sharing,
   visible,
+  askedOff: false,
+  askedPlan: false,
 });
 
 describe('A new friendship', () => {

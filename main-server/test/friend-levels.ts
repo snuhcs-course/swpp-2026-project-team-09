@@ -53,6 +53,11 @@ export async function placeNumbered(app: INestApplication<Server>, user: TestUse
   return place;
 }
 
+// POST /friends/asked, as the app records that it asked about these Friends.
+export function recordAsked(app: INestApplication<Server>, user: TestUser, body: object): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post('/friends/asked'), user.accessToken).send(body);
+}
+
 // The digits of the positions' coordinates that the values hold.
 export function coordinatesIn(values: unknown, ...positions: { latitude: number; longitude: number }[]): string[] {
   const text = JSON.stringify(values);

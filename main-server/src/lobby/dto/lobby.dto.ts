@@ -3,12 +3,15 @@
  *
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { ProfileDto } from '../../users/dto/profile.dto.js';
 
-// What the app needs when it starts. Later features add to it.
+// What the app needs when it starts. Later features add to it. masterOffAsked says whether the app has asked the User,
+// before they turned the Master Switch off, whether to show the building instead.
 export interface LobbyDto {
   profile: ProfileDto;
   masterSwitch: boolean;
+  masterOffAsked: boolean;
 }
