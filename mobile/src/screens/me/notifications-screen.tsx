@@ -37,6 +37,7 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   accepted: 'invitation',
   declined: 'invitation',
   'leave-by': 'navy',
+  'interest-new': 'navy',
   notice: 'invitation',
 };
 
