@@ -13,6 +13,7 @@ let known: boolean | null = null;
 let appStarts = 0;
 let reading = false;
 const readers = new Set<() => void>();
+const changeWatchers = new Set<() => void>();
 
 function tell(): void {
   for (const reader of readers) {
@@ -59,9 +60,23 @@ export function useAnswerSwitch(): boolean {
   return useSyncExternalStore(subscribe, isOn);
 }
 
+// Calls `watcher` on each change of the switch; the first read of what the phone keeps is not one.
+export function onAnswerSwitchChange(watcher: () => void): () => void {
+  changeWatchers.add(watcher);
+  return (): void => {
+    changeWatchers.delete(watcher);
+  };
+}
+
 export async function setAnswerSwitch(on: boolean): Promise<void> {
+  const changed = on !== isOn();
   known = on;
   tell();
+  if (changed) {
+    for (const watcher of changeWatchers) {
+      watcher();
+    }
+  }
   await keep({ answerOnMap: on });
 }
 

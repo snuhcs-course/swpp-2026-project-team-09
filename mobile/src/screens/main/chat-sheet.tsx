@@ -11,13 +11,13 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, useCallback, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal, RequestContext } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { Button, color, font, Icon, space } from '@/design-system';
-import { useAnswerSwitch } from '@/features/assistant/answer-switch';
+import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { openPost } from '../party/post-card';
@@ -200,7 +200,8 @@ function contextAt(position: LatLng | null): RequestContext {
 // otherwise.
 // With the switch of the answer on the map on, every request carries the context at the User's `position`, the sheet
 // never opens, and the answer frame shows the conversation instead: a card that leads elsewhere leaves the frame as
-// it is, and a map button forgets the conversation and turns its layer on.
+// it is, and a map button forgets the conversation and turns its layer on. A change of the switch closes the sheet and
+// forgets the conversation.
 export function useChatSheet(
   inFront: boolean,
   turnOn: (layer: MapLayer) => void,
@@ -218,6 +219,15 @@ export function useChatSheet(
     Keyboard.dismiss();
     setShown(false);
   }, []);
+  const { reset } = chat;
+  useEffect(
+    () =>
+      onAnswerSwitchChange(() => {
+        closeSheet();
+        reset();
+      }),
+    [closeSheet, reset],
+  );
   const close = frame ? stay : closeSheet;
   const { showLayer, openEvent, openQuestPost, openPartyForm } = useLeaving(close, turnOn);
   const proposals = useProposalMaking(close);
