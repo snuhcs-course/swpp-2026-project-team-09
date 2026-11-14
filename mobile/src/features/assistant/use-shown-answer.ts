@@ -76,13 +76,11 @@ function withPlan(state: AnswerState, index: number): AnswerState {
   return index === state.index ? state : { ...state, index, basisOpen: false };
 }
 
-// The Plan with the id of the one on screen stays when the new answer has it, otherwise the first.
+// After a drag the Plan with the id of the one on screen stays when the new answer has it, otherwise the first: the
+// User moved the time of the Plan they look at. Any other change changed who eats or where from, and so the order.
 function replaced(last: AnswerState, next: AnswerReply, by: 'drag' | undefined): AnswerState {
   const shownId = last.answer?.plans[last.index]?.id;
-  const index = Math.max(
-    0,
-    next.plans.findIndex(({ id }) => id === shownId),
-  );
+  const index = by === 'drag' ? Math.max(0, next.plans.findIndex(({ id }) => id === shownId)) : 0;
   const kept = by === 'drag' ? { answer: last.answer, index: last.index } : null;
   return { ...last, answer: next, index, basisOpen: false, kept, recalculating: false };
 }

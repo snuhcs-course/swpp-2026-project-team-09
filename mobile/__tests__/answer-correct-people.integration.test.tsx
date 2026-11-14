@@ -67,9 +67,10 @@ describe('taking a Friend out', () => {
     await pass(500);
 
     expect(recalculations(server)).toEqual([{ input: { ...MEAL_ANSWER.input, people: [ASKER] }, location: ON_CAMPUS }]);
-    // 302동식당, the Plan on screen, is the fourth of the answer for the User alone.
-    expect(card().getByText('3분을 걷고 12:43엔 나서야 해요')).toBeVisible();
-    expect(card().getByText('4/5')).toBeVisible();
+    // Who eats changed, so the first Plan of the answer for the User alone is shown.
+    expect(card().getByText('301동식당')).toBeVisible();
+    expect(card().getByText('12:45엔 나서야 해요')).toBeVisible();
+    expect(card().getByText('1/5')).toBeVisible();
     expect(card().getByRole('button', { name: '301동에서' })).toBeVisible();
     expect(card().queryByRole('button', { name: '민수 빼기' })).toBeNull();
     expect(mapThings()).not.toContain('민수');

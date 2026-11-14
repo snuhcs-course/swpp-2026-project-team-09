@@ -20,7 +20,7 @@ A User looking at a Plan corrects it where it is shown. The card's chips say the
 - [ ] **While a recalculation is on its way** the band stays where it was dropped, and the chips, the handles, and the arrows take no press.
 - [ ] **After a drag** the band's place before it is drawn as a dashed outline, and "되돌리기" brings back the answer shown before the drag without a request. Another change of the conditions drops the outline.
 - [ ] A busy stretch inside the window the User fixed is drawn in the warning colour.
-- [ ] **Which Plan is shown** after a recalculation: the one with the same id when the new answer has it, otherwise the first. An answer without a Plan shows its lines, keeps the chips, and keeps "되돌리기" after a drag.
+- [ ] **Which Plan is shown** after a recalculation: after a drag, the one with the same id when the new answer has it, otherwise the first; after any other change, the first. An answer without a Plan shows its lines, keeps the chips, and keeps "되돌리기" after a drag.
 - [ ] **A failed recalculation** shows a toast and leaves the answer on screen as it was.
 - [ ] **Words.** A message sent while a Plan is on screen carries the conditions and the Plan's id in the request context. The reply's answer replaces the one on screen.
 - [ ] **The mock client** answers a recalculation from the stored copies of real answers: the answer for the User alone when only the User is in the conditions, the answer for three people when three or more are, the answer with a fixed start when a window is fixed, and otherwise the first copy; each with the conditions it was given.
@@ -50,4 +50,4 @@ Details the spec left to the implementation, listed so that any of them can be v
 12. **A handle takes a touch 44 wide** (14 of `hitSlop` at each side of its 16), and its pan begins after 10 points sideways and fails after 10 points up or down.
 13. **The request context reads the answer on screen from a ref** that is set after each render, so that a message sent after a recalculation carries the recalculated conditions.
 14. **The mock does not answer a fixed window with the fixed-start copy**: the existing mock test sends a window fixed at 12:40 and expects the first copy, so only the User alone, three or more people, and the User's own start choose another copy.
-15. **Taking 민수 out from the first Plan keeps 302동식당 on screen** (the fourth Plan of the answer for the User alone), by the rule that the Plan with the same id stays.
+15. **Which Plan is shown after a recalculation**: after a drag (a change made with `'drag'`) the Plan with the same id stays when the new answer has it, otherwise the first, since the User moved the time of the Plan they look at; after any other change (a person out or in, the origin) the first Plan of the new answer, since who eats or where from changed the order of the Plans. So taking 민수 out shows 301동식당, the first Plan of the answer for the User alone.

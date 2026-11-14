@@ -7,13 +7,18 @@
 import { act } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
-import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
+import {
+  MEAL_ANSWER_ALONE,
+  MEAL_ANSWER_FIXED_START,
+  MEAL_ANSWER_OTHER_ORIGIN,
+  MEAL_ANSWER_THREE,
+} from '@/api/mock/data/meal-answers';
 import { ANSWERED, change, failed, HERE, heldBack, hold, replied, said } from '../support/shown-answer';
 
 // The answer on screen once the card corrects it (P02 spec, "Correcting the answer"), with the API client stood in.
 // The answers are the stored copies of the main server's replies: five Plans for "배고파, 민수랑 같이" (302동식당,
-// 301동식당, 학생회관식당, 3식당, 자하연식당 2층), the User alone (학생회관식당 second), and a fixed start (no
-// 302동식당).
+// 301동식당, 학생회관식당, 3식당, 자하연식당 2층), the User alone (301동식당 first, 학생회관식당 second), another
+// starting Place (the same five in the same order), and a fixed start (no 302동식당).
 
 jest.mock('@/api/client', () => ({ apiClient: { recalculateAnswer: jest.fn() } }));
 
@@ -49,7 +54,7 @@ describe('the answer on screen, by the last reply', () => {
   });
 });
 
-// Partitions: the Plan on screen in the new answer or not.
+// Partitions: a change that is no drag; the Plan on screen in the new answer or not.
 describe('a recalculation', () => {
   it('sends the input and the location, and is recalculating until its answer comes', async () => {
     const reply = heldBack(recalculate);
@@ -65,6 +70,23 @@ describe('a recalculation', () => {
     expect(held.shown().source).toBe(MEAL_ANSWER);
   });
 
+  it('shows the first Plan, also when the new answer has the one on screen', async () => {
+    const reply = heldBack(recalculate);
+    const held = await hold(ANSWERED);
+    await act(() => {
+      held.shown().show('학생회관식당');
+    });
+
+    await change(held, ALONE_INPUT);
+    await reply.come(MEAL_ANSWER_ALONE);
+
+    expect(held.shown().index).toBe(0);
+    expect(held.shown().plan?.id).toBe('301동식당');
+  });
+});
+
+// Partitions: the Plan on screen in the drag's answer at another index, at the same index, or not in it.
+describe('a recalculation after a drag', () => {
   it('keeps the Plan on screen when the new answer has it, and closes the basis', async () => {
     const reply = heldBack(recalculate);
     const held = await hold(ANSWERED);
@@ -73,7 +95,7 @@ describe('a recalculation', () => {
       held.shown().toggleBasis();
     });
 
-    await change(held, ALONE_INPUT);
+    await change(held, ALONE_INPUT, 'drag');
     await reply.come(MEAL_ANSWER_ALONE);
 
     expect(held.shown().plan?.id).toBe('학생회관식당');
@@ -81,11 +103,26 @@ describe('a recalculation', () => {
     expect(held.shown().basisOpen).toBe(false);
   });
 
+  it('keeps the third Plan on screen in an answer from another starting Place', async () => {
+    const reply = heldBack(recalculate);
+    const held = await hold(ANSWERED);
+    await act(() => {
+      held.shown().show('학생회관식당');
+    });
+
+    await change(held, MEAL_ANSWER_OTHER_ORIGIN.input, 'drag');
+    await reply.come(MEAL_ANSWER_OTHER_ORIGIN);
+
+    expect(held.shown().answer).toBe(MEAL_ANSWER_OTHER_ORIGIN);
+    expect(held.shown().plan?.id).toBe('학생회관식당');
+    expect(held.shown().index).toBe(2);
+  });
+
   it('shows the first Plan when the new answer does not have the one on screen', async () => {
     const reply = heldBack(recalculate);
     const held = await hold(ANSWERED);
 
-    await change(held, MEAL_ANSWER_FIXED_START.input);
+    await change(held, MEAL_ANSWER_FIXED_START.input, 'drag');
     await reply.come(MEAL_ANSWER_FIXED_START);
 
     expect(held.shown().index).toBe(0);

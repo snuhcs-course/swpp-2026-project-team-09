@@ -670,8 +670,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   handle of the time band (`time-band.tsx`), dragged or stepped by a screen reader, fixes that bound of the window.
   Each change goes to `POST /assistant/answers` with the User's position (`change` of `useShownAnswer`, the changes
   in `src/features/assistant/plan-input.ts`), one at a time: meanwhile the chips, the Friends, the handles, the arrows,
-  and "되돌리기" take no press. Its answer replaces the one on screen, keeping the Plan with the same id or else the
-  first; a failure says "다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요" and changes nothing, and an answer that
+  and "되돌리기" take no press. Its answer replaces the one on screen: after a drag, keeping the Plan with the same
+  id or else the first; after any other change, showing the first; a failure says "다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요" and changes nothing, and an answer that
   comes after the conversation was forgotten or replaced is dropped. After a drag the band before it stays as a
   dashed outline, and "되돌리기" brings back what was shown before the drag without a request; any other change or a
   new reply drops it. Words sent while an answer is on screen carry its `input` and the id of the Plan on screen in
