@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
-import { type MapLine, NATIVE_MIN_LEVEL } from '@/map';
+import { type MapAvatar, type MapLine, NATIVE_MIN_LEVEL } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
 import { type MapContents, useAnswerMap, useInvitationMap } from './use-answer-map';
@@ -35,6 +35,13 @@ function pressWithPin(pin: TutorialPin, onThing: (id: string) => void): (id: str
   };
 }
 
+// The everyday map's Avatars but those of people, Friends and the other people of the User's Party: under a received
+// invitation's card nobody else is drawn, also when its way has nothing to draw.
+function withoutPeople(avatars: readonly MapAvatar[], cards: readonly CardView[]): MapAvatar[] {
+  const people = new Set(cards.flatMap(({ id, mark }) => (mark.type === 'person' ? [id] : [])));
+  return avatars.filter(({ id }) => !people.has(id));
+}
+
 export interface Everyday {
   me: Me;
   pin: TutorialPin;
@@ -55,17 +62,17 @@ export function useMapView(
   invitation: ReceivedInvitation,
 ): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
-  const everyday = { avatars: things.avatars, cards };
-  const answer = useAnswerMap(chat.answer, map, room, everyday, chat.invitation);
-  const way = useInvitationMap(invitation.shown ? invitation.drawing : null, map, room, everyday);
+  const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
+  const way = useInvitationMap(invitation.shown ? invitation.drawing : null, map, room);
   if (answer !== null) {
     return answer;
   }
   if (way !== null) {
     return way;
   }
+  const avatars = invitation.shown ? withoutPeople(things.avatars, cards) : things.avatars;
   return {
-    contents: { markers: [...things.markers, ...pin.markers], avatars: [...things.avatars, ...me.avatars], lines },
+    contents: { markers: [...things.markers, ...pin.markers], avatars: [...avatars, ...me.avatars], lines },
     onPress: chat.framed || invitation.shown ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
     nativeMinLevel: NATIVE_MIN_LEVEL,
   };

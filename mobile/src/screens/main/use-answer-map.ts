@@ -105,16 +105,15 @@ export interface AnswerMap {
 
 type Everyday = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
 
-// A drawing on the map in place of the everyday map's markers, lines, the User's own Avatar, and the Avatars of the
-// people it draws, with the camera of an answer. Null while there is nothing to draw. `looks` are asked for with the
-// drawing's own, so that a change of drawing never waits for a picture.
+// A drawing's markers and lines on the map in place of the everyday map's markers, lines, and the User's own Avatar,
+// with the camera of an answer. Null while there is nothing to draw. `looks` are asked for with the drawing's own, so
+// that a change of drawing never waits for a picture.
 function useDrawnMap(
   drawing: AnswerDrawing | null,
   looks: readonly MarkerLook[],
   map: MainMap,
   room: Room,
-  everyday: Everyday,
-): MapContents | null {
+): Omit<MapContents, 'avatars'> | null {
   const things = drawing?.things ?? [];
   const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
   useAnswerCamera(drawing, map, room);
@@ -125,22 +124,22 @@ function useDrawnMap(
     const image = images[at];
     return image === undefined ? [] : [{ id, name, position, image, order, passive: planId === null }];
   });
-  return { markers, avatars: othersOf(everyday.avatars, everyday.cards, drawing), lines: drawing.lines };
+  return { markers, lines: drawing.lines };
 }
 
 function ignorePress(): void {
   // Nothing of a received invitation's way takes a press.
 }
 
-// The invitee's own way of a received invitation drawn as a Plan is. Null while there is none to draw.
-export function useInvitationMap(
-  drawing: AnswerDrawing | null,
-  map: MainMap,
-  room: Room,
-  everyday: Everyday,
-): AnswerMap | null {
-  const contents = useDrawnMap(drawing, NO_LOOKS, map, room, everyday);
-  return contents === null ? null : { contents, onPress: ignorePress, nativeMinLevel: ANSWER_MIN_LEVEL };
+const NO_AVATARS: readonly MapAvatar[] = [];
+
+// The invitee's own way of a received invitation drawn as a Plan is, with no Avatar of anyone else: the card says
+// that others are shown once the Party is on. Null while there is none to draw.
+export function useInvitationMap(drawing: AnswerDrawing | null, map: MainMap, room: Room): AnswerMap | null {
+  const drawn = useDrawnMap(drawing, NO_LOOKS, map, room);
+  return drawn === null
+    ? null
+    : { contents: { ...drawn, avatars: NO_AVATARS }, onPress: ignorePress, nativeMinLevel: ANSWER_MIN_LEVEL };
 }
 
 // A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
@@ -169,17 +168,17 @@ export function useAnswerMap(
     [answer, index, standings],
   );
   const looks = useMemo(() => (answer === null ? NO_LOOKS : looksOf(answer)), [answer]);
-  const contents = useDrawnMap(drawing, looks, map, room, everyday);
-  if (contents === null) {
+  const drawn = useDrawnMap(drawing, looks, map, room);
+  if (drawn === null || drawing === null) {
     return null;
   }
   return {
-    contents,
+    contents: { ...drawn, avatars: othersOf(everyday.avatars, everyday.cards, drawing) },
     onPress: (id) => {
       if (sending || made !== null) {
         return;
       }
-      const planId = drawing?.things.find((thing) => thing.id === id)?.planId ?? null;
+      const planId = drawing.things.find((thing) => thing.id === id)?.planId ?? null;
       if (planId === null) {
         addOnPress(shown, id);
       } else {
