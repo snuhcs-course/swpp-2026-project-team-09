@@ -13,18 +13,13 @@ import { QuestsModule } from '../quests/quests.module.js';
 import { TravelModule } from '../travel/travel.module.js';
 import { InvitationCardController } from './invitation-card.controller.js';
 import { InvitationCardService } from './invitation-card.service.js';
+import { InviteeTimeToLeave } from './invitee-time-to-leave.service.js';
 import { PlansController } from './plans.controller.js';
 import { PlansService } from './plans.service.js';
 
 @Module({
-  imports: [
-    AssistantModule,
-    NotificationsModule,
-    PlacesModule,
-    QuestsModule,
-    TravelModule,
-  ],
+  imports: [AssistantModule, NotificationsModule, PlacesModule, QuestsModule, TravelModule],
   controllers: [PlansController, InvitationCardController],
-  providers: [PlansService, InvitationCardService],
+  providers: [PlansService, InvitationCardService, InviteeTimeToLeave],
 })
 export class PlansModule {}

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -23,7 +24,7 @@ import { type CardStep, type Gathered, gatheringOf, ownWay, placePoint } from '.
 const startOf = ({ startsAt }: Pick<SubQuestDto, 'startsAt'>): number =>
   startsAt === null ? Number.POSITIVE_INFINITY : new Date(startsAt).getTime();
 
-function toCardStep({ id, title, startsAt, endsAt, place, ended }: SubQuestDto): CardStep {
+export function toCardStep({ id, title, startsAt, endsAt, place, ended }: SubQuestDto): CardStep {
   return {
     id,
     title,

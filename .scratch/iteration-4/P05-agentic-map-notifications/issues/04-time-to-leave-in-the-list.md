@@ -65,6 +65,14 @@ Details the ticket left to the implementation, listed so that any of them can be
 5. **The kind's look in the app**: the clock icon on the navy round. A kind the app does not know keeps the calendar.
 6. **An older main server** sends no `ahead`: the answer's check takes a missing one as none.
 7. **The two warnings**, when keeping or cancelling fails, are "The Leader's time to leave was not kept" and "A Holder's time to leave was not cancelled", each with the error.
+8. **An invited User's time to leave** is kept by `InviteeTimeToLeave`, a provider of the Plans' module that registers with `InvitationsService.onAccepted()`; the listeners are called once the acceptance is stored and signalled, so the Quests' module never imports the Plans' module.
+9. **It is kept for any Quest whose steps give a gathering**, not only a party made from a Plan.
+10. **Their way** is worked out as their invitation's card works it out, at the accept's time and from their Timetable alone, with the Quest's own steps, which their day holds once they enter it, left out.
+11. **The Place** is named as the card names the gathering's, by `placeLabel()` ("63동" for the Student Center), since the Quest keeps no Restaurant's name.
+12. **The walk** is the minutes of the whole way, through the Merging Point when they take it. None is kept when the way has no time to set out or a walk of 0 minutes.
+13. **Leaving the Quest**, by dropping it or by the Leader's removal, cancels that User's `leave-by` with the warning "A Holder's time to leave was not cancelled"; a Leader who drops it loses theirs too. `LeaderService.forgetTimeToLeave()` does it for an end, a removal, and a drop, which the route calls after `QuestsService.drop()`, since that file has no line left under `max-lines`.
+14. **The warning** when an invited User's is not kept is "An invited User's time to leave was not kept", with the error.
+15. **A cancel that forgets nothing sends no `notice`**, so that dropping, removing, or ending a Quest without a time to leave signals as it did before.
 
 ### Checked by hand (2026-11-15)
 
