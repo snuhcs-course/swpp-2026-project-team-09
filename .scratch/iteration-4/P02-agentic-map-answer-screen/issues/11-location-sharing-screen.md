@@ -37,3 +37,10 @@ The switch and each level ask once as P03 ticket 12 built them. 내 정보's car
 - "남기지 않는 것" draws each row as the thing at the start and the fact at the end, read as one ("누가 나를 찾았는지 · 기록 안 함").
 - The mock keeps each Friend's own end: what the two see at the start (the User's end, the Timetable for the two whose location is off) and the building for a new Friend; `seen` is the lower of that and the User's end. The mock's `visible` is left as it was.
 - The refusal's "위치 공유 보기" is ticket 10's: the route and its place in the stack are ready for it, and the box above stays open until that ticket opens the screen.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). The row's survey of its 28 boards against the code is counted under ticket 10; this session's review and the pull request under P03 ticket 07.
+
+- Agent time: about 26 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 81,827; input 22,353,828, of which 22,079,868 were cache reads, 273,758 cache writes, and 202 uncached. Without cache reads: 355,787.
