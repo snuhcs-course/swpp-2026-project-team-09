@@ -17,7 +17,7 @@ Blocked by: 03, and an emulator check that a press on a Friend's face during a P
 - [x] The open list's second line reads "지도의 얼굴을 누르거나 아래에서 골라요" (in place of "가까운 친구부터 보여요").
 - [x] A wrong add is undone with that person's ✕ in the chip row.
 - [x] Tests at the main screen over the fake main server for each of the above, and the README.
-- [ ] The screen is run on an Android emulator: a press on a face during a Plan, an add of a Friend with no position, and two Friends in one building; the pull request carries the pictures.
+- [x] The screen is run on an Android emulator: a press on a face during a Plan, an add of a Friend with no position, and two Friends in one building; the pull request carries the pictures.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
@@ -36,3 +36,10 @@ From the decision of 2026-11-15 on choosing a Friend (`answer-screen-design/deci
 8. Over an answer without a Plan the open list's second line stays "가까운 친구부터 보여요": nothing is drawn, so no face carries a "+" and a press on a face adds no one. "지도의 얼굴을 누르거나 아래에서 골라요" is said only while a Plan is drawn.
 9. The answer's faces never carry the everyday map's selection. A Friend selected on the everyday map before asking, whose card the frame hides, is drawn unselected, in the Avatars' usual order, with a "+" when a press would add them; only the pending add lights a face and draws it above the others. The selection itself is left as the everyday map holds it.
 10. The "+" stands outside the Avatar. At the upper right of the 36-wide box it lay over the Avatar's second letter on the emulator ("도윤" read "도"), because the drop's circle fills the box's width. While a face carries it, the person's box grows 6 at both sides and at the top (48 by about 49): the drop and its tip keep their place, so the face stands where it stood, and the badge's round sits on the drop's rim, 17 from its centre, outside the Avatar (14) and its white ring (16), whole inside the box the picture is made from. Nothing reads a person's box as 36 wide: the anchor is the tip as a share of the box (`anchorShare`), a picture's size and anchor come from the view it is made from, and the order holds no size. The face takes a press over its larger picture.
+
+### Agent usage (2026-11-15)
+
+From the ticket's start to its pull request's merge with ticket 06 and `4.0/Main`. One session with five subagents for this ticket (the implementation, two reviewers, the reviews' fixes with the "+" moved off the face, and the merge); the session's own time counted is the emulator check and the pull request.
+
+- Agent time: about 62 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 289,136; input 66,554,423, of which 65,360,775 were cache reads, 1,192,976 cache writes, and 672 uncached. Without cache reads: 1,482,784.
