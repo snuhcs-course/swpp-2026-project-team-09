@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -12,9 +13,12 @@ import { color, mapText, radius, shadow, space, text } from './tokens';
 
 export type AnswerSymbol =
   | { type: 'me' }
-  // `dashed`: the position comes from the Timetable.
-  | { type: 'face'; name: string; dashed: boolean }
+  // `dashed`: the position comes from the Timetable. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's
+  // upper right; the caller says what it means.
+  | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge }
   | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next'; number: number | null };
+
+export type FaceBadge = 'waiting' | 'accepted';
 
 export type LabelSide = 'above' | 'below' | 'left' | 'right';
 
@@ -56,9 +60,19 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
   }
   if (symbol.type === 'face') {
     return (
-      <View style={[styles.face, { borderStyle: symbol.dashed ? 'dashed' : 'solid' }]} testID={partOf(testID, 'face')}>
-        <Text style={styles.letters}>{Array.from(symbol.name).slice(0, 2).join('')}</Text>
-      </View>
+      <>
+        <View
+          style={[styles.face, { borderStyle: symbol.dashed ? 'dashed' : 'solid' }]}
+          testID={partOf(testID, 'face')}
+        >
+          <Text style={styles.letters}>{Array.from(symbol.name).slice(0, 2).join('')}</Text>
+        </View>
+        {symbol.badge === undefined ? null : (
+          <View style={[styles.faceBadge, styles[symbol.badge]]} testID={partOf(testID, 'badge')}>
+            <Text style={styles.number}>{symbol.badge === 'waiting' ? '?' : '✓'}</Text>
+          </View>
+        )}
+      </>
     );
   }
   return <Dot {...symbol} testID={partOf(testID, 'dot')} />;
@@ -131,6 +145,7 @@ const CANDIDATE_DOT = 20;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const BADGE = 16;
+const FACE_BADGE = 14;
 
 const styles = StyleSheet.create({
   mark: { alignSelf: 'flex-start', alignItems: 'center', gap: GAP },
@@ -159,6 +174,18 @@ const styles = StyleSheet.create({
   candidate: { width: CANDIDATE_DOT, height: CANDIDATE_DOT, backgroundColor: color.inkSubtle },
   dropped: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.border },
   next: { width: NEXT_SQUARE, height: NEXT_SQUARE, borderRadius: radius.sm, backgroundColor: color.snuBlue },
+  faceBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: FACE_BADGE,
+    height: FACE_BADGE,
+    borderRadius: radius.full,
+  },
+  waiting: { backgroundColor: color.inkMuted },
+  accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
   badge: {

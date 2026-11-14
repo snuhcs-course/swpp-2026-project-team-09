@@ -1,0 +1,439 @@
+{
+  "input": {
+    "kind": "events",
+    "date": "2026-11-20",
+    "eventIds": null
+  },
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "24동에서",
+      "userId": null
+    },
+    {
+      "kind": "until",
+      "text": "15:30 수업까지",
+      "userId": null
+    }
+  ],
+  "plans": [
+    {
+      "id": "42b86020-4f3a-42e0-9efb-8a60e66a7d0b",
+      "title": "채용박람회",
+      "place": {
+        "placeId": "1d3c1a4b-333a-50a9-b092-e142be72e481",
+        "label": "문화관",
+        "latitude": 37.46159,
+        "longitude": 126.95104
+      },
+      "startAt": "2026-11-20T13:54:00+09:00",
+      "endAt": "2026-11-20T15:12:00+09:00",
+      "togetherMinutes": 78,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+              "label": "24동",
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-20T13:50:00+09:00",
+          "walkMinutes": 4,
+          "leaveBy": "2026-11-20T15:12:00+09:00",
+          "next": {
+            "startAt": "2026-11-20T15:30:00+09:00",
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            }
+          }
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "13:54 도착",
+            "strong": true
+          },
+          {
+            "text": " · 78분 볼 수 있어요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "15:30 수업이라 15:12엔 나서요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["24동에서 문화관까지 걸어서 4분", "문화관에서 301동까지 걸어서 18분"],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "source": "timetable",
+            "tag": "나 · 4분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "1d3c1a4b-333a-50a9-b092-e142be72e481",
+              "label": "문화관",
+              "latitude": 37.46159,
+              "longitude": 126.95104
+            },
+            "role": "pick",
+            "tag": "채용박람회"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "next",
+            "tag": "15:30 수업 · 301동"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "to": {
+              "latitude": 37.46159,
+              "longitude": 126.95104
+            },
+            "minutes": 4
+          },
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "next",
+            "from": {
+              "latitude": 37.46159,
+              "longitude": 126.95104
+            },
+            "to": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "minutes": 18
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.46159,
+              "longitude": 126.95104
+            },
+            "text": "13:54 채용박람회",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-20T13:30:00+09:00",
+          "endAt": "2026-11-20T16:00:00+09:00"
+        },
+        "now": "2026-11-20T13:50:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-20T13:30:00+09:00",
+                "endAt": "2026-11-20T13:50:00+09:00"
+              },
+              {
+                "startAt": "2026-11-20T15:30:00+09:00",
+                "endAt": "2026-11-20T16:00:00+09:00"
+              }
+            ]
+          }
+        ],
+        "startAt": "2026-11-20T13:54:00+09:00",
+        "endAt": "2026-11-20T15:12:00+09:00",
+        "text": "13:54–15:12 · 78분"
+      }
+    },
+    {
+      "id": "06b0d7bf-98aa-4d49-a22c-4c06d135891c",
+      "title": "동아리 정기공연",
+      "place": {
+        "placeId": "dce055f8-29f6-5575-babc-1a243bade3d3",
+        "label": "두레문예관",
+        "latitude": 37.46353,
+        "longitude": 126.94973
+      },
+      "startAt": "2026-11-20T18:00:00+09:00",
+      "endAt": "2026-11-20T18:30:00+09:00",
+      "togetherMinutes": 30,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-20T17:42:00+09:00",
+          "walkMinutes": 18,
+          "leaveBy": null,
+          "next": null,
+          "mode": "shuttle"
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "동아리 정기공연",
+            "strong": true
+          },
+          {
+            "text": " · 18:00 시작",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "17:42에 셔틀로 가요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["301동에서 두레문예관까지 셔틀로 18분"],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "timetable",
+            "tag": "나 · 18분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "dce055f8-29f6-5575-babc-1a243bade3d3",
+              "label": "두레문예관",
+              "latitude": 37.46353,
+              "longitude": 126.94973
+            },
+            "role": "pick",
+            "tag": "동아리 정기공연"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.46353,
+              "longitude": 126.94973
+            },
+            "minutes": 18,
+            "mode": "shuttle"
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.46353,
+              "longitude": 126.94973
+            },
+            "text": "18:00 동아리 정기공연",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-20T17:00:00+09:00",
+          "endAt": "2026-11-20T19:00:00+09:00"
+        },
+        "now": "2026-11-20T13:50:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": []
+          }
+        ],
+        "startAt": "2026-11-20T18:00:00+09:00",
+        "endAt": "2026-11-20T18:30:00+09:00",
+        "text": "18:00–18:30 · 30분"
+      }
+    },
+    {
+      "id": "c750f9a0-887e-4dc1-99d1-34b065ff6257",
+      "title": "기업 설명회",
+      "place": {
+        "placeId": "1d3c1a4b-333a-50a9-b092-e142be72e481",
+        "label": "문화관",
+        "latitude": 37.46159,
+        "longitude": 126.95104
+      },
+      "startAt": "2026-11-20T16:00:00+09:00",
+      "endAt": "2026-11-20T17:00:00+09:00",
+      "togetherMinutes": 60,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+              "label": "24동",
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-20T15:56:00+09:00",
+          "walkMinutes": 4,
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "기업 설명회",
+            "strong": true
+          },
+          {
+            "text": " · 16:00 문화관",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "15:30 수업과 겹쳐요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["24동에서 문화관까지 걸어서 4분"],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "source": "timetable",
+            "tag": "나 · 4분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "1d3c1a4b-333a-50a9-b092-e142be72e481",
+              "label": "문화관",
+              "latitude": 37.46159,
+              "longitude": 126.95104
+            },
+            "role": "pick",
+            "tag": "기업 설명회"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "to": {
+              "latitude": 37.46159,
+              "longitude": 126.95104
+            },
+            "minutes": 4
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.46159,
+              "longitude": 126.95104
+            },
+            "text": "16:00 기업 설명회",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-20T15:00:00+09:00",
+          "endAt": "2026-11-20T17:30:00+09:00"
+        },
+        "now": "2026-11-20T13:50:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-20T15:30:00+09:00",
+                "endAt": "2026-11-20T16:45:00+09:00"
+              }
+            ]
+          }
+        ],
+        "startAt": "2026-11-20T16:00:00+09:00",
+        "endAt": "2026-11-20T17:00:00+09:00",
+        "text": "16:00–17:00 · 수업과 겹쳐요"
+      }
+    }
+  ],
+  "dropped": [],
+  "noPlan": null
+}

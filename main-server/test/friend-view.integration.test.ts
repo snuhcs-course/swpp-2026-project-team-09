@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -77,6 +78,15 @@ describe('A Friend the viewer may see now', () => {
 
     expect(await view.list(viewer.id)).toEqual([
       { ...atTimetable(friend), level: 'exact', position: uploaded, placeId: await libraryPlaceId(viewer) },
+    ]);
+  });
+
+  it('is at the building, with the id of the Place they are in and no position', async () => {
+    const [viewer, friend] = await sharingFriends(app, 'building');
+    await expectStatus(uploadPosition(app, friend, position()), 200);
+
+    expect(await view.list(viewer.id)).toEqual([
+      { ...atTimetable(friend), level: 'building', placeId: await libraryPlaceId(viewer) },
     ]);
   });
 });

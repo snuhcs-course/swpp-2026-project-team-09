@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -49,6 +50,7 @@ describe('the friend list', () => {
       position: { latitude: 37.45952, longitude: 126.95209 },
       minutesOld: null,
       visible: true,
+      level: 'exact',
       sharing: true,
     });
   });

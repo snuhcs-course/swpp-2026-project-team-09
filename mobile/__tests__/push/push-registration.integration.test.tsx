@@ -15,7 +15,7 @@ import { pass, screen } from '../support/app';
 import { type FakeServer, refusal, startFakeServer } from '../support/fake-server';
 import { sockets } from '../support/fake-socket';
 import { openLive, SIGN_IN, socketServer } from '../support/live';
-import { givePhone, ON_CAMPUS, openMain } from '../support/main';
+import { givePhone, ON_CAMPUS, openMain, type Phone } from '../support/main';
 import { startFresh } from '../support/mocks';
 import { CHANGED_TOKEN, givePushPhone, PHONE_TOKEN } from '../support/push';
 import { REGISTER } from '../support/push-moments';
@@ -44,6 +44,7 @@ jest.mock('expo', () => jest.requireActual<typeof PushFake>('../support/push').e
 jest.mock('expo-notifications', () => jest.requireActual<typeof PushFake>('../support/push').notificationsModule);
 
 let server: FakeServer;
+let front: Phone;
 
 beforeEach(async () => {
   jest.replaceProperty(Platform, 'OS', 'android');
@@ -53,7 +54,7 @@ beforeEach(async () => {
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
   server.on(REGISTER, { status: 204 });
-  givePhone({ permission: 'granted', position: ON_CAMPUS });
+  front = givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
 afterEach(() => {
@@ -112,6 +113,34 @@ describe('the registration with the permission granted', () => {
 
     expect(registered()).toHaveLength(1);
     expect(screen.getByRole('tab', { name: /^지도/u })).toBeSelected();
+  });
+});
+
+describe('a registration that did not go through', () => {
+  it('is tried again when the app comes to the front, and no more once it went through', async () => {
+    server.on(REGISTER, refusal(500));
+    givePushPhone({ permission: 'granted' });
+    await openMain();
+    expect(registered()).toHaveLength(1);
+
+    server.on(REGISTER, { status: 204 });
+    await front.comeToFront();
+    expect(registered()).toHaveLength(2);
+
+    await front.comeToFront();
+    expect(registered()).toHaveLength(2);
+  });
+
+  it("is sent once notifications are allowed in the phone's settings and the app comes to the front", async () => {
+    const phone = givePushPhone({ permission: 'denied' });
+    await openMain();
+    expect(registered()).toEqual([]);
+
+    phone.setPermission('granted');
+    await front.comeToFront();
+
+    expect(registered()).toEqual([{ token: PHONE_TOKEN }]);
+    expect(phone.prompts()).toBe(0);
   });
 });
 

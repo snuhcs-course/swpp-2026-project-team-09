@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Post } from '@nestjs/common';
@@ -17,13 +18,13 @@ import {
   type AssistantReplyDto,
 } from './dto/assistant-messages.dto.js';
 import { outOfReach } from './free-time/tool-parts.js';
-import { MealPlanService } from './gathering/meal-plan.service.js';
+import { PlanAnswersService } from './plan-answers.service.js';
 
 @Controller('assistant')
 export class AssistantController {
   constructor(
     private readonly assistant: AssistantService,
-    private readonly mealPlans: MealPlanService,
+    private readonly answers: PlanAnswersService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -34,7 +35,9 @@ export class AssistantController {
     @CurrentUser() user: SignedInUser,
     @Body({ schema: assistantMessagesSchema }) { messages, clientCapabilities, context }: AssistantMessages,
   ): Promise<AssistantReplyDto> {
-    if (context.conditions !== null && context.conditions.people[0]?.userId !== user.id) {
+    const { conditions } = context;
+    const withPeople = conditions?.kind === 'meal' || conditions?.kind === 'new-quest' ? conditions : null;
+    if (withPeople !== null && withPeople.people[0]?.userId !== user.id) {
       throw new BadRequestException('The first person of a plan is the asker');
     }
     return this.assistant.reply(user.id, messages, clientCapabilities, context);
@@ -48,9 +51,10 @@ export class AssistantController {
     @Body({ schema: recalculationSchema }) { input, location }: Recalculation,
   ): Promise<AnswerReply> {
     const now = this.clock.now();
-    if (outOfReach(input.date, now)) {
+    // Recruiting Quests are each on the day of their own step.
+    if (input.kind !== 'quests' && outOfReach(input.date, now)) {
       throw new BadRequestException('A plan is for a day from today to a week ahead');
     }
-    return this.mealPlans.plan(user.id, input, { now, location });
+    return this.answers.plan(user.id, input, { now, location });
   }
 }

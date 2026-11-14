@@ -7,10 +7,12 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
+import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
 
 // --- The Assistant (POST /assistant/messages) ---
@@ -229,7 +231,9 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export interface PlanInput {
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput;
+
+export interface MealInput {
   kind: 'meal';
   // YYYY-MM-DD in Korea.
   date: string;
@@ -240,6 +244,15 @@ export interface PlanInput {
   window: { from: string | null; until: string | null };
   // The Place the User fixed.
   placeId: string | null;
+}
+
+// The Global Events of a day the asker can attend.
+export interface EventsInput {
+  kind: 'events';
+  // YYYY-MM-DD in Korea.
+  date: string;
+  // Only these, as a search or a mark gave them; null for every event of the day.
+  eventIds: string[] | null;
 }
 
 export interface PlanPerson {
@@ -306,6 +319,11 @@ export interface Plan {
   basis: string[];
   scene: MapScene;
   band: TimeBand;
+  // A recruiting Quest's Plan: the Quest as the recruiting list gives it, and the names of the Friends who hold it.
+  quest?: RecruitingQuest;
+  friendNames?: string[];
+  // A new recruiting Quest's Plan: the Friends free then who are not in it, each with the line of their day.
+  candidates?: { userId: string; name: string; line: string }[];
 }
 
 export interface PlanPart {
@@ -319,6 +337,8 @@ export interface PlanPart {
   // Null when nothing follows.
   leaveBy: string | null;
   next: { startAt: string; place: PlacePoint | null } | null;
+  // How they travel, absent for a walk.
+  mode?: 'walk' | 'shuttle';
 }
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
@@ -327,12 +347,21 @@ export interface MapScene {
     userId: string;
     name: string;
     me: boolean;
+    // At 'building', the point of the Place the person is in.
     at: LatLng;
-    source: 'exact' | 'timetable';
+    source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
   places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
-  routes: { userId: string; role: 'me' | 'friend' | 'next'; from: LatLng; to: LatLng; minutes: number }[];
+  // `mode` is absent for a walk.
+  routes: {
+    userId: string;
+    role: 'me' | 'friend' | 'next';
+    from: LatLng;
+    to: LatLng;
+    minutes: number;
+    mode?: 'walk' | 'shuttle';
+  }[];
   flags: { at: LatLng; text: string; role: 'place' | 'meeting' }[];
 }
 

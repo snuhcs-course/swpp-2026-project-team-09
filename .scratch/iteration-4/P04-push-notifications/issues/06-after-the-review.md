@@ -49,7 +49,6 @@ Tickets 01 to 04 are merged. Their review fixed what blocked the merge. This tic
 - **Until the app runs again**, a phone whose unregistering did not go through is still registered, and the server's Session stays open until its refresh token expires. Closing that needs the phone to keep a credential after a sign-out, which it does not.
 - **An unregistering that finishes late.** The wrapper stops waiting after 3 seconds, but the phone's own call goes on. When it ends after a quick sign-in on the same phone, it deletes the token the new Session just registered, and that Session gets no push until the app's next start registers again.
 - `askForPush` reads the Session's state from the render before the send, so a Session that ends in the middle of a send can still be asked once.
-- A permission granted later in the phone's settings registers only at the next start or sign-in.
 
 ### A tapped push (ticket 04)
 
