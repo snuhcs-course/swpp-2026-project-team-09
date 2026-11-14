@@ -22,6 +22,7 @@ import {
   MATCHING_REQUESTS_KEY,
   MY_JOIN_REQUESTS_KEY,
   MY_PARTY_KEY,
+  NOTIFICATIONS_KEY,
   PARTIES_KEY,
   POSITIONS_KEY,
   QUEST_INVITATIONS_KEY,
@@ -59,18 +60,20 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
   'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
   'room-requests-changed': [ROOM_INBOX_KEY, ROOM_REQUEST_KEY],
+  notice: [NOTIFICATIONS_KEY],
   'invitation-accepted': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   'invitation-declined': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   late: [QUESTS_KEY],
   'plan-changed': [QUESTS_KEY, QUEST_INVITATIONS_KEY],
 };
 
-// The lists of what waits for the User, which 알림 and the badge on 파티 show.
+// The lists of what waits for the User and the Notifications kept for them, which 알림 and the badge on 파티 show.
 export const WAITING: readonly QueryKey[] = [
   PARTIES_KEY,
   FRIEND_REQUESTS_KEY,
   QUEST_INVITATIONS_KEY,
   JOIN_REQUESTS_KEY,
+  NOTIFICATIONS_KEY,
 ];
 
 // What is fetched again when the connection opens again: what may have changed while it was closed. The shuttle's
@@ -153,7 +156,8 @@ function openFor(queryClient: QueryClient): () => void {
 
 // Keeps the one connection to the socket server open while a signed-in User is past the sign-in and Onboarding, in a
 // build that asks the main server. When the app comes back to the front, the positions are fetched again, the Quests,
-// whose rows word their times against the phone's clock, and the lists of what waits for the User. Draws nothing.
+// whose rows word their times against the phone's clock, and the lists of what waits for the User and the
+// Notifications kept for them. Draws nothing.
 export function LiveUpdates(): null {
   const queryClient = useQueryClient();
   const { status } = useSession();

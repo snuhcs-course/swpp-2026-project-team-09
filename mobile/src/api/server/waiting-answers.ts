@@ -4,9 +4,11 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { FriendRequests, JoinRequest, QuestInvitation, QuestSummary } from '@/api/waiting-types';
+import type { FriendRequests, JoinRequest, KeptNotification, QuestInvitation, QuestSummary } from '@/api/waiting-types';
 import {
   field,
   hasTexts,
@@ -15,6 +17,7 @@ import {
   isHolder,
   isJoinPolicy,
   isNumber,
+  isTextOrNull,
   isUserSummary,
   listOf,
 } from './answers';
@@ -57,3 +60,10 @@ function isJoinRequest(value: unknown): value is JoinRequest {
 }
 
 export const isJoinRequests = listOf(isJoinRequest);
+
+function isKeptNotification(value: unknown): value is KeptNotification {
+  const ahead = field(value, 'ahead');
+  return hasTexts(value, ['id', 'kind', 'title', 'line', 'at', 'url']) && (ahead === undefined || isTextOrNull(ahead));
+}
+
+export const isKeptNotifications = listOf(isKeptNotification);

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Tool } from '../feature.js';
@@ -14,7 +15,7 @@ import {
   showMyLibraryBookings,
 } from './library-card-tools.js';
 import { type LibraryServices } from './library-parts.js';
-import { proposeLibraryBooking } from './propose-library-booking.js';
+import { type BookingOptions, proposeLibraryBooking } from './propose-library-booking.js';
 
 export { type LibraryServices } from './library-parts.js';
 
@@ -29,11 +30,11 @@ export interface LibraryTools {
   showMyLibraryBookings: Tool;
 }
 
-export function libraryTools(services: LibraryServices): LibraryTools {
+export function libraryTools(services: LibraryServices, options?: BookingOptions): LibraryTools {
   return {
     findLibrarySpace: findLibrarySpace(services),
     findLibraryFreeSlots: findLibraryFreeSlots(services),
-    proposeLibraryBooking: proposeLibraryBooking(services),
+    proposeLibraryBooking: proposeLibraryBooking(services, options),
     proposeLibraryCancel: proposeLibraryCancel(services),
     proposeLibraryReturn: proposeLibraryReturn(services),
     showLibrarySeats: showLibrarySeats(services),

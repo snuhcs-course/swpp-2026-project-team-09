@@ -72,6 +72,10 @@ export class BetterPlanStage extends MealPlanStage {
     return withAccessToken(request(this.app.getHttpServer()).put(`/plans/${questId}`), user.accessToken).send(body);
   }
 
+  notificationsOf(user: TestUser): request.Test {
+    return withAccessToken(request(this.app.getHttpServer()).get('/notifications'), user.accessToken);
+  }
+
   async invitationTo(user: TestUser, questId: string): Promise<string | undefined> {
     const listed = z
       .array(z.object({ id: z.string(), quest: z.object({ id: z.string() }) }))

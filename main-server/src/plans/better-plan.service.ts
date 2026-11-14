@@ -128,6 +128,7 @@ export class BetterPlanService {
     });
     this.signals.send(told, 'plan-changed', { questId });
     this.signals.send(told, 'quests-changed');
+    this.plans.keepTimeToLeave(userId, questId, plan);
     return this.quests.read(userId, questId);
   }
 

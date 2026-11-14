@@ -84,6 +84,15 @@ describe('After 지은 declines, the change to the better Plan', () => {
     expect(toldUsers(planChanged)).toEqual([stage.asker.id, minsu.id].toSorted());
     // Other test files' servers send `quests-changed` to the same Redis, so more Users may be among the told.
     expect(toldUsers(questsChanged)).toEqual(expect.arrayContaining([stage.asker.id, minsu.id]));
+    await vi.waitFor(async () => {
+      expect((await stage.notificationsOf(stage.asker)).body).toContainEqual(
+        expect.objectContaining({
+          id: `leave-by:party:${questId}`,
+          at: `${date}T12:12:00+09:00`,
+          line: '302동식당까지 걸어서 3분',
+        }),
+      );
+    });
     const again = betterSchema.parse((await stage.getBetter(stage.asker, questId)).body);
     expect(again.better).toBeNull();
     expect(again.current).toMatchObject({
