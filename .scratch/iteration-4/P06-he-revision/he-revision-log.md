@@ -1,6 +1,6 @@
 # HE revision log (P06)
 
-What was done for each issue of the heuristic evaluation (Wiki Testing Documentation §6.2, H1 to H12), and in which pull request. Each P06 ticket fills in its own rows when its pull request opens; a row whose work differs from the plan says what was done. The tables are written to be copied into the Wiki's Testing Documentation §6.
+What was done for each issue of the heuristic evaluation (Wiki Testing Documentation §6.2, H1 to H12), and in which pull request. Each P06 ticket fills in its own rows when its pull request opens; a row whose work differs from the plan says what was done. The tables are written to go into the Wiki's Testing Documentation §6 as a new subsection. §6.2's table and §6.3 stay there as submitted, and where a row differs from §6.2's "Fix (Iteration 4)" column it also gives the reason.
 
 Spec: `spec.md`. Tickets: `issues/`.
 

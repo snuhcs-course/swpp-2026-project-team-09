@@ -8,7 +8,7 @@ References:
 - `references/he-improvements.md`: the HE findings, the code they point at, and the decisions of 2026-11-14 ("결정 기록", "확인된 사실", sections 5-3-1 and 5-3-2).
 - Wiki Testing Documentation §6.2 (issues H1 to H12 and their planned fixes) and §6.3, at commit `3620902`.
 - `.scratch/iteration-4/agentic-map-work-split.md` on `4.0/Main`: §4 (files only one person changes, the order of schema changes), §6 (nothing new released before 11/18), §8 (Iteration 5, package D: the notification table).
-- `.scratch/iteration-4/agentic-map-design.md` on `4.0/Main`: "First run" and "Screen words" (파티 켜기, 켜짐, 끄기 replaces 활성화).
+- `.scratch/iteration-4/agentic-map-design.md` on `4.0/Main`: "Watching interests" and "Many results on the map" (what the design puts on the everyday map, and how it groups marks), "First run", and "Screen words" (파티 켜기, 켜짐, 끄기 replaces 활성화).
 - `he-revision-log.md` in this folder: one row per HE issue, kept up to date by every ticket.
 - `CLAUDE.md`, "The app's native files"; ADR 0007 (test levels); ADR 0010 (travel time from the walking table).
 
@@ -155,6 +155,8 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 
 **Which event pins stay (tickets 1 and 2).** One pure function in the map's event adapter decides it. Input: the published events, now, the ids this User has checked, and each event's `favorite`. Output: the events that stay, each with a look (`new`, `favorite` or `plain`). An event stays if `publishedAt` is within 24 hours and it is not checked (`new`), if it is a favorite (`favorite`), or if it is held today in Seoul time, for an event of several days only on its first or last day (`plain`). When several apply, the order is `new`, `favorite`, `plain`. Ticket 1 builds the function with `favorite` and `plain`; ticket 2 adds `new` and the checked ids. Starring an event adds it to the checked ids. The checked ids live on the phone, keyed by User, and an id is dropped once its event is more than 24 hours past `publishedAt`. A checked event leaves the map when its card closes, never while it is open. Same-Place grouping keeps its current behaviour and takes the strongest look of its members. The study layer's overlap merge applies to every event pin, with the merged pin taking the strongest look and the total count. The exclamation mark and the star are new marker looks drawn by the JS marker images, so they ship over the air and need no native Release.
 
+**How this sits with the agentic map's design (tickets 1 and 2).** The design decides the same pins another way. Its "Watching interests" puts on the everyday map only the events and recruiting that match a watched interest, with a "!" on a newly posted one, and its "Many results on the map" groups every mark by one rule. Both are built in Iteration 5, by packages D and B (work split §8). Until then the rule above is the one the map follows. The tickets that build them settle how the two fit: whether Favorite Events and events held today stay beside the events that match a watched interest, when the "!" goes, the design's grouping in place of the zoom merge, and where the ☆ sits once a tap on a mark opens the answer.
+
 **The ☆ toggle (ticket 1).** On the 행사 tab's and chat's event item, at the top right, with the source mark moved to its left. On the map, only on a single event's card, left of the close button; the card's data carries the event id and `favorite`. A grouped pin's list rows show ★ for a Favorite Event without a toggle. The hit area is 44pt, like the close button. The change is optimistic, rolled back with a toast on failure. The icon set gains a `star` shape that can be filled.
 
 **Global watch (ticket 3).** A watcher mounted in the signed-in layout, the way the matching watcher was, takes over the logic the room screen uses to close when its Quest is gone. When `quests-changed` brings a list in which a Quest the User held is missing, it toasts "○○ 파티에서 빠졌어요" on any screen. The User's own leave and end actions mark that Quest so no toast follows. The room screen still closes, without a second toast.
@@ -181,8 +183,8 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 - Ticket 7: B's tab bar.
 - Ticket 8: C's Friends service (the Friend Request by user id).
 
-**Wiki and glossary.** Each ticket edits what it changes:
-- Ticket 2: Requirements US-EVENT-01, UI-02, UI-03, UI-05, and a new story for Favorite Events; `GLOSSARY.md` gains **New Event** and **Favorite Event**. Testing §6.3's P7, P8 and P9 become P06.
+**Wiki and glossary.** A plan the Testing Documentation has already submitted (§6.2's "Fix (Iteration 4)" column and §6.3) is not rewritten in place: the original stays, and a revision note right below it says what changed and why. Each ticket edits what it changes:
+- Ticket 2: Requirements US-EVENT-01, UI-02, UI-03, UI-05, and a new story for Favorite Events; `GLOSSARY.md` gains **New Event** and **Favorite Event**. Testing §6.3 keeps its sentence about P7, P8, and P9 as submitted, and a revision note right below it says that the work is P06, with P8's issues (H5 and H12) deferred.
 - Ticket 3: Requirements entries on AI matching in the main UI.
 - Ticket 6: US-LOC-01 and UI-09 for the Master Switch's name. UAT-3's wording is not changed, as the criteria were fixed; the rename is noted.
 - Ticket 8: US-QUEST-03 and UI-08 for approval after removal.

@@ -21,7 +21,7 @@ An event published in the last 24 hours shows on the map with an exclamation mar
 - [ ] The exclamation look is a JS marker look; no native file changes.
 - [ ] Tests (ADR 0007): main-server integration that each of the four writes sets `publishedAt` (the Same-event queue's publish included) and an edit keeps it; unit tests of the pin function at the 24-hour edge, checked and unchecked, and the look order, and of the merge; an app integration test that closing a New Event's card removes its pin and a starred one stays.
 - [ ] The map files belong to package B (work split §4); B is told before the work starts.
-- [ ] Wiki Requirements: US-EVENT-01, UI-02, UI-03, UI-05 changed, and a new story for Favorite Events. `GLOSSARY.md` gains **New Event** and **Favorite Event** (User-relative). Wiki Testing §6.3's P7, P8 and P9 become P06.
+- [ ] Wiki Requirements: US-EVENT-01, UI-02, UI-03, UI-05 changed, and a new story for Favorite Events. `GLOSSARY.md` gains **New Event** and **Favorite Event** (User-relative). Wiki Testing §6.3 keeps its sentence about P7, P8, and P9 as submitted; a revision note right below it says that the work is P06, with P8's issues (H5 and H12) deferred.
 - [ ] The "Events on the map" row of `he-revision-log.md` gets this pull request and its state.
 
 ## Comments
