@@ -157,6 +157,8 @@ export async function unregisterPush(): Promise<void> {
     // The Session ends whatever the phone answered.
   } finally {
     clearTimeout(timer);
+    // Unregistering deletes the phone's token, so the next one it gives is its first, not a change.
+    lastDeviceToken = null;
   }
 }
 

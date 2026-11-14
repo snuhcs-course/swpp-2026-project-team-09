@@ -1599,6 +1599,29 @@ that phone.
   notification list. On Android a banner cannot show without sound. The app instead fetches again the lists "알림"
   and the "파티" badge are made from (`src/push/push-arrivals.tsx`).
 
+### When the app asks, registers, and unregisters
+
+All three happen only in a build that asks the main server, holds the native module, and has a ready Session. A mock
+build never asks and never registers, and its `registerPushToken` does nothing.
+
+- **Asking.** Nothing is asked at app start, at sign-in, at Onboarding, or in first run. `PushAskHost`
+  (`src/push/push-ask-host.tsx`, inside the overlay host) shows the sheet of board t17 ("나설 시각을 휴대폰으로 알려
+  드릴까요?") once the action that asked went through: a Party sent with at least one Friend invited, from the Party
+  form or the Assistant's Proposal card, and a library seat or room booked. Screens ask with `useAskForPush()`. The
+  sheet shows only while the wrapper reports the permission as undetermined, which means the phone's own prompt can
+  still show (on Android 13 and later that is a permission never asked, reported as denied but still askable), and
+  never before on this phone (`pushAsked` in what the phone keeps, which a sign-out leaves as it is). "알림 받기"
+  leads to the phone's prompt; "나중에" closes it for good. With the permission already granted (Android 12 and
+  below), the token is registered at once without the sheet.
+- **Registering.** `PushRegistration` (`src/push/push-registration.tsx`, beside `LiveUpdates`) sends the phone's
+  Expo push token with `PUT /users/me/push-token` when the permission is granted: at every start, at every sign-in,
+  and whenever the phone says its token changed. A failure is left for the next start. It never asks for the
+  permission.
+- **Unregistering.** When the Session ends on the phone, by a sign-out or by the main server's word, the app calls
+  `unregisterPush()` before it forgets its tokens, whatever the main server answered, so a signed-out phone receives
+  nothing even when the server could not be told. Unregistering goes through Firebase: a sign-out with no network at
+  all leaves the phone registered until the next User signs in on it or its Session can no longer refresh.
+
 ## 관정도서관 (P06)
 
 The app books 관정도서관 itself, as the User, through the library's booking site `k-rsv.snu.ac.kr`. Why the library
