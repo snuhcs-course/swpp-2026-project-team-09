@@ -3115,7 +3115,8 @@ its words and gives it its address. A feature imports `NotificationsModule` and 
 
 `told` holds the facts of a kind, never text. The caller gives the time, and the service reads no clock. After each
 call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing sends
-none. The calls throw when Redis fails, so a caller that must not fail catches and logs.
+none. `schedule` and `replace` refuse, by throwing, a card no address opens. The calls throw when Redis fails too, so
+a caller that must not fail catches and logs.
 
 | Kind       | Told to    | When                     | Title                 | Line              | Card              |
 | ---------- | ---------- | ------------------------ | --------------------- | ----------------- | ----------------- |
@@ -3130,7 +3131,8 @@ warning and the answer stays as it is.
 A User's Notifications are kept in Redis, in one hash `notifications:<userId>` with the identity
 `<kind>:<card kind>:<card id>` as the field and the Notification as JSON. A User keeps at most 100: one more drops the
 one with the earliest time. Each Notification kept sets the hash to expire 7 days later, by Redis's own expiry. No
-table holds them.
+table holds them. A stored Notification this version cannot read, such as one of a kind a later version kept, is left
+out of the list.
 
 `GET /notifications` answers the signed-in User's Notifications, the latest time first, and 401 without a sign-in. One
 whose time is still to come is in the answer:

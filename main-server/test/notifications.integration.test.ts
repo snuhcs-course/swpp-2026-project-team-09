@@ -184,7 +184,48 @@ describe('What the service keeps of a User', () => {
     expect(ids).toContain('accepted:party:party-1');
     expect(ids).not.toContain('accepted:party:party-0');
   });
+});
 
+describe('What the service refuses and leaves out', () => {
+  it('refuses one whose card no address opens, keeping nothing and telling nobody', async () => {
+    const user = await signInUser(app);
+    let refusal: unknown;
+
+    const notices = await noticesWhile(user, async () => {
+      await notifications
+        .schedule(user.id, accepted('민수', 'a quest/id'), new Date('2026-11-14T02:58:00Z'))
+        .catch((error: unknown) => {
+          refusal = error;
+        });
+    });
+
+    expect(refusal).toEqual(new Error('No address opens the card party:a quest/id'));
+    expect(notices).toBe(0);
+    expect((await getNotifications(user)).body).toEqual([]);
+  });
+
+  it('leaves out one it cannot read, and answers the others', async () => {
+    const user = await signInUser(app);
+    await notifications.schedule(user.id, accepted('민수'), new Date('2026-11-14T02:58:00Z'));
+    await redis.hset(
+      `notifications:${user.id}`,
+      'a-later-kind:party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
+      JSON.stringify({
+        kind: 'a-later-kind',
+        card: { kind: 'party', id: OTHER_QUEST_ID },
+        at: '2026-11-14T03:00:00.000Z',
+        title: '나중 버전의 알림',
+        line: '점심',
+      }),
+    );
+
+    expect((await getNotifications(user)).body).toEqual([
+      expect.objectContaining({ id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b' }),
+    ]);
+  });
+});
+
+describe('How long the service keeps a User’s Notifications', () => {
   it('gives the User’s Notifications a time to live of 7 days after a schedule', async () => {
     const user = await signInUser(app);
 

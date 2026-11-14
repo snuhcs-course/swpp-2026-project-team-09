@@ -67,13 +67,17 @@ export class NotificationStore {
     await this.redis.hdel(keyOf(userId), identity);
   }
 
-  // The latest time first.
+  // The latest time first. One this version cannot read, such as a kind a later version kept, is left out.
   async readAll(userId: string): Promise<(KeptNotification & { identity: string })[]> {
     const fields = await this.redis.hgetall(keyOf(userId));
     return Object.entries(fields)
-      .map(([identity, value]) => {
-        const { kind, card, at, title, line } = storedSchema.parse(JSON.parse(value));
-        return { identity, kind, card, at: new Date(at), title, line };
+      .flatMap(([identity, value]) => {
+        const stored = storedSchema.safeParse(JSON.parse(value));
+        if (!stored.success) {
+          return [];
+        }
+        const { kind, card, at, title, line } = stored.data;
+        return [{ identity, kind, card, at: new Date(at), title, line }];
       })
       .toSorted((a, b) => b.at.getTime() - a.at.getTime());
   }

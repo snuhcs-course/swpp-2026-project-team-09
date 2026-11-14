@@ -14,7 +14,10 @@ import { NotificationStore } from './notification-store.js';
 import { wordsOf } from './notification-words.js';
 
 function kept(told: Told, at: Date): KeptNotification {
-  return { kind: told.kind, at, ...wordsOf(told) };
+  const notification = { kind: told.kind, at, ...wordsOf(told) };
+  // A card no address opens is refused before it is kept: every later reading of the User's list would fail on it.
+  cardAddress(notification.card);
+  return notification;
 }
 
 // The one place that keeps a Notification, writes its words and gives it its address. The caller gives the time.
