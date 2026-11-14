@@ -21,6 +21,8 @@ const storedPositionSchema = z.object({
   // The Place the position is in, kept so that a viewer at the building is told only when it changes. A position kept
   // before the levels has none.
   placeId: z.string().nullable().default(null),
+  // When a viewer at the building was last told of that Place: the measuredAt of that upload.
+  placeToldAt: z.string().nullable().default(null),
 });
 
 export type StoredPosition = z.infer<typeof storedPositionSchema>;

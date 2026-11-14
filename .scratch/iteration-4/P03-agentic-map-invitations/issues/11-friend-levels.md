@@ -10,10 +10,10 @@ Each User chooses for each Friend whether that Friend sees only their Timetable,
 
 ## Acceptance criteria
 
-- [ ] One migration, made from the schema of the iteration branch at this package's turn: `friendships.user_a_level` and `user_b_level` (`timetable`, `building`, `exact`, default `building`) in place of the two sharing switches, with an existing switch that is on turned into `exact` and one that is off into `timetable`.
+- [x] One migration, made from the schema of the iteration branch at this package's turn: `friendships.user_a_level` and `user_b_level` (`timetable`, `building`, `exact`, default `building`) in place of the two sharing switches, with an existing switch that is on turned into `exact` and one that is off into `timetable`.
 - [x] What a viewer sees is the lower of the two ends, `timetable` while either Master Switch is off, and `exact` for members of a common Party who both share with it.
 - [x] `GET /positions` and the `position` signal give a building viewer the Place's id and point with `level: 'building'`, and nothing while the person is in no Place; an exact viewer gets today's position with `level: 'exact'`. No position of a person reaches a building viewer, in a reply or a signal.
-- [x] A viewer is told only when what they see changes: a building viewer when the Place changes, `position-removed` when the person leaves every Place or the level drops to `timetable`, and the Place in place of the position when it drops from `exact` to `building`.
+- [x] A viewer is told when what they see changes: a building viewer when the Place changes and again every 50 seconds while it stays, `position-removed` when the person leaves every Place or the level drops to `timetable`, and the Place in place of the position when it drops from `exact` to `building`.
 - [x] `PUT /friends/:userId/level` sets the User's end; `PUT /friends/:userId/sharing` keeps working for an app of before (on is `exact`, off is `timetable`); `GET /friends` gives `level`, `sharing`, and `visible`.
 - [x] The Friend view gives `building` with the Place and no position; a meal's Plan sets such a Friend out from that Place, and its scene marks them with the source `building` at the Place's point.
 - [x] The app's contract has the levels, the position's `level` and `placeId`, and the scene's `building`; its Friends adapter carries a Friend's level; the Friends screen offers "시간표만", "지금 있는 건물", and "정확한 위치" for each Friend in place of the switch.
@@ -40,6 +40,13 @@ Each User chooses for each Friend whether that Friend sees only their Timetable,
 - The Friends screen draws each Friend's row itself (Avatar, name, department) with the three levels under it as one segmented track of three cells of one width, "{이름}님에게 보일 위치", a radio group. The note under "친구 {n}" reads "둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요".
 - The app's live connection still passes on `userId`, `latitude`, `longitude`, and `measuredAt` only, so a building Friend is drawn at the Place's point as before; the map is not changed.
 
-### Open
+### Review (2026-11-15)
 
-- The app dims an Avatar whose `measuredAt` is 2 minutes old and drops it at 10 minutes. A building viewer is sent a Place only when it changes, so a Friend who stays in one building leaves that viewer's map after 10 minutes until the app fetches `GET /positions` again (connect, reconnect, return to the front, `friends-changed`). The design's section 7 leaves this "Not decided".
+- A building viewer is told the same Place again every 50 seconds while the person stays in it. Told only on a change, the app (which dims an Avatar after two minutes and drops it after ten) lost a Friend who stayed in one building. The time of the last telling is kept with the position.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). The session's own review and the pull request are counted under ticket 07.
+
+- Agent time: about 82 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 241,440; input 113,537,615, of which 112,982,600 were cache reads, 554,405 cache writes, and 610 uncached. Without cache reads: 796,455.

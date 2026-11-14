@@ -99,6 +99,24 @@ describe('An upload', () => {
       uploads.map((upload) => ({ name: 'position', payload: { userId: subject.id, ...upload, level: 'exact' } })),
     );
   });
+
+  it('tells a building viewer the same Place again once 50 seconds have passed, so that the Avatar stays fresh', async () => {
+    const [subject, viewer] = await sharingFriends(app, 'building');
+    const library = await placeNumbered(app, subject, '62');
+    const { latitude, longitude } = IN_LIBRARY;
+    const uploads = [55, 30, 4].map((seconds) => ({ latitude, longitude, measuredAt: secondsAgo(seconds) }));
+    const sent = await aboutWhile(subject, async () => {
+      for (const upload of uploads) {
+        // oxlint-disable-next-line no-await-in-loop -- one after another, as a phone uploads
+        await expectStatus(uploadPosition(app, subject, upload), 200);
+      }
+    });
+
+    expect(reaching(viewer, sent)).toEqual([
+      placed(subject, library, uploads[0]?.measuredAt),
+      placed(subject, library, uploads[2]?.measuredAt),
+    ]);
+  });
 });
 
 // The subject's level at the start and after the change, and what the viewer, whose own end is exact, is told.
