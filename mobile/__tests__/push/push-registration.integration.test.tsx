@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as PushDevice from '@/push/device';
@@ -68,6 +69,16 @@ describe('the registration with the permission granted', () => {
     await openMain();
 
     expect(registered()).toEqual([{ token: PHONE_TOKEN }]);
+  });
+
+  it('registers once at a start though the phone tells of its token after every fetch', async () => {
+    const phone = givePushPhone({ permission: 'granted' });
+
+    await openMain();
+    await pass(5000);
+
+    expect(registered()).toEqual([{ token: PHONE_TOKEN }]);
+    expect(phone.tokenFetches()).toBe(1);
   });
 
   it('sends it again after a sign-out and a sign-in', async () => {
