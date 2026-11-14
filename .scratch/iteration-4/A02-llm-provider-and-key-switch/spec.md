@@ -19,7 +19,7 @@ Iteration 3's A01 moved the calls to the Anthropic API behind a start-up setting
 
 ## Solution
 
-Keys live in Parameter Store under one folder, `/snunow/production/llm-keys/<name>`. A `keys` Release copies that folder into a Kubernetes Secret, which is mounted into the main server as one file per key. The running server never gets AWS access. A script puts a key and pushes the Release's tag in one step.
+Keys live in Parameter Store under `/snunow/production/llm-keys/<name>`, and one more parameter, `/snunow/production/llm-key-names`, lists their names. A `keys` Release reads the list and fetches each key by its exact name, with the permissions the deploy role already has, and copies the keys into a Kubernetes Secret, which is mounted into the main server as one file per key. Terraform and the deploy role are not changed. The running server never gets AWS access. A script puts a key, adds its name to the list and pushes the Release's tag in one step.
 
 A new `settings` table holds the settings Administrators change at run time, with a history of every change. Once a minute, a job in the main server copies the settings and the list of mounted keys (names and facts, never the key values) into Redis. Every model call reads the chosen key's name from Redis, or from the database when Redis is empty, and the key's value from its mounted file. The provider follows from the key's prefix. The model of each provider is fixed in code.
 
@@ -88,6 +88,7 @@ After the merge nothing changes for Users: the chosen key is the existing OpenRo
 ### Keys
 
 - In Parameter Store, a key is a SecureString at `/snunow/production/llm-keys/<name>`. A name is lowercase letters, digits and hyphens, at most 40 characters.
+- `/snunow/production/llm-key-names` is a StringList that names the keys the Release syncs. A key whose name is not on the list is not synced.
 - The provider is read from the key's prefix: `sk-ant-` is Anthropic, `sk-or-` is OpenRouter. A key with another prefix is listed as unknown and cannot be chosen.
 - The added date is the parameter's `LastModifiedDate`. Putting a new value under an existing name makes the key NEW again.
 - The existing `/snunow/production/openrouter-api-key` stays where it is and still reaches the pod as `OPENROUTER_API_KEY` through Secret `secrets`. The server lists it as the key `default`, so that nothing changes after the merge.
@@ -97,23 +98,18 @@ After the merge nothing changes for Users: the chosen key is the existing OpenRo
 ### The `keys` Release
 
 - A tag `snunow/keys/YY.MM.DD-N` starts a `keys` Release. `.github/release/release.sh`'s `check-name` accepts only `main-server|socket-server|worker-server|match-server|admin|app|all` today, so `keys` is added, with an output that says the Release syncs keys. It deploys no server and no app. `all` does not include `keys`.
-- The Release reads the folder (`aws ssm get-parameters-by-path --path /snunow/production/llm-keys --with-decryption`), writes one file per key and one `added.json` (name to added date), and applies them as a Secret named `llm-keys`. The Secret has a fixed name, not a generated one with a hash, so that applying it changes the mounted files without restarting the pods. The release's `clean` step only deletes Secrets named `secrets-<hash>`, so it leaves `llm-keys` alone.
-- Removing a parameter and pushing a `keys` tag removes the key from the Secret.
+- The Release reads `llm-key-names` from the call the other Releases already make (`aws ssm get-parameters-by-path --path /snunow/production`, which returns the folder's direct children). It then fetches each named key by its exact name (`aws ssm get-parameters --names … --with-decryption`, at most 10 names per call). It writes one file per key and one `added.json` (name to added date), and applies them as a Secret named `llm-keys`.
+- When the list names a key that is not in Parameter Store, the Release fails before it changes anything, and its log names the missing key. The Secret stays as it was. An empty list is allowed and empties the Secret. The Secret has a fixed name, not a generated one with a hash, so that applying it changes the mounted files without restarting the pods. The release's `clean` step only deletes Secrets named `secrets-<hash>`, so it leaves `llm-keys` alone.
+- Removing a key takes its name off the list. The next `keys` Release leaves it out of the Secret.
 - `main-server.yaml` mounts `llm-keys` as a read-only volume at `/var/run/llm-keys`, with `optional: true`, so that a pod starts before the first `keys` Release. The kubelet refreshes the files within about a minute of the apply; the copy to Redis picks them up at its next run.
 - The deploy role's trust already accepts any tag under `snunow/*`, so `keys` tags need no change there.
-- `infra/production/put-llm-key.sh <name>` (run by a person with AWS access) reads the key with `read -rs`, refuses an empty value or a bad name, puts the SecureString, then creates and pushes the next `snunow/keys/YY.MM.DD-N` tag.
+- `infra/production/put-llm-key.sh <name>` (run by a person with AWS access) does three things: it reads the key with `read -rs`, refuses an empty value or a bad name, and puts the SecureString; it adds the name to `llm-key-names` (once); and it creates and pushes the next `snunow/keys/YY.MM.DD-N` tag. With `--remove <name>`, it takes the name off the list first, then deletes the parameter, then pushes the tag, so that the list never names a deleted key.
 
 ### The deploy role's permission
 
-The deploy role (`infra/production/terraform/deploy_role.tf`) may call `ssm:GetParametersByPath` on `/snunow/production` only. That permission is checked against the exact path asked for, so the Release cannot list `/snunow/production/llm-keys` today. Two ways were weighed; the reviewer chooses.
+The deploy role (`infra/production/terraform/deploy_role.tf`) is not changed. It may call `ssm:GetParametersByPath` on `/snunow/production` only (checked against the exact path asked for), which returns `llm-key-names` as a direct child. It may call `ssm:GetParameters` on `/snunow/production/*`, which covers each key fetched by its exact name. So no IAM change is needed, no new secret becomes readable, and the running servers still have no AWS access.
 
-**Chosen: one more read-only path.** The `SecretParameterPath` statement gets one more resource, `${local.secret_parameter_path_arn}/llm-keys`. A person applies it once with `terraform apply`. What this changes:
-- one IAM policy statement gets one more resource;
-- the permission is read-only (`GetParametersByPath`);
-- the running servers still have no AWS access; only the Release's role changes;
-- the role can already read every parameter under `/snunow/production` by name (`SecretParameters` allows `GetParameters` on `/snunow/production/*`), so no new secret becomes readable. Only listing the folder is new.
-
-**Alternative, no Terraform: a list of names.** A parameter `/snunow/production/llm-key-names` holds the names, comma-separated. The Release's existing call on `/snunow/production` already returns it, as a direct child. The Release then fetches each key by its exact name with `GetParameters`, which `SecretParameters` already allows. The cost: the script must update the list together with the key, and a key put by hand without updating the list is silently left out.
+The rejected alternative was to add `/snunow/production/llm-keys` as one more read-only resource of the `GetParametersByPath` statement, applied with `terraform apply`. It would have let the Release list the folder without a names list, but it changes IAM, and no IAM change is wanted.
 
 ### The model port
 
@@ -149,11 +145,11 @@ The deploy role (`infra/production/terraform/deploy_role.tf`) may call `ssm:GetP
 - Production only. The Dev Server keeps `OPENROUTER_API_KEY` in its env file and gains nothing it must set.
 - After the merge, `llm.key` has no row, so the AI uses `default`, the existing OpenRouter key. Switching to Anthropic is an Administrator's step after the first `keys` Release.
 - ADR 0013, carried from A01 and rewritten: the Assistant calls Claude through either provider, chosen at run time on the admin site, from keys synced from Parameter Store. ADR 0005 is marked superseded on the provider only.
-- README, `main-server/README.md` and `infra/production/README.md` describe the keys, the script, the `keys` Release, the Terraform step and the AI settings page.
+- README, `main-server/README.md` and `infra/production/README.md` describe the keys, the script, the `keys` Release, `llm-key-names` and the AI settings page.
 
 ### Steps only a person can do
 
-- `terraform apply` of the deploy role's change (ticket 03), or creating `llm-key-names` if the alternative is chosen.
+- Creating `llm-key-names` the first time, through the script (ticket 03).
 - Putting keys with the script, and pushing `keys` tags (ticket 03).
 - 안진영 approving the baseline's cost before any run (ticket 05).
 
@@ -164,7 +160,7 @@ The deploy role (`infra/production/terraform/deploy_role.tf`) may call `ssm:GetP
 - Integration: the settings store writes a setting and its history in one transaction; the copy job fills Redis; a read with Redis empty falls back to the database; a call uses the key named in Redis's copy; a switch saved in the database is not used before the next copy; the automatic switch writes its history row; the admin routes refuse a switch to an unchecked key and accept a checked one.
 - The model port's requests are checked through a fake `fetch`, as A01 did (`anthropic-requests.integration.test.ts`): the Anthropic path carries the breakpoints and effort and no sampling parameters, and the key sent is the chosen key.
 - The admin page has a test of its state labels and of the disabled switch for an unchecked key.
-- Release: `release.bats` covers `check-name` for `keys` and the writing of the key files; `infra/production/k8s/test/targets.sh` covers the mount.
+- Release: `release.bats` covers `check-name` for `keys`, the writing of the key files, and the failure, before anything is written, when the list names a missing key; the script's test covers keeping the list in step; `infra/production/k8s/test/targets.sh` covers the mount.
 - No test calls a real model. The real checks are a health check of each real key after the first `keys` Release, and the baseline (ticket 05).
 - The baseline, after 01 to 04 are merged and released: P19 and the P5 small world (`--world p5`) on both providers; the P5 large world (`--world large-world-v1`), P6 and the collection evaluations on Anthropic only; no P4. The estimate is about USD 3.5, and 안진영 approves it again before any run. Each run records its provider and caching mode, beside the last OpenRouter run of each suite.
 
@@ -182,5 +178,5 @@ The deploy role (`infra/production/terraform/deploy_role.tf`) may call `ssm:GetP
 
 - **Where A01's code is.** `origin/3.0/A01-01-anthropic-model-port` (the model port, the adapter, the provider failures, settings, eval flags and their tests), `origin/3.0/A01-02-deployment-and-docs` (release, k8s, READMEs, ADR 0013) and `origin/3.0/A01-04-caching-modes` (`caching-experiment.md`). They branch from 3.0/Main, so each ticket brings the named files by hand onto 4.0/Main, not by a merge.
 - **A01's P19 run on Anthropic** (57/64, USD 0.085) is pushed to its old branch as a record before #210 is closed.
-- **Facts checked in the code on 2026-11-15 (origin/4.0/Main).** main-server has no scheduler; `@nestjs/schedule` is in worker-server, which runs the `@Cron` jobs on 1 replica (match-server lists it in its `package.json` but runs no job). Production runs 2 main-server replicas. Redis has 1 replica and no volume. There is no settings table. Secrets reach main-server only as env vars from Secret `secrets` (generated with a hash, `secrets-<hash>`), and nothing is mounted as a file. The deploy role's trust accepts tags under `snunow/*`.
+- **Facts checked in the code on 2026-11-15 (origin/4.0/Main).** main-server has no scheduler; `@nestjs/schedule` is in worker-server, which runs the `@Cron` jobs on 1 replica (match-server lists it in its `package.json` but runs no job). Production runs 2 main-server replicas. Redis has 1 replica and no volume. There is no settings table. Secrets reach main-server only as env vars from Secret `secrets` (generated with a hash, `secrets-<hash>`), and nothing is mounted as a file. The deploy role's trust accepts tags under `snunow/*`, and its permissions already cover the names list and each key by name.
 - **Order.** 01 and 03 start at once. 02 starts after 01. 04 starts after 01, 02 and 03. 05 is last.
