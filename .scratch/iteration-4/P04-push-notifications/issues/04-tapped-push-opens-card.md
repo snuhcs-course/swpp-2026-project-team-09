@@ -3,7 +3,7 @@
 Parent: [spec](../spec.md) ("The app: opening a tapped notification")
 Status: ready-for-agent
 Who: the server-side member
-Blocked by: 01 (the native module, the wrapper, and the test setup's default mock). 02 sends the address the check on a phone uses; the tests do not need it.
+Blocked by: 01 (the native module, the wrapper, and the test setup's default mock). 02 sends the address the check on a phone uses; the tests do not need it. It can be built on ticket 01's branch before 01 merges; its pull request merges after 01.
 Native files: no
 
 ## What to build

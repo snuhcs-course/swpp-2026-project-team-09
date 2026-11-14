@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 
-Schedule row: Iteration 4, package D of the agentic map (push notifications). The native part ships in the one native Release on 2026-11-19, built by the builder. The rest is server code and JavaScript, built by the server-side member: the server part merges after the 11/18 acceptance test, and the app parts follow the Release.
+Schedule row: Iteration 4, package D of the agentic map (push notifications). The server-side member builds all of it. The native part ships in the one native Release on 2026-11-19, which the builder makes; the server part merges after the 11/18 acceptance test, and the app parts follow the native part.
 
 References:
 - `.scratch/iteration-4/agentic-map-design.md`: section 5 ("Notifications", "Parties and invitations", "A late member"), section 7 (what is never recorded or sent), and section 8 (turning notifications off by kind is left out).
@@ -58,7 +58,7 @@ Before the Release, the in-app list stands in for push, as it does today.
 
 ## Implementation Decisions
 
-### The native part (11/19 Release, the builder)
+### The native part (11/19 Release)
 
 - The app adds the `expo-notifications` module at the version Expo picks for SDK 57, and its config plugin with three settings: a notification icon (a 96 by 96 PNG, white on transparent), the accent color `#208AEF`, and the default channel `default`.
 - Firebase's Android settings file, `google-services.json`, is committed at `mobile/google-services.json` and joins the app's configuration through `android.googleServicesFile`. Its bytes are part of the fingerprint, and committing it gives CI's `app-fingerprint` job, the Release workflow, the dev APK, and every developer the same bytes. The file holds no secret. Its Android API key is restricted by API in the Google Cloud console to the FCM Registration API and the Firebase Installations API, by a person, before the Release.
@@ -127,7 +127,7 @@ Before the Release, the in-app list stands in for push, as it does today.
 
 - `main-server/src/quests/invitations.service.ts` and the app's real-time signal handling (`mobile/src/live/live-updates.tsx`) are package C's files, and `mobile/src/screens/main/main-screen.tsx` is package B's. The tickets change only the lines they name in them, and their pull requests name the owner as a reviewer.
 - The push tokens migration is a schema change. By the work split, the schema is changed by one person at a time, and only package C's late-minutes column goes in before 11/18. Ticket 02 therefore merges after the 11/18 acceptance test, and no Release carries it before 11/19. If package C's migration is open when ticket 02 is ready, C's merges first, and ticket 02's migration is made again from the new schema.
-- Nothing native merges before the 11/18 acceptance test.
+- Nothing native merges before the 11/18 acceptance test: ticket 01's pull request stays a draft until then, and the builder merges it and makes the Release. Tickets 03 and 04 are built on ticket 01's branch and merge after it.
 
 ### What stays as it is
 
