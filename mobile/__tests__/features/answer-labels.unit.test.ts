@@ -6,7 +6,7 @@
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
-import { drawingOf } from '@/features/assistant/answer-marks';
+import { drawingOf, looksOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import { MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
 import {
@@ -22,12 +22,12 @@ import {
 
 // The worked numbers. A label's box: 20 from its point on its side (half the symbol box of 36 and the gap of 2), 26
 // high for one line and 46 for two, centred on the point the other way; its width the padding of 8 at each side, a
-// number's badge of 16 and 4, the pick's border of 2 at each side, and its words: a Hangul syllable 0.87 of the font's
-// size, a space, "·", or ":" 0.29, any other letter 0.67, at 12 points, or 14 for the pick's title; rounded up. The area
-// runs from 108 to 500 and from 16 to 395, and a box less than a point over it is inside. A symbol box is 36 square on
-// its point. Labels take sides flags first, then the pick, people, the next Class, candidates, and Restaurants that do
-// not fit; a side is free when its box stays inside the area and covers no other point's symbol box and no label placed
-// before it.
+// number's badge of 16 and 4, the pick's border of 2 at each side, and its words: a Hangul syllable 0.87 of the
+// font's size, a space, "·", or ":" 0.29, a digit 0.67, at 12 points, or 14 for the pick's title; rounded up. The
+// area runs from 108 to 500 and from 16 to 395, and a box less than a point over it is inside. A symbol box is 36
+// square on its point. Labels take sides flags first, then the pick, people, the next Class, candidates, and
+// Restaurants that do not fit; a side is free when its box stays inside the area and covers no other point's symbol
+// box and no label placed before it.
 //
 // The first Plan at its camera (`FIRST_CAMERA`, zoom 14.9638, where a degree of latitude is about 28,615 points and
 // one of longitude 22,720): 301동 at (235.5, 397.1), 302동 (236.9, 434.0), 학생회관 (189.8, 134.9), 3식당 (142.8,
@@ -164,5 +164,27 @@ describe('a label near the pill, the card, and other marks', () => {
     expect(sideOf(drawingOf(answer, 0, NO_STANDINGS, viewAt(FIRST_CAMERA)), 'answer:candidate:자하연식당 2층')).toBe(
       'above',
     );
+  });
+});
+
+// The third Plan's pick, 학생회관, which no other Plan of the stored answer picks.
+const HAKGWAN = { latitude: 37.45932, longitude: 126.95058 };
+
+// Partitions: a view given for one Plan's drawing alone. Expected values: at the third Plan's camera the label of
+// 자하연식당 2층, candidate 5, is left out (above); without a view every Plan but the fifth, which picks it, puts it at
+// its left (`answer-marks.unit.test.ts`).
+describe('the looks of every Plan of an answer', () => {
+  it("are made at the view given for each Plan's own drawing", () => {
+    const looks = looksOf(MEAL_ANSWER, ({ pick }) =>
+      pick?.latitude === HAKGWAN.latitude && pick.longitude === HAKGWAN.longitude ? viewAt(THIRD_CAMERA) : null,
+    );
+
+    const sides = looks.flatMap((look) => {
+      if (look.kind !== 'answer' || look.symbol?.type !== 'dot') {
+        return [];
+      }
+      return look.symbol.role === 'candidate' && look.symbol.number === 5 ? [look.label?.side ?? null] : [];
+    });
+    expect(sides).toEqual(expect.arrayContaining(['left', null]));
   });
 });
