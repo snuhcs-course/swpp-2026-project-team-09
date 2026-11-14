@@ -71,7 +71,7 @@ export function stepped(bound: BandBound, direction: 1 | -1, band: Band): string
 }
 
 // A clock time of the window on the band's day, with Korea's offset.
-function onBandDay(clock: string, band: { startAt: string }): string {
+export function onBandDay(clock: string, band: { startAt: string }): string {
   return `${band.startAt.slice(0, 10)}T${clock}:00+09:00`;
 }
 
