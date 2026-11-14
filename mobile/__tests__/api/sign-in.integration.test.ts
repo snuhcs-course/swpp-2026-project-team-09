@@ -35,6 +35,9 @@ afterEach(() => {
 // What the background sharing keeps, which nothing here changes.
 const NO_BACKGROUND = { masterSwitch: false, backgroundChosen: false, backgroundRunning: false };
 
+// What versions since the location explanation added, which nothing here changes.
+const NOTHING_LATER = { ...NO_BACKGROUND, declinedParties: [], answerOnMap: false };
+
 const FIRST_STATE = {
   signedIn: false,
   consented: false,
@@ -144,9 +147,7 @@ describe('what the phone keeps of the consent', () => {
       consented: false,
       locationExplained: false,
       inviteToken: null,
-      ...NO_BACKGROUND,
-      declinedParties: [],
-      answerOnMap: false,
+      ...NOTHING_LATER,
     });
   });
 
@@ -158,18 +159,14 @@ describe('what the phone keeps of the consent', () => {
       ...stored,
       locationExplained: false,
       inviteToken: null,
-      ...NO_BACKGROUND,
-      declinedParties: [],
-      answerOnMap: false,
+      ...NOTHING_LATER,
     });
     expect((await keep({ locationExplained: true })).locationExplained).toBe(true);
     expect(await readKept()).toEqual({
       ...stored,
       locationExplained: true,
       inviteToken: null,
-      ...NO_BACKGROUND,
-      declinedParties: [],
-      answerOnMap: false,
+      ...NOTHING_LATER,
     });
   });
 
