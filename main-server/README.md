@@ -2378,10 +2378,19 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     Free Time within the hours and the window, through `FREE_TIME_PORT`; `proposeLibraryBooking` checks the window
     (seats today, rooms up to 3 days ahead), the hours, 30-minute steps, the duration, the seat, the equipment group,
     the 사용용도 and the people (GR_MIN–GR_MAX as numbers, at most 8 for a party, G201 never), listing every refusal
-    at once (`library/booking-rules.ts`), and shows a `library` card (`library/library-card.ts`);
-    `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
-    cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id in the
-    history, checked against its grammar. Library cards are attached only for a request with
+    at once (`library/booking-rules.ts`), and shows a `library` card (`library/library-card.ts`). For an app that
+    draws answers (`clientCapabilities` with `answer`), `LIBRARY_ANSWER_RULES` replace the rule that asks for the time:
+    a seat for today without `start` has its time filled from the User's arrival at 관정관 (`library/seat-arrival.ts`).
+    The User is ready now, or at the end of the item under way, and sets out from where a Plan would start (the
+    gathering's `originOf`); the arrival adds the walking minutes to Place 62-1. The start is the first step mark at or
+    after the arrival and not before opening, and the length the one given, or else the space's maximum cut to closing
+    in whole steps. The filled request goes through the same check; the card's first note says what it was filled
+    for, and `shown` adds `arrival` (`at`, the Place's name as `from`, `walkMinutes`) and `leaveBy` (when to leave
+    for the next Class or Sub Quest with a Place that starts before the booking ends, or null, also when that time is
+    not later than the arrival). A room, a named start or another day is checked as before, and any other app is asked
+    for the time. `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show
+    the other cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id
+    in the history, checked against its grammar. Library cards are attached only for a request with
     `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
     `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
     or the User's 소속.
@@ -3061,10 +3070,11 @@ Pushed today:
 Accepting, declining or cancelling an invitation, Friend Requests, requests to join and Parties push nothing.
 
 Expo's answer holds a ticket for each message, in message order. A `DeviceNotRegistered` ticket deletes its row and
-logs an info line. Any other ticket error, an answer outside 2xx (with its `errors[].code` values), a timeout or a
-network failure logs a warning. An ok ticket's receipt id is logged at debug level. A log line holds only row ids,
-error codes, receipt ids and the HTTP status: never a token, Expo's `message` or `details`, the request body or the
-response body, because Expo's texts quote the whole token and a leaked token lets anyone push to that phone.
+logs an info line; the row goes only while it still holds the token that was sent. Any other ticket error, an answer
+outside 2xx (with its `errors[].code` values), a timeout or a network failure logs a warning. An ok ticket's receipt
+id is logged at debug level. A log line holds only row ids, error codes, receipt ids and the HTTP status: never a
+token, Expo's `message` or `details`, the request body or the response body, because Expo's texts quote the whole
+token and a leaked token lets anyone push to that phone.
 
 Nothing is retried, and receipts are not read in code, on purpose: the invitation stays in the app's "알림" whatever
 happens to the push. Errors such as wrong FCM credentials (`InvalidCredentials`) appear only in a receipt, so read it

@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ClockRange, type EquipmentGroup, KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
@@ -146,6 +147,8 @@ export interface BookCardInput {
   useDesc: string | null;
   companions: LibraryCompanion[];
   questId: string | null;
+  // What the server filled, said before the site's notes.
+  note?: string | undefined;
 }
 
 // The seat numbers the card picks from: the named room's, else the equipment group's, else the sector's rooms.
@@ -161,7 +164,7 @@ function seatNosOf(space: LibrarySpace, { seat, equipment }: Pick<BookCardInput,
 }
 
 export function bookCard(space: LibrarySpace, input: BookCardInput): LibraryCard {
-  const { date, start, minutes, seat, equipment, useDesc, companions, questId } = input;
+  const { date, start, minutes, seat, equipment, useDesc, companions, questId, note } = input;
   const key = [
     `book:${space.id}:${date}:${hhmm(start)}:${minutes}`,
     ...(seat === null ? [] : [`s=${seat}`]),
@@ -183,7 +186,7 @@ export function bookCard(space: LibrarySpace, input: BookCardInput): LibraryCard
       pledge: space.pledge,
       companions,
       questId,
-      notes: space.notes,
+      notes: note === undefined ? space.notes : [note, ...space.notes],
     },
   };
 }
