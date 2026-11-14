@@ -83,6 +83,17 @@ Details the spec left to the implementation, listed so that any of them can be v
 
 The design's example on the seed's Places, with the walking minutes given to the test: Wednesday 13:50, a Class in 24동 just ended, 4 minutes to 관정관, and a Class at 16:00 in 두산인문관, 4 minutes from 관정관. The card is `book:7F-7A-zone2:2026-11-04:1400:360` (14:00 to 20:00), its first note is "13:54 도착에 맞춰 최대 시간으로 채웠어요", and the tool's summary ends "13:54에 도착해요. 16:00 수업이라 15:56엔 나서요. 예약하기를 눌러야 예약돼요."
 
+### The real model (2026-11-14)
+
+One request with and one without the `answer` capability were sent through `POST /assistant/messages` of the started server (the test harness's database and Redis containers, the seed, and the real walking table) with the production model, `anthropic/claude-haiku-5.5` through OpenRouter. The clock was set to the design's example: Wednesday 2026-11-18 13:50, a Class in 24동 until 13:50, and one at 16:00 in 두산인문관. It was a check that the endpoint shows the server's card through the real model: no question set, no scoring, and no threshold.
+
+| Asked "공부할 자리" | The reply's text | The card |
+|---|---|---|
+| With the `answer` capability, at 24동 | 7층 7A 열람실 2 구역 좌석 예약 카드를 보여 드렸어요. 오늘 14:00–20:00으로, 관정관에 13:54에 도착하는 것을 기준으로 잡혔어요. 16:00 수업이 있어서 15:56에는 나서야 해요. 카드의 예약하기를 눌러야 예약이 완료돼요. | `book:7F-7A-zone2:2026-11-18:1400:360`, first note "13:54 도착에 맞춰 최대 시간으로 채웠어요" |
+| Without it | The Assistant asks which space, and for the day, the start, and the length, as today | none |
+
+On the seed's walking table 24동 to 관정관 and 관정관 to 두산인문관 are 4 minutes each, as in the design.
+
 ### Agent usage (2026-11-14)
 
 Up to the opening of the pull request. One implementing subagent (Opus 5.5) wrote the ticket and made the review's change. The main session's work on P05 is recorded once, under ticket 02.
