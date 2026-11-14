@@ -4,10 +4,12 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_PLAN_1 } from '@/api/mock/data/meal-answer-plan-1';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -90,7 +92,9 @@ describe('a press of "이대로 초대"', () => {
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
     expect(card().getByText('답이 없어도 12:15에 가면 돼요')).toBeVisible();
-    expect(card().getByText('12:15 302동식당에서 식사')).toBeVisible();
+    const steps = within(card().getByTestId('quest-steps'));
+    expect(steps.getByText('12:15')).toBeVisible();
+    expect(steps.getByText('302동식당에서 식사')).toBeVisible();
     expect(card().getByText('민수 · 아직 안 봄')).toBeVisible();
     expect(card().getByText('301동에서')).toBeVisible();
     expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
@@ -109,6 +113,23 @@ describe('a press of "이대로 초대"', () => {
     expect(card().queryByRole('button', { name: '민수 빼기' })).toBeNull();
     expect(card().queryByRole('button', { name: '301동에서' })).toBeNull();
     expect(card().queryByRole('button', { name: INVITE })).toBeNull();
+  });
+});
+
+// Partitions: the card's last part. Expected values: fix 5 of the design review of 2026-11-15, "닫기" the secondary
+// button across the card's content in the place the main button had.
+describe('the card after inviting', () => {
+  it('ends with "닫기" across its width', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await user.press(card().getByRole('button', { name: INVITE }));
+    await pass(500);
+
+    const close = card().getByRole('button', { name: '닫기' });
+    expect(close).toHaveStyle({ alignSelf: 'stretch', height: 40, borderColor: color.borderStrong });
+    const holder: unknown = close.parent?.props.testID;
+    expect(holder).toBe('invited-card');
   });
 });
 
