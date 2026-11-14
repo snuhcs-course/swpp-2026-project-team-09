@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '@/api/errors';
 import type { InvitationCard } from '@/api/invitation-card-types';
 import { invitationCardQuery, QUEST_INVITATIONS_KEY } from '@/api/queries';
@@ -51,48 +51,54 @@ function useCardRead(invitationId: string | null, position: LatLng | null): UseQ
   });
 }
 
+// The ids of the invitations answered on this phone, or whose answer is on its way.
+type Answering = RefObject<Set<string>>;
+
 // The selected invitation's card left the cards while the switch stayed on: the list of invitations came again
-// without it, as after the Leader cancelled it or it was answered on another device. The selection drops the card
-// itself. `selectedId` is the selected invitation's card id.
-function useEndedOnList(selectedId: string | null, cards: readonly CardView[]): void {
+// without it, as after the Leader cancelled it or it was answered on another device; one answered here is no news.
+// The selection drops the card itself. `selectedId` is the selected invitation's card id.
+function useEndedOnList(selectedId: string | null, cards: readonly CardView[], answering: Answering): void {
   const on = useAnswerSwitch();
   const showToast = useToast();
   const before = useRef(selectedId);
   useEffect(() => {
     const was = before.current;
     before.current = selectedId;
-    if (on && was !== null && was !== selectedId && !cards.some(({ id }) => id === was)) {
+    if (was === null || was === selectedId || !on || cards.some(({ id }) => id === was)) {
+      return;
+    }
+    if (!answering.current.has(invitationIdOf(was) ?? '')) {
       showToast(INVITATION_GONE);
     }
-  }, [selectedId, cards, on, showToast]);
+  }, [selectedId, cards, on, showToast, answering]);
 }
 
-// 수락 and 거절, each as the 파티 tab's buttons do it, once for each invitation at a time. Done, the toast says so, and
-// the card closes while that invitation's card is still the one selected (`selectedId`, a card's id).
+// 수락 and 거절, each as the 파티 tab's buttons do it, once for each invitation. Done, the toast says so, and the card
+// closes while that invitation's card is still the one selected (`selectedId`, a card's id).
 function useAnswers(
   card: InvitationCard | null,
   selectedId: string | null,
   closeCard: () => void,
+  answering: Answering,
 ): Pick<ReceivedInvitation, 'busy' | 'accept' | 'decline'> {
   const actions = usePartyActions();
   const showToast = useToast();
   const [sending, setSending] = useState<readonly string[]>([]);
-  const going = useRef(new Set<string>());
   const selected = useRef(selectedId);
   useEffect(() => {
     selected.current = selectedId;
   });
   const answer = async (does: PartyActions['accept'], done: string | null): Promise<void> => {
-    if (card === null || going.current.has(card.id)) {
+    if (card === null || answering.current.has(card.id)) {
       return;
     }
     const { id } = card;
-    going.current.add(id);
+    answering.current.add(id);
     setSending((ids) => [...ids, id]);
     const answered = await does(card);
-    going.current.delete(id);
     setSending((ids) => ids.filter((each) => each !== id));
     if (!answered) {
+      answering.current.delete(id);
       return;
     }
     if (done !== null) {
@@ -138,11 +144,12 @@ export function useReceivedInvitation(
   const read = useCardRead(invitationId, position);
   const gone = read.error instanceof ApiError && read.error.status === 404;
   useGoneOnRead(gone, closeCard);
-  useEndedOnList(selectedInvitation === null ? null : selectedId, cards);
+  const answering = useRef(new Set<string>());
+  useEndedOnList(selectedInvitation === null ? null : selectedId, cards, answering);
   const card = invitationId === null ? null : (read.data ?? null);
   const way = card?.way ?? null;
   const drawing = useMemo(() => (way === null ? null : drawingOfScene(way.scene)), [way]);
-  const answers = useAnswers(card, selectedId, closeCard);
+  const answers = useAnswers(card, selectedId, closeCard, answering);
   return {
     shown: invitationId !== null,
     card,

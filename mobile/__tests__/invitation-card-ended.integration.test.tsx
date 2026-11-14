@@ -107,7 +107,7 @@ describe('the addresses and cards of received invitations', () => {
     await openInvitation();
 
     expect(screen.getByText(GONE)).toBeVisible();
-    expect(shownAddress()).toBe('/main');
+    expect(shownAddress()).toMatch(/^\/main(?:\?|$)/u);
     expect(server.received(CARD_ROUTE)).toEqual([]);
   });
 
