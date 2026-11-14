@@ -34,7 +34,7 @@ import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
 import { mockParty } from './party';
-import { mockBetterPlan, mockChangedPlanQuest, mockPlanQuest } from './plan-quest';
+import { mockBetterPlan, mockChangedPlanQuest, mockMadeQuests, mockPlanQuest } from './plan-quest';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
@@ -174,7 +174,7 @@ export const mockClient: ApiClient = {
   },
   listPositions: () => answer('listPositions', friendships.listPositions, []),
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
-  listQuests: () => answer('listQuests', () => QUESTS, []),
+  listQuests: () => answer('listQuests', () => [...QUESTS, ...mockMadeQuests()], []),
   listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
   listNotifications: () => answer('listNotifications', () => [], []),
   // The User leads no Quest of the mock's.
