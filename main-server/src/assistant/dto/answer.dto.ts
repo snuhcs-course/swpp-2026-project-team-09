@@ -161,7 +161,9 @@ export const planInputSchema = z.strictObject({
     .array(z.strictObject({ userId: z.uuid(), constraints: z.array(personConstraintSchema).max(CONSTRAINTS_MAX) }))
     .min(1)
     .max(PEOPLE_MAX),
-  window: z.strictObject({ from: clockTime.nullable(), until: clockTime.nullable() }),
+  window: z
+    .strictObject({ from: clockTime.nullable(), until: clockTime.nullable() })
+    .refine(({ from, until }) => from === null || until === null || from < until, 'Expected from before until'),
   placeId: z.uuid().nullable(),
 });
 

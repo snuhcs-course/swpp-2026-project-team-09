@@ -192,3 +192,21 @@ describe('Refused with 400', () => {
     expect(stage.model.received()).toEqual([]);
   });
 });
+
+describe('A window whose start is not before its end, refused with 400', () => {
+  const date = '2087-05-13';
+
+  beforeAll(() => stage.asking(date, '11:50'));
+
+  it.each([
+    ['12:30', '12:30'],
+    ['13:00', '12:30'],
+  ])('from %s until %s', async (from, until) => {
+    stage.model.script();
+
+    const response = await recalculate({ input: inputOf(date, [], { window: { from, until } }) });
+
+    expect(response.status).toBe(400);
+    expect(stage.model.received()).toEqual([]);
+  });
+});

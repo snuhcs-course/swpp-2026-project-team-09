@@ -11,6 +11,8 @@ import { type GatheringPerson } from './gathering.js';
 
 // What the User fixed in a plan's input, as the calculation takes it.
 
+export type PersonConditions = Pick<GatheringPerson, 'chosenPlaceId' | 'notBefore' | 'leaveBy'>;
+
 // The meal's window narrowed on each side the User fixed. It may come out empty.
 export function windowOf({ date, meal, window }: PlanInput): Interval {
   const { start, end } = mealWindow(date, meal);
@@ -22,11 +24,8 @@ export function windowOf({ date, meal, window }: PlanInput): Interval {
 
 // A person's constraints. Of several of a kind, the last origin, the latest "not before", and the earliest "leave by"
 // hold.
-export function conditionsOf(
-  constraints: readonly PersonConstraint[],
-  date: string,
-): Pick<GatheringPerson, 'chosenPlaceId' | 'notBefore' | 'leaveBy'> {
-  const conditions: Pick<GatheringPerson, 'chosenPlaceId' | 'notBefore' | 'leaveBy'> = {};
+export function conditionsOf(constraints: readonly PersonConstraint[], date: string): PersonConditions {
+  const conditions: PersonConditions = {};
   for (const constraint of constraints) {
     if (constraint.kind === 'from') {
       conditions.chosenPlaceId = constraint.placeId;

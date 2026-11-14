@@ -7,6 +7,7 @@
 
 import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan, type PlanPart } from '../dto/answer.dto.js';
 import { clockOf, onDay } from '../free-time/free-time.js';
+import { mealWindow } from '../free-time/meal-fit.js';
 import { koreaTime } from '../korea-time.js';
 import {
   itemAt,
@@ -20,6 +21,7 @@ import {
 } from './answer-words.js';
 import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
 import { bandOf, sceneOf } from './meal-scene.js';
+import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
 
 export { type AnswerPerson, type MealAnswerArgs } from './answer-words.js';
 
@@ -29,31 +31,28 @@ const timeOf = (at: Date | null): string | null => (at === null ? null : koreaTi
 
 const plain = (text: string): AnswerLine => [{ text, strong: false }];
 
-// The earliest end the User fixed for the asker: the window's or their own leave-by, as HH:MM.
-function fixedEnd({ window, people }: MealAnswerArgs['input']): string | null {
-  const ends = (people[0]?.constraints ?? []).flatMap((constraint) =>
-    constraint.kind === 'leaveBy' ? [constraint.time] : [],
-  );
-  if (window.until !== null) {
-    ends.push(window.until);
-  }
-  return ends.toSorted()[0] ?? null;
+// What the User fixed for the asker: their conditions, and the earliest of the window's end and their own leave-by.
+function askerFixed({ date, window, people }: MealAnswerArgs['input']): PersonConditions & { end: Date | null } {
+  const conditions = conditionsOf(people[0]?.constraints ?? [], date);
+  const ends = [conditions.leaveBy, window.until === null ? undefined : onDay(date, window.until)];
+  const end = ends.filter((at) => at !== undefined).toSorted((a, b) => a.getTime() - b.getTime())[0] ?? null;
+  return { ...conditions, end };
 }
 
 // The asker's chosen origin, else the one of their side.
 function originChip(naming: Naming, mine: GatheringSide | undefined): ConditionChip | null {
-  const chosen = naming.args.input.people[0]?.constraints.findLast(({ kind }) => kind === 'from');
-  const placeId = chosen?.kind === 'from' ? chosen.placeId : (mine?.origin?.placeId ?? null);
+  const placeId = askerFixed(naming.args.input).chosenPlaceId ?? mine?.origin?.placeId ?? null;
   return placeId === null ? null : { kind: 'origin', text: `${naming.placeLabel(placeId)}에서`, userId: null };
 }
 
-// The end the User fixed when it is earlier than the asker's next item or nothing follows, else that item.
+// The end the User fixed when it is earlier than both the asker's next item and the meal's own end, else that item.
 function untilChip(naming: Naming, mine: GatheringSide | undefined): ConditionChip | null {
   const { input } = naming.args;
   const until = mine === undefined ? null : itemAt(naming.asker.items, mine.next);
-  const fixed = fixedEnd(input);
-  if (fixed !== null && (until === null || onDay(input.date, fixed) < until.start)) {
-    return { kind: 'until', text: `${fixed}까지`, userId: null };
+  const { end } = askerFixed(input);
+  const mealEnd = mealWindow(input.date, input.meal).end;
+  if (end !== null && end < mealEnd && (until === null || end < until.start)) {
+    return { kind: 'until', text: `${clockOf(end)}까지`, userId: null };
   }
   if (until === null) {
     return null;
@@ -136,19 +135,41 @@ function firstBy(parts: readonly PersonPart[], at: (part: PersonPart) => number)
   return parts.toSorted((a, b) => at(a) - at(b))[0];
 }
 
-// Who keeps the plan from the window the User fixed: the last to arrive when it starts later than the window's start,
-// else the first to leave when it ends earlier than the window's end.
+// When a person reaches the place on their own: ready, plus their whole walk; ready alone when their origin is unknown.
+const ownArrival = ({ readyAt, walkMinutes }: PersonPart): number => readyAt.getTime() + (walkMinutes ?? 0) * 60_000;
+
+// Who keeps the plan from the window the User fixed, or the meal's own window when it, not a person, does: the start
+// first, then the end.
 function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string | null {
-  const { date, window } = naming.args.input;
-  if (window.from !== null && start > onDay(date, window.from)) {
-    const last = firstBy(parts, (part) => -(part.canArriveAt ?? part.readyAt).getTime());
-    const { me, name } = naming.personOf(last?.personId ?? naming.asker.userId);
-    return me ? `${clockOf(start)}에야 도착해요` : `${withSubject(name)} ${clockOf(start)}에 도착해요`;
+  const { input } = naming.args;
+  const { date, window } = input;
+  const held = windowOf(input);
+  const meal = naming.mealWord();
+  if (window.from !== null) {
+    if (start > held.start) {
+      const last = firstBy(parts, (part) => -ownArrival(part));
+      const { me, name } = naming.personOf(last?.personId ?? naming.asker.userId);
+      const clock = clockOf(start);
+      if (me) {
+        return `${clock}에야 도착해요`;
+      }
+      return last?.origin === null
+        ? `${withTopic(name)} ${clock}부터 가능해요`
+        : `${withSubject(name)} ${clock}에 도착해요`;
+    }
+    if (held.start > onDay(date, window.from)) {
+      return `${withTopic(meal)} ${clockOf(held.start)}부터예요`;
+    }
   }
-  if (window.until !== null && end < onDay(date, window.until)) {
-    const first = firstBy(parts, (part) => (part.leaveBy ?? end).getTime());
-    const { me, name } = naming.personOf(first?.personId ?? naming.asker.userId);
-    return me ? `${clockOf(end)}엔 나서야 해요` : `${withTopic(name)} ${clockOf(end)}에 나서야 해요`;
+  if (window.until !== null) {
+    if (end < held.end) {
+      const first = firstBy(parts, (part) => (part.leaveBy ?? end).getTime());
+      const { me, name } = naming.personOf(first?.personId ?? naming.asker.userId);
+      return me ? `${clockOf(end)}엔 나서야 해요` : `${withTopic(name)} ${clockOf(end)}에 나서야 해요`;
+    }
+    if (held.end < onDay(date, window.until)) {
+      return `${withTopic(meal)} ${clockOf(held.end)}까지예요`;
+    }
   }
   return null;
 }
@@ -189,7 +210,7 @@ function friendBasis(part: PersonPart, { key, meeting }: GatheringFit, naming: N
     const endedAt = before !== null && before.end > now ? ` ${clockOf(before.end)}` : '';
     pieces.push(`${name}${endedAt} ${from} ${ended}`);
   }
-  // Ready later than their own day lets them be: the asker said from when they can come.
+  // Ready later than their own day allows: the asker's "not before" moved it.
   if (readyAt > now && (before === null || readyAt > before.end)) {
     pieces.push(`${clockOf(readyAt)}부터 가능`);
   }

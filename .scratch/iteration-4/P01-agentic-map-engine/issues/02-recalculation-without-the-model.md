@@ -27,11 +27,11 @@ A User drags the time band of a Plan, removes a Friend's chip, or adds one, and 
 Details the spec left to the implementation, listed so that any of them can be vetoed.
 
 1. **The endpoint** is `POST /assistant/answers`, with the body `{ input, location }`, and it answers an `AnswerReply`. It goes through the service the Assistant's tool calls, never through the model, and it does not count the User's daily messages.
-2. **The window narrows the meal's window.** A Plan that cannot start at `from` starts when the last person arrives, and its second line says who that is and when; a Plan that must end before `until` says who must leave and when. When both apply, the line says the start.
+2. **The window narrows the meal's window.** A Plan that starts later than the User's start says what holds it: the person whose own arrival is the latest (of two who merge, the one who reaches the Merging Point later), or the meal's own serving time when the meal is not served yet. A Plan that ends before the User's end says who must leave first, or when the meal stops being served. When both apply, the line says the start.
 3. **Several constraints of one kind on a person**: the last `from`, the latest `notBefore`, and the earliest `leaveBy` hold.
 4. **A fixed Place with no open Restaurant** gives no Plan, with the reason `no-fit` and the line "그곳에는 여는 식당이 없어요".
-5. **Refused with 400**: a body of another shape, a first person who is not the asker, a person who is not the asker's Friend, the same User twice, a date before today or more than a week ahead, a constraint whose source is not the asker, and a Place that does not exist.
-6. **The chips say what the User fixed**: the until chip reads the User's end when it is earlier than the asker's next item, and the origin chip names a chosen Place.
+5. **Refused with 400**: a body of another shape, a window whose start is not before its end, a first person who is not the asker, a person who is not the asker's Friend, the same User twice, a date before today or more than a week ahead, a constraint whose source is not the asker, and a Place that does not exist.
+6. **The chips say what the User fixed**: the until chip reads the User's end when it is earlier than both the asker's next item and the end of the meal's serving time, and the origin chip names a chosen Place.
 7. **A Friend who is ready later than their Class ends** keeps the Class's end in their line of the basis, followed by the time from which they can come ("민수 12:15 302동 수업 끝 · 12:20부터 가능").
 8. **The time band reaches out** to the half hours around a fixed window, so that the handles the User dropped stay inside it.
 9. **The app** has `recalculateAnswer(input, location)`. Its mock does not calculate: it answers with the copy of the real answer, holding the input it was given.

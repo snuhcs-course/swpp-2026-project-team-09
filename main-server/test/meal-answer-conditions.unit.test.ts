@@ -20,7 +20,7 @@ import {
   plain,
   time,
 } from './meal-answers.js';
-import { classAt, id, readWorld } from './worked-example.js';
+import { at, classAt, id, readWorld } from './worked-example.js';
 
 // The words of an answer under what the User fixed (the window, a person's origin, and their leave-by), on the design's
 // worked example (Tuesday 2026-11-17, asked at 11:50).
@@ -49,6 +49,71 @@ describe('A plan that starts later than the window', () => {
   it('keeps the lines of before when it starts as the window opens', () => {
     expect(secondLine(answerOf([me()], { fixed: window('11:50', null) }), '301동식당')).toEqual([
       plain('12:45엔 나서야 해요'),
+    ]);
+  });
+});
+
+describe("A plan held by the meal's own window", () => {
+  it('says from when the meal is served when that is later than the window', () => {
+    const early = person(ME, '유상', [
+      classAt('09:00', '09:50', '제1공학관'),
+      classAt('13:00', '13:50', '자연과학관6'),
+    ]);
+
+    const plan = answerOf([early], { now: at('10:00'), fixed: window('10:30', null) }).plans.find(
+      ({ id: key }) => key === '301동식당',
+    );
+
+    expect([plan?.startAt, plan?.endAt, plan?.lines[1]]).toEqual([
+      time('11:00'),
+      time('12:45'),
+      [plain('점심은 11:00부터예요')],
+    ]);
+  });
+
+  it('says until when the meal is served when that is earlier than the window, with no until chip', () => {
+    const free = person(ME, '유상', [classAt('11:00', '11:50', '제1공학관')]);
+
+    const answer = answerOf([free], { fixed: window(null, '15:00') });
+    const plan = answer.plans.find(({ id: key }) => key === '301동식당');
+
+    expect([plan?.startAt, plan?.endAt, plan?.lines[1]]).toEqual([
+      time('11:50'),
+      time('14:30'),
+      [plain('점심은 14:30까지예요')],
+    ]);
+    expect(answer.chips).toEqual([{ kind: 'origin', text: '301동에서', userId: null }]);
+  });
+});
+
+describe('A plan whose start a person holds', () => {
+  it('names the one of two who merge that comes later', () => {
+    const free = person(ME, '유상', [classAt('11:00', '11:50', '제1공학관')]);
+    const late = person(MINSU, '민수', [classAt('12:00', '12:50', '제2공학관')]);
+
+    const plan = answerOf([free, late], { aloneMinutes: 55, fixed: window('12:30', null) }).plans.find(
+      ({ id: key }) => key === '학생회관식당',
+    );
+
+    expect([plan?.meeting?.at, plan?.startAt, plan?.lines[1]]).toEqual([
+      time('12:53'),
+      time('13:08'),
+      [plain('민수가 13:08에 도착해요')],
+    ]);
+  });
+
+  it('says from when a Friend whose position is unknown can come', () => {
+    const notBefore = { kind: 'notBefore' as const, time: '12:30', source: 'asker' as const };
+
+    const plan = answerOf([me(), haeun()], {
+      aloneMinutes: 55,
+      fixed: { window: { from: '12:00', until: null }, constraints: { [HAEUN]: [notBefore] } },
+    }).plans.find(({ id: key }) => key === '301동식당');
+
+    expect([plan?.startAt, plan?.endAt, plan?.lines[1]]).toEqual([
+      time('12:30'),
+      time('12:45'),
+      [plain('하은은 12:30부터 가능해요')],
     ]);
   });
 });

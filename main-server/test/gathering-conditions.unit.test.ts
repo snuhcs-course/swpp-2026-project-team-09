@@ -36,7 +36,7 @@ describe('A chosen origin', () => {
     expect(originOf(asker, '12:00')).toEqual({ placeId: 'C', basis: 'chosen' });
   });
 
-  it('is walked from, a Friend merging at the asker’s chosen origin by the same rule', () => {
+  it("is walked from, a Friend merging at the asker's chosen origin by the same rule", () => {
     // The Friend at C reaches P in 1 minute, or by S in 1 + 1: one minute longer, so they meet at S.
     const asker = { ...person('me', [free('12:00', '14:30', item('11:00', '12:00', 'A'), null)]), chosenPlaceId: 'S' };
     const friend = person('friend', [free('12:00', '14:30', item('11:00', '12:00', 'C'), null)]);

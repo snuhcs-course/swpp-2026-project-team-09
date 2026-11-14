@@ -197,10 +197,12 @@ A good test states a behaviour a User or another package depends on, through a p
 - **The endpoint, integration tests.** The seam is the Assistant's endpoint over the started server with the scripted model, the real walking table, and the seed's Places, as the existing Assistant tests do. They cover the worked example end to end, what the model is given, a Friend's position used only when the asker may see it, an app without the capability, a refused context, and a day without menus.
 - **The app, unit tests.** The copy of the real answer passes the app's check of a reply, and the mock client returns it.
 - Prior art: the Assistant's free-time tests and their stage, the candidate-fit unit test, and the app's API answer tests.
+- **No evaluation suite in this task.** The location question set, its reference solver, its baselines, and its thresholds are frozen in one commit of their own before any result. This task adds nothing under the server's evaluation folder, does not run the engine against a question set, and writes no reference solver from the engine's own logic.
 
 ## Out of Scope
 
 - The answer screen, invitations and the making of a Quest from a Plan, and notifications and bookings: the other three packages.
+- The flows of today's app. The Assistant's free-time meals and Quests, the search for Global Events and recruiting Quests, Friends, and location sharing stay as they are: an app that does not send the `answer` capability gets the prompt, the tools, and the reply it gets today.
 - The shuttle in a Plan's Travel Time, a Restaurant's own closing time, and the per-Friend levels of location.
 - Plans other than a meal: a study group, an event, and a recruiting Quest.
 - A constraint set by an invited person, planning again after a decline, and a late Holder.
