@@ -5,23 +5,22 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
-import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
+import { useEffect, useEffectEvent, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { LatLng } from '@/api/types';
-import { correctedCentre, type ViewArea } from '@/features/assistant/answer-camera';
-import { type AnswerDrawing, drawingOf, looksOf } from '@/features/assistant/answer-marks';
+import { answerCamera } from '@/features/assistant/answer-camera';
+import { type AnswerDrawing, drawingOf, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import { withPerson } from '@/features/assistant/plan-input';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type CardView, cardId } from '@/features/map/adapter';
 import {
   type FitPadding,
   type MapAvatar,
-  type MapCamera,
   type MapLine,
   type MapMarker,
   type MarkerLook,
-  type Size,
+  NATIVE_MIN_LEVEL,
   useMarkerImages,
+  ZOOM_OFFSET,
 } from '@/map';
 import { ANSWER_PILL, listsTop, type Room } from './layout';
 import type { MainMap } from './use-main-map';
@@ -38,13 +37,12 @@ export interface MapContents {
 const ROOM_ABOVE = 56;
 const ROOM_BELOW = 72;
 const SIDE = 64;
-// A fit glides for 300 milliseconds, and the map tells of its rest later than that. A rest told sooner belongs to
-// an earlier move, such as the view's change of size when the frame appears, and one told much later to the User.
-const FIT_RESTS_AFTER_MS = 500;
-const FIT_RESTS_WITHIN_MS = 3000;
+
+// A Plan may span the campus, and on a phone Kakao's level 15, where a campus map's pinch out stops, is closer than
+// the lowest zoom of the camera's rules: while a Plan is drawn, a native map may go one level further out.
+const ANSWER_MIN_LEVEL = NATIVE_MIN_LEVEL - 1;
 
 const NO_LOOKS: readonly MarkerLook[] = [];
-const NO_POINTS: readonly LatLng[] = [];
 
 // What the pill covers at the top, under a status bar `top` high, and the card at the bottom, each with room for a
 // label.
@@ -57,61 +55,43 @@ function paddingOf(top: number, cardHeight: number | null): FitPadding {
   };
 }
 
-// The area the padding leaves of a view of `size`.
-function areaOf({ top, right, bottom, left }: FitPadding, size: Size): ViewArea {
-  return { top, right: size.width - right, bottom: size.height - bottom, left };
-}
-
-// Fits the points when they come, and again when the card's height or the stage's size changes. No points move
-// nothing, so closing the answer leaves the camera where it is. A map may stop short of the fit, held by its lowest
-// zoom: where the camera rests after a fit is checked once, and moved so that the Plan shows (`correctedCentre`).
+// Shows the drawing when it comes, and again when the card's height or the stage's size changes: in one glide to the
+// camera `answerCamera` works out for the view. Until the stage is laid out and the map has told its fit zoom, the
+// map fits the points itself. No drawing moves nothing, so closing the answer leaves the camera where it is.
 function useAnswerCamera(drawing: AnswerDrawing | null, map: MainMap, { answerHeight, stage }: Room): void {
   const { top } = useSafeAreaInsets();
-  const { fitAnswer, centreAt, camera } = map;
-  const points = drawing?.points ?? NO_POINTS;
+  const { fitAnswer, moveTo, fitZoom } = map;
   const width = stage?.width;
   const height = stage?.height;
-  // When the last fit was asked, until where it came to rest is checked.
-  const fitAt = useRef<number | null>(null);
-  const fit = useEffectEvent(() => {
-    fitAnswer(points, paddingOf(top, answerHeight));
-    fitAt.current = Date.now();
-  });
-  useEffect(() => {
-    if (points.length > 0) {
-      fit();
-    }
-  }, [points, top, answerHeight, width, height]);
-  const check = useEffectEvent((now: MapCamera) => {
-    const since = fitAt.current === null ? null : Date.now() - fitAt.current;
-    if (since === null || since < FIT_RESTS_AFTER_MS || drawing === null || stage === null) {
+  const show = useEffectEvent(() => {
+    if (drawing === null || drawing.points.length === 0) {
       return;
     }
-    fitAt.current = null;
-    if (since > FIT_RESTS_WITHIN_MS) {
+    const padding = paddingOf(top, answerHeight);
+    if (stage === null || fitZoom === null) {
+      fitAnswer(drawing.points, padding);
       return;
     }
     // The map lies under the status bar too.
     const size = { width: stage.width, height: stage.height + top };
-    const centre = correctedCentre(drawing, now, size, areaOf(paddingOf(top, answerHeight), size));
-    if (centre !== null) {
-      centreAt(centre);
+    const camera = answerCamera(drawing, size, padding, fitZoom + ZOOM_OFFSET.close);
+    if (camera !== null) {
+      moveTo(camera);
     }
   });
   useEffect(() => {
-    if (camera !== null) {
-      check(camera);
-    }
-  }, [camera]);
+    show();
+  }, [drawing, top, answerHeight, width, height, fitZoom]);
 }
 
 // The Avatars of people the Plan does not draw: Friends and the other people of the User's Party, not the User's own
-// nor the shuttle's vehicles.
-function othersOf(avatars: readonly MapAvatar[], cards: readonly CardView[], userIds: readonly string[]): MapAvatar[] {
+// nor the shuttle's vehicles. One near one of the Plan's own marks gives way too: the map draws every Avatar above
+// every marker, so it would lie over the mark or its words.
+function othersOf(avatars: readonly MapAvatar[], cards: readonly CardView[], drawing: AnswerDrawing): MapAvatar[] {
   const others = new Set(
-    cards.flatMap(({ id, mark }) => (mark.type === 'person' && !userIds.includes(mark.id) ? [id] : [])),
+    cards.flatMap(({ id, mark }) => (mark.type === 'person' && !drawing.userIds.includes(mark.id) ? [id] : [])),
   );
-  return avatars.filter(({ id }) => others.has(id));
+  return avatars.filter(({ id, position }) => others.has(id) && !nearOwnMark(drawing, position));
 }
 
 export interface AnswerMap {
@@ -119,6 +99,7 @@ export interface AnswerMap {
   // A press on a candidate's mark shows its Plan, and one on the Avatar of a Friend not in the conditions adds the
   // Friend; any other press does nothing.
   onPress: (id: string) => void;
+  nativeMinLevel: number;
 }
 
 const FRIEND = cardId.friend('');
@@ -159,7 +140,7 @@ export function useAnswerMap(
   return {
     contents: {
       markers,
-      avatars: othersOf(everyday.avatars, everyday.cards, drawing.userIds),
+      avatars: othersOf(everyday.avatars, everyday.cards, drawing),
       lines: drawing.lines,
     },
     onPress: (id) => {
@@ -170,5 +151,6 @@ export function useAnswerMap(
         show(planId);
       }
     },
+    nativeMinLevel: ANSWER_MIN_LEVEL,
   };
 }

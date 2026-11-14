@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
-import type { MapLine } from '@/map';
+import { type MapLine, NATIVE_MIN_LEVEL } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
 import { type MapContents, useAnswerMap } from './use-answer-map';
@@ -49,7 +50,7 @@ export function useMapView(
   map: MainMap,
   room: Room,
   { things, me, pin, lines, cards, selection }: Everyday,
-): { contents: MapContents; onPress: (id: string) => void } {
+): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards });
   if (answer !== null) {
     return answer;
@@ -57,5 +58,6 @@ export function useMapView(
   return {
     contents: { markers: [...things.markers, ...pin.markers], avatars: [...things.avatars, ...me.avatars], lines },
     onPress: chat.framed ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
+    nativeMinLevel: NATIVE_MIN_LEVEL,
   };
 }

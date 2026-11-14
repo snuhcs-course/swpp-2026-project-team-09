@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
@@ -92,6 +93,15 @@ function offset(from: LatLng, to: LatLng): { east: number; north: number } {
 function samePoint(one: LatLng, other: LatLng): boolean {
   const { east, north } = offset(one, other);
   return Math.hypot(east, north) <= ONE_POINT;
+}
+
+// Whether a position is so near one of the Plan's own marks that a picture drawn there would lie over the mark or
+// its words: within the reach of a label above or below it.
+export function nearOwnMark({ own }: Pick<AnswerDrawing, 'own'>, position: LatLng): boolean {
+  return own.some((mark) => {
+    const { east, north } = offset(mark, position);
+    return Math.abs(north) <= UPRIGHT_REACH.along && Math.abs(east) <= UPRIGHT_REACH.across;
+  });
 }
 
 function personDrafts(scene: MapScene): Draft[] {

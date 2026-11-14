@@ -7,6 +7,7 @@
 
 import { screen, within } from '@testing-library/react-native';
 import { Dimensions, StyleSheet, type ViewStyle } from 'react-native';
+import type { MapScene } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { color } from '@/design-system';
 import * as answerCamera from '@/features/assistant/answer-camera';
@@ -23,7 +24,7 @@ import { AI_INPUT, LAYERS, layStage } from './support/lists';
 import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
-import { askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
+import { askMainServer, LIBRARY_POSITION, MIN_JUN, PHONE_NOW } from './support/server';
 import { answerShuttle, GATE, stopMarker, vehicleMarker } from './support/shuttle';
 
 // The answer drawn on the map (P02 ticket 02, "The answer on the map"): the marks and the lines of the Plan on screen,
@@ -89,6 +90,19 @@ function strokesOf(id: string): ViewStyle[] {
     });
 }
 
+type Person = MapScene['people'][number];
+
+// The stored reply with one field changed for a boundary: the two people of its first Plan's scene.
+function replyWith(change: (me: Person, minsu: Person) => Person[]): object {
+  const [first, ...rest] = MEAL_ANSWER_REPLY.answer.plans;
+  const [me, minsu] = first?.scene.people ?? [];
+  if (first === undefined || me === undefined || minsu === undefined) {
+    throw new Error('The stored answer has no Plan of two people');
+  }
+  const plans = [{ ...first, scene: { ...first.scene, people: change(me, minsu) } }, ...rest];
+  return { ...MEAL_ANSWER_REPLY, answer: { ...MEAL_ANSWER_REPLY.answer, plans } };
+}
+
 // Partitions: the first Plan's marks, which take a press or not; its lines.
 describe('the Plan on screen', () => {
   it('draws the marks of the first Plan, by the names a screen reader says', async () => {
@@ -121,7 +135,8 @@ describe('the Plan on screen', () => {
   });
 });
 
-// Partitions: before the answer, while the Plan is drawn, and after ✕; a Friend not in the Plan and one in it.
+// Partitions: before the answer, while the Plan is drawn, and after ✕; a Friend not in the Plan, one in it, and one
+// who stands by a mark of it.
 describe('what gives way to the Plan', () => {
   it("leaves only the Plan's marks and the Friend who is not in it, and no line of the shuttle", async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY, turnLayersOn);
@@ -147,22 +162,26 @@ describe('what gives way to the Plan', () => {
   });
 
   it("hides the Avatar of a Friend whom the Plan draws, by the Friend's user id", async () => {
-    // The stored answer with one field changed: its Friend's user id is 김민준's, a Friend of the fake server.
-    const [first, ...rest] = MEAL_ANSWER_REPLY.answer.plans;
-    if (first === undefined) {
-      throw new Error('The stored answer has no Plan');
-    }
-    const [me, minsu] = first.scene.people;
-    if (me === undefined || minsu === undefined) {
-      throw new Error('The stored Plan has no two people');
-    }
-    const people = [me, { ...minsu, userId: MIN_JUN.id }];
-    const plans = [{ ...first, scene: { ...first.scene, people } }, ...rest];
-
-    await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: { ...MEAL_ANSWER_REPLY.answer, plans } });
+    // 민수's user id is 김민준's, a Friend of the fake server.
+    await askOnMap(
+      server,
+      replyWith((me, minsu) => [me, { ...minsu, userId: MIN_JUN.id }]),
+    );
 
     expect(mapThings()).not.toContain(FRIEND);
     expect(screen.getByLabelText('민수')).toBeOnTheScreen();
+  });
+
+  it("hides the Avatar of a Friend who stands by one of the Plan's own marks, which it would lie over", async () => {
+    // The User sets out from where 김민준 stands.
+    const { latitude, longitude } = LIBRARY_POSITION;
+    await askOnMap(
+      server,
+      replyWith((me, minsu) => [{ ...me, at: { latitude, longitude } }, minsu]),
+    );
+
+    expect(mapThings()).not.toContain(FRIEND);
+    expect(screen.getByLabelText('나 · 3분')).toBeOnTheScreen();
   });
 });
 
@@ -236,7 +255,7 @@ describe('the camera', () => {
   });
 });
 
-// Partitions: the Plan on screen changes, the basis opens, and the camera rests on a map that shows every point.
+// Partitions: the Plan on screen changes, the basis opens, and the stage is laid out.
 describe('the camera after the answer came', () => {
   it('fits again after "다음 후보" into what the card then leaves, and moves nothing when the answer is closed', async () => {
     const fit = jest.spyOn(projection, 'fit');
@@ -267,20 +286,18 @@ describe('the camera after the answer came', () => {
     expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(336) }));
   });
 
-  it('moves no further on the plain map, which has no floor that keeps a point out of view', async () => {
+  it('goes in one move to the camera worked out, once the stage is laid out', async () => {
     const fit = jest.spyOn(projection, 'fit');
-    const corrected = jest.spyOn(answerCamera, 'correctedCentre');
+    const worked = jest.spyOn(answerCamera, 'answerCamera');
     const { width, height } = Dimensions.get('window');
 
     await askOnMap(server, MEAL_ANSWER_REPLY, async () => {
       await layStage(width, height);
     });
 
-    expect(fit).toHaveBeenCalledTimes(1);
-    // The plain map tells of its rest at once, sooner than a fit's glide can end, so its place may not be checked at
-    // all; where it is, nothing is to move.
-    expect(corrected.mock.results.map(({ value }: { value: unknown }) => value)).toEqual(
-      corrected.mock.results.map(() => null),
-    );
+    // The map is asked for no fit of its own: the one fit is the worked-out camera's.
+    expect(worked).toHaveBeenCalled();
+    expect(fit).toHaveBeenCalledTimes(worked.mock.calls.length);
+    expect(worked.mock.lastCall?.[2]).toEqual(padding(0));
   });
 });

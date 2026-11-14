@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -169,15 +170,13 @@ describe("a fit of the main screen's camera for an answer", () => {
   });
 });
 
-// Partitions: a move to a centre that keeps the zoom where the camera rests, after a fit that came to rest further out.
-describe("a move of the main screen's camera to a centre", () => {
-  it('keeps the zoom where the camera rests', async () => {
-    const { map, moves, ready, rest } = await open();
+// Partitions: a move to a camera, inside the zooms the map allows.
+describe("a move of the main screen's camera to a camera", () => {
+  it('goes to its centre and its zoom', async () => {
+    const { map, moves, ready } = await open();
     await ready();
-    map().fitAnswer([CENTRE, LIBRARY], { top: 156, right: 64, bottom: 330, left: 64 });
-    await rest(FIT + 0.3);
 
-    map().centreAt(LIBRARY);
+    map().moveTo({ centre: LIBRARY, zoom: FIT + 0.3 });
 
     expect(moves).toEqual([{ centre: LIBRARY, zoom: FIT + 0.3, animated: true }]);
   });
