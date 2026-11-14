@@ -4,26 +4,8 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type DayItem } from '../src/assistant/free-time/free-time.js';
-import { pickStudyTime, type StudyFacts, type StudyPerson } from '../src/assistant/library/study-pick.js';
-
-const KWANJEONG = 'kwanjeong';
-const THURSDAY = '2026-11-19';
-const FRIDAY = '2026-11-20';
-const SATURDAY = '2026-11-21';
-
-// Walking minutes to 관정관, the same back.
-const WALKS: Record<string, number> = { '24': 4, doosan: 4, '301': 14, '302': 16, near: 10 };
-const walkingMinutes = (from: string, to: string): number => WALKS[from === KWANJEONG ? to : from] ?? 0;
-
-const item = (date: string, start: string, end: string, placeId: string | null, isClass = true): DayItem => ({
-  id: `${start}-${end}`,
-  name: 'item',
-  start: new Date(`${date}T${start}:00+09:00`),
-  end: new Date(`${date}T${end}:00+09:00`),
-  placeId,
-  isClass,
-});
+import { arrivalsOf, pickStudyTime } from '../src/assistant/library/study-pick.js';
+import { facts, FRIDAY, item, person, SATURDAY, THURSDAY, thursday } from './study-fixtures.js';
 
 const stay = (personId: string, from: string, until: string, minutes: number): object => ({
   personId,
@@ -31,40 +13,6 @@ const stay = (personId: string, from: string, until: string, minutes: number): o
   until,
   minutes,
 });
-
-const person = (id: string, itemsByDate: Record<string, DayItem[]> = {}): StudyPerson => ({ id, itemsByDate });
-
-const facts = (people: StudyPerson[], dates: string[], open: string, close: string, more = {}): StudyFacts => ({
-  people,
-  dates,
-  hours: { open, close },
-  stepMinutes: 30,
-  kwanjeongPlaceId: KWANJEONG,
-  walkingMinutes,
-  ...more,
-});
-
-// The design's table lists only the items around the slot; the day adds 민수's morning Classes and 지은's evening so
-// that the table's slot is the pick.
-const thursday: StudyPerson[] = [
-  person('me', { [THURSDAY]: [item(THURSDAY, '14:00', '15:15', '301')] }),
-  person('seojun', { [THURSDAY]: [item(THURSDAY, '13:00', '13:50', '24'), item(THURSDAY, '14:00', '14:50', '24')] }),
-  person('jieun', {
-    [THURSDAY]: [
-      item(THURSDAY, '14:00', '15:15', 'doosan'),
-      item(THURSDAY, '17:00', '18:15', 'doosan'),
-      item(THURSDAY, '18:30', '22:00', 'doosan', false),
-    ],
-  }),
-  person('minsu', {
-    [THURSDAY]: [
-      item(THURSDAY, '09:30', '10:45', '302'),
-      item(THURSDAY, '11:00', '12:15', '302'),
-      item(THURSDAY, '12:30', '13:45', '302'),
-      item(THURSDAY, '15:30', '16:45', '302'),
-    ],
-  }),
-];
 
 describe("The design's Thursday", () => {
   it('picks the design example: nobody left out, the shortest stay as long as possible', () => {
@@ -272,6 +220,31 @@ describe("The room's hours and the walks", () => {
     expect(pickStudyTime(facts([me, friend], [FRIDAY], '09:00', '12:00'))[0]?.booking?.stays).toEqual([
       stay('me', '09:10', '12:00', 170),
       stay('friend', '09:20', '12:00', 160),
+    ]);
+  });
+});
+
+describe('When each person reaches 관정관 for their stay', () => {
+  it("is the end of the item before the stay plus the walk, as in the design's table", () => {
+    const thursdayFacts = facts(thursday, [THURSDAY], '09:00', '23:00');
+    const [pick] = pickStudyTime(thursdayFacts);
+
+    expect(pick?.booking === null || pick === undefined ? null : arrivalsOf(thursdayFacts, pick.booking)).toEqual([
+      '15:29',
+      '14:54',
+      '15:19',
+      '17:01',
+    ]);
+  });
+
+  it('is unknown for a person with no item before the stay, and after an item in the middle of the booking', () => {
+    const f1 = person('f1', { [FRIDAY]: [item(FRIDAY, '10:00', '10:30', 'near')] });
+    const fridayFacts = facts([person('me'), f1], [FRIDAY], '09:00', '12:00');
+    const [pick] = pickStudyTime(fridayFacts);
+
+    expect(pick?.booking === null || pick === undefined ? null : arrivalsOf(fridayFacts, pick.booking)).toEqual([
+      null,
+      '10:40',
     ]);
   });
 });
