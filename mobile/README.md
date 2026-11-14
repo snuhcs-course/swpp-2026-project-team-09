@@ -1622,7 +1622,8 @@ asks and never registers, and its `registerPushToken` does nothing.
   `unregisterPush()` before it forgets its tokens, whatever the main server answered, so a signed-out phone receives
   nothing even when the server could not be told. Unregistering goes through Firebase and needs the network. When it
   does not go through, the phone keeps `pushUnregisterOwed` and tries again at a start and each time the app comes
-  to the front with nobody signed in. No token of the ended Session is kept for this, and a sign-in clears it.
+  to the front with nobody signed in. No token of the ended Session is kept for this. What is owed goes before the
+  next registration, and a registration that goes through clears it.
 
 ## 관정도서관 (P06)
 

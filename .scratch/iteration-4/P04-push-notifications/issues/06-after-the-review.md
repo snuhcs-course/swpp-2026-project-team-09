@@ -13,17 +13,19 @@ Tickets 01 to 04 are merged. Their review fixed what blocked the merge. This tic
 
 1. **A `DeviceNotRegistered` answer deletes only the row that still holds the token sent.** Registering upserts by Session, so a Session that registers another token keeps its row's id. When it does so while a send to its old token is in flight, the answer for the old token must not delete the row, which holds the new token by then. The delete matches the row's id and the token that was sent.
 2. **Nothing about push is asked or registered on iOS.** The iOS build holds the notifications module but no push entitlement, so no push can arrive there. The one condition the registration and the sheet go through also requires Android.
-3. **An unregistering that did not go through is tried again.** Unregistering is Firebase's delete of the phone's token and needs the network, so a sign-out with no network left the phone registered. The wrapper's `unregisterPush()` now answers whether it went through. When it did not, the phone keeps `pushUnregisterOwed`, and with nobody signed in the app tries again at a start and each time it comes to the front, until it goes through. A sign-in clears it, since the phone's token then moves to the new Session. No token of the ended Session is kept for this.
+3. **An unregistering that did not go through is tried again.** Unregistering is Firebase's delete of the phone's token and needs the network, so a sign-out with no network left the phone registered. The wrapper's `unregisterPush()` now answers whether it went through. When it did not, the phone keeps `pushUnregisterOwed`, and with nobody signed in the app tries again at a start and each time it comes to the front, until it goes through. What is owed also goes before a registration, one call at a time, so a new Session's token is fetched only after the old one is deleted. A registration that goes through clears what was owed, since the main server then moved the phone's token to the new Session; a sign-in alone clears nothing. No token of the ended Session is kept for this.
 
 ## Acceptance criteria
 
-- [ ] A Session that registers another token before Expo answers `DeviceNotRegistered` for its old one keeps its row with the new token, and the next invitation is sent to the new token.
-- [ ] On iOS, a Party sent with a Friend shows no sheet and reads no permission, and nothing is registered at a start.
-- [ ] `unregisterPush()` answers true when the phone is unregistered or has no native module, and false when the library call fails or does not answer within 3 seconds.
-- [ ] After a sign-out whose unregistering failed, the phone keeps `pushUnregisterOwed`. With nobody signed in, the app unregisters once when it next comes to the front and once at a start, and no more after it went through.
-- [ ] A sign-in after a failed unregistering clears `pushUnregisterOwed`, registers the token for the new Session, and nothing unregisters the phone afterwards.
-- [ ] An older stored value without `pushUnregisterOwed` reads as false.
-- [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `mobile/` and `main-server/`; no native file changes.
+- [x] A Session that registers another token before Expo answers `DeviceNotRegistered` for its old one keeps its row with the new token, and the next invitation is sent to the new token.
+- [x] On iOS, a Party sent with a Friend shows no sheet and reads no permission, and nothing is registered at a start.
+- [x] `unregisterPush()` answers true when the phone is unregistered or has no native module, and false when the library call fails or does not answer within 3 seconds.
+- [x] After a sign-out whose unregistering failed, the phone keeps `pushUnregisterOwed`. With nobody signed in, the app unregisters once when it next comes to the front and once at a start, and no more after it went through.
+- [x] At a sign-in after a failed unregistering, the phone unregisters before it fetches the token, registers the token for the new Session, keeps `pushUnregisterOwed` false, and nothing unregisters it afterwards.
+- [x] A registration that goes through clears `pushUnregisterOwed` even while the unregistering still fails, and a registration the main server refuses leaves it owed.
+- [x] A sign-in while the owed unregistering is still running registers only after it.
+- [x] An older stored value without `pushUnregisterOwed` reads as false.
+- [x] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `mobile/` and `main-server/`; no native file changes.
 
 ## What stays open
 
@@ -56,17 +58,16 @@ Tickets 01 to 04 are merged. Their review fixed what blocked the merge. This tic
 
 ## Not checked by the review
 
-- A real push from the main server to a phone, and its receipt. It needs the FCM V1 key in the EAS project.
+- A push sent by the main server to a phone, and its receipt. The FCM V1 key is in the EAS project: ticket 01's check sent a test push through Expo, and it arrived on the emulator.
 - The phone checks of tickets 03 and 04, and ticket 01's phone check with the wrapper as it is now.
 - `main-server/test/answers/expo-push-ok.json` is the documented format, not a captured answer.
 - A Gradle build, and an Xcode build with signing. `expo prebuild` ran for both platforms: the manifest holds the default channel, icon, and color, Gradle applies the Google services plugin, and the iOS entitlements hold no `aps-environment`.
 
 ## What a person does
 
-1. Uploads the FCM V1 service account key to the EAS project, by 11/17.
-2. Restricts the Android API key of `mobile/google-services.json` in the Google Cloud console to the FCM Registration API and the Firebase Installations API, then checks that a development build still gets a token.
-3. Checks a real push on a phone, on a development build of the iteration's Main.
-4. Makes the 11/19 native Release, then the iOS build.
+1. Restricts the Android API key of `mobile/google-services.json` in the Google Cloud console to the FCM Registration API and the Firebase Installations API, then checks that a development build still gets a token.
+2. Checks a push the main server sends on a phone, on a development build of the iteration's Main, and reads its receipt.
+3. Makes the 11/19 native Release, then the iOS build.
 
 ## Comments
 
@@ -75,10 +76,11 @@ Tickets 01 to 04 are merged. Their review fixed what blocked the merge. This tic
 - **The phone alone tries again, and keeps no credential for it.** Telling the main server later would need an access or refresh token on a phone that has signed out. The phone keeps only that an unregistering is owed. Once the phone's token is deleted, the server's next send to it is answered with `DeviceNotRegistered` and its row goes; the Session itself ends when its refresh token expires, as it did before.
 - **"When the network returns" is the app coming to the front.** The app has no network-state listener, and the front is when a User would notice.
 - **iOS is closed at the condition the registration and the sheet share**, not in the wrapper, so the wrapper still answers about the library on both platforms.
+- **What is owed goes before a registration, and only a registration that goes through clears it.** The phone's token moves to the new Session when the main server takes its registration, not when the User signs in. Until then the earlier Session's row could still reach the phone, so the unregistering stays owed.
 
-### Agent usage (2026-11-14)
+### Agent usage (2026-11-15)
 
-Up to the opening of the pull request. The session that reviewed and merged tickets 01 to 04, from the last of those merges on, with two Opus 5.5 subagents (the main server's fix; the app's two fixes and the split of a test file). The review that found these points is recorded on tickets 01 to 04.
+Up to the commit that answers the pull request's review. The session that reviewed and merged tickets 01 to 04, from the last of those merges on, with two Opus 5.5 subagents (the main server's fix; the app's fixes, the split of two test files, and the changes the review asked for). The review that found these points is recorded on tickets 01 to 04.
 
-- Agent time: about 38 minutes, an estimate from the transcripts' timestamps (the session's and the subagents' active stretches together, gaps of five minutes or more left out).
-- Tokens: output 96,127; input 32,935,075, of which 32,689,662 were cache reads, 245,207 cache writes, and 206 uncached. Without cache reads: 341,540.
+- Agent time: about 51 minutes, an estimate from the transcripts' timestamps (the session's and the subagents' active stretches together, gaps of five minutes or more left out).
+- Tokens: output 151,617; input 58,871,384, of which 58,438,432 were cache reads, 432,640 cache writes, and 312 uncached. Without cache reads: 584,569.

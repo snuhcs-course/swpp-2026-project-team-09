@@ -33,11 +33,11 @@ Change:
 ## Behavior
 
 - `PushRegistration` runs only when `useSession().status === 'ready'`, `asksMainServer()` is true, `pushAvailable()` is true, and the phone runs Android. The sheet goes through the same condition, so nothing is asked on iOS. Then, when `pushPermission()` is `granted`, it gets `expoPushToken()` and calls `apiClient.registerPushToken`. It does so on mount, when the Session becomes ready (a sign-in), and from `onPushTokenChange`. A failure is ignored; the next start tries again. It never asks for the permission itself.
-- `askForPush()` shows the sheet only when the same three conditions hold, `pushPermission()` answers `undetermined`, and `pushAsked` is false. `undetermined` means the phone's own prompt can still show: a permission that was never asked, which Android 13 and later report as denied but still askable and the wrapper reads as `undetermined`. It sets `pushAsked` when the sheet shows. When the permission is already `granted` (Android 12 and below), it registers the token at once without the sheet.
+- `askForPush()` shows the sheet only when the same conditions hold, `pushPermission()` answers `undetermined`, and `pushAsked` is false. `undetermined` means the phone's own prompt can still show: a permission that was never asked, which Android 13 and later report as denied but still askable and the wrapper reads as `undetermined`. It sets `pushAsked` when the sheet shows. When the permission is already `granted` (Android 12 and below), it registers the token at once without the sheet.
 - The sheet's words are the design's: "나설 시각을 휴대폰으로 알려 드릴까요?" (Shall I notify your phone at leave-by time?), "나설 시각, 초대, 예약, 관심만 보내요." (Only leave-by times, invitations, bookings, and interests are sent.), "알림 받기", "나중에", and "나중에를 고르면 알림 목록에만 남아요." (If you choose later, they stay only in the notification list.).
 - "알림 받기" calls `askPushPermission()` and closes the sheet. On `granted` it registers the token at once.
 - The sheet appears after the action succeeded, so it never blocks or undoes the action.
-- When `unregisterPush()` does not go through, the phone keeps `pushUnregisterOwed`, and the sign-out or the end goes on. With nobody signed in, the app tries it again at a start and each time it comes to the front, until it goes through. A sign-in clears it.
+- When `unregisterPush()` does not go through, the phone keeps `pushUnregisterOwed`, and the sign-out or the end goes on. With nobody signed in, the app tries it again at a start and each time it comes to the front, until it goes through. What is owed goes before a registration, and a registration that goes through clears it.
 - Nothing is asked at app start, at sign-in, at Onboarding, or in first run.
 
 ## Must not change
@@ -81,3 +81,7 @@ The review before the merge: two Opus 5.5 reviewers of this pull request (the ti
 
 - Agent time: about 20 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time, with the fixer's; the reviewers ran inside it).
 - Tokens: output 105,299; input 20,385,459, of which 19,973,088 were cache reads, 412,179 cache writes, and 192 uncached. Without cache reads: 517,670.
+
+### Agent usage (implementation)
+
+Not recorded yet. The sessions that built this ticket add their time and tokens here; the review's part is above.

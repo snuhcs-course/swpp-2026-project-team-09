@@ -60,3 +60,7 @@ The review before the merge: two Opus 5.5 reviewers of this pull request (the ti
 
 - Agent time: about 20 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time, with the fixer's; the reviewers ran inside it).
 - Tokens: output 104,209; input 21,817,018, of which 21,452,366 were cache reads, 364,430 cache writes, and 222 uncached. Without cache reads: 468,861.
+
+### Agent usage (implementation)
+
+Not recorded yet. The sessions that built this ticket add their time and tokens here; the review's part is above.
