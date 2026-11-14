@@ -42,6 +42,9 @@ export const LISTS = {
   rows: 3,
 } as const;
 
+// The answer frame's pill, in the lists' place: 16 from the sides, 48 high, its top where the lists' is (`listsTop`).
+export const ANSWER_PILL = { side: space[4], height: 48 } as const;
+
 // A list's distance from the top of what floats over the map, which starts under the status bar, `inset` high.
 export function listsTop(inset: number): number {
   return Math.max(LISTS.top - inset, LISTS.clear);

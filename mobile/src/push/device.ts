@@ -140,21 +140,25 @@ export function onPushTokenChange(listener: () => void): () => void {
 // Android's unregister call needs the network, and a sign-out waits for it.
 const UNREGISTER_TIMEOUT_MS = 3000;
 
-export async function unregisterPush(): Promise<void> {
+// Whether the phone is unregistered: false when the call failed or did not answer in time.
+export async function unregisterPush(): Promise<boolean> {
   const library = notifications();
   if (library === null) {
-    return;
+    return true;
   }
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    await Promise.race([
-      library.unregisterForNotificationsAsync(),
-      new Promise<void>((resolve) => {
-        timer = setTimeout(resolve, UNREGISTER_TIMEOUT_MS);
+    return await Promise.race([
+      library.unregisterForNotificationsAsync().then(() => true),
+      new Promise<boolean>((resolve) => {
+        timer = setTimeout(() => {
+          resolve(false);
+        }, UNREGISTER_TIMEOUT_MS);
       }),
     ]);
   } catch {
     // The Session ends whatever the phone answered.
+    return false;
   } finally {
     clearTimeout(timer);
     // Unregistering deletes the phone's token, so the next one it gives is its first, not a change.
