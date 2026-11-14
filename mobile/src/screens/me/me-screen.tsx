@@ -6,6 +6,7 @@
  * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -37,11 +38,11 @@ import { useSession } from '@/session/session';
 import { LocationExplanation } from '../main/location-explanation';
 import { yearLabel } from '../onboarding/form';
 import { TabScreen } from '../shell/tab-screen';
+import { BuildLine } from './build-line';
 import { SharingCard } from './sharing-card';
 import { TutorialRow } from './tutorial-row';
 import { useSharingSwitch } from './use-sharing-switch';
 import { LibraryCard } from './library-card';
-import { thisVersionLine } from './version-line';
 import { WeekCard } from './week-card';
 
 // How long the 위치 공유 card stays outlined after the friend panel's "공유 설정".
@@ -259,7 +260,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
         <ActivityCard />
         <LibraryCard />
         <SignOut />
-        <Text style={styles.version}>{thisVersionLine()}</Text>
+        <BuildLine />
       </ScrollView>
       <LocationExplanation
         blocked={sharing.blocked}
@@ -311,5 +312,4 @@ const styles = StyleSheet.create({
   },
   outPressed: { backgroundColor: color.dangerSoft },
   outWords: { ...text.label, color: color.danger },
-  version: { ...text.caption, textAlign: 'center', color: color.inkMuted },
 });
