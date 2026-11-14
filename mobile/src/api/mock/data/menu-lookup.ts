@@ -4,7 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { Lookup } from '@/api/assistant-types';
+import type { AssistantReply, Lookup } from '@/api/assistant-types';
 import { isLookup } from '@/api/server/plan-answers';
 import copy from './menu-lookup.json';
 
@@ -19,3 +19,12 @@ function checked(value: unknown): Lookup {
 }
 
 export const MENU_LOOKUP = checked(copy);
+
+export const MENU_LOOKUP_REPLY: AssistantReply & { lookup: Lookup } = {
+  text: '301동식당 오늘 점심은 부대짬뽕&군만두예요.',
+  mapButtons: [],
+  cards: [],
+  proposal: null,
+  answer: null,
+  lookup: MENU_LOOKUP,
+};

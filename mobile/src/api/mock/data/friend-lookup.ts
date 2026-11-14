@@ -4,7 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { Lookup } from '@/api/assistant-types';
+import type { AssistantReply, Lookup } from '@/api/assistant-types';
 import { isLookup } from '@/api/server/plan-answers';
 import copy from './friend-lookup.json';
 
@@ -19,3 +19,12 @@ function checked(value: unknown): Lookup {
 }
 
 export const FRIEND_LOOKUP = checked(copy);
+
+export const FRIEND_LOOKUP_REPLY: AssistantReply & { lookup: Lookup } = {
+  text: '민수는 지금 302동이에요.',
+  mapButtons: [],
+  cards: [],
+  proposal: null,
+  answer: null,
+  lookup: FRIEND_LOOKUP,
+};
