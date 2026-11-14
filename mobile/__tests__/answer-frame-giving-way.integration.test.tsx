@@ -4,22 +4,25 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
+import { fireEvent, within } from '@testing-library/react-native';
+import { Keyboard } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { answerEvents, MAJOR } from './support/events';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT } from './support/lists';
+import { hideKeyboard, KEYBOARD, showKeyboard } from './support/keyboard';
+import { AI_INPUT, button } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { DINNER, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { answerShuttle, toggleShuttle } from './support/shuttle';
 
-// What else gives way to the answer frame (P02 ticket 01, "What gives way") against the fake main server: the
-// shuttle's notice, a selected thing's card, and the tab bar, which stays on the other tabs.
+// What else gives way to the answer frame (P02 ticket 01, "What gives way" and "The input") against the fake main
+// server: the shuttle's notice, a selected thing's card, the tab bar, which stays on the other tabs, the map's credit,
+// and the keyboard after a send.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -35,7 +38,8 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const ANSWERED = { status: 200, body: { text: '셔틀은 월요일에 다녀요.', mapButtons: [], cards: [], proposal: null } };
+const REPLY = '셔틀은 월요일에 다녀요.';
+const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal: null } };
 // A Saturday at noon, outside the shuttle's service hours, as shuttle-layer.integration.test.tsx has it.
 const SATURDAY_NOON = new Date('2026-10-10T12:00:00+09:00');
 
@@ -125,5 +129,46 @@ describe('the tab bar while the frame is shown', () => {
     await pass(500);
     expect(screen.getByTestId('answer-pill')).toBeVisible();
     expect(screen.queryByRole('tab', { name: '행사' })).toBeNull();
+  });
+});
+
+// Partitions: the frame's card laid out; the frame closed.
+describe("the map's credit while the frame is shown", () => {
+  it("sits above the frame's card, and back above the row of buttons after ✕", async () => {
+    await start();
+    const user = await openMain({ answerOnMap: true });
+    await ask(user);
+
+    await fireEvent(screen.getByTestId('answer-card'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 400, width: 390, height: 300 } },
+    });
+
+    // The card's 300 from the stage's bottom, which the hidden tab bar leaves at the screen's, and the map's own 8.
+    expect(button('지도 데이터 출처 보기')).toHaveStyle({ left: 16, bottom: 308 });
+    await closeFrame(user);
+    // As main-controls.integration.test.tsx has it with nothing open.
+    expect(button('지도 데이터 출처 보기')).toHaveStyle({ left: 16, bottom: 134 });
+  });
+});
+
+// Partitions: a send with the switch on while the keyboard is up.
+describe('a send from the bar with the switch on', () => {
+  it('puts the keyboard down, so that the card shows 보는 중이에요 and then the reply', async () => {
+    await start();
+    server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
+    const dismiss = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
+      // The tests' phone has no keyboard to put down; hideKeyboard tells of it going.
+    });
+    const user = await openMain({ answerOnMap: true });
+    await showKeyboard(KEYBOARD);
+
+    await user.type(screen.getByLabelText(AI_INPUT), '셔틀 언제 다녀?');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+
+    expect(dismiss).toHaveBeenCalled();
+    await hideKeyboard();
+    expect(within(screen.getByTestId('answer-card')).getByText('보는 중이에요')).toBeVisible();
+    await pass(1000);
+    expect(within(screen.getByTestId('answer-card')).getByText(REPLY)).toBeVisible();
   });
 });

@@ -206,7 +206,7 @@ function MainMapView({ map, me, things, lines, room, pin, onPress }: MainMapView
       <Map
         avatars={[...things.avatars, ...me.avatars]}
         {...CAMPUS_CAMERA}
-        inset={mapInset(room.cardHeight, room.tutorialStart)}
+        inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight)}
         markers={[...things.markers, ...pin.markers]}
         onCameraIdle={map.onCameraIdle}
         onCreditPress={() => {

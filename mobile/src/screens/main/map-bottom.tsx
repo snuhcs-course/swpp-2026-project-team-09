@@ -12,6 +12,7 @@
 
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
+import { Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
 import { space } from '@/design-system';
@@ -51,6 +52,14 @@ function useKeyboardLift(framed: boolean): { lift: number; keyboardUp: boolean }
   const keyboard = useKeyboardHeight(bottom);
   const lift = framed ? Math.max(bottom, keyboard) : Math.max(0, keyboard - tabBarHeight(bottom));
   return { lift, keyboardUp: keyboard > 0 };
+}
+
+// With the switch of the answer on the map on, a send puts the keyboard down, so that the frame's card shows the reply.
+function sendWithKeyboardDown(send: (text: string) => void): (text: string) => void {
+  return (text) => {
+    Keyboard.dismiss();
+    send(text);
+  };
 }
 
 // What the open card and the shuttle's notice take. A 식당's card sits at the top: the lists give way to it, and what
@@ -113,7 +122,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         onHeight={setInputHeight}
         onOpen={chat.open}
         placeholder={chat.framed ? '이어서 말하기' : undefined}
-        onSend={chat.chat.send}
+        onSend={chat.onMap ? sendWithKeyboardDown(chat.chat.send) : chat.chat.send}
         waiting={chat.chat.waiting}
       />
       <TutorialPager flow={tutorial} />

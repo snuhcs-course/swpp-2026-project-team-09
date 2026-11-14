@@ -160,11 +160,16 @@ export const LAYER_STACK = {
 const CREDIT_LEFT = space[2];
 const ZOOM_CONTROL_RIGHT = 62;
 
-// The 새내기 튜토리얼's start button raises the credit above it.
+// The 새내기 튜토리얼's start button raises the credit above it. The answer frame's card, `answerHeight` high from the
+// stage's bottom, which is the screen's while the navigation gives way to it, covers the bottom as a card does.
 export function mapInset(
   cardHeight: number | null,
   tutorialStart = false,
+  answerHeight: number | null = null,
 ): { bottom: number; left: number; right: number } {
+  if (answerHeight !== null) {
+    return { bottom: answerHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
+  }
   if (cardHeight !== null) {
     return { bottom: CARD.bottom + cardHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
   }
