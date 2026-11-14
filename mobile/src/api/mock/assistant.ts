@@ -27,6 +27,7 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
+import { LATE_LOOKUP_REPLY, LEAVE_LOOKUP_REPLY, SHUTTLE_LOOKUP_REPLY } from './data/way-lookups';
 import {
   MEAL_ANSWER_ALONE,
   MEAL_ANSWER_FIXED_START,
@@ -160,7 +161,8 @@ export function mockRecalculation(input: PlanInput): AnswerReply {
   return { ...copyFor(input), input };
 }
 
-// The stored answer of 배고파 and Lookups of 301동식당's menu and of where 민수 is, for a message sent with a context.
+// The stored answer of 배고파 and Lookups of 301동식당's menu, of where 민수 is, and of a way with a deadline, for a
+// message sent with a context.
 function drawnReplyOf(last: string): AssistantReply | null {
   if (last.includes('배고파')) {
     return MEAL_ANSWER_REPLY;
@@ -168,7 +170,21 @@ function drawnReplyOf(last: string): AssistantReply | null {
   if (last.includes('301동식당') && last.includes('메뉴')) {
     return MENU_LOOKUP_REPLY;
   }
-  return last.includes('민수') && last.includes('어디') ? FRIEND_LOOKUP_REPLY : null;
+  if (last.includes('민수') && last.includes('어디')) {
+    return FRIEND_LOOKUP_REPLY;
+  }
+  return wayReplyOf(last);
+}
+
+// The stored Lookups of a way with a deadline: on time, late, and by the shuttle.
+function wayReplyOf(last: string): AssistantReply | null {
+  if (last.includes('셔틀') && last.includes('걸을까')) {
+    return SHUTTLE_LOOKUP_REPLY;
+  }
+  if (last.includes('늦')) {
+    return LATE_LOOKUP_REPLY;
+  }
+  return last.includes('몇 분') ? LEAVE_LOOKUP_REPLY : null;
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {

@@ -11,9 +11,9 @@ import { WAY_LOOKUP } from '@/api/mock/data/way-lookup';
 import { isLookup } from '@/api/server/lookup-answers';
 import { color } from '@/design-system';
 import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
-import late from '../fixtures/way-lookups/late.json';
-import leave from '../fixtures/way-lookups/leave.json';
-import shuttle from '../fixtures/way-lookups/shuttle.json';
+import late from '@/api/mock/data/way-lookups/late.json';
+import leave from '@/api/mock/data/way-lookups/leave.json';
+import shuttle from '@/api/mock/data/way-lookups/shuttle.json';
 import { label, MINSU_ID, NEXT_CLASS, seen } from '../support/answer-marks';
 
 function lookupOf(value: unknown): Lookup {

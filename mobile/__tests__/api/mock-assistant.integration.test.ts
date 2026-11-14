@@ -12,6 +12,7 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
 import { WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
+import { LATE_LOOKUP_REPLY, LEAVE_LOOKUP_REPLY, SHUTTLE_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 
 // The mock of the Assistant, where the app asks no main server: asked to eat together with what the app knew, it
@@ -56,6 +57,14 @@ describe('the mock of an answer drawn on the map', () => {
 
   it("answers where 민수 is with a context by the main server's Lookup", async () => {
     await expect(answered(mockClient.askAssistant(FRIEND, CONTEXT))).resolves.toEqual(FRIEND_LOOKUP_REPLY);
+  });
+
+  it.each([
+    ['24동까지 몇 분?', LEAVE_LOOKUP_REPLY],
+    ['24동까지 몇 분? 늦나', LATE_LOOKUP_REPLY],
+    ['셔틀 탈까 걸을까', SHUTTLE_LOOKUP_REPLY],
+  ])("answers %s with a context by the main server's Lookup", async (text, reply) => {
+    await expect(answered(mockClient.askAssistant([{ role: 'user', text }], CONTEXT))).resolves.toEqual(reply);
   });
 
   it('answers where a Place is without a context as before, with no Lookup', async () => {

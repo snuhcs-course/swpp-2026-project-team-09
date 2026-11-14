@@ -12,8 +12,8 @@ import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
-import late from './fixtures/way-lookups/late.json';
-import leave from './fixtures/way-lookups/leave.json';
+import late from '@/api/mock/data/way-lookups/late.json';
+import leave from '@/api/mock/data/way-lookups/leave.json';
 
 // A Lookup of a way with a deadline in the answer frame (P01 ticket 11), against the fake main server, which replies
 // with the main server's real Lookups of boards q3 (late) and q2 (on time, with a leave-by notification).
