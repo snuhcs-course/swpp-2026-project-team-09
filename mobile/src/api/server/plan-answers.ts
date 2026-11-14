@@ -169,11 +169,7 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
 }
 
 function isScenePlace(value: unknown): value is MapScene['places'][number] {
-  return (
-    isPlacePoint(field(value, 'place')) &&
-    isPlaceRole(field(value, 'role')) &&
-    isTextOrNull(field(value, 'tag'))
-  );
+  return isPlacePoint(field(value, 'place')) && isPlaceRole(field(value, 'role')) && isTextOrNull(field(value, 'tag'));
 }
 
 function isRoute(value: unknown): value is MapScene['routes'][number] {
