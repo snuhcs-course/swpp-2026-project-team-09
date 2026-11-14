@@ -72,6 +72,30 @@ describe("a friendship's level and its end", () => {
   });
 });
 
+describe('asking once', () => {
+  it('records the moment for the Friends with POST /friends/asked, refused for a User who is no Friend', async () => {
+    server.on('POST /friends/asked', { status: 204 });
+    await apiClient.recordFriendsAsked([MIN_JUN.id], 'plan');
+    expect(server.received('POST /friends/asked')).toEqual([
+      expect.objectContaining({ authorization: BEARER, body: { userIds: [MIN_JUN.id], moment: 'plan' } }),
+    ]);
+
+    server.on('POST /friends/asked', refusal(404, 'FRIEND_NOT_FOUND'));
+    expect(await refusalOf(apiClient.recordFriendsAsked([MIN_JUN.id], 'off'))).toEqual([404, 'FRIEND_NOT_FOUND']);
+  });
+
+  it("records the Master Switch's with POST /users/me/master-switch/asked and lowers every Friend with PUT", async () => {
+    server.on('POST /users/me/master-switch/asked', { status: 204 });
+    server.on('PUT /users/me/friend-levels', { status: 204 });
+
+    await apiClient.recordMasterOffAsked();
+    await apiClient.lowerFriendLevels('building');
+
+    expect(server.received('POST /users/me/master-switch/asked')).toHaveLength(1);
+    expect(server.received('PUT /users/me/friend-levels').map(({ body }) => body)).toEqual([{ level: 'building' }]);
+  });
+});
+
 describe('Friend IDs and Friend Requests', () => {
   it("looks a Friend ID's owner up with GET /friend-ids/:friendId", async () => {
     server.on('GET /friend-ids/YJ7A4Y6Z', { status: 200, body: OWNER });

@@ -8,10 +8,13 @@
 import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { FRIEND_REQUESTS_KEY, FRIENDS_KEY, POSITIONS_KEY } from '@/api/queries';
-import type { FriendLevel, InviteLink, SentFriendRequest, UserSummary } from '@/api/types';
+import type { AskedMoment, FriendLevel, InviteLink, SentFriendRequest, UserSummary } from '@/api/types';
 
 export interface FriendChanges {
   setLevel: (userId: string, level: FriendLevel) => Promise<void>;
+  // Every Friend above the level, lowered to it.
+  lowerLevels: (level: FriendLevel) => Promise<void>;
+  recordAsked: (userIds: string[], moment: AskedMoment) => Promise<void>;
   endFriendship: (userId: string) => Promise<void>;
   findFriendId: (friendId: string) => Promise<UserSummary>;
   sendFriendRequest: (friendId: string) => Promise<SentFriendRequest>;
@@ -43,6 +46,8 @@ export function useFriendChanges(): FriendChanges {
   }
   return {
     setLevel: changing(apiClient.setFriendLevel, FRIENDS_SEEN),
+    lowerLevels: changing(apiClient.lowerFriendLevels, FRIENDS_SEEN),
+    recordAsked: changing(apiClient.recordFriendsAsked, [FRIENDS_KEY]),
     endFriendship: changing(apiClient.endFriendship, FRIENDS_SEEN),
     findFriendId: apiClient.findFriendId,
     sendFriendRequest: changing(apiClient.sendFriendRequest, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),

@@ -84,6 +84,8 @@ export interface Lobby {
   profile: Profile;
   // Whether the User's Master Switch is on.
   masterSwitch: boolean;
+  // Whether the app has asked the User, before they turned the Master Switch off, whether to show the building instead.
+  masterOffAsked: boolean;
 }
 
 // The fields of the profile that change; a field left out stays. `null` empties the admission year and the 소속, and an
@@ -113,7 +115,14 @@ export interface Friend {
   sharing: boolean;
   // Whether the User can see the Friend on the map now, never why not.
   visible: boolean;
+  // Whether the app has asked the User about this Friend: before turning location off for them, and after a Plan with
+  // them became a Quest. Each is asked once.
+  askedOff: boolean;
+  askedPlan: boolean;
 }
+
+// The two moments the app asks a User about a Friend at, which the main server keeps.
+export type AskedMoment = 'off' | 'plan';
 
 // Another User as a Friend ID, a Friend Request or an Invite Link names them.
 export interface UserSummary {

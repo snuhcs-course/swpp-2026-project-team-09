@@ -56,6 +56,8 @@ export const MIN_JUN: Friend = {
   level: 'exact',
   sharing: true,
   visible: true,
+  askedOff: false,
+  askedPlan: false,
 };
 
 export const JI_WOO: Friend = {
@@ -65,6 +67,8 @@ export const JI_WOO: Friend = {
   level: 'exact',
   sharing: true,
   visible: false,
+  askedOff: false,
+  askedPlan: false,
 };
 
 export const LIBRARY_POSITION: Position = {
@@ -86,6 +90,7 @@ export const LOBBY: Lobby = {
     affiliation: null,
   },
   masterSwitch: false,
+  masterOffAsked: false,
 };
 
 // The moment the tests that ask the main server run at, by the phone's clock: 6 October 2026, 13:00 in Korea. Give it

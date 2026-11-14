@@ -67,14 +67,14 @@ export class SignalWatcher {
   }
 }
 
-// The signals of that name, or those names, that the server sends while `act` runs. A server's signals reach Redis in
-// order, so two signals of the test's own around `act` leave out those an earlier test sent late. Signals that other
-// test files' servers send to the same Redis can fall between the two, so a test that checks that none is sent gives
-// its server and the watcher a Redis of their own.
+// The signals of that name, those names, or every name with null, that the server sends while `act` runs. A server's
+// signals reach Redis in order, so two signals of the test's own around `act` leave out those an earlier test sent
+// late. Signals that other test files' servers send to the same Redis can fall between the two, so a test that checks
+// that none is sent gives its server and the watcher a Redis of their own, or reads only its own Users' signals.
 export async function signalsWhile(
   app: INestApplication<Server>,
   watcher: SignalWatcher,
-  names: string | readonly string[],
+  names: string | readonly string[] | null,
   act: () => Promise<unknown>,
 ): Promise<SignalEvent[]> {
   // Imported after startApp, so that it is the same class AppModule registers.
@@ -95,5 +95,5 @@ export async function signalsWhile(
   return watcher
     .all()
     .slice(start + 1, end)
-    .filter((signal) => [names].flat().includes(signal.name));
+    .filter((signal) => names === null || [names].flat().includes(signal.name));
 }

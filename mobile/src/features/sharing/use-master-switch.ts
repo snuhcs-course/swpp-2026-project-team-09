@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,10 +18,18 @@ function masterSwitchOf(lobby: Lobby): boolean {
   return lobby.masterSwitch;
 }
 
+function masterOffAskedOf(lobby: Lobby): boolean {
+  return lobby.masterOffAsked;
+}
+
 export interface MasterSwitch {
   on: boolean;
-  // Shows the new state at once, and the old one again with a toast when the main server did not take it.
-  turn: (on: boolean) => void;
+  // Shows the new state at once, and the old one again with a toast when the main server did not take it. `done` is
+  // the toast once it did.
+  turn: (on: boolean, done?: string) => void;
+  // Whether the app has asked the User before they turned it off, and the record that it did.
+  offAsked: boolean;
+  markOffAsked: () => void;
 }
 
 // The User's Master Switch, as the Lobby holds it. A change changes whom the User sees, so the Friends and their
@@ -29,8 +38,9 @@ export function useMasterSwitch(): MasterSwitch {
   const queryClient = useQueryClient();
   const showToast = useToast();
   const on = useQuery({ ...lobbyQuery, select: masterSwitchOf }).data === true;
+  const offAsked = useQuery({ ...lobbyQuery, select: masterOffAskedOf }).data === true;
   const turn = useCallback(
-    (next: boolean) => {
+    (next: boolean, done?: string) => {
       const show = (value: boolean): void => {
         queryClient.setQueryData<Lobby>(LOBBY_KEY, (lobby) => lobby && { ...lobby, masterSwitch: value });
       };
@@ -39,6 +49,9 @@ export function useMasterSwitch(): MasterSwitch {
         () => {
           void queryClient.invalidateQueries({ queryKey: FRIENDS_KEY });
           void queryClient.invalidateQueries({ queryKey: POSITIONS_KEY });
+          if (done !== undefined) {
+            showToast(done);
+          }
         },
         () => {
           show(!next);
@@ -48,5 +61,10 @@ export function useMasterSwitch(): MasterSwitch {
     },
     [queryClient, showToast],
   );
-  return { on, turn };
+  // Kept at once, so that the question is not asked again in this run whether the record reaches the main server.
+  const markOffAsked = useCallback(() => {
+    queryClient.setQueryData<Lobby>(LOBBY_KEY, (lobby) => lobby && { ...lobby, masterOffAsked: true });
+    void apiClient.recordMasterOffAsked().catch(() => null);
+  }, [queryClient]);
+  return { on, turn, offAsked, markOffAsked };
 }

@@ -40,6 +40,8 @@ describe('the mock of Friends', () => {
       level: 'exact',
       sharing: true,
       visible: true,
+      askedOff: false,
+      askedPlan: false,
     });
     expect(friends.filter(({ visible }) => !visible).map(({ name }) => name)).toEqual(['서지우', '신예린']);
   });
