@@ -1698,8 +1698,9 @@ asks and never registers, and its `registerPushToken` does nothing.
   below), the token is registered at once without the sheet.
 - **Registering.** `PushRegistration` (`src/push/push-registration.tsx`, beside `LiveUpdates`) sends the phone's
   Expo push token with `PUT /users/me/push-token` when the permission is granted: at every start, at every sign-in,
-  and whenever the phone says its token changed. A failure is left for the next start. It never asks for the
-  permission.
+  and whenever the phone says its token changed. Until one has gone through, it is tried again each time the app
+  comes back to the front, which also picks up notifications allowed later in the phone's settings. It never asks
+  for the permission.
 - **Unregistering.** When the Session ends on the phone, by a sign-out or by the main server's word, the app calls
   `unregisterPush()` before it forgets its tokens, whatever the main server answered, so a signed-out phone receives
   nothing even when the server could not be told. Unregistering goes through Firebase and needs the network. When it
