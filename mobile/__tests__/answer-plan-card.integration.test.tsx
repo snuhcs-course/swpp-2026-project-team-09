@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -109,6 +110,50 @@ describe('the arrows and the count', () => {
 
     expect(inOrder).toEqual([BEFORE, '되돌리기', '이대로 초대', NEXT]);
     expect(row.getByText('1/2')).toBeVisible();
+  });
+});
+
+// What stands in the steps' row, in order: an arrow by its name, the count by its test id, and the middle as "".
+function stepParts(): string[] {
+  return card()
+    .getByTestId('plan-steps')
+    .children.map((part) => {
+      if (typeof part === 'string') {
+        return part;
+      }
+      const name: unknown = part.props.accessibilityLabel ?? part.props.testID;
+      return typeof name === 'string' ? name : '';
+    });
+}
+
+// Partitions: more than one Plan without a drag, and with a drag kept. The rule: the design review of 2026-11-15, the
+// count in a box 36 wide always right before "›", and the arrows 40 across like the buttons, their touch still 48.
+describe('the last row', () => {
+  it('puts the count right before "›" for an answer of five Plans', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
+    expect(card().getByTestId('plan-count')).toHaveTextContent('1/5');
+  });
+
+  it('keeps the count right before "›" while a drag is kept, "되돌리기" in the middle', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    await step('from', 'increment');
+
+    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
+    expect(card().getByTestId('plan-count')).toHaveTextContent('1/2');
+    expect(within(card().getByTestId('plan-steps')).getByRole('button', { name: '되돌리기' })).toBeVisible();
+  });
+
+  it('draws the arrows 40 across with a touch of 48, and the count in a box 36 wide', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    for (const name of [BEFORE, NEXT]) {
+      expect(card().getByRole('button', { name })).toHaveStyle({ width: 40, height: 40 });
+      expect(card().getByRole('button', { name })).toHaveProp('hitSlop', 4);
+    }
+    expect(card().getByTestId('plan-count')).toHaveStyle({ width: 36, textAlign: 'center' });
   });
 });
 

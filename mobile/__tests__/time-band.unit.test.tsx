@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -67,8 +68,7 @@ async function step(bound: 'from' | 'until', actionName: 'increment' | 'decremen
 }
 
 describe('TimeBand drawn', () => {
-  // Partitions: the lanes and words of a stored band; a ghost given or not; a window that fixes a bound or none; a
-  // focus on a handle or none.
+  // Partitions: the lanes and words of a stored band; a ghost given or not; a focus on a handle or none.
   it("draws a lane for each person, the range's ends, the band's words, and its two handles", async () => {
     await show();
 
@@ -90,6 +90,16 @@ describe('TimeBand drawn', () => {
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed' });
   });
 
+  it('emphasises the handle in focus', async () => {
+    await show({ focus: 'until' });
+
+    expect(handle('until')).toHaveStyle({ borderColor: color.focusRing });
+    expect(handle('from')).not.toHaveStyle({ borderColor: color.focusRing });
+  });
+});
+
+describe("TimeBand's busy stretches in the window the User fixed", () => {
+  // Partitions: a window that fixes its end, with a class inside it, and a window that fixes no bound.
   it('draws a busy stretch inside the fixed window in the warning colour', async () => {
     // A window fixed to end at 13:10: 나's class from 13:00 lies inside it.
     await show({ fixed: { from: null, until: '13:10' } });
@@ -98,17 +108,21 @@ describe('TimeBand drawn', () => {
     expect(screen.getByTestId('time-band-clash')).toHaveStyle({ backgroundColor: color.warning });
   });
 
+  it('keys a busy stretch and its clash apart, though both start at 13:00', async () => {
+    // The same window: the clash of 나's class keeps the class's own start, 13:00, as the busy stretch does. The two are
+    // drawn in one lane, and React says so when two children of one list share a key.
+    const said = jest.spyOn(console, 'error').mockImplementation(noop);
+
+    await show({ fixed: { from: null, until: '13:10' } });
+
+    expect(said.mock.calls.flat().join(' ')).not.toMatch(/same key/u);
+    said.mockRestore();
+  });
+
   it('draws no clash when the window fixes no bound', async () => {
     await show();
 
     expect(screen.queryByTestId('time-band-clash')).toBeNull();
-  });
-
-  it('emphasises the handle in focus', async () => {
-    await show({ focus: 'until' });
-
-    expect(handle('until')).toHaveStyle({ borderColor: color.focusRing });
-    expect(handle('from')).not.toHaveStyle({ borderColor: color.focusRing });
   });
 });
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -162,7 +163,7 @@ describe('the time chip', () => {
 
     await user.press(card().getByRole('button', { name: '13:00 수업까지' }));
 
-    expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
+    expect(card().queryByRole('button', { name: '그대로' })).toBeNull();
     expect(handle('until')).toHaveStyle({ borderColor: color.focusRing });
   });
 });

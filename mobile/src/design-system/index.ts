@@ -23,6 +23,7 @@ export { Button } from './button';
 export { cardStyles } from './card';
 export { DayTile } from './day-tile';
 export { ChatInput } from './chat-input';
+export { ChoiceGrid, choiceRowsWithin, type GridChoice } from './choice-grid';
 export { Chip } from './chip';
 export { type CountedChip, ChipRow } from './chip-row';
 export { Dialog } from './dialog';

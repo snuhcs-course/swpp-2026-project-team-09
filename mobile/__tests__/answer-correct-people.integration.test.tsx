@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
@@ -21,8 +22,9 @@ import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './s
 
 // Correcting who eats together (P02 ticket 03, "Taking a Friend out" and "Adding a Friend"), over the stored answer
 // to "배고파, 민수랑 같이" and the fake main server's Friends, 김민준, whom the User sees on the map, and 서지우, whom
-// the User cannot see. Without the app's own statuses the Friend list says 공강 and 위치 꺼짐 of them (the friend
-// adapter's rule).
+// the User cannot see. The list says each by the given name and the distance from their position to the picked
+// Restaurant, 302동식당: 김민준's at 37.4598, 126.9521 is 1217.7 metres from it by the spec's flat map, "1.2km";
+// 서지우 has no position, "자리 모름".
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -40,6 +42,8 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const ASKER = MEAL_ANSWER.input.people[0];
 const ADD = '같이 먹을 친구 추가';
+const MIN_JUN_CELL = '민준, 1.2km, 추가';
+const JI_WOO_CELL = '지우, 자리 모름, 추가';
 
 let server: FakeServer;
 
@@ -79,15 +83,18 @@ describe('taking a Friend out', () => {
 
 // Partitions: the list opened and closed; a Friend already in the Plan.
 describe('adding a Friend', () => {
-  it("lists the User's Friends with the Friend list's lines, and 닫기 closes the list", async () => {
+  it("lists the User's Friends nearest first, the one without a position last, and 그대로 closes the list", async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await user.press(card().getByRole('button', { name: ADD }));
 
-    expect(card().getByRole('button', { name: `${MIN_JUN.name} 추가` })).toHaveTextContent('김민준 · 공강');
-    expect(card().getByRole('button', { name: `${JI_WOO.name} 추가` })).toHaveTextContent('서지우 · 위치 꺼짐');
-    await user.press(card().getByRole('button', { name: '닫기' }));
-    expect(card().queryByRole('button', { name: `${MIN_JUN.name} 추가` })).toBeNull();
+    const cells = within(card().getByTestId('choice-grid'))
+      .getAllByRole('button')
+      .map(({ props }): unknown => props.accessibilityLabel);
+    expect(cells).toEqual([MIN_JUN_CELL, JI_WOO_CELL]);
+    expect(card().getByRole('button', { name: MIN_JUN_CELL })).toHaveTextContent('민준1.2km');
+    await user.press(card().getByRole('button', { name: '그대로' }));
+    expect(card().queryByRole('button', { name: MIN_JUN_CELL })).toBeNull();
   });
 
   it('leaves out a Friend who is in the Plan', async () => {
@@ -97,8 +104,8 @@ describe('adding a Friend', () => {
 
     await user.press(card().getByRole('button', { name: ADD }));
 
-    expect(card().queryByRole('button', { name: `${MIN_JUN.name} 추가` })).toBeNull();
-    expect(card().getByRole('button', { name: `${JI_WOO.name} 추가` })).toBeVisible();
+    expect(card().queryByRole('button', { name: MIN_JUN_CELL })).toBeNull();
+    expect(card().getByRole('button', { name: JI_WOO_CELL })).toBeVisible();
   });
 });
 
@@ -109,7 +116,7 @@ describe('adding a Friend chosen', () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await user.press(card().getByRole('button', { name: ADD }));
 
-    await user.press(card().getByRole('button', { name: `${JI_WOO.name} 추가` }));
+    await user.press(card().getByRole('button', { name: JI_WOO_CELL }));
     await pass(500);
 
     expect(recalculations(server)).toEqual([

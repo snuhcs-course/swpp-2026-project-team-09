@@ -1,0 +1,25 @@
+# 01: Global settings, registered in code, kept in the database and copied into each pod
+
+Parent: [A02 spec](../spec.md) ("The settings store", "The in-memory copy in each pod")
+Status: ready-for-agent
+Blocked by: None (can start immediately)
+
+## What to build
+
+The main server keeps global settings in a generic `settings` table, with a history of every change and a one-row revision. The settings are registered in code. Each pod loads them into memory at start and, every minute at second 0, reloads them when the revision changed. A02 registers one setting, `llm.provider`; nothing reads it until ticket 02.
+
+## Acceptance criteria
+
+- [ ] A registry in code: each setting's name, type (`STRING`, `INTEGER`, `BOOLEAN`), default and allowed values. `llm.provider` is registered: `openrouter` or `anthropic`, default `openrouter`.
+- [ ] Prisma models `Setting` (table `settings`: `name` unique, `value_type` enum `SettingValueType`, `value` text, `updated_at`), `SettingChange` (table `setting_changes`: name, old value, new value, Administrator, time) and a one-row revision table, with one migration.
+- [ ] A save checks the name against the registry and the value against its type and allowed values, and writes the setting, its history row and the revision's increment in one transaction. The service takes an extra check from the caller, so that ticket 02 can refuse a provider without a key.
+- [ ] At start (`onModuleInit`), each pod loads every row and the revision. A pod that cannot load them does not start. A setting with no row reads as its default.
+- [ ] `@nestjs/schedule` added to main-server (the same major as worker-server's). `@Cron('0 * * * * *')` reads only the revision and reloads all rows when it changed. A failed check keeps the last copy and logs.
+- [ ] Reads come from the copy, with no query. A save is not seen by any pod, the saving one included, before the next minute's check.
+- [ ] The service gives the history newest first, and, for the admin page, the time a save applies (the next minute at second 0).
+- [ ] No Redis is used. The existing env switches in `main-server/src/common/settings.ts` are unchanged.
+- [ ] Tests (ADR 0007): unit tests of the registry's checks; integration tests of the one transaction, the start-up load, the minute check reloading on a new revision and not otherwise, a failed check keeping the copy, and a save not read before the check.
+- [ ] `main-server/README.md` says what the settings are, how to register one, and that a change applies at the next minute.
+- [ ] Each changed source file has its AI-generated row; lint, format, type checks and the touched tests pass.
+
+## Comments
