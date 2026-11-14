@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "132913341889",
+    "project_id": "snunow-b5827",
+    "storage_bucket": "snunow-b5827.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:132913341889:android:f9ffe38dd9a76554f1bb40",
+        "android_client_info": {
+          "package_name": "com.bonnieandclaude.snunow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRBzbMwkG12mqgHWVyThaGALPYZSR4oOA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
