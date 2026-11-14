@@ -2,7 +2,6 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
- * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -16,22 +15,18 @@ interface IconButtonProps {
   // What a screen reader says, such as "닫기".
   label: string;
   onPress: () => void;
-  disabled?: boolean;
 }
 
 // An icon alone in a touch area of 48, as on an app bar.
-export function IconButton({ icon, label, onPress, disabled = false }: IconButtonProps): ReactElement {
+export function IconButton({ icon, label, onPress }: IconButtonProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      // Only when true: `Pressable` derives the accessibility state from it, and the app's other icon buttons stay as
-      // they were.
-      disabled={disabled || undefined}
       onPress={onPress}
       style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
     >
-      <Icon color={disabled ? color.inkMuted : color.ink} name={icon} size={22} />
+      <Icon color={color.ink} name={icon} size={22} />
     </Pressable>
   );
 }

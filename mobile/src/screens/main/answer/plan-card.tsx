@@ -5,9 +5,9 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply } from '@/api/assistant-types';
-import { Button, color, IconButton, space, text } from '@/design-system';
+import { Button, color, Icon, space, text } from '@/design-system';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { AnswerLines } from './answer-lines';
 import { ConditionChips } from './condition-chips';
@@ -15,39 +15,59 @@ import { FriendChoices } from './friend-choices';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
 
-// "되돌리기" while a drag is kept, and the arrows with the count when the answer has more than one Plan.
+const ARROW = 44;
+
+// "‹" or "›" at an end of the steps' row: a round button that is easy to press.
+function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; onPress: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel={next ? '다음 후보' : '이전 후보'}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [styles.arrow, pressed && styles.pressed]}
+    >
+      <Icon color={disabled ? color.inkMuted : color.ink} name={next ? 'chevronRight' : 'chevronLeft'} size={22} />
+    </Pressable>
+  );
+}
+
+// The arrows at the row's two ends when the answer has more than one Plan, and between them "되돌리기" while a drag
+// is kept and the count.
 function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactElement | null {
   const { index, browse, recalculating, ghost, undo } = shown;
-  if (ghost === null && count <= 1) {
+  const arrows = count > 1;
+  if (ghost === null && !arrows) {
     return null;
   }
   return (
-    <View style={styles.steps}>
-      {ghost === null ? null : (
-        <Button disabled={recalculating} onPress={undo} variant="secondary">
-          되돌리기
-        </Button>
-      )}
-      {count > 1 ? (
-        <View style={styles.arrows}>
-          <IconButton
-            disabled={recalculating}
-            icon="chevronLeft"
-            label="이전 후보"
-            onPress={() => {
-              browse(-1);
-            }}
-          />
-          <Text style={styles.count}>{`${index + 1}/${count}`}</Text>
-          <IconButton
-            disabled={recalculating}
-            icon="chevronRight"
-            label="다음 후보"
-            onPress={() => {
-              browse(1);
-            }}
-          />
-        </View>
+    <View style={styles.steps} testID="plan-steps">
+      {arrows ? (
+        <Arrow
+          disabled={recalculating}
+          next={false}
+          onPress={() => {
+            browse(-1);
+          }}
+        />
+      ) : null}
+      <View style={[styles.middle, arrows && styles.centred]}>
+        {ghost === null ? null : (
+          <Button disabled={recalculating} onPress={undo} variant="secondary">
+            되돌리기
+          </Button>
+        )}
+        {arrows ? <Text style={styles.count}>{`${index + 1}/${count}`}</Text> : null}
+      </View>
+      {arrows ? (
+        <Arrow
+          disabled={recalculating}
+          next
+          onPress={() => {
+            browse(1);
+          }}
+        />
       ) : null}
     </View>
   );
@@ -116,7 +136,17 @@ const styles = StyleSheet.create({
   plan: { gap: space[3] },
   basis: { gap: space[1] },
   basisLine: { ...text.body, color: color.inkMuted },
-  steps: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
-  arrows: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], flex: 1 },
+  steps: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  arrow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: ARROW,
+    height: ARROW,
+    borderRadius: ARROW / 2,
+    backgroundColor: color.surfaceSunken,
+  },
+  pressed: { opacity: 0.85 },
+  middle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  centred: { justifyContent: 'center' },
   count: { ...text.label, color: color.ink },
 });
