@@ -76,6 +76,6 @@ import { WayService } from './lookup/way.service.js';
     },
   ],
   // The making of a Quest from a Plan plans through the same service as the tool and the recalculation.
-  exports: [MealPlanService],
+  exports: [MealPlanService, UserDayService],
 })
 export class AssistantModule {}

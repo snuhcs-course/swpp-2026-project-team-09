@@ -17,6 +17,7 @@
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
+import type { InvitationCard } from './invitation-card-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
@@ -53,7 +54,7 @@ import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
-import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
+import type { FriendRequests, JoinRequest, KeptNotification, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { MakePlanQuest, PlanQuest } from './plan-quest-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
@@ -93,6 +94,8 @@ export interface ApiClient {
   listFriendStatuses: () => Promise<FriendStatus[]>;
   listQuests: () => Promise<Quest[]>;
   listQuestInvitations: () => Promise<QuestInvitation[]>;
+  // The latest first.
+  listNotifications: () => Promise<KeptNotification[]>;
   // Only for a Quest the User leads.
   listJoinRequests: (questId: string) => Promise<JoinRequest[]>;
   listClasses: () => Promise<TimetableClass[]>;
@@ -176,6 +179,8 @@ export interface ApiClient {
   inviteToQuest: (questId: string, userId: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<Quest>;
   declineInvitation: (invitationId: string) => Promise<void>;
+  // A received invitation with the User's own way to it, worked out from where the User is now when the app knows.
+  getInvitationCard: (invitationId: string, location: LatLng | null) => Promise<InvitationCard>;
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked when it gives that.
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
@@ -226,6 +231,7 @@ export const apiClient: ShownClient = {
   listFriendStatuses: () => chosen().listFriendStatuses(),
   listQuests: () => chosen().listQuests(),
   listQuestInvitations: () => chosen().listQuestInvitations(),
+  listNotifications: () => chosen().listNotifications(),
   listJoinRequests: (questId) => chosen().listJoinRequests(questId),
   listClasses: () => chosen().listClasses(),
   addClass: (save, key) => chosen().addClass(save, key),
@@ -293,6 +299,7 @@ export const apiClient: ShownClient = {
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
   makePlanQuest: (making, key) => chosen().makePlanQuest(making, key),
+  getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),
   stopTutorial: () => chosen().stopTutorial(),

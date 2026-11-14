@@ -8,6 +8,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -21,6 +22,7 @@ import {
   MATCHING_REQUESTS_KEY,
   MY_JOIN_REQUESTS_KEY,
   MY_PARTY_KEY,
+  NOTIFICATIONS_KEY,
   PARTIES_KEY,
   POSITIONS_KEY,
   QUEST_INVITATIONS_KEY,
@@ -38,8 +40,9 @@ import { heldTokens } from '@/auth/tokens';
 import { useSession } from '@/session/session';
 import { endSession } from '@/session/session-events';
 import { openLiveConnection } from './connection';
+import { tellInvitationAnswer } from './invitation-answers';
 
-// What each signal of the main server makes the app fetch again. The signals carry nothing.
+// What each signal of the main server makes the app fetch again.
 const REFETCH: Record<string, readonly QueryKey[]> = {
   'friends-changed': [FRIENDS_KEY, POSITIONS_KEY, FRIEND_REQUESTS_KEY],
   // The Quests' key also holds the open room's Quest.
@@ -56,14 +59,18 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
   'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
   'room-requests-changed': [ROOM_INBOX_KEY, ROOM_REQUEST_KEY],
+  notice: [NOTIFICATIONS_KEY],
+  'invitation-accepted': [QUESTS_KEY, SENT_INVITATIONS_KEY],
+  'invitation-declined': [QUESTS_KEY, SENT_INVITATIONS_KEY],
 };
 
-// The lists of what waits for the User, which 알림 and the badge on 파티 show.
+// The lists of what waits for the User and the Notifications kept for them, which 알림 and the badge on 파티 show.
 export const WAITING: readonly QueryKey[] = [
   PARTIES_KEY,
   FRIEND_REQUESTS_KEY,
   QUEST_INVITATIONS_KEY,
   JOIN_REQUESTS_KEY,
+  NOTIFICATIONS_KEY,
 ];
 
 // What is fetched again when the connection opens again: what may have changed while it was closed. The shuttle's
@@ -136,15 +143,17 @@ function openFor(queryClient: QueryClient): () => void {
         queryClient.setQueryData<ShuttleVehicle[]>(SHUTTLE_VEHICLES_KEY, vehicles);
       }
     },
-    onSignal: (name) => {
+    onSignal: (name, payload) => {
       refetch(queryClient, REFETCH[name] ?? []);
+      tellInvitationAnswer(name, payload);
     },
   });
 }
 
 // Keeps the one connection to the socket server open while a signed-in User is past the sign-in and Onboarding, in a
 // build that asks the main server. When the app comes back to the front, the positions are fetched again, the Quests,
-// whose rows word their times against the phone's clock, and the lists of what waits for the User. Draws nothing.
+// whose rows word their times against the phone's clock, and the lists of what waits for the User and the
+// Notifications kept for them. Draws nothing.
 export function LiveUpdates(): null {
   const queryClient = useQueryClient();
   const { status } = useSession();
