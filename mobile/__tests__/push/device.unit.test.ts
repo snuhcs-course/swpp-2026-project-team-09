@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { Platform } from 'react-native';
@@ -125,7 +126,7 @@ describe('the push wrapper without the native module', () => {
       throw new Error('No change should be told');
     });
     expect(unsubscribe).not.toThrow();
-    await expect(unregisterPush()).resolves.toBeUndefined();
+    await expect(unregisterPush()).resolves.toBe(true);
     expect(mockCalls).toEqual([]);
   });
 });
@@ -248,7 +249,7 @@ describe('the push wrapper unregistering', () => {
   it('unregisters the phone from push once', async () => {
     jest.useFakeTimers();
 
-    await expect(unregisterPush()).resolves.toBeUndefined();
+    await expect(unregisterPush()).resolves.toBe(true);
     expect(mockCalls).toEqual(['unregisterForNotificationsAsync()']);
     expect(jest.getTimerCount()).toBe(0);
   });
@@ -256,7 +257,7 @@ describe('the push wrapper unregistering', () => {
   it('unregisters without throwing when the library call fails', async () => {
     mockUnregister = (): Promise<void> => Promise.reject(new Error('Network request failed'));
 
-    await expect(unregisterPush()).resolves.toBeUndefined();
+    await expect(unregisterPush()).resolves.toBe(false);
   });
 
   it('stops waiting for the library after 3 seconds', async () => {
@@ -265,15 +266,15 @@ describe('the push wrapper unregistering', () => {
       new Promise<void>(() => {
         // The phone never answers.
       });
-    let finished = false;
-    void unregisterPush().then(() => {
-      finished = true;
+    let answer: boolean | undefined;
+    void unregisterPush().then((unregistered) => {
+      answer = unregistered;
     });
 
     await jest.advanceTimersByTimeAsync(2999);
-    expect(finished).toBe(false);
+    expect(answer).toBeUndefined();
     await jest.advanceTimersByTimeAsync(1);
-    expect(finished).toBe(true);
+    expect(answer).toBe(false);
   });
 });
 

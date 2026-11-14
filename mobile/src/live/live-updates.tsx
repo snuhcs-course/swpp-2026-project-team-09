@@ -40,8 +40,9 @@ import { heldTokens } from '@/auth/tokens';
 import { useSession } from '@/session/session';
 import { endSession } from '@/session/session-events';
 import { openLiveConnection } from './connection';
+import { tellInvitationAnswer } from './invitation-answers';
 
-// What each signal of the main server makes the app fetch again. The signals carry nothing.
+// What each signal of the main server makes the app fetch again.
 const REFETCH: Record<string, readonly QueryKey[]> = {
   'friends-changed': [FRIENDS_KEY, POSITIONS_KEY, FRIEND_REQUESTS_KEY],
   // The Quests' key also holds the open room's Quest.
@@ -59,6 +60,8 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
   'room-requests-changed': [ROOM_INBOX_KEY, ROOM_REQUEST_KEY],
   notice: [NOTIFICATIONS_KEY],
+  'invitation-accepted': [QUESTS_KEY, SENT_INVITATIONS_KEY],
+  'invitation-declined': [QUESTS_KEY, SENT_INVITATIONS_KEY],
 };
 
 // The lists of what waits for the User and the Notifications kept for them, which 알림 and the badge on 파티 show.
@@ -140,8 +143,9 @@ function openFor(queryClient: QueryClient): () => void {
         queryClient.setQueryData<ShuttleVehicle[]>(SHUTTLE_VEHICLES_KEY, vehicles);
       }
     },
-    onSignal: (name) => {
+    onSignal: (name, payload) => {
       refetch(queryClient, REFETCH[name] ?? []);
+      tellInvitationAnswer(name, payload);
     },
   });
 }

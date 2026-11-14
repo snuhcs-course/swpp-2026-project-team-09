@@ -3,11 +3,13 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import type { PlaceAt } from '@/api/room-types';
-import { field, isCampusPlace, isMyParty, isNothing, isQuest, isSubQuest } from './answers';
+import { field, isCampusPlace, isMyParty, isNothing, isSubQuest } from './answers';
+import { isQuest } from './quest-answers';
 import { isJoinRequests } from './waiting-answers';
 import { call } from './http';
 
