@@ -52,6 +52,8 @@ export function listsTop(inset: number): number {
 export interface Room {
   stage: { width: number; height: number } | null;
   cardHeight: number | null;
+  // The answer frame's card, its whole laid-out height: null while the frame is not shown or not laid out yet.
+  answerHeight: number | null;
   // The 새내기 튜토리얼's start button is shown, above "오늘의 발자국".
   tutorialStart: boolean;
 }

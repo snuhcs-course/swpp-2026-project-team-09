@@ -294,7 +294,7 @@ export function MainScreen(): ReactElement {
   useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null, start, framed);
+  const { room, setStage, setCardHeight, setAnswerHeight } = useRoom(taken.bottomCard || taken.notice !== null, start, framed);
   const onPress = framed ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection));
   return (
     <View style={styles.screen}>
@@ -315,6 +315,7 @@ export function MainScreen(): ReactElement {
           />
           <MapBottom
             chat={chat}
+            onAnswerHeight={setAnswerHeight}
             onNoticeHeight={setCardHeight}
             onParty={party.open}
             onShowOnMap={pin.showOnMap}

@@ -69,8 +69,9 @@ export function takenBy(selected: CardView | null, serviceHours: string | null):
 
 interface MapBottomProps {
   taken: Taken;
-  // The shuttle's notice, or the answer frame's card, was laid out with this height.
   onNoticeHeight: (height: number) => void;
+  // The answer frame's card was laid out with this height.
+  onAnswerHeight: (height: number) => void;
   // "활성 파티": the room of the User's Party's Quest.
   onParty: () => void;
   room: Room;
@@ -90,7 +91,7 @@ interface MapBottomProps {
 // it, and the chat keeps its last bubble clear of it there. The conversation is kept while the app runs.
 // With the switch of the answer on the map on, the answer frame takes the sheet's place, and the input is its card's.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, room, stack, tutorial, onShowOnMap, chat } = props;
+  const { taken, onParty, onNoticeHeight, onAnswerHeight, room, stack, tutorial, onShowOnMap, chat } = props;
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const { bottomCard, notice } = taken;
@@ -105,7 +106,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       ) : null}
       {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
       {chat.sheet(inputTop)}
-      <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onNoticeHeight} room={room} />
+      <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
       <AiInput
         chatOpen={chat.shown}
         lift={lift}

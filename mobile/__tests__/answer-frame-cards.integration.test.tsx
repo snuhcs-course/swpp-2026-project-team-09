@@ -16,7 +16,7 @@ import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, LAYERS } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { press } from './support/markers';
+import { DINNER as DINNER_MARKER, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerParty, MY_HIKE } from './support/party';
 import { toast } from './support/room';
@@ -55,6 +55,8 @@ const LUNCH: QuestProposal = {
   globalEvent: null,
   invitees: [],
 };
+
+const PROPOSED = { text: '이렇게 만들까요?', mapButtons: [], cards: [], proposal: LUNCH };
 
 let server: FakeServer;
 
@@ -172,6 +174,53 @@ describe('a Proposal in the frame', () => {
     expect(toast()).toHaveTextContent('게시판을 골라 주세요');
     // The card's 300 from the screen's bottom, and 8 of clear room.
     expect(toast()).toHaveStyle({ bottom: 308 });
+  });
+});
+
+// Partitions: the frame's card not laid out yet after another card was; laid out; closed with a selected card back.
+describe('a toast while the frame is shown', () => {
+  beforeEach(() => {
+    answerParty(server);
+    server.on('POST /assistant/messages', { status: 200, body: PROPOSED });
+    server.on('POST /quests/own', refusal(409, 'BOARD_REQUIRED'));
+  });
+
+  // Opens the main screen with the switch on, opens a Quest's card 180 high, and asks.
+  async function askOverCard(): Promise<User> {
+    const user = await openMain({ answerOnMap: true });
+    await press(user, DINNER_MARKER);
+    await fireEvent(screen.getByTestId('map-card'), 'layout', {
+      nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },
+    });
+    await user.type(screen.getByLabelText(AI_INPUT), ASKED);
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(500);
+    return user;
+  }
+
+  it("sits where it sits without a card until the frame's card is laid out", async () => {
+    const user = await askOverCard();
+
+    await user.press(within(card().getByTestId('proposal-card')).getByRole('button', { name: '만들기' }));
+    await pass(500);
+
+    // Where a toast sits with no card open, as main-card.integration.test.tsx has it.
+    expect(toast()).toHaveStyle({ bottom: 158 });
+  });
+
+  it("sits above the selected thing's card again, by that card's height, once the frame is closed", async () => {
+    const user = await askOverCard();
+    expect(screen.queryByTestId('map-card')).toBeNull();
+    await fireEvent(screen.getByTestId('answer-card'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 400, width: 390, height: 300 } },
+    });
+
+    await user.press(within(screen.getByTestId('answer-pill')).getByRole('button', { name: '답 닫기' }));
+    expect(screen.getByTestId('map-card')).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '올리기' }));
+
+    // The navigation's 80, the card's bottom 72 above it, its 180, and 8 of clear room.
+    expect(toast()).toHaveStyle({ bottom: 340 });
   });
 });
 
