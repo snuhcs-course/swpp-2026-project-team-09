@@ -3,7 +3,7 @@
 Parent: [spec](../spec.md) ("Global watch", "AI matching removed")
 Status: ready-for-agent
 Blocked by: None (can start immediately).
-Before the acceptance tests: yes (UAT-2 criteria 4 and 6). Done when the pull request into `4.0/Main` is open; merging is the team's call.
+Prepared before the acceptance tests: yes (UAT-2 criteria 4 and 6). Done when the pull request into `4.0/Main` is open; whether it merges and ships before 11/16 is decided by the team later. If it does not, criteria 4 and 6 run on today's app that day.
 Native files: no
 PR assignee: Jaehyun0320
 

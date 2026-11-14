@@ -9,7 +9,7 @@ PR assignee: Jaehyun0320
 
 ## What to build
 
-After Onboarding, a four-step tour points at the bottom tabs (지도, 파티, 행사, 내 정보) one at a time, with "건너뛰기" and "다시 보지 않기". 내 정보 can replay it. It points only at the tab bar, which no package of the map work changes, never at the map, the input bar or cards. Whether it was seen is kept on the phone. Once package D's First run exists, the tour runs after it.
+After Onboarding, a four-step tour points at the bottom tabs (지도, 파티, 행사, 내 정보) one at a time, with "건너뛰기" and "다시 보지 않기". 내 정보 can replay it. It points only at the four tabs, never at the map, the input bar or cards, which package B is rebuilding. The tab bar itself is B's file (work split §4): B is told before the work starts, and the tour reaches the tabs from outside the tab bar where it can. Whether it was seen is kept on the phone. Once package D's First run exists, the tour runs after it.
 
 The 파티 tab, the 행사 tab and the sent-requests section, when empty, say what they are for and offer one first action.
 
@@ -22,6 +22,7 @@ A toast can carry a link (a label and what it does). Three actions use it: askin
 - [ ] The three empty states show their sentence and one action.
 - [ ] The toast takes an optional action; the three calls above use it and the link opens the right screen.
 - [ ] Tests (ADR 0007): the toast's action as a design-system unit test (prior art: `design-system/toast`); app integration for the tour's show, skip and replay, the empty states, and one link.
+- [ ] B was told before the change; the pull request says so.
 - [ ] The H7, H8 and H11 rows of `he-revision-log.md` get this pull request.
 
 ## Comments

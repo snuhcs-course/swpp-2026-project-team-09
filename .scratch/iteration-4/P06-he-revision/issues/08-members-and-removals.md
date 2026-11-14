@@ -2,7 +2,7 @@
 
 Parent: [spec](../spec.md) ("Members and removals")
 Status: ready-for-agent
-Blocked by: 04 (the sent-request row that shows the removed User's caption). Planned after the acceptance tests (11-18).
+Blocked by: 04 (the sent-request row that shows the removed User's caption). Planned after the acceptance tests (11-18). Tell C before starting: the Friend Request by user id goes in C's Friends service (work split §4).
 Done when the pull request into `4.0/Main` is open; merging is the team's call.
 Native files: no
 PR assignee: Jaehyun0320
@@ -21,6 +21,7 @@ A member the Leader removed must be approved to come back, even into an Open Que
 - [ ] The removed User's caption shows on the post and on the sent-request row; the Leader's mark shows on the request.
 - [ ] The migration order is agreed and written in the pull request.
 - [ ] Tests (ADR 0007): main-server integration for each server rule (prior art: `party-join-requests`, `party-join-request-answers`, `friend-requests`); app integration for the button states, the caption and the mark.
+- [ ] C was told before the change; the pull request says so.
 - [ ] Wiki Requirements US-QUEST-03 and UI-08 describe approval after removal.
 - [ ] The H4 and "Removed members joining again" rows of `he-revision-log.md` get this pull request.
 

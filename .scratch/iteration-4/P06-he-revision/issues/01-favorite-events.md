@@ -3,7 +3,7 @@
 Parent: [spec](../spec.md) ("Events on the map", "Global Events API", "Which event pins stay", "The ☆ toggle")
 Status: ready-for-agent
 Blocked by: None (can start immediately).
-Before the acceptance tests: yes. Done when the pull request into `4.0/Main` is open; merging is the team's call.
+Prepared before the acceptance tests: yes. Done when the pull request into `4.0/Main` is open; whether it merges and ships before an acceptance test is decided by the team later.
 Native files: no
 PR assignee: Jaehyun0320
 
@@ -24,7 +24,7 @@ The one migration of this feature lands here with both changes: `global_events.p
 - [ ] Same-Place grouping keeps its behaviour, with a group showing a star when any member is a Favorite Event.
 - [ ] Cancelled events still leave at once; an event the User goes to with a 파티 still shows as the 파티's pin.
 - [ ] Tests (ADR 0007): main-server integration for the API (beside `published-global-events` and `global-events`); a unit test of the pin function across today, the several-day rule and Seoul midnight; an app integration test for the optimistic toggle and its rollback.
-- [ ] The map files belong to package B (work split §4); conflicts are resolved when they happen.
+- [ ] The map files belong to package B (work split §4); B is told before the work starts, and conflicts are resolved when they happen.
 - [ ] The "Events on the map" row of `he-revision-log.md` gets this pull request.
 
 ## Comments

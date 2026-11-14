@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 
-Schedule row: Iteration 4, "Fix the HE issues and clean up the features outside the main UI (P06)" in the Team Meeting Log of 2026-11-09. The Testing Documentation §6.3 calls the same work P7, P8 and P9; P06 replaces those numbers. Five tickets come before the first acceptance test on 2026-11-16, three after the second on 2026-11-18. A ticket is done when its pull request into `4.0/Main` is open and ready for review. Whether and when it merges is the team's call, since `agentic-map-work-split.md` §6 keeps new work unreleased until 11/18.
+Schedule row: Iteration 4, "Fix the HE issues and clean up the features outside the main UI (P06)" in the Team Meeting Log of 2026-11-09. The Testing Documentation §6.3 calls the same work P7, P8 and P9; P06 replaces those numbers. Five tickets are prepared before the first acceptance test on 2026-11-16, three after the second on 2026-11-18. A ticket is done when its pull request into `4.0/Main` is open and ready for review. Whether a ticket merges and ships before an acceptance test is decided by the team later, since `agentic-map-work-split.md` §6 keeps new work unreleased until 11/18; P06 only makes each one ready. If ticket 03 does not ship before 11/16, UAT-2 criteria 4 and 6 run on today's app on that day, where B is told only with the room open.
 
 References:
 - `references/he-improvements.md`: the HE findings, the code they point at, and the decisions of 2026-11-14 ("결정 기록", "확인된 사실", sections 5-3-1 and 5-3-2).
@@ -28,7 +28,7 @@ Four evaluators used the app in the heuristic evaluation and found that a User l
 
 **Before the acceptance tests**
 
-- **Sent requests (H1, H2).** The 파티 tab gets a "보낸 신청" section beside the invitations received. Each row shows the Quest's post title and opens that post when tapped. Each row has "신청 취소", which asks for confirmation, withdraws, and says "신청을 취소했어요". If the Leader answered at the same moment and the server refuses, the row says why in plain words.
+- **Sent requests (H1, H2).** The 파티 tab gets a "보낸 신청" section beside the invitations received. Each row shows the Quest's post title and opens that post when tapped. Each row has "신청 취소", which asks for confirmation, withdraws, and says "신청을 취소했어요". If the Leader answered at the same moment and the server refuses, the app reads the User's Quests again and says "이미 파티에 들어갔어요" when the User now holds it, or "파티장이 신청을 받지 않았어요" when not.
 - **Told when a 파티 is gone (UAT-2).** Wherever the User is in the signed-in app, if a 파티 they held disappears from their list, a toast says "○○ 파티에서 빠졌어요". It is not shown when the User left or ended it themselves, and it is shown once even if the room is open. It does not tell removal from ending apart.
 - **Events on the map.** The map keeps only three kinds of Global Event pin:
   - a **New Event**, published less than 24 hours ago and not yet checked by this User, drawn with an exclamation mark;
@@ -62,7 +62,7 @@ Told when a 파티 is gone
 11. As a Holder whose 파티 the Leader ended, I want the same toast, so that I do not wait for a 파티 that no longer exists.
 12. As a Holder with the room open, I want the toast once, not twice, so that it reads as one event.
 13. As a User who left or ended a 파티 myself, I want no toast, so that I am not told what I just did.
-14. As an acceptance tester running UAT-2, I want B to be told on any screen, so that criteria 4 and 6 pass.
+14. As an acceptance tester running UAT-2, I want B to be told on any screen, so that criteria 4 and 6 pass once this ships.
 
 Events on the map
 15. As a User, I want the map to show only new, favorite and today's events, so that it is not covered with pins for weeks ahead.
@@ -151,17 +151,17 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 - Ticket 1: `global_events.published_at` (nullable) and `global_event_favorites (user_id, global_event_id, created_at)`, unique on the pair, deleted with the User or the event.
 - Ticket 8: `quest_removals (quest_id, user_id, created_at)`, unique on the pair, deleted with the Quest or the User.
 
-**Global Events API (ticket 1).** Each of the three publishing paths (the rules that read a post, a Judgement, an Administrator's publish) records `publishedAt` when an event becomes published. Events published before the change keep null and are never New Events. `GET /global-events` adds `publishedAt` (nullable) and `favorite` (for the caller) to each event. `PUT` and `DELETE /global-events/{id}/favorite` set and clear a favorite; both are idempotent, and both refuse an event that is not published. Editing an event's time does not change `publishedAt`.
+**Global Events API (tickets 1 and 2).** Ticket 1: `GET /global-events` adds `publishedAt` (nullable, still null everywhere) and `favorite` (for the caller) to each event, and `PUT` and `DELETE /global-events/{id}/favorite` set and clear a favorite; both are idempotent, and both refuse an event that is not published. Ticket 2: every write that sets `state = published` records `publishedAt`. There are four: the rules that read a post and a Judgement (both when a session settles), an Administrator's publish of a Draft, and an Administrator's publish from the Same-event queue, which sets the same `administrator` route and is easy to miss. Events published before the change keep null and are never New Events. Editing an event's time does not change `publishedAt`.
 
-**Which event pins stay (ticket 2).** One pure function in the map's event adapter decides it. Input: the published events, now, the ids this User has checked, and each event's `favorite`. Output: the events that stay, each with a look (`new`, `favorite` or `plain`). An event stays if `publishedAt` is within 24 hours and it is not checked (`new`), if it is a favorite (`favorite`), or if it is held today in Seoul time, for an event of several days only on its first or last day (`plain`). When several apply, the order is `new`, `favorite`, `plain`. Starring an event adds it to the checked ids. The checked ids live on the phone, keyed by User, and an id is dropped once its event is more than 24 hours past `publishedAt`. A checked event leaves the map when its card closes, never while it is open. Same-Place grouping keeps its current behaviour and takes the strongest look of its members. The study layer's overlap merge applies to every event pin, with the merged pin taking the strongest look and the total count. The exclamation mark and the star are new marker looks drawn by the JS marker images, so they ship over the air and need no native Release.
+**Which event pins stay (tickets 1 and 2).** One pure function in the map's event adapter decides it. Input: the published events, now, the ids this User has checked, and each event's `favorite`. Output: the events that stay, each with a look (`new`, `favorite` or `plain`). An event stays if `publishedAt` is within 24 hours and it is not checked (`new`), if it is a favorite (`favorite`), or if it is held today in Seoul time, for an event of several days only on its first or last day (`plain`). When several apply, the order is `new`, `favorite`, `plain`. Ticket 1 builds the function with `favorite` and `plain`; ticket 2 adds `new` and the checked ids. Starring an event adds it to the checked ids. The checked ids live on the phone, keyed by User, and an id is dropped once its event is more than 24 hours past `publishedAt`. A checked event leaves the map when its card closes, never while it is open. Same-Place grouping keeps its current behaviour and takes the strongest look of its members. The study layer's overlap merge applies to every event pin, with the merged pin taking the strongest look and the total count. The exclamation mark and the star are new marker looks drawn by the JS marker images, so they ship over the air and need no native Release.
 
-**The ☆ toggle (ticket 2).** On the 행사 tab's and chat's event item, at the top right, with the source mark moved to its left. On the map, only on a single event's card, left of the close button; the card's data carries the event id and `favorite`. A grouped pin's list rows show ★ for a Favorite Event without a toggle. The hit area is 44pt, like the close button. The change is optimistic, rolled back with a toast on failure. The icon set gains a `star` shape that can be filled.
+**The ☆ toggle (ticket 1).** On the 행사 tab's and chat's event item, at the top right, with the source mark moved to its left. On the map, only on a single event's card, left of the close button; the card's data carries the event id and `favorite`. A grouped pin's list rows show ★ for a Favorite Event without a toggle. The hit area is 44pt, like the close button. The change is optimistic, rolled back with a toast on failure. The icon set gains a `star` shape that can be filled.
 
 **Global watch (ticket 3).** A watcher mounted in the signed-in layout, the way the matching watcher was, takes over the logic the room screen uses to close when its Quest is gone. When `quests-changed` brings a list in which a Quest the User held is missing, it toasts "○○ 파티에서 빠졌어요" on any screen. The User's own leave and end actions mark that Quest so no toast follows. The room screen still closes, without a second toast.
 
 **AI matching removed (ticket 3).** The event card's "✦ AI 매칭" entry, the matching screen and its route, the match watcher, and the "결과는 알림으로 와요" toast are deleted, with tests that only covered them. The main server's matching module and the match server stay.
 
-**Sent requests (ticket 4).** No server change. The list reads the existing `GET /quest-join-requests`. Rows show the post's title and open the post. Withdraw uses the existing `POST /quest-join-requests/{id}/withdraw`; its refusals when the Leader answered first map to plain sentences. Requests made through chat cards use the same query, so they appear without extra work.
+**Sent requests (ticket 4).** No server change. The list reads the existing `GET /quest-join-requests`. Rows show the post's title and open the post. Withdraw uses the existing `POST /quest-join-requests/{id}/withdraw`. Accepting and declining both delete the request, so a withdraw after either fails with the same not-found; the server cannot say which. On that refusal the app refetches the User's Quests: holding the Quest means accepted ("이미 파티에 들어갔어요"), not holding it means declined ("파티장이 신청을 받지 않았어요"). The row leaves the list either way. Requests made through chat cards use the same query, so they appear without extra work.
 
 **Friend lines (ticket 5).** In production the Friends' statuses still come from the mock, and a visible Friend becomes `free` ("공강"). The app now shows only what the main server knows: for a visible Friend the nearest Place and the position's age, for one not visible "위치 꺼짐". "수업 중" and "이동 중" are left to C's FriendView and its three Friend levels, which redefine Friend status in this iteration. The pull request and a comment at the line say so. C is told before the change, since C owns the Friends adapter.
 
@@ -171,11 +171,15 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 
 **Location sharing display (ticket 6).** No server change. The card's counts are computed from the Friends list (each Friend's own switch) and the 파티 that is on (its other members). The Master Switch's label becomes "위치 공유". While it is off, the Friend and 파티 switches render off and disabled; their stored values are untouched. Words follow the design's Screen words ("파티 켜기, 켜짐, 끄기").
 
-**Tour, empty states and toast links (ticket 7).** The tour points only at the bottom tab bar, which no package of the map work changes, and never at the map, the input bar or cards. Whether it has been seen is kept on the phone. It runs after Onboarding, and after D's First run once that exists. The toast gains an optional action (a label and what it does); three calls use it.
+**Tour, empty states and toast links (ticket 7).** The tour points only at the four tabs of the bottom tab bar, never at the map, the input bar or cards, which package B is rebuilding. The four tabs themselves stay in the design. The tab bar is still B's file (work split §4), so B is told before the work starts and the tour reaches the tabs from outside the tab bar where it can. Whether it has been seen is kept on the phone. It runs after Onboarding, and after D's First run once that exists. The toast gains an optional action (a label and what it does); three calls use it.
 
 **Members and removals (ticket 8).** Friend Requests gain a way to name the receiver by user id, accepted only when both are Holders of the same Quest; the existing refusals (already Friends, already sent) still apply. Removing a member writes a `quest_removals` row in the same transaction; leaving does not. Joining an Open Quest with a removal refuses with `QUEST_REMOVED_ASK`. Asking to join accepts an Open Quest when a removal exists. The Leader's view of requests includes them and marks each with `removedBefore`. Accepting deletes the removal. The app shows "참여 신청" and the caption to the removed User, and "전에 내보낸 멤버" to the Leader. If the Leader's list of requests reads only Approval Quests today, it is widened.
 
-**Files other people own.** Ticket 2 touches B's files (the map card, the map adapter, the marker looks and images) and ticket 5 touches C's (the Friends adapter, location sharing). Conflicts are resolved when they happen (decided 2026-11-14).
+**Files other people own** (work split §4). The owner is told before the ticket starts. Conflicts are resolved when they happen (decided 2026-11-14).
+- Tickets 1 and 2: B's map card, map adapter, and marker looks and images.
+- Ticket 5: B's main-screen layout, where 오늘의 발자국 is laid out with the button row, and the bottom controls that draw it; C's Friends adapter and location-sharing service (`GET /positions`).
+- Ticket 7: B's tab bar.
+- Ticket 8: C's Friends service (the Friend Request by user id).
 
 **Wiki and glossary.** Each ticket edits what it changes:
 - Ticket 2: Requirements US-EVENT-01, UI-02, UI-03, UI-05, and a new story for Favorite Events; `GLOSSARY.md` gains **New Event** and **Favorite Event**. Testing §6.3's P7, P8 and P9 become P06.
@@ -190,15 +194,16 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 A good test drives what a User or a client sees: an HTTP response, a rendered screen, a function's output for given inputs. It does not reach into how the result was built. Levels and file names follow ADR 0007.
 
 - **Main server, integration (started server over HTTP, database container).**
-  - Ticket 1: each publishing path sets `publishedAt`; an older event has null; editing time keeps it; `favorite` per caller; PUT and DELETE are idempotent and refuse an unpublished event. Prior art: `published-global-events`, `global-events`.
+  - Ticket 1: `favorite` per caller; PUT and DELETE are idempotent and refuse an unpublished event. Prior art: `global-events`.
+  - Ticket 2: each of the four writes that publish sets `publishedAt`, the Same-event queue's publish included; an older event has null; editing time keeps it. Prior art: `published-global-events`.
   - Ticket 5: `nearPlace` and `walkMinutes` on `GET /positions`, null without the caller's position. Prior art: `friend-sharing`.
   - Ticket 8: removal then join refuses with `QUEST_REMOVED_ASK`; ask on an Open Quest succeeds only with a removal; the Leader sees `removedBefore`; acceptance clears it; leaving writes no removal; a Friend Request by user id only between Holders of the same Quest. Prior art: `party-join-requests`, `party-join-request-answers`, `friend-requests`.
 - **App, unit (pure adapter functions).**
-  - Ticket 2: the pin-selection function across the 24-hour edge, checked and unchecked, favorite, today and the several-day rule, Seoul midnight, the look order, grouped and merged looks. Prior art: `features/map-adapter-places`, the study merge.
+  - Ticket 1: the pin-selection function for favorite, today and the several-day rule, and Seoul midnight. Ticket 2: the 24-hour edge, checked and unchecked, the look order, grouped and merged looks. Prior art: `features/map-adapter-places`, the study merge.
   - Ticket 5: the Friend line without "공강", "근처", empty walking time. Prior art: `features/friends-adapter`.
   - Ticket 6: the two counts. 
 - **App, integration (router and screens over a fake server).**
-  - Ticket 2: starring is optimistic and rolls back with a toast; closing a new event's card removes its pin; a starred event stays. Prior art: `map-sources`, `study-layer`.
+  - Ticket 1: starring is optimistic and rolls back with a toast. Ticket 2: closing a New Event's card removes its pin; a starred event stays. Prior art: `map-sources`, `study-layer`.
   - Ticket 3: a 파티 that disappears while another tab is shown toasts once; own leave or end does not; no matching entry remains. Prior art: `party-mine-activation`, `events-matching` (removed with the feature).
   - Ticket 4: rows, opening the post, the withdraw flow and its refusal. Prior art: `party-mine`, `party-invites`.
   - Ticket 7: the tour, its skip and replay; empty states; toast links. Prior art: `design-system/toast`.
@@ -220,6 +225,6 @@ A good test drives what a User or a client sees: an HTTP response, a rendered sc
 
 ## Further Notes
 
-- None of the tickets changes a native file, so all ship over the air. Ticket 2 confirmed that marker looks are JS.
+- None of the tickets changes a native file, so all ship over the air. Marker looks are JS marker images, checked for tickets 1 and 2.
 - New Event and Favorite Event are User-relative: the same Global Event can be new to one User and checked by another.
 - How many events a day are published in production was not measured; the merge handles a busy day without a cap.

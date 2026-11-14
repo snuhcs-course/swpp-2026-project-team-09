@@ -2,8 +2,8 @@
 
 Parent: [spec](../spec.md) ("Friend lines", "Walking times", "오늘의 발자국 removed")
 Status: ready-for-agent
-Blocked by: None (can start immediately). Tell C before starting: C owns the Friends adapter and also works on location sharing.
-Before the acceptance tests: yes. Done when the pull request into `4.0/Main` is open; merging is the team's call.
+Blocked by: None (can start immediately). Tell B and C before starting (work split §4): C owns the Friends adapter and the location-sharing service; B owns the main-screen layout and the bottom controls where 오늘의 발자국 sits.
+Prepared before the acceptance tests: yes. Done when the pull request into `4.0/Main` is open; whether it merges and ships before an acceptance test is decided by the team later.
 Native files: no
 PR assignee: Jaehyun0320
 
@@ -23,7 +23,7 @@ The production app stops showing sample Friend data. A visible Friend's line sho
 - [ ] The pull request description and a code comment explain why only the server's facts are shown and that FriendView will add more.
 - [ ] 오늘의 발자국 and everything only it used is gone.
 - [ ] Tests (ADR 0007): main-server integration for the two fields (prior art: `friend-sharing`); a unit test of the Friend line (prior art: `features/friends-adapter`); the 오늘의 발자국 adapter test is removed with it.
-- [ ] C was told before the change; the pull request says so.
+- [ ] B and C were told before the change; the pull request says so.
 - [ ] The "Sample data in production" row of `he-revision-log.md` gets this pull request.
 
 ## Comments
