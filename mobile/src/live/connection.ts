@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { io, type Socket } from 'socket.io-client';
@@ -28,8 +29,8 @@ export interface LiveHandlers {
   onPositionRemoved: (userId: string) => void;
   // Every vehicle in service, in place of the ones before; [] when none runs.
   onShuttleVehicles: (vehicles: ShuttleVehicle[]) => void;
-  // Any other event: a signal by its name, which carries nothing.
-  onSignal: (name: string) => void;
+  // Any other event: a signal by its name, with what it carries as it arrived, or undefined.
+  onSignal: (name: string, payload: unknown) => void;
 }
 
 // When nothing answered a renewal, it is tried again after this wait.
@@ -133,9 +134,9 @@ function listen(socket: Socket, handlers: LiveHandlers, end: (replaced: boolean)
       handlers.onShuttleVehicles(vehicles);
     }
   });
-  socket.onAny((name: string) => {
+  socket.onAny((name: string, payload: unknown) => {
     if (!OWN_EVENTS.has(name)) {
-      handlers.onSignal(name);
+      handlers.onSignal(name, payload);
     }
   });
 }
