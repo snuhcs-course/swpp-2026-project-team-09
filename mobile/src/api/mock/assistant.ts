@@ -133,7 +133,8 @@ function copyFor({ people }: PlanInput): AnswerReply {
   if (people.length >= 3) {
     return MEAL_ANSWER_THREE;
   }
-  return people[0]?.constraints.some(({ kind }) => kind === 'from') === true ? MEAL_ANSWER_OTHER_ORIGIN : MEAL_ANSWER;
+  const ownStart = people[0]?.constraints.some(({ kind }) => kind === 'from') ?? false;
+  return ownStart ? MEAL_ANSWER_OTHER_ORIGIN : MEAL_ANSWER;
 }
 
 // A recalculation without a main server: the mock does not calculate, so it answers with the stored copy of the main

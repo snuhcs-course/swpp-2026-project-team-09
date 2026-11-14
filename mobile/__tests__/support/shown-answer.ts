@@ -52,31 +52,40 @@ export async function hold(bubbles: readonly ChatBubble[]): Promise<Held> {
 
 type Recalculate = jest.MockedFunction<(input: PlanInput, location: LatLng | null) => Promise<AnswerReply>>;
 
+interface Settle {
+  resolve: (answer: AnswerReply) => void;
+  reject: (error: Error) => void;
+}
+
 // The next recalculation's reply, which the test lets come or fail when it chooses.
 export function heldBack(recalculate: Recalculate): {
   come: (answer: AnswerReply) => Promise<void>;
   fail: () => Promise<void>;
 } {
-  let resolve: (answer: AnswerReply) => void = () => undefined;
-  let reject: (error: Error) => void = () => undefined;
+  let settle: Settle | null = null;
   recalculate.mockImplementationOnce(
-    async () =>
-      new Promise<AnswerReply>((given, refused) => {
-        resolve = given;
-        reject = refused;
+    () =>
+      new Promise<AnswerReply>((resolve, reject) => {
+        settle = { resolve, reject };
       }),
   );
+  const finish = async (how: (given: Settle) => void): Promise<void> => {
+    await act(async () => {
+      if (settle !== null) {
+        how(settle);
+      }
+      await Promise.resolve();
+    });
+  };
   return {
     come: async (answer): Promise<void> => {
-      await act(async () => {
+      await finish(({ resolve }) => {
         resolve(answer);
-        await Promise.resolve();
       });
     },
     fail: async (): Promise<void> => {
-      await act(async () => {
+      await finish(({ reject }) => {
         reject(new Error('refused'));
-        await Promise.resolve();
       });
     },
   };

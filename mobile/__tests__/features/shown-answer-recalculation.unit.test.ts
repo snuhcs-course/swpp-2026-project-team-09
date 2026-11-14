@@ -49,7 +49,7 @@ describe('the answer on screen, by the last reply', () => {
   });
 });
 
-// Partitions: the Plan on screen in the new answer or not; a second change while one is on its way; a failure.
+// Partitions: the Plan on screen in the new answer or not.
 describe('a recalculation', () => {
   it('sends the input and the location, and is recalculating until its answer comes', async () => {
     const reply = heldBack(recalculate);
@@ -91,7 +91,10 @@ describe('a recalculation', () => {
     expect(held.shown().index).toBe(0);
     expect(held.shown().plan?.id).toBe('학생회관식당');
   });
+});
 
+// Partitions: a second change while one is on its way; a failure.
+describe('a recalculation that is not shown', () => {
   it('ignores a second change while the first is on its way', async () => {
     heldBack(recalculate);
     const held = await hold(ANSWERED);

@@ -54,7 +54,13 @@ interface AnswerState extends Shown {
   epoch: number;
 }
 
-const NO_RECALCULATION: Recalculation = { location: null, onFailed: () => undefined };
+function sayNothing(): void {
+  // A holder that asks for no recalculation hears of no failure.
+}
+
+type SetStored = (update: (last: AnswerState) => AnswerState) => void;
+
+const NO_RECALCULATION: Recalculation = { location: null, onFailed: sayNothing };
 
 // A failure and the app's own bubble are no reply.
 function sourceOf(bubbles: readonly ChatBubble[]): AnswerReply | null {
@@ -73,7 +79,10 @@ function withPlan(state: AnswerState, index: number): AnswerState {
 // The Plan with the id of the one on screen stays when the new answer has it, otherwise the first.
 function replaced(last: AnswerState, next: AnswerReply, by: 'drag' | undefined): AnswerState {
   const shownId = last.answer?.plans[last.index]?.id;
-  const index = Math.max(0, next.plans.findIndex(({ id }) => id === shownId));
+  const index = Math.max(
+    0,
+    next.plans.findIndex(({ id }) => id === shownId),
+  );
   const kept = by === 'drag' ? { answer: last.answer, index: last.index } : null;
   return { ...last, answer: next, index, basisOpen: false, kept, recalculating: false };
 }
@@ -83,7 +92,7 @@ function ghostOf(kept: Shown | null): Stretch | null {
   return band === undefined ? null : { startAt: band.startAt, endAt: band.endAt };
 }
 
-function useBrowsing(setStored: (update: (last: AnswerState) => AnswerState) => void): {
+function useBrowsing(setStored: SetStored): {
   browse: ShownAnswer['browse'];
   show: ShownAnswer['show'];
   toggleBasis: ShownAnswer['toggleBasis'];
@@ -118,27 +127,15 @@ function useBrowsing(setStored: (update: (last: AnswerState) => AnswerState) => 
   return { browse, show, toggleBasis, undo };
 }
 
-// The answer on screen and the Plan on screen, which the map and the card read. The conversation's last reply gives
-// the source: a new one shows its first Plan with the basis closed and drops anything a recalculation brought. A
-// recalculation's answer replaces the one on screen, unless the source changed while it was on its way.
-export function useShownAnswer(
-  bubbles: readonly ChatBubble[],
-  { location, onFailed }: Recalculation = NO_RECALCULATION,
-): ShownAnswer {
-  const source = sourceOf(bubbles);
-  const [stored, setStored] = useState<AnswerState>(() => fresh(source, 0));
-  const current = stored.source === source ? stored : fresh(source, stored.epoch + 1);
-  if (current !== stored) {
-    setStored(current);
-  }
-  const { epoch } = current;
-  // The epoch on screen, and the one whose recalculation is on its way, for the replies that come later.
+// Asks for a recalculation unless one of this epoch is on its way. Its answer, or its failure, counts only while the
+// epoch it was asked in is still the one on screen.
+function useChange(epoch: number, setStored: SetStored, { location, onFailed }: Recalculation): ShownAnswer['change'] {
   const live = useRef(epoch);
   const flight = useRef<number | null>(null);
   useEffect(() => {
     live.current = epoch;
   }, [epoch]);
-  const change = (input: PlanInput, by?: 'drag'): void => {
+  return (input, by) => {
     if (flight.current === epoch) {
       return;
     }
@@ -163,6 +160,22 @@ export function useShownAnswer(
       },
     );
   };
+}
+
+// The answer on screen and the Plan on screen, which the map and the card read. The conversation's last reply gives
+// the source: a new one shows its first Plan with the basis closed and drops anything a recalculation brought. A
+// recalculation's answer replaces the one on screen, unless the source changed while it was on its way.
+export function useShownAnswer(
+  bubbles: readonly ChatBubble[],
+  { location, onFailed }: Recalculation = NO_RECALCULATION,
+): ShownAnswer {
+  const source = sourceOf(bubbles);
+  const [stored, setStored] = useState<AnswerState>(() => fresh(source, 0));
+  const current = stored.source === source ? stored : fresh(source, stored.epoch + 1);
+  if (current !== stored) {
+    setStored(current);
+  }
+  const change = useChange(current.epoch, setStored, { location, onFailed });
   return {
     source,
     answer: current.answer,
