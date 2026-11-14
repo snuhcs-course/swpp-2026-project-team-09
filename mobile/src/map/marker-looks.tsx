@@ -92,7 +92,9 @@ function parts(...names: (string | false)[]): string {
 function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): string {
   const drawn = [
     symbol?.type ?? null,
-    symbol?.type === 'face' ? [symbol.name, symbol.dashed, ...(symbol.badge === undefined ? [] : [symbol.badge])] : null,
+    symbol?.type === 'face'
+      ? [symbol.name, symbol.dashed, ...(symbol.badge === undefined ? [] : [symbol.badge])]
+      : null,
     symbol?.type === 'dot' ? [symbol.role, symbol.number] : null,
     label === null ? null : [label.side, label.tone, label.title, label.line, label.number],
   ];

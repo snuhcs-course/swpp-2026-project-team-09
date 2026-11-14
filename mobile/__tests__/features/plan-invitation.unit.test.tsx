@@ -4,7 +4,6 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -24,7 +23,7 @@ const make = jest.mocked(apiClient.makePlanQuest);
 
 beforeEach(() => {
   make.mockReset();
-  jest.mocked(apiClient.listQuests).mockReset().mockReturnValue(new Promise(() => undefined));
+  jest.mocked(apiClient.listQuests).mockReset().mockResolvedValue([]);
 });
 
 // Partitions: the first press; a press while it is on its way; a press after the Quest was made. Expected values:

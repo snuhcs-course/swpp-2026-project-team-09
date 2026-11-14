@@ -35,7 +35,7 @@ export interface HeldInvitation {
 
 export async function hold(first: OnScreen): Promise<HeldInvitation> {
   const say = jest.fn<void, [string]>();
-  const change: Change = jest.fn();
+  const change: Change = jest.fn<void, Parameters<ShownAnswer['change']>>();
   const { result, rerender } = await renderHook(
     (given: OnScreen) => usePlanInvitation({ ...given, change }, { location: HERE, say }),
     { initialProps: first, wrapper: freshWrapper() },

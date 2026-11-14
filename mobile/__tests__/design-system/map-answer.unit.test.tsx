@@ -66,7 +66,12 @@ describe("MapAnswerMark: a Friend's badge", () => {
     );
 
     expect(screen.getByText(sign)).toBeVisible();
-    expect(screen.getByTestId('mark:badge')).toHaveStyle({ position: 'absolute', top: 0, right: 0, backgroundColor: tone });
+    expect(screen.getByTestId('mark:badge')).toHaveStyle({
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      backgroundColor: tone,
+    });
   });
 });
 

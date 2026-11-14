@@ -74,10 +74,14 @@ describe('a signal of an answer to an invitation', () => {
 // states follow the Quest's members whenever the Quests are read again.
 describe("the Quest's members", () => {
   it("follow the User's Quests once they hold the Quest", async () => {
-    // The stored Quest with the members a later read gives once 민수 accepted.
+    // The stored Quest with the members a later read gives once 민수 accepted, and the parts the app adds to a Quest
+    // it reads.
     jest.mocked(apiClient.listQuests).mockResolvedValue([
       {
         ...PLAN_QUEST.quest,
+        photo: null,
+        tags: [],
+        faces: [],
         members: [
           { user: ASKER, state: 'accepted', lateMinutes: null },
           { user: { id: MINSU, name: '민수', department: '컴퓨터공학부' }, state: 'accepted', lateMinutes: null },

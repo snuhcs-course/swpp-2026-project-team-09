@@ -20,7 +20,12 @@ const TWO_INVITED: PlanQuest = {
   invitations: [...PLAN_QUEST.invitations, { id: 'b1d0e4a2-7c1f-4d6b-9a8e-3f2c5d7e9a10', userId: JIEUN }],
 };
 
-function member(userId: string, name: string, state: QuestMember['state'], lateMinutes: number | null = null): QuestMember {
+function member(
+  userId: string,
+  name: string,
+  state: QuestMember['state'],
+  lateMinutes: number | null = null,
+): QuestMember {
   return { user: { id: userId, name, department: '컴퓨터공학부' }, state, lateMinutes };
 }
 
@@ -35,7 +40,11 @@ describe("each Friend's state after inviting", () => {
   });
 
   it("follows the Quest's members, and leaves out the User", () => {
-    const members = [member(ME, '유상', 'accepted'), member(MINSU, '민수', 'late', 5), member(JIEUN, '지은', 'declined')];
+    const members = [
+      member(ME, '유상', 'accepted'),
+      member(MINSU, '민수', 'late', 5),
+      member(JIEUN, '지은', 'declined'),
+    ];
 
     expect(friendStandings(TWO_INVITED, members, [])).toEqual(
       new Map([
@@ -46,7 +55,9 @@ describe("each Friend's state after inviting", () => {
   });
 
   it('keeps invited a Friend whom the members leave out', () => {
-    expect(friendStandings(TWO_INVITED, [member(ME, '유상', 'accepted'), member(MINSU, '민수', 'accepted')], [])).toEqual(
+    expect(
+      friendStandings(TWO_INVITED, [member(ME, '유상', 'accepted'), member(MINSU, '민수', 'accepted')], []),
+    ).toEqual(
       new Map([
         [MINSU, { state: 'accepted', lateMinutes: null }],
         [JIEUN, { state: 'invited', lateMinutes: null }],

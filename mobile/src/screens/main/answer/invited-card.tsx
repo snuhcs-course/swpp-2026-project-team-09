@@ -36,10 +36,7 @@ function linesOf(startAt: string): AnswerLine[] {
 }
 
 // The conditions as they were sent: no chip takes a press, and a person's chip says how the Friend stands.
-function SentChips({
-  chips,
-  standings,
-}: Pick<InvitedCardProps, 'chips' | 'standings'>): ReactElement {
+function SentChips({ chips, standings }: Pick<InvitedCardProps, 'chips' | 'standings'>): ReactElement {
   return (
     <ScrollView contentContainerStyle={styles.chips} horizontal showsHorizontalScrollIndicator={false}>
       {chips.map((chip) => {

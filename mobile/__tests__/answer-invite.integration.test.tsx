@@ -74,7 +74,7 @@ describe('the main button', () => {
   });
 });
 
-// Partitions: the press and its reply; a second press while the reply is held back.
+// Partitions: the press and its reply, and the card after it.
 describe('a press of "이대로 초대"', () => {
   it('sends the Plan on screen with a key, and the card then says the Quest was made', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
@@ -110,7 +110,10 @@ describe('a press of "이대로 초대"', () => {
     expect(card().queryByRole('button', { name: '301동에서' })).toBeNull();
     expect(card().queryByRole('button', { name: INVITE })).toBeNull();
   });
+});
 
+// Partitions: a press on each kind of control while the reply is held back, and a second press.
+describe('"이대로 초대" on its way', () => {
   it('waits while the reply is held back, the controls and the swipe take nothing, and a second press sends nothing', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: HELD_MS });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);

@@ -72,7 +72,9 @@ function useHeard(made: PlanQuest | null, setStored: SetStored): void {
         ? undefined
         : onInvitationAnswer((answer) => {
             if (answer.questId === questId) {
-              setStored((last) => (last.made?.quest.id === questId ? { ...last, heard: [...last.heard, answer] } : last));
+              setStored((last) =>
+                last.made?.quest.id === questId ? { ...last, heard: [...last.heard, answer] } : last,
+              );
             }
           }),
     [questId, setStored],
