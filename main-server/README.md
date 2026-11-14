@@ -3183,9 +3183,10 @@ between sends nothing, and it stays in the list. The step also deletes the rows 
 It never throws: a failure is logged as a warning and the next step runs. It answers how many it sent.
 
 **The interval.** `NotificationSenderModule` runs the step every `NOTIFICATIONS_TICK_SECONDS` seconds, a whole number
-from 0 to 3600, 15 by default. 0 runs no step; the tests' settings give 0, and a test moves the clock with
-`vi.spyOn(app.get(CLOCK), 'now')` and calls `sendDue()` itself. The timer does not keep the process alive and stops at
-shutdown.
+from 0 to 3600, 15 by default; an empty value is refused at start-up. 0 runs no step; the tests' settings give 0, and a
+test moves the clock with `vi.spyOn(app.get(CLOCK), 'now')` and calls `sendDue()` itself. A step claims and deletes
+the rows of every User, so the sender's tests keep their Notifications in a year before every other test file's. The
+timer does not keep the process alive and stops at shutdown.
 
 `GET /notifications` answers the signed-in User's Notifications, the latest time first, and 401 without a sign-in. One
 whose time is still to come is in the answer:

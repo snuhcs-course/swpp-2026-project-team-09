@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 // NOTIFICATIONS_TICK_SECONDS, apart from test/settings.unit.test.ts, which is at the length limit. Partitions: unset,
-// each bound, below and above them, a fraction and a non-number.
+// each bound, below and above them, a fraction, a non-number, and an empty value, which would otherwise read as 0.
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -35,7 +35,7 @@ describe('settingsSchema: NOTIFICATIONS_TICK_SECONDS', () => {
     });
   });
 
-  it.each(['-1', '3601', '1.5', 'abc'])('"%s" → refused, naming NOTIFICATIONS_TICK_SECONDS', (value) => {
+  it.each(['-1', '3601', '1.5', 'abc', '', ' '])('"%s" → refused, naming NOTIFICATIONS_TICK_SECONDS', (value) => {
     const result = settingsSchema.safeParse({ ...valid, NOTIFICATIONS_TICK_SECONDS: value });
 
     expect(result.success ? [] : result.error.issues.map(({ path }) => String(path[0]))).toEqual([

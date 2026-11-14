@@ -128,8 +128,9 @@ export const settingsSchema = z
       .transform((value) => value === 'true'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
-    // How often, in seconds, the main server sends the Notifications whose time has come. 0 never sends them by itself.
-    NOTIFICATIONS_TICK_SECONDS: z.string().default('15').pipe(z.coerce.number<string>().int().min(0).max(3600)),
+    // How often, in seconds, the main server sends the Notifications whose time has come. 0 never sends them by itself,
+    // so an empty value is refused rather than read as 0.
+    NOTIFICATIONS_TICK_SECONDS: z.string().regex(/^\d+$/u).default('15').pipe(z.coerce.number<string>().max(3600)),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

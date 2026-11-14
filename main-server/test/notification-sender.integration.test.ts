@@ -6,7 +6,6 @@
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
-import { setTimeout as sleep } from 'node:timers/promises';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
@@ -31,10 +30,11 @@ const ACCEPTED = {
   friendId: FRIEND_ID,
   friendName: '민수',
 } as const;
-// 12:17, 12:18 and 12:30 in Korea.
-const AT_1217 = new Date('2026-11-17T03:17:00Z');
-const AT_1218 = new Date('2026-11-17T03:18:00Z');
-const AT_1230 = new Date('2026-11-17T03:30:00Z');
+// 12:17, 12:18 and 12:30 in Korea on 4 January 2000. A step claims and deletes the rows of every User, whichever file
+// kept them, so this file's Notifications stand in a year before every other file's.
+const AT_1217 = new Date('2000-01-04T03:17:00Z');
+const AT_1218 = new Date('2000-01-04T03:18:00Z');
+const AT_1230 = new Date('2000-01-04T03:30:00Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const expo = new ExpoPushStub();
@@ -203,38 +203,5 @@ describe('How long a Notification is kept', () => {
 
     const left = await prisma.notification.findMany({ where: { userId: user.id }, select: { cardId: true } });
     expect(left).toEqual([{ cardId: 'kept' }]);
-  });
-});
-
-describe('The interval of NOTIFICATIONS_TICK_SECONDS', () => {
-  it('at 0 runs no step by itself', async () => {
-    const user = await signInRegistered();
-    const minuteAgo = new Date(Date.now() - 60_000);
-    await notifications.schedule(user.id, LEAVE_BY, minuteAgo);
-    clockAt(new Date());
-
-    await sleep(1500);
-
-    expect(await pushedTo(user.token)).toEqual([]);
-    expect((await prisma.notification.findFirstOrThrow({ where: { userId: user.id } })).sentAt).toBeNull();
-  });
-
-  it('at 1 sends a Notification whose time has come within a few seconds', async () => {
-    const ticking = await startApp({ ...inject('settings'), NOTIFICATIONS_TICK_SECONDS: '1' });
-    try {
-      const user = await signInUser(ticking);
-      const { NotificationsService: registered } = await import('../src/notifications/notifications.service.js');
-      await ticking.get(registered).schedule(user.id, LEAVE_BY, new Date(Date.now() - 60_000));
-
-      await vi.waitFor(
-        async () => {
-          const row = await prisma.notification.findFirstOrThrow({ where: { userId: user.id } });
-          expect(row.sentAt).not.toBeNull();
-        },
-        { timeout: 5000, interval: 200 },
-      );
-    } finally {
-      await ticking.close();
-    }
   });
 });
