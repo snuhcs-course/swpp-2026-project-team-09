@@ -109,6 +109,16 @@ describe('What the model is given of a way', () => {
       fromIs: 'where the User is now',
       walkMinutes: 18,
       deadline: null,
+      shuttle: {
+        taken: false,
+        boardAt: '301동 정류장',
+        getOffAt: '기숙사삼거리 정류장',
+        leaveAt: '11:50',
+        comesAt: '11:56',
+        comesBy: 'the average wait at this hour',
+        arrival: '12:08',
+        lateMinutes: 0,
+      },
     });
   });
 });

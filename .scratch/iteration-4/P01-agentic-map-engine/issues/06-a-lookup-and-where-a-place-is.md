@@ -71,3 +71,10 @@ These are the details the design leaves open. Any of them can be vetoed.
 The walking table gives 301동 → 문화관 1,066 seconds, 18 minutes as the board says.
 
 The endpoint's integration tests (`assistant-way.integration.test.ts` and the six endpoint tests that now expect `lookup: null`) were written but not run on the build machine, whose lock for runs with containers was held by another session; GitHub CI runs them.
+
+### Agent usage (2026-11-15)
+
+Tickets 06, 07, and 08 together, one pull request: this session (the triage of ticket 05, the tickets, the reviews, and the pull request) and two implementer subagents (06 with 07, then 08 with the resolver fix).
+
+- Agent time: about 2 hours 8 minutes, an estimate from the transcripts' timestamps (the union of active stretches, gaps over 5 minutes left out).
+- Tokens: output 435,467; input 105,796,401, of which 104,395,504 were cache reads, 1,400,131 cache writes, and 766 uncached. Without cache reads: 1,836,364.

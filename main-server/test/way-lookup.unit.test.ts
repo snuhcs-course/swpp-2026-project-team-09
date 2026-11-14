@@ -9,7 +9,7 @@ import { onDay } from '../src/assistant/free-time/free-time.js';
 import { classAt, id, ME, point, position, readCampus, TUESDAY, wayFor } from './way-example.js';
 
 // Where a Place is, drawn on the map (board q1): "문화관이 어디야?" on Tuesday at 11:50, at 301동 after a Class there,
-// on the seed's walking table.
+// on the seed's walking table and shuttle timing.
 
 beforeAll(() => readCampus());
 
@@ -49,8 +49,11 @@ describe('Where 문화관 is, from 301동', () => {
     ]);
   });
 
-  it('rests on the walking table', () => {
-    expect(whereIsCultureHall().basis).toEqual(['301동 → 문화관(73동) 걸어서 18분 · 앱의 도보표']);
+  it('rests on the walking table, and on the shuttle, which is no faster with the average wait', () => {
+    expect(whereIsCultureHall().basis).toEqual([
+      '301동 → 문화관(73동) 걸어서 18분 · 앱의 도보표',
+      '셔틀은 18분 걸려 걸어요',
+    ]);
   });
 
   it('draws the User where they are, the Place picked out, the way, and a flag with the minutes', () => {

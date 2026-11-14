@@ -117,6 +117,15 @@ export interface PlanPart {
   next: { startAt: string; place: PlacePoint | null } | null;
 }
 
+// A shuttle stop's point holds the stop's id, not a Place's.
+type PlaceRole = 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting' | 'stop';
+
+// `shuttle` is a ride between two stops; `alt` is the way not taken, drawn faded.
+type RouteRole = 'me' | 'friend' | 'next' | 'shuttle' | 'alt';
+
+// `leave` is when to set out, `late` an arrival after the deadline, `shuttle` the stop a shuttle passed last.
+type FlagRole = 'place' | 'meeting' | 'leave' | 'late' | 'shuttle';
+
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {
   people: {
@@ -127,9 +136,9 @@ export interface MapScene {
     source: 'exact' | 'timetable';
     tag: string | null;
   }[];
-  places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
-  routes: { userId: string; role: 'me' | 'friend' | 'next'; from: Position; to: Position; minutes: number }[];
-  flags: { at: Position; text: string; role: 'place' | 'meeting' }[];
+  places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
+  routes: { userId: string; role: RouteRole; from: Position; to: Position; minutes: number }[];
+  flags: { at: Position; text: string; role: FlagRole }[];
 }
 
 export interface TimeBand {

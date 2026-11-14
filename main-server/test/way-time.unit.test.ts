@@ -8,7 +8,8 @@ import { type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
 import { classAt, id, ME, point, position, readCampus, time, TUESDAY, WEDNESDAY, wayFor } from './way-example.js';
 
-// How many minutes to the next Class, and whether the User will be late, on the seed's walking table: board q2
+// How many minutes to the next Class, and whether the User will be late, on the seed's walking table and shuttle
+// timing: board q2
 // (Tuesday 12:40 at 301동, the next Class at 13:00 in 24동), board q3 (the same at 12:50), and board q15 (Wednesday
 // 08:35 off campus, a Class at 09:00 in 24동).
 
@@ -63,8 +64,12 @@ describe('Board q2: 12:40 at 301동, the next Class at 13:00 in 24동', () => {
     ]);
   });
 
-  it('rests on the way on foot', () => {
-    expect(fromBuilding301At('12:40').basis).toEqual(['301동 → 24동 걸어서 15분']);
+  // The board writes "셔틀은 17분 넘게 걸려 걸어요"; the seed's legs are slower even without a wait.
+  it('rests on the way on foot, and on the shuttle, which is slower', () => {
+    expect(fromBuilding301At('12:40').basis).toEqual([
+      '301동 → 24동 걸어서 15분',
+      '셔틀은 기다림 없이도 16분(정류장 2 · 타기 4 · 내려서 10)이라 걸어요',
+    ]);
   });
 });
 
@@ -74,7 +79,7 @@ describe('Board q2: the map, the band, and the actions', () => {
       people: [{ userId: ME, name: '유상', me: true, at: AT_301, source: 'exact', tag: '나' }],
       places: [{ place: point('자연과학관6', '24동'), role: 'next', tag: '13:00 수업 · 24동' }],
       routes: [{ userId: ME, role: 'me', from: position('제1공학관'), to: position('자연과학관6'), minutes: 15 }],
-      flags: [{ at: position('제1공학관'), text: '12:45 나서기', role: 'place' }],
+      flags: [{ at: position('제1공학관'), text: '12:45 나서기', role: 'leave' }],
     });
   });
 
@@ -121,13 +126,16 @@ describe('Board q3: the same at 12:50', () => {
     ]);
   });
 
-  it('rests on the walk and the time now', () => {
-    expect(fromBuilding301At('12:50').basis).toEqual(['걸어서 15분 · 지금 12:50']);
+  it('rests on the walk, the time now, and the shuttle', () => {
+    expect(fromBuilding301At('12:50').basis).toEqual([
+      '걸어서 15분 · 지금 12:50',
+      '셔틀은 기다림 없이도 16분(정류장 2 · 타기 4 · 내려서 10)이라 걸어요',
+    ]);
   });
 
   it('flags the arrival and the lateness at the Class', () => {
     expect(fromBuilding301At('12:50').scene.flags).toEqual([
-      { at: position('자연과학관6'), text: '13:05 도착 · 5분 늦어요', role: 'place' },
+      { at: position('자연과학관6'), text: '13:05 도착 · 5분 늦어요', role: 'late' },
     ]);
   });
 
@@ -183,7 +191,7 @@ describe('Board q15: Wednesday 08:35 off campus, a Class at 09:00 in 24동', () 
       people: [{ userId: ME, name: '유상', me: true, at: position('서울대 정문'), source: 'timetable', tag: '나' }],
       places: [{ place: point('자연과학관6', '24동'), role: 'next', tag: '09:00 수업 · 24동' }],
       routes: [{ userId: ME, role: 'me', from: position('서울대 정문'), to: position('자연과학관6'), minutes: 10 }],
-      flags: [{ at: position('서울대 정문'), text: '08:50까지 정문 통과', role: 'place' }],
+      flags: [{ at: position('서울대 정문'), text: '08:50까지 정문 통과', role: 'leave' }],
     });
   });
 

@@ -76,6 +76,16 @@ describe('"늦나" at 12:40 at 301동 (board q2)', () => {
       fromIs: 'where the User is now',
       walkMinutes: 15,
       deadline: { at: '13:00', isClass: true, leaveBy: '12:45', arrivalIfLeavingNow: '12:55', lateMinutes: 0 },
+      shuttle: {
+        taken: false,
+        boardAt: '301동 정류장',
+        getOffAt: '기숙사삼거리 정류장',
+        leaveAt: '12:40',
+        comesAt: '12:46',
+        comesBy: 'the average wait at this hour',
+        arrival: '13:00',
+        lateMinutes: 0,
+      },
     });
     const replied = JSON.stringify(response.body);
     expect(replied).not.toContain(COURSE);

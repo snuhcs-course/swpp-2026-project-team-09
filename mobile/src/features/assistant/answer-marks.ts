@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
@@ -74,6 +75,8 @@ const ROUTE_STYLES = {
   me: { color: color.snuBlue, width: 5 },
   friend: { color: color.friend, width: 4 },
   next: { color: color.borderStrong, width: 3 },
+  shuttle: { color: color.svcShuttle, width: 4 },
+  alt: { color: color.border, width: 2 },
 } as const;
 
 const METRES_PER_DEGREE = 111_320;
@@ -158,6 +161,10 @@ function placeDraft(
     };
   }
   if (role === 'meeting') {
+    return null;
+  }
+  // Not drawn until its look is settled (P01 ticket 11).
+  if (role === 'stop') {
     return null;
   }
   const id = role === 'next' ? `answer:next:${place.placeId}` : `answer:dropped:${place.label}`;

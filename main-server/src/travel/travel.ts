@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { existsSync } from 'node:fs';
@@ -26,12 +27,28 @@ export interface Travel {
   mode: TravelMode;
 }
 
+// The legs of the shuttle way `travel` weighs against walking, in seconds. A stop is known by its place on the loop
+// (`loop_order`) and its name.
+export interface ShuttleWay {
+  // The stops ridden, from the boarding stop to the alighting stop, each with the ride to it from the boarding stop.
+  stops: { order: number; name: string; rideSeconds: number }[];
+  walkToStopSeconds: number;
+  // The timing's average wait at the boarding stop.
+  waitSeconds: number;
+  walkFromStopSeconds: number;
+  // The ride to the boarding stop from each stop of the loop, in loop order.
+  ridesToBoarding: number[];
+}
+
 // The one way to ask for a Travel Time. Injected by TRAVEL_PROVIDER, so that a fixture can stand in for the real table
 // and shuttle file.
 export interface TravelProvider {
   travel(fromPlaceId: string, toPlaceId: string, departure: Date): Travel;
   // The way on foot alone, whatever the shuttle offers. A leave-by time's out-travel departs by it.
   walkingSeconds(fromPlaceId: string, toPlaceId: string): number;
+  // The shuttle way `travel` weighs, or null when the shuttle does not run then. A fixture that knows no shuttle, such
+  // as the evaluation's frozen one, leaves it out.
+  shuttleWay?(fromPlaceId: string, toPlaceId: string, departure: Date): ShuttleWay | null;
 }
 
 export const TRAVEL_PROVIDER = 'TRAVEL_PROVIDER';
@@ -61,6 +78,16 @@ function cell(rows: readonly (readonly number[])[], row: number, column: number)
   return rows[row]?.[column] ?? Number.POSITIVE_INFINITY;
 }
 
+interface Best {
+  boarding: number;
+  alighting: number;
+  band: ShuttleBand;
+  walkToStop: number;
+  wait: number;
+  walkFromStop: number;
+  seconds: number;
+}
+
 export class SeedTravel implements TravelProvider {
   private readonly rowOf: Map<string, number>;
 
@@ -75,7 +102,7 @@ export class SeedTravel implements TravelProvider {
     const from = this.row(fromPlaceId);
     const to = this.row(toPlaceId);
     const walk = cell(this.table.placeToPlace, from, to);
-    const shuttle = this.bestShuttleSeconds(from, to, departure);
+    const shuttle = this.bestShuttle(from, to, departure)?.seconds ?? Number.POSITIVE_INFINITY;
     return shuttle + SHUTTLE_ADVANTAGE_SECONDS <= walk
       ? { seconds: Math.round(shuttle), mode: 'shuttle' }
       : { seconds: walk, mode: 'walk' };
@@ -83,6 +110,26 @@ export class SeedTravel implements TravelProvider {
 
   walkingSeconds(fromPlaceId: string, toPlaceId: string): number {
     return cell(this.table.placeToPlace, this.row(fromPlaceId), this.row(toPlaceId));
+  }
+
+  shuttleWay(fromPlaceId: string, toPlaceId: string, departure: Date): ShuttleWay | null {
+    const best = this.bestShuttle(this.row(fromPlaceId), this.row(toPlaceId), departure);
+    if (best === null) {
+      return null;
+    }
+    const { boarding, alighting, band, walkToStop, wait, walkFromStop } = best;
+    const { stops } = this.table;
+    const ridden = (alighting - boarding + stops.length) % stops.length;
+    return {
+      stops: Array.from({ length: ridden + 1 }, (_, step) => {
+        const order = (boarding + step) % stops.length;
+        return { order, name: stops[order]?.name ?? '', rideSeconds: this.ride(boarding, order, band) };
+      }),
+      walkToStopSeconds: walkToStop,
+      waitSeconds: wait,
+      walkFromStopSeconds: walkFromStop,
+      ridesToBoarding: stops.map((_, order) => this.ride(order, boarding, band)),
+    };
   }
 
   private row(placeId: string): number {
@@ -93,10 +140,15 @@ export class SeedTravel implements TravelProvider {
     return row;
   }
 
+  // From a stop to another along the loop, 0 from a stop to itself.
+  private ride(from: number, to: number, band: ShuttleBand): number {
+    return this.timing.rides[from]?.[to]?.[band] ?? fallbackRideSeconds(from, to);
+  }
+
   // Over every boarding stop the User reaches in service hours and every stop ahead on the loop.
-  private bestShuttleSeconds(from: number, to: number, departure: Date): number {
+  private bestShuttle(from: number, to: number, departure: Date): Best | null {
     const stops = this.table.stops.length;
-    let best = Number.POSITIVE_INFINITY;
+    let best: Best | null = null;
     for (let boarding = 0; boarding < stops; boarding += 1) {
       const walkToStop = cell(this.table.placeToStop, from, boarding);
       const band = serviceBand(new Date(departure.getTime() + walkToStop * 1000));
@@ -106,8 +158,11 @@ export class SeedTravel implements TravelProvider {
       const wait = this.timing.waits[boarding]?.[band] ?? fallbackWaitSeconds(band);
       for (let alighting = 0; alighting < stops; alighting += 1) {
         if (alighting !== boarding) {
-          const ride = this.timing.rides[boarding]?.[alighting]?.[band] ?? fallbackRideSeconds(boarding, alighting);
-          best = Math.min(best, walkToStop + wait + ride + cell(this.table.stopToPlace, alighting, to));
+          const walkFromStop = cell(this.table.stopToPlace, alighting, to);
+          const seconds = walkToStop + wait + this.ride(boarding, alighting, band) + walkFromStop;
+          if (best === null || seconds < best.seconds) {
+            best = { boarding, alighting, band, walkToStop, wait, walkFromStop, seconds };
+          }
         }
       }
     }

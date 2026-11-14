@@ -6,14 +6,17 @@
 
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
+import { type ShuttleStopDto } from '../../shuttle/dto/shuttle-route.dto.js';
+import { SHUTTLE_ADVANTAGE_SECONDS } from '../../travel/judgement-constants.js';
 import { shownMinutes, type TravelProvider } from '../../travel/travel.js';
 import { byStart, type DayItem, onDay } from '../free-time/free-time.js';
 import { itemBefore } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { koreaDate } from '../korea-time.js';
+import { type ReportedShuttle, shuttleTrip, type ShuttleTrip } from './shuttle-trip.js';
 
-// The way of a Lookup: where the User sets out from, how many minutes they walk to a Place, and, when they must be
-// there by a time, when to set out and how late they are.
+// The way of a Lookup: where the User sets out from, how many minutes they walk to a Place, whether the shuttle is
+// faster, and, when they must be there by a time, when to set out and how late they are.
 
 export interface WayArgs {
   now: Date;
@@ -29,7 +32,9 @@ export interface WayArgs {
   by: string | null;
   // The main gate, where a way from off campus starts.
   gatePlaceId: string;
-  travel: Pick<TravelProvider, 'walkingSeconds'>;
+  travel: Pick<TravelProvider, 'walkingSeconds' | 'shuttleWay'>;
+  // The shuttle route's stops in loop order, and each shuttle reported at the stop it passed last, with when.
+  shuttle: { stops: readonly ShuttleStopDto[]; reported: readonly { stop: string; at: Date }[] };
   placeOf: (placeId: string) => PlaceDto;
 }
 
@@ -51,6 +56,9 @@ export interface Way {
   // When the User must be there, the time they named or their next item's start, with when to set out to be there by
   // it and how many minutes late they are if they set out now. Null without either.
   deadline: { at: Date; isClass: boolean; leaveBy: Date; lateMinutes: number } | null;
+  // The shuttle weighed against the walk for setting out now, taken when it arrives at least 3 minutes earlier, with
+  // how late it is. 'not running' outside its service hours or at a weekend; null when the User is at the Place.
+  shuttle: { trip: ShuttleTrip; taken: boolean; lateMinutes: number } | 'not running' | null;
 }
 
 // A Place the User named; else the main gate when their location is off campus; else the Place of their location;
@@ -75,6 +83,36 @@ function nextOf(items: readonly DayItem[], now: Date): DayItem | null {
 }
 
 const plusMinutes = (at: Date, count: number): Date => new Date(at.getTime() + count * MINUTE_MS);
+
+const lateBy = (arrival: Date, due: Date | null): number =>
+  due === null ? 0 : Math.max(0, (arrival.getTime() - due.getTime()) / MINUTE_MS);
+
+// As the app drops a shuttle's position that is more than a minute old.
+const REPORT_LIFETIME_MS = 60 * 1000;
+
+function reportedNow({ shuttle, now }: WayArgs): ReportedShuttle[] {
+  return shuttle.reported.flatMap(({ stop, at }) => {
+    const order = shuttle.stops.findIndex(({ name }) => name === stop);
+    return order === -1 || Math.abs(at.getTime() - now.getTime()) > REPORT_LIFETIME_MS ? [] : [{ stop, order, at }];
+  });
+}
+
+function shuttleOf(args: WayArgs, way: Omit<Way, 'shuttle'>): Way['shuttle'] {
+  const { start, toPlaceId, now, arrival, deadline } = way;
+  if (start.placeId === toPlaceId) {
+    return null;
+  }
+  const legs = args.travel.shuttleWay?.(start.placeId, toPlaceId, now) ?? null;
+  if (legs === null) {
+    return 'not running';
+  }
+  const trip = shuttleTrip(legs, reportedNow(args), now);
+  return {
+    trip,
+    taken: arrival.getTime() - trip.arrival.getTime() >= SHUTTLE_ADVANTAGE_SECONDS * 1000,
+    lateMinutes: lateBy(trip.arrival, deadline?.at ?? null),
+  };
+}
 
 // The time the User named, today; else the start of their next item, when the way goes to its Place.
 function deadlineOf(by: string | null, next: DayItem | null, now: Date): { at: Date; isClass: boolean } | null {
@@ -106,7 +144,8 @@ export function wayOf(args: WayArgs): Way | 'no-start' | 'no-next' {
       : {
           ...end,
           leaveBy: plusMinutes(end.at, -walkMinutes),
-          lateMinutes: Math.max(0, (arrival.getTime() - end.at.getTime()) / MINUTE_MS),
+          lateMinutes: lateBy(arrival, end.at),
         };
-  return { start, toPlaceId, walkMinutes, now, arrival, next, deadline };
+  const way = { start, toPlaceId, walkMinutes, now, arrival, next, deadline };
+  return { ...way, shuttle: shuttleOf(args, way) };
 }

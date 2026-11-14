@@ -9,6 +9,7 @@ import { CampusBoundary } from '../../common/campus-boundary.js';
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
+import { ShuttleService } from '../../shuttle/shuttle.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
 import { UserDayService } from '../free-time/user-day.service.js';
@@ -19,7 +20,7 @@ import { wayAnswer, type WayAnswer } from './way-lookup.js';
 const MAIN_GATE = '서울대 정문';
 
 // What a way needs that the server reads itself: the User's name and day, the Place of their location and whether it
-// is on campus, and the main gate.
+// is on campus, the main gate, and the shuttle's stops and the shuttles reported now.
 @Injectable()
 export class WayService {
   constructor(
@@ -27,6 +28,7 @@ export class WayService {
     private readonly users: UsersService,
     private readonly places: PlaceLookup,
     private readonly campus: CampusBoundary,
+    private readonly shuttle: ShuttleService,
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
@@ -36,7 +38,12 @@ export class WayService {
     at: { now: Date; location: Position | null },
   ): Promise<WayAnswer> {
     const { now, location } = at;
-    const [user, items] = await Promise.all([this.users.findById(userId), this.days.itemsOn(userId, koreaDate(now))]);
+    const [user, items, { stops }, vehicles] = await Promise.all([
+      this.users.findById(userId),
+      this.days.itemsOn(userId, koreaDate(now)),
+      this.shuttle.route(),
+      this.shuttle.reportedVehicles(),
+    ]);
     return wayAnswer({
       now,
       me: { userId, name: user.name, items },
@@ -47,6 +54,10 @@ export class WayService {
       ...ask,
       gatePlaceId: this.gatePlaceId(),
       travel: this.travel,
+      shuttle: {
+        stops,
+        reported: (vehicles ?? []).map(({ stop, receivedAt }) => ({ stop: stop.name, at: new Date(receivedAt) })),
+      },
       placeOf: (placeId) => this.placeOf(placeId),
     });
   }

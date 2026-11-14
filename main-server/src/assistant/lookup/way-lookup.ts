@@ -15,53 +15,33 @@ import {
 import { clockOf } from '../free-time/free-time.js';
 import { withTopic } from '../gathering/answer-words.js';
 import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
-import { PlaceNaming } from '../gathering/place-naming.js';
 import { koreaTime } from '../korea-time.js';
+import {
+  shuttleActions,
+  shuttleBand,
+  shuttleBasis,
+  shuttleLine,
+  shuttleLines,
+  shuttleScene,
+  type ShuttleTaken,
+} from './shuttle-lookup.js';
 import { type Way, type WayArgs, wayOf } from './way.js';
+import { dueWords, gated, part, REMIND_WALK_MINUTES, WayNaming } from './way-naming.js';
 
 export { type WayArgs } from './way.js';
 
-// The words of a way, and what the map draws of it. Only the labels are sent to the model.
+// The words of a way, and what the map draws of it: the walk, or the shuttle when it is taken. Only the labels are
+// sent to the model.
 
 export type WayAnswer =
   // How the start and the Place are called.
   | { result: 'found'; way: Way; lookup: Lookup; labels: { from: string; to: string } }
   | { result: 'none'; reason: 'no-start' | 'no-next' };
 
-// The leave-by notification of a way taken alone is sent only for a walk this long or longer.
-const REMIND_WALK_MINUTES = 5;
-
-const GATE = '정문';
 const GATE_BASIS = '지금 위치는 캠퍼스 밖이라 쓰지 않고 정문부터 쟀어요';
 
-const part = (text: string, strong = false): AnswerLine[number] => ({ text, strong });
-
-class WayNaming extends PlaceNaming {
-  constructor(private readonly args: WayArgs) {
-    super(args.placeOf);
-  }
-
-  from({ start }: Way): string {
-    return start.basis === 'gate' ? GATE : this.placeLabel(start.placeId);
-  }
-
-  // The Place gone to, by its name and number when it has both, since the User may have asked by either; the Place of
-  // their next item as their Timetable calls it.
-  to({ toPlaceId, next }: Way): { name: string; label: string } {
-    const { number, name } = this.args.placeOf(toPlaceId);
-    if (next !== null || number === null) {
-      return { name, label: this.placeLabel(toPlaceId) };
-    }
-    return { name, label: `${name}(${number}동)` };
-  }
-}
-
-type Deadline = NonNullable<Way['deadline']>;
-
-const gated = ({ start }: Way): boolean => start.basis === 'gate';
-
-// "13:00 수업" for a Class, else the clock time.
-const dueWords = ({ at, isClass }: Deadline): string => (isClass ? `${clockOf(at)} 수업` : clockOf(at));
+const takenShuttle = ({ shuttle }: Way): ShuttleTaken | null =>
+  shuttle !== null && shuttle !== 'not running' && shuttle.taken ? shuttle : null;
 
 function chipsOf(way: Way, naming: WayNaming): ConditionChip[] {
   const origin: ConditionChip = { kind: 'origin', text: `${naming.from(way)}에서`, userId: null };
@@ -70,6 +50,10 @@ function chipsOf(way: Way, naming: WayNaming): ConditionChip[] {
 }
 
 function linesOf(way: Way, naming: WayNaming): AnswerLine[] {
+  const shuttle = takenShuttle(way);
+  if (shuttle !== null) {
+    return shuttleLines(way, shuttle);
+  }
   const { start, walkMinutes, deadline, arrival } = way;
   const to = naming.to(way);
   if (deadline === null) {
@@ -95,12 +79,20 @@ function linesOf(way: Way, naming: WayNaming): AnswerLine[] {
   ];
 }
 
+// A walk's, with the shuttle's minutes when it is 15 minutes or more.
 function basisOf(way: Way, naming: WayNaming): string[] {
+  const shuttle = takenShuttle(way);
   const { walkMinutes, deadline, now } = way;
   const walk = `${naming.from(way)} → ${naming.to(way).label} 걸어서 ${walkMinutes}분`;
   let lines = [`${walk} · 앱의 도보표`];
   if (deadline !== null) {
     lines = deadline.lateMinutes > 0 ? [`걸어서 ${walkMinutes}분 · 지금 ${clockOf(now)}`] : [walk];
+  }
+  const compared = shuttleLine(way);
+  if (shuttle !== null) {
+    lines = shuttleBasis(way, shuttle);
+  } else if (compared !== null) {
+    lines = [...lines, compared];
   }
   return gated(way) ? [...lines, GATE_BASIS] : lines;
 }
@@ -114,37 +106,31 @@ function flagOf(way: Way, naming: WayNaming): MapScene['flags'][number] {
     return { at: to, text: `${naming.to(way).label} · 걸어서 ${walkMinutes}분`, role: 'place' };
   }
   if (deadline.lateMinutes > 0) {
-    return { at: to, text: `${clockOf(arrival)} 도착 · ${deadline.lateMinutes}분 늦어요`, role: 'place' };
+    return { at: to, text: `${clockOf(arrival)} 도착 · ${deadline.lateMinutes}분 늦어요`, role: 'late' };
   }
   const leaveBy = clockOf(deadline.leaveBy);
   const text = gated(way) ? `${leaveBy}까지 정문 통과` : `${leaveBy} 나서기`;
-  return { at: naming.position(start.placeId), text, role: 'place' };
+  return { at: naming.position(start.placeId), text, role: 'leave' };
 }
 
-function sceneOf(way: Way, args: WayArgs, naming: WayNaming): MapScene {
+function sceneOf(way: Way, naming: WayNaming): MapScene {
   const { start, toPlaceId, walkMinutes, next } = way;
-  const { me, location } = args;
-  const here = start.basis === 'location' ? (location?.at ?? null) : null;
   const { label } = naming.to(way);
-  const place = naming.labelledPoint(toPlaceId, label);
+  const point = naming.labelledPoint(toPlaceId, label);
+  const place: MapScene['places'][number] =
+    next === null
+      ? { place: point, role: 'pick', tag: label }
+      : { place: point, role: 'next', tag: `${clockOf(next.start)}${next.isClass ? ' 수업' : ''} · ${label}` };
+  const shuttle = takenShuttle(way);
+  if (shuttle !== null) {
+    return shuttleScene(way, shuttle, naming, place);
+  }
+  const me = naming.me(way);
   const from = naming.position(start.placeId);
   const to = naming.position(toPlaceId);
   return {
-    people: [
-      {
-        userId: me.userId,
-        name: me.name,
-        me: true,
-        at: here ?? from,
-        source: here === null ? 'timetable' : 'exact',
-        tag: '나',
-      },
-    ],
-    places: [
-      next === null
-        ? { place, role: 'pick', tag: label }
-        : { place, role: 'next', tag: `${clockOf(next.start)}${next.isClass ? ' 수업' : ''} · ${label}` },
-    ],
+    people: [me],
+    places: [place],
     routes: walkMinutes > 0 ? [{ userId: me.userId, role: 'me', from, to, minutes: walkMinutes }] : [],
     flags: [flagOf(way, naming)],
   };
@@ -154,6 +140,10 @@ function sceneOf(way: Way, args: WayArgs, naming: WayNaming): MapScene {
 // the deadline and the arrival. The stretch runs from setting out to the deadline, or from now to the arrival when late.
 function bandOf(way: Way, args: WayArgs, naming: WayNaming): TimeBand | null {
   const { deadline, now, arrival, walkMinutes } = way;
+  const shuttle = takenShuttle(way);
+  if (shuttle !== null) {
+    return shuttleBand(way, shuttle, { userId: args.me.userId, items: args.me.items });
+  }
   if (deadline === null) {
     return null;
   }
@@ -178,6 +168,10 @@ function actionsOf(way: Way, naming: WayNaming): LookupAction[] {
   const { toPlaceId, walkMinutes, deadline, now } = way;
   const { label } = naming.to(way);
   const guide: LookupAction = { kind: 'guide', to: naming.labelledPoint(toPlaceId, label) };
+  const shuttle = takenShuttle(way);
+  if (shuttle !== null) {
+    return shuttleActions(way, shuttle, naming, guide);
+  }
   if (deadline === null || deadline.leaveBy <= now || walkMinutes < REMIND_WALK_MINUTES) {
     return [guide];
   }
@@ -197,7 +191,7 @@ export function wayAnswer(args: WayArgs): WayAnswer {
     chips: chipsOf(way, naming),
     lines: linesOf(way, naming),
     basis: basisOf(way, naming),
-    scene: sceneOf(way, args, naming),
+    scene: sceneOf(way, naming),
     band: bandOf(way, args, naming),
     actions: actionsOf(way, naming),
   };

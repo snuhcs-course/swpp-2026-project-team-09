@@ -47,3 +47,10 @@ The User asks "24동까지 몇 분? 늦나" or "9시 수업인데 늦나". The A
 The walking table gives the boards' minutes: 301동 → 24동 895 seconds (15 minutes, q2 and q3) and 서울대 정문 → 24동 600 seconds (10 minutes, q15).
 
 The endpoint's integration tests (`assistant-way-time.integration.test.ts`) were written but not run on the build machine, whose lock for runs with containers was held by another session; GitHub CI runs them.
+
+### Agent usage (2026-11-15)
+
+Tickets 06, 07, and 08 together, one pull request: this session (the triage of ticket 05, the tickets, the reviews, and the pull request) and two implementer subagents (06 with 07, then 08 with the resolver fix).
+
+- Agent time: about 2 hours 8 minutes, an estimate from the transcripts' timestamps (the union of active stretches, gaps over 5 minutes left out).
+- Tokens: output 435,467; input 105,796,401, of which 104,395,504 were cache reads, 1,400,131 cache writes, and 766 uncached. Without cache reads: 1,836,364.
