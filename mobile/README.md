@@ -703,23 +703,25 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   while invited and "✓" once in (accepted or late), its name read aloud the state after the name, and its tag the
   state alone beside a face that shows the whole name ("아직 안 봄"). A new answer, another Plan, or ✕ drops
   the made Quest from the screen.
-- **A made Quest after closing** (`src/features/assistant/made-quests.ts`, `use-made-quests.ts`,
-  `use-made-quest-card.ts`, `answer/made-quest-frame.tsx`, `made-quest-line.tsx`). With the switch on, a Quest the
-  User leads that is Closed, holds someone besides the User among its members, and whose destination (the last step
-  not cancelled with a start and a point) has not ended by the clock when the Quests were read counts as made from a
-  Plan; nothing the server sends tells it from a 비공개 Quest made by hand with invited Friends, which counts too. It
-  is drawn as a flag at its destination, the pick's dot with "12:15 점심 · 수락 0/1" above it (the start, the meal the
-  title names after "에서", and the Friends accepted or late out of all in its members), in place of its own card
-  `party:<id>`, whose id the flag keeps: a card of kind `made-quest`, outside the place groups, which an address or a
-  selection of the Quest finds. The first made Quest's line says the same at the left above the row of buttons (and
-  above the start button and the line that asks for interests), and gives way to the keyboard, a card at the bottom,
-  and the answer frame. A press on either opens the card after inviting again, built from the Quest: a chip for each
-  Friend with the state, the lines with the destination's start, the steps, and "닫기"; without a pill, the input, or
-  the tab bar, as a received invitation's, with the destination, a dark flag at each other step, and the User's own dot
-  where the phone was at the press, and no Avatar. The signals of an answer count at once, after which the Quests'
-  members do; the flag and its card go when the Quests come again without it or with its meal ended. With the switch
-  off nothing of this is drawn or listened to. The mock lists the Quest its `POST /plans` made, with the mock's User
-  as its asker.
+- **A made Quest after closing** (`src/features/assistant/made-quests.ts`, `made-quest-ids.ts`, `use-made-quests.ts`,
+  `use-made-quest-card.ts`, `answer/made-quest-frame.tsx`, `made-quest-line.tsx`). Nothing the server sends tells a
+  Quest made from a Plan from a matched Shared Quest or a library booking's, so the phone keeps the id of each Quest
+  `POST /plans` made (`Kept.madeQuests`); with the switch on, a Quest whose id is kept, which the User leads, and whose
+  destination (the last step not cancelled with a start and a point) has not ended by the clock when the Quests were
+  read counts as made from a Plan. Ids of Quests gone or ended are dropped when the Quests are read. It is drawn as a
+  flag at its destination, the pick's dot with "12:15 점심 · 수락 0/1" above it (the day when not today, the start, the
+  meal the title names after "에서" or a meeting step's title once the meal was cancelled, and the Friends accepted or
+  late out of all in its members): a card of kind `made-quest`, `made-quest:<id>`, outside the place groups, with the
+  Quest's own card `party:<id>` within it, which an address or a row of the Quest list opens with its "길찾기" as
+  before. The first made Quest's line says the same at the left above the row of buttons (and above the start button
+  and the line that asks for interests), and gives way to the keyboard, a card at the bottom, and the answer frame. A
+  press on either opens the card after inviting again, built from the Quest: a chip for each Friend with the state,
+  the lines with the destination's start, the steps, and "닫기"; without a pill, the input, or the tab bar, as a
+  received invitation's, with the destination, a dark flag at each other step, and the User's own dot where the phone
+  was at the press or first was after it, and no Avatar. Its drawing is kept by what it draws, so a signal moves no
+  camera. The signals of an answer count at once, after which the Quests' members do; the flag and its card go when
+  the Quests come again without it or with its meal ended. With the switch off nothing of this is read, drawn, or
+  listened to. The mock lists the Quest its `POST /plans` made, with the mock's User as its asker.
 - **A received invitation** (`use-received-invitation.ts`, `answer/received-invitation-card.tsx`). With the switch
   on, each invitation of `GET /quest-invitations` is a card of the main screen, `invitation:<invitationId>`, with no
   marker, so `/main?card=invitation:<id>` opens it once the switch's stored value is read; with the switch off that
