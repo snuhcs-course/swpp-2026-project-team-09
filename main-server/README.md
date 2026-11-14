@@ -2156,6 +2156,23 @@ its model through OpenRouter with the Vercel AI SDK
   apply. It holds nothing live: the phone fills it from the library. It is attached only when the request carries
   `"clientCapabilities": ["library"]` beside `messages`.
 
+  Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
+  not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
+  `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
+  `conditions` (the `PlanInput` of the answer on screen), and `planId` (the plan on screen). Every tool is given it, and
+  `planMeal` reads its `location`. For an app that draws answers, the model reads the User's new message followed by a
+  line `[Plan on screen: {"plan", "date", "meal", "friendIds", "from", "until", "placeId"}]` when `conditions` is sent
+  (`friendIds` being the people after the asker), and a line `[Tapped: friend <userId>]` or `[Tapped: place <placeId>]`
+  when `tapped` is (`context-lines.ts`). `planMeal` takes the conditions back with a change: beside `date`, `meal`, and
+  `friendIds` it takes `from` and `until` (`HH:MM`, the start and the end the User fixed, `from` before `until`) and
+  `placeId` (the Place to eat at), keeps each person's constraints of the conditions on screen while the date and meal
+  stay the same, and accepts a Friend or a Place a resolver returned in this message, one of the conditions on screen
+  other than the asker, or the one tapped. An app that sends `"clientCapabilities": ["answer"]` draws an answer on the
+  map. The reply always carries `answer`, `null` when there is none: the plans of a meal, each with its place, times,
+  each person's part (`parts`), the Sub Quests of the Quest it becomes (`subQuests`), map scene, and time band; the
+  condition chips; the dropped places; and the `input` to send back changed to recalculate. The full shape of both is in
+  `src/assistant/dto/answer.dto.ts`.
+
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
     (`quest` or `globalEvent` by id, `restaurant` and `library` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
@@ -2163,8 +2180,10 @@ its model through OpenRouter with the Vercel AI SDK
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
-    than one Proposal, or messages over 24,000 characters together, a Proposal's title, description and names included
-    (`dto/assistant-messages.dto.ts`).
+    than one Proposal, messages over 24,000 characters together, a Proposal's title, description and names included,
+    a `context` of another shape, such as a latitude out of range or more than 8 people
+    (`dto/assistant-messages.dto.ts`, `dto/answer.dto.ts`), or a `context` whose `conditions` start with someone
+    other than the User, before the message is counted.
   - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
     (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
   - **The reply's text** is the text of the model's steps in order, a step that repeats the one before it left out,
@@ -2183,6 +2202,42 @@ Proposal)`.
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
 
+- `POST /assistant/answers` with a User's access token, the `input` of an answer changed as the User dragged the time
+  band or added or removed a Friend, and where the User is now (`location`, `{ "latitude", "longitude" }`, null or left
+  out when unknown):
+
+  ```json
+  {
+    "input": {
+      "kind": "meal",
+      "date": "2026-11-17",
+      "meal": "lunch",
+      "people": [
+        { "userId": "…", "constraints": [] },
+        { "userId": "…", "constraints": [{ "kind": "notBefore", "time": "12:20", "source": "asker" }] }
+      ],
+      "window": { "from": null, "until": "12:50" },
+      "placeId": null
+    },
+    "location": null
+  }
+  ```
+
+  answers `200` with the recalculated answer, in the shape of the reply's `answer`. It is planned by the service
+  `planMeal` calls (`src/assistant/gathering/meal-plan.service.ts`), so the `input` of an answer posted back unchanged at
+  the same time gives the same answer. The model is not called, and the User's daily messages are not counted.
+
+  - **What the User fixed.** `window.from` and `window.until` narrow the meal's window; a plan that starts later than
+    `from` or ends earlier than `until` says what holds it: who arrives last or leaves first, and when, or the meal's
+    own serving time. `placeId` plans only the open Restaurants at that Place, and the answer says `그곳에는 여는 식당이 없어요`
+    when none is. A person's constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
+    are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
+    they leave).
+  - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
+    person is not the User, a person who is not the User's Friend, the same User twice, a day before today or more than
+    a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown
+    Place in a `from` or in `placeId`.
+
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
   `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
   `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds
@@ -2195,9 +2250,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 - **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
   OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
-- **Tools** (`tools/`, and `free-time/` for the 공강 tools): each is a zod schema of its input and a plain function
-  calling this server's services, made with `defineTool` (`feature.ts`). It is given the signed-in User's id and the
-  time of the request. A tool answers only
+- **Tools** (`tools/`, `free-time/` for the 공강 tools, and `gathering/` for `planMeal`): each is a zod schema of its
+  input and a plain function calling this server's services, made with `defineTool` (`feature.ts`). It is given the
+  signed-in User's id, the time of the request, and the request context. A tool answers only
   what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
   there is none instead of answering from elsewhere.
   - `getMenus(date, meal?, restaurant?)` answers the menus of that day only, each restaurant with `collectedAt` in
@@ -2304,6 +2359,13 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       Restaurants. It can answer `needs` as `findFreeTimeEvents` does. A Friend's item without a Place only leaves out
       that side's travel.
     - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
+    - `planMeal(date, meal, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
+      `PLAN_RULES` that of the meal part of the 공강 rules, for an app that sends `answer` (`gathering/`). It plans the
+      meal on the map: `MealPlanService` reads each person's day, the asker's location from the request context, and a
+      Friend's position only as the asker's map shows it, computes the plans and words them, and the tool puts them in
+      the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
+      person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
+      or rooms.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
@@ -2326,7 +2388,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   - `getTutorial(questKey?)` (`tutorial/`, `TUTORIAL_RULES`) answers the 새내기 튜토리얼's content from
     `content/tutorial.yaml` and the User's status of each quest, without turning the tutorial on.
   - A **presenter** puts something real into the reply rather than the model describing it.
-    `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
+    `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error. A reply
+    that carries a Plan has no map button: the answer already takes the map.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
     of both kinds lie in one list in the order shown, at most 20 in a reply.
   - **The presenters' guard** (`found-ids.ts`): a presenter accepts only ids that a lookup or a resolver returned in

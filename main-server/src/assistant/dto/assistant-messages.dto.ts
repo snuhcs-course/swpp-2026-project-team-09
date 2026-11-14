@@ -5,11 +5,13 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer } from '../feature.js';
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
+import { type AnswerReply, NO_CONTEXT, requestContextSchema } from './answer.dto.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
@@ -54,9 +56,11 @@ function lengthOf(message: Message): number {
 
 // The conversation so far, as the app keeps it, the User's new message last. The server stores none of it. A request
 // over a length is refused before the model is called. `clientCapabilities` says what the app can show beside the
-// cards every version shows: ['library'] for library cards.
+// cards every version shows: 'library' for library cards, 'answer' for an answer drawn on the map. `context` is what
+// the app knew as the User asked, each part null when it does not know it.
 export const assistantMessagesSchema = z.strictObject({
   clientCapabilities: z.array(z.enum(CLIENT_CAPABILITIES)).max(CLIENT_CAPABILITIES.length).default([]),
+  context: requestContextSchema.default(NO_CONTEXT),
   messages: z
     .array(z.discriminatedUnion('role', [userMessage, assistantMessage]))
     .min(1)
@@ -74,11 +78,12 @@ export const assistantMessagesSchema = z.strictObject({
 export type AssistantMessages = z.infer<typeof assistantMessagesSchema>;
 
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, filled from the database, and the Proposal it made, if any. Both lists are always there,
-// empty when there are none, and the Proposal null.
+// cards in the order shown, filled from the database, the Proposal it made, if any, and the answer it drew on the map,
+// if any. Both lists are always there, empty when there are none, and the Proposal and the answer null.
 export interface AssistantReplyDto {
   text: string;
   mapButtons: MapLayer[];
   cards: Card[];
   proposal: QuestProposal | null;
+  answer: AnswerReply | null;
 }

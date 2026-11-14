@@ -5,9 +5,11 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
+  ANSWER_CAPABILITIES,
   type AssistantReply,
   type ChatCard,
   CLIENT_CAPABILITIES,
@@ -25,9 +27,11 @@ import { isLibraryCardData, withLibraryDefaults } from './library-card-answers';
 import { call } from './http';
 import { isMenuLine } from './menu-answers';
 import { isRecruitingQuest } from './party-client';
+import { isAnswerReply } from './plan-answers';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request says
-// that this app draws library cards (`clientCapabilities`).
+// that this app draws library cards (`clientCapabilities`), and one with a context that it draws an answer on the map.
+// A request without a context stays as before P01-01, which a main server of before takes.
 
 function isMapLayer(value: unknown): value is MapLayer {
   return MAP_LAYERS.some((layer) => layer === value);
@@ -118,21 +122,28 @@ function filled(card: ChatCard): ChatCard {
   return card.kind === 'library' ? { kind: 'library', library: withLibraryDefaults(card.library) } : card;
 }
 
+// A main server before P01-01 leaves the answer out.
 function isAssistantReply(value: unknown): value is AssistantReply {
   const proposal = field(value, 'proposal');
+  const answer = field(value, 'answer');
   return (
     hasTexts(value, ['text']) &&
     listOf(isMapLayer)(field(value, 'mapButtons')) &&
     listOf(isChatCard)(field(value, 'cards')) &&
-    (isNothing(proposal) || isQuestProposal(proposal))
+    (isNothing(proposal) || isQuestProposal(proposal)) &&
+    (answer === undefined || isNothing(answer) || isAnswerReply(answer))
   );
 }
 
-export const assistantClient: Pick<ApiClient, 'askAssistant'> = {
-  askAssistant: async (messages) => {
-    const reply = await call('POST', '/assistant/messages', isAssistantReply, {
-      body: { messages, clientCapabilities: CLIENT_CAPABILITIES },
-    });
+export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer'> = {
+  askAssistant: async (messages, context) => {
+    const body =
+      context === undefined
+        ? { messages, clientCapabilities: CLIENT_CAPABILITIES }
+        : { messages, context, clientCapabilities: ANSWER_CAPABILITIES };
+    const reply = await call('POST', '/assistant/messages', isAssistantReply, { body });
     return { ...reply, cards: reply.cards.map(filled) };
   },
+  recalculateAnswer: (input, location) =>
+    call('POST', '/assistant/answers', isAnswerReply, { body: { input, location } }),
 };

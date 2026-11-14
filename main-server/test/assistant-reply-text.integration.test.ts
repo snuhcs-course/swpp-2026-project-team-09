@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -105,7 +106,8 @@ describe('A run that wrote no text', () => {
     const response = await send();
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ text: FIXED_SENTENCE, mapButtons: ['dining'], cards: [], proposal: null });
+    const body = { text: FIXED_SENTENCE, mapButtons: ['dining'], cards: [], proposal: null, answer: null };
+    expect(response.body).toEqual(body);
     expect(warnings()).toContain(
       'The Assistant answered with its fixed sentence: no step had text ' +
         '(finish reason stop, 0 cards, 1 map buttons, no Proposal)',

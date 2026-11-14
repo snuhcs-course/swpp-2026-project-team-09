@@ -12,9 +12,10 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AssistantReply, ChatMessage } from './assistant-types';
+import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
@@ -171,8 +172,11 @@ export interface ApiClient {
   inviteToQuest: (questId: string, userId: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<Quest>;
   declineInvitation: (invitationId: string) => Promise<void>;
-  // The chat Assistant's reply to the conversation, the User's new message last.
-  askAssistant: (messages: ChatMessage[]) => Promise<AssistantReply>;
+  // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
+  // asked when it gives that.
+  askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
+  // An answer drawn on the map, recalculated from its changed input and where the User is now, without the model.
+  recalculateAnswer: (input: PlanInput, location: LatLng | null) => Promise<AnswerReply>;
   // The 새내기 튜토리얼: its content and the User's progress. Each change answers with the new tutorial, and each is
   // idempotent. A key that is no quest is refused with 404; a `by` that does not fit the quest's completion with 400.
   getTutorial: () => Promise<Tutorial>;
@@ -278,7 +282,8 @@ export const apiClient: ShownClient = {
   hidePost: (questId) => chosen().hidePost(questId),
   listCompanionSeekers: () => chosen().listCompanionSeekers(),
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
-  askAssistant: (messages) => chosen().askAssistant(messages),
+  askAssistant: (messages, context) => chosen().askAssistant(messages, context),
+  recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),
   stopTutorial: () => chosen().stopTutorial(),

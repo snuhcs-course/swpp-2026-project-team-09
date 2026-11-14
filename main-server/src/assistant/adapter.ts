@@ -9,11 +9,13 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
 import { withApprovalLine } from './approval-line.js';
+import { contextLines } from './context-lines.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
 import { FoundIds } from './found-ids.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
@@ -141,6 +143,20 @@ function contentOf(message: ChatMessage): string {
   return lines.join('\n\n');
 }
 
+// The conversation as the model reads it, the lines of the request context after the User's new message for an app
+// that draws answers.
+function messagesFor(
+  messages: readonly ChatMessage[],
+  { context, capabilities }: Request,
+): { role: ChatMessage['role']; content: string }[] {
+  const last = messages.length - 1;
+  const lines = capabilities.includes('answer') ? contextLines(context) : [];
+  return messages.map((message, index) => ({
+    role: message.role,
+    content: index === last ? [contentOf(message), ...lines].join('\n\n') : contentOf(message),
+  }));
+}
+
 // The last Proposal of the conversation, which the app sends back on one message at most.
 function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
   const proposals = messages.map((message) => (message.role === 'assistant' ? message.proposal : null));
@@ -164,14 +180,14 @@ export async function runFeature(
     capabilities: new Set(asker.capabilities),
     found: new FoundIds(),
     shown: lastShown(messages),
-    presented: { mapButtons: [], cards: [], proposal: null },
+    presented: { mapButtons: [], cards: [], proposal: null, answer: null },
     judged: new Map(),
     restaurants: new Map(),
   };
   const { steps, finishReason } = await generateText({
     model,
     instructions: feature.instructions(asker.now),
-    messages: messages.map((message) => ({ role: message.role, content: contentOf(message) })),
+    messages: messagesFor(messages, asker),
     tools: toolSetOf(feature, context, observer),
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
@@ -216,7 +232,8 @@ function replyOf(text: string, finishReason: string, feature: Feature, context: 
   if (text !== '') {
     return { ...presented, text, noTextFinishReason: null };
   }
-  if (presented.cards.length === 0 && presented.mapButtons.length === 0 && presented.proposal === null) {
+  const { cards, mapButtons, proposal, answer } = presented;
+  if (cards.length === 0 && mapButtons.length === 0 && proposal === null && answer === null) {
     return null;
   }
   return { ...presented, text: FIXED_SENTENCE, noTextFinishReason: finishReason };

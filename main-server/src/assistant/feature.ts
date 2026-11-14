@@ -6,9 +6,11 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
+import { type AnswerReply, type RequestContext } from './dto/answer.dto.js';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
@@ -63,8 +65,9 @@ export interface QuestCard extends TravelBox {
 export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 
 // What the app says it can show beside the cards every version shows. Library cards are attached only for an app that
-// says `library`, since older apps refuse a reply with a card they do not know.
-export const CLIENT_CAPABILITIES = ['library'] as const;
+// says `library`, since older apps refuse a reply with a card they do not know. `answer`: the app draws an answer on
+// the map.
+export const CLIENT_CAPABILITIES = ['library', 'answer'] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 
@@ -76,12 +79,15 @@ export interface Presented {
   readonly cards: Card[];
   // At most one Proposal: the last that passed proposeQuest.
   proposal: QuestProposal | null;
+  // At most one answer drawn on the map: the last a tool put there.
+  answer: AnswerReply | null;
 }
 
-// Who asks and when.
+// Who asks, when, and what their app knew as they asked, such as where they are.
 export interface Asker {
   readonly userId: string;
   readonly now: Date;
+  readonly context: RequestContext;
 }
 
 // Who asks, when, and what their app can show.

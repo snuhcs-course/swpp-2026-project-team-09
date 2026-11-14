@@ -10,6 +10,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -18,7 +19,7 @@ import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
-import { mockAssistantReply } from './assistant';
+import { mockAssistantReply, mockRecalculation } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { MENUS } from './data/menus';
@@ -198,7 +199,8 @@ export const mockClient: ApiClient = {
   getShuttle: () => answer('getShuttle', () => SHUTTLE),
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
-  askAssistant: (messages) => answer('askAssistant', () => mockAssistantReply(messages)),
+  askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
+  recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
   ...mockRoom,
   ...mockParty,
   ...mockEvents,

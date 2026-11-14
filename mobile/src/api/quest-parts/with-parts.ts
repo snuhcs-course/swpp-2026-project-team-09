@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ChatCard } from '@/api/assistant-types';
@@ -90,8 +91,8 @@ function cardWithParts(card: ChatCard, entered: Entered, build: Build): ShownCha
 // The Assistant's reply, its Quest cards with the parts the Boards' post card draws, as the Boards' list has them.
 function withShownCards(client: ApiClient, build: Build): Pick<ShownClient, 'askAssistant'> {
   return {
-    askAssistant: async (messages) => {
-      const { cards, ...reply } = await client.askAssistant(messages);
+    askAssistant: async (messages, context) => {
+      const { cards, ...reply } = await client.askAssistant(messages, context);
       const entered = await readQuestEntries();
       return { ...reply, cards: cards.map((card) => cardWithParts(card, entered, build)) };
     },
