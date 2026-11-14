@@ -1,91 +1,95 @@
-# 에이전틱 지도 작업 나누기
+# The agentic map: work split
 
-에이전틱 지도 설계(`agentic-map-ideation.md`, 팀 캔버스의 구분선 아래 열세 줄)를 만드는 일을 네 묶음으로 나눈다. 일요일(11/15) 밤까지의 목표와 그 뒤의 일을 함께 적는다.
+This document splits the work of building the agentic map design (`agentic-map-design.md`, the thirteen rows below the divider on the team canvas) into four packages. It gives the goals up to Sunday (11/15) night and the work after it.
 
-## 1. 한눈에
+The screen words stay in Korean. A "계획" (plan) is what an answer proposes and what `POST /plans` turns into a party. A "파티" (party) on screen is a Quest that several Users hold, and its "단계" (steps) are its Sub Quests. "파티 켜기" (party on) is the glossary's Party.
 
-| 묶음 | 맡는 것 | 와이어프레임 줄 | 맞는 사람 |
+## 1. At a glance
+
+| Package | What it covers | Wireframe rows | Who fits |
 |---|---|---|---|
-| A. 엔진과 계약 | 여럿의 시간표와 위치로 곳, 시각, 합류 지점을 고르는 서버 계산. 다른 묶음이 기대는 계약 | 1 배고파, 7 그 밖의 질문 | 개발 경험이 있는 한 명 |
-| B. 지도 위의 답 화면 | 위 알약과 아래 카드 한 장의 틀, 답을 지도에 그리기, 시간 띠 | 0 틀, 6 지도에서 묻기, 8 답할 수 없는 말과 안 되는 경우 | 앱 쪽 두 명이 짝으로 |
-| C. 초대, 파티, 친구 위치 | 계획을 파티로 만들어 초대하기, 수락과 거절과 늦음, 친구를 읽는 하나뿐인 입구 | 4 행사, 5 파티, 9 친구와 위치 | 서버 쪽 한 명 |
-| D. 알림, 예약, 관심, 처음 켰을 때 | 앱 안 알림 목록, 관정 자리와 스터디룸, 관심 맡겨 두기, 처음 켰을 때 | 2–3 공부할 자리, 10 관심 맡겨 두기, 11 알림 모음, 12 처음 켰을 때 | 서버 쪽 한 명 |
+| A. Engine and contract | The server calculation that picks the place, the time, and the merging point from several Users' Timetables and locations. The contract the other packages rely on | 1 Lunch, 7 Other questions | One person with development experience |
+| B. The answer screen on the map | The frame of a pill at the top and one card at the bottom, drawing the answer on the map, the time band | 0 Frame, 6 Asking on the map, 8 What cannot be answered and what does not work | The two app-side people as a pair |
+| C. Invitations, parties, and Friends' locations | Turning a "계획" (plan) into a "파티" (party) and inviting to it; accepting, declining, and being late; and the single entry point for reading Friends | 4 Events, 5 Parties, 9 Friends and location | One server-side person |
+| D. Notifications, bookings, interests, and first run | The in-app notification list, Kwanjeong Library (관정) seats and study rooms, watching interests, and first run | 2–3 A seat to study, 10 Watching interests, 11 Notifications, 12 First run | One server-side person |
 
-PR 승인 짝: B의 두 사람끼리, C와 D끼리 승인한다. A의 서버 PR은 C나 D가, 앱 PR은 B가 승인한다. A는 계약을 바꾸는 PR만 직접 본다.
+Row 1, Lunch, is the "배고파" (I'm hungry) scene.
 
-## 2. 크기를 솔직하게
+PR approval pairs: B's two people approve each other's PRs, and C and D approve each other's. C or D approves A's server PRs, and B approves A's app PRs. A personally reviews only the PRs that change the contract.
 
-- 코드를 읽고 어림한 값으로, 킬러 기능만 한 사람이 16–20일이다. 열세 줄 전부는 Iteration 5(11/21–12/04)까지 이어진다.
-- 일요일 밤까지 두 휴대폰에서 실제로 도는 것은 한 길이다: 둘이 같이 먹기. 묻기, 지도에 그리기, 시간 띠 끌기, 초대, 수락.
-- 거절 뒤 다시 짜기와 "5분 늦어요"는 일요일에 되면 좋은 것이다. 셋 이상의 모임, 셔틀 섞기, 묶음 원, 얼굴의 세 모양, 점선, 휴대폰 알림, 관심, 처음 켰을 때는 일요일 뒤다.
+## 2. The size, plainly
 
-## 3. 먼저 정할 것 (토요일 정오까지, A가 PR 하나로)
+- Estimated from reading the code, the killer feature alone takes one person 16–20 days. All thirteen rows run into Iteration 5 (11/21–12/04).
+- What runs for real on two phones by Sunday night is one path: two people eating together. Asking, drawing on the map, dragging the time band, inviting, and accepting.
+- Re-planning after a decline and "5분 늦어" (I'm 5 minutes late) are nice to have by Sunday. Gatherings of three or more, mixing in the shuttle, count circles for grouped results (design section 5, Many results on the map), the Avatar's three looks (a green ring with a live dot for exact location, a green ring on the building for the building level, and a dashed ring for Timetable only), dashed lines, push notifications, interests, and first run come after Sunday.
 
-1. 계약 타입: 요청 맥락(내 위치, 보는 범위, 누른 건물이나 사람, 조건 칩, 계획 id), 답(AnswerReply), 지도 장면(MapScene), 계획(Plan)과 그 입력(PlanInput). 파일은 `mobile/src/api/assistant-types.ts`와 `main-server/src/assistant/dto/assistant-messages.dto.ts`다.
-2. 목업 하나: "화 11:50 배고파, 민수랑 같이". 앱의 목업(`mobile/src/api/mock/assistant.ts`)과 같은 모양을 돌려주는 서버의 가짜 응답.
-3. 묶음 사이의 약속을 타입과 가짜 응답을 내는 빈 함수로 둔다: 친구 보기(FriendView), `POST /plans`, `GET /quest-invitations/:id`, `POST /quests/:id/late`, 알림 서비스(schedule, replace, cancel), 알림이 여는 주소 `/main?card=<종류>:<id>`, 신호 이름(invitation-accepted, invitation-declined, plan-changed, late, notice).
-4. 각자 고칠 빈 자리: 묶음별 목업 장면 파일, 응답 규칙 파일, 신호 처리 파일, 빈 모듈 등록. 남의 파일에 한 줄을 부탁할 일을 줄인다.
-5. 시험 준비: 서로 친구인 시험 계정 둘과 화요일 예시 시간표(나: 301동 11:00–11:50, 다음 수업 13:00 24동. 민수: 302동 11:00–12:15).
+## 3. What to settle first (by Saturday noon, in one PR by A)
 
-파티 멤버의 다섯 상태는 지금의 테이블에 이렇게 맞춘다: 초대됨은 대기 중인 초대, 수락은 멤버, 거절은 거절 기록, N분 늦음은 멤버의 늦은 분, 빠짐은 멤버에서 빼기.
+1. Contract types: the request context (my location, the visible map area, the tapped building or person, the condition chips, and the plan id), the answer (AnswerReply), the map scene (MapScene), and the plan (Plan) with its input (PlanInput). The files are `mobile/src/api/assistant-types.ts` and `main-server/src/assistant/dto/assistant-messages.dto.ts`.
+2. One mock: "화 11:50 배고파, 민수랑 같이" (Tue 11:50, I'm hungry, with Minsu). A fake server response with the same shape as the app's mock (`mobile/src/api/mock/assistant.ts`).
+3. The promises between packages, as types and empty functions that return fake responses: FriendView, `POST /plans`, `GET /quest-invitations/:id`, `POST /quests/:id/late`, the notification service (schedule, replace, cancel), the address a notification opens, `/main?card=<kind>:<id>`, and the signal names (invitation-accepted, invitation-declined, plan-changed, late, notice).
+4. Empty slots each package fills on its own: a mock scene file per package, answer rule files, signal handler files, and empty module registrations. This cuts the times one person has to ask another for a line in their file.
+5. Test setup: two test accounts that are Friends of each other, and the Tuesday example Timetables (me: building 301 11:00–11:50, next class 13:00 in building 24. Minsu (민수): building 302 11:00–12:15).
 
-## 4. 한 사람만 고치는 파일
+The five states of a party member map onto today's tables like this: invited is a pending invitation, accepted is a member, declined is a decline record, N minutes late is the member's late minutes, and dropped out is removal from the members.
 
-| 주인 | 파일 |
+## 4. Files only one person changes
+
+| Owner | Files |
 |---|---|
-| A | `main-server/src/assistant/`의 feature.ts, dto, chat/chat-assistant.ts, free-time/meal-fit.ts, meal-tools.ts, assistant.module.ts, `main-server/src/travel/travel.ts`, 네이티브 파일 전부(`mobile/app.json`, `mobile/app.config.ts`, `mobile/plugins/`, `mobile/modules/`) |
-| B | `mobile/src/screens/main/`의 main-screen.tsx, map-bottom.tsx, layout.ts, use-things.ts, card.tsx, `mobile/src/map/`의 types.ts, native-map.tsx, marker-looks.tsx, marker-images.tsx, `mobile/src/features/map/adapter.ts`, `mobile/src/features/assistant/use-chat.ts`, 탭 바 |
-| C | `main-server/src/location-sharing/`의 visibility.service.ts, location-sharing.service.ts, `main-server/src/friends/friends.service.ts`, `main-server/src/quests/`의 invitations.service.ts, quest.dto.ts, `mobile/src/features/friends/adapter.ts`, 실시간 신호 처리 |
-| D | `main-server/src/app.module.ts`, `main-server/src/library/room-request-sync.service.ts`, `main-server/src/assistant/library/library-card.ts`, `mobile/src/features/notifications/` |
+| A | In `main-server/src/assistant/`: feature.ts, dto, chat/chat-assistant.ts, free-time/meal-fit.ts, free-time/meal-tools.ts, and assistant.module.ts. `main-server/src/travel/travel.ts`. All native files (`mobile/app.json`, `mobile/app.config.ts`, `mobile/plugins/`, and `mobile/modules/`) |
+| B | In `mobile/src/screens/main/`: main-screen.tsx, map-bottom.tsx, layout.ts, use-things.ts, and card.tsx. In `mobile/src/map/`: types.ts, native-map.tsx, marker-looks.tsx, and marker-images.tsx. `mobile/src/features/map/adapter.ts`, `mobile/src/features/assistant/use-chat.ts`, and the tab bar |
+| C | In `main-server/src/location-sharing/`: visibility.service.ts and location-sharing.service.ts. `main-server/src/friends/friends.service.ts`. In `main-server/src/quests/`: invitations.service.ts and dto/quest.dto.ts. `mobile/src/features/friends/adapter.ts`, and real-time signal handling |
+| D | `main-server/src/app.module.ts`, `main-server/src/library/room-request-sync.service.ts`, `main-server/src/assistant/library/library-card.ts`, and `mobile/src/features/notifications/` |
 
-`main-server/prisma/schema.prisma`는 한 번에 한 사람이 정한 순서로 고친다. 일요일까지는 멤버의 늦은 분 칸 하나만 넣는다(C). 친구 단계와 알림 테이블은 11/18 뒤에 넣는다.
+`main-server/prisma/schema.prisma` is changed by one person at a time, in a set order. Until Sunday only one column goes in: the member's late minutes (C). The Friend levels and the notification table go in after 11/18.
 
-## 5. 일요일 밤까지
+## 5. Up to Sunday night
 
-| | A. 엔진과 계약 | B. 지도 위의 답 화면 | C. 초대, 파티, 친구 위치 | D. 알림, 예약, 관심 |
+| | A. Engine and contract | B. The answer screen on the map | C. Invitations, parties, and Friends' locations | D. Notifications, bookings, and interests |
 |---|---|---|---|---|
-| 토 정오 | 계약 PR을 합친다 | 계약과 목업을 읽는다 | 계약을 읽는다 | 계약을 읽는다 |
-| 토 밤 | 모임 계산(화 11:50 예시 테스트), 모델 없는 다시 계산 주소, 도구가 실제 답을 냄 | 답 틀을 목업으로 폰에 띄움: 색 실선 길, 번호 점, 시각 깃발, 알약과 카드 사이 맞춤, 목록 숨기기 | `POST /plans`(파티와 단계 둘과 초대를 한 번에), 초대장 읽기, 수락과 거절 신호 | 2번 줄의 자리 카드를 도착에 맞춰 최대 시간으로 채움, 알림 서비스의 뼈대 |
-| 일 15시 | 중간에 한 번 끝까지 이어 본다 | A와 함께 이어 본다 | | |
-| 일 밤 | 도구가 친구를 친구 보기로만 읽게 함, 통합 | 시간 띠(놓으면 다시 계산), 조건 칩과 "＋ 같이", "이대로 초대", 받은 초대장 카드 | 멤버 상태를 파티에 싣기, 친구 보기(지금의 켬과 끔으로 읽기) | 받은 초대가 지금의 알림 목록에 뜨는지 확인, 알림 종류의 글 |
-| 되면 좋음 | 거절 뒤 다시 짜기, 늦음의 미리보기와 확인 | 닫은 뒤 계획 한 줄 | 늦음 보고 | 나설 시각을 목록에 남기기 |
+| Sat noon | Merge the contract PR | Read the contract and the mock | Read the contract | Read the contract |
+| Sat night | The gathering calculation (with a test of the Tue 11:50 example), an endpoint that recalculates without the model, the tools return real answers | The answer frame on a phone from the mock: solid colored routes, numbered dots, time flags, fitting between the pill and the card, hiding the list | `POST /plans` (the party, its two steps, and the invitations at once), reading an invitation, the accept and decline signals | Row 2's seat card filled with the longest time, counted from the arrival, the skeleton of the notification service |
+| Sun 15:00 | Connect everything end to end once, midway | Connect it with A | | |
+| Sun night | The tools read Friends only through FriendView, integration | The time band (dropping it recalculates), the condition chips and "＋ 같이" (+ together), "이대로 초대" (invite as is), the card of a received invitation | Carrying the member states on the party, FriendView (read from today's on and off) | Check that a received invitation shows in today's notification list, the text of each notification kind |
+| Nice to have | Re-planning after a decline, the preview and confirmation of being late | The one-line plan after closing | Reporting lateness | Keeping the time to leave in the list |
 
-새 답 화면은 스위치 하나 뒤에 둔다. 옛 채팅 화면은 지우지 않고, 옛 답(행사, 관정, 퀘스트 카드)은 새 카드 안에 그대로 담는다.
+The new answer screen sits behind one switch. The old chat screen is not deleted, and the old answers (the event, Kwanjeong, and Quest cards) go inside the new card as they are.
 
-## 6. 일요일 21시 점검
+## 6. The Sunday 21:00 check
 
-지금 설치된 Production APK 두 대에, 네이티브 빌드 없이 내려받은 것만으로 본다.
+The check runs on two phones with today's Production APK installed, using only what they download, with no native build.
 
-1. 폰 1이 "배고파, 민수랑 같이"라고 묻는다.
-2. 서버가 고른 곳과 시각, 두 사람의 길, 합류 깃발이 알약과 카드 사이에 뜬다.
-3. 시간 띠를 끌고 놓으면 길과 시각이 다시 계산되어 바뀐다.
-4. "이대로 초대"를 누른다.
-5. 폰 2의 알림 목록에 초대가 뜬다.
-6. 폰 2가 열면 자기 길과 나설 시각이 보인다.
-7. 폰 2가 수락하면 폰 1의 사람 칩이 ✓로 바뀐다.
+1. Phone 1 asks "배고파, 민수랑 같이" (I'm hungry, with Minsu).
+2. The place and time the server picked, both people's routes, and the flag at the merging point show between the pill and the card.
+3. Dragging and dropping the time band recalculates the routes and the times, and they change.
+4. Phone 1 presses "이대로 초대" (invite as is).
+5. The invitation shows in phone 2's notification list.
+6. When phone 2 opens it, it shows its own route and leave-by time.
+7. When phone 2 accepts, the person chip on phone 1 turns to ✓.
 
-- 일곱 단계가 끊김 없이 돌면 통과다. 그러면 인수 시험 문서를 새 화면에 맞게 고치고 새 앱으로 시험할 수 있다(조교의 안내).
-- 통과하지 못하면 스위치를 켜지 않고, 인수 시험(11/16, 11/18)은 지금의 앱으로 한다. 새 작업은 11/18까지 내보내지 않는다.
-- 모든 PR은 CI의 app-fingerprint 검사가 통과해야 합친다.
+- The check passes when the seven steps run without a break. Then the acceptance test document can be changed to fit the new screen and the tests run on the new app (the TA's guidance).
+- If it does not pass, the switch stays off and the acceptance tests (11/16, 11/18) run on today's app. New work is not released until 11/18.
+- Every PR is merged only after CI's app-fingerprint check passes.
 
-## 7. 네이티브 릴리스 (인수 시험이 끝난 11/19, A가 한 번)
+## 7. The native release (11/19, after the acceptance tests, once, by A)
 
-들어가는 것: 지도의 점선과 빈 곳 누르기와 바닥 지도 흐리게, 휴대폰 알림(expo-notifications, FCM), 관정 도착과 나섬을 잡는 위치 권한 문구. D가 준비 목록을 쓰고 A가 짝과 함께 합친다. 그 전에는 아무도 네이티브 파일을 건드리지 않는다.
+What goes in: dashed lines on the map, tapping empty ground, and dimming the base map; push notifications (expo-notifications, FCM); and the location permission text for catching arrival at and leaving Kwanjeong. D writes the checklist, and A merges it once B approves, as for A's other app PRs. Until then nobody touches the native files.
 
-그 전까지 대신 쓰는 것:
+What stands in until then:
 
-| 릴리스 뒤 | 릴리스 전 |
+| After the release | Before the release |
 |---|---|
-| 휴대폰 알림 | 앱 안 알림 목록 |
-| 점선 길 | 색이 다른 실선 |
-| 지도의 빈 곳이나 건물 누르기 | 건물 표시 누르기 |
-| 바닥 지도 흐리게 | 평소 표시만 숨김 |
-| 도착과 나섬을 위치로 잡기 | 시각에 맞춘 알림 |
+| Push notifications | The in-app notification list |
+| Dashed routes | Solid lines in different colors |
+| Tapping empty ground or a building on the map | Tapping a building marker |
+| Dimming the base map | Hiding only the usual markers |
+| Catching arrival and leaving by location | Notifications at set times |
 
 ## 8. Iteration 5 (11/21–12/04)
 
-- A: 다시 짜기 다듬기, 말로 알리는 늦음, 셔틀 어림(7번 줄), 위치 질문 세트와 기준선 둘.
-- B: 묶음 원을 모든 지도에, 얼굴의 세 모양과 배지, 점선과 흐림, 건물 사실 카드(6번 줄), 안 되는 경우(8번 줄), 옛 채팅 화면 걷어 내기.
-- C: 행사와 파티의 답(4–5번 줄), 친구 단계 셋의 저장과 건물 단계로 위치 보내기, 한 번 묻기, 파티 켜기.
-- D: 알림 테이블과 때맞춰 보내기, 휴대폰 알림, 스터디룸 계획 유지와 예약 창(3번 줄), 관심 저장과 맞추기(10번 줄), 처음 켰을 때(12번 줄).
-- 그 뒤: 지표 다섯을 두 기준선과 견주고, 작은 사용자 비교를 한다.
+- A: polishing re-planning, lateness told in words, shuttle estimates (row 7), and the set of location questions and two baselines.
+- B: cluster circles on every map, the Avatar's three shapes and badges, dashed lines and dimming, the building fact card (row 6), the failure cases (row 8), and removing the old chat screen.
+- C: the answers for events and parties (rows 4–5), storing the three Friend levels and sending the location at the building level, asking once, and the "파티 켜기" (party on) button on the leave-by notification.
+- D: the notification table and sending at the right time, push notifications, keeping the study room plan and the booking window (row 3), storing and matching interests (row 10), and first run (row 12).
+- After that: compare the five metrics with the two baselines, and run a small comparison with users.
