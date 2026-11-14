@@ -36,8 +36,16 @@ export interface LabelView {
 // What a label says before it has a side.
 export type Words = Omit<AnswerLabel, 'side'>;
 
-// A mark at a point: its position, the words of its label, null for none, and the sides its label may take, in order.
+// A point of an answer's marks, and the position of the one symbol drawn there, null for none.
+export interface MarkPoint {
+  position: LatLng;
+  symbol: LatLng | null;
+}
+
+// A mark that may take a label: the index of its point, its own position, the words of its label, null for none, and
+// the sides its label may take, in order.
 export interface Unplaced {
+  point: number;
   position: LatLng;
   words: Words | null;
   sides: readonly LabelSide[];
@@ -61,9 +69,13 @@ function boxIn(view: LabelView, position: LatLng, label: AnswerLabel): ViewArea 
   return { top: y + box.top, right: x + box.right, bottom: y + box.bottom, left: x + box.left };
 }
 
-function inside(view: LabelView, position: LatLng, label: AnswerLabel): boolean {
-  const { top, right, bottom, left } = boxIn(view, position, label);
-  const { area } = view;
+function symbolBox(view: LabelView, position: LatLng): ViewArea {
+  const { x, y } = inView(position, view.camera, view.size);
+  const half = ANSWER_SYMBOL_BOX / 2;
+  return { top: y - half, right: x + half, bottom: y + half, left: x - half };
+}
+
+function inside({ top, right, bottom, left }: ViewArea, area: ViewArea): boolean {
   return (
     left >= area.left - ONE_POINT &&
     right <= area.right + ONE_POINT &&
@@ -72,31 +84,38 @@ function inside(view: LabelView, position: LatLng, label: AnswerLabel): boolean 
   );
 }
 
-// The labels of the marks at one point, in the order they take sides, each at the first free side of its list: one
-// no earlier label at the point took and no other point of the answer lies within its reach on. When no side is free,
-// the first that no earlier label took; with none left, no label. At a view, a side whose box would leave the area is
-// not in the list.
-export function labelsAt(
-  point: LatLng,
-  others: readonly LatLng[],
-  marks: readonly Unplaced[],
-  view: LabelView | null,
-): (AnswerLabel | null)[] {
-  const taken = new Set<LabelSide>();
-  return marks.map(({ position, words, sides }) => {
-    if (words === null) {
-      return null;
-    }
-    const list = sides.filter(
-      (side) => !taken.has(side) && (view === null || inside(view, position, { ...words, side })),
-    );
-    const side = list.find((one) => !blocked(point, one, others)) ?? list[0];
-    if (side === undefined) {
-      return null;
-    }
-    taken.add(side);
-    return { ...words, side };
+function overlaps(one: ViewArea, other: ViewArea): boolean {
+  return one.left < other.right && other.left < one.right && one.top < other.bottom && other.top < one.bottom;
+}
+
+// The symbol boxes at the points other than `point`.
+function othersThan(symbols: readonly (ViewArea | null)[], point: number): ViewArea[] {
+  return symbols.filter((box, at): box is ViewArea => box !== null && at !== point);
+}
+
+// The first side of a list with no other point within its reach in metres, or else the first.
+function inMetres(points: readonly MarkPoint[], point: number, list: readonly LabelSide[]): LabelSide | null {
+  const at = points[point]?.position;
+  if (at === undefined) {
+    return null;
+  }
+  const others = points.filter((_, other) => other !== point).map(({ position }) => position);
+  return list.find((one) => !blocked(at, one, others)) ?? list[0] ?? null;
+}
+
+// The first side of a list whose box stays inside the area and covers none of `covering`, or none.
+function atView(
+  view: LabelView,
+  position: LatLng,
+  words: Words,
+  list: readonly LabelSide[],
+  covering: readonly ViewArea[],
+): LabelSide | null {
+  const side = list.find((one) => {
+    const box = boxIn(view, position, { ...words, side: one });
+    return inside(box, view.area) && !covering.some((other) => overlaps(box, other));
   });
+  return side ?? null;
 }
 
 interface Laid {
@@ -132,19 +151,68 @@ function shiftOf(one: Laid, all: readonly (Laid | null)[], area: ViewArea): numb
   return Math.min(Math.round(edge - one.box.left), Math.floor(area.right - one.box.right));
 }
 
-// The labels at a view with the edges they share at the left and the right of their marks: a label that moves carries
-// its `shift`. With no view, the labels as they are.
-export function sharedEdges(
-  view: LabelView | null,
-  marks: readonly { position: LatLng; label: AnswerLabel | null }[],
+// The labels with the edges they share at the left and the right of their marks: a label that moves carries its
+// `shift`, unless it would then cover another point's symbol or another label.
+function sharedEdges(
+  view: LabelView,
+  marks: readonly Unplaced[],
+  labels: readonly (AnswerLabel | null)[],
+  symbols: readonly (ViewArea | null)[],
 ): (AnswerLabel | null)[] {
-  if (view === null) {
-    return marks.map(({ label }) => label);
-  }
-  const laid = marks.map(({ position, label }) => laidOut(view, position, label));
-  return marks.map(({ label }, index) => {
-    const one = laid[index];
-    const shift = one === null || one === undefined ? 0 : shiftOf(one, laid, view.area);
-    return label === null || shift <= 0 ? label : { ...label, shift };
+  const positions = labels.map((_, index) => marks[index]?.position);
+  const laid = labels.map((label, index) => {
+    const position = positions[index];
+    return position === undefined ? null : laidOut(view, position, label);
   });
+  const boxes = labels.map((label, index) => {
+    const position = positions[index];
+    return label === null || position === undefined ? null : boxIn(view, position, label);
+  });
+  return labels.map((label, index) => {
+    const one = laid[index];
+    const mark = marks[index];
+    const shift = one === null || one === undefined ? 0 : shiftOf(one, laid, view.area);
+    if (label === null || mark === undefined || shift <= 0) {
+      return label;
+    }
+    const moved = { ...label, shift };
+    const box = boxIn(view, mark.position, moved);
+    const others = boxes.filter((other, otherAt): other is ViewArea => other !== null && otherAt !== index);
+    const covering = [...othersThan(symbols, mark.point), ...others];
+    return covering.some((other) => overlaps(box, other)) ? label : moved;
+  });
+}
+
+// The labels of an answer's marks, taken in the order given, each at a side of its list that no earlier label at its
+// point took. Without a view, the first side with no other point within its reach in metres, or with none such the
+// first. At a view, the first whose box stays inside the area and covers neither another point's symbol box nor a
+// label placed before it, or with none such no label; labels at the left and the right of neighbouring marks then
+// share an edge.
+export function placeLabels(
+  points: readonly MarkPoint[],
+  marks: readonly Unplaced[],
+  view: LabelView | null,
+): (AnswerLabel | null)[] {
+  const taken = points.map(() => new Set<LabelSide>());
+  const symbols = view === null ? [] : points.map(({ symbol }) => (symbol === null ? null : symbolBox(view, symbol)));
+  const boxes: ViewArea[] = [];
+  const labels = marks.map(({ point, position, words, sides }): AnswerLabel | null => {
+    const free = taken[point];
+    if (words === null || free === undefined) {
+      return null;
+    }
+    const list = sides.filter((side) => !free.has(side));
+    const covering = [...othersThan(symbols, point), ...boxes];
+    const side = view === null ? inMetres(points, point, list) : atView(view, position, words, list, covering);
+    if (side === null) {
+      return null;
+    }
+    free.add(side);
+    const label = { ...words, side };
+    if (view !== null) {
+      boxes.push(boxIn(view, position, label));
+    }
+    return label;
+  });
+  return view === null ? labels : sharedEdges(view, marks, labels, symbols);
 }

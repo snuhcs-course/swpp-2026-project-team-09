@@ -12,7 +12,7 @@ import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelS
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import type { AnswerDrawing, AnswerThing } from './answer-drawing';
-import { labelsAt, type LabelView, offset, sharedEdges, type Unplaced, UPRIGHT_REACH } from './answer-labels';
+import { type LabelView, offset, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -234,26 +234,30 @@ interface Placed {
   label: AnswerLabel | null;
 }
 
-// A draft's label without its side: a pick or a candidate whose dot is not drawn carries its number in it.
-function unplaced({ position, group, tone, title, line, number }: Draft, symbol: AnswerSymbol | null): Unplaced {
+// A draft at the point of that index, its label without its side: a pick or a candidate whose dot is not drawn
+// carries its number in it.
+function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null): Unplaced {
+  const { position, group, tone, title, line, number } = draft;
   const words = title === null ? null : { tone, title, line, number: symbol === null ? number : null };
-  return { position, words, sides: SIDES[group] };
+  return { point, position, words, sides: SIDES[group] };
 }
 
-// One symbol at a point, each label at its side (`labelsAt`), and at a view the edges labels share.
+// One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
+// Plan's own marks take theirs first.
 function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
-  const points = pointsOf(drafts);
-  const placed = points.flatMap(({ position, drafts: here }, index) => {
-    const others = points.filter((_, other) => other !== index).map((other) => other.position);
-    const drawn = here.filter(({ symbol }) => symbol !== null).toSorted(byGroup(SYMBOL_ORDER))[0];
-    const ordered = here.toSorted(byGroup(SIDE_ORDER));
-    const symbols = ordered.map((draft) => (draft === drawn ? draft.symbol : null));
-    const marks = ordered.map((draft, at) => unplaced(draft, symbols[at] ?? null));
-    const labels = labelsAt(position, others, marks, view);
-    return ordered.map((draft, at) => ({ draft, symbol: symbols[at] ?? null, label: labels[at] ?? null }));
-  });
-  const marks = placed.map(({ draft, label }) => ({ position: draft.position, label }));
-  const labels = sharedEdges(view, marks);
+  const points = pointsOf(drafts).map(({ position, drafts: here }) => ({
+    position,
+    here,
+    drawn: here.filter(({ symbol }) => symbol !== null).toSorted(byGroup(SYMBOL_ORDER))[0],
+  }));
+  const placed = points
+    .flatMap(({ here, drawn }, point) =>
+      here.map((draft) => ({ draft, point, symbol: draft === drawn ? draft.symbol : null })),
+    )
+    .toSorted((one, other) => byGroup(SIDE_ORDER)(one.draft, other.draft));
+  const marks = placed.map(({ draft, point, symbol }) => unplaced(draft, point, symbol));
+  const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
+  const labels = placeLabels(symbols, marks, view);
   return placed.map(({ draft, symbol }, at) => ({ draft, symbol, label: labels[at] ?? null }));
 }
 
@@ -310,15 +314,11 @@ export function drawingOf(
   return drawingOfScene(plan.scene, view, { number: planIndex + 1, plans: answer.plans, standings });
 }
 
-function noView(): LabelView | null {
-  return null;
-}
-
 // The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides
 // chosen in metres, or with those sides.
 export function looksOf(
   answer: AnswerReply,
-  viewOf: (drawing: AnswerDrawing) => LabelView | null = noView,
+  viewOf: (drawing: AnswerDrawing) => LabelView | null = (): null => null,
 ): MarkerLook[] {
   const looks = answer.plans.flatMap((_, index) => {
     const view = viewOf(drawingOf(answer, index));

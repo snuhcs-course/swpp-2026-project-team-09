@@ -47,15 +47,32 @@ export function viewAt(camera: MapCamera, area: ViewArea = AREA): LabelView {
   return { camera, size: SIZE, area };
 }
 
-// The camera the first Plan of the stored answer is shown at under the emulator's card. Its own points (301동, 302동,
-// and 24동) are 370.9 high at the lowest zoom, more than the 302 from 100 + 8 + 24 to 914 − 406 − 8 − 66 = 434 that
-// the pill, the card, and the marks' room leave, so its pick's end, 302동 (37.44887) at the south, comes to 434, and
-// the middle of the box across (126.95127) to the view's 205.5.
-export const FIRST_CAMERA = cameraPutting({ latitude: 37.44887, longitude: 126.95127 }, { x: 205.5, y: 434 });
+// The Plan's own points of the stored answer's Plans (301동, 302동, 24동, and the third Plan's 학생회관 and flag at
+// 301동) are 370.85 high at the lowest zoom, from 24동 (37.45942) down to 302동 (37.44887), and 77 wide; their middle
+// across is 126.95127. An answer's camera may go out to zoom 14.765 (Kakao's level 14 at 14.515 on the emulator, and a
+// quarter of a level), so where they do not fit at the lowest zoom it goes out until they fill the area between the
+// pill's and the card's room, from 100 + 8 + 24 = 132.
+const OWN_AT_LOWEST = 370.85;
 
-// The camera of the third Plan, and of the answer for a fixed start: the same own box is more than the 344 from 132
-// to 914 − 406 − 8 − 24 = 476, and its pick 학생회관 stands at the north end, so 24동 (37.45942) comes to 132.
-export const THIRD_CAMERA = cameraPutting({ latitude: 37.45942, longitude: 126.95127 }, { x: 205.5, y: 132 });
+// The first Plan of the stored answer under the emulator's card: the area runs from 132 to 914 − 406 − 8 − 66 = 434,
+// 302 high, so the camera goes out to 15.2601 + log2(302 / 370.85) = 14.9638, 24동 at 132 and 302동 at 434.
+export const FIRST_CAMERA = cameraPutting(
+  { latitude: 37.44887, longitude: 126.95127 },
+  { x: 205.5, y: 434 },
+  LOWEST + Math.log2(302 / OWN_AT_LOWEST),
+);
+
+// The third Plan, and the answer for a fixed start, whose own points are the same: the area runs from 132 to
+// 914 − 406 − 8 − 24 = 476, 344 high, so the camera goes out to 15.2601 + log2(344 / 370.85) = 15.1517.
+export const THIRD_CAMERA = cameraPutting(
+  { latitude: 37.45942, longitude: 126.95127 },
+  { x: 205.5, y: 132 },
+  LOWEST + Math.log2(344 / OWN_AT_LOWEST),
+);
+
+// The third Plan at the lowest zoom, where it was shown before an answer's camera could go further out: its north
+// end, by its pick 학생회관, at 132, and 302동 at 502.9, below the area.
+export const THIRD_AT_LOWEST = cameraPutting({ latitude: 37.45942, longitude: 126.95127 }, { x: 205.5, y: 132 });
 
 // A stored answer with one change to the scene of its Plan at `planIndex`, made by `change`.
 export function withScene(answer: AnswerReply, planIndex: number, change: (scene: MapScene) => MapScene): AnswerReply {

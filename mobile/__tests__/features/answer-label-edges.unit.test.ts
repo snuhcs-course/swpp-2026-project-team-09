@@ -5,6 +5,8 @@
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
+import type { LatLng } from '@/api/types';
+import { placeLabels, type Words } from '@/features/assistant/answer-labels';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import { inView } from '@/map';
@@ -15,7 +17,7 @@ import {
   placeMoved,
   positionAt,
   SIZE,
-  THIRD_CAMERA,
+  THIRD_AT_LOWEST,
   viewAt,
   withScene,
 } from '../support/answer-view';
@@ -46,18 +48,18 @@ describe('labels at one side of neighbouring marks', () => {
   });
 });
 
-// At the third Plan's camera on the emulator, 3식당 stands at (128.5, 235.7) with "3식당", 45 wide, at its left: its
-// right edge at 108.5. A Place moved to a point of the view this far from it takes its left side too.
-const AT_3 = inView({ latitude: 37.45647, longitude: 126.94851 }, THIRD_CAMERA, SIZE);
+// The third Plan at the lowest zoom on the emulator: 3식당 stands at (128.5, 235.7) with "3식당", 45 wide, at its left:
+// its right edge at 108.5. A Place moved to a point of the view this far from it takes its left side too.
+const AT_3 = inView({ latitude: 37.45647, longitude: 126.94851 }, THIRD_AT_LOWEST, SIZE);
 
 function drawnWith(label: string, across: number, down: number): ReturnType<typeof drawingOf> {
   // Changed from the stored copy: the Place stands that far right of and below 3식당 in the view.
-  const at = positionAt(THIRD_CAMERA, { x: AT_3.x + across, y: AT_3.y + down });
-  return drawingOf(withScene(MEAL_ANSWER, 2, placeMoved(label, at)), 2, NO_STANDINGS, viewAt(THIRD_CAMERA));
+  const at = positionAt(THIRD_AT_LOWEST, { x: AT_3.x + across, y: AT_3.y + down });
+  return drawingOf(withScene(MEAL_ANSWER, 2, placeMoved(label, at)), 2, NO_STANDINGS, viewAt(THIRD_AT_LOWEST));
 }
 
-// Partitions: marks 59.5 points apart up and down (in) and 60.5 (out); 20 apart across (in) and 36.5 (out); a move
-// that the area's left edge cuts short.
+// Partitions: marks 59.5 points apart up and down (in) and 60.5 (out); 20 apart across (in) and 36.5 (out), 40 below
+// so that its label at the left stays clear of 3식당's dot; a move that the area's left edge cuts short.
 describe('the bounds of neighbouring marks', () => {
   it("moves the label of 자하연식당 2층, 59.5 below and 20 right of 3식당, 20 away to 3식당's right edge", () => {
     // Its right edge would be at 128.5; moved to 108.5, its 91 run from 17.5, inside 16.
@@ -69,7 +71,7 @@ describe('the bounds of neighbouring marks', () => {
 
   it.each([
     ['60.5 below', 20, 60.5],
-    ['36.5 to the right', 36.5, 30],
+    ['36.5 to the right', 36.5, 40],
   ])('leaves the label of 자하연식당 2층 %s 3식당 where it is', (_, across, down) => {
     const { label } = seen(drawnWith('자하연식당 2층', across, down), 'answer:candidate:자하연식당 2층');
 
@@ -88,5 +90,43 @@ describe('the bounds of neighbouring marks', () => {
 describe('labels drawn without a view', () => {
   it('move no label', () => {
     expect(seen(drawingOf(MEAL_ANSWER, 2), 'answer:candidate:302동식당').label).not.toHaveProperty('shift');
+  });
+});
+
+function seenAt(x: number, y: number): LatLng {
+  return positionAt(THIRD_AT_LOWEST, { x, y });
+}
+
+function words(title: string): Words {
+  return { tone: 'candidate', title, line: null, number: null };
+}
+
+// The marks of the bounds above placed one by one: 3식당 and 자하연식당 2층 59.5 below and 20 right of it, whose label
+// would move 20 to share 3식당's right edge, from 37.5 to 17.5; and a symbol without a label, 36 square, at (10, 295.2).
+function placedWith(symbolAt: number | null): ReturnType<typeof placeLabels> {
+  const sides = ['left', 'right', 'below', 'above'] as const;
+  const three = seenAt(AT_3.x, AT_3.y);
+  const jahayeon = seenAt(AT_3.x + 20, AT_3.y + 59.5);
+  const lone = symbolAt === null ? [] : [seenAt(symbolAt, AT_3.y + 59.5)];
+  const points = [three, jahayeon, ...lone].map((position) => ({ position, symbol: position }));
+  const marks = [
+    { point: 0, position: three, words: words('3식당'), sides },
+    { point: 1, position: jahayeon, words: words('자하연식당 2층'), sides },
+    ...lone.map((position) => ({ point: 2, position, words: null, sides })),
+  ];
+  return placeLabels(points, marks, viewAt(THIRD_AT_LOWEST));
+}
+
+// Partitions: a move with nothing in its way; a move onto another point's symbol box.
+describe('a label moving to share an edge', () => {
+  it('moves when nothing is in its way', () => {
+    expect(placedWith(null)[1]).toMatchObject({ side: 'left', shift: 20 });
+  });
+
+  it("stays where it is when the move would cover another point's symbol, from -8 to 28", () => {
+    const [, moved] = placedWith(10);
+
+    expect(moved).toMatchObject({ side: 'left' });
+    expect(moved).not.toHaveProperty('shift');
   });
 });
