@@ -184,7 +184,7 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
     hasTexts(value, ['userId', 'name']) &&
     isBoolean(field(value, 'me')) &&
     isLatLng(field(value, 'at')) &&
-    isOneOf(['exact', 'timetable'])(field(value, 'source')) &&
+    isOneOf(['exact', 'building', 'timetable'])(field(value, 'source')) &&
     isTextOrNull(field(value, 'tag'))
   );
 }

@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Friend, FriendStatus, Position } from '@/api/types';
@@ -27,6 +28,7 @@ function friend(
     id,
     name,
     department,
+    level: 'exact',
     sharing: true,
     visible: at !== null,
     latitude: at?.[0] ?? null,
@@ -121,10 +123,11 @@ const PARTY_MEMBER_POSITION: Position = {
   measuredAt: FRAME_NOW,
 };
 
-export const FRIENDS: Friend[] = MOCK_FRIENDS.map(({ id, name, department, sharing, visible }) => ({
+export const FRIENDS: Friend[] = MOCK_FRIENDS.map(({ id, name, department, level, sharing, visible }) => ({
   id,
   name,
   department,
+  level,
   sharing,
   visible,
 }));

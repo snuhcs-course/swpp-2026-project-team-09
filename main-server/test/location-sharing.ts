@@ -3,11 +3,13 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
+import { type FriendLevel } from '../src/generated/prisma/client.js';
 import { befriend, signInUser, TestUser } from './friends.js';
 import { withAccessToken } from './sign-in.js';
 
@@ -30,6 +32,17 @@ export function setFriendSharing(
 ): request.Test {
   return withAccessToken(request(app.getHttpServer()).put(`/friends/${friendUserId}/sharing`), user.accessToken).send({
     on,
+  });
+}
+
+export function setFriendLevel(
+  app: INestApplication<Server>,
+  user: SignedIn,
+  friendUserId: string,
+  level: FriendLevel,
+): request.Test {
+  return withAccessToken(request(app.getHttpServer()).put(`/friends/${friendUserId}/level`), user.accessToken).send({
+    level,
   });
 }
 
@@ -56,14 +69,30 @@ export async function expectStatus(call: request.Test, status: number): Promise<
   return response;
 }
 
-// Two new Users who are Friends and have turned their Master Switches on.
-export async function sharingFriends(app: INestApplication<Server>): Promise<[TestUser, TestUser]> {
-  const [user, friend] = await Promise.all([signInUser(app), signInUser(app)]);
-  await befriend(app, user, friend);
+// Turns both Friends' Master Switches on and sets their friendship at that level on both ends.
+export async function shareAt(
+  app: INestApplication<Server>,
+  user: TestUser,
+  friend: TestUser,
+  level: FriendLevel,
+): Promise<void> {
   await Promise.all([
     expectStatus(setMasterSwitch(app, user, true), 204),
     expectStatus(setMasterSwitch(app, friend, true), 204),
+    expectStatus(setFriendLevel(app, user, friend.id, level), 204),
+    expectStatus(setFriendLevel(app, friend, user.id, level), 204),
   ]);
+}
+
+// Two new Users who are Friends at that level on both ends, exact unless given, and have turned their Master Switches
+// on.
+export async function sharingFriends(
+  app: INestApplication<Server>,
+  level: FriendLevel = 'exact',
+): Promise<[TestUser, TestUser]> {
+  const [user, friend] = await Promise.all([signInUser(app), signInUser(app)]);
+  await befriend(app, user, friend);
+  await shareAt(app, user, friend, level);
   return [user, friend];
 }
 

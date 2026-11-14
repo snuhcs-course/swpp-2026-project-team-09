@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -273,8 +274,8 @@ describe('Whether a viewer may see a subject now', () => {
       await expectStatus(setMasterSwitch(app, viewer, viewerMaster === 'on'), 204);
       await expectStatus(setMasterSwitch(app, subject, subjectMaster === 'on'), 204);
 
-      expect((await visibility.viewersOf(subject.id)).includes(viewer.id)).toBe(sees);
-      expect((await visibility.visibleTo(viewer.id)).includes(subject.id)).toBe(sees);
+      expect((await visibility.viewersOf(subject.id)).has(viewer.id)).toBe(sees);
+      expect((await visibility.visibleTo(viewer.id)).has(subject.id)).toBe(sees);
     },
   );
 });
@@ -293,8 +294,8 @@ describe('A Holder of the Party’s Quest who has not entered it', () => {
       expectStatus(uploadPosition(app, viewer), 200),
     ]);
 
-    expect(await visibility.viewersOf(subject.id)).toEqual([]);
-    expect(await visibility.visibleTo(viewer.id)).toEqual([]);
-    expect(await visibility.viewersOf(viewer.id)).toEqual([]);
+    expect(await visibility.viewersOf(subject.id)).toEqual(new Map());
+    expect(await visibility.visibleTo(viewer.id)).toEqual(new Map());
+    expect(await visibility.viewersOf(viewer.id)).toEqual(new Map());
   });
 });

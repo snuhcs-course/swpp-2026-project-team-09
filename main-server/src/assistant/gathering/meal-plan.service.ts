@@ -35,6 +35,10 @@ const menusOf = (collected: number, open: number, there: number): MealAnswerArgs
   return there === 0 ? 'closed-at-place' : 'open';
 };
 
+// The Place the Friend view puts a Friend in now: the one of their position at 'exact', and all there is at 'building'.
+const locationPlaceOf = (friend: FriendView | undefined): string | null =>
+  friend === undefined || friend.level === 'timetable' ? null : friend.placeId;
+
 @Injectable()
 export class MealPlanService {
   constructor(
@@ -68,7 +72,7 @@ export class MealPlanService {
     const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }, index): GatheringPerson => ({
       id: userId,
       free: freeTimeOf(items, date, now),
-      locationPlaceId: this.placeIdAt(position),
+      locationPlaceId: index === 0 ? this.placeIdAt(position) : locationPlaceOf(friends[index - 1]),
       ...conditionsOf(input.people[index]?.constraints ?? [], date),
     }));
     if (askerPerson === undefined) {
