@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,6 +32,8 @@ export interface Kept {
   backgroundRunning: boolean;
   // The running Parties whose 활성화 the User declined on this phone, by id. The main server stores no decline.
   declinedParties: string[];
+  // The answer of the Assistant is shown on the map in place of the chat's sheet: the switch on 내 정보's build line.
+  answerOnMap: boolean;
 }
 
 const KEY = 'snunow.kept';
@@ -47,6 +50,7 @@ const FIRST_STATE: Kept = {
   backgroundChosen: false,
   backgroundRunning: false,
   declinedParties: [],
+  answerOnMap: false,
 };
 
 type Later =
@@ -56,7 +60,8 @@ type Later =
   | 'masterSwitch'
   | 'backgroundChosen'
   | 'backgroundRunning'
-  | 'declinedParties';
+  | 'declinedParties'
+  | 'answerOnMap';
 
 // What an older version stored lacks the fields added later: the rest of it still counts.
 function isKept(value: unknown): value is Omit<Kept, Later> {
@@ -95,6 +100,7 @@ export async function readKept(): Promise<Kept> {
         'declinedParties' in value && Array.isArray(value.declinedParties)
           ? value.declinedParties.filter((id): id is string => typeof id === 'string')
           : [],
+      answerOnMap: 'answerOnMap' in value && value.answerOnMap === true,
     };
   } catch {
     return FIRST_STATE;

@@ -210,6 +210,6 @@ A good test states a behaviour a User or another package depends on, through a p
 
 ## Further Notes
 
-- The Restaurants of the worked example are 301동식당, 302동식당, 학생회관식당, 3식당, and 자하연식당. The design's table for one Friend names 301동식당 first, with 27 minutes from 12:18. The calculation finds one more candidate ahead of it: 302동식당, at the Place of the Friend's Class, with 28 minutes from 12:15. With both Friends it finds a third candidate after the design's two, 3식당 with 19 minutes. Every time and every count of minutes the design gives is reproduced.
+- The Restaurants of the worked example are 301동식당, 302동식당, 학생회관식당, 3식당, and 자하연식당. With one Friend, 302동식당, at the Place of the Friend's Class, comes first with 28 minutes from 12:15, ahead of 301동식당 with 27 minutes from 12:18. With both Friends the calculation finds a third candidate after the design's two, 3식당 with 19 minutes. Every time and every count of minutes the design gives is reproduced.
 - With the shuttle counted, the Friend's own way from 302동 to 자하연식당 is 16 minutes against 19 on foot, which can change the order of that example once the shuttle is added.
 - A Plan shows the Place of a Friend's Class and the time the Class ends. The requirements that say a Friend's Classes are never shown (US-AI-07, NFR-06) and the acceptance test document change together with this work.

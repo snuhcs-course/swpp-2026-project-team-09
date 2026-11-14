@@ -1,0 +1,1 @@
+{"data":[{"status":"error","message":"\"ExponentPushToken[aaaaaaaaaaaaaaaaaaaaaa]\" is not a registered push notification recipient or it is associated with a project that does not exist.","details":{"error":"DeviceNotRegistered","expoPushToken":"ExponentPushToken[aaaaaaaaaaaaaaaaaaaaaa]"}}]}
