@@ -665,6 +665,23 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
   and the 편의기능 button stay.
+- **The first run** (`src/features/first-run/`, `first-run/first-run-ask.tsx`, P05 ticket 09). A User who finishes
+  Onboarding on this phone is asked three things, one card at a time at the bottom card's place, each under
+  "시작하기 · n/3" and with "나중에", which skips it: "시간표부터 넣어 주세요" ("수업 사이의 빈 시간에 맞춰 짜요",
+  "친구에게는 수업 건물과 끝나는 시각만 보여요"), whose "시간표 넣기" opens 시간표; "무엇에 관심이 있어요?", whose chips
+  (채용, 공연, 동아리 모집, 배드민턴, 스터디, 전시, 축제, and 러닝, the wireframe's) are kept with "{n}개 맡기기", one
+  `POST /interests` each, or "관심을 맡기지 못했어요"; and "친구 한 명을 불러 보세요" ("친구에게는 먼저 내가 있는 건물이
+  보여요"), whose "초대 링크 보내기" makes an Invite Link and opens the share sheet as 친구 추가 does
+  (`useSendInviteLink`). The end of Onboarding keeps the three cards for the signed-in User (`src/storage/first-run.ts`,
+  under `snunow.first-run:{userId}`), and each answered or skipped card leaves the list; a User without a list, as
+  every User who finished Onboarding before, sees none, and the main screen asks the main server nothing more for
+  them. A card shows only while the User has no Class, no watched interest, or no Friend, and counts as answered once
+  the User has it, by the card or elsewhere (`rules.ts`); one that waits for a list not yet fetched shows nothing.
+  The interests card is passed over for a main server that keeps no interests. A card gives way to a selected
+  thing's card, the chat, and the answer frame, and hides what a card at the bottom hides. A User of the first run
+  who watches no interest sees "관심을 맡기면 맞는 행사를 알려 드려요" at the left, 8 above the row of buttons or the
+  tutorial's start button (`InterestsHint`), which opens the interests card again; the friend list and the map's
+  credit stand above it.
 - **The 편의기능 stack** (`layers.tsx`, the `MainLayers` frame). The button, "편의기능 (식당 · 셔틀버스)", opens and
   closes it and says whether it is open; it is navy with a white icon while the stack is open, and under its icon a
   dot of 5 in each colour of a layer that is on. The stack rises 8 above it, or appears at once where the phone asks
