@@ -2344,7 +2344,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   - `getTutorial(questKey?)` (`tutorial/`, `TUTORIAL_RULES`) answers the 새내기 튜토리얼's content from
     `content/tutorial.yaml` and the User's status of each quest, without turning the tutorial on.
   - A **presenter** puts something real into the reply rather than the model describing it.
-    `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
+    `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error. A reply
+    that carries a Plan has no map button: the answer already takes the map.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
     of both kinds lie in one list in the order shown, at most 20 in a reply.
   - **The presenters' guard** (`found-ids.ts`): a presenter accepts only ids that a lookup or a resolver returned in

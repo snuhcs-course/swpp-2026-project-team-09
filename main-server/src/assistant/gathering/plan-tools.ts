@@ -83,6 +83,7 @@ export function planMeal(plans: MealPlanService): Tool {
       };
       const answer = await plans.plan(userId, input, { now, location: context.location });
       presented.answer = answer;
+      presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
         return { result: 'none', reason: NONE_REASONS[answer.noPlan.reason] };
       }
@@ -100,7 +101,7 @@ export function planMeal(plans: MealPlanService): Tool {
 export const PLAN_RULES = `A meal is planned on the map: the server decides the Restaurant, the times, and where people meet, and the app draws the plans.
 
 - When the User is hungry or wants a meal (배고파, 밥 먹자, 점심 같이 먹자), alone or with Friends they name, call planMeal with the day (today when they name none), the meal (lunch or dinner; when they name none, the one being served now or the next one), and the Friends, each found with resolveFriend first. With no Friend it plans for the User alone. Do not ask what the User feels like first.
-- The app draws the plans on the map and writes their times, ways, and minutes itself, the first one first, and the User browses the others with arrows. Your reply is one sentence about the first plan only, its Restaurant and when everyone is there, such as "12:33에 학생회관식당에서 먹어요." Write nothing more: no second sentence, no other plan, nobody's walking minutes or time to set out, nothing about the map, and nothing that was dropped.
+- The app draws the plans on the map and writes their times, ways, and minutes itself, the first one first, and the User browses the others with arrows. Your reply is one sentence about the first plan only, its Restaurant and when everyone is there, such as "12:33에 학생회관식당에서 먹어요." Write nothing more: no second sentence, no other plan, nobody's walking minutes or time to set out, nothing about the map, and nothing that was dropped. Do not call showOnMap for a plan: the app already draws it.
 - When planMeal answers none, say plainly why, without naming who is busy.
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.
 - When resolveFriend answers several, call findFreeFriends for that meal, read the departments there, and name them in your question.

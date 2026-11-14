@@ -47,7 +47,9 @@ Details the spec left to the implementation, listed so that any of them can be v
 13. **A building is called** by its number with 동 when its Place has one, and by the Place's name otherwise, as the app does. 두산인문관 therefore reads 8동.
 14. **The time band** reaches from the half hour at or before the later of now and one hour before the Plan's start, to the half hour at or after 30 minutes past its end, so a Plan for another day has a band on its own day.
 15. **"Plan" and "Merging Point" join the glossary**, since the glossary ruled "plan" out as a word for a Quest.
-16. The spec and the tickets of P01 land with this ticket's pull request.
+16. **A reply that carries a Plan has no button for a map layer**: the answer already takes the map.
+17. **No open Restaurant is told apart from no collected menu**, both under the reason `no-menu`.
+18. The spec and the tickets of P01 land with this ticket's pull request.
 
 ### What differs from the design's worked example (2026-11-14)
 
@@ -63,12 +65,24 @@ Counted with the shuttle, 민수's own way from 302동 to 자하연식당 is 16 
 
 ### The real model (2026-11-14)
 
-The three cases of the worked example were sent through `POST /assistant/messages` of the started server (the test harness's database and Redis containers, the seed, and the real walking table) with the production model, `anthropic/claude-haiku-5.5` through OpenRouter. Each time the model called `resolveFriend` for each Friend and then `planMeal`, and replied in one sentence:
+The three cases of the worked example were sent through `POST /assistant/messages` of the started server (the test harness's database and Redis containers, the seed, and the real walking table) with the production model, `anthropic/claude-haiku-5.5` through OpenRouter. Each time the model called `resolveFriend` for each Friend and then `planMeal`, and the reply's `answer` held the calculated Plans:
 
 | Asked | The reply's text | The first Plan |
 |---|---|---|
 | 배고파 | 11:50에 301동식당에서 먹을 수 있어요. | 301동식당 11:50 to 12:45 |
-| 배고파, 민수랑 같이 | 12:15에 302동식당에서 민수랑 같이 먹어요. | 302동식당 12:15 to 12:43 |
-| 배고파, 민수랑 지은이랑 같이 | 12:33에 학생회관식당에서 먹어요. | 학생회관식당 12:33 to 12:55, meeting 민수 at 301동 at 12:18 |
+| 배고파, 민수랑 같이 | 12:15에 302동식당에서 민수와 만나 먹어요. | 302동식당 12:15 to 12:43 |
+| 배고파, 민수랑 지은이랑 같이 | 12:33에 학생회관식당에서 먹어요. 민수, 지은 님과 301동에서 12:18에 만나면 돼요. | 학생회관식당 12:33 to 12:55, meeting 민수 at 301동 at 12:18 |
 
 The app's mock data is the reply to the second.
+
+Two things the runs showed:
+
+- **The model's sentence is not always one sentence, and it can be loose.** In the third run it added a second sentence that puts both Friends at the Merging Point, where the Plan has only 민수 there. The two lines of a Plan are the server's and say only what was calculated, so the answer card reads those; the model's sentence is beside them in `text`.
+- **The model asked for the restaurants' map layer after a Plan** in most runs, whatever the prompt said. A layer's button is therefore left out of a reply that carries a Plan, by the two tools, not by the prompt.
+
+### Agent usage (2026-11-14)
+
+Up to the opening of the pull request, the spec and the tickets of P01 included. One session with seven subagents (three for the server, one for the app, two reviewers, and one for the review's fixes on the server).
+
+- Agent time: about 71 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 579,605; input 129,406,084, of which 127,397,826 were cache reads, 2,007,358 cache writes, and 900 uncached. Without cache reads: 2,587,863.
