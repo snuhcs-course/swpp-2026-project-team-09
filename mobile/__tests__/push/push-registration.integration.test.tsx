@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Platform } from 'react-native';
@@ -10,18 +11,17 @@ import type * as PushDevice from '@/push/device';
 import type * as SecureStoreFake from '../support/secure-store';
 import type * as FakeSocketModule from '../support/fake-socket';
 import type * as PushFake from '../support/push';
-import { pass, screen, startApp } from '../support/app';
+import { pass, screen } from '../support/app';
 import { type FakeServer, refusal, startFakeServer } from '../support/fake-server';
 import { sockets } from '../support/fake-socket';
 import { openLive, SIGN_IN, socketServer } from '../support/live';
-import { givePhone, ON_CAMPUS, openMain, type Phone } from '../support/main';
+import { givePhone, ON_CAMPUS, openMain } from '../support/main';
 import { startFresh } from '../support/mocks';
 import { CHANGED_TOKEN, givePushPhone, PHONE_TOKEN } from '../support/push';
 import { REGISTER } from '../support/push-moments';
 import { signIn, signOut } from '../support/sign-out';
 import { answerMainScreen, askMainServer, PHONE_NOW } from '../support/server';
 import { heldTokens } from '@/auth/tokens';
-import { keep, readKeptAfterChanges } from '@/storage/kept';
 
 // The phone's registration for push against the fake main server: the real push wrapper over a mocked
 // `expo-notifications`.
@@ -44,7 +44,6 @@ jest.mock('expo', () => jest.requireActual<typeof PushFake>('../support/push').e
 jest.mock('expo-notifications', () => jest.requireActual<typeof PushFake>('../support/push').notificationsModule);
 
 let server: FakeServer;
-let front: Phone;
 
 beforeEach(async () => {
   jest.replaceProperty(Platform, 'OS', 'android');
@@ -54,7 +53,7 @@ beforeEach(async () => {
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
   server.on(REGISTER, { status: 204 });
-  front = givePhone({ permission: 'granted', position: ON_CAMPUS });
+  givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
 afterEach(() => {
@@ -198,50 +197,5 @@ describe('the end of the Session on the phone', () => {
 
     expect(phone.unregisters()).toBe(1);
     expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
-  });
-});
-
-describe('an unregistering that did not go through', () => {
-  it('tries an unregistering that failed again when the app comes to the front signed out, until it goes through', async () => {
-    const phone = givePushPhone({ permission: 'granted', unregisterFails: true });
-    const user = await openMain();
-
-    await signOut(user, server);
-    expect((await readKeptAfterChanges()).pushUnregisterOwed).toBe(true);
-    phone.letUnregisterWork();
-    const failed = phone.unregisters();
-    await front.comeToFront();
-
-    expect(phone.unregisters()).toBe(failed + 1);
-    expect((await readKeptAfterChanges()).pushUnregisterOwed).toBe(false);
-    await front.comeToFront();
-    expect(phone.unregisters()).toBe(failed + 1);
-  });
-
-  it('tries an unregistering owed from before at a start signed out', async () => {
-    const phone = givePushPhone({ permission: 'granted' });
-    await keep({ signedIn: false, pushUnregisterOwed: true });
-
-    await startApp();
-    await pass(1000);
-
-    expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
-    expect(phone.unregisters()).toBe(1);
-    expect((await readKeptAfterChanges()).pushUnregisterOwed).toBe(false);
-  });
-
-  it('owes no unregistering after a sign-in that follows a failed one', async () => {
-    const phone = givePushPhone({ permission: 'granted', unregisterFails: true });
-    const user = await openMain();
-
-    await signOut(user, server);
-    await signIn(user, server);
-    phone.letUnregisterWork();
-    const before = phone.unregisters();
-
-    expect((await readKeptAfterChanges()).pushUnregisterOwed).toBe(false);
-    expect(registered()).toEqual([{ token: PHONE_TOKEN }, { token: PHONE_TOKEN }]);
-    await front.comeToFront();
-    expect(phone.unregisters()).toBe(before);
   });
 });

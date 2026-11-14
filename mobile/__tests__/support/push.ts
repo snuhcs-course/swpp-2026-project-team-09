@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -35,6 +36,9 @@ interface PhoneState {
   unregisters: number;
   // The unregister call fails, as without the network.
   unregisterFails: boolean;
+  // The next unregister call waits until the test lets it go.
+  holdsUnregister: boolean;
+  releaseUnregister: () => void;
   listeners: Set<TokenListener>;
   onUnregister: () => void;
 }
@@ -70,6 +74,8 @@ const phone: PhoneState = {
   prompts: 0,
   unregisters: 0,
   unregisterFails: false,
+  holdsUnregister: false,
+  releaseUnregister: doNothing,
   listeners: new Set(),
   onUnregister: doNothing,
 };
@@ -98,6 +104,9 @@ export interface PushPhone {
   whenUnregistered: (does: () => void) => void;
   // The unregister call works again, as once the network is back.
   letUnregisterWork: () => void;
+  // The next unregister call waits, as on a slow network, until `letUnregisterGo`.
+  holdUnregister: () => void;
+  letUnregisterGo: () => Promise<void>;
 }
 
 export function givePushPhone(given: Given = {}): PushPhone {
@@ -111,6 +120,8 @@ export function givePushPhone(given: Given = {}): PushPhone {
   phone.prompts = 0;
   phone.unregisters = 0;
   phone.unregisterFails = given.unregisterFails ?? false;
+  phone.holdsUnregister = false;
+  phone.releaseUnregister = doNothing;
   phone.listeners.clear();
   phone.onUnregister = doNothing;
   return {
@@ -131,6 +142,16 @@ export function givePushPhone(given: Given = {}): PushPhone {
     },
     letUnregisterWork: (): void => {
       phone.unregisterFails = false;
+    },
+    holdUnregister: (): void => {
+      phone.holdsUnregister = true;
+    },
+    letUnregisterGo: async (): Promise<void> => {
+      await act(async () => {
+        phone.releaseUnregister();
+        phone.releaseUnregister = doNothing;
+        await jest.advanceTimersByTimeAsync(0);
+      });
     },
   };
 }
@@ -196,6 +217,14 @@ export const notificationsModule = {
     }
     phone.deviceToken = freshDeviceToken();
     phone.onUnregister();
+    if (phone.holdsUnregister) {
+      phone.holdsUnregister = false;
+      return new Promise((resolve) => {
+        phone.releaseUnregister = (): void => {
+          resolve(null);
+        };
+      });
+    }
     return Promise.resolve(null);
   },
 };

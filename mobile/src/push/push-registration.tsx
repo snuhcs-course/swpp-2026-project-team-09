@@ -3,6 +3,8 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect } from 'react';
@@ -20,23 +22,38 @@ export function pushUsable(ready: boolean): boolean {
   return ready && asksMainServer() && pushAvailable() && Platform.OS === 'android';
 }
 
+// An unregistering that failed when a Session ended, tried again until it goes through. One runs at a time.
+let unregistering: Promise<void> | null = null;
+
+async function unregisterOwed(): Promise<void> {
+  if ((await readKeptAfterChanges()).pushUnregisterOwed && (await unregisterPush())) {
+    await keep({ pushUnregisterOwed: false });
+  }
+}
+
+function unregisterIfOwed(): Promise<void> {
+  unregistering ??= unregisterOwed().finally(() => {
+    unregistering = null;
+  });
+  return unregistering;
+}
+
 // Sends the phone's token to the main server. The token is null unless the permission is granted. A failure is left
 // for the next start.
 export async function registerPush(): Promise<void> {
   try {
+    // An unregistering finishing later would delete the token fetched here.
+    await unregisterIfOwed();
     const token = await expoPushToken();
     if (token !== null) {
       await apiClient.registerPushToken(token);
+      // The main server moved the token to this Session, so nothing of the earlier one reaches the phone.
+      if ((await readKeptAfterChanges()).pushUnregisterOwed) {
+        await keep({ pushUnregisterOwed: false });
+      }
     }
   } catch {
     // The next start tries again.
-  }
-}
-
-// An unregistering that failed when a Session ended, tried again until it goes through.
-async function unregisterIfOwed(): Promise<void> {
-  if ((await readKeptAfterChanges()).pushUnregisterOwed && (await unregisterPush())) {
-    await keep({ pushUnregisterOwed: false });
   }
 }
 
