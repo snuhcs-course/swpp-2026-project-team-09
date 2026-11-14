@@ -41,15 +41,42 @@ Change (app):
 
 ## Acceptance criteria
 
-- [ ] Making a party from the design's example with 민수 and 지은 (Tuesday 11:50) keeps one `leave-by` for the Leader: time 12:18, title "지금 나서요", `ahead` "12:18 나설 시각", line "학생회관식당까지 걸어서 15분", and `url` `/main?card=party:<questId>`. Nobody else has one.
-- [ ] Making a party from the example with 민수 alone keeps the Leader's at 12:12 with the line "302동식당까지 걸어서 3분".
-- [ ] A Leader whose starting Place is unknown, or who does not walk, has none, and `POST /plans` answers as before.
-- [ ] `POST /plans` answers as before when the keeping fails, and a warning is logged.
-- [ ] Ending the Quest removes the Leader's `leave-by`.
-- [ ] `accepted` and `declined` answer `ahead` null.
-- [ ] Unit tests of the words: both titles and the line, at a time whose minutes need a leading zero.
-- [ ] The app, unit tests: a row whose time is after now has `ahead` as its title, one whose time has come has the title, and a Notification without `ahead` has the title.
-- [ ] The app, integration test: "알림" shows "12:18 나설 시각" with its line, and a press opens the party's card.
-- [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `main-server/` and `mobile/`.
+- [x] Making a party from the design's example with 민수 and 지은 (Tuesday 11:50) keeps one `leave-by` for the Leader: time 12:18, title "지금 나서요", `ahead` "12:18 나설 시각", line "학생회관식당까지 걸어서 15분", and `url` `/main?card=party:<questId>`. Nobody else has one.
+- [x] Making a party from the example with 민수 alone keeps the Leader's at 12:12 with the line "302동식당까지 걸어서 3분".
+- [x] A Leader whose starting Place is unknown, or who does not walk, has none, and `POST /plans` answers as before.
+- [x] `POST /plans` answers as before when the keeping fails, and a warning is logged.
+- [x] Ending the Quest removes the Leader's `leave-by`.
+- [x] `accepted` and `declined` answer `ahead` null.
+- [x] Unit tests of the words: both titles and the line, at a time whose minutes need a leading zero.
+- [x] The app, unit tests: a row whose time is after now has `ahead` as its title, one whose time has come has the title, and a Notification without `ahead` has the title.
+- [x] The app, integration test: "알림" shows "12:18 나설 시각" with its line, and a press opens the party's card.
+- [x] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `main-server/` and `mobile/`.
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+Details the ticket left to the implementation, listed so that any of them can be vetoed.
+
+1. **`ahead` is kept with the Notification** and answered by `GET /notifications`. A Notification kept before this change reads it as null.
+2. **The phone decides which title shows.** `ahead` shows only while the Notification's time is strictly after the phone's now; at the time itself the row reads "지금 나서요".
+3. **The Leader's time to leave** is the time the Leader's part of the Plan sets out, read from the Plan that `POST /plans` has just calculated again. No Notification is kept when that part has no time, no walk, or a walk of 0 minutes.
+4. **Ending the Quest** cancels the time to leave of every Holder the Quest had, from the Holders the ending already reads.
+5. **The kind's look in the app**: the clock icon on the navy round. A kind the app does not know keeps the calendar.
+6. **An older main server** sends no `ahead`: the answer's check takes a missing one as none.
+7. **The two warnings**, when keeping or cancelling fails, are "The Leader's time to leave was not kept" and "A Holder's time to leave was not cancelled", each with the error.
+
+### Checked by hand (2026-11-15)
+
+The design's worked example on the seed's walking table (Tuesday 11:50, the asker's Class in 301동 just ended), through `POST /plans` and `GET /notifications` of the started server:
+
+- with 민수 and 지은: the Leader's Notification is at 12:18, "12:18 나설 시각" before it and "지금 나서요" from it, with "학생회관식당까지 걸어서 15분";
+- with 민수 alone: at 12:12, with "302동식당까지 걸어서 3분";
+- a Leader whose Class is in the Restaurant's own building, and one with no Class before lunch and no position, have none.
+
+### Agent usage (2026-11-15)
+
+Up to the opening of the pull request. One implementing subagent (Opus 5.5) wrote the main server's part and then the app's.
+
+- Agent time: about 20 minutes, an estimate from the transcript's timestamps.
+- Tokens: output 67,584; input 16,820,811, of which 16,636,360 were cache reads, 184,237 cache writes, and 214 uncached. Without cache reads: 252,035.
