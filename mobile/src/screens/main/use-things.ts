@@ -32,9 +32,14 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // restaurant, a study building and the shuttle's stops and vehicles look the same at every level: a stop a dot and a
 // vehicle a pin, so that a vehicle standing at its stop is seen, and stops at one place stay a dot. A study building
 // none of whose spaces the User may use is grey, and study pins merged at the overview level are their cluster.
-// Things of several kinds at one place are a group's dot or pin.
-function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
+// Things of several kinds at one place are a group's dot or pin. A Quest made from a Plan is its flag at every level:
+// the dot in the Quest colour with its words above it, as an answer draws its pick.
+function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
+  if (flag !== undefined) {
+    const label = { side: 'above', tone: 'pick', title: flag, line: null, number: null } as const;
+    return { kind: 'answer', symbol: { type: 'dot', role: 'pick', number: null }, label };
+  }
   if (kind === 'study-cluster') {
     return { kind: 'study-cluster', count: marker.count, selected };
   }

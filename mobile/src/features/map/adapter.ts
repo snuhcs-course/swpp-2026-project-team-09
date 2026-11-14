@@ -67,7 +67,8 @@ export interface CardView {
   // on. `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a
   // building of the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view.
   // `invitation` is an invitation the User received, while the switch of the answer on the map is on: it has no
-  // marker, and its card is the invitee's own way.
+  // marker, and its card is the invitee's own way. `made-quest` is a Quest made from a Plan while the switch is on, in
+  // place of its own card: its marker is its flag, and its card the one after inviting.
   kind:
     | 'global-event'
     | 'place-group'
@@ -80,7 +81,8 @@ export interface CardView {
     | 'shuttle-vehicle'
     | 'study'
     | 'study-cluster'
-    | 'invitation';
+    | 'invitation'
+    | 'made-quest';
   mark: CardMark;
   marker: CardMarker;
   // "공식 행사 · 컴퓨터공학부 공지"
@@ -116,6 +118,8 @@ export interface CardView {
   cluster?: readonly LatLng[];
   // Drawn in a translucent grey: a building none of whose Study Spaces the User may use.
   muted?: boolean;
+  // For a Quest made from a Plan: the words of its flag, "12:33 점심 · 수락 1/2".
+  flag?: string;
 }
 
 // One Study Space as its building's card lists it. `refusal` is what a press on a space the User may not use says,
