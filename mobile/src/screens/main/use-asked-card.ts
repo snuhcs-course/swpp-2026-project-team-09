@@ -7,7 +7,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import type { CardView } from '@/features/map/adapter';
-import { fallbackFor, readCardAddress } from '@/push/card-address';
+import { fallbackFor, readCard } from '@/push/card-address';
 import { useAskedPerson } from './use-asked-person';
 import type { MainMap } from './use-main-map';
 import type { Selection } from './use-selection';
@@ -27,7 +27,7 @@ export function useAskedCard(cards: readonly CardView[] | null, map: MainMap, se
       selection.selectOrWait(shown.id);
       return;
     }
-    const address = readCardAddress(`/main?card=${card}`);
+    const address = readCard(card);
     if (address !== null) {
       router.navigate(fallbackFor(address.kind));
     }

@@ -183,8 +183,7 @@ export function onPushArrival(listener: () => void): () => void {
   }
 }
 
-// A push while the app is in front goes to the notification list only. On Android a banner cannot show without
-// sound, and the open app shows the change itself.
+// On Android a banner cannot show without sound, so a push in front goes to the notification list only.
 export function quietPushesInFront(): void {
   try {
     notifications()?.setNotificationHandler({
