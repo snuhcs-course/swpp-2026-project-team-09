@@ -1,6 +1,6 @@
 # The agentic map: design
 
-This document records the design of the agentic map: what SNU Now does when a User asks a question that involves location, how the answer looks on the map, and which rules hold behind it. The final wireframes are on the team wireframe canvas below the divider, in 13 rows with 229 boards. The notes under each row hold the details decided for that row.
+This document records the design of the agentic map: what SNU Now does when a User asks a question that involves location, how the answer looks on the map, and which rules hold behind it. The final wireframes are on the team wireframe canvas below the divider, in 13 rows with 233 boards. The notes under each row hold the details decided for that row.
 
 ## 1. The big picture
 
@@ -60,7 +60,7 @@ The app takes over the decisions of a day on campus, from classes until going ho
 
 **One shape.** A screen with an answer on it has one shape, however the question was asked: in words, by tapping a building, or by tapping a Friend's face. Row 0, Frame, on the team canvas draws it. Each meaning has one way of being drawn on the map: my route is navy, a Friend's route is a dashed green line, the chosen place is in the Quest color (brown), and a filtered-out place is faded gray with its reason. Only values from the snunow design system are used.
 
-**Top pill.** The top of the screen holds only what was asked, as a pill, with an icon for how it was asked (a speech bubble for words, a pin for a building, a person for a Friend) and a ✕ that closes the answer. While an answer is shown, the Friend list, the Quest list, the "오늘의 발자국" (today's footprints) pill, and the bottom menu are hidden.
+**Top pill.** The top of the screen holds only what was asked, as a pill, with an icon for how it was asked (a speech bubble for words, a pin for a building or a mark, a person for a Friend or my own dot) and a ✕ that closes the answer. While an answer is shown, the Friend list, the Quest list, the "오늘의 발자국" (today's footprints) pill, and the bottom menu are hidden.
 
 **Bottom card.** One card attached to the bottom of the screen holds the rest: the condition chips the answer used, two lines of answer, the time band, what can be tapped, and the input field. Invitations, booking cards, and a party's "단계" (steps) are drawn inside this card too.
 
@@ -93,8 +93,10 @@ The app takes over the decisions of a day on campus, from classes until going ho
 - The changes to the vocabulary: the Assistant picks one result and the rest are browsed with arrows, with no result list; the answer is one line, and the basis shows when tapped; the default start is the building of the previous class, then the current location; the meeting place is where the time together is longest, not where everyone is evenly close within 10 minutes; the people tool also uses the building of a Friend's class from the Timetable; tapping a building, tapping a face, and the time band inside a plan are added as inputs on the map; a one-line suggestion is added to the facts and question chips when the time fits; and reach is never drawn as an area, only calculated, so each candidate carries whether it can be reached, the minutes I can stay, and, for one that cannot, the reason.
 - A question asked from off campus about a class on campus ("9시 수업인데 늦나", Will I be late for my 9:00 class?) is answered from the main gate ("정문을 08:50까지 지나면 09:00 수업에 맞아요", pass the main gate by 08:50 to make your 9:00 class), without using the off-campus location.
 - Asking on the map has no modes. Tapping a building makes it the question's "여기" (here), tapping a Friend's face makes that Friend "이 사람" (this person), and moving the map makes the visible area "이 근처" (around here).
-- Tapping a building shows its facts in my time: the minutes to get there, the minutes I can stay before my next item, and what is there now (menus, events, and Friends). Two or three question chips sit below. When the time fits, the Assistant adds a one-line suggestion: tapping the Student Center (학생회관) at 12:10 adds "점심시간이에요. 여기서 드실래요?" (It's lunchtime. Eat here?). A building tapped during a plan becomes "여기면 어때?" (How about here?) and shows each person's arrival time and the time together.
-- Tapping a Friend's face shows that Friend's facts (in class until when, and the building) and question chips. Choosing "만나고 싶다" (I want to meet) shows on the time band when the two are both free, and shows a meeting place on the map. Every plan to meet someone works this way, not only meals.
+- On the everyday map, the things to tap are a building, a Friend's face, my own dot, and the mark of an event or a recruiting party. A tap makes that thing the question, and closing the answer returns to the everyday map. A Restaurant, Study Space, or Shuttle Stop pin, shown when its layer is turned on, opens its own card as it does today; a pin on a building takes the tap, and the rest of the building opens the building's card. In a Party that is on, the face of a member who is not a Friend opens today's card with "파티 열기" (open the party).
+- Tapping a building leaves the map as it is, with the building highlighted, and the card shows its facts in my time: the minutes to get there, the minutes I can stay before my next item, and what is there now (menus, events, and Friends). A Friend my map shows in that building is one line of the card, and tapping the line opens that Friend's card. Question chips sit below, only for what has an answer: "여기서 먹기" (eat here) where there is a place to eat, "행사 보기" (see the event) and "같이 갈 파티" (a party to go with) where there is an event, and "가는 길" (the way there). When the time fits, the Assistant adds a one-line suggestion: tapping the Student Center (학생회관) at 12:10 adds "점심시간이에요. 여기서 드실래요?" (It's lunchtime. Eat here?). A building tapped during a plan becomes "여기면 어때?" (How about here?) and shows each person's arrival time and the time together; its ✕ and "그대로" (keep as is) return to the plan.
+- Tapping a Friend's face on the everyday map, or the Friend in the Friend list on the map screen, opens that Friend's card; inside an answer, tapping a face adds the Friend to the plan instead. Every Friend has the same card. At current building or exact location it shows the class and until when, the building, and the minutes from me, and its subtitle names the level; at Timetable only it shows the class from the Timetable and "지금 위치는 보여 주지 않아요" (current location is not shown). Its chips are "만나고 싶다" (I want to meet), "파티 만들기" (make a party), and "어디까지 보이나" (how far we see each other). Choosing "만나고 싶다" shows on the time band when the two are both free, and shows a meeting place on the map; every plan to meet someone works this way, not only meals. "파티 만들기" opens the party form as private with that Friend chosen, as the app does today.
+- Tapping my own dot shows what each Friend sees of me now ("지금 친구에게 보이는 나", what my Friends see of me now), with "바꾸기" (change), which opens the location sharing settings.
 - The candidates for a meeting place are places where people gather (restaurants, cafés, and lounges) and the buildings the two people are in.
 - The starting point is changed by tapping a building on the map. Turning off my own dot is not offered.
 
@@ -108,7 +110,7 @@ The app takes over the decisions of a day on campus, from classes until going ho
 | 4 | "오늘 볼 만한 거 있어?" (Anything worth seeing today?) | what is here (events), time fit, and route | One event, its route, and the minutes I can stay. What does not fit is faded with the reason | The leave-by time and recruiting parties (section 6.3) |
 | 5 | "배드민턴 칠 사람" (Anyone for badminton?) | what is here (recruiting parties), time fit, and people | Parties I can reach before they start, and the ones I cannot, with the reason | A new recruiting party and invitations (section 6.4) |
 | 6 | Tapping a Friend's face, then "만나고 싶다" (I want to meet) | people, time fit, and meeting | When both are free, on the time band, and a meeting place on the map | An invitation |
-| 7 | Tapping a building | route, time fit, and what is here | The minutes to get there, the minutes I can stay, and what is there now | Question chips, and a one-line suggestion when the time fits |
+| 7 | Tapping a building | route, time fit, and what is here | The building highlighted; the card gives the minutes to get there, the minutes I can stay, and what is there now | Question chips, and a one-line suggestion when the time fits |
 | 8 | Tapping a building during a plan ("여기면 어때?", How about here?) | meeting | Each person's arrival time and the time together | Changing the place |
 | 9 | "문화관이 어디야?" (Where is Culture Hall?) | what is here and route | The building highlighted, the way there, and the minutes | Route guidance |
 | 10 | "24동까지 몇 분? 늦나" (How many minutes to building 24? Will I be late?) | route and time fit | The route, the arrival time, and the leave-by time | The leave-by notification |
@@ -178,7 +180,7 @@ The map changes only when the answer needs a place, a route, or people. A questi
 
 - The User can ask the Assistant to watch for one kind of thing: events and recruiting that match the User's interests. This belongs to the event and party scenes. Results are not filtered by the Timetable; an overlap with the Timetable is only marked.
 - The everyday map shows only the events and recruiting that match the interests being watched. Other events are not put on the map, and are found by asking the Assistant ("오늘 볼 만한 거 있어?", Anything worth seeing today?).
-- A newly posted event or recruiting party that matches a watched interest gets a "!" mark at its place on the map. Tapping the mark gives the same answer as asking.
+- A newly posted event or recruiting party that matches a watched interest gets a "!" mark at its place on the map. Tapping the mark gives the same answer as asking. The events or recruiting parties at one place share one mark ("채용박람회 외 1", the job fair and 1 more), and the answer browses only those with the arrows. The "!" disappears once the mark has been opened, and a mark without it gives the same answer.
 - Matching an interest means catching the same meaning in different words ("채용박람회", "커리어 페어", and "기업 설명회", all a job fair or company session), and this is the Assistant's job. In the implementation, topic tags are added in the same model call that reads collected event posts for their time and place, and a User's interests are the profile's hashtags together with the interests told to the Assistant. A match on a profile hashtag only shows on the map; notifications go only for interests told to the Assistant.
 
 ### A late member
@@ -202,7 +204,7 @@ The map changes only when the answer needs a place, a route, or people. A questi
 - Things close to each other on the screen are grouped into one circle with a count ("자하연 쪽 5명", 5 near Jahayeon).
 - When the User zooms by hand, groups merge and split again when the finger lifts. Tapping a group zooms in until that group fills the screen. People in the same building, who do not split apart, are chosen from the card.
 - When four or fewer marks remain on the screen after grouping, each mark gets a tag (name, building, and minutes away). With five or more, only the one the answer's sentence points at gets a tag.
-- Friends and events on the everyday map are grouped by the same rule.
+- Friends, events, and recruiting parties on the everyday map are grouped by the same rule. Events or recruiting parties at one place do not split apart, so they share one mark, named after the first with the number of the rest ("채용박람회 외 1"). Tapping that mark opens the answer, and the arrows browse what the mark holds.
 - In the implementation, this rule is one function that decides the marks on the map.
 
 ### The shuttle in every route answer
@@ -212,7 +214,7 @@ The map changes only when the answer needs a place, a route, or people. A questi
 
 ### Notifications
 
-- Push notifications are part of the implementation. The moments when the Assistant speaks first (the leave-by time, an invitation and its answer, a booking's check-in and return, a booking window opening, and a watched interest) arrive as push notifications even when the app is closed, and also stay in the app's notification list. The app has no push today, so this needs one native Release.
+- Push notifications are part of the implementation. The moments when the Assistant speaks first (the leave-by time, an invitation, a decline when a better place exists, a booking's check-in and return, a booking window opening, and a watched interest) arrive as push notifications even when the app is closed, and also stay in the app's notification list. An acceptance stays in the list without a push. The app has no push today, so this needs one native Release.
 - The leave-by notification for a route taken alone is sent only when the walk takes 5 minutes or more.
 
 ### First run
@@ -400,7 +402,7 @@ The leave-by times are 15:30 minus 18 minutes (15:12), 14:10 minus 4 minutes (14
 
 **Rules**
 
-- Starting from the mark of a watched interest on the map gives the same answer as Alone 1.
+- Starting from the mark of a watched interest on the map gives the same first answer as Alone 1, and the arrows browse only the events of that mark (the job fair and the company session). The concert, which has no mark, is found only by asking.
 - A User holds one party per event, as now.
 - The order is: what matches a watched interest first, then what allows a longer stay. Events that clash with a class come last.
 - When no event can be attended, it says so and suggests handing over an interest to watch.
@@ -523,7 +525,7 @@ Example: on Tuesday at 11:50, Minsu says "배고파". Jieun is counted as "12:15
 
 **What changes in the app.** The per-Friend switch changes from on and off to a choice of three: "시간표만" (location off), "지금 있는 건물", and "정확한 위치". Friends switched on today stay at exact location. A new Friend starts at "지금 있는 건물" instead of exact location, where a new Friend starts today. Timetable labels appear on the map. A Friend seen through the Timetable only shows as a dashed Avatar during class and for 15 minutes after, and otherwise stays in the Friend list as "공강 · 14:00까지".
 
-**Not decided.** A location whose signal is lost stays for 10 minutes as "N분 전 위치" (location N minutes ago), while a lowered location disappears at once, so the two look different.
+**Not decided.** Today a position older than 2 minutes dims the Avatar, its name on the map reads "민수 · 3분 전" (Minsu, 3 minutes ago), and the card says "마지막 위치 3분 전" (last position 3 minutes ago); after 10 minutes the Friend leaves the map. A lowered location disappears at once, so a lost signal and a lowered level look different for up to 10 minutes. Whether the three levels keep this is not decided.
 
 ## 8. Left out, and why
 
@@ -554,7 +556,7 @@ These are left out of this design and looked at again after the build.
 
 ## 10. The wireframes
 
-The final wireframes are the 13 rows below the divider on the team's wireframe canvas (https://claude.ai/artifact/136sh65V4Trkv5KBM78Vgr). They replace the Assistant draft rows above the divider; the other screens (sign-in, parties, events, "내 정보" (my info), and the Timetable) stay as they are above it. In every row except 3 and 11 the leftmost board can be tapped through, and the note under the row holds the example's setup, where its numbers come from, and the details decided in that row. Every board is drawn by one frame component, AmKit, so a change to the frame changes every board. The board count includes the tap-through board where a row has one.
+The final wireframes are the 13 rows below the divider on the team's wireframe canvas (https://claude.ai/artifact/136sh65V4Trkv5KBM78Vgr). They replace the Assistant draft rows above the divider; the other screens (sign-in, parties, events, "내 정보" (my info), and the Timetable) stay as they are above it. Every row except 3 and 11 has a board that can be tapped through (the leftmost, or the second in row 0), and the note under the row holds the example's setup, where its numbers come from, and the details decided in that row. Every board is drawn by one frame component, AmKit, so a change to the frame changes every board. The board count includes the tap-through board where a row has one.
 
 | Row | Name | Scene file | Boards | What it shows |
 |---|---|---|---|---|
@@ -562,9 +564,9 @@ The final wireframes are the 13 rows below the divider on the team's wireframe c
 | 1 | Lunch | AmHungry | 23 | "배고파" alone with two cards and the arrows, together with Minsu and Jieun, the invitation, a decline, party on, and a member who is late |
 | 2 | A seat to study, alone | AmStudy | 14 | The seat filled for 6 hours without asking, the kiosk confirmation, leaving and returning, a far start, and a full floor |
 | 3 | A seat to study, together | AmStudy | 13 | Four people in a six-person group study room, other dates, invitations and Student Number consent, a decline, a full room, the room's end, and booking outside the window |
-| 4 | Events | AmEvent | 22 | The interest mark, one event I can attend between classes, the parties going with a Friend first, joining, and a new recruiting party with Jieun |
+| 4 | Events | AmEvent | 23 | The interest mark and the answer it opens, one event I can attend between classes, the parties going with a Friend first, joining, and a new recruiting party with Jieun |
 | 5 | Parties | AmParty | 13 | A recruiting party I can reach first, one I cannot reach faded, a new recruiting party with Seojun, the time and place I said, and no party recruiting |
-| 6 | Asking on the map | AmAsk | 13 | Tapping a building, a Friend's face, "만나고 싶다" (I want to meet), dragging the time band, "여기면 어때?" (how about here?) during a plan, the visible area as input, and my own dot |
+| 6 | Asking on the map | AmAsk | 16 | The everyday map and what can be tapped on it, tapping a building (also one with a Friend in it), a Friend's face at each level, "만나고 싶다" (I want to meet), dragging the time band, "여기면 어때?" (how about here?) during a plan, the visible area as input, and my own dot |
 | 7 | Other questions | AmMore | 20 | Questions the app answers today, drawn on the map: where a building is, minutes and lateness, shuttle or walk, where a Friend is at each level, menus, the Tutorial, seats, and grouping many results |
 | 8 | What cannot be answered and what does not work | AmCant | 28 | Requests out of scope, what the Assistant will not do for others, plans that cannot be met, missing inputs, failures, waiting, and what the app does not do |
 | 9 | Friends and location | AmShare | 26 | The three levels, the dashed Avatar for 15 minutes, the list, the two moments the Assistant asks, a new Friend, off campus, a Private Zone, and what a candidate sees (nothing) |
