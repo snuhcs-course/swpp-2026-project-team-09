@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -44,7 +45,8 @@ function Dot({ role, number, testID }: Extract<AnswerSymbol, { type: 'dot' }> & 
   );
 }
 
-function Symbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string }): ReactElement {
+// Not named `Symbol`: that would hide the global the React Compiler's output calls, and the mark would not render.
+function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string }): ReactElement {
   if (symbol.type === 'me') {
     return <MapPin kind="me" />;
   }
@@ -113,7 +115,7 @@ export function MapAnswerMark({
   return (
     <View style={[styles.mark, { flexDirection: DIRECTION[label?.side ?? 'right'] }]} testID={testID}>
       <View style={styles.box} testID={testID === undefined ? undefined : `${testID}:symbol`}>
-        {symbol === null ? null : <Symbol symbol={symbol} testID={testID} />}
+        {symbol === null ? null : <MarkSymbol symbol={symbol} testID={testID} />}
       </View>
       {label === null ? null : <Label label={label} testID={testID} />}
     </View>
