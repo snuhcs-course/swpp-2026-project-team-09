@@ -13,15 +13,15 @@ Tapping a push, whether the app was closed or open, takes the signed-in User to 
 ## Files
 
 Create (each with the AI-generated box):
-- `mobile/src/push/card-address.ts`: pure functions. `readCardAddress(url: unknown): { kind: string; id: string } | null` accepts only `/main?card=<kind>:<id>`, where kind is lowercase letters and `-`, and id is letters, digits, `-`, `.`, and `,` (a Place group's id is `place:<latitude>,<longitude>`). `fallbackFor(kind)` gives the screen of the list's row: `invitation` to `{ pathname: '/party', params: { tab: 'invites' } }`, and the main map for any other kind.
-- `mobile/src/push/use-notification-links.ts`: `useNotificationLinks(here: boolean)`. While `here` is true, it reads `getLastNotificationResponse()` once and subscribes to `addNotificationResponseReceivedListener`; while false, it does neither. For each response with a valid address, it calls `router.dismissTo({ pathname: '/main', params: { card } })`, as `mobile/src/screens/quests/quests-screen.tsx` reaches `/main`, and then `clearLastNotificationResponse()`. It keeps the last handled `response.notification.request.identifier` in a ref and skips a response with the same identifier, so a cold-start tap that reaches both paths navigates once. It ignores any other data. These are SDK 57's names; the `…Async` forms are deprecated.
+- `mobile/src/push/card-address.ts`: pure functions. `readCardAddress(url: unknown): { kind: string; id: string } | null` accepts only `/main?card=<kind>:<id>`, where kind is lowercase letters and `-`, and id is letters, digits, `-`, `.`, and `,` (a Place group's id is `place:<latitude>,<longitude>`). `readCard(card: string)` reads the `card` parameter alone, for `use-asked-card.ts`. `fallbackFor(kind)` gives the screen of the list's row: `invitation` to `{ pathname: '/party', params: { tab: 'invites' } }`, and the main map for any other kind.
+- `mobile/src/push/use-notification-links.ts`: `useNotificationLinks(here: boolean)`. While `here` is true, it reads `getLastNotificationResponse()` once and subscribes to `addNotificationResponseReceivedListener`; while false, it does neither. For each response with a valid address, it goes to `{ pathname: '/main', params: { card } }`, with `router.dismissTo` when `router.canDismiss()` (a screen sits above the tabs, and closes) and with `router.navigate` otherwise (on the tabs, where `dismissTo` does nothing), as `showMine` in `mobile/src/screens/party/use-party-actions.ts` does, and then calls `clearLastNotificationResponse()`. It keeps the last handled `response.notification.request.identifier` in a ref and skips a response with the same identifier, so a cold-start tap that reaches both paths navigates once. It ignores any other data. These are SDK 57's names; the `…Async` forms are deprecated.
 - `mobile/src/push/push-arrivals.tsx`: `PushArrivals`, a component that draws nothing, mounted in `mobile/src/app-providers.tsx` beside `LiveUpdates`. When the native module is present, it sets the handler for a push in front (below) and subscribes to `addNotificationReceivedListener`, which invalidates the queries of `WAITING`, as `refetch` in `live-updates.tsx` does.
 - `mobile/src/screens/main/use-asked-card.ts`: like `use-asked-person.ts`, it reads `card` once the cards are known, clears it with `router.setParams`, and either moves the map to the card and selects it, or routes to `fallbackFor(kind)`.
 - `mobile/__tests__/push/card-address.unit.test.ts` and `mobile/__tests__/push/notification-links.integration.test.tsx`.
 
 Change:
 - `mobile/src/app/(signed-in)/_layout.tsx`: `SignedInLayout` calls `useNotificationLinks(away === null)` beside `useInviteLinks(away === null)`, before the early return.
-- `mobile/src/screens/main/main-screen.tsx`: one line calling `useAskedCard`, beside `useAskedPerson`. The file is package B's; name B's owner as a reviewer in the pull request.
+- `mobile/src/screens/main/main-screen.tsx`: the call of `useAskedPerson` becomes a call of `useAskedByAddress` (in `use-asked-card.ts`), which calls `useAskedPerson` unchanged and then `useAskedCard`. A line of its own would pass the lint's 50 lines for `MainScreen`. The file is package B's; name B's owner as a reviewer in the pull request.
 - `mobile/src/push/device.ts`: wrappers for the four library calls above and `setNotificationHandler`, each a no-op or null without the native module. The handler for a push in front is `{ shouldShowBanner: false, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }`: on Android a banner cannot show without sound, and the open app shows the change itself.
 - `mobile/src/live/live-updates.tsx`: export `WAITING`, unchanged. The file is package C's real-time signal handling; change nothing else, and name C's owner as a reviewer in the pull request.
 - `mobile/README.md`: the section "Push notifications" says what a tap opens and what a push in front does.
@@ -31,7 +31,7 @@ Change:
 - What `?person=`, `?quest=`, and `?tutorial=` do on `/main`, and Invite Links.
 - The card ids in `mobile/src/features/map/adapter.ts` (package B's file); the hook matches the id string `<kind>:<id>` directly.
 - Native files, and any screen of a mock build. The Maestro flows and the acceptance-test flows run as before.
-- The default mock of `@/push/device` in the test setup; the new integration test opts in as ticket 03's do.
+- What the default mock of `@/push/device` in the test setup reports: unavailable. It gains a no-op entry for each new wrapper, since it is typed as the whole module. The new integration test opts in as ticket 03's do.
 - `main-server/`.
 
 ## Acceptance criteria
@@ -53,3 +53,10 @@ Change:
 3. Accept on device 2 and tap the old push again from the notification list if it is still there: the app opens the invitations tab without the invitation, and nothing breaks.
 
 ## Comments
+
+### Agent usage (2026-11-14, review)
+
+The review before the merge: two Opus 5.5 reviewers of this pull request (the ticket and the repository's rules; correctness and security), one Opus 5.5 subagent for the review's fix of a tap made above the tabs, and a quarter of the session that read the four pull requests of P04 and decided what merges, up to this commit. The implementation's own usage is not in these numbers.
+
+- Agent time: about 20 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time, with the fixer's; the reviewers ran inside it).
+- Tokens: output 104,209; input 21,817,018, of which 21,452,366 were cache reads, 364,430 cache writes, and 222 uncached. Without cache reads: 468,861.

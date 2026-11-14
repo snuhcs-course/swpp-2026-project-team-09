@@ -49,6 +49,7 @@ import { MenusModule } from './menus/menus.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { PartiesModule } from './parties/parties.module.js';
 import { PlacesModule } from './places/places.module.js';
+import { PlansModule } from './plans/plans.module.js';
 import { PushModule } from './push/push.module.js';
 import { QuestsModule } from './quests/quests.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
@@ -102,6 +103,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     TravelModule,
     TutorialModule,
     AssistantModule,
+    PlansModule,
     RoomRequestsModule,
     StudySpacesModule,
     PushModule,

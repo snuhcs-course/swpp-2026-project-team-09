@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -21,6 +22,7 @@ import { isSnuAccount, readIdToken, subjectOf } from '@/auth/id-token';
 import { forgetTokens, heldTokens, keepTokens } from '@/auth/tokens';
 import { namedSignInEnding, signInEnding } from '@/dev-settings';
 import { endLibrarySessionInBackground } from '@/library/end-session';
+import { unregisterPush } from '@/push/device';
 import { keep, readKept } from '@/storage/kept';
 
 // Sign-in lives behind these two operations. A build that holds Google's sign-in module asks Google which account.
@@ -126,6 +128,8 @@ async function signOutOfMainServer(): Promise<void> {
   } catch {
     // Nothing to do.
   }
+  // Whatever the main server answered, so that a phone it could not tell receives nothing.
+  await unregisterPush();
   await forgetTokens();
 }
 

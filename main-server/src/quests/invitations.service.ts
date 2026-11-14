@@ -12,6 +12,7 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { type Told } from '../notifications/notification.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -31,6 +32,8 @@ import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
 import { alreadyHolder, conflict, notFound } from './refusals.js';
+
+export type CreatedInvitation = Prisma.QuestInvitationGetPayload<{ include: typeof WAITING_INCLUDE }>;
 
 const invitationNotFound = (): NotFoundException => notFound('QUEST_INVITATION_NOT_FOUND', 'No such invitation waits.');
 
@@ -59,16 +62,30 @@ export class InvitationsService {
       if ((await this.quests.holderIds(questId, tx)).includes(userId)) {
         throw alreadyHolder();
       }
-      if (!(await this.friends.areFriends(leaderId, userId, tx))) {
-        throw notFound('FRIEND_NOT_FOUND', 'This User is not your Friend.');
-      }
-      if ((await tx.questInvitation.findUnique({ where: { questId_userId: { questId, userId } } })) !== null) {
-        throw conflict('QUEST_INVITATION_ALREADY_SENT', 'An invitation of this User into the Quest is waiting.');
-      }
-      return tx.questInvitation.create({ data: { questId, userId }, include: WAITING_INCLUDE });
+      return this.create(leaderId, questId, userId, tx);
     });
-    this.signals.send([userId], 'quests-changed');
-    void this.push.send([userId], invitationMessage(toWaitingDto(created)));
+    this.announce(created);
+  }
+
+  // An invitation of the Leader's Friend into the Quest, in the caller's transaction. Announce it once that is committed.
+  async create(
+    leaderId: string,
+    questId: string,
+    userId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<CreatedInvitation> {
+    if (!(await this.friends.areFriends(leaderId, userId, tx))) {
+      throw notFound('FRIEND_NOT_FOUND', 'This User is not your Friend.');
+    }
+    if ((await tx.questInvitation.findUnique({ where: { questId_userId: { questId, userId } } })) !== null) {
+      throw conflict('QUEST_INVITATION_ALREADY_SENT', 'An invitation of this User into the Quest is waiting.');
+    }
+    return tx.questInvitation.create({ data: { questId, userId }, include: WAITING_INCLUDE });
+  }
+
+  announce(invitation: CreatedInvitation): void {
+    this.signals.send([invitation.userId], 'quests-changed');
+    void this.push.send([invitation.userId], invitationMessage(toWaitingDto(invitation)));
   }
 
   // The User's invitations, the newest first.

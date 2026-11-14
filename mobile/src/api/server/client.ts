@@ -9,6 +9,8 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -44,6 +46,7 @@ import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
 import { partyClient } from './party-client';
+import { planQuestClient } from './plan-quest-client';
 import { roomClient } from './room-client';
 import { TUTORIAL_SERVED, tutorialClient } from './tutorial-client';
 
@@ -55,6 +58,7 @@ export const serverClient: ApiClient = {
   ...partyClient,
   ...eventClient,
   ...assistantClient,
+  ...planQuestClient,
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
@@ -74,6 +78,9 @@ export const serverClient: ApiClient = {
   getProfile: () => call('GET', '/users/me/profile', isProfile),
   setMasterSwitch: async (on) => {
     await call('PUT', '/users/me/master-switch', isNothing, { body: { on } });
+  },
+  registerPushToken: async (token) => {
+    await call('PUT', '/users/me/push-token', isNothing, { body: { token } });
   },
   uploadPosition: (position) => call('POST', '/positions', isPositionKept, { body: position }),
   listFriends: () => call('GET', '/friends', isFriends),
