@@ -25,7 +25,8 @@ interface MapPersonProps {
   selected?: boolean;
   // Dimmed: the position it stands on is old.
   stale?: boolean;
-  // A "+" at the face's upper right, as an answer's face carries "?" and "✓": a press adds the person.
+  // A "+" at the drop's upper right, outside the Avatar, as an answer's face carries "?" and "✓": a press adds the
+  // person.
   addable?: boolean;
   // Called once the photo is shown or has failed, for a caller that waits for the finished look.
   onPhotoSettled?: () => void;
@@ -38,6 +39,10 @@ const SMALL_SIDE = 24;
 const SMALL_FACE = 0.68;
 const SELECTED = 1.18;
 const BADGE = 14;
+// While the "+" is carried the box grows this much at both sides and at the top, so that the badge in its upper right
+// corner lies outside the Avatar, on the drop's rim, and whole inside the box the picture is made from. The drop and
+// its tip keep their place in the box, so the face stands where it stood.
+const BADGE_ROOM = 6;
 // A square turned by 45° reaches (√2 − 1) / 2 of its side below its own box: the marker's tip.
 const TIP = (Math.SQRT2 - 1) / 2;
 
@@ -68,12 +73,13 @@ export function MapPerson({
 }: MapPersonProps): ReactElement {
   const grown = selected ? SELECTED : 1;
   const side = (small ? SMALL_SIDE : SIDE) * grown;
+  const room = addable ? BADGE_ROOM : 0;
   return (
-    <View style={[{ width: side, height: side * (1 + TIP) }, stale && styles.stale]} testID={testID}>
+    <View style={[{ width: side + room * 2, height: side * (1 + TIP) + room }, stale && styles.stale]} testID={testID}>
       <View
         style={[
           styles.drop,
-          { width: side, height: side, backgroundColor: presence[tone] },
+          { width: side, height: side, marginTop: room, marginLeft: room, backgroundColor: presence[tone] },
           roundBut(side / 2),
           selected && styles.selected,
         ]}
