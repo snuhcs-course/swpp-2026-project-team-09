@@ -4,6 +4,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -110,7 +111,7 @@ export class PartiesService {
     if (membership === null) {
       throw notInParty();
     }
-    return toPartyDto(membership.party, userId, new Set(await this.visibility.visibleTo(userId)));
+    return toPartyDto(membership.party, userId, new Set((await this.visibility.visibleTo(userId)).keys()));
   }
 
   // The Parties the User can see and is not in: those of the Quests the User holds and those the User's Friends are

@@ -193,23 +193,25 @@ Request to it. The routes, all a User's:
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
 - `GET /friends` answers the User's Friends in the order of their names:
-  `[{ "id", "name", "department", "sharing", "visible" }]`, where `id` is the Friend's User id, `sharing` the User's own
-  switch for the friendship and `visible` whether the User can see the Friend on the map now, never why not (see
-  [Location Sharing](#location-sharing)).
+  `[{ "id", "name", "department", "level", "sharing", "visible" }]`, where `id` is the Friend's User id, `level` the
+  User's own end of the friendship, `sharing` whether it is above `timetable`, and `visible` whether the User sees the
+  Friend's position or Place on the map now, never why not (see [Location Sharing](#location-sharing)).
 - `DELETE /friends/:userId` ends the friendship for both and answers 204.
-- `PUT /friends/:userId/sharing` with `{ "on": false }` turns the User's switch for the friendship off, `{ "on": true }`
-  on, and answers 204. It changes the User's own end only.
+- `PUT /friends/:userId/level` with `{ "level": "timetable" }`, `"building"`, or `"exact"` sets what the User lets the
+  Friend see of where they are, and answers 204. It changes the User's own end only.
+- `PUT /friends/:userId/sharing`, for an app of before the levels: `{ "on": true }` sets the User's end to `exact`, and
+  `{ "on": false }` to `timetable`.
 
 A Friend ID is read in capitals, so one typed in small letters is found too. The refusals each have a `code`:
 
-| Refusal                                                                     | Status | `code`                        |
-| --------------------------------------------------------------------------- | ------ | ----------------------------- |
-| A Friend ID nobody holds, looked up or sent to                              | 404    | `FRIEND_ID_NOT_FOUND`         |
-| A Friend Request to the sender's own Friend ID                              | 400    | `OWN_FRIEND_ID`               |
-| A Friend Request to a Friend                                                | 409    | `ALREADY_FRIENDS`             |
-| A Friend Request to a User the sender's request already waits for           | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
-| An answer to a request that is not waiting for it from this User            | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
-| Ending a friendship, or turning its switch, with a User who is not a Friend | 404    | `FRIEND_NOT_FOUND`            |
+| Refusal                                                                    | Status | `code`                        |
+| -------------------------------------------------------------------------- | ------ | ----------------------------- |
+| A Friend ID nobody holds, looked up or sent to                             | 404    | `FRIEND_ID_NOT_FOUND`         |
+| A Friend Request to the sender's own Friend ID                             | 400    | `OWN_FRIEND_ID`               |
+| A Friend Request to a Friend                                               | 409    | `ALREADY_FRIENDS`             |
+| A Friend Request to a User the sender's request already waits for          | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
+| An answer to a request that is not waiting for it from this User           | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
+| Ending a friendship, or setting its level, with a User who is not a Friend | 404    | `FRIEND_NOT_FOUND`            |
 
 A request answered or cancelled already is not waiting, so a second answer gets `FRIEND_REQUEST_NOT_FOUND`.
 
@@ -225,8 +227,8 @@ After each change, `friends-changed` goes to both Users: when a request is sent,
 when a friendship ends. It carries nothing, and the app fetches `GET /friends` and `GET /friend-requests` again (see
 [Signals](#signals)).
 
-A friendship starts with both switches on, so accepting a Friend Request starts Location Sharing between the two. The
-table keeps each User's switch at their own end, in `user_a_sharing` and `user_b_sharing`.
+A friendship starts at `building` on both ends, so accepting a Friend Request starts Location Sharing between the two
+at the building. The table keeps each User's level at their own end, in `user_a_level` and `user_b_level`.
 
 An Administrator sets up demo accounts through `src/friends/admin-friends.controller.ts`, whose routes need an
 Administrator's access token (see [Administrators](#administrators)). Nothing else about a User is read or changed
@@ -239,7 +241,7 @@ there:
 - `GET /admin/users/:id/friends` answers the User's Friends in the order of `GET /friends`, each as
   `{ "id", "name", "email", "department", "friendId", "since" }`, `since` being when the friendship started.
 - `POST /admin/friendships` with `{ "userAId": "...", "userBId": "..." }`, in either order, makes the two Friends and
-  answers 204. The friendship is stored and announced as an accepted Friend Request's: the same row, both switches on,
+  answers 204. The friendship is stored and announced as an accepted Friend Request's: the same row, both at `building`,
   and `friends-changed` to both once it is stored. A Friend Request waiting between the two becomes the friendship and
   keeps its sender, as accepting an Invite Link does; otherwise the sender is `userAId`. A repeat is refused as already
   Friends, so it takes no `Idempotency-Key`.
@@ -320,12 +322,15 @@ numbers below are provisional until P17 has checked them on a phone.
   (`users.master_switch_on`), starts off, and signing in and signing out leave it as it is.
   `PUT /users/me/master-switch` with `{ "on": true }` or `{ "on": false }` answers 204, and the lobby returns it as
   `masterSwitch`. Turning it off clears the User's position.
-- **The switch of a friendship** is each Friend's own, on their end of the friendship, and starts on (see
+- **The level of a friendship** is each Friend's own, on their end of the friendship: `timetable` (the Timetable
+  only), `building` (the Place they are in), or `exact` (their position). It starts at `building` (see
   [Friends](#friends)).
-- **Who sees whom**: a viewer sees a subject when both Master Switches are on, the subject has a position, which is
-  kept only inside the [Campus Boundary](#campus-boundary), and a relationship between the two has its switch on at
-  both ends. A friendship is the one relationship so far. Sharing is mutual: the rule is the same both ways, and a User
-  who turns a switch off also stops seeing the other. A Friend off campus, one with sharing off and one whose position
+- **Who sees what of whom** (`src/location-sharing/friend-level.ts`): nothing while either Master Switch is off; the
+  position between members of a common Party who both have its switch on; and otherwise the lower of the two ends of
+  their friendship. The rule is the same both ways, and a User who lowers their end also sees the other no higher. A
+  viewer at `exact` sees the subject's position, which is kept only inside the [Campus Boundary](#campus-boundary). A
+  viewer at `building` sees only the Place the position is in, at the Place's own point, and nothing while it is in no
+  Place: no position of the subject ever reaches them. A Friend off campus, one at `timetable` and one whose position
   has expired look the same: no position, and `visible` false.
 - `POST /positions` with `{ "latitude": 37.4594, "longitude": 126.95199, "accuracy": 12, "measuredAt": "..." }`
   uploads a position, where `accuracy` is the radius in metres within which the phone places itself and `measuredAt`
@@ -334,9 +339,10 @@ numbers below are provisional until P17 has checked them on a phone.
   `200 { "offCampus": true }`: the app tells the User that they are not shared because they are off campus. The
   Boundary is checked in server code, without a database query. Each upload replaces the one before, so it takes no
   `Idempotency-Key`.
-- `GET /positions` answers the positions the User may see now:
-  `[{ "userId", "latitude", "longitude", "measuredAt" }]`. The app fetches it when it connects, reconnects and returns
-  to the front.
+- `GET /positions` answers what the User may see now of each subject: `{ "userId", "latitude", "longitude",
+"measuredAt", "level": "exact" }` with the position, or `{ "userId", "placeId", "latitude", "longitude",
+"measuredAt", "level": "building" }` with the Place's id and point. The app fetches it when it connects, reconnects
+  and returns to the front.
 
 An upload is refused, and nothing is stored, with these codes. The three numbers are `MAX_POSITION_AGE_MS`,
 `MAX_POSITION_LEAD_MS` and `MAX_ACCURACY_METRES` in `src/location-sharing/location-sharing.service.ts`.
@@ -349,30 +355,36 @@ An upload is refused, and nothing is stored, with these codes. The three numbers
 | An accuracy radius over 100 metres                        | 400    | `POSITION_TOO_INACCURATE` |
 
 What is stored: only each User's latest position, in Redis under `position:<userId>` as
-`{ "latitude", "longitude", "measuredAt" }`, which expires 10 minutes after it was stored. Redis counts the 10
+`{ "latitude", "longitude", "measuredAt", "placeId" }`, `placeId` being the Place it is in or null, which expires 10
+minutes after it was stored. Redis counts the 10
 minutes. No position is written to the database or to a log, and no history is kept. The position is cleared when the
 User turns the Master Switch off, uploads a position off campus, and when the User's session ends, by a sign-in on
 another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
 
 What is pushed, through the [socket server](../socket-server/README.md#signals):
 
-- Each position kept goes as `position`, with `{ "userId", "latitude", "longitude", "measuredAt" }`, to the Users who
-  may see the subject at that moment. Delivery is lossy on purpose: only the newest position matters.
-- `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see the subject before a
-  change and cannot after it: when either turns the Master Switch or the friendship's switch off, when the friendship
-  ends, when the subject leaves the Campus Boundary and when the subject's session ends.
+- Each position kept goes as `position`, in the form `GET /positions` gives, to the Users who may see the subject at
+  that moment: to a viewer at `exact` each time, and to one at `building` only when the Place differs from the one of
+  the position before. Delivery is lossy on purpose: only the newest position matters.
+- `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see something of the
+  subject before a change and nothing after it: when either turns the Master Switch off or lowers the friendship to
+  `timetable`, when the friendship ends, when the subject leaves the Campus Boundary, or every Place for a viewer at
+  `building`, and when the subject's session ends.
+- A viewer who sees only the subject's Place after a change and saw the position, or nothing, before it gets
+  `position` with the Place at once: when the friendship is lowered from `exact` to `building`, or raised from
+  `timetable`, and when a common Party ends for Friends at `building`. One raised to `exact` gets the next upload.
 
 `VisibilityService` in `src/location-sharing/visibility.service.ts`, exported by `LocationSharingModule`, is the one
-place that decides who sees whom:
+place that decides who sees what of whom:
 
-- `viewersOf(subjectId)`: who may see the subject now.
-- `visibleTo(viewerId)`: whom the viewer may see now.
-- `announceRemovals(userId, change)`: runs `change`, a change that may end what the User sees or who sees the User,
-  and sends `position-removed` to each viewer who saw a subject before and does not after. It compares who sees whom
-  among the pairs that include the User, before and after the change. Pass the User whose switch, relationship or
-  position the change touches: every sight it can end includes that User, so a new cause, such as leaving a Party,
-  only wraps its change in it. A change that touches several Users at once, as the end of a Party does, passes them
-  all as a list, and each sight is announced once.
+- `viewersOf(subjectId)`: who may see the subject now, each with their level.
+- `visibleTo(viewerId)`: what the viewer may see now of each subject, as `GET /positions` gives it.
+- `announceRemovals(userId, change)`: runs `change`, a change that may alter what the User sees or what others see
+  of the User, and tells each viewer whose sight of a subject it altered, as above. It compares who sees what of whom
+  among the pairs that include the User, before and after the change. Pass the User whose switch, level, relationship
+  or position the change touches: every sight it can alter includes that User, so a new cause, such as leaving a
+  Party, only wraps its change in it. A change that touches several Users at once, as the end of a Party does, passes
+  them all as a list, and each sight is announced once.
 
 ## Administrators
 
@@ -2366,6 +2378,14 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
       person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
       or rooms.
+    - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
+      It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
+      `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps
+      those that fit, the longer stay first, then those that clash with an item, and drops those the asker cannot
+      reach in time or stay at for 30 minutes. `eventIds` are accepted only when `searchGlobalEvents` returned them in
+      the message. It answers the model `planned` with each plan's title, place, arrival, stay, leave-by, and clash in
+      words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` refuses any but a
+      meal's with 400 `PLAN_KIND`.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.

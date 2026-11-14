@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -82,21 +83,33 @@ interface Shown {
 
 type ShownButton = Shown['buttons'][number];
 
+// The question before opening the Quest's Party, `others` being its other Holders, also asked from 알림.
+export function openAsk(
+  others: number,
+  otherParty: OtherParty | null,
+  masterSwitch: boolean,
+  onConfirm: () => void,
+): Ask {
+  const notice = others > 0 ? `멤버 ${others}명에게 알림이 가요. ` : '';
+  return {
+    title: '파티를 활성화할까요?',
+    body: `${notice}수락한 멤버끼리만 서로 위치를 볼 수 있어요.${switchLine(otherParty)}${masterSwitch ? '' : SWITCH_OFF_LINE}`,
+    confirm: '활성화',
+    danger: false,
+    onConfirm,
+  };
+}
+
 function openButton({ room, actions, onAsk }: ActivationBoxProps, masterSwitch: boolean): ShownButton {
   const { quest, otherParty } = room;
   const others = quest.holders.length - 1;
-  const notice = others > 0 ? `멤버 ${others}명에게 알림이 가요. ` : '';
   return {
     label: '파티 활성화',
     variant: 'primary',
     onPress: () => {
-      onAsk({
-        title: '파티를 활성화할까요?',
-        body: `${notice}수락한 멤버끼리만 서로 위치를 볼 수 있어요.${switchLine(otherParty)}${masterSwitch ? '' : SWITCH_OFF_LINE}`,
-        confirm: '활성화',
-        danger: false,
-        onConfirm: () => void actions.openParty(quest, others, leavingOf(otherParty)),
-      });
+      onAsk(
+        openAsk(others, otherParty, masterSwitch, () => void actions.openParty(quest, others, leavingOf(otherParty))),
+      );
     },
   };
 }

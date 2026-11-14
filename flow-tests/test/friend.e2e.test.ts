@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -21,10 +22,12 @@ async function theyBecomeFriendsThroughAnInviteLink(minji: Student, jun: Student
   await jun.inbox.receivesSignal('friends-changed');
 }
 
-// Both turn the Master Switch on, and each receives the other's position.
+// Both turn the Master Switch on and let the other see their exact position, and each receives the other's position.
 async function theySeeEachOther(minji: Student, jun: Student): Promise<void> {
   await minji.put('/users/me/master-switch', { on: true });
   await jun.put('/users/me/master-switch', { on: true });
+  await minji.put(`/friends/${jun.id}/level`, { level: 'exact' });
+  await jun.put(`/friends/${minji.id}/level`, { level: 'exact' });
   await minji.uploadsPosition(JAHAYEON);
   await jun.receivesPositionOf(minji, JAHAYEON);
   await jun.uploadsPosition(ENGINEERING_BUILDING);
