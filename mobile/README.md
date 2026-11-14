@@ -804,9 +804,11 @@ slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to wh
 
 - **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department, with "결과 없음"; the row
   "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
-  order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and the switch "{이름}님과 위치 공유".
-  A switch shows its new state at once, sends `setFriendSharing`, and turns back with "위치 공유를 바꾸지 못했어요" when
-  that fails; the Friends and the positions are fetched again after it. A press on a Friend opens a bottom sheet with
+  order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and, under it, the User's level for
+  that Friend as three cells of one width in a row, "시간표만", "지금 있는 건물", and "정확한 위치"
+  ("{이름}님에게 보일 위치"), with the note "둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요". A choice shows at
+  once, sends `setFriendLevel`, and turns back with "위치 공유를 바꾸지 못했어요" when that fails; the Friends and the
+  positions are fetched again after it. A press on a Friend opens a bottom sheet with
   "친구 끊기", which a danger dialog confirms; the Friend then leaves the list, the friend panel and the map. A
   friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
 - **친구 요청** (`/me/friends/requests`, also from a Friend Request in 알림): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
@@ -1138,7 +1140,7 @@ Behind a hook are three layers:
 | `setMasterSwitch`                                                    | Nothing                                                      | `PUT /users/me/master-switch`                                           |
 | `uploadPosition`                                                     | Whether the position was off campus                          | `POST /positions`                                                       |
 | `listFriends`                                                        | The Friends                                                  | `GET /friends`                                                          |
-| `setFriendSharing`, `endFriendship`                                  | Nothing                                                      | `PUT /friends/:userId/sharing`, `DELETE /friends/:userId`               |
+| `setFriendLevel`, `endFriendship`                                    | Nothing                                                      | `PUT /friends/:userId/level`, `DELETE /friends/:userId`                 |
 | `findFriendId`                                                       | The owner of a Friend ID                                     | `GET /friend-ids/:friendId`                                             |
 | `sendFriendRequest`                                                  | Whether the request waits or made two Friends                | `POST /friend-requests`                                                 |
 | `listFriendRequests`                                                 | The Friend Requests received and sent                        | `GET /friend-requests`                                                  |

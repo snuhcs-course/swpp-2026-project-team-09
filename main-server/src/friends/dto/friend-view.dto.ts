@@ -2,9 +2,9 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-// 'building' is for the per-Friend levels, and is not given yet.
 export type FriendLevel = 'timetable' | 'building' | 'exact';
 
 // What a viewer sees of a Friend now. A Friend's Timetable is visible at every level.

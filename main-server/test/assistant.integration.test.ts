@@ -6,6 +6,7 @@
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-29  Fable 5.1  prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -54,7 +55,7 @@ describe('The chat Assistant', () => {
     const response = await postAssistantMessages(app, accessToken, ask('안녕'));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ text, mapButtons: [], cards: [], proposal: null, answer: null });
+    expect(response.body).toEqual({ text, mapButtons: [], cards: [], proposal: null, answer: null, lookup: null });
   });
 
   it("gives the model the conversation, the User's new message last", async () => {
@@ -129,6 +130,7 @@ describe('getMenus', () => {
       cards: [],
       proposal: null,
       answer: null,
+      lookup: null,
     });
     expect(model.toolResults()).toEqual([{ result: 'found', date, restaurants: [studentCentre] }]);
   });
@@ -208,6 +210,7 @@ describe('showOnMap', () => {
       cards: [],
       proposal: null,
       answer: null,
+      lookup: null,
     });
     expect(model.toolResults()).toEqual([{ result: 'shown', layer: 'dining' }]);
   });
@@ -236,6 +239,7 @@ describe('showOnMap', () => {
       cards: [],
       proposal: null,
       answer: null,
+      lookup: null,
     });
     expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
   });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -21,10 +22,11 @@ export interface UploadedPositionDto {
   offCampus: boolean;
 }
 
-// A User's latest position, as the fetch answers it and `position` carries it.
-export interface PositionDto {
+// A User's latest position as a viewer sees it, as the fetch answers it and `position` carries it: the position itself
+// at 'exact', and at 'building' the Place the User is in, at the Place's own point.
+export type PositionDto = {
   userId: string;
   latitude: number;
   longitude: number;
   measuredAt: string;
-}
+} & ({ level: 'exact' } | { level: 'building'; placeId: string });

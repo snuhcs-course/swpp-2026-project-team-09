@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -45,15 +46,16 @@ import {
   type RunLimits,
   type RunObserver,
 } from './adapter.js';
-import { chatAssistant } from './chat/chat-assistant.js';
+import { chatAssistant, type ChatAssistantServices } from './chat/chat-assistant.js';
 import { NO_CONTEXT, type RequestContext } from './dto/answer.dto.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
 import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
-import { MealPlanService } from './gathering/meal-plan.service.js';
 import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
+import { WayService } from './lookup/way.service.js';
+import { PlanAnswersService } from './plan-answers.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
 // message cost more.
@@ -65,9 +67,8 @@ const COUNT_LIFETIME_SECONDS = 2 * 24 * 60 * 60;
 @Injectable()
 export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
-  private readonly chat: Feature;
-  // The same chat for an app that draws answers on the map.
-  private readonly answerChat: Feature;
+  // The chat, the same for an app that draws answers on the map, and for one that also draws a day's events.
+  private readonly chats: Record<'plain' | 'answer' | 'events', Feature>;
   private readonly keyConfigured: boolean;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
@@ -92,10 +93,12 @@ export class AssistantService {
     quests: QuestsService,
     users: UsersService,
     tutorial: TutorialService,
-    mealPlans: MealPlanService,
+    plans: PlanAnswersService,
+    ways: WayService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
+    const enabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     const services = {
       menus,
       shuttle,
@@ -104,20 +107,12 @@ export class AssistantService {
       friends,
       places,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
-      library: {
-        catalogue,
-        freeTime,
-        friends,
-        quests,
-        users,
-        arrival: { days, places: placeLookup, travel },
-        enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
-      },
+      library: { catalogue, freeTime, friends, quests, users, arrival: { days, places: placeLookup, travel }, enabled },
       tutorial,
-      mealPlans,
+      plans,
+      ways,
     };
-    this.chat = chatAssistant(services);
-    this.answerChat = chatAssistant(services, { drawsAnswers: true });
+    this.chats = chatsOf(services);
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
     this.limits = limitsOf(settings);
@@ -145,7 +140,7 @@ export class AssistantService {
     try {
       const reply = await runFeature(
         this.model,
-        capabilities.includes('answer') ? this.answerChat : this.chat,
+        this.chatFor(capabilities),
         { userId, now, capabilities, context },
         latest,
         this.limits,
@@ -154,12 +149,19 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, answer } = reply;
-      return { text, mapButtons, cards, proposal, answer };
+      const { text, mapButtons, cards, proposal, answer, lookup } = reply;
+      return { text, mapButtons, cards, proposal, answer, lookup };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
     }
+  }
+
+  private chatFor(capabilities: readonly ClientCapability[]): Feature {
+    if (!capabilities.includes('answer')) {
+      return this.chats.plain;
+    }
+    return capabilities.includes('events') ? this.chats.events : this.chats.answer;
   }
 
   // Counts the User's message in their day in Korea, and answers how many they have sent that day.
@@ -169,6 +171,14 @@ export class AssistantService {
     await this.redis.expire(key, COUNT_LIFETIME_SECONDS);
     return sent;
   }
+}
+
+function chatsOf(services: ChatAssistantServices): Record<'plain' | 'answer' | 'events', Feature> {
+  return {
+    plain: chatAssistant(services),
+    answer: chatAssistant(services, { drawsAnswers: true }),
+    events: chatAssistant(services, { drawsAnswers: true, drawsEvents: true }),
+  };
 }
 
 function limitsOf(settings: ConfigService<Settings, true>): RunLimits {

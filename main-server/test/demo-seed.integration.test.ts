@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -111,6 +112,8 @@ it('gives an onboarded account named in the list its Friends, requests and invit
     invitations: 1,
     parties: [{ title: '중도 스터디 중', joinPolicy: 'open', memberCount: 2 }],
   });
+  const ends = await prisma.friendship.findMany({ where: { acceptedAt: { not: null } } });
+  expect(new Set(ends.flatMap(({ userALevel, userBLevel }) => [userALevel, userBLevel]))).toEqual(new Set(['exact']));
   await vi.waitFor(() => {
     expect(watcher.for({ id: prepared[0] ?? '' }).map(({ name }) => name)).toStrictEqual(
       expect.arrayContaining(['friends-changed', 'quests-changed', 'party-changed']),

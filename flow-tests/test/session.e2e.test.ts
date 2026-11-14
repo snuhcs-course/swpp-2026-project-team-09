@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -9,7 +10,8 @@ import { inviteLink } from './answers.js';
 import { ENGINEERING_BUILDING, JAHAYEON, NEW_MEDIA_INSTITUTE } from './campus.js';
 import { signIn, type Student } from './people.js';
 
-// Jun accepts Minji's Invite Link, both turn the Master Switch on, and Minji's position on campus reaches Jun.
+// Jun accepts Minji's Invite Link, both turn the Master Switch on and let the other see their exact position, and
+// Minji's position on campus reaches Jun.
 async function theyAreFriendsWhoSeeEachOther(minji: Student, jun: Student): Promise<void> {
   const { url } = await minji.post('/invite-links', undefined, inviteLink);
   await jun.post(`/invite-links/${url.split('/invite/').at(1) ?? ''}/accept`);
@@ -17,6 +19,8 @@ async function theyAreFriendsWhoSeeEachOther(minji: Student, jun: Student): Prom
   await jun.inbox.receivesSignal('friends-changed');
   await minji.put('/users/me/master-switch', { on: true });
   await jun.put('/users/me/master-switch', { on: true });
+  await minji.put(`/friends/${jun.id}/level`, { level: 'exact' });
+  await jun.put(`/friends/${minji.id}/level`, { level: 'exact' });
   await minji.uploadsPosition(JAHAYEON);
   await jun.receivesPositionOf(minji, JAHAYEON);
 }

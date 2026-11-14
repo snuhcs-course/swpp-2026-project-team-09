@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { FIXED_SENTENCE, runFeature } from '../src/assistant/adapter.js';
-import { type AnswerReply, NO_CONTEXT, type RequestContext } from '../src/assistant/dto/answer.dto.js';
+import { type AnswerReply, type Lookup, NO_CONTEXT, type RequestContext } from '../src/assistant/dto/answer.dto.js';
 import { defineTool, type Feature, type Request } from '../src/assistant/feature.js';
 import { ScriptedModel } from './scripted-model.js';
 
@@ -30,6 +31,16 @@ const ANSWER: AnswerReply = {
   noPlan: { reason: 'no-menu', lines: [] },
 };
 
+const LOOKUP: Lookup = {
+  kind: 'way',
+  chips: [{ kind: 'origin', text: '301동에서', userId: null }],
+  lines: [],
+  basis: [],
+  scene: { people: [], places: [], routes: [], flags: [] },
+  band: null,
+  actions: [],
+};
+
 const model = new ScriptedModel();
 
 // One tool, `plan`, that tells what location it was run with and puts `answer` in the reply.
@@ -43,6 +54,23 @@ function featureAnswering(answer: AnswerReply | null): Feature {
         run: (_, { context, presented }) => {
           presented.answer = answer;
           return Promise.resolve({ location: context.location });
+        },
+      }),
+    },
+  };
+}
+
+// One tool, `find`, that puts `lookup` in the reply.
+function featureLookingUp(lookup: Lookup): Feature {
+  return {
+    instructions: () => 'test',
+    tools: {
+      find: defineTool({
+        description: 'Finds a way.',
+        input: z.object({}),
+        run: (_, { presented }) => {
+          presented.lookup = lookup;
+          return Promise.resolve({ result: 'found' });
         },
       }),
     },
@@ -87,5 +115,31 @@ describe("A run's request context and answer", () => {
     const reply = await runFeature(model.model, featureAnswering(ANSWER), asker(NO_CONTEXT), ask, LIMITS);
 
     expect(reply).toMatchObject({ text: FIXED_SENTENCE, answer: ANSWER, noTextFinishReason: 'stop' });
+  });
+});
+
+describe("A run's Lookup", () => {
+  it('replies with the Lookup a tool put there', async () => {
+    model.script({ tool: 'find', input: {} }, { text: '문화관은 여기예요.' });
+
+    const reply = await runFeature(model.model, featureLookingUp(LOOKUP), asker(NO_CONTEXT), ask, LIMITS);
+
+    expect(reply).toMatchObject({ text: '문화관은 여기예요.', answer: null, lookup: LOOKUP });
+  });
+
+  it('replies with no Lookup when no tool put one there', async () => {
+    model.script({ text: '안녕하세요!' });
+
+    const reply = await runFeature(model.model, featureLookingUp(LOOKUP), asker(NO_CONTEXT), ask, LIMITS);
+
+    expect(reply.lookup).toBeNull();
+  });
+
+  it('says the fixed sentence over a Lookup when no step wrote text', async () => {
+    model.script({ tool: 'find', input: {} }, { text: '' });
+
+    const reply = await runFeature(model.model, featureLookingUp(LOOKUP), asker(NO_CONTEXT), ask, LIMITS);
+
+    expect(reply).toMatchObject({ text: FIXED_SENTENCE, lookup: LOOKUP, noTextFinishReason: 'stop' });
   });
 });

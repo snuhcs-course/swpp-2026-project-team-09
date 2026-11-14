@@ -3,10 +3,11 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type AnswerReply, type Plan, type PlanInput, type RequestContext } from '../dto/answer.dto.js';
+import { type AnswerReply, type MealInput, type Plan, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Tool } from '../feature.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { othersText } from '../others-text.js';
@@ -89,7 +90,8 @@ function refuseUnseen(found: FoundIds, kind: FoundKind, ids: readonly string[], 
   );
 }
 
-function seenIds({ conditions, tapped }: RequestContext): { friends: string[]; places: string[] } {
+function seenIds({ conditions: shown, tapped }: RequestContext): { friends: string[]; places: string[] } {
+  const conditions = shown?.kind === 'meal' ? shown : null;
   const placeOnScreen = conditions?.placeId ?? null;
   return {
     friends: [
@@ -105,9 +107,9 @@ function seenIds({ conditions, tapped }: RequestContext): { friends: string[]; p
 function constraintsOf(
   { conditions }: RequestContext,
   date: string,
-  meal: PlanInput['meal'],
-): Map<string, PlanInput['people'][number]['constraints']> {
-  if (conditions === null || conditions.date !== date || conditions.meal !== meal) {
+  meal: MealInput['meal'],
+): Map<string, MealInput['people'][number]['constraints']> {
+  if (conditions?.kind !== 'meal' || conditions.date !== date || conditions.meal !== meal) {
     return new Map();
   }
   return new Map(conditions.people.map(({ userId, constraints }) => [userId, constraints]));
@@ -126,7 +128,7 @@ export function planMeal(plans: MealPlanService): Tool {
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       const kept = constraintsOf(context, date, meal);
-      const planInput: PlanInput = {
+      const planInput: MealInput = {
         kind: 'meal',
         date,
         meal,
@@ -136,6 +138,7 @@ export function planMeal(plans: MealPlanService): Tool {
       };
       const answer = await plans.plan(userId, planInput, { now, location: context.location });
       presented.answer = answer;
+      presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
         return { result: 'none', reason: NONE_REASONS[answer.noPlan.reason] };
