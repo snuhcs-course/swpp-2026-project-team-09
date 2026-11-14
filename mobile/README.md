@@ -665,6 +665,23 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
   and the 편의기능 button stay.
+- **The first run** (`src/features/first-run/`, `first-run/first-run-ask.tsx`, P05 ticket 09). A User who finishes
+  Onboarding on this phone is asked three things, one card at a time at the bottom card's place, each under
+  "시작하기 · n/3" and with "나중에", which skips it: "시간표부터 넣어 주세요" ("수업 사이의 빈 시간에 맞춰 짜요",
+  "친구에게는 수업 건물과 끝나는 시각만 보여요"), whose "시간표 넣기" opens 시간표; "무엇에 관심이 있어요?", whose chips
+  (채용, 공연, 동아리 모집, 배드민턴, 스터디, 전시, 축제, and 러닝, the wireframe's) are kept with "{n}개 맡기기", one
+  `POST /interests` each, or "관심을 맡기지 못했어요"; and "친구 한 명을 불러 보세요" ("친구에게는 먼저 내가 있는 건물이
+  보여요"), whose "초대 링크 보내기" makes an Invite Link and opens the share sheet as 친구 추가 does
+  (`useSendInviteLink`). The end of Onboarding keeps the three cards for the signed-in User (`src/storage/first-run.ts`,
+  under `snunow.first-run:{userId}`), and each answered or skipped card leaves the list; a User without a list, as
+  every User who finished Onboarding before, sees none, and the main screen asks the main server nothing more for
+  them. A card shows only while the User has no Class, no watched interest, or no Friend, and counts as answered once
+  the User has it, by the card or elsewhere (`rules.ts`); one that waits for a list not yet fetched shows nothing.
+  The interests card is passed over for a main server that keeps no interests. A card gives way to a selected
+  thing's card, the chat, and the answer frame, and hides what a card at the bottom hides. A User of the first run
+  who watches no interest sees "관심을 맡기면 맞는 행사를 알려 드려요" at the left, 8 above the row of buttons or the
+  tutorial's start button (`InterestsHint`), which opens the interests card again; the friend list and the map's
+  credit stand above it.
 - **The 편의기능 stack** (`layers.tsx`, the `MainLayers` frame). The button, "편의기능 (식당 · 셔틀버스)", opens and
   closes it and says whether it is open; it is navy with a white icon while the stack is open, and under its icon a
   dot of 5 in each colour of a layer that is on. The stack rises 8 above it, or appears at once where the phone asks
@@ -786,8 +803,18 @@ cards from the top:
   "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
   못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
   it for 1.2 s;
-- "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
-  whole screen).
+- "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티), "내 퀘스트" (the Quest list on the
+  whole screen), and "관심사 {n}" (관심사, with the number of watched interests).
+
+관심사 (`/me/interests`, `src/screens/me/interests-screen.tsx`, P05 ticket 08) has two cards. "프로필 관심사" shows the
+profile's hashtags from the Lobby as chips ("#러닝"), or "프로필에 넣은 관심사가 없어요", over "프로필 편집에서 바꿀 수
+있어요". "맡겨 둔 관심" says "지켜봐 드리는 것은 행사와 모집뿐이에요" and lists the watched interests
+(`GET /interests`), the newest first: the words as said, the topics they were read as where those differ from the
+words (`interestRow` in `src/features/interests/adapter.ts`), and "지우기", which sends `DELETE /interests/:id`, says
+"관심을 지웠어요", and fetches the list again; an interest removed already (404 `INTEREST_NOT_FOUND`) counts as
+removed, and any other failure says "지우지 못했어요". Without one it says "맡겨 둔 관심이 없어요". A main server older
+than the route answers 404, which `listInterests` turns into null: the screen then shows the hashtags and the empty
+list, and 내 정보's row no number.
 
 "로그아웃" asks "로그아웃할까요?", then stops the sending, signs out and shows the sign-in screen. 프로필 편집
 (`profile-edit-screen.tsx`) edits the name, the department, the admission year and the interests with Onboarding's
@@ -818,7 +845,9 @@ Iteration 2 (P06), and commit `2f4f201` holds its code.
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its
 time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A Notification whose time is still to
 come shows its title for that (`ahead`), such as "12:18 나설 시각" for the time to leave (`leave-by`, a clock on the
-navy round), and its own title once the time has come. A kind the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
+navy round), and its own title once the time has come. A new match of a watched interest (`interest-new`, "채용박람회가
+떴어요") is on the navy round too, a calendar for an event and people for a recruiting party, by its address. A kind
+the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Quest the User leads with Approval ("참여 신청 {n}명"). A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
 (`src/features/notifications/address.ts`): a kept Notification's address is the main server's, and an invitation's is

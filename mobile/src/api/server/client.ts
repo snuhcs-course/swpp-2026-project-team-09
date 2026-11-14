@@ -11,6 +11,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -46,6 +47,7 @@ import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
 import { invitationCardClient } from './invitation-card-client';
+import { interestClient } from './interest-client';
 import { lateClient } from './late-client';
 import { partyClient } from './party-client';
 import { planQuestClient } from './plan-quest-client';
@@ -62,6 +64,7 @@ export const serverClient: ApiClient = {
   ...assistantClient,
   ...planQuestClient,
   ...invitationCardClient,
+  ...interestClient,
   ...lateClient,
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),
