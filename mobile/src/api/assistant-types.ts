@@ -6,11 +6,12 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
-import type { Board, GlobalEvent, JoinPolicy } from './types';
+import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
 
 // --- The Assistant (POST /assistant/messages) ---
 
@@ -22,8 +23,9 @@ export interface CardReference {
 }
 
 // What the app tells the main server it can draw, with every chat request: library cards. An app without it (the
-// 1.0.0 bundle) is never sent one.
+// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map.
 export const CLIENT_CAPABILITIES = ['library'] as const;
+export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -210,11 +212,146 @@ export function referenceOf(card: ChatCard): CardReference {
   return { kind: card.kind, id: card.kind === 'quest' ? card.quest.id : card.globalEvent.id };
 }
 
+// --- An answer drawn on the map (main-server `assistant/dto/answer.dto.ts`, the same shapes) ---
+
+// Times are Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
+
+// What the app knows when the User asks, each part null when it does not know it.
+export interface RequestContext {
+  location: LatLng | null;
+  // The visible map area.
+  viewport: { south: number; west: number; north: number; east: number } | null;
+  tapped: { kind: 'place'; placeId: string } | { kind: 'friend'; userId: string } | null;
+  // The condition chips of the answer on screen.
+  conditions: PlanInput | null;
+  // The plan on screen.
+  planId: string | null;
+}
+
+// The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
+export interface PlanInput {
+  kind: 'meal';
+  // YYYY-MM-DD in Korea.
+  date: string;
+  meal: 'lunch' | 'dinner';
+  // Everyone of the plan, the asker first.
+  people: PlanPerson[];
+  // What the User fixed on the time band or in words.
+  window: { from: string | null; until: string | null };
+  // The Place the User fixed.
+  placeId: string | null;
+}
+
+export interface PlanPerson {
+  userId: string;
+  constraints: PersonConstraint[];
+}
+
+// `source` says who set it: the asker (words, a tap, a drag) or the person it is about.
+export type PersonConstraint =
+  | { kind: 'from'; placeId: string; source: 'asker' | 'person' }
+  | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
+  | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
+
+export interface AnswerReply {
+  // Sent back, changed, to recalculate.
+  input: PlanInput;
+  chips: ConditionChip[];
+  // The Assistant's pick first; the arrows browse the rest.
+  plans: Plan[];
+  // Considered, but they do not fit.
+  dropped: DroppedPlace[];
+  noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
+}
+
+export interface ConditionChip {
+  kind: 'origin' | 'until' | 'person';
+  text: string;
+  userId: string | null;
+}
+
+export type AnswerLine = { text: string; strong: boolean }[];
+
+export interface PlacePoint {
+  placeId: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface DroppedPlace {
+  place: PlacePoint;
+  reason: string;
+}
+
+export interface Plan {
+  // Unique within the answer.
+  id: string;
+  // The title of the Quest the plan becomes.
+  title: string;
+  place: PlacePoint;
+  // When everyone is there.
+  startAt: string;
+  // When the first must leave.
+  endAt: string;
+  togetherMinutes: number;
+  // The merging point.
+  meeting: { place: PlacePoint; at: string; userIds: string[] } | null;
+  // Each person's part of the plan, the asker first.
+  parts: PlanPart[];
+  // The Sub Quests of the Quest the plan becomes.
+  subQuests: { at: string; placeId: string; title: string }[];
+  // At most two.
+  lines: AnswerLine[];
+  basis: string[];
+  scene: MapScene;
+  band: TimeBand;
+}
+
+export interface PlanPart {
+  userId: string;
+  name: string;
+  me: boolean;
+  // Null when the position is unknown.
+  origin: { place: PlacePoint; basis: 'timetable' | 'location' | 'chosen' } | null;
+  leaveAt: string | null;
+  walkMinutes: number | null;
+  // Null when nothing follows.
+  leaveBy: string | null;
+  next: { startAt: string; place: PlacePoint | null } | null;
+}
+
+// What the map draws, by meaning. The app decides colours, camera, and label sides.
+export interface MapScene {
+  people: {
+    userId: string;
+    name: string;
+    me: boolean;
+    at: LatLng;
+    source: 'exact' | 'timetable';
+    tag: string | null;
+  }[];
+  places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
+  routes: { userId: string; role: 'me' | 'friend' | 'next'; from: LatLng; to: LatLng; minutes: number }[];
+  flags: { at: LatLng; text: string; role: 'place' | 'meeting' }[];
+}
+
+export interface TimeBand {
+  range: { startAt: string; endAt: string };
+  now: string;
+  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string }[] }[];
+  startAt: string;
+  endAt: string;
+  text: string;
+}
+
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, and the Proposal it made, or null.
+// cards in the order shown, the Proposal it made, or null, and the answer it drew on the map, or null. A main server
+// before P01-01 leaves the answer out.
 export interface AssistantReply {
   text: string;
   mapButtons: MapLayer[];
   cards: ChatCard[];
   proposal: QuestProposal | null;
+  answer?: AnswerReply | null;
 }

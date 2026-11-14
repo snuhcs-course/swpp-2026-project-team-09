@@ -5,15 +5,17 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AssistantReply, ChatMessage, QuestProposal } from '@/api/assistant-types';
+import type { AssistantReply, ChatMessage, QuestProposal, RequestContext } from '@/api/assistant-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { now } from '@/clock';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
+import { MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
 
@@ -22,7 +24,8 @@ import { isLibraryAsk, libraryReply } from './library-replies';
 // with a Proposal for tomorrow's lunch, or, 비공개, a Closed one for the mocks' first Global Event inviting their first Friend,
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
-// main server.
+// main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
+// the map.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -115,8 +118,11 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
-export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantReply {
+export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {
   const last = messages.at(-1)?.text ?? '';
+  if (context !== undefined && last.includes('배고파')) {
+    return MEAL_ANSWER_REPLY;
+  }
   if (SHUTTLE_WORDS.some((word) => last.includes(word))) {
     return { text: '셔틀이 어디 있는지 지도에서 볼 수 있어요.', mapButtons: ['shuttle'], cards: [], proposal: null };
   }
