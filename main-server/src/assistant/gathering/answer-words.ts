@@ -52,7 +52,8 @@ const HANGUL_FIRST = 0xac_00;
 const HANGUL_SYLLABLES = 11_172;
 const FINALS = 28;
 
-// Whether the last syllable of a word has a final consonant, which picks 은 over 는, 과 over 와, and 이 over 가.
+// Whether the last syllable of a word has a final consonant, which picks 은 over 는, 과 over 와, 이 over 가, and 이에요
+// over 예요.
 function hasFinal(word: string): boolean {
   const syllable = (word.at(-1)?.codePointAt(0) ?? 0) - HANGUL_FIRST;
   return syllable >= 0 && syllable < HANGUL_SYLLABLES && syllable % FINALS !== 0;
@@ -63,6 +64,8 @@ export const withTopic = (word: string): string => `${word}${hasFinal(word) ? '�
 export const withAnd = (word: string): string => `${word}${hasFinal(word) ? '과' : '와'}`;
 
 export const withSubject = (word: string): string => `${word}${hasFinal(word) ? '이' : '가'}`;
+
+export const withCopula = (word: string): string => `${word}${hasFinal(word) ? '이에요' : '예요'}`;
 
 // The item a person was busy with up to `readyAt`.
 export function itemBefore(items: readonly DayItem[], readyAt: Date): DayItem | null {

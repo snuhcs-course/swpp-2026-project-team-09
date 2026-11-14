@@ -1,0 +1,123 @@
+{
+  "kind": "way",
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    },
+    {
+      "kind": "until",
+      "text": "13:00 수업까지",
+      "userId": null
+    }
+  ],
+  "lines": [
+    [
+      {
+        "text": "지금 가도 ",
+        "strong": false
+      },
+      {
+        "text": "13:05",
+        "strong": true
+      },
+      {
+        "text": " 도착",
+        "strong": false
+      }
+    ],
+    [
+      {
+        "text": "5분 늦어요",
+        "strong": false
+      }
+    ]
+  ],
+  "basis": ["걸어서 15분 · 지금 12:50", "셔틀은 기다림 없이도 16분(정류장 2 · 타기 4 · 내려서 10)이라 걸어요"],
+  "scene": {
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "name": "유상",
+        "me": true,
+        "at": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "source": "exact",
+        "tag": "나"
+      }
+    ],
+    "places": [
+      {
+        "place": {
+          "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+          "label": "24동",
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "role": "next",
+        "tag": "13:00 수업 · 24동"
+      }
+    ],
+    "routes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "me",
+        "from": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "to": {
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "minutes": 15
+      }
+    ],
+    "flags": [
+      {
+        "at": {
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "text": "13:05 도착 · 5분 늦어요",
+        "role": "late"
+      }
+    ]
+  },
+  "band": {
+    "range": {
+      "startAt": "2026-11-17T12:30:00+09:00",
+      "endAt": "2026-11-17T13:30:00+09:00"
+    },
+    "now": "2026-11-17T12:50:00+09:00",
+    "lanes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "name": "나",
+        "busy": [
+          {
+            "startAt": "2026-11-17T13:00:00+09:00",
+            "endAt": "2026-11-17T13:30:00+09:00"
+          }
+        ]
+      }
+    ],
+    "startAt": "2026-11-17T12:50:00+09:00",
+    "endAt": "2026-11-17T13:05:00+09:00",
+    "text": "12:50–13:05 · 걸어서 15분"
+  },
+  "actions": [
+    {
+      "kind": "guide",
+      "to": {
+        "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+        "label": "24동",
+        "latitude": 37.45942,
+        "longitude": 126.94989
+      }
+    }
+  ]
+}

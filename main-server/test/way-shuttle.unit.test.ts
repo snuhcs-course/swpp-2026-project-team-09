@@ -32,7 +32,8 @@ const plain = (text: string): { text: string; strong: boolean } => ({ text, stro
 
 const AT_301 = { latitude: 37.45021, longitude: 126.95262 };
 
-function shuttleOrWalk(): Lookup {
+// With the one shuttle reported at that stop at 16:40.
+function shuttleOrWalk(reportedAt = '신소재공동연구소'): Lookup {
   const now = onDay(TUESDAY, '16:40');
   const answer = wayFor(now, {
     me: {
@@ -41,7 +42,7 @@ function shuttleOrWalk(): Lookup {
       items: [classAt(TUESDAY, '15:00', '16:15', '제1공학관'), classAt(TUESDAY, '17:00', '18:15', 'SK경영관')],
     },
     location: { at: AT_301, placeId: id('제1공학관'), onCampus: true },
-    shuttle: reporting([{ stop: '신소재공동연구소', at: now }]),
+    shuttle: reporting([{ stop: reportedAt, at: now }]),
   });
   if (answer.result !== 'found') {
     throw new Error(`No way: ${answer.reason}`);
@@ -132,5 +133,21 @@ describe('Board q4: the band and the actions', () => {
       },
       { kind: 'guide', to: point('SK경영관', '58동') },
     ]);
+  });
+});
+
+// A lap from the 301동 stop at 14–17 is its ride to 302동, 1,080 s, and back, 135 s: 20 minutes and 15 seconds.
+describe('Board q4 with the shuttle just gone', () => {
+  it('walks when the shuttle reported has just left the 301동 stop, as when it is one stop past it', () => {
+    const walk = [[plain('지금 가도 '), strong('17:05'), plain(' 도착')], [plain('5분 늦어요')]];
+
+    expect(shuttleOrWalk('301동')).toMatchObject({
+      lines: walk,
+      basis: ['걸어서 25분 · 지금 16:40', '셔틀은 28분 걸려 걸어요'],
+    });
+    expect(shuttleOrWalk('유전공학연구소')).toMatchObject({
+      lines: walk,
+      basis: ['걸어서 25분 · 지금 16:40', '셔틀은 26분 걸려 걸어요'],
+    });
   });
 });

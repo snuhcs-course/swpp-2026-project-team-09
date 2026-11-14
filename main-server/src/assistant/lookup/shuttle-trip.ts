@@ -37,17 +37,24 @@ const plusMinutes = (at: Date, count: number): Date => new Date(at.getTime() + c
 // Down to the minute, so that the User is at the stop by the time it is said to come.
 const minuteOf = (time: number): Date => new Date(Math.floor(time / MINUTE_MS) * MINUTE_MS);
 
-// The first reported shuttle that comes to the boarding stop once the User is there; else the average wait.
+// The first of a shuttle's arrivals, a lap apart, at or after `from`.
+function lapsUntil(first: number, from: number, lap: number): number {
+  return first >= from || lap <= 0 ? first : first + Math.ceil((from - first) / lap) * lap;
+}
+
+// The first reported shuttle that comes to the boarding stop once the User is there; else the average wait. One
+// reported at the boarding stop has just left it.
 export function shuttleTrip(legs: ShuttleWay, reported: readonly ReportedShuttle[], now: Date): ShuttleTrip {
   const toStopMinutes = shownMinutes(legs.walkToStopSeconds);
   const rideMinutes = shownMinutes(legs.stops.at(-1)?.rideSeconds ?? 0);
   const fromStopMinutes = shownMinutes(legs.walkFromStopSeconds);
   const atStop = plusMinutes(now, toStopMinutes);
+  const boarding = legs.stops[0]?.order;
   const caught = reported
-    .map(({ stop, order, at }) => ({
-      stop,
-      comes: minuteOf(at.getTime() + (legs.ridesToBoarding[order] ?? Number.NaN) * 1000),
-    }))
+    .map(({ stop, order, at }) => {
+      const ride = order === boarding ? legs.lapSeconds : (legs.ridesToBoarding[order] ?? Number.NaN);
+      return { stop, comes: minuteOf(lapsUntil(at.getTime() + ride * 1000, atStop.getTime(), legs.lapSeconds * 1000)) };
+    })
     .filter(({ comes }) => comes.getTime() >= atStop.getTime())
     .toSorted((one, other) => one.comes.getTime() - other.comes.getTime())[0];
   const comes = caught?.comes ?? plusMinutes(atStop, shownMinutes(legs.waitSeconds));
