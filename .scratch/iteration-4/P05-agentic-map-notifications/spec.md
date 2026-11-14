@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 
-Schedule row: Iteration 4 P05, package D of the agentic map (notifications, bookings, interests, and first run), as far as the first path needs it.
+Schedule row: Iteration 4 P05, package D of the agentic map (notifications, bookings, interests, and first run). Part 1 is what the first path needs (tickets 01 to 04). Part 2, at the end of this document, is the rest of the package (tickets 05 to 09).
 
 References:
 - `.scratch/iteration-4/agentic-map-design.md`: the design. Section 5 ("Notifications", "A study seat", and "Parties and invitations"), section 6.2 (the seat scene, alone), and section 7 (what is never recorded or sent).
@@ -119,10 +119,55 @@ A good test states a behaviour a User or another package depends on, through a s
 - **The other kinds**: the richer words of an invitation that carries its Plan (board t3), a changed invitation, a decline when a better Place exists, a late member, a party still on, the reading-room check-in and return, a room's booking window and end, and a watched interest. Each comes with its feature and adds its facts, words, and caller.
 - **The invitation's card on the map.** It needs the reading of an invitation, which is package C's.
 - **The seat scene beyond the filled card**: the route to 관정관 on the map, the arrows to other floors and zones, a full floor, not booking yet when the walk takes 15 minutes or more, the booked seat's card, and the check-in and return reminders.
-- Study rooms, interests, and first run.
+- Study rooms, interests, and first run: part 2.
 
 ## Further Notes
 
 - The time to leave is kept in the list by ticket 04, once a Plan can become a party. Until a phone can be rung at that time, the list is where it stands.
 - Until the native Release the list stands in for push, as the work split's section 7 says.
 - The seat card is seen only with the answer switch on. With it off the app sends no `answer` capability, and the Assistant asks for the time as today.
+
+## Part 2: The rest of the package
+
+Part 1 ends with the first path. Part 2 is the work split's section 8 for package D, in the design's order, one pull request for each wireframe row: sending each Notification at its time (row 11), keeping a study room's plan and its booking window (row 3), storing and matching interests (row 10), and first run (row 12).
+
+What the map draws for these rows waits for two things outside this package: an answer on the map that is not a meal's Plan (the engine's contract), and the screen that draws it. Until then each ticket answers in the card the app has today, and says so.
+
+### Notifications at their time (ticket 05, row 11)
+
+- **A table of Notifications** replaces the Redis hash. A row is one Notification: its User, kind, card, the person it is about, its time, its words (the title, the title while its time is still to come, the line, and the body of its push), whether it rings a phone, and when it was sent. The identity of part 1 is its unique key. The service's three calls and `GET /notifications` keep their shapes. What Redis holds at the change is not carried over.
+- **One sender.** Every pod of the main server asks, at a short interval, for the Notifications that ring a phone, whose time has come, and that are not sent. It claims them in one statement that skips rows another pod holds, marks them sent, and then sends each through the push service and tells the User's open apps with the signal `notice`. A Notification is sent at most once: a pod that stops after the mark sends nothing, and the Notification is still in the list. The interval is a setting, 15 seconds by default, and 0 turns the sender off, which the tests do: they call the sender's one step themselves.
+- **What rings a phone**, by the design: the time to leave (`leave-by`), and the kinds the other packages add that the design pushes. An acceptance and a decline stay in the list. The push carries the kind's title and body and the Notification's address, and nobody's position, route, or arrival time but the User's own.
+- **Kept for 30 days** after its time; the sender deletes older ones.
+- The sender reads the clock the Quests read, so a test moves it.
+
+### A study room's plan stays (ticket 06, row 3)
+
+- **A decline no longer ends the plan.** When a companion declines, withdraws, or leaves the Booking Party, the room request stays, gathering, with that companion out of it, and so does its Booking Party. The booker is told ("지은이 못 온대요", in the list and on the phone), and the request says who is out. It ends only when the booker cancels it or leaves, when its time comes unbooked, or when the booker's friendship with every remaining companion is gone.
+- **Filling the group.** The booker can ask one more Friend into a gathering request. The Friend is invited into the Booking Party and asked for the Student Number consent as the others were.
+- **The room's minimum decides, not the first list.** A request is ready when every remaining companion consented and the people left are at least the room's minimum. Below it the request stays gathering and says how many more are needed.
+- **Answers are due by 20:00 on the day before the meeting.** A companion who has not answered by then counts as out, as after a decline. A request made after that hour for the next day has no such deadline.
+- **Told at the right moments**: the booker when everyone left has consented ("모두 동의했어요", with the day, the time, and the room), and every Holder 10 minutes before the room's end ("10분 뒤 끝나요").
+
+### The study group's time and the booking window (ticket 07, row 3)
+
+- **The Assistant picks the time.** For an app that draws answers, "민수, 지은, 서준이랑 이번 주에 스터디" needs no date, time, or room from the User. The server picks the room size from the number of people, and three hours inside the booking window by this rule: nobody is left out, the shortest stay among the people is as long as possible, and on a tie the larger total time wins. A stay counts from a person's arrival at 관정관 (their Class's end plus the walk) to when they must leave for what follows. A named length or day is used as said.
+- **The answer** is today's room booking card, filled, with one line for each person (arrival, and when they leave early or join late). The plans of other days are the next cards.
+- **Outside the booking window** (more than 3 days ahead) the room request is made without a room: the invitations and the consents are gathered first. On the day the window opens for that date, at 09:00, the booker is told "예약 창이 열렸어요" with the filled booking card. The hour is the wireframe's, to be confirmed against the library.
+- Only plans in which the booker arrives within one hour of the start are offered.
+
+### Watched interests (ticket 08, row 10)
+
+- **Telling the Assistant.** "채용 관련 행사 뜨면 알려 줘" keeps a watched interest for the User: the words as said, and the topics the Assistant read them as. "배드민턴 이제 그만 알려 줘" removes it. Only events and recruiting parties are watched: a shuttle, a free seat, a Friend's Class, and words too vague to match are answered in the wireframe's words, and nothing is kept.
+- **Topics.** Each published Global Event and each recruiting Quest gets a few topic words, read by the language model once when it is published or posted, in Korean, from its title and description. "채용박람회", "커리어 페어", and "기업 설명회" share the topic "채용".
+- **A match** is a shared topic between an event or a recruiting Quest and the User's interests. The User's interests are the profile's hashtags and the watched interests.
+- **The everyday map** shows only the Global Events and recruiting Quests that match, and a new match carries "!" until the User opens it. A User with no watched interest and no hashtag sees up to three of today's events, faded.
+- **Notifications** go only for watched interests, never for a hashtag: once when a match is published, and once on the day at the last time the User can still go.
+- **The interests screen** (내 정보 → 관심사) lists the hashtags, the watched interests with a way to remove each, and what is watched.
+
+### First run (ticket 09, row 12)
+
+- After Onboarding, the main screen asks three things in order, each as one card over the map, and each can be skipped: the Timetable (with the reason: plans are fitted between Classes, and Friends see only a Class's building and end), interests (chips; a chosen chip is a watched interest), and one Friend (an Invite Link through the share sheet).
+- The phone remembers which cards were answered or skipped. Nothing asks again; each can be done later from 내 정보.
+- A User with no interest sees the faded events of ticket 08 and one line over the input that leads to choosing interests.
+
