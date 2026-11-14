@@ -16,6 +16,7 @@ import { pass, screen } from './support/app';
 import { askOnMap, card } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { AI_INPUT } from './support/lists';
 import { swipe } from './support/swipe';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
@@ -130,6 +131,32 @@ describe('the card after inviting', () => {
     expect(close).toHaveStyle({ alignSelf: 'stretch', height: 40, borderColor: color.borderStrong });
     const holder: unknown = close.parent?.props.testID;
     expect(holder).toBe('invited-card');
+  });
+});
+
+// Partitions: the list of Friends open and closed again before inviting; the input after inviting. The rule: ticket
+// 03, the open list takes the place of the band, the steps, and the input.
+describe('"이대로 초대" beside the list of Friends', () => {
+  it('gives way to the open list, and comes back with "그대로"', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await user.press(card().getByRole('button', { name: '같이 먹을 친구 추가' }));
+    expect(card().queryByRole('button', { name: INVITE })).toBeNull();
+    await user.press(card().getByRole('button', { name: '그대로' }));
+
+    expect(card().getByRole('button', { name: INVITE })).toBeEnabled();
+    expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
+  });
+
+  it('leaves the input under the card after inviting', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await user.press(card().getByRole('button', { name: INVITE }));
+    await pass(500);
+
+    expect(card().getByTestId('invited-card')).toBeVisible();
+    expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
   });
 });
 
