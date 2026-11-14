@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -172,6 +173,33 @@ describe('A token Expo reports as DeviceNotRegistered', () => {
     await settled();
     expect(expo.requests).toEqual([]);
     expect(await prisma.pushToken.count({ where: { sessionId: sessionOf(friend.accessToken) } })).toBe(0);
+  });
+
+  it('leaves the row of a Session that registered another token before Expo answered', async () => {
+    const { leader, friend, questId } = await leaderAndFriend();
+    const secondQuestId = await ownQuest(app, leader);
+    const answer = expo.holds();
+    expect((await invite(app, leader, questId, friend.id)).status).toBe(204);
+    await vi.waitFor(() => {
+      expect(expo.requests).toHaveLength(1);
+    });
+    const newToken = madeUpPushToken();
+    await registerPushToken(app, friend.accessToken, newToken);
+
+    answer(savedAnswer('expo-push-device-not-registered'));
+
+    await settled();
+    expect(
+      await prisma.pushToken.findMany({
+        where: { sessionId: sessionOf(friend.accessToken) },
+        select: { token: true },
+      }),
+    ).toEqual([{ token: newToken }]);
+    expo.reset();
+    expo.answers(savedAnswer('expo-push-ok'));
+    expect((await invite(app, leader, secondQuestId, friend.id)).status).toBe(204);
+    await settled();
+    expect(expo.requests.map(({ body }) => body)).toEqual([[expect.objectContaining({ to: newToken })]]);
   });
 });
 
