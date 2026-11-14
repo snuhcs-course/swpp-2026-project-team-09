@@ -2386,7 +2386,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     after the arrival and not before opening, and the length the one given, or else the space's maximum cut to closing
     in whole steps. The filled request goes through the same check; the card's first note says what it was filled
     for, and `shown` adds `arrival` (`at`, the Place's name as `from`, `walkMinutes`) and `leaveBy` (when to leave
-    for the next Class or Sub Quest with a Place that starts before the booking ends, or null). A room, a named start
+    for the next Class or Sub Quest with a Place that starts before the booking ends, or null, also when that time is
+    not later than the arrival). A room, a named start
     or another day is checked as before, and any other app is asked for the time. `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
     cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id in the
     history, checked against its grammar. Library cards are attached only for a request with

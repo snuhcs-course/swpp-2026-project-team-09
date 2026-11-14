@@ -22,10 +22,12 @@ const DATE = '2026-11-04';
 const KWANJEONG = 'place-62-1';
 const BUILDING_24 = 'place-24';
 const DOOSAN = 'place-8';
+const FAR = 'place-far';
 
 const WALKS: Record<string, number> = {
   [`${BUILDING_24}>${KWANJEONG}`]: 4,
   [`${KWANJEONG}>${DOOSAN}`]: 4,
+  [`${KWANJEONG}>${FAR}`]: 10,
 };
 
 const at = (clock: string): Date => new Date(`${DATE}T${clock}:00+09:00`);
@@ -205,6 +207,22 @@ describe('The time to leave', () => {
       at: '15:56',
       for: '일정',
       start: '16:00',
+    });
+  });
+
+  it('is null when it would come before the arrival: 14:00 at 10 minutes away is 13:50, before 13:54', () => {
+    const items = [item('13:00', '13:50', BUILDING_24), item('14:00', '15:00', FAR)];
+
+    expect(leaveByOf(facts('13:50', { items }), '13:54', '20:00')).toBeNull();
+  });
+
+  it('is given when it comes after the arrival: 14:10 at 10 minutes away is 14:00', () => {
+    const items = [item('13:00', '13:50', BUILDING_24), item('14:10', '15:00', FAR)];
+
+    expect(leaveByOf(facts('13:50', { items }), '13:54', '20:00')).toEqual({
+      at: '14:00',
+      for: '수업',
+      start: '14:10',
     });
   });
 

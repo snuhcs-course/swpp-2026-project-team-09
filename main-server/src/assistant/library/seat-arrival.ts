@@ -91,6 +91,7 @@ export function fillSeat(facts: SeatFacts, space: SeatSpace, { minutes, end }: N
 }
 
 // When to leave 관정관 for the first item with a Place that starts at or after the arrival and before the booking ends.
+// None when that time is not later than the arrival: the seat could not be used before the item.
 export function leaveByOf(facts: SeatFacts, arrival: string, bookingEnd: string): LeaveBy | null {
   const { date, items, kwanjeongPlaceId, walkingMinutes } = facts;
   const from = minutesOfClock(arrival);
@@ -105,6 +106,9 @@ export function leaveByOf(facts: SeatFacts, arrival: string, bookingEnd: string)
     return null;
   }
   const walk = next.placeId === kwanjeongPlaceId ? 0 : walkingMinutes(kwanjeongPlaceId, next.placeId);
+  if (next.minutes - walk <= from) {
+    return null;
+  }
   return {
     at: clockOfMinutes(next.minutes - walk),
     for: next.isClass ? '수업' : '일정',
