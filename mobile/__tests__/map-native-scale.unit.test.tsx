@@ -225,3 +225,21 @@ describe('the camera asked of a module that measures its scale where the view is
     expect(mockProps?.minZoom).toBeCloseTo(map.fitZoom(), 6);
   });
 });
+
+// Partitions: an outer zoom given in a view as high as when the module opened, and in one grown since. Expected values:
+// the outer zoom, 14.765, below the fit zoom of either view (15.11 and 15.26) and above the 14.26 at which the view
+// fits inside the camera's area; less the scale's shift, log2(914 / 826), in the grown view.
+describe("the module's lowest zoom with an outer zoom", () => {
+  it('is the outer zoom, less the shift once the view grew', async () => {
+    await render(<NativeMap {...EMPTY} outerZoom={14.765} />);
+    await layOut(OPENED);
+    await act(() => {
+      mockProps?.onCameraIdle({ nativeEvent: { latitude: 37.458, longitude: 126.954, zoom: 15.2 } });
+    });
+    expect(mockProps?.minZoom).toBeCloseTo(14.765, 6);
+
+    await layOut(FRAMED);
+
+    expect(mockProps?.minZoom).toBeCloseTo(14.765 - Math.log2(FRAMED / OPENED), 6);
+  });
+});

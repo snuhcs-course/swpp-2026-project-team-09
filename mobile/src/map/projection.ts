@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -74,6 +75,14 @@ export function lowestZoom({ bounds, fitBounds = bounds, minZoom, size }: Camera
     zoomWhere(size.height, bottomRight.y - topLeft.y),
   );
   return Number.isFinite(fits) ? Math.max(minZoom, fits) : minZoom;
+}
+
+// The rules a camera keeps to when the screen lets it go out to `outer`, further than their lowest zoom: the view
+// then keeps inside `bounds` alone. The rules as they are when `outer` is left out or no further out.
+export function outerRules(rules: CameraRules, outer: number | undefined): CameraRules {
+  return outer === undefined || outer >= lowestZoom(rules)
+    ? rules
+    : { ...rules, fitBounds: rules.bounds, minZoom: outer };
 }
 
 // A value kept between two others, or their middle where the room between them is gone.
