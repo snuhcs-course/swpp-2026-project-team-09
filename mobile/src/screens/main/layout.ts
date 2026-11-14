@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -196,4 +197,10 @@ const OVER_CARD = space[2];
 // The same while a card is open: the toast sits above the card, so that it never lies over the card's buttons.
 export function takenUnderToastOverCard(inset: number, cardHeight: number): number {
   return NAV_HEIGHT + navPaddingBottom(inset) - inset + CARD.bottom + cardHeight + OVER_CARD - space[6];
+}
+
+// The same while the answer frame is shown: the navigation gives way, and the frame's card, `cardHeight` high from the
+// screen's bottom, holds the bar. The toast sits above the card.
+export function takenUnderToastOverAnswer(inset: number, cardHeight: number): number {
+  return cardHeight + OVER_CARD - inset - space[6];
 }

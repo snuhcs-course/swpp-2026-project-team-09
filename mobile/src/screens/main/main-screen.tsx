@@ -12,14 +12,15 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
-import { type ReactElement, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, type ReactNode, useEffect, useMemo } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
-import { color, useNotReadyToast, useToastAbove } from '@/design-system';
+import { color, useNotReadyToast } from '@/design-system';
 import type { CardView } from '@/features/map/adapter';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
@@ -28,17 +29,19 @@ import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { Card } from './card';
 import { FriendList } from './friend-list';
-import { listsTop, mapInset, ROUTE_PADDING, type Room, takenUnderToast, takenUnderToastOverCard } from './layout';
+import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
-import { MapBottom, openMenus, takenBy } from './map-bottom';
+import { MapBottom, openMenus, type Taken, takenBy } from './map-bottom';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
+import type { ChatSheetControl } from './chat-sheet';
 import { askAssistant, pressOnMap, useMainLayers } from './use-main-layers';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedPerson } from './use-asked-person';
 import { type MainRoute, useRoute } from './use-route';
+import { useRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
 import { type Things, useThings } from './use-things';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
@@ -64,8 +67,8 @@ interface SelectedCardProps {
   // The shuttle's line, which "노선 보기" brings into view.
   shuttleLine: readonly LatLng[];
   onActiveParty: () => void;
-  // 좌석 현황 of 관정관's card: the chat opens and asks the Assistant.
-  onAsk: (words: string) => void;
+  // 좌석 현황 of 관정관's card asks the Assistant in the chat. No card is shown while the answer frame is.
+  chat: ChatSheetControl;
   onHeight: (height: number) => void;
   // A 식당's card sits at the top of the map, without "가까이 보기".
   top: boolean;
@@ -98,12 +101,12 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
 // Friend's "파티 만들기" 파티 만들기 as 비공개 with the Friend invited. Every other button belongs to another task and says that it is not ready. A
 // choice, such as an event at a place, opens its own card.
 function SelectedCard(props: SelectedCardProps): ReactElement | null {
-  const { selection, map, route, shuttleLine, onActiveParty, onAsk, onHeight, top } = props;
+  const { selection, map, route, shuttleLine, onActiveParty, chat, onHeight, top } = props;
   const showNotReady = useNotReadyToast();
   const openPartyCreate = useOpenPartyCreate();
   const { top: inset } = useSafeAreaInsets();
   const { selected: card, close: onClose } = selection;
-  if (card === null) {
+  if (card === null || chat.framed) {
     return null;
   }
   const { primary } = card;
@@ -125,7 +128,7 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
           openMenus(primary.restaurant);
         } else if (primary.action === 'library-seats') {
           onClose();
-          onAsk(LIVE_SEATS_WORDS);
+          askAssistant(chat)(LIVE_SEATS_WORDS);
         } else if (primary.action === 'shuttle-line') {
           map.fitTo(shuttleLine, ROUTE_PADDING);
           onClose();
@@ -148,13 +151,13 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
   );
 }
 
-// While the map is in front, a toast sits over the row of buttons, or above an open card.
-function useToastOverMap(cardHeight: number | null): void {
-  const { bottom } = useSafeAreaInsets();
-  useToastAbove(
-    cardHeight === null ? takenUnderToast(bottom) : takenUnderToastOverCard(bottom, cardHeight),
-    useIsFocused(),
-  );
+// The zoom control gives way to a card at the bottom, the shuttle's notice, the open 편의기능 stack and the answer frame.
+function zoomShown({ bottomCard, notice }: Taken, stackOpen: boolean, framed: boolean): boolean {
+  return !bottomCard && notice === null && !stackOpen && !framed;
+}
+
+function ignorePress(): void {
+  // While the answer frame is shown, a marker opens no card.
 }
 
 function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
@@ -239,23 +242,6 @@ function Lists({ hidden, map, room, selection, tutorial }: { hidden: boolean } &
   );
 }
 
-// The room the parts over the map have, and the toast's place. What is at the bottom card's place counts: a card at
-// the bottom, or the shuttle's notice; one that appears counts from the last one's height until it is laid out.
-function useRoom(
-  atBottom: boolean,
-  tutorialStart: boolean,
-): {
-  room: Room;
-  setStage: (stage: Room['stage']) => void;
-  setCardHeight: (height: number) => void;
-} {
-  const [cardHeight, setCardHeight] = useState(0);
-  const [stage, setStage] = useState<Room['stage']>(null);
-  const room: Room = { stage, cardHeight: atBottom ? cardHeight : null, tutorialStart: tutorialStart && !atBottom };
-  useToastOverMap(room.cardHeight);
-  return { room, setStage, setCardHeight };
-}
-
 // A tutorial quest pressed on the Quest list on the whole screen comes back by the main screen's address,
 // `/main?tutorial=…`, and opens its sheet here.
 function useAskedTutorialQuest(openSheet: (key: string) => void): void {
@@ -293,12 +279,13 @@ function useMainTutorial(
 // `selection.select(cardId.friend(id))` and moves the map with `map.goTo`. Any part reads the User's position with
 // `usePosition()`: the signed-in place's layout holds the one watch of the phone. The map is told what the controls
 // cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
-// itself to the screen takes `room`: the stage's size and the open card's height.
+// itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
+// the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing.
 export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
   const me = useMe(map);
-  const { stack, shuttle, cards, ready, chat } = useMainLayers(inFront, map);
+  const { stack, shuttle, cards, ready, chat, framed } = useMainLayers(inFront, map, me.position);
   const selection = useSelection(cards, inFront);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
@@ -307,19 +294,19 @@ export function MainScreen(): ReactElement {
   useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null, start);
-  const onPress = pressWithPin(pin, pressOnMap(cards, map, selection));
+  const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null, start, framed);
+  const onPress = framed ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection));
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView lines={lines} map={map} me={me} onPress={onPress} pin={pin} room={room} things={things} />
         <OverMap onStage={setStage}>
-          <Lists hidden={taken.topCard} map={map} room={room} selection={selection} tutorial={tutorial} />
-          {taken.bottomCard || taken.notice !== null || stack.open ? null : <MainZoomControl map={map} me={me} />}
+          <Lists hidden={taken.topCard || framed} map={map} room={room} selection={selection} tutorial={tutorial} />
+          {zoomShown(taken, stack.open, framed) ? <MainZoomControl map={map} me={me} /> : null}
           <SelectedCard
+            chat={chat}
             map={map}
             onActiveParty={party.open}
-            onAsk={askAssistant(chat)}
             onHeight={setCardHeight}
             route={route}
             selection={selection}

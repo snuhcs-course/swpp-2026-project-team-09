@@ -7,6 +7,7 @@
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -19,6 +20,7 @@ import type { CardView } from '@/features/map/adapter';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
+import { AnswerFrame } from './answer/answer-frame';
 import { BottomControls } from './bottom-controls';
 import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
@@ -42,10 +44,13 @@ function liftOver(noticeHeight: number | null): number {
 }
 
 // How much higher the AI input stands while the keyboard is up: the keyboard's reach less what already lies under
-// the bar, the navigation with the phone's own bar, which the keyboard covers. 0 while it is down.
-function useKeyboardLift(): number {
+// the bar, the navigation with the phone's own bar, which the keyboard covers. 0 while it is down. While the answer
+// frame is shown the navigation gives way, and the bar stands above the phone's own bar or the keyboard.
+function useKeyboardLift(framed: boolean): { lift: number; keyboardUp: boolean } {
   const { bottom } = useSafeAreaInsets();
-  return Math.max(0, useKeyboardHeight(bottom) - tabBarHeight(bottom));
+  const keyboard = useKeyboardHeight(bottom);
+  const lift = framed ? Math.max(bottom, keyboard) : Math.max(0, keyboard - tabBarHeight(bottom));
+  return { lift, keyboardUp: keyboard > 0 };
 }
 
 // What the open card and the shuttle's notice take. A 식당's card sits at the top: the lists give way to it, and what
@@ -64,6 +69,7 @@ export function takenBy(selected: CardView | null, serviceHours: string | null):
 
 interface MapBottomProps {
   taken: Taken;
+  // The shuttle's notice, or the answer frame's card, was laid out with this height.
   onNoticeHeight: (height: number) => void;
   // "활성 파티": the room of the User's Party's Quest.
   onParty: () => void;
@@ -82,12 +88,14 @@ interface MapBottomProps {
 // input opens the chat's sheet, which hides the rest and lies under the input: the input stays, as the chat's own,
 // in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input stands right above
 // it, and the chat keeps its last bubble clear of it there. The conversation is kept while the app runs.
+// With the switch of the answer on the map on, the answer frame takes the sheet's place, and the input is its card's.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { taken, onParty, onNoticeHeight, room, stack, tutorial, onShowOnMap, chat } = props;
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
-  const lift = useKeyboardLift();
+  const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const { bottomCard, notice } = taken;
-  const under = !chat.shown;
+  const under = !chat.shown && !chat.framed;
+  const inputTop = AI_INPUT.bottom + lift + inputHeight;
   return (
     <>
       {under && notice !== null ? <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} /> : null}
@@ -96,12 +104,14 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} stack={stack} />
       ) : null}
       {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
-      {chat.sheet(AI_INPUT.bottom + lift + inputHeight)}
+      {chat.sheet(inputTop)}
+      <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onNoticeHeight} room={room} />
       <AiInput
         chatOpen={chat.shown}
         lift={lift}
         onHeight={setInputHeight}
         onOpen={chat.open}
+        placeholder={chat.framed ? '이어서 말하기' : undefined}
         onSend={chat.chat.send}
         waiting={chat.chat.waiting}
       />
