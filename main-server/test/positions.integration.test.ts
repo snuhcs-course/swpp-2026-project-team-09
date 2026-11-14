@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -11,9 +12,11 @@ import { inject } from 'vitest';
 import { REDIS } from '../src/common/redis.module.js';
 import { befriend, signInUser } from './friends.js';
 import {
+  expectStatus,
   getPositions,
   OFF_CAMPUS,
   ON_CAMPUS,
+  setFriendLevel,
   setMasterSwitch,
   sharingFriends,
   uploadPosition,
@@ -87,7 +90,9 @@ describe('An upload taken', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ offCampus: false });
-    expect((await getPositions(app, friend)).body).toEqual([{ userId: user.id, ...ON_CAMPUS, measuredAt }]);
+    expect((await getPositions(app, friend)).body).toEqual([
+      { userId: user.id, ...ON_CAMPUS, measuredAt, level: 'exact' },
+    ]);
   });
 
   it("up to 10 seconds ahead of the server's clock is kept", async () => {
@@ -103,7 +108,7 @@ describe('An upload taken', () => {
     await uploadPosition(app, user, OTHER_PLACE);
 
     expect((await getPositions(app, friend)).body).toEqual([
-      { userId: user.id, ...OTHER_PLACE, measuredAt: ANY_STRING },
+      { userId: user.id, ...OTHER_PLACE, measuredAt: ANY_STRING, level: 'exact' },
     ]);
   });
 
@@ -125,6 +130,10 @@ describe('The fetch of the positions', () => {
     const [viewer, friend] = await sharingFriends(app);
     const [otherFriend, stranger] = await sharingFriends(app);
     await befriend(app, viewer, otherFriend);
+    await Promise.all([
+      expectStatus(setFriendLevel(app, viewer, otherFriend.id, 'exact'), 204),
+      expectStatus(setFriendLevel(app, otherFriend, viewer.id, 'exact'), 204),
+    ]);
     const measuredAt = secondsFromNow(-20);
     await Promise.all([
       uploadPosition(app, friend, { measuredAt }),
@@ -139,8 +148,8 @@ describe('The fetch of the positions', () => {
     expect(response.body).toHaveLength(2);
     expect(response.body).toEqual(
       expect.arrayContaining([
-        { userId: friend.id, ...ON_CAMPUS, measuredAt },
-        { userId: otherFriend.id, ...OTHER_PLACE, measuredAt },
+        { userId: friend.id, ...ON_CAMPUS, measuredAt, level: 'exact' },
+        { userId: otherFriend.id, ...OTHER_PLACE, measuredAt, level: 'exact' },
       ]),
     );
   });

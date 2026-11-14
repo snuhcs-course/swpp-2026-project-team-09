@@ -11,6 +11,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -130,18 +131,25 @@ export interface StudyDetail {
   sectors: readonly LibrarySpace[] | null;
 }
 
+const FRIEND_CARD = 'friend:';
+
 // A card's id from the id of what it shows, for a part of a screen that holds the thing and not its card.
 export const cardId = {
   globalEvent: (eventId: string): string => `event:${eventId}`,
   placeGroup: placeGroupId,
   quest: (questId: string): string => `party:${questId}`,
-  friend: (userId: string): string => `friend:${userId}`,
+  friend: (userId: string): string => `${FRIEND_CARD}${userId}`,
   partyMember: (userId: string): string => `party-member:${userId}`,
   dining: (placeId: string): string => `dining:${placeId}`,
   shuttleStop: (stopId: string): string => `shuttle-stop:${stopId}`,
   shuttleVehicle: (carId: string): string => `shuttle-vehicle:${carId}`,
   study: (placeId: string): string => `study:${placeId}`,
 } as const;
+
+// The Friend's user id of a card's id, which a marker or an Avatar on the map carries, or null for anything else.
+export function friendIdOf(id: string): string | null {
+  return id.startsWith(FRIEND_CARD) ? id.slice(FRIEND_CARD.length) : null;
+}
 
 type Line = CardView['lines'][number];
 

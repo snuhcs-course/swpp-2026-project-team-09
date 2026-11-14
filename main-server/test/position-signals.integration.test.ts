@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -71,7 +72,7 @@ describe('position', () => {
 
     await vi.waitFor(() => {
       expect(received(viewer, 'position')).toEqual([
-        { userIds: [viewer.id], payload: { userId: subject.id, ...ON_CAMPUS, measuredAt } },
+        { userIds: [viewer.id], payload: { userId: subject.id, ...ON_CAMPUS, measuredAt, level: 'exact' } },
       ]);
     });
     // A position names all its viewers at once, so one that named these Users has come already.
@@ -89,7 +90,7 @@ describe('position', () => {
       expect(received(viewer, 'position')).toHaveLength(1);
     });
     expect(received(viewer, 'position')).toEqual([
-      { userIds: [viewer.id], payload: { userId: subject.id, ...ON_CAMPUS, measuredAt: ANY_STRING } },
+      { userIds: [viewer.id], payload: { userId: subject.id, ...ON_CAMPUS, measuredAt: ANY_STRING, level: 'exact' } },
     ]);
   });
 });

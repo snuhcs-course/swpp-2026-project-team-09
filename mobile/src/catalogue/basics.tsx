@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -153,6 +154,14 @@ function AnswerMarks(): ReactElement {
       <MapAnswerMark
         label={{ side: 'right', tone: 'person', title: '민수 · 18분', line: null, number: null }}
         symbol={{ type: 'face', name: '민수', dashed: true }}
+      />
+      <MapAnswerMark
+        label={{ side: 'left', tone: 'person', title: '민수 · 아직 안 봄', line: null, number: null }}
+        symbol={{ type: 'face', name: '민수', dashed: true, badge: 'waiting' }}
+      />
+      <MapAnswerMark
+        label={{ side: 'right', tone: 'person', title: '지은 · 수락', line: null, number: null }}
+        symbol={{ type: 'face', name: '지은', dashed: true, badge: 'accepted' }}
       />
       <MapAnswerMark
         label={{ side: 'below', tone: 'pick', title: '학생회관식당', line: '12:33 점심', number: null }}

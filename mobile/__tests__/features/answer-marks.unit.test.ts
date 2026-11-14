@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -32,10 +33,11 @@ describe('the marks of the answer for two people, its first Plan', () => {
   });
 
   it("draws 민수's dashed face at 302동, and the pick's number, title, and time below it", () => {
+    // 민수's tag is his name alone, which his face shows already: no label (the design review of 2026-11-15).
     expect(seen(drawing, `answer:person:${MINSU_ID}`)).toEqual({
       name: '민수',
       symbol: { type: 'face', name: '민수', dashed: true },
-      label: label('right', 'person', '민수'),
+      label: null,
       planId: null,
     });
     expect(seen(drawing, 'answer:pick')).toEqual({

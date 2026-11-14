@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -36,8 +37,8 @@ describe('The list of Friends', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
-      { id: cheolsu.id, name: '김철수', department: '경영학과', sharing: true, visible: false },
-      { id: gildong.id, name: '홍길동', department: '컴퓨터공학부', sharing: true, visible: false },
+      { id: cheolsu.id, name: '김철수', department: '경영학과', level: 'building', sharing: true, visible: false },
+      { id: gildong.id, name: '홍길동', department: '컴퓨터공학부', level: 'building', sharing: true, visible: false },
     ]);
   });
 
