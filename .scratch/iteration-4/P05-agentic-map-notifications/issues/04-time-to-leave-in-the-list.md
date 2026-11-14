@@ -88,3 +88,12 @@ Up to the opening of the pull request. One implementing subagent (Opus 5.5) wrot
 
 - Agent time: about 20 minutes, an estimate from the transcript's timestamps.
 - Tokens: output 67,584; input 16,820,811, of which 16,636,360 were cache reads, 184,237 cache writes, and 214 uncached. Without cache reads: 252,035.
+
+### Agent usage, the invited User's part (2026-11-15)
+
+One implementing subagent (Opus 5.5).
+
+- Agent time: about 58 minutes, an estimate from the transcript's timestamps; much of it was waiting for the shared
+  test lock.
+- Tokens: output 121,332; input 33,885,398, of which 32,822,709 were cache reads, 1,062,335 cache writes, and 354
+  uncached. Without cache reads: 1,184,021.
