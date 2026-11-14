@@ -1,10 +1,10 @@
 # The agentic map: revising the metrics
 
-This note records what the course asks of metrics, which of the metrics written down so far survive the agentic map, and what has to change. It was researched on 2026-11-14 from the course lectures and guidelines, the Wiki, the evaluation code under `main-server/eval/`, and the design document (`agentic-map-design.md`). Nothing in it has been applied to the Wiki, the acceptance-test sheet, or the design document yet. The Wiki is edited after the build; section 10 says what cannot wait that long.
+This note records what the course asks of metrics, which of the metrics written down so far survive the agentic map, and what has to change. It was researched on 2026-11-14 from the course lectures and guidelines, the Wiki, the evaluation code under `main-server/eval/`, and the design document (`agentic-map-design.md`). The design document states its measures as section 9 gives them. Nothing has been applied to the Wiki or the acceptance-test sheet. The Wiki is edited after the build; section 10 says what cannot wait that long.
 
 ## 1. In short
 
-- The design's five measures do not say what they are checked against. Checked against the engine's own walking table and its own best answer, "everyone arrives on time" and "time together" would pass by construction. They are checked instead by a checker and a reference solver written apart from the engine, and the walking table's own error is reported beside them (NFR-15: 16 of 30 timed walks within tolerance).
+- Each measure says what it is checked against. Checked against the engine's own walking table and its own best answer, "everyone arrives on time" and "time together" would pass by construction. They are checked by a checker and a reference solver written apart from the engine, and the walking table's own error is reported beside them (NFR-15: 16 of 30 timed walks within tolerance).
 - The latency targets become p95 with a named workload, device, and script, in place of medians.
 - The privacy measure becomes a gate: no answer, card, map payload, invitation result, or socket event may reveal more about a Friend than the asker's map shows.
 - The chat evaluation suites of Iterations 2 and 3 stay as regression for the flows that remain. The suite for the flow that is replaced is marked superseded, with the original kept beside the revision.
@@ -136,22 +136,22 @@ The slides of the Week 11 lab on user studies and on measuring software in produ
 
 ## 9. How the design's measures would read
 
-This is the text proposed for the design document. It is not applied.
+This is the text of the measures in the design document.
 
-**Section 5, "Depth and measures"**, in place of the five-row table and the three bullets after it:
+**Section 5, "Depth and measures"**, after its first three bullets:
 
-- The location question set (`main-server/eval/location/`) has at least 50 cases. They are built from real SNU class times, the walking table, and a fixed world and clock. Its categories are the five storylines, declines, late members, and drags of the time band. Each threshold holds per category. A category whose kind of plan is not built yet is reported as not run.
+- The measures are named LQ-1 to LQ-5, after the location question set. The set (`main-server/eval/location/`) has at least 50 cases. They are built from real SNU class times, the walking table, and a fixed world and clock. Its categories are the five storylines, declines, late members, and drags of the time band. Each threshold holds per category. A category whose kind of plan is not built yet is reported as not run.
 
 | Measure | Checked against | Passing |
 |---|---|---|
-| LQ-1 Everyone arrives on time | A checker written apart from the engine. From a frozen copy of the walking table, it recomputes when each person reaches the meeting and when they reach their next class | Given the right conditions, and after chips, drags, and late reports: 100%. From words: 90% of cases in all three runs. Ours beats each baseline on the same cases (exact McNemar test, p < 0.05) |
+| LQ-1 Everyone arrives on time | A checker written apart from the engine. From a frozen copy of the walking table, it recomputes when each person reaches the meeting and when they reach their next class | Given the right conditions, and after chips, drags, and late reports: 100%. From words: 90% of cases in all three runs. The engine beats each baseline on the same cases (exact McNemar test, p < 0.05) |
 | LQ-2 Time together is the best possible | A reference solver written in a separate session from the written planning rules, without reading the engine, and checked by hand against the examples in section 6 | Time together equals the solver's, at one of the places it ranks best. Given the right conditions, and after chips, drags, and late reports: 100%, with no model call. From words: 90% of cases in all three runs |
 | LQ-3 Conditions pulled out of words | At least 40 utterances in the set. An agent labels them, a person reviews the labels, and they are compared field by field after names and times are normalized | 90% of utterances fully right in all three runs. 80% of ambiguous ones asked back. No one added whom nobody named |
 | LQ-4 The Assistant says no more than the asker's map shows | A table of what the asker's map shows at each level (section 7), applied to the text, cards, map data, invitation results, and socket events of every case. Also at least 30 cases that try to draw out more | No leak in any run. The table test runs on every merge, and it must fail when the visibility check is removed |
 | LQ-5 Time to the answer on the map | On the server, p95 over the set, measured in one process with the model provider's network included. On a phone, p95 over 20 trials per input kind, on a mid-range Android phone over LTE that the freeze commit names | Server: 8 seconds for words. Phone: 10 seconds for words, 2 seconds for other inputs |
 
-- There are two baselines. The first is the model alone: the same model gets the same facts as text (Timetables, Free Time, the positions the asker may see, the walking table, and the places), has no tools, and answers in a fixed JSON form. The second is the nearest place. For lunch, that is the restaurant serving the meal that is nearest the asker's start, from the earliest time everyone can arrive. Each other category writes its own rule along with its cases. Cases that call the model run three times, and the nearest-place rule runs once. Where a measure applies to a baseline, the baseline's result is reported beside ours.
-- NFR-15 measures the walking table's own error (`main-server/eval/walking/`). A plan keeps no margin before a class. So beside LQ-1 we report the share of timed walks that took longer than the minutes the app shows.
+- There are two baselines. The first is the model alone: the same model gets the same facts as text (Timetables, Free Time, the positions the asker may see, the walking table, and the places), has no tools, and answers in a fixed JSON form. The second is the nearest place. For lunch, that is the restaurant serving the meal that is nearest the asker's start, from the earliest time everyone can arrive. Each other category writes its own rule along with its cases. Cases that call the model run three times, and the nearest-place rule runs once. Where a measure applies to a baseline, the baseline's result is reported beside the engine's.
+- NFR-15 measures the walking table's own error (`main-server/eval/walking/`). A plan keeps no margin before a class. So the share of timed walks that took longer than the minutes the app shows is reported beside LQ-1.
 - The set, the walking-table copy, the planning rules, both baselines, and the thresholds go into one commit before anything runs on the set, baselines included. Cases may be added later with a note, but never edited or removed.
 
 **Section 7, "What is measured"**:

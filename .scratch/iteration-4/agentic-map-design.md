@@ -235,19 +235,19 @@ The map changes only when the answer needs a place, a route, or people. A questi
 - Depth is described in two parts.
 - The model's part: it pulls conditions out of words ("5분 늦어", I'm 5 minutes late; "지은은 빼고", leave out Jieun; "12:30까지만", only until 12:30), picks and combines tools, and says in one line what changed.
 - The server's part: the time window of several people (Free Time minus the time to get there and the time to get to the next class), walking times and the shuttle, recalculation after a decline, a late member, or a drag of the time band, and the check of visible levels. Recalculation does not go through the model. Facts such as Timetables and locations are computed by the server directly. Users' Assistants do not talk to each other: both sides are the same server, so a conversation adds nothing and makes answers slower and less stable.
-- Five things are measured on the location question set, each with a target:
+- The measures are named LQ-1 to LQ-5, after the location question set. The set (`main-server/eval/location/`) has at least 50 cases. They are built from real SNU class times, the walking table, and a fixed world and clock. Its categories are the five storylines, declines, late members, and drags of the time band. Each threshold holds per category. A category whose kind of plan is not built yet is reported as not run.
 
-| Measure | Target |
-|---|---|
-| Share of answers in which everyone arrives on time | 95% or more |
-| Time together as a share of the best answer's | 90% or more |
-| Accuracy of the conditions pulled out of words | 90% or more |
-| Share of answers that say more than the visible level allows | 0 |
-| Time to the first answer (median) | 3 seconds for a suggestion chip, 8 seconds for words |
+| Measure | Checked against | Passing |
+|---|---|---|
+| LQ-1 Everyone arrives on time | A checker written apart from the engine. From a frozen copy of the walking table, it recomputes when each person reaches the meeting and when they reach their next class | Given the right conditions, and after chips, drags, and late reports: 100%. From words: 90% of cases in all three runs. The engine beats each baseline on the same cases (exact McNemar test, p < 0.05) |
+| LQ-2 Time together is the best possible | A reference solver written in a separate session from the written planning rules, without reading the engine, and checked by hand against the examples in section 6 | Time together equals the solver's, at one of the places it ranks best. Given the right conditions, and after chips, drags, and late reports: 100%, with no model call. From words: 90% of cases in all three runs |
+| LQ-3 Conditions pulled out of words | At least 40 utterances in the set. An agent labels them, a person reviews the labels, and they are compared field by field after names and times are normalized | 90% of utterances fully right in all three runs. 80% of ambiguous ones asked back. No one added whom nobody named |
+| LQ-4 The Assistant says no more than the asker's map shows | A table of what the asker's map shows at each level (section 7), applied to the text, cards, map data, invitation results, and socket events of every case. Also at least 30 cases that try to draw out more | No leak in any run. The table test runs on every merge, and it must fail when the visibility check is removed |
+| LQ-5 Time to the answer on the map | On the server, p95 over the set, measured in one process with the model provider's network included. On a phone, p95 over 20 trials per input kind, on a mid-range Android phone over LTE that the freeze commit names | Server: 8 seconds for words. Phone: 10 seconds for words, 2 seconds for other inputs |
 
-- The set includes cases of declines and late members, and checks whether the replanned answer matches the expected one.
-- The baselines compared against are answers from the model alone and a rule that picks the nearest place. The five measures are compared against these two baselines, and a small comparison with Users is added.
-- The targets are reviewed once after the set is built.
+- There are two baselines. The first is the model alone: the same model gets the same facts as text (Timetables, Free Time, the positions the asker may see, the walking table, and the places), has no tools, and answers in a fixed JSON form. The second is the nearest place. For lunch, that is the restaurant serving the meal that is nearest the asker's start, from the earliest time everyone can arrive. Each other category writes its own rule along with its cases. Cases that call the model run three times, and the nearest-place rule runs once. Where a measure applies to a baseline, the baseline's result is reported beside the engine's.
+- NFR-15 measures the walking table's own error (`main-server/eval/walking/`). A plan keeps no margin before a class. So the share of timed walks that took longer than the minutes the app shows is reported beside LQ-1.
+- The set, the walking-table copy, the planning rules, both baselines, and the thresholds go into one commit before anything runs on the set, baselines included. Cases may be added later with a note, but never edited or removed.
 
 ## 6. The five storylines
 
@@ -519,7 +519,7 @@ Example: on Tuesday at 11:50, Minsu says "배고파". Jieun is counted as "12:15
 
 **What is never recorded or sent.** For each Friend, only one level and the date the Assistant asked are stored. No location history is kept. Raising or lowering a level shows nothing on the other person's screen. Being searched for or recommended is never a trigger and is never reported. Nothing about an invited person's route or position goes back to the inviter. A late member sends only the minutes late and the resulting arrival time.
 
-**What is measured.** At the end of the beta: the share of Users who stay at a level other than off, the share who choose "건물까지만" (building only) when about to turn location off, and the share who choose an answer other than "시간표만" (Timetable only) when asked after a plan.
+**What is measured.** First, LQ-4 in section 5: no answer, card, map, invitation result, or socket event shows more about a Friend than the asker's map shows. Second, once the three levels are built, each tester in the lab study and the beta is asked one question about a Friend: "지금 민수에게 내가 어떻게 보일까요?" (What does Minsu see of me now?). The choices are the three levels and "모르겠어요" (I don't know). The answer is compared with the level stored on the server and reported as k of n, with no target. Each wrong answer becomes a usability issue.
 
 **What changes in the app.** The per-Friend switch changes from on and off to a choice of three: "시간표만" (location off), "지금 있는 건물", and "정확한 위치". Friends switched on today stay at exact location. A new Friend starts at "지금 있는 건물" instead of exact location, where a new Friend starts today. Timetable labels appear on the map. A Friend seen through the Timetable only shows as a dashed Avatar during class and for 15 minutes after, and otherwise stays in the Friend list as "공강 · 14:00까지".
 
@@ -596,5 +596,5 @@ Not confirmed: Continua, an assistant that joins group chats (reported 2025-08),
 1. Share the design with the team and revise it from their feedback. The 13 wireframe rows are the final screens for the map and the Assistant.
 2. Build it. The work is split into four packages (`.scratch/iteration-4/agentic-map-work-split.md`): the engine and its contract; the answer screens on the map; invitations, parties, and Friend locations; and notifications, bookings, interests, and first run. The killer feature comes first. The scope (all 13 rows), how the depth is presented, and what is measured are decided above. The review of this design is in `.scratch/iteration-4/design-review-2026-11-14.md`.
 3. One thing to check during the build: the reading-room confirmation deadline. The wireframes count 30 minutes from the booking; the library's rules decide whether it counts from the booking or from the start time.
-4. Measure: compare the five measures with the two baselines, and run a small comparison with users. In that comparison, users make the same corrections (adding a person, moving the time, changing the start) once on the map and once in words, and the time taken and the number of taps are compared.
+4. Measure. Run LQ-1 to LQ-5 of section 5 against the two baselines. Run a lab study: 8 to 12 participants make the same corrections (adding a person, moving the time, changing the start) on the map and in words, in alternating order. The hypothesis is declared before the sessions: success on the map is no lower than in words, and the median time is lower. Paired differences are reported with 95% intervals. Ask SUS and one usefulness question after each acceptance session. Lunch with a Friend on the map (section 6.1) is added as acceptance story UAT-6, beside the five frozen ones.
 5. What to look at again after the build is in section 9.
