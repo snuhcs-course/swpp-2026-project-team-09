@@ -123,7 +123,7 @@ function MadeLine({
   unasked,
   keyboardUp,
 }: Pick<EverydayProps, 'room' | 'unasked' | 'keyboardUp'>): ReactElement | null {
-  const { first, open } = unasked.made;
+  const { first, openCard } = unasked.made;
   if (first === null || room.madeLine !== true || keyboardUp) {
     return null;
   }
@@ -131,7 +131,7 @@ function MadeLine({
     <MadeQuestLine
       bottom={madeLineBottom(room.tutorialStart, room.interestsHint)}
       onPress={() => {
-        open(first.quest.id);
+        openCard(first.quest.id);
       }}
       words={first.words}
     />
@@ -183,7 +183,9 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       {chat.sheet(inputTop)}
       <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
-      <MadeQuestFrame made={made} onHeight={onAnswerHeight} room={room} />
+      {made.shown === null ? null : (
+        <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
+      )}
       {inputShown && !cardShown ? (
         <AiInput
           chatOpen={chat.shown}

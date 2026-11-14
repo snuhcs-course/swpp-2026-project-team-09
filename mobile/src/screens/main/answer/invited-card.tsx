@@ -19,7 +19,6 @@ interface InvitedCardProps {
   chips: readonly ConditionChip[];
   // The start of the Plan that was sent.
   startAt: string;
-  // The Quest's steps.
   steps: readonly SubQuest[];
   standings: ReadonlyMap<string, Standing>;
   onClose: () => void;

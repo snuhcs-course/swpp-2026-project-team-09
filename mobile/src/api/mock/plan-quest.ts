@@ -16,8 +16,8 @@ import { PLAN_QUEST } from './data/plan-quest';
 // User holds. Empty at each start.
 let made: Quest[] = [];
 
-// The stored reply's Quest as the main server makes it for the mock's User: the asker, who leads it and is its one
-// Holder and accepted member, is the mock's User.
+// The stored reply's Quest as the main server makes it for the mock's User: the asker, who leads it, is its one Holder,
+// and is accepted among its `members`, is the mock's User.
 function madeByMe(quest: Quest): Quest {
   const asker = quest.leader?.id;
   const me = (person: Person): Person => (person.id === asker ? { ...ME } : person);
