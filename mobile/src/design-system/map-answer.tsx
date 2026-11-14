@@ -156,17 +156,29 @@ const FACE_BADGE = 14;
 const ONE_LINE = mapText.buttonTitle.lineHeight + 2 * GAP + 2 * RING;
 const TWO_LINES = mapText.buttonTitle.lineHeight + mapText.rowLine.lineHeight + 2 * space[1] + 2 * RING;
 // The advance widths of `assets/fonts/Pretendard-SemiBold.otf` and `Pretendard-Bold.otf` as shares of the font's
-// size, rounded up: a Hangul syllable 0.864; a space, "·", and ":" at most 0.282; any other letter at most the widest
-// digit's 0.66.
+// size, each class at its widest letter in either font, rounded up: a Hangul syllable 0.864; a space, "·", ":", ".",
+// and "," 0.287; "W", "M", "m", "w", "%", "@", and the capitals "A", "C", "D", "G", "H", "N", "O", "Q", "U", "V", "X",
+// and "Y" 0.999, and any letter outside ASCII, such as "→" (0.922), "—", or "…", no wider but for rare symbols such as
+// "㎯"; any other letter 0.663.
 const HANGUL = /\p{Script=Hangul}/u;
 const NARROW = /[\s·:.,]/u;
-const LETTER = { hangul: 0.87, narrow: 0.29, other: 0.67 };
+const WIDE = /[WMmw%@ACDGHNOQUVXY]|\P{ASCII}/u;
+const LETTER = { hangul: 0.87, narrow: 0.29, wide: 1, other: 0.67 };
+
+function shareOf(letter: string): number {
+  if (HANGUL.test(letter)) {
+    return LETTER.hangul;
+  }
+  if (NARROW.test(letter)) {
+    return LETTER.narrow;
+  }
+  return WIDE.test(letter) ? LETTER.wide : LETTER.other;
+}
 
 function wordsWidth(words: string, size: number): number {
   let width = 0;
   for (const letter of words) {
-    const share = HANGUL.test(letter) ? LETTER.hangul : NARROW.test(letter) ? LETTER.narrow : LETTER.other;
-    width += share * size;
+    width += shareOf(letter) * size;
   }
   return width;
 }

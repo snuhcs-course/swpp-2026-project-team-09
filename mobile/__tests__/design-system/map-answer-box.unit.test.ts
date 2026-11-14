@@ -17,13 +17,13 @@ function label(
 
 // The worked widths: the padding of 8 at each side, a number's badge of 16 and its gap of 4, the pick's border of 2 at
 // each side, and the words at the advance widths of Pretendard rounded up (a Hangul syllable 0.87 of the font's size,
-// a space, "·", or ":" 0.29, any other letter 0.67), at 12 points, or 14 for the pick's title; the sum rounded up, at
-// most 180. The heights: 26 for one line (the pick's title 18, the padding of 2 and the border of 2 at the top and
-// at the bottom) and 46 for two (18 and 16, the padding of 4 and the border). 20 from the point: half the symbol box
-// of 36 and the gap of 2.
-// Partitions: a label at each side; one line and two; with a badge; past the widest; moved to share an edge.
+// a space, "·", or ":" 0.29, "W" and "→" 1.0, a digit 0.67), at 12 points, or 14 for the pick's title; the sum rounded
+// up, at most 180. The heights: 26 for one line (the pick's title 18, the padding of 2 and the border of 2 at the top
+// and at the bottom) and 46 for two (18 and 16, the padding of 4 and the border). 20 from the point: half the symbol
+// box of 36 and the gap of 2.
+// Partitions: a label at each side; one line and two; with a badge; past the widest.
 describe("an answer's label box around its point", () => {
-  it('is 113 wide at the left for "13:00 수업 · 24동", 26 high and centred on the point', () => {
+  it('is 113 wide at the left for "13:00 수업 · 24동", 26 high, and centred on the point', () => {
     // Six digits 4.02, five narrow letters 1.45, three syllables 2.61: 8.08 × 12 = 96.96, and 16.
     expect(answerLabelBox(label('left', 'next', '13:00 수업 · 24동'))).toEqual({
       left: -133,
@@ -60,6 +60,14 @@ describe("an answer's label box around its point", () => {
     const reason = label('right', 'dropped', '301동식당 · 지은은 13분밖에 못 있어요');
 
     expect(answerLabelBox(reason)).toMatchObject({ left: 20, right: 200 });
+  });
+});
+
+// Partitions: wide letters; moved to share an edge.
+describe("an answer's label box with wide letters or a shift", () => {
+  it('is 92 wide at the right for "W관 → 301동", its "W" and "→" wide letters', () => {
+    // "W" and "→" 2.0, two syllables 1.74, two spaces 0.58, three digits 2.01: 6.33 × 12 = 75.96, and 16.
+    expect(answerLabelBox(label('right', 'candidate', 'W관 → 301동'))).toMatchObject({ left: 20, right: 112 });
   });
 
   it('stands its shift further from the point at the left', () => {
