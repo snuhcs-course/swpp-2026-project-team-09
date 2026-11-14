@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo } from 'react';
@@ -23,7 +24,15 @@ const SWIPE_COUNTS = 48;
 
 // The answer's lines, which a swipe to the left turns to the next Plan and one to the right to the previous, as the
 // arrows do.
-function SwipedLines({ shown, count, lines }: { shown: ShownAnswer; count: number; lines: readonly AnswerLine[] }): ReactElement {
+function SwipedLines({
+  shown,
+  count,
+  lines,
+}: {
+  shown: ShownAnswer;
+  count: number;
+  lines: readonly AnswerLine[];
+}): ReactElement {
   const { browse, recalculating } = shown;
   const pan = useMemo(
     () =>
