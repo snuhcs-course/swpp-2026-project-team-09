@@ -97,6 +97,15 @@ export const serverClient: ApiClient = {
   endFriendship: async (userId) => {
     await call('DELETE', `/friends/${encodeURIComponent(userId)}`, isNothing);
   },
+  recordFriendsAsked: async (userIds, moment) => {
+    await call('POST', '/friends/asked', isNothing, { body: { userIds, moment } });
+  },
+  recordMasterOffAsked: async () => {
+    await call('POST', '/users/me/master-switch/asked', isNothing);
+  },
+  lowerFriendLevels: async (level) => {
+    await call('PUT', '/users/me/friend-levels', isNothing, { body: { level } });
+  },
   findFriendId: (friendId) => call('GET', `/friend-ids/${encodeURIComponent(friendId)}`, isUserSummary),
   sendFriendRequest: (friendId) => call('POST', '/friend-requests', isSentFriendRequest, { body: { friendId } }),
   listFriendRequests: () => call('GET', '/friend-requests', isFriendRequests),

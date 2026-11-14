@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -21,6 +22,7 @@ import { MarkerImageStage } from '@/map';
 import { PushArrivals } from '@/push/push-arrivals';
 import { PushAskHost } from '@/push/push-ask-host';
 import { PushRegistration } from '@/push/push-registration';
+import { PlanLevelsQuestion } from '@/screens/friends/plan-levels-question';
 import { SessionProvider } from '@/session/session';
 
 // What every screen stands in: the data's cache, where the User is in the flow, the connection to the socket server,
@@ -39,6 +41,7 @@ export function AppProviders({ children }: { children: ReactNode }): ReactElemen
             <LibrarySessionProvider>
               <OverlayHost>
                 <PushAskHost>{children}</PushAskHost>
+                <PlanLevelsQuestion />
               </OverlayHost>
             </LibrarySessionProvider>
             <MarkerImageStage />
