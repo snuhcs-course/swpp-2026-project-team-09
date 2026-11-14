@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, within } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 
-import { MapDot, MapPerson, presence } from '@/design-system';
+import { color, MapDot, MapPerson, presence } from '@/design-system';
 
 // The size the marker with the test's id is laid out at.
 function sizeOf(testID: string): { width: number; height: number } {
@@ -63,6 +64,31 @@ describe('MapPerson', () => {
       off: '#8A90A3',
       member: '#B63A07',
     });
+  });
+});
+
+// Partitions: a face without the "+", and one with it. Expected values: P02 ticket 09, a small round at the face's
+// upper right in the size of the answer's "?" and "✓", navy with a white "+" as the wireframe kit draws it.
+describe('MapPerson: the "+" of a Friend who can be added', () => {
+  it('draws no badge on a face without it', async () => {
+    await render(<MapPerson name="김민준" testID="person" tone="free" />);
+
+    expect(screen.queryByTestId('person:badge')).toBeNull();
+    expect(screen.queryByText('+')).toBeNull();
+  });
+
+  it('draws a navy round of 14 with a white "+" at the upper right of the face', async () => {
+    await render(<MapPerson addable name="김민준" testID="person" tone="free" />);
+
+    expect(screen.getByTestId('person:badge')).toHaveStyle({
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 14,
+      height: 14,
+      backgroundColor: color.snuBlue,
+    });
+    expect(within(screen.getByTestId('person:badge')).getByText('+')).toHaveStyle({ color: color.onPrimary });
   });
 });
 
