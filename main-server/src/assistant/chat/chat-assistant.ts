@@ -8,10 +8,12 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendsService } from '../../friends/friends.service.js';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
+import { type InterestsService } from '../../interests/interests.service.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
@@ -23,6 +25,7 @@ import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { type MealPlanService } from '../gathering/meal-plan.service.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
+import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { koreaNow } from '../korea-time.js';
 import { LIBRARY_RULES } from '../library/library-rules.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
@@ -54,6 +57,7 @@ export interface ChatAssistantServices {
   library: LibraryServices;
   tutorial: TutorialService;
   mealPlans: MealPlanService;
+  interests: InterestsService;
 }
 
 export interface ChatAssistantOptions {
@@ -117,17 +121,20 @@ export function chatAssistant(
     library,
     tutorial,
     mealPlans,
+    interests,
   }: ChatAssistantServices,
   options?: ChatAssistantOptions,
 ): Feature {
   const drawsAnswers = options?.drawsAnswers ?? false;
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
-  const meal: Record<string, Tool> = drawsAnswers
-    ? { planMeal: planMeal(mealPlans) }
+  const byApp: Record<string, Tool> = drawsAnswers
+    ? { planMeal: planMeal(mealPlans), ...interestTools(interests) }
     : { findMealRestaurants, showRestaurants };
   return {
-    instructions: instructionsOf(drawsAnswers ? [FREE_TIME_EVENT_RULES, PLAN_RULES] : [FREE_TIME_RULES]),
+    instructions: instructionsOf(
+      drawsAnswers ? [FREE_TIME_EVENT_RULES, PLAN_RULES, INTEREST_RULES] : [FREE_TIME_RULES],
+    ),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
       getMenus: getMenus(menus),
@@ -144,7 +151,7 @@ export function chatAssistant(
       getMyDay,
       findFreeTimeEvents,
       findFreeFriends,
-      ...meal,
+      ...byApp,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
       // showLibrarySeats and showMyLibraryBookings.
       ...libraryTools(library),

@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { type Settings } from '../common/settings.js';
 import { FriendsModule } from '../friends/friends.module.js';
 import { GlobalEventsModule } from '../global-events/global-events.module.js';
+import { InterestsModule } from '../interests/interests.module.js';
 import { LocationSharingModule } from '../location-sharing/location-sharing.module.js';
 import { MenusModule } from '../menus/menus.module.js';
 import { PlacesModule } from '../places/places.module.js';
@@ -39,6 +41,8 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
   imports: [
     FriendsModule,
     GlobalEventsModule,
+    // The watched interests the interest tools keep and remove.
+    InterestsModule,
     LocationSharingModule,
     MenusModule,
     PlacesModule,

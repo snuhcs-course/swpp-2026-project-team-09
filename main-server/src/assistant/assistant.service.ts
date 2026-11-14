@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -27,6 +28,7 @@ import { FriendsService } from '../friends/friends.service.js';
 import { MenusService } from '../menus/menus.service.js';
 import { RestaurantPlaces } from '../menus/restaurant-places.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
+import { InterestsService } from '../interests/interests.service.js';
 import { PlaceLookup } from '../places/place-lookup.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
@@ -93,9 +95,11 @@ export class AssistantService {
     users: UsersService,
     tutorial: TutorialService,
     mealPlans: MealPlanService,
+    interests: InterestsService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
+    const enabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     const services = {
       menus,
       shuttle,
@@ -104,16 +108,10 @@ export class AssistantService {
       friends,
       places,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
-      library: {
-        catalogue,
-        freeTime,
-        friends,
-        quests,
-        users,
-        enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
-      },
+      library: { catalogue, freeTime, friends, quests, users, enabled },
       tutorial,
       mealPlans,
+      interests,
     };
     this.chat = chatAssistant(services);
     this.answerChat = chatAssistant(services, { drawsAnswers: true });
