@@ -18,6 +18,7 @@ import { OverlayHost, ToastProvider } from '@/design-system';
 import { LibrarySessionProvider } from '@/library/library-session';
 import { LiveUpdates } from '@/live/live-updates';
 import { MarkerImageStage } from '@/map';
+import { PushArrivals } from '@/push/push-arrivals';
 import { PushAskHost } from '@/push/push-ask-host';
 import { PushRegistration } from '@/push/push-registration';
 import { SessionProvider } from '@/session/session';
@@ -32,6 +33,7 @@ export function AppProviders({ children }: { children: ReactNode }): ReactElemen
       <QueryClientProvider client={queryClient}>
         <SessionProvider>
           <LiveUpdates />
+          <PushArrivals />
           <PushRegistration />
           <ToastProvider>
             <LibrarySessionProvider>
