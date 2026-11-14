@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
@@ -41,6 +42,7 @@ describe('design system catalogue', () => {
       'SidePanel · BottomSheet',
       'SegmentedTabs · ChipRow · SearchField · DayTile',
       'ListRow · SectionHeader · SwitchRow',
+      'ChoiceGrid',
       'EmptyState · LoadingState · ErrorState',
     ]) {
       expect(screen.getByRole('header', { name })).toBeOnTheScreen();

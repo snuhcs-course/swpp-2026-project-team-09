@@ -1,9 +1,9 @@
 # 02: A received invitation is pushed to the invitee's registered phone (main server)
 
 Parent: [spec](../spec.md) ("Tokens on the server", "Sending", "The received invitation", "Ownership and merge order")
-Status: ready-for-agent
+Status: done
 Who: the server-side member
-Blocked by: None (can start immediately). It merges once its review passes. No main-server or `all` Release carries it before 11/19.
+Blocked by: None. It is on the iteration's Main. No main-server or `all` Release carries it before 11/19.
 Native files: no
 
 ## What to build
@@ -65,20 +65,20 @@ Change:
 
 ## Acceptance criteria
 
-- [ ] The migration creates `push_tokens` with the unique `session_id` and `token` and the cascade from `sessions`. It is the only migration in the pull request, made from the schema of the iteration's Main at merge time.
-- [ ] `PUT /users/me/push-token` registers and answers 204. A second token from the same Session replaces the first. A malformed token gives 400, and no sign-in gives 401.
-- [ ] The same token registered by a second User's Session moves to it: inviting the first User then sends nothing.
-- [ ] Sign-out, a sign-in on another phone (`replaced`), and a reused refresh token each delete the ended Session's token row.
-- [ ] A Session whose only refresh token has expired (set `expiresAt` in the past in the test) gets no push, though its row stays.
-- [ ] An invitation sends exactly one request to the stand-in, with the title, body, address, `channelId`, and `priority` above, to the invitee's token only.
-- [ ] An invitee with no token, or whose Session ended, causes no request.
-- [ ] A `DeviceNotRegistered` ticket deletes the row, and the next invitation causes no request.
-- [ ] When the stand-in answers 500, fails, or hangs, the invitation's route answers as before, and the test ends within its normal time.
-- [ ] Accepting and declining an invitation cause no request.
-- [ ] Every test that checks the stand-in awaits `app.get(PushService).settled()` first, also before checking that nothing was sent, and before closing the app.
-- [ ] Every integration test refuses Expo by default, through `startApp`.
-- [ ] Unit tests: the invitation's message from a waiting invitation; the tokens dropped from an answer with an ok ticket, a `DeviceNotRegistered` ticket, and an error ticket with a made-up code (`details: { error: 'SomethingElse' }`); the logger never receives a string containing `PushToken[` for any of these answers, a 400 answer, or a failed parse.
-- [ ] Each changed source file has its AI-generated row; `pnpm lint`, format, type checks, and the touched tests pass in `main-server/`.
+- [x] The migration creates `push_tokens` with the unique `session_id` and `token` and the cascade from `sessions`. It is the only migration in the pull request, made from the schema of the iteration's Main at merge time.
+- [x] `PUT /users/me/push-token` registers and answers 204. A second token from the same Session replaces the first. A malformed token gives 400, and no sign-in gives 401.
+- [x] The same token registered by a second User's Session moves to it: inviting the first User then sends nothing.
+- [x] Sign-out, a sign-in on another phone (`replaced`), and a reused refresh token each delete the ended Session's token row.
+- [x] A Session whose only refresh token has expired (set `expiresAt` in the past in the test) gets no push, though its row stays.
+- [x] An invitation sends exactly one request to the stand-in, with the title, body, address, `channelId`, and `priority` above, to the invitee's token only.
+- [x] An invitee with no token, or whose Session ended, causes no request.
+- [x] A `DeviceNotRegistered` ticket deletes the row, and the next invitation causes no request.
+- [x] When the stand-in answers 500, fails, or hangs, the invitation's route answers as before, and the test ends within its normal time.
+- [x] Accepting and declining an invitation cause no request.
+- [x] Every test that checks the stand-in awaits `app.get(PushService).settled()` first, also before checking that nothing was sent, and before closing the app.
+- [x] Every integration test refuses Expo by default, through `startApp`.
+- [x] Unit tests: the invitation's message from a waiting invitation; the tokens dropped from an answer with an ok ticket, a `DeviceNotRegistered` ticket, and an error ticket with a made-up code (`details: { error: 'SomethingElse' }`); the logger never receives a string containing `PushToken[` for any of these answers, a 400 answer, or a failed parse.
+- [x] Each changed source file has its AI-generated row; `pnpm lint`, format, type checks, and the touched tests pass in `main-server/`.
 
 ## How a reviewer checks it
 
@@ -95,3 +95,7 @@ The review before the merge: two Opus 5.5 reviewers of this pull request (the ti
 
 - Agent time: about 7 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time; the reviewers ran inside it).
 - Tokens: output 58,382; input 7,112,482, of which 6,852,679 were cache reads, 259,705 cache writes, and 98 uncached. Without cache reads: 318,185.
+
+### Agent usage (implementation)
+
+Not recorded yet. The sessions that built this ticket add their time and tokens here; the review's part is above.

@@ -26,6 +26,9 @@ import { CloseButton } from './close-button';
 import { InvitedCard } from './invited-card';
 import { PlanCard } from './plan-card';
 
+// Above the first of the card's parts.
+const CONTENT_TOP = space[5];
+
 // What the User asked, on one line, with the chat icon and ✕, which forgets the conversation.
 function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }): ReactElement {
   const { top } = useSafeAreaInsets();
@@ -46,18 +49,20 @@ interface WordsProps {
   bubble: ChatBubble;
   shown: ShownAnswer;
   invitation: PlanInvitation;
+  // How high the Plan's card may stand before the card scrolls, null until it is known.
+  room: number | null;
   onClose: () => void;
 }
 
 // A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
 // made into one, else the lines of its answer's first Plan, or those that say why it has none, in place of the
 // model's sentence; otherwise the sentence as Markdown.
-function Words({ bubble, shown, invitation, onClose }: WordsProps): ReactElement {
+function Words({ bubble, shown, invitation, room, onClose }: WordsProps): ReactElement {
   const { answer } = bubble;
   if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
     const { made, standings } = invitation;
     return made === null || shown.plan === null ? (
-      <PlanCard answer={shown.answer} invitation={invitation} shown={shown} />
+      <PlanCard answer={shown.answer} invitation={invitation} room={room} shown={shown} />
     ) : (
       <InvitedCard
         chips={shown.answer.chips}
@@ -95,9 +100,14 @@ interface FrameCardProps {
   children: ReactNode;
 }
 
+// The most the card's content takes, about half the stage, null until the stage is laid out.
+function contentMaxOf(stageHeight: number | null, barRoom: number): number | null {
+  return stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom);
+}
+
 // The frame's card, attached to the bottom of the screen. Its content scrolls inside it.
 export function FrameCard({ barRoom, stageHeight, onHeight, testID, children }: FrameCardProps): ReactElement {
-  const contentMax = stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom);
+  const contentMax = contentMaxOf(stageHeight, barRoom);
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -126,6 +136,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   const { bubbles, waiting, retry } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const last = bubbles.at(-1);
+  const contentMax = contentMaxOf(stageHeight, barRoom);
   return (
     <FrameCard barRoom={barRoom} onHeight={onHeight} stageHeight={stageHeight} testID="answer-card">
       {keyboardUp ? null : (
@@ -138,7 +149,13 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                 onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting ? retry : null}
                 onShowLayer={control.leaving.showLayer}
                 words={
-                  <Words bubble={bubble} invitation={control.invitation} onClose={onClose} shown={control.answer} />
+                  <Words
+                    bubble={bubble}
+                    invitation={control.invitation}
+                    onClose={onClose}
+                    room={contentMax === null ? null : contentMax - CONTENT_TOP}
+                    shown={control.answer}
+                  />
                 }
               />
             </View>
@@ -247,7 +264,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.sheet,
   },
-  content: { gap: space[3], paddingTop: space[5], paddingHorizontal: space[4] },
+  content: { gap: space[3], paddingTop: CONTENT_TOP, paddingHorizontal: space[4] },
   part: { gap: space[2] },
   words: { ...text.bodyLg, color: color.ink },
   notice: { ...text.caption, position: 'absolute', right: space[4], left: space[4], color: color.inkMuted },

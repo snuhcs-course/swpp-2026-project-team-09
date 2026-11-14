@@ -3,11 +3,14 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
+import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap, card } from './support/answer-map';
@@ -41,6 +44,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const NEXT = '다음 후보';
 const BEFORE = '이전 후보';
+const INVITE = '이대로 초대';
 // The first Plan's basis, from the stored answer.
 const FIRST_BASIS = [
   '민수 12:15 302동 수업 끝',
@@ -109,6 +113,82 @@ describe('the arrows and the count', () => {
 
     expect(inOrder).toEqual([BEFORE, '되돌리기', '이대로 초대', NEXT]);
     expect(row.getByText('1/2')).toBeVisible();
+  });
+});
+
+// What stands in the steps' row, in order: an arrow by its name, the count by its test id, and the middle as "".
+function stepParts(): string[] {
+  return card()
+    .getByTestId('plan-steps')
+    .children.map((part) => {
+      if (typeof part === 'string') {
+        return part;
+      }
+      const name: unknown = part.props.accessibilityLabel ?? part.props.testID;
+      return typeof name === 'string' ? name : '';
+    });
+}
+
+// Partitions: more than one Plan without a drag, and with a drag kept. The rule: the design review of 2026-11-15, the
+// count in a box 36 wide always right before "›", and the arrows 40 across like the buttons, their touch still 48.
+describe('the last row', () => {
+  it('puts the count right before "›" for an answer of five Plans', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
+    expect(card().getByTestId('plan-count')).toHaveTextContent('1/5');
+  });
+
+  it('keeps the count right before "›" while a drag is kept, "되돌리기" in the middle', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    await step('from', 'increment');
+
+    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
+    expect(card().getByTestId('plan-count')).toHaveTextContent('1/2');
+    expect(within(card().getByTestId('plan-steps')).getByRole('button', { name: '되돌리기' })).toBeVisible();
+  });
+
+  it('draws the arrows 40 across with a touch of 48, and the count in a box 36 wide', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    for (const name of [BEFORE, NEXT]) {
+      expect(card().getByRole('button', { name })).toHaveStyle({ width: 40, height: 40 });
+      expect(card().getByRole('button', { name })).toHaveProp('hitSlop', 4);
+    }
+    expect(card().getByTestId('plan-count')).toHaveStyle({ width: 36, textAlign: 'center' });
+  });
+});
+
+// Partitions: the main button beside a kept drag, and while its request is held back. The rule: fix 4 of the design
+// review of 2026-11-15, "이대로 초대" the primary button 40 high in what the middle leaves after "되돌리기", "보내는
+// 중이에요" in its place and width, and the count never moving.
+describe('the main button in the last row', () => {
+  it('takes the rest of the middle after "되돌리기", the count still right before "›"', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    await step('from', 'increment');
+
+    const row = within(card().getByTestId('plan-steps'));
+    const main = row.getByRole('button', { name: INVITE });
+    expect(row.getByRole('button', { name: '되돌리기' }).parent).toHaveStyle({ width: 96 });
+    expect(main.parent).toHaveStyle({ flex: 1 });
+    expect(main).toHaveStyle({ alignSelf: 'stretch', height: 40, backgroundColor: color.snuBlue });
+    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
+  });
+
+  it('reads "보내는 중이에요" in its place while the request is held back, the count unmoved', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: 3000 });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await user.press(card().getByRole('button', { name: INVITE }));
+
+    const sending = within(card().getByTestId('plan-steps')).getByRole('button', { name: '보내는 중이에요' });
+    expect(sending.parent).toHaveStyle({ flex: 1 });
+    expect(sending).toHaveStyle({ alignSelf: 'stretch', height: 40 });
+    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
+    expect(card().getByTestId('plan-count')).toHaveTextContent('1/5');
+    await pass(3000);
   });
 });
 

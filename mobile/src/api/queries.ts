@@ -9,6 +9,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -32,6 +33,7 @@ export const MY_PARTY_KEY = ['my-party'] as const;
 export const PARTIES_KEY = ['parties'] as const;
 export const FRIEND_REQUESTS_KEY = ['friend-requests'] as const;
 export const QUEST_INVITATIONS_KEY = ['quest-invitations'] as const;
+export const NOTIFICATIONS_KEY = ['notifications'] as const;
 export const JOIN_REQUESTS_KEY = ['join-requests'] as const;
 export const SENT_INVITATIONS_KEY = ['sent-invitations'] as const;
 export const DECLINED_PARTIES_KEY = ['declined-parties'] as const;
@@ -53,6 +55,7 @@ export const OFFICIAL_RECRUITING_KEY = ['official-recruiting'] as const;
 export const HIDDEN_POSTS_KEY = ['hidden-posts'] as const;
 export const COMPANION_SEEKERS_KEY = ['companion-seekers'] as const;
 export const TUTORIAL_KEY = ['tutorial'] as const;
+export const INTERESTS_KEY = ['interests'] as const;
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
 // Entering the Lobby is done once, by the loading screen or after a sign-in, and its answer is not asked again by a
@@ -91,6 +94,10 @@ export function invitationCardQuery(
     queryFn: () => apiClient.getInvitationCard(invitationId, location()),
   };
 }
+export const notificationsQuery = queryOptions({
+  queryKey: NOTIFICATIONS_KEY,
+  queryFn: () => apiClient.listNotifications(),
+});
 // One entry for each Quest the User leads, all under one key, so that a signal fetches them all again.
 export function joinRequestsQuery(
   questId: string,
@@ -193,3 +200,5 @@ export const companionSeekersQuery = queryOptions({
 });
 // The 새내기 튜토리얼 with the User's progress. Each change answers with the new tutorial, which replaces this entry.
 export const tutorialQuery = queryOptions({ queryKey: TUTORIAL_KEY, queryFn: () => apiClient.getTutorial() });
+// The User's watched interests: null from a main server that does not keep them yet.
+export const interestsQuery = queryOptions({ queryKey: INTERESTS_KEY, queryFn: () => apiClient.listInterests() });

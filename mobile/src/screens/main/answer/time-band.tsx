@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
@@ -121,11 +122,11 @@ function Lanes({ band, fixed }: { band: TimeBandData; fixed: PlanInput['window']
         <View key={userId} style={styles.lane}>
           <View style={styles.bar}>
             {busy.map((stretch) => (
-              <View key={stretch.startAt} style={[styles.busy, placeOf(stretch, band.range)]} />
+              <View key={`busy-${stretch.startAt}`} style={[styles.busy, placeOf(stretch, band.range)]} />
             ))}
             {clashes(busy, fixed, band).map((stretch) => (
               <View
-                key={stretch.startAt}
+                key={`clash-${stretch.startAt}`}
                 style={[styles.clash, placeOf(stretch, band.range)]}
                 testID="time-band-clash"
               />

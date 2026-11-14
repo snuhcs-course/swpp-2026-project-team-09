@@ -55,18 +55,17 @@ function SentChips({ chips, standings }: Pick<InvitedCardProps, 'chips' | 'stand
 }
 
 // The card of the answer on screen once its Plan was made into a Quest: the conditions with how each Friend stands,
-// two lines that say the invitations went out and when to be there, the Quest's steps in order, and "닫기".
+// two lines that say the invitations went out and when to be there, the Quest's steps in order, and "닫기" across the
+// card, where "이대로 초대" stood.
 export function InvitedCard({ chips, startAt, made, standings, onClose }: InvitedCardProps): ReactElement {
   return (
     <View style={styles.card} testID="invited-card">
       <SentChips chips={chips} standings={standings} />
       <AnswerLines lines={linesOf(startAt)} />
       <QuestSteps steps={made.quest.subQuests} />
-      <View style={styles.buttons}>
-        <Button onPress={onClose} variant="secondary">
-          닫기
-        </Button>
-      </View>
+      <Button full onPress={onClose} variant="secondary">
+        닫기
+      </Button>
     </View>
   );
 }
@@ -74,5 +73,4 @@ export function InvitedCard({ chips, startAt, made, standings, onClose }: Invite
 const styles = StyleSheet.create({
   card: { gap: space[3] },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  buttons: { flexDirection: 'row' },
 });

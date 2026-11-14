@@ -35,7 +35,7 @@ import { Card } from './card';
 import { FriendList } from './friend-list';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
-import { MapBottom, openMenus, type Taken, takenBy } from './map-bottom';
+import { MapBottom, openMenus, type Taken } from './map-bottom';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
 import type { ChatSheetControl } from './chat-sheet';
@@ -48,7 +48,7 @@ import { useAskedByAddress } from './use-asked-card';
 import { type MainRoute, useRoute } from './use-route';
 import { useMapView } from './use-map-view';
 import { type ReceivedInvitation, useReceivedInvitation } from './use-received-invitation';
-import { useRoom } from './use-room';
+import { useBottomRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
 import { type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
@@ -200,7 +200,7 @@ function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel }: Main
       <Map
         avatars={contents.avatars}
         {...CAMPUS_CAMERA}
-        inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight)}
+        inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight, room.interestsHint)}
         markers={contents.markers}
         nativeMinLevel={nativeMinLevel}
         onCameraIdle={map.onCameraIdle}
@@ -295,7 +295,9 @@ function useMainTutorial(
 // itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
 // the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing; while
 // its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`). A received invitation's
-// card is shown the same way, with the invitee's own way on the map, and the tab bar gives way to either.
+// card is shown the same way, with the invitee's own way on the map, and the tab bar gives way to either. After
+// Onboarding on this phone the first run asks its three things, one card at a time, while nothing else takes the
+// bottom (`useFirstRun`).
 export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
@@ -305,31 +307,31 @@ export function MainScreen(): ReactElement {
   const { route, lines } = useLines(shuttle, map, me);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection);
-  const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { invitation, framed } = useFramed(selection, cards, me, chat.framed);
-  const { room, setStage, setCardHeight, heights } = useRoom(taken, start, framed);
+  const { taken, firstRun, room, ...bottom } = useBottomRoom(selection, chat, shuttle, start, framed);
   const view = useMapView(chat, map, room, { me, pin, lines, cards, selection }, invitation);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView {...view} map={map} pin={pin} room={room} />
-        <OverMap onStage={setStage}>
+        <OverMap onStage={bottom.setStage}>
           <Lists hidden={listsHidden(taken, framed)} map={map} room={room} selection={selection} tutorial={tutorial} />
           {zoomShown(taken, stack.open, framed) ? <MainZoomControl map={map} me={me} /> : null}
           <SelectedCard
             chat={chat}
             map={map}
             onActiveParty={party.open}
-            onHeight={setCardHeight}
+            onHeight={bottom.setCardHeight}
             route={route}
             selection={selection}
             shuttleLine={shuttle.line}
             top={taken.topCard}
           />
           <MapBottom
-            {...heights}
+            {...bottom.heights}
             chat={chat}
+            firstRun={firstRun}
             invitation={invitation}
             onParty={party.open}
             onShowOnMap={pin.showOnMap}

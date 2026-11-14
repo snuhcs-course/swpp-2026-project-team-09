@@ -14,15 +14,17 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
-import type { InvitationCard } from './invitation-card-types';
+import type { InvitationCard, OwnWay } from './invitation-card-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
+import type { WatchedInterest } from './interest-types';
 import type { MatchingRequest } from './matching-types';
 import type {
   Board,
@@ -54,9 +56,9 @@ import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
-import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
+import type { FriendRequests, JoinRequest, KeptNotification, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
-import type { MakePlanQuest, PlanQuest } from './plan-quest-types';
+import type { BetterPlan, MakePlanQuest, PlanQuest } from './plan-quest-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
 
@@ -94,6 +96,8 @@ export interface ApiClient {
   listFriendStatuses: () => Promise<FriendStatus[]>;
   listQuests: () => Promise<Quest[]>;
   listQuestInvitations: () => Promise<QuestInvitation[]>;
+  // The latest first.
+  listNotifications: () => Promise<KeptNotification[]>;
   // Only for a Quest the User leads.
   listJoinRequests: (questId: string) => Promise<JoinRequest[]>;
   listClasses: () => Promise<TimetableClass[]>;
@@ -179,6 +183,8 @@ export interface ApiClient {
   declineInvitation: (invitationId: string) => Promise<void>;
   // A received invitation with the User's own way to it, worked out from where the User is now when the app knows.
   getInvitationCard: (invitationId: string, location: LatLng | null) => Promise<InvitationCard>;
+  // A Holder reports being late by a whole number of minutes from 1 to 120, and gets their own way as it now is.
+  reportLate: (questId: string, minutes: number, location: LatLng | null) => Promise<OwnWay>;
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked when it gives that.
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
@@ -187,6 +193,12 @@ export interface ApiClient {
   // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
   // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
   makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
+  // For the Leader after a decline: whether the people left have a better Plan than the Quest as it stands, worked
+  // out from where the Leader is now when the app knows.
+  getBetterPlan: (questId: string, location: LatLng | null) => Promise<BetterPlan>;
+  // The Quest changed to the Plan named, its Holders and waiting invitations kept. Refused with 409 PLAN_CHANGED as
+  // the making is, and with 400 PLAN_PEOPLE_CHANGED when the input is not for the Quest's people.
+  changePlanQuest: (questId: string, making: MakePlanQuest) => Promise<Quest>;
   // The 새내기 튜토리얼: its content and the User's progress. Each change answers with the new tutorial, and each is
   // idempotent. A key that is no quest is refused with 404; a `by` that does not fit the quest's completion with 400.
   getTutorial: () => Promise<Tutorial>;
@@ -195,6 +207,13 @@ export interface ApiClient {
   hideTutorialRow: () => Promise<Tutorial>;
   startTutorialQuest: (key: string) => Promise<Tutorial>;
   completeTutorialQuest: (key: string, by: TutorialCompletedBy) => Promise<Tutorial>;
+  // The User's watched interests, the newest first. Null from a main server that does not keep them yet.
+  listInterests: () => Promise<WatchedInterest[] | null>;
+  // Keeps the words, 1 to 60 characters once trimmed, or answers the interest of the same words the User has. Refused
+  // with 400 for other words and with 409 INTERESTS_FULL for a 21st.
+  watchInterest: (words: string) => Promise<WatchedInterest>;
+  // Refused with 404 INTEREST_NOT_FOUND.
+  removeInterest: (interestId: string) => Promise<void>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -229,6 +248,7 @@ export const apiClient: ShownClient = {
   listFriendStatuses: () => chosen().listFriendStatuses(),
   listQuests: () => chosen().listQuests(),
   listQuestInvitations: () => chosen().listQuestInvitations(),
+  listNotifications: () => chosen().listNotifications(),
   listJoinRequests: (questId) => chosen().listJoinRequests(questId),
   listClasses: () => chosen().listClasses(),
   addClass: (save, key) => chosen().addClass(save, key),
@@ -296,11 +316,17 @@ export const apiClient: ShownClient = {
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
   makePlanQuest: (making, key) => chosen().makePlanQuest(making, key),
+  getBetterPlan: (questId, location) => chosen().getBetterPlan(questId, location),
+  changePlanQuest: (questId, making) => chosen().changePlanQuest(questId, making),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
+  reportLate: (questId, minutes, location) => chosen().reportLate(questId, minutes, location),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),
   stopTutorial: () => chosen().stopTutorial(),
   hideTutorialRow: () => chosen().hideTutorialRow(),
   startTutorialQuest: (key) => chosen().startTutorialQuest(key),
   completeTutorialQuest: (key, by) => chosen().completeTutorialQuest(key, by),
+  listInterests: () => chosen().listInterests(),
+  watchInterest: (words) => chosen().watchInterest(words),
+  removeInterest: (interestId) => chosen().removeInterest(interestId),
 };

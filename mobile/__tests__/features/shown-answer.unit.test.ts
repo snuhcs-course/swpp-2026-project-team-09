@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -176,5 +177,40 @@ describe('the basis', () => {
     });
 
     expect(shown().basisOpen).toBe(false);
+  });
+});
+
+// Partitions: the list of Friends to add opened, closed again, and closed by a new reply and by forgetting the
+// conversation. The rule: the list belongs to the answer on screen, as the band and the steps it replaces do.
+describe('the list of Friends to add', () => {
+  it('opens and closes', async () => {
+    const { shown } = await hold([ASKED, replied(2, MEAL_ANSWER)]);
+    expect(shown().adding).toBe(false);
+
+    await act(() => {
+      shown().setAdding(true);
+    });
+    expect(shown().adding).toBe(true);
+
+    await act(() => {
+      shown().setAdding(false);
+    });
+    expect(shown().adding).toBe(false);
+  });
+
+  it('is closed for a new reply and once the conversation is forgotten', async () => {
+    const { shown, rerender } = await hold([ASKED, replied(2, MEAL_ANSWER)]);
+    await act(() => {
+      shown().setAdding(true);
+    });
+
+    await rerender([ASKED, replied(2, MEAL_ANSWER), said(3, '지은이도'), replied(4, MEAL_ANSWER_THREE)]);
+    expect(shown().adding).toBe(false);
+
+    await act(() => {
+      shown().setAdding(true);
+    });
+    await rerender([]);
+    expect(shown().adding).toBe(false);
   });
 });
