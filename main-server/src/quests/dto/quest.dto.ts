@@ -53,7 +53,6 @@ export interface HolderDto {
   department: string;
 }
 
-// 'late' and 'declined' are sent once the schema holds a Holder's late minutes and a declined invitation.
 export type MemberState = 'invited' | 'accepted' | 'late' | 'declined';
 
 export interface QuestMemberDto {
@@ -83,8 +82,8 @@ export interface QuestDto {
   classQuest: boolean;
   // The requests to join waiting for the Leader's answer, when the User who reads it leads it; 0 otherwise.
   waitingJoinRequests: number;
-  // The Holders in the order they entered, then the Users whose invitation waits, by when it was sent. None for a
-  // Class Quest.
+  // The Holders in the order they entered, then the Users whose invitation waits, by when it was sent, then the Users
+  // who declined, by when they declined. None for a Class Quest.
   members: QuestMemberDto[];
 }
 
@@ -134,6 +133,7 @@ export const QUEST_INCLUDE = {
   holders: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }] },
   subQuests: { include: SUB_QUEST_INCLUDE, orderBy: [{ attending: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }] },
   invitations: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ sentAt: 'asc' }, { id: 'asc' }] },
+  declines: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ declinedAt: 'asc' }, { id: 'asc' }] },
   _count: { select: { joinRequests: true } },
 } satisfies Prisma.QuestInclude;
 
@@ -235,8 +235,13 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     classQuest: false,
     waitingJoinRequests: quest.leaderId === userId ? _count.joinRequests : 0,
     members: [
-      ...quest.holders.map(({ user }): QuestMemberDto => ({ user, state: 'accepted', lateMinutes: null })),
+      ...quest.holders.map(({ user, lateMinutes }): QuestMemberDto => ({
+        user,
+        state: lateMinutes === null ? 'accepted' : 'late',
+        lateMinutes,
+      })),
       ...quest.invitations.map(({ user }): QuestMemberDto => ({ user, state: 'invited', lateMinutes: null })),
+      ...quest.declines.map(({ user }): QuestMemberDto => ({ user, state: 'declined', lateMinutes: null })),
     ],
   };
 }

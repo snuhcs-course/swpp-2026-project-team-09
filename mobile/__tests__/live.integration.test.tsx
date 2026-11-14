@@ -28,7 +28,9 @@ import {
   TOKENS,
 } from './support/server';
 import { heldTokens } from '@/auth/tokens';
+import type { LateSignal } from '@/api/late-types';
 import { type InvitationAnswer, onInvitationAnswer } from '@/live/invitation-answers';
+import { onLateReport } from '@/live/late-reports';
 
 // The one connection to the socket server: what arrives over it, and how it opens again at the token's expiry.
 
@@ -177,6 +179,40 @@ describe('an answer to an invitation over the connection', () => {
     expect(server.received('GET /quests')).toHaveLength(before + 1);
     expect(listener).toHaveBeenCalledWith({ kind, questId: DINNER.id, userId: MIN_JUN.id });
     unsubscribe();
+  });
+});
+
+describe("a Holder's late report over the connection", () => {
+  it('fetches the Quests again, and tells a listener the minutes and the arrival', async () => {
+    const socket = await openLive();
+    const listener = jest.fn<undefined, [LateSignal]>();
+    const unsubscribe = onLateReport(listener);
+    const before = server.received('GET /quests').length;
+    const late = { questId: DINNER.id, userId: MIN_JUN.id, minutes: 5, arriveAt: '2026-11-17T12:37:00+09:00' };
+
+    await socketServer(() => {
+      socket.send('late', late);
+    });
+
+    expect(server.received('GET /quests')).toHaveLength(before + 1);
+    expect(listener).toHaveBeenCalledWith(late);
+    unsubscribe();
+  });
+});
+
+describe('a Quest changed to a better Plan over the connection', () => {
+  it('fetches the Quests and the invitations again on plan-changed', async () => {
+    const socket = await openLive();
+    const before = [server.received('GET /quests').length, server.received('GET /quest-invitations').length];
+
+    await socketServer(() => {
+      socket.send('plan-changed', { questId: DINNER.id });
+    });
+
+    expect([server.received('GET /quests').length, server.received('GET /quest-invitations').length]).toEqual([
+      before[0] + 1,
+      before[1] + 1,
+    ]);
   });
 });
 
