@@ -41,7 +41,7 @@ import {
 import { isMenus } from './menu-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isStudyBuildings } from './study-answers';
-import { isFriendRequests, isJoinRequests, isQuestInvitations } from './waiting-answers';
+import { isFriendRequests, isJoinRequests, isKeptNotifications, isQuestInvitations } from './waiting-answers';
 import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
@@ -110,6 +110,7 @@ export const serverClient: ApiClient = {
   listPositions: () => call('GET', '/positions', isPositions),
   listQuests: () => call('GET', '/quests', isQuests),
   listQuestInvitations: () => call('GET', '/quest-invitations', isQuestInvitations),
+  listNotifications: () => call('GET', '/notifications', isKeptNotifications),
   listJoinRequests: (questId) => call('GET', `/quests/${encodeURIComponent(questId)}/join-requests`, isJoinRequests),
   listClasses: () => call('GET', '/timetable/classes', isTimetableClasses),
   // Sent once for each press of 저장, so its key is new each time unless the caller keeps one to send again.
