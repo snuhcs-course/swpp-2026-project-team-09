@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -95,18 +96,18 @@ describe('the arrows and the count', () => {
     expect(card().getByText('5/5')).toBeVisible();
   });
 
-  it('stand at the two ends of their row, with "되돌리기" and the count between them', async () => {
+  it('stand at the two ends of their row, with "되돌리기", the main button, and the count between them', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await step('from', 'increment');
 
     const row = within(card().getByTestId('plan-steps'));
-    const names = [BEFORE, '되돌리기', NEXT];
+    const names = [BEFORE, '되돌리기', '이대로 초대', NEXT];
     const inOrder = row
       .getAllByRole('button')
       .map((button) => names.find((name) => row.getByRole('button', { name }) === button));
 
-    expect(inOrder).toEqual([BEFORE, '되돌리기', NEXT]);
+    expect(inOrder).toEqual([BEFORE, '되돌리기', '이대로 초대', NEXT]);
     expect(row.getByText('1/2')).toBeVisible();
   });
 });
