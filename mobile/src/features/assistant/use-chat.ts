@@ -14,7 +14,6 @@ import {
   CHAT_HISTORY_MAX,
   type ChatMessage,
   lengthOf,
-  type Lookup,
   type MapLayer,
   MESSAGES_TOTAL_MAX,
   type QuestProposal,
@@ -22,6 +21,7 @@ import {
   type RequestContext,
   sentProposalOf,
 } from '@/api/assistant-types';
+import type { Lookup } from '@/api/lookup-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';

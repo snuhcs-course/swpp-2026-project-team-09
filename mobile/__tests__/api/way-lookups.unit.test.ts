@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { WAY_LOOKUP } from '@/api/mock/data/way-lookup';
-import { isLookup } from '@/api/server/plan-answers';
+import { isLookup } from '@/api/server/lookup-answers';
 import late from '../fixtures/way-lookups/late.json';
 import leave from '../fixtures/way-lookups/leave.json';
 import shuttle from '../fixtures/way-lookups/shuttle.json';

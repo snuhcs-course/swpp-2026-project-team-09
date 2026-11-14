@@ -23,7 +23,9 @@ function scenePerson({ personId, origin, walkMinutes }: PersonPart, naming: Nami
     return [];
   }
   const person = naming.personOf(personId);
-  const exact = origin.basis === 'location' ? person.position : null;
+  const located = origin.basis === 'location';
+  // A Friend the asker sees only at the building has a location Place and no position.
+  const exact = located ? person.position : null;
   const label = person.me ? '나' : person.name;
   return [
     {
@@ -31,7 +33,7 @@ function scenePerson({ personId, origin, walkMinutes }: PersonPart, naming: Nami
       name: person.name,
       me: person.me,
       at: exact ?? naming.position(origin.placeId),
-      source: exact === null ? 'timetable' : 'exact',
+      source: exact === null ? (located ? 'building' : 'timetable') : 'exact',
       tag: walkMinutes !== null && walkMinutes > 0 ? `${label} · ${walkMinutes}분` : label,
     },
   ];

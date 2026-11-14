@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MarkerLook } from '@/map';
@@ -22,9 +23,9 @@ function withLabel(side: 'above' | 'below' | 'left' | 'right'): MarkerLook {
   return { kind: 'answer', symbol: null, label: { side, tone: 'candidate', title: '3식당', line: null, number: 4 } };
 }
 
-// Partitions: the same picture built twice; a change of each thing drawn (the symbol's type, name, ring, role, and
-// number; the label's side, tone, title, line, and number; no symbol; no label). Expected values: the brief's rule
-// that the name holds the words.
+// Partitions: the same picture built twice; a change of each thing drawn (the symbol's type, name, ring, badge, role,
+// and number; the label's side, tone, title, line, and number; no symbol; no label). Expected values: the brief's
+// rule that the name holds the words.
 describe("an answer's look on the map", () => {
   it('has one name for two looks that draw the same picture', () => {
     const again: MarkerLook = {
@@ -42,6 +43,8 @@ describe("an answer's look on the map", () => {
       FACE,
       { ...FACE, symbol: { type: 'face', name: '지은', dashed: true } },
       { ...FACE, symbol: { type: 'face', name: '민수', dashed: false } },
+      { ...FACE, symbol: { type: 'face', name: '민수', dashed: true, badge: 'waiting' } },
+      { ...FACE, symbol: { type: 'face', name: '민수', dashed: true, badge: 'accepted' } },
       { ...FACE, symbol: { type: 'me' } },
       { ...FACE, symbol: null },
       { ...FACE, label: null },

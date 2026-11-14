@@ -14,6 +14,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -23,12 +24,14 @@ import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
+import type { WatchedInterest } from './interest-types';
 import type { MatchingRequest } from './matching-types';
 import type {
   Board,
   ClassSave,
   Footprints,
   Friend,
+  FriendLevel,
   FriendStatus,
   GlobalEvent,
   InviteLink,
@@ -73,8 +76,8 @@ export interface ApiClient {
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
   listFriends: () => Promise<Friend[]>;
-  // Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
-  setFriendSharing: (userId: string, on: boolean) => Promise<void>;
+  // The User's own end of the friendship. Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
+  setFriendLevel: (userId: string, level: FriendLevel) => Promise<void>;
   endFriendship: (userId: string) => Promise<void>;
   // Refused with 404 FRIEND_ID_NOT_FOUND.
   findFriendId: (friendId: string) => Promise<UserSummary>;
@@ -205,6 +208,13 @@ export interface ApiClient {
   hideTutorialRow: () => Promise<Tutorial>;
   startTutorialQuest: (key: string) => Promise<Tutorial>;
   completeTutorialQuest: (key: string, by: TutorialCompletedBy) => Promise<Tutorial>;
+  // The User's watched interests, the newest first. Null from a main server that does not keep them yet.
+  listInterests: () => Promise<WatchedInterest[] | null>;
+  // Keeps the words, 1 to 60 characters once trimmed, or answers the interest of the same words the User has. Refused
+  // with 400 for other words and with 409 INTERESTS_FULL for a 21st.
+  watchInterest: (words: string) => Promise<WatchedInterest>;
+  // Refused with 404 INTEREST_NOT_FOUND.
+  removeInterest: (interestId: string) => Promise<void>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -224,7 +234,7 @@ export const apiClient: ShownClient = {
   registerPushToken: (token) => chosen().registerPushToken(token),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
-  setFriendSharing: (userId, on) => chosen().setFriendSharing(userId, on),
+  setFriendLevel: (userId, level) => chosen().setFriendLevel(userId, level),
   endFriendship: (userId) => chosen().endFriendship(userId),
   findFriendId: (friendId) => chosen().findFriendId(friendId),
   sendFriendRequest: (friendId) => chosen().sendFriendRequest(friendId),
@@ -317,4 +327,7 @@ export const apiClient: ShownClient = {
   hideTutorialRow: () => chosen().hideTutorialRow(),
   startTutorialQuest: (key) => chosen().startTutorialQuest(key),
   completeTutorialQuest: (key, by) => chosen().completeTutorialQuest(key, by),
+  listInterests: () => chosen().listInterests(),
+  watchInterest: (words) => chosen().watchInterest(words),
+  removeInterest: (interestId) => chosen().removeInterest(interestId),
 };

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -25,11 +26,12 @@ function useToastOverMap({ cardHeight, answerHeight }: Room, framed: boolean): v
 // The room the parts over the map have, and the toast's place. What is at the bottom card's place counts: a card at
 // the bottom, or the shuttle's notice; one that appears counts from the last one's height until it is laid out. The
 // answer frame's card counts on its own while `framed`, from its first layout on. `heights` are the bottom's parts'
-// callbacks: the shuttle's notice's and the answer frame's card's.
+// callbacks: the shuttle's notice's, which the first run's card shares, and the answer frame's card's.
 export function useRoom(
   { bottomCard, notice }: Taken,
   tutorialStart: boolean,
   framed: boolean,
+  interestsHint = false,
 ): {
   room: Room;
   setStage: (stage: Room['stage']) => void;
@@ -48,6 +50,7 @@ export function useRoom(
     cardHeight: atBottom ? cardHeight : null,
     answerHeight: framed ? answerHeight : null,
     tutorialStart: tutorialStart && !atBottom,
+    interestsHint: interestsHint && !atBottom,
   };
   useToastOverMap(room, framed);
   return {

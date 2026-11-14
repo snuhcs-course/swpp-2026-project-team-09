@@ -6,16 +6,23 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 name: CI
 
 on:
   push:
+    # A merge queue's branches are checked by their merge_group run.
+    branches-ignore: ['gh-readonly-queue/**']
+    # Named because a branch filter alone would leave tags out, and the Release gate waits for the tag's run.
+    tags: ['**']
+  merge_group:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # A Main's run in progress is not cancelled, since a job that skips on a branch leans on its Main's last full run.
+  cancel-in-progress: ${{ !endsWith(github.ref, '/Main') }}
 
 permissions:
   contents: read
@@ -41,18 +48,31 @@ jobs:
       run:
         working-directory: ${{ matrix.project }}
     steps:
+      # Every branch's history without file contents, then the script that says whether the branch's changes reach this
+      # job: each later step runs unless it said run=false.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - id: changes
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+        run: .github/ci/changes.sh ${{ matrix.project }}
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        if: steps.changes.outputs.run != 'false'
         with:
           working-directory: ${{ matrix.project }}
           node-version-file: ../.nvmrc
           cache: true
           require-lockfile: true
       - run: pnpm lint
+        if: steps.changes.outputs.run != 'false'
       - run: pnpm format:check
+        if: steps.changes.outputs.run != 'false'
       - run: pnpm typecheck
+        if: steps.changes.outputs.run != 'false'
       - run: pnpm test
-        if: matrix.project != 'mobile'
+        if: matrix.project != 'mobile' && steps.changes.outputs.run != 'false'
 
   # mobile's tests take over ten minutes on one runner, so they are split across four. Each keeps Jest's transform
   # cache for the next runs on its branch.
@@ -69,17 +89,27 @@ jobs:
         working-directory: mobile
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - id: changes
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+        run: .github/ci/changes.sh mobile-tests
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        if: steps.changes.outputs.run != 'false'
         with:
           working-directory: mobile
           node-version-file: ../.nvmrc
           cache: true
           require-lockfile: true
       - uses: actions/cache@v6
+        if: steps.changes.outputs.run != 'false'
         with:
           path: ${{ runner.temp }}/jest
           key: mobile-jest-${{ matrix.shard }}-${{ hashFiles('mobile/pnpm-lock.yaml') }}
       - run: pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --cacheDirectory=${{ runner.temp }}/jest
+        if: steps.changes.outputs.run != 'false'
 
   # The app's fingerprints under Production's build settings, against the latest native build's in app-version.json:
   # the Release workflow's own decision, so that a native change without a raised `version` fails here and not at its
@@ -102,13 +132,22 @@ jobs:
       APP_VERSION_URL: https://github.com/${{ github.repository }}/releases/download/app-version/app-version.json
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - id: changes
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+        run: .github/ci/changes.sh app-fingerprint
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        if: steps.changes.outputs.run != 'false'
         with:
           working-directory: mobile
           node-version-file: ../.nvmrc
           cache: true
           require-lockfile: true
       - name: Decide as the Release workflow would
+        if: steps.changes.outputs.run != 'false'
         run: |
           outputs=$(.github/release/release.sh fingerprint-and-decide "$APP_VERSION_URL" \
             "$RUNNER_TEMP/app-version.json" ci)
@@ -130,9 +169,19 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - id: changes
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+        run: .github/ci/changes.sh deploy-scripts
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
+        if: steps.changes.outputs.run != 'false'
       - run: find infra/deploy \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
+        if: steps.changes.outputs.run != 'false'
       - run: bats --recursive infra/deploy
+        if: steps.changes.outputs.run != 'false'
 
   # The Release workflow's script and its tests, which reach neither GitHub nor AWS.
   release-script:
@@ -141,9 +190,19 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - id: changes
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+        run: .github/ci/changes.sh release-script
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
-      - run: find .github/release \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
-      - run: bats --recursive .github/release
+        if: steps.changes.outputs.run != 'false'
+      - run: find .github/release .github/ci \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
+        if: steps.changes.outputs.run != 'false'
+      - run: bats --recursive .github/release .github/ci
+        if: steps.changes.outputs.run != 'false'
 
   # Production's Terraform, checked without a backend or AWS credentials.
   terraform:
@@ -155,12 +214,23 @@ jobs:
         working-directory: infra/production/terraform
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - id: changes
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+        run: .github/ci/changes.sh terraform
       - uses: hashicorp/setup-terraform@v4
+        if: steps.changes.outputs.run != 'false'
         with:
           terraform_version: 1.16.6
       - run: terraform fmt -check
+        if: steps.changes.outputs.run != 'false'
       - run: terraform init -backend=false -input=false -lockfile=readonly
+        if: steps.changes.outputs.run != 'false'
       - run: terraform validate
+        if: steps.changes.outputs.run != 'false'
 
   # Production's manifests: each target renders with stand-ins for the secrets that the Release workflow writes, and
   # holds the objects that a Release of it applies.
@@ -170,4 +240,12 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - id: changes
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}
+        run: .github/ci/changes.sh manifests
       - run: infra/production/k8s/test/targets.sh
+        if: steps.changes.outputs.run != 'false'
