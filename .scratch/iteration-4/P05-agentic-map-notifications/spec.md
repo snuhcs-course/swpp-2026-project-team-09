@@ -55,7 +55,7 @@ A User who asks for a seat without a time gets a booking card filled with the lo
 ### The notification service
 
 - A new module of the main server holds the service, registered in the application module. It is the one place that keeps a Notification, writes its words, and gives it its address.
-- **A Notification** is one thing the Assistant tells one User: its kind, the card it opens, its time, a title, and one line under it. Its identity is the User, the kind, and the card: there is at most one Notification of a kind about a card for a User.
+- **A Notification** is one thing the Assistant tells one User: its kind, the card it opens, its time, a title, and one line under it. Its identity is the User, the kind, and the card: there is at most one Notification of a kind about a card for a User. An answer to an invitation is also about the Friend who answered, so two Friends who accept into one Quest are two Notifications.
 - **The three calls.** `schedule` keeps a Notification for a User from now on, with the time it is for; one kept under the same identity is overwritten. `replace` does the same only when one is kept under that identity, and answers whether it did, so that a change arriving after a cancel does not bring the Notification back. `cancel` forgets it. Each call takes the facts of the kind, never text: the service writes the words.
 - **The kinds** are a closed list. This spec adds two, the answers to an invitation: `accepted` and `declined`. A later kind adds its facts, its words, and its caller in its own ticket, as a pushed kind does in the push spec.
 

@@ -14,6 +14,7 @@
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -36,17 +37,19 @@ import { MapBottom, openMenus, type Taken, takenBy } from './map-bottom';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
 import type { ChatSheetControl } from './chat-sheet';
-import { askAssistant, pressOnMap, useMainLayers } from './use-main-layers';
+import type { MapContents } from './use-answer-map';
+import { askAssistant, useMainLayers } from './use-main-layers';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import { type MainRoute, useRoute } from './use-route';
+import { useMapView } from './use-map-view';
 import { useRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
-import { type Things, useThings } from './use-things';
+import { useThings } from './use-things';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
-import { TUTORIAL_PIN_ID, type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
+import { type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
 import { ZoomControl } from './zoom-control';
 
 interface ListProps {
@@ -162,10 +165,6 @@ function listsHidden({ topCard }: Taken, { framed }: ChatSheetControl): boolean 
   return topCard || framed;
 }
 
-function ignorePress(): void {
-  // While the answer frame is shown, a marker opens no card.
-}
-
 function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
   return (
     <ZoomControl
@@ -180,47 +179,35 @@ function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
   );
 }
 
-// A press on the map: the tutorial place pin takes its own first; any other goes to the map's things, where merged
-// study pins zoom in.
-function pressWithPin(pin: TutorialPin, onThing: (id: string) => void): (id: string) => void {
-  return (id) => {
-    if (id === TUTORIAL_PIN_ID) {
-      pin.press(id);
-    } else {
-      onThing(id);
-    }
-  };
-}
-
 interface MainMapViewProps {
   map: MainMap;
-  me: Me;
-  things: Things;
-  lines: readonly MapLine[];
+  contents: MapContents;
   room: Room;
-  // The tutorial place pin, whose marker the map draws over the things'.
+  // The tutorial place pin, which watches the map's touches.
   pin: TutorialPin;
   // What a press on a marker does: the tutorial pin's press for its own marker, else the things'.
   onPress: (id: string) => void;
+  nativeMinLevel: number;
 }
 
-// The map with the things of the cards, the tutorial place pin, the User's own Avatar and the lines. Its credit opens
-// the sources of its data. The View around it watches its touches for a tap, which removes the pin.
-function MainMapView({ map, me, things, lines, room, pin, onPress }: MainMapViewProps): ReactElement {
+// The map with what it draws. Its credit opens the sources of its data. The View around it watches its touches for a
+// tap, which removes the pin.
+function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel }: MainMapViewProps): ReactElement {
   return (
     <View style={styles.map} testID="main-map-touches" {...pin.touches}>
       <Map
-        avatars={[...things.avatars, ...me.avatars]}
+        avatars={contents.avatars}
         {...CAMPUS_CAMERA}
         inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight)}
-        markers={[...things.markers, ...pin.markers]}
+        markers={contents.markers}
+        nativeMinLevel={nativeMinLevel}
         onCameraIdle={map.onCameraIdle}
         onCreditPress={() => {
           router.push('/map-sources');
         }}
         onFitZoom={map.onFitZoom}
         onPress={onPress}
-        lines={lines}
+        lines={contents.lines}
         ref={map.ref}
       />
     </View>
@@ -286,7 +273,8 @@ function useMainTutorial(
 // `usePosition()`: the signed-in place's layout holds the one watch of the phone. The map is told what the controls
 // cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
 // itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
-// the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing.
+// the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing; while
+// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`).
 export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
@@ -301,11 +289,11 @@ export function MainScreen(): ReactElement {
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { room, setStage, setCardHeight, heights } = useRoom(taken, start, chat.framed);
-  const onPress = chat.framed ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection));
+  const view = useMapView(chat, map, room, { things, me, pin, lines, cards, selection });
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
-        <MainMapView lines={lines} map={map} me={me} onPress={onPress} pin={pin} room={room} things={things} />
+        <MainMapView {...view} map={map} pin={pin} room={room} />
         <OverMap onStage={setStage}>
           <Lists hidden={listsHidden(taken, chat)} map={map} room={room} selection={selection} tutorial={tutorial} />
           {zoomShown(taken, stack.open, chat.framed) ? <MainZoomControl map={map} me={me} /> : null}

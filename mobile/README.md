@@ -641,6 +641,26 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it is laid
   out. Turning the switch either way closes the chat sheet and forgets the conversation. Every request then carries a
   context with the User's position on campus and the capability `answer`.
+- **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the latest
+  bubble of the turn that has one, held with the index of the Plan on screen and whether its basis is open
+  (`useShownAnswer` in `src/features/assistant/use-shown-answer.ts`, read through the chat control's `answer`). While
+  it has a Plan, the map draws what `drawingOf` (`src/features/assistant/answer-marks.ts`) gives for it, and nothing
+  else of the everyday map: each mark is an `answer` look, one symbol at a point and its label at the first free side,
+  and a candidate's mark takes a press, which shows its Plan; each route is a straight, solid line. The markers of
+  events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
+  the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
+  User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
+  marks, which they would lie over (`nearOwnMark`). The looks of every Plan are asked for when the answer comes. The camera
+  goes in one glide to where `answerCamera` (`src/features/assistant/answer-camera.ts`) works it out for the view:
+  the fit of the answer's points between the pill and the card, with room for a label above and below and 64 at the
+  sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the Plan's
+  own points centred there, or, when they do not fit either, the picked Restaurant's side kept in view. It moves
+  again when the Plan on screen changes and when the card's height or the stage's size changes; closing the answer
+  moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its lowest in place of 15, which on a
+  phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기")
+  at the right of its first row, the Plan's two lines, the basis while it is open, and "‹" ("이전 후보"), the count
+  ("3/5"), and "›" ("다음 후보") when the answer has more than one Plan; the arrows go round, and a new Plan closes
+  the basis. An answer without a Plan draws nothing and keeps the everyday map.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
@@ -1416,18 +1436,19 @@ The component chooses while the app runs (`src/map/map.tsx`), by whether the bui
 A native map draws images, not React views. An image is a picture of the design system's own marker view, made once
 for each look and kept for as long as the app runs:
 
-- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is one of three:
+- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is one of four:
   - the User's own Avatar: `MapPin` of the kind `me`, and its `small` form under the name `me:small`;
   - a person: `MapPerson` with the letters or the photo, in a `tone` (a status, or `member`), `small` or at full
     size, `selected` or not, named by the person's `id` and by whether there is a photo, such as
     `person:full:free:f1`, `person:full:free:f2:photo` and `person:small:member:pm1:selected`. The photo's address,
     which is new with every answer of the server, is no part of the name;
   - a place of each kind of the design system, as a `dot` from far away or a `pin` from close, a pin with its
-    `count` when it has one, `selected` or not, such as `official:dot`, `party:pin:4` and `party:pin:4:selected`.
+    `count` when it has one, `selected` or not, such as `official:dot`, `party:pin:4` and `party:pin:4:selected`;
+  - a mark of an answer (`answer`): `MapAnswerMark`, a symbol box of 36, which may be empty, and a label at one side
+    of it, words included, named by what it draws, such as `answer:[…]`. It stands on the centre of its symbol box.
 - Two looks that draw the same picture have the same name, so the pictures stay few: two for each person in each
   tone the person was seen in, a dot and a pin for each kind of place and count, and the selected look of the one
-  thing that is selected. No look has
-  a label: a name is the map's own text.
+  thing that is selected. No look but an answer's has a label: a name is the map's own text.
 - A person's marker and a pin stand on their tip, the bottom of their view; a dot and the User's own Avatar sit on
   their middle (`anchor`).
 - The main screen asks for every unselected look of its cards when the cards come, so that a change of the level of
@@ -1607,8 +1628,9 @@ that phone.
 
 ### When the app asks, registers, and unregisters
 
-All three happen only in a build that asks the main server, holds the native module, and has a ready Session. A mock
-build never asks and never registers, and its `registerPushToken` does nothing.
+Asking and registering happen only on Android, in a build that asks the main server, holds the native module, and has
+a ready Session. The iOS build has no push entitlement, so nothing is asked or registered there. A mock build never
+asks and never registers, and its `registerPushToken` does nothing.
 
 - **Asking.** Nothing is asked at app start, at sign-in, at Onboarding, or in first run. `PushAskHost`
   (`src/push/push-ask-host.tsx`, inside the overlay host) shows the sheet of board t17 ("나설 시각을 휴대폰으로 알려
@@ -1625,8 +1647,11 @@ build never asks and never registers, and its `registerPushToken` does nothing.
   permission.
 - **Unregistering.** When the Session ends on the phone, by a sign-out or by the main server's word, the app calls
   `unregisterPush()` before it forgets its tokens, whatever the main server answered, so a signed-out phone receives
-  nothing even when the server could not be told. Unregistering goes through Firebase: a sign-out with no network at
-  all leaves the phone registered until the next User signs in on it or its Session can no longer refresh.
+  nothing even when the server could not be told. Unregistering goes through Firebase and needs the network. When it
+  does not go through, the phone keeps `pushUnregisterOwed` and tries again at a start and each time the app comes
+  to the front while no Session is ready on it (nobody signed in, or a User still at the consent or in Onboarding).
+  No token of the ended Session is kept for this. What is owed goes before the next registration, and a registration
+  that goes through clears it.
 
 ## 관정도서관 (P06)
 

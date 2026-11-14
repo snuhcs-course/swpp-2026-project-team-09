@@ -1,9 +1,9 @@
 # 01: The phone can receive a push (the native part, 11/19 Release)
 
 Parent: [spec](../spec.md) ("The native part")
-Status: ready-for-agent
+Status: ready-for-human
 Who: the server-side member implements it. The builder runs the checks that need a Mac or a phone and makes the Release.
-Blocked by: None (can start immediately). Its pull request merges once its review passes, and ships in the 11/19 native Release.
+Blocked by: None. It is on the iteration's Main and ships in the 11/19 native Release. The criteria left open need a person: the API key's restriction, the Xcode build, the check on a phone, and the Release.
 Native files: yes
 
 ## What to build
@@ -50,17 +50,17 @@ Change:
 
 ## Acceptance criteria
 
-- [ ] `expo-notifications` is a dependency at the version Expo picks for SDK 57, with its plugin settings as above, listed after `./plugins/ios-without-push.ts`.
-- [ ] `mobile/google-services.json` is committed and `android.googleServicesFile` points at it.
+- [x] `expo-notifications` is a dependency at the version Expo picks for SDK 57, with its plugin settings as above, listed after `./plugins/ios-without-push.ts`.
+- [x] `mobile/google-services.json` is committed and `android.googleServicesFile` points at it.
 - [ ] Before the Release, a person has restricted the file's Android API key by API in the Google Cloud console to the FCM Registration API and the Firebase Installations API, and a development build still gets a token after the restriction.
-- [ ] After `CI=1 pnpm expo prebuild --platform android --no-install`, the manifest has the default notification icon, color, and channel `default`, and the Gradle files apply the Google services plugin.
+- [x] After `CI=1 pnpm expo prebuild --platform android --no-install`, the manifest has the default notification icon, color, and channel `default`, and the Gradle files apply the Google services plugin.
 - [ ] On the pull request, before it merges, `CI=1 pnpm expo prebuild --platform ios` leaves no `aps-environment` in the generated entitlements file. If it is there, the plugin order is wrong. Xcode builds and signs with the free team as `infra/production/README.md` describes. This check needs a Mac: the builder runs it when the implementer has none.
-- [ ] `version` is raised once for the Release, and CI's `app-fingerprint` job passes with the notice that the native part changed and needs a build.
-- [ ] Unit tests with `expo-notifications` mocked: the channel is created before the permission is asked and before the token is asked; the token call gets the project id; a failing token call gives null; `unregisterPush` calls the library once, and resolves after 3 seconds when the library does not answer; on Android a denied permission that can still be asked reads as undetermined; the token listener is told only of a token that differs from the last one. For "unavailable", the test mocks `expo` so that `requireOptionalNativeModule` returns null, and every function reports unavailable without throwing.
-- [ ] The whole mobile suite passes unchanged.
+- [x] `version` is raised once for the Release, and CI's `app-fingerprint` job passes with the notice that the native part changed and needs a build.
+- [x] Unit tests with `expo-notifications` mocked: the channel is created before the permission is asked and before the token is asked; the token call gets the project id; a failing token call gives null; `unregisterPush` calls the library once, and resolves after 3 seconds when the library does not answer; on Android a denied permission that can still be asked reads as undetermined; the token listener is told only of a token that differs from the last one. For "unavailable", the test mocks `expo` so that `requireOptionalNativeModule` returns null, and every function reports unavailable without throwing.
+- [x] The whole mobile suite passes unchanged.
 - [ ] On a development build on a phone, or an emulator with a Google Play image, `/push-check` shows the permission, asks for it, and shows the token. A push sent to that token from Expo's push tool arrives with the notification icon. The app's notification settings list the channel "알림" and no "Miscellaneous" channel. Tapping the push opens the app.
 - [ ] The builder merges the pull request once its review passes. For the Release, a commit of the iteration's Main that holds it is tagged `snunow/app/26.11.19-N`, the `release app` job builds the APK in CI, which installs over the 1.0.1 APK, and `app-version.json` names the new version. The iOS build is then made by hand and its fingerprint checked against `fingerprint.ios`, as "The iOS fingerprint" in `infra/production/README.md` describes.
-- [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `mobile/`.
+- [x] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass in `mobile/`.
 
 ## How a reviewer checks it
 
@@ -77,3 +77,7 @@ The review before the merge: two Opus 5.5 reviewers of this pull request (the na
 
 - Agent time: about 15 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time, with the fixer's; the reviewers ran inside it).
 - Tokens: output 96,087; input 16,413,738, of which 15,994,978 were cache reads, 418,580 cache writes, and 180 uncached. Without cache reads: 514,847.
+
+### Agent usage (implementation)
+
+Not recorded yet. The sessions that built this ticket add their time and tokens here; the review's part is above.

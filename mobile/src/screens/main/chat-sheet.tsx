@@ -18,7 +18,8 @@ import type { MapLayer, QuestProposal, RequestContext } from '@/api/assistant-ty
 import type { LatLng } from '@/api/types';
 import { Button, color, font, Icon, space } from '@/design-system';
 import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answer-switch';
-import { type Chat, useChat } from '@/features/assistant/use-chat';
+import { type Chat, type ChatBubble, useChat } from '@/features/assistant/use-chat';
+import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { openPost } from '../party/post-card';
 import { ChatBubbles, ChatEmpty } from './chat-bubbles';
@@ -181,6 +182,8 @@ export interface ChatSheetControl {
   framed: boolean;
   // Where the answer frame's cards lead, and its map buttons.
   leaving: CardLeaving & { showLayer: (layer: MapLayer) => void };
+  // The answer on screen and its Plan, which the map and the frame's card draw: none while the switch is off.
+  answer: ShownAnswer;
 }
 
 // A change of the switch of the answer on the map closes the sheet and forgets the conversation.
@@ -194,6 +197,8 @@ function useForgottenOnSwitchChange(closeSheet: () => void, reset: () => void): 
     [closeSheet, reset],
   );
 }
+
+const NO_BUBBLES: readonly ChatBubble[] = [];
 
 function stay(): void {
   // A card that leads elsewhere leaves the answer frame as it is.
@@ -247,6 +252,7 @@ export function useChatSheet(
     onMap,
     framed: onMap && (chat.bubbles.length > 0 || chat.waiting),
     leaving: { showLayer: forgetAndShow, openEvent, openQuestPost, openPartyForm, proposals },
+    answer: useShownAnswer(onMap ? chat.bubbles : NO_BUBBLES),
     sheet: (inputTop) =>
       sheetShown ? (
         <ChatSheet

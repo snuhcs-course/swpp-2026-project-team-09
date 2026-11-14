@@ -4,12 +4,13 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { captureView } from './capture';
-import { hasPhoto, LookView, lookName, type MarkerLook, standsOnTip } from './marker-looks';
+import { anchorShare, hasPhoto, LookView, lookName, type MarkerLook } from './marker-looks';
 import { hasNativeMap } from './native-module';
 import type { Size } from './projection';
 import type { MarkerImage } from './types';
@@ -44,13 +45,18 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
-function anchorOf(look: MarkerLook, height: number): MarkerImage['anchor'] {
-  return { x: 0.5, y: standsOnTip(look) && height > 0 ? 1 - IMAGE_MARGIN / height : 0.5 };
+// The look's anchor in the picture, which has `IMAGE_MARGIN` around the look: (margin + share × (size − 2 × margin)) /
+// size, written so that the middle and the tip come out exactly as 0.5 and 1 − margin / size.
+function anchorOf(look: MarkerLook, { width, height }: Size): MarkerImage['anchor'] {
+  const share = anchorShare(look, { width: width - IMAGE_MARGIN * 2, height: height - IMAGE_MARGIN * 2 });
+  const inPicture = (part: number, size: number): number =>
+    size > 0 ? part + (IMAGE_MARGIN * (1 - part * 2)) / size : 0.5;
+  return { x: inPicture(share.x, width), y: inPicture(share.y, height) };
 }
 
 // An image before its picture is made: it names its look, which is all a test and the plain ground need.
 export function unmadeImage(look: MarkerLook): MarkerImage {
-  return { look: lookName(look), view: look, uri: null, width: 0, height: 0, anchor: anchorOf(look, 0) };
+  return { look: lookName(look), view: look, uri: null, width: 0, height: 0, anchor: anchorOf(look, NO_SIZE) };
 }
 
 // Puts the looks that have no picture on the stage. A screen that is newly shown asks `again` for a look whose
@@ -81,7 +87,7 @@ function leave(look: MarkerLook): void {
 // A picture is kept under its look's name, as a new image: a map that holds the old one sees that it changed. The
 // look stays on the stage while its photo is still to come.
 function made(look: MarkerLook, uri: string, { width, height }: Size, complete: boolean): void {
-  const image = { look: lookName(look), view: look, uri, width, height, anchor: anchorOf(look, height) };
+  const image = { look: lookName(look), view: look, uri, width, height, anchor: anchorOf(look, { width, height }) };
   images = { ...images, [image.look]: image };
   if (complete) {
     leave(look);
@@ -201,6 +207,7 @@ export function MarkerImageStage(): ReactElement {
 // draws a marker's text that much higher, so that it sits under the look and not under the room.
 export const IMAGE_MARGIN = 12;
 const OFF_SCREEN = -10_000;
+const NO_SIZE: Size = { width: 0, height: 0 };
 
 const styles = StyleSheet.create({
   stage: { position: 'absolute', top: 0, left: OFF_SCREEN, alignItems: 'flex-start', pointerEvents: 'none' },
