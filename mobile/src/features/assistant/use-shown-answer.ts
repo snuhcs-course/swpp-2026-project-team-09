@@ -93,7 +93,13 @@ function withPlan(state: AnswerState, index: number): AnswerState {
 // User moved the time of the Plan they look at. Any other change changed who eats or where from, and so the order.
 function replaced(last: AnswerState, next: AnswerReply, by: 'drag' | undefined): AnswerState {
   const shownId = last.answer?.plans[last.index]?.id;
-  const index = by === 'drag' ? Math.max(0, next.plans.findIndex(({ id }) => id === shownId)) : 0;
+  const index =
+    by === 'drag'
+      ? Math.max(
+          0,
+          next.plans.findIndex(({ id }) => id === shownId),
+        )
+      : 0;
   const kept = by === 'drag' ? { answer: last.answer, index: last.index } : null;
   return { ...last, answer: next, index, basisOpen: false, kept, recalculating: false };
 }

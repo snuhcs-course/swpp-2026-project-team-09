@@ -24,7 +24,16 @@ const recalculate = jest.mocked(apiClient.recalculateAnswer);
 const ANSWERED_AGAIN: readonly ChatBubble[] = [...ANSWERED, said(3, '다시 찾아줘'), replied(4, MEAL_ANSWER)];
 
 function own(id: number): ChatBubble {
-  return { id, role: 'assistant', text: '좌석 현황이에요.', cards: [], mapButtons: [], proposal: null, failure: null, own: true };
+  return {
+    id,
+    role: 'assistant',
+    text: '좌석 현황이에요.',
+    cards: [],
+    mapButtons: [],
+    proposal: null,
+    failure: null,
+    own: true,
+  };
 }
 
 beforeEach(() => {
