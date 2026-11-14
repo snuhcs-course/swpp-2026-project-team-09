@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import type { GlobalEvent } from '@/api/types';
+import type { ListedGlobalEvent } from '@/api/types';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
@@ -34,7 +35,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 // Today at 15:00, where the career talk is.
-const TALK: GlobalEvent = {
+const TALK: ListedGlobalEvent = {
   ...CAREER,
   id: 'e4',
   title: '컴퓨터공학부 취업 특강',
@@ -43,7 +44,7 @@ const TALK: GlobalEvent = {
 };
 
 // Today at 16:00, there too.
-const SEMINAR: GlobalEvent = { ...TALK, id: 'e5', title: '딥러닝 세미나', startsAt: '2026-10-06T07:00:00.000Z' };
+const SEMINAR: ListedGlobalEvent = { ...TALK, id: 'e5', title: '딥러닝 세미나', startsAt: '2026-10-06T07:00:00.000Z' };
 
 const TWO_AT_ONE_POINT = '공식 행사 2개 · 301동 대강당';
 const THREE_AT_ONE_POINT = '공식 행사 3개 · 301동 대강당';

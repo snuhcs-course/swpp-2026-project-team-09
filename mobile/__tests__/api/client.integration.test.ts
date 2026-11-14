@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -101,6 +102,8 @@ describe('the mock of Quests and Global Events', () => {
         latitude: 37.45016,
         longitude: 126.95259,
         sourceUrl: null,
+        publishedAt: null,
+        favorite: false,
       },
     ]);
     expect(await answered(mockClient.listGlobalEventAnnouncers())).toEqual([

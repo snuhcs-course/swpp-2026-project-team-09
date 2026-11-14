@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -137,6 +138,41 @@ describe('a group of things at one place', () => {
       subLabel: '공식 행사 2개',
       title: '301동 대강당',
     });
+  });
+});
+
+// A Favorite Event's card, as the adapter makes it: the official pin with the star.
+const STARRED: CardView = {
+  ...TALK,
+  mark: { type: 'place', place: 'official', starred: true },
+  event: { id: 'e4', favorite: true },
+};
+
+describe('a group with a Favorite Event among its things', () => {
+  it("of one kind is the official pin with the star, its count and ★ on that event's row only", () => {
+    const [group] = groupedByPlace([{ ...EVENT, event: { id: 'e1', favorite: false } }, STARRED]);
+
+    expect(group).toMatchObject({
+      mark: { type: 'place', place: 'official', starred: true },
+      marker: { name: '공식 행사 2개 · 301동 대강당', count: 2 },
+    });
+    expect(group?.choices?.map(({ id, favorite }) => [id, favorite])).toEqual([
+      [EVENT.id, undefined],
+      [STARRED.id, true],
+    ]);
+  });
+
+  it('of several kinds has the star too', () => {
+    expect(groupedByPlace([PARTY, STARRED])[0]?.mark).toEqual({
+      type: 'group',
+      kinds: ['official', 'party'],
+      starred: true,
+    });
+  });
+
+  it('has no star when none of its events is one', () => {
+    expect(groupedByPlace([EVENT, TALK])[0]?.mark).toEqual({ type: 'place', place: 'official' });
+    expect(groupedByPlace([EVENT, PARTY])[0]?.mark).toEqual({ type: 'group', kinds: ['official', 'party'] });
   });
 });
 

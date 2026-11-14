@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // What the map and friends adapters' unit tests build their sources from: 13:00 in Korea on Tuesday 6 October 2026,
 // the User, two Friends' names and points on the campus.
 
 import type { RecruitingQuest } from '@/api/party-types';
-import type { Friend, GlobalEvent, MyParty, Person, Position, Quest } from '@/api/types';
+import type { Friend, ListedGlobalEvent, MyParty, Person, Position, Quest } from '@/api/types';
 import type { FriendView } from '@/features/friends/adapter';
 import type { MapSources } from '@/features/map/adapter';
 
@@ -27,8 +28,8 @@ export function sources(more: Partial<MapSources>): MapSources {
   return { ...none, myParty: null, positions: [], meId: ME.id, now: NOW, ...more };
 }
 
-// At 18:00 today at the point, with no end, no place and no page.
-export function event(id: string, more: Partial<GlobalEvent> = {}): GlobalEvent {
+// At 18:00 today at the point, with no end, no place and no page, not starred.
+export function event(id: string, more: Partial<ListedGlobalEvent> = {}): ListedGlobalEvent {
   const startsAt = '2026-10-06T18:00:00+09:00';
   return {
     id,
@@ -39,6 +40,8 @@ export function event(id: string, more: Partial<GlobalEvent> = {}): GlobalEvent 
     place: null,
     ...HALL,
     sourceUrl: null,
+    publishedAt: null,
+    favorite: false,
     ...more,
   };
 }

@@ -8,6 +8,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -31,7 +32,8 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // restaurant, a study building and the shuttle's stops and vehicles look the same at every level: a stop a dot and a
 // vehicle a pin, so that a vehicle standing at its stop is seen, and stops at one place stay a dot. A study building
 // none of whose spaces the User may use is grey, and study pins merged at the overview level are their cluster.
-// Things of several kinds at one place are a group's dot or pin.
+// Things of several kinds at one place are a group's dot or pin. A Favorite Event, and a place one of whose events is
+// one, is a pin with the star at every level, so that the star is seen with the whole campus in view.
 function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (kind === 'study-cluster') {
@@ -41,8 +43,11 @@ function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, sel
     const { id, name, photo, presence, stale } = mark;
     return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, stale, name, photo };
   }
+  const starred = mark.starred === true;
   if (mark.type === 'group') {
-    return { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected };
+    return starred
+      ? { kind: 'group', kinds: mark.kinds, form: 'pin', selected, starred }
+      : { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected };
   }
   if (mark.place === 'dining') {
     return { kind: 'restaurant', selected };
@@ -52,6 +57,9 @@ function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, sel
   }
   if (mark.place === 'shuttle') {
     return { kind: 'shuttle', form: kind === 'shuttle-vehicle' ? 'pin' : 'dot', selected };
+  }
+  if (starred) {
+    return { kind: mark.place, form: 'pin', count: marker.count, selected, starred };
   }
   return far
     ? { kind: mark.place, form: 'dot', selected }

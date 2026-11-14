@@ -11,15 +11,17 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
 import type { RecruitingQuest } from '@/api/party-types';
-import type { GlobalEvent, LatLng, MyParty, Party, Position, Presence, Quest } from '@/api/types';
+import type { LatLng, ListedGlobalEvent, MyParty, Party, Position, Presence, Quest } from '@/api/types';
 import { eventTime, recruitingCounts } from '@/features/events/adapter';
 import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
 import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
+import { eventPins } from './event-pins';
 import { placeGroupId } from './place-groups';
 import { givenName, shortTitle, withParticle } from './short-name';
 
@@ -33,11 +35,12 @@ export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
 // - a place: the icon and the colour of its kind in the design system. The frames draw a Shared Quest as a Party, and a
 //   shuttle's vehicle as its stops;
 // - a group: the kinds of the things at one place, in the order `place-groups.ts` draws them.
+// `starred` is a Favorite Event's star on a place's or a group's pin: the event, or one of the events at the place.
 export type CardMark =
   // `stale`: the position is over two minutes old, and the Avatar is dimmed.
   | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null; stale: boolean }
-  | { type: 'place'; place: PlaceKind }
-  | { type: 'group'; kinds: readonly PlaceKind[] };
+  | { type: 'place'; place: PlaceKind; starred?: boolean }
+  | { type: 'group'; kinds: readonly PlaceKind[]; starred?: boolean };
 
 // The kinds of a place in the design system.
 export type PlaceKind = 'official' | 'party' | 'quest' | 'dining' | 'shuttle' | 'library';
@@ -104,13 +107,16 @@ export interface CardView {
   within?: string;
   // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
   // such as its time.
-  choices?: { id: string; kind: PlaceKind; title: string; detail: string }[];
+  // `favorite` marks a Favorite Event's row with ★.
+  choices?: { id: string; kind: PlaceKind; title: string; detail: string; favorite?: boolean }[];
   // For a building of the 공부공간 layer: its Study Spaces, and 관정관's seat sectors.
   study?: StudyDetail;
   // For merged study pins: where each building stands, which a press brings into view.
   cluster?: readonly LatLng[];
   // Drawn in a translucent grey: a building none of whose Study Spaces the User may use.
   muted?: boolean;
+  // For a Global Event's card: the event, and whether the User starred it, which its ☆ shows and changes.
+  event?: { id: string; favorite: boolean };
 }
 
 // One Study Space as its building's card lists it. `refusal` is what a press on a space the User may not use says,
@@ -150,7 +156,7 @@ function line(icon: CardIcon, text: string): Line {
 }
 
 export interface MapSources {
-  globalEvents: readonly GlobalEvent[];
+  globalEvents: readonly ListedGlobalEvent[];
   globalEventAnnouncers: readonly { eventId: string; announcer: string }[];
   recruiting: readonly RecruitingQuest[];
   quests: readonly Quest[];
@@ -162,16 +168,17 @@ export interface MapSources {
   now: Date;
 }
 
-// The Global Events' cards. Things at one place are grouped on the main screen (`place-groups.ts`).
+// The cards of the Global Events that stand on the map (`event-pins.ts`), a Favorite Event's with the star. Things at
+// one place are grouped on the main screen (`place-groups.ts`). The others are in the 행사 tab only.
 function eventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering, now }: MapSources): CardView[] {
   const counts = recruitingCounts(gathering);
-  return globalEvents.map((event): CardView => {
+  return eventPins(globalEvents, now).map(({ event, look }): CardView => {
     const announcer = globalEventAnnouncers.find(({ eventId }) => eventId === event.id)?.announcer;
     const recruiting = counts.get(event.id) ?? 0;
     return {
       id: cardId.globalEvent(event.id),
       kind: 'global-event',
-      mark: { type: 'place', place: 'official' },
+      mark: { type: 'place', place: 'official', ...(look === 'favorite' ? { starred: true } : {}) },
       marker: {
         name: `공식 행사 · ${event.title}`,
         short: shortTitle(event.title),
@@ -188,6 +195,7 @@ function eventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering
       primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: event.id },
       secondary: null,
       position: { latitude: event.latitude, longitude: event.longitude },
+      event: { id: event.id, favorite: event.favorite },
     };
   });
 }

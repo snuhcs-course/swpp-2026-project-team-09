@@ -4,12 +4,14 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
 import { type LayoutChangeEvent, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge, Button, cardStyles, color, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
+import { FavoriteToggle } from './favorite-toggle';
 
 interface EventItemProps {
   event: EventView;
@@ -92,7 +94,10 @@ export function EventItem(props: EventItemProps): ReactElement {
             </Badge>
           ) : null}
         </View>
-        {event.source === null ? null : <Text style={styles.source}>{event.source}</Text>}
+        <View style={styles.corner}>
+          {event.source === null ? null : <Text style={styles.source}>{event.source}</Text>}
+          <FavoriteToggle eventId={event.id} style={styles.favorite} />
+        </View>
       </View>
       <Text accessibilityRole={onPress === undefined ? 'header' : 'link'} onPress={onPress} style={styles.title}>
         {event.title}
@@ -133,7 +138,11 @@ const styles = StyleSheet.create({
   },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
   badges: { flexDirection: 'row', flexWrap: 'wrap', flexShrink: 1, gap: 6 },
+  // The source, then the ☆ at the top right.
+  corner: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: space[1] },
   source: { ...text.caption, color: color.inkMuted },
+  // Its touch area reaches past the card's padding, as the map card's X does, so that the row stays as high.
+  favorite: { marginVertical: -space[3], marginRight: -space[3] },
   title: { ...text.title, color: color.ink },
   lines: { gap: space[1] },
   line: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

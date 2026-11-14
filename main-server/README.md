@@ -485,15 +485,25 @@ start, then by title. The app fetches it again on `global-events-changed`.
     "place": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
     "latitude": 37.45487,
     "longitude": 126.95407,
-    "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525"
+    "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+    "publishedAt": null,
+    "favorite": false
   }
 ]
 ```
 
 - A Draft, a cancelled, a discarded and an ended event are never in it.
 - `sourceUrl` is `null` for an event an Administrator created.
+- `publishedAt` is when the event was published, `null` for an event published before it was recorded. Nothing records
+  it yet.
+- `favorite` is whether the caller starred the event, which makes it a Favorite Event.
 - An Administrator's access token gets 401, and a User before onboarding 403 `ONBOARDING_REQUIRED`, as on every User's
   route.
+
+`PUT /global-events/:id/favorite` stars a published event for the caller and `DELETE /global-events/:id/favorite`
+clears the star, both with 204. A repeat changes nothing, so neither takes an Idempotency-Key. An event that is not
+published, or an id no event has, is refused with 404 `GLOBAL_EVENT_NOT_FOUND`, as the User's list never shows it. A star
+is kept in `global_event_favorites` and deleted with the User or the event.
 
 An Administrator reads them through `src/global-events/admin-global-events.controller.ts`, and the lists the admin site
 needs beside them through a controller of their own feature. Each route needs an Administrator's access token (see

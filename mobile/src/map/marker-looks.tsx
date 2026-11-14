@@ -8,6 +8,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -36,7 +37,9 @@ import type { Size } from './projection';
 // - for each person, the two sizes in each tone the person was seen in, with and without a photo, dimmed while the
 //   person's position was old, and each of them selected, which only the one selected person ever asks for;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
-// - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected;
+//   an official pin also with a Favorite Event's star;
+// - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected; the pin
+//   also with the star;
 // - one for the tutorial's place pin.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
@@ -70,14 +73,16 @@ export type MarkerLook =
       photo: string | null;
     }
   // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
-  // `muted` is translucent grey: a study building none of whose spaces the User may use.
-  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean; muted?: boolean }
+  // `muted` is translucent grey: a study building none of whose spaces the User may use. `starred` draws a pin's
+  // icon as the filled star: a Favorite Event, or official events at one place of which one is.
+  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean; muted?: boolean; starred?: boolean }
   // Study pins merged while the whole campus is in view, with how many they are.
   | { kind: 'study-cluster'; count: number; selected?: boolean }
   // The Place of restaurants with menus today, at every level of detail.
   | { kind: 'restaurant'; selected?: boolean }
-  // Things of several kinds at one place: a small round for each kind, in the order given.
-  | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean }
+  // Things of several kinds at one place: a small round for each kind, in the order given. `starred` draws the
+  // official round's star on a pin: a Favorite Event is among them.
+  | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean; starred?: boolean }
   // The place 지도에서 보기 of a tutorial quest shows: a red teardrop with a white circle, at every level of detail.
   | { kind: 'tutorialPlace' }
   // A mark of an answer: its symbol and its label, words included, in one picture.
@@ -114,7 +119,7 @@ export function lookName(look: MarkerLook): string {
     return parts('restaurant', selected);
   }
   if (look.kind === 'group') {
-    return parts('group', look.kinds.join('+'), look.form, selected);
+    return parts('group', look.kinds.join('+'), look.form, look.starred === true && 'starred', selected);
   }
   if (look.kind === 'study-cluster') {
     return parts('study-cluster', String(look.count), selected);
@@ -125,7 +130,14 @@ export function lookName(look: MarkerLook): string {
     return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, stale, selected);
   }
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
-  return parts(look.kind, look.form, count, look.muted === true && 'muted', selected);
+  return parts(
+    look.kind,
+    look.form,
+    count,
+    look.muted === true && 'muted',
+    look.starred === true && 'starred',
+    selected,
+  );
 }
 
 export function hasPhoto(look: MarkerLook): boolean {
@@ -191,7 +203,7 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
     return look.form === 'dot' ? (
       <MapGroupDot kinds={look.kinds} selected={look.selected} />
     ) : (
-      <MapGroupPin kinds={look.kinds} selected={look.selected} />
+      <MapGroupPin kinds={look.kinds} selected={look.selected} starred={look.starred} />
     );
   }
   if (look.kind === 'study-cluster') {
@@ -200,6 +212,13 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
   return look.form === 'dot' ? (
     <MapDot kind={look.kind} selected={look.selected} />
   ) : (
-    <MapPin count={look.count} kind={look.kind} muted={look.muted} selected={look.selected} />
+    <MapPin
+      count={look.count}
+      filled={look.starred}
+      icon={look.starred === true ? 'star' : undefined}
+      kind={look.kind}
+      muted={look.muted}
+      selected={look.selected}
+    />
   );
 }

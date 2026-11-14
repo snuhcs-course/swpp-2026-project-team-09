@@ -10,6 +10,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -235,7 +236,7 @@ export interface QuestMember {
 
 // --- What is on the map ---
 
-// GET /global-events: the published Global Events that have not ended, by their start.
+// A published Global Event, as the Assistant's cards carry it, and the list without what is the User's own.
 export interface GlobalEvent {
   id: string;
   title: string;
@@ -247,6 +248,14 @@ export interface GlobalEvent {
   latitude: number;
   longitude: number;
   sourceUrl: string | null;
+}
+
+// GET /global-events: the published Global Events that have not ended, by their start, with what is the User's own.
+export interface ListedGlobalEvent extends GlobalEvent {
+  // When it was published; null for one published before the main server recorded it.
+  publishedAt: string | null;
+  // The User starred it: a Favorite Event, which stays on the map until it ends.
+  favorite: boolean;
 }
 
 export type JoinPolicy = 'open' | 'approval' | 'closed';

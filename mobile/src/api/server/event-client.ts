@@ -3,11 +3,12 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import type { MatchingRequest } from '@/api/matching-types';
-import type { GlobalEvent } from '@/api/types';
+import type { GlobalEvent, ListedGlobalEvent } from '@/api/types';
 import { field, hasTexts, isNothing, isNumber, isTextOrNull, listOf } from './answers';
 import { call } from './http';
 
@@ -22,6 +23,13 @@ export function isGlobalEvent(value: unknown): value is GlobalEvent {
     isNumber(field(value, 'latitude')) &&
     isNumber(field(value, 'longitude')) &&
     isTextOrNull(field(value, 'sourceUrl'))
+  );
+}
+
+// An entry of GET /global-events, with what is the User's own.
+function isListedGlobalEvent(value: unknown): value is ListedGlobalEvent {
+  return (
+    isGlobalEvent(value) && isTextOrNull(field(value, 'publishedAt')) && typeof field(value, 'favorite') === 'boolean'
   );
 }
 
@@ -44,11 +52,19 @@ function matchingPath(globalEventId: string, rest = ''): string {
 
 type EventClient = Pick<
   ApiClient,
-  'listGlobalEvents' | 'requestMatching' | 'listMatchingRequests' | 'getMatchingRequest' | 'withdrawMatchingRequest'
+  | 'listGlobalEvents'
+  | 'setFavoriteEvent'
+  | 'requestMatching'
+  | 'listMatchingRequests'
+  | 'getMatchingRequest'
+  | 'withdrawMatchingRequest'
 >;
 
 export const eventClient: EventClient = {
-  listGlobalEvents: () => call('GET', '/global-events', listOf(isGlobalEvent)),
+  listGlobalEvents: () => call('GET', '/global-events', listOf(isListedGlobalEvent)),
+  setFavoriteEvent: async (globalEventId, favorite) => {
+    await call(favorite ? 'PUT' : 'DELETE', `/global-events/${encodeURIComponent(globalEventId)}/favorite`, isNothing);
+  },
   requestMatching: (globalEventId, size) =>
     call('POST', '/matching-requests', isMatchingRequest, { body: { globalEventId, size } }),
   listMatchingRequests: () => call('GET', '/matching-requests', listOf(isMatchingRequest)),

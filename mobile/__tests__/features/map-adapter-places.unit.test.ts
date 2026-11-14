@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: a Global Event alone and at a shared point; a Quest alone, with a Friend, with others' Party, with the
@@ -35,6 +36,7 @@ describe('toCards of a Global Event', () => {
       primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1' },
       secondary: null,
       position: HALL,
+      event: { id: 'e1', favorite: false },
     });
   });
 

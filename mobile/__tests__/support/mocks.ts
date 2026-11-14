@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +17,7 @@ import { resetMockFriendships } from '@/api/mock/friendships';
 import { resetMockInterests } from '@/api/mock/interests';
 import { resetMockTimetable } from '@/api/mock/timetable';
 import { forgetMockMatching } from '@/api/mock/events';
+import { forgetMockFavorites } from '@/api/mock/favorites';
 import { resetMockTutorial } from '@/api/mock/tutorial';
 import { forgetAnswerSwitch } from '@/features/assistant/answer-switch';
 
@@ -42,6 +44,7 @@ export async function startFresh(): Promise<void> {
   await AsyncStorage.clear();
   forgetMockSwitch();
   forgetMockMatching();
+  forgetMockFavorites();
   resetMockTutorial();
   forgetAnswerSwitch();
 }

@@ -23,6 +23,7 @@
 // 2026-11-05  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-14  Opus 5.5   prompted by TaeHyun79
 // 2026-11-14  Opus 5.5   prompted by fyoon46
+// 2026-11-15  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -84,6 +85,7 @@ model User {
   roomRequests      RoomRequest[]
   roomConsents      RoomConsent[]
   roomNotices       RoomNotice[]
+  favoriteEvents    GlobalEventFavorite[]
 
   @@map("users")
 }
@@ -256,12 +258,28 @@ model GlobalEvent {
   // update keep working; a later migration drops them.
   retiredPostNumber  Int?                @unique @map("post_number")
   retiredSourceUrl   String?             @map("source_url")
+  // When it was published, which tells a New Event. Empty for an event published before it was recorded.
+  publishedAt        DateTime?           @map("published_at")
   // None for an event an Administrator created.
   sessions           SourcePostSession[]
   quests             Quest[]
   questHolders       QuestHolder[]
+  favorites          GlobalEventFavorite[]
 
   @@map("global_events")
+}
+
+// A Global Event a User starred, which stays on their map until it ends. Deleted with the User or the event.
+model GlobalEventFavorite {
+  userId        String      @map("user_id") @db.Uuid
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  globalEventId String      @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent @relation(fields: [globalEventId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@id([userId, globalEventId])
+  @@index([globalEventId])
+  @@map("global_event_favorites")
 }
 
 enum GlobalEventState {

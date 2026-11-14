@@ -504,7 +504,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   given name under it from the `names` level. A Friend whose position is not known has no marker. The Global Event,
   the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
   with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
-  that gather for it (`GET /quests/recruiting`) when they are more than one. A short name is the title cut at a word's end within 8 characters,
+  that gather for it (`GET /quests/recruiting`) when they are more than one. Of the Global Events, only Favorite Events
+  and those held today in Korea stand on the map, an event of several days only on its first and last day
+  (`src/features/map/event-pins.ts`); the others are in the 행사 tab only. A Favorite Event is the official pin with a
+  filled star at every zoom, and so is a place one of whose events is one. A short name is the title cut at a word's end within 8 characters,
   counted in whole characters, so that an emoji is never cut. A given name is the name without its first syllable for
   a Korean name of three syllables, and the whole name otherwise (`src/features/map/short-name.ts`). A marker is read as the wireframe reads it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어
   설명회". The selected marker has the selected look and is drawn above the others, the User's own Avatar included.
@@ -973,6 +976,11 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
   "AI 매칭", or "매칭 중" while the User's request waits, which opens the list. At `/events?focus=<id>` the list shows
   every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
+- The ☆ "즐겨찾기" (`favorite-toggle.tsx`) at a card's top right, right of the source, stars the event or clears its
+  star (`PUT` and `DELETE /global-events/:id/favorite`). It changes at once and back with "즐겨찾기를 바꾸지 못했어요"
+  when the main server refuses. The chat's event cards have it too, and so does the map's card of one event, left of
+  the X; a grouped pin's card marks a Favorite Event's row with ★ instead. Whether the User starred an event is read
+  from `GET /global-events` alone, so every screen shows the same.
 - **파티 찾기/모집** (`recruiting-sheet.tsx`) lists the User's own Quest for the event ("내 파티" when the User leads it,
   "참여 중" with its Leader otherwise), then the Quests gathering for it (`GET /quests/recruiting?globalEventId=`),
   each with its fill and its next Sub Quest. The User's own opens its room; another's asks "‘{title}’에

@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import type { GlobalEvent } from '@/api/types';
+import type { ListedGlobalEvent } from '@/api/types';
 import { pass, screen } from './support/app';
 import { answerDining } from './support/dining';
 import { answerEvents, CAREER } from './support/events';
@@ -37,7 +38,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 // A Global Event at 학생회관, at the very point of the Shared Quest.
-const FAIR: GlobalEvent = {
+const FAIR: ListedGlobalEvent = {
   ...CAREER,
   id: 'e9',
   title: '동아리 박람회',

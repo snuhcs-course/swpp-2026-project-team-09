@@ -7,12 +7,14 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, color, font, Icon, type IconName, radius, shadow, space, text } from '@/design-system';
 import type { CardMark, CardView } from '@/features/map/adapter';
+import { FavoriteToggle } from '../events/favorite-toggle';
 import { Choices, GroupMark } from './card-choices';
 import { CARD } from './layout';
 import { StudyRows } from './study-rows';
@@ -75,8 +77,9 @@ function Leading({ mark }: { mark: CardMark }): ReactElement {
   );
 }
 
+// A Global Event's card has its ☆ left of the X; a place's card that lists events has none, its rows show ★.
 function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElement {
-  const { mark, subLabel, title } = card;
+  const { mark, subLabel, title, event } = card;
   return (
     <View style={styles.head}>
       <Leading mark={mark} />
@@ -95,6 +98,7 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
           {title}
         </Text>
       </View>
+      {event === undefined ? null : <FavoriteToggle eventId={event.id} style={styles.favorite} />}
       <Pressable
         accessibilityLabel="닫기"
         accessibilityRole="button"
@@ -196,6 +200,8 @@ const styles = StyleSheet.create({
     marginTop: -space[2],
     marginRight: -space[2],
   },
+  // Beside the X, at its height, with no room between their touch areas taken from the title.
+  favorite: { alignSelf: 'flex-start', marginTop: -space[2], marginRight: -space[3] },
   lines: { gap: space[1] },
   line: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   lineWords: { ...text.body, flexShrink: 1, color: color.inkMuted },

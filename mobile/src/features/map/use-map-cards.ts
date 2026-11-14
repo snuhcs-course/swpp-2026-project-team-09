@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
@@ -20,7 +21,7 @@ import {
 } from '@/api/queries';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { RecruitingQuest } from '@/api/party-types';
-import type { Friend, FriendStatus, GlobalEvent, MyParty, Party, Position, Quest } from '@/api/types';
+import type { Friend, FriendStatus, ListedGlobalEvent, MyParty, Party, Position, Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
 import { toFriendViews } from '@/features/friends/adapter';
@@ -29,7 +30,7 @@ import { POSITION_AGE_EVERY_MS } from '@/position';
 import { type CardView, toCards } from './adapter';
 
 type Results = [
-  UseQueryResult<GlobalEvent[]>,
+  UseQueryResult<ListedGlobalEvent[]>,
   UseQueryResult<{ eventId: string; announcer: string }[]>,
   UseQueryResult<Quest[]>,
   UseQueryResult<Party[]>,
