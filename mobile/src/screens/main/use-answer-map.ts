@@ -11,7 +11,7 @@ import { answerCamera } from '@/features/assistant/answer-camera';
 import { type AnswerDrawing, drawingOf, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import { withPerson } from '@/features/assistant/plan-input';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
-import { type CardView, cardId } from '@/features/map/adapter';
+import { type CardView, friendIdOf } from '@/features/map/adapter';
 import {
   type FitPadding,
   type MapAvatar,
@@ -102,14 +102,12 @@ export interface AnswerMap {
   nativeMinLevel: number;
 }
 
-const FRIEND = cardId.friend('');
-
 // A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
 function addOnPress({ change }: ShownAnswer, id: string): void {
-  if (!id.startsWith(FRIEND)) {
+  const userId = friendIdOf(id);
+  if (userId === null) {
     return;
   }
-  const userId = id.slice(FRIEND.length);
   change((input) => (input.people.some((person) => person.userId === userId) ? input : withPerson(input, userId)));
 }
 

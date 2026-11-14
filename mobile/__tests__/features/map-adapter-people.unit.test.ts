@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: a Friend and a Party member, recent, old (2 minutes) and too old (10 minutes); a member who is a
@@ -23,7 +24,7 @@ import {
   SEO_YEON,
   sources,
 } from '../support/map-sources';
-import { toCards } from '@/features/map/adapter';
+import { cardId, friendIdOf, toCards } from '@/features/map/adapter';
 
 describe('toCards of Friends', () => {
   it('a Friend with a recent position → the Avatar, the status and the way, and 파티 만들기', () => {
@@ -110,5 +111,17 @@ describe('toCards order', () => {
       }),
     );
     expect(cards.map(({ kind }) => kind)).toEqual(['global-event', 'shared-quest', 'friend', 'party-member']);
+  });
+});
+
+// Partitions: a Friend's card id; a Party member's, whose id also holds a user id; another kind's.
+describe('friendIdOf', () => {
+  it("gives the Friend's user id of a Friend's card id", () => {
+    expect(friendIdOf(cardId.friend('min-jun'))).toBe('min-jun');
+  });
+
+  it("gives null for a Party member's card id and for a Quest's", () => {
+    expect(friendIdOf(cardId.partyMember('min-jun'))).toBeNull();
+    expect(friendIdOf(cardId.quest('q1'))).toBeNull();
   });
 });
