@@ -104,37 +104,55 @@ interface MapBottomProps {
   firstRun: Pick<FirstRun, 'card' | 'answer' | 'openInterests'>;
 }
 
-// What is at the bottom of the map: the shuttle's notice, the row of buttons, the 편의기능 button and the AI input. A
-// card at the bottom hides the row and the button; the notice hides the row, and the button stands above it. The AI
-// input opens the chat's sheet, which hides the rest and lies under the input: the input stays, as the chat's own,
-// in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input stands right above
-// it, and the chat keeps its last bubble clear of it there. The conversation is kept while the app runs.
-// With the switch of the answer on the map on, the answer frame takes the sheet's place, and the input is its card's.
-// The first run's card stands at the bottom card's place, and its line that asks for interests at the left above the
-// row of buttons.
+type EverydayProps = Pick<
+  MapBottomProps,
+  'taken' | 'onParty' | 'onNoticeHeight' | 'room' | 'stack' | 'tutorial' | 'firstRun'
+>;
+
+// What the everyday map has at its bottom while no chat and no answer is shown: the shuttle's notice, the row of
+// buttons, the 편의기능 button, the tutorial's start, and the first run's card and its line that asks for interests.
+function EverydayBottom({
+  taken,
+  onParty,
+  onNoticeHeight,
+  room,
+  stack,
+  tutorial,
+  firstRun,
+}: EverydayProps): ReactElement {
+  const { bottomCard, notice } = taken;
+  return (
+    <>
+      {notice === null ? null : <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} />}
+      <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} room={room} />
+      {bottomCard ? null : <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} stack={stack} />}
+      {room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
+      {firstRun.card === null ? null : (
+        <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
+      )}
+      {room.interestsHint ? (
+        <InterestsHint bottom={interestsHintBottom(room.tutorialStart)} onPress={firstRun.openInterests} />
+      ) : null}
+    </>
+  );
+}
+
+// What is at the bottom of the map: the everyday map's own (`EverydayBottom`) and the AI input. A card at the bottom
+// hides the row and the button; the notice hides the row, and the button stands above it. The AI input opens the
+// chat's sheet, which hides the rest and lies under the input: the input stays, as the chat's own, in the same place
+// in the tree, so that it keeps the focus. While the keyboard is up, the input stands right above it, and the chat
+// keeps its last bubble clear of it there. The conversation is kept while the app runs. With the switch of the answer
+// on the map on, the answer frame takes the sheet's place, and the input is its card's.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, onAnswerHeight, room, stack, tutorial, onShowOnMap, chat, firstRun } = props;
+  const { onAnswerHeight, room, tutorial, onShowOnMap, chat } = props;
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
-  const { bottomCard, notice } = taken;
-  const under = !chat.shown && !chat.framed;
   // The open list of Friends to add takes the input's place in the answer's card.
   const inputShown = !(chat.framed && chat.answer.adding);
   const inputTop = inputShown ? AI_INPUT.bottom + lift + inputHeight : lift;
   return (
     <>
-      {under && notice !== null ? <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} /> : null}
-      {under ? <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} room={room} /> : null}
-      {under && !bottomCard ? (
-        <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} stack={stack} />
-      ) : null}
-      {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
-      {under && firstRun.card !== null ? (
-        <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
-      ) : null}
-      {under && room.interestsHint ? (
-        <InterestsHint bottom={interestsHintBottom(room.tutorialStart)} onPress={firstRun.openInterests} />
-      ) : null}
+      {!chat.shown && !chat.framed ? <EverydayBottom {...props} /> : null}
       {chat.sheet(inputTop)}
       <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
       {inputShown ? (
