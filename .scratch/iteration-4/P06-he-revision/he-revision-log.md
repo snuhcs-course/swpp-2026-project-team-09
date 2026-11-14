@@ -17,7 +17,7 @@ Spec: `spec.md`. Tickets: `issues/`.
 | H7 | 2 | After signing up it is hard to tell what the app does. | A four-step tour of the bottom tabs after Onboarding, replayable from 내 정보, and empty states that say what a screen is for. The planned tour of the main screen's inside was dropped: package B is rebuilding that screen, and package D's First run covers the first launch. | 07 | | Planned |
 | H8 | 1 | There are many features, and a new User can get lost. | H7's tour and empty states. | 07 | | Planned |
 | H9 | 1 | There is too much to read before using a feature. | No change in P06 beyond H7's empty states. The Assistant's share waits for H5. | — | — | Not planned |
-| H10 | 1 | The User cannot see at a glance whom they share their location with. | The 위치 공유 card says how many Friends receive the User's location (only those whose switch is on) and, while a 파티 is on, how many of its members do. | 06 | | Planned |
+| H10 | 1 | The User cannot see at a glance whom they share their location with. | The 위치 공유 card says how many Friends the User allows to see their location (위치 공유를 허용한 친구 N명) and, while a 파티 is on, how many of its members (○○ 파티에서 위치 공유를 허용한 멤버 M명). It counts the User's own end only; who sees the User now, which also needs the other end, is not shown. | 06 | | Planned |
 | H11 | 1 | It is hard to tell where a tap or a decision shows up. | Toasts can carry a link: 보낸 신청 보기 after asking to join, 내 파티 보기 after joining or making a 파티, 친구 목록 보기 after a Friend Request. | 07 | | Planned |
 | H12 | – | Does the Assistant work in English or other languages? | Deferred with H5: English questions are added to the evaluation once the Assistant's rework settles. | — | — | Deferred |
 

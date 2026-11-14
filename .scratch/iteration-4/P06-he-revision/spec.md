@@ -40,7 +40,7 @@ Four evaluators used the app in the heuristic evaluation and found that a User l
 
 **After the acceptance tests**
 
-- **Location sharing shows its rule (H3, H10).** The Master Switch is renamed "위치 공유". While it is off, every Friend and 파티 switch is shown off and disabled under one line, "전체 위치 공유가 꺼져 있어요 · 켜기". Each keeps its stored value, so turning the Master Switch back on restores them. Under the Master Switch the card says "친구 N명이 내 위치를 봐요", counting only Friends whose own switch is on, and, while a 파티 is on, "○○ 파티 M명이 내 위치를 봐요", counting its other members. The map does not change.
+- **Location sharing shows its rule (H3, H10).** The Master Switch is renamed "위치 공유". While it is off, every Friend and 파티 switch is shown off and disabled under one line, "전체 위치 공유가 꺼져 있어요 · 켜기". Each keeps its stored value, so turning the Master Switch back on restores them. Under the Master Switch the card says "위치 공유를 허용한 친구 N명", counting Friends for whom the User's own switch is on, and, while a 파티 is on and the User's own switch for it is on, "○○ 파티에서 위치 공유를 허용한 멤버 M명", counting its other members. Both count only the User's own end, so the words say "허용한", never "봐요" or "볼 수 있어요": a Friend or member who turned their own end or Master Switch off does not see the User, and no screen claims who sees the User now. The map does not change.
 - **Learning the app (H7, H8, H11).** After Onboarding, a four-step tour points at the bottom tabs (지도, 파티, 행사, 내 정보) one at a time, with "건너뛰기" and "다시 보지 않기". 내 정보 can replay it. The 파티 tab, the 행사 tab and the sent-requests section, when empty, say what they are for and offer one first action. A toast can carry a link, and three actions use it: asking to join ("보낸 신청 보기"), joining or making a 파티 ("내 파티 보기"), and sending a Friend Request ("친구 목록 보기").
 - **Members of the same 파티 (H4, UI-08).** Each member row has "친구 추가". It is hidden for a Friend, reads "요청됨" once sent and "수락" when the other member has sent one. The server accepts it only between Holders of the same Quest. A member the Leader removed from a Quest must be approved to come back, even into an Open Quest. That User sees "참여 신청" with one caption, "내보내진 파티라 파티장 승인이 필요해요", in place of the join button and on the sent-request row. The Leader sees "전에 내보낸 멤버" on the request. Acceptance clears the removal.
 
@@ -108,8 +108,8 @@ Location sharing shows its rule
 49. As a User with the Master Switch off, I want the Friend and 파티 switches shown off and disabled, so that I can see that nobody receives my location.
 50. As that User, I want one line saying why with a "켜기" link, so that I know how to turn sharing back on.
 51. As a User turning the Master Switch back on, I want each Friend and 파티 switch as I left it, so that I do not set them one by one again.
-52. As a User, I want to see how many Friends receive my location, so that I know my exposure at a glance.
-53. As a User whose 파티 is on, I want to see how many of its members receive my location, so that I see the 파티 side too.
+52. As a User, I want to see how many Friends I allow to see my location, so that I know my settings at a glance.
+53. As a User whose 파티 is on, I want to see how many of its members I allow to see my location, so that I see the 파티 side too.
 
 Learning the app
 54. As a new User finishing Onboarding, I want a short tour of the bottom tabs, so that I know what each part of the app is for.
@@ -171,7 +171,7 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 
 **오늘의 발자국 removed (ticket 5).** Its feature folder, its mock data, its types and client operations, and its design tokens go.
 
-**Location sharing display (ticket 6).** No server change. The card's counts are computed from the Friends list (each Friend's own switch) and the 파티 that is on (its other members). The Master Switch's label becomes "위치 공유". While it is off, the Friend and 파티 switches render off and disabled; their stored values are untouched. Words follow the design's Screen words ("파티 켜기, 켜짐, 끄기").
+**Location sharing display (ticket 6).** No server change. The card's counts are computed from the Friends list (the User's own switch for each Friend) and the 파티 that is on (its other members, while the User's own switch for it is on). They are the User's own end only; whether the other end and both Master Switches are on is the visibility service's rule and is not shown, so the words are "위치 공유를 허용한 친구 N명" and "○○ 파티에서 위치 공유를 허용한 멤버 M명" (agreed in review). Showing who sees the User now would need a count from the server (`linkedTo`) and is out of scope. The Master Switch's label becomes "위치 공유". While it is off, the Friend and 파티 switches render off and disabled; their stored values are untouched. Words follow the design's Screen words ("파티 켜기, 켜짐, 끄기").
 
 **Tour, empty states and toast links (ticket 7).** The tour points only at the four tabs of the bottom tab bar, never at the map, the input bar or cards, which package B is rebuilding. The four tabs themselves stay in the design. The tab bar is still B's file (work split §4), so B is told before the work starts and the tour reaches the tabs from outside the tab bar where it can. Whether it has been seen is kept on the phone. It runs after Onboarding, and after D's First run once that exists. The toast gains an optional action (a label and what it does); three calls use it.
 
@@ -203,7 +203,7 @@ A good test drives what a User or a client sees: an HTTP response, a rendered sc
 - **App, unit (pure adapter functions).**
   - Ticket 1: the pin-selection function for favorite, today and the several-day rule, and Seoul midnight. Ticket 2: the 24-hour edge, checked and unchecked, the look order, grouped and merged looks. Prior art: `features/map-adapter-places`, the study merge.
   - Ticket 5: the Friend line without "공강", "근처", empty walking time. Prior art: `features/friends-adapter`.
-  - Ticket 6: the two counts. 
+  - Ticket 6: the two counts and their words, own end only (a Friend whose own end is off still counts; the words never say "봐요" or "볼 수 있어요"). 
 - **App, integration (router and screens over a fake server).**
   - Ticket 1: starring is optimistic and rolls back with a toast. Ticket 2: closing a New Event's card removes its pin; a starred event stays. Prior art: `map-sources`, `study-layer`.
   - Ticket 3: a 파티 that disappears while another tab is shown toasts once; own leave or end does not; no matching entry remains. Prior art: `party-mine-activation`, `events-matching` (removed with the feature).
