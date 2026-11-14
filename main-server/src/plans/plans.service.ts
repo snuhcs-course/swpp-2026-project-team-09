@@ -13,6 +13,7 @@ import { PlanAnswersService } from '../assistant/plan-answers.service.js';
 import { CAPACITY_MIN } from '../assistant/recruiting/new-quest-answer.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
+import { FriendAsksService } from '../friends/friend-asks.service.js';
 import { JoinPolicy, type Prisma, QuestBoard } from '../generated/prisma/client.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
@@ -73,6 +74,7 @@ export class PlansService {
     private readonly invitations: InvitationsService,
     private readonly signals: SignalsService,
     private readonly notifications: NotificationsService,
+    private readonly asks: FriendAsksService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -177,9 +179,14 @@ export class PlansService {
     created.forEach((invitation) => {
       this.invitations.announce(invitation);
     });
+    const invitations = created.map(({ id, userId: invitee }) => ({ id, userId: invitee }));
     return {
       quest: await this.quests.read(userId, questId),
-      invitations: created.map(({ id, userId: invitee }) => ({ id, userId: invitee })),
+      invitations,
+      askLevels: await this.asks.notAskedAfterPlan(
+        userId,
+        invitations.map(({ userId: invitee }) => invitee),
+      ),
     };
   }
 

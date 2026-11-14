@@ -99,7 +99,7 @@ export function measured(userId: string, ago: number, at = HALL): Position {
 
 // A Friend seen at the point, free, with a detail and a walk.
 export function friendView(person: Person, more: Partial<FriendView> = {}): FriendView {
-  const friend: Friend = { ...person, level: 'exact', sharing: true, visible: true };
+  const friend: Friend = { ...person, level: 'exact', sharing: true, visible: true, askedOff: false, askedPlan: false };
   return {
     ...friend,
     presence: 'free',

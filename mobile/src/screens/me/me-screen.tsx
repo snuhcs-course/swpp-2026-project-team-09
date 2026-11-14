@@ -35,6 +35,7 @@ import { waitingNotices } from '@/features/notifications/adapter';
 import { useNotices } from '@/features/notifications/use-notices';
 import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
+import { OffQuestion } from '../friends/off-question';
 import { LocationExplanation } from '../main/location-explanation';
 import { yearLabel } from '../onboarding/form';
 import { TabScreen } from '../shell/tab-screen';
@@ -203,6 +204,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
         onLater={sharing.later}
         visible={sharing.explaining}
       />
+      <OffQuestion name={null} onAnswer={sharing.answerOff} open={sharing.askingOff} />
     </TabScreen>
   );
 }

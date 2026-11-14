@@ -7,6 +7,7 @@
 
 import { Module } from '@nestjs/common';
 import { AssistantModule } from '../assistant/assistant.module.js';
+import { FriendsModule } from '../friends/friends.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
@@ -24,7 +25,7 @@ import { PlansController } from './plans.controller.js';
 import { PlansService } from './plans.service.js';
 
 @Module({
-  imports: [AssistantModule, PlacesModule, QuestsModule, TravelModule, NotificationsModule, UsersModule],
+  imports: [AssistantModule, FriendsModule, PlacesModule, QuestsModule, TravelModule, NotificationsModule, UsersModule],
   controllers: [PlansController, InvitationCardController, LateController, BetterPlanController],
   providers: [PlansService, InvitationCardService, OwnWayReader, LateService, BetterPlanService, InviteeTimeToLeave],
 })
