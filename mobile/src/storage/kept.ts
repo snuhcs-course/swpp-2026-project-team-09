@@ -37,6 +37,8 @@ export interface Kept {
   answerOnMap: boolean;
   // The sheet that asks about push was shown on this phone. A sign-out leaves it as it is.
   pushAsked: boolean;
+  // An unregistering from push failed at the end of a Session, and is tried again until it goes through.
+  pushUnregisterOwed: boolean;
 }
 
 const KEY = 'snunow.kept';
@@ -55,6 +57,7 @@ const FIRST_STATE: Kept = {
   declinedParties: [],
   answerOnMap: false,
   pushAsked: false,
+  pushUnregisterOwed: false,
 };
 
 type Later =
@@ -66,7 +69,8 @@ type Later =
   | 'backgroundRunning'
   | 'declinedParties'
   | 'answerOnMap'
-  | 'pushAsked';
+  | 'pushAsked'
+  | 'pushUnregisterOwed';
 
 // What an older version stored lacks the fields added later: the rest of it still counts.
 function isKept(value: unknown): value is Omit<Kept, Later> {
@@ -107,6 +111,7 @@ export async function readKept(): Promise<Kept> {
           : [],
       answerOnMap: 'answerOnMap' in value && value.answerOnMap === true,
       pushAsked: 'pushAsked' in value && value.pushAsked === true,
+      pushUnregisterOwed: 'pushUnregisterOwed' in value && value.pushUnregisterOwed === true,
     };
   } catch {
     return FIRST_STATE;

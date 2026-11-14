@@ -31,7 +31,6 @@ import {
   isPositionKept,
   isPositions,
   isProfile,
-  isQuests,
   isSentFriendRequest,
   isTimetableClass,
   isTimetableClasses,
@@ -39,6 +38,7 @@ import {
   isWalkingRoute,
 } from './answers';
 import { isMenus } from './menu-answers';
+import { isQuests } from './quest-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isStudyBuildings } from './study-answers';
 import { isFriendRequests, isJoinRequests, isQuestInvitations } from './waiting-answers';
