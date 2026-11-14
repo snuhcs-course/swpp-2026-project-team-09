@@ -213,7 +213,8 @@ function padding(cardHeight: number): object {
   return { top: 52 + 48 + 56, right: 64, bottom: cardHeight + 56, left: 64 };
 }
 
-// Partitions: the answer comes before the card is laid out, the card is laid out, and the Plan on screen changes.
+// Partitions: the answer comes before the card is laid out, the card is laid out, the Plan on screen changes, the
+// basis opens, and the camera rests on a map that shows every point.
 describe('the camera', () => {
   it("fits the first Plan's points into what the pill leaves, when the answer comes", async () => {
     const fit = jest.spyOn(projection, 'fit');
@@ -234,19 +235,33 @@ describe('the camera', () => {
     expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(240) }));
   });
 
-  it('fits again after "다음 후보", and moves nothing when the answer is closed', async () => {
+  it('fits again after "다음 후보" into what the card then leaves, and moves nothing when the answer is closed', async () => {
     const fit = jest.spyOn(projection, 'fit');
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await layAnswerCard(240);
     const before = fit.mock.calls.length;
 
     await user.press(screen.getByRole('button', { name: '다음 후보' }));
+    // The Plans of the stored answer stand at the same points (their people at 301동 and 302동, and the same
+    // Restaurants), so what can differ is that a fit is asked again, and with the card as it then is.
     expect(fit.mock.calls).toHaveLength(before + 1);
-    // The second Plan stands at the same points as the first: its people at 301동 and 302동, and the same Restaurants.
-    expect(distinct(fit.mock.lastCall?.[0] ?? [])).toEqual(FIRST_PLAN_POINTS);
+    expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(240) }));
 
     await user.press(screen.getByRole('button', { name: CLOSE }));
 
     expect(fit.mock.calls).toHaveLength(before + 1);
+  });
+
+  it('fits again when the opened basis makes the card taller, by what the card grew', async () => {
+    const fit = jest.spyOn(projection, 'fit');
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await layAnswerCard(240);
+
+    await user.press(screen.getByRole('button', { name: '근거' }));
+    // The plain ground lays nothing out: the card is laid out 96 taller, as the phone lays it out with the basis.
+    await layAnswerCard(336);
+
+    expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(336) }));
   });
 
   it('moves no further on the plain map, which has no floor that keeps a point out of view', async () => {

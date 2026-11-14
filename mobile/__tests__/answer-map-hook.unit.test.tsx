@@ -10,11 +10,17 @@ import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
-import { type MapCamera, type MapHandle, project, unproject } from '@/map';
+import { type MapCamera, type MapHandle, type MarkerLook, project, unproject } from '@/map';
+import type * as MarkerImages from '@/map/marker-images';
+import { useMarkerImages } from '@/map/marker-images';
 import type { Room } from '@/screens/main/layout';
 import { useAnswerMap } from '@/screens/main/use-answer-map';
 import type { MainMap } from '@/screens/main/use-main-map';
 
+jest.mock('@/map/marker-images', () => {
+  const actual = jest.requireActual<typeof MarkerImages>('@/map/marker-images');
+  return { ...actual, useMarkerImages: jest.fn(actual.useMarkerImages) };
+});
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));
@@ -123,5 +129,21 @@ describe("the answer's camera after a fit comes to rest", () => {
 
     await rest(2, restingOver(2, FLOOR));
     expect(asked.centres).toHaveLength(1);
+  });
+});
+
+function titled(looks: readonly MarkerLook[], title: string): boolean {
+  return looks.some((look) => look.kind === 'answer' && look.label?.title === title);
+}
+
+// Partitions: a look that only another Plan than the one on screen draws. The third Plan's flag "12:18 민수와 만남"
+// stands at its Merging Point; the first Plan has none.
+describe('the looks the answer asks for', () => {
+  it("include another Plan's, while the first Plan is on screen", async () => {
+    const asked: Asked = { fits: 0, centres: [] };
+    await render(asked);
+
+    expect(titled(drawingOf(MEAL_ANSWER, 0).things.map(({ look }) => look), '12:18 민수와 만남')).toBe(false);
+    expect(titled(jest.mocked(useMarkerImages).mock.lastCall?.[0] ?? [], '12:18 민수와 만남')).toBe(true);
   });
 });
