@@ -12,7 +12,7 @@ A User looking at a Plan corrects it where it is shown. The card's chips say the
 
 - [x] **The chips** of the answer are shown in the card's first row, with "근거" at its right, and "＋ 같이" after them.
 - [x] **Taking a Friend out.** The ✕ on a person's chip sends the conditions without that person, and the answer that comes back replaces the one on screen: the map, the card, and the chips.
-- [x] **Adding a Friend.** "＋ 같이" shows, in the card, the User's Friends who are not in the Plan, each with the line the Friend list shows, one whose position is not known included, and a way to close the list. A press on a Friend, or on a Friend's Avatar on the map while a Plan is shown, sends the conditions with that Friend added, without constraints.
+- [x] **Adding a Friend.** "＋ 같이" shows, in the card, the User's Friends who are not in the Plan, in a grid of equal cells, each with the name their face shows and the distance to the picked Restaurant ("N분 전" for an old position, "자리 모름" for none), nearest first, one whose position is not known included; "그대로" closes the list. A press on a Friend, or on a Friend's Avatar on the map while a Plan is shown, sends the conditions with that Friend added, without constraints.
 - [x] **Where the User sets out from.** The chip opens the map view of 장소 선택. A Place chosen there is sent as the User's own `from` constraint, in place of an earlier one; a point that is no Place sends nothing and shows a toast.
 - [x] **The chip of the time** puts the focus on the band's end handle and opens nothing.
 - [x] **The time band** draws, from the Plan's band: a lane for each person with their busy stretches, the line of now, the band with a handle at each end, the two ends of the range, and the band's words.
