@@ -82,7 +82,7 @@ describe('TOPICS_TICK_SECONDS', () => {
     expect(tick.parse('3600')).toBe(3600);
   });
 
-  it.each(['-1', '3601', '1.5', 'often'])('refuses %s', (value) => {
+  it.each(['-1', '3601', '1.5', 'often', '', ' '])('refuses "%s"', (value) => {
     expect(tick.safeParse(value).success).toBe(false);
   });
 });
