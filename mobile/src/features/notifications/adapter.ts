@@ -3,13 +3,19 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Party, Quest } from '@/api/types';
-import type { FriendRequests, JoinRequest, QuestInvitation } from '@/api/waiting-types';
+import type { FriendRequests, JoinRequest, KeptNotification, QuestInvitation } from '@/api/waiting-types';
+import { koreaCalendar, koreaClock, sameKoreaDay } from '@/korea-time';
+import { cardAddress } from './address';
+
+// The kinds of the Notifications the main server keeps; `notice` stands for a kind this app does not know yet.
+type KeptKind = 'accepted' | 'declined' | 'notice';
 
 // What a row of 알림 is about. Every kind but `friend-request` concerns 파티.
-export type NoticeKind = 'party' | 'friend-request' | 'invitation' | 'join-requests';
+export type NoticeKind = 'party' | 'friend-request' | 'invitation' | 'join-requests' | KeptKind;
 
 // One row of 알림.
 export interface NoticeView {
@@ -23,6 +29,10 @@ export interface NoticeView {
   sub: string;
   // The Quest whose room the row opens: a running Party's, or the one others ask to join. Null for the others.
   questId: string | null;
+  // The card's address the row opens, `/main?card=<kind>:<id>`. Null for a row that leads elsewhere.
+  address: string | null;
+  // A kept Notification's time, "11:58" today in Korea and "11월 16일" before. Null for today's rows.
+  time: string | null;
 }
 
 // The lists 알림 is composed from. A list that failed is null and gives no rows.
@@ -32,6 +42,37 @@ export interface NoticeSources {
   invitations: readonly QuestInvitation[] | null;
   // Each Quest the User leads that others ask to join, with its requests.
   joinRequests: readonly { quest: Quest; requests: readonly JoinRequest[] }[] | null;
+  kept: readonly KeptNotification[] | null;
+  // The moment a kept Notification's time is worded against.
+  now: Date;
+}
+
+function keptKind(kind: string): KeptKind {
+  return kind === 'accepted' || kind === 'declined' ? kind : 'notice';
+}
+
+function timeOf(at: string, now: Date): string {
+  const instant = new Date(at);
+  if (sameKoreaDay(instant, now)) {
+    return koreaClock(at);
+  }
+  const { month, date } = koreaCalendar(instant);
+  return `${month}월 ${date}일`;
+}
+
+function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[] {
+  return kept
+    .toSorted((one, other) => Date.parse(other.at) - Date.parse(one.at))
+    .map(({ id, kind, title, line, at, url }) => ({
+      key: `notice-${id}`,
+      kind: keptKind(kind),
+      icon: 'calendar',
+      title,
+      sub: line,
+      questId: null,
+      address: url,
+      time: timeOf(at, now),
+    }));
 }
 
 // A Party running for a Quest the User holds, which the User is not in: `GET /parties` lists no Party of the User's.
@@ -45,6 +86,8 @@ function partyNotices(parties: readonly Party[]): NoticeView[] {
       title: leader === undefined ? '파티가 활성화됐어요' : `${leader.name}님이 파티를 활성화했어요`,
       sub: `${title} · 참여하면 위치를 공유해요`,
       questId: quest?.id ?? null,
+      address: null,
+      time: null,
     }));
 }
 
@@ -56,6 +99,8 @@ function friendRequestNotices({ received }: FriendRequests): NoticeView[] {
     title: `${sender.name}님의 친구 요청`,
     sub: sender.department,
     questId: null,
+    address: null,
+    time: null,
   }));
 }
 
@@ -67,6 +112,8 @@ function invitationNotices(invitations: readonly QuestInvitation[]): NoticeView[
     title: `${quest.leader.name}님의 파티 초대`,
     sub: quest.title,
     questId: null,
+    address: cardAddress('invitation', id),
+    time: null,
   }));
 }
 
@@ -80,18 +127,33 @@ function joinRequestNotices(joinRequests: NonNullable<NoticeSources['joinRequest
       title: `참여 신청 ${requests.length}명`,
       sub: quest.title,
       questId: quest.id,
+      address: null,
+      time: null,
     }));
 }
 
-// The rows of 알림, in the `Profile` frame's order: the Parties opened, the Friend Requests, the invitations to 파티,
-// and the requests to join.
-export function toNotices({ parties, friendRequests, invitations, joinRequests }: NoticeSources): NoticeView[] {
+// The rows of 알림: the kept Notifications, the latest first, then today's in the `Profile` frame's order: the Parties
+// opened, the Friend Requests, the invitations to 파티, and the requests to join.
+export function toNotices({
+  parties,
+  friendRequests,
+  invitations,
+  joinRequests,
+  kept,
+  now,
+}: NoticeSources): NoticeView[] {
   return [
+    ...(kept === null ? [] : keptNotices(kept, now)),
     ...(parties === null ? [] : partyNotices(parties)),
     ...(friendRequests === null ? [] : friendRequestNotices(friendRequests)),
     ...(invitations === null ? [] : invitationNotices(invitations)),
     ...(joinRequests === null ? [] : joinRequestNotices(joinRequests)),
   ];
+}
+
+// Today's rows, which the bell and the badge on 파티 count: the kept Notifications are left out.
+export function todaysNotices(notices: readonly NoticeView[]): NoticeView[] {
+  return notices.filter(({ time }) => time === null);
 }
 
 // Whether others ask the User to let them into the Quest: the User leads it, and its Join Policy is Approval.

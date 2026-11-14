@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -109,13 +110,14 @@ describe('알림', () => {
 });
 
 describe("a row of 알림's press", () => {
-  it('opens 파티 at 초대 from an invitation', async () => {
+  it("opens 파티 at 초대 from an invitation, by the invitation card's address the map does not hold", async () => {
     const user = await openNotifications();
 
     await user.press(screen.getByRole('button', { name: ROWS[2] }));
 
     expect(screen.getByRole('tab', { name: /^초대/u })).toBeSelected();
-    expect(shownAddress()).toBe('/party?tab=invites');
+    // The test router still prints the main screen's cleared parameter's name, as `card=undefined`.
+    expect(shownAddress()).toMatch(/^\/party\?(?:card=undefined&)?tab=invites$/u);
   });
 
   it('opens 친구 요청 from a Friend Request', async () => {
