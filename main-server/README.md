@@ -2403,6 +2403,14 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
       person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
       or rooms.
+    - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
+      It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
+      `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps
+      those that fit, the longer stay first, then those that clash with an item, and drops those the asker cannot
+      reach in time or stay at for 30 minutes. `eventIds` are accepted only when `searchGlobalEvents` returned them in
+      the message. It answers the model `planned` with each plan's title, place, arrival, stay, leave-by, and clash in
+      words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` refuses any but a
+      meal's with 400 `PLAN_KIND`.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.

@@ -6,6 +6,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -23,6 +24,12 @@ import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
+import {
+  MEAL_ANSWER_ALONE,
+  MEAL_ANSWER_FIXED_START,
+  MEAL_ANSWER_OTHER_ORIGIN,
+  MEAL_ANSWER_THREE,
+} from './data/meal-answers';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
 
@@ -125,10 +132,28 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
+// The mock holds copies of meal answers only, so other conditions are read as a meal of the User alone.
+function copyFor(input: PlanInput): AnswerReply {
+  const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
+  const from = input.kind === 'meal' ? input.window.from : null;
+  if (people.length <= 1) {
+    return MEAL_ANSWER_ALONE;
+  }
+  if (people.length >= 3) {
+    return MEAL_ANSWER_THREE;
+  }
+  if (from !== null) {
+    return MEAL_ANSWER_FIXED_START;
+  }
+  const ownStart = people[0]?.constraints.some(({ kind }) => kind === 'from') ?? false;
+  return ownStart ? MEAL_ANSWER_OTHER_ORIGIN : MEAL_ANSWER;
+}
+
 // A recalculation without a main server: the mock does not calculate, so it answers with the stored copy of the main
-// server's real answer, holding the input it was given.
+// server's real answer that fits who is in the conditions, whether the window's start is fixed, and where the User
+// sets out from, holding the input it was given.
 export function mockRecalculation(input: PlanInput): AnswerReply {
-  return { ...MEAL_ANSWER, input };
+  return { ...copyFor(input), input };
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {

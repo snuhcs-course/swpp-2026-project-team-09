@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { type Plan, type PlanInput } from '../assistant/dto/answer.dto.js';
+import { type MealInput, type Plan } from '../assistant/dto/answer.dto.js';
 import { mealWindow } from '../assistant/free-time/meal-fit.js';
 import { outOfReach } from '../assistant/free-time/tool-parts.js';
 import { MealPlanService } from '../assistant/gathering/meal-plan.service.js';
@@ -27,7 +27,7 @@ import { type BetterPlanDto } from './dto/better-plan.dto.js';
 import { type PlanQuestBody } from './dto/plan-quest.dto.js';
 import { placePoint } from './own-way.js';
 import { OwnWayReader } from './own-way-reader.service.js';
-import { PlansService, subQuestsOf } from './plans.service.js';
+import { mealInputOf, PlansService, subQuestsOf } from './plans.service.js';
 
 const MEALS = ['lunch', 'dinner'] as const;
 
@@ -40,7 +40,7 @@ const peopleOf = ({ leaderId, holders, invitations }: StoredQuest): string[] => 
   ...invitations.map(({ userId }) => userId),
 ];
 
-function refuseOtherPeople({ people }: PlanInput, quest: StoredQuest): void {
+function refuseOtherPeople({ people }: MealInput, quest: StoredQuest): void {
   const [leaderId, ...others] = peopleOf(quest);
   const [first, ...rest] = people.map(({ userId }) => userId);
   if (first !== leaderId || rest.length !== others.length || !others.every((id) => rest.includes(id))) {
@@ -84,7 +84,7 @@ export class BetterPlanService {
     if (meal === undefined) {
       return NONE;
     }
-    const input: PlanInput = {
+    const input: MealInput = {
       kind: 'meal',
       date,
       meal,
@@ -110,7 +110,8 @@ export class BetterPlanService {
       throw conflict('ATTENDING_SUB_QUEST', 'A Quest for a Global Event follows its event, and no plan changes it.');
     }
     const quest = await this.stored(questId);
-    refuseOtherPeople(making.input, quest);
+    const input = mealInputOf(making.input);
+    refuseOtherPeople(input, quest);
     const plan = await this.plans.replanned(
       userId,
       making,
@@ -119,7 +120,7 @@ export class BetterPlanService {
     const told = await this.prisma.$transaction(async (tx) => {
       await this.leaders.lockLed(questId, userId, tx);
       const locked = await this.stored(questId, tx);
-      refuseOtherPeople(making.input, locked);
+      refuseOtherPeople(input, locked);
       await tx.quest.update({
         where: { id: questId },
         data: { title: plan.title, subQuests: { deleteMany: {}, create: inOrder(subQuestsOf(plan)) } },
@@ -135,7 +136,7 @@ export class BetterPlanService {
   // A refusal for the people, such as one who is no longer the Leader's Friend, offers no better Plan.
   private async plansFor(
     userId: string,
-    input: PlanInput,
+    input: MealInput,
     { now, location, quest }: { now: Date; location: Position | null; quest: StoredQuest },
   ): Promise<Plan[]> {
     try {

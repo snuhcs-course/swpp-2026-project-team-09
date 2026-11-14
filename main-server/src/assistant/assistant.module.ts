@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -25,10 +26,14 @@ import { UsersModule } from '../users/users.module.js';
 import { type Model, MODEL_PORT, openRouterModel } from './adapter.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
+import { EventsPlanService } from './events/events-plan.service.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { MealPlanService } from './gathering/meal-plan.service.js';
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
+import { PlanAnswersService } from './plan-answers.service.js';
+import { NewQuestPlanService } from './recruiting/new-quest-plan.service.js';
+import { QuestsPlanService } from './recruiting/quests-plan.service.js';
 
 @Module({
   // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule gives the
@@ -52,6 +57,10 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
     AssistantService,
     UserDayService,
     MealPlanService,
+    EventsPlanService,
+    QuestsPlanService,
+    NewQuestPlanService,
+    PlanAnswersService,
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     // The P6 eval world binds a day of its own here.
@@ -71,6 +80,6 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
     },
   ],
   // The making of a Quest from a Plan plans through the same service as the tool and the recalculation.
-  exports: [MealPlanService, UserDayService],
+  exports: [MealPlanService, PlanAnswersService, UserDayService],
 })
 export class AssistantModule {}

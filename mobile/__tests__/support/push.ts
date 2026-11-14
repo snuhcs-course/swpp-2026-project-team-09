@@ -107,6 +107,8 @@ export interface PushPhone {
   // The next unregister call waits, as on a slow network, until `letUnregisterGo`.
   holdUnregister: () => void;
   letUnregisterGo: () => Promise<void>;
+  // The User changes the permission in the phone's settings.
+  setPermission: (permission: Status) => void;
 }
 
 export function givePushPhone(given: Given = {}): PushPhone {
@@ -139,6 +141,10 @@ export function givePushPhone(given: Given = {}): PushPhone {
     },
     whenUnregistered: (does): void => {
       phone.onUnregister = does;
+    },
+    setPermission: (permission): void => {
+      phone.permission = permission;
+      phone.canAskAgain = permission !== 'denied';
     },
     letUnregisterWork: (): void => {
       phone.unregisterFails = false;

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, freeTimeOf, type FreeInterval, startOfDay } from '../free-time/free-time.js';
@@ -61,7 +62,7 @@ function minutesOfDay(date: string, at: Date): number {
 function arrivalOf({ date, now, items, locationPlaceId, kwanjeongPlaceId, walkingMinutes }: SeatFacts): Arrival {
   const first: FreeInterval = freeTimeOf(items, date, now)[0] ?? { start: now, end: now, previous: null, next: null };
   const ready = minutesOfDay(date, first.start);
-  const origin = originOf({ id: '', free: [first], locationPlaceId }, first, now);
+  const origin = originOf({ locationPlaceId }, first, now);
   if (origin === null || kwanjeongPlaceId === null) {
     return { at: clockOfMinutes(ready), fromPlaceId: null, walkMinutes: null };
   }

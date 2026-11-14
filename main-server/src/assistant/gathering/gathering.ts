@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -157,7 +158,13 @@ function minutes(from: string, to: string, travel: Walking): number {
   return from === to ? 0 : shownMinutes(travel.walkingSeconds(from, to));
 }
 
-export function originOf(person: GatheringPerson, { start, previous }: FreeInterval, now: Date): PersonPart['origin'] {
+// Where a person sets out from for a stretch of Free Time: what the asker chose, else the Place of the item that keeps
+// them until then, else the Place of their location, else that of an item that ended at most RECENT_CLASS_MINUTES ago.
+export function originOf(
+  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId'>,
+  { start, previous }: Pick<FreeInterval, 'start' | 'previous'>,
+  now: Date,
+): PersonPart['origin'] {
   if (person.chosenPlaceId !== undefined) {
     return { placeId: person.chosenPlaceId, basis: 'chosen' };
   }

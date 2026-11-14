@@ -15,7 +15,7 @@ import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
-import { type AnswerReply, type PlanInput } from '../dto/answer.dto.js';
+import { type AnswerReply, type MealInput } from '../dto/answer.dto.js';
 import { freeTimeOf } from '../free-time/free-time.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { UserDayService } from '../free-time/user-day.service.js';
@@ -54,7 +54,7 @@ export class MealPlanService {
   // `leftOut` names Sub Quests that stand in nobody's way: a Quest being planned again leaves its own out.
   async plan(
     askerId: string,
-    input: PlanInput,
+    input: MealInput,
     at: { now: Date; location: Position | null; leftOut?: readonly string[] },
   ): Promise<AnswerReply> {
     const friends = await this.friendsOf(askerId, input);
@@ -102,7 +102,7 @@ export class MealPlanService {
 
   // The Friends of the plan, in its order, refusing a plan that does not start with the asker, names anyone else or
   // anyone twice, or holds a constraint the asker did not set.
-  private async friendsOf(askerId: string, input: PlanInput): Promise<FriendView[]> {
+  private async friendsOf(askerId: string, input: MealInput): Promise<FriendView[]> {
     const [first, ...others] = input.people;
     if (first?.userId !== askerId) {
       throw new BadRequestException('The first person of a plan is the asker');
@@ -123,7 +123,7 @@ export class MealPlanService {
     });
   }
 
-  private refuseUnknownPlaces({ placeId, people }: PlanInput): void {
+  private refuseUnknownPlaces({ placeId, people }: MealInput): void {
     const placeIds = people.flatMap(({ constraints }) =>
       constraints.flatMap((constraint) => (constraint.kind === 'from' ? [constraint.placeId] : [])),
     );
