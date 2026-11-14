@@ -2,20 +2,36 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { peopleRefusal } from '../assistant/library/booking-rules.js';
 import { type Catalogue } from '../assistant/library/catalogue.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { Prisma, RoomConsent, RoomRequestStatus } from '../generated/prisma/client.js';
-import { ACTIVE, DECLINED, type HeldRequest, RoomRequestGone, type Settling } from './room-request-parts.js';
+import { Prisma, RoomRequestStatus } from '../generated/prisma/client.js';
+import { type Card } from '../notifications/card-address.js';
+import { type NotificationKind, type Told } from '../notifications/notification.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
+import { CLOCK, type Clock } from '../quests/clock.js';
+import { answerDeadline, DEADLINE_AHEAD_MS } from './room-answer-deadline.js';
+import { agreedTold, declinedTolds, goingOut, type Leaving, questNow, takeOut } from './room-companions-out.js';
+import {
+  ACTIVE,
+  DECLINED,
+  type HeldRequest,
+  isIn,
+  moreNeededOf,
+  overRefusal,
+  roomLabelOf,
+  RoomRequestGone,
+  type Settling,
+} from './room-request-parts.js';
 
 // Keeps the room requests true to their Quests (README.md: Group study room requests). Whatever changes a Quest's
 // Holders or invitations, deletes it or ends a friendship calls it once the change is stored, and it settles each
-// request still gathering against the Quest as it is then: anyone leaving, being removed or unfriending counts as a
-// decline, and a Holder who joined later is asked too. It depends on nothing of the Quests' module, which calls it.
+// request still gathering against the Quest as it is then: a companion leaving, being removed or unfriending goes out of
+// the request, and a Holder who joined later is asked too. It depends on nothing of the Quests' module, which calls it.
 
 // Read by its own factory, since the Assistant's module, which reads the same file, depends on the Quests' module.
 export const ROOM_CATALOGUE = 'ROOM_CATALOGUE';
@@ -33,7 +49,9 @@ export class RoomRequestSync {
   constructor(
     private readonly prisma: PrismaService,
     private readonly signals: SignalsService,
+    private readonly notifications: NotificationsService,
     @Inject(ROOM_CATALOGUE) private readonly catalogue: Catalogue,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   // After a Quest's Holders or invitations changed, or it was deleted.
@@ -48,20 +66,23 @@ export class RoomRequestSync {
     }
   }
 
-  // After a friendship between the two ended: a request of one of them that asks the other is declined.
+  // After a friendship between the two ended: the one asked by the other's request goes out of it.
   async friendshipEnded(userId: string, otherUserId: string): Promise<void> {
     const requests = await this.prisma.roomRequest.findMany({
       where: { status: { in: ACTIVE }, OR: [between(userId, otherUserId), between(otherUserId, userId)] },
-      select: { id: true },
+      select: { id: true, requesterId: true },
     });
-    for (const { id } of requests) {
+    for (const { id, requesterId } of requests) {
+      const companionId = requesterId === userId ? otherUserId : userId;
       // oxlint-disable-next-line no-await-in-loop -- as above
-      await this.quietly(id, (settling, request) => this.dissolve(settling, request, DECLINED));
+      await this.quietly(id, (settling, request) =>
+        this.reconcile(settling, request, [{ userId: companionId, answered: true }]),
+      );
     }
   }
 
-  // A request still not booked at its start expires, and a booking party made for it goes. Run before each room
-  // request is read, as nothing else runs on a schedule.
+  // A request still not booked at its start expires, and a booking party made for it goes; a companion still asked at
+  // the request's deadline goes out of it. Run before each room request is read, as nothing else runs on a schedule.
   async expireDue(now: Date): Promise<void> {
     const due = await this.prisma.roomRequest.findMany({
       where: { status: { in: ACTIVE }, startsAt: { lte: now } },
@@ -77,13 +98,15 @@ export class RoomRequestSync {
         await this.finish(settling, request);
       });
     }
+    await this.passDeadlines(now);
   }
 
   // Locks the request's Quest, then the request, and makes the change to the request as it is then. Tells the Users it
-  // concerns once it is stored.
+  // concerns once it is stored, and keeps its Notifications without waiting for them.
   async settle<T>(requestId: string, change: (settling: Settling, request: HeldRequest) => Promise<T>): Promise<T> {
     const told = new Set<string>();
     const questsChanged = new Set<string>();
+    const afterwards: (() => Promise<void>)[] = [];
     const result = await this.prisma.$transaction(async (tx) => {
       const found = await tx.roomRequest.findUnique({ where: { id: requestId }, select: { questId: true } });
       if (found !== null) {
@@ -94,57 +117,66 @@ export class RoomRequestSync {
       if (request === null) {
         throw new RoomRequestGone();
       }
-      return change({ tx, told, questsChanged }, request);
+      return change({ tx, told, questsChanged, afterwards }, request);
     });
     this.signals.send([...told], 'room-requests-changed');
     this.signals.send([...questsChanged], 'quests-changed');
+    for (const job of afterwards) {
+      job().catch((error: unknown) => {
+        this.logger.warn(`A room request's Notification was not kept: ${String(error)}`);
+      });
+    }
     return result;
   }
 
-  // Brings a gathering or ready request in line with its Quest.
-  async reconcile(settling: Settling, request: HeldRequest): Promise<void> {
+  // Keeps the Notification once the change is stored, for the time given or now.
+  tellLater(settling: Settling, userId: string, told: Told, at = this.clock.now()): void {
+    settling.afterwards.push(() => this.notifications.schedule(userId, told, at));
+  }
+
+  forgetLater(settling: Settling, userId: string, kind: NotificationKind, card: Card): void {
+    settling.afterwards.push(() => this.notifications.cancel(userId, kind, card));
+  }
+
+  // Brings a gathering or ready request in line with its Quest, with these companions going out of it as well.
+  async reconcile(settling: Settling, request: HeldRequest, leaving: readonly Leaving[] = []): Promise<void> {
     if (!ACTIVE.includes(request.status)) {
       return;
     }
-    const { tx } = settling;
-    const quest = await tx.quest.findUnique({
-      where: { id: request.questId },
-      select: { holders: { select: { userId: true } }, invitations: { select: { userId: true } } },
-    });
-    const holders = new Set(quest?.holders.map(({ userId }) => userId));
-    const invited = new Set(quest?.invitations.map(({ userId }) => userId));
-    // A companion of a booking party who has not answered yet waits on their invitation.
-    const stays = ({ userId, consented }: RoomConsent): boolean =>
-      holders.has(userId) || (request.madeForBooking && invited.has(userId) && consented !== true);
-    if (quest === null || !holders.has(request.requesterId) || !request.consents.every(stays)) {
+    const quest = await questNow(settling.tx, request.questId);
+    if (quest === null || !quest.holders.has(request.requesterId)) {
       await this.dissolve(settling, request, DECLINED);
       return;
     }
-    const asked = new Set([request.requesterId, ...request.consents.map(({ userId }) => userId)]);
-    const newcomers = [...holders].filter((userId) => !asked.has(userId));
+    const gone = goingOut(request, quest, leaving);
+    const kept = await takeOut(settling, request, gone, this.clock.now());
+    const newcomers = [...quest.holders].filter(
+      (userId) => userId !== request.requesterId && !kept.some((consent) => consent.userId === userId),
+    );
+    const held = { ...request, consents: [...kept, ...newcomers.map((userId) => ({ ...NEW_CONSENT, userId }))] };
     if (newcomers.length > 0) {
-      await tx.roomConsent.createMany({ data: newcomers.map((userId) => ({ requestId: request.id, userId })) });
-      const consents = [...request.consents, ...newcomers.map((userId) => ({ ...NEW_CONSENT, userId }))];
-      const space = this.catalogue.byId.get(request.spaceId);
-      const refusal = space === undefined ? null : peopleRefusal(this.catalogue, space, asked.size + newcomers.length);
-      if (refusal !== null) {
-        await this.dissolve(settling, { ...request, consents }, refusal.reason);
-        return;
-      }
-      this.tell(settling, { ...request, consents });
+      await settling.tx.roomConsent.createMany({
+        data: newcomers.map((userId) => ({ requestId: request.id, userId })),
+      });
     }
+    const companionsIn = held.consents.filter(isIn);
+    const space = this.catalogue.byId.get(request.spaceId);
+    const refusal = newcomers.length > 0 ? overRefusal(this.catalogue, space, 1 + companionsIn.length) : null;
+    if (companionsIn.length === 0 || refusal !== null) {
+      await this.dissolve(settling, held, refusal?.reason ?? DECLINED);
+      return;
+    }
+    await this.tellOut(settling, held, gone, moreNeededOf(space, companionsIn.length));
     const ready =
       newcomers.length === 0 &&
-      request.consents.every(({ userId, consented }) => consented === true && holders.has(userId));
-    const status = ready ? RoomRequestStatus.ready : RoomRequestStatus.gathering;
-    if (status !== request.status) {
-      await tx.roomRequest.update({ where: { id: request.id }, data: { status } });
-    }
-    this.tell(settling, request);
+      moreNeededOf(space, companionsIn.length) === 0 &&
+      companionsIn.every(({ userId, consented }) => consented === true && quest.holders.has(userId));
+    await this.setReady(settling, held, ready);
   }
 
-  // Ends the request as declined, or for the reason given: its consents go, a booking party made for it is deleted, and
-  // everyone it asked gets the notice. An existing Quest stays as it is.
+  // Ends the request when the booker is no longer in it, nobody is left with them, or more people than the room holds
+  // are: its consents go, a booking party made for it is deleted, and everyone it asked gets the notice. An existing
+  // Quest stays as it is.
   async dissolve(settling: Settling, request: HeldRequest, reason: string): Promise<void> {
     await settling.tx.roomRequest.update({
       where: { id: request.id },
@@ -192,6 +224,56 @@ export class RoomRequestSync {
   tell(settling: Settling, request: HeldRequest): void {
     for (const userId of this.membersOf(request)) {
       settling.told.add(userId);
+    }
+  }
+
+  // The booker hears of each companion who went out, and how many more the room needs now.
+  private async tellOut(
+    settling: Settling,
+    request: HeldRequest,
+    gone: readonly Leaving[],
+    more: number,
+  ): Promise<void> {
+    const label = roomLabelOf(this.catalogue.byId.get(request.spaceId), request.spaceId);
+    for (const told of await declinedTolds(settling.tx, request, gone, label, more)) {
+      this.tellLater(settling, request.requesterId, told);
+    }
+  }
+
+  // Gathering or ready; the booker hears when it becomes ready.
+  private async setReady(settling: Settling, request: HeldRequest, ready: boolean): Promise<void> {
+    const status = ready ? RoomRequestStatus.ready : RoomRequestStatus.gathering;
+    if (status !== request.status) {
+      await settling.tx.roomRequest.update({ where: { id: request.id }, data: { status } });
+    }
+    if (ready && request.status !== RoomRequestStatus.ready) {
+      const label = roomLabelOf(this.catalogue.byId.get(request.spaceId), request.spaceId);
+      this.tellLater(settling, request.requesterId, await agreedTold(settling.tx, request, label));
+    }
+    this.tell(settling, request);
+  }
+
+  // Each companion still asked at a gathering request's deadline goes out of it, as unanswered.
+  private async passDeadlines(now: Date): Promise<void> {
+    const asking = await this.prisma.roomRequest.findMany({
+      where: {
+        status: RoomRequestStatus.gathering,
+        startsAt: { gt: now, lte: new Date(now.getTime() + DEADLINE_AHEAD_MS) },
+        consents: { some: { consented: null } },
+      },
+      select: { id: true, createdAt: true, startsAt: true },
+    });
+    const passed = (madeAt: Date, startsAt: Date): boolean => (answerDeadline(madeAt, startsAt) ?? Infinity) <= now;
+    for (const { id } of asking.filter(({ createdAt, startsAt }) => passed(createdAt, startsAt))) {
+      // oxlint-disable-next-line no-await-in-loop -- as above
+      await this.quietly(id, async (settling, request) => {
+        const unanswered = request.consents
+          .filter(({ consented }) => consented === null)
+          .map(({ userId }) => ({ userId, answered: false }));
+        if (request.status === RoomRequestStatus.gathering && passed(request.createdAt, request.startsAt)) {
+          await this.reconcile(settling, request, unanswered);
+        }
+      });
     }
   }
 
