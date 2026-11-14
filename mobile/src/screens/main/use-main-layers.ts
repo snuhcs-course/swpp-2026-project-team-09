@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { questInvitationsQuery } from '@/api/queries';
 import type { LatLng } from '@/api/types';
-import { useAnswerSwitch } from '@/features/assistant/answer-switch';
+import { useKeptAnswerSwitch } from '@/features/assistant/answer-switch';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
 import { invitationCards } from '@/features/map/invitation-cards';
@@ -33,12 +33,14 @@ function overviewZoom(map: MainMap): number | null {
 }
 
 // The cards of the invitations the User received while the switch of the answer on the map is on, and whether they
-// are known: with the switch off there are none to wait for.
-function useInvitationCards(): { cards: readonly CardView[]; known: boolean } {
-  const on = useAnswerSwitch();
-  const { data, isPending } = useQuery({ ...questInvitationsQuery, enabled: on });
+// are known: not before the phone has said where the switch is, and with it off there are none to wait for. While it
+// is off the list does not render the screen again.
+export function useInvitationCards(): { cards: readonly CardView[]; known: boolean } {
+  const kept = useKeptAnswerSwitch();
+  const on = kept === true;
+  const { data, isPending } = useQuery({ ...questInvitationsQuery, subscribed: on });
   const cards = useMemo(() => (on && data !== undefined ? invitationCards(data) : NO_CARDS), [on, data]);
-  return { cards, known: !on || !isPending };
+  return { cards, known: kept !== null && (!on || !isPending) };
 }
 
 // The map's cards, and the 식당, shuttle and 공부공간 layers' while they are on, with the things at one place
