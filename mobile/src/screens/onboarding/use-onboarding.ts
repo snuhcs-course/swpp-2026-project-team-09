@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useRef, useState } from 'react';
@@ -9,6 +10,7 @@ import { apiClient } from '@/api/client';
 import { signOut } from '@/auth/sign-in';
 import { useToast } from '@/design-system';
 import { useSession } from '@/session/session';
+import { startFirstRun } from '@/storage/first-run';
 import { answersOf, type Form } from './form';
 
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
@@ -32,12 +34,19 @@ export function useOnboarding(): { working: boolean; save: (form: Form) => void;
     if (!begin()) {
       return;
     }
-    apiClient.completeOnboarding(answersOf(form)).then(finishOnboarding, () => {
-      // The form stays as it is, for the User to try again.
-      showToast(NOT_SAVED);
-      busy.current = false;
-      setWorking(false);
-    });
+    apiClient.completeOnboarding(answersOf(form)).then(
+      async () => {
+        // The first run's cards are shown only to a User who finished Onboarding on this phone.
+        await startFirstRun().catch(() => null);
+        finishOnboarding();
+      },
+      () => {
+        // The form stays as it is, for the User to try again.
+        showToast(NOT_SAVED);
+        busy.current = false;
+        setWorking(false);
+      },
+    );
   };
   const out = (): void => {
     if (!begin()) {

@@ -20,9 +20,31 @@ A User who has just finished Onboarding lands on the map and is asked three thin
 
 ## Acceptance criteria
 
-- [ ] Integration tests over the main screen with the fake main server: the three cards in order for a new User, each skipped and each answered; nothing shown to a User who has a Class, an interest, and a Friend; nothing shown again after a restart.
-- [ ] The interests card keeps the chosen chips through the interests route.
-- [ ] The Friend card makes a link and opens the share sheet.
+- [x] Integration tests over the main screen with the fake main server: the three cards in order for a new User, each skipped and each answered; nothing shown to a User who has a Class, an interest, and a Friend; nothing shown again after a restart.
+- [x] The interests card keeps the chosen chips through the interests route.
+- [x] The Friend card makes a link and opens the share sheet.
 - [ ] The whole mobile suite passes; CI's `app-fingerprint` passes without a native change.
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+Details the ticket left to the implementation, listed so that any of them can be vetoed.
+
+1. **Who is asked.** The phone keeps, for the signed-in User, the list of cards still waiting, written right after the
+   Onboarding succeeds on this phone; no list means no first run, so a User who onboarded before this version is never
+   asked. A waiting card whose thing the User already has (a Class, an interest, a Friend) counts as answered.
+2. **When a card is answered**: the Timetable card when the User comes back with a Class, the interests card once the
+   chosen chips are kept, the Friend card once the Invite Link is made and the share sheet opens.
+3. **The chips**: 채용, 공연, 동아리 모집, 배드민턴, 스터디, 전시, 축제, 러닝, from the wireframe.
+4. **The words**: the interests card says "고른 것에 맞는 행사와 모집이 새로 뜨면 알려 드려요", since the map's pins do not
+   change yet; the Friend card says "친구에게는 먼저 내가 있는 건물이 보여요".
+5. **Where the cards sit**: at the bottom card's place, taking the bottom as a selected thing's card does, and only
+   while nothing is selected and neither the chat nor the answer frame is shown.
+6. **The line over the input**, "관심을 맡기면 맞는 행사를 알려 드려요", is shown only to a User in the first run with no
+   interest, so that no other User's screen changes.
+7. **친구 추가** sends its Invite Link through a hook that the Friend card shares.
+
+### Agent usage (2026-11-15)
+
+Counted with ticket 08's app part, whose subagent built this ticket too.
