@@ -48,7 +48,7 @@ describe('the build line, when the phone cannot keep the switch', () => {
 
     await fireEvent(screen.getByText(/^앱 /u), 'longPress');
     await act(async () => {
-      await new Promise((settled) => {
+      await new Promise<void>((settled) => {
         setImmediate(settled);
       });
     });
