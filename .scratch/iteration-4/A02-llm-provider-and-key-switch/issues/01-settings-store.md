@@ -1,25 +1,25 @@
-# 01: Settings an Administrator changes, kept in the database and copied to Redis every minute
+# 01: Global settings, registered in code, kept in the database and copied into each pod
 
-Parent: [A02 spec](../spec.md) ("The settings store", "The one-minute copy to Redis")
+Parent: [A02 spec](../spec.md) ("The settings store", "The in-memory copy in each pod")
 Status: ready-for-agent
 Blocked by: None (can start immediately)
 
 ## What to build
 
-The main server keeps settings in a generic `settings` table, with a history of every change. Once a minute, a job in the main server copies every setting into Redis, with the time of the copy. A read takes the setting from Redis, or from the database when Redis is empty. Saving a setting writes only the database: Redis is written by the job alone. Nothing uses the store yet except A02's two names, `llm.key` and `llm.backupKey`.
-
-The job also copies the list of keys (ticket 03 mounts them, ticket 02 reads them). This ticket gives it a slot for that list, filled by a function that returns the env keys only (`OPENROUTER_API_KEY` as `default`, `ANTHROPIC_API_KEY` as `default-anthropic` when set); ticket 02 adds the mounted folder.
+The main server keeps global settings in a generic `settings` table, with a history of every change and a one-row revision. The settings are registered in code. Each pod loads them into memory at start and, every minute at second 0, reloads them when the revision changed. A02 registers one setting, `llm.provider`; nothing reads it until ticket 02.
 
 ## Acceptance criteria
 
-- [ ] Prisma models `Setting` (table `settings`: `name` unique, `value_type` enum `SettingValueType` of `STRING`, `INTEGER`, `BOOLEAN`, `value` text, `updated_at`) and `SettingChange` (table `setting_changes`: name, old value, new value, Administrator or empty, cause `ADMINISTRATOR` or `AUTOMATIC_SWITCH`, time), with one migration.
-- [ ] A settings service: read a setting (Redis first, then the database, then the name's default), save a setting (the row and its history row in one transaction, the value checked against its type), and list the history newest first. `llm.key` defaults to `default`, `llm.backupKey` to empty.
-- [ ] `@nestjs/schedule` added to main-server (the same major as worker-server's). A job runs every minute and writes into Redis, through the global `REDIS` token, every setting, the key list (names, provider, last 4, added date, never a value) and the copy's time. The copy is written whole, so the 2 replicas both running it do no harm.
-- [ ] Saving a setting does not write Redis. A read right after a save still returns Redis's old value until the next copy.
-- [ ] The service says, for each setting, whether Redis's copy equals the database's value, and the copy's time, for the admin page's "waiting / applied".
-- [ ] The existing env switches in `main-server/src/common/settings.ts` are unchanged.
-- [ ] Tests (ADR 0007): integration tests for the transaction, the copy, the read with Redis empty (database), the read before and after a copy, and the waiting/applied answer; unit tests for the type checks.
-- [ ] `main-server/README.md` says what the settings store is and that a change shows within a minute.
+- [ ] A registry in code: each setting's name, type (`STRING`, `INTEGER`, `BOOLEAN`), default and allowed values. `llm.provider` is registered: `openrouter` or `anthropic`, default `openrouter`.
+- [ ] Prisma models `Setting` (table `settings`: `name` unique, `value_type` enum `SettingValueType`, `value` text, `updated_at`), `SettingChange` (table `setting_changes`: name, old value, new value, Administrator, time) and a one-row revision table, with one migration.
+- [ ] A save checks the name against the registry and the value against its type and allowed values, and writes the setting, its history row and the revision's increment in one transaction. The service takes an extra check from the caller, so that ticket 02 can refuse a provider without a key.
+- [ ] At start (`onModuleInit`), each pod loads every row and the revision. A pod that cannot load them does not start. A setting with no row reads as its default.
+- [ ] `@nestjs/schedule` added to main-server (the same major as worker-server's). `@Cron('0 * * * * *')` reads only the revision and reloads all rows when it changed. A failed check keeps the last copy and logs.
+- [ ] Reads come from the copy, with no query. A save is not seen by any pod, the saving one included, before the next minute's check.
+- [ ] The service gives the history newest first, and, for the admin page, the time a save applies (the next minute at second 0).
+- [ ] No Redis is used. The existing env switches in `main-server/src/common/settings.ts` are unchanged.
+- [ ] Tests (ADR 0007): unit tests of the registry's checks; integration tests of the one transaction, the start-up load, the minute check reloading on a new revision and not otherwise, a failed check keeping the copy, and a save not read before the check.
+- [ ] `main-server/README.md` says what the settings are, how to register one, and that a change applies at the next minute.
 - [ ] Each changed source file has its AI-generated row; lint, format, type checks and the touched tests pass.
 
 ## Comments

@@ -6,7 +6,7 @@ Blocked by: 01, 02, 03, 04
 
 ## What to build
 
-The eval suites run once on the merged code, so that later work is measured against the paths production may use. The ADR and the READMEs describe how the provider and key are chosen.
+The eval suites run once on the merged code, so that later work is measured against the paths production may use. The ADR, the glossary and the READMEs describe the global settings and how the provider is chosen.
 
 ## Bring from A01
 
@@ -22,10 +22,10 @@ The eval suites run once on the merged code, so that later work is measured agai
   - the P5 large world (`--world large-world-v1`), P6 (`--world p6`) and the collection evaluations A and B (`pnpm eval:collection`) on Anthropic only;
   - no P4.
 - [ ] A record beside the last OpenRouter run of each suite: pass rate, cost per turn, cache hit rate, time per turn, provider, caching mode and commit, and each comparison stated as a different condition (metrics 4.3).
-- [ ] ADR 0013: the Assistant, the Judgement and the same-event choice call Claude through the Anthropic API or OpenRouter, chosen on the admin site from keys synced from Parameter Store; why (A01's three reasons, the switch without a Release, no AWS access in the pods); what was considered (A01's start-up setting, the server reading Parameter Store itself, Redis written on save). ADR 0005 marked superseded on the provider only.
-- [ ] `GLOSSARY.md`: the Administrator entry says an Administrator also chooses which key the AI uses.
+- [ ] ADR 0013: the Assistant, the Judgement and the same-event choice call Claude through the Anthropic API or OpenRouter, the provider chosen on the admin site from the two env keys; why (A01's three reasons, the switch without a Release); what was considered (A01's start-up setting, a Redis copy of the settings, keys managed on the admin site). ADR 0005 marked superseded on the provider only.
+- [ ] `GLOSSARY.md`: the Administrator entry says an Administrator also changes global settings, such as the AI's provider.
 - [ ] Root README: the Assistant row of the stack table, the settings table, the AI-in-the-product paragraph and the external-services table (Anthropic beside OpenRouter).
-- [ ] `infra/production/README.md`: checked against ticket 03's sections, with a short "switching the AI's key" walk-through (put the key, push the tag, check, switch, see "applied").
+- [ ] `infra/production/README.md`: checked against ticket 03's sections, with a short walk-through of switching the AI's provider: put `anthropic-api-key`, release, and switch on the Settings page.
 - [ ] Each changed source file has its AI-generated row (the Markdown files get none).
 
 ## Comments
