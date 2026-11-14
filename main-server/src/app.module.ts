@@ -106,6 +106,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     RoomRequestsModule,
     StudySpacesModule,
     PushModule,
+    PlansModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).
