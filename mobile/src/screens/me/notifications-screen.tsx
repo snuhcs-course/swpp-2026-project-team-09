@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -35,6 +36,8 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   'join-requests': 'request',
   accepted: 'invitation',
   declined: 'invitation',
+  'leave-by': 'navy',
+  'interest-new': 'navy',
   notice: 'invitation',
 };
 

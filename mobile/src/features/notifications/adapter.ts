@@ -4,15 +4,17 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Party, Quest } from '@/api/types';
 import type { FriendRequests, JoinRequest, KeptNotification, QuestInvitation } from '@/api/waiting-types';
 import { koreaCalendar, koreaClock, sameKoreaDay } from '@/korea-time';
+import { readCardAddress } from '@/push/card-address';
 import { cardAddress } from './address';
 
 // The kinds of the Notifications the main server keeps; `notice` stands for a kind this app does not know yet.
-type KeptKind = 'accepted' | 'declined' | 'notice';
+type KeptKind = 'accepted' | 'declined' | 'leave-by' | 'interest-new' | 'notice';
 
 // What a row of 알림 is about. Every kind but `friend-request` concerns 파티.
 export type NoticeKind = 'party' | 'friend-request' | 'invitation' | 'join-requests' | KeptKind;
@@ -22,7 +24,7 @@ export interface NoticeView {
   key: string;
   kind: NoticeKind;
   // In the row's round, by its name in the design system.
-  icon: 'pin' | 'user' | 'calendar' | 'users';
+  icon: 'pin' | 'user' | 'calendar' | 'users' | 'clock';
   // "김민준님의 친구 요청"
   title: string;
   // "산업공학과"
@@ -48,7 +50,21 @@ export interface NoticeSources {
 }
 
 function keptKind(kind: string): KeptKind {
-  return kind === 'accepted' || kind === 'declined' ? kind : 'notice';
+  return kind === 'accepted' || kind === 'declined' || kind === 'leave-by' || kind === 'interest-new' ? kind : 'notice';
+}
+
+// `ahead` while the time is still to come, as the main server reads no clock.
+function keptTitle({ title, ahead, at }: KeptNotification, now: Date): string {
+  return typeof ahead === 'string' && Date.parse(at) > now.getTime() ? ahead : title;
+}
+
+// The time to leave has the clock, and a new match of a watched interest the look of what it opens: a recruiting
+// party's people, or an event's calendar.
+function keptIcon({ kind, url }: KeptNotification): NoticeView['icon'] {
+  if (kind === 'leave-by') {
+    return 'clock';
+  }
+  return kind === 'interest-new' && readCardAddress(url)?.kind === 'party' ? 'users' : 'calendar';
 }
 
 function timeOf(at: string, now: Date): string {
@@ -63,15 +79,15 @@ function timeOf(at: string, now: Date): string {
 function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[] {
   return kept
     .toSorted((one, other) => Date.parse(other.at) - Date.parse(one.at))
-    .map(({ id, kind, title, line, at, url }) => ({
-      key: `notice-${id}`,
-      kind: keptKind(kind),
-      icon: 'calendar',
-      title,
-      sub: line,
+    .map((notification) => ({
+      key: `notice-${notification.id}`,
+      kind: keptKind(notification.kind),
+      icon: keptIcon(notification),
+      title: keptTitle(notification, now),
+      sub: notification.line,
       questId: null,
-      address: url,
-      time: timeOf(at, now),
+      address: notification.url,
+      time: timeOf(notification.at, now),
     }));
 }
 

@@ -214,3 +214,14 @@ export const ACCEPTED: KeptNotification = {
   at: '2026-10-06T12:58:00+09:00',
   url: `/main?card=party:${DINNER.id}`,
 };
+
+// The Leader's time to leave for the dinner, kept by the main server for 12:18 in Korea on the phone's day.
+export const LEAVE_BY: KeptNotification = {
+  id: `leave-by:party:${DINNER.id}`,
+  kind: 'leave-by',
+  title: '지금 나서요',
+  ahead: '12:18 나설 시각',
+  line: '학생회관식당까지 걸어서 15분',
+  at: '2026-10-06T12:18:00+09:00',
+  url: `/main?card=party:${DINNER.id}`,
+};
