@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,6 +27,7 @@ import {
   recruitingOf,
 } from '@/features/party/making';
 import { refusalWords } from '@/features/quests/refusals';
+import { useAskForPush } from '@/push/push-ask-host';
 
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
 
@@ -84,6 +86,7 @@ export function useSendParty(
   quest: ShownQuest | null,
 ): (form: PartyForm, friends: readonly string[], plan: PlanChange | null) => Promise<Sending> {
   const queryClient = useQueryClient();
+  const askForPush = useAskForPush();
   const refetch = (): void => {
     for (const queryKey of [QUESTS_KEY, RECRUITING_KEY, SENT_INVITATIONS_KEY]) {
       void queryClient.invalidateQueries({ queryKey });
@@ -116,6 +119,9 @@ export function useSendParty(
     }
     const missed = await invite(questId, friends);
     refetch();
+    if (friends.length - missed > 0) {
+      askForPush();
+    }
     return { sent: 'taken', questId, toast: toastOf(form, quest !== null, friends.length - missed, missed) };
   };
 }

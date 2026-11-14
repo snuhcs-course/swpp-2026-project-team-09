@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -17,6 +18,7 @@ import { chooseSeat, nextFreeSeat, seatState } from '@/library/cards/seats';
 import { nextStart, siteBookTime, siteDate, whenWords } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibrarySeat } from '@/library/replies';
+import { useAskForPush } from '@/push/push-ask-host';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { seatsBubble } from './own-bubbles';
 import { LargeSeatMap } from './seat-map';
@@ -218,8 +220,12 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   const { card, space, actions, place } = props;
   const [slot, setSlot] = useState<Slot>(() => slotOf(card));
   const [named, setNamed] = useState<string | null>(card.seat);
+  const askForPush = useAskForPush();
   const setClosed = (closed: Closed): void => {
     actions.finish(place, CLOSED[closed]);
+    if (closed === 'booked') {
+      askForPush();
+    }
   };
   const { loaded, reload } = useLibraryLoad(() => seatsFor(space, slot), `${slot.start} ${String(slot.minutes)}`);
   const booking: Booking = { card, space, slot, actions, close: setClosed, choose: setNamed, reload };
