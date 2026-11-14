@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -31,10 +32,12 @@ afterAll(async () => {
   await app.close();
 });
 
+const KIM = { name: '김철수', department: '경영학과' };
+
 describe('Attending a Global Event', () => {
   it('gives a Quest with the Global Event, the User as its Holder and a Sub Quest for attending', async () => {
-    const user = await signInUser(app, { name: '김철수', department: '경영학과' });
-    const event = await storeEvent(prisma, { endsAt: null });
+    const [user, event] = await Promise.all([signInUser(app, KIM), storeEvent(prisma, { endsAt: null })]);
+    const holder = { id: user.id, ...KIM };
 
     const response = await attend(app, user, event.id);
 
@@ -43,13 +46,13 @@ describe('Attending a Global Event', () => {
       id: ANY_STRING,
       title: '지능형통신 연합전공 설명회',
       globalEvent: { id: event.id, title: '지능형통신 연합전공 설명회' },
-      leader: { id: user.id, name: '김철수', department: '경영학과' },
+      leader: holder,
       capacity: 4,
       joinPolicy: 'closed',
       board: null,
       description: '',
       createdAt: ANY_STRING,
-      holders: [{ id: user.id, name: '김철수', department: '경영학과' }],
+      holders: [holder],
       subQuests: [
         {
           id: ANY_STRING,
@@ -66,6 +69,7 @@ describe('Attending a Global Event', () => {
       ],
       classQuest: false,
       waitingJoinRequests: 0,
+      members: [{ user: holder, state: 'accepted', lateMinutes: null }],
     });
   });
 
