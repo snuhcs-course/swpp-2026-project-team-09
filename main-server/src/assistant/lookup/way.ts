@@ -77,6 +77,9 @@ export function startOf({ fromPlaceId, location, gatePlaceId, me, now }: WayArgs
   return placeId === null ? null : { placeId, basis: 'timetable' };
 }
 
+// The User is at the Place gone to already.
+export const atPlace = ({ start, toPlaceId }: Pick<Way, 'start' | 'toPlaceId'>): boolean => start.placeId === toPlaceId;
+
 // The User's next item today that has a Place.
 function nextOf(items: readonly DayItem[], now: Date): DayItem | null {
   return items.filter(({ start, placeId }) => start > now && placeId !== null).toSorted(byStart)[0] ?? null;
@@ -99,7 +102,7 @@ function reportedNow({ shuttle, now }: WayArgs): ReportedShuttle[] {
 
 function shuttleOf(args: WayArgs, way: Omit<Way, 'shuttle'>): Way['shuttle'] {
   const { start, toPlaceId, now, arrival, deadline } = way;
-  if (start.placeId === toPlaceId) {
+  if (atPlace(way)) {
     return null;
   }
   const legs = args.travel.shuttleWay?.(start.placeId, toPlaceId, now) ?? null;
@@ -122,7 +125,13 @@ function deadlineOf(by: string | null, next: DayItem | null, now: Date): { at: D
   return next === null ? null : { at: next.start, isClass: next.isClass };
 }
 
-export function wayOf(args: WayArgs): Way | 'no-start' | 'no-next' {
+// No way when the time the User named is not later than now, as when the model gives 2시 in the afternoon as 02:00.
+export function wayOf(args: WayArgs): Way | 'no-start' | 'no-next' | 'past-by' {
+  const { travel, by } = args;
+  const now = new Date(Math.ceil(args.now.getTime() / MINUTE_MS) * MINUTE_MS);
+  if (by !== null && onDay(koreaDate(args.now), by) <= now) {
+    return 'past-by';
+  }
   const upcoming = nextOf(args.me.items, args.now);
   const toPlaceId = args.toPlaceId ?? upcoming?.placeId ?? null;
   if (toPlaceId === null) {
@@ -132,9 +141,7 @@ export function wayOf(args: WayArgs): Way | 'no-start' | 'no-next' {
   if (start === null) {
     return 'no-start';
   }
-  const { travel, by } = args;
-  const walkMinutes = start.placeId === toPlaceId ? 0 : shownMinutes(travel.walkingSeconds(start.placeId, toPlaceId));
-  const now = new Date(Math.ceil(args.now.getTime() / MINUTE_MS) * MINUTE_MS);
+  const walkMinutes = atPlace({ start, toPlaceId }) ? 0 : shownMinutes(travel.walkingSeconds(start.placeId, toPlaceId));
   const arrival = plusMinutes(now, walkMinutes);
   const next = upcoming !== null && upcoming.placeId === toPlaceId ? upcoming : null;
   const end = deadlineOf(by, next, args.now);

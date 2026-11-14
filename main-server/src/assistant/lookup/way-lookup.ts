@@ -13,7 +13,8 @@ import {
   type TimeBand,
 } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
-import { withTopic } from '../gathering/answer-words.js';
+import { withCopula, withTopic } from '../gathering/answer-words.js';
+import { MINUTE_MS } from '../gathering/gathering.js';
 import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import {
@@ -25,7 +26,7 @@ import {
   shuttleScene,
   type ShuttleTaken,
 } from './shuttle-lookup.js';
-import { type Way, type WayArgs, wayOf } from './way.js';
+import { atPlace, type Way, type WayArgs, wayOf } from './way.js';
 import { dueWords, gated, part, REMIND_WALK_MINUTES, WayNaming } from './way-naming.js';
 
 export { type WayArgs } from './way.js';
@@ -36,7 +37,7 @@ export { type WayArgs } from './way.js';
 export type WayAnswer =
   // How the start and the Place are called.
   | { result: 'found'; way: Way; lookup: Lookup; labels: { from: string; to: string } }
-  | { result: 'none'; reason: 'no-start' | 'no-next' };
+  | { result: 'none'; reason: 'no-start' | 'no-next' | 'past-by' };
 
 const GATE_BASIS = '지금 위치는 캠퍼스 밖이라 쓰지 않고 정문부터 쟀어요';
 
@@ -49,6 +50,14 @@ function chipsOf(way: Way, naming: WayNaming): ConditionChip[] {
   return deadline === null ? [origin] : [origin, { kind: 'until', text: `${dueWords(deadline)}까지`, userId: null }];
 }
 
+type Called = ReturnType<WayNaming['to']>;
+
+// The particle after a Place's label follows the name outside the parentheses of "name(N동)", else the label.
+function particleAfter({ name, label }: Called, withParticle: (word: string) => string): string {
+  const word = label.startsWith(name) ? name : label;
+  return withParticle(word).slice(word.length);
+}
+
 function linesOf(way: Way, naming: WayNaming): AnswerLine[] {
   const shuttle = takenShuttle(way);
   if (shuttle !== null) {
@@ -58,10 +67,8 @@ function linesOf(way: Way, naming: WayNaming): AnswerLine[] {
   const to = naming.to(way);
   if (deadline === null) {
     const from = naming.from(way);
-    // The particle follows the name, outside the parentheses.
-    const particle = withTopic(to.name).slice(to.name.length);
     return [
-      [part(to.label, true), part(`${particle} 여기예요`)],
+      [part(to.label, true), part(`${particleAfter(to, withTopic)} 여기예요`)],
       [part(`${start.basis === 'location' ? `지금 있는 ${from}` : from}에서 걸어서 ${walkMinutes}분`)],
     ];
   }
@@ -113,14 +120,19 @@ function flagOf(way: Way, naming: WayNaming): MapScene['flags'][number] {
   return { at: naming.position(start.placeId), text, role: 'leave' };
 }
 
-function sceneOf(way: Way, naming: WayNaming): MapScene {
-  const { start, toPlaceId, walkMinutes, next } = way;
+// The Place gone to, picked out, or as the User's next item.
+function placeOf(way: Way, naming: WayNaming): MapScene['places'][number] {
+  const { toPlaceId, next } = way;
   const { label } = naming.to(way);
   const point = naming.labelledPoint(toPlaceId, label);
-  const place: MapScene['places'][number] =
-    next === null
-      ? { place: point, role: 'pick', tag: label }
-      : { place: point, role: 'next', tag: `${clockOf(next.start)}${next.isClass ? ' 수업' : ''} · ${label}` };
+  return next === null
+    ? { place: point, role: 'pick', tag: label }
+    : { place: point, role: 'next', tag: `${clockOf(next.start)}${next.isClass ? ' 수업' : ''} · ${label}` };
+}
+
+function sceneOf(way: Way, naming: WayNaming): MapScene {
+  const { start, toPlaceId, walkMinutes } = way;
+  const place = placeOf(way, naming);
   const shuttle = takenShuttle(way);
   if (shuttle !== null) {
     return shuttleScene(way, shuttle, naming, place);
@@ -180,20 +192,55 @@ function actionsOf(way: Way, naming: WayNaming): LookupAction[] {
   return [{ kind: 'remind', at: koreaTime(deadline.leaveBy), text }, guide];
 }
 
+// What says where the User is; off campus, the gate's line.
+const HERE_BASIS: Record<Way['start']['basis'], (to: Called) => string> = {
+  location: (to) => `지금 있는 곳이 ${to.label}${particleAfter(to, withCopula)}`,
+  timetable: ({ label }) => `오늘 마지막으로 끝난 일정이 ${label}에서였어요`,
+  chosen: (to) => `나서는 곳이 ${to.label}${particleAfter(to, withCopula)}`,
+  gate: () => GATE_BASIS,
+};
+
+// The User at the Place already: the minutes left until the deadline, or that the Place is here. No way, no time to
+// set out, and no button.
+function hereLookup(way: Way, naming: WayNaming): Lookup {
+  const { deadline, now, start } = way;
+  const to = naming.to(way);
+  const where = HERE_BASIS[start.basis](to);
+  const left =
+    deadline === null ? null : `${dueWords(deadline)}까지 ${(deadline.at.getTime() - now.getTime()) / MINUTE_MS}분`;
+  return {
+    kind: 'way',
+    chips: chipsOf(way, naming),
+    lines:
+      left === null
+        ? [
+            [part(to.label, true), part(`${particleAfter(to, withTopic)} 여기예요`)],
+            [part(`지금 ${to.label}에 있어요`)],
+          ]
+        : [[part('지금 '), part(to.label, true), part('에 있어요')], [part(`${left} 남았어요`)]],
+    basis: left === null ? [where] : [where, `지금 ${clockOf(now)} · ${left}`],
+    scene: { people: [naming.me(way)], places: [placeOf(way, naming)], routes: [], flags: [] },
+    band: null,
+    actions: [],
+  };
+}
+
 export function wayAnswer(args: WayArgs): WayAnswer {
   const way = wayOf(args);
-  if (way === 'no-start' || way === 'no-next') {
+  if (typeof way === 'string') {
     return { result: 'none', reason: way };
   }
   const naming = new WayNaming(args);
-  const lookup: Lookup = {
-    kind: 'way',
-    chips: chipsOf(way, naming),
-    lines: linesOf(way, naming),
-    basis: basisOf(way, naming),
-    scene: sceneOf(way, naming),
-    band: bandOf(way, args, naming),
-    actions: actionsOf(way, naming),
-  };
+  const lookup: Lookup = atPlace(way)
+    ? hereLookup(way, naming)
+    : {
+        kind: 'way',
+        chips: chipsOf(way, naming),
+        lines: linesOf(way, naming),
+        basis: basisOf(way, naming),
+        scene: sceneOf(way, naming),
+        band: bandOf(way, args, naming),
+        actions: actionsOf(way, naming),
+      };
   return { result: 'found', way, lookup, labels: { from: naming.from(way), to: naming.to(way).label } };
 }

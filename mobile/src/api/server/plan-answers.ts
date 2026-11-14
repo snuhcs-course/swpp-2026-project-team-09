@@ -31,6 +31,26 @@ function isOneOf<Value extends string>(values: readonly Value[]): (value: unknow
   return (value: unknown): value is Value => values.some((one) => one === value);
 }
 
+// The keys of a record typed by a union of the contract, so that the compiler refuses a value left out or one too many.
+function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
+  return (value: unknown): value is Value => typeof value === 'string' && Object.hasOwn(values, value);
+}
+
+type Role<Part extends 'places' | 'routes' | 'flags'> = MapScene[Part][number]['role'];
+
+const isPlaceRole = isKeyOf<Role<'places'>>({
+  pick: true,
+  candidate: true,
+  dropped: true,
+  next: true,
+  meeting: true,
+  stop: true,
+});
+
+const isRouteRole = isKeyOf<Role<'routes'>>({ me: true, friend: true, next: true, shuttle: true, alt: true });
+
+const isFlagRole = isKeyOf<Role<'flags'>>({ place: true, meeting: true, leave: true, late: true, shuttle: true });
+
 function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
@@ -62,7 +82,7 @@ function isPerson(value: unknown): value is PlanPerson {
   return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
 }
 
-function isInput(value: unknown): value is PlanInput {
+export function isInput(value: unknown): value is PlanInput {
   const window = field(value, 'window');
   return (
     field(value, 'kind') === 'meal' &&
@@ -149,17 +169,13 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
 }
 
 function isScenePlace(value: unknown): value is MapScene['places'][number] {
-  return (
-    isPlacePoint(field(value, 'place')) &&
-    isOneOf(['pick', 'candidate', 'dropped', 'next', 'meeting', 'stop'])(field(value, 'role')) &&
-    isTextOrNull(field(value, 'tag'))
-  );
+  return isPlacePoint(field(value, 'place')) && isPlaceRole(field(value, 'role')) && isTextOrNull(field(value, 'tag'));
 }
 
 function isRoute(value: unknown): value is MapScene['routes'][number] {
   return (
     isText(field(value, 'userId')) &&
-    isOneOf(['me', 'friend', 'next', 'shuttle', 'alt'])(field(value, 'role')) &&
+    isRouteRole(field(value, 'role')) &&
     isLatLng(field(value, 'from')) &&
     isLatLng(field(value, 'to')) &&
     isNumber(field(value, 'minutes'))
@@ -167,11 +183,7 @@ function isRoute(value: unknown): value is MapScene['routes'][number] {
 }
 
 function isFlag(value: unknown): value is MapScene['flags'][number] {
-  return (
-    isLatLng(field(value, 'at')) &&
-    isText(field(value, 'text')) &&
-    isOneOf(['place', 'meeting', 'leave', 'late', 'shuttle'])(field(value, 'role'))
-  );
+  return isLatLng(field(value, 'at')) && isText(field(value, 'text')) && isFlagRole(field(value, 'role'));
 }
 
 export function isScene(value: unknown): value is MapScene {
@@ -199,7 +211,7 @@ function isBand(value: unknown): value is TimeBand {
   );
 }
 
-function isPlan(value: unknown): value is Plan {
+export function isPlan(value: unknown): value is Plan {
   return (
     hasTexts(value, ['id', 'title', 'startAt', 'endAt']) &&
     isPlacePoint(field(value, 'place')) &&

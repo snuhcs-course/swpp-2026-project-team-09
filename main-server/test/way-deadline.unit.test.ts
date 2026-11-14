@@ -125,6 +125,23 @@ describe("The way's deadline", () => {
   });
 });
 
+// The way from 301동 to 문화관 by that time.
+const askedBy = (now: Date, by: string): ReturnType<typeof wayFor> =>
+  wayFor(now, { me: me([classIn24()]), location: atPlace('제1공학관'), toPlaceId: id('문화관'), by });
+
+describe('A time the User named that is not later than now', () => {
+  it('draws no way, as for 2시 given as 02:00 at 13:30', () => {
+    expect(askedBy(onDay(TUESDAY, '13:30'), '02:00')).toEqual({ result: 'none', reason: 'past-by' });
+  });
+
+  it('is refused at now rounded up to the minute, and taken a minute later', () => {
+    const now = new Date(onDay(TUESDAY, '13:29').getTime() + 30 * 1000);
+
+    expect(askedBy(now, '13:30').result).toBe('none');
+    expect(askedBy(now, '13:31').result).toBe('found');
+  });
+});
+
 describe('The next item, with no Place named', () => {
   it('is the first item later today that has a Place', () => {
     const noPlace: DayItem = { ...classAt(TUESDAY, '12:50', '12:55', '제1공학관'), placeId: null, isClass: false };

@@ -52,7 +52,8 @@ const HANGUL_FIRST = 0xac_00;
 const HANGUL_SYLLABLES = 11_172;
 const FINALS = 28;
 
-// Whether the last syllable of a word has a final consonant, which picks 은 over 는, 과 over 와, and 이 over 가.
+// Whether the last syllable of a word has a final consonant, which picks 은 over 는, 과 over 와, 이 over 가, and 이에요
+// over 예요.
 function hasFinal(word: string): boolean {
   const syllable = (word.at(-1)?.codePointAt(0) ?? 0) - HANGUL_FIRST;
   return syllable >= 0 && syllable < HANGUL_SYLLABLES && syllable % FINALS !== 0;

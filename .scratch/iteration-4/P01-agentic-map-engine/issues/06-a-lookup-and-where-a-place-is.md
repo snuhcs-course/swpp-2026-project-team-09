@@ -15,7 +15,7 @@ An answer like this has no Plan: nobody else is in it, it is not recalculated, a
 - [x] The contract declares a Lookup on both sides (`main-server/src/assistant/dto/answer.dto.ts`, `mobile/src/api/assistant-types.ts`), with the same shape, reusing the answer's condition chips, lines, map scene, and time band.
 - [x] The Assistant's reply carries `lookup`, null when there is none, beside `answer`. A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer: the last one drawn is the one on the map.
 - [x] For an app with the `answer` capability, a tool finds the way from where the User is to a Place. "문화관이 어디야?" from building 301 on a Tuesday at 11:50 answers with the Place picked out, the way, and "걸어서 18분" (the walking table's value), and the lines "**문화관(73동)**은 여기예요" and "지금 있는 301동에서 걸어서 18분".
-- [x] Where the User sets out from: a Place the User named; else the Place their location is in, or the nearest Place within 150 m; else the Place of their last item today that has ended. With none of these the tool answers none, and the model says it needs the location.
+- [x] Where the User sets out from: a Place the User named; else the Place their location is in, or the nearest Place within 150 m; else the Place of their last item today that has ended. With none of these the tool answers none, and the model asks where the User sets out from.
 - [x] An app without the capability gets today's prompt, tools, and reply (plus `lookup: null`).
 - [x] The app checks a reply's Lookup and keeps it; the mock answers with a copy of a real Lookup.
 - [x] Unit tests for the Lookup's words and scene; integration tests at the Assistant's endpoint with the scripted model; the app's reply-check test.

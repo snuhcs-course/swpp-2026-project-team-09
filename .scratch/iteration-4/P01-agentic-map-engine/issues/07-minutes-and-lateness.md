@@ -43,6 +43,8 @@ The User asks "24동까지 몇 분? 늦나" or "9시 수업인데 늦나". The A
 11. **No location and no next item**: the tool answers that there is no next item, since the way has nowhere to go.
 12. **What the model is given** gains `deadline`: the time, whether it is a Class, the leave-by time, the arrival if the User sets out now, and the minutes late.
 13. **The band's half hours and lane** are shared with the meal's band (`halfHoursAround` and `busyIn` in `meal-scene.ts`).
+14. **At the Place already** (the start's Place is the Place gone to). With a deadline: "지금 **24동**에 있어요" / "13:00 수업까지 20분 남았어요", "13:00까지" for a time the User named, the minutes counted from now, rounded up, to the deadline. Without one: "**문화관(73동)**은 여기예요" / "지금 문화관(73동)에 있어요". No route, no flag, no band, and no action; the scene draws the User and the Place. The basis says what puts the User there, "지금 있는 곳이 24동이에요" (their location), "오늘 마지막으로 끝난 일정이 24동에서였어요" (their last item), or "나서는 곳이 24동이에요" (a Place they named), and with a deadline adds "지금 12:40 · 13:00 수업까지 20분". The model is given `walkMinutes: 0` and `atPlace: true`, and `WAY_RULES` has its sentence say they are there ("지금 24동에 있어요.").
+15. **A time already past.** When `by` is not later than now, rounded up to the minute, findWay draws nothing and answers none, with the reason that the time is to be given as 24-hour HH:MM (2시 in the afternoon is 14:00), or said to have passed. `WAY_RULES` and the tool's `by` say "as 24-hour HH:MM". "2시까지" at 13:30, given as 02:00, is no longer "708분 늦어요".
 
 The walking table gives the boards' minutes: 301동 → 24동 895 seconds (15 minutes, q2 and q3) and 서울대 정문 → 24동 600 seconds (10 minutes, q15).
 

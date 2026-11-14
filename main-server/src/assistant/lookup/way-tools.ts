@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { clockOf } from '../free-time/free-time.js';
 import { clockTime } from '../free-time/tool-parts.js';
-import { type Way } from './way.js';
+import { atPlace, type Way } from './way.js';
 import { type WayAnswer } from './way-lookup.js';
 import { type WayService } from './way.service.js';
 
@@ -18,8 +18,10 @@ import { type WayService } from './way.service.js';
 
 const NONE_REASONS: Record<Extract<WayAnswer, { result: 'none' }>['reason'], string> = {
   'no-start':
-    'Where the User is now is not known: the app sent no location, and no item of theirs has ended earlier today.',
+    'Where the User sets out from is not known: where they are could not be matched to a Place, and no item of theirs has ended earlier today.',
   'no-next': 'The User has no item with a Place later today.',
+  'past-by':
+    'The time given as by is not later than now. Give it as 24-hour HH:MM (2시 in the afternoon is 14:00); if the time the User named has passed today, say so.',
 };
 
 const STARTS: Record<Way['start']['basis'], string> = {
@@ -44,7 +46,9 @@ const input = z.object({
     ),
   by: clockTime
     .optional()
-    .describe('The time the User must be there by, as HH:MM, when they named one (2시까지). Left out otherwise.'),
+    .describe(
+      'The time the User must be there by, as 24-hour HH:MM, when they named one (2시까지 in the afternoon is 14:00). Left out otherwise.',
+    ),
 });
 
 // When the User must be there and whether it is a Class, when to set out, and how late they are if they set out now.
@@ -111,6 +115,7 @@ export function findWay(ways: WayService): Tool {
         result: 'found',
         ...labels,
         fromIs: STARTS[way.start.basis],
+        ...(atPlace(way) ? { atPlace: true } : {}),
         walkMinutes: way.walkMinutes,
         deadline: deadlineWords(way),
         shuttle: shuttleWords(way),
@@ -123,7 +128,7 @@ export function findWay(ways: WayService): Tool {
 export const WAY_RULES = `A way is drawn on the map: the server finds where the User sets out from, the way, the minutes on foot, whether the shuttle is faster, and whether they will be late, and the app draws them.
 
 - When the User asks where a Place is (문화관이 어디야?, 24동 어떻게 가?), or how many minutes it takes to a Place (24동까지 몇 분?), find the Place with resolvePlace first, then call findWay with it as to. When they name where they set out from (301동에서), find that Place with resolvePlace too and give it as from.
-- When the User asks how many minutes it takes to their next Class, whether they will be late, or whether to take the shuttle (늦나?, 다음 수업까지 몇 분?, 9시 수업인데 늦나, 셔틀 탈까 걸을까), call findWay with to left out: the server takes the Place of their next item today. A time they must be there by (2시까지) is by, as HH:MM.
+- When the User asks how many minutes it takes to their next Class, whether they will be late, or whether to take the shuttle (늦나?, 다음 수업까지 몇 분?, 9시 수업인데 늦나, 셔틀 탈까 걸을까), call findWay with to left out: the server takes the Place of their next item today. A time they must be there by (2시까지) is by, as 24-hour HH:MM: 2시 in the afternoon is 14:00.
 - A line [Tapped: place …] gives the Place the User tapped (여기): give it as to.
-- The app draws the way and writes its minutes and times itself. Your reply is one sentence, such as "문화관은 지금 있는 301동에서 걸어서 18분이에요.", "12:45에 나서면 13:00 수업에 맞아요.", "지금 가도 5분 늦어요.", or, when the shuttle is taken, "16:43에 나서 셔틀을 타면 16:53에 도착해요." Do not call showOnMap for a way: the app already draws it.
-- When findWay answers none because it does not know where the User is, say that you need their location to find the way, or ask where they set out from. When it answers none because there is no next item, say that they have nothing later today.`;
+- The app draws the way and writes its minutes and times itself. Your reply is one sentence, such as "문화관은 지금 있는 301동에서 걸어서 18분이에요.", "12:45에 나서면 13:00 수업에 맞아요.", "지금 가도 5분 늦어요.", or, when the shuttle is taken, "16:43에 나서 셔틀을 타면 16:53에 도착해요." When findWay gives atPlace, the User is there already: say so, such as "지금 24동에 있어요." Do not call showOnMap for a way: the app already draws it.
+- When findWay answers none because it does not know where the User sets out from, ask where they set out from. When it answers none because there is no next item, say that they have nothing later today.`;

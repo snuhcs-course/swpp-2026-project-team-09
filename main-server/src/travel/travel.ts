@@ -36,8 +36,10 @@ export interface ShuttleWay {
   // The timing's average wait at the boarding stop.
   waitSeconds: number;
   walkFromStopSeconds: number;
-  // The ride to the boarding stop from each stop of the loop, in loop order.
+  // The ride to the boarding stop from each stop of the loop, in loop order, 0 from the boarding stop itself.
   ridesToBoarding: number[];
+  // One lap of the loop from the boarding stop back to it.
+  lapSeconds: number;
 }
 
 // The one way to ask for a Travel Time. Injected by TRAVEL_PROVIDER, so that a fixture can stand in for the real table
@@ -120,6 +122,7 @@ export class SeedTravel implements TravelProvider {
     const { boarding, alighting, band, walkToStop, wait, walkFromStop } = best;
     const { stops } = this.table;
     const ridden = (alighting - boarding + stops.length) % stops.length;
+    const before = (boarding - 1 + stops.length) % stops.length;
     return {
       stops: Array.from({ length: ridden + 1 }, (_, step) => {
         const order = (boarding + step) % stops.length;
@@ -129,6 +132,7 @@ export class SeedTravel implements TravelProvider {
       waitSeconds: wait,
       walkFromStopSeconds: walkFromStop,
       ridesToBoarding: stops.map((_, order) => this.ride(order, boarding, band)),
+      lapSeconds: this.ride(boarding, before, band) + this.ride(before, boarding, band),
     };
   }
 
