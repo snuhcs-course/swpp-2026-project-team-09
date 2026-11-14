@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Meal } from '../../generated/prisma/client.js';
@@ -52,7 +53,7 @@ export interface MealFit {
 
 const later = (at: Date, seconds: number): Date => new Date(at.getTime() + seconds * 1000);
 
-const latest = (times: readonly Date[]): Date => new Date(Math.max(...times.map((at) => at.getTime())));
+export const latest = (times: readonly Date[]): Date => new Date(Math.max(...times.map((at) => at.getTime())));
 
 export const earliest = (times: readonly Date[]): Date => new Date(Math.min(...times.map((at) => at.getTime())));
 

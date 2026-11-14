@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PublishedGlobalEventDto } from '../../global-events/dto/global-event.dto.js';
@@ -110,7 +111,7 @@ function globalEventIn(event: PublishedGlobalEventDto, part: AskedInterval, plac
 // Every candidate that fits, each once, in the first gap it fits, soonest first.
 export async function fittingCandidates(
   { recruiting, globalEvents, places, travel }: CandidateServices,
-  { userId, now }: Asker,
+  { userId, now }: Pick<Asker, 'userId' | 'now'>,
   parts: readonly AskedInterval[],
   search: CandidateSearch,
 ): Promise<JudgedCandidate[]> {

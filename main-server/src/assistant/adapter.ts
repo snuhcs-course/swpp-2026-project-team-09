@@ -9,6 +9,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -164,7 +165,7 @@ export async function runFeature(
     capabilities: new Set(asker.capabilities),
     found: new FoundIds(),
     shown: lastShown(messages),
-    presented: { mapButtons: [], cards: [], proposal: null },
+    presented: { mapButtons: [], cards: [], proposal: null, answer: null },
     judged: new Map(),
     restaurants: new Map(),
   };
@@ -216,7 +217,8 @@ function replyOf(text: string, finishReason: string, feature: Feature, context: 
   if (text !== '') {
     return { ...presented, text, noTextFinishReason: null };
   }
-  if (presented.cards.length === 0 && presented.mapButtons.length === 0 && presented.proposal === null) {
+  const { cards, mapButtons, proposal, answer } = presented;
+  if (cards.length === 0 && mapButtons.length === 0 && proposal === null && answer === null) {
     return null;
   }
   return { ...presented, text: FIXED_SENTENCE, noTextFinishReason: finishReason };

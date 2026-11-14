@@ -10,6 +10,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -198,7 +199,7 @@ export const mockClient: ApiClient = {
   getShuttle: () => answer('getShuttle', () => SHUTTLE),
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
-  askAssistant: (messages) => answer('askAssistant', () => mockAssistantReply(messages)),
+  askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   ...mockRoom,
   ...mockParty,
   ...mockEvents,

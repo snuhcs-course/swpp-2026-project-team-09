@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -93,6 +94,7 @@ describe('proposeQuest, with a complete Open Proposal', () => {
       mapButtons: [],
       cards: [],
       proposal: LUNCH,
+      answer: null,
     });
     expect(model.toolResults()).toEqual([{ result: 'proposed', proposal: LUNCH }]);
   });

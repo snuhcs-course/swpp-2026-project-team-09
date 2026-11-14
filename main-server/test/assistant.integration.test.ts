@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-29  Fable 5.1  prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -47,17 +48,13 @@ const studentCentre = {
 
 describe('The chat Assistant', () => {
   it("answers with the model's text", async () => {
-    model.script({ text: '안녕하세요! 무엇을 도와드릴까요?' });
+    const text = '안녕하세요! 무엇을 도와드릴까요?';
+    model.script({ text });
 
     const response = await postAssistantMessages(app, accessToken, ask('안녕'));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      text: '안녕하세요! 무엇을 도와드릴까요?',
-      mapButtons: [],
-      cards: [],
-      proposal: null,
-    });
+    expect(response.body).toEqual({ text, mapButtons: [], cards: [], proposal: null, answer: null });
   });
 
   it("gives the model the conversation, the User's new message last", async () => {
@@ -131,6 +128,7 @@ describe('getMenus', () => {
       mapButtons: [],
       cards: [],
       proposal: null,
+      answer: null,
     });
     expect(model.toolResults()).toEqual([{ result: 'found', date, restaurants: [studentCentre] }]);
   });
@@ -204,7 +202,13 @@ describe('showOnMap', () => {
 
     const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
 
-    expect(response.body).toEqual({ text: '오늘 메뉴예요.', mapButtons: ['dining'], cards: [], proposal: null });
+    expect(response.body).toEqual({
+      text: '오늘 메뉴예요.',
+      mapButtons: ['dining'],
+      cards: [],
+      proposal: null,
+      answer: null,
+    });
     expect(model.toolResults()).toEqual([{ result: 'shown', layer: 'dining' }]);
   });
 
@@ -231,6 +235,7 @@ describe('showOnMap', () => {
       mapButtons: [],
       cards: [],
       proposal: null,
+      answer: null,
     });
     expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
   });

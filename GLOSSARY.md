@@ -77,7 +77,7 @@ _Avoid_: Personal event
 
 **Quest**:
 An activity a User sets out to do and what Users gather around, held by one or more Users and made of one or more Sub Quests. A Quest can point at a Global Event. The screens call a Quest that several Users hold or gather for a "파티".
-_Avoid_: Mission, plan
+_Avoid_: Mission, plan (a Plan is what the Assistant works out before a Quest exists)
 
 **Sub Quest**:
 One step of a Quest, such as attending the event or going to a café afterwards. It carries the step's time and where it happens: a Place, a point on the map, or only the words the User wrote. Sub Quests are one level deep.
@@ -178,6 +178,14 @@ _Avoid_: Chatbot, AI agent, bot
 **Proposal**:
 A Quest the Assistant filled in from what a User wrote, shown for the User to make or to edit first. Nothing exists until the User makes it.
 _Avoid_: Draft (a Draft is an unpublished Global Event), suggestion
+
+**Plan**:
+What the Assistant works out in answer to a question about eating or meeting: a Place, a time, a Merging Point, and each person's way there. The server calculates it from Timetables, the locations the asker may see, and Travel Times. Nothing exists until the User sends it, and it then becomes a Quest. The screens call it a "계획".
+_Avoid_: Proposal (a Proposal is a Quest filled in from the User's words), schedule
+
+**Merging Point**:
+A Place on a Friend's way to a Plan's Place where the Friend meets the asker, so that the two walk the rest together.
+_Avoid_: Join-up, rendezvous
 
 ### The tutorial
 

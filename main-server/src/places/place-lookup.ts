@@ -3,6 +3,7 @@
  *
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -117,6 +118,10 @@ export class PlaceLookup implements OnModuleInit {
     const place =
       position === null ? null : (this.exactlyAt(position) ?? this.at(position)?.place ?? this.nearTo(position));
     return (place ?? this.named(label))?.id ?? null;
+  }
+
+  byId(id: string): PlaceDto | null {
+    return this.places.find(({ place }) => place.id === id)?.place ?? null;
   }
 
   numbered(number: string): PlaceDto | null {
