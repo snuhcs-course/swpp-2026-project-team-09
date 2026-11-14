@@ -27,4 +27,9 @@ jest.mock('@/push/device', (): typeof PushDevice => ({
   expoPushToken: () => Promise.resolve(null),
   onPushTokenChange: () => mockStopNothing,
   unregisterPush: () => Promise.resolve(),
+  lastPushTap: () => null,
+  clearLastPushTap: mockStopNothing,
+  onPushTap: () => mockStopNothing,
+  onPushArrival: () => mockStopNothing,
+  quietPushesInFront: mockStopNothing,
 }));

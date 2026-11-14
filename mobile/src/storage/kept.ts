@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,6 +35,8 @@ export interface Kept {
   declinedParties: string[];
   // The answer of the Assistant is shown on the map in place of the chat's sheet: the switch on 내 정보's build line.
   answerOnMap: boolean;
+  // The sheet that asks about push was shown on this phone. A sign-out leaves it as it is.
+  pushAsked: boolean;
 }
 
 const KEY = 'snunow.kept';
@@ -51,6 +54,7 @@ const FIRST_STATE: Kept = {
   backgroundRunning: false,
   declinedParties: [],
   answerOnMap: false,
+  pushAsked: false,
 };
 
 type Later =
@@ -61,7 +65,8 @@ type Later =
   | 'backgroundChosen'
   | 'backgroundRunning'
   | 'declinedParties'
-  | 'answerOnMap';
+  | 'answerOnMap'
+  | 'pushAsked';
 
 // What an older version stored lacks the fields added later: the rest of it still counts.
 function isKept(value: unknown): value is Omit<Kept, Later> {
@@ -101,6 +106,7 @@ export async function readKept(): Promise<Kept> {
           ? value.declinedParties.filter((id): id is string => typeof id === 'string')
           : [],
       answerOnMap: 'answerOnMap' in value && value.answerOnMap === true,
+      pushAsked: 'pushAsked' in value && value.pushAsked === true,
     };
   } catch {
     return FIRST_STATE;
