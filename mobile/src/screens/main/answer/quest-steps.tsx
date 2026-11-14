@@ -37,8 +37,8 @@ const styles = StyleSheet.create({
     width: STEP_NUMBER,
     height: STEP_NUMBER,
     borderRadius: radius.full,
-    backgroundColor: color.surfaceSunken,
+    backgroundColor: color.snuBlue,
   },
-  numberLabel: { ...text.caption, color: color.ink },
+  numberLabel: { ...text.caption, color: color.onPrimary },
   stepLabel: { ...text.body, flexShrink: 1, color: color.ink },
 });
