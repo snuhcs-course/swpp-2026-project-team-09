@@ -6,6 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { userEvent } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import type * as PushDevice from '@/push/device';
 import { keep, readKept } from '@/storage/kept';
 import type * as SecureStoreFake from '../support/secure-store';
@@ -176,6 +177,24 @@ describe('the permission already answered', () => {
   });
 });
 
+describe('Android 13 and above', () => {
+  beforeEach(startUndetermined);
+
+  // Notifications start disabled there: a permission never asked is reported as denied that can be asked again.
+  it('shows the sheet for a permission never asked, and 알림 받기 leads to the prompt and the registration', async () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    phone = givePushPhone({ permission: 'denied', canAskAgain: true });
+    const user = await openMain();
+    await sendParty(user, [MIN_JUN_HOLDER.name]);
+
+    expect(screen.getByRole('header', { name: QUESTION })).toBeVisible();
+    await press(user, '알림 받기');
+
+    expect(phone.prompts()).toBe(1);
+    expect(registered()).toEqual([{ token: PHONE_TOKEN }]);
+  });
+});
+
 describe('the sheet after the Proposal card', () => {
   beforeEach(startUndetermined);
 
@@ -281,10 +300,8 @@ describe('a build that cannot push', () => {
 
 describe('what the phone keeps', () => {
   it('reads an older value without pushAsked as false', async () => {
-    await AsyncStorage.setItem(
-      'snunow.kept',
-      JSON.stringify({ signedIn: true, consented: true, onboardingCompleted: true, suggestion: null, answers: null }),
-    );
+    const older = { signedIn: true, consented: true, onboardingCompleted: true, suggestion: null, answers: null };
+    await AsyncStorage.setItem('snunow.kept', JSON.stringify(older));
 
     expect((await readKept()).pushAsked).toBe(false);
   });

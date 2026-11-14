@@ -19,6 +19,8 @@ interface PhoneState {
   // Whether the build holds the notifications library's native part.
   native: boolean;
   permission: Status;
+  // Whether the phone would show its prompt again. Android 13+ reports a permission never asked as denied with it.
+  canAskAgain: boolean;
   // What the User answers to the phone's prompt.
   prompt: 'granted' | 'denied';
   token: string;
@@ -40,6 +42,7 @@ function doNothing(): void {
 const phone: PhoneState = {
   native: true,
   permission: 'undetermined',
+  canAskAgain: true,
   prompt: 'granted',
   token: PHONE_TOKEN,
   permissionReads: 0,
@@ -52,6 +55,8 @@ const phone: PhoneState = {
 interface Given {
   native?: boolean;
   permission?: Status;
+  // Left out, false for a denial and true otherwise.
+  canAskAgain?: boolean;
   prompt?: 'granted' | 'denied';
 }
 
@@ -71,6 +76,7 @@ export interface PushPhone {
 export function givePushPhone(given: Given = {}): PushPhone {
   phone.native = given.native ?? true;
   phone.permission = given.permission ?? 'undetermined';
+  phone.canAskAgain = given.canAskAgain ?? phone.permission !== 'denied';
   phone.prompt = given.prompt ?? 'granted';
   phone.token = PHONE_TOKEN;
   phone.permissionReads = 0;
@@ -97,8 +103,14 @@ export function givePushPhone(given: Given = {}): PushPhone {
   };
 }
 
-function permissionAnswer(status: Status): { status: Status; granted: boolean } {
-  return { status, granted: status === 'granted' };
+interface PermissionAnswer {
+  status: Status;
+  granted: boolean;
+  canAskAgain: boolean;
+}
+
+function permissionAnswer(): PermissionAnswer {
+  return { status: phone.permission, granted: phone.permission === 'granted', canAskAgain: phone.canAskAgain };
 }
 
 const actualExpo = jest.requireActual<typeof Expo>('expo');
@@ -112,14 +124,15 @@ export const expoModule = {
 export const notificationsModule = {
   AndroidImportance: { HIGH: 5 },
   setNotificationChannelAsync: (): Promise<null> => Promise.resolve(null),
-  getPermissionsAsync: (): Promise<{ status: Status; granted: boolean }> => {
+  getPermissionsAsync: (): Promise<PermissionAnswer> => {
     phone.permissionReads += 1;
-    return Promise.resolve(permissionAnswer(phone.permission));
+    return Promise.resolve(permissionAnswer());
   },
-  requestPermissionsAsync: (): Promise<{ status: Status; granted: boolean }> => {
+  requestPermissionsAsync: (): Promise<PermissionAnswer> => {
     phone.prompts += 1;
     phone.permission = phone.prompt;
-    return Promise.resolve(permissionAnswer(phone.permission));
+    phone.canAskAgain = phone.prompt === 'granted';
+    return Promise.resolve(permissionAnswer());
   },
   getExpoPushTokenAsync: (): Promise<{ type: 'expo'; data: string }> =>
     Promise.resolve({ type: 'expo', data: phone.token }),
