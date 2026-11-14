@@ -193,7 +193,7 @@ The map changes only when the answer needs a place, a route, or people. A questi
 
 ### The time band
 
-- Dragging a handle on a plan's time band recalculates each person's arrival, the time together, the merging point, and the meeting place without the model, and draws them on the map at once. Where the band was before the drag stays as a dashed outline, and "되돌리기" (undo) goes back to it. Where the band was before the drag stays as a dashed outline, and "되돌리기" (undo) goes back to it.
+- Dragging a handle on a plan's time band recalculates each person's arrival, the time together, the merging point, and the meeting place without the model, and draws them on the map at once. Where the band was before the drag stays as a dashed outline, and "되돌리기" (undo) goes back to it.
 - For a person who cannot come at the new time, their row on the band marks where it overlaps their class, and the answer says who comes when.
 
 ### Many results on the map

@@ -107,8 +107,8 @@ What stands in until then:
 
 The freshman package (design section 6.5; rows 7 and 12) is a major storyline and is built first after the lunch path.
 
-- A: polishing re-planning, lateness told in words, shuttle estimates (row 7), and the set of location questions and two baselines.
+- A: polishing re-planning, lateness told in words, and shuttle estimates (row 7).
 - B: cluster circles on every map, the Avatar's three shapes and badges, dashed lines and dimming, the building fact card (row 6), the failure cases (row 8), and removing the old chat screen.
 - C: the answers for events and parties (rows 4–5), storing the three Friend levels and sending the location at the building level, asking once, and the "파티 켜기" (party on) button on the leave-by notification.
 - D: the notification table and sending at the right time, push notifications, keeping the study room plan and the booking window (row 3), storing and matching interests (row 10), and first run (row 12).
-- After that: compare the five metrics with the two baselines, and run a small comparison with users.
+- After that: run the location measures against the two baselines on the frozen set, and run the lab study (`metrics-revision.md`).
