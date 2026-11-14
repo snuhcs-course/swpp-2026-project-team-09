@@ -2,14 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type Plan } from '../assistant/dto/answer.dto.js';
 import { outOfReach } from '../assistant/free-time/tool-parts.js';
 import { MealPlanService } from '../assistant/gathering/meal-plan.service.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { InvitationsService } from '../quests/invitations.service.js';
 import { QuestsService, type SubQuestColumns } from '../quests/quests.service.js';
@@ -33,12 +35,15 @@ const subQuestsOf = ({ subQuests, endAt }: Plan): SubQuestColumns[] =>
 
 @Injectable()
 export class PlansService {
+  private readonly logger = new Logger(PlansService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mealPlans: MealPlanService,
     private readonly quests: QuestsService,
     private readonly invitations: InvitationsService,
     private readonly signals: SignalsService,
+    private readonly notifications: NotificationsService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -77,9 +82,22 @@ export class PlansService {
     created.forEach((invitation) => {
       this.invitations.announce(invitation);
     });
+    this.keepTimeToLeave(userId, questId, plan);
     return {
       quest: await this.quests.read(userId, questId),
       invitations: created.map(({ id, userId: invitee }) => ({ id, userId: invitee })),
     };
+  }
+
+  // Not awaited: the Leader's time to leave never fails the party's making.
+  private keepTimeToLeave(userId: string, questId: string, plan: Plan): void {
+    const part = plan.parts.find((each) => each.userId === userId);
+    if (part === undefined || part.leaveAt === null || part.walkMinutes === null || part.walkMinutes === 0) {
+      return;
+    }
+    const told = { kind: 'leave-by', questId, placeLabel: plan.place.label, walkMinutes: part.walkMinutes } as const;
+    this.notifications.schedule(userId, told, new Date(part.leaveAt)).catch((error: unknown) => {
+      this.logger.warn(`The Leader's time to leave was not kept: ${String(error)}`);
+    });
   }
 }
