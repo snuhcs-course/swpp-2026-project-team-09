@@ -10,21 +10,21 @@ A User whose phone has the switch on asks the Assistant from the bar on the map,
 
 ## Acceptance criteria
 
-- [ ] **The switch.** The phone keeps a flag, off by default. A long press on the build line at the bottom of 내 정보 turns it on or off and shows a toast that says which. The main screen follows the change without a restart. A phone that kept nothing, or kept an older version's data, reads it as off.
-- [ ] **Off is today.** With the flag off, pressing the bar opens the chat sheet as today, and the request's body is today's: the messages and the library capability, with no context. The chat's existing tests pass unchanged.
-- [ ] **The frame.** With the flag on, sending words shows the pill with those words and a ✕, and the card with "보는 중이에요" until the reply comes, then the reply. The chat sheet does not open.
-- [ ] **What gives way.** While the frame is shown: the Friend list, the Quest list, the row of buttons with the footprints, the 편의기능 button, the zoom control, the shuttle's notice, the tutorial's start button, and the card of a pressed thing are not shown; the tab bar is not shown while the main tab is in front; and a press on a marker opens no card.
-- [ ] **Today's answers inside the card**, drawn with the chat's own parts: the text as Markdown, the event, Quest, Restaurant, and library cards with their buttons, a Proposal with "만들기" and "수정", the map buttons, and "다시 시도" under a failure. A card that leads elsewhere leaves the frame as it is, and a map button closes the frame and turns its layer on.
-- [ ] **A reply that carries a Plan** shows the first Plan's two lines in the card, with their strong parts marked, in place of the model's sentence; one whose answer has no Plan shows the lines that say why.
-- [ ] **Closing.** The ✕ and Android's back button forget the conversation, a reply on its way included, and bring the everyday map back with everything that gave way.
-- [ ] **The input.** The bar's placeholder is "이어서 말하기" while the frame is shown. A follow-up message joins the same conversation, and the pill then says the new words. While the keyboard is up the card's content gives way and the bar stands over the keyboard. "대화 내용은 AI 제공자에게 전송돼요" stands above the bar while the keyboard is up and nothing is asked.
-- [ ] **Every way of asking** from the main screen shows the frame when the flag is on: the bar, 관정관's "좌석 현황", and the tutorial's ask.
-- [ ] **The request context.** With the flag on, each request, "다시 시도" included, carries a context with the User's position (null off campus and when the phone has none) and nulls for the rest, and the capability that says the app draws answers.
-- [ ] **The conversation keeps each reply's answer**, so that the next ticket can draw it.
-- [ ] A toast sits above the card, and the card never covers the pill: its content scrolls inside it.
-- [ ] Integration tests at the main screen over the fake main server for each criterion above, and unit tests for the flag and for what a turn is. Expected values come from this ticket, the wireframes, and the stored copy of a real answer.
-- [ ] The app's README says what the frame is and how the switch is turned on.
-- [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass; and no native file of the app changed.
+- [x] **The switch.** The phone keeps a flag, off by default. A long press on the build line at the bottom of 내 정보 turns it on or off and shows a toast that says which. The main screen follows the change without a restart. A phone that kept nothing, or kept an older version's data, reads it as off.
+- [x] **Off is today.** With the flag off, pressing the bar opens the chat sheet as today, and the request's body is today's: the messages and the library capability, with no context. The chat's existing tests pass unchanged.
+- [x] **The frame.** With the flag on, sending words shows the pill with those words and a ✕, and the card with "보는 중이에요" until the reply comes, then the reply. The chat sheet does not open.
+- [x] **What gives way.** While the frame is shown: the Friend list, the Quest list, the row of buttons with the footprints, the 편의기능 button, the zoom control, the shuttle's notice, the tutorial's start button, and the card of a pressed thing are not shown; the tab bar is not shown while the main tab is in front; and a press on a marker opens no card.
+- [x] **Today's answers inside the card**, drawn with the chat's own parts: the text as Markdown, the event, Quest, Restaurant, and library cards with their buttons, a Proposal with "만들기" and "수정", the map buttons, and "다시 시도" under a failure. A card that leads elsewhere leaves the frame as it is, and a map button closes the frame and turns its layer on.
+- [x] **A reply that carries a Plan** shows the first Plan's two lines in the card, with their strong parts marked, in place of the model's sentence; one whose answer has no Plan shows the lines that say why.
+- [x] **Closing.** The ✕ and Android's back button forget the conversation, a reply on its way included, and bring the everyday map back with everything that gave way.
+- [x] **The input.** The bar's placeholder is "이어서 말하기" while the frame is shown. A follow-up message joins the same conversation, and the pill then says the new words. While the keyboard is up the card's content gives way and the bar stands over the keyboard. "대화 내용은 AI 제공자에게 전송돼요" stands above the bar while the keyboard is up and nothing is asked.
+- [x] **Every way of asking** from the main screen shows the frame when the flag is on: the bar, 관정관's "좌석 현황", and the tutorial's ask.
+- [x] **The request context.** With the flag on, each request, "다시 시도" included, carries a context with the User's position (null off campus and when the phone has none) and nulls for the rest, and the capability that says the app draws answers.
+- [x] **The conversation keeps each reply's answer**, so that the next ticket can draw it.
+- [x] A toast sits above the card, and the card never covers the pill: its content scrolls inside it.
+- [x] Integration tests at the main screen over the fake main server for each criterion above, and unit tests for the flag and for what a turn is. Expected values come from this ticket, the wireframes, and the stored copy of a real answer.
+- [x] The app's README says what the frame is and how the switch is turned on.
+- [x] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass; and no native file of the app changed.
 
 ## Comments
 
@@ -45,3 +45,21 @@ Details the spec left to the implementation, listed so that any of them can be v
 11. **A change of the switch closes the chat sheet and forgets the conversation**, either way; the first read of what the phone keeps is not a change. A phone that cannot be read counts as off until a later reader reads it, and one that cannot keep the switch still has it changed until the app starts again.
 12. **A send with the switch on puts the keyboard down**, so that the card shows "보는 중이에요" and then the reply; with the switch off a send keeps the keyboard up, as the chat sheet does.
 13. **An answer's lines take the design system's `text.title`** (18, semi-bold), the strong parts bold in the key colour.
+
+### Checked on an emulator (2026-11-14)
+
+A development build of this branch on an Android emulator (API 36), with Kakao's map, the app's mock answers, and the switch turned on by the long press.
+
+- "배고파, 민수랑 같이" shows the pill with those words and the card with "12:15 302동식당" and "같이 먹으면 식사가 27분 줄어요"; the lists, the row of buttons, 편의기능, the zoom control, and the tabs are gone; the map's credit and Kakao's logo sit above the card.
+- "오늘 행사 뭐 있어" shows today's event card inside the card, with its two buttons, and the content scrolls inside the card.
+- The ✕ and the back button bring the everyday map back, and the back button does not leave the app.
+- The long press shows "지도 위의 답을 켰어요" and "지도 위의 답을 껐어요". With the switch off, a press on the bar opens the chat sheet with its greeting and examples, as before.
+
+Not seen there, because the emulator has a hardware keyboard and draws no keyboard on screen: the bar standing over the keyboard, the card's content giving way to it, and the line above the bar. The tests cover them, and a person looks at them on a phone.
+
+### Agent usage (2026-11-14)
+
+Up to the opening of the pull request, the spec and the tickets of P02 included. One session with six subagents for this ticket (a digest of the course's testing lectures, the capture of four real recalculated answers from the main server, the implementation, two reviewers, and the review's fixes).
+
+- Agent time: about 108 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 455,920; input 135,629,986, of which 133,452,684 were cache reads, 2,176,434 cache writes, and 868 uncached. Without cache reads: 2,633,222.
