@@ -25,8 +25,9 @@ export function IconButton({ icon, label, onPress, disabled = false }: IconButto
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      // Only when true: `Pressable` derives the accessibility state from it, and the app's other icon buttons stay as
+      // they were.
+      disabled={disabled || undefined}
       onPress={onPress}
       style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
     >

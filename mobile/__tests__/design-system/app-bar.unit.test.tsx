@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
 
-import { AppBar } from '@/design-system/app-bar';
+import { AppBar, IconButton } from '@/design-system/app-bar';
 import { Button } from '@/design-system/button';
 
 describe('AppBar', () => {
@@ -35,5 +36,31 @@ describe('AppBar', () => {
     await render(<AppBar count={12} leave={{ kind: 'close', onPress: jest.fn<void, []>() }} title="퀘스트" />);
 
     expect(screen.getByRole('header', { name: '퀘스트 12' })).toBeVisible();
+  });
+});
+
+// Partitions: without `disabled`, as every icon button of the app was before; disabled.
+describe('IconButton', () => {
+  it('without disabled renders no disabled state of its own, as Pressable derives none, and takes a press', async () => {
+    const onPress = jest.fn<void, []>();
+    await render(<IconButton icon="chevronRight" label="다음 후보" onPress={onPress} />);
+    const button = screen.getByRole('button', { name: '다음 후보' });
+
+    await userEvent.press(button);
+
+    const state: unknown = button.props.accessibilityState;
+    expect(state).toEqual(expect.objectContaining({ disabled: undefined }));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('disabled takes no press', async () => {
+    const onPress = jest.fn<void, []>();
+    await render(<IconButton disabled icon="chevronRight" label="다음 후보" onPress={onPress} />);
+    const button = screen.getByRole('button', { name: '다음 후보' });
+
+    await userEvent.press(button);
+
+    expect(button).toBeDisabled();
+    expect(onPress).not.toHaveBeenCalled();
   });
 });
