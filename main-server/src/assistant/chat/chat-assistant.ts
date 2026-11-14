@@ -11,7 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { FriendsService } from '../../friends/friends.service.js';
+import { FriendViewService } from '../../friends/friend-view.service.js';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { PlacesService } from '../../places/places.service.js';
@@ -51,7 +51,7 @@ export interface ChatAssistantServices {
   shuttle: ShuttleService;
   globalEvents: GlobalEventsService;
   recruiting: RecruitingService;
-  friends: FriendsService;
+  friends: FriendViewService;
   places: PlacesService;
   freeTime: FreeTimeServices;
   library: LibraryServices;

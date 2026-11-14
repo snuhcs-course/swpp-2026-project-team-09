@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type FriendDto } from '../../friends/dto/friends.dto.js';
+import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { Meal } from '../../generated/prisma/client.js';
 import { type RestaurantMenusDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { servedLines } from '../../menus/open-rule.js';
@@ -74,7 +74,7 @@ const intervalAnswers = (intervals: readonly Interval[], date: string): object[]
   intervals.map((interval) => intervalAnswer(interval, date));
 
 // The Friends of the request, each once and in the order given, of those who are the User's accepted Friends.
-function chosenFriends(listed: readonly FriendDto[], friendIds: readonly string[]): FriendDto[] {
+function chosenFriends(listed: readonly FriendView[], friendIds: readonly string[]): FriendView[] {
   return [...new Set(friendIds)].flatMap((id) => listed.find((friend) => friend.id === id) ?? []);
 }
 
@@ -103,7 +103,7 @@ export function findFreeFriends({ days, friends }: Pick<FreeTimeServices, 'days'
         return noneFound('Give a meal or a window.');
       }
       const freeTime = overlapOf(await freeOn(days, userId, date, now), [bounds]);
-      const listed = await friends.listFriends(userId);
+      const listed = await friends.list(userId);
       const asked = friendIds === undefined ? listed : chosenFriends(listed, friendIds);
       const frees = await Promise.all(asked.map(({ id }) => freeOn(days, id, date, now)));
       const free = asked.flatMap((friend, index) => {
@@ -179,7 +179,7 @@ function neededOfFirst({ free }: Diner, shared: readonly Interval[], conditions:
 
 async function dinersOf(
   { date, departurePlace, departureTime, leaveBy }: RestaurantConditions,
-  chosen: readonly FriendDto[],
+  chosen: readonly FriendView[],
   { userId, now }: Pick<ToolContext, 'userId' | 'now'>,
   days: UserDayService,
 ): Promise<[Diner, ...Diner[]]> {
@@ -239,7 +239,7 @@ export function findMealRestaurants({ days, friends, menus, restaurantPlaces, tr
       if (collected.length === 0) {
         return { ...noneFound(`No menu was collected for ${date}.`), why: 'no-menu' };
       }
-      const chosen = chosenFriends(await friends.listFriends(userId), friendIds);
+      const chosen = chosenFriends(await friends.list(userId), friendIds);
       const diners = await dinersOf(conditions, chosen, context, days);
       const bounds = mealWindow(date, meal, window);
       const frees = diners.map(({ free }) => free);

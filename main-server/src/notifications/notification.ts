@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Card } from './card-address.js';
@@ -10,12 +11,15 @@ import { type Card } from './card-address.js';
 // The facts of each kind, from which the service writes the words. The kinds are a closed list.
 export type Told =
   | { kind: 'accepted'; questId: string; questTitle: string; friendId: string; friendName: string }
-  | { kind: 'declined'; questId: string; questTitle: string; friendId: string; friendName: string };
+  | { kind: 'declined'; questId: string; questTitle: string; friendId: string; friendName: string }
+  | { kind: 'leave-by'; questId: string; placeLabel: string; walkMinutes: number };
 
 export type NotificationKind = Told['kind'];
 
 export interface NotificationWords {
   title: string;
+  // The title while the time is still to come. Null for a kind that has none.
+  ahead: string | null;
   line: string;
   card: Card;
   // Whom, beside the card, the Notification is about: the Friend who answered. Null when the card says it all.

@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { FriendsService } from '../../friends/friends.service.js';
+import { FriendViewService } from '../../friends/friend-view.service.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
 import { QuestsService } from '../../quests/quests.service.js';
 import { type TravelProvider } from '../../travel/travel.js';
@@ -26,7 +26,7 @@ import { type LibraryCard } from './library-card.js';
 export interface LibraryServices {
   catalogue: Catalogue;
   freeTime: FreeTimePort;
-  friends: FriendsService;
+  friends: FriendViewService;
   quests: QuestsService;
   users: UsersService;
   // What a seat's arrival at 관정관 is read from: the User's day, the Place of a position, and the walks.

@@ -3,6 +3,7 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: each kind of 알림 row, with and without what it names, a list that failed, the rows' order, the kept
@@ -241,6 +242,46 @@ describe('toNotices of the kept Notifications', () => {
   it('a failed list of kept Notifications → the other rows alone', () => {
     const rows = toNotices({ ...NONE, invitations: [INVITATION], kept: null });
     expect(rows.map(({ key }) => key)).toEqual(['invitation-inv1']);
+  });
+});
+
+// The Leader's time to leave at 12:18 in Korea on 17 November 2026.
+const LEAVE_BY: KeptNotification = {
+  id: 'leave-by:party:q1',
+  kind: 'leave-by',
+  title: '지금 나서요',
+  ahead: '12:18 나설 시각',
+  line: '학생회관식당까지 걸어서 15분',
+  at: '2026-11-17T12:18:00+09:00',
+  url: '/main?card=party:q1',
+};
+
+const onThatDay = (clock: string): Date => new Date(`2026-11-17T${clock}:00+09:00`);
+
+describe('toNotices of the time to leave', () => {
+  it("the Leader's time to leave → the clock's icon, its words, the party's card, and its time", () => {
+    expect(toNotices({ ...NONE, now: onThatDay('12:10'), kept: [LEAVE_BY] })).toEqual([
+      {
+        key: 'notice-leave-by:party:q1',
+        kind: 'leave-by',
+        icon: 'clock',
+        title: '12:18 나설 시각',
+        sub: '학생회관식당까지 걸어서 15분',
+        questId: null,
+        address: '/main?card=party:q1',
+        time: '12:18',
+      },
+    ]);
+  });
+
+  it.each([
+    ['a time still to come, with now at 12:10', '12:18 나설 시각', '12:10', LEAVE_BY],
+    ['a time that has come, with now at 12:18', '지금 나서요', '12:18', LEAVE_BY],
+    ['a time past, with now at 12:30', '지금 나서요', '12:30', LEAVE_BY],
+    ['no title ahead, with now at 12:10', '지금 나서요', '12:10', { ...LEAVE_BY, ahead: undefined }],
+    ['a title ahead of null, with now at 12:10', '지금 나서요', '12:10', { ...LEAVE_BY, ahead: null }],
+  ])('%s → %p', (_, title, clock, notification) => {
+    expect(toNotices({ ...NONE, now: onThatDay(clock), kept: [notification] })[0]?.title).toBe(title);
   });
 });
 
