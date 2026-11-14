@@ -93,7 +93,7 @@ describe('words sent with an answer on screen', () => {
     await pass(500);
 
     expect(lastContext()).toEqual(
-      expect.objectContaining({ conditions: MEAL_ANSWER_ALONE.input, planId: '302동식당' }),
+      expect.objectContaining({ conditions: MEAL_ANSWER_ALONE.input, planId: '301동식당' }),
     );
   });
 });

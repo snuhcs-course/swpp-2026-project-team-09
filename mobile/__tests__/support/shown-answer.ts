@@ -91,8 +91,9 @@ export function heldBack(recalculate: Recalculate): {
   };
 }
 
+// A change to the given conditions, whatever the answer on screen holds.
 export async function change(held: Held, input: PlanInput, by?: 'drag'): Promise<void> {
   await act(() => {
-    held.shown().change(input, by);
+    held.shown().change(() => input, by);
   });
 }

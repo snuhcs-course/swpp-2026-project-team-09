@@ -78,24 +78,24 @@ export function useCorrections({ change }: ShownAnswer, input: PlanInput): Corre
     choices: useChoices(input),
     choose: (userId) => {
       setAdding(false);
-      change(withPerson(input, userId));
+      change((shown) => withPerson(shown, userId));
     },
     remove: (userId) => {
-      change(withoutPerson(input, userId));
+      change((shown) => withoutPerson(shown, userId));
     },
     chooseOrigin: () => {
       waitForPlace(({ placeId }) => {
         if (placeId === null) {
           showToast('건물을 골라 주세요');
         } else {
-          change(withOrigin(input, placeId));
+          change((shown) => withOrigin(shown, placeId));
         }
       });
       router.push('/place-map');
     },
     ...useFocus(),
     drop: (bound, time) => {
-      change(withBound(input, bound, time), 'drag');
+      change((shown) => withBound(shown, bound, time), 'drag');
     },
   };
 }

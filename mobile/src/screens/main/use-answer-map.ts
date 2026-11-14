@@ -105,14 +105,12 @@ export interface AnswerMap {
 const FRIEND = cardId.friend('');
 
 // A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
-function addOnPress({ answer, change }: ShownAnswer, id: string): void {
-  if (answer === null || !id.startsWith(FRIEND)) {
+function addOnPress({ change }: ShownAnswer, id: string): void {
+  if (!id.startsWith(FRIEND)) {
     return;
   }
   const userId = id.slice(FRIEND.length);
-  if (!answer.input.people.some((person) => person.userId === userId)) {
-    change(withPerson(answer.input, userId));
-  }
+  change((input) => (input.people.some((person) => person.userId === userId) ? input : withPerson(input, userId)));
 }
 
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the

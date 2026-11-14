@@ -7,13 +7,15 @@
 import { act } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
-import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
+import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
+import { withoutPerson } from '@/features/assistant/plan-input';
 import type { ChatBubble } from '@/features/assistant/use-chat';
-import { ANSWERED, change, failed, heldBack, hold, replied, said } from '../support/shown-answer';
+import { ANSWERED, change, failed, HERE, heldBack, hold, replied, said } from '../support/shown-answer';
 
 // A new reply is told by its bubble, not by its answer's object (P02 spec, "Correcting the answer"): the mock, or a
-// cache, may answer a follow-up with the same object as before. The answers are the stored copies of the main
-// server's replies to "배고파, 민수랑 같이" (302동식당 first), for the User alone, and for a fixed start.
+// cache, may answer a follow-up with the same object as before; and a change works on the answer on screen when it
+// is called, not when its control was drawn. The answers are the stored copies of the main
+// server's replies to "배고파, 민수랑 같이" (302동식당 first), for the User alone, for three (지은 third), and for a fixed start.
 
 jest.mock('@/api/client', () => ({ apiClient: { recalculateAnswer: jest.fn() } }));
 
@@ -72,5 +74,48 @@ describe('a new reply with the same answer object', () => {
 
     await held.rerender([...ANSWERED, own(3), said(4, '다시 찾아줘'), failed(5)]);
     expect(held.shown().answer).toBe(MEAL_ANSWER_ALONE);
+  });
+});
+
+// Partitions: a change kept from an earlier render and called after a new reply; one that changes nothing; one with
+// no answer on screen.
+describe('a change', () => {
+  it("kept from before a new reply changes the new reply's conditions, and ends recalculating", async () => {
+    const reply = heldBack(recalculate);
+    const held = await hold(ANSWERED);
+    const kept = held.shown().change;
+    const third = [...ANSWERED, said(3, '지은이도'), replied(4, MEAL_ANSWER_THREE)];
+    await held.rerender(third);
+    const jiEun = MEAL_ANSWER_THREE.input.people[2]?.userId ?? '';
+
+    await act(() => {
+      kept((input) => withoutPerson(input, jiEun));
+    });
+    expect(recalculate).toHaveBeenCalledWith(withoutPerson(MEAL_ANSWER_THREE.input, jiEun), HERE);
+    expect(held.shown().recalculating).toBe(true);
+    await reply.come(MEAL_ANSWER);
+
+    expect(held.shown().answer).toBe(MEAL_ANSWER);
+    expect(held.shown().recalculating).toBe(false);
+  });
+
+  it('asks for nothing when it gives the same conditions back', async () => {
+    const held = await hold(ANSWERED);
+
+    await act(() => {
+      held.shown().change((input) => input);
+    });
+
+    expect(recalculate).not.toHaveBeenCalled();
+    expect(held.shown().recalculating).toBe(false);
+  });
+
+  it('asks for nothing without an answer on screen', async () => {
+    const held = await hold([said(1, '고마워'), replied(2, null)]);
+
+    await change(held, MEAL_ANSWER.input);
+
+    expect(recalculate).not.toHaveBeenCalled();
+    expect(held.shown().recalculating).toBe(false);
   });
 });

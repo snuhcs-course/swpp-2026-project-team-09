@@ -6,7 +6,7 @@
 
 import { within } from '@testing-library/react-native';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
-import { MEAL_ANSWER_OTHER_ORIGIN } from '@/api/mock/data/meal-answers';
+import { MEAL_ANSWER_OTHER_ORIGIN, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
@@ -14,6 +14,7 @@ import { askOnMap, card } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
@@ -101,5 +102,39 @@ describe('the origin chip', () => {
     expect(recalculations(server)).toEqual([]);
     expect(within(screen.getByTestId('toast-layer')).getByText('건물을 골라 주세요')).toBeVisible();
     expect(card().getByRole('button', { name: '301동에서' })).toBeVisible();
+  });
+});
+
+// Partitions: a reply that comes while 장소 선택 is open, before the Place is picked.
+describe('the origin chip pressed while words wait for their reply', () => {
+  it("sends the new reply's conditions with the Place, and the chips take a press afterwards", async () => {
+    server.on('GET /places/at', { status: 200, body: { place: STUDENT_HALL, relation: 'inside' } });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    const held = 3000;
+    server.on('POST /assistant/messages', {
+      status: 200,
+      body: { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_THREE },
+      afterMs: held,
+    });
+    await user.type(screen.getByLabelText(AI_INPUT), '지은이도 불러 줘');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+
+    await user.press(card().getByRole('button', { name: '301동에서' }));
+    await pass(held);
+    expect(shownAddress()).toBe('/place-map');
+    await user.press(screen.getByRole('button', { name: '이 위치로 정하기' }));
+    await pass(500);
+
+    const [asker, ...others] = MEAL_ANSWER_THREE.input.people;
+    const fromHall = { kind: 'from', placeId: STUDENT_HALL.id, source: 'asker' };
+    expect(recalculations(server)).toEqual([
+      {
+        input: { ...MEAL_ANSWER_THREE.input, people: [{ ...asker, constraints: [fromHall] }, ...others] },
+        location: ON_CAMPUS,
+      },
+    ]);
+    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await pass(500);
+    expect(recalculations(server)).toHaveLength(2);
   });
 });

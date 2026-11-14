@@ -26,8 +26,10 @@ export interface ShownAnswer {
   toggleBasis: () => void;
   // A recalculation is on its way: one runs at a time.
   recalculating: boolean;
-  // Asks for the answer to changed conditions, which replaces the one on screen.
-  change: (input: PlanInput, by?: 'drag') => void;
+  // Asks for the answer to the conditions of the answer on screen when it is called, as `alter` changes them; it
+  // replaces the one on screen. Without an answer on screen, or when `alter` gives the same conditions back, it does
+  // nothing.
+  change: (alter: (input: PlanInput) => PlanInput, by?: 'drag') => void;
   // The band of the Plan shown before the last drag, while "되돌리기" can bring that answer back.
   ghost: Stretch | null;
   undo: () => void;
@@ -136,25 +138,31 @@ function useBrowsing(setStored: SetStored): {
   return { browse, show, toggleBasis, undo };
 }
 
-// Asks for a recalculation unless one of this epoch is on its way. Its answer, or its failure, counts only while the
-// epoch it was asked in is still the one on screen.
-function useChange(epoch: number, setStored: SetStored, { location, onFailed }: Recalculation): ShownAnswer['change'] {
-  const live = useRef(epoch);
+// Asks for a recalculation of the answer on screen when it is called, unless one of that epoch is on its way: a
+// control may call a `change` of an earlier render. Its answer, or its failure, counts only while the epoch it was
+// asked in is still the one on screen.
+function useChange(current: AnswerState, setStored: SetStored, recalculation: Recalculation): ShownAnswer['change'] {
+  const live = useRef({ current, recalculation });
   const flight = useRef<number | null>(null);
   useEffect(() => {
-    live.current = epoch;
-  }, [epoch]);
-  return (input, by) => {
-    if (flight.current === epoch) {
+    live.current = { current, recalculation };
+  });
+  return (alter, by) => {
+    const {
+      current: { answer, epoch },
+      recalculation: { location, onFailed },
+    } = live.current;
+    const input = answer === null ? null : alter(answer.input);
+    if (input === null || input === answer?.input || flight.current === epoch) {
       return;
     }
     flight.current = epoch;
-    setStored((last) => ({ ...last, recalculating: true }));
+    setStored((last) => (last.epoch === epoch ? { ...last, recalculating: true } : last));
     const settle = (update: (last: AnswerState) => AnswerState): boolean => {
       if (flight.current === epoch) {
         flight.current = null;
       }
-      const late = live.current !== epoch;
+      const late = live.current.current.epoch !== epoch;
       setStored((last) => (late || last.epoch !== epoch ? last : update(last)));
       return !late;
     };
@@ -185,7 +193,7 @@ export function useShownAnswer(
   if (current !== stored) {
     setStored(current);
   }
-  const change = useChange(current.epoch, setStored, { location, onFailed });
+  const change = useChange(current, setStored, { location, onFailed });
   return {
     source: current.source,
     answer: current.answer,
