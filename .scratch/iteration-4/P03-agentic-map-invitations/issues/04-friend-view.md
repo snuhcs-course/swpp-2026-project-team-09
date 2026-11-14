@@ -32,3 +32,10 @@ One service of the main server answers what a viewer sees of each Friend: the le
 - Every Assistant service that took `FriendsService` (the Friend resolver, `proposeQuest`'s invitees, `findFreeFriends`, `findMealRestaurants`, and the library booking's companions) now takes `FriendViewService`, and nothing in the Assistant uses `FriendsService` any more. `AssistantModule` no longer imports `LocationSharingModule`.
 - The "Timetable only" tests share a helper in `test/location-sharing.ts`: the Friend uploads a position at 8동 with more digits than any seed Place has, then turns their sharing with the asker off. A test then looks for those coordinates, 8동, and 두산인문관 in what the model received and in the reply.
 - The unit test reads every `.ts` file under `src/assistant/` and matches the import paths `location-sharing/position-store`, `location-sharing/visibility.service`, and `location-sharing/location-sharing.service`, dynamic imports included.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5), for this ticket and the engine's ticket 04 together. The session that wrote the spec, reviewed each ticket, and opened the pull requests is counted once, under ticket 07.
+
+- Agent time: about 49 minutes, an estimate from the transcript's timestamps; it includes waits for the machine's shared test lock.
+- Tokens: output 63,215; input 22,805,161, of which 22,197,620 were cache reads, 607,285 cache writes, and 256 uncached. Without cache reads: 670,756.

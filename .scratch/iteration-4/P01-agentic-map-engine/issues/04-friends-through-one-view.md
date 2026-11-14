@@ -24,3 +24,7 @@ Every tool of the Assistant that reads something about a Friend (a position, a P
 
 - "No tool imports the position store or the visibility rule" covers the location sharing service too, and every file under `src/assistant/`, not only the tools. A unit test (`test/assistant-friend-reads.unit.test.ts`) fails when one does.
 - A tool that reads only the names of Friends (the resolver, `proposeQuest`, `findFreeFriends`, `findMealRestaurants`, the library booking) reads them through the view too, and each has a "Timetable only" test beside its other tests. The test for `findFreeFriends` and `findMealRestaurants` is in a file of its own, `assistant-free-time-friends.integration.test.ts`, on the stage of the other 공강 tool tests, because the meals file is at the lint's line limit.
+
+### Agent usage (2026-11-15)
+
+Built with ticket 04 of the invitations package (`P03-agentic-map-invitations/issues/04-friend-view.md`), where the agent time and the tokens of both are recorded.
