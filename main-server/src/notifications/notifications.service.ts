@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { NotificationStore } from './notification-store.js';
 import { wordsOf } from './notification-words.js';
 
 function kept(told: Told, at: Date): { identity: string; notification: KeptNotification } {
-  const { about, ...words } = wordsOf(told);
+  const { about, ...words } = wordsOf(told, at);
   // A card no address opens is refused before it is kept: every later reading of the User's list would fail on it.
   cardAddress(words.card);
   return { identity: identityOf(told.kind, words.card, about), notification: { kind: told.kind, at, ...words } };
@@ -52,10 +53,11 @@ export class NotificationsService {
   }
 
   async listFor(userId: string): Promise<NotificationDto[]> {
-    return (await this.store.readAll(userId)).map(({ identity, kind, title, line, at, card }) => ({
+    return (await this.store.readAll(userId)).map(({ identity, kind, title, ahead, line, at, card }) => ({
       id: identity,
       kind,
       title,
+      ahead,
       line,
       at: koreaTime(at),
       url: cardAddress(card),

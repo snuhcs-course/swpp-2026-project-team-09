@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { cardAddress } from '../src/notifications/card-address.js';
@@ -11,6 +12,8 @@ import { wordsOf } from '../src/notifications/notification-words.js';
 
 const QUEST_ID = '0b9f7c5e-2a4d-4e8b-9c1a-3f6e5d7a8b90';
 const FRIEND_ID = 'c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f';
+// 12:18 in Korea.
+const AT = new Date('2026-11-17T03:18:00Z');
 
 describe('The words of an answer to an invitation', () => {
   it.each([
@@ -19,12 +22,33 @@ describe('The words of an answer to an invitation', () => {
     ['declined', '민수', '민수가 못 온대요'],
     ['declined', '지은', '지은이 못 온대요'],
   ] as const)('%s by %s reads "%s", under the Quest’s title, on the party’s card', (kind, friendName, title) => {
-    expect(wordsOf({ kind, questId: QUEST_ID, questTitle: '저녁 같이', friendId: FRIEND_ID, friendName })).toEqual({
+    expect(
+      wordsOf({ kind, questId: QUEST_ID, questTitle: '저녁 같이', friendId: FRIEND_ID, friendName }, AT),
+    ).toEqual({
       title,
+      ahead: null,
       line: '저녁 같이',
       card: { kind: 'party', id: QUEST_ID },
       about: FRIEND_ID,
     });
+  });
+});
+
+describe('The words of the time to leave', () => {
+  const leaveBy = { kind: 'leave-by', questId: QUEST_ID, placeLabel: '학생회관식당', walkMinutes: 15 } as const;
+
+  it('reads "지금 나서요" once the time has come and the time in Korea before it, with the walk under it', () => {
+    expect(wordsOf(leaveBy, AT)).toEqual({
+      title: '지금 나서요',
+      ahead: '12:18 나설 시각',
+      line: '학생회관식당까지 걸어서 15분',
+      card: { kind: 'party', id: QUEST_ID },
+      about: null,
+    });
+  });
+
+  it('writes the hour and the minutes with a leading zero', () => {
+    expect(wordsOf(leaveBy, new Date('2026-11-17T00:05:00Z')).ahead).toBe('09:05 나설 시각');
   });
 });
 
