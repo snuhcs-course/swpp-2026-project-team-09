@@ -74,3 +74,10 @@ Change:
 4. Stop the local stack's main server, sign out on device 2, start the server again, and invite device 2 again: no push arrives, since the phone unregistered itself through Firebase. A sign-out with no network at all cannot unregister (the spec, "Tokens on the server").
 
 ## Comments
+
+### Agent usage (2026-11-14, review)
+
+The review before the merge: two Opus 5.5 reviewers of this pull request (the ticket and the repository's rules; correctness over time), one agent that read Expo's documentation of the notification permission, one Opus 5.5 subagent for the fake phone of the tests and the wrapper's forgetting of an unregistered token, and a quarter of the session that read the four pull requests of P04 and decided what merges, up to this commit. The implementation's own usage is not in these numbers.
+
+- Agent time: about 20 minutes, an estimate from the transcripts' timestamps (a quarter of the session's active time, with the fixer's; the reviewers ran inside it).
+- Tokens: output 105,299; input 20,385,459, of which 19,973,088 were cache reads, 412,179 cache writes, and 192 uncached. Without cache reads: 517,670.
