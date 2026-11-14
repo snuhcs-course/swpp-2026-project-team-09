@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
@@ -84,7 +85,7 @@ const SIDE_REACH = { along: 400, across: 50 };
 const UPRIGHT_REACH = { along: 120, across: 150 };
 
 // The metres east and north from one position to another.
-function offset(from: LatLng, to: LatLng): { east: number; north: number } {
+export function offset(from: LatLng, to: LatLng): { east: number; north: number } {
   const north = (to.latitude - from.latitude) * METRES_PER_DEGREE;
   const east = (to.longitude - from.longitude) * METRES_PER_DEGREE * Math.cos((from.latitude * Math.PI) / 180);
   return { east, north };

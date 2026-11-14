@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -19,6 +20,8 @@ import {
   unproject,
 } from '@/map';
 import { fit, settle } from '@/map/projection';
+import { ANSWER_SYMBOL_BOX } from '@/design-system';
+import { type AnswerDrawing, offset } from './answer-marks';
 
 // What the pill and the card leave of the map, with the room for labels, in points of the map's view: each edge as a
 // distance from the view's top or left.
@@ -27,6 +30,49 @@ export interface ViewArea {
   right: number;
   bottom: number;
   left: number;
+}
+
+// The heights of what `MapAnswerMark` draws at a point, in points. A label of one line: the pick's title, 18 high
+// (`mapText.buttonTitle`), the tallest of a one-line label, with a padding of 2 and the pick's border of 2 at the top
+// and at the bottom. A label of two lines: that title and its line, 16 (`mapText.rowLine`), with a padding of 4
+// (`space[1]`) and the border. The gap of 2 between the symbol box and the label.
+const ONE_LINE_LABEL = 18 + 2 * 2 + 2 * 2;
+const TWO_LINE_LABEL = 18 + 16 + 2 * 4 + 2 * 2;
+const LABEL_GAP = 2;
+// More ground a point than a campus map shows on any phone, so that a room is never too small.
+const METRES_PER_POINT = 4.5;
+// Half the symbol box and a margin of 6.
+const LEAST_ROOM = ANSWER_SYMBOL_BOX / 2 + 6;
+
+// The room a mark needs on one side of its point: half its symbol box, and its label's when the label is there.
+function needOn(side: 'above' | 'below', { look }: AnswerDrawing['things'][number]): number {
+  const label = look.kind === 'answer' ? look.label : null;
+  const half = ANSWER_SYMBOL_BOX / 2;
+  if (label?.side !== side) {
+    return half;
+  }
+  return half + LABEL_GAP + (label.line === null ? ONE_LINE_LABEL : TWO_LINE_LABEL);
+}
+
+// The room the marks of a drawing need above its top-most point and below its bottom-most, in points: a mark that
+// stands south of the top-most point needs that much less above, and one north of the bottom-most that much less
+// below; at least `LEAST_ROOM` each.
+export function roomsOf({ things, points }: Pick<AnswerDrawing, 'things' | 'points'>): {
+  above: number;
+  below: number;
+} {
+  const latitudes = points.map(({ latitude }) => latitude);
+  const top = Math.max(...latitudes);
+  const bottom = Math.min(...latitudes);
+  const room = (side: 'above' | 'below', edge: number): number =>
+    Math.max(
+      LEAST_ROOM,
+      ...things.map((thing) => {
+        const { north } = offset({ latitude: edge, longitude: thing.position.longitude }, thing.position);
+        return needOn(side, thing) - Math.abs(north) / METRES_PER_POINT;
+      }),
+    );
+  return { above: room('above', top), below: room('below', bottom) };
 }
 
 // Less than this is no move, and a point this near the area's edge is inside it: a fit rests in its last digits.

@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -227,10 +228,21 @@ const FIRST_PLAN_POINTS = distinct([
   { latitude: 37.45942, longitude: 126.94989 },
 ]);
 
-// The test's phone has no status bar: the pill's 52 from the top and its 48, and room of 56 for a label above a point;
-// below, the card and room of 72 for the two lines of a label under a point; 64 at each side.
+// The test's phone has no status bar: the pill's 52 from the top and its 48, and the room the marks need above the
+// top-most point, 24 (자하연식당 2층's label is at its left); below, the card and the room the marks need under the
+// bottom-most point: for the first Plan 66, half the symbol box and the gap and the two lines of the pick's label
+// under 302동, 18 + 2 + 46; 64 at each side.
 function padding(cardHeight: number): object {
-  return { top: 52 + 48 + 56, right: 64, bottom: cardHeight + 72, left: 64 };
+  return { top: 52 + 48 + 24, right: 64, bottom: cardHeight + 66, left: 64 };
+}
+
+// The bottom of a fit's padding, its other sides checked to be those of `padding`.
+function bottomBeside(given: Parameters<typeof projection.fit>[1]['padding']): number {
+  if (typeof given !== 'object') {
+    throw new TypeError('The fit was given no padding of each side');
+  }
+  expect({ ...given, bottom: 66 }).toEqual(padding(0));
+  return given.bottom;
 }
 
 // Partitions: the answer comes before the card is laid out, and the card is laid out.
@@ -265,9 +277,10 @@ describe('the camera after the answer came', () => {
 
     await user.press(screen.getByRole('button', { name: '다음 후보' }));
     // The Plans of the stored answer stand at the same points (their people at 301동 and 302동, and the same
-    // Restaurants), so what can differ is that a fit is asked again, and with the card as it then is.
+    // Restaurants), so what can differ is that a fit is asked again, and with the card as it then is. The second
+    // Plan's pick 301동식당 has its two lines under 301동, 0.00129° = 143.6 metres north of 302동: 66 - 143.6 / 4.5 = 34.1.
     expect(fit.mock.calls).toHaveLength(before + 1);
-    expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(240) }));
+    expect(bottomBeside(fit.mock.lastCall?.[1].padding)).toBeCloseTo(240 + 66 - (0.00129 * 111_320) / 4.5, 6);
 
     await user.press(screen.getByRole('button', { name: CLOSE }));
 
