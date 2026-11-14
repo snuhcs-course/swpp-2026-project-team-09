@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
 import type { CardActions } from '../chat-cards';
@@ -19,8 +20,9 @@ import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
+import { PlanCard } from './plan-card';
 
-const PILL_HEIGHT = 48;
+export const PILL_HEIGHT = 48;
 const CLOSE = 36;
 
 // What the User asked, on one line, with the chat icon and ✕, which forgets the conversation.
@@ -41,10 +43,13 @@ function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }):
   );
 }
 
-// A reply's words: the lines of its answer's first Plan, or those that say why it has none, in place of the model's
-// sentence; otherwise the sentence as Markdown.
-function Words({ bubble }: { bubble: ChatBubble }): ReactElement {
+// A reply's words: the card of the Plan on screen for the answer on screen, else the lines of its answer's first Plan,
+// or those that say why it has none, in place of the model's sentence; otherwise the sentence as Markdown.
+function Words({ bubble, shown }: { bubble: ChatBubble; shown: ShownAnswer }): ReactElement {
   const { answer } = bubble;
+  if (answer === shown.answer && shown.plan !== null) {
+    return <PlanCard shown={shown} />;
+  }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
 }
@@ -88,7 +93,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                 cardActions={cardActions}
                 onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting ? retry : null}
                 onShowLayer={control.leaving.showLayer}
-                words={<Words bubble={bubble} />}
+                words={<Words bubble={bubble} shown={control.answer} />}
               />
             </View>
           ))}

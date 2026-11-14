@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -144,5 +145,26 @@ describe("a fit of the main screen's camera", () => {
     await rest(FIT + 0.2);
     map().zoomBy(1);
     expect(moves.at(-1)?.zoom).toBeCloseTo(FIT + 0.2 + ZOOM_OFFSET.step, 6);
+  });
+});
+
+// Partitions: a fit for an answer, against the route's fit above, which stops at the "pins" level.
+describe("a fit of the main screen's camera for an answer", () => {
+  it('comes no closer than the "close" level', async () => {
+    const { map, fits, ready } = await open();
+    await ready();
+
+    map().fitAnswer([CENTRE, LIBRARY], { top: 156, right: 64, bottom: 56, left: 64 });
+
+    expect(fits).toEqual([
+      {
+        points: [CENTRE, LIBRARY],
+        options: {
+          padding: { top: 156, right: 64, bottom: 56, left: 64 },
+          maxZoom: FIT + ZOOM_OFFSET.close,
+          animated: true,
+        },
+      },
+    ]);
   });
 });

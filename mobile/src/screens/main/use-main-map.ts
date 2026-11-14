@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RefObject, useCallback, useRef, useState } from 'react';
@@ -17,7 +18,7 @@ import {
   type ZoomDetail,
   zoomDetail,
 } from '@/map';
-import { useCameraMoves } from './use-camera-moves';
+import { type CameraMoves, useCameraMoves } from './use-camera-moves';
 
 export type ZoomLevel = 'pins' | 'names' | 'close';
 
@@ -42,6 +43,18 @@ export interface MainMap {
   // To the closest view that shows all the points inside what the padding leaves of the view, and no closer than
   // the "pins" level, which is where the `Main` frame goes for a route.
   fitTo: (points: readonly LatLng[], padding: FitPadding) => void;
+  // The same for an answer drawn on the map, no closer than the "close" level.
+  fitAnswer: (points: readonly LatLng[], padding: FitPadding) => void;
+}
+
+// A fit that comes no closer than `offset` above the fit zoom.
+function useFit(fit: CameraMoves['fit'], offset: number): MainMap['fitTo'] {
+  return useCallback(
+    (points: readonly LatLng[], padding: FitPadding) => {
+      fit(points, padding, offset);
+    },
+    [fit, offset],
+  );
 }
 
 // Owns the map's handle and follows its camera. The zoom is counted from the fit zoom, which the map gives. A move
@@ -83,12 +96,8 @@ export function useMainMap(): MainMap {
   const showCampus = useCallback(() => {
     move((fit) => ({ centre: centreOf(CAMPUS_BOUNDS), zoom: fit }));
   }, [move]);
-  const fitTo = useCallback(
-    (points: readonly LatLng[], padding: FitPadding) => {
-      fitInto(points, padding, ZOOM_OFFSET.pins);
-    },
-    [fitInto],
-  );
+  const fitTo = useFit(fitInto, ZOOM_OFFSET.pins);
+  const fitAnswer = useFit(fitInto, ZOOM_OFFSET.close);
   const detail = camera === null || fitZoom === null ? 'overview' : zoomDetail(camera.zoom, fitZoom);
-  return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo };
+  return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo, fitAnswer };
 }
