@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
@@ -50,7 +51,8 @@ interface Draft {
   group: Group;
   symbol: AnswerSymbol | null;
   tone: AnswerLabel['tone'];
-  title: string;
+  // Null for a mark that takes no label.
+  title: string | null;
   line: string | null;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
@@ -82,17 +84,24 @@ const ONE_POINT = 15;
 // sideways for one above or below.
 const SIDE_REACH = { along: 400, across: 50 };
 const UPRIGHT_REACH = { along: 120, across: 150 };
+// How many characters of a name a face shows (`MapAnswerMark`).
+const FACE_LETTERS = 2;
 
 // The metres east and north from one position to another.
-function offset(from: LatLng, to: LatLng): { east: number; north: number } {
+export function offset(from: LatLng, to: LatLng): { east: number; north: number } {
   const north = (to.latitude - from.latitude) * METRES_PER_DEGREE;
   const east = (to.longitude - from.longitude) * METRES_PER_DEGREE * Math.cos((from.latitude * Math.PI) / 180);
   return { east, north };
 }
 
+// The metres in a straight line from one position to another.
+export function metresBetween(from: LatLng, to: LatLng): number {
+  const { east, north } = offset(from, to);
+  return Math.hypot(east, north);
+}
+
 function samePoint(one: LatLng, other: LatLng): boolean {
-  const { east, north } = offset(one, other);
-  return Math.hypot(east, north) <= ONE_POINT;
+  return metresBetween(one, other) <= ONE_POINT;
 }
 
 // Whether a position is so near one of the Plan's own marks that a picture drawn there would lie over the mark or
@@ -104,19 +113,32 @@ export function nearOwnMark({ own }: Pick<AnswerDrawing, 'own'>, position: LatLn
   });
 }
 
+// The words of a face's tag that the face does not show already: a face shows the first two characters of the name,
+// so the tag of a name that short leaves the name out, and is none when the name is all it says.
+function faceTitle(name: string, tag: string): string | null {
+  if (Array.from(name).length > FACE_LETTERS) {
+    return tag;
+  }
+  if (tag === name) {
+    return null;
+  }
+  const lead = `${name} · `;
+  return tag.startsWith(lead) ? tag.slice(lead.length) : tag;
+}
+
 function personDrafts(scene: MapScene): Draft[] {
   const people = [...scene.people.filter((person) => person.me), ...scene.people.filter((person) => !person.me)];
   return people.map(({ userId, name, me, at, source, tag }) => {
-    const title = tag ?? (me ? '나' : name);
+    const said = tag ?? (me ? '나' : name);
     return {
       id: me ? 'answer:me' : `answer:person:${userId}`,
-      name: title,
+      name: said,
       position: at,
       planId: null,
       group: 'person',
       symbol: me ? { type: 'me' } : { type: 'face', name, dashed: source === 'timetable' },
       tone: 'person',
-      title,
+      title: me ? said : faceTitle(name, said),
       line: null,
       number: null,
     };
@@ -236,7 +258,7 @@ function placeAll(drafts: Draft[]): Placed[] {
     const drawn = here.filter(({ symbol }) => symbol !== null).toSorted(byGroup(SYMBOL_ORDER))[0];
     const taken = new Set<LabelSide>();
     return here.toSorted(byGroup(SIDE_ORDER)).map((draft) => {
-      const list = SIDES[draft.group].filter((side) => !taken.has(side));
+      const list = draft.title === null ? [] : SIDES[draft.group].filter((side) => !taken.has(side));
       const side = list.find((one) => !blocked(position, one, others)) ?? list[0] ?? null;
       if (side !== null) {
         taken.add(side);
@@ -249,7 +271,7 @@ function placeAll(drafts: Draft[]): Placed[] {
 function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
   const { id, name, position, planId, tone, title, line, number } = draft;
   const label: AnswerLabel | null =
-    side === null ? null : { side, tone, title, line, number: symbol === null ? number : null };
+    side === null || title === null ? null : { side, tone, title, line, number: symbol === null ? number : null };
   return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
 }
 
