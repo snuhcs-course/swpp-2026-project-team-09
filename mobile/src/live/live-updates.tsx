@@ -62,6 +62,7 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   'invitation-accepted': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   'invitation-declined': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   late: [QUESTS_KEY],
+  'plan-changed': [QUESTS_KEY, QUEST_INVITATIONS_KEY],
 };
 
 // The lists of what waits for the User, which 알림 and the badge on 파티 show.

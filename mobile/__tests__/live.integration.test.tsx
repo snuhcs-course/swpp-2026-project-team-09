@@ -200,6 +200,22 @@ describe("a Holder's late report over the connection", () => {
   });
 });
 
+describe('a Quest changed to a better Plan over the connection', () => {
+  it('fetches the Quests and the invitations again on plan-changed', async () => {
+    const socket = await openLive();
+    const before = [server.received('GET /quests').length, server.received('GET /quest-invitations').length];
+
+    await socketServer(() => {
+      socket.send('plan-changed', { questId: DINNER.id });
+    });
+
+    expect([server.received('GET /quests').length, server.received('GET /quest-invitations').length]).toEqual([
+      before[0] + 1,
+      before[1] + 1,
+    ]);
+  });
+});
+
 describe("the access token's expiry", () => {
   it('renews the Session and opens the connection again with the new token', async () => {
     server.on('POST /auth/refresh', { status: 200, body: RENEWED });

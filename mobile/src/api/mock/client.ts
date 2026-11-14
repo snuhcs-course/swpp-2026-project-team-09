@@ -32,7 +32,7 @@ import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockParty } from './party';
-import { mockPlanQuest } from './plan-quest';
+import { mockBetterPlan, mockChangedPlanQuest, mockPlanQuest } from './plan-quest';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
@@ -208,6 +208,8 @@ export const mockClient: ApiClient = {
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
   makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
+  getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
+  changePlanQuest: () => answer('changePlanQuest', mockChangedPlanQuest),
   getInvitationCard: (invitationId) => answer('getInvitationCard', () => mockInvitationCard(invitationId)),
   // The mock does not calculate: the main server's real way for 민수 5 minutes late, whatever is reported.
   reportLate: () => answer('reportLate', () => LATE_WAY),
