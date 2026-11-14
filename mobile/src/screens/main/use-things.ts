@@ -33,11 +33,11 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // vehicle a pin, so that a vehicle standing at its stop is seen, and stops at one place stay a dot. A study building
 // none of whose spaces the User may use is grey, and study pins merged at the overview level are their cluster.
 // Things of several kinds at one place are a group's dot or pin. A Quest made from a Plan is its flag at every level:
-// the dot in the Quest colour with its words above it, as an answer draws its pick.
-function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
+// the dot in the Quest colour with its words, its marker's name, above it, as an answer draws its pick.
+function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
-  if (flag !== undefined) {
-    const label = { side: 'above', tone: 'pick', title: flag, line: null, number: null } as const;
+  if (kind === 'made-quest') {
+    const label = { side: 'above', tone: 'pick', title: marker.name, line: null, number: null } as const;
     return { kind: 'answer', symbol: { type: 'dot', role: 'pick', number: null }, label };
   }
   if (kind === 'study-cluster') {
@@ -81,7 +81,8 @@ function wordsOf({ mark, marker }: CardView, detail: ZoomDetail): string | undef
 
 // Turns the cards into what the map shows at a level of detail. From the "names" level a person has their given name
 // under them, in the map's own text. The selected one is drawn selected and above the others. A thing within a place
-// has no marker: the place's stands for it, and is selected while the thing is. A received invitation has none.
+// has no marker: the place's stands for it, and is selected while the thing is, as a made Quest's flag for its Quest.
+// A received invitation has none.
 export function useThings(all: readonly CardView[], detail: ZoomDetail, selectedId: string | null): Things {
   const cards = all.filter(({ kind }) => kind !== 'invitation');
   const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
