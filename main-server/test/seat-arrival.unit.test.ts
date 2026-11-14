@@ -5,9 +5,14 @@
  ******************************************************************************/
 
 import { checkBooking } from '../src/assistant/library/booking-rules.js';
-import { CATALOGUE_FILE, type Catalogue, type LibrarySpace, readCatalogue } from '../src/assistant/library/catalogue.js';
+import {
+  CATALOGUE_FILE,
+  type Catalogue,
+  type LibrarySpace,
+  readCatalogue,
+} from '../src/assistant/library/catalogue.js';
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
-import { fillSeat, leaveByOf, type SeatFacts } from '../src/assistant/library/seat-arrival.js';
+import { fillSeat, leaveByOf, type SeatFacts, type SeatSpace } from '../src/assistant/library/seat-arrival.js';
 
 // A seat asked for today without a start, on Wednesday 2026-11-04 in Korea. The walks, in whole minutes: 24동 to
 // 관정관 4, 관정관 to 두산인문관 (8동) 4. The reading room 7F-7A-zone2 is open 07:00–23:00, in steps of 30 minutes, for
@@ -37,15 +42,15 @@ const item = (start: string, end: string, placeId: string | null, isClass = true
 const AFTERNOON = [item('13:00', '13:50', BUILDING_24), item('16:00', '17:15', DOOSAN)];
 
 let catalogue: Catalogue;
-let seat: LibrarySpace;
+let seat: LibrarySpace & SeatSpace;
 
 beforeAll(async () => {
   catalogue = await readCatalogue(CATALOGUE_FILE);
   const space = catalogue.byId.get('7F-7A-zone2');
-  if (space === undefined) {
+  if (space === undefined || space.hours === null) {
     throw new Error('No 7F-7A-zone2');
   }
-  seat = space;
+  seat = { ...space, hours: space.hours };
 });
 
 function facts(now: string, more: Partial<SeatFacts> = {}): SeatFacts {
@@ -102,7 +107,11 @@ describe('The start', () => {
   });
 
   it('is the opening time for an arrival before the space opens', () => {
-    expect(fillSeat(facts('06:20'), seat, {})).toMatchObject({ arrival: { at: '06:24' }, start: '07:00', minutes: 360 });
+    expect(fillSeat(facts('06:20'), seat, {})).toMatchObject({
+      arrival: { at: '06:24' },
+      start: '07:00',
+      minutes: 360,
+    });
   });
 });
 
@@ -144,7 +153,11 @@ describe('The arrival', () => {
 
 describe('The length', () => {
   it('is cut to the closing time: an arrival at 19:10 gets 19:30 for 210 minutes', () => {
-    expect(fillSeat(facts('19:06'), seat, {})).toMatchObject({ arrival: { at: '19:10' }, start: '19:30', minutes: 210 });
+    expect(fillSeat(facts('19:06'), seat, {})).toMatchObject({
+      arrival: { at: '19:10' },
+      start: '19:30',
+      minutes: 210,
+    });
   });
 
   it('is the one the User named, and the note says it was filled for the arrival only', () => {
@@ -188,7 +201,11 @@ describe('The time to leave', () => {
       item('16:00', '17:00', DOOSAN, false),
     ];
 
-    expect(leaveByOf(facts('13:50', { items }), '13:54', '20:00')).toEqual({ at: '15:56', for: '일정', start: '16:00' });
+    expect(leaveByOf(facts('13:50', { items }), '13:54', '20:00')).toEqual({
+      at: '15:56',
+      for: '일정',
+      start: '16:00',
+    });
   });
 
   it('is null when nothing with a Place starts before the booking ends', () => {

@@ -110,6 +110,7 @@ export class AssistantService {
         friends,
         quests,
         users,
+        arrival: { days, places: placeLookup, travel },
         enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
       },
       tutorial,

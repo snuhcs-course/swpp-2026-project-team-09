@@ -2,13 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { FriendsService } from '../../friends/friends.service.js';
+import { PlaceLookup } from '../../places/place-lookup.js';
 import { QuestsService } from '../../quests/quests.service.js';
+import { type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
 import { CARDS_MAX, noneFound, type Presented, type ToolContext } from '../feature.js';
+import { type UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
 import { addDays, lastBookableDate, type Refusal } from './booking-rules.js';
 import { type Catalogue, type LibrarySpace, type SpaceStatus, statusOf } from './catalogue.js';
@@ -25,6 +29,8 @@ export interface LibraryServices {
   friends: FriendsService;
   quests: QuestsService;
   users: UsersService;
+  // What a seat's arrival at 관정관 is read from: the User's day, the Place of a position, and the walks.
+  arrival: { days: UserDayService; places: PlaceLookup; travel: TravelProvider };
   // LIBRARY_BOOKING_ENABLED.
   enabled: boolean;
 }
