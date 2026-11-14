@@ -8,6 +8,7 @@ import { answered, startFresh } from '../support/mocks';
 import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-types';
 import { mockClient } from '@/api/mock/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 
 // The mock of the Assistant, where the app asks no main server: asked to eat together with what the app knew, it
 // answers with the main server's real answer drawn on the map; anything else as it did before.
@@ -62,5 +63,11 @@ describe('the mock of a recalculation', () => {
     const input: PlanInput = { ...MEAL_ANSWER.input, window: { from: '12:40', until: null } };
 
     await expect(answered(mockClient.recalculateAnswer(input, null))).resolves.toEqual({ ...MEAL_ANSWER, input });
+  });
+
+  it('answers the User alone with the stored copy for the User alone', async () => {
+    await expect(answered(mockClient.recalculateAnswer(MEAL_ANSWER_ALONE.input, null))).resolves.toEqual(
+      MEAL_ANSWER_ALONE,
+    );
   });
 });
