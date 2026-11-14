@@ -33,7 +33,7 @@ import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
 import { mockParty } from './party';
-import { mockPlanQuest } from './plan-quest';
+import { mockBetterPlan, mockChangedPlanQuest, mockPlanQuest } from './plan-quest';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
@@ -210,6 +210,8 @@ export const mockClient: ApiClient = {
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
   makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
+  getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
+  changePlanQuest: () => answer('changePlanQuest', mockChangedPlanQuest),
   getInvitationCard: (invitationId) => answer('getInvitationCard', () => mockInvitationCard(invitationId)),
   ...mockRoom,
   ...mockParty,

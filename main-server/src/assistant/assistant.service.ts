@@ -23,7 +23,7 @@ import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 import { REDIS } from '../common/redis.module.js';
 import { type Settings } from '../common/settings.js';
-import { FriendsService } from '../friends/friends.service.js';
+import { FriendViewService } from '../friends/friend-view.service.js';
 import { MenusService } from '../menus/menus.service.js';
 import { RestaurantPlaces } from '../menus/restaurant-places.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
@@ -81,7 +81,7 @@ export class AssistantService {
     shuttle: ShuttleService,
     globalEvents: GlobalEventsService,
     recruiting: RecruitingService,
-    friends: FriendsService,
+    friends: FriendViewService,
     places: PlacesService,
     placeLookup: PlaceLookup,
     days: UserDayService,

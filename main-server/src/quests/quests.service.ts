@@ -11,6 +11,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -39,6 +40,7 @@ import {
   toQuestDto,
 } from './dto/quest.dto.js';
 import { notFound, questNotFound } from './refusals.js';
+import { inOrder } from './sub-quest-order.js';
 
 // What a Sub Quest that a Holder writes stores.
 export type SubQuestColumns = Pick<
@@ -201,10 +203,7 @@ export class QuestsService {
     tx: Prisma.TransactionClient,
     settings: QuestSettings = {},
   ): Promise<string> {
-    // Sub Quests are read in the order they were created, and the rows of one transaction share its now().
-    const start = Date.now();
-    const ordered = subQuests.map((subQuest, index) => ({ ...subQuest, createdAt: new Date(start + index) }));
-    return this.create({ title, globalEventId: null, subQuest: ordered }, holderIds, settings, tx);
+    return this.create({ title, globalEventId: null, subQuest: inOrder(subQuests) }, holderIds, settings, tx);
   }
 
   // Removes the Holder with the Holder's progress, and the Quest with its Sub Quests when nobody holds it any more.
