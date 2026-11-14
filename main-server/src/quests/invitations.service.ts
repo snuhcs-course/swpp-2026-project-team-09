@@ -5,15 +5,19 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { type Told } from '../notifications/notification.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { invitationMessage } from '../push/messages.js';
 import { PushService } from '../push/push.service.js';
+import { CLOCK, type Clock } from './clock.js';
 import { QuestDto } from './dto/quest.dto.js';
 import {
   toWaitingDto,
@@ -34,6 +38,8 @@ const invitationNotFound = (): NotFoundException => notFound('QUEST_INVITATION_N
 // answers it, and ends with the Quest and when the User enters it in any way (RecruitingService.enter).
 @Injectable()
 export class InvitationsService {
+  private readonly logger = new Logger(InvitationsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly quests: QuestsService,
@@ -43,6 +49,8 @@ export class InvitationsService {
     private readonly signals: SignalsService,
     private readonly roomRequests: RoomRequestSync,
     private readonly push: PushService,
+    private readonly notifications: NotificationsService,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   async invite(leaderId: string, questId: string, userId: string): Promise<void> {
@@ -102,8 +110,11 @@ export class InvitationsService {
   // A refused acceptance leaves the invitation waiting. Checked again once the Quest is locked, so that an invitation
   // the Leader cancelled meanwhile admits nobody.
   async accept(userId: string, invitationId: string): Promise<QuestDto> {
-    const { questId, holderIds } = await this.prisma.$transaction(async (tx) => {
-      const invitation = await tx.questInvitation.findFirst({ where: { id: invitationId, userId } });
+    const { questId, holderIds, answered } = await this.prisma.$transaction(async (tx) => {
+      const invitation = await tx.questInvitation.findFirst({
+        where: { id: invitationId, userId },
+        include: { quest: { select: { leaderId: true, title: true } }, user: { select: { name: true } } },
+      });
       if (invitation === null) {
         throw invitationNotFound();
       }
@@ -112,9 +123,15 @@ export class InvitationsService {
           throw invitationNotFound();
         }
       });
-      return { questId: invitation.questId, holderIds: entered };
+      return { questId: invitation.questId, holderIds: entered, answered: invitation };
     });
     this.signals.send(holderIds, 'quests-changed');
+    this.tellLeader(answered.quest.leaderId, {
+      kind: 'accepted',
+      questId,
+      questTitle: answered.quest.title,
+      friendName: answered.user.name,
+    });
     await this.roomRequests.questChanged(questId);
     return this.quests.read(userId, questId);
   }
@@ -123,7 +140,7 @@ export class InvitationsService {
   async decline(userId: string, invitationId: string): Promise<void> {
     const invitation = await this.prisma.questInvitation.findFirst({
       where: { id: invitationId, userId },
-      include: { quest: true },
+      include: { quest: true, user: { select: { name: true } } },
     });
     if (
       invitation === null ||
@@ -132,6 +149,19 @@ export class InvitationsService {
       throw invitationNotFound();
     }
     this.signals.send([userId, invitation.quest.leaderId], 'quests-changed');
+    this.tellLeader(invitation.quest.leaderId, {
+      kind: 'declined',
+      questId: invitation.questId,
+      questTitle: invitation.quest.title,
+      friendName: invitation.user.name,
+    });
     await this.roomRequests.questChanged(invitation.questId);
+  }
+
+  // Not awaited: the Leader's Notification never fails the invited User's answer.
+  private tellLeader(leaderId: string, told: Told): void {
+    this.notifications.schedule(leaderId, told, this.clock.now()).catch((error: unknown) => {
+      this.logger.warn(`The Leader was not told of an invitation answered: ${String(error)}`);
+    });
   }
 }
