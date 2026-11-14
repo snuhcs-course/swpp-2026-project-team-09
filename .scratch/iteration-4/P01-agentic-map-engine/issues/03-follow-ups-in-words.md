@@ -23,18 +23,19 @@ While a Plan is on the screen, the User says "지은이도 불러 줘", "민수�
 
 Details the spec left to the implementation, listed so that any of them can be vetoed.
 
-1. **The lines.** The Plan on screen reaches the model as one line after the User's new message, `[Plan on screen: {"plan", "date", "meal", "friendIds", "from", "until", "placeId"}]`, and a tapped Friend or Place as `[Tapped: friend …]` or `[Tapped: place …]`. They are added whenever the request context carries them, and a request without them gives the model what it gets today.
+1. **The lines.** The Plan on screen reaches the model as one line after the User's new message, `[Plan on screen: {"plan", "date", "meal", "friendIds", "from", "until", "placeId"}]`, and a tapped Friend or Place as `[Tapped: friend …]` or `[Tapped: place …]`. They are added for an app with the `answer` capability, when the request context carries the Plan's conditions or a tap. A plan id without conditions gives no line, and any other request gives the model what it gets today.
 2. **What the tool takes.** A start, an end, and a Place beside the day, the meal, and the Friends. A person's constraints cannot be said by the model, so they come from the conditions on screen, while the day and the meal stay the same.
-3. **Ids on screen or tapped** are accepted without the resolver finding them again. The service still checks that each person is the asker's Friend and that the Place exists.
+3. **Ids on screen or tapped** are accepted without the resolver finding them again. The asker's own id is not one of them. The service still checks that each person is the asker's Friend and that the Place exists.
 4. **A context whose conditions start with someone other than the User** is refused with 400, before the message is counted.
 5. **Where the asker sets out from is not changed in words.** The answer screen sends a `from` constraint to the recalculation when the User taps another Place.
 6. **The other answers on the map** (where a Place is, the minutes to a Place, and a menu) are ticket 05.
-7. **The prompt's rules are checked with the scripted model only.** No evaluation suite is added and no real model is run, as the spec's Testing Decisions say.
+7. **To move a Plan by an amount of time**, the model first asks the tool for the Plan as it is and reads its start, since the line carries the conditions and not the calculated times.
+8. **The prompt's rules are checked with the scripted model only.** No evaluation suite is added and no real model is run, as the spec's Testing Decisions say.
 
 ### Agent usage (2026-11-14)
 
-Up to this ticket's commit. The same session as tickets 01 and 02, with one more subagent for this ticket.
+Up to the review's fixes. The same session as tickets 01 and 02, with three more subagents for this ticket (the implementation, a two-axis review, and the review's fixes).
 
-- Agent time: about 7 minutes, an estimate from the transcripts' timestamps.
-- Tokens: output 39,951; input 11,075,674, of which 10,902,549 were cache reads, 173,059 cache writes, and 66 uncached. Without cache reads: 213,076.
+- Agent time: about 17 minutes, an estimate from the transcripts' timestamps.
+- Tokens: output 81,877; input 26,945,849, of which 26,601,740 were cache reads, 343,955 cache writes, and 154 uncached. Without cache reads: 425,986.
 

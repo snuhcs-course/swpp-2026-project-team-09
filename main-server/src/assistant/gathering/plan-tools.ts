@@ -80,7 +80,8 @@ const input = z
   })
   .refine(({ from, until }) => from === undefined || until === undefined || from < until, 'Expected from before until');
 
-// An id is accepted when a resolver returned it in this message, or when it is on screen or tapped.
+// An id is accepted when a resolver returned it in this message, or when it is on screen or tapped. The asker heads
+// the conditions on screen and is no Friend of them.
 function refuseUnseen(found: FoundIds, kind: FoundKind, ids: readonly string[], seen: readonly string[]): void {
   found.refuseUnfound(
     kind,
@@ -92,14 +93,14 @@ function seenIds({ conditions, tapped }: RequestContext): { friends: string[]; p
   const placeOnScreen = conditions?.placeId ?? null;
   return {
     friends: [
-      ...(conditions?.people.map(({ userId }) => userId) ?? []),
+      ...(conditions?.people.slice(1).map(({ userId }) => userId) ?? []),
       ...(tapped?.kind === 'friend' ? [tapped.userId] : []),
     ],
     places: [...(placeOnScreen === null ? [] : [placeOnScreen]), ...(tapped?.kind === 'place' ? [tapped.placeId] : [])],
   };
 }
 
-// Each person's constraints of the conditions on screen, kept while the plan stays on the same day and meal: the model
+// Each person's constraints of the conditions on screen, kept while the Plan stays on the same day and meal: the model
 // cannot give them, so a change in words would lose them.
 function constraintsOf(
   { conditions }: RequestContext,
@@ -158,6 +159,6 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.
 - When resolveFriend answers several, call findFreeFriends for that meal, read the departments there, and name them in your question.
 - Breakfast is not covered: say that lunch and dinner are.
-- A line [Plan on screen: …] after the User's message gives the plan the app shows and its conditions. To change it (민수는 빼고, 지은이도 불러 줘, 12:30까지만, 10분 늦춰 줘, 학생회관에서 먹자), call planMeal again with those conditions and only that change: the same date, meal, friendIds, from, until, and placeId, except what the User changed. A Friend to add is found with resolveFriend first and added to friendIds. A Friend to take out is found with resolveFriend and left out of friendIds. An end the User names is until, and a start is from, as HH:MM. A Place to eat at is found with resolvePlace and given as placeId.
+- A line [Plan on screen: …] after the User's message gives the plan the app shows and its conditions. To change it (민수는 빼고, 지은이도 불러 줘, 12:30까지만, 학생회관에서 먹자), call planMeal again with those conditions and only that change: the same date, meal, friendIds, from, until, and placeId, except what the User changed. A Friend to add is found with resolveFriend first and added to friendIds. A Friend to take out is found with resolveFriend and left out of friendIds. An end the User names is until, and a start is from, as HH:MM. A Place to eat at is found with resolvePlace and given as placeId. To move the plan by an amount of time (10분 늦춰 줘), first call planMeal with the conditions as they are, read the start of the plan the line names, and call it again with from set to that start moved by the amount.
 - A line [Tapped: friend …] gives the id of the Friend the User tapped on the map (이 사람, 얘): use it as that Friend's id. A line [Tapped: place …] gives the Place they tapped (여기): give it as placeId to eat there.
 - After a change, your reply is one sentence that says what changed.`;

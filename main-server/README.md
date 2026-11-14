@@ -2160,17 +2160,17 @@ its model through OpenRouter with the Vercel AI SDK
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
   `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
   `conditions` (the `PlanInput` of the answer on screen), and `planId` (the plan on screen). Every tool is given it, and
-  `planMeal` reads its `location`. The model reads the User's new message followed by a line
-  `[Plan on screen: {"plan", "date", "meal", "friendIds", "from", "until", "placeId"}]` when `conditions` is sent
+  `planMeal` reads its `location`. For an app that draws answers, the model reads the User's new message followed by a
+  line `[Plan on screen: {"plan", "date", "meal", "friendIds", "from", "until", "placeId"}]` when `conditions` is sent
   (`friendIds` being the people after the asker), and a line `[Tapped: friend <userId>]` or `[Tapped: place <placeId>]`
   when `tapped` is (`context-lines.ts`). `planMeal` takes the conditions back with a change: beside `date`, `meal`, and
   `friendIds` it takes `from` and `until` (`HH:MM`, the start and the end the User fixed, `from` before `until`) and
   `placeId` (the Place to eat at), keeps each person's constraints of the conditions on screen while the date and meal
-  stay the same, and accepts a Friend or a Place a resolver returned in this message, one of the conditions on screen,
-  or the one tapped. An app that sends `"clientCapabilities": ["answer"]` draws an answer on the map. The
-  reply always carries `answer`, `null` when there is none: the plans of a meal, each with its place, times, each
-  person's part (`parts`), the Sub Quests of the Quest it becomes (`subQuests`), map scene, and time band; the condition
-  chips; the dropped places; and the `input` to send back changed to recalculate. The full shape of both is in
+  stay the same, and accepts a Friend or a Place a resolver returned in this message, one of the conditions on screen
+  other than the asker, or the one tapped. An app that sends `"clientCapabilities": ["answer"]` draws an answer on the
+  map. The reply always carries `answer`, `null` when there is none: the plans of a meal, each with its place, times,
+  each person's part (`parts`), the Sub Quests of the Quest it becomes (`subQuests`), map scene, and time band; the
+  condition chips; the dropped places; and the `input` to send back changed to recalculate. The full shape of both is in
   `src/assistant/dto/answer.dto.ts`.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,

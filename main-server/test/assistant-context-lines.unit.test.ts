@@ -11,7 +11,7 @@ import { NO_CONTEXT, type PlanInput, type RequestContext } from '../src/assistan
 import { defineTool, type Feature, type Request } from '../src/assistant/feature.js';
 import { ScriptedModel } from './scripted-model.js';
 
-// What the app knew as the User asked, as the lines the model reads after their message: the plan on screen with its
+// What the app knew as the User asked, as the lines the model reads after their message: the Plan on screen with its
 // conditions, and what they tapped on the map.
 
 const ASKER = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
@@ -64,6 +64,10 @@ describe('The lines of a request context', () => {
     expect(contextLines(context)).toEqual([PLAN_LINE, `[Tapped: place ${PLACE}]`]);
   });
 
+  it('give no Plan for a planId without conditions', () => {
+    expect(contextLines({ ...NO_CONTEXT, planId: '학생회관식당' })).toEqual([]);
+  });
+
   it('are none for a context with neither', () => {
     expect(contextLines(NO_CONTEXT)).toEqual([]);
   });
@@ -78,7 +82,12 @@ const feature: Feature = {
   tools: { plan: defineTool({ description: 'Plans a meal.', input: z.object({}), run: () => Promise.resolve({}) }) },
 };
 
-const asker = (context: RequestContext): Request => ({ userId: ASKER, now: new Date(), capabilities: [], context });
+const asker = (context: RequestContext, capabilities: Request['capabilities'] = ['answer']): Request => ({
+  userId: ASKER,
+  now: new Date(),
+  capabilities,
+  context,
+});
 
 const conversation = [
   { role: 'user' as const, text: '배고파' },
@@ -94,17 +103,18 @@ function userTexts(): string[] {
   );
 }
 
+const FULL_CONTEXT: RequestContext = {
+  ...NO_CONTEXT,
+  conditions: CONDITIONS,
+  planId: '학생회관식당',
+  tapped: { kind: 'place', placeId: PLACE },
+};
+
 describe("The User's last message, as the model reads it", () => {
   it('is their text followed by the lines of the context', async () => {
     model.script({ text: '네' });
-    const context: RequestContext = {
-      ...NO_CONTEXT,
-      conditions: CONDITIONS,
-      planId: '학생회관식당',
-      tapped: { kind: 'place', placeId: PLACE },
-    };
 
-    await runFeature(model.model, feature, asker(context), conversation, LIMITS);
+    await runFeature(model.model, feature, asker(FULL_CONTEXT), conversation, LIMITS);
 
     expect(userTexts()).toEqual(['배고파', `여기서 먹자\n\n${PLAN_LINE}\n\n[Tapped: place ${PLACE}]`]);
   });
@@ -113,6 +123,14 @@ describe("The User's last message, as the model reads it", () => {
     model.script({ text: '네' });
 
     await runFeature(model.model, feature, asker(NO_CONTEXT), conversation, LIMITS);
+
+    expect(userTexts()).toEqual(['배고파', '여기서 먹자']);
+  });
+
+  it('is their text alone for an app that does not draw answers', async () => {
+    model.script({ text: '네' });
+
+    await runFeature(model.model, feature, asker(FULL_CONTEXT, ['library']), conversation, LIMITS);
 
     expect(userTexts()).toEqual(['배고파', '여기서 먹자']);
   });

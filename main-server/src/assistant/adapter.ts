@@ -143,15 +143,17 @@ function contentOf(message: ChatMessage): string {
   return lines.join('\n\n');
 }
 
-// The conversation as the model reads it, the lines of the request context after the User's new message.
+// The conversation as the model reads it, the lines of the request context after the User's new message for an app
+// that draws answers.
 function messagesFor(
   messages: readonly ChatMessage[],
-  { context }: Request,
+  { context, capabilities }: Request,
 ): { role: ChatMessage['role']; content: string }[] {
   const last = messages.length - 1;
+  const lines = capabilities.includes('answer') ? contextLines(context) : [];
   return messages.map((message, index) => ({
     role: message.role,
-    content: index === last ? [contentOf(message), ...contextLines(context)].join('\n\n') : contentOf(message),
+    content: index === last ? [contentOf(message), ...lines].join('\n\n') : contentOf(message),
   }));
 }
 
