@@ -59,6 +59,15 @@ function useFit(fit: CameraMoves['fit'], offset: number): MainMap['fitTo'] {
   );
 }
 
+function useCentreAt(move: CameraMoves['move']): MainMap['centreAt'] {
+  return useCallback(
+    (centre: LatLng) => {
+      move((_fit, zoomNow) => ({ centre, zoom: zoomNow }));
+    },
+    [move],
+  );
+}
+
 // Owns the map's handle and follows its camera. The zoom is counted from the fit zoom, which the map gives. A move
 // asked before the map is ready is carried out when it is.
 export function useMainMap(): MainMap {
@@ -98,14 +107,8 @@ export function useMainMap(): MainMap {
   const showCampus = useCallback(() => {
     move((fit) => ({ centre: centreOf(CAMPUS_BOUNDS), zoom: fit }));
   }, [move]);
-  const centreAt = useCallback(
-    (centre: LatLng) => {
-      move((_fit, zoomNow) => ({ centre, zoom: zoomNow }));
-    },
-    [move],
-  );
   const fitTo = useFit(fitInto, ZOOM_OFFSET.pins);
-  const fitAnswer = useFit(fitInto, ZOOM_OFFSET.close);
+  const answerMoves = { fitAnswer: useFit(fitInto, ZOOM_OFFSET.close), centreAt: useCentreAt(move) };
   const detail = camera === null || fitZoom === null ? 'overview' : zoomDetail(camera.zoom, fitZoom);
-  return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo, fitAnswer, centreAt };
+  return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo, ...answerMoves };
 }

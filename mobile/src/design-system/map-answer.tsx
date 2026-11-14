@@ -56,10 +56,7 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
   }
   if (symbol.type === 'face') {
     return (
-      <View
-        style={[styles.face, { borderStyle: symbol.dashed ? 'dashed' : 'solid' }]}
-        testID={partOf(testID, 'face')}
-      >
+      <View style={[styles.face, { borderStyle: symbol.dashed ? 'dashed' : 'solid' }]} testID={partOf(testID, 'face')}>
         <Text style={styles.letters}>{Array.from(symbol.name).slice(0, 2).join('')}</Text>
       </View>
     );

@@ -192,6 +192,10 @@ describe('the lines of the answer for two people, its third Plan', () => {
   });
 });
 
+function sorted(points: readonly { latitude: number; longitude: number }[]): string[] {
+  return [...new Set(points.map(({ latitude, longitude }) => `${latitude},${longitude}`))].toSorted();
+}
+
 // Partitions of what the camera keeps in view when not everything fits: a Plan whose pick stands with a person (the
 // first) and one whose pick stands alone and whose flag stands at the User's point (the third); an index out of range.
 // Expected values: the stored answer's scene, people, pick, next Class, and flags, without the other candidates.
@@ -200,8 +204,6 @@ describe("the Plan's own points and its pick", () => {
   const AT_302 = { latitude: 37.44887, longitude: 126.95265 };
   const STUDENT_CENTER = { latitude: 37.45932, longitude: 126.95058 };
   const AT_24 = { latitude: 37.45942, longitude: 126.94989 };
-  const sorted = (points: readonly { latitude: number; longitude: number }[]): string[] =>
-    [...new Set(points.map(({ latitude, longitude }) => `${latitude},${longitude}`))].toSorted();
 
   it('for the first Plan, are the people at 301동 and 302동, the pick at 302동, and 24동', () => {
     const drawing = drawingOf(MEAL_ANSWER, 0);

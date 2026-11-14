@@ -30,6 +30,10 @@ jest.mock('react-native-safe-area-context', () => ({
 const ROOM: Room = { stage: { width: 411, height: 914 }, cardHeight: null, answerHeight: 274, tutorialStart: false };
 const FLOOR = 15.515;
 
+function nothing(): void {
+  // A move the test does not follow.
+}
+
 interface Asked {
   fits: number;
   centres: LatLng[];
@@ -37,7 +41,6 @@ interface Asked {
 
 // A stand-in for the main screen's map, resting at `camera`, which records the fits and the moves it is asked.
 function mapAt(camera: MapCamera | null, asked: Asked): MainMap {
-  const nothing = (): void => undefined;
   return {
     ref: createRef<MapHandle>(),
     onCameraIdle: nothing,
@@ -59,7 +62,6 @@ function mapAt(camera: MapCamera | null, asked: Asked): MainMap {
 }
 
 function shownAt(index: number): ShownAnswer {
-  const nothing = (): void => undefined;
   return {
     answer: MEAL_ANSWER,
     plan: MEAL_ANSWER.plans[index] ?? null,
@@ -143,7 +145,12 @@ describe('the looks the answer asks for', () => {
     const asked: Asked = { fits: 0, centres: [] };
     await render(asked);
 
-    expect(titled(drawingOf(MEAL_ANSWER, 0).things.map(({ look }) => look), '12:18 민수와 만남')).toBe(false);
+    expect(
+      titled(
+        drawingOf(MEAL_ANSWER, 0).things.map(({ look }) => look),
+        '12:18 민수와 만남',
+      ),
+    ).toBe(false);
     expect(titled(jest.mocked(useMarkerImages).mock.lastCall?.[0] ?? [], '12:18 민수와 만남')).toBe(true);
   });
 });

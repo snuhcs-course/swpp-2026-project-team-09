@@ -43,21 +43,35 @@ function moved(camera: MapCamera, centre: LatLng | null): MapCamera {
   return { centre, zoom: camera.zoom };
 }
 
-// Partitions: every point inside the area; points outside with the Plan's own box longer than the area, the pick at
-// its south end, at its north end, and no pick; points outside with the own box inside; a shift under one point.
 // The worked numbers, at zoom 15.515 (a world of 256 × 2^15.515 = 11,987,272 points around):
 // - the first and the third Plan stand at 301동 (37.45016, 126.95259), 302동 (37.44887, 126.95265), and 24동
 //   (37.45942, 126.94989), the third with its pick at 학생회관 (37.45932, 126.95058): their own box is 0.01055° of
 //   latitude, 0.01055 / 360 × 11,987,272 / cos(37.454°) = 442.5 points high, and 0.00276° of longitude, 91.9 wide;
 // - with the other candidates, up to 자하연식당 2층 at 37.46098, the box is 508.0 high and 137.9 wide;
 // - the area is 584 − 156 = 428 high and 347 − 64 = 283 wide.
-describe('where the camera goes when the answer does not fit', () => {
+// Partitions: every point inside the area; a shift under one point.
+describe('where the camera stays', () => {
   it('stays when every point is inside the area: at zoom 15, the whole box is 508.0 / 2^0.515 = 355.5 high', () => {
     const drawing = drawingOf(MEAL_ANSWER, 0);
 
     expect(correctedCentre(drawing, restingOver(drawing.points, 15), SIZE, AREA)).toBeNull();
   });
 
+  it('stays when the shift would be under one point', () => {
+    const drawing = drawingOf(MEAL_ANSWER, 0);
+    const camera = restingOver(drawing.points, FLOOR);
+    const corrected = moved(camera, correctedCentre(drawing, camera, SIZE, AREA));
+    // Half a point north of where the rule puts the camera: the box would move by half a point.
+    const at = project(corrected.centre, FLOOR);
+    const near = { centre: unproject({ x: at.x, y: at.y - 0.5 }, FLOOR), zoom: FLOOR };
+
+    expect(correctedCentre(drawing, near, SIZE, AREA)).toBeNull();
+  });
+});
+
+// Partitions: points outside with the Plan's own box longer than the area, the pick at its south end and at its north
+// end; points outside with the own box inside.
+describe('where the camera goes when the answer does not fit', () => {
   it("lays the first Plan's south edge, where its pick is, on the area's bottom, and centres it across", () => {
     const drawing = drawingOf(MEAL_ANSWER, 0);
     const camera = restingOver(drawing.points, FLOOR);
@@ -91,7 +105,10 @@ describe('where the camera goes when the answer does not fit', () => {
     expect((box.top + box.bottom) / 2).toBeCloseTo(MIDDLE.y, 3);
     expect(box.middleX).toBeCloseTo(MIDDLE.x, 3);
   });
+});
 
+// Partitions: no pick, with the own box longer than the area.
+describe('where the camera goes without a pick', () => {
   it('centres the own box when there is no pick, even when it is longer than the area', () => {
     // Changed from the stored copy: the pick taken away, to see the rule without one.
     const drawing = { ...drawingOf(MEAL_ANSWER, 0), pick: null };
@@ -102,16 +119,5 @@ describe('where the camera goes when the answer does not fit', () => {
     // 442.5 high, centred on 370: from 148.75 to 591.25, over both edges by 7.25.
     expect(box.top).toBeCloseTo(370 - 442.5 / 2, 0);
     expect((box.top + box.bottom) / 2).toBeCloseTo(MIDDLE.y, 3);
-  });
-
-  it('stays when the shift would be under one point', () => {
-    const drawing = drawingOf(MEAL_ANSWER, 0);
-    const camera = restingOver(drawing.points, FLOOR);
-    const corrected = moved(camera, correctedCentre(drawing, camera, SIZE, AREA));
-    // Half a point north of where the rule puts the camera: the box would move by half a point.
-    const at = project(corrected.centre, FLOOR);
-    const near = { centre: unproject({ x: at.x, y: at.y - 0.5 }, FLOOR), zoom: FLOOR };
-
-    expect(correctedCentre(drawing, near, SIZE, AREA)).toBeNull();
   });
 });

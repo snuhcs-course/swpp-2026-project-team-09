@@ -213,8 +213,7 @@ function padding(cardHeight: number): object {
   return { top: 52 + 48 + 56, right: 64, bottom: cardHeight + 56, left: 64 };
 }
 
-// Partitions: the answer comes before the card is laid out, the card is laid out, the Plan on screen changes, the
-// basis opens, and the camera rests on a map that shows every point.
+// Partitions: the answer comes before the card is laid out, and the card is laid out.
 describe('the camera', () => {
   it("fits the first Plan's points into what the pill leaves, when the answer comes", async () => {
     const fit = jest.spyOn(projection, 'fit');
@@ -234,7 +233,10 @@ describe('the camera', () => {
 
     expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(240) }));
   });
+});
 
+// Partitions: the Plan on screen changes, the basis opens, and the camera rests on a map that shows every point.
+describe('the camera after the answer came', () => {
   it('fits again after "다음 후보" into what the card then leaves, and moves nothing when the answer is closed', async () => {
     const fit = jest.spyOn(projection, 'fit');
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
