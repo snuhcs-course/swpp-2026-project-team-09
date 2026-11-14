@@ -15,14 +15,13 @@ import {
   type MapCamera,
   MAX_ZOOM,
   MIN_ZOOM,
-  outerRules,
   project,
   type Size,
   unproject,
 } from '@/map';
-import { fit, settle } from '@/map/projection';
+import { fit, outerRules, settle } from '@/map/projection';
 import { ANSWER_SYMBOL_BOX, answerLabelBox } from '@/design-system';
-import { offset } from './answer-labels';
+import { inside, offset, ONE_POINT } from './answer-labels';
 import type { AnswerDrawing } from './answer-marks';
 
 // What the pill and the card leave of the map, with the room for labels, in points of the map's view: each edge as a
@@ -70,9 +69,6 @@ export function roomsOf({ things, points }: Pick<AnswerDrawing, 'things' | 'poin
   return { above: room('above', top), below: room('below', bottom) };
 }
 
-// Less than this is no move, and a point this near the area's edge is inside it: a fit rests in its last digits.
-const ONE_POINT = 1;
-
 // How far the box from `low` to `high` must move along an axis to lie in the area from `start` to `end`: centred
 // when it fits or there is no pick, otherwise its edge on the pick's side on the area's edge on that side.
 function shiftAlong(low: number, high: number, start: number, end: number, pick: number | null): number {
@@ -91,27 +87,29 @@ interface Shown {
 
 // Where the camera should go so that the Plan shows, or null when it may stay. When a point of the drawing lies
 // outside the area, as on a map whose lowest zoom is too close for all of it, the Plan's own points are centred in
-// the area, and when they do not fit either, the picked Restaurant's side is kept in view.
-export function correctedCentre(drawing: Shown, camera: MapCamera, size: Size, area: ViewArea): LatLng | null {
+// `ownArea`, what the room of their own marks leaves, and when they do not fit either, the picked Restaurant's side
+// is kept in view.
+export function correctedCentre(
+  drawing: Shown,
+  camera: MapCamera,
+  size: Size,
+  area: ViewArea,
+  ownArea: ViewArea = area,
+): LatLng | null {
   const place = (position: LatLng): { x: number; y: number } => inView(position, camera, size);
-  const inside = drawing.points.every((position) => {
+  const shown = drawing.points.every((position) => {
     const { x, y } = place(position);
-    return (
-      x >= area.left - ONE_POINT &&
-      x <= area.right + ONE_POINT &&
-      y >= area.top - ONE_POINT &&
-      y <= area.bottom + ONE_POINT
-    );
+    return inside({ top: y, right: x, bottom: y, left: x }, area);
   });
-  if (inside || drawing.own.length === 0) {
+  if (shown || drawing.own.length === 0) {
     return null;
   }
   const own = drawing.own.map(place);
   const pick = drawing.pick === null ? null : place(drawing.pick);
   const xs = own.map(({ x }) => x);
   const ys = own.map(({ y }) => y);
-  const dx = shiftAlong(Math.min(...xs), Math.max(...xs), area.left, area.right, pick?.x ?? null);
-  const dy = shiftAlong(Math.min(...ys), Math.max(...ys), area.top, area.bottom, pick?.y ?? null);
+  const dx = shiftAlong(Math.min(...xs), Math.max(...xs), ownArea.left, ownArea.right, pick?.x ?? null);
+  const dy = shiftAlong(Math.min(...ys), Math.max(...ys), ownArea.top, ownArea.bottom, pick?.y ?? null);
   if (Math.abs(dx) < ONE_POINT && Math.abs(dy) < ONE_POINT) {
     return null;
   }
@@ -131,30 +129,41 @@ function fitsIn(points: readonly LatLng[], camera: MapCamera, size: Size, area: 
   );
 }
 
+function areaOf({ top, right, bottom, left }: FitPadding, size: Size): ViewArea {
+  return { top, right: size.width - right, bottom: size.height - bottom, left };
+}
+
+// How the camera fits the Plan's own points where not every point fits: the padding with the room their marks need
+// (`roomsOf` of those points), and how far further out than the map's lowest zoom it may go for them.
+export interface OwnFit {
+  padding: FitPadding;
+  outer: number;
+}
+
 // Where the camera goes for an answer's drawing on a campus map whose view has that size: the fit of all its points
 // into what the padding leaves, no closer than `closest`. Where the map's lowest zoom is too close for the Plan's own
-// points and `outer` is given, the fit of those alone, out to `outer` at most. Where a point is still outside, moved
-// at that zoom so that the Plan shows. Null for a drawing without points.
+// points and `own` is given, the fit of those alone into what its padding leaves, out to its `outer` at most. Where a
+// point is still outside, moved at that zoom so that the Plan shows. Null for a drawing without points.
 export function answerCamera(
   drawing: Shown,
   size: Size,
   padding: FitPadding,
   closest: number,
-  outer?: number,
+  own?: OwnFit,
 ): MapCamera | null {
   const campus = { bounds: CAMERA_BOUNDS, fitBounds: CAMPUS_BOUNDS, minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM, size };
   const fitted = fit(drawing.points, { padding, maxZoom: closest }, campus);
   if (fitted === null) {
     return null;
   }
-  const { top, right, bottom, left } = padding;
-  const area = { top, right: size.width - right, bottom: size.height - bottom, left };
-  const rules = outerRules(campus, outer);
+  const ownPadding = own?.padding ?? padding;
+  const ownArea = areaOf(ownPadding, size);
+  const rules = outerRules(campus, own?.outer);
   const wider =
-    rules === campus || fitsIn(drawing.own, fitted, size, area)
+    rules === campus || fitsIn(drawing.own, fitted, size, ownArea)
       ? null
-      : fit(drawing.own, { padding, maxZoom: closest }, rules);
+      : fit(drawing.own, { padding: ownPadding, maxZoom: closest }, rules);
   const camera = wider ?? fitted;
-  const centre = correctedCentre(drawing, camera, size, area);
+  const centre = correctedCentre(drawing, camera, size, areaOf(padding, size), ownArea);
   return centre === null ? camera : settle({ centre, zoom: camera.zoom }, rules);
 }

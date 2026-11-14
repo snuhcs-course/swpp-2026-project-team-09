@@ -107,13 +107,15 @@ function useFraming({ fitZoom }: MainMap, { answerHeight, stage }: Room, pill: b
 }
 
 // The camera `answerCamera` works out for a drawing whose labels' sides are chosen in metres, and the area its labels
-// stay in. Null until the view is known.
+// stay in. Null until the view is known. The room for labels is measured from the points the camera fits: every point,
+// or the Plan's own alone.
 function labelViewOf(drawing: AnswerDrawing, { top, card, pill, view }: Framing): LabelView | null {
   if (view === null) {
     return null;
   }
   const padding = paddingOf(top, card, drawing, pill);
-  const camera = answerCamera(drawing, view.size, padding, view.closest, ANSWER_OUTER_ZOOM);
+  const own = { padding: paddingOf(top, card, { ...drawing, points: drawing.own }, pill), outer: ANSWER_OUTER_ZOOM };
+  const camera = answerCamera(drawing, view.size, padding, view.closest, own);
   return camera === null ? null : { camera, size: view.size, area: labelArea(top, card, view.size, pill) };
 }
 
@@ -159,7 +161,34 @@ export interface AnswerMap {
   outerZoom?: number;
 }
 
-const ANSWER_LIMITS = { nativeMinLevel: ANSWER_MIN_LEVEL, outerZoom: ANSWER_OUTER_ZOOM } as const;
+type Limits = Pick<AnswerMap, 'nativeMinLevel' | 'outerZoom'>;
+
+const ANSWER_LIMITS: Limits = { nativeMinLevel: ANSWER_MIN_LEVEL, outerZoom: ANSWER_OUTER_ZOOM };
+const EVERYDAY_LIMITS: Limits = { nativeMinLevel: NATIVE_MIN_LEVEL };
+// A native map measures its camera back with a little noise: a zoom less than this under the lowest zoom is at it, as
+// the module counts it (`CameraRules.same`).
+const STILL_ZOOM = 0.01;
+
+// The limits of the everyday map's camera. A camera an answer or a received invitation's way left further out than the
+// everyday map's lowest zoom first glides in to that zoom at the same centre, and the answer's limits stay until it
+// rests there: dropped at once, they would make the native map jump back.
+export function useEverydayLimits({ camera, fitZoom, moveTo }: MainMap, drawn: boolean): Limits {
+  const target =
+    !drawn && camera !== null && fitZoom !== null && camera.zoom < fitZoom - STILL_ZOOM
+      ? { centre: camera.centre, zoom: fitZoom }
+      : null;
+  const out = target !== null;
+  const glide = useEffectEvent(() => {
+    if (target !== null) {
+      moveTo(target);
+    }
+  });
+  // Again whenever the camera rests short of it.
+  useEffect(() => {
+    glide();
+  }, [out, camera]);
+  return out ? ANSWER_LIMITS : EVERYDAY_LIMITS;
+}
 
 // The everyday map's Avatars, and the cards that say whose they are.
 type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
@@ -210,7 +239,8 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
     () => (scene === null ? null : (view: LabelView | null): AnswerDrawing => drawingOfScene(scene, view)),
     [scene],
   );
-  const drawn = useDrawnMap(draw, NO_LOOKS, map, useFraming(map, room, false));
+  const framing = useFraming(map, room, false);
+  const drawn = useDrawnMap(draw, NO_LOOKS, map, framing);
   if (drawn === null) {
     return null;
   }
@@ -229,8 +259,8 @@ function addOnPress({ change }: ShownAnswer, id: string): void {
 
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the
 // Avatars of the people it draws. Null while no Plan is shown. The looks of every Plan, each at its own camera, are
-// asked for when the answer comes, so that the arrows never wait for a picture. Once "이대로 초대" is pressed the faces say how each invited
-// Friend stands, and a press changes nothing: the Plan is sent.
+// asked for when the answer comes, so that the arrows never wait for a picture. Once "이대로 초대" is pressed the faces
+// say how each invited Friend stands, and a press changes nothing: the Plan is sent.
 export function useAnswerMap(
   shown: ShownAnswer,
   map: MainMap,

@@ -202,7 +202,7 @@ const OUTER = 14.765;
 
 function outerFor(planIndex: number, below: number, outer = OUTER): MapCamera {
   const padding = { top: 132, right: 64, bottom: 406 + 8 + below, left: 64 };
-  const camera = answerCamera(drawingOf(MEAL_ANSWER, planIndex), SIZE, padding, 20, outer);
+  const camera = answerCamera(drawingOf(MEAL_ANSWER, planIndex), SIZE, padding, 20, { padding, outer });
   if (camera === null) {
     throw new Error('The drawing has no camera');
   }
@@ -243,6 +243,8 @@ describe('the camera of an answer that may go further out than the lowest zoom',
   it('is the camera of a campus map when every point fits at the lowest zoom: under a card of 120', () => {
     const drawing = drawingOf(MEAL_ANSWER, 0);
 
-    expect(answerCamera(drawing, SIZE, paddingOver(120), 20, OUTER)).toEqual(cameraFor(0, 120));
+    expect(answerCamera(drawing, SIZE, paddingOver(120), 20, { padding: paddingOver(120), outer: OUTER })).toEqual(
+      cameraFor(0, 120),
+    );
   });
 });

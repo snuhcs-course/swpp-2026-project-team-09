@@ -7,10 +7,10 @@
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
-import { type MapAvatar, type MapLine, NATIVE_MIN_LEVEL } from '@/map';
+import type { MapAvatar, MapLine } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
-import { type AnswerMap, ignorePress, useAnswerMap, useInvitationMap } from './use-answer-map';
+import { type AnswerMap, ignorePress, useAnswerMap, useEverydayLimits, useInvitationMap } from './use-answer-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
 import type { Me } from './use-me';
@@ -49,7 +49,7 @@ export interface Everyday {
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, and the lines. While a Plan of an answer is
 // shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received invitation's
-// card is, its own way is.
+// card is, its own way is. Once either closes, a camera left further out than the everyday map allows glides back in.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
@@ -60,6 +60,7 @@ export function useMapView(
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
   const way = useInvitationMap(invitation.shown ? invitation.scene : null, map, room);
+  const limits = useEverydayLimits(map, answer !== null || way !== null);
   if (answer !== null) {
     return answer;
   }
@@ -70,6 +71,6 @@ export function useMapView(
   return {
     contents: { markers: [...things.markers, ...pin.markers], avatars: [...avatars, ...me.avatars], lines },
     onPress: chat.framed || invitation.shown ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
-    nativeMinLevel: NATIVE_MIN_LEVEL,
+    ...limits,
   };
 }

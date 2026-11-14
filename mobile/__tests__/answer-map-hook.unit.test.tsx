@@ -20,6 +20,7 @@ import { useMarkerImages } from '@/map/marker-images';
 import type { Room } from '@/screens/main/layout';
 import { type AnswerMap, useAnswerMap } from '@/screens/main/use-answer-map';
 import type { MainMap } from '@/screens/main/use-main-map';
+import { placeMoved, withScene } from './support/answer-view';
 
 jest.mock('@/map/marker-images', () => {
   const actual = jest.requireActual<typeof MarkerImages>('@/map/marker-images');
@@ -194,11 +195,9 @@ function labelOf(drawn: AnswerMap | null, name: string): AnswerLabel | null | un
   return look?.kind === 'answer' ? look.label : undefined;
 }
 
-async function drawnIn(room: Room): Promise<AnswerMap | null> {
-  const asked: Asked = { fits: 0, cameras: [] };
-  const { result } = await renderHook(() =>
-    useAnswerMap(shownAt(0), mapOf(FIT_ZOOM, asked), room, { avatars: [], cards: [] }, NOT_INVITED),
-  );
+async function drawnIn(room: Room, shown = shownAt(0), asked?: Asked): Promise<AnswerMap | null> {
+  const map = mapOf(FIT_ZOOM, asked ?? { fits: 0, cameras: [] });
+  const { result } = await renderHook(() => useAnswerMap(shown, map, room, { avatars: [], cards: [] }, NOT_INVITED));
   return result.current;
 }
 
@@ -225,6 +224,28 @@ describe('the labels the answer draws', () => {
 
     expect(drawn).toMatchObject({ nativeMinLevel: 14 });
     expect(drawn?.outerZoom).toBeCloseTo(14.765, 6);
+  });
+});
+
+// The first Plan under the card of 406 with 3식당 200 metres south of 302동, the bottom-most of every point. The room
+// below every point is 24: the pick's two lines need 66 − 200 / 4.5 = 21.6, 3식당's label at its left 18. Below the
+// Plan's own points, 302동 is the bottom-most, and the pick's two lines need 66. At the lowest zoom, 15.2601, those
+// points are 370.85 high, more than the area leaves them either way, so the camera fits them alone further out: into
+// 132 to 914 − 406 − 8 − 66 = 434, at 15.2601 + log2(302 / 370.85) = 14.9638, where the pick's lines run from 184.4
+// to 289.4 and from 454 to 500 (`answer-labels.unit.test.ts`), and 3식당 stands at (142.8, 485.4), its symbol box
+// clear of them. With the room of every point, 24, it would fit them into 132 to 476 instead, where the lines below
+// would end at 542 and above would cover 301동's symbol.
+describe("the room the camera leaves when it fits the Plan's own points alone", () => {
+  it("keeps the pick's two lines under 302동 with a candidate 200 metres further south", async () => {
+    // Changed from the stored copy: 3식당 stands 200 metres (0.0017966°) south of 302동, its longitude kept.
+    const south = { latitude: 37.44887 - 200 / 111_320, longitude: 126.94851 };
+    const answer = withScene(MEAL_ANSWER, 0, placeMoved('3식당', south));
+    const asked: Asked = { fits: 0, cameras: [] };
+
+    const drawn = await drawnIn({ ...ROOM, answerHeight: 406 }, { ...shownAt(0), answer, source: answer }, asked);
+
+    expect(asked.cameras[0]?.zoom).toBeCloseTo(15.2601 + Math.log2(302 / 370.85), 3);
+    expect(labelOf(drawn, '302동식당 · 12:15 점심')).toMatchObject({ side: 'below' });
   });
 });
 
