@@ -8,14 +8,19 @@
 
 import { clockOf } from '../assistant/free-time/free-time.js';
 import { withSubject } from '../assistant/gathering/answer-words.js';
+import { koreaDate } from '../assistant/korea-time.js';
 import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
+import { monthDayWords, weekdayWord } from '../assistant/library/study-room.js';
 import { type NotificationWords, type Told } from './notification.js';
 
 const ANSWERS = { accepted: '수락했어요', declined: '못 온대요' } as const;
 
-const WEEKDAYS = '일월화수목금토';
-
 type Of<Kind extends Told['kind']> = Extract<Told, { kind: Kind }>;
+
+// "목 15:30–18:30".
+function timesWords({ date, start, minutes }: { date: string; start: string; minutes: number }): string {
+  return `${weekdayWord(date)} ${start}–${clockOfMinutes(minutesOfClock(start) + minutes)}`;
+}
 
 function roomWords(told: Of<'room-declined'> | Of<'room-agreed'> | Of<'room-ending'>): NotificationWords {
   const card = { kind: 'party', id: told.questId };
@@ -30,10 +35,7 @@ function roomWords(told: Of<'room-declined'> | Of<'room-agreed'> | Of<'room-endi
     };
   }
   if (told.kind === 'room-agreed') {
-    const weekday = WEEKDAYS[new Date(`${told.date}T00:00:00Z`).getUTCDay()] ?? '';
-    const end = clockOfMinutes(minutesOfClock(told.start) + told.minutes);
-    const line = `${weekday} ${told.start}–${end} ${told.roomLabel}`;
-    return { title: '모두 동의했어요', ahead: null, line, card, about: null };
+    return { title: '모두 동의했어요', ahead: null, line: `${timesWords(told)} ${told.roomLabel}`, card, about: null };
   }
   return {
     title: '10분 뒤 끝나요',
@@ -51,6 +53,15 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       title: '지금 나서요',
       ahead: `${clockOf(at)} 나설 시각`,
       line: `${told.placeLabel}까지 걸어서 ${String(told.walkMinutes)}분`,
+      card: { kind: 'party', id: told.questId },
+      about: null,
+    };
+  }
+  if (told.kind === 'room-window') {
+    return {
+      title: '예약 창이 열렸어요',
+      ahead: `${monthDayWords(koreaDate(at))} ${clockOf(at)} 예약 창 열림`,
+      line: `${timesWords(told)} 스터디`,
       card: { kind: 'party', id: told.questId },
       about: null,
     };

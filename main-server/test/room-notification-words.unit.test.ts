@@ -48,6 +48,22 @@ describe('The words of a room request every companion agreed to', () => {
   });
 });
 
+describe('The words of a room request waiting for the booking window', () => {
+  it.each([
+    ['2026-11-23', '09:00', 180, '2026-11-20T09:00:00+09:00', '11월 20일 09:00 예약 창 열림', '월 09:00–12:00 스터디'],
+    ['2026-11-26', '15:30', 180, '2026-11-23T09:00:00+09:00', '11월 23일 09:00 예약 창 열림', '목 15:30–18:30 스터디'],
+    ['2026-12-01', '21:30', 90, '2026-11-28T09:00:00+09:00', '11월 28일 09:00 예약 창 열림', '화 21:30–23:00 스터디'],
+  ] as const)('on %s at %s for %i minutes, told at %s', (date, start, minutes, at, ahead, line) => {
+    expect(wordsOf({ kind: 'room-window', questId: QUEST_ID, date, start, minutes }, new Date(at))).toEqual({
+      title: '예약 창이 열렸어요',
+      ahead,
+      line,
+      card: CARD,
+      about: null,
+    });
+  });
+});
+
 describe('The words of a booked room ending', () => {
   it('reads "10분 뒤 끝나요" with the end, and the end while it is still to come', () => {
     expect(wordsOf({ kind: 'room-ending', questId: QUEST_ID, roomLabel: ROOM, end: '18:30' }, AT)).toEqual({

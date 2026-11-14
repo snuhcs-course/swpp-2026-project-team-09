@@ -8,6 +8,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendsService } from '../../friends/friends.service.js';
@@ -148,8 +149,8 @@ export function chatAssistant(
       findFreeFriends,
       ...meal,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
-      // showLibrarySeats and showMyLibraryBookings.
-      ...libraryTools(library, { fillsSeatTime: drawsAnswers }),
+      // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom for an app that draws answers.
+      ...libraryTools(library, { fillsSeatTime: drawsAnswers, picksStudyTime: drawsAnswers }),
       getTutorial: getTutorial(tutorial),
     },
   };

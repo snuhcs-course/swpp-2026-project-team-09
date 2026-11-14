@@ -165,6 +165,20 @@ function bestOn(facts: StudyFacts, date: string): StudyBooking | null {
   return best;
 }
 
+// When each person reaches 관정관 for their stay in the booking: the end of the item before it plus the walk, or null
+// when no item comes before it that day.
+export function arrivalsOf(facts: StudyFacts, booking: StudyBooking): (string | null)[] {
+  return facts.people.map(({ itemsByDate }, index) => {
+    const stay = booking.stays[index];
+    const from = stay === undefined ? -Infinity : minutesOfClock(stay.from);
+    const until = stay === undefined ? -Infinity : minutesOfClock(stay.until);
+    const stretch = freeStretches(facts, booking.date, itemsByDate[booking.date] ?? []).find(
+      (each) => each.from <= from && each.until >= until,
+    );
+    return stretch === undefined || stretch.from === -Infinity ? null : clockOfMinutes(stretch.from);
+  });
+}
+
 // Each date's best booking, best first; dates without one last, in their order.
 export function pickStudyTime(facts: StudyFacts): StudyDatePick[] {
   const picks = facts.dates.map((date) => ({ date, booking: bestOn(facts, date) }));

@@ -6,7 +6,9 @@
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { lastBookableDate } from '../assistant/library/booking-rules.js';
 import { type Catalogue } from '../assistant/library/catalogue.js';
+import { windowOpening } from '../assistant/library/window-opening.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { Prisma, RoomRequestStatus } from '../generated/prisma/client.js';
@@ -138,6 +140,13 @@ export class RoomRequestSync {
     settling.afterwards.push(() => this.notifications.cancel(userId, kind, card));
   }
 
+  // Keeps the Notification without a settling, such as when a request is made, without the caller waiting for it.
+  tellNow(userId: string, told: Told, at: Date): void {
+    this.notifications.schedule(userId, told, at).catch((error: unknown) => {
+      this.logger.warn(`A room request's Notification was not kept: ${String(error)}`);
+    });
+  }
+
   // Brings a gathering or ready request in line with its Quest, with these companions going out of it as well.
   async reconcile(settling: Settling, request: HeldRequest, leaving: readonly Leaving[] = []): Promise<void> {
     if (!ACTIVE.includes(request.status)) {
@@ -192,6 +201,7 @@ export class RoomRequestSync {
     const { tx } = settling;
     await tx.roomConsent.deleteMany({ where: { requestId: request.id } });
     this.tell(settling, request);
+    this.forgetWindow(settling, request);
     if (keepQuest || !request.madeForBooking) {
       return;
     }
@@ -205,6 +215,15 @@ export class RoomRequestSync {
     await tx.quest.delete({ where: { id: request.questId } });
     for (const { userId } of [...quest.holders, ...quest.invitations]) {
       settling.questsChanged.add(userId);
+    }
+  }
+
+  // A request made before the booking window held its date, ending before the window opens, tells nothing then.
+  private forgetWindow(settling: Settling, request: HeldRequest): void {
+    const space = this.catalogue.byId.get(request.spaceId);
+    const waited = space !== undefined && request.date > lastBookableDate(space, request.createdAt);
+    if (waited && windowOpening(space, request.date) > this.clock.now()) {
+      this.forgetLater(settling, request.requesterId, 'room-window', { kind: 'party', id: request.questId });
     }
   }
 

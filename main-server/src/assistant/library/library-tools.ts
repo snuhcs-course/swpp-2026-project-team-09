@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Tool } from '../feature.js';
@@ -16,6 +17,7 @@ import {
 } from './library-card-tools.js';
 import { type LibraryServices } from './library-parts.js';
 import { type BookingOptions, proposeLibraryBooking } from './propose-library-booking.js';
+import { proposeStudyRoom } from './propose-study-room.js';
 
 export { type LibraryServices } from './library-parts.js';
 
@@ -30,8 +32,16 @@ export interface LibraryTools {
   showMyLibraryBookings: Tool;
 }
 
-export function libraryTools(services: LibraryServices, options?: BookingOptions): LibraryTools {
-  return {
+export interface LibraryToolOptions extends BookingOptions {
+  // The app draws answers on the map: the Assistant picks a study group's time in a group study room.
+  picksStudyTime?: boolean;
+}
+
+export function libraryTools(
+  services: LibraryServices,
+  options?: LibraryToolOptions,
+): LibraryTools | (LibraryTools & { proposeStudyRoom: Tool }) {
+  const tools: LibraryTools = {
     findLibrarySpace: findLibrarySpace(services),
     findLibraryFreeSlots: findLibraryFreeSlots(services),
     proposeLibraryBooking: proposeLibraryBooking(services, options),
@@ -40,4 +50,5 @@ export function libraryTools(services: LibraryServices, options?: BookingOptions
     showLibrarySeats: showLibrarySeats(services),
     showMyLibraryBookings: showMyLibraryBookings(services),
   };
+  return options?.picksStudyTime === true ? { ...tools, proposeStudyRoom: proposeStudyRoom(services) } : tools;
 }

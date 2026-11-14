@@ -7,14 +7,15 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { checkBooking, clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
+import { checkBooking, clockOfMinutes, lastBookableDate, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { type Catalogue, KWANJEONG_PLACE_NUMBER, type LibrarySpace, statusOf } from '../assistant/library/catalogue.js';
 import { bookKeyOf } from '../assistant/library/library-card.js';
+import { windowOpening } from '../assistant/library/window-opening.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type Settings } from '../common/settings.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
-import { JoinPolicy, Prisma, RoomRequestStatus } from '../generated/prisma/client.js';
+import { JoinPolicy, Prisma, RoomRequest, RoomRequestStatus } from '../generated/prisma/client.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { type CreatedInvitation, InvitationsService } from '../quests/invitations.service.js';
 import { QuestsService } from '../quests/quests.service.js';
@@ -84,13 +85,14 @@ export class RoomRequestsService {
     }
     const people = 1 + companionIds.length;
     const now = this.clock.now();
-    const checked = checkBooking(this.catalogue, space, { ...asked, useDesc: body.useDesc, people }, now);
+    const waits = asked.waitsForWindow === true;
+    const checked = checkBooking(this.catalogue, space, { ...asked, useDesc: body.useDesc, people }, now, waits);
     if ('refusals' in checked) {
       throw refusedWith(checked.refusals);
     }
     const { date, start, minutes, useDesc } = checked.booking;
     const slot = { date, start, minutes };
-    const id = await this.prisma.$transaction(async (tx) => {
+    const made = await this.prisma.$transaction(async (tx) => {
       const questId =
         'questId' in body
           ? await this.sameHolders(userId, body.questId, companionIds, tx)
@@ -109,11 +111,12 @@ export class RoomRequestsService {
           consents: { create: companionIds.map((companion) => ({ userId: companion })) },
         },
       });
-      return request.id;
+      return request;
     });
     this.signals.send(companionIds, 'quests-changed');
     this.signals.send([userId, ...companionIds], 'room-requests-changed');
-    return this.read(userId, id);
+    this.tellWhenWindowOpens(space, made, now);
+    return this.read(userId, made.id);
   }
 
   async read(userId: string, requestId: string): Promise<RoomRequestDto> {
@@ -174,6 +177,15 @@ export class RoomRequestsService {
   // The notice is shown once.
   async seen(userId: string, noticeId: string): Promise<void> {
     await this.prisma.roomNotice.deleteMany({ where: { id: noticeId, userId } });
+  }
+
+  // The requester of a request made before the booking window holds its date is told when the window opens.
+  private tellWhenWindowOpens(space: LibrarySpace, request: RoomRequest, now: Date): void {
+    const { requesterId, questId, date, start, minutes } = request;
+    if (date > lastBookableDate(space, now)) {
+      const told = { kind: 'room-window', questId, date, start, minutes } as const;
+      this.sync.tellNow(requesterId, told, windowOpening(space, date));
+    }
   }
 
   // A room sector this User may book.

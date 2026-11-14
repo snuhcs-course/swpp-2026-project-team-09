@@ -30,7 +30,8 @@ export type Told =
       minutes: number;
       names: string[];
     }
-  | { kind: 'room-ending'; questId: string; roomLabel: string; end: string };
+  | { kind: 'room-ending'; questId: string; roomLabel: string; end: string }
+  | { kind: 'room-window'; questId: string; date: string; start: string; minutes: number };
 
 export type NotificationKind = Told['kind'];
 

@@ -2083,7 +2083,11 @@ never the Assistant's tools, and the phone alone talks to the library: the serve
   is a 400 with the party's reason, as is a `friendIds` entry that is not the User's Friend. With `friendIds` it makes
   a **booking party**: the Closed Quest "관정 {space} 예약" the User leads, with one Sub Quest at Place 62-1 for the
   booking's time and a `QuestInvitation` for each Friend. With `questId` (a Quest the User holds) it makes no Quest
-  and asks its other Holders. Each companion gets a `room_consents` row.
+  and asks its other Holders. Each companion gets a `room_consents` row. A key that ends in `:wait`, the card of
+  `proposeStudyRoom` for a day after the booking window, **waits for the window**: a date after it is kept, up to 14
+  days from today, and every other check stays. The request gathers its invitations and consents as any other, and
+  the requester gets `room-window` for 09:00 in Korea on the day the window opens for its date (`windowOpening` in
+  `window-opening.ts`: the date minus the space's `bookingAheadDays`).
 - `GET /library/room-requests` answers `{ asks, notices }`: the gathering requests that ask the User and the User is
   not out of, for the consent dialog, and the one-time notices, which `POST /library/room-notices/:id/seen` deletes.
 - `GET /library/room-requests/:id` is what the booker's card polls. `status` is `gathering`, `ready`, `booked`,
@@ -2134,7 +2138,8 @@ next, and its booking party goes. Consents are deleted at `booked` and at every 
 `room-requests-changed` to the Users it concerns.
 
 **Notifications.** The requester gets `room-declined` for each companion who goes out while the request stays, and
-`room-agreed` when the request becomes `ready`. When the booking is reported made, every Holder but a companion out of
+`room-agreed` when the request becomes `ready`. A request that waits for the window keeps `room-window` for its
+requester when it is made; ending before the window opens (booked, dissolved, cancelled or expired) forgets it. When the booking is reported made, every Holder but a companion out of
 the request gets `room-ending` for the room's end minus 10 minutes; `cancelled` forgets it for every Holder. Each is
 kept once the change is stored, with the time of the Quests' `CLOCK` unless said, without the answer waiting for it; a
 failure is logged as a warning. The room in their words is `관정 {floor}층 {name}`, the catalogue's name without
@@ -2420,8 +2425,27 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     for, and `shown` adds `arrival` (`at`, the Place's name as `from`, `walkMinutes`) and `leaveBy` (when to leave
     for the next Class or Sub Quest with a Place that starts before the booking ends, or null, also when that time is
     not later than the arrival). A room, a named start or another day is checked as before, and any other app is asked
-    for the time. `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show
-    the other cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id
+    for the time.
+  - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers only: the
+    answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
+    with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one
+    named, a period of at most 7 days from today on, or the days a room can be booked now; each must be bookable or
+    waitable (at most 14 days ahead). The room is the smallest group study room size whose minimum and maximum hold the
+    people, the 4th floor before the 2nd (`library/study-room.ts`); fewer than its minimum or more than a party holds
+    are refused. The length is the one given, else 180 minutes. Each person's day is read as a Plan reads it (their
+    Classes and timed Sub Quests, `UserDayService`), with the walking minutes between each item's Place and Place
+    62-1, and `pickStudyTime` (`library/study-pick.ts`) picks, on each day and each half hour within the hours: nobody
+    with a stay under 30 minutes, the booker within 60 minutes of the start, the longest shortest stay, then the larger
+    total, then the earlier day and start. The best pick shows today's room book card with the Friends as companions
+    and a note for each person before the site's notes: when they arrive (`지은 15:19 도착`, from the item before
+    their stay; `<start>부터` when no item comes before it or it ends more than an hour before the start) and when they
+    leave early (`· 16:56에 먼저 나서요`). `shown` gives the model a summary of the day, the time and the room, each
+    person (`나` for the User, a Friend's name as `friend.name` text by others) with their arrival and stay, the best pick of each other day (`otherDays`) and the days with none (`noBookingOn`), and
+    never an item, a Place or a coordinate. No booking that leaves nobody out answers `none` with the days looked at.
+    A pick after the booking window has a card whose key ends in `:wait` and a first note of when the window opens, and
+    `shown` adds `windowOpens`: the room request it makes waits for the window (Group study room requests).
+  - `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
+    library cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id
     in the history, checked against its grammar. Library cards are attached only for a request with
     `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
     `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
@@ -3160,14 +3184,15 @@ call the service sends the signal `notice`, which carries nothing, to the User; 
 none. `schedule` and `replace` refuse, by throwing, a card no address opens. The calls throw when Redis fails too, so
 a caller that must not fail catches and logs.
 
-| Kind            | Told to                               | When                                       | Title                 | Ahead               | Line                                                                                | Card              |
-| --------------- | ------------------------------------- | ------------------------------------------ | --------------------- | ------------------- | ----------------------------------------------------------------------------------- | ----------------- |
-| `accepted`      | The Leader                            | An invited User accepts                    | `<name>가 수락했어요` | None                | The Quest's title                                                                   | `party:<questId>` |
-| `declined`      | The Leader                            | An invited User declines                   | `<name>이 못 온대요`  | None                | The Quest's title                                                                   | `party:<questId>` |
-| `leave-by`      | The Leader                            | A Plan becomes a party                     | `지금 나서요`         | `<HH:MM> 나설 시각` | `<Place>까지 걸어서 <N>분`                                                          | `party:<questId>` |
-| `room-declined` | A room request's requester            | A companion goes out and the request stays | `<name>이 못 온대요`  | None                | `<room> · N명 더 필요해요`, or `<room> · 계획은 그대로예요` when the minimum is met | `party:<questId>` |
-| `room-agreed`   | A room request's requester            | The request becomes `ready`                | `모두 동의했어요`     | None                | `<요일> <start>–<end> <room>`, such as `목 15:30–18:30 관정 4층 6인실`              | `party:<questId>` |
-| `room-ending`   | Every Holder of a booked room's Quest | 10 minutes before the room's end           | `10분 뒤 끝나요`      | `<end> 방 예약 끝`  | `<room> · <end>에 끝나요`                                                           | `party:<questId>` |
+| Kind            | Told to                               | When                                                                      | Title                 | Ahead                          | Line                                                                                | Card              |
+| --------------- | ------------------------------------- | ------------------------------------------------------------------------- | --------------------- | ------------------------------ | ----------------------------------------------------------------------------------- | ----------------- |
+| `accepted`      | The Leader                            | An invited User accepts                                                   | `<name>가 수락했어요` | None                           | The Quest's title                                                                   | `party:<questId>` |
+| `declined`      | The Leader                            | An invited User declines                                                  | `<name>이 못 온대요`  | None                           | The Quest's title                                                                   | `party:<questId>` |
+| `leave-by`      | The Leader                            | A Plan becomes a party                                                    | `지금 나서요`         | `<HH:MM> 나설 시각`            | `<Place>까지 걸어서 <N>분`                                                          | `party:<questId>` |
+| `room-declined` | A room request's requester            | A companion goes out and the request stays                                | `<name>이 못 온대요`  | None                           | `<room> · N명 더 필요해요`, or `<room> · 계획은 그대로예요` when the minimum is met | `party:<questId>` |
+| `room-agreed`   | A room request's requester            | The request becomes `ready`                                               | `모두 동의했어요`     | None                           | `<요일> <start>–<end> <room>`, such as `목 15:30–18:30 관정 4층 6인실`              | `party:<questId>` |
+| `room-ending`   | Every Holder of a booked room's Quest | 10 minutes before the room's end                                          | `10분 뒤 끝나요`      | `<end> 방 예약 끝`             | `<room> · <end>에 끝나요`                                                           | `party:<questId>` |
+| `room-window`   | A room request's requester            | 09:00 on the day the booking window opens for a request that waits for it | `예약 창이 열렸어요`  | `<M월 D일> 09:00 예약 창 열림` | `<요일> <start>–<end> 스터디`, such as `월 09:00–12:00 스터디`                      | `party:<questId>` |
 
 The name is the User's name as stored, with the subject particle that fits its last syllable (이 or 가). An invitation
 the Leader cancels tells nobody. `InvitationsService` tells the Leader after the invitation's change is stored and

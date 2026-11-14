@@ -13,6 +13,8 @@ import { conflict, notFound } from '../quests/refusals.js';
 import { type CompanionState, type PersonDto, type RoomRequestDto } from './dto/room-request.dto.js';
 import { type RoomRequestSync } from './room-request-sync.service.js';
 
+export { roomLabelOf } from '../assistant/library/catalogue.js';
+
 // What the room request services share: the statuses, the refusals and the reply.
 
 export const DECLINED = '파티 구성원이 제안을 거절했습니다';
@@ -40,18 +42,6 @@ export function stateOf({ consented, answeredAt }: Pick<RoomConsent, 'consented'
     return 'consented';
   }
   return answeredAt === null ? 'unanswered' : 'declined';
-}
-
-// "관정 4층 6인실": the space's name without the kind of room before it or the rooms named after it.
-export function roomLabelOf(space: LibrarySpace | undefined, spaceId: string): string {
-  if (space === undefined) {
-    return spaceId;
-  }
-  const name = space.name
-    .replace(/^그룹스터디룸 /u, '')
-    .replace(/ \(.*\)$/u, '')
-    .trim();
-  return space.floor === null ? `관정 ${name}` : `관정 ${space.floor}층 ${name}`;
 }
 
 // More people than the room or a party holds. Fewer than its minimum only gather longer.
