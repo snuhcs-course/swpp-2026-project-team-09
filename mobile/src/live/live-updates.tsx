@@ -8,6 +8,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -21,6 +22,7 @@ import {
   MATCHING_REQUESTS_KEY,
   MY_JOIN_REQUESTS_KEY,
   MY_PARTY_KEY,
+  NOTIFICATIONS_KEY,
   PARTIES_KEY,
   POSITIONS_KEY,
   QUEST_INVITATIONS_KEY,
@@ -56,6 +58,7 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
   'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
   'room-requests-changed': [ROOM_INBOX_KEY, ROOM_REQUEST_KEY],
+  notice: [NOTIFICATIONS_KEY],
 };
 
 // The lists of what waits for the User, which 알림 and the badge on 파티 show.
@@ -81,6 +84,7 @@ const SHOWN: readonly QueryKey[] = [
   MATCHING_REQUESTS_KEY,
   SENT_INVITATIONS_KEY,
   ROOM_INBOX_KEY,
+  NOTIFICATIONS_KEY,
   ...WAITING,
 ];
 

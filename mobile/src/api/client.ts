@@ -52,7 +52,7 @@ import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
-import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
+import type { FriendRequests, JoinRequest, KeptNotification, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
@@ -89,6 +89,8 @@ export interface ApiClient {
   listFriendStatuses: () => Promise<FriendStatus[]>;
   listQuests: () => Promise<Quest[]>;
   listQuestInvitations: () => Promise<QuestInvitation[]>;
+  // The latest first.
+  listNotifications: () => Promise<KeptNotification[]>;
   // Only for a Quest the User leads.
   listJoinRequests: (questId: string) => Promise<JoinRequest[]>;
   listClasses: () => Promise<TimetableClass[]>;
@@ -218,6 +220,7 @@ export const apiClient: ShownClient = {
   listFriendStatuses: () => chosen().listFriendStatuses(),
   listQuests: () => chosen().listQuests(),
   listQuestInvitations: () => chosen().listQuestInvitations(),
+  listNotifications: () => chosen().listNotifications(),
   listJoinRequests: (questId) => chosen().listJoinRequests(questId),
   listClasses: () => chosen().listClasses(),
   addClass: (save, key) => chosen().addClass(save, key),

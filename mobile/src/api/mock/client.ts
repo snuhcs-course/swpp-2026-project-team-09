@@ -168,6 +168,7 @@ export const mockClient: ApiClient = {
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
   listQuests: () => answer('listQuests', () => QUESTS, []),
   listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
+  listNotifications: () => answer('listNotifications', () => [], []),
   // The User leads no Quest of the mock's.
   listJoinRequests: () => answer('listJoinRequests', () => [], []),
   listClasses: () => answer('listClasses', timetable.listClasses, []),
