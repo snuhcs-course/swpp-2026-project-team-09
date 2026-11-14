@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
 import { befriend, type TestUser } from './friends.js';
 import { find, libraryCards, LibraryStage, resolving } from './library.js';
+import { keptButHidden, keptPositionIn } from './location-sharing.js';
 import { ownQuest } from './quests.js';
 
 // The people of a 관정 booking at the Assistant's endpoint: the User and the Friends resolveFriend returned, or the
@@ -77,6 +79,34 @@ describe('Friends', () => {
         },
       ],
     });
+  });
+});
+
+describe('A Friend the Friend view puts at the Timetable, whose position is kept', () => {
+  it('is a companion by id and name, and nothing of where they are reaches the model or the reply', async () => {
+    const names = ['관정하은', '관정도윤', '관정시우'];
+    const [another, ...friends] = await Promise.all(['관정숨김예약자', ...names].map((name) => stage.user(name)));
+    if (another === undefined) {
+      throw new Error('The booker was not signed in');
+    }
+    await Promise.all(friends.map((friend) => befriend(stage.app, another, friend)));
+    const [hidden] = friends;
+    if (hidden === undefined) {
+      throw new Error('The Friends were not signed in');
+    }
+    await keptButHidden(stage.app, another, hidden);
+
+    const response = await stage.send(another, [
+      find(['4F-group-6']),
+      ...names.map((name) => resolving(name)),
+      { tool: 'proposeLibraryBooking', input: { ...room, friendIds: friends.map(({ id }) => id) } },
+      { text: '…' },
+    ]);
+
+    expect(libraryCards(response.body)).toMatchObject([
+      { companions: names.map((name, index) => ({ friendId: friends[index]?.id, name })) },
+    ]);
+    expect(keptPositionIn(stage.model.received(), response.body)).toEqual([]);
   });
 });
 

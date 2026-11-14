@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { FriendsService } from '../../friends/friends.service.js';
+import { FriendViewService } from '../../friends/friend-view.service.js';
 import { QuestsService } from '../../quests/quests.service.js';
 import { UsersService } from '../../users/users.service.js';
 import { CARDS_MAX, noneFound, type Presented, type ToolContext } from '../feature.js';
@@ -22,7 +23,7 @@ import { type LibraryCard } from './library-card.js';
 export interface LibraryServices {
   catalogue: Catalogue;
   freeTime: FreeTimePort;
-  friends: FriendsService;
+  friends: FriendViewService;
   quests: QuestsService;
   users: UsersService;
   // LIBRARY_BOOKING_ENABLED.

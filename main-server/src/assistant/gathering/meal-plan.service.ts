@@ -6,9 +6,8 @@
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
-import { type FriendDto } from '../../friends/dto/friends.dto.js';
-import { FriendsService } from '../../friends/friends.service.js';
-import { LocationSharingService } from '../../location-sharing/location-sharing.service.js';
+import { type FriendView } from '../../friends/dto/friend-view.dto.js';
+import { FriendViewService } from '../../friends/friend-view.service.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
@@ -39,12 +38,11 @@ const menusOf = (collected: number, open: number, there: number): MealAnswerArgs
 export class MealPlanService {
   constructor(
     private readonly days: UserDayService,
-    private readonly friends: FriendsService,
+    private readonly friends: FriendViewService,
     private readonly users: UsersService,
     private readonly menus: MenusService,
     private readonly restaurantPlaces: RestaurantPlaces,
     private readonly places: PlaceLookup,
-    private readonly locations: LocationSharingService,
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
@@ -90,7 +88,7 @@ export class MealPlanService {
 
   // The Friends of the plan, in its order, refusing a plan that does not start with the asker, names anyone else or
   // anyone twice, or holds a constraint the asker did not set.
-  private async friendsOf(askerId: string, input: PlanInput): Promise<FriendDto[]> {
+  private async friendsOf(askerId: string, input: PlanInput): Promise<FriendView[]> {
     const [first, ...others] = input.people;
     if (first?.userId !== askerId) {
       throw new BadRequestException('The first person of a plan is the asker');
@@ -101,7 +99,7 @@ export class MealPlanService {
     if (input.people.some(({ constraints }) => constraints.some(({ source }) => source !== 'asker'))) {
       throw new BadRequestException('Only the asker sets constraints');
     }
-    const listed = await this.friends.listFriends(askerId);
+    const listed = await this.friends.list(askerId);
     return others.map(({ userId }) => {
       const friend = listed.find(({ id }) => id === userId);
       if (friend === undefined) {
@@ -122,32 +120,29 @@ export class MealPlanService {
 
   private async peopleOf(
     askerId: string,
-    friends: readonly FriendDto[],
+    friends: readonly FriendView[],
     date: string,
     location: Position | null,
   ): Promise<[AnswerPerson, ...AnswerPerson[]]> {
-    const [asker, positions, mine, ...theirs] = await Promise.all([
+    const [asker, mine, ...theirs] = await Promise.all([
       this.users.findById(askerId),
-      this.friendPositions(askerId),
       this.days.itemsOn(askerId, date),
       ...friends.map(({ id }) => this.days.itemsOn(id, date)),
     ]);
     return [
       { userId: askerId, name: asker.name, me: true, items: mine, position: location },
-      ...friends.map(({ id, name }, index) => ({
+      ...friends.map(({ id, name, level, position }, index) => ({
         userId: id,
         name,
         me: false,
         items: theirs[index] ?? [],
-        position: positions.get(id) ?? null,
+        // The only place the Assistant uses a Friend's position: what the Friend view lets the asker see.
+        position:
+          level === 'exact' && position !== null
+            ? { latitude: position.latitude, longitude: position.longitude }
+            : null,
       })),
     ];
-  }
-
-  // The only place the Assistant reads a Friend's position: what the asker's map shows of them.
-  private async friendPositions(askerId: string): Promise<Map<string, Position>> {
-    const positions = await this.locations.visiblePositions(askerId);
-    return new Map(positions.map(({ userId, latitude, longitude }) => [userId, { latitude, longitude }]));
   }
 
   private placeIdAt(position: Position | null): string | null {

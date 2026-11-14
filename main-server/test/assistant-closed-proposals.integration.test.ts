@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { befriend, signInUser, TestUser } from './friends.js';
+import { keptButHidden, keptPositionIn } from './location-sharing.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { type Step, ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
@@ -96,6 +98,25 @@ function refusedFields(): string[] {
   const result = z.object({ fields: z.record(z.string(), z.string()) }).safeParse(model.toolResults().at(-1));
   return Object.keys(result.data?.fields ?? {}).toSorted();
 }
+
+describe('a Closed Proposal inviting a Friend the Friend view puts at the Timetable, whose position is kept', () => {
+  it('names them by id and name, and nothing of where they are reaches the model or the reply', async () => {
+    const friend = await named('육칠하은');
+    await befriend(app, user, friend);
+    await keptButHidden(app, user, friend);
+    model.script(
+      { tool: 'resolveFriend', input: { name: '육칠하은' } },
+      { tool: 'proposeQuest', input: dinner({ inviteeIds: [friend.id] }) },
+      { text: '만들기를 누르면 파티가 만들어져요.' },
+    );
+
+    const response = await postAssistantMessages(app, user.accessToken, ask('…'));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ proposal: { invitees: [{ id: friend.id, name: '육칠하은' }] } });
+    expect(keptPositionIn(model.received(), response.body)).toEqual([]);
+  });
+});
 
 describe('a Closed Proposal with Friends, a Place and a Global Event', () => {
   it('passes with the ids the resolvers returned, starts with the event and names each for the card', async () => {

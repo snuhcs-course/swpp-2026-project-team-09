@@ -8,7 +8,14 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
 import { PLAN_RULES } from '../src/assistant/gathering/plan-tools.js';
-import { expectStatus, setFriendSharing, setMasterSwitch, uploadPosition } from './location-sharing.js';
+import {
+  expectStatus,
+  keptButHidden,
+  keptPositionIn,
+  setFriendSharing,
+  setMasterSwitch,
+  uploadPosition,
+} from './location-sharing.js';
 import { COURSE, MealPlanStage, type Named, planMeal, resolve, ROOM } from './meal-plan.js';
 
 // A meal planned on the map, at the Assistant's endpoint with the scripted model, the seed's walking table, and Places:
@@ -212,6 +219,25 @@ describe("A Friend's position", () => {
     const answer = answerIn(response.body);
     expect(answer.plans[0]?.parts[1]?.origin).toBeNull();
     expect(answer.chips.at(-1)).toEqual({ kind: 'person', text: '하은 · 자리 모름', userId: friend.id });
+  });
+});
+
+describe('A Friend the Friend view puts at the Timetable, whose position is kept', () => {
+  it('is planned without it: no origin, no exact mark, and nothing of it to the model or in the reply', async () => {
+    const date = '2088-07-06';
+    await workedExample(date);
+    const friend = await stage.friend('하은');
+    await keptButHidden(stage.app, stage.asker, friend);
+
+    const response = await stage.send([resolve('하은'), planMeal(date, [friend.id]), { text: '…' }]);
+
+    const answer = answerIn(response.body);
+    expect(answer.plans.length).toBeGreaterThan(0);
+    for (const plan of answer.plans) {
+      expect(plan.parts[1]?.origin).toBeNull();
+      expect(plan.scene.people.find(({ userId }) => userId === friend.id)?.source ?? 'timetable').toBe('timetable');
+    }
+    expect(keptPositionIn(stage.model.toolResults(), stage.model.received(), response.body)).toEqual([]);
   });
 });
 

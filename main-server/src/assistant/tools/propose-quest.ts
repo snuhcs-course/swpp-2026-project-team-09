@@ -4,10 +4,11 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { FriendsService } from '../../friends/friends.service.js';
+import { FriendViewService } from '../../friends/friend-view.service.js';
 import { type PublishedGlobalEventDto } from '../../global-events/dto/global-event.dto.js';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
 import { JoinPolicy, QuestBoard } from '../../generated/prisma/client.js';
@@ -27,7 +28,7 @@ import {
 
 // The services proposeQuest checks the resolved ids with.
 export interface ProposeQuestServices {
-  friends: FriendsService;
+  friends: FriendViewService;
   places: PlacesService;
   globalEvents: GlobalEventsService;
 }
@@ -133,7 +134,7 @@ async function eventOf(
 async function inviteesOf(
   inviteeIds: readonly string[],
   context: ToolContext,
-  friends: FriendsService,
+  friends: FriendViewService,
 ): Promise<Checked<ProposalFriend[]>> {
   const ids = [...new Set(inviteeIds)];
   const shownFriends = context.shown?.invitees.map(({ id }) => id) ?? [];
@@ -141,7 +142,7 @@ async function inviteesOf(
   if (unreturned.length > 0) {
     return { failure: `${UNRETURNED} Ids: ${unreturned.join(', ')}.` };
   }
-  const listed = ids.length === 0 ? [] : await friends.listFriends(context.userId);
+  const listed = ids.length === 0 ? [] : await friends.list(context.userId);
   const notFriends = ids.filter((id) => !listed.some((friend) => friend.id === id));
   if (notFriends.length > 0) {
     return { failure: `Not a Friend of the User any more: ${notFriends.join(', ')}. Tell the User.` };
