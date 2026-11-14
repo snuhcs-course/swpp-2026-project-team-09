@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine } from './menu-types';
@@ -229,7 +230,9 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export interface PlanInput {
+export type PlanInput = MealInput | EventsInput;
+
+export interface MealInput {
   kind: 'meal';
   // YYYY-MM-DD in Korea.
   date: string;
@@ -240,6 +243,15 @@ export interface PlanInput {
   window: { from: string | null; until: string | null };
   // The Place the User fixed.
   placeId: string | null;
+}
+
+// The Global Events of a day the asker can attend.
+export interface EventsInput {
+  kind: 'events';
+  // YYYY-MM-DD in Korea.
+  date: string;
+  // Only these, as a search or a mark gave them; null for every event of the day.
+  eventIds: string[] | null;
 }
 
 export interface PlanPerson {
@@ -319,6 +331,8 @@ export interface PlanPart {
   // Null when nothing follows.
   leaveBy: string | null;
   next: { startAt: string; place: PlacePoint | null } | null;
+  // How they travel, absent for a walk.
+  mode?: 'walk' | 'shuttle';
 }
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
@@ -332,7 +346,15 @@ export interface MapScene {
     tag: string | null;
   }[];
   places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
-  routes: { userId: string; role: 'me' | 'friend' | 'next'; from: LatLng; to: LatLng; minutes: number }[];
+  // `mode` is absent for a walk.
+  routes: {
+    userId: string;
+    role: 'me' | 'friend' | 'next';
+    from: LatLng;
+    to: LatLng;
+    minutes: number;
+    mode?: 'walk' | 'shuttle';
+  }[];
   flags: { at: LatLng; text: string; role: 'place' | 'meeting' }[];
 }
 

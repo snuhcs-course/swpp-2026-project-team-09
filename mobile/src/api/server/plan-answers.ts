@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -9,7 +10,9 @@ import type {
   AnswerReply,
   ConditionChip,
   DroppedPlace,
+  EventsInput,
   MapScene,
+  MealInput,
   PersonConstraint,
   PlacePoint,
   Plan,
@@ -59,7 +62,7 @@ function isPerson(value: unknown): value is PlanPerson {
   return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
 }
 
-export function isInput(value: unknown): value is PlanInput {
+function isMealInput(value: unknown): value is MealInput {
   const window = field(value, 'window');
   return (
     field(value, 'kind') === 'meal' &&
@@ -70,6 +73,22 @@ export function isInput(value: unknown): value is PlanInput {
     isTextOrNull(field(window, 'until')) &&
     isTextOrNull(field(value, 'placeId'))
   );
+}
+
+function isEventsInput(value: unknown): value is EventsInput {
+  const eventIds = field(value, 'eventIds');
+  return (
+    field(value, 'kind') === 'events' && isText(field(value, 'date')) && (eventIds === null || listOf(isText)(eventIds))
+  );
+}
+
+export function isInput(value: unknown): value is PlanInput {
+  return isMealInput(value) || isEventsInput(value);
+}
+
+// A mode is absent for a walk.
+function isMode(value: unknown): boolean {
+  return value === undefined || isOneOf(['walk', 'shuttle'])(value);
 }
 
 function isChip(value: unknown): value is ConditionChip {
@@ -127,7 +146,8 @@ function isPart(value: unknown): value is PlanPart {
     isOrigin(field(value, 'origin')) &&
     ['leaveAt', 'leaveBy'].every((name) => isTextOrNull(field(value, name))) &&
     isNumberOrNull(field(value, 'walkMinutes')) &&
-    isNext(field(value, 'next'))
+    isNext(field(value, 'next')) &&
+    isMode(field(value, 'mode'))
   );
 }
 
@@ -159,7 +179,8 @@ function isRoute(value: unknown): value is MapScene['routes'][number] {
     isOneOf(['me', 'friend', 'next'])(field(value, 'role')) &&
     isLatLng(field(value, 'from')) &&
     isLatLng(field(value, 'to')) &&
-    isNumber(field(value, 'minutes'))
+    isNumber(field(value, 'minutes')) &&
+    isMode(field(value, 'mode'))
   );
 }
 

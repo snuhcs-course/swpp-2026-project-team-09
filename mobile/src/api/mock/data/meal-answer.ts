@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerReply, AssistantReply } from '@/api/assistant-types';
+import type { AnswerReply, AssistantReply, MealInput } from '@/api/assistant-types';
 import { MEAL_PLAN_1 } from './meal-answer-plan-1';
 import { MEAL_PLAN_2 } from './meal-answer-plan-2';
 import { MEAL_PLAN_3 } from './meal-answer-plan-3';
@@ -14,7 +15,7 @@ import { MEAL_PLAN_5 } from './meal-answer-plan-5';
 // The main server's reply to "배고파, 민수랑 같이", asked on Tuesday 2026-11-17 at 11:50 with the real model, copied
 // whole: its text and the answer it drew on the map, its plans one to a file.
 
-export const MEAL_ANSWER: AnswerReply = {
+export const MEAL_ANSWER: AnswerReply & { input: MealInput } = {
   input: {
     kind: 'meal',
     date: '2026-11-17',
