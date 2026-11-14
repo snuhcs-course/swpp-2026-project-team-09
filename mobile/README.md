@@ -1601,8 +1601,9 @@ that phone.
 
 ### When the app asks, registers, and unregisters
 
-All three happen only in a build that asks the main server, holds the native module, and has a ready Session. A mock
-build never asks and never registers, and its `registerPushToken` does nothing.
+Asking and registering happen only on Android, in a build that asks the main server, holds the native module, and has
+a ready Session. The iOS build has no push entitlement, so nothing is asked or registered there. A mock build never
+asks and never registers, and its `registerPushToken` does nothing.
 
 - **Asking.** Nothing is asked at app start, at sign-in, at Onboarding, or in first run. `PushAskHost`
   (`src/push/push-ask-host.tsx`, inside the overlay host) shows the sheet of board t17 ("나설 시각을 휴대폰으로 알려
@@ -1619,8 +1620,9 @@ build never asks and never registers, and its `registerPushToken` does nothing.
   permission.
 - **Unregistering.** When the Session ends on the phone, by a sign-out or by the main server's word, the app calls
   `unregisterPush()` before it forgets its tokens, whatever the main server answered, so a signed-out phone receives
-  nothing even when the server could not be told. Unregistering goes through Firebase: a sign-out with no network at
-  all leaves the phone registered until the next User signs in on it or its Session can no longer refresh.
+  nothing even when the server could not be told. Unregistering goes through Firebase and needs the network. When it
+  does not go through, the phone keeps `pushUnregisterOwed` and tries again at a start and each time the app comes
+  to the front with nobody signed in. No token of the ended Session is kept for this, and a sign-in clears it.
 
 ## 관정도서관 (P06)
 

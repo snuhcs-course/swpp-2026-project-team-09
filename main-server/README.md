@@ -3060,10 +3060,11 @@ Pushed today:
 Accepting, declining or cancelling an invitation, Friend Requests, requests to join and Parties push nothing.
 
 Expo's answer holds a ticket for each message, in message order. A `DeviceNotRegistered` ticket deletes its row and
-logs an info line. Any other ticket error, an answer outside 2xx (with its `errors[].code` values), a timeout or a
-network failure logs a warning. An ok ticket's receipt id is logged at debug level. A log line holds only row ids,
-error codes, receipt ids and the HTTP status: never a token, Expo's `message` or `details`, the request body or the
-response body, because Expo's texts quote the whole token and a leaked token lets anyone push to that phone.
+logs an info line; the row goes only while it still holds the token that was sent. Any other ticket error, an answer
+outside 2xx (with its `errors[].code` values), a timeout or a network failure logs a warning. An ok ticket's receipt
+id is logged at debug level. A log line holds only row ids, error codes, receipt ids and the HTTP status: never a
+token, Expo's `message` or `details`, the request body or the response body, because Expo's texts quote the whole
+token and a leaked token lets anyone push to that phone.
 
 Nothing is retried, and receipts are not read in code, on purpose: the invitation stays in the app's "알림" whatever
 happens to the push. Errors such as wrong FCM credentials (`InvalidCredentials`) appear only in a receipt, so read it
