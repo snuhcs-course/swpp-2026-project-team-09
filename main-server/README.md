@@ -2182,8 +2182,11 @@ its model through OpenRouter with the Vercel AI SDK
   other than the asker, or the one tapped. An app that sends `"clientCapabilities": ["answer"]` draws an answer on the
   map. The reply always carries `answer`, `null` when there is none: the plans of a meal, each with its place, times,
   each person's part (`parts`), the Sub Quests of the Quest it becomes (`subQuests`), map scene, and time band; the
-  condition chips; the dropped places; and the `input` to send back changed to recalculate. The full shape of both is in
-  `src/assistant/dto/answer.dto.ts`.
+  condition chips; the dropped places; and the `input` to send back changed to recalculate. It also always carries
+  `lookup`, `null` when there is none: an answer drawn on the map that has no Plan (`kind` `way`), with its condition
+  chips, at most two lines, basis, map scene, time band or `null`, and the card's actions (`guide`, `remind`, `meet`).
+  A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer. The full shape of each is
+  in `src/assistant/dto/answer.dto.ts`.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -2262,7 +2265,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 - **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
   OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
-- **Tools** (`tools/`, `free-time/` for the 공강 tools, and `gathering/` for `planMeal`): each is a zod schema of its
+- **Tools** (`tools/`, `free-time/` for the 공강 tools, `gathering/` for `planMeal`, and `lookup/` for `findWay`): each is a zod schema of its
   input and a plain function calling this server's services, made with `defineTool` (`feature.ts`). It is given the
   signed-in User's id, the time of the request, and the request context. A tool answers only
   what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
@@ -2378,6 +2381,14 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
       person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
       or rooms.
+    - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
+      to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
+      the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
+      nearest within 150 m; else the Place of their last item today that has ended. The way's deadline is `by`
+      (`HH:MM`), else the next item's start when the way goes to its Place. `WayService` reads the User's day, and the
+      tool puts the Lookup in the reply's `lookup`: the minutes, when to set out, how late the User is if they set out
+      now, and a leave-by notification while that time is ahead and the walk takes 5 minutes or more. It answers the
+      model `found` with Place names, minutes, and clock times, or `none` with the reason.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
       It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
       `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps

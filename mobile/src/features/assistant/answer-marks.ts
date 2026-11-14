@@ -77,6 +77,8 @@ const ROUTE_STYLES = {
   me: { color: color.snuBlue, width: 5 },
   friend: { color: color.friend, width: 4 },
   next: { color: color.borderStrong, width: 3 },
+  shuttle: { color: color.svcShuttle, width: 4 },
+  alt: { color: color.border, width: 2 },
 } as const;
 
 const METRES_PER_DEGREE = 111_320;
@@ -193,7 +195,8 @@ function placeDraft(
       number,
     };
   }
-  if (role === 'meeting') {
+  // A stop is not drawn until its look is settled (P01 ticket 11).
+  if (role === 'meeting' || role === 'stop') {
     return null;
   }
   const id = role === 'next' ? `answer:next:${place.placeId}` : `answer:dropped:${place.label}`;
