@@ -8,17 +8,14 @@
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, type FaceBadge, type LabelSide } from '@/design-system';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
+import { DRAW_ORDER, type Group, OWN, ROUTE_STYLES, SIDE_ORDER, SIDES, SYMBOL_ORDER } from './answer-groups';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
-
-// The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
-// flags, which have none.
-type Group = 'flag' | 'pick' | 'person' | 'next' | 'candidate' | 'dropped';
 
 interface Draft {
   id: string;
@@ -34,28 +31,6 @@ interface Draft {
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
 }
-
-const SIDE_ORDER: Group[] = ['flag', 'pick', 'person', 'next', 'candidate', 'dropped'];
-const SYMBOL_ORDER: Group[] = ['person', 'pick', 'next', 'candidate', 'dropped'];
-const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'next', 'candidate', 'dropped'];
-const OWN = new Set<Group>(['person', 'pick', 'next', 'flag']);
-
-const SIDES: Record<Group, LabelSide[]> = {
-  flag: ['above', 'below', 'right', 'left'],
-  pick: ['below', 'above'],
-  person: ['right', 'left'],
-  next: ['left', 'below', 'right', 'above'],
-  candidate: ['left', 'right', 'below', 'above'],
-  dropped: ['left', 'right', 'below', 'above'],
-};
-
-const ROUTE_STYLES = {
-  me: { color: color.snuBlue, width: 5 },
-  friend: { color: color.friend, width: 4 },
-  next: { color: color.borderStrong, width: 3 },
-  shuttle: { color: color.svcShuttle, width: 4 },
-  alt: { color: color.border, width: 2 },
-} as const;
 
 const ONE_POINT = 15;
 // How far a label reaches from its point: sideways and how far up or down for a side label, up or down and how far
