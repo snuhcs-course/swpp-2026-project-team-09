@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { type Plan } from '../assistant/dto/answer.dto.js';
+import { type MealInput, type Plan, type PlanInput } from '../assistant/dto/answer.dto.js';
 import { outOfReach } from '../assistant/free-time/tool-parts.js';
 import { MealPlanService } from '../assistant/gathering/meal-plan.service.js';
 import { PrismaService } from '../common/prisma.service.js';
@@ -31,6 +32,19 @@ export const subQuestsOf = ({ subQuests, endAt }: Plan): SubQuestColumns[] =>
     placeLabel: null,
   }));
 
+// Only a meal's Plan is made into a Quest so far.
+export function mealInputOf(input: PlanInput): MealInput {
+  if (input.kind !== 'meal') {
+    throw new BadRequestException({
+      statusCode: HttpStatus.BAD_REQUEST,
+      error: 'Bad Request',
+      code: 'PLAN_KIND',
+      message: "Only a meal's plan is made into a Quest.",
+    });
+  }
+  return input;
+}
+
 @Injectable()
 export class PlansService {
   constructor(
@@ -45,7 +59,7 @@ export class PlansService {
   // Plans again as the recalculation does, and makes the Plan named into a Quest the asker leads, inviting everyone
   // else of it.
   async make(userId: string, making: PlanQuestBody): Promise<PlanQuestDto> {
-    if (making.input.people.length < 2) {
+    if (mealInputOf(making.input).people.length < 2) {
       throw new BadRequestException({
         statusCode: HttpStatus.BAD_REQUEST,
         error: 'Bad Request',
@@ -81,11 +95,12 @@ export class PlansService {
     { input, planId, startAt, location }: PlanQuestBody,
     leftOut: readonly string[],
   ): Promise<Plan> {
+    const meal = mealInputOf(input);
     const now = this.clock.now();
-    if (outOfReach(input.date, now)) {
+    if (outOfReach(meal.date, now)) {
       throw new BadRequestException('A plan is for a day from today to a week ahead');
     }
-    const { plans } = await this.mealPlans.plan(userId, input, { now, location, leftOut });
+    const { plans } = await this.mealPlans.plan(userId, meal, { now, location, leftOut });
     const plan = plans.find(({ id }) => id === planId);
     if (plan === undefined || new Date(plan.startAt).getTime() !== new Date(startAt).getTime()) {
       throw conflict('PLAN_CHANGED', 'The plan is no longer the one shown. Recalculate it.');

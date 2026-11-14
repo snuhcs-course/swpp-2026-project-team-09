@@ -8,6 +8,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendsService } from '../../friends/friends.service.js';
@@ -16,6 +17,8 @@ import { MenusService } from '../../menus/menus.service.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
+import { EVENT_RULES, planEvents } from '../events/event-tools.js';
+import { type EventsPlanService } from '../events/events-plan.service.js';
 import { type Feature, type Tool } from '../feature.js';
 import { FREE_TIME_EVENT_RULES, FREE_TIME_RULES } from '../free-time/free-time-rules.js';
 import { type FreeTimeServices } from '../free-time/free-time-services.js';
@@ -54,11 +57,14 @@ export interface ChatAssistantServices {
   library: LibraryServices;
   tutorial: TutorialService;
   mealPlans: MealPlanService;
+  eventPlans: EventsPlanService;
 }
 
 export interface ChatAssistantOptions {
   // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards.
   drawsAnswers: boolean;
+  // With drawsAnswers, it also draws the events of a day planned there.
+  drawsEvents?: boolean;
 }
 
 function instructionsOf(freeTimeRules: readonly string[]): (now: Date) => string {
@@ -104,6 +110,25 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
 - You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.`;
 }
 
+// What an app that draws answers plans on the map in place of the Restaurant cards and their rules: a meal, and the
+// events of a day when it draws those too.
+function plannedOnMap(
+  { mealPlans, eventPlans }: Pick<ChatAssistantServices, 'mealPlans' | 'eventPlans'>,
+  cards: Record<string, Tool>,
+  options: ChatAssistantOptions | undefined,
+): { rules: string[]; tools: Record<string, Tool> } {
+  if (options?.drawsAnswers !== true) {
+    return { rules: [FREE_TIME_RULES], tools: cards };
+  }
+  if (options.drawsEvents !== true) {
+    return { rules: [FREE_TIME_EVENT_RULES, PLAN_RULES], tools: { planMeal: planMeal(mealPlans) } };
+  }
+  return {
+    rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, EVENT_RULES],
+    tools: { planMeal: planMeal(mealPlans), planEvents: planEvents(eventPlans) },
+  };
+}
+
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
 export function chatAssistant(
   {
@@ -117,17 +142,15 @@ export function chatAssistant(
     library,
     tutorial,
     mealPlans,
+    eventPlans,
   }: ChatAssistantServices,
   options?: ChatAssistantOptions,
 ): Feature {
-  const drawsAnswers = options?.drawsAnswers ?? false;
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
-  const meal: Record<string, Tool> = drawsAnswers
-    ? { planMeal: planMeal(mealPlans) }
-    : { findMealRestaurants, showRestaurants };
+  const planned = plannedOnMap({ mealPlans, eventPlans }, { findMealRestaurants, showRestaurants }, options);
   return {
-    instructions: instructionsOf(drawsAnswers ? [FREE_TIME_EVENT_RULES, PLAN_RULES] : [FREE_TIME_RULES]),
+    instructions: instructionsOf(planned.rules),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
       getMenus: getMenus(menus),
@@ -144,7 +167,7 @@ export function chatAssistant(
       getMyDay,
       findFreeTimeEvents,
       findFreeFriends,
-      ...meal,
+      ...planned.tools,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
       // showLibrarySeats and showMyLibraryBookings.
       ...libraryTools(library),

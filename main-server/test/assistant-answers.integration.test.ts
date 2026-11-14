@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Redis } from 'ioredis';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { z } from 'zod';
-import { type AnswerReply, type PersonConstraint, type PlanInput } from '../src/assistant/dto/answer.dto.js';
+import { type AnswerReply, type MealInput, type PersonConstraint } from '../src/assistant/dto/answer.dto.js';
 import { REDIS } from '../src/common/redis.module.js';
 import { MealPlanStage, type Named, planMeal, resolve } from './meal-plan.js';
 import { withAccessToken } from './sign-in.js';
@@ -54,7 +55,7 @@ async function withMinsu(date: string): Promise<Named> {
   return friend;
 }
 
-const inputOf = (date: string, friendIds: string[], more: Partial<PlanInput> = {}): PlanInput => ({
+const inputOf = (date: string, friendIds: string[], more: Partial<MealInput> = {}): MealInput => ({
   kind: 'meal',
   date,
   meal: 'lunch',
@@ -157,7 +158,7 @@ describe('Refused with 400', () => {
     stage.asker = asker;
   });
 
-  const constrained = (constraint: PersonConstraint): PlanInput => {
+  const constrained = (constraint: PersonConstraint): MealInput => {
     const input = inputOf(date, [friend.id]);
     input.people[1] = { userId: friend.id, constraints: [constraint] };
     return input;

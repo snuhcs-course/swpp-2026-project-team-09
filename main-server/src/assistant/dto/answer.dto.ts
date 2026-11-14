@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -24,7 +25,9 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export interface PlanInput {
+export type PlanInput = MealInput | EventsInput;
+
+export interface MealInput {
   kind: 'meal';
   // YYYY-MM-DD in Korea.
   date: string;
@@ -35,6 +38,15 @@ export interface PlanInput {
   window: { from: string | null; until: string | null };
   // The Place the User fixed.
   placeId: string | null;
+}
+
+// The Global Events of a day the asker can attend.
+export interface EventsInput {
+  kind: 'events';
+  // YYYY-MM-DD in Korea.
+  date: string;
+  // Only these, as a search or a mark gave them; null for every event of the day.
+  eventIds: string[] | null;
 }
 
 export interface PlanPerson {
@@ -114,6 +126,8 @@ export interface PlanPart {
   // Null when nothing follows.
   leaveBy: string | null;
   next: { startAt: string; place: PlacePoint | null } | null;
+  // How they travel, absent for a walk.
+  mode?: 'walk' | 'shuttle';
 }
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
@@ -127,7 +141,15 @@ export interface MapScene {
     tag: string | null;
   }[];
   places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
-  routes: { userId: string; role: 'me' | 'friend' | 'next'; from: Position; to: Position; minutes: number }[];
+  // `mode` is absent for a walk.
+  routes: {
+    userId: string;
+    role: 'me' | 'friend' | 'next';
+    from: Position;
+    to: Position;
+    minutes: number;
+    mode?: 'walk' | 'shuttle';
+  }[];
   flags: { at: Position; text: string; role: 'place' | 'meeting' }[];
 }
 
@@ -144,6 +166,8 @@ export interface TimeBand {
 const PEOPLE_MAX = 8;
 const CONSTRAINTS_MAX = 8;
 const PLAN_ID_MAX = 200;
+// The most events an answer of events is asked for by id.
+export const EVENT_IDS_MAX = 20;
 
 const constraintSource = z.enum(['asker', 'person']);
 
@@ -153,7 +177,7 @@ const personConstraintSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('leaveBy'), time: clockTime, source: constraintSource }),
 ]);
 
-export const planInputSchema = z.strictObject({
+const mealInputSchema = z.strictObject({
   kind: z.literal('meal'),
   date: z.iso.date(),
   meal: z.enum(['lunch', 'dinner']),
@@ -166,6 +190,14 @@ export const planInputSchema = z.strictObject({
     .refine(({ from, until }) => from === null || until === null || from < until, 'Expected from before until'),
   placeId: z.uuid().nullable(),
 });
+
+const eventsInputSchema = z.strictObject({
+  kind: z.literal('events'),
+  date: z.iso.date(),
+  eventIds: z.array(z.uuid()).max(EVENT_IDS_MAX).nullable(),
+});
+
+export const planInputSchema = z.discriminatedUnion('kind', [mealInputSchema, eventsInputSchema]);
 
 const latitude = z.number().min(-90).max(90);
 const longitude = z.number().min(-180).max(180);
