@@ -14,7 +14,6 @@ import { ConfigService } from '@nestjs/config';
 import { type Settings } from '../common/settings.js';
 import { FriendsModule } from '../friends/friends.module.js';
 import { GlobalEventsModule } from '../global-events/global-events.module.js';
-import { LocationSharingModule } from '../location-sharing/location-sharing.module.js';
 import { MenusModule } from '../menus/menus.module.js';
 import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
@@ -32,14 +31,13 @@ import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
 
 @Module({
-  // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule and
-  // PlacesModule give what the resolvers read, and TimetableModule and TravelModule what the 공강 tools do. UsersModule
-  // gives the 소속 the library tools read, and TutorialModule the tutorial getTutorial answers. LocationSharingModule
-  // gives the positions a meal's plan may use: those the asker's map shows.
+  // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule gives the
+  // Friend view, through which every tool reads Friends and a meal's plan their positions, and PlacesModule what the
+  // resolvers read. TimetableModule and TravelModule give what the 공강 tools do. UsersModule gives the 소속 the library
+  // tools read, and TutorialModule the tutorial getTutorial answers.
   imports: [
     FriendsModule,
     GlobalEventsModule,
-    LocationSharingModule,
     MenusModule,
     PlacesModule,
     QuestsModule,

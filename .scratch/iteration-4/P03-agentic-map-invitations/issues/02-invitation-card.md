@@ -37,3 +37,10 @@ An invited User opens an invitation, and the main server answers with the Quest,
 - An off-campus phone gives no Place of its location to the calculation; an item that ended at most 15 minutes ago still gives a Timetable origin then, as the calculation's rule says, and the status is `ok`.
 - The invitee's name comes from the User table; the Leader's from the Quest. Holders are listed by `QUEST_INCLUDE`'s order (when they entered) with the Leader moved first.
 - The mock answers the stored card under whatever invitation id it is asked for, and ignores the location. Its User ids are the meal answer copy's (유상 `11ca538e…`, 민수 `35976b5c…`); its Place ids are the seed's.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). The session that wrote the spec, reviewed each ticket, and opened the pull requests is counted once, under ticket 07.
+
+- Agent time: about 58 minutes, an estimate from the transcript's timestamps; it includes waits for the machine's shared test lock.
+- Tokens: output 107,703; input 31,128,933, of which 30,576,477 were cache reads, 552,186 cache writes, and 270 uncached. Without cache reads: 660,159.
