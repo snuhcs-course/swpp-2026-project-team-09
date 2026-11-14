@@ -35,3 +35,10 @@ A Holder who is late reports the minutes. The Quest keeps them on the Holder, th
 - The app's mock answers with the main server's reply for 민수 5 minutes late, copied from a run on 2088-10-05 with the day moved to 2026-11-17 and 민수's id set to the one the invitation card's copy has, so the two copies tell one story.
 - In the app, the `late` signal fetches only the Quests again (the members change); the listener in `live/late-reports.ts` passes on a payload only with all four fields of their types. The set of listeners and the reading of a payload's text fields moved to `live/listeners.ts`, which the invitation answers and the late reports share.
 - The app's check of a late report's reply is the card's check of a way, with no way (null) refused, since a report is always answered with one.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). The session that wrote the spec, reviewed each ticket, and opened the pull requests is counted once, under ticket 07.
+
+- Agent time: about 55 minutes, an estimate from the transcript's timestamps; it includes waits for the machine's shared test lock.
+- Tokens: output 93,694; input 28,258,363, of which 27,983,125 were cache reads, 274,986 cache writes, and 252 uncached. Without cache reads: 368,932.
