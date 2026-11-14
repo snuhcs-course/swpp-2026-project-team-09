@@ -15,6 +15,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
 import { withApprovalLine } from './approval-line.js';
+import { contextLines } from './context-lines.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
 import { FoundIds } from './found-ids.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
@@ -142,6 +143,18 @@ function contentOf(message: ChatMessage): string {
   return lines.join('\n\n');
 }
 
+// The conversation as the model reads it, the lines of the request context after the User's new message.
+function messagesFor(
+  messages: readonly ChatMessage[],
+  { context }: Request,
+): { role: ChatMessage['role']; content: string }[] {
+  const last = messages.length - 1;
+  return messages.map((message, index) => ({
+    role: message.role,
+    content: index === last ? [contentOf(message), ...contextLines(context)].join('\n\n') : contentOf(message),
+  }));
+}
+
 // The last Proposal of the conversation, which the app sends back on one message at most.
 function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
   const proposals = messages.map((message) => (message.role === 'assistant' ? message.proposal : null));
@@ -172,7 +185,7 @@ export async function runFeature(
   const { steps, finishReason } = await generateText({
     model,
     instructions: feature.instructions(asker.now),
-    messages: messages.map((message) => ({ role: message.role, content: contentOf(message) })),
+    messages: messagesFor(messages, asker),
     tools: toolSetOf(feature, context, observer),
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,

@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { ask, postAssistantMessages } from './assistant.js';
+import { signInUser } from './friends.js';
 import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
@@ -33,23 +34,23 @@ async function newAccessToken(): Promise<string> {
   return (await signIn(app)).accessToken;
 }
 
-function conditionsOf(): object {
+function conditionsOf(userId: string = randomUUID()): object {
   return {
     kind: 'meal',
     date: '2027-03-02',
     meal: 'lunch',
-    people: [{ userId: randomUUID(), constraints: [{ kind: 'leaveBy', time: '12:50', source: 'asker' }] }],
+    people: [{ userId, constraints: [{ kind: 'leaveBy', time: '12:50', source: 'asker' }] }],
     window: { from: '11:50', until: null },
     placeId: null,
   };
 }
 
-function fullContext(): object {
+function fullContext(userId?: string): object {
   return {
     location: { latitude: 37.4599, longitude: 126.9519 },
     viewport: { south: 37.45, west: 126.94, north: 37.47, east: 126.96 },
     tapped: { kind: 'place', placeId: randomUUID() },
-    conditions: conditionsOf(),
+    conditions: conditionsOf(userId),
     planId: 'plan-1',
   };
 }
@@ -66,10 +67,9 @@ describe('The request context', () => {
 
   it('is accepted whole: a location, a viewport, a tapped Place, conditions and a plan', async () => {
     model.script({ text: '네' });
+    const { id, accessToken } = await signInUser(app);
 
-    const response = await postAssistantMessages(app, await newAccessToken(), ask('여기 어때?'), {
-      context: fullContext(),
-    });
+    const response = await postAssistantMessages(app, accessToken, ask('여기 어때?'), { context: fullContext(id) });
 
     expect(response.status).toBe(200);
   });
