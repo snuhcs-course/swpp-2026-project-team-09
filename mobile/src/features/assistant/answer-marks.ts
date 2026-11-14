@@ -29,6 +29,10 @@ export interface AnswerDrawing {
   lines: MapLine[];
   // What the camera fits.
   points: LatLng[];
+  // The Plan's own points: its people, its pick, its next Class, and its flags. The camera keeps these in view when
+  // not every point fits.
+  own: LatLng[];
+  pick: LatLng | null;
   // The people the scene draws, the User included.
   userIds: string[];
 }
@@ -54,6 +58,7 @@ interface Draft {
 const SIDE_ORDER: Group[] = ['flag', 'pick', 'person', 'next', 'candidate', 'dropped'];
 const SYMBOL_ORDER: Group[] = ['person', 'pick', 'next', 'candidate', 'dropped'];
 const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'next', 'candidate', 'dropped'];
+const OWN: Group[] = ['person', 'pick', 'next', 'flag'];
 
 const SIDES: Record<Group, LabelSide[]> = {
   flag: ['above', 'below', 'right', 'left'],
@@ -242,7 +247,7 @@ function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
 export function drawingOf(answer: AnswerReply, planIndex: number): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
-    return { things: [], lines: [], points: [], userIds: [] };
+    return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
   const { scene } = plan;
   const drafts = [
@@ -264,6 +269,8 @@ export function drawingOf(answer: AnswerReply, planIndex: number): AnswerDrawing
     things,
     lines,
     points: [...things.map(({ position }) => position), ...scene.routes.flatMap(({ from, to }) => [from, to])],
+    own: drafts.filter(({ group }) => OWN.includes(group)).map(({ position }) => position),
+    pick: drafts.find(({ group }) => group === 'pick')?.position ?? null,
     userIds: scene.people.map(({ userId }) => userId),
   };
 }

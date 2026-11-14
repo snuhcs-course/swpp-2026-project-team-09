@@ -1,0 +1,65 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import type { LatLng } from '@/api/types';
+import { inView, type MapCamera, project, type Size, unproject } from '@/map';
+
+// What the pill and the card leave of the map, with the room for labels, in points of the map's view: each edge as a
+// distance from the view's top or left.
+export interface ViewArea {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+// Less than this is no move, and a point this near the area's edge is inside it: a fit rests in its last digits.
+const ONE_POINT = 1;
+
+// How far the box from `low` to `high` must move along an axis to lie in the area from `start` to `end`: centred
+// when it fits or there is no pick, otherwise its edge on the pick's side on the area's edge on that side.
+function shiftAlong(low: number, high: number, start: number, end: number, pick: number | null): number {
+  if (high - low <= end - start || pick === null) {
+    return (start + end) / 2 - (low + high) / 2;
+  }
+  return pick - low <= high - pick ? start - low : end - high;
+}
+
+// Where the camera should go so that the Plan shows, or null when it may stay. When a point of the drawing lies
+// outside the area, as on a map whose lowest zoom is too close for all of it, the Plan's own points are centred in
+// the area, and when they do not fit either, the picked Restaurant's side is kept in view.
+export function correctedCentre(
+  drawing: { points: readonly LatLng[]; own: readonly LatLng[]; pick: LatLng | null },
+  camera: MapCamera,
+  size: Size,
+  area: ViewArea,
+): LatLng | null {
+  const place = (position: LatLng): { x: number; y: number } => inView(position, camera, size);
+  const inside = drawing.points.every((position) => {
+    const { x, y } = place(position);
+    return (
+      x >= area.left - ONE_POINT &&
+      x <= area.right + ONE_POINT &&
+      y >= area.top - ONE_POINT &&
+      y <= area.bottom + ONE_POINT
+    );
+  });
+  if (inside || drawing.own.length === 0) {
+    return null;
+  }
+  const own = drawing.own.map(place);
+  const pick = drawing.pick === null ? null : place(drawing.pick);
+  const xs = own.map(({ x }) => x);
+  const ys = own.map(({ y }) => y);
+  const dx = shiftAlong(Math.min(...xs), Math.max(...xs), area.left, area.right, pick?.x ?? null);
+  const dy = shiftAlong(Math.min(...ys), Math.max(...ys), area.top, area.bottom, pick?.y ?? null);
+  if (Math.abs(dx) < ONE_POINT && Math.abs(dy) < ONE_POINT) {
+    return null;
+  }
+  // The points move by the shift when the centre moves the other way.
+  const centre = project(camera.centre, camera.zoom);
+  return unproject({ x: centre.x - dx, y: centre.y - dy }, camera.zoom);
+}
