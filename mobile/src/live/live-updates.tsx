@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -62,7 +63,12 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
 };
 
 // The lists of what waits for the User, which 알림 and the badge on 파티 show.
-const WAITING: readonly QueryKey[] = [PARTIES_KEY, FRIEND_REQUESTS_KEY, QUEST_INVITATIONS_KEY, JOIN_REQUESTS_KEY];
+export const WAITING: readonly QueryKey[] = [
+  PARTIES_KEY,
+  FRIEND_REQUESTS_KEY,
+  QUEST_INVITATIONS_KEY,
+  JOIN_REQUESTS_KEY,
+];
 
 // What is fetched again when the connection opens again: what may have changed while it was closed. The shuttle's
 // vehicles are fetched only while the layer that shows them is on.
