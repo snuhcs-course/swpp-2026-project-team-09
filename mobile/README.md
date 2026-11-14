@@ -657,8 +657,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the fit of the answer's points between the pill and the card, with the room the marks there need (`roomsOf`) and 64
   at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the Plan's
   own points centred there, or, when they do not fit either, the picked Restaurant's side kept in view. It moves
-  again when the Plan on screen changes and when the card's height or the stage's size changes; closing the answer
-  moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its lowest in place of 15, which on a
+  again when the Plan on screen changes and when the card's height or the stage's size changes; after an answer
+  replaced the one on screen, as a recalculation's does, it moves once, when the drawing and the card's height have
+  stayed the same for 120 ms. Closing the answer moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its lowest in place of 15, which on a
   phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기")
   at the right of its chips' first line, the Plan's two lines, the basis while it is open, and, when the answer has more than one
   Plan, round buttons "‹" ("이전 후보") and "›" ("다음 후보") at the two ends of the last row, 40 high as its buttons are,
@@ -672,7 +673,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   to the picked Restaurant ("350m", "1.2km"), "N분 전" for an old position, or "자리 모름", nearest first. While the
   list is open the card's lines ask "누구와 같이 먹을까요?", "그대로" stands where "근거" did and closes it, the band,
   the arrows, and the input give way, and the grid shows at most four whole rows that scroll inside, with a fade
-  while more are below. A press adds the Friend, as does a press on a Friend's Avatar on the map; the origin
+  while more are below; its second line says "지도의 얼굴을 누르거나 아래에서 골라요". A press on a cell adds the Friend,
+  as does a press on the Avatar of a Friend who is not in the conditions, which carries a "+" (the person look's
+  `addable`) until "이대로 초대". Both start one add (`add` and `pendingAdd` of `useShownAnswer`): the Friend's cell
+  reads "넣는 중" with a spinner, the face takes the selected look at once (its "+" and selected looks are asked for
+  ahead), the list stays open until the answer comes, and a wrong add is undone with that person's ✕. The origin
   chip opens 장소 선택's map view, and a Place chosen there becomes the User's own `from` (a point that is no Place
   says "건물을 골라 주세요"); the time chip closes the list and puts the focus on the band's end handle for two seconds. Letting go of a
   handle of the time band (`time-band.tsx`), dragged or stepped by a screen reader, fixes that bound of the window.
