@@ -10,8 +10,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
 import { correctedCentre, type ViewArea } from '@/features/assistant/answer-camera';
 import { type AnswerDrawing, drawingOf, looksOf } from '@/features/assistant/answer-marks';
+import { withPerson } from '@/features/assistant/plan-input';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
-import type { CardView } from '@/features/map/adapter';
+import { type CardView, cardId } from '@/features/map/adapter';
 import {
   type FitPadding,
   type MapAvatar,
@@ -115,8 +116,22 @@ function othersOf(avatars: readonly MapAvatar[], cards: readonly CardView[], use
 
 export interface AnswerMap {
   contents: MapContents;
-  // A press on a candidate's mark shows its Plan; any other press does nothing.
+  // A press on a candidate's mark shows its Plan, and one on the Avatar of a Friend not in the conditions adds the
+  // Friend; any other press does nothing.
   onPress: (id: string) => void;
+}
+
+const FRIEND = cardId.friend('');
+
+// A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
+function addOnPress({ answer, change }: ShownAnswer, id: string): void {
+  if (answer === null || !id.startsWith(FRIEND)) {
+    return;
+  }
+  const userId = id.slice(FRIEND.length);
+  if (!answer.input.people.some((person) => person.userId === userId)) {
+    change(withPerson(answer.input, userId));
+  }
 }
 
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the
@@ -149,7 +164,9 @@ export function useAnswerMap(
     },
     onPress: (id) => {
       const planId = things.find((thing) => thing.id === id)?.planId ?? null;
-      if (planId !== null) {
+      if (planId === null) {
+        addOnPress(shown, id);
+      } else {
         show(planId);
       }
     },

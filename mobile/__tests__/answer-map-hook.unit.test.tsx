@@ -72,6 +72,11 @@ function shownAt(index: number): ShownAnswer {
     show: nothing,
     basisOpen: false,
     toggleBasis: nothing,
+    source: MEAL_ANSWER,
+    recalculating: false,
+    change: nothing,
+    ghost: null,
+    undo: nothing,
   };
 }
 

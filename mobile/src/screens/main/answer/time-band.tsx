@@ -44,6 +44,11 @@ interface Moved {
 const LANE_HEIGHT = 20;
 const BAR_HEIGHT = 8;
 const HANDLE_WIDTH = 16;
+// A handle takes a touch this wide, and its drag begins only on a sideways move, so that the card still scrolls over
+// the band.
+const HANDLE_TOUCH = 44;
+const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
+const PAN_STARTS = 10;
 const NAME_WIDTH = 40;
 
 function percent(share: number): DimensionValue {
@@ -78,6 +83,9 @@ function Handle({ bound, band, shown, trackWidth, focused, disabled, onMove, onL
       .withTestId(`time-band-${bound}`)
       .runOnJS(true)
       .enabled(!disabled && trackWidth > 0)
+      .hitSlop({ left: HANDLE_SLOP, right: HANDLE_SLOP })
+      .activeOffsetX([-PAN_STARTS, PAN_STARTS])
+      .failOffsetY([-PAN_STARTS, PAN_STARTS])
       .onUpdate(({ translationX }) => {
         onMove(at(translationX));
       })
