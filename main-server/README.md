@@ -2156,6 +2156,15 @@ its model through OpenRouter with the Vercel AI SDK
   apply. It holds nothing live: the phone fills it from the library. It is attached only when the request carries
   `"clientCapabilities": ["library"]` beside `messages`.
 
+  Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
+  not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
+  `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
+  `conditions` (the `PlanInput` of the answer on screen) and `planId` (the plan on screen). Every tool reads it. An app
+  that sends `"clientCapabilities": ["answer"]` draws an answer on the map. The reply always carries `answer`, `null`
+  when there is none: the plans of a meal with their places, times, members, map scene and time band, the condition
+  chips, the dropped places and the `input` to send back changed to recalculate. The full shape of both is in
+  `src/assistant/dto/answer.dto.ts`.
+
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
     (`quest` or `globalEvent` by id, `restaurant` and `library` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
@@ -2163,8 +2172,9 @@ its model through OpenRouter with the Vercel AI SDK
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
-    than one Proposal, or messages over 24,000 characters together, a Proposal's title, description and names included
-    (`dto/assistant-messages.dto.ts`).
+    than one Proposal, messages over 24,000 characters together, a Proposal's title, description and names included,
+    or a `context` of another shape, such as a latitude out of range or more than 8 people
+    (`dto/assistant-messages.dto.ts`, `dto/answer.dto.ts`).
   - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
     (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
   - **The reply's text** is the text of the model's steps in order, a step that repeats the one before it left out,
@@ -2304,6 +2314,13 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       Restaurants. It can answer `needs` as `findFreeTimeEvents` does. A Friend's item without a Place only leaves out
       that side's travel.
     - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
+    - `planMeal(date, meal, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
+      `PLAN_RULES` that of the meal part of the 공강 rules, for an app that sends `answer` (`gathering/`). It plans the
+      meal on the map: `MealPlanService` reads each person's day, the asker's location from the request context and a
+      Friend's position only as the asker's map shows it, computes the plans and words them, and the tool puts them in
+      the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting and each
+      person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names
+      or rooms.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.

@@ -1,0 +1,137 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { type Position } from '../../common/geometry.js';
+import { type FriendDto } from '../../friends/dto/friends.dto.js';
+import { FriendsService } from '../../friends/friends.service.js';
+import { LocationSharingService } from '../../location-sharing/location-sharing.service.js';
+import { MenusService } from '../../menus/menus.service.js';
+import { RestaurantPlaces } from '../../menus/restaurant-places.js';
+import { type PlaceDto } from '../../places/dto/place.dto.js';
+import { PlaceLookup } from '../../places/place-lookup.js';
+import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
+import { UsersService } from '../../users/users.service.js';
+import { type AnswerReply, type PlanInput } from '../dto/answer.dto.js';
+import { freeTimeOf } from '../free-time/free-time.js';
+import { mealWindow } from '../free-time/meal-fit.js';
+import { openRestaurants } from '../free-time/meal-tools.js';
+import { UserDayService } from '../free-time/user-day.service.js';
+import { gather, type GatheringMember } from './gathering.js';
+import { type AnswerPerson, mealAnswer } from './meal-answer.js';
+
+const MINUTE_MS = 60 * 1000;
+
+// The one place that gathers what a meal's plan needs: the tool, the recalculation and the making of a party call it,
+// so that the three agree.
+@Injectable()
+export class MealPlanService {
+  constructor(
+    private readonly days: UserDayService,
+    private readonly friends: FriendsService,
+    private readonly users: UsersService,
+    private readonly menus: MenusService,
+    private readonly restaurantPlaces: RestaurantPlaces,
+    private readonly places: PlaceLookup,
+    private readonly locations: LocationSharingService,
+    @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
+  ) {}
+
+  async plan(askerId: string, input: PlanInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
+    const friends = await this.friendsOf(askerId, input);
+    const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
+    const { date, meal } = input;
+    const [people, collected] = await Promise.all([
+      this.peopleOf(askerId, friends, date, at.location),
+      this.menus.findByDate(date),
+    ]);
+    const [askerMember, ...friendMembers] = people.map(({ userId, items, position }): GatheringMember => ({
+      id: userId,
+      free: freeTimeOf(items, date, now),
+      locationPlaceId: this.placeIdAt(position),
+    }));
+    if (askerMember === undefined) {
+      throw new Error('A plan has its asker');
+    }
+    const candidates = openRestaurants(collected, meal, this.restaurantPlaces).map(({ key, place }) => ({
+      key,
+      placeId: place.id,
+    }));
+    const when = { window: mealWindow(date, meal), now };
+    const gathering = gather([askerMember, ...friendMembers], candidates, when, this.travel);
+    const aloneMinutes =
+      friendMembers.length === 0
+        ? null
+        : (gather([askerMember], candidates, when, this.travel).fits[0]?.togetherMinutes ?? null);
+    return mealAnswer({
+      input,
+      now,
+      people,
+      gathering,
+      aloneMinutes,
+      menusCollected: collected.length > 0,
+      placeOf: (placeId) => this.placeOf(placeId),
+    });
+  }
+
+  // The Friends of the plan, in its order, refusing a plan that does not start with the asker or names anyone else.
+  private async friendsOf(askerId: string, input: PlanInput): Promise<FriendDto[]> {
+    const [first, ...others] = input.people;
+    if (first?.userId !== askerId) {
+      throw new BadRequestException('The first person of a plan is the asker');
+    }
+    const listed = await this.friends.listFriends(askerId);
+    return others.map(({ userId }) => {
+      const friend = listed.find(({ id }) => id === userId);
+      if (friend === undefined) {
+        throw new BadRequestException("Only the asker's Friends can be in a plan");
+      }
+      return friend;
+    });
+  }
+
+  private async peopleOf(
+    askerId: string,
+    friends: readonly FriendDto[],
+    date: string,
+    location: Position | null,
+  ): Promise<[AnswerPerson, ...AnswerPerson[]]> {
+    const [asker, positions, mine, ...theirs] = await Promise.all([
+      this.users.findById(askerId),
+      this.friendPositions(askerId),
+      this.days.itemsOn(askerId, date),
+      ...friends.map(({ id }) => this.days.itemsOn(id, date)),
+    ]);
+    return [
+      { userId: askerId, name: asker.name, me: true, items: mine, position: location },
+      ...friends.map(({ id, name }, index) => ({
+        userId: id,
+        name,
+        me: false,
+        items: theirs[index] ?? [],
+        position: positions.get(id) ?? null,
+      })),
+    ];
+  }
+
+  // The only place the Assistant reads a Friend's position: what the asker's map shows of them.
+  private async friendPositions(askerId: string): Promise<Map<string, Position>> {
+    const positions = await this.locations.visiblePositions(askerId);
+    return new Map(positions.map(({ userId, latitude, longitude }) => [userId, { latitude, longitude }]));
+  }
+
+  private placeIdAt(position: Position | null): string | null {
+    return position === null ? null : (this.places.at(position)?.place.id ?? null);
+  }
+
+  private placeOf(placeId: string): PlaceDto {
+    const place = this.places.byId(placeId);
+    if (place === null) {
+      throw new Error(`No Place ${placeId}`);
+    }
+    return place;
+  }
+}

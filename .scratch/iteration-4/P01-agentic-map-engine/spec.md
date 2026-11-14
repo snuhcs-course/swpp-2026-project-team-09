@@ -159,9 +159,10 @@ A pure module: it takes the people, the candidate places, the meal's window, the
   4. Otherwise the position is unknown. No walk is counted for that person and no route is drawn; only their next item limits the plan.
 - **Minutes.** A walk is the walking table's seconds between two Places, rounded up to whole minutes for each leg. Every time is a whole minute, so that the times shown add up. A walk inside one Place is 0 minutes. Only walking is counted.
 - **Arrival.** The time a person is ready, plus the walk.
-- **The merging point.** A Friend whose way to the Restaurant passes the asker's starting Place meets the asker there: going by that Place takes the Friend at most one minute longer than going straight. They set out together once the last of them is there, and walk the rest together. There is no merging point when the Restaurant stands at the asker's or at that Friend's starting Place, and never one between two Friends.
+- **The merging point.** A Friend whose way to the Restaurant passes the asker's starting Place meets the asker there: going by that Place takes the Friend at most one minute longer than going straight. They walk the rest together, and can arrive once the last of them has reached the merging point. There is no merging point when the Restaurant stands at the asker's or at that Friend's starting Place, and never one between two Friends.
 - **Leave-by.** The start of a person's next item, minus the walk from the Restaurant to its Place. An item without a Place is reached at its start. A person with nothing after has none.
 - **Together.** From the latest arrival, not before the meal's window opens, to the earliest leave-by, not after the window closes. A Restaurant fits when that is at least 15 minutes.
+- **Setting out.** Everyone sets out as late as still has them at the Restaurant when the time together starts, and the merging point's time follows from that.
 - **Order.** The longest time together first, then the earlier start, then the Restaurant's name.
 - **Dropped.** An open Restaurant that does not fit is returned with the person who limits it most and the minutes they would have.
 - **Candidates.** The Restaurants that have a Place and are open for the meal that day.

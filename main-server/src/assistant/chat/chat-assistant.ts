@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendsService } from '../../friends/friends.service.js';
@@ -15,11 +16,13 @@ import { MenusService } from '../../menus/menus.service.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
-import { type Feature } from '../feature.js';
-import { FREE_TIME_RULES } from '../free-time/free-time-rules.js';
+import { type Feature, type Tool } from '../feature.js';
+import { FREE_TIME_EVENT_RULES, FREE_TIME_RULES } from '../free-time/free-time-rules.js';
 import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
+import { type MealPlanService } from '../gathering/meal-plan.service.js';
+import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { koreaNow } from '../korea-time.js';
 import { LIBRARY_RULES } from '../library/library-rules.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
@@ -50,10 +53,16 @@ export interface ChatAssistantServices {
   freeTime: FreeTimeServices;
   library: LibraryServices;
   tutorial: TutorialService;
+  mealPlans: MealPlanService;
 }
 
-function instructions(now: Date): string {
-  return [chatRules(now), FREE_TIME_RULES, LIBRARY_RULES, TUTORIAL_RULES].join('\n\n');
+export interface ChatAssistantOptions {
+  // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards.
+  drawsAnswers: boolean;
+}
+
+function instructionsOf(freeTimeRules: readonly string[]): (now: Date) => string {
+  return (now) => [chatRules(now), ...freeTimeRules, LIBRARY_RULES, TUTORIAL_RULES].join('\n\n');
 }
 
 function chatRules(now: Date): string {
@@ -96,21 +105,29 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
 }
 
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
-export function chatAssistant({
-  menus,
-  shuttle,
-  globalEvents,
-  recruiting,
-  friends,
-  places,
-  freeTime,
-  library,
-  tutorial,
-}: ChatAssistantServices): Feature {
+export function chatAssistant(
+  {
+    menus,
+    shuttle,
+    globalEvents,
+    recruiting,
+    friends,
+    places,
+    freeTime,
+    library,
+    tutorial,
+    mealPlans,
+  }: ChatAssistantServices,
+  options?: ChatAssistantOptions,
+): Feature {
+  const drawsAnswers = options?.drawsAnswers ?? false;
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
+  const meal: Record<string, Tool> = drawsAnswers
+    ? { planMeal: planMeal(mealPlans) }
+    : { findMealRestaurants, showRestaurants };
   return {
-    instructions,
+    instructions: instructionsOf(drawsAnswers ? [FREE_TIME_EVENT_RULES, PLAN_RULES] : [FREE_TIME_RULES]),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
       getMenus: getMenus(menus),
@@ -127,8 +144,7 @@ export function chatAssistant({
       getMyDay,
       findFreeTimeEvents,
       findFreeFriends,
-      findMealRestaurants,
-      showRestaurants,
+      ...meal,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
       // showLibrarySeats and showMyLibraryBookings.
       ...libraryTools(library),

@@ -7,6 +7,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -45,9 +46,11 @@ import {
   type RunObserver,
 } from './adapter.js';
 import { chatAssistant } from './chat/chat-assistant.js';
+import { NO_CONTEXT, type RequestContext } from './dto/answer.dto.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
 import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
+import { MealPlanService } from './gathering/meal-plan.service.js';
 import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
@@ -63,6 +66,8 @@ const COUNT_LIFETIME_SECONDS = 2 * 24 * 60 * 60;
 export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
   private readonly chat: Feature;
+  // The same chat for an app that draws answers on the map.
+  private readonly answerChat: Feature;
   private readonly keyConfigured: boolean;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
@@ -87,10 +92,11 @@ export class AssistantService {
     quests: QuestsService,
     users: UsersService,
     tutorial: TutorialService,
+    mealPlans: MealPlanService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
-    this.chat = chatAssistant({
+    const services = {
       menus,
       shuttle,
       globalEvents,
@@ -107,14 +113,13 @@ export class AssistantService {
         enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
       },
       tutorial,
-    });
+      mealPlans,
+    };
+    this.chat = chatAssistant(services);
+    this.answerChat = chatAssistant(services, { drawsAnswers: true });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
-    this.limits = {
-      maxSteps: settings.get('ASSISTANT_MAX_STEPS', { infer: true }),
-      timeoutMs: settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }),
-      maxOutputTokens: settings.get('ASSISTANT_MAX_OUTPUT_TOKENS', { infer: true }),
-    };
+    this.limits = limitsOf(settings);
   }
 
   // The reply, or one error reply whatever failed: 503 when the Assistant cannot answer, 429 once the User's messages
@@ -123,6 +128,7 @@ export class AssistantService {
     userId: string,
     messages: readonly ChatMessage[],
     capabilities: readonly ClientCapability[] = [],
+    context: RequestContext = NO_CONTEXT,
   ): Promise<AssistantReplyDto> {
     if (!this.keyConfigured) {
       this.logger.warn('The Assistant did not answer: no OpenRouter key is configured');
@@ -138,8 +144,8 @@ export class AssistantService {
     try {
       const reply = await runFeature(
         this.model,
-        this.chat,
-        { userId, now, capabilities },
+        capabilities.includes('answer') ? this.answerChat : this.chat,
+        { userId, now, capabilities, context },
         latest,
         this.limits,
         this.observer,
@@ -147,7 +153,8 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      return { text: reply.text, mapButtons: reply.mapButtons, cards: reply.cards, proposal: reply.proposal };
+      const { text, mapButtons, cards, proposal, answer } = reply;
+      return { text, mapButtons, cards, proposal, answer };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
@@ -161,6 +168,14 @@ export class AssistantService {
     await this.redis.expire(key, COUNT_LIFETIME_SECONDS);
     return sent;
   }
+}
+
+function limitsOf(settings: ConfigService<Settings, true>): RunLimits {
+  return {
+    maxSteps: settings.get('ASSISTANT_MAX_STEPS', { infer: true }),
+    timeoutMs: settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }),
+    maxOutputTokens: settings.get('ASSISTANT_MAX_OUTPUT_TOKENS', { infer: true }),
+  };
 }
 
 // That a reply had no text of the model's: how many things it showed, never what they were.
