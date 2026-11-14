@@ -3,13 +3,13 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import type { ReactElement } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Chip, color, font, Icon, IconButton, SearchField, size, space } from '@/design-system';
+import { Chip, color, IconButton, SearchField, size, space } from '@/design-system';
 import type { EventFilter } from '@/features/events/adapter';
 
 // The 행사 tab's app bar and filters, as the `Events` frame draws them.
@@ -20,27 +20,6 @@ const FILTERS: readonly { key: EventFilter; label: string }[] = [
   { key: 'week', label: '이번 주' },
   { key: 'recruiting', label: '파티 모집 중' },
 ];
-
-// The sparkle that opens the AI 매칭 신청 list, with a navy count of the waiting requests.
-export function MatchingButton({ count }: { count: number }): ReactElement {
-  return (
-    <Pressable
-      accessibilityLabel={count === 0 ? 'AI 매칭 신청 내역' : `AI 매칭 신청 내역 ${count}건`}
-      accessibilityRole="button"
-      onPress={() => {
-        router.push('/matching');
-      }}
-      style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-    >
-      <Icon color={color.ink} name="sparkle" size={22} />
-      {count === 0 ? null : (
-        <View style={styles.count}>
-          <Text style={styles.countWords}>{count}</Text>
-        </View>
-      )}
-    </Pressable>
-  );
-}
 
 interface SearchBarProps {
   search: string;
@@ -103,21 +82,6 @@ const styles = StyleSheet.create({
     paddingLeft: space[4],
   },
   field: { flex: 1 },
-  iconButton: { alignItems: 'center', justifyContent: 'center', width: size.touchMin, height: size.touchMin },
-  pressed: { backgroundColor: color.surfaceSunken, borderRadius: size.touchMin / 2 },
-  count: {
-    position: 'absolute',
-    top: 6,
-    right: 4,
-    minWidth: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    borderRadius: 9,
-    backgroundColor: color.snuBlue,
-  },
-  countWords: { fontFamily: font.bold, fontSize: 11, lineHeight: 14, color: color.onPrimary },
   // The room above and below the chips is padding on the scroller, as in `ChipRow`, so that Android keeps it.
   filtersScroll: { flexGrow: 0, paddingVertical: space[3] },
   filters: { alignItems: 'center', gap: space[2], paddingHorizontal: space[4] },

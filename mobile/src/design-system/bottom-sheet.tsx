@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -17,7 +18,7 @@ import { useSlide } from './use-slide';
 interface BottomSheetProps {
   open: boolean;
   onClose: () => void;
-  // The sheet's name, such as "AI 매칭": the scrim is read as "AI 매칭 닫기".
+  // The sheet's name, such as "파티 찾기": the scrim is read as "파티 찾기 닫기".
   label: string;
   children: ReactNode;
 }

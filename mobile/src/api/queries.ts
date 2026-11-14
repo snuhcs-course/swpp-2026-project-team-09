@@ -11,6 +11,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -162,10 +163,6 @@ export function eventRecruitingQuery(
 export const myJoinRequestsQuery = queryOptions({
   queryKey: MY_JOIN_REQUESTS_KEY,
   queryFn: () => apiClient.listMyJoinRequests(),
-});
-export const matchingRequestsQuery = queryOptions({
-  queryKey: MATCHING_REQUESTS_KEY,
-  queryFn: () => apiClient.listMatchingRequests(),
 });
 // The User's tags, and the mocked parts of 찾기 (`./quest-parts/`).
 export const myTagsQuery = queryOptions({ queryKey: MY_TAGS_KEY, queryFn: () => apiClient.listMyTags() });
