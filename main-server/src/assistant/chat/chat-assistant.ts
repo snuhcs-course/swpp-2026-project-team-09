@@ -27,6 +27,8 @@ import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { koreaNow } from '../korea-time.js';
 import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
+import { type MenuLookupService } from '../lookup/menu.service.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { type WayService } from '../lookup/way.service.js';
 import { DELIMITER } from '../others-text.js';
@@ -58,11 +60,12 @@ export interface ChatAssistantServices {
   tutorial: TutorialService;
   mealPlans: MealPlanService;
   ways: WayService;
+  menuLookups: MenuLookupService;
 }
 
 export interface ChatAssistantOptions {
   // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards, and a way to a
-  // Place is drawn there.
+  // Place and a Restaurant's menu are drawn there.
   drawsAnswers: boolean;
 }
 
@@ -123,6 +126,7 @@ export function chatAssistant(
     tutorial,
     mealPlans,
     ways,
+    menuLookups,
   }: ChatAssistantServices,
   options?: ChatAssistantOptions,
 ): Feature {
@@ -130,11 +134,11 @@ export function chatAssistant(
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const answers: Record<string, Tool> = drawsAnswers
-    ? { planMeal: planMeal(mealPlans), findWay: findWay(ways) }
+    ? { planMeal: planMeal(mealPlans), findWay: findWay(ways), findMenu: findMenu(menuLookups) }
     : { findMealRestaurants, showRestaurants };
   return {
     instructions: drawsAnswers
-      ? instructionsOf([FREE_TIME_EVENT_RULES, PLAN_RULES, WAY_RULES], LIBRARY_ANSWER_RULES)
+      ? instructionsOf([FREE_TIME_EVENT_RULES, PLAN_RULES, WAY_RULES, MENU_RULES], LIBRARY_ANSWER_RULES)
       : instructionsOf([FREE_TIME_RULES], LIBRARY_RULES),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {

@@ -55,6 +55,7 @@ import { MealPlanService } from './gathering/meal-plan.service.js';
 import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
+import { MenuLookupService } from './lookup/menu.service.js';
 import { WayService } from './lookup/way.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
@@ -96,6 +97,7 @@ export class AssistantService {
     tutorial: TutorialService,
     mealPlans: MealPlanService,
     ways: WayService,
+    menuLookups: MenuLookupService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -112,6 +114,7 @@ export class AssistantService {
       tutorial,
       mealPlans,
       ways,
+      menuLookups,
     };
     this.chat = chatAssistant(services);
     this.answerChat = chatAssistant(services, { drawsAnswers: true });

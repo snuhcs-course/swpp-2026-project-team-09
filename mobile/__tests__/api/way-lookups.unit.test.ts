@@ -4,16 +4,22 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { MENU_LOOKUP } from '@/api/mock/data/menu-lookup';
 import { WAY_LOOKUP } from '@/api/mock/data/way-lookup';
 import { isLookup } from '@/api/server/plan-answers';
 
 const { chips: _chips, ...withoutChips } = WAY_LOOKUP;
 
-// The app's check of a reply's Lookup, on the stored copy of the main server's Lookup for "문화관이 어디야?" (board
-// q1). Expected values: the stored reply, and copies of it with one part broken.
+// The app's check of a reply's Lookup, on the stored copies of the main server's Lookups for "문화관이 어디야?" (board
+// q1) and "오늘 301동식당 메뉴 뭐야?" (board q8). Expected values: the stored replies, and copies of one with one part
+// broken.
 describe('the check of a Lookup', () => {
   it('passes the stored copy of a real Lookup', () => {
     expect(isLookup(WAY_LOOKUP)).toBe(true);
+  });
+
+  it('passes the stored copy of a real menu Lookup, with its time band', () => {
+    expect(isLookup(MENU_LOOKUP)).toBe(true);
   });
 
   it('passes a Lookup with a time band and a leave-by notification', () => {
