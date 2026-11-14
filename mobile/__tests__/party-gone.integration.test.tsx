@@ -125,6 +125,17 @@ describe('a 파티 that leaves the list on another tab', () => {
     expect(toastWords()).toBe(GONE);
   });
 
+  it('is told when the main server could not say whether the User still holds it', async () => {
+    await openMain();
+    await connect();
+
+    server.on('GET /quests', { status: 200, body: [DINNER] });
+    server.on(`GET /quests/${PICNIC.id}`, refusal(500));
+    await questsChanged();
+
+    expect(toastWords()).toBe(GONE);
+  });
+
   it('is not told when the Quest only left the list because all its Sub Quests ended', async () => {
     await openMain();
     await connect();

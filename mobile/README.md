@@ -905,7 +905,7 @@ It reads the Quest (`GET /quests/:questId`), the User's Party and the listed Par
 feature, `room-adapter.ts`), and closes once the main server no longer answers the Quest, after a removal, a drop on
 another phone or the Leader's end. `GoneQuestsWatch` (`src/features/quests/gone-watch.tsx`), in the signed-in layout,
 tells it on whatever screen is shown: a Quest that was in `GET /quests` and is not when the list comes again, and that
-`GET /quests/:questId` refuses with `QUEST_NOT_FOUND`, says "{title} 파티에서 빠졌어요" once. A Quest that only left the
+`GET /quests/:questId` no longer answers (`QUEST_NOT_FOUND`, or no answer at all), says "{title} 파티에서 빠졌어요" once. A Quest that only left the
 list because all its Sub Quests ended, a Class Quest, and the User's own 나가기 or 파티 없애기 on this phone, which
 mark the Quest while they run, are not told; nor is what happened before the app started. From the top:
 

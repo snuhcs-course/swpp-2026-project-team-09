@@ -7,7 +7,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { apiClient } from '@/api/client';
-import { isRefusal } from '@/api/errors';
 import { questsQuery } from '@/api/queries';
 import { useToast } from '@/design-system';
 
@@ -26,18 +25,18 @@ export async function leavingOnPurpose(questId: string, leave: () => Promise<boo
   return left;
 }
 
-// A Quest also leaves the list once all its Sub Quests ended. Only a Quest the main server no longer lets the User
-// read, as the room tells it, was removed or ended by its Leader.
+// A Quest also leaves the list once all its Sub Quests ended, and the main server still lets the User read it. Any
+// other answer, the room's `QUEST_NOT_FOUND` or no answer at all, is told: the list has moved past the Quest, so a
+// toast lost here would never come.
 async function tellIfGone(questId: string, title: string, showToast: (words: string) => void): Promise<void> {
-  if (leaving.delete(questId)) {
+  if (leaving.has(questId)) {
+    leaving.delete(questId);
     return;
   }
   try {
     await apiClient.getQuest(questId);
-  } catch (error) {
-    if (isRefusal(error, 404, 'QUEST_NOT_FOUND')) {
-      showToast(`${title} 파티에서 빠졌어요`);
-    }
+  } catch {
+    showToast(`${title} 파티에서 빠졌어요`);
   }
 }
 

@@ -19,12 +19,12 @@ import {
   QUESTS_KEY,
   SENT_INVITATIONS_KEY,
 } from '@/api/queries';
-import { leavingOnPurpose } from '@/features/quests/gone-watch';
 import type { SubQuestContent } from '@/api/room-types';
 import type { MyParty, Quest, SubQuest } from '@/api/types';
 import type { JoinRequest } from '@/api/waiting-types';
 import { useToast } from '@/design-system';
 import { useDeclineParty } from '@/features/parties/declined';
+import { leavingOnPurpose } from '@/features/quests/gone-watch';
 import { refusalWords } from '@/features/quests/refusals';
 import type { MemberView } from '@/features/quests/room-adapter';
 
