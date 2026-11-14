@@ -9,17 +9,25 @@
 import { Injectable } from '@nestjs/common';
 import { koreaTime } from '../assistant/korea-time.js';
 import { SignalsService } from '../common/signals.service.js';
+import { type Notification } from '../generated/prisma/client.js';
 import { type Card, cardAddress } from './card-address.js';
 import { type NotificationDto } from './dto/notification.dto.js';
-import { identityOf, type KeptNotification, type NotificationKind, type Told } from './notification.js';
-import { NotificationStore } from './notification-store.js';
+import { identityOf, type NotificationKind, type Told } from './notification.js';
+import { type Kept, NotificationStore } from './notification-store.js';
 import { wordsOf } from './notification-words.js';
 
-function kept(told: Told, at: Date): { identity: string; notification: KeptNotification } {
-  const { about, ...words } = wordsOf(told, at);
+const KINDS: ReadonlySet<string> = new Set<NotificationKind>(['accepted', 'declined', 'leave-by']);
+
+function kept(told: Told, at: Date): Kept {
+  const words = wordsOf(told, at);
   // A card no address opens is refused before it is kept: every later reading of the User's list would fail on it.
   cardAddress(words.card);
-  return { identity: identityOf(told.kind, words.card, about), notification: { kind: told.kind, at, ...words } };
+  return { kind: told.kind, at, ...words };
+}
+
+// A row of a kind this version does not know, such as one a later version kept, is left out of the list.
+function isKnown(row: Notification): row is Notification & { kind: NotificationKind } {
+  return KINDS.has(row.kind);
 }
 
 // The one place that keeps a Notification, writes its words and gives it its address. The caller gives the time.
@@ -31,15 +39,13 @@ export class NotificationsService {
   ) {}
 
   async schedule(userId: string, told: Told, at: Date): Promise<void> {
-    const { identity, notification } = kept(told, at);
-    await this.store.keep(userId, identity, notification);
+    await this.store.keep(userId, kept(told, at));
     this.signals.send([userId], 'notice');
   }
 
   // Only when one is kept under the same identity.
   async replace(userId: string, told: Told, at: Date): Promise<boolean> {
-    const { identity, notification } = kept(told, at);
-    const replaced = await this.store.replace(userId, identity, notification);
+    const replaced = await this.store.replace(userId, kept(told, at));
     if (replaced) {
       this.signals.send([userId], 'notice');
     }
@@ -48,19 +54,24 @@ export class NotificationsService {
 
   // `about` names the person of a kind that is kept for each one, such as the Friend who answered.
   async cancel(userId: string, kind: NotificationKind, card: Card, about: string | null = null): Promise<void> {
-    await this.store.forget(userId, identityOf(kind, card, about));
+    await this.store.forget(userId, kind, card, about);
     this.signals.send([userId], 'notice');
   }
 
   async listFor(userId: string): Promise<NotificationDto[]> {
-    return (await this.store.readAll(userId)).map(({ identity, kind, title, ahead, line, at, card }) => ({
-      id: identity,
-      kind,
-      title,
-      ahead,
-      line,
-      at: koreaTime(at),
-      url: cardAddress(card),
-    }));
+    return (await this.store.readAll(userId))
+      .filter((row) => isKnown(row))
+      .map((row) => {
+        const card = { kind: row.cardKind, id: row.cardId };
+        return {
+          id: identityOf(row.kind, card, row.about === '' ? null : row.about),
+          kind: row.kind,
+          title: row.title,
+          ahead: row.ahead,
+          line: row.line,
+          at: koreaTime(row.at),
+          url: cardAddress(card),
+        };
+      });
   }
 }

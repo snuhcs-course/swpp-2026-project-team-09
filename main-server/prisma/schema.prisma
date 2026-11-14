@@ -22,6 +22,7 @@
 // 2026-11-02  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-05  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-14  Opus 5.5   prompted by TaeHyun79
+// 2026-11-15  Opus 5.5   prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -82,6 +83,7 @@ model User {
   roomRequests      RoomRequest[]
   roomConsents      RoomConsent[]
   roomNotices       RoomNotice[]
+  notifications     Notification[]
 
   @@map("users")
 }
@@ -214,6 +216,32 @@ model PushToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("push_tokens")
+}
+
+// One thing told to one User (README.md: Notifications). The words are written when it is scheduled.
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  cardKind  String    @map("card_kind")
+  cardId    String    @map("card_id")
+  // The person it is about, or '' for nobody: NULLs would not collide in the unique key.
+  about     String    @default("")
+  at        DateTime  @db.Timestamptz(3)
+  title     String
+  ahead     String?
+  line      String
+  // The push's body. Null for a kind that rings no phone.
+  body      String?
+  rings     Boolean
+  sentAt    DateTime? @map("sent_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@unique([userId, kind, cardKind, cardId, about])
+  @@index([userId, at])
+  @@index([sentAt, at])
+  @@map("notifications")
 }
 
 // A team member who signs in to the admin site. Not a User, even when the same person also uses the app.

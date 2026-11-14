@@ -21,29 +21,36 @@ describe('The words of an answer to an invitation', () => {
     ['accepted', '지은', '지은이 수락했어요'],
     ['declined', '민수', '민수가 못 온대요'],
     ['declined', '지은', '지은이 못 온대요'],
-  ] as const)('%s by %s reads "%s", under the Quest’s title, on the party’s card', (kind, friendName, title) => {
-    expect(
-      wordsOf({ kind, questId: QUEST_ID, questTitle: '저녁 같이', friendId: FRIEND_ID, friendName }, AT),
-    ).toEqual({
-      title,
-      ahead: null,
-      line: '저녁 같이',
-      card: { kind: 'party', id: QUEST_ID },
-      about: FRIEND_ID,
-    });
-  });
+  ] as const)(
+    '%s by %s reads "%s", under the Quest’s title, on the party’s card, ringing no phone',
+    (kind, friendName, title) => {
+      expect(
+        wordsOf({ kind, questId: QUEST_ID, questTitle: '저녁 같이', friendId: FRIEND_ID, friendName }, AT),
+      ).toEqual({
+        title,
+        ahead: null,
+        line: '저녁 같이',
+        card: { kind: 'party', id: QUEST_ID },
+        about: FRIEND_ID,
+        rings: false,
+        body: null,
+      });
+    },
+  );
 });
 
 describe('The words of the time to leave', () => {
   const leaveBy = { kind: 'leave-by', questId: QUEST_ID, placeLabel: '학생회관식당', walkMinutes: 15 } as const;
 
-  it('reads "지금 나서요" once the time has come and the time in Korea before it, with the walk under it', () => {
+  it('reads "지금 나서요" once the time has come and the time in Korea before it, with the walk under it, and rings', () => {
     expect(wordsOf(leaveBy, AT)).toEqual({
       title: '지금 나서요',
       ahead: '12:18 나설 시각',
       line: '학생회관식당까지 걸어서 15분',
       card: { kind: 'party', id: QUEST_ID },
       about: null,
+      rings: true,
+      body: '학생회관식당까지 걸어서 15분이에요.',
     });
   });
 

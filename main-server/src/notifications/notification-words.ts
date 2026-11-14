@@ -21,6 +21,8 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       line: `${told.placeLabel}까지 걸어서 ${String(told.walkMinutes)}분`,
       card: { kind: 'party', id: told.questId },
       about: null,
+      rings: true,
+      body: `${told.placeLabel}까지 걸어서 ${String(told.walkMinutes)}분이에요.`,
     };
   }
   return {
@@ -29,5 +31,7 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
     line: told.questTitle,
     card: { kind: 'party', id: told.questId },
     about: told.friendId,
+    rings: false,
+    body: null,
   };
 }
