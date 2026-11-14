@@ -5,9 +5,11 @@
  ******************************************************************************/
 
 import { Logger } from '@nestjs/common';
+import request from 'supertest';
 import { inject } from 'vitest';
 import { type TestUser } from './friends.js';
 import { LONG_KEY, ROOM_LABEL, RoomStage } from './room-requests.js';
+import { withAccessToken } from './sign-in.js';
 
 // A study room's plan stays when a companion declines: the booker is told who cannot come and how many more the room
 // needs, asks one more Friend, and is told when everyone left agreed and, once booked, when the room ends.
@@ -75,6 +77,23 @@ describe('A companion declining a request of four people for the six-person room
         url: `/main?card=party:${questId}`,
       }),
     ]);
+  });
+});
+
+describe('A companion declining the booking party’s invitation', () => {
+  it('tells the booker once, as the request’s companion', async () => {
+    const [yusang, minsu, jieun, seojun] = await fivePeople();
+    const { questId } = await stage.made(yusang, [minsu, jieun, seojun], LONG_KEY);
+    const invitationId = await stage.invitationOf(jieun);
+    await withAccessToken(
+      request(stage.app.getHttpServer()).post(`/quest-invitations/${invitationId}/decline`),
+      jieun.accessToken,
+    ).expect(204);
+
+    expect(await stage.notificationsOf(yusang, 'room-declined')).toEqual([
+      expect.objectContaining({ title: '지은이 못 온대요', url: `/main?card=party:${questId}` }),
+    ]);
+    expect((await stage.notifications(yusang)).map(({ kind }) => kind)).not.toContain('declined');
   });
 });
 

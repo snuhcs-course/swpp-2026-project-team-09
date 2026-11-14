@@ -7,6 +7,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -168,13 +169,19 @@ export class InvitationsService {
       throw invitationNotFound();
     }
     this.signals.send([userId, invitation.quest.leaderId], 'quests-changed');
-    this.tellLeader(invitation.quest.leaderId, {
-      kind: 'declined',
-      questId: invitation.questId,
-      questTitle: invitation.quest.title,
-      friendId: userId,
-      friendName: invitation.user.name,
+    // The booker of a room request made with this party hears of it from the request, with the room's count.
+    const forRoom = await this.prisma.roomRequest.count({
+      where: { questId: invitation.questId, madeForBooking: true, status: { in: ['gathering', 'ready'] } },
     });
+    if (forRoom === 0) {
+      this.tellLeader(invitation.quest.leaderId, {
+        kind: 'declined',
+        questId: invitation.questId,
+        questTitle: invitation.quest.title,
+        friendId: userId,
+        friendName: invitation.user.name,
+      });
+    }
     await this.roomRequests.questChanged(invitation.questId);
   }
 
