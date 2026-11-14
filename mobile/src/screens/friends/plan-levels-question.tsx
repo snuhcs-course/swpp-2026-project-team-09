@@ -5,11 +5,11 @@
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { onAskLevels } from '@/api/plan-asks';
 import type { AskLevel } from '@/api/plan-quest-types';
 import type { FriendLevel } from '@/api/types';
-import { BottomSheet, Button, Chip, color, space, text, useToast } from '@/design-system';
+import { BottomSheet, Button, color, Icon, radius, size, space, text, useToast } from '@/design-system';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { LevelTrack } from './level-track';
 import { NOT_CHANGED } from './use-levels';
@@ -21,8 +21,22 @@ const SEEN: Record<FriendLevel, string> = {
   exact: '정확한 위치까지',
 };
 
+// The same, as short as a name's cell holds.
+const SEEN_SHORT: Record<FriendLevel, string> = { timetable: '시간표만', building: '건물까지', exact: '정확한 위치' };
+
 // A Plan has at most seven Friends.
 const HOW_MANY = ['', '', '둘', '셋', '넷', '다섯', '여섯', '일곱'];
+
+const REMOVE_ICON = 14;
+const REMOVE_REACH = (size.touchMin - REMOVE_ICON - 4) / 2;
+
+// Two to a row, so that every cell has one width.
+function pairs(asks: readonly AskLevel[]): [AskLevel, ...AskLevel[]][] {
+  return asks.flatMap((ask, index) => {
+    const pair: [AskLevel, ...AskLevel[]] = [ask, ...asks.slice(index + 1, index + 2)];
+    return index % 2 === 0 ? [pair] : [];
+  });
+}
 
 const names = (asks: readonly AskLevel[]): string => asks.map(({ name }) => name).join(', ');
 
@@ -42,9 +56,32 @@ function nowLine(asks: readonly AskLevel[]): string {
 interface Asking {
   // The Friends the reply named, whom the question is recorded for.
   named: readonly AskLevel[];
-  // Those whose chips are left, whom a chosen level is set for.
+  // Those whose cells are left, whom a chosen level is set for.
   left: readonly AskLevel[];
   open: boolean;
+}
+
+// A Friend left in the question: the name, what they see now, and an × that leaves them as they are.
+function NameCell({ ask: { name, level }, onRemove }: { ask: AskLevel; onRemove: () => void }): ReactElement {
+  return (
+    <View style={styles.cell}>
+      <Text numberOfLines={1} style={styles.name}>
+        {name}
+      </Text>
+      <Text numberOfLines={1} style={styles.seen}>
+        {SEEN_SHORT[level]}
+      </Text>
+      <Pressable
+        accessibilityLabel={`${name} 삭제`}
+        accessibilityRole="button"
+        hitSlop={REMOVE_REACH}
+        onPress={onRemove}
+        style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
+      >
+        <Icon color={color.inkMuted} name="x" size={REMOVE_ICON} />
+      </Pressable>
+    </View>
+  );
 }
 
 interface SheetProps {
@@ -54,7 +91,7 @@ interface SheetProps {
   onFinish: (level: FriendLevel | null) => void;
 }
 
-// The question in the design's words: a removable chip for each name, and the three levels as cells of one width with
+// The question in the design's words: a removable cell for each name, and the three levels as cells of one width with
 // the current one chosen when every Friend left is at it.
 function PlanLevelsSheet({ asking: { named, left, open }, onRemove, onFinish }: SheetProps): ReactElement {
   const skip = (): void => {
@@ -68,17 +105,20 @@ function PlanLevelsSheet({ asking: { named, left, open }, onRemove, onFinish }: 
         <Text style={styles.kicker}>내 파티에 처음 들어왔어요</Text>
         <Text accessibilityRole="header" style={styles.title}>{`${names(left)}에게 평소에 어디까지 보일까요?`}</Text>
         <Text style={styles.words}>{`${nowLine(left)}${named.length > 1 ? ' 뺀 친구는 그대로 둬요.' : ''}`}</Text>
-        <View style={styles.chips}>
-          {left.map(({ userId, name }) => (
-            <Chip
-              key={userId}
-              onRemove={() => {
-                onRemove(userId);
-              }}
-              selected
-            >
-              {name}
-            </Chip>
+        <View style={styles.cells}>
+          {pairs(left).map((pair) => (
+            <View key={pair[0].userId} style={styles.pair}>
+              {pair.map((ask) => (
+                <NameCell
+                  ask={ask}
+                  key={ask.userId}
+                  onRemove={() => {
+                    onRemove(ask.userId);
+                  }}
+                />
+              ))}
+              {pair.length === 1 ? <View style={styles.spacer} /> : null}
+            </View>
           ))}
         </View>
         <LevelTrack label="평소에 보일 위치" level={chosen} onChoose={onFinish} />
@@ -146,6 +186,25 @@ const styles = StyleSheet.create({
   kicker: { ...text.caption, color: color.snuBlue },
   title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  cells: { gap: space[2] },
+  pair: { flexDirection: 'row', gap: space[2] },
+  spacer: { flex: 1 },
+  cell: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    minHeight: size.touchMin,
+    paddingLeft: space[3],
+    paddingRight: space[2],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surface,
+  },
+  name: { ...text.label, flex: 1, color: color.ink },
+  seen: { ...text.caption, color: color.inkMuted },
+  remove: { padding: 2, borderRadius: radius.full },
+  pressed: { opacity: 0.6 },
   footer: { ...text.caption, color: color.inkMuted, textAlign: 'center' },
 });

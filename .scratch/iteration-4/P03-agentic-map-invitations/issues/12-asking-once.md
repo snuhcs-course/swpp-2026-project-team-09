@@ -21,7 +21,7 @@ The app asks once at the two moments the design names, and the server remembers 
 ## Comments
 
 - The migration, `20261115053528_add_friend_asks`, is provisional, as ticket 11's is: it comes after ticket 11's and is made again from the iteration branch's schema at this package's turn. The first box stays open until then.
-- Tests: `main-server/test/friend-asks.integration.test.ts` (each route, its refusals, the lowering with what each Friend is told, and no signal to the other User), `main-server/test/plan-ask-levels.integration.test.ts` (`askLevels`, the moments it leaves out, and nothing of it in the invitees' signals), `mobile/__tests__/location-off-question.integration.test.tsx` (the Friend's and the Master Switch's question, each answer's requests, asked once), and `mobile/__tests__/plan-levels-question.integration.test.tsx` (the question after a Plan, a removed chip, a skip, mixed levels, and nobody named).
+- Tests: `main-server/test/friend-asks.integration.test.ts` (each route, its refusals, the lowering with what each Friend is told, and no signal to the other User), `main-server/test/plan-ask-levels.integration.test.ts` (`askLevels`, the moments it leaves out, and nothing of it in the invitees' signals), `mobile/__tests__/location-off-question.integration.test.tsx` (the Friend's and the Master Switch's question, each answer's requests, asked once), and `mobile/__tests__/plan-levels-question.integration.test.tsx` (the question after a Plan, a removed name, a skip, mixed levels, and nobody named).
 - `test/friends.integration.test.ts` and `test/friend-answers.integration.test.ts` compared `GET /friends` without `level` and failed on ticket 11's branch; they now compare the whole new shape.
 
 ### Decisions (2026-11-15)
@@ -34,8 +34,20 @@ The app asks once at the two moments the design names, and the server remembers 
 - Every answer is recorded, "취소", "넘기기", and closing a sheet included, so each question is asked once; a record that fails is ignored and the question comes again later. The Master Switch's is also kept in the Lobby's cache at once.
 - The words are section 7's; the wireframe row 9 (boards 4, 5, 7, 7-2, 6, 6-1, 6-2, 6-3) adds the line under each title (for the Master Switch "어느 쪽을 골라도 친구에게는 아무 표시도 가지 않아요."), the kicker "내 파티에 처음 들어왔어요", "넘기기", and the toast after an answer that changes something ("껐어요 · {이름}에게 알림은 가지 않아요", "{이름}에게 지금 있는 건물까지만 보여요", "껐어요 · 친구에게 알림은 가지 않아요", "모든 친구에게 지금 있는 건물까지만 보여요", "{이름들}에게 지금 있는 건물까지 보여요").
 - The plan question's line reads the Friends left: "지금은 둘에게 시간표만 보여요." (둘 to 일곱; "지금은 시간표만 보여요." for one) when they are at one level, which is then chosen, and "지금은 민수에게 시간표만, 지은에게 정확한 위치까지 보여요." with none chosen when they differ. " 뺀 친구는 그대로 둬요." follows while the reply named more than one; the wireframe's "지은은 그대로 둬요." after a removal is not used.
-- A removed Friend keeps their level but is recorded as asked; removing the last chip is a skip; choosing the level the Friends are at records the question and changes nothing.
+- A removed Friend keeps their level but is recorded as asked; removing the last name is a skip; choosing the level the Friends are at records the question and changes nothing.
 - The off question's three answers are one row of three cells of one width, "위치 끄기" first. The plan question's levels use the Friends screen's track, now `src/screens/friends/level-track.tsx`; "넘기기" is a full-width ghost button.
 - `apiClient.makePlanQuest` tells `src/api/plan-asks.ts` what a reply names, and `PlanLevelsQuestion` listens in the overlay host beside `PushAskHost`, so package B's screen is unchanged.
 - The mock's stored reply of `POST /plans` names 민수 at the building in `askLevels`. 민수 is no Friend of the mock's, so a level chosen there is refused in a mock build with "위치 공유를 바꾸지 못했어요".
 - `signalsWhile` takes null for every signal name, so that a test reads every signal that reached its own Users.
+
+### Review (2026-11-15)
+
+- The names in the plan question are cells of one width, two to a row, each with the name, what the Friend sees now, and an ×, in place of chips that wrapped at the width of each name.
+- `schema.prisma`'s `sessions` line is aligned with the fields around it again.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). The session's own review and the pull request are counted under ticket 07.
+
+- Agent time: about 44 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 205,619; input 86,244,407, of which 85,743,968 were cache reads, 499,927 cache writes, and 512 uncached. Without cache reads: 706,058.
