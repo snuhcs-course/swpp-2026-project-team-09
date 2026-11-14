@@ -38,8 +38,7 @@ async function show(props: Partial<Props> = {}): Promise<void> {
 }
 
 describe('ConditionChips shown', () => {
-  // Partitions: each kind of chip (origin, until, person with and without a userId), "＋ 같이" closed and open, and
-  // the corner's action: the basis closed, open, none to open, and "그대로" while the list of Friends is open.
+  // Partitions: each kind of chip (origin, until, person with and without a userId), and "＋ 같이" closed and open.
   it("shows the answer's chips, then ＋ 같이, with 근거", async () => {
     await show();
 
@@ -64,7 +63,11 @@ describe('ConditionChips shown', () => {
 
     expect(screen.getByRole('button', { name: '같이 먹을 친구 추가' })).toBeSelected();
   });
+});
 
+describe("ConditionChips' corner", () => {
+  // Partitions: the corner's action, the basis closed, open, none to open, and "그대로" while the list of Friends is
+  // open; and a press on it.
   it('draws no 근거 without a basis to open', async () => {
     await show({ corner: null });
 
@@ -86,6 +89,15 @@ describe('ConditionChips shown', () => {
     const holder: unknown = screen.getByRole('button', { name: '그대로' }).parent?.props.testID;
     expect(holder).toBe('condition-chips');
     expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
+  });
+
+  it("does the corner's action from 근거", async () => {
+    const onBasis = jest.fn<void, []>();
+    await show({ corner: { ...BASIS, onPress: onBasis } });
+
+    await userEvent.press(screen.getByRole('button', { name: '근거' }));
+
+    expect(onBasis).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -131,7 +143,7 @@ describe('ConditionChips laid out', () => {
 });
 
 describe('ConditionChips pressed', () => {
-  // Partitions: a press on each control while enabled, and on each while disabled (the corner still works).
+  // Partitions: a press on each control while enabled.
   it.each([
     ['301동에서', 'onOrigin'],
     ['13:00 수업까지', 'onUntil'],
@@ -145,15 +157,6 @@ describe('ConditionChips pressed', () => {
     expect(called).toHaveBeenCalledTimes(1);
   });
 
-  it("does the corner's action from 근거", async () => {
-    const onBasis = jest.fn<void, []>();
-    await show({ corner: { ...BASIS, onPress: onBasis } });
-
-    await userEvent.press(screen.getByRole('button', { name: '근거' }));
-
-    expect(onBasis).toHaveBeenCalledTimes(1);
-  });
-
   it("takes the person out with the person chip's ✕", async () => {
     const onRemove = jest.fn<void, [string]>();
     await show({ onRemove });
@@ -162,7 +165,10 @@ describe('ConditionChips pressed', () => {
 
     expect(onRemove).toHaveBeenCalledWith(MINSU);
   });
+});
 
+describe('ConditionChips while a recalculation is on its way', () => {
+  // Partitions: a press on each chip, and on the corner, which still works.
   it('takes no press on the chips while a recalculation is on its way, but opens the basis', async () => {
     const pressed = jest.fn<void, []>();
     const onRemove = jest.fn<void, [string]>();

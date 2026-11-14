@@ -26,19 +26,17 @@ async function show(props: Partial<Props> = {}): Promise<void> {
 
 // The grid's rows, each as what its parts are called: a cell by its name read aloud, the empty partner by its id.
 function rows(): string[][] {
-  return screen
-    .getByTestId('choice-grid')
-    .children.map((row) =>
-      typeof row === 'string'
-        ? [row]
-        : row.children.map((part) => {
-            if (typeof part === 'string') {
-              return part;
-            }
-            const name: unknown = part.props.accessibilityLabel ?? part.props.testID;
-            return typeof name === 'string' ? name : '';
-          }),
-    );
+  return screen.getByTestId('choice-grid').children.map((row) =>
+    typeof row === 'string'
+      ? [row]
+      : row.children.map((part) => {
+          if (typeof part === 'string') {
+            return part;
+          }
+          const name: unknown = part.props.accessibilityLabel ?? part.props.testID;
+          return typeof name === 'string' ? name : '';
+        }),
+  );
 }
 
 describe('ChoiceGrid laid out', () => {
@@ -156,8 +154,8 @@ describe('ChoiceGrid with a row limit', () => {
     [199, 3],
     [96, 2],
     [95, 1],
-  ])('counts the whole rows within %d as %d', (height, rows) => {
-    expect(choiceRowsWithin(height)).toBe(rows);
+  ])('counts the whole rows within %d as %d', (height, whole) => {
+    expect(choiceRowsWithin(height)).toBe(whole);
   });
 });
 

@@ -34,7 +34,7 @@ function mockFriend(id: string): Choice {
 // 강도윤, 김민준, 서지우 (no position), 임채원, and 정하은, in the mock's order. By the spec's flat map (a degree of
 // latitude 111,320 metres, one of longitude that times the cosine of the latitude) they stand 719.9, 1186.6, -,
 // 1074.2, and 157.1 metres from 302동식당.
-const FRIENDS_SHOWN = ['f6', 'f1', 'f11', 'f10', 'f5'].map(mockFriend);
+const FRIENDS_SHOWN = ['f6', 'f1', 'f11', 'f10', 'f5'].map((id) => mockFriend(id));
 
 const noop = (): void => undefined;
 
@@ -105,7 +105,8 @@ describe('FriendChoices distances and ages', () => {
 
   it("says an old position's age in place of its distance, and keeps it in the order of distances", async () => {
     // 김민준's position is made 3 minutes old.
-    const friends = FRIENDS_SHOWN.map((friend) => (friend.id === 'f1' ? { ...friend, minutesOld: 3 } : friend));
+    const old = { ...mockFriend('f1'), minutesOld: 3 };
+    const friends = FRIENDS_SHOWN.map((friend) => (friend.id === 'f1' ? old : friend));
 
     await show({ friends });
 

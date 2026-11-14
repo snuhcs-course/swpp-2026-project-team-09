@@ -93,7 +93,7 @@ export function FriendChoices({ friends, pick, disabled, onChoose, room }: Frien
       metres: friend.position === null || pick === null ? null : metresBetween(pick, friend.position),
     }))
     .toSorted(byNearness)
-    .map(cellOf);
+    .map((measured) => cellOf(measured));
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
