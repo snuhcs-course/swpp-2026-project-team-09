@@ -16,7 +16,7 @@ A User who has just finished Onboarding lands on the map and is asked three thin
 - **The Friend card**: "친구 한 명을 불러 보세요", whose button makes an Invite Link and opens the share sheet, as 친구 추가 does. The card says what the Friend will see first: the building the User is in.
 - The phone remembers each card as answered or skipped, for the signed-in User. A card is shown only to a User who finished Onboarding on this phone after this version, has no Class (for the first), no interest (for the second), and no Friend (for the third).
 - Each card is one bottom card of the main screen, drawn with the design system's parts, and gives way to an answer.
-- A User with no interest sees one line over the input, "관심을 맡기면 맞는 것만 또렷하게 떠요", that opens the interests card again.
+- A User with no interest sees one line over the input, "관심을 맡기면 맞는 행사를 알려 드려요", that opens the interests card again. The design's line, "관심을 맡기면 맞는 것만 또렷하게 떠요", comes with the map's pin rule.
 
 ## Acceptance criteria
 

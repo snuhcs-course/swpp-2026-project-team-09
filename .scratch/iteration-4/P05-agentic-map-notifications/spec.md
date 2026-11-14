@@ -161,7 +161,7 @@ What the map draws for these rows waits for two things outside this package: an 
 - **Telling the Assistant.** "채용 관련 행사 뜨면 알려 줘" keeps a watched interest for the User: the words as said, and the topics the Assistant read them as. "배드민턴 이제 그만 알려 줘" removes it. Only events and recruiting parties are watched: a shuttle, a free seat, a Friend's Class, and words too vague to match are answered in the wireframe's words, and nothing is kept.
 - **Topics.** Each published Global Event and each recruiting Quest gets a few topic words, read by the language model once when it is published or posted, in Korean, from its title and description. "채용박람회", "커리어 페어", and "기업 설명회" share the topic "채용".
 - **A match** is a shared topic between an event or a recruiting Quest and the User's interests. The User's interests are the profile's hashtags and the watched interests.
-- **The everyday map** shows only the Global Events and recruiting Quests that match, and a new match carries "!" until the User opens it. A User with no watched interest and no hashtag sees up to three of today's events, faded.
+- **The everyday map.** Which event pins stay on the map is decided today by the rule of P06 (new events, Favorite Events, and events held today), in the map's event adapter. This ticket does not change that rule: it gives each event and each recruiting Quest, for the asking User, whether it matches and whether the match is a watched interest, so that the one function that decides the pins can take them in. How the design's rule (only matches, "!" on a new match, faded events with no interest) and P06's rule become one is settled with P06's owner before the map changes.
 - **Notifications** go only for watched interests, never for a hashtag: once when a match is published, and once on the day at the last time the User can still go.
 - **The interests screen** (내 정보 → 관심사) lists the hashtags, the watched interests with a way to remove each, and what is watched.
 
@@ -169,5 +169,5 @@ What the map draws for these rows waits for two things outside this package: an 
 
 - After Onboarding, the main screen asks three things in order, each as one card over the map, and each can be skipped: the Timetable (with the reason: plans are fitted between Classes, and Friends see only a Class's building and end), interests (chips; a chosen chip is a watched interest), and one Friend (an Invite Link through the share sheet).
 - The phone remembers which cards were answered or skipped. Nothing asks again; each can be done later from 내 정보.
-- A User with no interest sees the faded events of ticket 08 and one line over the input that leads to choosing interests.
+- A User with no interest sees one line over the input that leads to choosing interests. The faded events of the design wait for the map's pin rule (ticket 08).
 
