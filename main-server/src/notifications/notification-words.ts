@@ -40,10 +40,26 @@ function roomWords(told: Of<'room-declined'> | Of<'room-agreed'> | Of<'room-endi
   }
   if (told.kind === 'room-agreed') {
     const line = `${timesWords(told)} ${told.roomLabel}`;
-    return { title: '모두 동의했어요', ahead: null, line, card, about: null, rings: true, body: `${line}, 이제 예약할 수 있어요.` };
+    return {
+      title: '모두 동의했어요',
+      ahead: null,
+      line,
+      card,
+      about: null,
+      rings: true,
+      body: `${line}, 이제 예약할 수 있어요.`,
+    };
   }
   const line = `${told.roomLabel} · ${told.end}에 끝나요`;
-  return { title: '10분 뒤 끝나요', ahead: `${told.end} 방 예약 끝`, line, card, about: null, rings: true, body: `${line}.` };
+  return {
+    title: '10분 뒤 끝나요',
+    ahead: `${told.end} 방 예약 끝`,
+    line,
+    card,
+    about: null,
+    rings: true,
+    body: `${line}.`,
+  };
 }
 
 // `at` is the Notification's time.

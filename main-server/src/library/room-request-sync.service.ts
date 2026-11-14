@@ -38,7 +38,7 @@ import {
 // Read by its own factory, since the Assistant's module, which reads the same file, depends on the Quests' module.
 export const ROOM_CATALOGUE = 'ROOM_CATALOGUE';
 
-const NEW_CONSENT = { requestId: '', answeredAt: null, consented: null };
+const NEW_CONSENT = { answeredAt: null, consented: null };
 
 function between(requesterId: string, companionId: string): Prisma.RoomRequestWhereInput {
   return { requesterId, consents: { some: { userId: companionId } } };
@@ -157,15 +157,17 @@ export class RoomRequestSync {
       await this.dissolve(settling, request, DECLINED);
       return;
     }
+    const now = this.clock.now();
     const gone = goingOut(request, quest, leaving);
-    const kept = await takeOut(settling, request, gone, this.clock.now());
+    const kept = await takeOut(settling, request, gone, now);
     const newcomers = [...quest.holders].filter(
       (userId) => userId !== request.requesterId && !kept.some((consent) => consent.userId === userId),
     );
-    const held = { ...request, consents: [...kept, ...newcomers.map((userId) => ({ ...NEW_CONSENT, userId }))] };
+    const asked = newcomers.map((userId) => ({ ...NEW_CONSENT, requestId: request.id, userId, askedAt: now }));
+    const held = { ...request, consents: [...kept, ...asked] };
     if (newcomers.length > 0) {
       await settling.tx.roomConsent.createMany({
-        data: newcomers.map((userId) => ({ requestId: request.id, userId })),
+        data: newcomers.map((userId) => ({ requestId: request.id, userId, askedAt: now })),
       });
     }
     const companionsIn = held.consents.filter(isIn);
@@ -272,7 +274,8 @@ export class RoomRequestSync {
     this.tell(settling, request);
   }
 
-  // Each companion still asked at a gathering request's deadline goes out of it, as unanswered.
+  // Each companion still asked at their own deadline, counted from when they were asked, goes out of a gathering
+  // request, as unanswered.
   private async passDeadlines(now: Date): Promise<void> {
     const asking = await this.prisma.roomRequest.findMany({
       where: {
@@ -280,16 +283,17 @@ export class RoomRequestSync {
         startsAt: { gt: now, lte: new Date(now.getTime() + DEADLINE_AHEAD_MS) },
         consents: { some: { consented: null } },
       },
-      select: { id: true, createdAt: true, startsAt: true },
+      select: { id: true, startsAt: true, consents: { where: { consented: null }, select: { askedAt: true } } },
     });
-    const passed = (madeAt: Date, startsAt: Date): boolean => (answerDeadline(madeAt, startsAt) ?? Infinity) <= now;
-    for (const { id } of asking.filter(({ createdAt, startsAt }) => passed(createdAt, startsAt))) {
+    const late = (askedAt: Date, startsAt: Date): boolean => (answerDeadline(askedAt, startsAt) ?? Infinity) <= now;
+    const due = asking.filter(({ startsAt, consents }) => consents.some(({ askedAt }) => late(askedAt, startsAt)));
+    for (const { id } of due) {
       // oxlint-disable-next-line no-await-in-loop -- as above
       await this.quietly(id, async (settling, request) => {
         const unanswered = request.consents
-          .filter(({ consented }) => consented === null)
+          .filter(({ consented, askedAt }) => consented === null && late(askedAt, request.startsAt))
           .map(({ userId }) => ({ userId, answered: false }));
-        if (request.status === RoomRequestStatus.gathering && passed(request.createdAt, request.startsAt)) {
+        if (request.status === RoomRequestStatus.gathering && unanswered.length > 0) {
           await this.reconcile(settling, request, unanswered);
         }
       });
