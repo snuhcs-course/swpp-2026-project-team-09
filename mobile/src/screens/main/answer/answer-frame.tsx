@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
@@ -21,6 +22,7 @@ import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { ANSWER_PILL, listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
+import { InvitedCard } from './invited-card';
 import { PlanCard } from './plan-card';
 
 const CLOSE = 36;
@@ -45,13 +47,33 @@ function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }):
   );
 }
 
-// A reply's words: the card of the answer on screen for the reply it came from, else the lines of its answer's first
-// Plan, or those that say why it has none, in place of the model's sentence; otherwise the sentence as Markdown.
-// `room` is how high the Plan's card may stand before the card scrolls, null until it is known.
-function Words({ bubble, shown, room }: { bubble: ChatBubble; shown: ShownAnswer; room: number | null }): ReactElement {
+interface WordsProps {
+  bubble: ChatBubble;
+  shown: ShownAnswer;
+  invitation: PlanInvitation;
+  // How high the Plan's card may stand before the card scrolls, null until it is known.
+  room: number | null;
+  onClose: () => void;
+}
+
+// A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
+// made into one, else the lines of its answer's first Plan, or those that say why it has none, in place of the
+// model's sentence; otherwise the sentence as Markdown.
+function Words({ bubble, shown, invitation, room, onClose }: WordsProps): ReactElement {
   const { answer } = bubble;
   if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
-    return <PlanCard answer={shown.answer} room={room} shown={shown} />;
+    const { made, standings } = invitation;
+    return made === null || shown.plan === null ? (
+      <PlanCard answer={shown.answer} invitation={invitation} room={room} shown={shown} />
+    ) : (
+      <InvitedCard
+        chips={shown.answer.chips}
+        made={made}
+        onClose={onClose}
+        standings={standings}
+        startAt={shown.plan.startAt}
+      />
+    );
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
@@ -66,12 +88,13 @@ interface AnswerCardProps {
   contentMax: number | null;
   keyboardUp: boolean;
   onHeight: (height: number) => void;
+  onClose: () => void;
 }
 
 // The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중이에요", and under them the room
 // of the bar. Its content scrolls inside it, and gives way to the keyboard.
 function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, cardActions, barRoom, contentMax, keyboardUp, onHeight } = props;
+  const { control, cardActions, barRoom, contentMax, keyboardUp, onHeight, onClose } = props;
   const { bubbles, waiting, retry } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const last = bubbles.at(-1);
@@ -99,6 +122,8 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                 words={
                   <Words
                     bubble={bubble}
+                    invitation={control.invitation}
+                    onClose={onClose}
                     room={contentMax === null ? null : contentMax - CONTENT_TOP}
                     shown={control.answer}
                   />
@@ -142,6 +167,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
         contentMax={stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom)}
         control={control}
         keyboardUp={keyboardUp}
+        onClose={close}
         onHeight={onHeight}
       />
       {sheets}
