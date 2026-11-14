@@ -138,9 +138,18 @@ function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>)
   });
 }
 
+// What a scene is drawn with beyond itself: the number of the pick, the Plans whose candidates it shows, and how each
+// invited Friend stands, by user id.
+export interface SceneSetting {
+  number: number | null;
+  plans: readonly Plan[];
+  standings: ReadonlyMap<string, Standing>;
+}
+
+const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
+
 function placeDraft(
-  { plans }: AnswerReply,
-  planIndex: number,
+  { number: pickNumber, plans }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -151,9 +160,17 @@ function placeDraft(
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const name = flag === undefined ? title : `${title} · ${flag.text}`;
-    const number = planIndex + 1;
-    const symbol: AnswerSymbol = { type: 'dot', role, number };
-    return { ...base, id: 'answer:pick', name, group: role, symbol, tone: role, line: flag?.text ?? null, number };
+    const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
+    return {
+      ...base,
+      id: 'answer:pick',
+      name,
+      group: role,
+      symbol,
+      tone: role,
+      line: flag?.text ?? null,
+      number: pickNumber,
+    };
   }
   if (role === 'candidate') {
     const index = plans.findIndex((plan) => plan.place.placeId === place.placeId && plan.place.label === place.label);
@@ -268,21 +285,11 @@ function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
   return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
 }
 
-// What the map shows for the Plan at `planIndex` of an answer: its marks, its lines, and the points the camera fits.
-// `standings` holds how each invited Friend stands, by user id, once the Plan was made into a Quest.
-export function drawingOf(
-  answer: AnswerReply,
-  planIndex: number,
-  standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
-): AnswerDrawing {
-  const plan = answer.plans[planIndex];
-  if (plan === undefined) {
-    return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
-  }
-  const { scene } = plan;
+// What the map shows for a scene: its marks, its lines, and the points the camera fits.
+export function drawingOfScene(scene: MapScene, setting: SceneSetting = BARE): AnswerDrawing {
   const drafts = [
-    ...personDrafts(scene, standings),
-    ...scene.places.flatMap((place) => placeDraft(answer, planIndex, scene, place) ?? []),
+    ...personDrafts(scene, setting.standings),
+    ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
   ];
   const placed = placeAll(drafts).toSorted(
@@ -303,6 +310,21 @@ export function drawingOf(
     pick: drafts.find(({ group }) => group === 'pick')?.position ?? null,
     userIds: scene.people.map(({ userId }) => userId),
   };
+}
+
+// What the map shows for the Plan at `planIndex` of an answer: its scene, with the Plan's number on the pick and the
+// other Plans as candidates. `standings` holds how each invited Friend stands, by user id, once the Plan was made
+// into a Quest.
+export function drawingOf(
+  answer: AnswerReply,
+  planIndex: number,
+  standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
+): AnswerDrawing {
+  const plan = answer.plans[planIndex];
+  if (plan === undefined) {
+    return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
+  }
+  return drawingOfScene(plan.scene, { number: planIndex + 1, plans: answer.plans, standings });
 }
 
 // The looks of every Plan's drawing, each once.
