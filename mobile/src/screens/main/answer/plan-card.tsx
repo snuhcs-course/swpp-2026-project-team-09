@@ -30,7 +30,7 @@ const SWIPE_COUNTS = 48;
 // The card's lines while the list of Friends is open, in place of the Plan's.
 const LIST_LINES: readonly AnswerLine[] = [
   [{ text: '누구와 같이 먹을까요?', strong: false }],
-  [{ text: '가까운 친구부터 보여요', strong: false }],
+  [{ text: '지도의 얼굴을 누르거나 아래에서 골라요', strong: false }],
 ];
 
 // The answer's lines, which a swipe to the left turns to the next Plan and one to the right to the previous, as the
@@ -171,6 +171,7 @@ function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): Reac
         disabled={busy}
         friends={fix.choices}
         onChoose={fix.choose}
+        pending={shown.pendingAdd}
         pick={plan?.place ?? null}
         room={room}
       />

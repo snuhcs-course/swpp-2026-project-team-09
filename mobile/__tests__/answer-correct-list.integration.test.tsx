@@ -62,7 +62,7 @@ describe('the open list of Friends', () => {
 
     const lines = within(card().getByTestId('answer-lines'));
     expect(lines.getByText('누구와 같이 먹을까요?')).toBeVisible();
-    expect(lines.getByText('가까운 친구부터 보여요')).toBeVisible();
+    expect(lines.getByText('지도의 얼굴을 누르거나 아래에서 골라요')).toBeVisible();
     expect(card().queryByText(FIRST_PLAN)).toBeNull();
     const keep: unknown = card().getByRole('button', { name: '그대로' }).parent?.props.testID;
     expect(keep).toBe('condition-chips');
