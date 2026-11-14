@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -10,6 +11,7 @@ import { askMainServer, PHONE_NOW } from '../support/server';
 import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { WAY_LOOKUP, WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import { googleAvailable } from '@/auth/google';
 
 // The Assistant through the main server's client: what the app knew as the User asked goes with the request only when
@@ -88,6 +90,29 @@ describe("the Assistant's reply from the main server", () => {
     const server = await askMainServer({ signedIn: true });
     const { chips: _chips, ...malformed } = MEAL_ANSWER;
     server.on('POST /assistant/messages', { status: 200, body: { ...MEAL_ANSWER_REPLY, answer: malformed } });
+
+    await expect(apiClient.askAssistant(MESSAGES, CONTEXT)).rejects.toMatchObject({
+      status: 0,
+      code: 'UNEXPECTED_ANSWER',
+    });
+  });
+});
+
+describe("the Assistant's Lookup from the main server", () => {
+  it.each([
+    ['with the Lookup drawn on the map', WAY_LOOKUP_REPLY],
+    ['with no Lookup, null', { ...WAY_LOOKUP_REPLY, lookup: null }],
+  ])('is believed and kept %s', async (_, reply) => {
+    const server = await askMainServer({ signedIn: true });
+    server.on('POST /assistant/messages', { status: 200, body: reply });
+
+    await expect(apiClient.askAssistant(MESSAGES, CONTEXT)).resolves.toMatchObject({ lookup: reply.lookup });
+  });
+
+  it('is refused with a Lookup of another shape', async () => {
+    const server = await askMainServer({ signedIn: true });
+    const { actions: _actions, ...malformed } = WAY_LOOKUP;
+    server.on('POST /assistant/messages', { status: 200, body: { ...WAY_LOOKUP_REPLY, lookup: malformed } });
 
     await expect(apiClient.askAssistant(MESSAGES, CONTEXT)).rejects.toMatchObject({
       status: 0,

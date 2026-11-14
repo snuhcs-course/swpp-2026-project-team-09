@@ -3,12 +3,13 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
-import { type PlanInput, type PlacePoint } from '../dto/answer.dto.js';
+import { type PlanInput } from '../dto/answer.dto.js';
 import { type DayItem } from '../free-time/free-time.js';
 import {
   type Gathering,
@@ -17,6 +18,7 @@ import {
   type GatheringSide,
   type PersonPart,
 } from './gathering.js';
+import { PlaceNaming } from './place-naming.js';
 
 // What the words of a meal's answer share: who is who, how a Place is called, and the pieces of a way.
 
@@ -97,10 +99,11 @@ export function wayOn(part: PersonPart | undefined): { placeId: string; minutes:
   return { placeId: next.placeId, minutes: next.walkMinutes };
 }
 
-// Who is who and how Places are called. A Place is called by its number, as the app calls it (301동), and otherwise by
-// its name; a Restaurant by its key.
-export class Naming {
-  constructor(readonly args: MealAnswerArgs) {}
+// Who is who and how Places are called; a Restaurant by its key.
+export class Naming extends PlaceNaming {
+  constructor(readonly args: MealAnswerArgs) {
+    super(args.placeOf);
+  }
 
   get asker(): AnswerPerson {
     return this.args.people[0];
@@ -112,24 +115,6 @@ export class Naming {
       throw new Error(`No person ${userId} in the plan`);
     }
     return person;
-  }
-
-  placeLabel(placeId: string): string {
-    const { number, name } = this.args.placeOf(placeId);
-    return number === null ? name : `${number}동`;
-  }
-
-  position(placeId: string): Position {
-    const { latitude, longitude } = this.args.placeOf(placeId);
-    return { latitude, longitude };
-  }
-
-  placePoint(placeId: string): PlacePoint {
-    return this.labelledPoint(placeId, this.placeLabel(placeId));
-  }
-
-  labelledPoint(placeId: string, label: string): PlacePoint {
-    return { placeId, label, ...this.position(placeId) };
   }
 
   mealWord(): string {

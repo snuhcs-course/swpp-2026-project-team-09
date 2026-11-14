@@ -12,13 +12,13 @@ An answer like this has no Plan: nobody else is in it, it is not recalculated, a
 
 ## Acceptance criteria
 
-- [ ] The contract declares a Lookup on both sides (`main-server/src/assistant/dto/answer.dto.ts`, `mobile/src/api/assistant-types.ts`), with the same shape, reusing the answer's condition chips, lines, map scene, and time band.
-- [ ] The Assistant's reply carries `lookup`, null when there is none, beside `answer`. A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer: the last one drawn is the one on the map.
-- [ ] For an app with the `answer` capability, a tool finds the way from where the User is to a Place. "문화관이 어디야?" from building 301 on a Tuesday at 11:50 answers with the Place picked out, the way, and "걸어서 18분" (the walking table's value), and the lines "**문화관(73동)**은 여기예요" and "지금 있는 301동에서 걸어서 18분".
-- [ ] Where the User sets out from: a Place the User named; else the Place their location is in, or the nearest Place within 150 m; else the Place of their last item today that has ended. With none of these the tool answers none, and the model says it needs the location.
-- [ ] An app without the capability gets today's prompt, tools, and reply (plus `lookup: null`).
-- [ ] The app checks a reply's Lookup and keeps it; the mock answers with a copy of a real Lookup.
-- [ ] Unit tests for the Lookup's words and scene; integration tests at the Assistant's endpoint with the scripted model; the app's reply-check test.
+- [x] The contract declares a Lookup on both sides (`main-server/src/assistant/dto/answer.dto.ts`, `mobile/src/api/assistant-types.ts`), with the same shape, reusing the answer's condition chips, lines, map scene, and time band.
+- [x] The Assistant's reply carries `lookup`, null when there is none, beside `answer`. A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer: the last one drawn is the one on the map.
+- [x] For an app with the `answer` capability, a tool finds the way from where the User is to a Place. "문화관이 어디야?" from building 301 on a Tuesday at 11:50 answers with the Place picked out, the way, and "걸어서 18분" (the walking table's value), and the lines "**문화관(73동)**은 여기예요" and "지금 있는 301동에서 걸어서 18분".
+- [x] Where the User sets out from: a Place the User named; else the Place their location is in, or the nearest Place within 150 m; else the Place of their last item today that has ended. With none of these the tool answers none, and the model says it needs the location.
+- [x] An app without the capability gets today's prompt, tools, and reply (plus `lookup: null`).
+- [x] The app checks a reply's Lookup and keeps it; the mock answers with a copy of a real Lookup.
+- [x] Unit tests for the Lookup's words and scene; integration tests at the Assistant's endpoint with the scripted model; the app's reply-check test.
 
 ## Decisions (2026-11-15)
 
@@ -53,3 +53,22 @@ These are the details the design leaves open. Any of them can be vetoed.
 8. **The words of the start** in the second line: "지금 있는 301동에서" when the start is the User's location, "301동에서" otherwise.
 
 ## Comments
+
+### Decisions taken in the build (2026-11-15)
+
+1. **The start's last item** is the item that ended last before now, by its end. When it has no Place, there is no start: an item without a Place later than a Class means the Class's Place is no longer where the User is. An item going on now does not count.
+2. **The nearest Place within 150 m** is the nearest Place point within `NEAREST_PLACE_METRES` (150 m), read only when no Place holds the location (`PlaceLookup.at`, 20 m). `PlaceLookup.nearTo` became public for it.
+3. **The basis** calls the Place asked about as decision 3 does: "301동 → 문화관(73동) 걸어서 18분 · 앱의 도보표". Board q1 writes "301동 → 문화관".
+4. **The particle** after "문화관(73동)" follows the name outside the parentheses: "문화관(73동)은".
+5. **The scene** draws the User with the tag "나" (the flag carries the minutes), at their location ("exact") when it is the start, else at the start's Place ("timetable"), as the meal's scene does. The way starts at the start's Place, which is what the walking table measures. The pick's tag is the Place's label, as a Plan's pick's is.
+6. **The map buttons.** findWay clears them, and showOnMap adds none beside a Lookup, as with a Plan: a Lookup takes the map.
+7. **What the model is given**: `from` and `to` as labels, `fromIs` (where the User is now, the Place the User named, or the Place of the User's last item today), and `walkMinutes`.
+8. **How Places are called** is shared: `Naming`'s Place half became `PlaceNaming`, which the meal's words and the way's both use.
+9. **The app's chat** keeps a reply's Lookup in its bubble (`lookup`), as it keeps the answer. The mock answers a message holding "어디" sent with a context with the copied Lookup, after the words it already knows.
+10. **The copy of a real Lookup** (`mobile/src/api/mock/data/way-lookup.json`) was written by the server's `wayAnswer`, the function the endpoint's `WayService` calls, over the seed's Places and walking table, for board q1 on Tuesday 2026-11-17, with the asker's id of the meal copies.
+
+The walking table gives 301동 → 문화관 1,066 seconds, 18 minutes as the board says.
+
+Left open: `resolvePlace` answers "several" for "문화관" (문화관, 해동학술문화관, …), so the real model may ask the User which one before calling findWay.
+
+The endpoint's integration tests (`assistant-way.integration.test.ts` and the six endpoint tests that now expect `lookup: null`) were written but not run on the build machine, whose lock for runs with containers was held by another session; GitHub CI runs them.

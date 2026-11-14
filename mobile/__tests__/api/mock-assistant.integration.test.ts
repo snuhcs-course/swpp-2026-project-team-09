@@ -2,18 +2,22 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
 import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-types';
 import { mockClient } from '@/api/mock/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 
 // The mock of the Assistant, where the app asks no main server: asked to eat together with what the app knew, it
-// answers with the main server's real answer drawn on the map; anything else as it did before.
+// answers with the main server's real answer drawn on the map, and asked where a Place is, with its real Lookup;
+// anything else as it did before.
 
 const HUNGRY: ChatMessage[] = [{ role: 'user', text: '배고파, 민수랑 같이' }];
 const MENUS: ChatMessage[] = [{ role: 'user', text: '오늘 점심 뭐 나와?' }];
+const WHERE: ChatMessage[] = [{ role: 'user', text: '문화관이 어디야?' }];
 
 const CONTEXT: RequestContext = {
   location: { latitude: 37.45016, longitude: 126.95259 },
@@ -35,6 +39,14 @@ afterEach(() => {
 describe('the mock of an answer drawn on the map', () => {
   it("answers 배고파 with a context by the main server's reply", async () => {
     await expect(answered(mockClient.askAssistant(HUNGRY, CONTEXT))).resolves.toEqual(MEAL_ANSWER_REPLY);
+  });
+
+  it("answers where a Place is with a context by the main server's Lookup", async () => {
+    await expect(answered(mockClient.askAssistant(WHERE, CONTEXT))).resolves.toEqual(WAY_LOOKUP_REPLY);
+  });
+
+  it('answers where a Place is without a context as before, with no Lookup', async () => {
+    await expect(answered(mockClient.askAssistant(WHERE))).resolves.not.toHaveProperty('lookup');
   });
 
   it('answers 배고파 without a context as before, with no answer', async () => {

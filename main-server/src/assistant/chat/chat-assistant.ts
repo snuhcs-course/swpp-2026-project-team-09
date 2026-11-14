@@ -8,6 +8,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendsService } from '../../friends/friends.service.js';
@@ -26,6 +27,8 @@ import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { koreaNow } from '../korea-time.js';
 import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { findWay, WAY_RULES } from '../lookup/way-tools.js';
+import { type WayService } from '../lookup/way.service.js';
 import { DELIMITER } from '../others-text.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
@@ -54,10 +57,12 @@ export interface ChatAssistantServices {
   library: LibraryServices;
   tutorial: TutorialService;
   mealPlans: MealPlanService;
+  ways: WayService;
 }
 
 export interface ChatAssistantOptions {
-  // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards.
+  // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards, and a way to a
+  // Place is drawn there.
   drawsAnswers: boolean;
 }
 
@@ -117,18 +122,19 @@ export function chatAssistant(
     library,
     tutorial,
     mealPlans,
+    ways,
   }: ChatAssistantServices,
   options?: ChatAssistantOptions,
 ): Feature {
   const drawsAnswers = options?.drawsAnswers ?? false;
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
-  const meal: Record<string, Tool> = drawsAnswers
-    ? { planMeal: planMeal(mealPlans) }
+  const answers: Record<string, Tool> = drawsAnswers
+    ? { planMeal: planMeal(mealPlans), findWay: findWay(ways) }
     : { findMealRestaurants, showRestaurants };
   return {
     instructions: drawsAnswers
-      ? instructionsOf([FREE_TIME_EVENT_RULES, PLAN_RULES], LIBRARY_ANSWER_RULES)
+      ? instructionsOf([FREE_TIME_EVENT_RULES, PLAN_RULES, WAY_RULES], LIBRARY_ANSWER_RULES)
       : instructionsOf([FREE_TIME_RULES], LIBRARY_RULES),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
@@ -146,7 +152,7 @@ export function chatAssistant(
       getMyDay,
       findFreeTimeEvents,
       findFreeFriends,
-      ...meal,
+      ...answers,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
       // showLibrarySeats and showMyLibraryBookings.
       ...libraryTools(library, { fillsSeatTime: drawsAnswers }),

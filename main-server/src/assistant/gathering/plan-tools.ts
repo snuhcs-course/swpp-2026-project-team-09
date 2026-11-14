@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -136,6 +137,7 @@ export function planMeal(plans: MealPlanService): Tool {
       };
       const answer = await plans.plan(userId, planInput, { now, location: context.location });
       presented.answer = answer;
+      presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
         return { result: 'none', reason: NONE_REASONS[answer.noPlan.reason] };

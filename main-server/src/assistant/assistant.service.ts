@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -54,6 +55,7 @@ import { MealPlanService } from './gathering/meal-plan.service.js';
 import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
+import { WayService } from './lookup/way.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
 // message cost more.
@@ -93,9 +95,11 @@ export class AssistantService {
     users: UsersService,
     tutorial: TutorialService,
     mealPlans: MealPlanService,
+    ways: WayService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
+    const enabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     const services = {
       menus,
       shuttle,
@@ -104,17 +108,10 @@ export class AssistantService {
       friends,
       places,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
-      library: {
-        catalogue,
-        freeTime,
-        friends,
-        quests,
-        users,
-        arrival: { days, places: placeLookup, travel },
-        enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
-      },
+      library: { catalogue, freeTime, friends, quests, users, arrival: { days, places: placeLookup, travel }, enabled },
       tutorial,
       mealPlans,
+      ways,
     };
     this.chat = chatAssistant(services);
     this.answerChat = chatAssistant(services, { drawsAnswers: true });
@@ -154,8 +151,8 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, answer } = reply;
-      return { text, mapButtons, cards, proposal, answer };
+      const { text, mapButtons, cards, proposal, answer, lookup } = reply;
+      return { text, mapButtons, cards, proposal, answer, lookup };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();

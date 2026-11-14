@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine } from './menu-types';
@@ -345,13 +346,37 @@ export interface TimeBand {
   text: string;
 }
 
+// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, or a menu.
+export interface Lookup {
+  kind: 'way' | 'friend' | 'menu';
+  // The conditions it used; a Lookup is not recalculated.
+  chips: ConditionChip[];
+  // At most two.
+  lines: AnswerLine[];
+  basis: string[];
+  scene: MapScene;
+  // When a time matters; it has no handles.
+  band: TimeBand | null;
+  // The card's buttons, the main one first.
+  actions: LookupAction[];
+}
+
+export type LookupAction =
+  // 길 안내
+  | { kind: 'guide'; to: PlacePoint }
+  // A leave-by notification at `at`.
+  | { kind: 'remind'; at: string; text: string }
+  // 만나고 싶다
+  | { kind: 'meet'; userId: string };
+
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, the Proposal it made, or null, and the answer it drew on the map, or null. A main server
-// before P01-01 leaves the answer out.
+// cards in the order shown, the Proposal it made, or null, and the answer or the Lookup it drew on the map, or null. A
+// main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
 export interface AssistantReply {
   text: string;
   mapButtons: MapLayer[];
   cards: ChatCard[];
   proposal: QuestProposal | null;
   answer?: AnswerReply | null;
+  lookup?: Lookup | null;
 }

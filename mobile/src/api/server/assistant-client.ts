@@ -6,6 +6,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -27,7 +28,7 @@ import { isLibraryCardData, withLibraryDefaults } from './library-card-answers';
 import { call } from './http';
 import { isMenuLine } from './menu-answers';
 import { isRecruitingQuest } from './party-client';
-import { isAnswerReply } from './plan-answers';
+import { isAnswerReply, isLookup } from './plan-answers';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request says
 // that this app draws library cards (`clientCapabilities`), and one with a context that it draws an answer on the map.
@@ -122,16 +123,18 @@ function filled(card: ChatCard): ChatCard {
   return card.kind === 'library' ? { kind: 'library', library: withLibraryDefaults(card.library) } : card;
 }
 
-// A main server before P01-01 leaves the answer out.
+// A main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
 function isAssistantReply(value: unknown): value is AssistantReply {
   const proposal = field(value, 'proposal');
   const answer = field(value, 'answer');
+  const lookup = field(value, 'lookup');
   return (
     hasTexts(value, ['text']) &&
     listOf(isMapLayer)(field(value, 'mapButtons')) &&
     listOf(isChatCard)(field(value, 'cards')) &&
     (isNothing(proposal) || isQuestProposal(proposal)) &&
-    (answer === undefined || isNothing(answer) || isAnswerReply(answer))
+    (answer === undefined || isNothing(answer) || isAnswerReply(answer)) &&
+    (lookup === undefined || isNothing(lookup) || isLookup(lookup))
   );
 }
 
