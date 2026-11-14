@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Board, JoinPolicy, Person, UserSummary } from './types';
@@ -50,4 +51,16 @@ export interface JoinRequest {
   id: string;
   user: Person;
   sentAt: string;
+}
+
+// GET /notifications, the latest first: the Notifications the main server keeps for the User. `at` is Korea's time with
+// its offset, and `url` the card's address, `/main?card=<kind>:<id>`. Kinds: `accepted` and `declined`, with more to
+// come.
+export interface KeptNotification {
+  id: string;
+  kind: string;
+  title: string;
+  line: string;
+  at: string;
+  url: string;
 }

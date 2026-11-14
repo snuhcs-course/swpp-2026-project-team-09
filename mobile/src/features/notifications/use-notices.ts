@@ -3,12 +3,14 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import {
   friendRequestsQuery,
   joinRequestsQuery,
+  notificationsQuery,
   partiesQuery,
   questInvitationsQuery,
   questsQuery,
@@ -16,7 +18,8 @@ import {
 import { type ScreenData, askAgain, somePending } from '@/api/screen-data';
 import type { JoinRequest } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
-import { type NoticeView, takesJoinRequests, toNotices } from './adapter';
+import { now } from '@/clock';
+import { type NoticeView, takesJoinRequests, waitingNotices, toNotices } from './adapter';
 
 function answerOf<Answer>(result: UseQueryResult<Answer>): Answer | null {
   return result.data ?? null;
@@ -26,9 +29,9 @@ function answerOf<Answer>(result: UseQueryResult<Answer>): Answer | null {
 // list failed has 알림 failed.
 export function useNotices(): ScreenData<NoticeView[]> {
   const lists = useQueries({
-    queries: [partiesQuery, friendRequestsQuery, questInvitationsQuery, questsQuery],
+    queries: [partiesQuery, friendRequestsQuery, questInvitationsQuery, questsQuery, notificationsQuery],
   });
-  const [parties, friendRequests, invitations, quests] = lists;
+  const [parties, friendRequests, invitations, quests, kept] = lists;
   const meId = myUserId();
   const leading = (quests.data ?? []).filter((quest) => takesJoinRequests(quest, meId));
   const requests = useQueries({ queries: leading.map((quest) => joinRequestsQuery(quest.id)) });
@@ -50,6 +53,8 @@ export function useNotices(): ScreenData<NoticeView[]> {
                     const answered: JoinRequest[] | undefined = requests[index]?.data;
                     return answered === undefined ? [] : [{ quest, requests: answered }];
                   }),
+            kept: answerOf(kept),
+            now: now(),
           }),
     isPending,
     isError,
@@ -57,8 +62,8 @@ export function useNotices(): ScreenData<NoticeView[]> {
   };
 }
 
-// The number on the bottom navigation's 파티: the rows of 알림 that concern 파티. It never fails a screen: while the
-// lists load, and when every one failed, there is no badge.
+// The number on the bottom navigation's 파티: the rows of 알림 that wait for the User and concern 파티. It never fails a screen: while
+// the lists load, and when every one failed, there is no badge.
 export function usePartyBadge(): number {
-  return (useNotices().data ?? []).filter(({ kind }) => kind !== 'friend-request').length;
+  return waitingNotices(useNotices().data ?? []).filter(({ kind }) => kind !== 'friend-request').length;
 }
