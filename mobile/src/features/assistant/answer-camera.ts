@@ -21,7 +21,7 @@ import {
 } from '@/map';
 import { fit, settle } from '@/map/projection';
 import { ANSWER_SYMBOL_BOX } from '@/design-system';
-import { type AnswerDrawing, offset } from './answer-marks';
+import { type AnswerDrawing, offset } from './answer-drawing';
 
 // What the pill and the card leave of the map, with the room for labels, in points of the map's view: each edge as a
 // distance from the view's top or left.
