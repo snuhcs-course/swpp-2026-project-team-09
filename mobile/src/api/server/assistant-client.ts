@@ -28,7 +28,8 @@ import { isLibraryCardData, withLibraryDefaults } from './library-card-answers';
 import { call } from './http';
 import { isMenuLine } from './menu-answers';
 import { isRecruitingQuest } from './party-client';
-import { isAnswerReply, isLookup } from './plan-answers';
+import { isLookup } from './lookup-answers';
+import { isAnswerReply } from './plan-answers';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request says
 // that this app draws library cards (`clientCapabilities`), and one with a context that it draws an answer on the map.

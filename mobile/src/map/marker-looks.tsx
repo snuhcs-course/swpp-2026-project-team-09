@@ -8,6 +8,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -91,7 +92,9 @@ function parts(...names: (string | false)[]): string {
 function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): string {
   const drawn = [
     symbol?.type ?? null,
-    symbol?.type === 'face' ? [symbol.name, symbol.dashed] : null,
+    symbol?.type === 'face'
+      ? [symbol.name, symbol.dashed, ...(symbol.badge === undefined ? [] : [symbol.badge])]
+      : null,
     symbol?.type === 'dot' ? [symbol.role, symbol.number] : null,
     label === null ? null : [label.side, label.tone, label.title, label.line, label.number],
   ];

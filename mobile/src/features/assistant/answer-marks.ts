@@ -8,9 +8,10 @@
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, color, type LabelSide } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
 import type { MapLine, MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
+import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export interface AnswerThing {
   // Unique within a drawing.
@@ -51,7 +52,8 @@ interface Draft {
   group: Group;
   symbol: AnswerSymbol | null;
   tone: AnswerLabel['tone'];
-  title: string;
+  // Null for a mark that takes no label.
+  title: string | null;
   line: string | null;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
@@ -85,17 +87,24 @@ const ONE_POINT = 15;
 // sideways for one above or below.
 const SIDE_REACH = { along: 400, across: 50 };
 const UPRIGHT_REACH = { along: 120, across: 150 };
+// How many characters of a name a face shows (`MapAnswerMark`).
+const FACE_LETTERS = 2;
 
 // The metres east and north from one position to another.
-function offset(from: LatLng, to: LatLng): { east: number; north: number } {
+export function offset(from: LatLng, to: LatLng): { east: number; north: number } {
   const north = (to.latitude - from.latitude) * METRES_PER_DEGREE;
   const east = (to.longitude - from.longitude) * METRES_PER_DEGREE * Math.cos((from.latitude * Math.PI) / 180);
   return { east, north };
 }
 
+// The metres in a straight line from one position to another.
+export function metresBetween(from: LatLng, to: LatLng): number {
+  const { east, north } = offset(from, to);
+  return Math.hypot(east, north);
+}
+
 function samePoint(one: LatLng, other: LatLng): boolean {
-  const { east, north } = offset(one, other);
-  return Math.hypot(east, north) <= ONE_POINT;
+  return metresBetween(one, other) <= ONE_POINT;
 }
 
 // Whether a position is so near one of the Plan's own marks that a picture drawn there would lie over the mark or
@@ -107,19 +116,45 @@ export function nearOwnMark({ own }: Pick<AnswerDrawing, 'own'>, position: LatLn
   });
 }
 
-function personDrafts(scene: MapScene): Draft[] {
+const BADGES: Partial<Record<Standing['state'], FaceBadge>> = {
+  invited: 'waiting',
+  accepted: 'accepted',
+  late: 'accepted',
+};
+
+function faceOf(name: string, dashed: boolean, standing: Standing | undefined): AnswerSymbol {
+  const badge = standing === undefined ? undefined : BADGES[standing.state];
+  return badge === undefined ? { type: 'face', name, dashed } : { type: 'face', name, dashed, badge };
+}
+
+// The words of a face's tag that the face does not show already: a face shows the first two characters of the name,
+// so the tag of a name that short leaves the name out, and is none when the name is all it says.
+function faceTitle(name: string, tag: string): string | null {
+  if (Array.from(name).length > FACE_LETTERS) {
+    return tag;
+  }
+  if (tag === name) {
+    return null;
+  }
+  const lead = `${name} · `;
+  return tag.startsWith(lead) ? tag.slice(lead.length) : tag;
+}
+
+// A Friend who was invited is named with how they stand, in place of the tag.
+function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>): Draft[] {
   const people = [...scene.people.filter((person) => person.me), ...scene.people.filter((person) => !person.me)];
   return people.map(({ userId, name, me, at, source, tag }) => {
-    const title = tag ?? (me ? '나' : name);
+    const standing = me ? undefined : standings.get(userId);
+    const said = standing === undefined ? (tag ?? (me ? '나' : name)) : `${name} · ${standingWords(standing)}`;
     return {
       id: me ? 'answer:me' : `answer:person:${userId}`,
-      name: title,
+      name: said,
       position: at,
       planId: null,
       group: 'person',
-      symbol: me ? { type: 'me' } : { type: 'face', name, dashed: source === 'timetable' },
+      symbol: me ? { type: 'me' } : faceOf(name, source === 'timetable', standing),
       tone: 'person',
-      title,
+      title: me ? said : faceTitle(name, said),
       line: null,
       number: null,
     };
@@ -160,11 +195,8 @@ function placeDraft(
       number,
     };
   }
-  if (role === 'meeting') {
-    return null;
-  }
-  // Not drawn until its look is settled (P01 ticket 11).
-  if (role === 'stop') {
+  // A stop is not drawn until its look is settled (P01 ticket 11).
+  if (role === 'meeting' || role === 'stop') {
     return null;
   }
   const id = role === 'next' ? `answer:next:${place.placeId}` : `answer:dropped:${place.label}`;
@@ -243,7 +275,7 @@ function placeAll(drafts: Draft[]): Placed[] {
     const drawn = here.filter(({ symbol }) => symbol !== null).toSorted(byGroup(SYMBOL_ORDER))[0];
     const taken = new Set<LabelSide>();
     return here.toSorted(byGroup(SIDE_ORDER)).map((draft) => {
-      const list = SIDES[draft.group].filter((side) => !taken.has(side));
+      const list = draft.title === null ? [] : SIDES[draft.group].filter((side) => !taken.has(side));
       const side = list.find((one) => !blocked(position, one, others)) ?? list[0] ?? null;
       if (side !== null) {
         taken.add(side);
@@ -256,19 +288,24 @@ function placeAll(drafts: Draft[]): Placed[] {
 function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
   const { id, name, position, planId, tone, title, line, number } = draft;
   const label: AnswerLabel | null =
-    side === null ? null : { side, tone, title, line, number: symbol === null ? number : null };
+    side === null || title === null ? null : { side, tone, title, line, number: symbol === null ? number : null };
   return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
 }
 
 // What the map shows for the Plan at `planIndex` of an answer: its marks, its lines, and the points the camera fits.
-export function drawingOf(answer: AnswerReply, planIndex: number): AnswerDrawing {
+// `standings` holds how each invited Friend stands, by user id, once the Plan was made into a Quest.
+export function drawingOf(
+  answer: AnswerReply,
+  planIndex: number,
+  standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
+): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
     return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
   const { scene } = plan;
   const drafts = [
-    ...personDrafts(scene),
+    ...personDrafts(scene, standings),
     ...scene.places.flatMap((place) => placeDraft(answer, planIndex, scene, place) ?? []),
     ...flagDrafts(scene),
   ];

@@ -4,8 +4,9 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AssistantReply, Lookup } from '@/api/assistant-types';
-import { isLookup } from '@/api/server/plan-answers';
+import type { AssistantReply } from '@/api/assistant-types';
+import type { Lookup } from '@/api/lookup-types';
+import { isLookup } from '@/api/server/lookup-answers';
 import copy from './way-lookup.json';
 
 // The main server's Lookup for "문화관이 어디야?", asked on Tuesday 2026-11-17 at 11:50 at 301동, copied whole, with the

@@ -2,15 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { FRIEND_REQUESTS_KEY, FRIENDS_KEY, POSITIONS_KEY } from '@/api/queries';
-import type { InviteLink, SentFriendRequest, UserSummary } from '@/api/types';
+import type { FriendLevel, InviteLink, SentFriendRequest, UserSummary } from '@/api/types';
 
 export interface FriendChanges {
-  setSharing: (userId: string, on: boolean) => Promise<void>;
+  setLevel: (userId: string, level: FriendLevel) => Promise<void>;
   endFriendship: (userId: string) => Promise<void>;
   findFriendId: (friendId: string) => Promise<UserSummary>;
   sendFriendRequest: (friendId: string) => Promise<SentFriendRequest>;
@@ -41,7 +42,7 @@ export function useFriendChanges(): FriendChanges {
     };
   }
   return {
-    setSharing: changing(apiClient.setFriendSharing, FRIENDS_SEEN),
+    setLevel: changing(apiClient.setFriendLevel, FRIENDS_SEEN),
     endFriendship: changing(apiClient.endFriendship, FRIENDS_SEEN),
     findFriendId: apiClient.findFriendId,
     sendFriendRequest: changing(apiClient.sendFriendRequest, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),

@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type AnswerReply, type Plan, type PlanInput, type RequestContext } from '../dto/answer.dto.js';
+import { type AnswerReply, type MealInput, type Plan, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Tool } from '../feature.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { othersText } from '../others-text.js';
@@ -90,7 +90,8 @@ function refuseUnseen(found: FoundIds, kind: FoundKind, ids: readonly string[], 
   );
 }
 
-function seenIds({ conditions, tapped }: RequestContext): { friends: string[]; places: string[] } {
+function seenIds({ conditions: shown, tapped }: RequestContext): { friends: string[]; places: string[] } {
+  const conditions = shown?.kind === 'meal' ? shown : null;
   const placeOnScreen = conditions?.placeId ?? null;
   return {
     friends: [
@@ -106,9 +107,9 @@ function seenIds({ conditions, tapped }: RequestContext): { friends: string[]; p
 function constraintsOf(
   { conditions }: RequestContext,
   date: string,
-  meal: PlanInput['meal'],
-): Map<string, PlanInput['people'][number]['constraints']> {
-  if (conditions === null || conditions.date !== date || conditions.meal !== meal) {
+  meal: MealInput['meal'],
+): Map<string, MealInput['people'][number]['constraints']> {
+  if (conditions?.kind !== 'meal' || conditions.date !== date || conditions.meal !== meal) {
     return new Map();
   }
   return new Map(conditions.people.map(({ userId, constraints }) => [userId, constraints]));
@@ -127,7 +128,7 @@ export function planMeal(plans: MealPlanService): Tool {
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       const kept = constraintsOf(context, date, meal);
-      const planInput: PlanInput = {
+      const planInput: MealInput = {
         kind: 'meal',
         date,
         meal,

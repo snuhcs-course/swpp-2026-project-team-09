@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions of the check of an answer drawn on the map: the main server's answer to "배고파, 민수랑 같이"; each
@@ -80,6 +81,10 @@ const ACCEPTED: Variant[] = [
   ['a plan without a meeting', withPlan(MEAL_PLAN_1)],
   ['no plan, its reason and lines', { ...ANSWER, plans: [], noPlan: NO_PLAN }],
   ['a dropped place', { ...ANSWER, dropped: [DROPPED] }],
+  [
+    'a Friend at the building, at the point of the Place they are in',
+    withPlan({ ...PLAN, scene: { ...SCENE, people: [{ ...SCENE_PERSON, source: 'building' }] } }),
+  ],
   [
     'a person with a constraint of each kind',
     {

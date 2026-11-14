@@ -143,7 +143,7 @@ _Avoid_: Group, team
 ### Location
 
 **Location Sharing**:
-Mutual visibility of live location within one relationship, either a friendship or a Party. Each relationship is switched on and off on its own.
+Mutual visibility of live location within one relationship, either a friendship or a Party. In a friendship each Friend chooses a level for the other, the Timetable only, the building they are in, or their exact position, and the two see each other at the lower of the two. A Party's sharing is switched on and off by each member, and its members see each other's exact position.
 
 **Master Switch**:
 A User's single switch that turns all of their Location Sharing on or off.

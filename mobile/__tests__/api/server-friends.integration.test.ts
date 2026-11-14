@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -48,14 +49,14 @@ async function refusalOf(asked: Promise<unknown>): Promise<[number, string | nul
   throw new Error('It was not refused');
 }
 
-describe("a friendship's switch and its end", () => {
-  it('turns the switch with PUT /friends/:userId/sharing', async () => {
-    server.on(`PUT /friends/${MIN_JUN.id}/sharing`, { status: 204 });
+describe("a friendship's level and its end", () => {
+  it('sets the level with PUT /friends/:userId/level', async () => {
+    server.on(`PUT /friends/${MIN_JUN.id}/level`, { status: 204 });
 
-    await apiClient.setFriendSharing(MIN_JUN.id, false);
+    await apiClient.setFriendLevel(MIN_JUN.id, 'building');
 
-    expect(server.received(`PUT /friends/${MIN_JUN.id}/sharing`)).toEqual([
-      expect.objectContaining({ authorization: BEARER, body: { on: false } }),
+    expect(server.received(`PUT /friends/${MIN_JUN.id}/level`)).toEqual([
+      expect.objectContaining({ authorization: BEARER, body: { level: 'building' } }),
     ]);
   });
 
@@ -66,8 +67,8 @@ describe("a friendship's switch and its end", () => {
 
     server.on(`DELETE /friends/${MIN_JUN.id}`, refusal(404, 'FRIEND_NOT_FOUND'));
     expect(await refusalOf(apiClient.endFriendship(MIN_JUN.id))).toEqual([404, 'FRIEND_NOT_FOUND']);
-    server.on(`PUT /friends/${MIN_JUN.id}/sharing`, refusal(404, 'FRIEND_NOT_FOUND'));
-    expect(await refusalOf(apiClient.setFriendSharing(MIN_JUN.id, true))).toEqual([404, 'FRIEND_NOT_FOUND']);
+    server.on(`PUT /friends/${MIN_JUN.id}/level`, refusal(404, 'FRIEND_NOT_FOUND'));
+    expect(await refusalOf(apiClient.setFriendLevel(MIN_JUN.id, 'exact'))).toEqual([404, 'FRIEND_NOT_FOUND']);
   });
 });
 
