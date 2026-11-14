@@ -187,6 +187,10 @@ _Avoid_: Proposal (a Proposal is a Quest filled in from the User's words), sched
 A Place on a Friend's way to a Plan's Place where the Friend meets the asker, so that the two walk the rest together.
 _Avoid_: Join-up, rendezvous
 
+**Notification**:
+Something the Assistant tells a User first, at a moment the User handed over: an answer to an invitation, or a time to leave. The main server keeps it for the User, the app lists it in "알림", and it opens a card on the map by its address. A push is one way a Notification reaches a phone.
+_Avoid_: Alert, message (a message is what a User writes to the Assistant)
+
 ### The tutorial
 
 **Tutorial**:
