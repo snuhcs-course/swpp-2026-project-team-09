@@ -28,6 +28,7 @@ import { FriendViewService } from '../friends/friend-view.service.js';
 import { MenusService } from '../menus/menus.service.js';
 import { RestaurantPlaces } from '../menus/restaurant-places.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
+import { InterestsService } from '../interests/interests.service.js';
 import { PlaceLookup } from '../places/place-lookup.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
@@ -95,6 +96,7 @@ export class AssistantService {
     tutorial: TutorialService,
     plans: PlanAnswersService,
     ways: WayService,
+    interests: InterestsService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -111,6 +113,7 @@ export class AssistantService {
       tutorial,
       plans,
       ways,
+      interests,
     };
     this.chats = chatsOf(services);
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';

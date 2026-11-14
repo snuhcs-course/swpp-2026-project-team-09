@@ -13,6 +13,7 @@
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
+import { type InterestsService } from '../../interests/interests.service.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
@@ -24,6 +25,7 @@ import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
+import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { koreaNow } from '../korea-time.js';
 import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
@@ -62,6 +64,7 @@ export interface ChatAssistantServices {
   // The planners of each kind of answer drawn on the map.
   plans: PlanAnswersService;
   ways: WayService;
+  interests: InterestsService;
 }
 
 export interface ChatAssistantOptions {
@@ -152,6 +155,18 @@ function withWays(
   return { rules: [...planned.rules, WAY_RULES], tools: { ...planned.tools, findWay: findWay(ways) } };
 }
 
+// An app that draws answers also keeps the interests the User asks it to watch, whose matches it marks on the map.
+function withInterests(
+  planned: { rules: string[]; tools: Record<string, Tool> },
+  interests: InterestsService,
+  drawsAnswers: boolean,
+): { rules: string[]; tools: Record<string, Tool> } {
+  if (!drawsAnswers) {
+    return planned;
+  }
+  return { rules: [...planned.rules, INTEREST_RULES], tools: { ...planned.tools, ...interestTools(interests) } };
+}
+
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
 export function chatAssistant(
   {
@@ -166,13 +181,15 @@ export function chatAssistant(
     tutorial,
     plans,
     ways,
+    interests,
   }: ChatAssistantServices,
   options?: ChatAssistantOptions,
 ): Feature {
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const drawsAnswers = options?.drawsAnswers ?? false;
-  const planned = withWays(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), ways, drawsAnswers);
+  const onMap = withWays(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), ways, drawsAnswers);
+  const planned = withInterests(onMap, interests, drawsAnswers);
   return {
     instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
