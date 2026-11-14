@@ -30,8 +30,6 @@ import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
-import { useHideTabBarOnMain } from '../shell/main-tab-bar';
-import { InvitationFrame } from './answer/received-invitation-card';
 import { Card } from './card';
 import { FriendList } from './friend-list';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
@@ -48,10 +46,9 @@ import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import { type MainRoute, useRoute } from './use-route';
 import { useMapView } from './use-map-view';
-import { useReceivedInvitation } from './use-received-invitation';
+import { useFramed } from './use-received-invitation';
 import { useRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
-import { useThings } from './use-things';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
 import { type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
 import { ZoomControl } from './zoom-control';
@@ -218,9 +215,14 @@ function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel }: Main
   );
 }
 
-// The shuttle's line under the walking route.
-function useLines(shuttle: ShuttleLayer, route: MainRoute): readonly MapLine[] {
-  return useMemo(() => [...shuttle.lines, ...(route.line === null ? [] : [route.line])], [shuttle.lines, route.line]);
+// The walking route, and the shuttle's line under it.
+function useLines(shuttle: ShuttleLayer, map: MainMap, me: Me): { route: MainRoute; lines: readonly MapLine[] } {
+  const route = useRoute(map, me);
+  const lines = useMemo(
+    () => [...shuttle.lines, ...(route.line === null ? [] : [route.line])],
+    [shuttle.lines, route.line],
+  );
+  return { route, lines };
 }
 
 // The friend list and the Quest list, which give way to a card at the top.
@@ -286,18 +288,14 @@ export function MainScreen(): ReactElement {
   const me = useMe(map);
   const { stack, shuttle, cards, ready, chat } = useMainLayers(inFront, map, me.position);
   const selection = useSelection(cards, inFront);
-  const things = useThings(cards, map.detail, selection.selected?.id ?? null);
-  const route = useRoute(map, me);
-  const lines = useLines(shuttle, route);
+  const { route, lines } = useLines(shuttle, map, me);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const invitation = useReceivedInvitation(selection, me.position, chat.framed);
-  const framed = chat.framed || invitation.shown;
-  useHideTabBarOnMain(framed);
+  const { invitation, framed } = useFramed(selection, me.position, chat.framed);
   const { room, setStage, setCardHeight, heights } = useRoom(taken, start, framed);
-  const view = useMapView(chat, map, room, { things, me, pin, lines, cards, selection }, invitation);
+  const view = useMapView(chat, map, room, { me, pin, lines, cards, selection }, invitation);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
@@ -318,11 +316,7 @@ export function MainScreen(): ReactElement {
           <MapBottom
             {...heights}
             chat={chat}
-            invitation={
-              invitation.shown ? (
-                <InvitationFrame invitation={invitation} onHeight={heights.onAnswerHeight} room={room} />
-              ) : null
-            }
+            invitation={invitation}
             onParty={party.open}
             onShowOnMap={pin.showOnMap}
             room={room}

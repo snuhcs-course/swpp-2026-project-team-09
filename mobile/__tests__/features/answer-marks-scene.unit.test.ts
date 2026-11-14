@@ -54,6 +54,12 @@ describe("the marks of an invitee's own way", () => {
       planId: null,
     });
   });
+});
+
+// Partitions of the same scene's lines and people: each leg, and nobody but the invitee. Expected values: the stored
+// card's routes, which are all the User's.
+describe("the lines and people of an invitee's own way", () => {
+  const drawing = drawingOfScene(scene());
 
   it('draws one line of the User for each leg, and no other thing or person', () => {
     expect(drawing.lines).toEqual([

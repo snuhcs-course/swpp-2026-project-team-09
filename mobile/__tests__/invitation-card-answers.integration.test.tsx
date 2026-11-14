@@ -66,7 +66,7 @@ function answered(): void {
   server.on('GET /quest-invitations', { status: 200, body: [] });
 }
 
-// Partitions: an acceptance, a decline, and a failure of either.
+// Partitions: an acceptance, and a decline.
 describe('수락 and 거절', () => {
   it('수락 accepts, says so, and closes the card to the everyday map, the Quests read again', async () => {
     server.on(ACCEPT_ROUTE, { status: 201, body: DINNER_QUEST });
@@ -100,7 +100,10 @@ describe('수락 and 거절', () => {
     expect(screen.queryByTestId('invitation-card')).toBeNull();
     expect(mapThings()).toContain(DINNER);
   });
+});
 
+// Partitions: a failure, and a second press while the first is on its way.
+describe('수락 and 거절 that do not go through', () => {
   it('a failure says so and leaves the card', async () => {
     server.on(ACCEPT_ROUTE, { status: 500, body: { statusCode: 500 } });
     const user = await openMain({ answerOnMap: true });

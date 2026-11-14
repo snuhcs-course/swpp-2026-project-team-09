@@ -14,6 +14,7 @@ import { useToast } from '@/design-system';
 import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
 import { invitationIdOf } from '@/features/map/adapter';
 import { type PartyActions, usePartyActions } from '../party/use-party-actions';
+import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import type { Selection } from './use-selection';
 
 export interface ReceivedInvitation {
@@ -111,4 +112,16 @@ export function useReceivedInvitation(
     ...useAnswers(card, close),
     close,
   };
+}
+
+// The received invitation, and whether the answer frame or its card is shown, which the tab bar gives way to.
+export function useFramed(
+  selection: Selection,
+  position: LatLng | null,
+  chatFramed: boolean,
+): { invitation: ReceivedInvitation; framed: boolean } {
+  const invitation = useReceivedInvitation(selection, position, chatFramed);
+  const framed = chatFramed || invitation.shown;
+  useHideTabBarOnMain(framed);
+  return { invitation, framed };
 }

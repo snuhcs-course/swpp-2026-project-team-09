@@ -9,7 +9,7 @@ import { INVITATION_CARD } from '@/api/mock/data/invitation-card';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { mapLines, mapThings } from './support/answer-map';
-import { pass, screen, shownAddress } from './support/app';
+import { screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';

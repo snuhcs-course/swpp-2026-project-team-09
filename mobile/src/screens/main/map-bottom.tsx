@@ -23,6 +23,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { AnswerFrame } from './answer/answer-frame';
+import { InvitationFrame } from './answer/received-invitation-card';
 import { BottomControls } from './bottom-controls';
 import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
@@ -31,6 +32,7 @@ import { ShuttleNotice } from './shuttle-notice';
 import { TutorialPager } from './tutorial/tutorial-pager';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
+import type { ReceivedInvitation } from './use-received-invitation';
 import type { TutorialFlow } from './tutorial/use-tutorial-flow';
 import type { TutorialPinTarget } from './tutorial/use-tutorial-pin';
 
@@ -92,8 +94,8 @@ interface MapBottomProps {
   onShowOnMap: (target: TutorialPinTarget) => void;
   // The chat's sheet, which the main screen holds, so that a card's button can ask the Assistant.
   chat: ChatSheetControl;
-  // A received invitation's card, which stands at the bottom in place of everything else there.
-  invitation: ReactElement | null;
+  // A received invitation, whose card stands at the bottom in place of everything else there while it is shown.
+  invitation: ReceivedInvitation;
 }
 
 // What is at the bottom of the map: the shuttle's notice, the row of buttons, the 편의기능 button and the AI input. A
@@ -108,7 +110,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const { bottomCard, notice } = taken;
-  const under = !chat.shown && !chat.framed && invitation === null;
+  const under = !chat.shown && !chat.framed && !invitation.shown;
   const inputTop = AI_INPUT.bottom + lift + inputHeight;
   return (
     <>
@@ -120,7 +122,9 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
       {chat.sheet(inputTop)}
       <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
-      {invitation ?? (
+      {invitation.shown ? (
+        <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} />
+      ) : (
         <AiInput
           chatOpen={chat.shown}
           lift={lift}

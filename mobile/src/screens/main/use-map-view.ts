@@ -16,7 +16,7 @@ import type { MainMap } from './use-main-map';
 import type { Me } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
 import type { Selection } from './use-selection';
-import type { Things } from './use-things';
+import { useThings } from './use-things';
 import { TUTORIAL_PIN_ID, type TutorialPin } from './tutorial/use-tutorial-pin';
 
 function ignorePress(): void {
@@ -36,7 +36,6 @@ function pressWithPin(pin: TutorialPin, onThing: (id: string) => void): (id: str
 }
 
 export interface Everyday {
-  things: Things;
   me: Me;
   pin: TutorialPin;
   lines: readonly MapLine[];
@@ -44,16 +43,18 @@ export interface Everyday {
   selection: Selection;
 }
 
-// What the map draws and what a press on it does. The everyday map: the things of the cards, the tutorial place pin
+// What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
+// selected, the tutorial place pin
 // over them, the User's own Avatar, and the lines. While a Plan of an answer is shown, the Plan is drawn in their
 // place, and a press on a candidate shows its Plan; while a received invitation's card is, its own way is.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
   room: Room,
-  { things, me, pin, lines, cards, selection }: Everyday,
+  { me, pin, lines, cards, selection }: Everyday,
   invitation: ReceivedInvitation,
 ): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
+  const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const everyday = { avatars: things.avatars, cards };
   const answer = useAnswerMap(chat.answer, map, room, everyday, chat.invitation);
   const way = useInvitationMap(invitation.shown ? invitation.drawing : null, map, room, everyday);

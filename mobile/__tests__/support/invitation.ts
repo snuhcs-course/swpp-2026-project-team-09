@@ -27,8 +27,10 @@ export const DECLINE_ROUTE = `POST /quest-invitations/${INVITATION_CARD.id}/decl
 // The names a screen reader says for the marks of 민수's own way in the stored card.
 export const OWN_WAY_MARKS = ['12:18 유상과 만남', '63동 · 12:33 학생회관식당에서 식사', '나 · 18분'];
 
+const STORED: Reply = { status: 200, body: INVITATION_CARD };
+
 // The main server lists the invitation and answers its card with `card`.
-export function answerInvitation(server: FakeServer, card: Reply = { status: 200, body: INVITATION_CARD }): void {
+export function answerInvitation(server: FakeServer, card: Reply = STORED): void {
   server.on('GET /quest-invitations', { status: 200, body: [RECEIVED] });
   server.on(CARD_ROUTE, card);
 }
