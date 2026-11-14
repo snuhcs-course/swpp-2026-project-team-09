@@ -2,16 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
 import { AssistantModule } from '../assistant/assistant.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
 import { PlansController } from './plans.controller.js';
 import { PlansService } from './plans.service.js';
 
 @Module({
-  imports: [AssistantModule, QuestsModule],
+  imports: [AssistantModule, QuestsModule, NotificationsModule],
   controllers: [PlansController],
   providers: [PlansService],
 })

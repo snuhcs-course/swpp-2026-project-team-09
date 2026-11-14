@@ -6,13 +6,15 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, Prisma, Quest } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { type UpdateQuestDto } from './dto/quest-requests.dto.js';
@@ -26,6 +28,8 @@ const notHolder = (): NotFoundException => notFound('NOT_QUEST_HOLDER', 'This Us
 // before the Quest, as entering does, and checks the Leader once the Quest is locked.
 @Injectable()
 export class LeaderService {
+  private readonly logger = new Logger(LeaderService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
@@ -33,6 +37,7 @@ export class LeaderService {
     private readonly signals: SignalsService,
     private readonly classQuests: ClassQuestsService,
     private readonly roomRequests: RoomRequestSync,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // Refuses unless the User holds and leads the Quest. Read without a lock, so that the Leader's actions are refused in
@@ -77,15 +82,23 @@ export class LeaderService {
   // Ends the Quest for every Holder at once, as when its last Holder drops it: it is deleted with its Sub Quests, the
   // Holders' progress, its requests to join and its invitations. Tells the Holders and the Users who waited.
   async end(userId: string, questId: string): Promise<void> {
-    const told = await this.prisma.$transaction(async (tx) => {
+    const { told, holderIds } = await this.prisma.$transaction(async (tx) => {
       await this.lockLed(questId, userId, tx);
       const { holders, joinRequests, invitations } = await tx.quest.delete({
         where: { id: questId },
         select: { holders: true, joinRequests: true, invitations: true },
       });
-      return [...holders, ...joinRequests, ...invitations].map((one) => one.userId);
+      return {
+        told: [...holders, ...joinRequests, ...invitations].map((one) => one.userId),
+        holderIds: holders.map((one) => one.userId),
+      };
     });
     this.signals.send([...new Set(told)], 'quests-changed');
+    holderIds.forEach((holderId) => {
+      this.notifications.cancel(holderId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
+        this.logger.warn(`A Holder's time to leave was not cancelled: ${String(error)}`);
+      });
+    });
     await this.roomRequests.questChanged(questId);
   }
 

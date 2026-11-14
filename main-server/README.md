@@ -3119,15 +3119,22 @@ call the service sends the signal `notice`, which carries nothing, to the User; 
 none. `schedule` and `replace` refuse, by throwing, a card no address opens. The calls throw when Redis fails too, so
 a caller that must not fail catches and logs.
 
-| Kind       | Told to    | When                     | Title                 | Line              | Card              |
-| ---------- | ---------- | ------------------------ | --------------------- | ----------------- | ----------------- |
-| `accepted` | The Leader | An invited User accepts  | `<name>가 수락했어요` | The Quest's title | `party:<questId>` |
-| `declined` | The Leader | An invited User declines | `<name>이 못 온대요`  | The Quest's title | `party:<questId>` |
+| Kind       | Told to    | When                     | Title                 | Ahead               | Line                       | Card              |
+| ---------- | ---------- | ------------------------ | --------------------- | ------------------- | -------------------------- | ----------------- |
+| `accepted` | The Leader | An invited User accepts  | `<name>가 수락했어요` | None                | The Quest's title          | `party:<questId>` |
+| `declined` | The Leader | An invited User declines | `<name>이 못 온대요`  | None                | The Quest's title          | `party:<questId>` |
+| `leave-by` | The Leader | A Plan becomes a party   | `지금 나서요`         | `<HH:MM> 나설 시각` | `<Place>까지 걸어서 <N>분` | `party:<questId>` |
 
 The name is the User's name as stored, with the subject particle that fits its last syllable (이 or 가). An invitation
 the Leader cancels tells nobody. `InvitationsService` tells the Leader after the invitation's change is stored and
 after its signal, with the time of the Quests' `CLOCK`, without the answer waiting for it; a failure is logged as a
 warning and the answer stays as it is.
+
+`leave-by` is kept when `POST /plans` makes a party: `PlansService` schedules the Leader's for the time the Leader's
+part of the Plan sets out, with the Plan's Place and the Leader's own walking minutes, after the transaction and its
+signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
+Place is unknown or the walk is 0 minutes. A User has one for a party. When the Leader ends the Quest, `LeaderService`
+cancels the `leave-by` of every Holder it had, in the same way.
 
 A User's Notifications are kept in Redis, in one hash `notifications:<userId>` with the identity as the field,
 `<kind>:<card kind>:<card id>` followed by `:<user id>` of the person it is about when the kind has one, and the
@@ -3144,6 +3151,7 @@ whose time is still to come is in the answer:
     "id": "accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c7e17523-981f-5761-a03e-52519082d7b1",
     "kind": "accepted",
     "title": "민수가 수락했어요",
+    "ahead": null,
     "line": "저녁 같이",
     "at": "2026-11-14T11:58:00+09:00",
     "url": "/main?card=party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b"
@@ -3153,12 +3161,14 @@ whose time is still to come is in the answer:
 
 `id` is the identity, `at` the time in Korea with its offset, and `url` the address that opens the card,
 `/main?card=<kind>:<id>`. `cardAddress()` from `src/notifications/card-address.ts` makes it and refuses a card kind
-outside lowercase letters and `-`, or an id outside letters, digits, `-`, `.` and `,`.
+outside lowercase letters and `-`, or an id outside letters, digits, `-`, `.` and `,`. `ahead` is the title while `at`
+is still to come, with `at` in Korea in it, and null for a kind that has none: the service reads no clock, and the
+phone shows `ahead` while `at` is after its own now. A Notification kept without `ahead` answers null.
 
 Nothing is pushed from this service: a Notification stays in the list only.
 
-**A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its card and whom it is
-about to `wordsOf()` in `src/notifications/notification-words.ts`, its kind to the stored schema in
+**A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its title ahead, its card
+and whom it is about to `wordsOf()` in `src/notifications/notification-words.ts`, its kind to the stored schema in
 `src/notifications/notification-store.ts`, and its caller in the feature it belongs to.
 
 ## Requests from the worker server
