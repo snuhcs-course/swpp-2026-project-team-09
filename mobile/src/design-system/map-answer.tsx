@@ -30,6 +30,9 @@ export interface AnswerLabel {
   line: string | null;
   // A number badge before the title, when the mark's own dot is not drawn.
   number: number | null;
+  // How much further than the gap a label at the left or the right stands from the symbol box, in points, so that it
+  // shares an edge with the labels of neighbouring marks. Left out, none.
+  shift?: number;
 }
 
 export const ANSWER_SYMBOL_BOX = 36;
@@ -79,7 +82,7 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 }
 
 function Label({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { tone, title, line, number } = label;
+  const { side, tone, title, line, number, shift } = label;
   return (
     <View
       style={[
@@ -87,6 +90,7 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
         line !== null && styles.twoLines,
         tone === 'pick' && styles.pickLabel,
         tone === 'meeting' && styles.meetingLabel,
+        shift !== undefined && (side === 'left' ? { marginRight: shift } : { marginLeft: shift }),
       ]}
       testID={partOf(testID, 'label')}
     >
@@ -146,6 +150,50 @@ const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const BADGE = 16;
 const FACE_BADGE = 14;
+
+// A label's height, the tallest of its kind: one line of the pick's title with the padding and the pick's border at
+// the top and at the bottom, or that title and a line under it.
+const ONE_LINE = mapText.buttonTitle.lineHeight + 2 * GAP + 2 * RING;
+const TWO_LINES = mapText.buttonTitle.lineHeight + mapText.rowLine.lineHeight + 2 * space[1] + 2 * RING;
+// The advance widths of `assets/fonts/Pretendard-SemiBold.otf` and `Pretendard-Bold.otf` as shares of the font's
+// size, rounded up: a Hangul syllable 0.864; a space, "·", and ":" at most 0.282; any other letter at most the widest
+// digit's 0.66.
+const HANGUL = /\p{Script=Hangul}/u;
+const NARROW = /[\s·:.,]/u;
+const LETTER = { hangul: 0.87, narrow: 0.29, other: 0.67 };
+
+function wordsWidth(words: string, size: number): number {
+  let width = 0;
+  for (const letter of words) {
+    const share = HANGUL.test(letter) ? LETTER.hangul : NARROW.test(letter) ? LETTER.narrow : LETTER.other;
+    width += share * size;
+  }
+  return width;
+}
+
+// A label's box around its mark's point, in points, x to the right and y down, as `MapAnswerMark` lays it out: at its
+// side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
+// words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
+// labels and the choice of a label's side both read it.
+export function answerLabelBox({ side, tone, title, line, number, shift = 0 }: AnswerLabel): {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+} {
+  const titleSize = tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize;
+  const words = Math.max(wordsWidth(title, titleSize), line === null ? 0 : wordsWidth(line, mapText.rowLine.fontSize));
+  const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
+  const width = Math.ceil(Math.min(LABEL_MAX, frame + words));
+  const height = line === null ? ONE_LINE : TWO_LINES;
+  const reach = ANSWER_SYMBOL_BOX / 2 + GAP + shift;
+  if (side === 'left' || side === 'right') {
+    const left = side === 'right' ? reach : -reach - width;
+    return { left, top: -height / 2, right: left + width, bottom: height / 2 };
+  }
+  const top = side === 'below' ? reach : -reach - height;
+  return { left: -width / 2, top, right: width / 2, bottom: top + height };
+}
 
 const styles = StyleSheet.create({
   mark: { alignSelf: 'flex-start', alignItems: 'center', gap: GAP },

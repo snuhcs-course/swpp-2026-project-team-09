@@ -34,6 +34,7 @@ export { ListRow, RoundIcon, SectionHeader } from './list-row';
 export {
   ANSWER_SYMBOL_BOX,
   type AnswerLabel,
+  answerLabelBox,
   type AnswerSymbol,
   type FaceBadge,
   type LabelSide,

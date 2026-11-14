@@ -71,6 +71,22 @@ describe("an answer's look on the map", () => {
   });
 });
 
+function moved(shift: number): MarkerLook {
+  return {
+    kind: 'answer',
+    symbol: null,
+    label: { side: 'left', tone: 'candidate', title: '3식당', line: null, number: 4, shift },
+  };
+}
+
+// Partitions: a label not moved, and moved by two lengths (ticket 08's labels sharing an edge). Expected value: the
+// brief's rule that the name holds what is drawn.
+describe("an answer's look with a label moved to share an edge", () => {
+  it('has another name by how far its label moved', () => {
+    expect(new Set([withLabel('left'), moved(2), moved(9)].map((look) => lookName(look))).size).toBe(3);
+  });
+});
+
 // Partitions: a look on its middle, a look on its tip, an answer's look with a label at each of the four sides and
 // without a label, and a box not laid out yet. Expected values: the brief's anchor, the centre of the 36-point
 // symbol box.
