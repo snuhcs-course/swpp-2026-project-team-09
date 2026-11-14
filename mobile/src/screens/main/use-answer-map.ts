@@ -108,7 +108,8 @@ export interface AnswerMap {
   nativeMinLevel: number;
 }
 
-type Everyday = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
+// The everyday map's Avatars, and the cards that say whose they are.
+type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
 
 // A drawing's markers and lines on the map in place of the everyday map's markers, lines, and the User's own Avatar,
 // with the camera of an answer, under the answer's `pill` or none. Null while there is nothing to draw. `looks` are
@@ -134,8 +135,9 @@ function useDrawnMap(
   return { markers, lines: drawing.lines };
 }
 
-function ignorePress(): void {
-  // Nothing of a received invitation's way takes a press.
+export function ignorePress(): void {
+  // Nothing of a received invitation's way takes a press, nor, while the frame or that card is shown, the everyday
+  // map's markers.
 }
 
 const NO_AVATARS: readonly MapAvatar[] = [];
@@ -166,7 +168,7 @@ export function useAnswerMap(
   shown: ShownAnswer,
   map: MainMap,
   room: Room,
-  everyday: Everyday,
+  everyday: EverydayAvatars,
   { sending, made, standings }: Invited,
 ): AnswerMap | null {
   const { answer, index, show } = shown;

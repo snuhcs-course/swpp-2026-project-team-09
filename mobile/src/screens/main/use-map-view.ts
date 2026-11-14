@@ -10,7 +10,7 @@ import type { CardView } from '@/features/map/adapter';
 import { type MapAvatar, type MapLine, NATIVE_MIN_LEVEL } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
-import { type MapContents, useAnswerMap, useInvitationMap } from './use-answer-map';
+import { ignorePress, type MapContents, useAnswerMap, useInvitationMap } from './use-answer-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
 import type { Me } from './use-me';
@@ -18,10 +18,6 @@ import type { ReceivedInvitation } from './use-received-invitation';
 import type { Selection } from './use-selection';
 import { useThings } from './use-things';
 import { TUTORIAL_PIN_ID, type TutorialPin } from './tutorial/use-tutorial-pin';
-
-function ignorePress(): void {
-  // While the answer frame or a received invitation's card is shown, a marker opens no card.
-}
 
 // A press on the map: the tutorial place pin takes its own first; any other goes to the map's things, where merged
 // study pins zoom in.
@@ -51,9 +47,9 @@ export interface Everyday {
 }
 
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
-// selected, the tutorial place pin
-// over them, the User's own Avatar, and the lines. While a Plan of an answer is shown, the Plan is drawn in their
-// place, and a press on a candidate shows its Plan; while a received invitation's card is, its own way is.
+// selected, the tutorial place pin over them, the User's own Avatar, and the lines. While a Plan of an answer is
+// shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received invitation's
+// card is, its own way is.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,

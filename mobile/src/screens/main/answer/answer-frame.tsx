@@ -7,7 +7,7 @@
 
 import { useIsFocused } from 'expo-router';
 import { type ReactElement, type ReactNode, useCallback } from 'react';
-import { type LayoutChangeEvent, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type LayoutChangeEvent, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
@@ -22,10 +22,9 @@ import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { ANSWER_PILL, listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
+import { CloseButton } from './close-button';
 import { InvitedCard } from './invited-card';
 import { PlanCard } from './plan-card';
-
-const CLOSE = 36;
 
 // What the User asked, on one line, with the chat icon and ✕, which forgets the conversation.
 function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }): ReactElement {
@@ -37,9 +36,7 @@ function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }):
         <Text ellipsizeMode="tail" numberOfLines={1} style={styles.asked}>
           {asked}
         </Text>
-        <Pressable accessibilityLabel="답 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
-          <Icon color={color.ink} name="x" size={18} />
-        </Pressable>
+        <CloseButton label="답 닫기" onPress={onClose} />
       </View>
     </View>
   );
@@ -80,8 +77,8 @@ interface AnswerCardProps {
   cardActions: CardActions;
   // From the stage's bottom to a little above the bar's top: the room the card keeps for the bar.
   barRoom: number;
-  // The most the content takes, null until the stage is laid out.
-  contentMax: number | null;
+  // The stage's height, null until it is laid out.
+  stageHeight: number | null;
   keyboardUp: boolean;
   onHeight: (height: number) => void;
   onClose: () => void;
@@ -90,8 +87,8 @@ interface AnswerCardProps {
 interface FrameCardProps {
   // From the stage's bottom: the room the card keeps under its content.
   barRoom: number;
-  // The most the content takes, null until the stage is laid out.
-  contentMax: number | null;
+  // The stage's height, null until it is laid out: the card takes at most about half of it.
+  stageHeight: number | null;
   onHeight: (height: number) => void;
   testID: string;
   // Null leaves the card empty, as while the keyboard is up.
@@ -99,7 +96,8 @@ interface FrameCardProps {
 }
 
 // The frame's card, attached to the bottom of the screen. Its content scrolls inside it.
-export function FrameCard({ barRoom, contentMax, onHeight, testID, children }: FrameCardProps): ReactElement {
+export function FrameCard({ barRoom, stageHeight, onHeight, testID, children }: FrameCardProps): ReactElement {
+  const contentMax = stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom);
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -124,12 +122,12 @@ export function FrameCard({ barRoom, contentMax, onHeight, testID, children }: F
 // The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중이에요", and under them the room
 // of the bar. Its content gives way to the keyboard.
 function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, cardActions, barRoom, contentMax, keyboardUp, onHeight, onClose } = props;
+  const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose } = props;
   const { bubbles, waiting, retry } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const last = bubbles.at(-1);
   return (
-    <FrameCard barRoom={barRoom} contentMax={contentMax} onHeight={onHeight} testID="answer-card">
+    <FrameCard barRoom={barRoom} onHeight={onHeight} stageHeight={stageHeight} testID="answer-card">
       {keyboardUp ? null : (
         <>
           {after.map((bubble) => (
@@ -178,11 +176,11 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
       <AnswerCard
         barRoom={barRoom}
         cardActions={actions}
-        contentMax={stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom)}
         control={control}
         keyboardUp={keyboardUp}
         onClose={close}
         onHeight={onHeight}
+        stageHeight={stageHeight}
       />
       {sheets}
     </>
@@ -239,14 +237,6 @@ const styles = StyleSheet.create({
     boxShadow: shadow.float,
   },
   asked: { ...text.label, flexShrink: 1, color: color.ink },
-  close: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: CLOSE,
-    height: CLOSE,
-    borderRadius: CLOSE / 2,
-    backgroundColor: color.surfaceSunken,
-  },
   card: {
     position: 'absolute',
     right: 0,

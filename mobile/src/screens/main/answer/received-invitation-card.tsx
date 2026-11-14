@@ -5,17 +5,18 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerLine } from '@/api/assistant-types';
 import type { InvitationCard } from '@/api/invitation-card-types';
-import { Button, color, font, Icon, radius, space, text } from '@/design-system';
+import { Button, color, font, radius, space, text } from '@/design-system';
 import { withParticle } from '@/features/map/short-name';
 import { koreaClock } from '@/korea-time';
 import type { Room } from '../layout';
 import type { ReceivedInvitation } from '../use-received-invitation';
 import { FrameCard } from './answer-frame';
 import { AnswerLines } from './answer-lines';
+import { CloseButton } from './close-button';
 import { QuestSteps } from './quest-steps';
 
 interface ReceivedInvitationCardProps {
@@ -31,8 +32,6 @@ interface ReceivedInvitationCardProps {
   onClose: () => void;
   onRetry: () => void;
 }
-
-const CLOSE = 36;
 
 // The main server's words for a phone off campus (main-server `plans/own-way.ts`). The app sends no position from
 // there, so the server cannot tell where the User sets out from and answers `unknown` with no line.
@@ -62,9 +61,7 @@ function Heading({ words, onClose }: { words: string; onClose: () => void }): Re
   return (
     <View style={styles.heading}>
       <Text style={styles.whose}>{words}</Text>
-      <Pressable accessibilityLabel="초대 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
-        <Icon color={color.ink} name="x" size={18} />
-      </Pressable>
+      <CloseButton label="초대 닫기" onPress={onClose} />
     </View>
   );
 }
@@ -157,14 +154,12 @@ interface InvitationFrameProps {
 // The card of a received invitation in the answer frame's card, without a pill, the input, or the tab bar under it.
 export function InvitationFrame({ invitation, room, onHeight }: InvitationFrameProps): ReactElement {
   const { bottom } = useSafeAreaInsets();
-  const barRoom = bottom + space[4];
-  const stageHeight = room.stage?.height ?? null;
   const { card, failed, offCampus, busy, accept, decline, closeCard, retry } = invitation;
   return (
     <FrameCard
-      barRoom={barRoom}
-      contentMax={stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom)}
+      barRoom={bottom + space[4]}
       onHeight={onHeight}
+      stageHeight={room.stage?.height ?? null}
       testID="invitation-frame"
     >
       <ReceivedInvitationCard
@@ -185,14 +180,6 @@ const styles = StyleSheet.create({
   card: { gap: space[3] },
   heading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
   whose: { ...text.label, flexShrink: 1, color: color.inkMuted },
-  close: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: CLOSE,
-    height: CLOSE,
-    borderRadius: CLOSE / 2,
-    backgroundColor: color.surfaceSunken,
-  },
   title: { ...text.title, fontFamily: font.bold, color: color.ink },
   time: { color: color.snuBlue },
   with: { ...text.body, color: color.inkMuted },
