@@ -15,6 +15,7 @@ import {
   type MapCamera,
   MAX_ZOOM,
   MIN_ZOOM,
+  outerRules,
   project,
   type Size,
   unproject,
@@ -119,17 +120,41 @@ export function correctedCentre(drawing: Shown, camera: MapCamera, size: Size, a
   return unproject({ x: centre.x - dx, y: centre.y - dy }, camera.zoom);
 }
 
+// Whether the box around some points at a camera is no wider and no higher than the area.
+function fitsIn(points: readonly LatLng[], camera: MapCamera, size: Size, area: ViewArea): boolean {
+  const placed = points.map((position) => inView(position, camera, size));
+  const xs = placed.map(({ x }) => x);
+  const ys = placed.map(({ y }) => y);
+  return (
+    Math.max(...xs) - Math.min(...xs) <= area.right - area.left + ONE_POINT &&
+    Math.max(...ys) - Math.min(...ys) <= area.bottom - area.top + ONE_POINT
+  );
+}
+
 // Where the camera goes for an answer's drawing on a campus map whose view has that size: the fit of all its points
-// into what the padding leaves, no closer than `closest`, and, where the map's lowest zoom is too close for all of
-// them, moved at that zoom so that the Plan shows. Null for a drawing without points.
-export function answerCamera(drawing: Shown, size: Size, padding: FitPadding, closest: number): MapCamera | null {
-  const rules = { bounds: CAMERA_BOUNDS, fitBounds: CAMPUS_BOUNDS, minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM, size };
-  const fitted = fit(drawing.points, { padding, maxZoom: closest }, rules);
+// into what the padding leaves, no closer than `closest`. Where the map's lowest zoom is too close for the Plan's own
+// points and `outer` is given, the fit of those alone, out to `outer` at most. Where a point is still outside, moved
+// at that zoom so that the Plan shows. Null for a drawing without points.
+export function answerCamera(
+  drawing: Shown,
+  size: Size,
+  padding: FitPadding,
+  closest: number,
+  outer?: number,
+): MapCamera | null {
+  const campus = { bounds: CAMERA_BOUNDS, fitBounds: CAMPUS_BOUNDS, minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM, size };
+  const fitted = fit(drawing.points, { padding, maxZoom: closest }, campus);
   if (fitted === null) {
     return null;
   }
   const { top, right, bottom, left } = padding;
   const area = { top, right: size.width - right, bottom: size.height - bottom, left };
-  const centre = correctedCentre(drawing, fitted, size, area);
-  return centre === null ? fitted : settle({ centre, zoom: fitted.zoom }, rules);
+  const rules = outerRules(campus, outer);
+  const wider =
+    rules === campus || fitsIn(drawing.own, fitted, size, area)
+      ? null
+      : fit(drawing.own, { padding, maxZoom: closest }, rules);
+  const camera = wider ?? fitted;
+  const centre = correctedCentre(drawing, camera, size, area);
+  return centre === null ? camera : settle({ centre, zoom: camera.zoom }, rules);
 }

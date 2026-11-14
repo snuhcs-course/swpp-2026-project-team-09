@@ -24,6 +24,7 @@ import {
   type MapMarker,
   type MarkerLook,
   NATIVE_MIN_LEVEL,
+  nativeLevelZoom,
   type Size,
   useMarkerImages,
   ZOOM_OFFSET,
@@ -46,6 +47,11 @@ const EDGE = space[4];
 // A Plan may span the campus, and on a phone Kakao's level 15, where a campus map's pinch out stops, is closer than
 // the lowest zoom of the camera's rules: while a Plan is drawn, a native map may go one level further out.
 const ANSWER_MIN_LEVEL = NATIVE_MIN_LEVEL - 1;
+// Where the lowest zoom is too close for the Plan's own points, the camera may go out to that level's zoom, kept a
+// quarter of a level clear of it: on Android the module shows a view taller than when it opened by sending each zoom
+// that much lower (`useScaleShift` in `native-map.tsx`, 0.15 on the emulator), and Kakao holds what it is sent to the
+// level.
+const ANSWER_OUTER_ZOOM = nativeLevelZoom(ANSWER_MIN_LEVEL) + 0.25;
 
 const NO_LOOKS: readonly MarkerLook[] = [];
 
@@ -106,7 +112,8 @@ function labelViewOf(drawing: AnswerDrawing, { top, card, pill, view }: Framing)
   if (view === null) {
     return null;
   }
-  const camera = answerCamera(drawing, view.size, paddingOf(top, card, drawing, pill), view.closest);
+  const padding = paddingOf(top, card, drawing, pill);
+  const camera = answerCamera(drawing, view.size, padding, view.closest, ANSWER_OUTER_ZOOM);
   return camera === null ? null : { camera, size: view.size, area: labelArea(top, card, view.size, pill) };
 }
 
@@ -148,7 +155,11 @@ export interface AnswerMap {
   // Friend; any other press does nothing.
   onPress: (id: string) => void;
   nativeMinLevel: number;
+  // Left out, the camera's rules' lowest zoom (`MapProps`).
+  outerZoom?: number;
 }
+
+const ANSWER_LIMITS = { nativeMinLevel: ANSWER_MIN_LEVEL, outerZoom: ANSWER_OUTER_ZOOM } as const;
 
 // The everyday map's Avatars, and the cards that say whose they are.
 type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
@@ -204,7 +215,7 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
     return null;
   }
   const { markers, lines } = drawn;
-  return { contents: { markers, lines, avatars: NO_AVATARS }, onPress: ignorePress, nativeMinLevel: ANSWER_MIN_LEVEL };
+  return { contents: { markers, lines, avatars: NO_AVATARS }, onPress: ignorePress, ...ANSWER_LIMITS };
 }
 
 // A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
@@ -256,6 +267,6 @@ export function useAnswerMap(
         show(planId);
       }
     },
-    nativeMinLevel: ANSWER_MIN_LEVEL,
+    ...ANSWER_LIMITS,
   };
 }

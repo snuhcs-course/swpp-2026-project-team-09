@@ -10,7 +10,7 @@ import type { CardView } from '@/features/map/adapter';
 import { type MapAvatar, type MapLine, NATIVE_MIN_LEVEL } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
-import { ignorePress, type MapContents, useAnswerMap, useInvitationMap } from './use-answer-map';
+import { type AnswerMap, ignorePress, useAnswerMap, useInvitationMap } from './use-answer-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
 import type { Me } from './use-me';
@@ -56,7 +56,7 @@ export function useMapView(
   room: Room,
   { me, pin, lines, cards, selection }: Everyday,
   invitation: ReceivedInvitation,
-): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
+): AnswerMap {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
   const way = useInvitationMap(invitation.shown ? invitation.scene : null, map, room);

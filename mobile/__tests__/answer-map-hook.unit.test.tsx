@@ -123,8 +123,8 @@ function spanIn(points: readonly LatLng[], camera: MapCamera | undefined): { top
 
 // Partitions: the answer comes; the Plan on screen changes; the card grows; the answer is closed. Expected values:
 // at the lowest zoom every point is 425.7 high and the Plans' own points 370.8 (see `answer-camera.unit.test.ts`).
-// The first Plan's area of 434 holds every point; the third Plan's under a card of 380, from 132 to 502, not even its
-// own.
+// The first Plan's area of 434 holds every point; the third Plan's under a card of 380, from 132 to 502, only its own
+// within a point.
 describe("the answer's camera", () => {
   it('goes in one move to the fit of every point of the first Plan, and asks the map for no fit', async () => {
     const asked: Asked = { fits: 0, cameras: [] };
@@ -147,10 +147,12 @@ describe("the answer's camera", () => {
 
     await rerender({ ...FIRST, shown: shownAt(2), room: { ...ROOM, answerHeight: 380 } });
     expect(asked.cameras).toHaveLength(3);
-    // With the 8 of ticket 08's area, the area from 132 to 502 is 370 high, less than the third Plan's own 370.8: its
-    // north end, by its pick 학생회관, comes to 132, and its middle to 132 + 185.4 = 317.4.
+    // With the 8 of ticket 08's area, the area from 132 to 502 is 370 high, less than the third Plan's own 370.85 by
+    // under a point, so they count as fitting there and the camera stays at the lowest zoom: their north end, by the
+    // pick 학생회관, comes to 132, and their middle to 132 + 185.4 = 317.4.
     const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 2).own, asked.cameras[2]);
     expect((top + bottom) / 2).toBeCloseTo(317.4, 0);
+    expect(bottom - top).toBeCloseTo(370.85, 1);
   });
 
   it('moves nothing when the answer is closed', async () => {
@@ -200,22 +202,29 @@ async function drawnIn(room: Room): Promise<AnswerMap | null> {
   return result.current;
 }
 
-// Partitions: the first Plan under the card of 406 measured on the emulator, at whose camera 학생회관 lies under the
-// pill; the same before the stage is laid out, with the sides chosen in metres. Expected values: the worked numbers
-// of `answer-labels.unit.test.ts` at that camera, where the pill also ends at 100 (0 + 52 + 48 here), and the stored
-// answer's sides in metres (`answer-marks.unit.test.ts`).
+// Partitions: the first Plan under the card of 406 measured on the emulator, at whose camera 자하연식당 2층 lies under
+// the pill; the same before the stage is laid out, with the sides chosen in metres. Expected values: the worked
+// numbers of `answer-labels.unit.test.ts` at that camera, where the pill also ends at 100 (0 + 52 + 48 here), and the
+// stored answer's sides in metres (`answer-marks.unit.test.ts`).
 describe('the labels the answer draws', () => {
-  it("leaves out 학생회관식당's label, under the pill at the camera, and keeps the pick's under 302동", async () => {
+  it("leaves out 자하연식당 2층's label, under the pill at the camera, and keeps the pick's under 302동", async () => {
     const drawn = await drawnIn({ ...ROOM, answerHeight: 406 });
 
-    expect(labelOf(drawn, '후보 3 · 학생회관식당')).toBeNull();
+    expect(labelOf(drawn, '후보 5 · 자하연식당 2층')).toBeNull();
     expect(labelOf(drawn, '302동식당 · 12:15 점심')).toMatchObject({ side: 'below' });
   });
 
-  it("keeps 학생회관식당's label at its right while the stage is not laid out", async () => {
+  it("keeps 자하연식당 2층's label at its left while the stage is not laid out", async () => {
     const drawn = await drawnIn({ ...ROOM, stage: null, answerHeight: 406 });
 
-    expect(labelOf(drawn, '후보 3 · 학생회관식당')).toMatchObject({ side: 'right' });
+    expect(labelOf(drawn, '후보 5 · 자하연식당 2층')).toMatchObject({ side: 'left' });
+  });
+
+  it("lets the map go out to Kakao's level 14, a quarter of a level clear of its 14.515 on the emulator", async () => {
+    const drawn = await drawnIn(ROOM);
+
+    expect(drawn).toMatchObject({ nativeMinLevel: 14 });
+    expect(drawn?.outerZoom).toBeCloseTo(14.765, 6);
   });
 });
 

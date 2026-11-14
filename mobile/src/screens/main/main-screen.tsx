@@ -190,11 +190,12 @@ interface MainMapViewProps {
   // What a press on a marker does: the tutorial pin's press for its own marker, else the things'.
   onPress: (id: string) => void;
   nativeMinLevel: number;
+  outerZoom?: number;
 }
 
 // The map with what it draws. Its credit opens the sources of its data. The View around it watches its touches for a
 // tap, which removes the pin.
-function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel }: MainMapViewProps): ReactElement {
+function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel, outerZoom }: MainMapViewProps): ReactElement {
   return (
     <View style={styles.map} testID="main-map-touches" {...pin.touches}>
       <Map
@@ -203,6 +204,7 @@ function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel }: Main
         inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight, room.interestsHint)}
         markers={contents.markers}
         nativeMinLevel={nativeMinLevel}
+        outerZoom={outerZoom}
         onCameraIdle={map.onCameraIdle}
         onCreditPress={() => {
           router.push('/map-sources');

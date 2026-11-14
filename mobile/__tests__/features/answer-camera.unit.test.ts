@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -191,5 +192,57 @@ describe('the camera worked out at its limits', () => {
     const near = own.filter(({ latitude }) => latitude < 37.451);
 
     expect(answerCamera({ points: near, own: near, pick }, SIZE, paddingOver(274), 17)?.zoom).toBe(17);
+  });
+});
+
+// The emulator's padding with ticket 08's area: 100 + 8 + 24 = 132 at the top, and the card of 406, 8, and the marks'
+// room at the bottom (66 for the first Plan, whose pick has its two lines below; 24 for the third). An answer's camera
+// may go out to zoom 14.765.
+const OUTER = 14.765;
+
+function outerFor(planIndex: number, below: number, outer = OUTER): MapCamera {
+  const padding = { top: 132, right: 64, bottom: 406 + 8 + below, left: 64 };
+  const camera = answerCamera(drawingOf(MEAL_ANSWER, planIndex), SIZE, padding, 20, outer);
+  if (camera === null) {
+    throw new Error('The drawing has no camera');
+  }
+  return camera;
+}
+
+// Partitions: the Plan's own points too high for the lowest zoom, filling the area further out (the first Plan into
+// 302, the third into 344); more than the outer zoom allows; own points that fit at the lowest zoom. Expected values:
+// the own points are 370.85 high at the lowest zoom, 15.2601.
+describe('the camera of an answer that may go further out than the lowest zoom', () => {
+  it("goes out until the first Plan's own points fill the area from 132 to 434", () => {
+    const camera = outerFor(0, 66);
+
+    const box = boxIn(drawingOf(MEAL_ANSWER, 0).own, camera);
+    expect(camera.zoom).toBeCloseTo(15.2601 + Math.log2(302 / 370.85), 3);
+    expect(box.top).toBeCloseTo(132, 0);
+    expect(box.bottom).toBeCloseTo(434, 0);
+  });
+
+  it("goes out until the third Plan's own points fill the area from 132 to 476", () => {
+    const camera = outerFor(2, 24);
+
+    const box = boxIn(drawingOf(MEAL_ANSWER, 2).own, camera);
+    expect(camera.zoom).toBeCloseTo(15.2601 + Math.log2(344 / 370.85), 3);
+    expect(box.top).toBeCloseTo(132, 0);
+    expect(box.bottom).toBeCloseTo(476, 0);
+  });
+
+  it("stops at the outer zoom, and keeps the third Plan's pick's side there", () => {
+    // At 15.2 the own points are 370.85 × 2^(15.2 − 15.2601) = 355.7 high, more than 344: the north end, by the pick
+    // 학생회관, comes to 132.
+    const camera = outerFor(2, 24, 15.2);
+
+    expect(camera.zoom).toBeCloseTo(15.2, 6);
+    expect(boxIn(drawingOf(MEAL_ANSWER, 2).own, camera).top).toBeCloseTo(132, 0);
+  });
+
+  it('is the camera of a campus map when every point fits at the lowest zoom: under a card of 120', () => {
+    const drawing = drawingOf(MEAL_ANSWER, 0);
+
+    expect(answerCamera(drawing, SIZE, paddingOver(120), 20, OUTER)).toEqual(cameraFor(0, 120));
   });
 });
