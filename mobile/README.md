@@ -682,16 +682,19 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   sets out from.
 - **Inviting as it is** (`src/features/assistant/use-plan-invitation.ts`, `answer/invited-card.tsx`). The card of a
   Plan with a Friend has "이대로 초대" between the arrows, before the count. A press sends the answer's `input`, the
-  Plan's id and start, and the User's position to `POST /plans` with an `Idempotency-Key` kept for that answer and
-  Plan, so that a second press or one after a failure repeats it. While it is on its way the button reads "보내는
-  중이에요", and the chips, the band, the arrows, the swipe, and the map take no press. 409 `PLAN_CHANGED`
+  Plan's id and start, and the User's position to `POST /plans` with an `Idempotency-Key` kept for each Plan while
+  its answer is on screen, so that a second press, one after a failure, or one after coming back from another Plan
+  repeats it. One request is on its way at a time: the button of whatever Plan is on screen reads "보내는
+  중이에요", and the chips, the band, the arrows, the swipe, and the map take no press. A Quest made after its answer
+  left the screen is told with the toast "파티를 만들고 초대를 보냈어요". 409 `PLAN_CHANGED`
   recalculates from the same conditions and says "계획이 바뀌었어요. 다시 확인해 주세요"; any other failure says
   "초대하지 못했어요. 잠시 후 다시 시도해 주세요". The made Quest's card shows the chips without a press, each Friend's
-  with the state ("민수 · 아직 안 봄", "수락", "거절", "5분 늦음"), "파티를 만들고 초대를 보냈어요" and "답이 없어도
-  12:15에 가면 돼요", the Quest's steps, and "닫기", which closes the answer as ✕ does. The states come from the
-  signals of an answer heard since, then the Quest's members in the User's Quests, then the reply's invitations
-  (`invited-friends.ts`); a Friend's face on the map carries "?" while invited and "✓" once accepted, and its name
-  the state. A new answer, another Plan, or ✕ drops the made Quest from the screen.
+  with the state ("민수 · 아직 안 봄", "수락", "거절", "5분 늦음", "빠짐"), "파티를 만들고 초대를 보냈어요" and "답이 없어도
+  12:15에 가면 돼요", the Quest's steps, and "닫기", which closes the answer as ✕ does. The latest word counts
+  (`invited-friends.ts`): a signal of an answer heard after the Quest's members were last read, else those members
+  ("빠짐" for a Friend no longer among them), else the reply's invitations; a Friend's face on the map carries "?"
+  while invited and "✓" once in (accepted or late), and its name the state. A new answer, another Plan, or ✕ drops
+  the made Quest from the screen.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
