@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -24,6 +25,9 @@ export interface ShownAnswer {
   show: (planId: string) => void;
   basisOpen: boolean;
   toggleBasis: () => void;
+  // The list of Friends to add is open in the card; the input gives way to it.
+  adding: boolean;
+  setAdding: (open: boolean) => void;
   // A recalculation is on its way: one runs at a time.
   recalculating: boolean;
   // Asks for the answer to the conditions of the answer on screen when it is called, as `alter` changes them; it
@@ -51,6 +55,7 @@ interface AnswerState extends Shown {
   replyId: number | null;
   source: AnswerReply | null;
   basisOpen: boolean;
+  adding: boolean;
   // What was shown before the last drag.
   kept: Shown | null;
   recalculating: boolean;
@@ -79,6 +84,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     answer: source,
     index: 0,
     basisOpen: false,
+    adding: false,
     kept: null,
     recalculating: false,
     epoch,
@@ -113,6 +119,7 @@ function useBrowsing(setStored: SetStored): {
   browse: ShownAnswer['browse'];
   show: ShownAnswer['show'];
   toggleBasis: ShownAnswer['toggleBasis'];
+  setAdding: ShownAnswer['setAdding'];
   undo: ShownAnswer['undo'];
 } {
   const browse = useCallback(
@@ -136,12 +143,18 @@ function useBrowsing(setStored: SetStored): {
   const toggleBasis = useCallback((): void => {
     setStored((last) => ({ ...last, basisOpen: !last.basisOpen }));
   }, [setStored]);
+  const setAdding = useCallback(
+    (open: boolean): void => {
+      setStored((last) => (last.adding === open ? last : { ...last, adding: open }));
+    },
+    [setStored],
+  );
   const undo = useCallback((): void => {
     setStored((last) =>
       last.kept === null || last.recalculating ? last : { ...last, ...last.kept, kept: null, basisOpen: false },
     );
   }, [setStored]);
-  return { browse, show, toggleBasis, undo };
+  return { browse, show, toggleBasis, setAdding, undo };
 }
 
 // Asks for a recalculation of the answer on screen when it is called, unless one of that epoch is on its way: a
@@ -208,6 +221,7 @@ export function useShownAnswer(
     index: current.index,
     ...browsing,
     basisOpen: current.basisOpen,
+    adding: current.adding,
     recalculating: current.recalculating,
     change,
     ghost: ghostOf(current.kept),

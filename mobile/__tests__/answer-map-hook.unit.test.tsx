@@ -76,6 +76,8 @@ const NO_ANSWER: ShownAnswer = {
   show: nothing,
   basisOpen: false,
   toggleBasis: nothing,
+  adding: false,
+  setAdding: nothing,
   recalculating: false,
   change: nothing,
   ghost: null,
