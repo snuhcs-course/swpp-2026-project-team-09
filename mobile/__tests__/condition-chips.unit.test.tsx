@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { render, screen, userEvent, within } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -75,6 +76,47 @@ describe('ConditionChips shown', () => {
 
     expect(screen.getByRole('button', { name: '근거 접기' })).toBeVisible();
     expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
+  });
+});
+
+type Host = ReturnType<typeof screen.getByTestId>;
+
+function inScroll(element: Host): boolean {
+  for (let node: Host | null = element; node !== null; node = node.parent) {
+    if (node.type === 'RCTScrollView') {
+      return true;
+    }
+  }
+  return false;
+}
+
+describe('ConditionChips laid out', () => {
+  // Partitions: each kind of chip and "＋ 같이" in lines that wrap, and "근거" beside them. The rule: the decision of
+  // 2026-11-15, the chips wrap onto a second line in place of a sideways scroll, and "근거" stays at the right of the
+  // first line.
+  it('puts every chip whole into lines that wrap, none in a sideways scroll', async () => {
+    await show();
+
+    const lines = screen.getByTestId('condition-chips-lines');
+    expect(lines).toHaveStyle({ flexDirection: 'row', flexWrap: 'wrap' });
+    for (const chip of [
+      within(lines).getByRole('button', { name: '301동에서' }),
+      within(lines).getByRole('button', { name: '13:00 수업까지' }),
+      within(lines).getByText('민수'),
+      within(lines).getByRole('button', { name: '민수 빼기' }),
+      within(lines).getByRole('button', { name: '같이 먹을 친구 추가' }),
+    ]) {
+      expect(inScroll(chip)).toBe(false);
+    }
+  });
+
+  it('keeps 근거 out of the lines, at the top of the row beside them, so that it stays at the first line', async () => {
+    await show();
+
+    const holder: unknown = screen.getByRole('button', { name: '근거' }).parent?.props.testID;
+    expect(within(screen.getByTestId('condition-chips-lines')).queryByRole('button', { name: '근거' })).toBeNull();
+    expect(holder).toBe('condition-chips');
+    expect(screen.getByTestId('condition-chips')).toHaveStyle({ flexDirection: 'row', alignItems: 'flex-start' });
   });
 });
 

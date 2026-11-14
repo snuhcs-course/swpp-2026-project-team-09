@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
 import { color, Icon, radius, size, space, text } from '@/design-system';
 
@@ -103,17 +104,13 @@ function AddChip({ adding, disabled, onAdd }: { adding: boolean; disabled: boole
 }
 
 // The first row of the answer's card: the conditions the answer used, each a control that corrects it, then
-// "＋ 같이", with "근거" fixed at the row's right when there is a basis to open.
+// "＋ 같이", in lines that wrap so that no chip is cut, with "근거" fixed at the right of the first line when there is a
+// basis to open.
 export function ConditionChips({ chips, basisOpen, adding, disabled, ...on }: ConditionChipsProps): ReactElement {
   const basis = basisOpen ? '근거 접기' : '근거';
   return (
-    <View style={styles.row}>
-      <ScrollView
-        contentContainerStyle={styles.chips}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.scroll}
-      >
+    <View style={styles.row} testID="condition-chips">
+      <View style={styles.chips} testID="condition-chips-lines">
         {chips.map((chip) =>
           chip.kind === 'person' ? (
             <PersonChip
@@ -132,7 +129,7 @@ export function ConditionChips({ chips, basisOpen, adding, disabled, ...on }: Co
           ),
         )}
         <AddChip adding={adding} disabled={disabled} onAdd={on.onAdd} />
-      </ScrollView>
+      </View>
       {on.onBasis === null ? null : (
         <Pressable
           accessibilityLabel={basis}
@@ -150,9 +147,8 @@ export function ConditionChips({ chips, basisOpen, adding, disabled, ...on }: Co
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  scroll: { flex: 1 },
-  chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
+  chips: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -171,6 +167,6 @@ const styles = StyleSheet.create({
   label: { ...text.label, color: color.ink },
   personLabel: { color: color.snuBlue },
   remove: { marginRight: -space[1], padding: 2, borderRadius: radius.full },
-  basis: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: space[2] },
+  basis: { flexDirection: 'row', alignItems: 'center', gap: 2, height: CHIP_HEIGHT },
   basisLabel: { ...text.label, color: color.blue600 },
 });
