@@ -105,7 +105,10 @@ describe('the Avatars of others under an invitation', () => {
   it("draws a Friend's Avatar on the everyday map, none under the invitation, and again after ✕", async () => {
     // Changed for the boundary: 김민준 stands halfway between 301동 and 63동, out of the reach of the way's marks, by
     // which an Avatar gives way under any drawing.
-    server.on('GET /positions', { status: 200, body: [{ ...LIBRARY_POSITION, latitude: 37.4547, longitude: 126.9516 }] });
+    server.on('GET /positions', {
+      status: 200,
+      body: [{ ...LIBRARY_POSITION, latitude: 37.4547, longitude: 126.9516 }],
+    });
     const user = await openMain({ answerOnMap: true });
     expect(mapThings()).toContain(FRIEND);
 

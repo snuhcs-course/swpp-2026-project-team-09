@@ -99,7 +99,9 @@ describe('the lines of a card that differs from the stored one', () => {
       throw new Error('The stored card has a gathering');
     }
     // Changed for the boundary: the gathering at a Place where no step is.
-    await show({ card: { ...INVITATION_CARD, gathering: { ...gathering, place: { ...gathering.place, placeId: 'p' } } } });
+    await show({
+      card: { ...INVITATION_CARD, gathering: { ...gathering, place: { ...gathering.place, placeId: 'p' } } },
+    });
 
     expect(screen.getByTestId('invitation-title')).toHaveTextContent('12:33 점심', { exact: true });
   });
@@ -130,8 +132,8 @@ describe("the way's words of a received invitation", () => {
   });
 });
 
-// Partitions of the read: on its way, failed; and of the buttons: a press of each, and while one is on its way.
-describe('the card while it is read, and its buttons', () => {
+// Partitions of the read: on its way, and failed.
+describe('the card while it is read', () => {
   it('says the invitation is being read', async () => {
     await show({ card: null });
 
@@ -148,7 +150,10 @@ describe('the card while it is read, and its buttons', () => {
 
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+});
 
+// Partitions of the buttons: a press of each, and 수락 and 거절 while one is on its way.
+describe("the card's buttons", () => {
   it('accepts with 수락', async () => {
     const onAccept = jest.fn<undefined, []>();
     await show({ onAccept });

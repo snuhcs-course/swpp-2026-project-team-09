@@ -6,6 +6,7 @@
 
 import { act, renderHook } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
+import type { ShownQuestInvitation } from '@/api/quest-parts-types';
 import { cardId } from '@/features/map/adapter';
 import { forgetAnswerSwitch } from '@/features/assistant/answer-switch';
 import { useInvitationCards } from '@/screens/main/use-main-layers';
@@ -24,11 +25,20 @@ function kept(answerOnMap: boolean): Kept {
   return { answerOnMap } as Kept;
 }
 
+// The list as the app's client gives it: the invitation with the parts the app adds, left empty, as the card reads
+// only the Quest's title and its Leader.
+const LISTED: ShownQuestInvitation = {
+  ...RECEIVED,
+  quest: { ...RECEIVED.quest, photo: null, tags: [], faces: [] },
+  startsAt: null,
+  place: null,
+};
+
 beforeEach(() => {
   jest.useFakeTimers();
   forgetAnswerSwitch();
   jest.mocked(readKept).mockReset();
-  jest.spyOn(apiClient, 'listQuestInvitations').mockResolvedValue([RECEIVED]);
+  jest.spyOn(apiClient, 'listQuestInvitations').mockResolvedValue([LISTED]);
 });
 
 afterEach(() => {
@@ -39,10 +49,10 @@ afterEach(() => {
 // Partitions: the switch's read held back and then on; the switch read off.
 describe('the cards of the received invitations, and whether they are known', () => {
   it('are not known while the switch is unread, and known once it is read on and the list came', async () => {
-    let say: (answer: Kept) => void = () => undefined;
+    const phone: { say?: (answer: Kept) => void } = {};
     jest.mocked(readKept).mockReturnValue(
       new Promise((resolve) => {
-        say = resolve;
+        phone.say = resolve;
       }),
     );
     const { result } = await renderHook(() => useInvitationCards(), { wrapper: freshWrapper() });
@@ -50,7 +60,7 @@ describe('the cards of the received invitations, and whether they are known', ()
     expect(result.current.known).toBe(false);
 
     await act(async () => {
-      say(kept(true));
+      phone.say?.(kept(true));
       await Promise.resolve();
     });
     await settle();
