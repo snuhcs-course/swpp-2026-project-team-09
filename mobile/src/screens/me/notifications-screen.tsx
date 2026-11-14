@@ -25,7 +25,7 @@ import {
   useNotReadyToast,
 } from '@/design-system';
 import { openAddress } from '@/features/notifications/address';
-import { type NoticeKind, type NoticeView, todaysNotices } from '@/features/notifications/adapter';
+import { type NoticeKind, type NoticeView, waitingNotices } from '@/features/notifications/adapter';
 import { useNotices } from '@/features/notifications/use-notices';
 
 const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
@@ -92,11 +92,11 @@ function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement 
   );
 }
 
-// 알림, the panel of the `Profile` frame: the Notifications the main server keeps, then what waits for the User today,
-// from the lists the main server serves. The count is today's rows'.
+// 알림, the panel of the `Profile` frame: the Notifications the main server keeps, then what waits for the User, from
+// the lists the main server serves. The count is of the rows that wait.
 export function NotificationsScreen(): ReactElement {
   const { data, isPending, refetch } = useNotices();
-  const count = todaysNotices(data ?? []).length;
+  const count = waitingNotices(data ?? []).length;
   return (
     <FullScreenPanel
       count={count === 0 ? undefined : count}

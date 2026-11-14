@@ -31,7 +31,7 @@ export interface NoticeView {
   questId: string | null;
   // The card's address the row opens, `/main?card=<kind>:<id>`. Null for a row that leads elsewhere.
   address: string | null;
-  // A kept Notification's time, "11:58" today in Korea and "11월 16일" before. Null for today's rows.
+  // A kept Notification's time, "11:58" today in Korea and "11월 16일" before. Null for a row of what waits for the User.
   time: string | null;
 }
 
@@ -151,8 +151,8 @@ export function toNotices({
   ];
 }
 
-// Today's rows, which the bell and the badge on 파티 count: the kept Notifications are left out.
-export function todaysNotices(notices: readonly NoticeView[]): NoticeView[] {
+// The rows of what waits for the User, which the bell and the badge on 파티 count: the kept Notifications are left out.
+export function waitingNotices(notices: readonly NoticeView[]): NoticeView[] {
   return notices.filter(({ time }) => time === null);
 }
 

@@ -210,7 +210,7 @@ describe('toNotices of the kept Notifications', () => {
     ]);
   });
 
-  it("kept Notifications out of order, and today's rows → the kept ones first, the latest first", () => {
+  it('kept Notifications out of order, and rows that wait → the kept ones first, the latest first', () => {
     const rows = toNotices({
       ...NONE,
       invitations: [INVITATION],

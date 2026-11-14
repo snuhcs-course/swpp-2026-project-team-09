@@ -19,7 +19,7 @@ import { type ScreenData, askAgain, somePending } from '@/api/screen-data';
 import type { JoinRequest } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
-import { type NoticeView, takesJoinRequests, todaysNotices, toNotices } from './adapter';
+import { type NoticeView, takesJoinRequests, waitingNotices, toNotices } from './adapter';
 
 function answerOf<Answer>(result: UseQueryResult<Answer>): Answer | null {
   return result.data ?? null;
@@ -62,8 +62,8 @@ export function useNotices(): ScreenData<NoticeView[]> {
   };
 }
 
-// The number on the bottom navigation's 파티: today's rows of 알림 that concern 파티. It never fails a screen: while
+// The number on the bottom navigation's 파티: the rows of 알림 that wait for the User and concern 파티. It never fails a screen: while
 // the lists load, and when every one failed, there is no badge.
 export function usePartyBadge(): number {
-  return todaysNotices(useNotices().data ?? []).filter(({ kind }) => kind !== 'friend-request').length;
+  return waitingNotices(useNotices().data ?? []).filter(({ kind }) => kind !== 'friend-request').length;
 }
