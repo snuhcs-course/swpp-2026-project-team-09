@@ -109,7 +109,7 @@ After the merge nothing changes for Users: the chosen key is the existing OpenRo
 
 The deploy role (`infra/production/terraform/deploy_role.tf`) is not changed. It may call `ssm:GetParametersByPath` on `/snunow/production` only (checked against the exact path asked for), which returns `llm-key-names` as a direct child. It may call `ssm:GetParameters` on `/snunow/production/*`, which covers each key fetched by its exact name. So no IAM change is needed, no new secret becomes readable, and the running servers still have no AWS access.
 
-The rejected alternative was to add `/snunow/production/llm-keys` as one more read-only resource of the `GetParametersByPath` statement, applied with `terraform apply`. It would have let the Release list the folder without a names list, but it changes IAM, and no IAM change is wanted.
+The rejected alternative was to add `/snunow/production/llm-keys` as one more read-only resource of the `GetParametersByPath` statement, applied with `terraform apply`. It would have let the Release list the folder without a names list, but it changes IAM. The deploy role's permissions are not widened feature by feature: a role that grows with every feature becomes hard to audit, since nobody can say later what is open and why. With the list, only adding or removing a key needs any care.
 
 ### The model port
 
