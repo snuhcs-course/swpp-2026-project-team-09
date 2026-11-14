@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -18,6 +19,8 @@ import { startApp } from './start-app.js';
 
 const QUEST_ID = '6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b';
 const OTHER_QUEST_ID = '7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c';
+const FRIEND_ID = 'c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f';
+const OTHER_FRIEND_ID = 'd2e3f4a5-6b7c-4d8e-9f0a-1b2c3d4e5f6a';
 
 let app: INestApplication<Server>;
 let watcher: SignalWatcher;
@@ -42,8 +45,8 @@ function getNotifications(user: TestUser | null): request.Test {
   return withAccessToken(request(app.getHttpServer()).get('/notifications'), user?.accessToken);
 }
 
-const accepted = (friendName: string, questId = QUEST_ID) =>
-  ({ kind: 'accepted', questId, questTitle: '저녁 같이', friendName }) as const;
+const accepted = (friendName: string, questId = QUEST_ID, friendId = FRIEND_ID) =>
+  ({ kind: 'accepted', questId, questTitle: '저녁 같이', friendId, friendName }) as const;
 
 async function noticesWhile(user: TestUser, act: () => Promise<unknown>): Promise<number> {
   const signals = await signalsWhile(app, watcher, 'notice', act);
@@ -56,7 +59,7 @@ describe('GET /notifications', () => {
     await notifications.schedule(user.id, accepted('민수'), new Date('2026-11-14T02:58:00Z'));
     await notifications.schedule(
       user.id,
-      { kind: 'declined', questId: OTHER_QUEST_ID, questTitle: '점심', friendName: '지은' },
+      { kind: 'declined', questId: OTHER_QUEST_ID, questTitle: '점심', friendId: FRIEND_ID, friendName: '지은' },
       new Date('2026-11-14T03:10:00Z'),
     );
     await notifications.schedule(other.id, accepted('철수'), new Date('2026-11-14T03:00:00Z'));
@@ -66,7 +69,7 @@ describe('GET /notifications', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
       {
-        id: 'declined:party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
+        id: 'declined:party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
         kind: 'declined',
         title: '지은이 못 온대요',
         line: '점심',
@@ -74,7 +77,7 @@ describe('GET /notifications', () => {
         url: '/main?card=party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
       },
       {
-        id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b',
+        id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
         kind: 'accepted',
         title: '민수가 수락했어요',
         line: '저녁 같이',
@@ -107,6 +110,29 @@ describe('A second schedule through the service', () => {
     expect(notices).toBe(2);
     expect((await getNotifications(user)).body).toEqual([
       expect.objectContaining({ title: '지은이 수락했어요', at: '2026-11-14T12:05:00+09:00' }),
+    ]);
+  });
+});
+
+describe('Two Friends who answered about one card', () => {
+  it('are kept as two Notifications, and a cancel of one keeps the other', async () => {
+    const user = await signInUser(app);
+    await notifications.schedule(user.id, accepted('민수'), new Date('2026-11-14T02:58:00Z'));
+    await notifications.schedule(
+      user.id,
+      accepted('지은', QUEST_ID, OTHER_FRIEND_ID),
+      new Date('2026-11-14T03:05:00Z'),
+    );
+
+    expect((await getNotifications(user)).body).toEqual([
+      expect.objectContaining({ id: `accepted:party:${QUEST_ID}:${OTHER_FRIEND_ID}`, title: '지은이 수락했어요' }),
+      expect.objectContaining({ id: `accepted:party:${QUEST_ID}:${FRIEND_ID}`, title: '민수가 수락했어요' }),
+    ]);
+
+    await notifications.cancel(user.id, 'accepted', { kind: 'party', id: QUEST_ID }, FRIEND_ID);
+
+    expect((await getNotifications(user)).body).toEqual([
+      expect.objectContaining({ id: `accepted:party:${QUEST_ID}:${OTHER_FRIEND_ID}` }),
     ]);
   });
 });
@@ -149,12 +175,14 @@ describe('A cancel through the service', () => {
     await notifications.schedule(user.id, accepted('지은', OTHER_QUEST_ID), new Date('2026-11-14T03:00:00Z'));
 
     const notices = await noticesWhile(user, () =>
-      notifications.cancel(user.id, 'accepted', { kind: 'party', id: QUEST_ID }),
+      notifications.cancel(user.id, 'accepted', { kind: 'party', id: QUEST_ID }, FRIEND_ID),
     );
 
     expect(notices).toBe(1);
     expect((await getNotifications(user)).body).toEqual([
-      expect.objectContaining({ id: 'accepted:party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c' }),
+      expect.objectContaining({
+        id: 'accepted:party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
+      }),
     ]);
   });
 });
@@ -180,9 +208,9 @@ describe('What the service keeps of a User', () => {
       .parse((await getNotifications(user)).body)
       .map(({ id }) => id);
     expect(ids).toHaveLength(100);
-    expect(ids).toContain('accepted:party:party-new');
-    expect(ids).toContain('accepted:party:party-1');
-    expect(ids).not.toContain('accepted:party:party-0');
+    expect(ids).toContain('accepted:party:party-new:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f');
+    expect(ids).toContain('accepted:party:party-1:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f');
+    expect(ids).not.toContain('accepted:party:party-0:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f');
   });
 });
 
@@ -220,7 +248,9 @@ describe('What the service refuses and leaves out', () => {
     );
 
     expect((await getNotifications(user)).body).toEqual([
-      expect.objectContaining({ id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b' }),
+      expect.objectContaining({
+        id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
+      }),
     ]);
   });
 });

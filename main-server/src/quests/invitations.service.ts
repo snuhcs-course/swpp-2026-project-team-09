@@ -6,6 +6,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -147,6 +148,7 @@ export class InvitationsService {
       kind: 'accepted',
       questId,
       questTitle: answered.quest.title,
+      friendId: userId,
       friendName: answered.user.name,
     });
     await this.roomRequests.questChanged(questId);
@@ -170,6 +172,7 @@ export class InvitationsService {
       kind: 'declined',
       questId: invitation.questId,
       questTitle: invitation.quest.title,
+      friendId: userId,
       friendName: invitation.user.name,
     });
     await this.roomRequests.questChanged(invitation.questId);

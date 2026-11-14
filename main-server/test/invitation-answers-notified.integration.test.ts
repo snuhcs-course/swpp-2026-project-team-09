@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -71,7 +72,7 @@ describe('An invited User accepting', () => {
     await vi.waitFor(async () => {
       expect((await getNotifications(leader)).body).toEqual([
         {
-          id: `accepted:party:${questId}`,
+          id: `accepted:party:${questId}:${friend.id}`,
           kind: 'accepted',
           title: '민수가 수락했어요',
           line: '저녁 같이',
@@ -85,6 +86,29 @@ describe('An invited User accepting', () => {
   });
 });
 
+describe('Two invited Users accepting into one Quest', () => {
+  it('gives the Leader a Notification for each, the later first', async () => {
+    const { leader, friend, questId, invitationId } = await invitedFriend('민수');
+    const second = await signInUser(app, { name: '지은', department: '경제학부' });
+    await befriend(app, leader, second);
+    const secondInvitationId = await invitationOf(app, leader, questId, second);
+
+    expect((await answerInvitation(app, friend, invitationId, 'accept')).status).toBe(201);
+    await vi.waitFor(async () => {
+      expect((await getNotifications(leader)).body).toHaveLength(1);
+    });
+    vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(new Date(NOW.getTime() + 60_000));
+    expect((await answerInvitation(app, second, secondInvitationId, 'accept')).status).toBe(201);
+
+    await vi.waitFor(async () => {
+      expect((await getNotifications(leader)).body).toEqual([
+        expect.objectContaining({ id: `accepted:party:${questId}:${second.id}`, title: '지은이 수락했어요' }),
+        expect.objectContaining({ id: `accepted:party:${questId}:${friend.id}`, title: '민수가 수락했어요' }),
+      ]);
+    });
+  });
+});
+
 describe('An invited User declining', () => {
   it('gives the Leader one Notification that the User cannot come, and the User none', async () => {
     const { leader, friend, questId, invitationId } = await invitedFriend('지은');
@@ -94,7 +118,7 @@ describe('An invited User declining', () => {
     await vi.waitFor(async () => {
       expect((await getNotifications(leader)).body).toEqual([
         {
-          id: `declined:party:${questId}`,
+          id: `declined:party:${questId}:${friend.id}`,
           kind: 'declined',
           title: '지은이 못 온대요',
           line: '저녁 같이',
