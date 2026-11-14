@@ -2,7 +2,7 @@
 
 Parent: [P02 spec](../spec.md) ("Correcting the answer")
 Status: ready-for-agent
-Blocked by: 03, and an emulator check that a press on a Friend's face during a Plan adds the Friend
+Blocked by: 03, and an emulator check that a press on a Friend's face during a Plan adds the Friend, which passed on 2026-11-15
 
 ## What to build
 
@@ -33,3 +33,5 @@ From the decision of 2026-11-15 on choosing a Friend (`answer-screen-design/deci
 5. The lit face is the everyday look with `selected`, drawn above the other Avatars (`SELECTED_ORDER`), without its "+". Its "+" is a 14-point navy (`color.snuBlue`) circle with a white "+" at the upper right of the face's box, as the wireframe kit draws a "+" badge, in the size of the answer's "?" and "✓". A "+" goes on every face of a Friend whose id is not in the conditions; a member of the User's Party who is no Friend has none. After "이대로 초대" no face has one; while the invitation is on its way the "+" stays, as the chips stay, and the face takes no press.
 6. The "+" look and the selected look of each face with a "+" are asked for together while the answer is on screen. A face whose new look has no picture yet keeps the picture it has until the new one is made, so a native map never leaves a face out, also at the answer's first show and after a change of the zoom's detail.
 7. The camera waits for stillness only after an answer replaced another on screen (a recalculation, "되돌리기", or a reply with an answer to words), and then moves once, 120 ms after the drawing, the card's height, and the stage last changed. The first answer, the arrows, a candidate pressed, and a change of the card's height at any other time (the list opened, the basis opened) move it at once, as before. An answer without a Plan draws nothing and moves nothing. The Android height shift of ticket 06 is untouched.
+8. Over an answer without a Plan the open list's second line stays "가까운 친구부터 보여요": nothing is drawn, so no face carries a "+" and a press on a face adds no one. "지도의 얼굴을 누르거나 아래에서 골라요" is said only while a Plan is drawn.
+9. The answer's faces never carry the everyday map's selection. A Friend selected on the everyday map before asking, whose card the frame hides, is drawn unselected, in the Avatars' usual order, with a "+" when a press would add them; only the pending add lights a face and draws it above the others. The selection itself is left as the everyday map holds it.

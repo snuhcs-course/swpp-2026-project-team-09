@@ -655,17 +655,18 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   name that short ("18분" beside the face "민수"). The looks of every Plan are asked for when the answer comes. The camera
   goes in one glide to where `answerCamera` (`src/features/assistant/answer-camera.ts`) works it out for the view:
   the fit of the answer's points between the pill and the card, with the room the marks there need (`roomsOf`) and 64
-  at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the Plan's
-  own points centred there, or, when they do not fit either, the picked Restaurant's side kept in view. It moves
-  again when the Plan on screen changes and when the card's height or the stage's size changes; after an answer
-  replaced the one on screen, as a recalculation's does, it moves once, when the drawing and the card's height have
-  stayed the same for 120 ms. Closing the answer moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its lowest in place of 15, which on a
-  phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기")
-  at the right of its chips' first line, the Plan's two lines, the basis while it is open, and, when the answer has more than one
-  Plan, round buttons "‹" ("이전 후보") and "›" ("다음 후보") at the two ends of the last row, 40 high as its buttons are,
-  with "되돌리기" at a fixed width at the row's start while a drag is kept and the count ("3/5") in a box of its own
-  right before "›"; a sideways swipe over the two lines does the same, to the left the next Plan and to the right the
-  previous one. The arrows and the swipe go round, and a new Plan closes the basis. An answer without a Plan draws nothing and keeps the everyday map.
+  at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the
+  Plan's own points centred there, or, when they do not fit either, the picked Restaurant's side kept in view. It moves
+  again when the Plan on screen changes and when the card's height or the stage's size changes; after an answer replaced
+  the one on screen, as a recalculation's does, it moves once, when the drawing and the card's height have stayed the
+  same for 120 ms. Closing the answer moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its
+  lowest in place of 15, which on a phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기") at the right
+  of its chips' first line, the Plan's two lines, the basis while it is open, and, when the answer has more than one
+  Plan, round buttons "‹" ("이전 후보") and "›" ("다음 후보") at the two ends of the last row, 40 high as its buttons are, with
+  "되돌리기" at a fixed width at the row's start while a drag is kept and the count ("3/5") in a box of its own right before
+  "›"; a sideways swipe over the two lines does the same, to the left the next Plan and to the right the previous one.
+  The arrows and the swipe go round, and a new Plan closes the basis. An answer without a Plan draws nothing and keeps
+  the everyday map.
 - **Correcting the answer** (`answer/plan-card.tsx`, `answer/use-corrections.ts`). The card's first row holds the
   answer's chips (`condition-chips.tsx`) and "＋ 같이", in lines that wrap so that no chip is cut. The ✕ of a person's
   chip takes the person out; "＋ 같이" lists in the card the User's Friends who are not in the conditions in the design
@@ -673,7 +674,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   to the picked Restaurant ("350m", "1.2km"), "N분 전" for an old position, or "자리 모름", nearest first. While the
   list is open the card's lines ask "누구와 같이 먹을까요?", "그대로" stands where "근거" did and closes it, the band,
   the arrows, and the input give way, and the grid shows at most four whole rows that scroll inside, with a fade
-  while more are below; its second line says "지도의 얼굴을 누르거나 아래에서 골라요". A press on a cell adds the Friend,
+  while more are below; its second line says "지도의 얼굴을 누르거나 아래에서 골라요" while a Plan is drawn, and
+  "가까운 친구부터 보여요" over an answer without one, whose map takes no press on a face. A press on a cell adds the Friend,
   as does a press on the Avatar of a Friend who is not in the conditions, which carries a "+" (the person look's
   `addable`) until "이대로 초대". Both start one add (`add` and `pendingAdd` of `useShownAnswer`): the Friend's cell
   reads "넣는 중" with a spinner, the face takes the selected look at once (its "+" and selected looks are asked for
