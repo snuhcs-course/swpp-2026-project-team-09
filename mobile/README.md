@@ -786,8 +786,18 @@ cards from the top:
   "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
   못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
   it for 1.2 s;
-- "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
-  whole screen).
+- "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티), "내 퀘스트" (the Quest list on the
+  whole screen), and "관심사 {n}" (관심사, with the number of watched interests).
+
+관심사 (`/me/interests`, `src/screens/me/interests-screen.tsx`, P05 ticket 08) has two cards. "프로필 관심사" shows the
+profile's hashtags from the Lobby as chips ("#러닝"), or "프로필에 넣은 관심사가 없어요", over "프로필 편집에서 바꿀 수
+있어요". "맡겨 둔 관심" says "지켜봐 드리는 것은 행사와 모집뿐이에요" and lists the watched interests
+(`GET /interests`), the newest first: the words as said, the topics they were read as where those differ from the
+words (`interestRow` in `src/features/interests/adapter.ts`), and "지우기", which sends `DELETE /interests/:id`, says
+"관심을 지웠어요", and fetches the list again; an interest removed already (404 `INTEREST_NOT_FOUND`) counts as
+removed, and any other failure says "지우지 못했어요". Without one it says "맡겨 둔 관심이 없어요". A main server older
+than the route answers 404, which `listInterests` turns into null: the screen then shows the hashtags and the empty
+list, and 내 정보's row no number.
 
 "로그아웃" asks "로그아웃할까요?", then stops the sending, signs out and shows the sign-in screen. 프로필 편집
 (`profile-edit-screen.tsx`) edits the name, the department, the admission year and the interests with Onboarding's
