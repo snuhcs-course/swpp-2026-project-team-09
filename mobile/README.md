@@ -1574,6 +1574,8 @@ and none throws.
 - **Channel.** One Android channel, id `default`, named "알림", with high importance. The config plugin's default
   channel, the wrapper's channel creation and the main server's `channelId` use the same id. The channel is created
   before the permission is asked, since Android 13 shows no prompt before a channel exists.
+- **Permission.** Android 13 and later report a permission that was never asked as denied but still askable. On
+  Android the wrapper reads that as `undetermined`, so `undetermined` means the phone's own prompt can still show.
 - **Icon.** `assets/images/notification-icon.png`, 96 by 96, white on transparent, drawn from the app icon's shape.
   Android tints it with the plugin's `color`, `#208AEF`.
 - **Firebase.** `google-services.json` is Firebase's Android settings file for `com.bonnieandclaude.snunow` in the
@@ -1593,13 +1595,38 @@ that phone.
 
 - **A tap.** A push's data carries one address, `/main?card=<kind>:<id>` (`src/push/card-address.ts`); any other data
   is ignored. The signed-in layout reads the tap that started the app and each tap while it runs, once the User is
-  past the loading screen, the consent and Onboarding, as Invite Links are (`src/push/use-notification-links.ts`). A
-  tap opens once, then the library forgets it, so the next start does not open it again. `/main` reads `card` once:
-  the map moves to the card with that id and opens it, and without one the app opens the screen of the matching row
-  of "알림". For an invitation that is the "파티" tab's invitations, `/party?tab=invites`.
+  past the loading screen, the consent, and Onboarding, as Invite Links are (`src/push/use-notification-links.ts`). A
+  tap opens once, then the library forgets it, so the next start does not open it again. A screen above the tabs
+  closes (`router.dismissTo`); on the tabs, where `dismissTo` does nothing, the app goes there with
+  `router.navigate`. `/main` reads `card` once: the map moves to the card with that id and opens it, and without
+  one the app opens the screen of the matching row of "알림". For an invitation that is the "파티" tab's
+  invitations, `/party?tab=invites`.
 - **A push in front.** While the app is open, a push drops no banner and plays no sound; it goes to the phone's
   notification list. On Android a banner cannot show without sound. The app instead fetches again the lists "알림"
   and the "파티" badge are made from (`src/push/push-arrivals.tsx`).
+
+### When the app asks, registers, and unregisters
+
+All three happen only in a build that asks the main server, holds the native module, and has a ready Session. A mock
+build never asks and never registers, and its `registerPushToken` does nothing.
+
+- **Asking.** Nothing is asked at app start, at sign-in, at Onboarding, or in first run. `PushAskHost`
+  (`src/push/push-ask-host.tsx`, inside the overlay host) shows the sheet of board t17 ("나설 시각을 휴대폰으로 알려
+  드릴까요?") once the action that asked went through: a Party sent with at least one Friend invited, from the Party
+  form or the Assistant's Proposal card, and a library seat or room booked. Screens ask with `useAskForPush()`. The
+  sheet shows only while the wrapper reports the permission as undetermined, which means the phone's own prompt can
+  still show (on Android 13 and later that is a permission never asked, reported as denied but still askable), and
+  never before on this phone (`pushAsked` in what the phone keeps, which a sign-out leaves as it is). "알림 받기"
+  leads to the phone's prompt; "나중에" closes it for good. With the permission already granted (Android 12 and
+  below), the token is registered at once without the sheet.
+- **Registering.** `PushRegistration` (`src/push/push-registration.tsx`, beside `LiveUpdates`) sends the phone's
+  Expo push token with `PUT /users/me/push-token` when the permission is granted: at every start, at every sign-in,
+  and whenever the phone says its token changed. A failure is left for the next start. It never asks for the
+  permission.
+- **Unregistering.** When the Session ends on the phone, by a sign-out or by the main server's word, the app calls
+  `unregisterPush()` before it forgets its tokens, whatever the main server answered, so a signed-out phone receives
+  nothing even when the server could not be told. Unregistering goes through Firebase: a sign-out with no network at
+  all leaves the phone registered until the next User signs in on it or its Session can no longer refresh.
 
 ## 관정도서관 (P06)
 

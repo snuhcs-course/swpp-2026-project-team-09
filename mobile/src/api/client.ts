@@ -13,6 +13,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -65,6 +66,8 @@ export interface ApiClient {
   updateProfile: (change: ProfileChange) => Promise<Profile>;
   getProfile: () => Promise<Profile>;
   setMasterSwitch: (on: boolean) => Promise<void>;
+  // The phone's Expo push token, for the signed-in Session.
+  registerPushToken: (token: string) => Promise<void>;
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
   listFriends: () => Promise<Friend[]>;
@@ -203,6 +206,7 @@ export const apiClient: ShownClient = {
   updateProfile: (change) => chosen().updateProfile(change),
   getProfile: () => chosen().getProfile(),
   setMasterSwitch: (on) => chosen().setMasterSwitch(on),
+  registerPushToken: (token) => chosen().registerPushToken(token),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
   setFriendSharing: (userId, on) => chosen().setFriendSharing(userId, on),

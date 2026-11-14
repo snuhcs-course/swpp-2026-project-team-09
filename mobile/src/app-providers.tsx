@@ -19,6 +19,8 @@ import { LibrarySessionProvider } from '@/library/library-session';
 import { LiveUpdates } from '@/live/live-updates';
 import { MarkerImageStage } from '@/map';
 import { PushArrivals } from '@/push/push-arrivals';
+import { PushAskHost } from '@/push/push-ask-host';
+import { PushRegistration } from '@/push/push-registration';
 import { SessionProvider } from '@/session/session';
 
 // What every screen stands in: the data's cache, where the User is in the flow, the connection to the socket server,
@@ -32,9 +34,12 @@ export function AppProviders({ children }: { children: ReactNode }): ReactElemen
         <SessionProvider>
           <LiveUpdates />
           <PushArrivals />
+          <PushRegistration />
           <ToastProvider>
             <LibrarySessionProvider>
-              <OverlayHost>{children}</OverlayHost>
+              <OverlayHost>
+                <PushAskHost>{children}</PushAskHost>
+              </OverlayHost>
             </LibrarySessionProvider>
             <MarkerImageStage />
           </ToastProvider>

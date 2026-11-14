@@ -11,6 +11,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -120,6 +121,8 @@ export const mockClient: ApiClient = {
     answer('setMasterSwitch', () => {
       masterSwitchOn = on;
     }),
+  // A mock build never registers for push.
+  registerPushToken: () => Promise.resolve(),
   // As the main server: refused while the switch is off, and not kept off campus, here the camera's rectangle.
   uploadPosition: (position) =>
     answer('uploadPosition', () => {
