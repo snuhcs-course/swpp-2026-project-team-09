@@ -2,10 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
+import { QuestBoard } from '../../generated/prisma/client.js';
+import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import { clockTime } from '../free-time/tool-parts.js';
 
 // The contract of an answer drawn on the map, declared with the same shape in the app's Assistant types. Times are
@@ -24,7 +27,9 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export interface PlanInput {
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput;
+
+export interface MealInput {
   kind: 'meal';
   // YYYY-MM-DD in Korea.
   date: string;
@@ -35,6 +40,39 @@ export interface PlanInput {
   window: { from: string | null; until: string | null };
   // The Place the User fixed.
   placeId: string | null;
+}
+
+// The Global Events of a day the asker can attend.
+export interface EventsInput {
+  kind: 'events';
+  // YYYY-MM-DD in Korea.
+  date: string;
+  // Only these, as a search or a mark gave them; null for every event of the day.
+  eventIds: string[] | null;
+}
+
+// Recruiting Quests the asker could join: those going to a Global Event, or those a search gave. One of the two.
+export interface QuestsInput {
+  kind: 'quests';
+  globalEventId: string | null;
+  questIds: string[] | null;
+}
+
+// A recruiting Quest the asker would make: for a Global Event at its Place, or for an activity at a Place.
+export interface NewQuestInput {
+  kind: 'new-quest';
+  // YYYY-MM-DD in Korea.
+  date: string;
+  globalEventId: string | null;
+  // Without a Global Event: what the User asked for ("배드민턴"), and the Place they said or the answer chose.
+  title: string | null;
+  placeId: string | null;
+  // HH:MM the User said; null for the earliest everyone can be there.
+  time: string | null;
+  // The asker first, then the Friends to invite.
+  people: PlanPerson[];
+  // The Board it is posted on; Hobby when left out.
+  board?: QuestBoard;
 }
 
 export interface PlanPerson {
@@ -101,6 +139,11 @@ export interface Plan {
   basis: string[];
   scene: MapScene;
   band: TimeBand;
+  // A recruiting Quest's Plan: the Quest as the recruiting list gives it, and the names of the Friends who hold it.
+  quest?: RecruitingQuestDto;
+  friendNames?: string[];
+  // A new recruiting Quest's Plan: the Friends free then who are not in it, each with the line of their day.
+  candidates?: { userId: string; name: string; line: string }[];
 }
 
 export interface PlanPart {
@@ -114,6 +157,8 @@ export interface PlanPart {
   // Null when nothing follows.
   leaveBy: string | null;
   next: { startAt: string; place: PlacePoint | null } | null;
+  // How they travel, absent for a walk.
+  mode?: 'walk' | 'shuttle';
 }
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
@@ -127,7 +172,15 @@ export interface MapScene {
     tag: string | null;
   }[];
   places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
-  routes: { userId: string; role: 'me' | 'friend' | 'next'; from: Position; to: Position; minutes: number }[];
+  // `mode` is absent for a walk.
+  routes: {
+    userId: string;
+    role: 'me' | 'friend' | 'next';
+    from: Position;
+    to: Position;
+    minutes: number;
+    mode?: 'walk' | 'shuttle';
+  }[];
   flags: { at: Position; text: string; role: 'place' | 'meeting' }[];
 }
 
@@ -144,6 +197,11 @@ export interface TimeBand {
 const PEOPLE_MAX = 8;
 const CONSTRAINTS_MAX = 8;
 const PLAN_ID_MAX = 200;
+// The most events an answer of events is asked for by id, and the most Quests an answer of Quests.
+export const EVENT_IDS_MAX = 20;
+export const QUEST_IDS_MAX = 20;
+// The longest title of a new Quest, as a Quest's title.
+const TITLE_MAX = 50;
 
 const constraintSource = z.enum(['asker', 'person']);
 
@@ -153,7 +211,7 @@ const personConstraintSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('leaveBy'), time: clockTime, source: constraintSource }),
 ]);
 
-export const planInputSchema = z.strictObject({
+const mealInputSchema = z.strictObject({
   kind: z.literal('meal'),
   date: z.iso.date(),
   meal: z.enum(['lunch', 'dinner']),
@@ -166,6 +224,51 @@ export const planInputSchema = z.strictObject({
     .refine(({ from, until }) => from === null || until === null || from < until, 'Expected from before until'),
   placeId: z.uuid().nullable(),
 });
+
+const eventsInputSchema = z.strictObject({
+  kind: z.literal('events'),
+  date: z.iso.date(),
+  eventIds: z.array(z.uuid()).max(EVENT_IDS_MAX).nullable(),
+});
+
+const questsInputSchema = z
+  .strictObject({
+    kind: z.literal('quests'),
+    globalEventId: z.uuid().nullable(),
+    questIds: z.array(z.uuid()).min(1).max(QUEST_IDS_MAX).nullable(),
+  })
+  .refine(
+    ({ globalEventId, questIds }) => (globalEventId === null) !== (questIds === null),
+    'Expected a Global Event or Quests',
+  );
+
+// A new Quest's people carry no constraints.
+const newQuestInputSchema = z
+  .strictObject({
+    kind: z.literal('new-quest'),
+    date: z.iso.date(),
+    globalEventId: z.uuid().nullable(),
+    title: z.string().trim().min(1).max(TITLE_MAX).nullable(),
+    placeId: z.uuid().nullable(),
+    time: clockTime.nullable(),
+    people: z
+      .array(z.strictObject({ userId: z.uuid(), constraints: z.array(personConstraintSchema).max(0) }))
+      .min(1)
+      .max(PEOPLE_MAX),
+    board: z.enum(QuestBoard).optional(),
+  })
+  .refine(
+    ({ globalEventId, title, placeId }) =>
+      globalEventId === null ? title !== null && placeId !== null : title === null && placeId === null,
+    'Expected a Global Event, or a title and a Place',
+  );
+
+export const planInputSchema = z.discriminatedUnion('kind', [
+  mealInputSchema,
+  eventsInputSchema,
+  questsInputSchema,
+  newQuestInputSchema,
+]);
 
 const latitude = z.number().min(-90).max(90);
 const longitude = z.number().min(-180).max(180);
