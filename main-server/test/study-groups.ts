@@ -22,12 +22,13 @@ import { addClass } from './timetable.js';
 import { refuseKakao } from './walking-route.js';
 
 // The stage of a study group's time picked by the Assistant, at its endpoint with the scripted model, on the design's
-// example week: Tuesday 2026-11-17 at 10:00 in Korea, so that a room can be booked up to Friday 2026-11-20. Thursday's
+// example week: Tuesday 2026-11-03 at 10:00 in Korea, so that a room can be booked up to Friday 2026-11-06. Thursday's
 // Classes are the design's table; 민수 also has Classes from 09:00 to 21:45 on Tuesday, Wednesday and Friday, so that
 // Thursday is the pick, and until 22:50 on Saturday, which leaves him no time that day. On foot to and from 관정관
-// (62-1): 301동 14 minutes, 24동 4, 두산인문관 (8동) 4, 302동 16.
+// (62-1): 301동 14 minutes, 24동 4, 두산인문관 (8동) 4, 302동 16. The week is the room request files' week, before
+// their Thursday: any read of a room request expires and closes every request by its own file's clock.
 
-export const NOW = new Date('2026-11-17T10:00:00+09:00');
+export const NOW = new Date('2026-11-03T10:00:00+09:00');
 
 export const ANSWER = { clientCapabilities: ['library', 'answer'] };
 
