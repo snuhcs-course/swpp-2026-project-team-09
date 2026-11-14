@@ -22,3 +22,9 @@ The 파티 tab gets a "보낸 신청" section beside the invitations received. E
 - [ ] The H1 and H2 rows of `he-revision-log.md` get this pull request. H2 is recorded as an existing feature made easy to find.
 
 ## Comments
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 1 hour 30 minutes in one session (worktree `swpp-p06-04`), most of it waiting on test runs; an estimate.
+- Tokens: subagents (two code reviews) 109,496 tokens in total, as their reports gave them, not split into input and output. The main session's input, output, cache reads and cache writes were not measured from inside the session; read them from the session's usage (`/cost`) to fill in.
+
