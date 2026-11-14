@@ -42,3 +42,31 @@ A booker has asked three Friends to a 관정 group study room. One of them decli
 - [ ] Each changed source file has its AI-generated row; lint, format, type checks, and the touched tests pass.
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+Details the ticket left to the implementation, listed so that any of them can be vetoed.
+
+1. **A companion out** keeps their consent row with `consented` false, as the record of who was asked: answered when
+   they declined or a change took them out, unanswered when the deadline passed. The answer's `companions[].state` is
+   `asked`, `consented`, `declined`, or `unanswered`. A companion out gets 404 on consent and decline, is left out of
+   the inbox's asks, and can still read the request.
+2. **The room's name in the words** is the catalogue's name without "그룹스터디룸" and the rooms counted after it:
+   "관정 4층 6인실".
+3. **The deadline** is counted from the request's making, whose time is now set by the Quests' clock.
+4. **The last companion going out** ends the request with today's notice to everyone it asked; no "못 온대요" is kept
+   then.
+5. **Asking one more Friend** is for a request made for booking. A request made with an existing Quest refuses it with
+   409 `ROOM_REQUEST_OF_QUEST`: a Friend who joins that Quest is asked, as today. The checks run in this order: 403,
+   409 for the status, 409 for the Quest, then the 400s. A Friend who went out before is asked again.
+6. **"10분 뒤 끝나요"** is kept for every Holder of the booked room's Quest but a companion out of the request; a
+   cancelled booking forgets it for every Holder.
+7. **`moreNeeded`** is 0 once the request is neither gathering nor ready.
+8. **More people than the room holds** still ends a request, when a Holder joining its Quest makes it so. Fewer than
+   the minimum keeps it gathering.
+9. **Taking a companion out of a booking party** happens in the request's transaction: their invitation and their
+   holding go, the leadership moves to the booker if they had it, and `quests-changed` goes to them and the Holders
+   left.
+10. **A companion declining the booking party's invitation** tells the booker once, by the room request's "못 온대요"
+    with the room's count; the Leader's `declined` of an invitation is not kept for a party that a gathering or ready
+    room request was made with.
