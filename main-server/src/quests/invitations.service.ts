@@ -120,7 +120,7 @@ export class InvitationsService {
   // A refused acceptance leaves the invitation waiting. Checked again once the Quest is locked, so that an invitation
   // the Leader cancelled meanwhile admits nobody.
   async accept(userId: string, invitationId: string): Promise<QuestDto> {
-    const { questId, holderIds } = await this.prisma.$transaction(async (tx) => {
+    const { questId, holderIds, leaderId } = await this.prisma.$transaction(async (tx) => {
       const invitation = await tx.questInvitation.findFirst({ where: { id: invitationId, userId } });
       if (invitation === null) {
         throw invitationNotFound();
@@ -130,18 +130,20 @@ export class InvitationsService {
           throw invitationNotFound();
         }
       });
-      return { questId: invitation.questId, holderIds: entered };
+      const quest = await tx.quest.findUniqueOrThrow({ where: { id: invitation.questId } });
+      return { questId: invitation.questId, holderIds: entered, leaderId: quest.leaderId };
     });
     this.signals.send(holderIds, 'quests-changed');
+    this.signals.send([leaderId], 'invitation-accepted', { questId, userId });
     await this.roomRequests.questChanged(questId);
     return this.quests.read(userId, questId);
   }
 
-  // Tells the Leader too, whose list drops the invitation.
+  // Tells the Holders too, whose members drop the User.
   async decline(userId: string, invitationId: string): Promise<void> {
     const invitation = await this.prisma.questInvitation.findFirst({
       where: { id: invitationId, userId },
-      include: { quest: true },
+      include: { quest: { include: { holders: { select: { userId: true } } } } },
     });
     if (
       invitation === null ||
@@ -149,7 +151,9 @@ export class InvitationsService {
     ) {
       throw invitationNotFound();
     }
-    this.signals.send([userId, invitation.quest.leaderId], 'quests-changed');
-    await this.roomRequests.questChanged(invitation.questId);
+    const { questId, quest } = invitation;
+    this.signals.send([userId, ...quest.holders.map((holder) => holder.userId)], 'quests-changed');
+    this.signals.send([quest.leaderId], 'invitation-declined', { questId, userId });
+    await this.roomRequests.questChanged(questId);
   }
 }

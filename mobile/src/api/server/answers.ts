@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -24,7 +25,6 @@ import type {
   Position,
   PositionKept,
   Profile,
-  Quest,
   SentFriendRequest,
   SubQuest,
   Suggestion,
@@ -190,26 +190,6 @@ const BOARDS = new Set(['meal', 'career', 'hobby', 'show']);
 export function isBoard(value: unknown): value is Board | null {
   return value === null || (isText(value) && BOARDS.has(value));
 }
-
-export function isQuest(value: unknown): value is Quest {
-  const leader = field(value, 'leader');
-  return (
-    isBoard(field(value, 'board')) &&
-    isText(field(value, 'description')) &&
-    isTextOrNull(field(value, 'createdAt')) &&
-    hasTexts(value, ['id', 'title']) &&
-    isEventName(field(value, 'globalEvent')) &&
-    (leader === null || isHolder(leader)) &&
-    isNumber(field(value, 'capacity')) &&
-    isJoinPolicy(field(value, 'joinPolicy')) &&
-    listOf(isHolder)(field(value, 'holders')) &&
-    listOf(isSubQuest)(field(value, 'subQuests')) &&
-    typeof field(value, 'classQuest') === 'boolean' &&
-    isNumber(field(value, 'waitingJoinRequests'))
-  );
-}
-
-export const isQuests = listOf(isQuest);
 
 function isPartyQuest(value: unknown): value is PartyQuest | null {
   return value === null || (hasTexts(value, ['id', 'title']) && isEventName(field(value, 'globalEvent')));
