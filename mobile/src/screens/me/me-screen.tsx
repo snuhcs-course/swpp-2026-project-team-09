@@ -32,6 +32,7 @@ import {
   space,
   text,
 } from '@/design-system';
+import { waitingNotices } from '@/features/notifications/adapter';
 import { useNotices } from '@/features/notifications/use-notices';
 import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
@@ -48,9 +49,9 @@ import { WeekCard } from './week-card';
 // How long the 위치 공유 card stays outlined after the friend panel's "공유 설정".
 const OUTLINE_MS = 1200;
 
-// The bell on the app bar, with the number of 알림's rows in red.
+// The bell on the app bar, with the number of rows of 알림 that wait for the User in red.
 function Bell(): ReactElement {
-  const count = useNotices().data?.length ?? 0;
+  const count = waitingNotices(useNotices().data ?? []).length;
   return (
     <Pressable
       accessibilityLabel={count > 0 ? `알림 ${count}개` : '알림'}
