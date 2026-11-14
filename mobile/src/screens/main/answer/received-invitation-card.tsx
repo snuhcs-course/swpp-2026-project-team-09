@@ -7,6 +7,7 @@
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { AnswerLine } from '@/api/assistant-types';
 import type { InvitationCard } from '@/api/invitation-card-types';
 import { Button, color, font, Icon, radius, space, text } from '@/design-system';
 import { withParticle } from '@/features/map/short-name';
@@ -21,6 +22,8 @@ interface ReceivedInvitationCardProps {
   // Null while it is read, or when the read failed.
   card: InvitationCard | null;
   failed: boolean;
+  // The phone told a position outside the campus rectangle.
+  offCampus: boolean;
   // 수락 or 거절 is on its way.
   busy: boolean;
   onAccept: () => void;
@@ -30,6 +33,17 @@ interface ReceivedInvitationCardProps {
 }
 
 const CLOSE = 36;
+
+// The main server's words for a phone off campus (main-server `plans/own-way.ts`). The app sends no position from
+// there, so the server cannot tell where the User sets out from and answers `unknown` with no line.
+const OFF_CAMPUS_LINES: AnswerLine[] = [[{ text: '캠퍼스 밖이라 길은 그리지 못해요.', strong: false }]];
+
+function wayLines({ way }: InvitationCard, offCampus: boolean): readonly AnswerLine[] {
+  if (way === null) {
+    return [];
+  }
+  return way.status === 'unknown' && offCampus ? OFF_CAMPUS_LINES : way.lines;
+}
 
 // The destination step is the one that starts when everyone is together, at that Place.
 function titleOf({ quest, steps, gathering }: InvitationCard): { time: string | null; title: string } {
@@ -55,9 +69,15 @@ function Heading({ words, onClose }: { words: string; onClose: () => void }): Re
   );
 }
 
-function Invitation({ card, busy, onAccept, onDecline }: { card: InvitationCard } & ButtonsProps): ReactElement {
+interface InvitationProps extends ButtonsProps {
+  card: InvitationCard;
+  offCampus: boolean;
+}
+
+function Invitation({ card, offCampus, busy, onAccept, onDecline }: InvitationProps): ReactElement {
   const { time, title } = titleOf(card);
   const holders = card.holders.map(({ name }) => name).join(', ');
+  const lines = wayLines(card, offCampus);
   return (
     <>
       <Text style={styles.title} testID="invitation-title">
@@ -65,7 +85,7 @@ function Invitation({ card, busy, onAccept, onDecline }: { card: InvitationCard 
         {title}
       </Text>
       {holders === '' ? null : <Text style={styles.with}>{`${withParticle(holders)} 함께`}</Text>}
-      {card.way === null || card.way.lines.length === 0 ? null : <AnswerLines lines={card.way.lines} />}
+      {lines.length === 0 ? null : <AnswerLines lines={lines} />}
       <View style={styles.steps}>
         <QuestSteps steps={card.steps} />
       </View>
@@ -100,7 +120,7 @@ function Buttons({ busy, onAccept, onDecline }: ButtonsProps): ReactElement {
 // together, who is in so far, the User's own way in the server's words, the Quest's steps, "수락" and "거절", and the
 // line that says that only the User's own way is shown.
 export function ReceivedInvitationCard(props: ReceivedInvitationCardProps): ReactElement {
-  const { card, failed, busy, onAccept, onDecline, onClose, onRetry } = props;
+  const { card, failed, offCampus, busy, onAccept, onDecline, onClose, onRetry } = props;
   if (card === null) {
     return (
       <View style={styles.card} testID="invitation-card">
@@ -123,7 +143,7 @@ export function ReceivedInvitationCard(props: ReceivedInvitationCardProps): Reac
   return (
     <View style={styles.card} testID="invitation-card">
       <Heading onClose={onClose} words={`${card.quest.leader.name}의 파티 초대`} />
-      <Invitation busy={busy} card={card} onAccept={onAccept} onDecline={onDecline} />
+      <Invitation busy={busy} card={card} offCampus={offCampus} onAccept={onAccept} onDecline={onDecline} />
     </View>
   );
 }
@@ -139,7 +159,7 @@ export function InvitationFrame({ invitation, room, onHeight }: InvitationFrameP
   const { bottom } = useSafeAreaInsets();
   const barRoom = bottom + space[4];
   const stageHeight = room.stage?.height ?? null;
-  const { card, failed, busy, accept, decline, close, retry } = invitation;
+  const { card, failed, offCampus, busy, accept, decline, close, retry } = invitation;
   return (
     <FrameCard
       barRoom={barRoom}
@@ -151,6 +171,7 @@ export function InvitationFrame({ invitation, room, onHeight }: InvitationFrameP
         busy={busy}
         card={card}
         failed={failed}
+        offCampus={offCampus}
         onAccept={accept}
         onClose={close}
         onDecline={decline}

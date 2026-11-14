@@ -15,6 +15,7 @@ import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-
 import { cardId, invitationIdOf } from '@/features/map/adapter';
 import { type PartyActions, usePartyActions } from '../party/use-party-actions';
 import { useHideTabBarOnMain } from '../shell/main-tab-bar';
+import type { Me } from './use-me';
 import type { Selection } from './use-selection';
 
 export interface ReceivedInvitation {
@@ -24,6 +25,8 @@ export interface ReceivedInvitation {
   card: InvitationCard | null;
   failed: boolean;
   retry: () => void;
+  // The phone told a position outside the campus rectangle, from where the app sends none.
+  offCampus: boolean;
   // The invitee's own way, null without one.
   drawing: AnswerDrawing | null;
   // 수락 or 거절 of this invitation is on its way: neither takes a press.
@@ -96,7 +99,7 @@ function useAnswers(
 // from the main server, and the invitee's own way drawn. An invitation that waits no more closes with a toast.
 export function useReceivedInvitation(
   selection: Selection,
-  position: LatLng | null,
+  { position, offCampus }: Pick<Me, 'position' | 'offCampus'>,
   framed: boolean,
 ): ReceivedInvitation {
   const { selected, close } = selection;
@@ -120,6 +123,7 @@ export function useReceivedInvitation(
     card,
     failed: read.isError && !gone,
     retry: () => void read.refetch(),
+    offCampus,
     drawing,
     ...answers,
     close,
@@ -129,10 +133,10 @@ export function useReceivedInvitation(
 // The received invitation, and whether the answer frame or its card is shown, which the tab bar gives way to.
 export function useFramed(
   selection: Selection,
-  position: LatLng | null,
+  me: Pick<Me, 'position' | 'offCampus'>,
   chatFramed: boolean,
 ): { invitation: ReceivedInvitation; framed: boolean } {
-  const invitation = useReceivedInvitation(selection, position, chatFramed);
+  const invitation = useReceivedInvitation(selection, me, chatFramed);
   const framed = chatFramed || invitation.shown;
   useHideTabBarOnMain(framed);
   return { invitation, framed };
