@@ -9,7 +9,8 @@ import { CAMPUS_BOUNDS, centreOf } from '@/map';
 import { type CardView, cardId } from './adapter';
 import { shortTitle } from './short-name';
 
-// The list of received invitations gives no Place's position, so the map goes to the campus's centre.
+// The list of received invitations gives no Place's position, so the campus's centre stands in. No camera goes there:
+// the card of an invitation fits the camera to the invitee's own way.
 const CAMPUS_CENTRE = centreOf(CAMPUS_BOUNDS);
 
 // One card for each invitation the User received, which the everyday map draws no marker for.

@@ -30,7 +30,10 @@ export function useAskedCard(cards: readonly CardView[] | null, map: MainMap, se
     router.setParams({ card: undefined });
     const shown = cards.find(({ id }) => id === card);
     if (shown !== undefined) {
-      map.goTo(shown.position, 'close');
+      // An invitation's card fits the camera to the invitee's own way itself.
+      if (shown.kind !== 'invitation') {
+        map.goTo(shown.position, 'close');
+      }
       selection.selectOrWait(shown.id);
       return;
     }
