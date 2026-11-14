@@ -87,14 +87,16 @@ describe('the switch of the answer on the map', () => {
     expect(screen.queryByText(/지도 위의 답/u)).toBeNull();
   });
 
-  it('is followed by the main screen without a restart: the bar no longer opens the chat sheet', async () => {
+  it('is followed by the main screen without a restart: the words sent from the bar stand in the pill', async () => {
     const user = await openMe();
     await holdBuildLine(user);
 
     await user.press(screen.getByRole('tab', { name: '지도' }));
     await user.press(screen.getByLabelText(AI_INPUT));
+    await ask(user, '한식');
 
     expect(screen.queryByTestId('chat-sheet')).toBeNull();
+    expect(within(screen.getByTestId('answer-pill')).getByText('한식')).toBeVisible();
   });
 });
 

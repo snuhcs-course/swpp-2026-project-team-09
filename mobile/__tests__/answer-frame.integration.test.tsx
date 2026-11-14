@@ -161,6 +161,14 @@ describe('what gives way to the frame', () => {
     expect(screen.getByRole('tab', { name: '행사' })).toBeVisible();
   });
 
+  it("opens a marker's card on a press while nothing is asked", async () => {
+    const user = await openFramed();
+
+    await press(user, DINNER);
+
+    expect(screen.getByTestId('map-card')).toBeVisible();
+  });
+
   it('opens no card on a press on a marker', async () => {
     const user = await openFramed();
     await ask(user);
