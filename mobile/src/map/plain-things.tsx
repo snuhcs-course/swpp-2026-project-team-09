@@ -3,13 +3,14 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';
 import { color, font, radius, shadow } from '@/design-system';
-import { LookView, standsOnTip } from './marker-looks';
+import { anchorShare, LookView } from './marker-looks';
 import type { Point, Size } from './projection';
 import type { MapMarker } from './types';
 
@@ -112,7 +113,7 @@ export function Thing({ thing, glideMs, place, view, onPress }: ThingProps): Rea
   const [box, setBox] = useState<Size>({ width: 0, height: 0 });
   const at = place(position);
   const seen = at.x >= 0 && at.x <= view.width && at.y >= 0 && at.y <= view.height;
-  const top = at.y - (standsOnTip(image.view) ? box.height : box.height / 2);
+  const anchor = anchorShare(image.view, box);
   return (
     <Animated.View
       style={
@@ -120,7 +121,11 @@ export function Thing({ thing, glideMs, place, view, onPress }: ThingProps): Rea
           ? [
               styles.thing,
               passive === true && styles.passive,
-              { left: at.x - box.width / 2, top, transform: offset.getTranslateTransform() },
+              {
+                left: at.x - box.width * anchor.x,
+                top: at.y - box.height * anchor.y,
+                transform: offset.getTranslateTransform(),
+              },
             ]
           : styles.unseen
       }
