@@ -7,10 +7,11 @@
 import { within } from '@testing-library/react-native';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
+import * as projection from '@/map/projection';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, layAnswerCard } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -148,6 +149,40 @@ describe("a Friend's face pressed on the map", () => {
 
     expect(card().getByRole('button', { name: MIN_JUN_ADDING })).toHaveTextContent('민준넣는 중');
     expect(card().getByRole('button', { name: JI_WOO_CELL })).toBeDisabled();
+  });
+});
+
+// Partitions: "그대로" pressed while the add is on its way; the card laid out again once the add's answer is applied.
+// Expected values: the ticket's decisions, "그대로" closes the list and the add goes on, and one camera move.
+describe('while an add is on its way', () => {
+  it('closes the list with 그대로, and the answer to the add still replaces the Plan', async () => {
+    const user = await openList();
+    await user.press(card().getByRole('button', { name: JI_WOO_CELL }));
+
+    await user.press(card().getByRole('button', { name: '그대로' }));
+
+    expect(card().queryByText(QUESTION)).toBeNull();
+    expect(card().queryByTestId('choice-grid')).toBeNull();
+    expect(card().getByText('12:15 302동식당')).toBeVisible();
+    await pass(HELD_MS);
+    expect(card().getByText('12:33 학생회관식당')).toBeVisible();
+    expect(card().queryByText(QUESTION)).toBeNull();
+    expect(recalculations(server)).toHaveLength(1);
+  });
+
+  it('moves the camera once when the answer is applied, after the card is laid out again', async () => {
+    const fit = jest.spyOn(projection, 'fit');
+    const user = await openList();
+    await layAnswerCard(380);
+    await user.press(card().getByRole('button', { name: JI_WOO_CELL }));
+    const before = fit.mock.calls.length;
+
+    await pass(HELD_MS);
+    // The list closed with the answer, and the phone lays the card out again: the plain ground lays nothing out.
+    await layAnswerCard(240);
+    await pass(1000);
+
+    expect(fit.mock.calls).toHaveLength(before + 1);
   });
 });
 

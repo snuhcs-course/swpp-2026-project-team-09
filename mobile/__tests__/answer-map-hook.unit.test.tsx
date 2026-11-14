@@ -209,8 +209,8 @@ function onFakeTimers(): void {
   });
 }
 
-// Partitions: the card laid out again within 120 ms of the answer, and the moment of 120 ms still. Expected values:
-// the first Plan's area under a card of 274 is from 124 to 574, as above.
+// Partitions: the card laid out again within 120 ms of the answer, and the moment of 120 ms still; an answer without a
+// Plan. Expected values: the first Plan's area under a card of 274 is from 124 to 574, as above.
 describe("the answer's camera after a recalculation", () => {
   onFakeTimers();
 
@@ -234,9 +234,21 @@ describe("the answer's camera after a recalculation", () => {
     await wait(1000);
     expect(asked.cameras).toHaveLength(2);
   });
+
+  it('stays where it is when the answer has no Plan', async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, LIST_OPEN);
+
+    // The recalculated answer with its Plans emptied for the boundary.
+    await rerender({ ...FIRST, shown: recalculated([]) });
+    await wait(1000);
+
+    expect(asked.cameras).toHaveLength(1);
+    expect(asked.fits).toBe(0);
+  });
 });
 
-// Partitions: a change of the card after the one move; an answer without a Plan.
+// Partitions: a change of the card after the one move.
 describe("the answer's camera after the move for a recalculation", () => {
   onFakeTimers();
 
@@ -250,18 +262,6 @@ describe("the answer's camera after the move for a recalculation", () => {
     await rerender({ ...FIRST, shown, room: { ...ROOM, answerHeight: 336 } });
 
     expect(asked.cameras).toHaveLength(3);
-  });
-
-  it('stays where it is for an answer without a Plan', async () => {
-    const asked: Asked = { fits: 0, cameras: [] };
-    const rerender = await render(asked, LIST_OPEN);
-
-    // The recalculated answer with its Plans emptied for the boundary.
-    await rerender({ ...FIRST, shown: recalculated([]) });
-    await wait(1000);
-
-    expect(asked.cameras).toHaveLength(1);
-    expect(asked.fits).toBe(0);
   });
 });
 
