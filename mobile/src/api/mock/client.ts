@@ -30,6 +30,7 @@ import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
 import { mockParty } from './party';
+import { mockPlanQuest } from './plan-quest';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
@@ -205,6 +206,7 @@ export const mockClient: ApiClient = {
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
+  makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
   ...mockRoom,
   ...mockParty,
   ...mockEvents,
