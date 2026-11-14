@@ -68,15 +68,14 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
 
 // What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
 // recalculation. The list of Friends leaves out those `input` holds.
-export function useCorrections({ change }: ShownAnswer, input: PlanInput): Corrections {
-  const [adding, setAdding] = useState(false);
+export function useCorrections({ change, adding, setAdding }: ShownAnswer, input: PlanInput): Corrections {
   const showToast = useToast();
   const choices = useChoices(input);
   const { focus, focusUntil } = useFocus();
   return {
     adding,
     toggleAdding: () => {
-      setAdding((open) => !open);
+      setAdding(!adding);
     },
     choices,
     choose: (userId) => {

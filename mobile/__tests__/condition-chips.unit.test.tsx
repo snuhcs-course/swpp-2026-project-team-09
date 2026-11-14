@@ -17,16 +17,18 @@ type Props = ComponentProps<typeof ConditionChips>;
 
 const noop = (): void => undefined;
 
+// What the right of the first line holds while the basis is closed.
+const BASIS = { words: '근거', icon: 'chevronRight', onPress: noop } as const;
+
 // The chips of the stored reply to "배고파, 민수랑 같이": "301동에서", "13:00 수업까지", and 민수.
 async function show(props: Partial<Props> = {}): Promise<void> {
   await render(
     <ConditionChips
       adding={false}
-      basisOpen={false}
       chips={MEAL_ANSWER.chips}
+      corner={BASIS}
       disabled={false}
       onAdd={noop}
-      onBasis={noop}
       onOrigin={noop}
       onRemove={noop}
       onUntil={noop}
@@ -37,7 +39,7 @@ async function show(props: Partial<Props> = {}): Promise<void> {
 
 describe('ConditionChips shown', () => {
   // Partitions: each kind of chip (origin, until, person with and without a userId), "＋ 같이" closed and open, and
-  // the basis closed, open, and none to open.
+  // the corner's action: the basis closed, open, none to open, and "그대로" while the list of Friends is open.
   it("shows the answer's chips, then ＋ 같이, with 근거", async () => {
     await show();
 
@@ -64,7 +66,7 @@ describe('ConditionChips shown', () => {
   });
 
   it('draws no 근거 without a basis to open', async () => {
-    await show({ onBasis: null });
+    await show({ corner: null });
 
     expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
     expect(screen.queryByRole('button', { name: '근거 접기' })).toBeNull();
@@ -72,9 +74,17 @@ describe('ConditionChips shown', () => {
   });
 
   it('says 근거 접기 while the basis is open', async () => {
-    await show({ basisOpen: true });
+    await show({ corner: { words: '근거 접기', icon: 'chevronUp', onPress: noop } });
 
     expect(screen.getByRole('button', { name: '근거 접기' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
+  });
+
+  it('says 그대로 where 근거 stands while the list of Friends is open', async () => {
+    await show({ adding: true, corner: { words: '그대로', icon: null, onPress: noop } });
+
+    const holder: unknown = screen.getByRole('button', { name: '그대로' }).parent?.props.testID;
+    expect(holder).toBe('condition-chips');
     expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
   });
 });
@@ -121,12 +131,11 @@ describe('ConditionChips laid out', () => {
 });
 
 describe('ConditionChips pressed', () => {
-  // Partitions: a press on each control while enabled, and on each while disabled (근거 still works).
+  // Partitions: a press on each control while enabled, and on each while disabled (the corner still works).
   it.each([
     ['301동에서', 'onOrigin'],
     ['13:00 수업까지', 'onUntil'],
     ['같이 먹을 친구 추가', 'onAdd'],
-    ['근거', 'onBasis'],
   ] as const)('calls back from %s', async (name, callback) => {
     const called = jest.fn<void, []>();
     await show({ [callback]: called });
@@ -134,6 +143,15 @@ describe('ConditionChips pressed', () => {
     await userEvent.press(screen.getByRole('button', { name }));
 
     expect(called).toHaveBeenCalledTimes(1);
+  });
+
+  it("does the corner's action from 근거", async () => {
+    const onBasis = jest.fn<void, []>();
+    await show({ corner: { ...BASIS, onPress: onBasis } });
+
+    await userEvent.press(screen.getByRole('button', { name: '근거' }));
+
+    expect(onBasis).toHaveBeenCalledTimes(1);
   });
 
   it("takes the person out with the person chip's ✕", async () => {
@@ -149,7 +167,14 @@ describe('ConditionChips pressed', () => {
     const pressed = jest.fn<void, []>();
     const onRemove = jest.fn<void, [string]>();
     const onBasis = jest.fn<void, []>();
-    await show({ disabled: true, onAdd: pressed, onBasis, onOrigin: pressed, onRemove, onUntil: pressed });
+    await show({
+      corner: { ...BASIS, onPress: onBasis },
+      disabled: true,
+      onAdd: pressed,
+      onOrigin: pressed,
+      onRemove,
+      onUntil: pressed,
+    });
 
     for (const name of ['301동에서', '13:00 수업까지', '민수 빼기', '같이 먹을 친구 추가']) {
       expect(screen.getByRole('button', { name })).toBeDisabled();

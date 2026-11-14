@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -105,7 +106,9 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const { bottomCard, notice } = taken;
   const under = !chat.shown && !chat.framed;
-  const inputTop = AI_INPUT.bottom + lift + inputHeight;
+  // The open list of Friends to add takes the input's place in the answer's card.
+  const inputShown = !(chat.framed && chat.answer.adding);
+  const inputTop = inputShown ? AI_INPUT.bottom + lift + inputHeight : lift;
   return (
     <>
       {under && notice !== null ? <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} /> : null}
@@ -116,15 +119,17 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       {under && room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
       {chat.sheet(inputTop)}
       <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
-      <AiInput
-        chatOpen={chat.shown}
-        lift={lift}
-        onHeight={setInputHeight}
-        onOpen={chat.open}
-        placeholder={chat.framed ? '이어서 말하기' : undefined}
-        onSend={chat.onMap ? sendWithKeyboardDown(chat.chat.send) : chat.chat.send}
-        waiting={chat.chat.waiting}
-      />
+      {inputShown ? (
+        <AiInput
+          chatOpen={chat.shown}
+          lift={lift}
+          onHeight={setInputHeight}
+          onOpen={chat.open}
+          placeholder={chat.framed ? '이어서 말하기' : undefined}
+          onSend={chat.onMap ? sendWithKeyboardDown(chat.chat.send) : chat.chat.send}
+          waiting={chat.chat.waiting}
+        />
+      ) : null}
       <TutorialPager flow={tutorial} />
       <TutorialSheet
         flow={tutorial}

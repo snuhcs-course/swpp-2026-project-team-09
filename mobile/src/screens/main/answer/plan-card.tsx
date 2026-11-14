@@ -12,7 +12,7 @@ import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { AnswerLines } from './answer-lines';
-import { ConditionChips } from './condition-chips';
+import { ConditionChips, type CornerAction } from './condition-chips';
 import { FriendChoices } from './friend-choices';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
@@ -26,6 +26,11 @@ const COUNT_WIDTH = 36;
 // A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
 const SWIPE_STARTS = 10;
 const SWIPE_COUNTS = 48;
+// The card's lines while the list of Friends is open, in place of the Plan's.
+const LIST_LINES: readonly AnswerLine[] = [
+  [{ text: '누구와 같이 먹을까요?', strong: false }],
+  [{ text: '가까운 친구부터 보여요', strong: false }],
+];
 
 // The answer's lines, which a swipe to the left turns to the next Plan and one to the right to the previous, as the
 // arrows do.
@@ -38,13 +43,13 @@ function SwipedLines({
   count: number;
   lines: readonly AnswerLine[];
 }): ReactElement {
-  const { browse, recalculating } = shown;
+  const { browse, recalculating, adding } = shown;
   const pan = useMemo(
     () =>
       Gesture.Pan()
         .withTestId('plan-swipe')
         .runOnJS(true)
-        .enabled(!recalculating && count > 1)
+        .enabled(!recalculating && !adding && count > 1)
         .activeOffsetX([-SWIPE_STARTS, SWIPE_STARTS])
         .failOffsetY([-SWIPE_STARTS, SWIPE_STARTS])
         .onEnd(({ translationX }) => {
@@ -52,7 +57,7 @@ function SwipedLines({
             browse(translationX < 0 ? 1 : -1);
           }
         }),
-    [browse, recalculating, count],
+    [browse, recalculating, adding, count],
   );
   return (
     <GestureDetector gesture={pan}>
@@ -126,8 +131,15 @@ function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactEl
   );
 }
 
+interface CardProps {
+  shown: ShownAnswer;
+  answer: AnswerReply;
+  // How high the card may stand before it scrolls, null until it is known.
+  room: number | null;
+}
+
 // Under the lines: the list of Friends while it is open, else the Plan's time band and the steps.
-function Below({ shown, answer, fix }: { shown: ShownAnswer; answer: AnswerReply; fix: Corrections }): ReactElement {
+function Below({ shown, answer, room, fix }: CardProps & { fix: Corrections }): ReactElement {
   const { plan, recalculating, ghost } = shown;
   if (fix.adding) {
     return (
@@ -135,8 +147,8 @@ function Below({ shown, answer, fix }: { shown: ShownAnswer; answer: AnswerReply
         disabled={recalculating}
         friends={fix.choices}
         onChoose={fix.choose}
-        onClose={fix.toggleAdding}
         pick={plan?.place ?? null}
+        room={room}
       />
     );
   }
@@ -157,27 +169,42 @@ function Below({ shown, answer, fix }: { shown: ShownAnswer; answer: AnswerReply
   );
 }
 
-// The answer on screen in the answer frame's card: its condition chips with "근거" at the row's right, the Plan's two
-// lines or those that say why there is none, the basis while open, and the time band with the steps, or the list of
-// Friends to add in their place. Each chip, a Friend chosen, and a drop of the band ask for a recalculation.
-export function PlanCard({ shown, answer }: { shown: ShownAnswer; answer: AnswerReply }): ReactElement {
-  const { plan, basisOpen, toggleBasis, recalculating } = shown;
+// What stands at the right of the chips' first line: "그대로" while the list of Friends is open, else "근거" for a
+// Plan, which has a basis to open.
+function cornerOf({ plan, basisOpen, toggleBasis }: ShownAnswer, fix: Corrections): CornerAction | null {
+  if (fix.adding) {
+    return { words: '그대로', icon: null, onPress: fix.toggleAdding };
+  }
+  if (plan === null) {
+    return null;
+  }
+  return basisOpen
+    ? { words: '근거 접기', icon: 'chevronUp', onPress: toggleBasis }
+    : { words: '근거', icon: 'chevronRight', onPress: toggleBasis };
+}
+
+// The answer on screen in the answer frame's card: its condition chips with "근거" at the right of their first line,
+// the Plan's two lines or those that say why there is none, the basis while open, and the time band with the steps.
+// While the list of Friends to add is open, the lines ask who comes, "그대로" closes the list, and the list stands in
+// place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation.
+export function PlanCard({ shown, answer, room }: CardProps): ReactElement {
+  const { plan, basisOpen, recalculating } = shown;
   const fix = useCorrections(shown, answer.input);
+  const lines = fix.adding ? LIST_LINES : (plan?.lines ?? answer.noPlan?.lines ?? []);
   return (
     <View style={styles.plan}>
       <ConditionChips
         adding={fix.adding}
-        basisOpen={plan !== null && basisOpen}
         chips={answer.chips}
+        corner={cornerOf(shown, fix)}
         disabled={recalculating}
         onAdd={fix.toggleAdding}
-        onBasis={plan === null ? null : toggleBasis}
         onOrigin={fix.chooseOrigin}
         onRemove={fix.remove}
         onUntil={fix.focusUntil}
       />
-      <SwipedLines count={answer.plans.length} lines={plan?.lines ?? answer.noPlan?.lines ?? []} shown={shown} />
-      {plan !== null && basisOpen ? (
+      <SwipedLines count={answer.plans.length} lines={lines} shown={shown} />
+      {plan !== null && basisOpen && !fix.adding ? (
         <View style={styles.basis}>
           {plan.basis.map((line) => (
             <Text key={line} style={styles.basisLine}>
@@ -186,7 +213,7 @@ export function PlanCard({ shown, answer }: { shown: ShownAnswer; answer: Answer
           ))}
         </View>
       ) : null}
-      <Below answer={answer} fix={fix} shown={shown} />
+      <Below answer={answer} fix={fix} room={room} shown={shown} />
     </View>
   );
 }

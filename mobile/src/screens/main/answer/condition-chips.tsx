@@ -10,9 +10,17 @@ import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } fro
 import type { ConditionChip } from '@/api/assistant-types';
 import { color, Icon, radius, size, space, text } from '@/design-system';
 
+// What stands at the right of the first line: "근거" or "근거 접기" with its chevron, or "그대로", which closes the list
+// of Friends.
+export interface CornerAction {
+  // Also its name read aloud.
+  words: string;
+  icon: 'chevronRight' | 'chevronUp' | null;
+  onPress: () => void;
+}
+
 interface ConditionChipsProps {
   chips: readonly ConditionChip[];
-  basisOpen: boolean;
   // The list of Friends is open.
   adding: boolean;
   disabled: boolean;
@@ -20,8 +28,8 @@ interface ConditionChipsProps {
   onUntil: () => void;
   onRemove: (userId: string) => void;
   onAdd: () => void;
-  // Null for an answer without a Plan, which has no basis: no "근거" is drawn.
-  onBasis: (() => void) | null;
+  // Null for nothing there, as for an answer without a Plan, which has no basis.
+  corner: CornerAction | null;
 }
 
 const CHIP_HEIGHT = 34;
@@ -104,10 +112,8 @@ function AddChip({ adding, disabled, onAdd }: { adding: boolean; disabled: boole
 }
 
 // The first row of the answer's card: the conditions the answer used, each a control that corrects it, then
-// "＋ 같이", in lines that wrap so that no chip is cut, with "근거" fixed at the right of the first line when there is a
-// basis to open.
-export function ConditionChips({ chips, basisOpen, adding, disabled, ...on }: ConditionChipsProps): ReactElement {
-  const basis = basisOpen ? '근거 접기' : '근거';
+// "＋ 같이", in lines that wrap so that no chip is cut, with the corner's action fixed at the right of the first line.
+export function ConditionChips({ chips, adding, disabled, corner, ...on }: ConditionChipsProps): ReactElement {
   return (
     <View style={styles.row} testID="condition-chips">
       <View style={styles.chips} testID="condition-chips-lines">
@@ -130,16 +136,16 @@ export function ConditionChips({ chips, basisOpen, adding, disabled, ...on }: Co
         )}
         <AddChip adding={adding} disabled={disabled} onAdd={on.onAdd} />
       </View>
-      {on.onBasis === null ? null : (
+      {corner === null ? null : (
         <Pressable
-          accessibilityLabel={basis}
+          accessibilityLabel={corner.words}
           accessibilityRole="button"
           hitSlop={HIT_SLOP}
-          onPress={on.onBasis}
-          style={pressedStyle(styles.basis)}
+          onPress={corner.onPress}
+          style={pressedStyle(styles.corner)}
         >
-          <Text style={styles.basisLabel}>{basis}</Text>
-          <Icon color={color.blue600} name={basisOpen ? 'chevronUp' : 'chevronRight'} size={14} />
+          <Text style={styles.cornerLabel}>{corner.words}</Text>
+          {corner.icon === null ? null : <Icon color={color.blue600} name={corner.icon} size={14} />}
         </Pressable>
       )}
     </View>
@@ -167,6 +173,6 @@ const styles = StyleSheet.create({
   label: { ...text.label, color: color.ink },
   personLabel: { color: color.snuBlue },
   remove: { marginRight: -space[1], padding: 2, borderRadius: radius.full },
-  basis: { flexDirection: 'row', alignItems: 'center', gap: 2, height: CHIP_HEIGHT },
-  basisLabel: { ...text.label, color: color.blue600 },
+  corner: { flexDirection: 'row', alignItems: 'center', gap: 2, height: CHIP_HEIGHT },
+  cornerLabel: { ...text.label, color: color.blue600 },
 });

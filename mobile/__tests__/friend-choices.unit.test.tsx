@@ -5,7 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -40,7 +40,7 @@ const noop = (): void => undefined;
 
 async function show(props: Partial<Props> = {}): Promise<void> {
   await render(
-    <FriendChoices disabled={false} friends={FRIENDS_SHOWN} onChoose={noop} onClose={noop} pick={PICK} {...props} />,
+    <FriendChoices disabled={false} friends={FRIENDS_SHOWN} onChoose={noop} pick={PICK} room={null} {...props} />,
   );
 }
 
@@ -114,24 +114,43 @@ describe('FriendChoices distances and ages', () => {
 });
 
 describe('FriendChoices shown', () => {
-  // Partitions: Friends to add, and none to add.
-  it('asks who to eat with', async () => {
-    await show();
-
-    expect(screen.getByText('누구와 같이 먹을까요?')).toBeVisible();
-  });
-
-  it('says there is nobody more to add above 닫기', async () => {
+  // Partitions: Friends to add, and none to add. The question is the card's lines now, and "그대로" closes the list.
+  it('says there is nobody more to add in place of the grid, with no question and no 닫기', async () => {
     await show({ friends: [] });
 
     expect(screen.getByText('더 넣을 친구가 없어요')).toBeVisible();
-    expect(screen.getByRole('button', { name: '닫기' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: /추가$/u })).toBeNull();
+    expect(screen.queryByTestId('choice-grid')).toBeNull();
+    expect(screen.queryByText('누구와 같이 먹을까요?')).toBeNull();
+    expect(screen.queryByRole('button', { name: '닫기' })).toBeNull();
+  });
+});
+
+// The list laid out `top` below the top of the card's Plan.
+async function layOut(top: number): Promise<void> {
+  await fireEvent(screen.getByTestId('friend-choices'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: top, width: 343, height: 200 } },
+  });
+}
+
+describe('FriendChoices rows', () => {
+  // Partitions: the card's room not known yet; room for more than four rows below the list's top, for three, and for
+  // less than two. The rule: fix 2 of the decision, at most four whole rows (200), the largest whole number that fits,
+  // and at least two; a row is 44 and rows 8 apart.
+  it.each([
+    ['not known', null, 4, 200],
+    ['400, the list at 150', 400, 4, 200],
+    ['300, the list at 150', 300, 3, 148],
+    ['200, the list at 150', 200, 2, 96],
+  ] as const)('with the room %s shows %d rows in a window %d high', async (_, room, __, height) => {
+    await show({ room });
+    await layOut(150);
+
+    expect(screen.getByTestId('choice-grid-window')).toHaveStyle({ maxHeight: height });
   });
 });
 
 describe('FriendChoices pressed', () => {
-  // Partitions: a press on a Friend, on 닫기, and on a Friend while disabled.
+  // Partitions: a press on a Friend, and on a Friend while disabled.
   it('chooses the Friend pressed', async () => {
     const onChoose = jest.fn<void, [string]>();
     await show({ onChoose });
@@ -139,15 +158,6 @@ describe('FriendChoices pressed', () => {
     await userEvent.press(screen.getByRole('button', { name: '지우, 자리 모름, 추가' }));
 
     expect(onChoose).toHaveBeenCalledWith('f11');
-  });
-
-  it('closes with 닫기', async () => {
-    const onClose = jest.fn<void, []>();
-    await show({ onClose });
-
-    await userEvent.press(screen.getByRole('button', { name: '닫기' }));
-
-    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('takes no choice while a recalculation is on its way', async () => {

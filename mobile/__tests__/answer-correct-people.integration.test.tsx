@@ -83,7 +83,7 @@ describe('taking a Friend out', () => {
 
 // Partitions: the list opened and closed; a Friend already in the Plan.
 describe('adding a Friend', () => {
-  it("lists the User's Friends nearest first, the one without a position last, and 닫기 closes the list", async () => {
+  it("lists the User's Friends nearest first, the one without a position last, and 그대로 closes the list", async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await user.press(card().getByRole('button', { name: ADD }));
@@ -93,7 +93,7 @@ describe('adding a Friend', () => {
       .map(({ props }): unknown => props.accessibilityLabel);
     expect(cells).toEqual([MIN_JUN_CELL, JI_WOO_CELL]);
     expect(card().getByRole('button', { name: MIN_JUN_CELL })).toHaveTextContent('민준1.2km');
-    await user.press(card().getByRole('button', { name: '닫기' }));
+    await user.press(card().getByRole('button', { name: '그대로' }));
     expect(card().queryByRole('button', { name: MIN_JUN_CELL })).toBeNull();
   });
 

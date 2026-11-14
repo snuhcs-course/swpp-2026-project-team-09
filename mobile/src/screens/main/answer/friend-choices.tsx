@@ -5,10 +5,10 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, useState } from 'react';
+import { type LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';
-import { Button, ChoiceGrid, color, type GridChoice, space, text } from '@/design-system';
+import { ChoiceGrid, choiceRowsWithin, color, type GridChoice, text } from '@/design-system';
 import { metresBetween } from '@/features/assistant/answer-marks';
 import { givenName } from '@/features/map/short-name';
 
@@ -28,10 +28,21 @@ interface FriendChoicesProps {
   pick: LatLng | null;
   disabled: boolean;
   onChoose: (userId: string) => void;
-  onClose: () => void;
+  // How high the card's Plan may stand before the card scrolls, null until it is known.
+  room: number | null;
 }
 
 const KILOMETRE = 1000;
+const MOST_ROWS = 4;
+const LEAST_ROWS = 2;
+
+// The whole rows that fit between the list's top and the end of the card's room: at most four, and at least two.
+function rowsIn(room: number | null, top: number | null): number {
+  if (room === null || top === null) {
+    return MOST_ROWS;
+  }
+  return Math.min(MOST_ROWS, Math.max(LEAST_ROWS, choiceRowsWithin(room - top)));
+}
 
 // "350m" to ten metres under a kilometre, "1.2km" to a tenth from one.
 function distanceWords(metres: number): string {
@@ -72,8 +83,9 @@ function cellOf(measured: Measured): GridChoice {
 }
 
 // The card's list of Friends to add to the Plan, opened by "＋ 같이": each by the name their face and chip show, and
-// how far they are from the picked Restaurant, nearest first.
-export function FriendChoices({ friends, pick, disabled, onChoose, onClose }: FriendChoicesProps): ReactElement {
+// how far they are from the picked Restaurant, nearest first, in as many whole rows as the card has room for.
+export function FriendChoices({ friends, pick, disabled, onChoose, room }: FriendChoicesProps): ReactElement {
+  const [top, setTop] = useState<number | null>(null);
   const cells = friends
     .map((friend) => ({
       friend,
@@ -83,22 +95,21 @@ export function FriendChoices({ friends, pick, disabled, onChoose, onClose }: Fr
     .toSorted(byNearness)
     .map(cellOf);
   return (
-    <View style={styles.choices}>
-      <Text style={styles.question}>누구와 같이 먹을까요?</Text>
+    <View
+      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+        setTop(nativeEvent.layout.y);
+      }}
+      testID="friend-choices"
+    >
       {cells.length === 0 ? (
         <Text style={styles.none}>더 넣을 친구가 없어요</Text>
       ) : (
-        <ChoiceGrid choices={cells} disabled={disabled} onChoose={onChoose} />
+        <ChoiceGrid choices={cells} disabled={disabled} onChoose={onChoose} rows={rowsIn(room, top)} />
       )}
-      <Button onPress={onClose} variant="ghost">
-        닫기
-      </Button>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  choices: { gap: space[2] },
-  question: { ...text.label, color: color.ink },
   none: { ...text.body, color: color.inkMuted },
 });
