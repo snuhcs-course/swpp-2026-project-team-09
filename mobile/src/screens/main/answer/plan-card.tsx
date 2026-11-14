@@ -4,9 +4,10 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import { type ReactElement, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { AnswerReply } from '@/api/assistant-types';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
 import { Button, color, Icon, space, text } from '@/design-system';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { AnswerLines } from './answer-lines';
@@ -16,6 +17,37 @@ import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
 
 const ARROW = 44;
+// A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
+const SWIPE_STARTS = 10;
+const SWIPE_COUNTS = 48;
+
+// The answer's lines, which a swipe to the left turns to the next Plan and one to the right to the previous, as the
+// arrows do.
+function SwipedLines({ shown, count, lines }: { shown: ShownAnswer; count: number; lines: readonly AnswerLine[] }): ReactElement {
+  const { browse, recalculating } = shown;
+  const pan = useMemo(
+    () =>
+      Gesture.Pan()
+        .withTestId('plan-swipe')
+        .runOnJS(true)
+        .enabled(!recalculating && count > 1)
+        .activeOffsetX([-SWIPE_STARTS, SWIPE_STARTS])
+        .failOffsetY([-SWIPE_STARTS, SWIPE_STARTS])
+        .onEnd(({ translationX }) => {
+          if (Math.abs(translationX) >= SWIPE_COUNTS) {
+            browse(translationX < 0 ? 1 : -1);
+          }
+        }),
+    [browse, recalculating, count],
+  );
+  return (
+    <GestureDetector gesture={pan}>
+      <View collapsable={false}>
+        <AnswerLines lines={lines} />
+      </View>
+    </GestureDetector>
+  );
+}
 
 // "‹" or "›" at an end of the steps' row: a round button that is easy to press.
 function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; onPress: () => void }): ReactElement {
@@ -117,7 +149,7 @@ export function PlanCard({ shown, answer }: { shown: ShownAnswer; answer: Answer
         onRemove={fix.remove}
         onUntil={fix.focusUntil}
       />
-      <AnswerLines lines={plan?.lines ?? answer.noPlan?.lines ?? []} />
+      <SwipedLines count={answer.plans.length} lines={plan?.lines ?? answer.noPlan?.lines ?? []} shown={shown} />
       {plan !== null && basisOpen ? (
         <View style={styles.basis}>
           {plan.basis.map((line) => (
