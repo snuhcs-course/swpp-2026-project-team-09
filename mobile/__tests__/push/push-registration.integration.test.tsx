@@ -3,8 +3,10 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { Platform } from 'react-native';
 import type * as PushDevice from '@/push/device';
 import type * as SecureStoreFake from '../support/secure-store';
 import type * as FakeSocketModule from '../support/fake-socket';
@@ -44,6 +46,7 @@ jest.mock('expo-notifications', () => jest.requireActual<typeof PushFake>('../su
 let server: FakeServer;
 
 beforeEach(async () => {
+  jest.replaceProperty(Platform, 'OS', 'android');
   jest.useFakeTimers({ now: PHONE_NOW });
   await startFresh();
   sockets.length = 0;
@@ -140,6 +143,16 @@ describe('no registration', () => {
 
     expect(phone.permissionReads()).toBe(0);
     expect(server.received()).toEqual([]);
+  });
+
+  it('reads no permission and sends nothing on iOS', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    const phone = givePushPhone({ permission: 'granted' });
+
+    await openMain();
+
+    expect(phone.permissionReads()).toBe(0);
+    expect(registered()).toEqual([]);
   });
 });
 

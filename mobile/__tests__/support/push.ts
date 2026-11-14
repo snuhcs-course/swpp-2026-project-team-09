@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -33,6 +34,11 @@ interface PhoneState {
   permissionReads: number;
   prompts: number;
   unregisters: number;
+  // The unregister call fails, as without the network.
+  unregisterFails: boolean;
+  // The next unregister call waits until the test lets it go.
+  holdsUnregister: boolean;
+  releaseUnregister: () => void;
   listeners: Set<TokenListener>;
   onUnregister: () => void;
 }
@@ -67,6 +73,9 @@ const phone: PhoneState = {
   permissionReads: 0,
   prompts: 0,
   unregisters: 0,
+  unregisterFails: false,
+  holdsUnregister: false,
+  releaseUnregister: doNothing,
   listeners: new Set(),
   onUnregister: doNothing,
 };
@@ -77,6 +86,7 @@ interface Given {
   // Left out, false for a denial and true otherwise.
   canAskAgain?: boolean;
   prompt?: 'granted' | 'denied';
+  unregisterFails?: boolean;
 }
 
 export interface PushPhone {
@@ -92,6 +102,11 @@ export interface PushPhone {
   changeToken: (token: string) => Promise<void>;
   // Runs at each unregistering, to see what the app still holds then.
   whenUnregistered: (does: () => void) => void;
+  // The unregister call works again, as once the network is back.
+  letUnregisterWork: () => void;
+  // The next unregister call waits, as on a slow network, until `letUnregisterGo`.
+  holdUnregister: () => void;
+  letUnregisterGo: () => Promise<void>;
 }
 
 export function givePushPhone(given: Given = {}): PushPhone {
@@ -104,6 +119,9 @@ export function givePushPhone(given: Given = {}): PushPhone {
   phone.permissionReads = 0;
   phone.prompts = 0;
   phone.unregisters = 0;
+  phone.unregisterFails = given.unregisterFails ?? false;
+  phone.holdsUnregister = false;
+  phone.releaseUnregister = doNothing;
   phone.listeners.clear();
   phone.onUnregister = doNothing;
   return {
@@ -121,6 +139,19 @@ export function givePushPhone(given: Given = {}): PushPhone {
     },
     whenUnregistered: (does): void => {
       phone.onUnregister = does;
+    },
+    letUnregisterWork: (): void => {
+      phone.unregisterFails = false;
+    },
+    holdUnregister: (): void => {
+      phone.holdsUnregister = true;
+    },
+    letUnregisterGo: async (): Promise<void> => {
+      await act(async () => {
+        phone.releaseUnregister();
+        phone.releaseUnregister = doNothing;
+        await jest.advanceTimersByTimeAsync(0);
+      });
     },
   };
 }
@@ -181,8 +212,19 @@ export const notificationsModule = {
   },
   unregisterForNotificationsAsync: (): Promise<null> => {
     phone.unregisters += 1;
+    if (phone.unregisterFails) {
+      return Promise.reject(new Error('Network request failed'));
+    }
     phone.deviceToken = freshDeviceToken();
     phone.onUnregister();
+    if (phone.holdsUnregister) {
+      phone.holdsUnregister = false;
+      return new Promise((resolve) => {
+        phone.releaseUnregister = (): void => {
+          resolve(null);
+        };
+      });
+    }
     return Promise.resolve(null);
   },
 };

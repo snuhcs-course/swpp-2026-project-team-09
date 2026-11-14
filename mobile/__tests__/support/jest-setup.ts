@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as PushDevice from '@/push/device';
@@ -26,7 +27,7 @@ jest.mock('@/push/device', (): typeof PushDevice => ({
   askPushPermission: () => Promise.resolve('unavailable'),
   expoPushToken: () => Promise.resolve(null),
   onPushTokenChange: () => mockStopNothing,
-  unregisterPush: () => Promise.resolve(),
+  unregisterPush: () => Promise.resolve(true),
   lastPushTap: () => null,
   clearLastPushTap: mockStopNothing,
   onPushTap: () => mockStopNothing,

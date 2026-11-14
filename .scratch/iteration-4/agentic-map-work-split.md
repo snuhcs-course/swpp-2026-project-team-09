@@ -91,7 +91,7 @@ When the path runs, it is checked on two phones with today's Production APK inst
 
 ## 7. The native release (11/19, after the acceptance tests, once, by A)
 
-What goes in: dashed lines on the map, tapping empty ground, and dimming the base map; push notifications (expo-notifications, FCM; ticket 01 of `P04-push-notifications`, written by the server-side member as a draft pull request); and the location permission text for catching arrival at and leaving Kwanjeong. D writes the checklist, and A merges it once B approves, as for A's other app PRs. Until then no change to the native files merges.
+What goes in: dashed lines on the map, tapping empty ground, and dimming the base map; push notifications (expo-notifications, FCM; ticket 01 of `P04-push-notifications`, on the iteration's Main already); and the location permission text for catching arrival at and leaving Kwanjeong. D writes the checklist, and A merges it once B approves, as for A's other app PRs. No native change reaches a User before this Release. Since push's native change is on the iteration's Main, an update published from Main reaches no installed 1.0.1 APK: a fix they need before the Release is published from a branch cut before that change.
 
 What stands in until then:
 

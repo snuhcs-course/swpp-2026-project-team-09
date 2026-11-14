@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-14  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -126,7 +127,9 @@ export class PushService {
       this.logger[level](text);
     }
     if (reading.dropped.length > 0) {
-      await this.prisma.pushToken.deleteMany({ where: { id: { in: reading.dropped } } });
+      // A row whose Session registered another token while Expo answered keeps the new token.
+      const dropped = rows.filter(({ id }) => reading.dropped.includes(id)).map(({ id, token }) => ({ id, token }));
+      await this.prisma.pushToken.deleteMany({ where: { OR: dropped } });
     }
   }
 }
