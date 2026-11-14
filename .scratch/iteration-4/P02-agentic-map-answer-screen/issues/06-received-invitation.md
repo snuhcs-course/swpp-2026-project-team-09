@@ -19,7 +19,7 @@ A User whose phone has the switch on opens an invitation, from "알림" or from 
 - [x] The phone's position goes with the request only while the User is on campus, as a recalculation sends it.
 - [x] **Tests**: unit tests for the card's lines from the stored copies of the server's real replies; integration tests at the main screen over the fake main server: the address opening the card, the marks, both buttons down to their requests, a failure, and an invitation that waits no more.
 - [x] The app's README says how a received invitation is shown.
-- [ ] The screen is run on an Android emulator, and the pull request carries the screen of a received invitation.
+- [x] The screen is run on an Android emulator, and the pull request carries the screen of a received invitation.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
@@ -55,7 +55,7 @@ On the Android emulator (1080 × 2400, density 2.625) with the mock's stored car
 - The map drew 민수's dot at 302동 with "나 · 18분", the navy line by 301동, under the flag "12:18 유상과 만남", to 63동 with "12:33 학생회관식당에서 식사" under it, and no one else's Avatar.
 - "거절" closed the card to the everyday map with the tab bar back.
 
-Fixed after the check: 63동 stood under the status bar (decision 19), and the way's line wrapped its last word alone at the answer's size (decision 20). Neither fix has been run on the emulator yet.
+Fixed after the check: 63동 stood under the status bar (decision 19), and the way's line wrapped its last word alone at the answer's size (decision 20). Run again on the emulator with both fixes: 63동 and its label lie below the status bar with the whole way inside the map, the way's line fits one line after the route arrow, and the answer to "배고파, 민수랑 같이" still fits its first Plan between the pill and the card, a little wider than before the fix.
 
 ### Agent usage (2026-11-15)
 
