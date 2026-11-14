@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, type userEvent } from '@testing-library/react-native';
@@ -124,9 +125,9 @@ export function answerParty(server: FakeServer, answers: Answers = {}): (next: A
   server.on('GET /friends', {
     status: 200,
     body: [
-      { ...MIN_JUN_HOLDER, sharing: true, visible: true },
-      { ...SEO_YEON_HOLDER, sharing: true, visible: false },
-      { ...YU_NA, sharing: true, visible: false },
+      { ...MIN_JUN_HOLDER, level: 'exact', sharing: true, visible: true },
+      { ...SEO_YEON_HOLDER, level: 'exact', sharing: true, visible: false },
+      { ...YU_NA, level: 'exact', sharing: true, visible: false },
     ],
   });
   return set;

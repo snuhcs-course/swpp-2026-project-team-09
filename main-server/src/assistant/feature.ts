@@ -7,6 +7,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -66,8 +67,8 @@ export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 
 // What the app says it can show beside the cards every version shows. Library cards are attached only for an app that
 // says `library`, since older apps refuse a reply with a card they do not know. `answer`: the app draws an answer on
-// the map.
-export const CLIENT_CAPABILITIES = ['library', 'answer'] as const;
+// the map. `events`: with `answer`, it also draws an answer of a day's events.
+export const CLIENT_CAPABILITIES = ['library', 'answer', 'events'] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 

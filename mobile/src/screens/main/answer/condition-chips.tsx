@@ -63,6 +63,17 @@ function ChipButton({ label, disabled, onPress }: ChipButtonProps): ReactElement
   );
 }
 
+// A chip that takes no press, in the look of the row's chips; `marked` draws it as a person's chip is drawn.
+export function ReadOnlyChip({ label, marked }: { label: string; marked: boolean }): ReactElement {
+  return (
+    <View style={[styles.chip, marked && styles.person]}>
+      <Text numberOfLines={1} style={[styles.label, marked && styles.personLabel]}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 interface PersonChipProps {
   chip: ConditionChip;
   disabled: boolean;

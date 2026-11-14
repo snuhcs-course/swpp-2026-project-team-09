@@ -11,10 +11,12 @@ import { NotificationsModule } from '../notifications/notifications.module.js';
 import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
 import { TravelModule } from '../travel/travel.module.js';
+import { UsersModule } from '../users/users.module.js';
 import { BetterPlanController } from './better-plan.controller.js';
 import { BetterPlanService } from './better-plan.service.js';
 import { InvitationCardController } from './invitation-card.controller.js';
 import { InvitationCardService } from './invitation-card.service.js';
+import { InviteeTimeToLeave } from './invitee-time-to-leave.service.js';
 import { LateController } from './late.controller.js';
 import { LateService } from './late.service.js';
 import { OwnWayReader } from './own-way-reader.service.js';
@@ -22,8 +24,8 @@ import { PlansController } from './plans.controller.js';
 import { PlansService } from './plans.service.js';
 
 @Module({
-  imports: [AssistantModule, PlacesModule, QuestsModule, TravelModule, NotificationsModule],
+  imports: [AssistantModule, PlacesModule, QuestsModule, TravelModule, NotificationsModule, UsersModule],
   controllers: [PlansController, InvitationCardController, LateController, BetterPlanController],
-  providers: [PlansService, InvitationCardService, OwnWayReader, LateService, BetterPlanService],
+  providers: [PlansService, InvitationCardService, OwnWayReader, LateService, BetterPlanService, InviteeTimeToLeave],
 })
 export class PlansModule {}

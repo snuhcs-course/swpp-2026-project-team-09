@@ -10,6 +10,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
+import { peopleOf, windowOf } from '@/features/assistant/plan-input';
+import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { AnswerLines } from './answer-lines';
 import { ConditionChips, type CornerAction } from './condition-chips';
@@ -38,18 +40,20 @@ function SwipedLines({
   shown,
   count,
   lines,
+  busy,
 }: {
   shown: ShownAnswer;
   count: number;
   lines: readonly AnswerLine[];
+  busy: boolean;
 }): ReactElement {
-  const { browse, recalculating, adding } = shown;
+  const { browse, adding } = shown;
   const pan = useMemo(
     () =>
       Gesture.Pan()
         .withTestId('plan-swipe')
         .runOnJS(true)
-        .enabled(!recalculating && !adding && count > 1)
+        .enabled(!busy && !adding && count > 1)
         .activeOffsetX([-SWIPE_STARTS, SWIPE_STARTS])
         .failOffsetY([-SWIPE_STARTS, SWIPE_STARTS])
         .onEnd(({ translationX }) => {
@@ -57,7 +61,7 @@ function SwipedLines({
             browse(translationX < 0 ? 1 : -1);
           }
         }),
-    [browse, recalculating, adding, count],
+    [browse, busy, adding, count],
   );
   return (
     <GestureDetector gesture={pan}>
@@ -85,19 +89,27 @@ function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; 
   );
 }
 
+interface StepsProps {
+  shown: ShownAnswer;
+  count: number;
+  busy: boolean;
+  // Null for a Plan of the User alone, which has no "이대로 초대".
+  invitation: PlanInvitation | null;
+}
+
 // The arrows at the row's two ends when the answer has more than one Plan, the count right before "›", and the
-// middle from the start: "되돌리기" at a fixed width while a drag is kept, and room for the card's main button.
-function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactElement | null {
-  const { index, browse, recalculating, ghost, undo } = shown;
+// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend.
+function Steps({ shown, count, busy, invitation }: StepsProps): ReactElement | null {
+  const { index, browse, ghost, undo } = shown;
   const arrows = count > 1;
-  if (ghost === null && !arrows) {
+  if (ghost === null && !arrows && invitation === null) {
     return null;
   }
   return (
     <View style={styles.steps} testID="plan-steps">
       {arrows ? (
         <Arrow
-          disabled={recalculating}
+          disabled={busy}
           next={false}
           onPress={() => {
             browse(-1);
@@ -107,8 +119,15 @@ function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactEl
       <View style={styles.middle}>
         {ghost === null ? null : (
           <View style={styles.undo}>
-            <Button disabled={recalculating} full onPress={undo} variant="secondary">
+            <Button disabled={busy} full onPress={undo} variant="secondary">
               되돌리기
+            </Button>
+          </View>
+        )}
+        {invitation === null ? null : (
+          <View style={styles.main}>
+            <Button disabled={busy} full onPress={invitation.invite}>
+              {invitation.sending ? '보내는 중이에요' : '이대로 초대'}
             </Button>
           </View>
         )}
@@ -120,7 +139,7 @@ function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactEl
       ) : null}
       {arrows ? (
         <Arrow
-          disabled={recalculating}
+          disabled={busy}
           next
           onPress={() => {
             browse(1);
@@ -134,17 +153,23 @@ function Steps({ shown, count }: { shown: ShownAnswer; count: number }): ReactEl
 interface CardProps {
   shown: ShownAnswer;
   answer: AnswerReply;
+  invitation: PlanInvitation;
   // How high the card may stand before it scrolls, null until it is known.
   room: number | null;
 }
 
+interface BelowProps extends CardProps {
+  fix: Corrections;
+  busy: boolean;
+}
+
 // Under the lines: the list of Friends while it is open, else the Plan's time band and the steps.
-function Below({ shown, answer, room, fix }: CardProps & { fix: Corrections }): ReactElement {
-  const { plan, recalculating, ghost } = shown;
+function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): ReactElement {
+  const { plan, ghost } = shown;
   if (fix.adding) {
     return (
       <FriendChoices
-        disabled={recalculating}
+        disabled={busy}
         friends={fix.choices}
         onChoose={fix.choose}
         pick={plan?.place ?? null}
@@ -152,19 +177,20 @@ function Below({ shown, answer, room, fix }: CardProps & { fix: Corrections }): 
       />
     );
   }
+  const invitable = plan !== null && peopleOf(answer.input).length > 1;
   return (
     <>
       {plan === null ? null : (
         <TimeBand
           band={plan.band}
-          disabled={recalculating}
+          disabled={busy}
           focus={fix.focus}
           ghost={ghost}
           onDrop={fix.drop}
-          fixed={answer.input.window}
+          fixed={windowOf(answer.input)}
         />
       )}
-      <Steps count={answer.plans.length} shown={shown} />
+      <Steps busy={busy} count={answer.plans.length} invitation={invitable ? invitation : null} shown={shown} />
     </>
   );
 }
@@ -186,9 +212,11 @@ function cornerOf({ plan, basisOpen, toggleBasis }: ShownAnswer, fix: Correction
 // The answer on screen in the answer frame's card: its condition chips with "근거" at the right of their first line,
 // the Plan's two lines or those that say why there is none, the basis while open, and the time band with the steps.
 // While the list of Friends to add is open, the lines ask who comes, "그대로" closes the list, and the list stands in
-// place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation.
-export function PlanCard({ shown, answer, room }: CardProps): ReactElement {
+// place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
+// none takes a press while a recalculation or "이대로 초대" is on its way.
+export function PlanCard({ shown, answer, invitation, room }: CardProps): ReactElement {
   const { plan, basisOpen, recalculating } = shown;
+  const busy = recalculating || invitation.sending;
   const fix = useCorrections(shown, answer.input);
   const lines = fix.adding ? LIST_LINES : (plan?.lines ?? answer.noPlan?.lines ?? []);
   return (
@@ -197,13 +225,13 @@ export function PlanCard({ shown, answer, room }: CardProps): ReactElement {
         adding={fix.adding}
         chips={answer.chips}
         corner={cornerOf(shown, fix)}
-        disabled={recalculating}
+        disabled={busy}
         onAdd={fix.toggleAdding}
         onOrigin={fix.chooseOrigin}
         onRemove={fix.remove}
         onUntil={fix.focusUntil}
       />
-      <SwipedLines count={answer.plans.length} lines={lines} shown={shown} />
+      <SwipedLines busy={busy} count={answer.plans.length} lines={lines} shown={shown} />
       {plan !== null && basisOpen && !fix.adding ? (
         <View style={styles.basis}>
           {plan.basis.map((line) => (
@@ -213,7 +241,7 @@ export function PlanCard({ shown, answer, room }: CardProps): ReactElement {
           ))}
         </View>
       ) : null}
-      <Below answer={answer} fix={fix} room={room} shown={shown} />
+      <Below answer={answer} busy={busy} fix={fix} invitation={invitation} room={room} shown={shown} />
     </View>
   );
 }
@@ -234,6 +262,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85 },
   middle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2] },
   undo: { width: UNDO_WIDTH },
+  main: { flex: 1 },
   count: {
     ...text.label,
     width: COUNT_WIDTH,

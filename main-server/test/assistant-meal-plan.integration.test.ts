@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -13,7 +14,7 @@ import {
   keptButHidden,
   keptPositionIn,
   setFriendSharing,
-  setMasterSwitch,
+  shareAt,
   uploadPosition,
 } from './location-sharing.js';
 import { COURSE, MealPlanStage, type Named, planMeal, resolve, ROOM } from './meal-plan.js';
@@ -184,13 +185,12 @@ describe('What the model is told of the plans', () => {
   });
 });
 
-// A Friend with no Class that day, whose phone is at the Student Center, and whose Master Switch is on, as the
-// asker's is.
+// A Friend with no Class that day, whose phone is at the Student Center, and who shares the exact position with the
+// asker, both Master Switches on.
 async function sharingFriend(date: string): Promise<{ friend: Named; at: { latitude: number; longitude: number } }> {
   await workedExample(date);
   const friend = await stage.friend('하은');
-  await expectStatus(setMasterSwitch(stage.app, stage.asker, true), 204);
-  await expectStatus(setMasterSwitch(stage.app, friend, true), 204);
+  await shareAt(stage.app, stage.asker, friend, 'exact');
   const { latitude, longitude } = await stage.numbered('63');
   await expectStatus(uploadPosition(stage.app, friend, { latitude, longitude }), 200);
   return { friend, at: { latitude, longitude } };

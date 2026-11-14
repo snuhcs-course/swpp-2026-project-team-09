@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
@@ -186,7 +187,7 @@ function destinationOf(plan: readonly PlanStepView[]): RoomDestination | null {
   return { label: ahead.label, at: { latitude: ahead.latitude, longitude: ahead.longitude } };
 }
 
-function otherPartyOf(myParty: MyParty | null, inParty: boolean, meId: string): OtherParty | null {
+export function otherPartyOf(myParty: MyParty | null, inParty: boolean, meId: string): OtherParty | null {
   if (myParty === null || inParty) {
     return null;
   }

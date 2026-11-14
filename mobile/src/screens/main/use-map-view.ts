@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -51,7 +52,7 @@ export function useMapView(
   room: Room,
   { things, me, pin, lines, cards, selection }: Everyday,
 ): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
-  const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards });
+  const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
   if (answer !== null) {
     return answer;
   }
