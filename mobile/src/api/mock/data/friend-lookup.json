@@ -1,0 +1,54 @@
+{
+  "kind": "friend",
+  "chips": [
+    {
+      "kind": "person",
+      "text": "민수",
+      "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37"
+    }
+  ],
+  "lines": [
+    [
+      {
+        "text": "민수",
+        "strong": true
+      },
+      {
+        "text": "는 지금 302동이에요",
+        "strong": false
+      }
+    ],
+    [
+      {
+        "text": "12:15까지 수업이에요",
+        "strong": false
+      }
+    ]
+  ],
+  "basis": ["민수는 내게 지금 있는 건물까지 보여 줘요"],
+  "scene": {
+    "people": [
+      {
+        "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+        "name": "민수",
+        "me": false,
+        "at": {
+          "latitude": 37.44887,
+          "longitude": 126.95265
+        },
+        "source": "building",
+        "tag": "민수 · 지금 302동"
+      }
+    ],
+    "places": [],
+    "routes": [],
+    "flags": []
+  },
+  "band": null,
+  "actions": [
+    {
+      "kind": "meet",
+      "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37"
+    }
+  ]
+}

@@ -3,15 +3,17 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_PLAN_1 } from '@/api/mock/data/meal-answer-plan-1';
+import { color } from '@/design-system';
 import { drawingOf, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import { lookName } from '@/map/marker-looks';
-import { MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
+import { ME_ID, MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
 
 // Distances are built with the spec's flat map ("Where the words go"): a degree of latitude is 111,320 metres, and a
 // degree of longitude that times the cosine of the latitude. The code counts with the same definition.
@@ -219,5 +221,56 @@ describe('an answer that draws nothing', () => {
 
     expect(new Set(names).size).toBe(names.length);
     expect(new Set(names)).toEqual(new Set(drawn));
+  });
+});
+
+// Partitions: what a way by the shuttle adds to a scene, which the drawing keeps plain until P01 ticket 11 settles its
+// look: a stop among the places, a ride and a faded walk among the routes, and the flags for setting out, being late,
+// and the shuttle. Expected values: P01 ticket 08's brief. The stop stands 300 metres north of 301동.
+describe('a scene with a way by the shuttle', () => {
+  const stop = north(AT_301, 300);
+  const drawing = drawingOf(
+    withScene((scene) => ({
+      ...scene,
+      places: [
+        ...scene.places,
+        {
+          place: { placeId: 'test-stop', label: '301동 정류장', ...stop },
+          role: 'stop',
+          tag: '301동 정류장 · 16:45 셔틀',
+        },
+      ],
+      routes: [
+        ...scene.routes,
+        { userId: ME_ID, role: 'shuttle', from: stop, to: AT_STUDENT_HALL, minutes: 7 },
+        { userId: ME_ID, role: 'alt', from: AT_301, to: AT_STUDENT_HALL, minutes: 25 },
+      ],
+      flags: [
+        ...scene.flags,
+        { at: AT_301, text: '16:43 나서기', role: 'leave' },
+        { at: AT_STUDENT_HALL, text: '17:05 도착 · 5분 늦어요', role: 'late' },
+        { at: stop, text: '셔틀 · 신소재공동연구소 지남', role: 'shuttle' },
+      ],
+    })),
+    0,
+  );
+
+  it('leaves the stop out', () => {
+    expect(drawing.things.map(({ name }) => name).filter((name) => name.includes('정류장'))).toEqual([]);
+  });
+
+  it('draws the ride in the shuttle colour, and the walk not taken thin and light', () => {
+    expect(drawing.lines.slice(-2).map(({ style }) => style)).toEqual([
+      { color: color.svcShuttle, width: 4 },
+      { color: color.border, width: 2 },
+    ]);
+  });
+
+  it('draws the new flags in the pick tone', () => {
+    const flags = ['16:43 나서기', '17:05 도착 · 5분 늦어요', '셔틀 · 신소재공동연구소 지남'];
+
+    expect(flags.map((_, index) => seen(drawing, `answer:meeting:${index + 1}`))).toMatchObject(
+      flags.map((name) => ({ name, symbol: null, label: { tone: 'pick', title: name } })),
+    );
   });
 });

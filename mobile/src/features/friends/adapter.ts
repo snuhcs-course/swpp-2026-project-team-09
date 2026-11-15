@@ -3,9 +3,10 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { Friend, FriendStatus, LatLng, Position, Presence } from '@/api/types';
+import type { Friend, FriendLevel, FriendStatus, LatLng, Position, Presence } from '@/api/types';
 import type { FriendRequests } from '@/api/waiting-types';
 import { KEPT_POSITION_MS, OLD_POSITION_MS } from '@/position';
 
@@ -27,8 +28,11 @@ export interface FriendView {
   minutesOld: number | null;
   // Whether the User can see the Friend on the map now, as the main server says.
   visible: boolean;
-  // The User's own switch for this friendship.
+  // The User's own end of this friendship.
+  level: FriendLevel;
   sharing: boolean;
+  // Whether the app has asked the User before turning location off for this Friend.
+  askedOff: boolean;
 }
 
 export const PRESENCE_LABEL: Record<Presence, string> = {
@@ -77,7 +81,7 @@ export function toFriendViews(
   now: Date,
 ): FriendView[] {
   const kept = keptPositions(positions, now);
-  return friends.map(({ id, name, department, visible, sharing }) => {
+  return friends.map(({ id, name, department, visible, level, sharing, askedOff }) => {
     // The main server's word on whether the Friend is seen wins over the app's own status.
     const status = statuses.find(({ userId, presence }) => userId === id && (presence !== 'off') === visible);
     const position = visible ? kept.find(({ userId }) => userId === id) : undefined;
@@ -95,7 +99,9 @@ export function toFriendViews(
       position: position === undefined ? null : { latitude: position.latitude, longitude: position.longitude },
       minutesOld: position === undefined ? null : minutesOld(position, now),
       visible,
+      level,
       sharing,
+      askedOff,
     };
   });
 }

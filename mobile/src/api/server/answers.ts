@@ -8,12 +8,14 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
   Board,
   ClassTime,
   Friend,
+  FriendLevel,
   InviteLink,
   Lobby,
   MyParty,
@@ -105,18 +107,29 @@ export function isProfile(value: unknown): value is Profile {
 }
 
 export function isLobby(value: unknown): value is Lobby {
-  return isProfile(field(value, 'profile')) && typeof field(value, 'masterSwitch') === 'boolean';
+  return (
+    isProfile(field(value, 'profile')) &&
+    typeof field(value, 'masterSwitch') === 'boolean' &&
+    typeof field(value, 'masterOffAsked') === 'boolean'
+  );
 }
 
 export function isPositionKept(value: unknown): value is PositionKept {
   return typeof field(value, 'offCampus') === 'boolean';
 }
 
+const FRIEND_LEVELS = new Set<unknown>(['timetable', 'building', 'exact']);
+
+export function isFriendLevel(value: unknown): value is FriendLevel {
+  return FRIEND_LEVELS.has(value);
+}
+
 function isFriend(value: unknown): value is Friend {
   return (
     hasTexts(value, ['id', 'name', 'department']) &&
-    typeof field(value, 'sharing') === 'boolean' &&
-    typeof field(value, 'visible') === 'boolean'
+    isFriendLevel(field(value, 'level')) &&
+    isFriendLevel(field(value, 'seen')) &&
+    ['sharing', 'visible', 'askedOff', 'askedPlan'].every((name) => typeof field(value, name) === 'boolean')
   );
 }
 
@@ -142,11 +155,16 @@ export function isOpenedInviteLink(value: unknown): value is OpenedInviteLink {
   return isUserSummary(field(value, 'sender')) && isText(status) && INVITE_LINK_STATUSES.has(status);
 }
 
+const POSITION_LEVELS = new Set<unknown>([undefined, 'building', 'exact']);
+
 function isPosition(value: unknown): value is Position {
+  const placeId = field(value, 'placeId');
   return (
     hasTexts(value, ['userId', 'measuredAt']) &&
     isNumber(field(value, 'latitude')) &&
-    isNumber(field(value, 'longitude'))
+    isNumber(field(value, 'longitude')) &&
+    POSITION_LEVELS.has(field(value, 'level')) &&
+    (placeId === undefined || isText(placeId))
   );
 }
 

@@ -1,0 +1,233 @@
+{
+  "input": {
+    "kind": "new-quest",
+    "date": "2026-11-19",
+    "globalEventId": null,
+    "title": "배드민턴",
+    "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+    "time": null,
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "constraints": []
+      },
+      {
+        "userId": "813ef697-74f3-4848-b231-50dea4aef958",
+        "constraints": []
+      }
+    ]
+  },
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    },
+    {
+      "kind": "person",
+      "text": "서준",
+      "userId": "813ef697-74f3-4848-b231-50dea4aef958"
+    }
+  ],
+  "plans": [
+    {
+      "id": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+      "title": "배드민턴",
+      "place": {
+        "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+        "label": "체육관",
+        "latitude": 37.4676,
+        "longitude": 126.95238
+      },
+      "startAt": "2026-11-19T17:10:00+09:00",
+      "endAt": "2026-11-19T17:40:00+09:00",
+      "togetherMinutes": 30,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-19T16:53:00+09:00",
+          "walkMinutes": 17,
+          "leaveBy": null,
+          "next": null,
+          "mode": "shuttle"
+        },
+        {
+          "userId": "813ef697-74f3-4848-b231-50dea4aef958",
+          "name": "서준",
+          "me": false,
+          "origin": {
+            "place": {
+              "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+              "label": "24동",
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-19T16:56:00+09:00",
+          "walkMinutes": 14,
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-19T17:10:00+09:00",
+          "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+          "title": "유상, 서준: 체육관 앞에서 만나기"
+        },
+        {
+          "at": "2026-11-19T17:10:00+09:00",
+          "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+          "title": "배드민턴"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "17:10 체육관",
+            "strong": true
+          },
+          {
+            "text": " · 4명 공개 모집",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "17:02에 도착해서 17:10에 모여요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "301동에서 체육관까지 셔틀로 17분, 16:53에 나서요",
+        "서준 · 24동에서 체육관까지 걸어서 14분, 16:56에 나서요"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "timetable",
+            "tag": "나 · 17분"
+          },
+          {
+            "userId": "813ef697-74f3-4848-b231-50dea4aef958",
+            "name": "서준",
+            "me": false,
+            "at": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "source": "timetable",
+            "tag": "서준 · 14분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "884c088c-205c-55d7-9860-63c8e28fb3bf",
+              "label": "체육관",
+              "latitude": 37.4676,
+              "longitude": 126.95238
+            },
+            "role": "pick",
+            "tag": "배드민턴"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.4676,
+              "longitude": 126.95238
+            },
+            "minutes": 17,
+            "mode": "shuttle"
+          },
+          {
+            "userId": "813ef697-74f3-4848-b231-50dea4aef958",
+            "role": "friend",
+            "from": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "to": {
+              "latitude": 37.4676,
+              "longitude": 126.95238
+            },
+            "minutes": 14
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.4676,
+              "longitude": 126.95238
+            },
+            "text": "17:10 배드민턴",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-19T16:30:00+09:00",
+          "endAt": "2026-11-19T18:30:00+09:00"
+        },
+        "now": "2026-11-19T16:45:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-19T16:30:00+09:00",
+                "endAt": "2026-11-19T16:45:00+09:00"
+              }
+            ]
+          },
+          {
+            "userId": "813ef697-74f3-4848-b231-50dea4aef958",
+            "name": "서준",
+            "busy": [
+              {
+                "startAt": "2026-11-19T16:30:00+09:00",
+                "endAt": "2026-11-19T16:45:00+09:00"
+              }
+            ]
+          }
+        ],
+        "startAt": "2026-11-19T17:10:00+09:00",
+        "endAt": "2026-11-19T17:40:00+09:00",
+        "text": "17:10–17:40 · 30분"
+      },
+      "candidates": []
+    }
+  ],
+  "dropped": [],
+  "noPlan": null
+}

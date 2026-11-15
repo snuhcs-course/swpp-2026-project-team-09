@@ -8,8 +8,8 @@ import type { LatLng } from '@/api/types';
 import { ANSWER_SYMBOL_BOX, type AnswerLabel, answerLabelBox, type LabelSide } from '@/design-system';
 import { inView, type MapCamera, type Size } from '@/map';
 import type { ViewArea } from './answer-camera';
+import { offset } from './answer-drawing';
 
-const METRES_PER_DEGREE = 111_320;
 // How far a label reaches from its point: sideways and how far up or down for a side label, up or down and how far
 // sideways for one above or below.
 const SIDE_REACH = { along: 400, across: 50 };
@@ -19,13 +19,6 @@ const NEIGHBOURS = { upAndDown: 60, across: ANSWER_SYMBOL_BOX };
 // A box or a point this near the area's edge is inside it, and a move of less is none: a camera's fit rests in its
 // last digits.
 export const ONE_POINT = 1;
-
-// The metres east and north from one position to another.
-export function offset(from: LatLng, to: LatLng): { east: number; north: number } {
-  const north = (to.latitude - from.latitude) * METRES_PER_DEGREE;
-  const east = (to.longitude - from.longitude) * METRES_PER_DEGREE * Math.cos((from.latitude * Math.PI) / 180);
-  return { east, north };
-}
 
 // The camera an answer is shown at, its view's size, and the area of the view its labels stay in, in its points.
 export interface LabelView {

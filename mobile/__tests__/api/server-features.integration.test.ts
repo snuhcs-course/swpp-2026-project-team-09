@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -84,7 +85,9 @@ describe('the Friends from the main server', () => {
         position: { latitude: 37.4598, longitude: 126.9521 },
         minutesOld: null,
         visible: true,
+        level: 'exact',
         sharing: true,
+        askedOff: false,
       },
       {
         id: JI_WOO.id,
@@ -98,7 +101,9 @@ describe('the Friends from the main server', () => {
         position: null,
         minutesOld: null,
         visible: false,
+        level: 'exact',
         sharing: true,
+        askedOff: false,
       },
     ]);
   });

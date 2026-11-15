@@ -11,8 +11,8 @@ import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
-import type { AnswerDrawing, AnswerThing } from './answer-drawing';
-import { type LabelView, offset, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
+import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
+import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -54,17 +54,13 @@ const ROUTE_STYLES = {
   me: { color: color.snuBlue, width: 5 },
   friend: { color: color.friend, width: 4 },
   next: { color: color.borderStrong, width: 3 },
+  shuttle: { color: color.svcShuttle, width: 4 },
+  alt: { color: color.border, width: 2 },
 } as const;
 
 const ONE_POINT = 15;
 // How many characters of a name a face shows (`MapAnswerMark`).
 const FACE_LETTERS = 2;
-
-// The metres in a straight line from one position to another.
-export function metresBetween(from: LatLng, to: LatLng): number {
-  const { east, north } = offset(from, to);
-  return Math.hypot(east, north);
-}
 
 function samePoint(one: LatLng, other: LatLng): boolean {
   return metresBetween(one, other) <= ONE_POINT;
@@ -175,7 +171,8 @@ function placeDraft(
       number,
     };
   }
-  if (role === 'meeting') {
+  // A stop is not drawn until its look is settled (P01 ticket 11).
+  if (role === 'meeting' || role === 'stop') {
     return null;
   }
   const id = role === 'next' ? `answer:next:${place.placeId}` : `answer:dropped:${place.label}`;

@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -36,8 +37,12 @@ describe('the mock of Friends', () => {
       id: 'f1',
       name: '김민준',
       department: '컴퓨터공학부',
+      level: 'exact',
+      seen: 'exact',
       sharing: true,
       visible: true,
+      askedOff: false,
+      askedPlan: false,
     });
     expect(friends.filter(({ visible }) => !visible).map(({ name }) => name)).toEqual(['서지우', '신예린']);
   });
@@ -56,7 +61,31 @@ describe('the mock of Friends', () => {
       expect(new Date(measuredAt).toISOString()).toBe(measuredAt);
     }
   });
+});
 
+async function seenOf(id: string): Promise<string | undefined> {
+  return (await answered(mockClient.listFriends())).find((friend) => friend.id === id)?.seen;
+}
+
+describe('the mock of what the User and a Friend see of each other', () => {
+  it("gives the two with their location off the Timetable, and every other Friend the User's end", async () => {
+    const friends = await answered(mockClient.listFriends());
+
+    expect(friends.filter(({ seen }) => seen === 'timetable').map(({ name }) => name)).toEqual(['서지우', '신예린']);
+    expect(friends.filter(({ visible }) => visible).every(({ seen, level }) => seen === level)).toBe(true);
+  });
+
+  it("follows the User's end down and up, and never above the Friend's", async () => {
+    await answered(mockClient.setFriendLevel('f1', 'building'));
+    expect(await seenOf('f1')).toBe('building');
+    await answered(mockClient.setFriendLevel('f1', 'exact'));
+    expect(await seenOf('f1')).toBe('exact');
+    await answered(mockClient.setFriendLevel('f11', 'building'));
+    expect(await seenOf('f11')).toBe('timetable');
+  });
+});
+
+describe('the mock of Friend statuses', () => {
   it("gives every Friend's status, which no answer of the main server holds", async () => {
     const statuses = await answered(mockClient.listFriendStatuses());
 
