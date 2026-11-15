@@ -45,10 +45,17 @@ describe("a push's address", () => {
 
 describe('where a card not on the map falls back to', () => {
   it("opens the 파티 tab's invitations for an invitation", () => {
-    expect(fallbackFor('invitation')).toEqual({ pathname: '/party', params: { tab: 'invites' } });
+    expect(fallbackFor({ kind: 'invitation', id: 'i1' })).toEqual({ pathname: '/party', params: { tab: 'invites' } });
+  });
+
+  it('opens the 행사 tab at the event for an event, such as one on a later day', () => {
+    expect(fallbackFor({ kind: 'event', id: 'later-event' })).toEqual({
+      pathname: '/events',
+      params: { focus: 'later-event' },
+    });
   });
 
   it('stays on the main map for any other kind', () => {
-    expect(fallbackFor('shuttle-stop')).toEqual({ pathname: '/main' });
+    expect(fallbackFor({ kind: 'shuttle-stop', id: 's1' })).toEqual({ pathname: '/main' });
   });
 });

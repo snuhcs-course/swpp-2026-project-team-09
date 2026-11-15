@@ -5,6 +5,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -16,7 +17,7 @@ import { PlacesService } from '../../places/places.service.js';
 import { makeQuestSchema } from '../../quests/dto/quest-requests.dto.js';
 import { facilityBookingOf } from '../facility-booking.js';
 import { defineTool, type Tool, type ToolContext } from '../feature.js';
-import { type FoundKind } from '../found-ids.js';
+import { contestedReason, type FoundKind } from '../found-ids.js';
 import { koreaTime } from '../korea-time.js';
 import {
   type ProposalFriend,
@@ -139,8 +140,9 @@ async function inviteesOf(
   const ids = [...new Set(inviteeIds)];
   const shownFriends = context.shown?.invitees.map(({ id }) => id) ?? [];
   const unreturned = ids.filter((id) => !accepted(context, 'friend', id, shownFriends));
+  const toAsk = context.found.contested('friend', unreturned);
   if (unreturned.length > 0) {
-    return { failure: `${UNRETURNED} Ids: ${unreturned.join(', ')}.` };
+    return { failure: toAsk.length > 0 ? contestedReason(toAsk) : `${UNRETURNED} Ids: ${unreturned.join(', ')}.` };
   }
   const listed = ids.length === 0 ? [] : await friends.list(context.userId);
   const notFriends = ids.filter((id) => !listed.some((friend) => friend.id === id));
