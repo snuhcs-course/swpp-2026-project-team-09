@@ -127,7 +127,7 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
     expect(card().getByText('수락은 민수가 직접 해요')).toBeVisible();
     expect(card().getByText('답이 없어도 12:15에 가면 돼요')).toBeVisible();
     expect(card().queryByText('파티를 만들고 초대를 보냈어요')).toBeNull();
-    expect(card().getByText('민수 · 아직 안 봄')).toBeVisible();
+    expect(card().getByText('김민수 · 아직 안 봄')).toBeVisible();
     expect(mapThings()).toContain('민수 · 아직 안 봄');
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
   });
