@@ -76,8 +76,9 @@ export class GlobalSettings implements OnModuleInit {
     }));
   }
 
-  // Saves a value given as text, once it passed the setting's type, allowed values and own check, with its history row and the revision's increment, in one transaction. No pod reads
-  // it, this one included, before the next minute's check, which is the time it answers.
+  // Saves a value given as text, once it passed the setting's type, allowed values and own check, with its history row
+  // and the revision's increment, in one transaction. No pod reads it, this one included, before the next minute's
+  // check, which is the time it answers.
   async save(name: string, text: string, administratorId: string): Promise<{ appliesAt: Date }> {
     const setting = this.registry.get(name);
     if (setting === undefined) {

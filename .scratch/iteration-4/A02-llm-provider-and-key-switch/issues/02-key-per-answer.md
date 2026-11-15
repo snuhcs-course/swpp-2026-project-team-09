@@ -42,7 +42,7 @@ What changes from A01: `MODEL_PROVIDER`, chosen at start-up, is replaced by `llm
 
 ### Agent usage (2026-11-15)
 
-- Agent time: about 2 hours in one session (Opus 5.5, worktree `/workspace/a02-02`), the review round included. An
-  estimate.
-- Tokens, estimated: input about 12M, of which about 11.4M cache reads and 0.5M cache writes; output about 110k. No
+- Agent time: about 2 hours 40 minutes in one session (Opus 5.5, worktree `/workspace/a02-02`), both review rounds and
+  the merge of `4.0/Main` included. An estimate.
+- Tokens, estimated: input about 17M, of which about 16.2M cache reads and 0.7M cache writes; output about 150k. No
   subagents.
