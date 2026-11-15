@@ -36,6 +36,8 @@ import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { type FriendLookupService } from '../lookup/friend.service.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
 import { type MenuLookupService } from '../lookup/menu.service.js';
+import { withStudyArea } from '../lookup/study-tools.js';
+import { type StudyAreaService } from '../lookup/study.service.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { type WayService } from '../lookup/way.service.js';
 import { DELIMITER } from '../others-text.js';
@@ -73,6 +75,7 @@ export interface ChatAssistantServices {
   menuLookups: MenuLookupService;
   friendLookups: FriendLookupService;
   interests: InterestsService;
+  studyAreas: StudyAreaService;
 }
 
 export interface ChatAssistantOptions {
@@ -81,6 +84,8 @@ export interface ChatAssistantOptions {
   drawsAnswers: boolean;
   // With drawsAnswers, it also draws the events of a day and recruiting Quests planned there.
   drawsEvents?: boolean;
+  // With drawsAnswers, it also sends the visible map area and draws its study spaces.
+  drawsArea?: boolean;
 }
 
 function instructionsOf(
@@ -202,7 +207,11 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
     freeTime,
     drawsAnswers,
   );
-  const planned = withInterests(onMap, services.interests, drawsAnswers);
+  const planned = withStudyArea(
+    withInterests(onMap, services.interests, drawsAnswers),
+    services.studyAreas,
+    drawsAnswers && options?.drawsArea === true,
+  );
   return {
     instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES, drawsAnswers),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),

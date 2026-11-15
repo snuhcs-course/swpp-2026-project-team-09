@@ -51,7 +51,14 @@ const isPlaceRole = isKeyOf<Role<'places'>>({
 
 const isRouteRole = isKeyOf<Role<'routes'>>({ me: true, friend: true, next: true, shuttle: true, alt: true });
 
-const isFlagRole = isKeyOf<Role<'flags'>>({ place: true, meeting: true, leave: true, late: true, shuttle: true });
+const isFlagRole = isKeyOf<Role<'flags'>>({
+  place: true,
+  meeting: true,
+  leave: true,
+  late: true,
+  shuttle: true,
+  away: true,
+});
 
 const isPersonSource = isKeyOf<MapScene['people'][number]['source']>({ exact: true, building: true, timetable: true });
 
@@ -139,7 +146,7 @@ function isMode(value: unknown): boolean {
 
 export function isChip(value: unknown): value is ConditionChip {
   return (
-    isOneOf(['origin', 'until', 'person'])(field(value, 'kind')) &&
+    isOneOf(['origin', 'until', 'person', 'area', 'what'])(field(value, 'kind')) &&
     isText(field(value, 'text')) &&
     isTextOrNull(field(value, 'userId'))
   );
@@ -226,8 +233,11 @@ function isRoute(value: unknown): value is MapScene['routes'][number] {
   );
 }
 
+// A main server before P05-11 sends no `placeId`.
 function isFlag(value: unknown): value is MapScene['flags'][number] {
-  return isLatLng(field(value, 'at')) && isText(field(value, 'text')) && isFlagRole(field(value, 'role'));
+  const placeId = field(value, 'placeId');
+  const pointed = placeId === undefined || isText(placeId);
+  return pointed && isLatLng(field(value, 'at')) && isText(field(value, 'text')) && isFlagRole(field(value, 'role'));
 }
 
 export function isScene(value: unknown): value is MapScene {

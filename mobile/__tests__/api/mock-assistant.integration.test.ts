@@ -12,6 +12,7 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
 import { FRIENDS } from '@/api/mock/data/friends';
+import { STUDY_LOOKUP_REPLY } from '@/api/mock/data/study-lookup';
 import { FRIEND_TAPS, TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
@@ -58,6 +59,12 @@ describe('the mock of an answer drawn on the map', () => {
 
   it("answers where 민수 is with a context by the main server's Lookup", async () => {
     await expect(answered(mockClient.askAssistant(FRIEND, CONTEXT))).resolves.toEqual(FRIEND_LOOKUP_REPLY);
+  });
+
+  it("answers a place to study near here with a context by the main server's Lookup of board a9", async () => {
+    const near: ChatMessage[] = [{ role: 'user', text: '이 근처 조용히 공부할 곳' }];
+
+    await expect(answered(mockClient.askAssistant(near, CONTEXT))).resolves.toEqual(STUDY_LOOKUP_REPLY);
   });
 
   it('answers where a Place is without a context as before, with no Lookup', async () => {

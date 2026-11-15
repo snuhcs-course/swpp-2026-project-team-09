@@ -52,7 +52,7 @@ export function isLookup(value: unknown): value is Lookup {
   const band = field(value, 'band');
   const card = field(value, 'card');
   return (
-    isOneOf(['way', 'friend', 'menu', 'place'])(field(value, 'kind')) &&
+    isOneOf(['way', 'friend', 'menu', 'place', 'study'])(field(value, 'kind')) &&
     listOf(isChip)(field(value, 'chips')) &&
     listOf(isLine)(field(value, 'lines')) &&
     listOf(isText)(field(value, 'basis')) &&

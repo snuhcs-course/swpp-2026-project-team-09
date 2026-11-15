@@ -16,10 +16,10 @@ import type {
 
 // The main server's `Lookup` (`assistant/dto/answer.dto.ts`), the same shape.
 
-// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, or a
-// pressed Place.
+// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, a
+// pressed Place, or the study spaces of the visible area.
 export interface Lookup {
-  kind: 'way' | 'friend' | 'menu' | 'place';
+  kind: 'way' | 'friend' | 'menu' | 'place' | 'study';
   // The conditions it used; a Lookup is not recalculated.
   chips: ConditionChip[];
   // At most two.

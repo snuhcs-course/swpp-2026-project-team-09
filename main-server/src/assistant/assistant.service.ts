@@ -57,6 +57,7 @@ import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
 import { FriendLookupService } from './lookup/friend.service.js';
 import { MenuLookupService } from './lookup/menu.service.js';
+import { StudyAreaService } from './lookup/study.service.js';
 import { WayService } from './lookup/way.service.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 
@@ -64,18 +65,22 @@ import { PlanAnswersService } from './plan-answers.service.js';
 // message cost more.
 export const HISTORY_MAX = 20;
 
+// The chats an app that draws answers is given, by what else it draws: events, and the visible area's study spaces.
+type ChatKind = 'plain' | 'answer' | 'events' | 'answer-area' | 'events-area';
+
 // A day's count outlives its day in Korea, whatever the server's clock, and is then dropped.
 const COUNT_LIFETIME_SECONDS = 2 * 24 * 60 * 60;
 
 @Injectable()
 export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
-  // The chat, the same for an app that draws answers on the map, and for one that also draws a day's events.
-  private readonly chats: Record<'plain' | 'answer' | 'events', Feature>;
+  // The chat of each kind of app.
+  private readonly chats: Record<ChatKind, Feature>;
   private readonly keyConfigured: boolean;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
 
+  // oxlint-disable-next-line max-lines-per-function -- one injected parameter per service the chat's tools call
   constructor(
     @Inject(MODEL_PORT) private readonly model: Model,
     @Inject(REDIS) private readonly redis: Redis,
@@ -101,6 +106,7 @@ export class AssistantService {
     menuLookups: MenuLookupService,
     friendLookups: FriendLookupService,
     interests: InterestsService,
+    studyAreas: StudyAreaService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -120,6 +126,7 @@ export class AssistantService {
       menuLookups,
       friendLookups,
       interests,
+      studyAreas,
     };
     this.chats = chatsOf(services);
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
@@ -170,7 +177,8 @@ export class AssistantService {
     if (!capabilities.includes('answer')) {
       return this.chats.plain;
     }
-    return capabilities.includes('events') ? this.chats.events : this.chats.answer;
+    const kind = capabilities.includes('events') ? 'events' : 'answer';
+    return this.chats[capabilities.includes('area') ? (`${kind}-area` as const) : kind];
   }
 
   // Counts the User's message in their day in Korea, and answers how many they have sent that day.
@@ -182,11 +190,13 @@ export class AssistantService {
   }
 }
 
-function chatsOf(services: ChatAssistantServices): Record<'plain' | 'answer' | 'events', Feature> {
+function chatsOf(services: ChatAssistantServices): Record<ChatKind, Feature> {
   return {
     plain: chatAssistant(services),
     answer: chatAssistant(services, { drawsAnswers: true }),
     events: chatAssistant(services, { drawsAnswers: true, drawsEvents: true }),
+    'answer-area': chatAssistant(services, { drawsAnswers: true, drawsArea: true }),
+    'events-area': chatAssistant(services, { drawsAnswers: true, drawsEvents: true, drawsArea: true }),
   };
 }
 

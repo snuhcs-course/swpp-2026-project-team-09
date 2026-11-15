@@ -20,6 +20,7 @@ import { MenusModule } from '../menus/menus.module.js';
 import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
 import { ShuttleModule } from '../shuttle/shuttle.module.js';
+import { StudySpacesModule } from '../study-spaces/study-spaces.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';
 import { TravelModule } from '../travel/travel.module.js';
 import { TutorialModule } from '../tutorial/tutorial.module.js';
@@ -35,6 +36,7 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
 import { FriendLookupService } from './lookup/friend.service.js';
 import { MenuLookupService } from './lookup/menu.service.js';
 import { PlaceCardService } from './lookup/place.service.js';
+import { StudyAreaService } from './lookup/study.service.js';
 import { WayService } from './lookup/way.service.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 import { NewQuestPlanService } from './recruiting/new-quest-plan.service.js';
@@ -54,6 +56,8 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     PlacesModule,
     QuestsModule,
     ShuttleModule,
+    // The 공부공간 layer, read for the study spaces of the visible area.
+    StudySpacesModule,
     TimetableModule,
     TravelModule,
     TutorialModule,
@@ -72,6 +76,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     MenuLookupService,
     FriendLookupService,
     PlaceCardService,
+    StudyAreaService,
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     // The P6 eval world binds a day of its own here.
