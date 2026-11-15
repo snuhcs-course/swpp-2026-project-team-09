@@ -769,7 +769,8 @@ such as `llm-key-anthropic` or `llm-key-team-2`. There may be none. Until the Se
 one JSON object of name to key, `LLM_KEYS`, in Secret `secrets`. The deploy role reads them through its
 `GetParametersByPath` call on `/snunow/production`, so Terraform does not change, and the running servers have no AWS
 access. A Release fails at its secrets step, before it changes anything, when a parameter's name breaks the pattern or
-its value holds whitespace, a quote or a backslash; it names the parameter and never prints the value.
+its value holds whitespace, a quote or a backslash; it names the parameter and never prints the value. Every server's
+Release job runs that step, so such a parameter blocks the Release of every server, not only the main server's.
 
 **Adding a key, or replacing one's value.** The key's owner puts it in. It must be a key that has never been pasted
 anywhere else, such as a chat. `read -rs` takes it without showing it or keeping it in the shell's history, and the

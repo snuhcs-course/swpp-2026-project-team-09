@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 
-Schedule row: Iteration 4, A2, "LLM provider and key switch from the admin site". Owner: 안진영. Reviewer: 윤유상. Spec drafted 2026-11-15 from a grilling session in which 안진영 (PM) settled the decisions, and narrowed the same day after 윤유상's review of PR #248: A02 is global settings that an Administrator changes on the admin site, with the AI's key as the first one. Key management left the spec.
+Schedule row: Iteration 4, A2, "LLM provider and key switch from the admin site". Owner: 안진영. Reviewer: 윤유상. Spec drafted 2026-11-15 from a grilling session in which 안진영 (PM) settled the decisions, and narrowed the same day after 윤유상's review of PR #248: A02 is global settings that an Administrator changes on the admin site, with the AI's provider as the first one. Choosing the AI's keys by name was added after that review.
 
 This spec supersedes Iteration 3's A01 ([its spec](../../iteration-3/A01-openrouter-to-claude-console/spec.md)) and its open pull requests #210 (the model port), #207 (deployment and docs) and #217 (the caching experiment). They are closed after this spec's pull request is up, and their code is carried into A02's tickets, which name the files to bring.
 
