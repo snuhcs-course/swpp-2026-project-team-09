@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -132,14 +133,12 @@ async function signOutOfMainServer(): Promise<void> {
 
 // The library session ends too, whether or not the User logged in to it, so that the next person on the phone never
 // sees this one's bookings. It starts once the tokens are gone and the sign-out does not wait on the library's site.
-// On the HE branch (P15) the phone also forgets the consent and the location explanation, so that the next evaluator
-// on the phone is shown both.
 export async function signOut(): Promise<void> {
   if (asksMainServer()) {
     await signOutOfMainServer();
   }
   endLibrarySessionInBackground();
-  await keep({ signedIn: false, suggestion: null, consented: false, locationExplained: false });
+  await keep({ signedIn: false, suggestion: null });
   if (googleAvailable()) {
     await forgetGoogleQuietly();
   }

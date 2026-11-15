@@ -15,6 +15,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -128,8 +129,8 @@ export const settingsSchema = z
       .transform((value) => value === 'true'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
-    // Whether the HE accounts sign in by their keys in place of Google's ID token (src/he/he-accounts.ts). On
-    // only on the Heuristic Evaluation's server (P15).
+    // Whether the UAT accounts sign in by their keys in place of Google's ID token (src/uat/uat-accounts.ts). On only
+    // on swpp-a, whose settings file already holds it under this name from the Heuristic Evaluation.
     HE_ACCOUNTS: z
       .enum(['on', 'off'])
       .default('off')

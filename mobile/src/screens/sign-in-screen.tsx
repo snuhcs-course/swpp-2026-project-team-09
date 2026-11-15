@@ -4,13 +4,14 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useEffect } from 'react';
 import { AccessibilityInfo, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, color, font, space, text } from '@/design-system';
-import { HeAccountSheet } from './he-account-sheet';
+import { UatAccountSheet } from './uat-account-sheet';
 import { Drawing, SignInButton } from './sign-in-button';
 import { type SignInPhase, useSignIn } from './use-sign-in';
 
@@ -102,7 +103,7 @@ export function SignInScreen(): ReactElement {
           />
         </View>
       </View>
-      <HeAccountSheet />
+      <UatAccountSheet />
     </ScrollView>
   );
 }

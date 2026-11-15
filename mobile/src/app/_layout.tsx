@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import '@/polyfills';
@@ -39,7 +40,7 @@ export default function RootLayout(): ReactElement | null {
   if (!ready) {
     return null;
   }
-  // The HE build leaves out the check for a newer native build: what was submitted is what is evaluated.
+  // The UAT build leaves out the check for a newer native build: the APK installed is what is tested.
   return (
     <AppProviders>
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />

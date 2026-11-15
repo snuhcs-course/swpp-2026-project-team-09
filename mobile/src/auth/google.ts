@@ -5,12 +5,13 @@
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import type { TurboModule } from 'react-native';
 import { Platform, TurboModuleRegistry } from 'react-native';
 import type { GoogleOneTapSignIn } from 'react-native-nitro-google-signin';
-import { askHeAccount } from '@/auth/he-accounts';
+import { askUatAccount } from '@/auth/uat-accounts';
 
 // The one file that touches Google's sign-in library, `react-native-nitro-google-signin`. The library is native code:
 // only a development build or a released app holds it, and loading it anywhere else throws. So nothing here loads it
@@ -69,10 +70,10 @@ function google(): typeof GoogleOneTapSignIn {
   return loaded.GoogleOneTapSignIn;
 }
 
-// On the HE branch (P15) no Google sheet opens: either way, the sign-in screen lists the HE accounts, and the one
-// picked gives its key in place of the ID token (src/auth/he-accounts.ts). Closing the list is a cancel.
+// On the UAT branch no Google sheet opens: either way, the sign-in screen lists the UAT accounts, and the one
+// picked gives its key in place of the ID token (src/auth/uat-accounts.ts). Closing the list is a cancel.
 export function askGoogle(_way: GoogleAccountPrompt = 'phone-accounts'): Promise<GoogleAnswer> {
-  return askHeAccount();
+  return askUatAccount();
 }
 
 // Signs out of Google on the phone, so that the next sign-in asks which account again.

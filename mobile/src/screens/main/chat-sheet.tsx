@@ -8,6 +8,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -90,16 +91,19 @@ function ChatHeader({ onReset, onClose }: ChatHeaderProps): ReactElement {
   );
 }
 
-// What the event cards of the answers do. Their 파티 찾기/모집 opens the 행사 tab's own sheet over the chat, which stays
-// open under it, and what that sheet opens next lies over the main screen as it does over the tab.
+// What the event cards of the answers do. Their 파티 찾기/모집 and AI 매칭 open the 행사 tab's own sheets over the chat,
+// which stays open under them, and what those sheets open next lies over the main screen as it does over the tab.
 function useEventCards(onOpenEvent: (globalEventId: string) => void): {
   actions: EventCardActions;
   sheets: ReactElement;
 } {
   const sheets = useEventSheets();
   const quests = useQuery(questsQuery).data ?? [];
-  const { setRecruitEvent } = sheets;
-  const actions = useMemo(() => ({ open: onOpenEvent, recruit: setRecruitEvent }), [onOpenEvent, setRecruitEvent]);
+  const { setRecruitEvent, setMatchEvent } = sheets;
+  const actions = useMemo(
+    () => ({ open: onOpenEvent, recruit: setRecruitEvent, match: setMatchEvent }),
+    [onOpenEvent, setMatchEvent, setRecruitEvent],
+  );
   return { actions, sheets: <EventSheets quests={quests} sheets={sheets} /> };
 }
 

@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import { Platform } from 'react-native';
@@ -12,7 +13,7 @@ import { pass, screen, startApp } from './support/app';
 import { startFakeServer } from './support/fake-server';
 import { startFresh } from './support/mocks';
 
-// The check for a newer native build at start, which the HE build leaves out: what was submitted is what is evaluated.
+// The check for a newer native build at start, which the UAT build leaves out: what was submitted is what is evaluated.
 // The app starts with its own root layout, and GitHub is replaced at the network.
 
 // The installed native build is 1.0.0, whatever `app.json` says today.
@@ -49,7 +50,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('Starting the HE build', () => {
+describe('Starting the UAT build', () => {
   it.each(['android', 'ios'] as const)(
     'on %s, requests no version file and shows no update dialog',
     async (platform) => {

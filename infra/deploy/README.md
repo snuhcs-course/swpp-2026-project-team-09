@@ -7,6 +7,16 @@ to it
 ([ADR 0003](../../docs/adr/0003-the-dev-server-pulls-its-deployments.md),
 [ADR 0004](../../docs/adr/0004-compose-not-kubernetes-on-the-course-servers.md)).
 
+**For the UAT of 2026-11-16** the same branch and server carry the Release `snunow/all/26.11.04-1` with the three UAT
+accounts in place of the HE accounts ("the HE server" below is that server). The Demo Data's two services start and do
+nothing. A scenario of the UAT sheet is prepared right before it is run, from a shell on the server:
+
+```bash
+sudo /srv/team/snu-now/infra/deploy/uat.sh risk1   # and risk2 to risk5; risk4-cancel cancels Risk 4's event
+```
+
+What it keeps, empties and writes is in the main server's README, under UAT data.
+
 ## The HE server
 
 Every team member reaches it as `ssh swpp-a` with their own key, from the university's network only, and has `sudo`

@@ -4,11 +4,12 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import { Platform, TurboModuleRegistry } from 'react-native';
 import { askGoogle, forgetGoogle, googleAvailable } from '@/auth/google';
-import { closeHeAccounts, pickHeAccount } from '@/auth/he-accounts';
+import { closeUatAccounts, pickUatAccount } from '@/auth/uat-accounts';
 
 interface Response {
   type: 'success' | 'noSavedCredentialFound' | 'cancelled';
@@ -81,18 +82,18 @@ describe('whether a build can ask Google', () => {
   });
 });
 
-// On the HE branch (P15) the HE accounts' list takes the place of Google's sheet and chooser.
+// On the UAT branch the UAT accounts' list takes the place of Google's sheet and chooser.
 describe('asking Google', () => {
   beforeEach(aBuildWithGoogle);
 
-  it("gives the key of the HE account picked, and opens neither Google's sheet nor its chooser", async () => {
+  it("gives the key of the UAT account picked, and opens neither Google's sheet nor its chooser", async () => {
     const asked = askGoogle();
-    pickHeAccount('he-r1a');
-    expect(await asked).toEqual({ kind: 'token', idToken: 'he-r1a' });
+    pickUatAccount('uat-a');
+    expect(await asked).toEqual({ kind: 'token', idToken: 'uat-a' });
 
     const chooser = askGoogle('chooser');
-    pickHeAccount('he-s3');
-    expect(await chooser).toEqual({ kind: 'token', idToken: 'he-s3' });
+    pickUatAccount('uat-c');
+    expect(await chooser).toEqual({ kind: 'token', idToken: 'uat-c' });
 
     expect(mockCheckPlayServices).not.toHaveBeenCalled();
     expect(mockCreateAccount).not.toHaveBeenCalled();
@@ -101,7 +102,7 @@ describe('asking Google', () => {
 
   it('says "cancelled" when the list closes without a pick', async () => {
     const asked = askGoogle();
-    closeHeAccounts();
+    closeUatAccounts();
 
     expect(await asked).toEqual({ kind: 'cancelled' });
   });

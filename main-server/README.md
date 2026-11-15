@@ -112,10 +112,11 @@ The app signs in with Google and sends the ID token it gets to the main server:
   soon as its session ends. The main server then tells the socket server, which disconnects the session's connections,
   and clears the User's position (see [Location Sharing](#location-sharing)).
 
-With `HE_ACCOUNTS=on`, which only the Heuristic Evaluation's server sets (P15), the seven HE accounts of
-`src/he/he-accounts.ts` sign in without Google: an `idToken` equal to an account's key, such as `he-r1a`, is taken as
-an SNU account with the key as its Google subject, a verified address on `he.invalid` and the Google name
-`<name> / 학생 / <department>`. Every other ID token goes to Google as above. The admin site's sign-in is unchanged.
+With `HE_ACCOUNTS=on`, which only swpp-a sets (its settings file holds the name from the Heuristic Evaluation), the
+three UAT accounts of `src/uat/uat-accounts.ts` sign in without Google: an `idToken` equal to an account's key, such
+as `uat-a`, is taken as an SNU account with the key as its Google subject, a verified address on `uat.invalid` and the
+Google name `<name> / 학생 / <department>`. Every other ID token goes to Google as above. The admin site's sign-in is
+unchanged.
 
 `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
 stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
@@ -2648,14 +2649,27 @@ the operator's vehicles are shown, since each set replaces the one before.
 everything else in it: the collected Global Events, what Administrators did with them and the Administrators
 themselves. To bring only the demo's times up to date, restart `demo-seed` as above instead.
 
-## HE data
+## UAT data
 
-`he-seed` writes the HE accounts of [Sign-in](#sign-in) as Users before Onboarding, with their Friend IDs, Friends,
-weekly Timetables and the eight recruiting Quests of `src/he/he-quests.ts`, at fixed times of the week of 2026-11-04.
-It runs once the seed files and the demo data are in, and stops naming what is missing: `node dist/he-seed` in the main
-server's container, or `pnpm he:seed`. Every row has an id of its own, and a run writes only what is missing, so a
-second run changes nothing. A key that signed in before the first run made a User the seed did not write, so the seed
-also stops, writing nothing, naming each such key until its User is removed.
+`uat-seed` prepares one scenario of the User Acceptance Test on swpp-a, right before the scenario is run:
+`node dist/uat-seed risk1` in the main server's container, and likewise `risk2` to `risk5`
+(`infra/deploy/uat.sh risk1` on the server), or `pnpm uat:seed risk1`. Whatever the database holds, a run leaves it as
+the UAT sheet's Setup of that scenario asks, so the scenarios run in any order and a second run gives the same.
+
+- **Kept:** the three accounts of [Sign-in](#sign-in) as Users past Onboarding, with their Sessions, so that the
+  phones stay signed in; the Places, the menus and the events of later days.
+- **Emptied:** every Quest and Party, the friendships and Friend Requests, the Invite Links, the Timetables, the
+  tutorial's progress and the room requests; every other User; each account's position and today's count of Assistant
+  messages. Every published event that touches today or tomorrow is cancelled.
+- **Written:** the scenario's Friends, 친구와 위치 공유, recruiting Quests and events of `src/uat/uat.seed.ts`, at times
+  counted from the run. What the tester and the team make in the steps is left to them.
+- **Risk 3** runs at dinner, since the session starts after lunch has ended: C has a Class through all of dinner, and
+  the coming Sunday's menus are removed, so that the day has none in the app and for the Assistant.
+- **`risk4-cancel`** cancels Risk 4's "[UAT] Event", where the sheet has an Administrator cancel it on the admin site,
+  which cannot sign in over plain HTTP.
+
+The command prints, in Korean, what the host reads before the scenario. The apps are told to fetch their lists again;
+starting each app again is the sure way.
 
 ## Checks
 
@@ -2690,10 +2704,10 @@ src/
 ├── load-seed.ts                     loads every seed file; the command and the tests call it
 ├── demo-seed.ts                     the command that writes the demo data, `pnpm demo:seed`
 ├── demo-walk.ts                     the command that walks the demo Users, `pnpm demo:walk`
-├── he-seed.ts                       the command that writes the HE data (P15), `pnpm he:seed`
+├── uat-seed.ts                      the command that prepares a UAT scenario, `pnpm uat:seed`
 ├── build-walking-table.ts           the command that writes the walking table, `pnpm walking:build`
 ├── demo/                            the demo profile's data, its seed and the walker's paths (not a module)
-├── he/                              the HE accounts, recruiting Quests and their seed (P15; not a module)
+├── uat/                             the UAT accounts and each scenario's data (not a module)
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
