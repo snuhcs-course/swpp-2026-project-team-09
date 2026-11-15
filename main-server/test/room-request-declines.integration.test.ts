@@ -2,19 +2,22 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
+import { withSubject } from '../src/assistant/gathering/answer-words.js';
 import { endFriendship, type TestUser } from './friends.js';
-import { endQuest, removeHolder } from './quest-recruiting.js';
+import { cancelInvitation, endQuest, removeHolder } from './quest-recruiting.js';
 import { dropQuest } from './quests.js';
 import { DECLINED, lunchQuest, RoomStage } from './room-requests.js';
 
-// What counts as a decline while a room request gathers or is ready: each dissolves it, tells everyone it asked, and
-// deletes a booking party made for it, but never an existing Quest.
+// What takes one companion out of a room request, which stays for the others with the booker told, and what still
+// ends it: the booker gone, the Quest deleted or nobody left. An ended request deletes a booking party made for it,
+// but never an existing Quest.
 
-// Each test signs in four to nine Users and befriends them over HTTP before it starts, which takes up to 4 s on a
-// loaded runner: close to Vitest's 5 s. Only these files wait longer.
+// Each test signs in four Users and befriends them over HTTP before it starts, which takes up to 4 s on a loaded
+// runner: close to Vitest's 5 s. Only these files wait longer.
 vi.setConfig({ testTimeout: 15_000 });
 
 const stage = new RoomStage();
@@ -51,7 +54,36 @@ async function existingQuest(): Promise<Party> {
   return { people, id, questId };
 }
 
-async function expectDissolved({ people, id }: Party, questStays: Party | null = null): Promise<void> {
+// Only this companion is out: the request gathers with the others, the booker is told, and nobody gets a notice.
+async function expectOnlyOut({ people, id }: Party, out: TestUser): Promise<void> {
+  const [booker, ...companions] = people;
+  const { status, companions: states, moreNeeded } = await stage.status(booker, id);
+
+  expect({ status, moreNeeded }).toEqual({ status: 'gathering', moreNeeded: 1 });
+  expect(states.filter(({ state }) => state === 'declined').map(({ userId }) => userId)).toEqual([out.id]);
+  expect(states.map(({ userId }) => userId).toSorted()).toEqual(companions.map(({ id: userId }) => userId).toSorted());
+  expect(await stage.notificationsOf(booker, 'room-declined')).toEqual([
+    expect.objectContaining({
+      title: `${withSubject(states.find(({ userId }) => userId === out.id)?.name ?? '')} 못 온대요`,
+      line: '관정 4층 6인실 · 1명 더 필요해요',
+    }),
+  ]);
+  for (const user of people) {
+    // oxlint-disable-next-line no-await-in-loop -- one User at a time
+    expect(await stage.notices(user)).toEqual([]);
+  }
+}
+
+async function expectOutOfParty({ questId }: Party, out: TestUser): Promise<void> {
+  const quest = await stage.prisma.quest.findUniqueOrThrow({
+    where: { id: questId },
+    include: { holders: true, invitations: true },
+  });
+
+  expect([...quest.holders, ...quest.invitations].map(({ userId }) => userId)).not.toContain(out.id);
+}
+
+async function expectDissolved({ people, id }: Party): Promise<void> {
   const [booker] = people;
 
   expect(await stage.status(booker, id)).toMatchObject({ status: 'dissolved', reason: DECLINED });
@@ -60,54 +92,35 @@ async function expectDissolved({ people, id }: Party, questStays: Party | null =
     // oxlint-disable-next-line no-await-in-loop -- one User at a time
     expect(await stage.notices(user)).toEqual([DECLINED]);
   }
-  if (questStays !== null) {
-    expect(await stage.prisma.quest.count({ where: { id: questStays.questId } })).toBe(1);
-  }
 }
 
-describe('Counted as a decline', () => {
+describe('Taking one companion out of a booking party’s request', () => {
+  it('a withdrawn consent', async () => {
+    const party = await bookingParty();
+    const [, minsu] = party.people;
+    await stage.decline(minsu, party.id).expect(204);
+
+    await expectOnlyOut(party, minsu);
+    await expectOutOfParty(party, minsu);
+  });
+
   it('a consented companion leaving the booking party', async () => {
     const party = await bookingParty();
     const [, minsu] = party.people;
     await dropQuest(stage.app, minsu, party.questId).expect(204);
 
-    await expectDissolved(party);
-
-    expect(await stage.prisma.quest.count({ where: { id: party.questId } })).toBe(0);
+    await expectOnlyOut(party, minsu);
   });
 
-  it('a companion who has not consented leaving an existing Quest', async () => {
-    const party = await existingQuest();
-    const [, , , haneul] = party.people;
-    await dropQuest(stage.app, haneul, party.questId).expect(204);
+  it('the Leader cancelling an invitation not yet answered', async () => {
+    const party = await bookingParty(2);
+    const [booker, , , haneul] = party.people;
+    const invitation = await stage.prisma.questInvitation.findFirstOrThrow({
+      where: { questId: party.questId, userId: haneul.id },
+    });
+    await cancelInvitation(stage.app, booker, party.questId, invitation.id).expect(204);
 
-    await expectDissolved(party, party);
-  });
-
-  it('a companion removed by DELETE quests/:questId/holders/:userId', async () => {
-    const party = await bookingParty();
-    const [booker, , jieun] = party.people;
-    await removeHolder(stage.app, booker, party.questId, jieun.id).expect(204);
-
-    await expectDissolved(party);
-  });
-
-  it('the booker leaving the existing Quest of a questId request', async () => {
-    const party = await existingQuest();
-    const [booker] = party.people;
-    await dropQuest(stage.app, booker, party.questId).expect(204);
-
-    await expectDissolved(party, party);
-  });
-});
-
-describe('Counted as a decline as well', () => {
-  it('the party being deleted', async () => {
-    const party = await existingQuest();
-    const [booker] = party.people;
-    await endQuest(stage.app, booker, party.questId).expect(204);
-
-    await expectDissolved(party);
+    await expectOnlyOut(party, haneul);
   });
 
   it('a companion unfriending the booker', async () => {
@@ -115,21 +128,65 @@ describe('Counted as a decline as well', () => {
     const [booker, , jieun] = party.people;
     await endFriendship(stage.app, jieun, booker.id).expect(204);
 
-    await expectDissolved(party);
+    await expectOnlyOut(party, jieun);
+    await expectOutOfParty(party, jieun);
   });
+});
 
-  it('the booker unfriending a companion', async () => {
+describe('Taking one companion out of an existing Quest’s request', () => {
+  it('the booker unfriending a companion, who stays in the Quest', async () => {
     const party = await existingQuest();
     const [booker, minsu] = party.people;
     await endFriendship(stage.app, booker, minsu.id).expect(204);
 
-    await expectDissolved(party, party);
+    await expectOnlyOut(party, minsu);
+    expect(await stage.holderIds(party.questId)).toContain(minsu.id);
   });
 
-  it('a withdrawn consent', async () => {
+  it('a companion removed from the Quest', async () => {
+    const party = await existingQuest();
+    const [booker, , jieun] = party.people;
+    await removeHolder(stage.app, booker, party.questId, jieun.id).expect(204);
+
+    await expectOnlyOut(party, jieun);
+  });
+});
+
+describe('What still ends a request', () => {
+  it('the booker leaving the booking party, which is deleted', async () => {
     const party = await bookingParty();
-    const [, minsu] = party.people;
-    await stage.decline(minsu, party.id).expect(204);
+    const [booker] = party.people;
+    await dropQuest(stage.app, booker, party.questId).expect(204);
+
+    await expectDissolved(party);
+    expect(await stage.prisma.quest.count({ where: { id: party.questId } })).toBe(0);
+  });
+
+  it('the last companion going out, and the booking party is deleted', async () => {
+    const party = await bookingParty(0);
+    const [, ...friends] = party.people;
+    for (const friend of friends) {
+      // oxlint-disable-next-line no-await-in-loop -- one answer at a time
+      await stage.decline(friend, party.id).expect(204);
+    }
+
+    await expectDissolved(party);
+    expect(await stage.prisma.quest.count({ where: { id: party.questId } })).toBe(0);
+  });
+
+  it('the booker leaving an existing Quest, which stays', async () => {
+    const party = await existingQuest();
+    const [booker] = party.people;
+    await dropQuest(stage.app, booker, party.questId).expect(204);
+
+    await expectDissolved(party);
+    expect(await stage.prisma.quest.count({ where: { id: party.questId } })).toBe(1);
+  });
+
+  it('the Quest being deleted', async () => {
+    const party = await existingQuest();
+    const [booker] = party.people;
+    await endQuest(stage.app, booker, party.questId).expect(204);
 
     await expectDissolved(party);
   });

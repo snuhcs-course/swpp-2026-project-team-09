@@ -28,6 +28,7 @@ import { FriendViewService } from '../friends/friend-view.service.js';
 import { MenusService } from '../menus/menus.service.js';
 import { RestaurantPlaces } from '../menus/restaurant-places.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
+import { InterestsService } from '../interests/interests.service.js';
 import { PlaceLookup } from '../places/place-lookup.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
@@ -99,6 +100,7 @@ export class AssistantService {
     ways: WayService,
     menuLookups: MenuLookupService,
     friendLookups: FriendLookupService,
+    interests: InterestsService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -117,6 +119,7 @@ export class AssistantService {
       ways,
       menuLookups,
       friendLookups,
+      interests,
     };
     this.chats = chatsOf(services);
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
@@ -155,8 +158,8 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, answer, lookup } = reply;
-      return { text, mapButtons, cards, proposal, answer, lookup };
+      const { text, mapButtons, cards, proposal, answer, lookup, refusal } = reply;
+      return { text, mapButtons, cards, proposal, answer, lookup, refusal };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
