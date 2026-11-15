@@ -60,6 +60,9 @@ const PEOPLE: readonly Person[] = [
 
 interface State {
   friends: Friend[];
+  // Each Friend's own end, which the User never changes: what the two see at the start, and the building for a new
+  // Friend.
+  ends: Map<string, FriendLevel>;
   requests: Request[];
   links: Map<string, Link>;
   made: number;
@@ -68,6 +71,7 @@ interface State {
 function firstState(): State {
   return {
     friends: [...FRIENDS],
+    ends: new Map(FRIENDS.map(({ id, seen }) => [id, seen])),
     requests: [...FRIEND_REQUESTS],
     links: new Map([
       [INVITE_LINK_FROM_YUJIAN, { senderId: 'u5', expiresAt: Date.parse(FRAME_NOW) + LINK_LIFETIME_MS, used: false }],
@@ -117,20 +121,27 @@ function befriend(id: string): void {
     name,
     department,
     level: 'building',
+    seen: 'building',
     sharing: true,
     visible: hasPosition(id),
     askedOff: false,
     askedPlan: false,
   };
+  state.ends.set(id, 'building');
   state.friends = [...state.friends, friend].toSorted((one, other) => one.name.localeCompare(other.name, 'ko'));
 }
 
 const FROM_LEAST: readonly FriendLevel[] = ['timetable', 'building', 'exact'];
 
-// The mock keeps the User's end only, and takes the Friend's to be as high.
+function lower(one: FriendLevel, other: FriendLevel): FriendLevel {
+  return FROM_LEAST.indexOf(one) < FROM_LEAST.indexOf(other) ? one : other;
+}
+
+// Whether the User sees the Friend is left to the User's end, as before the Friend's end was kept.
 function atLevel(friend: Friend, level: FriendLevel): Friend {
   const sharing = level !== 'timetable';
-  return { ...friend, level, sharing, visible: sharing && hasPosition(friend.id) };
+  const seen = lower(level, state.ends.get(friend.id) ?? level);
+  return { ...friend, level, seen, sharing, visible: sharing && hasPosition(friend.id) };
 }
 
 function friendOrRefuse(userId: string): Friend {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useSyncExternalStore } from 'react';
@@ -9,6 +10,8 @@ import { keep, readKept } from '@/storage/kept';
 
 // The switch of the answer on the map, which the phone keeps: null until the phone has said.
 let known: boolean | null = null;
+// The phone could not be read: the switch counts as off until a later read says otherwise.
+let unreadable = false;
 // Which start of the app a read of the phone belongs to: a read from before `forgetAnswerSwitch` is dropped.
 let appStarts = 0;
 let reading = false;
@@ -32,6 +35,10 @@ function isOn(): boolean {
   return known === true;
 }
 
+function keptOrNull(): boolean | null {
+  return known ?? (unreadable ? false : null);
+}
+
 function readOnce(): void {
   if (known !== null || reading) {
     return;
@@ -49,6 +56,8 @@ function readOnce(): void {
       // A phone that cannot be read counts as off, and a later reader reads it again.
       if (asked === appStarts) {
         reading = false;
+        unreadable = true;
+        tell();
       }
     },
   );
@@ -58,6 +67,13 @@ function readOnce(): void {
 export function useAnswerSwitch(): boolean {
   useEffect(readOnce, []);
   return useSyncExternalStore(subscribe, isOn);
+}
+
+// The same, null until the phone has said, for a reader that must not take the switch for off before then. A phone
+// that cannot be read counts as off.
+export function useKeptAnswerSwitch(): boolean | null {
+  useEffect(readOnce, []);
+  return useSyncExternalStore(subscribe, keptOrNull);
 }
 
 // Calls `watcher` on each change of the switch; the first read of what the phone keeps is not one.
@@ -83,6 +99,7 @@ export async function setAnswerSwitch(on: boolean): Promise<void> {
 // For the tests: a new start of the app.
 export function forgetAnswerSwitch(): void {
   known = null;
+  unreadable = false;
   reading = false;
   appStarts += 1;
 }

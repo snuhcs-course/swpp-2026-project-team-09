@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -31,8 +32,20 @@ export const MIN_ZOOM = 14;
 export const MAX_ZOOM = 19;
 
 // The lowest level of Kakao's SDK, which takes whole levels only: pinching out stops there instead of snapping back
-// from below the lowest zoom. A hair closer than the lowest zoom of 14.97.
+// from below the lowest zoom.
 export const NATIVE_MIN_LEVEL = 15;
+
+// How far above its number a level of Kakao's SDK reaches, at most as measured. The native module measures the zoom
+// of the level Kakao opens at once at each start and keeps it to itself: on the emulator (density 2.625) level 15
+// measured from 15.19 to 15.515 over several starts. A camera at `nativeLevelZoom` of a level or closer is at that
+// level or above on any of them: Kakao has shown the level there, and the module, which asks for the level of a zoom
+// less its own measure, rounded, asks for no lower.
+const KAKAO_LEVEL_ZOOM = 0.515;
+
+// The zoom from which a camera is at Kakao's `level` or above.
+export function nativeLevelZoom(level: number): number {
+  return level + KAKAO_LEVEL_ZOOM;
+}
 
 // The camera every campus map has: it moves over the camera's area, no further out than the zoom at which the view
 // fits inside the on-campus rectangle, and on a native map a pinch out stops at Kakao's level 15.

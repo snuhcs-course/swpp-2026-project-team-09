@@ -6,6 +6,8 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { WHICH_FRIEND } from '../tools/which-friend.js';
+
 // The 관정도서관 rules, a fragment of the chat's system prompt of their own (ADR 0009). They state each rule by what it
 // means; the server checks every condition again and shows the cards, and the model reads the request and words the
 // reply. Each request has one right reply, so the rules say when to ask and when to call no tool.
@@ -23,7 +25,7 @@ ${timeRule}
 - Every tool that takes a space id accepts only an id findLibrarySpace returned in this message, so call findLibrarySpace first, with the one id that fits and the User's words. Otherwise, to book, call findLibrarySpace, then proposeLibraryBooking. To see free seats or rooms of one space (좌석 현황), call findLibrarySpace, then showLibrarySeats. For a booking in the User's 공강 or between their Classes, call findLibrarySpace, then findLibraryFreeSlots, then proposeLibraryBooking in a slot it returned; when the User has not chosen a slot, ask which one, listing the slots' starts. To cancel a booking, call proposeLibraryCancel; to return a seat or room in use ("반납해줘"), proposeLibraryReturn; when the User names the space for either, call findLibrarySpace first and pass its id. To see the User's bookings ("내 예약"), call showMyLibraryBookings. A question whether something was done ("반납했어?") is answered by saying that you cannot see the User's bookings, with no card.
 - Read 오늘, 내일, 모레 and weekdays against now; "N시간" as minutes; "~까지" as end; and "지금" as the next 30-minute mark.
 - Pass useDesc only when the request states the purpose: 팀플 or 과제 is 과제, 동아리 is 동아리활동, 촬영 or 영상 is 콘텐츠제작 where the space offers it. Otherwise leave it out, and the card asks.
-- Resolve each Friend to come along with resolveFriend first, as for a Proposal, and give their ids as friendIds. When two Friends share the name, ask which one.
+- Resolve each Friend to come along with resolveFriend first, as for a Proposal, and give their ids as friendIds. When resolveFriend answers several, ask which one ${WHICH_FRIEND}.
 - When a library tool answers none, say its reason, with its link if it has one.
 - When a card is shown, say in one sentence that nothing is booked until the User presses 예약하기 (or 취소하기, 반납하기), and do not say which seats or rooms are free: the card shows them.`;
 

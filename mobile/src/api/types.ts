@@ -111,6 +111,9 @@ export interface Friend {
   department: string;
   // The User's own end of this friendship.
   level: FriendLevel;
+  // What the two see of each other by the friendship: the lower of the two ends, the Timetable while either Master
+  // Switch is off. The only word on the Friend's own end.
+  seen: FriendLevel;
   // Whether the User's end is above the Timetable.
   sharing: boolean;
   // Whether the User can see the Friend on the map now, never why not.

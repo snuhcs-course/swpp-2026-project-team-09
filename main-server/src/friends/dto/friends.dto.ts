@@ -50,12 +50,14 @@ export function endOf(row: Friendship, userId: string): FriendEnd {
 }
 
 // id is the Friend's User id, which ending the friendship names. level is the User's own end of the friendship, and
-// sharing whether it is above the Timetable, for an app of before. visible is whether the User sees the Friend's
-// position or Place now, never why not. askedOff and askedPlan say whether the app has asked the User about the Friend
-// before turning location off for them, and after a Plan with them became a Quest.
+// sharing whether it is above the Timetable, for an app of before. seen is what the two see of each other by the
+// friendship, the same from both sides, and the only word on the Friend's own end. visible is whether the User sees the
+// Friend's position or Place now, never why not. askedOff and askedPlan say whether the app has asked the User about
+// the Friend before turning location off for them, and after a Plan with them became a Quest.
 export interface FriendDto extends UserSummaryDto {
   id: string;
   level: FriendLevel;
+  seen: FriendLevel;
   sharing: boolean;
   visible: boolean;
   askedOff: boolean;
@@ -65,12 +67,13 @@ export interface FriendDto extends UserSummaryDto {
 export function toFriendDto(
   user: Pick<User, 'id' | 'name' | 'department'>,
   { level, offAskedAt, planAskedAt }: FriendEnd,
-  visible: boolean,
+  { seen, visible }: { seen: FriendLevel; visible: boolean },
 ): FriendDto {
   return {
     id: user.id,
     ...toUserSummaryDto(user),
     level,
+    seen,
     sharing: level !== FriendLevel.timetable,
     visible,
     askedOff: offAskedAt !== null,

@@ -62,6 +62,8 @@ export interface Room {
   tutorialStart: boolean;
   // The first run's line that asks for interests is shown, above the row or the start button.
   interestsHint: boolean;
+  // The line of a Quest made from a Plan is shown, above all of them. Left out, it is not.
+  madeLine?: boolean;
 }
 
 // The two columns never share a point. The Quest column keeps the frame's 182, which a title of 146 beside its round
@@ -78,17 +80,13 @@ export function friendsWidth({ stage }: Room): number {
 // - While a card is open, both end above the credit, which sits on the card.
 // - Otherwise the friend list ends above the credit, which sits on "오늘의 발자국", and the Quest list above the
 //   zoom control.
-function underLists(
-  cardHeight: number | null,
-  tutorialStart: boolean,
-  interestsHint: boolean,
-): { friends: number; quests: number } {
+function underLists({ cardHeight, tutorialStart, interestsHint, madeLine }: Room): { friends: number; quests: number } {
   if (cardHeight !== null) {
     const card = CARD.bottom + cardHeight + CREDIT_ROOM + LISTS.clear;
     return { friends: card, quests: card };
   }
   return {
-    friends: leftControlsTop(tutorialStart, interestsHint) + CREDIT_ROOM + LISTS.clear,
+    friends: leftControlsTop(tutorialStart, interestsHint, madeLine) + CREDIT_ROOM + LISTS.clear,
     quests: ZOOM_CONTROL.bottom + ZOOM_CONTROL.height + LISTS.clear,
   };
 }
@@ -105,12 +103,9 @@ function rowsOver(under: number, stage: Room['stage'], inset: number): number {
 }
 
 // The rows each list's window shows, under a status bar `inset` high.
-export function listRows(
-  { stage, cardHeight, tutorialStart, interestsHint }: Room,
-  inset: number,
-): { friends: number; quests: number } {
-  const under = underLists(cardHeight, tutorialStart, interestsHint);
-  return { friends: rowsOver(under.friends, stage, inset), quests: rowsOver(under.quests, stage, inset) };
+export function listRows(room: Room, inset: number): { friends: number; quests: number } {
+  const under = underLists(room);
+  return { friends: rowsOver(under.friends, room.stage, inset), quests: rowsOver(under.quests, room.stage, inset) };
 }
 
 // A window's height: its rows and the room between them. 172 for three.
@@ -138,9 +133,20 @@ export function interestsHintBottom(tutorialStart: boolean): number {
   return tutorialStart ? TUTORIAL_START.bottom + TUTORIAL_START.height + space[2] : TUTORIAL_START.bottom;
 }
 
+// The line of a Quest made from a Plan: 34 high, 16 from the left, 8 above the row of buttons, the start button, or
+// the line that asks for interests, whichever stands highest.
+export const MADE_LINE = { left: space[4], height: 34 } as const;
+
+export function madeLineBottom(tutorialStart: boolean, interestsHint: boolean): number {
+  return leftControlsTop(tutorialStart, interestsHint) + space[2];
+}
+
 // The top of what stands at the left above the AI input while no card is open: the row of buttons, the start button
-// above it, or the line that asks for interests above them.
-function leftControlsTop(tutorialStart: boolean, interestsHint = false): number {
+// above it, the line that asks for interests above them, or the line of a made Quest above all.
+function leftControlsTop(tutorialStart: boolean, interestsHint = false, madeLine = false): number {
+  if (madeLine) {
+    return madeLineBottom(tutorialStart, interestsHint) + MADE_LINE.height;
+  }
   if (interestsHint) {
     return interestsHintBottom(tutorialStart) + INTERESTS_HINT.height;
   }
@@ -181,14 +187,15 @@ export const LAYER_STACK = {
 const CREDIT_LEFT = space[2];
 const ZOOM_CONTROL_RIGHT = 62;
 
-// The 새내기 튜토리얼's start button and the line that asks for interests raise the credit above them. The answer
-// frame's card, `answerHeight` high from the stage's bottom, which is the screen's while the navigation gives way to
-// it, covers the bottom as a card does.
+// The 새내기 튜토리얼's start button, the line that asks for interests, and the line of a made Quest raise the credit
+// above them. The answer frame's card, `answerHeight` high from the stage's bottom, which is the screen's while the
+// navigation gives way to it, covers the bottom as a card does.
 export function mapInset(
   cardHeight: number | null,
   tutorialStart = false,
   answerHeight: number | null = null,
   interestsHint = false,
+  madeLine = false,
 ): { bottom: number; left: number; right: number } {
   if (answerHeight !== null) {
     return { bottom: answerHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
@@ -196,7 +203,8 @@ export function mapInset(
   if (cardHeight !== null) {
     return { bottom: CARD.bottom + cardHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
   }
-  return { bottom: leftControlsTop(tutorialStart, interestsHint), left: CREDIT_LEFT, right: ZOOM_CONTROL_RIGHT };
+  const bottom = leftControlsTop(tutorialStart, interestsHint, madeLine);
+  return { bottom, left: CREDIT_LEFT, right: ZOOM_CONTROL_RIGHT };
 }
 
 // What the screen's controls take at each edge of the map, with clear room of 16: the two lists end 272 from the
