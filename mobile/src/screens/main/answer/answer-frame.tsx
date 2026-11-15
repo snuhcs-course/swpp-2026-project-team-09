@@ -27,7 +27,7 @@ import { CloseButton } from './close-button';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { InvitedCard } from './invited-card';
 import { PlanCard } from './plan-card';
-import { RefusalReply } from './refusal-reply';
+import { type RefusalAsk, RefusalReply } from './refusal-reply';
 
 // Above the first of the card's parts.
 const CONTENT_TOP = space[5];
@@ -55,7 +55,7 @@ interface WordsProps {
   // How high the Plan's card may stand before the card scrolls, null until it is known.
   room: number | null;
   onClose: () => void;
-  onAsk: (words: string) => void;
+  onAsk: RefusalAsk;
 }
 
 // A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
