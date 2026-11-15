@@ -28,6 +28,8 @@ interface MapPersonProps {
   // A "+" at the drop's upper right, outside the Avatar, as an answer's face carries "?" and "✓": a press adds the
   // person.
   addable?: boolean;
+  // A green dot at the face's lower right, outside the Avatar, on the drop's rim: a Friend seen at the exact level.
+  exact?: boolean;
   // Called once the photo is shown or has failed, for a caller that waits for the finished look.
   onPhotoSettled?: () => void;
   testID?: string;
@@ -39,9 +41,12 @@ const SMALL_SIDE = 24;
 const SMALL_FACE = 0.68;
 const SELECTED = 1.18;
 const BADGE = 14;
-// While the "+" is carried the box grows this much at both sides and at the top, so that the badge in its upper right
-// corner lies outside the Avatar, on the drop's rim, and whole inside the box the picture is made from. The drop and
-// its tip keep their place in the box, so the face stands where it stood.
+const DOT = 11;
+// How far the green dot reaches inside the drop's rim: it sits on the rim, and at no size reaches the Avatar.
+const DOT_ON_RIM = 1.5;
+// While the "+" or the green dot is carried the box grows this much at both sides and at the top, so that the badge in
+// its upper right corner and the dot at the lower right lie outside the Avatar, on the drop's rim, and whole inside the
+// box the picture is made from. The drop and its tip keep their place in the box, so the face stands where it stood.
 const BADGE_ROOM = 6;
 // A square turned by 45° reaches (√2 − 1) / 2 of its side below its own box: the marker's tip.
 const TIP = (Math.SQRT2 - 1) / 2;
@@ -68,12 +73,15 @@ export function MapPerson({
   selected = false,
   stale = false,
   addable = false,
+  exact = false,
   onPhotoSettled,
   testID,
 }: MapPersonProps): ReactElement {
   const grown = selected ? SELECTED : 1;
   const side = (small ? SMALL_SIDE : SIDE) * grown;
-  const room = addable ? BADGE_ROOM : 0;
+  const room = addable || exact ? BADGE_ROOM : 0;
+  // The dot's box, its centre at 45° below the drop's centre, as far out as puts its inner edge `DOT_ON_RIM` inside.
+  const dotAt = room + side / 2 + (side / 2 + DOT / 2 - DOT_ON_RIM) / Math.SQRT2 - DOT / 2;
   return (
     <View style={[{ width: side + room * 2, height: side * (1 + TIP) + room }, stale && styles.stale]} testID={testID}>
       <View
@@ -93,6 +101,12 @@ export function MapPerson({
         <View style={styles.badge} testID={testID === undefined ? undefined : `${testID}:badge`}>
           <Text style={styles.plus}>+</Text>
         </View>
+      ) : null}
+      {exact ? (
+        <View
+          style={[styles.exact, { left: dotAt, top: dotAt }]}
+          testID={testID === undefined ? undefined : `${testID}:exact`}
+        />
       ) : null}
     </View>
   );
@@ -126,4 +140,13 @@ const styles = StyleSheet.create({
     backgroundColor: color.snuBlue,
   },
   plus: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
+  exact: {
+    position: 'absolute',
+    width: DOT,
+    height: DOT,
+    borderRadius: radius.full,
+    borderWidth: 2,
+    borderColor: color.surface,
+    backgroundColor: color.live,
+  },
 });

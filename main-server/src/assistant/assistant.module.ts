@@ -20,6 +20,7 @@ import { MenusModule } from '../menus/menus.module.js';
 import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
 import { ShuttleModule } from '../shuttle/shuttle.module.js';
+import { StudySpacesModule } from '../study-spaces/study-spaces.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';
 import { TravelModule } from '../travel/travel.module.js';
 import { TutorialModule } from '../tutorial/tutorial.module.js';
@@ -30,10 +31,12 @@ import { AssistantService } from './assistant.service.js';
 import { EventsPlanService } from './events/events-plan.service.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { MealPlanService } from './gathering/meal-plan.service.js';
+import { MeetPlanService } from './gathering/meet-plan.service.js';
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
 import { FriendLookupService } from './lookup/friend.service.js';
 import { MenuLookupService } from './lookup/menu.service.js';
+import { PlaceCardService } from './lookup/place.service.js';
 import { WayService } from './lookup/way.service.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 import { NewQuestPlanService } from './recruiting/new-quest-plan.service.js';
@@ -53,6 +56,8 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     PlacesModule,
     QuestsModule,
     ShuttleModule,
+    // The libraries among the places a meet may be at.
+    StudySpacesModule,
     TimetableModule,
     TravelModule,
     TutorialModule,
@@ -63,6 +68,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     AssistantService,
     UserDayService,
     MealPlanService,
+    MeetPlanService,
     WayService,
     EventsPlanService,
     QuestsPlanService,
@@ -70,6 +76,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     PlanAnswersService,
     MenuLookupService,
     FriendLookupService,
+    PlaceCardService,
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     // The P6 eval world binds a day of its own here.

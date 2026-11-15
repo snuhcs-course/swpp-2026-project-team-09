@@ -7,12 +7,13 @@
 import { type Position } from '../../common/geometry.js';
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
-import { type AnswerLine, type Lookup, type MapScene } from '../dto/answer.dto.js';
+import { type AnswerLine, type CardFact, type Lookup, type MapScene } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
-import { itemBefore, withCopula, withTopic } from '../gathering/answer-words.js';
+import { itemBefore, withCopula, withSubject, withTopic } from '../gathering/answer-words.js';
 import { minutesBetween, RECENT_CLASS_MINUTES } from '../gathering/gathering.js';
 import { PlaceNaming } from '../gathering/place-naming.js';
 import { othersText } from '../others-text.js';
+import { cardOf, fact } from './card.js';
 import { part } from './way-naming.js';
 
 // Where a Friend is, drawn with what the asker's map shows of them and nothing more: their position at the exact level,
@@ -52,17 +53,23 @@ const HIDDEN = '지금 위치는 보여 주지 않아요';
 const currentOf = (classes: readonly DayItem[], now: Date): DayItem | null =>
   classes.find(({ start, end }) => start <= now && now < end) ?? null;
 
-// "수업 중 · 12:15까지", "공강 · 14:00까지", "첫 수업 13:00", "오늘 수업 끝", or "오늘 수업 없음".
-function timetableLabel(classes: readonly DayItem[], now: Date): string {
+const nextOf = (classes: readonly DayItem[], now: Date): DayItem | undefined =>
+  classes.filter(({ start }) => start > now).toSorted(byStart)[0];
+
+// "수업 중 · 12:15까지", "공강 · 14:00까지", "첫 수업 13:00", "오늘 수업 끝", or "오늘 수업 없음"; a line that already
+// holds a dot joins the state and its time with a space.
+function timetableLabel(classes: readonly DayItem[], now: Date, joint = ' · '): string {
   const current = currentOf(classes, now);
   if (current !== null) {
-    return `수업 중 · ${clockOf(current.end)}까지`;
+    return `수업 중${joint}${clockOf(current.end)}까지`;
   }
-  const next = classes.filter(({ start }) => start > now).toSorted(byStart)[0];
+  const next = nextOf(classes, now);
   if (next === undefined) {
     return classes.length === 0 ? '오늘 수업 없음' : '오늘 수업 끝';
   }
-  return classes.some(({ end }) => end <= now) ? `공강 · ${clockOf(next.start)}까지` : `첫 수업 ${clockOf(next.start)}`;
+  return classes.some(({ end }) => end <= now)
+    ? `공강${joint}${clockOf(next.start)}까지`
+    : `첫 수업 ${clockOf(next.start)}`;
 }
 
 // The Class with a Place the Timetable puts them in now, or the one that ended at most 15 minutes ago.
@@ -176,9 +183,18 @@ function byTimetable({ friend, classes, now }: FriendArgs, naming: PlaceNaming):
   };
 }
 
-// A view at the exact level without a position, or at the building without a Place, shows the Timetable only.
+// The level the map draws a Friend at: a view at the exact level without a position, or at the building without a
+// Place, shows the Timetable only.
+export function shownLevel({ level, position, placeId }: FriendView): FriendView['level'] {
+  if (level === 'exact') {
+    return position === null ? 'timetable' : 'exact';
+  }
+  return level === 'building' && placeId !== null ? 'building' : 'timetable';
+}
+
 function drawnOf(args: FriendArgs, naming: PlaceNaming): Drawn {
-  const { level, position, placeId } = args.friend;
+  const { position, placeId } = args.friend;
+  const level = shownLevel(args.friend);
   if (level === 'exact' && position !== null) {
     return exactly(args, { latitude: position.latitude, longitude: position.longitude }, naming);
   }
@@ -202,5 +218,94 @@ export function friendAnswer(args: FriendArgs): FriendAnswer {
       actions: [{ kind: 'meet', userId: friend.id }],
     },
     words: { name: othersText('friend.name', friend.name), ...words },
+  };
+}
+
+// The line of a pressed Place's card for a Friend the asker's map shows in it; at the Timetable only, it says so.
+function hereText({ friend, classes, now }: FriendArgs, placeId: string): string | null {
+  if (shownLevel(friend) !== 'timetable') {
+    return friend.placeId === placeId
+      ? `${withSubject(friend.name)} 여기 있어요 · ${timetableLabel(classes, now, ' ')}`
+      : null;
+  }
+  const located = classAt(classes, now);
+  if (located === null || located.placeId !== placeId) {
+    return null;
+  }
+  const end = clockOf(located.item.end);
+  return located.ended
+    ? `${withTopic(friend.name)} ${end}에 여기서 수업이 끝났어요`
+    : `시간표로는 ${withSubject(friend.name)} ${end}까지 여기서 수업이에요`;
+}
+
+// A Friend the asker's map shows in the Place: their line, which opens their card, and how the map draws them.
+export function friendHere(
+  args: FriendArgs,
+  placeId: string,
+): { fact: CardFact; person: MapScene['people'][number] } | null {
+  const text = hereText(args, placeId);
+  const [person] = drawnOf(args, new PlaceNaming(args.placeOf)).scene.people;
+  return text === null || person === undefined ? null : { fact: fact('user', text, args.friend.id), person };
+}
+
+export interface FriendTapArgs extends FriendArgs {
+  // Where the asker sets out from, as a chip calls it; null when it is not known.
+  start: { placeId: string; label: string } | null;
+  walkMinutes: (fromPlaceId: string, toPlaceId: string) => number;
+}
+
+const LEVEL_WORDS: Record<FriendWords['shows'], string> = {
+  'exact location': '정확한 위치까지 보여요',
+  'the building they are in': '지금 있는 건물까지 보여요',
+  'Timetable only': '시간표만 보여요',
+};
+
+// The Timetable label, the Place the map shows them at, and the walk there from the asker, counted unless either end
+// is unknown or both are the same Place.
+function shownFacts(args: FriendTapArgs, place: string | null): { facts: CardFact[]; from: string | null } {
+  const { friend, classes, now, nearPlaceId, start, walkMinutes } = args;
+  const placeId = friend.placeId ?? nearPlaceId;
+  const walking = start !== null && placeId !== null && start.placeId !== placeId;
+  const facts = [
+    fact('clock', timetableLabel(classes, now)),
+    ...(place === null ? [] : [fact('pin', place)]),
+    ...(walking ? [fact('route', `나에게서 걸어서 ${walkMinutes(start.placeId, placeId)}분`)] : []),
+  ];
+  return { facts, from: walking ? start.label : null };
+}
+
+function classWords({ classes, now }: FriendArgs, naming: PlaceNaming): string {
+  const located = classAt(classes, now);
+  if (located === null) {
+    return timetableLabel(classes, now);
+  }
+  const place = naming.placeLabel(located.placeId);
+  const end = clockOf(located.item.end);
+  return located.ended
+    ? `${end}에 ${place} 수업이 끝났어요 · ${timetableLabel(classes, now, ' ')}`
+    : `시간표로는 ${end}까지 ${place} 수업이에요`;
+}
+
+// The Class as the Timetable gives it, the next one, and that the position is not shown.
+function timetableFacts(args: FriendArgs): CardFact[] {
+  const naming = new PlaceNaming(args.placeOf);
+  const next = nextOf(args.classes, args.now);
+  const nextPlace = next === undefined || next.placeId === null ? '' : ` · ${naming.placeLabel(next.placeId)}`;
+  return [
+    fact('clock', classWords(args, naming)),
+    ...(next === undefined ? [] : [fact('calendar', `다음 수업 ${clockOf(next.start)}${nextPlace}`)]),
+    fact('lock', HIDDEN),
+  ];
+}
+
+// A pressed Friend's face: the Friend Lookup with the card of what the asker's map shows of them.
+export function friendTap(args: FriendTapArgs): Lookup {
+  const { lookup, words } = friendAnswer(args);
+  const { facts, from } =
+    words.shows === 'Timetable only' ? { facts: timetableFacts(args), from: null } : shownFacts(args, words.place);
+  return {
+    ...lookup,
+    chips: from === null ? [] : [{ kind: 'origin', text: `${from}에서`, userId: null }],
+    card: cardOf(args.friend.name, LEVEL_WORDS[words.shows], facts, null),
   };
 }

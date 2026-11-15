@@ -9,7 +9,7 @@
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
-import { type MealInput } from '../dto/answer.dto.js';
+import { type MealInput, type MeetInput } from '../dto/answer.dto.js';
 import { type DayItem } from '../free-time/free-time.js';
 import {
   type Gathering,
@@ -32,19 +32,23 @@ export interface AnswerPerson {
   position: Position | null;
 }
 
-export interface MealAnswerArgs {
-  input: MealInput;
+// What the words of a gathering's answer read, a meal's or a meet's.
+export interface GatheringArgs<Input extends MealInput | MeetInput = MealInput | MeetInput> {
+  input: Input;
   now: Date;
   // In the order of input.people, the asker first.
   people: readonly [AnswerPerson, ...AnswerPerson[]];
   gathering: Gathering;
+  placeOf: (placeId: string) => PlaceDto;
+}
+
+export interface MealAnswerArgs extends GatheringArgs<MealInput> {
   // The asker's longest meal alone under the same conditions, when Friends are in the plan; null otherwise or when
   // none fits.
   aloneMinutes: number | null;
   // No menu collected for the day, menus but no Restaurant with a Place open for the meal, open ones but none at the
   // Place the User fixed, or open ones.
   menus: 'none' | 'closed' | 'closed-at-place' | 'open';
-  placeOf: (placeId: string) => PlaceDto;
 }
 
 const SHORTEST_MEAL_MINUTES = SHORTEST_MEAL_SECONDS / 60;
@@ -110,9 +114,9 @@ export function wayOn(part: PersonPart | undefined): { placeId: string; minutes:
 
 export { placeLabelOf } from './place-naming.js';
 
-// Who is who and how Places are called; a Restaurant by its key.
-export class Naming extends PlaceNaming {
-  constructor(readonly args: MealAnswerArgs) {
+// Who is who and how Places are called; a candidate by its key.
+export class GatheringNaming<Args extends GatheringArgs = GatheringArgs> extends PlaceNaming {
+  constructor(readonly args: Args) {
     super(args.placeOf);
   }
 
@@ -128,10 +132,6 @@ export class Naming extends PlaceNaming {
     return person;
   }
 
-  mealWord(): string {
-    return this.args.input.meal === 'lunch' ? '점심' : '저녁';
-  }
-
   dropReason({ togetherMinutes, shortest }: GatheringDrop): string {
     if (shortest.minutes >= SHORTEST_MEAL_MINUTES) {
       return `같이 있는 시간이 ${togetherMinutes}분뿐이에요`;
@@ -141,3 +141,7 @@ export class Naming extends PlaceNaming {
     return person.me ? stay : `${withTopic(person.name)} ${stay}`;
   }
 }
+
+export type Naming = GatheringNaming<MealAnswerArgs>;
+
+export const mealWord = ({ args }: Naming): string => (args.input.meal === 'lunch' ? '점심' : '저녁');

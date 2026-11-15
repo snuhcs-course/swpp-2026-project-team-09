@@ -2288,7 +2288,10 @@ its model through OpenRouter with the Vercel AI SDK
   `lookup`, `null` when there is none: an answer drawn on the map that has no Plan (`kind` `way`), with its condition
   chips, at most two lines, basis, map scene, time band or `null`, and the card's actions (`guide`, `remind`, `meet`).
   A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer. The full shape of each is
-  in `src/assistant/dto/answer.dto.ts`.
+  in `src/assistant/dto/answer.dto.ts`. An app that also sends `meet` is offered `planMeet` ("민수랑 만나고 싶어"),
+  whose answer is a meet's (`kind` `meet`, below); one that does not keeps the prompt and the tools it had. A busy
+  stretch of a Plan's time band carries a `label`: `302동 수업` for a Class with a Place, `수업` without one, and `일정`
+  for a Sub Quest.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -2350,10 +2353,40 @@ Proposal)`.
     when none is. A person's constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
+  - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
+    earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
+    place where they
+    are together longest, from the latest arrival to the earliest leave-by, at least 15 minutes; at most five Plans. The
+    places are 학생회관, the buildings of `GET /study-spaces`, the Restaurants open that day, and the buildings each
+    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip.
+    `people` holds the asker and at least one Friend.
   - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
     person is not the User, a person who is not the User's Friend, the same User twice, a day before today or more than
     a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown
     Place in a `from` or in `placeId`.
+
+- `POST /assistant/taps` with a User's access token, what the User pressed on the everyday map, a building
+  (`{ "kind": "place", "placeId" }`) or a Friend's face (`{ "kind": "friend", "userId" }`), and where the User is now
+  (`location`, as above):
+
+  ```json
+  { "tapped": { "kind": "place", "placeId": "…" }, "location": { "latitude": 37.45016, "longitude": 126.95259 } }
+  ```
+
+  answers `200` with a Lookup that carries a `card` (`title`, `subtitle`, `facts`, and `note`), worked out by
+  `src/assistant/lookup/place-lookup.ts` or `friend-lookup.ts`. The model is not called, and the User's daily messages
+  are not counted.
+
+  - **A building** (kind `place`): the walk there and when the User arrives, or `지금 여기 있어요` only when the outline
+    of the Place holds their location; how long they can stay before their next item today; each Restaurant there with
+    a menu for the meal now; the published events there today; and the Friends the User's map shows in it. Its actions
+    are `plan` buttons (`여기서 먹기`, `행사 보기`, `같이 갈 파티`), whose `input` goes to `POST /assistant/answers`, and the
+    way there unless the User is in it.
+  - **A Friend** (kind `friend`): the Friend Lookup with a card of their full name, what the User sees of them, and
+    their Timetable label, Place, and walk from the User, or at the Timetable only their Class and the next one. It is
+    read only through the Friend view, as `findFriend` is.
+  - **Refused with 400:** a body of another shape, and a `placeId` that is no Place. **Refused with 404
+    `FRIEND_NOT_FOUND`:** a `userId` who is not the User's Friend.
 
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
   `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
@@ -2521,7 +2554,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     for, and `shown` adds `arrival` (`at`, the Place's name as `from`, `walkMinutes`) and `leaveBy` (when to leave
     for the next Class or Sub Quest with a Place that starts before the booking ends, or null, also when that time is
     not later than the arrival). A room, a named start or another day is checked as before, and any other app is asked
-    for the time.
+    for the time. For the same app, words that fit several bookable seat spaces are not asked back: `findLibrarySpace`
+    answers `found` with only the first of them, in the catalogue's order with `7F-7A-zone2` first, its card's notes
+    say "맞는 곳이 N곳이라 첫 곳으로 채웠어요", and the phone's room chip lets the User choose another; several rooms
+    are still asked about. The card's space carries the
+    catalogue's `kind`, by which the phone groups the seat spaces of a floor.
   - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers only: the
     answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
     with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one

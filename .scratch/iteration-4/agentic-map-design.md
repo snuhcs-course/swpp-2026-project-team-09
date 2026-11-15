@@ -64,7 +64,7 @@ The app takes over the decisions of a day on campus, from classes until going ho
 
 **Bottom card.** One card attached to the bottom of the screen holds the rest: the condition chips the answer used, two lines of answer, the time band, what can be tapped, and the input field. Invitations, booking cards, and a party's "단계" (steps) are drawn inside this card too.
 
-**Condition chips.** Each chip names a condition the answer used: where from, until when, and with whom ("301동에서", from building 301; "13:00 수업까지", until the 13:00 class). Tapping a chip changes that condition on the map, and the answer is recalculated without the model. People are added by tapping "＋ 같이" (+ together) and choosing from the Friends listed in the card, or by tapping a face on the map. The ✕ on a person chip removes that person, and a press anywhere else on the chip opens that Friend's profile card. Tapping the chip that states the time opens nothing separate and goes to the time band's handle.
+**Condition chips.** Each chip names a condition the answer used: where from, until when, and with whom ("301동에서", from building 301; "13:00 수업까지", until the 13:00 class). Tapping a chip changes that condition on the map, and the answer is recalculated without the model. People are added by tapping "＋ 같이" (+ together) and choosing from the Friends listed in the card, or by tapping a face on the map. The ✕ on a person chip removes that person, and a press anywhere else on the chip opens that Friend's profile card. Tapping the chip that states the time opens nothing separate and goes to the time band's handle. Where the place holds several rooms, the room in use is a chip too ("7층 열람실 ▾"): tapping it lists the kinds of room on each floor inside the card, and one tap switches.
 
 **People.** A person's name is written in full wherever the app writes a name: chips, cells, tags, lines, cards, lists, and notifications ("김민수 · 수락", Kim Minsu · accepted). Only a face on the map and a person's row on the time band show two letters of the name. No rule shortens a name, and no name changes with who else is among my Friends. A cell in which a person is chosen, in the "＋ 같이" list or in a question the Assistant asks, always shows the department under the name in small muted text. In the "＋ 같이" list the right of the cell says how far that person is from the picked place, in metres, when their position is known ("140m", "1.1km"), or why they cannot join ("12:50 수업 끝", class ends at 12:50). A small round "i" at the end of the cell opens that person's profile card (section 5) without choosing them; a press anywhere else in the cell chooses.
 
@@ -72,7 +72,7 @@ The app takes over the decisions of a day on campus, from classes until going ho
 
 **The time band.** A plan's time band has handles. The time is changed by dragging a handle or in words ("12:30까지만", only until 12:30). The band can be dragged only inside a plan, never on the everyday map. What a drag recalculates is in section 5, The time band.
 
-**Buttons and input.** The buttons default to "‹ main button ›": the arrows move to other candidates, and a number shows which candidate is on screen ("1/4"). The input field is always visible at the bottom of the card. Tapping it brings up the keyboard in the card's place, and the answer on the map stays visible.
+**Buttons and input.** The buttons default to "‹ main button ›": the arrows move to other candidates, and a number shows which candidate is on screen ("1/4"). The input field is always visible at the bottom of the card. Tapping it brings up the keyboard in the card's place, and the answer on the map stays visible. Arrows appear only when candidates differ on the map or on the time band. After I change something by a tap, "되돌리기" (undo) sits before the main button and returns to the answer as it first showed.
 
 **What stays on the map.** Every Friend's face stays on the map while an answer is shown. A Friend who can be added to the plan carries a +. A Friend's face shows where the position comes from: a green dot for an exact location measured now, a plain border for the building the Friend is in now, and a dashed border for a position taken from the Timetable. The dashed border appears for a Friend seen through the Timetable only (during class and for 15 minutes after it ends), and for a Friend whose position at a future plan time is taken from the Timetable. Once the invitations are sent and the plan becomes a party, the person chips show who has accepted and who has not yet ("박지은 · 수락", Park Jieun · accepted; "김민수 · 아직 안 봄", Kim Minsu · not seen yet).
 
@@ -89,7 +89,7 @@ The app takes over the decisions of a day on campus, from classes until going ho
 - The center is an agentic map, not a social map. The design concentrates on using what the Assistant does well together with location.
 - A core feature must use the map.
 - My current location is the Assistant's default context.
-- The Assistant picks one answer. The other candidates are browsed with arrows on the map, not read as a list of text.
+- The Assistant picks one answer. The other candidates are browsed with arrows on the map, not read as a list of text. Rooms inside one place, which change neither the map nor the time, are a condition chosen from the card, as People in the same building are.
 - Answers use little text and are tapped on the map.
 - When my words fit several Friends ("민수랑 같이", with Minsu, when two Friends are called 민수), the Assistant asks which one and plans nothing until I choose. The answer is two short lines, "민수가 두 명이에요" (there are two Minsus) and "누구와 먹을까요?" (who will you eat with?), with one cell per candidate (김민수 with 컴퓨터공학부 under the name, and 이민수 with 경영학과, Business Administration). It never picks one for me.
 - Every answer rests on the "지도 위 단어장" (vocabulary on the map) on the team canvas. The Assistant picks and combines seven tools to answer: reach, route, what is here, people, time fit, meeting, and order. Each tool has one way of drawing on the map. The four scenes and the other questions (menus, the shuttle, places, and search) are answered with the same tools and the same ways of drawing. The design takes the vocabulary's basic idea and adapts it to this design.
@@ -171,7 +171,7 @@ The map changes only when the answer needs a place, a route, or people. A questi
 ### A study seat
 
 - Class group projects are left out. Going together in "공부할 자리" is studying with Friends.
-- Alone, the Assistant spends its effort on what comes before and after a booking, not on choosing a place. Without asking for a time, it fills a Kwanjeong Library seat's booking card for the longest time from my arrival. It reminds me of the kiosk check-in when I arrive, of the leave-by time when it comes, and of returning the seat when I leave the building. The arrows browse other floors and areas inside Kwanjeong Library. Seats are mostly free, so "where" is worth little, and the check-in and the return carry penalties.
+- Alone, the Assistant spends its effort on what comes before and after a booking, not on choosing a place. Without asking for a time, it fills a Kwanjeong Library seat's booking card for the longest time from my arrival. It reminds me of the kiosk check-in when I arrive, of the leave-by time when it comes, and of returning the seat when I leave the building. The room is a condition chip. Its list has one cell per kind of room on each floor (열람실, 노트북존, 정숙 열람실, and 대학원 열람실 for a graduate student). A cell shows the free seats, for the filled time, of the seat space it would fill: the one of that kind on that floor with the most free seats. Only the phone can read free seats. A particular seat space is reached by naming it. Seats are mostly free, so "where" is worth little, and the check-in and the return carry penalties.
 - The wireframes draw the reading-room check-in deadline as 30 minutes after booking. The library's rules confirm it during the build.
 - Together, it is a study group of four or more. The work is fixing a date, and the place is a group study room. The Kwanjeong reading rooms are for studying alone.
 - The only space handled for now is Kwanjeong Library. The design leaves room to add other spaces, but Kwanjeong Library is the only place that is booked, so the main storyline is Kwanjeong Library.
@@ -183,8 +183,9 @@ The map changes only when the answer needs a place, a route, or people. A questi
 ### Watching interests
 
 - The User can ask the Assistant to watch for one kind of thing: events and recruiting that match the User's interests. This belongs to the event and party scenes. Results are not filtered by the Timetable; an overlap with the Timetable is only marked.
-- The everyday map shows only the events and recruiting that match the interests being watched. Other events are not put on the map, and are found by asking the Assistant ("오늘 볼 만한 거 있어?", Anything worth seeing today?).
-- A newly posted event or recruiting party that matches a watched interest gets a "!" mark at its place on the map. Tapping the mark gives the same answer as asking. The events or recruiting parties at one place share one mark ("채용박람회 외 1", the job fair and 1 more), and the answer browses only those with the arrows. The "!" disappears once the mark has been opened, and a mark without it gives the same answer.
+- The everyday map shows only the events and recruiting that match the interests being watched, and the events the User starred. Other events are not put on the map, and are found by asking the Assistant ("오늘 볼 만한 거 있어?", Anything worth seeing today?).
+- An event the User starred (☆) stays on the map with a star until it ends, whether or not it matches an interest. The star is the User's own choice, so it carries no "!" and sends no notification.
+- A newly posted event or recruiting party that matches a watched interest gets a "!" mark at its place on the map. Tapping the mark gives the same answer as asking. The events or recruiting parties at one place share one mark ("채용박람회 외 1", the job fair and 1 more), and the answer browses only those with the arrows. The "!" disappears once the mark has been opened, and a mark without it gives the same answer. A shared mark takes one look, in the order "!", star, plain.
 - Matching an interest means catching the same meaning in different words ("채용박람회", "커리어 페어", and "기업 설명회", all a job fair or company session), and this is the Assistant's job. In the implementation, topic tags are added in the same model call that reads collected event posts for their time and place, and a User's interests are the profile's hashtags together with the interests told to the Assistant. A match on a profile hashtag only shows on the map; notifications go only for interests told to the Assistant.
 
 ### A late member
@@ -224,7 +225,7 @@ The map changes only when the answer needs a place, a route, or people. A questi
 ### First run
 
 - A User opening the app for the first time is asked, in this order, for their Timetable, their interests, and one Friend to invite.
-- A User who has asked the Assistant to watch no interest at all sees two or three of today's events, faded, on the map.
+- A User who has asked the Assistant to watch no interest at all sees two or three of today's events, faded, on the map, beside the events they starred.
 
 ### Screen words
 
@@ -333,13 +334,13 @@ Studying alone and studying together are different jobs. A Kwanjeong Library (�
 
 | Step | What I do | What the Assistant does | What the map shows |
 |---|---|---|---|
-| Alone 1 | I say "공부할 자리" | It does not ask the time. It fills the booking card for a 7th-floor reading-room seat at Kwanjeong to match my arrival (13:54): from 14:00 for the maximum 6 hours (until 20:00). It also works out when I must leave for my next class (15:56) | The route from building 24 to Kwanjeong, and "관정 7층 열람실 · 13:54 도착" (Kwanjeong 7th-floor reading room, arrive 13:54) and "16:00 수업이라 15:56엔 나서요" (class at 16:00, so leave at 15:56) |
-| Alone 2 | I swipe with the arrows | It shows the next candidate, the 8th-floor laptop zone (노트북존) at Kwanjeong (2 of 2). Arrival and leave-by times stay the same, since it is the same building | The seat changes |
+| Alone 1 | I say "공부할 자리" | It does not ask the time. It fills the booking card for a 7th-floor reading-room seat at Kwanjeong to match my arrival (13:54): from 14:00 for the maximum 6 hours (until 20:00). It also works out when I must leave for my next class (15:56) | The route from building 24 to Kwanjeong, "관정도서관 · 13:54 도착" (Kwanjeong Library, arrive 13:54) and "16:00 수업이라 15:56엔 나서요" (class at 16:00, so leave at 15:56), and the room chip "7층 열람실" |
+| Alone 2 | I tap the room chip and choose 노트북존 under 7층 | It fills the same time in the 7th-floor laptop zone with the most free seats (7A 노트북존). Arrival and leave-by times stay, and "되돌리기" returns to 7층 열람실 | The seat card names the seat space |
 | Alone 3 | I book from the booking card | It guides me there and says to confirm at the seat kiosk by 14:20, 30 minutes after I booked at 13:50. If the walk to Kwanjeong takes 15 minutes or more, half of the 30-minute confirmation limit, it does not book now and offers the filled booking card when I get close | The seat and my route |
 | Alone 4 | I arrive at Kwanjeong | It reminds me to confirm at the kiosk | |
 | Alone 5 | | It shows the leave-by time, 15:56, on the plan line of the everyday map. When I leave the building (15:57), it asks whether to return the seat or come back. If I tap "돌아올 거예요" (I'll come back), it asks once more when my class ends at 16:50. The booking runs until 20:00, so leaving without returning it and not coming back counts toward the penalty | The way to my next class |
 
-Kwanjeong to Doosan Humanities Hall is 4 minutes, under the 5 minutes that a leave-by notification needs, so 15:56 shows only on the plan line of the everyday map. The push notification comes when I leave the building (15:57), and once more at 16:50, when my class ends, if I said I would come back. If the 7th-floor reading room is full, the card is filled with a floor that has free seats (the 6th floor in the wireframes), and the arrival and leave-by times stay the same.
+Kwanjeong to Doosan Humanities Hall is 4 minutes, under the 5 minutes that a leave-by notification needs, so 15:56 shows only on the plan line of the everyday map. The push notification comes when I leave the building (15:57), and once more at 16:50, when my class ends, if I said I would come back. If the filled room has no free seat for the filled time, the phone fills the room of the same kind with the most free seats (8층 정숙 열람실 in the wireframes), else the room with the most free seats, and the room chip shows the change. This needs the User's library session.
 
 #### Together
 
@@ -406,7 +407,7 @@ The leave-by times are 15:30 minus 18 minutes (15:12), 14:10 minus 4 minutes (14
 
 **Rules**
 
-- Starting from the mark of a watched interest on the map gives the same first answer as Alone 1, and the arrows browse only the events of that mark (the job fair and the company session). The concert, which has no mark, is found only by asking.
+- Starting from the mark of a watched interest on the map gives the same first answer as Alone 1, and the arrows browse only the events of that mark (the job fair and the company session). The concert, which has no mark, is found only by asking, until the User stars it.
 - A User holds one party per event, as now.
 - The order is: what matches a watched interest first, then what allows a longer stay. Events that clash with a class come last.
 - When no event can be attended, it says so and suggests handing over an interest to watch.
@@ -566,7 +567,7 @@ The final wireframes are the 13 rows below the divider on the team's wireframe c
 |---|---|---|---|---|
 | 0 | Frame | AmFrame | 17 | The everyday map, asking, the answer on the map with one bottom card, the basis, condition chips, adding Friends, dragging the time band, after inviting, and the legend |
 | 1 | Lunch | AmHungry | 25 | "배고파" alone with two cards and the arrows, together with Minsu and Jieun, the invitation, a decline, party on, a member who is late, the question when two Friends share a name, and a Friend's profile card |
-| 2 | A seat to study, alone | AmStudy | 14 | The seat filled for 6 hours without asking, the kiosk confirmation, leaving and returning, a far start, and a full floor |
+| 2 | A seat to study, alone | AmStudy | 14 | The seat filled for 6 hours without asking, choosing the room, a room named in words, the kiosk confirmation, leaving and returning, a far start, and a full room |
 | 3 | A seat to study, together | AmStudy | 13 | Four people in a six-person group study room, other dates, invitations and Student Number consent, a decline, a full room, the room's end, and booking outside the window |
 | 4 | Events | AmEvent | 23 | The interest mark and the answer it opens, one event I can attend between classes, the parties going with a Friend first, joining, and a new recruiting party with Jieun |
 | 5 | Parties | AmParty | 13 | A recruiting party I can reach first, one I cannot reach faded, a new recruiting party with Seojun, the time and place I said, and no party recruiting |

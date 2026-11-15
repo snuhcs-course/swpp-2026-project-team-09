@@ -25,7 +25,7 @@ export class WayNaming extends PlaceNaming {
     super(args.placeOf);
   }
 
-  from({ start }: Way): string {
+  from({ start }: Pick<Way, 'start'>): string {
     return start.basis === 'gate' ? GATE : this.placeLabel(start.placeId);
   }
 
@@ -78,4 +78,5 @@ type Deadline = NonNullable<Way['deadline']>;
 export const gated = ({ start }: Way): boolean => start.basis === 'gate';
 
 // "13:00 수업" for a Class, else the clock time.
-export const dueWords = ({ at, isClass }: Deadline): string => (isClass ? `${clockOf(at)} 수업` : clockOf(at));
+export const dueWords = ({ at, isClass }: Pick<Deadline, 'at' | 'isClass'>): string =>
+  isClass ? `${clockOf(at)} 수업` : clockOf(at);

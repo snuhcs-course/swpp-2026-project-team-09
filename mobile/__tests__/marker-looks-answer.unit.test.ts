@@ -23,9 +23,9 @@ function withLabel(side: 'above' | 'below' | 'left' | 'right'): MarkerLook {
   return { kind: 'answer', symbol: null, label: { side, tone: 'candidate', title: '3식당', line: null, number: 4 } };
 }
 
-// Partitions: the same picture built twice; a change of each thing drawn (the symbol's type, name, ring, badge, role,
-// and number; the label's side, tone, title, line, and number; no symbol; no label). Expected values: the brief's
-// rule that the name holds the words.
+// Partitions: the same picture built twice; a change of each thing drawn (the symbol's type, name, ring, badge, green
+// dot, role, and number; the label's side, tone, title, line, and number; no symbol; no label). Expected values: the
+// brief's rule that the name holds the words.
 describe("an answer's look on the map", () => {
   it('has one name for two looks that draw the same picture', () => {
     const again: MarkerLook = {
@@ -45,6 +45,8 @@ describe("an answer's look on the map", () => {
       { ...FACE, symbol: { type: 'face', name: '민수', dashed: false } },
       { ...FACE, symbol: { type: 'face', name: '민수', dashed: true, badge: 'waiting' } },
       { ...FACE, symbol: { type: 'face', name: '민수', dashed: true, badge: 'accepted' } },
+      { ...FACE, symbol: { type: 'face', name: '민수', dashed: false, exact: true } },
+      { ...FACE, symbol: { type: 'face', name: '민수', dashed: false, exact: true, badge: 'accepted' } },
       { ...FACE, symbol: { type: 'me' } },
       { ...FACE, symbol: null },
       { ...FACE, label: null },
@@ -68,6 +70,17 @@ describe("an answer's look on the map", () => {
 
   it('never stands on a tip', () => {
     expect(standsOnTip(PICK)).toBe(false);
+  });
+});
+
+// Partitions: a face whose `exact` is false and one without it. Expected value: P02 ticket 20, two looks that draw
+// one picture share a name.
+describe("an answer's face without the green dot", () => {
+  it('has one name whether `exact` is false or left out', () => {
+    const plain: MarkerLook = { ...FACE, symbol: { type: 'face', name: '민수', dashed: false } };
+    const notExact: MarkerLook = { ...FACE, symbol: { type: 'face', name: '민수', dashed: false, exact: false } };
+
+    expect(lookName(notExact)).toBe(lookName(plain));
   });
 });
 

@@ -19,6 +19,7 @@
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
 import type { InvitationCard, OwnWay } from './invitation-card-types';
+import type { Lookup, Tapped } from './lookup-types';
 import { mockClient } from './mock/client';
 import { tellAskLevels } from './plan-asks';
 import { serverClient } from './server/client';
@@ -200,6 +201,10 @@ export interface ApiClient {
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
   // An answer drawn on the map, recalculated from its changed input and where the User is now, without the model.
   recalculateAnswer: (input: PlanInput, location: LatLng | null) => Promise<AnswerReply>;
+  // The card of a building or a Friend's face pressed on the everyday map, without the model and without counting the
+  // User's messages. Refused with 400 for an id that is no Place and with 404 FRIEND_NOT_FOUND for someone who is not
+  // the User's Friend.
+  answerTap: (tapped: Tapped, location: LatLng | null) => Promise<Lookup>;
   // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
   // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
   makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
@@ -328,6 +333,7 @@ export const apiClient: ShownClient = {
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
+  answerTap: (tapped, location) => chosen().answerTap(tapped, location),
   // Whatever screen made the Quest, the question about the Friends the reply names is asked by its own host.
   makePlanQuest: async (making, key) => {
     const made = await chosen().makePlanQuest(making, key);
