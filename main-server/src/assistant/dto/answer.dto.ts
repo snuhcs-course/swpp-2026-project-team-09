@@ -333,9 +333,11 @@ const tappedSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('friend'), userId: z.uuid() }),
 ]);
 
+const locationMissingSchema = z.enum(['permission', 'off-campus']).nullable().default(null);
+
 export const requestContextSchema = z.strictObject({
   location: z.strictObject({ latitude, longitude }).nullable().default(null),
-  locationMissing: z.enum(['permission', 'off-campus']).nullable().default(null),
+  locationMissing: locationMissingSchema,
   viewport: z
     .strictObject({ south: latitude, west: longitude, north: latitude, east: longitude })
     .nullable()
@@ -345,10 +347,11 @@ export const requestContextSchema = z.strictObject({
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
 }) satisfies z.ZodType<RequestContext>;
 
-// The body of a recalculation: the changed input, and where the asker is now.
+// The body of a recalculation: the changed input, and where the asker is now or why that is not sent.
 export const recalculationSchema = z.strictObject({
   input: planInputSchema,
   location: z.strictObject({ latitude, longitude }).nullable().default(null),
+  locationMissing: locationMissingSchema,
 });
 
 export type Recalculation = z.infer<typeof recalculationSchema>;

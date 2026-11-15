@@ -4,9 +4,11 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import request from 'supertest';
 import { z } from 'zod';
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
 import { MealPlanStage, planMeal } from './meal-plan.js';
+import { withAccessToken } from './sign-in.js';
 
 // Without a location or a Timetable (P02-13), a meal planned at the Assistant's endpoint with the scripted model, the
 // seed's walking table, and Places: board n13 (no location permission) and board n15 (no Class at all), each on a
@@ -69,6 +71,30 @@ describe('Board n13: 배고파 without the location permission', () => {
     const answer = answerIn(response.body);
     expect(answer.chips[0]).toEqual({ kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' });
     expect(answer.plans[0]?.parts[0]?.origin).toMatchObject({ basis: 'timetable', place: { label: '301동' } });
+  });
+});
+
+describe('A recalculation of board n13', () => {
+  it('keeps the assumed origin when it says the permission is missing', async () => {
+    const date = '2079-01-31';
+    await lunchAt(date, '12:40');
+    await stage.classAt(stage.asker, '09:00', '10:15', '301');
+    const asked = await stage.send([planMeal(date), { text: '…' }], { context: { locationMissing: 'permission' } });
+    const { input } = answerIn(asked.body);
+
+    const response = await withAccessToken(
+      request(stage.app.getHttpServer()).post('/assistant/answers'),
+      stage.asker.accessToken,
+    ).send({
+      input: { ...input, window: { from: '13:00', until: null } },
+      location: null,
+      locationMissing: 'permission',
+    });
+
+    expect(response.status).toBe(200);
+    const answer = z.custom<AnswerReply>().parse(response.body);
+    expect(answer.chips[0]).toEqual({ kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' });
+    expect(answer.offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
   });
 });
 

@@ -8,13 +8,14 @@ import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap, card } from './support/answer-map';
+import { recalculations, step } from './support/answer-correct';
 import { pass, screen, shownAddress } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
-import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from '@/api/mock/data/missing-inputs';
+import { NO_LOCATION_ANSWER, NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from '@/api/mock/data/missing-inputs';
 import { LEAVE_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
 
 // Without a location or a Timetable (P02-13), in the answer frame against the fake main server: the card says what
@@ -81,6 +82,19 @@ describe('board n13: no location permission', () => {
     await user.press(steps.getByRole('button', { name: '위치 켜기' }));
 
     expect(screen.getByText(EXPLANATION)).toBeVisible();
+  });
+});
+
+describe('a correction of board n13', () => {
+  it('asks for the recalculation with no position and the reason, the permission missing', async () => {
+    givePhone({ permission: 'refused' });
+    server.on('POST /assistant/answers', { status: 200, body: NO_LOCATION_ANSWER });
+    await askOnMap(server, NO_LOCATION_REPLY);
+
+    await step('from', 'increment');
+
+    const [sent] = recalculations(server);
+    expect(sent).toMatchObject({ location: null, locationMissing: 'permission' });
   });
 });
 

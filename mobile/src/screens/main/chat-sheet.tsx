@@ -16,7 +16,6 @@ import { type ReactElement, type RefObject, useCallback, useEffect, useRef, useS
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal, RequestContext } from '@/api/assistant-types';
-import type { LatLng } from '@/api/types';
 import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type Chat, type ChatBubble, useChat } from '@/features/assistant/use-chat';
@@ -237,12 +236,13 @@ const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 �
 function useAnswerOnScreen(
   onMap: boolean,
   bubbles: readonly ChatBubble[],
-  position: LatLng | null,
+  { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
 ): { answer: ShownAnswer; invitation: PlanInvitation } {
   const showToast = useToast();
   const shown = useShownAnswer(onMap ? bubbles : NO_BUBBLES, {
     location: position,
+    locationMissing,
     onFailed: () => {
       showToast(NOT_RECALCULATED);
     },
@@ -271,7 +271,6 @@ export function useChatSheet(
   where: Where,
   start: StartGuidance,
 ): ChatSheetControl {
-  const { position } = where;
   const onMap = useAnswerSwitch();
   const shownNow = useRef<ShownAnswer | null>(null);
   const chat = useChat(onMap ? (): RequestContext => contextAt(where, shownNow.current) : undefined);
@@ -297,7 +296,7 @@ export function useChatSheet(
     onMap,
     framed: onMap && (chat.bubbles.length > 0 || chat.waiting),
     leaving: { showLayer: forgettingFor(chat.reset, turnOn), openEvent, openQuestPost, openPartyForm, proposals },
-    ...useAnswerOnScreen(onMap, chat.bubbles, position, shownNow),
+    ...useAnswerOnScreen(onMap, chat.bubbles, where, shownNow),
     lookup: useShownLookup(onMap ? chat.bubbles : NO_BUBBLES, start, chat.reset),
     sheet: (inputTop) =>
       sheetShown ? (

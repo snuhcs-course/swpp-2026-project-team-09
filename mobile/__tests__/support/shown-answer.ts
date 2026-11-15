@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
 import type { AnswerReply, PlanInput } from '@/api/assistant-types';
+import type { ApiClient } from '@/api/client';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -50,7 +52,7 @@ export async function hold(bubbles: readonly ChatBubble[]): Promise<Held> {
   };
 }
 
-type Recalculate = jest.MockedFunction<(input: PlanInput, location: LatLng | null) => Promise<AnswerReply>>;
+type Recalculate = jest.MockedFunction<ApiClient['recalculateAnswer']>;
 
 interface Settle {
   resolve: (answer: AnswerReply) => void;

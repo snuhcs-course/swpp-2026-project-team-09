@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -100,7 +101,7 @@ describe('a change', () => {
     await act(() => {
       kept((input) => withoutPerson(input, jiEun));
     });
-    expect(recalculate).toHaveBeenCalledWith(withoutPerson(MEAL_ANSWER_THREE.input, jiEun), HERE);
+    expect(recalculate).toHaveBeenCalledWith(withoutPerson(MEAL_ANSWER_THREE.input, jiEun), HERE, null);
     expect(held.shown().recalculating).toBe(true);
     await reply.come(MEAL_ANSWER);
 
