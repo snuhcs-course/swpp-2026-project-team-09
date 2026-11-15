@@ -1012,6 +1012,8 @@ model RoomConsent {
   user       User        @relation(fields: [userId], references: [id])
   answeredAt DateTime?   @map("answered_at")
   consented  Boolean?
+  // When the companion was asked, from which their answer's deadline is counted.
+  askedAt    DateTime    @default(now()) @map("asked_at")
 
   @@id([requestId, userId])
   @@index([userId])
