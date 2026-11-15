@@ -43,3 +43,10 @@ A label has three parts: `text` and `name`, which are the same (the given name, 
 - **One computation for both.** `listFriends` works the labels out over the rows it already loads (each row holds `acceptedAt`, and the Friend's department), and the Friend view takes `label` from `listFriends`, so it loads nothing more and gives the same label.
 - **Not in this ticket**: the resolver candidate's `label`, which the proposal's ticket 2 lists, is left to package A with the rest of `resolve-friend.ts`.
 - **The proposal's claims** in "The rule", "Hard cases", and its ticket 2 row were checked against `4c1bb2f7`: every cited file and line holds (`friends.service.ts:208-225`, `schema.prisma:117`, `resolve-friend.ts:23-25, 36`, `short-name.ts:76-79`, `friends.dto.ts:57-82`, `friend-view.dto.ts:11-20`, `friend-view.service.ts:32-41`, `answer-words.ts:57-68`, `update-profile.dto.ts:15-18, 37-39`, `assistant-resolvers.integration.test.ts:36-38`). Only its label texts with a department or a date are superseded by the first decision above.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). This session's review and the pull request are counted under ticket 07.
+
+- Agent time: about 19 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 73,442; input 8,890,209, of which 8,708,026 were cache reads, 182,069 cache writes, and 114 uncached. Without cache reads: 255,625.
