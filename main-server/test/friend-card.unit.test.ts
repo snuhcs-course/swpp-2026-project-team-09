@@ -11,6 +11,7 @@ import { friendTapLookup } from '../src/assistant/lookup/friend.service.js';
 import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type FriendView } from '../src/friends/dto/friend-view.dto.js';
 import { readSeedTravel, shownMinutes } from '../src/travel/travel.js';
+import { friendView } from './place-card.js';
 import { classAt, id, placeOf, position, readCampus, TUESDAY } from './way-example.js';
 
 // A pressed Friend's card (wireframe row 6, boards a4, a13, and a10) on Tuesday 2026-11-17 at 12:10, the User setting
@@ -30,15 +31,7 @@ const FRIEND = 'b0c2e3a4-0000-4000-8000-000000000002';
 
 const FROM_301 = (): FriendTapArgs['start'] => ({ placeId: id('제1공학관'), label: '301동' });
 
-const view = (name: string, changes: Partial<FriendView> = {}): FriendView => ({
-  id: FRIEND,
-  name,
-  department: '컴퓨터공학부',
-  level: 'timetable',
-  position: null,
-  placeId: null,
-  ...changes,
-});
+const view = (name: string, changes: Partial<FriendView> = {}): FriendView => friendView(FRIEND, name, changes);
 
 function tapped(
   friend: FriendView,

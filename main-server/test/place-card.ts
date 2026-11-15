@@ -38,15 +38,20 @@ export const dish = (name: string): MenuLineDto => ({
 
 export const NOTE: MenuLineDto = { text: '※ 운영시간 : 11:00~14:30', kind: MenuLineKind.note, name: null, price: null };
 
-export const minsu = (changes: Partial<FriendView> = {}): FriendView => ({
-  id: MINSU,
-  name: '김민수',
+// A Friend as the Friend view gives them, at the Timetable only unless changed.
+export const friendView = (userId: string, name: string, changes: Partial<FriendView> = {}): FriendView => ({
+  id: userId,
+  name,
   department: '컴퓨터공학부',
+  friendId: 'MNS23456',
+  friendsSince: '2026-09-01T12:00:00+09:00',
   level: 'timetable',
   position: null,
   placeId: null,
   ...changes,
 });
+
+export const minsu = (changes: Partial<FriendView> = {}): FriendView => friendView(MINSU, '김민수', changes);
 
 // 김민수's Class in 302동 until 12:15.
 export const minsuIn302 = (): DayItem[] => [classAt(TUESDAY, '11:00', '12:15', '제2공학관')];
