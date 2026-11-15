@@ -10,105 +10,65 @@ import type {
   AnswerReply,
   ConditionChip,
   DroppedPlace,
-  EventsInput,
-  MealInput,
-  PersonConstraint,
+  MapScene,
+  PlacePoint,
   Plan,
-  PlanInput,
   PlanPart,
-  PlanPerson,
   TimeBand,
 } from '@/api/assistant-types';
-import type { MeetInput } from '@/api/meet-plan-types';
-import type { NewQuestInput, QuestsInput } from '@/api/recruiting-plan-types';
-import { field, hasTexts, isBoard, isNumber, isText, isTextOrNull, listOf } from './answers';
+import type { LatLng } from '@/api/types';
+import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isRecruitingQuest } from './party-client';
-import { isBoolean, isMode, isPlacePoint, isScene } from './scene-answers';
+import { isInput, isOneOf } from './plan-inputs';
 
 // The `answer` and the `lookup` of the Assistant's reply, as main-server `assistant/dto/answer.dto.ts` fixes them:
-// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply. The map
-// scene's checks are in `scene-answers.ts`.
+// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply. The
+// input's checks are in `plan-inputs.ts`.
 
-export { isPlacePoint, isScene };
+// The keys of a record typed by a union of the contract, so that the compiler refuses a value left out or one too many.
+export function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
+  return (value: unknown): value is Value => typeof value === 'string' && Object.hasOwn(values, value);
+}
 
-export function isOneOf<Value extends string>(values: readonly Value[]): (value: unknown) => value is Value {
-  return (value: unknown): value is Value => values.some((one) => one === value);
+type Role<Part extends 'places' | 'routes' | 'flags'> = MapScene[Part][number]['role'];
+
+const isPlaceRole = isKeyOf<Role<'places'>>({
+  pick: true,
+  candidate: true,
+  dropped: true,
+  next: true,
+  meeting: true,
+  stop: true,
+});
+
+const isRouteRole = isKeyOf<Role<'routes'>>({ me: true, friend: true, next: true, shuttle: true, alt: true });
+
+const isFlagRole = isKeyOf<Role<'flags'>>({
+  place: true,
+  meeting: true,
+  leave: true,
+  late: true,
+  shuttle: true,
+  away: true,
+});
+
+const isPersonSource = isKeyOf<MapScene['people'][number]['source']>({ exact: true, building: true, timetable: true });
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === 'boolean';
 }
 
 function isNumberOrNull(value: unknown): value is number | null {
   return value === null || isNumber(value);
 }
 
-function isConstraint(value: unknown): value is PersonConstraint {
-  if (!isOneOf(['asker', 'person'])(field(value, 'source'))) {
-    return false;
-  }
-  switch (field(value, 'kind')) {
-    case 'from':
-      return isText(field(value, 'placeId'));
-    case 'notBefore':
-    case 'leaveBy':
-      return isText(field(value, 'time'));
-    default:
-      return false;
-  }
+function isLatLng(value: unknown): value is LatLng {
+  return isNumber(field(value, 'latitude')) && isNumber(field(value, 'longitude'));
 }
 
-function isPerson(value: unknown): value is PlanPerson {
-  return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
-}
-
-// The people, the window, and the Place a meal and a meet share.
-function isGathering(value: unknown): boolean {
-  const window = field(value, 'window');
-  return (
-    isText(field(value, 'date')) &&
-    listOf(isPerson)(field(value, 'people')) &&
-    isTextOrNull(field(window, 'from')) &&
-    isTextOrNull(field(window, 'until')) &&
-    isTextOrNull(field(value, 'placeId'))
-  );
-}
-
-function isMealInput(value: unknown): value is MealInput {
-  return field(value, 'kind') === 'meal' && isOneOf(['lunch', 'dinner'])(field(value, 'meal')) && isGathering(value);
-}
-
-function isMeetInput(value: unknown): value is MeetInput {
-  return field(value, 'kind') === 'meet' && isGathering(value);
-}
-
-function isEventsInput(value: unknown): value is EventsInput {
-  const eventIds = field(value, 'eventIds');
-  return (
-    field(value, 'kind') === 'events' && isText(field(value, 'date')) && (eventIds === null || listOf(isText)(eventIds))
-  );
-}
-
-function isQuestsInput(value: unknown): value is QuestsInput {
-  const globalEventId = field(value, 'globalEventId');
-  const questIds = field(value, 'questIds');
-  return (
-    field(value, 'kind') === 'quests' &&
-    isTextOrNull(globalEventId) &&
-    (questIds === null || listOf(isText)(questIds)) &&
-    (globalEventId === null) !== (questIds === null)
-  );
-}
-
-function isNewQuestInput(value: unknown): value is NewQuestInput {
-  const board = field(value, 'board');
-  return (
-    field(value, 'kind') === 'new-quest' &&
-    isText(field(value, 'date')) &&
-    ['globalEventId', 'title', 'placeId', 'time'].every((name) => isTextOrNull(field(value, name))) &&
-    listOf(isPerson)(field(value, 'people')) &&
-    (board === undefined || (board !== null && isBoard(board)))
-  );
-}
-
-export function isInput(value: unknown): value is PlanInput {
-  return [isMealInput, isEventsInput, isQuestsInput, isNewQuestInput, isMeetInput].some((isKind) => isKind(value));
+// A mode is absent for a walk.
+function isMode(value: unknown): boolean {
+  return value === undefined || isOneOf(['walk', 'shuttle'])(value);
 }
 
 export function isChip(value: unknown): value is ConditionChip {
@@ -123,6 +83,10 @@ export function isLine(value: unknown): value is AnswerLine {
   return listOf((part): part is AnswerLine[number] => isText(field(part, 'text')) && isBoolean(field(part, 'strong')))(
     value,
   );
+}
+
+export function isPlacePoint(value: unknown): value is PlacePoint {
+  return hasTexts(value, ['placeId', 'label']) && isLatLng(value);
 }
 
 function isDropped(value: unknown): value is DroppedPlace {
@@ -169,6 +133,57 @@ function isPart(value: unknown): value is PlanPart {
 
 function isSubQuest(value: unknown): value is Plan['subQuests'][number] {
   return hasTexts(value, ['at', 'placeId', 'title']);
+}
+
+function isScenePerson(value: unknown): value is MapScene['people'][number] {
+  return (
+    hasTexts(value, ['userId', 'name']) &&
+    isBoolean(field(value, 'me')) &&
+    isLatLng(field(value, 'at')) &&
+    isPersonSource(field(value, 'source')) &&
+    isTextOrNull(field(value, 'tag'))
+  );
+}
+
+function isScenePlace(value: unknown): value is MapScene['places'][number] {
+  const order = field(value, 'order');
+  return (
+    isPlacePoint(field(value, 'place')) &&
+    isPlaceRole(field(value, 'role')) &&
+    isTextOrNull(field(value, 'tag')) &&
+    (order === undefined || (typeof order === 'number' && Number.isInteger(order) && order >= 1))
+  );
+}
+
+function isRoute(value: unknown): value is MapScene['routes'][number] {
+  return (
+    isText(field(value, 'userId')) &&
+    isRouteRole(field(value, 'role')) &&
+    isLatLng(field(value, 'from')) &&
+    isLatLng(field(value, 'to')) &&
+    isNumber(field(value, 'minutes')) &&
+    isMode(field(value, 'mode'))
+  );
+}
+
+// `placeId` names the Place an `away` flag points to, such as 관정, whose free seats the phone adds.
+function isFlag(value: unknown): value is MapScene['flags'][number] {
+  const placeId = field(value, 'placeId');
+  return (
+    isLatLng(field(value, 'at')) &&
+    isText(field(value, 'text')) &&
+    isFlagRole(field(value, 'role')) &&
+    (placeId === undefined || isText(placeId))
+  );
+}
+
+export function isScene(value: unknown): value is MapScene {
+  return (
+    listOf(isScenePerson)(field(value, 'people')) &&
+    listOf(isScenePlace)(field(value, 'places')) &&
+    listOf(isRoute)(field(value, 'routes')) &&
+    listOf(isFlag)(field(value, 'flags'))
+  );
 }
 
 function isSpan(value: unknown): value is { startAt: string; endAt: string } {

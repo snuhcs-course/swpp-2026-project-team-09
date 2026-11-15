@@ -33,6 +33,8 @@ interface TimeBandProps {
   disabled: boolean;
   // "HH:MM", when a handle is let go or stepped.
   onDrop: (bound: BandBound, time: string) => void;
+  // False draws no handles, as for a Lookup's band, which is not recalculated.
+  handles?: boolean;
 }
 
 // A handle moved by a drag, or let go and held while the recalculation it asked for is on its way.
@@ -185,7 +187,7 @@ function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandPro
 
 // The time band of the answer's card: each person's busy stretches, the line of now, and the Plan's band with a
 // handle at each end, which a drag or a screen reader's step moves by five minutes.
-export function TimeBand({ band, fixed, ghost, focus, disabled, onDrop }: TimeBandProps): ReactElement {
+export function TimeBand({ band, fixed, ghost, focus, disabled, onDrop, handles = true }: TimeBandProps): ReactElement {
   const [trackWidth, setTrackWidth] = useState(0);
   const moved = useMovedBand(band, disabled, onDrop);
   const handle = (bound: BandBound): ReactElement => (
@@ -218,8 +220,8 @@ export function TimeBand({ band, fixed, ghost, focus, disabled, onDrop }: TimeBa
           <Lanes band={band} fixed={fixed} />
           {ghost === null ? null : <View style={[styles.ghost, placeOf(ghost, band.range)]} testID="time-band-ghost" />}
           <View style={[styles.band, placeOf(moved.shown, band.range)]} />
-          {handle('from')}
-          {handle('until')}
+          {handles ? handle('from') : null}
+          {handles ? handle('until') : null}
         </View>
       </View>
       <View style={styles.ends}>

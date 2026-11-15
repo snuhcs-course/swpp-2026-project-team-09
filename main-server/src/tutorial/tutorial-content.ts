@@ -4,12 +4,14 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'zod';
+import { Weekday } from '../generated/prisma/client.js';
 
 // The tutorial's content (README.md: Tutorial). src/ and dist/ lie at the same depth below it.
 export const TUTORIAL_FILE = fileURLToPath(new URL('../../content/tutorial.yaml', import.meta.url));
@@ -33,6 +35,25 @@ const completionSchema = z.discriminatedUnion('kind', [
   // The phone checks the User's library bookings; the skip completes the quest without the check.
   z.strictObject({ kind: z.literal('kwanjeongCheck'), skipLabel: text }),
 ]);
+
+const SPAN = /^(?:[01]\d|2[0-3]):[0-5]\d-(?:[01]\d|2[0-3]):[0-5]\d$/u;
+
+// "09:00-12:00", read as the clock times it opens and closes.
+const spanSchema = z
+  .string()
+  .regex(SPAN, 'Expected HH:MM-HH:MM')
+  .transform((span) => ({ from: span.slice(0, 5), until: span.slice(6) }))
+  .refine(({ from, until }) => from < until, 'Expected the opening before the closing');
+
+// When a quest can be done, which only the Assistant's order of the quests reads: the line it says of it, and the hours
+// its place is open, on the days given or on every day. A stop outside them is left out of the order.
+const visitSchema = z.strictObject({
+  note: text.optional(),
+  hours: z
+    .array(z.strictObject({ days: z.array(z.enum(Weekday)).min(1).optional(), open: z.array(spanSchema).min(1) }))
+    .min(1)
+    .optional(),
+});
 
 const keySchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, 'Expected a key in lowercase words joined by dashes');
 
@@ -60,6 +81,7 @@ const questSchema = z.strictObject({
   // What the Assistant answers from beyond the sheet's text, each with where it was read and when. GET /tutorial does
   // not serve them.
   facts: z.array(z.strictObject({ text, source: z.url({ protocol: /^https?$/u }), checked: z.iso.date() })).default([]),
+  visit: visitSchema.optional(),
 });
 
 type Quest = z.infer<typeof questSchema>;
@@ -131,6 +153,7 @@ export type TutorialContent = z.infer<typeof contentSchema>;
 export type TutorialQuest = TutorialContent['quests'][number];
 export type TutorialPlace = TutorialQuest['places'][number];
 export type TutorialCategory = TutorialContent['categories'][number];
+export type TutorialVisit = NonNullable<TutorialQuest['visit']>;
 
 // Read once when the server starts. A file that does not parse or does not match stops the start with the reason.
 export async function readTutorialContent(file: string): Promise<TutorialContent> {

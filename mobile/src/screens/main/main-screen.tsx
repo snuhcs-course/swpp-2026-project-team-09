@@ -45,7 +45,7 @@ import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
-import { type MainRoute, useRoute } from './use-route';
+import type { MainRoute } from './use-route';
 import { useMapView } from './use-map-view';
 import { useFramedRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
@@ -227,13 +227,8 @@ function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel, outerZ
 }
 
 // The walking route, and the shuttle's line under it.
-function useLines(shuttle: ShuttleLayer, map: MainMap, me: Me): { route: MainRoute; lines: readonly MapLine[] } {
-  const route = useRoute(map, me);
-  const lines = useMemo(
-    () => [...shuttle.lines, ...(route.line === null ? [] : [route.line])],
-    [shuttle.lines, route.line],
-  );
-  return { route, lines };
+function useLines(shuttle: ShuttleLayer, route: MainRoute): readonly MapLine[] {
+  return useMemo(() => [...shuttle.lines, ...(route.line === null ? [] : [route.line])], [shuttle.lines, route.line]);
 }
 
 // The friend list and the Quest list, which give way to a card at the top.
@@ -291,19 +286,19 @@ function useMainTutorial(
 // cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
 // itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
 // the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing; while
-// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`). A received invitation's
-// card is shown the same way, with the invitee's own way on the map, and so is the card after inviting of a Quest
-// made from a Plan, opened by its flag or its line, with its Places; the tab bar gives way to each. After
+// its answer has a Plan or a Lookup, the map draws it in place of its usual things (`useMapView`). A received
+// invitation's card is shown the same way, with the invitee's own way on the map, and so is the card after inviting of
+// a Quest made from a Plan, opened by its flag or its line, with its Places; the tab bar gives way to each. After
 // Onboarding on this phone the first run asks its three things, one card at a time, while nothing else takes the
 // bottom (`useFirstRun`).
 export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
   const me = useMe(map);
-  const layers = useMainLayers(inFront, map, me.position);
-  const { stack, shuttle, cards, ready, chat } = layers;
+  const layers = useMainLayers(inFront, map, me);
+  const { stack, shuttle, cards, ready, chat, route } = layers;
   const selection = useSelection(cards, inFront, chat.onMap && me.position !== null);
-  const { route, lines } = useLines(shuttle, map, me);
+  const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection, chat);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
