@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -30,3 +31,10 @@ export type PositionDto = {
   longitude: number;
   measuredAt: string;
 } & ({ level: 'exact' } | { level: 'building'; placeId: string });
+
+// What GET /positions answers of each position: what the viewer sees, with the name of the Place nearest the subject
+// and the walking minutes to that Place from the Place nearest the viewer's own last position, from the walking table
+// (ADR 0010). The minutes are 0 when both are the same Place. Either is null when its Place is unknown, and the
+// minutes also when the viewer has no position kept. Only the fetch carries them: `position` goes to every viewer
+// alike, and the minutes are each viewer's own.
+export type SeenPositionDto = PositionDto & { nearPlace: string | null; walkMinutes: number | null };

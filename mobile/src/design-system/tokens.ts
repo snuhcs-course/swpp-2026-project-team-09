@@ -8,6 +8,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -89,8 +90,6 @@ export const shadow = {
   mapMark: '0 0 0 2px #FFFFFF, 0 1px 4px rgba(14, 19, 48, 0.25)',
   // Around the rail that joins the Quest list's rows, as the `Main` frame draws it: a white ring of 1.5.
   mapRail: '0 0 0 1.5px #FFFFFF',
-  // Around a small face that overlaps its neighbour, as on "오늘의 발자국": a white ring of 2.
-  faceRing: '0 0 0 2px #FFFFFF',
   // Under a floating button in the key colour, as the `Main` frame draws "활성 파티": the floating shadow, darker.
   floatKey: '0 4px 16px rgba(14, 19, 48, 0.24)',
 } as const;
@@ -115,6 +114,8 @@ export const presence = {
   free: color.live,
   class: color.snuBlue,
   moving: color.warning,
+  // A Friend whose position is shared, with no status beyond it.
+  on: color.live,
   off: color.inkSubtle,
   member: color.party,
 } as const;
@@ -220,9 +221,8 @@ export const mapText = {
   rowKicker: { fontFamily: font.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0.11 },
   // "오늘 일정 없음".
   empty: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18 },
-  // The two lines of "오늘의 발자국".
+  // The title of the answer frame's pick.
   buttonTitle: { fontFamily: font.bold, fontSize: 14, lineHeight: 18 },
-  buttonLine: { fontFamily: font.medium, fontSize: 11, lineHeight: 14 },
   // The two lines of "활성 파티".
   smallTitle: { fontFamily: font.bold, fontSize: 12, lineHeight: 16 },
   smallLine: { fontFamily: font.medium, fontSize: 10, lineHeight: 13 },

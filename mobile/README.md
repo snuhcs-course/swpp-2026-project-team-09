@@ -576,11 +576,15 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - **The room** (`Room` in `layout.ts`: the stage's size, which `OverMap` tells, and the open card's height). A
     window shows the whole rows that fit above what is under it, with 8 clear (`listRows`): three, or two, one or
     none on a low screen. Under the Quest list is the zoom control; under the friend list is the strip of the
-    map's credit, on "오늘의 발자국"; while a card is open, under both is the credit's strip on the card. The Quest
+    map's credit, on the row of buttons; while a card is open, under both is the credit's strip on the card. The Quest
     column is 182 wide; the friend column is 160 or, on a screen narrower than 374, what the Quest column leaves
     (`friendsWidth`), 146 at 360, so the two never share a point.
-  - A Friend's row has the dot in the status's colour (`presence`), the name and the line, "공강 · 중앙도서관" or
-    "위치 꺼짐". A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
+  - A Friend's row has the dot in the status's colour (`presence`), the name and the line. Against the main server,
+    which serves no statuses, the line is the Place nearest the Friend from `GET /positions`'s `nearPlace`
+    ("중앙도서관 본관", or "위치 켜짐" while it is not known) or "위치 꺼짐", with "· N분 전 위치" after an old
+    position; the mock's statuses give "공강 · 중앙도서관". The Friend's card has the walk from
+    `walkMinutes`: "도보 N분", "근처" for the same Place, and nothing while the User's own position is unknown.
+    "수업 중" and "이동 중" wait for the FriendView of the Friend levels. A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
     position is not known it says "<이름>님은 위치가 꺼져 있어요" for 2 seconds.
   - A Quest's row has the round with its icon, the kicker, the title and the time with the place, and the rail joins
     the rounds. The adapter says the row's `tone` and `icon`: a class is `clock` in grey; `open`, a Party that
@@ -590,12 +594,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     room.
     Without a Quest the list says "오늘 일정 없음".
   - While a list's data is loading, and after a failure, its pill has no number and the list has no rows.
-- **The controls above the navigation** (`bottom-controls.tsx`): "오늘의 발자국", with up to three faces and "친구
-  5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
+- **The controls above the navigation** (`bottom-controls.tsx`): "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
   the members who share their position, the User left out, or "응답 대기" when nobody else does
   (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. "활성 파티" opens the room of the
   Party's Quest, or, for a Party tied to no Quest, which has no room, asks "활성화에서 나갈까요?" and leaves it
-  (`use-active-party-room.tsx`). The AI input opens the chat (below). "오늘의 발자국" says "준비 중이에요".
+  (`use-active-party-room.tsx`). The AI input opens the chat (below).
   - The AI input (`ai-input.tsx`) is a field with the placeholder "무엇이든 부탁해 보세요". Pressing or focusing it
     opens the chat, and it stays at the bottom as the chat's input, with the focus ring as its border. It grows with
     its text from 40 to 120 and then scrolls, its corners going from 28 to 22 once it holds more than a line; Enter
@@ -603,9 +606,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     takes in a message. The send button is `snuBlue` while there is something to send,
     and grey and disabled while the input is empty or the Assistant works. Speech input and autocomplete would attach
     to it.
-  - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
-    whole (`footprintsForm` in `layout.ts`): it drops its second line and keeps one face, has no face under 360,
-    and is the one button of the row that shrinks, its name cut with an ellipsis. Alone in the row it is whole.
+  - "활성 파티" never shrinks: its two lines stay whole on a screen narrower than the wireframe's 390.
 - **The chat with the Assistant** (`chat-sheet.tsx`, `chat-bubbles.tsx`, the `MainChat` frame). It is a translucent
   sheet (`color.surfaceGlass`, white at 80%) from the top of the screen to the navigation, which stays in view. It
   lies over the map and the lists, and hides the shuttle's notice, the row of buttons and the 편의기능 button; the
@@ -745,7 +746,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   while it is still shown. "이미 끝난 초대예요" closes it after a 404 read (which reads the list again) or when the
   list comes back without it, and an address of an invitation the known list does not hold says it on the map;
   another failure offers "다시 시도". Android's back button closes it as ✕ does.
-- While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
+- While a card at the bottom is open, the row of buttons with "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
   and the 편의기능 button stay.
@@ -810,7 +811,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   into a neighbour's shape.
 - **The map's credit.** The map ends at the navigation's top and is told what the controls cover of its edges
   (`mapInset` in `layout.ts`, the `inset` of `<Map>`): 126 at the bottom, the row of buttons' top, and 62 at the
-  right, the zoom control. So the credit is just above "오늘의 발자국", 16 from the left, and a provider's logo
+  right, the zoom control. So the credit is just above the row of buttons, 16 from the left, and a provider's logo
   belongs left of the zoom control, above "활성 파티". While a card is open the inset's bottom is the card's top,
   and the credit sits above the card. Nothing is drawn over the credit: the lists end 8 above its strip
   (`CREDIT_ROOM` of `@/map`, the credit's margin and its line), on a low screen with fewer rows.
@@ -1150,7 +1151,7 @@ the entries it needs. So an operation that two screens need is asked once, and o
 
 When an operation fails:
 
-- `listFriendStatuses`, `listGlobalEventAnnouncers` and `getFootprints`, the app's own, never fail a screen: it shows what it has without them.
+- `listFriendStatuses` and `listGlobalEventAnnouncers`, the app's own, never fail a screen: it shows what it has without them.
 - The friend list and the Quest list have `isError` and no `data`.
 - The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
   cards still show; without the recruiting Quests, an event's card only lacks its line of them.
@@ -1176,7 +1177,7 @@ Behind a hook are three layers:
   A shape marked "provisional" comes from an open pull request of the main server, and one marked "the app's own" is
   defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
-  `FriendView`, `QuestRowView`, `CardView`, `FootprintsView` and `ActivePartyView`.
+  `FriendView`, `QuestRowView`, `CardView` and `ActivePartyView`.
 - **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
   (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
   once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` (with `waiting-answers.ts`,
@@ -1208,7 +1209,7 @@ Behind a hook are three layers:
 | `createInviteLink`                                                   | A new Invite Link's address                                  | `POST /invite-links`                                                    |
 | `getInviteLink`, `acceptInviteLink`                                  | Who sent the link and its status; nothing                    | `GET /invite-links/:token`, `POST /invite-links/:token/accept`          |
 | `listPositions`                                                      | The positions the User may see                               | `GET /positions`, and the socket's `position`                           |
-| `listFriendStatuses`                                                 | Each Friend's status, place and photo                        | The mock: the app's own                                                 |
+| `listFriendStatuses`                                                 | Each Friend's status, place and photo                        | The mock's in a mock build; none against the main server                |
 | `listQuests`                                                         | The User's Quests and today's Class Quests                   | `GET /quests`                                                           |
 | `listQuestInvitations`                                               | The invitations into a Quest                                 | `GET /quest-invitations`                                                |
 | `listJoinRequests`                                                   | The requests to join a Quest the User leads                  | `GET /quests/:questId/join-requests`                                    |
@@ -1216,7 +1217,6 @@ Behind a hook are three layers:
 | `listGlobalEvents`                                                   | The published Global Events                                  | The mock: no route lists them for a User yet                            |
 | `listGlobalEventAnnouncers`                                          | Who announced each Global Event                              | The mock: the app's own                                                 |
 | `listParties`, `getMyParty`                                          | The Parties, and the one the User is in                      | `GET /parties`, `/parties/mine`                                         |
-| `getFootprints`                                                      | What "오늘의 발자국" shows: a number and faces               | The mock: the app's own                                                 |
 | `findWalkingRoute`                                                   | The way on foot between two points                           | `GET /walking-route`                                                    |
 | `listMenus`                                                          | One day's menus by restaurant                                | `GET /menus?date=`                                                      |
 | `getShuttle`                                                         | The shuttle's route: hours, stops and line                   | `GET /shuttle`                                                          |

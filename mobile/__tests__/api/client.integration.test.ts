@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -163,18 +164,6 @@ describe('the mock of Parties', () => {
       ['오현우', false],
       ['안진영', false],
     ]);
-  });
-});
-
-describe('the mock of 오늘의 발자국', () => {
-  it('counts the Friends who left a story today and gives three faces, which no answer of the main server holds', async () => {
-    const footprints = await answered(mockClient.getFootprints());
-
-    expect(footprints.friendCount).toBe(5);
-    expect(footprints.faces.map(({ name }) => name)).toEqual(['김민준', '이서연', '박지호']);
-
-    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getFootprints';
-    expect(await answered(mockClient.getFootprints())).toEqual({ friendCount: 0, faces: [] });
   });
 });
 

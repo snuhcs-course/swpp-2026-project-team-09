@@ -281,8 +281,9 @@ What the demo cannot show, and what is known not to work yet:
 - **The walking route has a quota** of 1,000 routes a day for the team's Kakao app. A route is asked when the User
   asks for one and, while a party room is open, for each sharing member who has moved, at most once a minute each,
   looked at every 15 seconds.
-- **Sample data in a build.** Friends' statuses (such as 공강), who announced a Global Event and "오늘의 발자국" are the
-  app's own sample data even against the servers: no server serves them yet.
+- **Sample data in a build.** Who announced a Global Event is the app's own sample data even against the servers: no
+  server serves it yet. Against the servers a Friend has no status ("공강", "수업 중", "이동 중"): their line shows the
+  Place nearest them, or "위치 꺼짐".
 - **Kept on the phone only.** The party form's 사진 and 태그 and the room's 파티 채팅 are kept on the phone that made
   them: the main server stores none of them yet, so other members do not see them. Timetable versions other than the
   current one belong to one phone, and while a switch runs the server's timetable is empty or partial for a few

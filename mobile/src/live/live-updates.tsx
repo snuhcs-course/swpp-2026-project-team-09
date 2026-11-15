@@ -9,6 +9,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -100,9 +101,12 @@ function refetch(queryClient: QueryClient, keys: readonly QueryKey[]): void {
   }
 }
 
-// A position replaces the User's one before, which the Avatar glides from.
+// A position replaces the User's one before, which the Avatar glides from. The socket's carries no `nearPlace` or
+// `walkMinutes`, so those of the one before stay until the next fetch of the positions (`positionsQuery`).
 export function withPosition(positions: readonly Position[], position: Position): Position[] {
-  return [...positions.filter(({ userId }) => userId !== position.userId), position];
+  const before = positions.find(({ userId }) => userId === position.userId);
+  const kept = { nearPlace: before?.nearPlace, walkMinutes: before?.walkMinutes };
+  return [...positions.filter(({ userId }) => userId !== position.userId), { ...kept, ...position }];
 }
 
 // A position that arrives for a Friend or a member whom the answers say the User cannot see means that those answers

@@ -9,6 +9,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type {
@@ -158,13 +159,15 @@ export function isOpenedInviteLink(value: unknown): value is OpenedInviteLink {
 const POSITION_LEVELS = new Set<unknown>([undefined, 'building', 'exact']);
 
 function isPosition(value: unknown): value is Position {
-  const placeId = field(value, 'placeId');
+  const [placeId, nearPlace, walkMinutes] = ['placeId', 'nearPlace', 'walkMinutes'].map((name) => field(value, name));
   return (
     hasTexts(value, ['userId', 'measuredAt']) &&
     isNumber(field(value, 'latitude')) &&
     isNumber(field(value, 'longitude')) &&
     POSITION_LEVELS.has(field(value, 'level')) &&
-    (placeId === undefined || isText(placeId))
+    (placeId === undefined || isText(placeId)) &&
+    (nearPlace === undefined || isTextOrNull(nearPlace)) &&
+    (walkMinutes === undefined || walkMinutes === null || isNumber(walkMinutes))
   );
 }
 

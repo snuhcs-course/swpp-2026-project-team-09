@@ -11,6 +11,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -39,7 +40,6 @@ export const SENT_INVITATIONS_KEY = ['sent-invitations'] as const;
 export const DECLINED_PARTIES_KEY = ['declined-parties'] as const;
 export const CLASSES_KEY = ['timetable-classes'] as const;
 export const PLACES_KEY = ['places'] as const;
-export const FOOTPRINTS_KEY = ['footprints'] as const;
 export const GLOBAL_EVENTS_KEY = ['global-events'] as const;
 export const GLOBAL_EVENT_ANNOUNCERS_KEY = ['global-event-announcers'] as const;
 export const SHUTTLE_KEY = ['shuttle'] as const;
@@ -66,7 +66,14 @@ export const lobbyQuery = queryOptions({
   staleTime: Infinity,
 });
 export const friendsQuery = queryOptions({ queryKey: FRIENDS_KEY, queryFn: () => apiClient.listFriends() });
-export const positionsQuery = queryOptions({ queryKey: POSITIONS_KEY, queryFn: () => apiClient.listPositions() });
+// The socket's `position` moves a Friend between fetches but carries no `nearPlace` or `walkMinutes`, so while a
+// screen shows the positions they are fetched again every minute, and the Place and the walk lag by a minute at most.
+const POSITIONS_EVERY_MS = 60_000;
+export const positionsQuery = queryOptions({
+  queryKey: POSITIONS_KEY,
+  queryFn: () => apiClient.listPositions(),
+  refetchInterval: POSITIONS_EVERY_MS,
+});
 export const friendStatusesQuery = queryOptions({
   queryKey: FRIEND_STATUSES_KEY,
   queryFn: () => apiClient.listFriendStatuses(),
@@ -117,7 +124,6 @@ export function sentInvitationsQuery(questId: string): UseQueryOptions<JoinReque
   return { queryKey: [...SENT_INVITATIONS_KEY, questId], queryFn: () => apiClient.listSentInvitations(questId) };
 }
 export const classesQuery = queryOptions({ queryKey: CLASSES_KEY, queryFn: () => apiClient.listClasses() });
-export const footprintsQuery = queryOptions({ queryKey: FOOTPRINTS_KEY, queryFn: () => apiClient.getFootprints() });
 export const globalEventsQuery = queryOptions({
   queryKey: GLOBAL_EVENTS_KEY,
   queryFn: () => apiClient.listGlobalEvents(),

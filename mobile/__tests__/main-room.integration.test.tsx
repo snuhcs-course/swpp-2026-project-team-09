@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -15,7 +16,6 @@ import {
   DINNER_ROW,
   findButton,
   FOLD_FRIENDS,
-  FOOTPRINTS,
   FRIEND_ROW,
   FULL_SCREEN,
   layCard,
@@ -169,42 +169,14 @@ describe("the main screen's lists on a low screen while a card is open", () => {
 });
 
 describe('the row of buttons on a narrow screen', () => {
-  it("is whole at the frame's width", async () => {
+  it.each([390, 360, 320])('keeps "활성 파티" whole and unshrunk at %i', async (width) => {
     await openMain();
 
-    await layStage(390, 764);
+    await layStage(width, 700);
 
-    expect(button(FOOTPRINTS)).toHaveTextContent('민준서연지호오늘의 발자국친구 5명의 오늘');
     expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티3명 공유 중');
-  });
-
-  it('lets "오늘의 발자국" give way: one face and no second line at 360, no face at 320', async () => {
-    await openMain();
-
-    await layStage(360, 700);
-    expect(button(FOOTPRINTS)).toHaveTextContent('민준오늘의 발자국');
-    expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티3명 공유 중');
-
-    await layStage(320, 700);
-    expect(button(FOOTPRINTS)).toHaveTextContent('오늘의 발자국');
-    expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티3명 공유 중');
-    expect(button(LAYERS)).toBeVisible();
-  });
-
-  it('shrinks "오늘의 발자국" and never "활성 파티"', async () => {
-    await openMain();
-
-    expect(button(FOOTPRINTS)).toHaveStyle({ flexShrink: 1, minWidth: 0 });
     expect(button(ACTIVE_PARTY)).toHaveStyle({ flexShrink: 0 });
-  });
-
-  it('keeps "오늘의 발자국" whole on a narrow screen while the User is in no Party', async () => {
-    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
-    await openMain();
-
-    await layStage(320, 700);
-
-    expect(button(FOOTPRINTS)).toHaveTextContent('민준서연지호오늘의 발자국친구 5명의 오늘');
+    expect(button(LAYERS)).toBeVisible();
   });
 });
 

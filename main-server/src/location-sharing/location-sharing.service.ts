@@ -3,14 +3,18 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { BadRequestException, ConflictException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CampusBoundary } from '../common/campus-boundary.js';
+import { type Position } from '../common/geometry.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
+import { type PlaceDto } from '../places/dto/place.dto.js';
 import { PlaceLookup } from '../places/place-lookup.js';
-import { PositionDto, UploadedPositionDto, UploadPositionDto } from './dto/position.dto.js';
+import { shownMinutes, TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
+import { SeenPositionDto, UploadedPositionDto, UploadPositionDto } from './dto/position.dto.js';
 import { PositionStore, type StoredPosition } from './position-store.js';
 import { type SeenLevel, VisibilityService } from './visibility.service.js';
 
@@ -36,6 +40,7 @@ export class LocationSharingService {
     private readonly visibility: VisibilityService,
     private readonly signals: SignalsService,
     private readonly places: PlaceLookup,
+    @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
   // Turning it off clears the User's position.
@@ -92,13 +97,42 @@ export class LocationSharingService {
     return { offCampus: false };
   }
 
-  async visiblePositions(viewerId: string): Promise<PositionDto[]> {
-    return [...(await this.visibility.visibleTo(viewerId)).values()];
+  // Each position the viewer sees, with the Place nearest it and the walk to it from the Place nearest the viewer.
+  async visiblePositions(viewerId: string): Promise<SeenPositionDto[]> {
+    const [seen, own] = await Promise.all([this.visibility.visibleTo(viewerId), this.positions.read([viewerId])]);
+    const from = this.nearestPlace(own.get(viewerId));
+    return [...seen.values()].map((position) => {
+      const near = position.level === 'building' ? this.places.byId(position.placeId) : this.nearestPlace(position);
+      // Each position is the viewer's own, made for this answer.
+      return Object.assign(position, {
+        nearPlace: near?.name ?? null,
+        walkMinutes: from === null || near === null ? null : this.walkMinutes(from.id, near.id),
+      });
+    });
   }
 
   // Also when the User's session ends, so that the phone's last position does not linger.
   clearPosition(userId: string): Promise<void> {
     return this.visibility.announceRemovals(userId, () => this.positions.clear(userId));
+  }
+
+  // The Place a position is in or next to, or else the one whose point is nearest within NEAREST_PLACE_METRES.
+  private nearestPlace(position: Position | undefined): PlaceDto | null {
+    return position === undefined ? null : (this.places.at(position)?.place ?? this.places.nearTo(position));
+  }
+
+  private walkMinutes(fromPlaceId: string, toPlaceId: string): number | null {
+    if (fromPlaceId === toPlaceId) {
+      return 0;
+    }
+    try {
+      const seconds = this.travel.walkingSeconds(fromPlaceId, toPlaceId);
+      return Number.isFinite(seconds) ? shownMinutes(seconds) : null;
+    } catch {
+      // A Place added after the table was last built has no row in it (ADR 0010): its walk is not known, and the
+      // positions are still answered.
+      return null;
+    }
   }
 
   // Stores the position and pushes it to whoever may see the User now: the position to a viewer at 'exact', and to one

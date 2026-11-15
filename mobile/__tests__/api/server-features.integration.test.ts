@@ -6,6 +6,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -16,6 +17,7 @@ import {
   askMainServer,
   DINNER,
   JI_WOO,
+  LIBRARY_POSITION,
   LOBBY,
   ME_ID,
   MIN_JUN,
@@ -77,8 +79,8 @@ describe('the Friends from the main server', () => {
         id: MIN_JUN.id,
         name: '김민준',
         department: '컴퓨터공학부',
-        presence: 'free',
-        line: '공강',
+        presence: 'on',
+        line: '위치 켜짐',
         detail: '',
         walk: '',
         photo: null,
@@ -106,6 +108,23 @@ describe('the Friends from the main server', () => {
         askedOff: false,
       },
     ]);
+  });
+});
+
+describe('the Place nearest a Friend and the walk there, from the main server', () => {
+  it.each([
+    [4, '도보 4분'],
+    [0, '근처'],
+    [null, ''],
+  ])("words a walk of %s minutes as %j, beside the Place's name", async (walkMinutes, walk) => {
+    const server = await askMainServer({ signedIn: true });
+    answerMainScreen(server);
+    const near = { ...LIBRARY_POSITION, level: 'exact', nearPlace: '중앙도서관 본관', walkMinutes };
+    server.on('GET /positions', { status: 200, body: [near] });
+
+    const [view] = toFriendViews(await apiClient.listFriends(), await apiClient.listPositions(), [], now());
+
+    expect(view).toMatchObject({ presence: 'on', line: '중앙도서관 본관', walk });
   });
 });
 
@@ -274,20 +293,15 @@ describe('Onboarding with the main server', () => {
 });
 
 describe('what the main server does not serve', () => {
-  it("stays the mock's: the Friends' statuses, who announced the Global Events and 오늘의 발자국", async () => {
+  it("stays the mock's: who announced the Global Events; and no Friend statuses, the mock's sample ones neither", async () => {
     const server = await askMainServer({ signedIn: true });
 
-    const asked = Promise.all([
-      apiClient.listFriendStatuses(),
-      apiClient.listGlobalEventAnnouncers(),
-      apiClient.getFootprints(),
-    ]);
+    const asked = Promise.all([apiClient.listGlobalEventAnnouncers(), apiClient.listFriendStatuses()]);
     await jest.runAllTimersAsync();
-    const [statuses, announcers, footprints] = await asked;
+    const [announcers, statuses] = await asked;
 
-    expect(statuses).toHaveLength(12);
     expect(announcers).toHaveLength(1);
-    expect(footprints.friendCount).toBe(5);
+    expect(statuses).toEqual([]);
     expect(server.received()).toEqual([]);
   });
 });

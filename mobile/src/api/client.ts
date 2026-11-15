@@ -15,6 +15,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -31,7 +32,6 @@ import type {
   AskedMoment,
   Board,
   ClassSave,
-  Footprints,
   Friend,
   FriendLevel,
   FriendStatus,
@@ -137,9 +137,6 @@ export interface ApiClient {
   // Null for a User who is in no Party. The main server says so with a refusal, 404 NOT_IN_PARTY: the operation turns
   // exactly that one into null, with `isRefusal`, and throws any other.
   getMyParty: () => Promise<MyParty | null>;
-  // What "오늘의 발자국" shows: how many Friends left a story today, and three faces. The app's own: no answer of the
-  // main server holds it.
-  getFootprints: () => Promise<Footprints>;
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
   // One day's menus, a calendar day in Korea as "2026-10-06", by restaurant.
   listMenus: (date: string) => Promise<RestaurantMenus[]>;
@@ -278,7 +275,6 @@ export const apiClient: ShownClient = {
   getMatchingRequest: (globalEventId) => chosen().getMatchingRequest(globalEventId),
   withdrawMatchingRequest: (globalEventId) => chosen().withdrawMatchingRequest(globalEventId),
   getMyParty: () => chosen().getMyParty(),
-  getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
   listMenus: (date) => chosen().listMenus(date),
   getShuttle: () => chosen().getShuttle(),
