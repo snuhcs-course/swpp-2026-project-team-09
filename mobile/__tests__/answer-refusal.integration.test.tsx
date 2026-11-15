@@ -14,7 +14,7 @@ import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
-import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
 import { LEE_MINSU, WHICH_MINSU_REPLY } from './support/which-friend';
 import { REFUSAL_REPLIES, type RefusalReply } from '@/api/mock/data/refusals';
 
@@ -192,5 +192,21 @@ describe('a Friend picked from the question', () => {
     const [, pressed, again] = sent();
     expect(pressed).toMatchObject({ context: { tapped: LEE } });
     expect(again).toEqual(pressed);
+  });
+});
+
+describe("a Friend's profile from the question", () => {
+  it("opens over the card from the cell's mark, and picks no one", async () => {
+    server.on('GET /friends', {
+      status: 200,
+      body: [{ ...MIN_JUN, id: LEE_MINSU.userId, name: LEE_MINSU.label, department: LEE_MINSU.aside }],
+    });
+    const user = await askWhich();
+
+    await user.press(card().getByRole('button', { name: '이민수 프로필' }));
+
+    expect(within(screen.getByTestId('map-card')).getByRole('header', { name: '이민수' })).toBeVisible();
+    expect(card().getByText('민수가 두 명이에요')).toBeVisible();
+    expect(sent()).toHaveLength(1);
   });
 });

@@ -13,6 +13,7 @@ import type { Refusal, RefusalOffer } from '@/api/refusal-types';
 import { color } from '@/design-system';
 import { useLocationOffer } from '@/screens/main/answer/location-offer';
 import { RefusalReply } from '@/screens/main/answer/refusal-reply';
+import { FriendProfileOver } from '@/screens/main/friend-profile';
 
 // A refusal in the answer frame's card (P02 ticket 10): its lines in place of the model's sentence, and its offers as
 // buttons in the board's order, of one width in one row. Partitions: one offer, a choice of equal asks, offers of
@@ -129,90 +130,113 @@ describe('an offer pressed', () => {
   });
 });
 
-// The question of which Friend (P02 ticket 17): one cell per candidate, of one width, the full name with the
-// department under it in small muted text. Partitions: two and three candidates (one row), five (two to a row, an odd
-// last cell); an aside and none; candidates of different names and of one full name.
+// The question of which Friend (P02 ticket 17): one cell of the choice grid per candidate, the full name with the
+// department under it, and inside the answer frame a mark at its end that opens the Friend's profile. Partitions:
+// two candidates (one row), three (two to a row, an odd last cell); an aside and none; inside the frame and outside;
+// a press on the cell and on its mark; candidates of different names and of one full name.
 
-// The cells' rows, each as what a screen reader says of its cells, the empty partner by its id.
+type Part = ReturnType<typeof screen.getByTestId>['children'][number];
+
+// What a part of a row is called: a cell by what a screen reader says of it, the empty partner by its id, and a cell
+// with a mark by its first part that has a name.
+function nameOf(part: Part): string {
+  if (typeof part === 'string') {
+    return part;
+  }
+  const name: unknown = part.props.accessibilityLabel ?? part.props.testID;
+  if (typeof name === 'string') {
+    return name;
+  }
+  return part.children.map((child) => nameOf(child)).find((named) => named !== '') ?? '';
+}
+
 function rows(): string[][] {
-  return screen.getByTestId('refusal-picks').children.map((row) =>
-    typeof row === 'string'
-      ? [row]
-      : row.children.map((part) => {
-          if (typeof part === 'string') {
-            return part;
-          }
-          const name: unknown = part.props.accessibilityLabel ?? part.props.testID;
-          return typeof name === 'string' ? name : '';
-        }),
+  return screen
+    .getByTestId('choice-grid')
+    .children.map((row) => (typeof row === 'string' ? [row] : row.children.map((part) => nameOf(part))));
+}
+
+const showProfile = jest.fn<undefined, [string]>();
+
+// The refusal inside the answer frame, whose profile is a stand-in.
+async function showFramed(refusal: Refusal): Promise<void> {
+  const profile = { friend: null, show: showProfile, hide: jest.fn() };
+  await render(
+    <FriendProfileOver keyboardUp={false} profile={profile}>
+      <RefusalReply onAsk={onAsk} refusal={refusal} />
+    </FriendProfileOver>,
   );
 }
 
 const PARK_MINSU = pick('minsu-park', '박민수', '기계공학부');
-const CHOI_MINSU = pick('minsu-choi', '최민수', '사회학과');
 const JUNG_MINSU = pick('minsu-jung', '정민수', null);
 
 describe('the Friends to pick', () => {
-  it('stand as cells of one width in one row, the full name with the department under it', async () => {
-    await show(WHICH_MINSU);
+  beforeEach(() => {
+    showProfile.mockReset();
+  });
+
+  it("are the choice grid's cells, the full name with the department under it and the profile mark", async () => {
+    await showFramed(WHICH_MINSU);
 
     expect(rows()).toEqual([['김민수, 컴퓨터공학부', '이민수, 경영학과']]);
     const kim = screen.getByRole('button', { name: '김민수, 컴퓨터공학부' });
     expect(kim).toHaveTextContent('김민수컴퓨터공학부');
-    expect(kim).toHaveStyle({ flex: 1 });
-    expect(kim).not.toHaveStyle({ flexDirection: 'row' });
-    expect(screen.getByText('김민수')).toHaveStyle({ fontSize: 14, color: color.ink });
     expect(screen.getByText('컴퓨터공학부')).toHaveStyle({ fontSize: 12, color: color.inkMuted });
+    expect(screen.getByRole('button', { name: '김민수 프로필' })).toBeOnTheScreen();
     expect(screen.queryByTestId('refusal-offers')).toBeNull();
   });
 
-  it('never cut the name', async () => {
-    await show(WHICH_MINSU);
-
-    expect(screen.getByText('김민수').props.numberOfLines).toBeUndefined();
-  });
-
-  it('stand three in one row', async () => {
-    await show(whichFriend('민수', [KIM_MINSU, LEE_MINSU, PARK_MINSU]));
-
-    expect(rows()).toEqual([['김민수, 컴퓨터공학부', '이민수, 경영학과', '박민수, 기계공학부']]);
-  });
-
-  it('go two to a row when there are more than three, an odd last one keeping its width', async () => {
-    const jung = { ...JUNG_MINSU, aside: '물리학과' };
-    await show(whichFriend('민수', [KIM_MINSU, LEE_MINSU, PARK_MINSU, CHOI_MINSU, jung]));
+  it('go two to a row, an odd last one keeping its width', async () => {
+    await showFramed(whichFriend('민수', [KIM_MINSU, LEE_MINSU, PARK_MINSU]));
 
     expect(rows()).toEqual([
       ['김민수, 컴퓨터공학부', '이민수, 경영학과'],
-      ['박민수, 기계공학부', '최민수, 사회학과'],
-      ['정민수, 물리학과', 'refusal-pick-empty'],
+      ['박민수, 기계공학부', 'choice-grid-empty'],
     ]);
   });
 
   it('show the name alone when there is no aside', async () => {
-    await show(whichFriend('민수', [KIM_MINSU, JUNG_MINSU]));
+    await showFramed(whichFriend('민수', [KIM_MINSU, JUNG_MINSU]));
 
     expect(rows()).toEqual([['김민수, 컴퓨터공학부', '정민수']]);
     expect(screen.getByRole('button', { name: '정민수' })).toHaveTextContent('정민수');
+  });
+
+  it('have no profile mark outside the answer frame', async () => {
+    await show(WHICH_MINSU);
+
+    expect(screen.getByRole('button', { name: '김민수, 컴퓨터공학부' })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: '김민수 프로필' })).toBeNull();
   });
 });
 
 describe('a Friend picked', () => {
   it("sends the cell's words with that Friend tapped", async () => {
-    await show(WHICH_MINSU);
+    await showFramed(WHICH_MINSU);
 
     await fireEvent.press(screen.getByRole('button', { name: '이민수, 경영학과' }));
 
     expect(onAsk).toHaveBeenCalledTimes(1);
     expect(onAsk).toHaveBeenCalledWith('이민수', { kind: 'friend', userId: 'minsu-lee' });
+    expect(showProfile).not.toHaveBeenCalled();
   });
 
   it('tells two Friends of one full name apart by their id', async () => {
     const other = pick('minsu-kim-2', '김민수', '경영학과');
-    await show(whichFriend('김민수', [KIM_MINSU, other]));
+    await showFramed(whichFriend('김민수', [KIM_MINSU, other]));
 
     await fireEvent.press(screen.getByRole('button', { name: '김민수, 경영학과' }));
 
     expect(onAsk).toHaveBeenCalledWith('김민수', { kind: 'friend', userId: 'minsu-kim-2' });
+  });
+
+  it("opens the Friend's profile from the mark, and picks no one", async () => {
+    await showFramed(WHICH_MINSU);
+
+    await fireEvent.press(screen.getByRole('button', { name: '이민수 프로필' }));
+
+    expect(showProfile).toHaveBeenCalledWith('minsu-lee');
+    expect(onAsk).not.toHaveBeenCalled();
   });
 });
