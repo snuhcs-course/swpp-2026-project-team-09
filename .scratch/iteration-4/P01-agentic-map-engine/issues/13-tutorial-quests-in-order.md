@@ -73,4 +73,7 @@ The tests were run on the build machine and pass: `tutorial-order.unit.test.ts` 
 
 ### Agent usage (2026-11-15)
 
-Left for the coordinator.
+Tickets 12 and 13 together, one pull request: this session (the tickets and the review), the implementer subagent (the build and the review's fixes), and a review subagent of the diff.
+
+- Agent time: about 1 hour 17 minutes, an estimate from the transcripts' timestamps (the union of active stretches, gaps over 5 minutes left out).
+- Tokens: output 378,068; input 79,939,421, of which 77,921,411 were cache reads, 2,017,532 cache writes, and 478 uncached. Without cache reads: 2,396,078.
