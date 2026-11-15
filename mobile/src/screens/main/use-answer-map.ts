@@ -8,7 +8,7 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { AnswerReply, MapScene } from '@/api/assistant-types';
+import type { MapScene } from '@/api/assistant-types';
 import { space } from '@/design-system';
 import { answerCamera, roomsOf, type ViewArea } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
@@ -94,7 +94,7 @@ interface Framing {
   view: { size: Size; closest: number } | null;
 }
 
-function useFraming({ fitZoom }: MainMap, { answerHeight, stage }: Room, pill: boolean): Framing {
+export function useFraming({ fitZoom }: MainMap, { answerHeight, stage }: Room, pill: boolean): Framing {
   const { top } = useSafeAreaInsets();
   const width = stage?.width;
   const height = stage?.height;
@@ -143,11 +143,11 @@ function showDrawing(drawing: AnswerDrawing | null, shown: LabelView | null, map
 function useAnswerCamera(
   drawing: AnswerDrawing | null,
   shown: LabelView | null,
-  answer: AnswerReply | null,
+  answer: object | null,
   map: MainMap,
   framing: Framing,
 ): void {
-  const followed = useRef<AnswerReply | null>(null);
+  const followed = useRef<object | null>(null);
   const waiting = useRef(false);
   const move = (): void => {
     showDrawing(drawing, shown, map, framing);
@@ -179,7 +179,11 @@ function useAnswerCamera(
 // The Avatars of people the Plan does not draw: Friends and the other people of the User's Party, not the User's own
 // nor the shuttle's vehicles. One near one of the Plan's own marks gives way too: the map draws every Avatar above
 // every marker, so it would lie over the mark or its words.
-function othersOf(avatars: readonly MapAvatar[], cards: readonly CardView[], drawing: AnswerDrawing): MapAvatar[] {
+export function othersOf(
+  avatars: readonly MapAvatar[],
+  cards: readonly CardView[],
+  drawing: AnswerDrawing,
+): MapAvatar[] {
   const others = new Set(
     cards.flatMap(({ id, mark }) => (mark.type === 'person' && !drawing.userIds.includes(mark.id) ? [id] : [])),
   );
@@ -198,7 +202,7 @@ export interface AnswerMap {
 
 type Limits = Pick<AnswerMap, 'nativeMinLevel' | 'outerZoom'>;
 
-const ANSWER_LIMITS: Limits = { nativeMinLevel: ANSWER_MIN_LEVEL, outerZoom: ANSWER_OUTER_ZOOM };
+export const ANSWER_LIMITS: Limits = { nativeMinLevel: ANSWER_MIN_LEVEL, outerZoom: ANSWER_OUTER_ZOOM };
 const EVERYDAY_LIMITS: Limits = { nativeMinLevel: NATIVE_MIN_LEVEL };
 // A native map measures its camera back with a little noise: a zoom less than this under the lowest zoom is at it, as
 // the module counts it (`CameraRules.same`).
@@ -226,7 +230,7 @@ export function useEverydayLimits({ camera, fitZoom, moveTo }: MainMap, drawn: b
 }
 
 // The everyday map's Avatars, and the cards that say whose they are.
-type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
+export type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
 
 // A drawing whose labels' sides are chosen in metres alone, or at a view too.
 type Draw = (view: LabelView | null) => AnswerDrawing;
@@ -239,7 +243,7 @@ interface Drawn {
 }
 
 // The drawing with its labels' sides chosen in metres.
-function useBase(draw: Draw | null): AnswerDrawing | null {
+export function useBase(draw: Draw | null): AnswerDrawing | null {
   return useMemo(() => (draw === null ? null : draw(null)), [draw]);
 }
 
@@ -247,11 +251,11 @@ function useBase(draw: Draw | null): AnswerDrawing | null {
 // with the camera of an answer. The camera is worked out from the drawing with its sides chosen in metres (`base`),
 // and the marks are drawn with their sides chosen at that camera. Null while there is nothing to draw. `looks` are
 // asked for with the drawing's own, so that a change of drawing never waits for a picture. `answer` is the answer
-// drawn, for the camera to tell one that replaced another.
-function useDrawnMap(
+// drawn, or the reply of a Lookup, for the camera to tell one that replaced another.
+export function useDrawnMap(
   draw: Draw | null,
   base: AnswerDrawing | null,
-  answer: AnswerReply | null,
+  answer: object | null,
   looks: readonly MarkerLook[],
   map: MainMap,
   framing: Framing,

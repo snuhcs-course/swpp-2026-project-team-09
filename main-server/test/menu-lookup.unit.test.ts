@@ -106,8 +106,8 @@ describe('301동식당 at 11:40 on the map (board q8)', () => {
           userId: ME,
           name: '나',
           busy: [
-            { startAt: time('11:30'), endAt: time('11:50') },
-            { startAt: time('13:00'), endAt: time('13:30') },
+            { startAt: time('11:30'), endAt: time('11:50'), label: '301동 수업' },
+            { startAt: time('13:00'), endAt: time('13:30'), label: '24동 수업' },
           ],
         },
       ],

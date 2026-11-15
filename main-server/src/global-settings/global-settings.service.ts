@@ -19,11 +19,15 @@ import {
   type ValueOf,
 } from './registry.js';
 
-// A caller's check of a value beyond the registry's: the reason it is refused, or null.
-export type ExtraCheck = (value: SettingValue) => string | null;
-
-export interface SettingRow extends ResolvedSetting {
+export interface SettingRow extends Omit<ResolvedSetting, 'check' | 'label'> {
   readonly value: SettingValue;
+}
+
+// A setting as the Settings page shows it: each allowed value with its label, and its last change with when that
+// applies. `value` is the one in effect on this pod.
+export interface AdministratorSettingRow extends Omit<SettingRow, 'allowed'> {
+  readonly allowed: readonly { readonly value: SettingValue; readonly label: string }[] | null;
+  readonly lastChange: { readonly newValue: string; readonly appliesAt: Date } | null;
 }
 
 export interface SettingChangeRow {
@@ -79,14 +83,33 @@ export class GlobalSettings implements OnModuleInit {
     }));
   }
 
-  // Saves a value given as text, with its history row and the revision's increment, in one transaction. No pod reads
-  // it, this one included, before the next minute's check, which is the time it answers.
-  async save(
-    name: string,
-    text: string,
-    administratorId: string,
-    extraCheck?: ExtraCheck,
-  ): Promise<{ appliesAt: Date }> {
+  // Every registered setting with the value in effect, as list() gives it, and the labels of its allowed values and
+  // its last change.
+  async forAdministrators(): Promise<AdministratorSettingRow[]> {
+    const latest = await this.prisma.settingChange.findMany({
+      distinct: ['name'],
+      orderBy: [{ name: 'asc' }, { revision: 'desc' }],
+      select: { name: true, newValue: true, changedAt: true },
+    });
+    const lastChanges = new Map(latest.map((change) => [change.name, change]));
+    return [...this.registry.values()].map(({ name, type, description, allowed, default: byDefault, label }) => {
+      const change = lastChanges.get(name);
+      return {
+        name,
+        type,
+        description,
+        default: byDefault,
+        value: this.values.get(name) ?? byDefault,
+        allowed: allowed?.map((value) => ({ value, label: label(value) })) ?? null,
+        lastChange: change === undefined ? null : { newValue: change.newValue, appliesAt: appliesAt(change.changedAt) },
+      };
+    });
+  }
+
+  // Saves a value given as text, once it passed the setting's type, allowed values and own check, with its history row
+  // and the revision's increment, in one transaction. No pod reads it, this one included, before the next minute's
+  // check, which is the time it answers.
+  async save(name: string, text: string, administratorId: string): Promise<{ appliesAt: Date }> {
     const setting = this.registry.get(name);
     if (setting === undefined) {
       throw new SettingRefused(`${name} is not a setting.`);
@@ -95,7 +118,7 @@ export class GlobalSettings implements OnModuleInit {
     if (!parsed.ok) {
       throw new SettingRefused(parsed.reason);
     }
-    const refusal = extraCheck?.(parsed.value) ?? null;
+    const refusal = setting.check?.(parsed.value) ?? null;
     if (refusal !== null) {
       throw new SettingRefused(refusal);
     }

@@ -9,32 +9,23 @@ import type {
   AnswerLine,
   AnswerReply,
   ConditionChip,
-  DroppedPlace,
-  EventsInput,
   MapScene,
-  MealInput,
-  PersonConstraint,
   PlacePoint,
   Plan,
-  PlanInput,
-  PlanPart,
-  PlanPerson,
   TimeBand,
 } from '@/api/assistant-types';
-import type { NewQuestInput, QuestsInput } from '@/api/recruiting-plan-types';
+import type { DroppedPlace, PlanPart } from '@/api/plan-part-types';
 import type { LatLng } from '@/api/types';
-import { field, hasTexts, isBoard, isNumber, isText, isTextOrNull, listOf } from './answers';
+import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isRecruitingQuest } from './party-client';
+import { isInput, isOneOf } from './plan-inputs';
 
 // The `answer` and the `lookup` of the Assistant's reply, as main-server `assistant/dto/answer.dto.ts` fixes them:
-// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply.
-
-export function isOneOf<Value extends string>(values: readonly Value[]): (value: unknown) => value is Value {
-  return (value: unknown): value is Value => values.some((one) => one === value);
-}
+// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply. The
+// input's checks are in `plan-inputs.ts`.
 
 // The keys of a record typed by a union of the contract, so that the compiler refuses a value left out or one too many.
-function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
+export function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
   return (value: unknown): value is Value => typeof value === 'string' && Object.hasOwn(values, value);
 }
 
@@ -67,71 +58,6 @@ function isLatLng(value: unknown): value is LatLng {
   return isNumber(field(value, 'latitude')) && isNumber(field(value, 'longitude'));
 }
 
-function isConstraint(value: unknown): value is PersonConstraint {
-  if (!isOneOf(['asker', 'person'])(field(value, 'source'))) {
-    return false;
-  }
-  switch (field(value, 'kind')) {
-    case 'from':
-      return isText(field(value, 'placeId'));
-    case 'notBefore':
-    case 'leaveBy':
-      return isText(field(value, 'time'));
-    default:
-      return false;
-  }
-}
-
-function isPerson(value: unknown): value is PlanPerson {
-  return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
-}
-
-function isMealInput(value: unknown): value is MealInput {
-  const window = field(value, 'window');
-  return (
-    field(value, 'kind') === 'meal' &&
-    isText(field(value, 'date')) &&
-    isOneOf(['lunch', 'dinner'])(field(value, 'meal')) &&
-    listOf(isPerson)(field(value, 'people')) &&
-    isTextOrNull(field(window, 'from')) &&
-    isTextOrNull(field(window, 'until')) &&
-    isTextOrNull(field(value, 'placeId'))
-  );
-}
-
-function isEventsInput(value: unknown): value is EventsInput {
-  const eventIds = field(value, 'eventIds');
-  return (
-    field(value, 'kind') === 'events' && isText(field(value, 'date')) && (eventIds === null || listOf(isText)(eventIds))
-  );
-}
-
-function isQuestsInput(value: unknown): value is QuestsInput {
-  const globalEventId = field(value, 'globalEventId');
-  const questIds = field(value, 'questIds');
-  return (
-    field(value, 'kind') === 'quests' &&
-    isTextOrNull(globalEventId) &&
-    (questIds === null || listOf(isText)(questIds)) &&
-    (globalEventId === null) !== (questIds === null)
-  );
-}
-
-function isNewQuestInput(value: unknown): value is NewQuestInput {
-  const board = field(value, 'board');
-  return (
-    field(value, 'kind') === 'new-quest' &&
-    isText(field(value, 'date')) &&
-    ['globalEventId', 'title', 'placeId', 'time'].every((name) => isTextOrNull(field(value, name))) &&
-    listOf(isPerson)(field(value, 'people')) &&
-    (board === undefined || (board !== null && isBoard(board)))
-  );
-}
-
-export function isInput(value: unknown): value is PlanInput {
-  return isMealInput(value) || isEventsInput(value) || isQuestsInput(value) || isNewQuestInput(value);
-}
-
 // A mode is absent for a walk.
 function isMode(value: unknown): boolean {
   return value === undefined || isOneOf(['walk', 'shuttle'])(value);
@@ -139,7 +65,7 @@ function isMode(value: unknown): boolean {
 
 export function isChip(value: unknown): value is ConditionChip {
   return (
-    isOneOf(['origin', 'until', 'person'])(field(value, 'kind')) &&
+    isOneOf(['origin', 'from', 'until', 'person'])(field(value, 'kind')) &&
     isText(field(value, 'text')) &&
     isTextOrNull(field(value, 'userId'))
   );
@@ -155,8 +81,14 @@ export function isPlacePoint(value: unknown): value is PlacePoint {
   return hasTexts(value, ['placeId', 'label']) && isLatLng(value);
 }
 
+// The Place the input fixed carries each person's part there.
 function isDropped(value: unknown): value is DroppedPlace {
-  return isPlacePoint(field(value, 'place')) && isText(field(value, 'reason'));
+  const parts = field(value, 'parts');
+  return (
+    isPlacePoint(field(value, 'place')) &&
+    isText(field(value, 'reason')) &&
+    (parts === undefined || listOf(isPart)(parts))
+  );
 }
 
 function isNoPlan(value: unknown): value is AnswerReply['noPlan'] {
@@ -186,11 +118,13 @@ export function isNext(value: unknown): value is PlanPart['next'] {
 }
 
 function isPart(value: unknown): value is PlanPart {
+  const arriveAt = field(value, 'arriveAt');
   return (
     hasTexts(value, ['userId', 'name']) &&
     isBoolean(field(value, 'me')) &&
     isOrigin(field(value, 'origin')) &&
     ['leaveAt', 'leaveBy'].every((name) => isTextOrNull(field(value, name))) &&
+    (arriveAt === undefined || isTextOrNull(arriveAt)) &&
     isNumberOrNull(field(value, 'walkMinutes')) &&
     isNext(field(value, 'next')) &&
     isMode(field(value, 'mode'))
@@ -212,7 +146,13 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
 }
 
 function isScenePlace(value: unknown): value is MapScene['places'][number] {
-  return isPlacePoint(field(value, 'place')) && isPlaceRole(field(value, 'role')) && isTextOrNull(field(value, 'tag'));
+  const order = field(value, 'order');
+  return (
+    isPlacePoint(field(value, 'place')) &&
+    isPlaceRole(field(value, 'role')) &&
+    isTextOrNull(field(value, 'tag')) &&
+    (order === undefined || (typeof order === 'number' && Number.isInteger(order) && order >= 1))
+  );
 }
 
 function isRoute(value: unknown): value is MapScene['routes'][number] {
@@ -243,8 +183,14 @@ function isSpan(value: unknown): value is { startAt: string; endAt: string } {
   return hasTexts(value, ['startAt', 'endAt']);
 }
 
+// A busy stretch says what it is on a Plan's band, and need not elsewhere.
+function isBusy(value: unknown): value is TimeBand['lanes'][number]['busy'][number] {
+  const label = field(value, 'label');
+  return isSpan(value) && (label === undefined || isText(label));
+}
+
 function isLane(value: unknown): value is TimeBand['lanes'][number] {
-  return hasTexts(value, ['userId', 'name']) && listOf(isSpan)(field(value, 'busy'));
+  return hasTexts(value, ['userId', 'name']) && listOf(isBusy)(field(value, 'busy'));
 }
 
 export function isBand(value: unknown): value is TimeBand {

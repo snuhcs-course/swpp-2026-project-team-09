@@ -82,8 +82,8 @@ const jobFairBand = (): object => ({
       userId: 'me',
       name: '나',
       busy: [
-        { startAt: time('13:30'), endAt: time('13:50') },
-        { startAt: time('15:30'), endAt: time('16:00') },
+        { startAt: time('13:30'), endAt: time('13:50'), label: '24동 수업' },
+        { startAt: time('15:30'), endAt: time('16:00'), label: '301동 수업' },
       ],
     },
   ],

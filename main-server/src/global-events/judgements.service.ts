@@ -3,12 +3,14 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
-import { causeOf, type Model, MODEL_PORT } from '../assistant/adapter.js';
+import { causeOf, type Model } from '../assistant/adapter.js';
+import { ModelPort } from '../assistant/model-port.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { Settings } from '../common/settings.js';
 import {
@@ -94,12 +96,11 @@ function ownDraftStart(ownDraft: Prisma.JsonValue): Date | null {
 export class JudgementsService {
   private readonly logger = new Logger(JudgementsService.name);
   private readonly limits: JudgementLimits;
-  private readonly keyConfigured: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly places: PlacesService,
-    @Inject(MODEL_PORT) private readonly model: Model,
+    private readonly models: ModelPort,
     @Inject(CLOCK) private readonly clock: Clock,
     settings: ConfigService<Settings, true>,
   ) {
@@ -107,7 +108,6 @@ export class JudgementsService {
       timeoutMs: settings.get('JUDGEMENT_TIMEOUT_MS', { infer: true }),
       maxOutputTokens: settings.get('JUDGEMENT_MAX_OUTPUT_TOKENS', { infer: true }),
     };
-    this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
   }
 
   // Judges the post of a Draft, whatever AUTOMATIC_JUDGEMENT says: the step for a later script and for the evaluation.
@@ -124,9 +124,11 @@ export class JudgementsService {
   }
 
   // Answers with the post's Judgement as it now is. Another server's try that is still running is left to finish.
+  // The key llm.key names is read once, at the start, and the whole Judgement uses it.
   async judgePost(sourcePostId: string): Promise<Judgement | null> {
-    if (!this.keyConfigured) {
-      throw new Error('A Judgement needs OPENROUTER_API_KEY');
+    const chosen = this.models.chosen();
+    if (chosen === null) {
+      throw new Error('A Judgement needs a key: the server has none by the name llm.key gives');
     }
     const post = await this.prisma.sourcePost.findUniqueOrThrow({
       where: { id: sourcePostId },
@@ -139,7 +141,7 @@ export class JudgementsService {
     if (claimed === null) {
       return this.prisma.judgement.findUnique({ where: { sourcePostId } });
     }
-    return this.judge(post, claimed);
+    return this.judge(post, claimed, chosen.model);
   }
 
   // Which of the posts have a try to make, so that the step can take them after those that wait for no model.
@@ -181,7 +183,7 @@ export class JudgementsService {
     return claimed ?? null;
   }
 
-  private async judge(post: PostWithOwnSessions, claim: Judgement): Promise<Judgement> {
+  private async judge(post: PostWithOwnSessions, claim: Judgement, model: Model): Promise<Judgement> {
     const now = this.clock.now();
     const event = post.sessions[0]?.globalEvent;
     const masked = maskedPost({ title: event?.title ?? '', text: event?.description ?? '' });
@@ -195,7 +197,7 @@ export class JudgementsService {
     });
     let answered: Prisma.JudgementUpdateManyMutationInput;
     try {
-      const { answer, modelId } = await askForJudgement(this.model, masked, source, now, this.limits);
+      const { answer, modelId } = await askForJudgement(model, masked, source, now, this.limits);
       const sessions = checkedSessions(answer, {
         post: masked,
         source: POST_SOURCES[source],

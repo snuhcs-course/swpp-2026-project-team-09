@@ -5,13 +5,25 @@
  ******************************************************************************/
 
 import { Global, Module } from '@nestjs/common';
+import { AI_KEYS, type AiKeys } from '../common/llm-keys.js';
+import { AdminSettingsController } from './admin-settings.controller.js';
 import { GlobalSettings } from './global-settings.service.js';
-import { REGISTERED_SETTINGS, SETTING_REGISTRY } from './registered-settings.js';
+import { registeredSettings, SETTING_REGISTRY } from './registered-settings.js';
+import { type SettingDefinition } from './registry.js';
 
-// Makes GlobalSettings available to every feature. AppModule starts the scheduler that runs its minute check.
+// Makes GlobalSettings available to every feature, and serves the admin site's Settings page. AppModule starts the
+// scheduler that runs its minute check.
 @Global()
 @Module({
-  providers: [GlobalSettings, { provide: SETTING_REGISTRY, useValue: REGISTERED_SETTINGS }],
+  controllers: [AdminSettingsController],
+  providers: [
+    GlobalSettings,
+    {
+      provide: SETTING_REGISTRY,
+      inject: [AI_KEYS],
+      useFactory: (keys: AiKeys): SettingDefinition[] => registeredSettings(keys),
+    },
+  ],
   exports: [GlobalSettings],
 })
 export class GlobalSettingsModule {}

@@ -12,8 +12,10 @@
 
 import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
+import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
+import type { DroppedPlace, PlanPart } from './plan-part-types';
 import type { WithRefusal } from './refusal-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
@@ -185,7 +187,7 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput;
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
 
 export interface MealInput {
   kind: 'meal';
@@ -231,8 +233,9 @@ export interface AnswerReply {
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
 }
 
+// `from` is the start the User fixed for a meet.
 export interface ConditionChip {
-  kind: 'origin' | 'until' | 'person';
+  kind: 'origin' | 'from' | 'until' | 'person';
   text: string;
   userId: string | null;
 }
@@ -244,11 +247,6 @@ export interface PlacePoint {
   label: string;
   latitude: number;
   longitude: number;
-}
-
-export interface DroppedPlace {
-  place: PlacePoint;
-  reason: string;
 }
 
 export interface Plan {
@@ -280,21 +278,6 @@ export interface Plan {
   candidates?: { userId: string; name: string; line: string }[];
 }
 
-export interface PlanPart {
-  userId: string;
-  name: string;
-  me: boolean;
-  // Null when the position is unknown.
-  origin: { place: PlacePoint; basis: 'timetable' | 'location' | 'chosen' } | null;
-  leaveAt: string | null;
-  walkMinutes: number | null;
-  // Null when nothing follows.
-  leaveBy: string | null;
-  next: { startAt: string; place: PlacePoint | null } | null;
-  // How they travel, absent for a walk.
-  mode?: 'walk' | 'shuttle';
-}
-
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {
   people: {
@@ -307,7 +290,8 @@ export interface MapScene {
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
-  places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
+  // `order`: the number a place carries in a list (1, 2, 3), as a day's Classes or the Tutorial Quests in order.
+  places: { place: PlacePoint; role: PlaceRole; tag: string | null; order?: number }[];
   // `mode` is absent for a walk.
   routes: {
     userId: string;
@@ -323,7 +307,8 @@ export interface MapScene {
 export interface TimeBand {
   range: { startAt: string; endAt: string };
   now: string;
-  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string }[] }[];
+  // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
+  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
   startAt: string;
   endAt: string;
   text: string;

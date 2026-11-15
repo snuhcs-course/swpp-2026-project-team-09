@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -82,6 +83,7 @@ describe("Lunch with 민수 and 지은: each person's part", () => {
         origin: { place: point('제1공학관', '301동'), basis: 'timetable' },
         leaveAt: time('12:18'),
         walkMinutes: 15,
+        arriveAt: time('12:33'),
         leaveBy: time('12:59'),
         next: { startAt: time('13:00'), place: point('자연과학관6', '24동') },
       },
@@ -92,6 +94,7 @@ describe("Lunch with 민수 and 지은: each person's part", () => {
         origin: { place: point('제2공학관', '302동'), basis: 'timetable' },
         leaveAt: time('12:15'),
         walkMinutes: 18,
+        arriveAt: time('12:33'),
         leaveBy: null,
         next: null,
       },
@@ -102,6 +105,7 @@ describe("Lunch with 민수 and 지은: each person's part", () => {
         origin: { place: point('두산인문관', '8동'), basis: 'timetable' },
         leaveAt: time('12:28'),
         walkMinutes: 5,
+        arriveAt: time('12:20'),
         leaveBy: time('12:55'),
         next: { startAt: time('13:00'), place: point('두산인문관', '8동') },
       },
@@ -157,17 +161,17 @@ describe('Lunch with 민수 and 지은: the time band and the other places', () 
           userId: ME,
           name: '나',
           busy: [
-            { startAt: time('11:30'), endAt: time('11:50') },
-            { startAt: time('13:00'), endAt: time('13:30') },
+            { startAt: time('11:30'), endAt: time('11:50'), label: '301동 수업' },
+            { startAt: time('13:00'), endAt: time('13:30'), label: '24동 수업' },
           ],
         },
-        { userId: MINSU, name: '민수', busy: [{ startAt: time('11:30'), endAt: time('12:15') }] },
+        { userId: MINSU, name: '민수', busy: [{ startAt: time('11:30'), endAt: time('12:15'), label: '302동 수업' }] },
         {
           userId: JIEUN,
           name: '지은',
           busy: [
-            { startAt: time('11:30'), endAt: time('12:15') },
-            { startAt: time('13:00'), endAt: time('13:30') },
+            { startAt: time('11:30'), endAt: time('12:15'), label: '8동 수업' },
+            { startAt: time('13:00'), endAt: time('13:30'), label: '8동 수업' },
           ],
         },
       ],

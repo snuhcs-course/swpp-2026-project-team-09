@@ -24,6 +24,7 @@ import { FREE_TIME_EVENT_RULES, FREE_TIME_RULES } from '../free-time/free-time-r
 import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
+import { MEET_RULES, planMeet } from '../gathering/meet-tools.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { koreaNow } from '../korea-time.js';
@@ -32,12 +33,12 @@ import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
 import { answeringOptions, type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { DAY_RULES, findDay } from '../lookup/day-tools.js';
 import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
-import { type FriendLookupService } from '../lookup/friend.service.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
-import { type MenuLookupService } from '../lookup/menu.service.js';
+import { type LookupServices } from '../lookup/lookup-services.js';
+import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-order-tools.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
-import { type WayService } from '../lookup/way.service.js';
 import { DELIMITER } from '../others-text.js';
 import { withRefusals } from '../refusals/refusal-tools.js';
 import { getMenus } from '../tools/get-menus.js';
@@ -69,18 +70,19 @@ export interface ChatAssistantServices {
   tutorial: TutorialService;
   // The planners of each kind of answer drawn on the map.
   plans: PlanAnswersService;
-  ways: WayService;
-  menuLookups: MenuLookupService;
-  friendLookups: FriendLookupService;
+  // The reads of the Lookups drawn on the map.
+  lookups: LookupServices;
   interests: InterestsService;
 }
 
 export interface ChatAssistantOptions {
   // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards, and a way to a
-  // Place, a Restaurant's menu, and where a Friend is are drawn there.
+  // Place, a Restaurant's menu, where a Friend is, a day's Classes, and the Tutorial Quests in order are drawn there.
   drawsAnswers: boolean;
   // With drawsAnswers, it also draws the events of a day and recruiting Quests planned there.
   drawsEvents?: boolean;
+  // With drawsAnswers, it also draws a meet.
+  drawsMeets?: boolean;
 }
 
 function instructionsOf(
@@ -133,18 +135,29 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
 - Politely decline long general work, such as writing a report or an essay, or writing or fixing code, and say what you can help with on campus.${drawsAnswers ? '' : NO_POSITIONS}`;
 }
 
-// What an app that draws answers plans on the map in place of the Restaurant cards and their rules: a meal, and the
-// events of a day and recruiting Quests when it draws those too.
+// What an app that draws answers plans on the map in place of the Restaurant cards and their rules: a meal, the events
+// of a day and recruiting Quests when it draws those too, and a meet when it draws one.
 function plannedOnMap(
   plans: PlanAnswersService,
   cards: Record<string, Tool>,
   options: ChatAssistantOptions | undefined,
 ): { rules: string[]; tools: Record<string, Tool> } {
-  const { meals, events, quests } = plans;
   if (options?.drawsAnswers !== true) {
     return { rules: [FREE_TIME_RULES], tools: cards };
   }
-  if (options.drawsEvents !== true) {
+  const planned = mealsAndEvents(plans, options.drawsEvents === true);
+  if (options.drawsMeets !== true) {
+    return planned;
+  }
+  return { rules: [...planned.rules, MEET_RULES], tools: { ...planned.tools, planMeet: planMeet(plans.meets) } };
+}
+
+function mealsAndEvents(
+  plans: PlanAnswersService,
+  drawsEvents: boolean,
+): { rules: string[]; tools: Record<string, Tool> } {
+  const { meals, events, quests } = plans;
+  if (!drawsEvents) {
     return { rules: [FREE_TIME_EVENT_RULES, PLAN_RULES], tools: { planMeal: planMeal(meals) } };
   }
   return {
@@ -158,23 +171,25 @@ function plannedOnMap(
   };
 }
 
-// An app that draws answers also gets the Lookups drawn on the map: the way to a Place, a Restaurant's menu, and where a
-// Friend is.
+// An app that draws answers also gets the Lookups drawn on the map: the way to a Place, a Restaurant's menu, where a
+// Friend is, a day's Classes, and the Tutorial Quests in order.
 function withLookups(
   planned: { rules: string[]; tools: Record<string, Tool> },
-  { ways, menuLookups, friendLookups }: ChatAssistantServices,
+  { lookups }: ChatAssistantServices,
   drawsAnswers: boolean,
 ): { rules: string[]; tools: Record<string, Tool> } {
   if (!drawsAnswers) {
     return planned;
   }
   return {
-    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES],
+    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES, DAY_RULES, TUTORIAL_ORDER_RULES],
     tools: {
       ...planned.tools,
-      findWay: findWay(ways),
-      findMenu: findMenu(menuLookups),
-      findFriend: findFriend(friendLookups),
+      findWay: findWay(lookups.ways),
+      findMenu: findMenu(lookups.menus),
+      findFriend: findFriend(lookups.friends),
+      findDay: findDay(lookups.days),
+      findTutorialOrder: findTutorialOrder(lookups.tutorial),
     },
   };
 }

@@ -75,6 +75,8 @@ export interface GatheringDrop {
   togetherMinutes: number;
   // Who could stay the shortest on their own, and for how long (never below 0). The first such person on a tie.
   shortest: { personId: string; minutes: number };
+  // In the order of the people.
+  parts: PersonPart[];
 }
 
 export interface Gathering {
@@ -92,33 +94,40 @@ export const RECENT_CLASS_MINUTES = 15;
 // The most a Friend's way may grow by going through the asker's origin to meet there.
 export const DETOUR_MINUTES = 1;
 
-// The asker is the first person. `now` is a whole minute.
+// The Places, or those of a stretch from its sides, as a meet adds the buildings the people set out from.
+export type GatheringPlaces =
+  readonly GatheringPlace[] | ((sides: readonly GatheringSide[]) => readonly GatheringPlace[]);
+
+// The asker is the first person. `now` is a whole minute. Without `merging`, everyone walks to the place on their own,
+// as for a meet, where meeting on the way would be the meet itself.
 export function gather(
   people: readonly [GatheringPerson, ...GatheringPerson[]],
-  places: readonly GatheringPlace[],
+  places: GatheringPlaces,
   when: { window: Interval; now: Date },
   travel: Pick<TravelProvider, 'walkingSeconds'>,
+  { merging = true }: { merging?: boolean } = {},
 ): Gathering {
   const stretches = sharedTime(
     people.map(({ free }) => free),
     when.window,
   );
-  const plans = stretches.map((stretch) => planIn(stretch, people, places, when, travel));
+  const plans = stretches.map((stretch) => planIn(stretch, people, places, when, { travel, merging }));
   return plans.find(({ fits }) => fits.length > 0) ?? plans[0] ?? { shared: null, sides: [], fits: [], dropped: [] };
 }
 
 function planIn(
   stretch: Interval,
   [asker, ...friends]: readonly [GatheringPerson, ...GatheringPerson[]],
-  places: readonly GatheringPlace[],
+  places: GatheringPlaces,
   { window, now }: { window: Interval; now: Date },
-  travel: Walking,
+  { travel, merging }: { travel: Walking; merging: boolean },
 ): Gathering {
   const sides: [GatheringSide, ...GatheringSide[]] = [
     sideOf(asker, stretch, now),
     ...friends.map((friend) => sideOf(friend, stretch, now)),
   ];
-  const all = places.map((place) => fitAt(place, sides, window, travel));
+  const candidates = typeof places === 'function' ? places(sides) : places;
+  const all = candidates.map((place) => fitAt(place, sides, window, { travel, merging }));
   const fits = all.filter((fit) => fitsTogether(fit)).toSorted(byLongestTogether);
   const dropped = all.filter((fit) => !fitsTogether(fit)).map((fit) => dropOf(fit, window));
   return { shared: stretch, sides, fits, dropped };
@@ -143,7 +152,7 @@ function dropOf({ key, placeId, togetherMinutes, parts }: GatheringFit, window: 
     ),
   }));
   const shortest = stays.reduce((least, stay) => (stay.minutes < least.minutes ? stay : least));
-  return { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest };
+  return { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest, parts };
 }
 
 type Walking = Pick<TravelProvider, 'walkingSeconds'>;
@@ -266,9 +275,9 @@ function fitAt(
   place: GatheringPlace,
   [asker, ...friends]: readonly [GatheringSide, ...GatheringSide[]],
   window: Interval,
-  travel: Walking,
+  { travel, merging }: { travel: Walking; merging: boolean },
 ): GatheringFit {
-  const earliestMeeting = meetingOf(place.placeId, asker, friends, travel);
+  const earliestMeeting = merging ? meetingOf(place.placeId, asker, friends, travel) : null;
   const arriving = [asker, ...friends].map((side) => partOf(side, place.placeId, earliestMeeting, travel));
   const start = latest([window.start, ...arriving.map((part) => part.canArriveAt ?? part.readyAt)]);
   const end = earliest([window.end, ...arriving.flatMap(({ leaveBy }) => (leaveBy === null ? [] : [leaveBy]))]);

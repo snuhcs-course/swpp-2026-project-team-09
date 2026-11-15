@@ -156,7 +156,7 @@ servers' own `.env.example` files.
 `MATCH_DB_PASSWORD`, the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, `WORKER_TOKEN`
 and `MATCH_SERVER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
 `PUBLIC_URL` (the Dev Server's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug
-key's, which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS` and `EXTRA_SNU_COLLECTION=off`.
+key's, which signs the dev APK), `ROUND_INTERVAL_SECONDS` and `EXTRA_SNU_COLLECTION=off`.
 
 **Filled in by a person**, `CHANGE_ME` until then:
 
@@ -168,7 +168,7 @@ key's, which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS` and
 
 `OPENROUTER_API_KEY`, the Assistant's OpenRouter key (`main-server/.env.example` says how to make one), is left empty
 rather than `CHANGE_ME`: while it is empty, the Assistant answers that it is unavailable and everything else runs. A
-settings file written before the Assistant lacks it and `ASSISTANT_MODEL`: copy both lines from
+settings file written before the Assistant lacks it: copy its line from
 [`snu-now.env.example`](snu-now.env.example) and apply them as in [Changing a setting later](#changing-a-setting-later).
 
 `LLM_KEYS`, the AI's other keys by name, is `{}` and may stay so: the Assistant then uses `OPENROUTER_API_KEY`, the key

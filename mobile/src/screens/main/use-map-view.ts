@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -11,6 +12,7 @@ import type { MapAvatar, MapLine } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
 import { type AnswerMap, ignorePress, useAnswerMap, useEverydayLimits, useInvitationMap } from './use-answer-map';
+import { useLookupMap } from './use-lookup-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
 import type { MadeQuestCard } from './use-made-quest-card';
@@ -62,8 +64,9 @@ export type MapView = AnswerMap & { around: MapTouches };
 // selected, the tutorial place pin over them, the User's own Avatar, which takes a press while the switch is on, and
 // the lines. While the switch is on, a tap on a building opens its card and the Place is marked. While a Plan of an
 // answer is shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received
-// invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. Once any of them
-// closes, a camera left further out than the everyday map allows glides back in.
+// invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A Lookup on screen
+// is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left further out than
+// the everyday map allows glides back in.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
@@ -72,7 +75,8 @@ export function useMapView(
   { invitation, made }: UnaskedCards,
 ): MapView {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap);
-  const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
+  const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
+  const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
   const limits = useEverydayLimits(map, answer !== null || way !== null);
