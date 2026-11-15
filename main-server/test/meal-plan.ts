@@ -70,8 +70,8 @@ export class MealPlanStage {
   }
 
   // A new User who is the asker's Friend.
-  async friend(name: string): Promise<Named> {
-    const friend = await this.user(name);
+  async friend(name: string, department?: string): Promise<Named> {
+    const friend = await this.user(name, department);
     await befriend(this.app, this.asker, friend);
     return friend;
   }
@@ -110,8 +110,8 @@ export class MealPlanStage {
     });
   }
 
-  private async user(name: string): Promise<Named> {
-    return { ...(await signInUser(this.app, { name, department: '컴퓨터공학부' })), name };
+  private async user(name: string, department = '컴퓨터공학부'): Promise<Named> {
+    return { ...(await signInUser(this.app, { name, department })), name };
   }
 }
 
