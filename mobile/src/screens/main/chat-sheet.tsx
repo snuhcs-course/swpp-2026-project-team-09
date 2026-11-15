@@ -22,6 +22,7 @@ import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answ
 import { type Chat, type ChatBubble, useChat } from '@/features/assistant/use-chat';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
+import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features/assistant/use-shown-lookup';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { openPost } from '../party/post-card';
 import { ChatBubbles, ChatEmpty } from './chat-bubbles';
@@ -188,6 +189,8 @@ export interface ChatSheetControl {
   answer: ShownAnswer;
   // The Quest "이대로 초대" made from the Plan on screen, and how each invited Friend stands.
   invitation: PlanInvitation;
+  // The Lookup on screen, which the map and the frame's card draw: none while the switch is off.
+  lookup: ShownLookup;
 }
 
 // A change of the switch of the answer on the map closes the sheet and forgets the conversation.
@@ -257,11 +260,13 @@ function useAnswerOnScreen(
 // With the switch of the answer on the map on, every request carries the context at the User's `position`, the sheet
 // never opens, and the answer frame shows the conversation instead: a card that leads elsewhere leaves the frame as
 // it is, and a map button forgets the conversation and turns its layer on. A change of the switch closes the sheet and
-// forgets the conversation.
+// forgets the conversation. A Lookup's "길 안내" starts the route guidance with `start` and forgets the conversation
+// once it started.
 export function useChatSheet(
   inFront: boolean,
   turnOn: (layer: MapLayer) => void,
   position: LatLng | null,
+  start: StartGuidance,
 ): ChatSheetControl {
   const onMap = useAnswerSwitch();
   const shownNow = useRef<ShownAnswer | null>(null);
@@ -289,6 +294,7 @@ export function useChatSheet(
     framed: onMap && (chat.bubbles.length > 0 || chat.waiting),
     leaving: { showLayer: forgettingFor(chat.reset, turnOn), openEvent, openQuestPost, openPartyForm, proposals },
     ...useAnswerOnScreen(onMap, chat.bubbles, position, shownNow),
+    lookup: useShownLookup(onMap ? chat.bubbles : NO_BUBBLES, start, chat.reset),
     sheet: (inputTop) =>
       sheetShown ? (
         <ChatSheet

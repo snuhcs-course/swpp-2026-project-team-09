@@ -24,7 +24,7 @@ const NONE_REASONS: Record<Extract<WayAnswer, { result: 'none' }>['reason'], str
     'The time given as by is not later than now. Give it as 24-hour HH:MM (2시 in the afternoon is 14:00); if the time the User named has passed today, say so.',
 };
 
-const STARTS: Record<Way['start']['basis'], string> = {
+export const STARTS: Record<Way['start']['basis'], string> = {
   location: 'where the User is now',
   chosen: 'the Place the User named',
   timetable: "the Place of the User's last item today",

@@ -585,7 +585,7 @@ the rules go on publishing. Turn it on only when all of these hold (ticket 09):
   only providers that do not train on prompts.
 
 Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no
-`OPENROUTER_API_KEY` or `ASSISTANT_MODEL`, so a Release with that mistake does not replace the running pods. To turn it
+key, neither `OPENROUTER_API_KEY` nor one in `LLM_KEYS`, so a Release with that mistake does not replace the running pods. To turn it
 off again at once, use the ConfigMap patch above with `AUTOMATIC_JUDGEMENT`, and also change the file. Drafts stored while
 it was off are not judged when it is turned on.
 
@@ -608,7 +608,7 @@ and also change the file.
 post leaves the server for it, and a session the rules do not attach is published as before. Turn it on only when both
 hold: evaluation B (ticket 09) has shown D1 at its floor of 0 on the commit being released, and the posts may be sent to the
 model provider. A person decides this, by setting the value to `on` in that file, merging it and releasing. With `on`, the
-server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`. It looks only at posts that go through the
+server refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`. It looks only at posts that go through the
 step afterwards. To turn it off at once, use the ConfigMap patch above with this name, and also change the file.
 
 The queue, attaching, publishing from it and detaching work with the setting off too: `/queue` on the admin site. With it

@@ -52,7 +52,6 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       # The AI's other keys, by name; absent or empty, the main server reads it as {}.
       LLM_KEYS: ${LLM_KEYS:-}
-      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-}
       AUTOMATIC_PUBLICATION: ${AUTOMATIC_PUBLICATION:-on}
       AUTOMATIC_JUDGEMENT: ${AUTOMATIC_JUDGEMENT:-off}
       SAME_EVENT_TITLE_RULE: ${SAME_EVENT_TITLE_RULE:-off}
