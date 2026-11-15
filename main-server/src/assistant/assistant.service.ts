@@ -28,6 +28,7 @@ import { FriendViewService } from '../friends/friend-view.service.js';
 import { MenusService } from '../menus/menus.service.js';
 import { RestaurantPlaces } from '../menus/restaurant-places.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
+import { InterestsService } from '../interests/interests.service.js';
 import { PlaceLookup } from '../places/place-lookup.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
@@ -54,6 +55,8 @@ import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
+import { FriendLookupService } from './lookup/friend.service.js';
+import { MenuLookupService } from './lookup/menu.service.js';
 import { WayService } from './lookup/way.service.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 
@@ -95,6 +98,9 @@ export class AssistantService {
     tutorial: TutorialService,
     plans: PlanAnswersService,
     ways: WayService,
+    menuLookups: MenuLookupService,
+    friendLookups: FriendLookupService,
+    interests: InterestsService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -111,6 +117,9 @@ export class AssistantService {
       tutorial,
       plans,
       ways,
+      menuLookups,
+      friendLookups,
+      interests,
     };
     this.chats = chatsOf(services);
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';

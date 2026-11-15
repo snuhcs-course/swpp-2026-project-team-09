@@ -3,10 +3,12 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { render, screen } from '@testing-library/react-native';
 import type { MarkerLook } from '@/map';
-import { lookName } from '@/map/marker-looks';
+import { LookView, lookName } from '@/map/marker-looks';
 
 const SEO_YEON: MarkerLook = {
   kind: 'person',
@@ -41,6 +43,22 @@ describe("a person's look on the map", () => {
       'person:full:class:f2:photo',
       'person:full:free:f3:photo',
     ]);
+  });
+
+  it('has another name with the "+" of a Friend who can be added to the answer on screen', () => {
+    expect(lookName({ ...SEO_YEON, addable: true })).toBe('person:full:free:f2:photo:addable');
+    expect(lookName({ ...SEO_YEON, addable: false })).toBe(lookName(SEO_YEON));
+  });
+});
+
+// Partitions: a person's look with the "+" and without it.
+describe("a person's look drawn", () => {
+  it('carries the "+" of a Friend who can be added, and none without it', async () => {
+    const { rerender } = await render(<LookView look={{ ...SEO_YEON, addable: true }} />);
+    expect(screen.getByText('+')).toBeVisible();
+
+    await rerender(<LookView look={SEO_YEON} />);
+    expect(screen.queryByText('+')).toBeNull();
   });
 });
 

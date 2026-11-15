@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { Friend } from '@/api/types';
 import type { RoomRequest } from '@/api/room-requests';
 import { ASK_ONE_MORE, SEND_ONE_MORE } from '@/screens/main/library/room-ask-more';
 import { forgetPartyRequests, SEND_ASK } from '@/screens/main/library/room-party';
@@ -35,12 +36,17 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const HA_EUN = { friendId: 'bbbbbbbb-0000-4000-8000-000000000005', name: '박하은' };
 
-const FRIENDS = [MIN_JUN, JI_WOO, HA_EUN].map(({ friendId, name }) => ({
+// Typed as the answer of GET /friends, so that a field added there fails here at the type check and not at a run.
+const FRIENDS: Friend[] = [MIN_JUN, JI_WOO, HA_EUN].map(({ friendId, name }) => ({
   id: friendId,
   name,
   department: '컴퓨터공학부',
+  level: 'exact',
+  seen: 'exact',
   sharing: true,
   visible: false,
+  askedOff: false,
+  askedPlan: false,
 }));
 
 // 김민준 consented and 서지우 declined: the six-person room needs one more.

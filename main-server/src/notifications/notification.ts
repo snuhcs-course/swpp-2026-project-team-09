@@ -31,7 +31,15 @@ export type Told =
       names: string[];
     }
   | { kind: 'room-ending'; questId: string; roomLabel: string; end: string }
-  | { kind: 'room-window'; questId: string; date: string; start: string; minutes: number };
+  | { kind: 'room-window'; questId: string; date: string; start: string; minutes: number }
+  | {
+      kind: 'interest-new';
+      subject: 'event' | 'quest';
+      id: string;
+      title: string;
+      startsAt: Date | null;
+      placeLabel: string | null;
+    };
 
 export type NotificationKind = Told['kind'];
 

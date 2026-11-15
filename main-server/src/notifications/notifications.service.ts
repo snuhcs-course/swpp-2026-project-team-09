@@ -24,6 +24,7 @@ const KINDS: ReadonlySet<string> = new Set<NotificationKind>([
   'room-agreed',
   'room-ending',
   'room-window',
+  'interest-new',
 ]);
 
 function kept(told: Told, at: Date): Kept {

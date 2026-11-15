@@ -46,10 +46,18 @@ async function onlyFriendOf(user: TestUser): Promise<unknown> {
   return z.array(z.unknown()).parse(response.body)[0];
 }
 
-const friendOf = (friend: TestUser, level: FriendLevel, sharing: boolean, visible: boolean): object => ({
+interface Shown {
+  level: FriendLevel;
+  seen: FriendLevel;
+  sharing: boolean;
+  visible: boolean;
+}
+
+const friendOf = (friend: TestUser, { level, seen, sharing, visible }: Shown): object => ({
   id: friend.id,
   ...ONBOARDED_PROFILE,
   level,
+  seen,
   sharing,
   visible,
   askedOff: false,
@@ -57,10 +65,11 @@ const friendOf = (friend: TestUser, level: FriendLevel, sharing: boolean, visibl
 });
 
 describe('A new friendship', () => {
-  it('starts at the building on both ends, and GET /friends gives the level, sharing, and visible', async () => {
+  it('starts at the building on both ends, and GET /friends gives the level, seen, sharing, and visible', async () => {
     const [viewer, subject] = await Promise.all([signInUser(app), signInUser(app)]);
     await befriend(app, viewer, subject);
-    expect(await onlyFriendOf(viewer)).toEqual(friendOf(subject, 'building', true, false));
+    const switchesOff: Shown = { level: 'building', seen: 'timetable', sharing: true, visible: false };
+    expect(await onlyFriendOf(viewer)).toEqual(friendOf(subject, switchesOff));
 
     await Promise.all([
       expectStatus(setMasterSwitch(app, viewer, true), 204),
@@ -68,8 +77,9 @@ describe('A new friendship', () => {
     ]);
     await expectStatus(uploadPosition(app, subject, IN_LIBRARY), 200);
 
-    expect(await onlyFriendOf(viewer)).toEqual(friendOf(subject, 'building', true, true));
-    expect(await onlyFriendOf(subject)).toEqual(friendOf(viewer, 'building', true, false));
+    const switchesOn: Shown = { ...switchesOff, seen: 'building' };
+    expect(await onlyFriendOf(viewer)).toEqual(friendOf(subject, { ...switchesOn, visible: true }));
+    expect(await onlyFriendOf(subject)).toEqual(friendOf(viewer, switchesOn));
   });
 });
 
@@ -81,8 +91,12 @@ describe('PUT /friends/:userId/level', () => {
 
     expect((await setFriendLevel(app, user, friend.id, 'timetable')).status).toBe(204);
 
-    expect(await onlyFriendOf(user)).toEqual(friendOf(friend, 'timetable', false, false));
-    expect(await onlyFriendOf(friend)).toEqual(friendOf(user, 'building', true, false));
+    expect(await onlyFriendOf(user)).toEqual(
+      friendOf(friend, { level: 'timetable', seen: 'timetable', sharing: false, visible: false }),
+    );
+    expect(await onlyFriendOf(friend)).toEqual(
+      friendOf(user, { level: 'building', seen: 'timetable', sharing: true, visible: false }),
+    );
   });
 
   it.each([
@@ -108,6 +122,41 @@ describe('PUT /friends/:userId/level', () => {
 
     expect(response.status).toBe(404);
     expect(response.body).toMatchObject(refused(404, 'FRIEND_NOT_FOUND'));
+  });
+});
+
+describe("GET /friends's seen, what the two see of each other", () => {
+  it.each(LEVEL_PAIRS)(
+    "is, with the ends at %s and %s, %s on both sides, beside each one's own level",
+    async (oneEnd, otherEnd, seen) => {
+      const [one, other] = await sharingFriends(app, 'building');
+      await expectStatus(setFriendLevel(app, one, other.id, oneEnd), 204);
+      await expectStatus(setFriendLevel(app, other, one.id, otherEnd), 204);
+
+      expect(await onlyFriendOf(one)).toMatchObject({ level: oneEnd, seen });
+      expect(await onlyFriendOf(other)).toMatchObject({ level: otherEnd, seen });
+    },
+  );
+
+  it.each(['one', 'other'] as const)(
+    "is the Timetable on both sides while the %s's Master Switch is off",
+    async (who) => {
+      const [one, other] = await sharingFriends(app, 'exact');
+
+      await expectStatus(setMasterSwitch(app, who === 'one' ? one : other, false), 204);
+
+      expect(await onlyFriendOf(one)).toMatchObject({ level: 'exact', seen: 'timetable' });
+      expect(await onlyFriendOf(other)).toMatchObject({ level: 'exact', seen: 'timetable' });
+    },
+  );
+
+  it('is not raised by a common Party, which shows the position only while it lasts', async () => {
+    const [one, other] = await sharingFriends(app, 'timetable');
+
+    await partyOfHolders(app, one, [other]);
+
+    expect(await onlyFriendOf(one)).toMatchObject({ level: 'timetable', seen: 'timetable' });
+    expect(await onlyFriendOf(other)).toMatchObject({ level: 'timetable', seen: 'timetable' });
   });
 });
 
