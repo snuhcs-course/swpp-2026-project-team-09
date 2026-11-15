@@ -33,3 +33,10 @@ Blocked by: package B's ticket 07 (it changes `map-bottom.tsx` now)
 4. **n17's card.** Only the seat book card (`library-book-…`), the card of the seat answer, offers the read again. The 좌석 현황 card and the room cards keep their one line, as no board draws them failing. `FailureNote` takes `reading` (the words, 다시 시도, 닫기) and uses it for any failure but a session one, which keeps "로그인". The line takes the card's failure colour, as the card's other failures do.
 5. **n17's 닫기** ends the card as the chat keeps an ended card, "예약하지 않았어요", without the bubble "알겠어요. 예약하지 않았어요." that 취소 adds. It does not close the answer frame as the board's play does: a library card does not hold the frame's close, and handing it down would change `chat-card-actions.tsx` beyond the seam. The pill's ✕ closes the frame.
 6. **Beyond the seam.** `answer-frame.tsx`'s `Words` gains a three-line branch that draws a failure's lines (decision 1). The P02 spec's line on waiting now says "보는 중" with "그만".
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). This session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 28 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 86,880; input 22,196,887, of which 21,293,094 were cache reads, 903,561 cache writes, and 232 uncached. Without cache reads: 990,673.
