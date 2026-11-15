@@ -54,3 +54,19 @@ Blocked by: package A's tap endpoint, its Place half (row-6-seams, ticket 22); P
 11. **The mock** is package A's as it is: its Places carry other ids than the stored cards, so on the mock every building answers 63동's card (a1), by P01-17's rule.
 12. **The test of "여기서 먹기"** answers with the stored answer of the User alone, given the button's input: no stored answer is of a lunch fixed at 63동. Its request body is checked against a1's action; "the User's lunch at that Restaurant" is not checked with a real reply.
 13. **The Friend half's tests**: the request and the facts over the fake main server, which gives no Friend a status of the app's; the facts standing in place of the app's status and way over the mock, whose 김민준 has both and is answered with the main server's card of him.
+
+### Checked on an emulator (2026-11-16)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build on the mock with its campus walk, the switch on:
+
+- A press on 학생회관 opened its card as board a1 reads: "63동 / 학생회관", "걸어서 15분 · 12:25 도착", "13:00 수업 전까지 34분 머물 수 있어요", "학생회관식당 · 오늘 순두부찌개", the note "점심시간이에요. 여기서 드실래요?", the chips "301동에서" and "13:00 수업까지" with "근거", and "여기서 먹기" and "가는 길". The Place's mark stood at 63동, and the camera did not move.
+- A press on 302동 showed "302동 / 제2공학관 / 보는 중이에요" while it was asked, then 63동's card, as the mock answers every building (decision 11).
+- "여기서 먹기" opened the answer frame with the pill "63동 · 여기서 먹기" and the mock's stored answer of the User alone (decision 12); the frame's ✕ returned to the building's card, and the card's ✕ and Android's back closed it.
+- With the 식당 layer on, a press on its pin at 302동 opened 302동식당's card, and a press on 302동 beside the pin opened the building's card in its place.
+
+### Agent usage (2026-11-16)
+
+One session with three subagents for this ticket (the implementation, a review with first-path safety first, and the merge with Main with the review's nits); the session's own time counted is the emulator check and the second merge with Main.
+
+- Agent time: about 184 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 354,194; input 140,937,850, of which 139,206,807 were cache reads, 1,730,059 cache writes, and 984 uncached. Without cache reads: 2,085,237.
