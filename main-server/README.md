@@ -1708,7 +1708,8 @@ for today and the six days after, and posts them to `/menus/collected` (see
 - `text` is the line as the page wrote it, prices and markers such as `(#)` (no meat) included. The worker sets the
   rest only when it is sure, and leaves it `null` otherwise:
   - `kind`: `heading` for a corner or section, `dish`, or `note` for hours, notices and closures such as
-    `개천절 휴무`. There is no operating hours field: hours are note lines of the meal.
+    `개천절 휴무`. Hours stay note lines of the meal here; the hours read from them are kept apart
+    ([Restaurant hours](#restaurant-hours)) and are not served by this route.
   - `name`: a dish's text without its price, when the line ends with that price.
   - `price`: in won, when the line gives exactly one price. `9,900원 / 12,400원`, or a price with a typo, stays in
     `text` alone.
@@ -1728,6 +1729,31 @@ keeps getting the last menus collected.
 
 The worker server's README says how each line is read and how to run a Collection by hand. What the collectors sent
 on the real pages is recorded in `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
+
+### Restaurant hours
+
+A message to `/menus/collected` also carries each restaurant's `hours`, which the worker read from the one hours line
+of a meal's cell (`※ 운영시간 : 11:00~14:30`; the worker server's README lists the forms it reads):
+
+```json
+{ "meal": "lunch", "opensAt": "11:00", "closesAt": "14:30", "line": "※ 운영시간 : 11:00~14:30" }
+```
+
+`RestaurantHours` (`src/menus/restaurant-hours.ts`) keeps them in `restaurant_hours`, one row for each Source,
+restaurant name, meal and kind of day (`weekday`, `saturday` or `sunday`, from the day's date), with `opensAt` and
+`closesAt` as times of day in Asia/Seoul, the line they were read from, and `readAt`, the time of the Collection that
+read them. The line stays a menu line as well.
+
+- Hours rarely change, so a Collection writes a row only when it reads other times than the kept ones, or none were
+  kept. A day whose cell has no hours line, such as a closure (`개천절 휴무`) or a day not yet filled in, leaves them.
+  When the days of one message read different times for one kind of day, the earliest day's are kept.
+- The pages give no hours for a public holiday, and the server keeps no calendar of holidays, so a holiday is read by
+  its day of the week. Whether a Restaurant serves on that day is in the day's cell
+  ([ADR 0011](../docs/adr/0011-a-restaurant-is-open-when-a-meal-cell-has-a-line-that-is-not-a-note.md)).
+- `hoursOf(restaurant, meal, date)` answers `{ opensAt, closesAt }` for a restaurant's name as `GET /menus` gives it, a
+  meal and a calendar day in Asia/Seoul, or `null` when no hours were read for that kind of day. Nothing guesses hours
+  that were never read.
+- A message without `hours`, as from a worker that does not read them, keeps the hours as they are.
 
 ## Walking route
 
@@ -3102,7 +3128,8 @@ src/
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
 │                                    the Shared Quests of its matches
-├── menus/                           a feature: the menus the worker collects, stored and served by day
+├── menus/                           a feature: the menus the worker collects, stored and served by day, and each
+│                                    Restaurant's hours
 ├── travel/                          Travel Time: the walking table's builder, and the provider that looks it up
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
