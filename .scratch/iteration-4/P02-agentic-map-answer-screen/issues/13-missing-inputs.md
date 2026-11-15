@@ -39,3 +39,10 @@ Blocked by: ticket 10 (its offers); #265 (P02-09 changes `use-shown-answer.ts` a
 9. **A recalculation carries the reason too.** `POST /assistant/answers` takes `locationMissing` with the context's values and default, and passes it to the meal's plan as the chat does, so a correction of an n13 answer keeps the assumed origin. The app sends it from the same source as the context (`useMe`), through `Recalculation.locationMissing` in `use-shown-answer.ts` (`lastReply` untouched), and leaves the key out when it is null, so that a main server before this ticket, which refuses an unknown key, still recalculates. The mock ignores it.
 10. **Not built here.** The map's words of n13 ("출발로 잡은 곳" at the building, "직전 수업 건물" on the pick's card) and a mock copy of n14 are not built; "여기로" is package D's.
 
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5), resumed once for the recalculation. This session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 56 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 183,142; input 69,062,332, of which 68,596,264 were cache reads, 465,660 cache writes, and 408 uncached. Without cache reads: 649,210.
