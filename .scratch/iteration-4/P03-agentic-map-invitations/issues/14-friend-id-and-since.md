@@ -35,3 +35,10 @@ No student number and no admission year.
 - A pending request is covered by the existing test that `GET /friends` leaves out the Users a Friend Request waits for. The new test also bounds `friendsSince` by the moment the request was accepted.
 - `main-server/README.md` documents the two fields under `GET /friends`.
 - The app's `Position` already had `level?: 'building' | 'exact'` and `placeId?: string`, so its type is unchanged. The live connection's check accepts only those two levels, because the server never sends a position at `timetable` (its `SeenLevel`). A `timetable` level therefore fails the check like any other bad level.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5), resumed once for the live connection. The rejected earlier draft (#277, a label per Friend) took a further subagent: about 19 minutes; output 73,442; without cache reads 255,625. This session's review and the pull request are counted under ticket 07.
+
+- Agent time: about 33 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 57,811; input 12,912,981, of which 12,747,922 were cache reads, 164,881 cache writes, and 178 uncached. Without cache reads: 222,870.
