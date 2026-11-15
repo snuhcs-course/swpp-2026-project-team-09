@@ -35,7 +35,8 @@ import type { Size } from './projection';
 // that look the same share one, and the number of pictures is the number of names:
 // - two for the User's own Avatar;
 // - for each person, the two sizes in each tone the person was seen in, with and without a photo, dimmed while the
-//   person's position was old, and each of them selected, which only the one selected person ever asks for;
+//   person's position was old, and each of them selected, which only the one selected person ever asks for, or with
+//   the "+" of a Friend who can be added to the answer on screen;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
 // - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected;
 // - one for the tutorial's place pin.
@@ -59,7 +60,7 @@ export type MarkerLook =
   // A person: a Friend in the status's colour, or a member of the User's Party in the tone `member`. The frames'
   // teardrop with the person's letters or photo in it. `small` is its look while the whole campus is in view.
   // `id` is the person's own, which names the look; `name` and `photo` are what is drawn. `stale` is dimmed: the
-  // position is old.
+  // position is old. `addable` carries a "+": a press adds the Friend to the answer on screen.
   | {
       kind: 'person';
       id: string;
@@ -67,6 +68,7 @@ export type MarkerLook =
       small?: boolean;
       selected?: boolean;
       stale?: boolean;
+      addable?: boolean;
       name: string;
       photo: string | null;
     }
@@ -96,7 +98,16 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
       ? [symbol.name, symbol.dashed, ...(symbol.badge === undefined ? [] : [symbol.badge])]
       : null,
     symbol?.type === 'dot' ? [symbol.role, symbol.number] : null,
-    label === null ? null : [label.side, label.tone, label.title, label.line, label.number],
+    label === null
+      ? null
+      : [
+          label.side,
+          label.tone,
+          label.title,
+          label.line,
+          label.number,
+          ...(label.shift === undefined ? [] : [label.shift]),
+        ],
   ];
   return `answer:${JSON.stringify(drawn)}`;
 }
@@ -125,7 +136,8 @@ export function lookName(look: MarkerLook): string {
   if (look.kind === 'person') {
     const photo = look.photo !== null && 'photo';
     const stale = look.stale === true && 'stale';
-    return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, stale, selected);
+    const addable = look.addable === true && 'addable';
+    return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, stale, selected, addable);
   }
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
   return parts(look.kind, look.form, count, look.muted === true && 'muted', selected);
@@ -171,6 +183,7 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
   if (look.kind === 'person') {
     return (
       <MapPerson
+        addable={look.addable}
         name={look.name}
         onPhotoSettled={onPhotoSettled}
         selected={look.selected}

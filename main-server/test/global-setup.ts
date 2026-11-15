@@ -77,8 +77,9 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     JUDGEMENT_MAX_OUTPUT_TOKENS: '4000',
     LIBRARY_BOOKING_ENABLED: 'true',
     TUTORIAL_KWANJEONG_CHECK: 'false',
-    // No timer: a test calls NotificationSender.sendDue() itself.
+    // No timers: a test calls NotificationSender.sendDue() itself, and runs the topics step itself.
     NOTIFICATIONS_TICK_SECONDS: '0',
+    TOPICS_TICK_SECONDS: '0',
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);

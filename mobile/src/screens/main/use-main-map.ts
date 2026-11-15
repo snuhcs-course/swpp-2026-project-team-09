@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RefObject, useCallback, useRef, useState } from 'react';
@@ -46,7 +47,7 @@ export interface MainMap {
   fitTo: (points: readonly LatLng[], padding: FitPadding) => void;
   // The same for an answer drawn on the map, no closer than the "close" level.
   fitAnswer: (points: readonly LatLng[], padding: FitPadding) => void;
-  // To a camera.
+  // To a camera, also one further out than the fit zoom, which the map's own rules then hold.
   moveTo: (camera: MapCamera) => void;
 }
 
@@ -60,22 +61,13 @@ function useFit(fit: CameraMoves['fit'], offset: number): MainMap['fitTo'] {
   );
 }
 
-function useMoveTo(move: CameraMoves['move']): MainMap['moveTo'] {
-  return useCallback(
-    (camera: MapCamera) => {
-      move(() => camera);
-    },
-    [move],
-  );
-}
-
 // Owns the map's handle and follows its camera. The zoom is counted from the fit zoom, which the map gives. A move
 // asked before the map is ready is carried out when it is.
 export function useMainMap(): MainMap {
   const ref = useRef<MapHandle>(null);
   const [camera, setCamera] = useState<MapCamera | null>(null);
   const [fitZoom, setFitZoom] = useState<number | null>(null);
-  const { move, fit: fitInto, rested, fitted } = useCameraMoves(ref);
+  const { move, place, fit: fitInto, rested, fitted } = useCameraMoves(ref);
   const onCameraIdle = useCallback(
     (now: MapCamera) => {
       setCamera(now);
@@ -109,7 +101,7 @@ export function useMainMap(): MainMap {
     move((fit) => ({ centre: centreOf(CAMPUS_BOUNDS), zoom: fit }));
   }, [move]);
   const fitTo = useFit(fitInto, ZOOM_OFFSET.pins);
-  const answerMoves = { fitAnswer: useFit(fitInto, ZOOM_OFFSET.close), moveTo: useMoveTo(move) };
+  const answerMoves = { fitAnswer: useFit(fitInto, ZOOM_OFFSET.close), moveTo: place };
   const detail = camera === null || fitZoom === null ? 'overview' : zoomDetail(camera.zoom, fitZoom);
   return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo, ...answerMoves };
 }

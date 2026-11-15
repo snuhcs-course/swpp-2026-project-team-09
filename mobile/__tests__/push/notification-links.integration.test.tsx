@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -193,6 +194,17 @@ describe('a push tapped while the app runs', () => {
     expect(screen.queryByRole('header', { name: /^알림/u, includeHiddenElements: true })).toBeNull();
     expect(router.canDismiss()).toBe(false);
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
+  });
+});
+
+describe('a push about an event the map shows no card of', () => {
+  it('opens the 행사 tab at that event, as one on a later day', async () => {
+    await openMain();
+
+    await tap(tapOn('/main?card=event:later-day-event'));
+
+    // The 행사 tab takes `focus` off once it has marked the event; the test router prints the cleared name.
+    expect(shownAddress()).toBe('/events?focus=undefined');
   });
 });
 

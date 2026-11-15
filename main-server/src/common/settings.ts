@@ -157,6 +157,9 @@ export const settingsSchema = z
     // How often, in seconds, the main server sends the Notifications whose time has come. 0 never sends them by itself,
     // so an empty value is refused rather than read as 0.
     NOTIFICATIONS_TICK_SECONDS: z.string().regex(/^\d+$/u).default('15').pipe(z.coerce.number<string>().max(3600)),
+    // How often, in seconds, the topics of new events and recruiting Quests are read (README.md: Interests). 0 never,
+    // so an empty value is refused rather than read as 0.
+    TOPICS_TICK_SECONDS: z.string().regex(/^\d+$/u).default('60').pipe(z.coerce.number<string>().max(3600)),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
