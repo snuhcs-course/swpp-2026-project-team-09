@@ -9,6 +9,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -247,7 +248,7 @@ function useAnswerOnScreen(
       showToast(NOT_RECALCULATED);
     },
   });
-  const invitation = usePlanInvitation(shown, { location: position, say: showToast });
+  const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
   useEffect(() => {
     shownNow.current = shown;
   });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerOffer, type AnswerReply, type LocationMissing } from '../dto/answer.dto.js';
@@ -26,9 +27,10 @@ const askerWalk = ({ parts }: GatheringFit): number => parts[0]?.walkMinutes ?? 
 
 // The asker alone without a Timetable, setting out from a known Place, is free until the meal's end, so the longest
 // meal is the nearest; the Plans are put nearest first all the same, for a start fixed later gives every Plan the same
-// minutes. Null when they keep the gathering's order.
-export function nearestFirst({ missing, people, gathering }: MealAnswerArgs): GatheringFit[] | null {
-  if (missing?.noClasses !== true || people.length > 1 || (gathering.sides[0]?.origin ?? null) === null) {
+// minutes. Null when they keep the gathering's order, as with a Place the User fixed, where nearest was not asked.
+export function nearestFirst({ missing, people, gathering, input }: MealAnswerArgs): GatheringFit[] | null {
+  const origin = gathering.sides[0]?.origin ?? null;
+  if (missing?.noClasses !== true || people.length > 1 || input.placeId !== null || origin === null) {
     return null;
   }
   return gathering.fits.toSorted((a, b) => askerWalk(a) - askerWalk(b));

@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
 import { z } from 'zod';
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
 import { MealPlanStage, planMeal } from './meal-plan.js';
+import { inputOf, makePlanQuest } from './plan-quests.js';
 import { withAccessToken } from './sign-in.js';
 
 // Without a location or a Timetable (P02-13), a meal planned at the Assistant's endpoint with the scripted model, the
@@ -95,6 +97,36 @@ describe('A recalculation of board n13', () => {
     const answer = z.custom<AnswerReply>().parse(response.body);
     expect(answer.chips[0]).toEqual({ kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' });
     expect(answer.offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
+  });
+});
+
+describe('A Quest made from an answer of board n13 (review 2026-11-16)', () => {
+  it('is made from the Plan the asker saw, the assumed origin deciding its start', async () => {
+    const date = '2079-02-07';
+    await lunchAt(date, '12:40');
+    await stage.classAt(stage.asker, '09:00', '10:15', '301');
+    const friend = await stage.friend('민수');
+    await stage.classAt(friend, '11:00', '12:40', '302');
+    const input = inputOf(date, [stage.asker.id, friend.id]);
+    const answered = await withAccessToken(
+      request(stage.app.getHttpServer()).post('/assistant/answers'),
+      stage.asker.accessToken,
+    ).send({ input, location: null, locationMissing: 'permission' });
+    const plan = z
+      .custom<AnswerReply>()
+      .parse(answered.body)
+      .plans.find(({ id }) => id === '302동식당');
+    expect(plan?.parts[0]?.walkMinutes).toBeGreaterThan(0);
+
+    const response = await makePlanQuest(stage, {
+      input,
+      planId: '302동식당',
+      startAt: plan?.startAt,
+      location: null,
+      locationMissing: 'permission',
+    });
+
+    expect(response.status).toBe(201);
   });
 });
 

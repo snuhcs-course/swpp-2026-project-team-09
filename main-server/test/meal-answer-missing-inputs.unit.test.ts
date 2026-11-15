@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type LocationMissing, type MealInput } from '../src/assistant/dto/answer.dto.js';
@@ -159,6 +160,17 @@ describe('Board n15: no Timetable, at 11:50 at 301동', () => {
     const answer = n15(lunch({ from: '13:00', until: null }));
 
     expect(walksOf(answer)).toEqual(ascending(walksOf(answer)));
+  });
+
+  it('claims no order with a Place fixed, where nearest is not what was asked (review 2026-11-16)', () => {
+    const answer = n15({ ...lunch(NO_BOUNDS), placeId: id('학생회관') });
+
+    expect(answer.plans[0]?.lines[0]).not.toEqual([strong('301동식당'), plain('이 가장 가까워요')]);
+    expect(answer.plans.flatMap(({ lines }) => lines.flat().map(({ text }) => text))).not.toContain('이 가장 가까워요');
+    for (const { basis } of answer.plans) {
+      expect(basis).not.toContain('시간표가 없어 가까운 순서로 넘겨 봐요');
+    }
+    expect(answer.offers?.map(({ label }) => label)).toEqual(['시간표 넣기']);
   });
 
   it('says the first is the nearest, in one line', () => {

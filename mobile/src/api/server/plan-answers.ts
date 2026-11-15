@@ -3,16 +3,10 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type {
-  AnswerLine,
-  AnswerReply,
-  MapScene,
-  PlacePoint,
-  Plan,
-  TimeBand,
-} from '@/api/assistant-types';
+import type { AnswerLine, AnswerReply, MapScene, PlacePoint, Plan, TimeBand } from '@/api/assistant-types';
 import type { DroppedPlace, PlanPart } from '@/api/plan-part-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
