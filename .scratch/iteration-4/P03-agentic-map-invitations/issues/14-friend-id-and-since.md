@@ -12,6 +12,7 @@ Each Friend of `GET /friends` and of the Friend view gains:
 
 - `friendId`: the Friend's Friend ID, the code a User shares to be added (`users.friend_id`);
 - `friendsSince`: when the friendship was accepted, as an ISO time with the Korea offset, as other times the server sends.
+- In the app, the live connection passes a `position` signal's `level` and `placeId` on, beside `userId`, `latitude`, `longitude` and `measuredAt`, for package B's green dot (its ticket 20); the server already sends both (P03-11).
 
 No student number and no admission year.
 
@@ -21,6 +22,7 @@ No student number and no admission year.
 - [x] The Friend view gives the same two for each `FriendView`, read in the query it already makes.
 - [x] Nothing else of the Friend is added; no migration.
 - [x] Integration tests: both fields for a new friendship, the same from both ends' view of the date, and a pending request has neither (it is not listed).
+- [x] The app's live connection passes `level` and `placeId` on, for package B's green dot (its ticket 20).
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass.
 
 ## Comments
@@ -32,3 +34,4 @@ No student number and no admission year.
 - `friendsSince` is formatted by `koreaTime` (`src/assistant/korea-time.ts`), as the plans and notifications are: to the second, with `+09:00`.
 - A pending request is covered by the existing test that `GET /friends` leaves out the Users a Friend Request waits for. The new test also bounds `friendsSince` by the moment the request was accepted.
 - `main-server/README.md` documents the two fields under `GET /friends`.
+- The app's `Position` already had `level?: 'building' | 'exact'` and `placeId?: string`, so its type is unchanged. The live connection's check accepts only those two levels, because the server never sends a position at `timetable` (its `SeenLevel`). A `timetable` level therefore fails the check like any other bad level.
