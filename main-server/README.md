@@ -194,8 +194,10 @@ Request to it. The routes, all a User's:
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
 - `GET /friends` answers the User's Friends in the order of their names:
-  `[{ "id", "name", "department", "level", "sharing", "visible", "askedOff", "askedPlan" }]`, where `id` is the
-  Friend's User id, `level` the User's own end of the friendship, `sharing` whether it is above `timetable`, `visible`
+  `[{ "id", "name", "department", "level", "seen", "sharing", "visible", "askedOff", "askedPlan" }]`, where `id` is
+  the Friend's User id, `level` the User's own end of the friendship, `seen` what the two see of each other by the
+  friendship (the lower of the two ends, `timetable` while either Master Switch is off; a common Party does not raise
+  it, and nothing else of the Friend's own end is given), `sharing` whether `level` is above `timetable`, `visible`
   whether the User sees the Friend's position or Place on the map now, never why not (see
   [Location Sharing](#location-sharing)), and `askedOff` and `askedPlan` whether the app has asked the User about the
   Friend (see [Asking once](#asking-once)).

@@ -122,7 +122,7 @@ export function answerParty(server: FakeServer, answers: Answers = {}): (next: A
   server.on('GET /quests', () => ({ status: 200, body: held.quests }));
   server.on('GET /quest-join-requests', () => ({ status: 200, body: held.requests }));
   server.on('GET /quest-invitations', () => ({ status: 200, body: held.invitations }));
-  const exact = { level: 'exact', sharing: true, askedOff: false, askedPlan: false };
+  const exact = { level: 'exact', seen: 'exact', sharing: true, askedOff: false, askedPlan: false };
   server.on('GET /friends', {
     status: 200,
     body: [

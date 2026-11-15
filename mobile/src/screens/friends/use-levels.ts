@@ -13,12 +13,15 @@ import type { OffAnswer } from './off-question';
 
 export const NOT_CHANGED = '위치 공유를 바꾸지 못했어요';
 
+// A Friend of the list or of `GET /friends` itself.
+type Leveled = Pick<FriendView, 'id' | 'name' | 'level' | 'askedOff'>;
+
 export interface Levels {
   // The level shown for a Friend: the choice being sent, or the Friend's own.
-  levelOf: (friend: FriendView) => FriendLevel;
-  choose: (friend: FriendView, level: FriendLevel) => void;
+  levelOf: (friend: Leveled) => FriendLevel;
+  choose: (friend: Leveled, level: FriendLevel) => void;
   // The Friend the question before turning location off is about, kept while the sheet closes.
-  asked: { friend: FriendView; open: boolean } | null;
+  asked: { friend: Leveled; open: boolean } | null;
   answer: (answer: OffAnswer) => void;
 }
 
@@ -29,8 +32,8 @@ export function useLevels(): Levels {
   const showToast = useToast();
   const [choosing, setChoosing] = useState<ReadonlyMap<string, FriendLevel>>(new Map());
   const [asked, setAsked] = useState<Levels['asked']>(null);
-  const levelOf = (friend: FriendView): FriendLevel => choosing.get(friend.id) ?? friend.level;
-  const change = (friend: FriendView, level: FriendLevel, done?: string): void => {
+  const levelOf = (friend: Leveled): FriendLevel => choosing.get(friend.id) ?? friend.level;
+  const change = (friend: Leveled, level: FriendLevel, done?: string): void => {
     const settle = (): void => {
       setChoosing((now) => new Map([...now].filter(([id]) => id !== friend.id)));
     };
@@ -48,7 +51,7 @@ export function useLevels(): Levels {
       },
     );
   };
-  const choose = (friend: FriendView, level: FriendLevel): void => {
+  const choose = (friend: Leveled, level: FriendLevel): void => {
     if (level === levelOf(friend)) {
       return;
     }
