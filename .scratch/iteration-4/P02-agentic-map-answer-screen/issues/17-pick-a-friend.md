@@ -44,4 +44,4 @@ One implementing subagent (Opus 5.5), resumed four times (the full-name cells, t
 
 ### Mock copy (2026-11-16)
 
-- Package A's real reply (P01-20, #304) to "배고파, 민수랑 같이" over two Friends 김민수 (컴퓨터공학부) and 이민수 (경영학과) is kept in `mobile/src/api/mock/data/refusals.json`, so that a mock build shows the question. Its two ids are not the mock's Friends, so a press sends words the mock answers in general.
+- Package A's real reply (P01-20, #304) to "배고파, 민수랑 같이" over two Friends 김민수 (컴퓨터공학부) and 이민수 (경영학과) is kept in `mobile/src/api/mock/data/refusals.json` under "민수랑 점심", so that a mock build shows the question; "배고파, 민수랑 같이" stays the mock's meal answer. Its two ids are not the mock's Friends, so a press sends words the mock answers in general.
