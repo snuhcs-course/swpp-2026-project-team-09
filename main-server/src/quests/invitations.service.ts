@@ -190,13 +190,19 @@ export class InvitationsService {
     });
     this.signals.send([userId, ...quest.holders.map((holder) => holder.userId)], 'quests-changed');
     this.signals.send([quest.leaderId], 'invitation-declined', { questId, userId });
-    this.tellLeader(quest.leaderId, {
-      kind: 'declined',
-      questId,
-      questTitle: quest.title,
-      friendId: userId,
-      friendName: invitation.user.name,
+    // The booker of a room request made with this party hears of it from the request, with the room's count.
+    const forRoom = await this.prisma.roomRequest.count({
+      where: { questId, madeForBooking: true, status: { in: ['gathering', 'ready'] } },
     });
+    if (forRoom === 0) {
+      this.tellLeader(quest.leaderId, {
+        kind: 'declined',
+        questId,
+        questTitle: quest.title,
+        friendId: userId,
+        friendName: invitation.user.name,
+      });
+    }
     await this.roomRequests.questChanged(questId);
   }
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { koreaDate } from '../korea-time.js';
@@ -94,14 +95,21 @@ export function lastBookableDate(space: LibrarySpace, now: Date): string {
   return addDays(koreaDate(now), space.bookingAheadDays);
 }
 
-// Why a date cannot be booked, or null when it can.
-export function windowRefusal(space: LibrarySpace, date: string, now: Date): Refusal | null {
+// A room request made before the window holds its date waits for it, up to this many days ahead.
+export const WAIT_DAYS_AHEAD = 14;
+
+// Why a date cannot be booked, or null when it can. A request that waits for the window keeps a date after it.
+export function windowRefusal(space: LibrarySpace, date: string, now: Date, waitsForWindow = false): Refusal | null {
   const today = koreaDate(now);
   const last = lastBookableDate(space, now);
   if (date < today) {
     return { field: 'date', reason: '지난 날짜는 예약할 수 없어요', bound: today };
   }
-  if (date > last) {
+  if (waitsForWindow && date > addDays(today, WAIT_DAYS_AHEAD)) {
+    const reason = `${kindWord(space)}은 ${WAIT_DAYS_AHEAD}일 뒤까지만 미리 정해 둘 수 있어요`;
+    return { field: 'date', reason, bound: addDays(today, WAIT_DAYS_AHEAD) };
+  }
+  if (date > last && !waitsForWindow) {
     const reason =
       space.bookingAheadDays === 0
         ? `${kindWord(space)}은 당일만 예약할 수 있어요`
@@ -125,7 +133,7 @@ function hoursRefusal(space: LibrarySpace, hours: ClockRange, start: number, end
   };
 }
 
-function durationRefusal(space: LibrarySpace, minutes: number): Refusal | null {
+export function durationRefusal(space: LibrarySpace, minutes: number): Refusal | null {
   const { minMinutes, maxMinutes, stepMinutes } = space;
   if (minutes % stepMinutes !== 0) {
     return { field: 'minutes', reason: `${stepMinutes}분 단위로 예약할 수 있어요`, bound: stepMinutes };
@@ -260,8 +268,14 @@ function timeOf(
 }
 
 // Checks a booking of an implemented space. Each wrong or missing field gives a refusal, all of them at once.
-export function checkBooking(catalogue: Catalogue, space: LibrarySpace, request: BookingRequest, now: Date): Checked {
-  const window = windowRefusal(space, request.date, now);
+export function checkBooking(
+  catalogue: Catalogue,
+  space: LibrarySpace,
+  request: BookingRequest,
+  now: Date,
+  waitsForWindow = false,
+): Checked {
+  const window = windowRefusal(space, request.date, now, waitsForWindow);
   const time = timeOf(space, request, now);
   const refusals = [...(window === null ? [] : [window]), ...time.refusals];
   const seat = request.seat === undefined ? null : seatLabelOf(space, request.seat);
