@@ -2986,6 +2986,7 @@ src/
 ├── tutorial/                        a feature: the 새내기 튜토리얼's content and each User's progress
 ├── push/                            a feature: each Session's Expo push token, and the one sender of pushes
 ├── notifications/                   a feature: the Notifications the Assistant keeps for each User, and their list
+├── interests/                       a feature: watched interests, the topics step, and what matches them
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
@@ -3247,20 +3248,21 @@ call the service sends the signal `notice`, which carries nothing, to the User; 
 `cancel` that forgot nothing, sends none. `schedule` and `replace` refuse, by throwing, a card no address opens. The
 calls throw when the database fails too, so a caller that must not fail catches and logs.
 
-| Kind            | Told to                                       | When                                                                      | Title                 | Ahead                          | Line                                                                                | Card              | Rings |
-| --------------- | --------------------------------------------- | ------------------------------------------------------------------------- | --------------------- | ------------------------------ | ----------------------------------------------------------------------------------- | ----------------- | ----- |
-| `accepted`      | The Leader                                    | An invited User accepts                                                   | `<name>가 수락했어요` | None                           | The Quest's title                                                                   | `party:<questId>` | No    |
-| `declined`      | The Leader                                    | An invited User declines                                                  | `<name>이 못 온대요`  | None                           | The Quest's title                                                                   | `party:<questId>` | No    |
-| `leave-by`      | The Leader, and each invited User who accepts | A Plan becomes a party, or the User accepts                               | `지금 나서요`         | `<HH:MM> 나설 시각`            | `<Place>까지 걸어서 <N>분`                                                          | `party:<questId>` | Yes   |
-| `room-declined` | A room request's requester                    | A companion goes out and the request stays                                | `<name>이 못 온대요`  | None                           | `<room> · N명 더 필요해요`, or `<room> · 계획은 그대로예요` when the minimum is met | `party:<questId>` | Yes   |
-| `room-agreed`   | A room request's requester                    | The request becomes `ready`                                               | `모두 동의했어요`     | None                           | `<요일> <start>–<end> <room>`, such as `목 15:30–18:30 관정 4층 6인실`              | `party:<questId>` | Yes   |
-| `room-ending`   | Every Holder of a booked room's Quest         | 10 minutes before the room's end                                          | `10분 뒤 끝나요`      | `<end> 방 예약 끝`             | `<room> · <end>에 끝나요`                                                           | `party:<questId>` | Yes   |
-| `room-window`   | A room request's requester                    | 09:00 on the day the booking window opens for a request that waits for it | `예약 창이 열렸어요`  | `<M월 D일> 09:00 예약 창 열림` | `<요일> <start>–<end> 스터디`, such as `월 09:00–12:00 스터디`                      | `party:<questId>` | Yes   |
+| Kind            | Told to                                       | When                                                                      | Title                                                      | Ahead                          | Line                                                                                | Card                                         | Rings |
+| --------------- | --------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------- | ----- |
+| `accepted`      | The Leader                                    | An invited User accepts                                                   | `<name>가 수락했어요`                                      | None                           | The Quest's title                                                                   | `party:<questId>`                            | No    |
+| `declined`      | The Leader                                    | An invited User declines                                                  | `<name>이 못 온대요`                                       | None                           | The Quest's title                                                                   | `party:<questId>`                            | No    |
+| `leave-by`      | The Leader, and each invited User who accepts | A Plan becomes a party, or the User accepts                               | `지금 나서요`                                              | `<HH:MM> 나설 시각`            | `<Place>까지 걸어서 <N>분`                                                          | `party:<questId>`                            | Yes   |
+| `room-declined` | A room request's requester                    | A companion goes out and the request stays                                | `<name>이 못 온대요`                                       | None                           | `<room> · N명 더 필요해요`, or `<room> · 계획은 그대로예요` when the minimum is met | `party:<questId>`                            | Yes   |
+| `room-agreed`   | A room request's requester                    | The request becomes `ready`                                               | `모두 동의했어요`                                          | None                           | `<요일> <start>–<end> <room>`, such as `목 15:30–18:30 관정 4층 6인실`              | `party:<questId>`                            | Yes   |
+| `room-ending`   | Every Holder of a booked room's Quest         | 10 minutes before the room's end                                          | `10분 뒤 끝나요`                                           | `<end> 방 예약 끝`             | `<room> · <end>에 끝나요`                                                           | `party:<questId>`                            | Yes   |
+| `room-window`   | A room request's requester                    | 09:00 on the day the booking window opens for a request that waits for it | `예약 창이 열렸어요`                                       | `<M월 D일> 09:00 예약 창 열림` | `<요일> <start>–<end> 스터디`, such as `월 09:00–12:00 스터디`                      | `party:<questId>`                            | Yes   |
+| `interest-new`  | A User watching a match                       | The topics step reads a match                                             | `<title>이 떴어요`, or `<title> 모집이 떴어요` for a Quest | None                           | `<HH:MM> <Place>`                                                                   | `event:<globalEventId>` or `party:<questId>` | Yes   |
 
 A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
 `leave-by`, `<Place>까지 걸어서 <N>분이에요.`; for a room request's kinds, the line as a sentence ("모두 동의했어요" adds
-"이제 예약할 수 있어요.", and `room-window` reads `<요일> <start>–<end> 스터디를 이제 예약할 수 있어요.`). A kind that
-does not ring has no body.
+"이제 예약할 수 있어요.", and `room-window` reads `<요일> <start>–<end> 스터디를 이제 예약할 수 있어요.`); and for an
+`interest-new`, `<HH:MM> <Place>이에요.` A kind that does not ring has no body.
 
 The name is the User's name as stored, with the subject particle that fits its last syllable (이 or 가). An invitation
 the Leader cancels tells nobody. `InvitationsService` tells the Leader after the invitation's change is stored and
@@ -3349,6 +3351,78 @@ phone shows `ahead` while `at` is after its own now.
 whom it is about, whether it rings and its push's body to `wordsOf()` in `src/notifications/notification-words.ts`,
 its kind to the kinds the list reads in `src/notifications/notifications.service.ts`, and its caller in the feature it
 belongs to.
+
+`interest-new` is kept by the topics step of [Interests](#interests), at the step's time, for each User with a watched
+interest that matches what the step has just read and that was kept before that time. A hashtag alone tells nothing.
+The title takes the subject particle as the other kinds do. The line leaves out the start or the Place when it is
+unknown, and is empty when both are. The body is then `<Place>이에요.`, `<HH:MM>에 시작해요.` or
+`맡겨 둔 관심에 맞아요.`; 이에요 is 예요 after a Place whose last syllable has no final consonant. It rings once, at the
+step's time.
+
+## Interests
+
+A User asks the Assistant to watch for a kind of event or recruiting party ("채용 관련 행사 뜨면 알려 줘"), and from
+then on what matches it is answered as a match and a new one is told as a Notification. `src/interests/` holds it.
+
+**What is kept.** A watched interest is one row of `watched_interests`: the User, the words as said (1 to 60
+characters, trimmed), the topics they were read as, and when it was kept. A User keeps at most 20. Words whose
+normalised form equals an interest the User already has keep nothing new and answer that interest.
+
+**Topics.** A topic is one Korean word, compared normalised: lowercased, without spaces, and without a leading `#`, so
+`#채용 `, `채 용` and `채용` are one topic, as `AI` and `ai` are. `TopicsReader` asks the Assistant's model
+(`ASSISTANT_MODEL`, with the Assistant's time and output limits) for one to five topics of a text, giving it the
+topics already in use (those of the watched interests, events and Quests, at most 200, the most used first) so that
+the same meaning gets the same word: 채용박람회, 커리어 페어 and 기업 설명회 are all 채용. Without `OPENROUTER_API_KEY`,
+on a failed call, or on an answer of another shape, it gives none and never throws. An interest whose words get none
+is kept with its normalised words as its one topic.
+
+**The topics step.** `TopicsStep.run()` takes up to 10 published Global Events that have not ended and up to 10
+recruiting Quests (Open or Approval, on a Board, with a Sub Quest ahead) that were never read, or that have no topics
+and were tried fewer than 2 times. For each it counts the try and its time (`topicsTries`, `topicsReadAt`) before it
+asks, so that two servers never ask for the same one, reads the topics of its title and description, and stores them.
+It never throws. `TopicsTimer` runs it every `TOPICS_TICK_SECONDS` seconds (0 to 3600, 60 by default; 0 never, as in
+the tests, which run the step themselves).
+
+**A match** is an event or a Quest whose topics share one with the User's interests: the profile's hashtags and the
+watched interests' topics. `watched` says whether a watched interest matched, not only a hashtag. Each new match of a
+watched interest is told as an `interest-new` Notification ([Notifications](#notifications)), except to a Holder of
+the Quest.
+
+**Routes**, each for the signed-in User:
+
+- `GET /interests` answers the watched interests, the newest first:
+
+  ```json
+  [
+    {
+      "id": "0b9f7c5e-2a4d-4e8b-9c1a-3f6e5d7a8b90",
+      "words": "채용 관련 행사",
+      "topics": ["채용"],
+      "createdAt": "2026-11-15T03:12:00.000Z"
+    }
+  ]
+  ```
+
+- `POST /interests` with `{ "words": "채용 관련 행사" }` keeps one and answers it, 201, in the shape of an item above.
+  It answers 400 for empty words or words over 60 characters, and 409 with the code `INTERESTS_FULL` for a 21st.
+- `DELETE /interests/:id` removes one and answers 204, or 404 with the code `INTEREST_NOT_FOUND` for another User's or
+  a missing one.
+- `GET /interests/matches` answers the matches among the published events that have not ended and the recruiting list:
+
+  ```json
+  {
+    "globalEvents": [{ "id": "6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b", "watched": true }],
+    "quests": [{ "id": "c7e17523-981f-4761-a03e-52519082d7b1", "watched": false }]
+  }
+  ```
+
+**The Assistant's tools**, only for an app that draws answers, with their rules in `INTEREST_RULES`
+(`src/assistant/interests/interest-tools.ts`): `watchInterest({ words })` keeps an interest and answers
+`{ result: 'watching', words, topics }`, or result `none` when 20 are kept; `unwatchInterest({ words })` removes each
+interest whose normalised words, or one of whose topics, equal the normalised words and answers
+`{ result: 'removed', words }` with the words removed, or result `none`. The rules call neither for a shuttle, a free
+seat or a Friend's Class ("지켜봐 드리는 것은 행사와 모집뿐이에요"), nor for words too vague to match, which are asked
+about.
 
 ## Requests from the worker server
 
