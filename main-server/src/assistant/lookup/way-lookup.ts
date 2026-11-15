@@ -39,7 +39,7 @@ export type WayAnswer =
   | { result: 'found'; way: Way; lookup: Lookup; labels: { from: string; to: string } }
   | { result: 'none'; reason: 'no-start' | 'no-next' | 'past-by' };
 
-const GATE_BASIS = '지금 위치는 캠퍼스 밖이라 쓰지 않고 정문부터 쟀어요';
+export const GATE_BASIS = '지금 위치는 캠퍼스 밖이라 쓰지 않고 정문부터 쟀어요';
 
 const takenShuttle = ({ shuttle }: Way): ShuttleTaken | null =>
   shuttle !== null && shuttle !== 'not running' && shuttle.taken ? shuttle : null;
@@ -200,12 +200,14 @@ const HERE_BASIS: Record<Way['start']['basis'], (to: Called) => string> = {
   gate: () => GATE_BASIS,
 };
 
+export const hereBasis = (way: Way, naming: WayNaming): string => HERE_BASIS[way.start.basis](naming.to(way));
+
 // The User at the Place already: the minutes left until the deadline, or that the Place is here. No way, no time to
 // set out, and no button.
 function hereLookup(way: Way, naming: WayNaming): Lookup {
-  const { deadline, now, start } = way;
+  const { deadline, now } = way;
   const to = naming.to(way);
-  const where = HERE_BASIS[start.basis](to);
+  const where = hereBasis(way, naming);
   const left =
     deadline === null ? null : `${dueWords(deadline)}까지 ${(deadline.at.getTime() - now.getTime()) / MINUTE_MS}분`;
   return {

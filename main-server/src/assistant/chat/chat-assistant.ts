@@ -31,7 +31,7 @@ import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
-import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { answeringOptions, type LibraryServices, libraryTools } from '../library/library-tools.js';
 import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { type FriendLookupService } from '../lookup/friend.service.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
@@ -224,7 +224,7 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
       ...planned.tools,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
       // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom for an app that draws answers.
-      ...libraryTools(library, { fillsSeatTime: drawsAnswers, picksStudyTime: drawsAnswers }),
+      ...libraryTools(library, answeringOptions(drawsAnswers)),
       getTutorial: getTutorial(tutorial),
     },
   };

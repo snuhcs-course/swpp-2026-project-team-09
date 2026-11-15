@@ -118,7 +118,7 @@ A good test states a behaviour a User or another package depends on, through a s
 - **Sending a kept Notification as a push at its time**, the notification table, rows grouped by date, and a row's muted tone once it is handled. They need a stored due time and one sender across the pods, and come with the table.
 - **The other kinds**: the richer words of an invitation that carries its Plan (board t3), a changed invitation, a decline when a better Place exists, a late member, a party still on, the reading-room check-in and return, a room's booking window and end, and a watched interest. Each comes with its feature and adds its facts, words, and caller.
 - **The invitation's card on the map.** It needs the reading of an invitation, which is package C's.
-- **The seat scene beyond the filled card**: the route to 관정관 on the map, the arrows to other floors and zones, a full floor, not booking yet when the walk takes 15 minutes or more, the booked seat's card, and the check-in and return reminders.
+- **The seat scene beyond the filled card**: the route to 관정관 on the map, not booking yet when the walk takes 15 minutes or more, the booked seat's card, and the check-in and return reminders.
 - Study rooms, interests, and first run: part 2.
 
 ## Further Notes

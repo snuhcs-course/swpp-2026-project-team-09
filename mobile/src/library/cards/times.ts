@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { koreaDateKey, koreaMinutes, WEEKDAYS } from '@/korea-time';
+import { koreaClock, koreaDateKey, koreaMinutes, WEEKDAYS } from '@/korea-time';
 
 // The times of the library cards: the card's "YYYY-MM-DD" and "HH:MM", the site's YYYYMMDD and HHMM-HHMM, and the
 // words a card shows. Every booking steps by 30 minutes.
@@ -69,6 +70,14 @@ export function whenWords(date: string, start: string, minutes: number, now: Dat
 // The next 30-minute start from now in Korea: 16:40 gives "17:00", 17:00 gives "17:00".
 export function nextStart(now: Date): string {
   return clockOf(Math.ceil(koreaMinutes(now) / STEP_MINUTES) * STEP_MINUTES);
+}
+
+// A seat is confirmed at the seat kiosk (좌석배정기) within 30 minutes of its booking, or it is returned.
+const KIOSK_MS = 30 * 60_000;
+
+// The latest time a seat booked at `now` is confirmed at the kiosk, in Korea: 13:50 gives "14:20".
+export function kioskDeadline(now: Date): string {
+  return koreaClock(new Date(now.getTime() + KIOSK_MS).toISOString());
 }
 
 // The site's "2026-11-02 17:30:00" as its day and its clock.

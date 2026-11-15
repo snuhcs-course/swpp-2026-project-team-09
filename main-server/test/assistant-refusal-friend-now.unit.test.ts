@@ -26,7 +26,16 @@ function classOf(start: string, end: string, placeId: string | null = 'place-302
 function viewOf(level: FriendView['level'], placeId: string | null = null): FriendView {
   const position =
     level === 'exact' ? { latitude: 37.45, longitude: 126.95, measuredAt: at('11:49').toISOString() } : null;
-  return { id: 'minsu', name: '민수', department: '컴퓨터공학부', level, position, placeId };
+  return {
+    id: 'minsu',
+    name: '민수',
+    department: '컴퓨터공학부',
+    friendId: 'MS4K8P2R',
+    friendsSince: '2096-01-05T10:00:00+09:00',
+    level,
+    position,
+    placeId,
+  };
 }
 
 const CLASSES = [classOf('09:00', '09:50', 'place-301'), classOf('11:00', '12:15'), classOf('14:00', '15:15')];

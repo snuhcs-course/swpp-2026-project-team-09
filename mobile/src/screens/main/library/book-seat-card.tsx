@@ -3,25 +3,29 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
+import { color, font } from '@/design-system';
 import { koreaDateKey } from '@/korea-time';
 import type { CardOutcome } from '@/features/assistant/use-chat';
 import type { ConfirmedPress } from '@/library/client';
 import { seatWords, spaceWords } from '@/library/cards/bookings';
 import { doneOf } from '@/library/cards/done';
 import { type Slot, seatBookingOf } from '@/library/cards/payloads';
-import { chooseSeat, nextFreeSeat, seatState } from '@/library/cards/seats';
-import { nextStart, siteBookTime, siteDate, whenWords } from '@/library/cards/times';
+import { chooseSeat, freeSeats, nextFreeSeat, seatState } from '@/library/cards/seats';
+import { kioskDeadline, nextStart, whenWords } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibrarySeat } from '@/library/replies';
 import { useAskForPush } from '@/push/push-ask-host';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { seatsBubble } from './own-bubbles';
 import { LargeSeatMap } from './seat-map';
+import { RoomTop, RoomWords, type SeatRoom, useFullRoomSwap, useSeatRoom } from './seat-room';
 import { SlotSteps } from './slot-steps';
 import {
   bseqnoOf,
@@ -34,10 +38,14 @@ import {
   useWrite,
   type Write,
 } from './use-library-call';
+import { seatsFor } from './use-room-counts';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
-// offers the named or tapped seat, else the first free one, and books it only on 예약하기. The done message is the
-// app's own bubble.
+// offers the named or tapped seat, else the first free one, and books it only on 예약하기; 닫기 beside it ends the card
+// unbooked, and the foot under them says until when a seat booked now is confirmed at the seat kiosk. The done message
+// is the app's own bubble. A card the Assistant gave for a seat space the room chip knows starts with that chip: it
+// lists the rooms by floor and kind and switches the card to another for the same time, and a room full for that time
+// is swapped for one with free seats.
 
 export const SEAT_TAKEN = '그 자리는 방금 다른 사람이 예약했어요';
 export const NO_FREE_SEAT = '그 시간에 빈 자리가 없어요';
@@ -46,7 +54,8 @@ export const BOOK_FAILED = '예약하지 못했어요';
 // 대학원 열람실, which the library may refuse to an undergraduate: the card then says only that it failed.
 const GRADUATE_ROOM = '8F-grad-reading-room';
 
-// After 예약하기 or 취소, the card offers nothing more: the chat keeps how it ended (`LibraryCardActions.finish`).
+// After 예약하기 or 취소 (the seat card's 닫기), the card offers nothing more: the chat keeps how it ended
+// (`LibraryCardActions.finish`).
 export type Closed = 'booked' | 'declined';
 
 export const CLOSED: Readonly<Record<Closed, CardOutcome>> = {
@@ -61,17 +70,9 @@ interface BookSeatCardProps {
   place: string;
   // A card the app gave for a tapped seat: its time can be changed.
   adjustable: boolean;
+  // The User's words named the room, so its chip is the User's own condition.
+  roomNamed?: boolean;
   actions: LibraryCardActions;
-}
-
-function seatsFor(space: LibrarySpace, slot: Slot): Promise<LibrarySeat[]> {
-  return library.seats({
-    roomNo: space.roomNo,
-    sectorNo: space.sectorNo,
-    useTime: slot.minutes,
-    bookDate: siteDate(slot.date),
-    bookTime: siteBookTime(slot.start, slot.minutes),
-  });
 }
 
 function slotOf(card: LibraryCardData): Slot {
@@ -129,6 +130,8 @@ interface OfferProps extends BookSeatCardProps {
   choose: (label: string) => void;
   write: Write<LibrarySeat>;
   close: (closed: Closed) => void;
+  // 되돌리기, while the card shows another room than the one it first showed.
+  undo: (() => void) | null;
 }
 
 function OfferButtons({
@@ -136,12 +139,14 @@ function OfferButtons({
   write,
   close,
   actions,
+  undo,
   onPick,
-}: Pick<OfferProps, 'seat' | 'write' | 'close' | 'actions'> & {
+}: Pick<OfferProps, 'seat' | 'write' | 'close' | 'actions' | 'undo'> & {
   onPick: () => void;
 }): ReactElement {
   return (
     <Pills>
+      {undo === null ? null : <Pill label="되돌리기" onPress={undo} />}
       <Pill
         label="예약하기"
         onPress={() => {
@@ -149,16 +154,23 @@ function OfferButtons({
         }}
         primary
       />
-      <Pill label="다른 자리 고르기" onPress={onPick} />
       <Pill
-        label="취소"
+        label="닫기"
         onPress={() => {
           close('declined');
           actions.addOwn({ text: NOT_BOOKED });
         }}
       />
+      <Pill label="다른 자리 고르기" onPress={onPick} />
     </Pills>
   );
+}
+
+// The site's note on the seat kiosk, which the card's foot says with its time instead.
+const KIOSK = '좌석배정기';
+
+function KioskFoot(): ReactElement {
+  return <Text style={styles.foot}>{`예약하면 ${kioskDeadline(now())}까지 ${KIOSK}에서 확인해야 해요.`}</Text>;
 }
 
 // The seat offered, its time, the card's buttons and the site's notes.
@@ -182,8 +194,9 @@ function SeatOffer(props: OfferProps): ReactElement {
           }}
         />
       ) : null}
+      {open ? <KioskFoot /> : null}
       {write.busy ? <Said>예약하는 중이에요</Said> : null}
-      <Notes notes={card.notes} />
+      <Notes notes={card.notes.filter((note) => !note.includes(KIOSK))} />
       <LargeSeatMap
         onClose={() => {
           setPicking(false);
@@ -216,19 +229,36 @@ function NoFreeSeat({ space, card, actions }: Pick<BookSeatCardProps, 'space' | 
   );
 }
 
-export function BookSeatCard(props: BookSeatCardProps): ReactElement {
-  const { card, space, actions, place } = props;
-  const [slot, setSlot] = useState<Slot>(() => slotOf(card));
-  const [named, setNamed] = useState<string | null>(card.seat);
+// After 예약하기 or 닫기: the chat keeps how the card ended, and a booking asks for push.
+function useClose(actions: LibraryCardActions, place: string): (closed: Closed) => void {
   const askForPush = useAskForPush();
-  const setClosed = (closed: Closed): void => {
+  return (closed) => {
     actions.finish(place, CLOSED[closed]);
     if (closed === 'booked') {
       askForPush();
     }
   };
-  const { loaded, reload } = useLibraryLoad(() => seatsFor(space, slot), `${slot.start} ${String(slot.minutes)}`);
-  const booking: Booking = { card, space, slot, actions, close: setClosed, choose: setNamed, reload };
+}
+
+interface SeatPartProps extends BookSeatCardProps {
+  room: SeatRoom;
+  slot: Slot;
+  setSlot: (slot: Slot) => void;
+  named: string | null;
+  setNamed: (seat: string | null) => void;
+}
+
+// The seats of the room on screen and what the card offers of them. It stays mounted while the room list is open, so
+// that a booking under way is not lost, and shows nothing then.
+function SeatPart(props: SeatPartProps): ReactElement | null {
+  const { card, actions, place, room, slot, named, setNamed } = props;
+  const { shown } = room;
+  const close = useClose(actions, place);
+  const { loaded, reload } = useLibraryLoad(
+    () => seatsFor(shown, slot),
+    `${shown.id} ${slot.start} ${String(slot.minutes)}`,
+  );
+  const booking: Booking = { card, space: shown, slot, actions, close, choose: setNamed, reload };
   const write = useWrite<LibrarySeat>(
     (seat, press) => sendBooking(booking, seat, press),
     undefined,
@@ -237,13 +267,38 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   const logIn = useLogInReload(reload);
   const seats = loaded.state === 'ready' ? loaded.value : [];
   const seat = chooseSeat(seats, named);
-  const offer = { ...props, seats, slot, setSlot, choose: setNamed, write, close: setClosed };
+  const searching = useFullRoomSwap(room, props.space, loaded.state === 'ready' && seat === null);
+  if (room.listing) {
+    return null;
+  }
+  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo };
+  const free = loaded.state === 'ready' ? freeSeats(seats).length : null;
+  return (
+    <>
+      {room.chip === null ? null : <RoomWords free={free} full={room.full} rooms={room.counting.rooms} shown={shown} />}
+      {loaded.state === 'loading' || searching ? <Said>빈 자리를 찾고 있어요</Said> : null}
+      <FailureNote failure={loaded.state === 'failed' ? loaded.failure : null} onLogIn={logIn} />
+      {loaded.state === 'ready' && seat === null && !searching ? (
+        <NoFreeSeat actions={actions} card={card} space={shown} />
+      ) : null}
+      {seat === null ? null : <SeatOffer {...offer} seat={seat} />}
+    </>
+  );
+}
+
+export function BookSeatCard(props: BookSeatCardProps): ReactElement {
+  const { card } = props;
+  const [slot, setSlot] = useState<Slot>(() => slotOf(card));
+  const [named, setNamed] = useState<string | null>(card.seat);
+  const room = useSeatRoom(props, slot, setNamed);
   return (
     <CardBox testID={`library-book-${card.key}`}>
-      {loaded.state === 'loading' ? <Said>빈 자리를 찾고 있어요</Said> : null}
-      <FailureNote failure={loaded.state === 'failed' ? loaded.failure : null} onLogIn={logIn} />
-      {loaded.state === 'ready' && seat === null ? <NoFreeSeat {...props} /> : null}
-      {seat === null ? null : <SeatOffer {...offer} seat={seat} />}
+      <RoomTop room={room} slot={slot} />
+      <SeatPart {...props} named={named} room={room} setNamed={setNamed} setSlot={setSlot} slot={slot} />
     </CardBox>
   );
 }
+
+const styles = StyleSheet.create({
+  foot: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
+});

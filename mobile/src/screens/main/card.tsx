@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, color, font, Icon, type IconName, radius, shadow, space, text } from '@/design-system';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
@@ -81,6 +81,21 @@ function Leading({ mark }: { mark: CardMark }): ReactElement {
   );
 }
 
+// A card's ✕, at the end of its head.
+export function CloseButton({ onClose }: Pick<CardProps, 'onClose'>): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel="닫기"
+      accessibilityRole="button"
+      hitSlop={CLOSE_HIT_SLOP}
+      onPress={onClose}
+      style={styles.close}
+    >
+      <Icon color={color.inkMuted} name="x" size={20} />
+    </Pressable>
+  );
+}
+
 function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElement {
   const { mark, subLabel, title } = card;
   return (
@@ -101,15 +116,7 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
           {title}
         </Text>
       </View>
-      <Pressable
-        accessibilityLabel="닫기"
-        accessibilityRole="button"
-        hitSlop={CLOSE_HIT_SLOP}
-        onPress={onClose}
-        style={styles.close}
-      >
-        <Icon color={color.inkMuted} name="x" size={20} />
-      </Pressable>
+      <CloseButton onClose={onClose} />
     </View>
   );
 }
@@ -163,9 +170,28 @@ function Lines({ card }: Pick<CardProps, 'card'>): ReactElement | null {
   );
 }
 
-// The card of what was pressed on the map, as the `MapOverviewSelect` frame draws it: above the AI input's place,
-// with the leading mark, the sub-label, the title, the lines or the choices, "가까이 보기" where it is offered and the
-// card's button. A Friend's card is their profile, with its rows among the lines.
+// A card over the map, as the `MapOverviewSelect` frame draws it: above the AI input's place, or at `top`.
+export function CardFrame({
+  onHeight,
+  top: fromTop,
+  children,
+}: Pick<CardProps, 'onHeight' | 'top'> & { children: ReactNode }): ReactElement {
+  return (
+    <View
+      onLayout={({ nativeEvent: { layout } }) => {
+        onHeight?.(layout.height);
+      }}
+      style={[styles.card, fromTop === undefined ? styles.atBottom : { top: fromTop }]}
+      testID="map-card"
+    >
+      {children}
+    </View>
+  );
+}
+
+// The card of what was pressed on the map: the leading mark, the sub-label, the title, the lines or the choices,
+// "가까이 보기" where it is offered and the card's button. A Friend's card is their profile, with its rows among the
+// lines.
 export function Card({
   card,
   canLookCloser,
@@ -177,13 +203,7 @@ export function Card({
   top,
 }: CardProps): ReactElement {
   return (
-    <View
-      onLayout={({ nativeEvent: { layout } }) => {
-        onHeight?.(layout.height);
-      }}
-      style={[styles.card, top === undefined ? styles.atBottom : { top }]}
-      testID="map-card"
-    >
+    <CardFrame onHeight={onHeight} top={top}>
       <Head card={card} onClose={onClose} />
       <Lines card={card} />
       {card.study === undefined ? null : <StudyRows key={`study:${card.id}`} study={card.study} />}
@@ -202,7 +222,7 @@ export function Card({
           </View>
         )}
       </View>
-    </View>
+    </CardFrame>
   );
 }
 
