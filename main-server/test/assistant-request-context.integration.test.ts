@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -62,7 +63,14 @@ describe('The request context', () => {
     const response = await postAssistantMessages(app, await newAccessToken(), ask('안녕'));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ text: '안녕하세요!', mapButtons: [], cards: [], proposal: null, answer: null });
+    expect(response.body).toEqual({
+      text: '안녕하세요!',
+      mapButtons: [],
+      cards: [],
+      proposal: null,
+      answer: null,
+      lookup: null,
+    });
   });
 
   it('is accepted whole: a location, a viewport, a tapped Place, conditions and a plan', async () => {

@@ -10,9 +10,11 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { Lookup } from './lookup-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
+import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
 
 // --- The Assistant (POST /assistant/messages) ---
@@ -349,20 +351,21 @@ export interface MapScene {
     me: boolean;
     // At 'building', the point of the Place the person is in.
     at: LatLng;
+    // `building`: a Friend at the building they are in, as the Friend view shows them.
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
-  places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
+  places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
   // `mode` is absent for a walk.
   routes: {
     userId: string;
-    role: 'me' | 'friend' | 'next';
+    role: RouteRole;
     from: LatLng;
     to: LatLng;
     minutes: number;
     mode?: 'walk' | 'shuttle';
   }[];
-  flags: { at: LatLng; text: string; role: 'place' | 'meeting' }[];
+  flags: { at: LatLng; text: string; role: FlagRole }[];
 }
 
 export interface TimeBand {
@@ -375,12 +378,13 @@ export interface TimeBand {
 }
 
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, the Proposal it made, or null, and the answer it drew on the map, or null. A main server
-// before P01-01 leaves the answer out.
+// cards in the order shown, the Proposal it made, or null, and the answer or the Lookup it drew on the map, or null. A
+// main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
 export interface AssistantReply {
   text: string;
   mapButtons: MapLayer[];
   cards: ChatCard[];
   proposal: QuestProposal | null;
   answer?: AnswerReply | null;
+  lookup?: Lookup | null;
 }

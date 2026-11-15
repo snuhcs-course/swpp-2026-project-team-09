@@ -67,6 +67,7 @@ export function planQuests(plans: QuestsPlanService): Tool {
       };
       const answer = await plans.plan(userId, planInput, { now, location: context.location });
       presented.answer = answer;
+      presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
         return noneFound('No recruiting 파티 of these can be reached before it starts.');

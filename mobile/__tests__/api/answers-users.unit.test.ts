@@ -50,14 +50,17 @@ const PROFILE = {
   registeredName: '홍길동',
   affiliation: 'exchange',
 };
-const LOBBY = { profile: PROFILE, masterSwitch: false };
+const LOBBY = { profile: PROFILE, masterSwitch: false, masterOffAsked: false };
 const FRIEND = {
   id: 'u-min-jun',
   name: '김민준',
   department: '경영학과',
   level: 'building',
+  seen: 'timetable',
   sharing: true,
   visible: false,
+  askedOff: true,
+  askedPlan: false,
 };
 const USER_SUMMARY = { name: '김민준', department: '경영학과' };
 const INVITE_LINK = { url: 'https://snunow.example/invite/abc', expiresAt: '2026-10-07T08:00:00.000Z' };
@@ -150,7 +153,7 @@ describe('isLobby', () => {
     isLobby,
     [['the Lobby', LOBBY]],
     [
-      ...wrongFields(LOBBY, { profile: ['홍길동'], masterSwitch: ['false'] }),
+      ...wrongFields(LOBBY, { profile: ['홍길동'], masterSwitch: ['false'], masterOffAsked: ['true'] }),
       ['a profile without a friendId', { ...LOBBY, profile: omit(PROFILE, 'friendId') }],
     ],
   );
@@ -183,8 +186,11 @@ describe('isFriends', () => {
           name: [1],
           department: [1],
           level: ['college'],
+          seen: ['college'],
           sharing: ['true'],
           visible: ['false'],
+          askedOff: ['true'],
+          askedPlan: [0],
         }),
       ),
     ],

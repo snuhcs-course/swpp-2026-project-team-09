@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -22,7 +23,7 @@ import {
   RECRUITING_KEY,
 } from '@/api/queries';
 import type { CompanionSeeker, OfficialRecruiting } from '@/api/quest-parts-types';
-import type { QuestInvitation } from '@/api/waiting-types';
+import type { MyJoinRequest, QuestInvitation } from '@/api/waiting-types';
 import { useToast } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
 import { ENTERING, refusalWords } from '@/features/quests/refusals';
@@ -37,8 +38,9 @@ export interface PartyActions {
   join: (post: PostView) => Promise<void>;
   // Withdraws the request to join the Quest `questId`, from 보낸 신청 or the post.
   withdraw: (requestId: string, questId: string) => Promise<void>;
-  accept: (invitation: QuestInvitation) => Promise<void>;
-  decline: (invitation: QuestInvitation) => Promise<void>;
+  // Each gives whether the main server did it.
+  accept: (invitation: QuestInvitation) => Promise<boolean>;
+  decline: (invitation: QuestInvitation) => Promise<boolean>;
 }
 
 // The 파티 tab at 내 파티, closing the screens above it.
@@ -53,8 +55,12 @@ export function showMine(): void {
 // Accepting and declining both delete a request, so a withdrawal after either is refused with the same not-found, and
 // only the User's Quests tell them apart: holding the Quest now means the Leader accepted. Null when the Quests do not
 // come either, and for any other refusal.
+function isGone(error: unknown): boolean {
+  return error instanceof ApiError && error.code === 'QUEST_JOIN_REQUEST_NOT_FOUND';
+}
+
 async function answeredFirstWords(queryClient: QueryClient, questId: string, error: unknown): Promise<string | null> {
-  if (!(error instanceof ApiError && error.code === 'QUEST_JOIN_REQUEST_NOT_FOUND')) {
+  if (!isGone(error)) {
     return null;
   }
   try {
@@ -65,16 +71,50 @@ async function answeredFirstWords(queryClient: QueryClient, questId: string, err
   }
 }
 
+// The request leaves 보낸 신청 at once once it is gone, so that a second 신청 취소 before the list comes again cannot
+// find it gone and say the Leader declined.
+function dropRequest(queryClient: QueryClient, requestId: string): void {
+  queryClient.setQueryData<MyJoinRequest[]>(MY_JOIN_REQUESTS_KEY, (requests) =>
+    requests?.filter(({ id }) => id !== requestId),
+  );
+}
+
+// The requests being withdrawn, from 보낸 신청 or the post: a second press while one is on its way sends nothing.
+const withdrawing = new Set<string>();
+
+// Sends a request and toasts `done`, or the words `refused` gives for a refusal; true when the main server did it.
+type Run = (
+  requests: () => Promise<unknown>,
+  done: string | null,
+  refused?: (error: unknown) => Promise<string | null>,
+) => Promise<boolean>;
+
+async function withdrawOnce(run: Run, queryClient: QueryClient, requestId: string, questId: string): Promise<void> {
+  if (withdrawing.has(requestId)) {
+    return;
+  }
+  withdrawing.add(requestId);
+  let gone = false;
+  const withdrawn = await run(
+    () => apiClient.withdrawJoinRequest(requestId),
+    '신청을 취소했어요',
+    (error) => {
+      gone = isGone(error);
+      return answeredFirstWords(queryClient, questId, error);
+    },
+  );
+  withdrawing.delete(requestId);
+  if (withdrawn || gone) {
+    dropRequest(queryClient, requestId);
+  }
+}
+
 export function usePartyActions(): PartyActions {
   const queryClient = useQueryClient();
   const showToast = useToast();
   return useMemo(() => {
     // `refused` may give words of its own for a refusal; otherwise the table's are shown.
-    const run = async (
-      requests: () => Promise<unknown>,
-      done: string | null,
-      refused?: (error: unknown) => Promise<string | null>,
-    ): Promise<boolean> => {
+    const run: Run = async (requests, done, refused) => {
       try {
         await requests();
         if (done !== null) {
@@ -98,19 +138,9 @@ export function usePartyActions(): PartyActions {
           showMine();
         }
       },
-      withdraw: async (requestId, questId) => {
-        await run(
-          () => apiClient.withdrawJoinRequest(requestId),
-          '신청을 취소했어요',
-          (error) => answeredFirstWords(queryClient, questId, error),
-        );
-      },
-      accept: async ({ id }) => {
-        await run(() => apiClient.acceptInvitation(id), '파티에 참여했어요');
-      },
-      decline: async ({ id }) => {
-        await run(() => apiClient.declineInvitation(id), null);
-      },
+      withdraw: (requestId, questId) => withdrawOnce(run, queryClient, requestId, questId),
+      accept: ({ id }) => run(() => apiClient.acceptInvitation(id), '파티에 참여했어요'),
+      decline: ({ id }) => run(() => apiClient.declineInvitation(id), null),
     };
   }, [queryClient, showToast]);
 }

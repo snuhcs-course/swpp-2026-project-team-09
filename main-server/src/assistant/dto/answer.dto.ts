@@ -161,6 +161,15 @@ export interface PlanPart {
   mode?: 'walk' | 'shuttle';
 }
 
+// A shuttle stop's point holds the stop's id, not a Place's.
+type PlaceRole = 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting' | 'stop';
+
+// `shuttle` is a ride between two stops; `alt` is the way not taken, drawn faded.
+type RouteRole = 'me' | 'friend' | 'next' | 'shuttle' | 'alt';
+
+// `leave` is when to set out, `late` an arrival after the deadline, `shuttle` the stop a shuttle passed last.
+type FlagRole = 'place' | 'meeting' | 'leave' | 'late' | 'shuttle';
+
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {
   people: {
@@ -169,20 +178,21 @@ export interface MapScene {
     me: boolean;
     // At 'building', the point of the Place the person is in.
     at: Position;
+    // `building`: a Friend at the building they are in, as the Friend view shows them.
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
-  places: { place: PlacePoint; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting'; tag: string | null }[];
+  places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
   // `mode` is absent for a walk.
   routes: {
     userId: string;
-    role: 'me' | 'friend' | 'next';
+    role: RouteRole;
     from: Position;
     to: Position;
     minutes: number;
     mode?: 'walk' | 'shuttle';
   }[];
-  flags: { at: Position; text: string; role: 'place' | 'meeting' }[];
+  flags: { at: Position; text: string; role: FlagRole }[];
 }
 
 export interface TimeBand {
@@ -193,6 +203,29 @@ export interface TimeBand {
   endAt: string;
   text: string;
 }
+
+// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, or a menu.
+export interface Lookup {
+  kind: 'way' | 'friend' | 'menu';
+  // The conditions it used; a Lookup is not recalculated.
+  chips: ConditionChip[];
+  // At most two.
+  lines: AnswerLine[];
+  basis: string[];
+  scene: MapScene;
+  // When a time matters; it has no handles.
+  band: TimeBand | null;
+  // The card's buttons, the main one first.
+  actions: LookupAction[];
+}
+
+export type LookupAction =
+  // 길 안내
+  | { kind: 'guide'; to: PlacePoint }
+  // A leave-by notification at `at`.
+  | { kind: 'remind'; at: string; text: string }
+  // 만나고 싶다
+  | { kind: 'meet'; userId: string };
 
 // The most people of a plan, and the most constraints on each.
 const PEOPLE_MAX = 8;

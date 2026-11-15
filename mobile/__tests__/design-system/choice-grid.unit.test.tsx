@@ -4,7 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent, within } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
 
 import { ChoiceGrid, choiceRowsWithin, color, type GridChoice } from '@/design-system';
@@ -160,7 +160,8 @@ describe('ChoiceGrid with a row limit', () => {
 });
 
 describe('ChoiceGrid pressed', () => {
-  // Partitions: a press while enabled, and while disabled.
+  // Partitions: a press while enabled, and while disabled; a busy cell inside a disabled grid, as the choice on its
+  // way while every other cell waits for it.
   it('chooses the cell pressed by its key', async () => {
     const onChoose = jest.fn<void, [string]>();
     await show({ onChoose });
@@ -179,5 +180,28 @@ describe('ChoiceGrid pressed', () => {
     expect(onChoose).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: '하은, 160m, 추가' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '하은, 160m, 추가' })).toHaveStyle({ opacity: 0.5 });
+  });
+
+  it('draws a busy cell of a disabled grid on the pressed ground, not dimmed, with a spinner, and takes no press', async () => {
+    const onChoose = jest.fn<void, [string]>();
+    const busy: GridChoice = {
+      key: 'f5',
+      name: '하은',
+      value: '넣는 중',
+      faint: false,
+      label: '하은, 넣는 중',
+      busy: true,
+    };
+    await show({ choices: [busy, ...CHOICES.slice(1)], disabled: true, onChoose });
+
+    const cell = screen.getByRole('button', { name: '하은, 넣는 중' });
+    await userEvent.press(cell);
+
+    expect(onChoose).not.toHaveBeenCalled();
+    expect(cell).toBeDisabled();
+    expect(cell).toHaveStyle({ backgroundColor: color.blue50 });
+    expect(cell).not.toHaveStyle({ opacity: 0.5 });
+    expect(within(cell).getByTestId('choice-grid-spinner')).toBeVisible();
+    expect(cell).toHaveTextContent('하은넣는 중');
   });
 });

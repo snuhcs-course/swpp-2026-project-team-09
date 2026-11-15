@@ -4,6 +4,7 @@
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -133,7 +134,8 @@ export class PlaceLookup implements OnModuleInit {
     return found?.place ?? null;
   }
 
-  private nearTo(position: Position): PlaceDto | null {
+  // The Place whose point is nearest, within NEAREST_PLACE_METRES.
+  nearTo(position: Position): PlaceDto | null {
     const [nearest] = this.places
       .map(({ place }) => ({ place, metres: metresBetween(place, position) }))
       .toSorted((a, b) => a.metres - b.metres);
