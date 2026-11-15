@@ -3,6 +3,7 @@
  *
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RestaurantMenu } from '../src/menu/dto/menus-collected.dto.js';
@@ -12,9 +13,14 @@ import { blockPage, savedPage } from './pages.js';
 // The week of Monday 28 September to Friday 2 October 2026.
 const weekPage = savedPage('veterinary-menus-2026-10-01');
 
-// The cafeteria with the one line of a lunch cell. The line says neither what it is nor what it costs.
+// The cafeteria with the one line of a lunch cell. The line says neither what it is nor what it costs, and the table
+// gives no hours.
 function lunchOf(dish: string): RestaurantMenu {
-  return { name: '수의대식당', lines: [{ meal: 'lunch', text: dish, kind: null, name: null, price: null }] };
+  return {
+    name: '수의대식당',
+    lines: [{ meal: 'lunch', text: dish, kind: null, name: null, price: null }],
+    hours: [],
+  };
 }
 
 describe("The veterinary college's week table", () => {

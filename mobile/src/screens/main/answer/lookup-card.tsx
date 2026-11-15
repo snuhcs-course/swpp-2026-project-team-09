@@ -9,10 +9,12 @@ import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
 import type { Lookup } from '@/api/lookup-types';
+import type { Refusal } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
-import { type GuideAction, mainActionOf, type ShownLookup } from '@/features/assistant/use-shown-lookup';
+import { mainActionOf, type ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { AnswerLines } from './answer-lines';
 import { ReadOnlyChip } from './condition-chips';
+import { isButton, pressOffer } from './refusal-reply';
 import { TimeBand } from './time-band';
 
 // As high as the answer's chips, whose touch area "근거" shares.
@@ -61,14 +63,13 @@ export function Chips({ chips, basis }: ChipsProps): ReactElement {
   );
 }
 
-interface ButtonsProps {
-  main: GuideAction | null;
-  guide: (to: GuideAction['to']) => void;
-  onClose: () => void;
+interface MainButton {
+  label: string;
+  onPress: () => void;
 }
 
 // "길 안내" with "닫기" beside it, or "닫기" alone across the card.
-function Buttons({ main, guide, onClose }: ButtonsProps): ReactElement {
+function Buttons({ main, onClose }: { main: MainButton | null; onClose: () => void }): ReactElement {
   if (main === null) {
     return (
       <Button full onPress={onClose} variant="secondary">
@@ -79,13 +80,8 @@ function Buttons({ main, guide, onClose }: ButtonsProps): ReactElement {
   return (
     <View style={styles.buttons}>
       <View style={styles.main}>
-        <Button
-          full
-          onPress={() => {
-            guide(main.to);
-          }}
-        >
-          길 안내
+        <Button full onPress={main.onPress}>
+          {main.label}
         </Button>
       </View>
       <Button onPress={onClose} variant="secondary">
@@ -98,18 +94,45 @@ function Buttons({ main, guide, onClose }: ButtonsProps): ReactElement {
 interface LookupCardProps {
   lookup: Lookup;
   shown: ShownLookup;
+  // A refusal of the part that cannot be answered, beside the Lookup (boards n4, n20), or null.
+  refusal: Refusal | null;
+  onAsk: (words: string) => void;
   onClose: () => void;
+}
+
+// The refusal's first offer, else "길 안내" when the Lookup has it.
+function mainOf({ lookup, shown, refusal, onAsk }: LookupCardProps): MainButton | null {
+  const offer = refusal?.offers.find(isButton);
+  if (offer !== undefined) {
+    return {
+      label: offer.label,
+      onPress: () => {
+        pressOffer(offer, onAsk);
+      },
+    };
+  }
+  const guide = mainActionOf(lookup);
+  return guide === null
+    ? null
+    : {
+        label: '길 안내',
+        onPress: () => {
+          shown.guide(guide.to);
+        },
+      };
 }
 
 // A Lookup in the answer frame's card, as a Plan's card without its arrows and "이대로 초대": its chips, its two lines,
 // the basis while open, the band without handles when a time matters, and the first action the app draws as the main
-// button beside "닫기".
-export function LookupCard({ lookup, shown, onClose }: LookupCardProps): ReactElement {
-  const { basisOpen, toggleBasis, guide } = shown;
+// button beside "닫기". Beside a refusal, the refusal's lines stand in place of the Lookup's, and its offer in place of
+// the main button.
+export function LookupCard(props: LookupCardProps): ReactElement {
+  const { lookup, shown, refusal, onClose } = props;
+  const { basisOpen, toggleBasis } = shown;
   return (
     <View style={styles.card} testID="lookup-card">
       <Chips basis={lookup.basis.length === 0 ? null : { open: basisOpen, toggle: toggleBasis }} chips={lookup.chips} />
-      <AnswerLines lines={lookup.lines} />
+      <AnswerLines lines={refusal?.lines ?? lookup.lines} />
       {basisOpen ? (
         <View style={styles.basis}>
           {lookup.basis.map((line) => (
@@ -130,7 +153,7 @@ export function LookupCard({ lookup, shown, onClose }: LookupCardProps): ReactEl
           onDrop={ignoreDrop}
         />
       )}
-      <Buttons guide={guide} main={mainActionOf(lookup)} onClose={onClose} />
+      <Buttons main={mainOf(props)} onClose={onClose} />
     </View>
   );
 }

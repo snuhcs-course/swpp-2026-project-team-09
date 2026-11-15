@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -22,6 +23,7 @@ import {
   textHalo,
   useToast,
 } from '@/design-system';
+import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type FriendView, withAge } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 import { cardId } from '@/features/map/adapter';
@@ -97,10 +99,16 @@ function FriendRow({ friend, onPress }: { friend: FriendView; onPress: () => voi
 }
 
 // What a press on a Friend's row does: it brings the map to the Friend at the "close" level and opens their card,
-// also when the map's cards are still to come; for a Friend whose position is not known it says so.
+// also when the map's cards are still to come. For a Friend whose position is not known it opens their card where the
+// map is while the switch of the answer on the map is on, and says so while it is off.
 function useShow({ map, selection }: Pick<FriendListProps, 'map' | 'selection'>): (friend: FriendView) => void {
   const showToast = useToast();
+  const onMap = useAnswerSwitch();
   return (friend) => {
+    if (friend.position === null && onMap) {
+      selection.selectFriend(friend.id);
+      return;
+    }
     if (friend.position === null) {
       showToast(`${friend.name}님은 위치가 꺼져 있어요`, LOCATION_OFF_MS);
       return;
@@ -132,12 +140,14 @@ function Rows({ friends, shown, onPress }: RowsProps): ReactElement {
 }
 
 // The friend list of the `Main` frame, at the left over the map: the pill, the round button that collapses the list,
-// and every Friend in a window of up to three rows. The pill opens the friend panel over the whole screen.
+// and every Friend in a window of up to three rows. The pill opens the friend panel over the whole screen, whose rows,
+// while the switch of the answer on the map is on, close it and do what a row of the list does.
 export function FriendList({ map, selection, room }: FriendListProps): ReactElement {
   const friends = useFriends().data;
   const [open, setOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const show = useShow({ map, selection });
+  const onMap = useAnswerSwitch();
   const { top } = useSafeAreaInsets();
   const shown = listRows(room, top).friends;
   return (
@@ -163,6 +173,14 @@ export function FriendList({ map, selection, room }: FriendListProps): ReactElem
         onClose={() => {
           setPanelOpen(false);
         }}
+        onShow={
+          onMap
+            ? (friend) => {
+                setPanelOpen(false);
+                show(friend);
+              }
+            : undefined
+        }
         open={panelOpen}
       />
     </View>

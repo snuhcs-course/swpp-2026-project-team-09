@@ -10,6 +10,7 @@ import { WAY_LOOKUP } from '@/api/mock/data/way-lookup';
 import { isLookup } from '@/api/server/lookup-answers';
 import late from '@/api/mock/data/way-lookups/late.json';
 import leave from '@/api/mock/data/way-lookups/leave.json';
+import notRunning from '@/api/mock/data/way-lookups/shuttle-not-running.json';
 import shuttle from '@/api/mock/data/way-lookups/shuttle.json';
 
 const { chips: _chips, ...withoutChips } = WAY_LOOKUP;
@@ -17,13 +18,15 @@ const { chips: _chips, ...withoutChips } = WAY_LOOKUP;
 const [FRIEND] = FRIEND_LOOKUP.scene.people;
 
 // Copies of the main server's Lookups, written by its `wayAnswer` over the seed's Places, walking table, shuttle
-// timing, and stops, for the User of `way-lookup.ts` at 301동 on Tuesday 2026-11-17; a stop's id is its key in the
-// seed, where the database gives it one. Expected values: each passes as the server wrote it.
+// timing, and stops, for the User of `way-lookup.ts` at 301동 on Tuesday 2026-11-17, and at the endpoint at 관정 at
+// 22:10 on a Tuesday; a stop's id is its key in the seed, where the database gives it one. Expected values: each passes
+// as the server wrote it.
 describe('the check of real Lookups with a deadline or the shuttle', () => {
   it.each([
     ['12:40, leaving at 12:45 for the 13:00 Class in 24동 (board q2)', leave],
     ['12:50, 5 minutes late for it (board q3)', late],
     ['16:40, by the shuttle reported at 신소재공동연구소 to the 17:00 Class in 58동 (board q4)', shuttle],
+    ['22:10 at 관정, asked about the shuttle to 919동 when it is not running (board n21)', notRunning],
   ])('passes the Lookup at %s', (_, lookup) => {
     expect(isLookup(lookup)).toBe(true);
   });

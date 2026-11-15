@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, type RenderHookResult, renderHook } from '@testing-library/react-native';
@@ -127,13 +128,15 @@ describe("the User's own card once open", () => {
 
 const STUDENT_HALL: Place = { id: 'p63', number: '63', name: '학생회관', latitude: 37.45932, longitude: 126.95058 };
 
-// The selection over the two Friends' cards; `buildings`: whether a building takes a press (P02 ticket 22).
+// The selection over the two Friends' cards; `buildings`: whether a building takes a press, the switch being on, which
+// gives the Friends a card may be open for without their mark (P02 ticket 22).
 function renderBuildings(initialProps: {
   buildings: boolean;
 }): Promise<RenderHookResult<Selection, { buildings: boolean }>> {
-  return renderHook(({ buildings }: { buildings: boolean }) => useSelection([MIN_JUN, JI_HO], true, false, buildings), {
-    initialProps,
-  });
+  return renderHook(
+    ({ buildings }: { buildings: boolean }) => useSelection([MIN_JUN, JI_HO], true, false, buildings ? [] : null),
+    { initialProps },
+  );
 }
 
 // Partitions: buildings taking a press and not.

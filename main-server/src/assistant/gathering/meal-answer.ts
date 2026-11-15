@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan } from '../dto/answer.dto.js';
@@ -90,22 +91,25 @@ function chipsOf(naming: Naming): ConditionChip[] {
   return [...chips, ...personChips(naming)];
 }
 
+// The meal is named where the window is its own, so that a meal the server took by the clock can be corrected.
 function noPlanOf(naming: Naming): AnswerReply['noPlan'] {
   const { menus, gathering, people, input } = naming.args;
+  const meal = mealWord(naming);
   if (menus === 'none') {
     return { reason: 'no-menu', lines: [plain('그날은 수집된 메뉴가 없어요')] };
   }
   if (menus === 'closed') {
-    return { reason: 'no-menu', lines: [plain('그 끼니에 여는 식당이 없어요')] };
+    return { reason: 'no-menu', lines: [plain(`${meal}에 여는 식당이 없어요`)] };
   }
   if (menus === 'closed-at-place') {
     return { reason: 'no-fit', lines: [plain('그곳에는 여는 식당이 없어요')] };
   }
   if (gathering.shared === null) {
-    const text = people.length > 1 ? '그 시간에는 같이 비는 시간이 없어요' : '그 시간에는 비는 시간이 없어요';
+    const when = input.window.from === null && input.window.until === null ? `${meal} 시간` : '그 시간';
+    const text = people.length > 1 ? `${when}에는 같이 비는 시간이 없어요` : `${when}에는 비는 시간이 없어요`;
     return { reason: 'no-shared-time', lines: [plain(text)] };
   }
-  const unfit = unfitLines(naming, windowOf(input), { word: mealWord(naming), stay: '먹어요' });
+  const unfit = unfitLines(naming, windowOf(input), { word: meal, stay: '먹어요' });
   return { reason: 'no-fit', lines: unfit ?? [plain('시간 안에 다녀올 수 있는 식당이 없어요')] };
 }
 
@@ -184,16 +188,20 @@ function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string
   return null;
 }
 
+// The first line, which every plan has, opens with the meal, so that a meal the server took by the clock can be
+// corrected.
 function linesOf(fit: GatheringFit, naming: Naming): AnswerLine[] {
   const { key, start, togetherMinutes, parts } = fit;
   const { people, aloneMinutes } = naming.args;
   const missed = missedLine(fit, naming);
+  const meal = { text: `${mealWord(naming)} `, strong: false };
   if (people.length > 1) {
     const fewer = aloneMinutes === null ? 0 : aloneMinutes - togetherMinutes;
     const second = missed ?? (fewer > 0 ? `같이 먹으면 식사가 ${fewer}분 줄어요` : `식사 ${togetherMinutes}분`);
-    return [[{ text: `${clockOf(start)} ${key}`, strong: true }], plain(second)];
+    return [[meal, { text: `${clockOf(start)} ${key}`, strong: true }], plain(second)];
   }
   const first: AnswerLine = [
+    meal,
     { text: key, strong: true },
     { text: ` · 식사 ${togetherMinutes}분`, strong: false },
   ];

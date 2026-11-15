@@ -26,6 +26,8 @@ const ADVANTAGE_MINUTES = SHUTTLE_ADVANTAGE_SECONDS / 60;
 
 const RULE = `셔틀은 걷기보다 ${ADVANTAGE_MINUTES}분 이상 빠를 때만 권해요 (평일 8–21시)`;
 
+export const NOT_RUNNING = '셔틀은 지금 다니지 않아요 (평일 8–21시)';
+
 const minutesBetween = (from: Date, to: Date): number => (to.getTime() - from.getTime()) / MINUTE_MS;
 
 const tripMinutes = ({ leave, arrival }: ShuttleTrip): number => minutesBetween(leave, arrival);
@@ -36,7 +38,7 @@ export function shuttleLine({ walkMinutes, shuttle, now }: Way): string | null {
     return null;
   }
   if (shuttle === 'not running') {
-    return '셔틀은 지금 다니지 않아요 (평일 8–21시)';
+    return NOT_RUNNING;
   }
   const { toStopMinutes, rideMinutes, fromStopMinutes, arrival } = shuttle.trip;
   const riding = toStopMinutes + rideMinutes + fromStopMinutes;

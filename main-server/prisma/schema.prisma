@@ -829,6 +829,37 @@ enum Meal {
   @@map("meal")
 }
 
+// A Restaurant's hours for a meal on a kind of day, read by the worker from the one hours line of the meal's cell
+// ("※ 운영시간 : 11:00~14:30"). The line stays a MenuLine as well. A Collection replaces the hours only when it reads
+// other times, and a day without an hours line leaves them.
+model RestaurantHours {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source     Source
+  // As the pages write it, as in RestaurantDay.
+  restaurant String
+  meal       Meal
+  dayKind    DayKind  @map("day_kind")
+  // Times of day in Asia/Seoul, "HH:MM".
+  opensAt    String   @map("opens_at")
+  closesAt   String   @map("closes_at")
+  // The line the hours were read from.
+  line       String
+  // The time of the Collection that read them.
+  readAt     DateTime @map("read_at")
+
+  @@unique([source, restaurant, meal, dayKind])
+  @@map("restaurant_hours")
+}
+
+// A public holiday has no kind of its own: the pages give no holiday hours.
+enum DayKind {
+  weekday
+  saturday
+  sunday
+
+  @@map("day_kind")
+}
+
 // A page or feed outside the project that the worker server collects.
 enum Source {
   coop_menus

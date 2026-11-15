@@ -9,6 +9,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
+import type { RefusalKind } from '@/api/refusal-types';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 
@@ -21,6 +22,11 @@ function said(id: number, text: string): ChatBubble {
 
 function replied(id: number, answer: AnswerReply | null): ChatBubble {
   return { id, role: 'assistant', text: '', cards: [], mapButtons: [], proposal: null, failure: null, answer };
+}
+
+function refusing(id: number, kind: RefusalKind, line: string): ChatBubble {
+  const refusal = { kind, lines: [[{ text: line, strong: false }]], offers: [] };
+  return { ...replied(id, null), text: line, refusal };
 }
 
 function own(id: number): ChatBubble {
@@ -83,6 +89,26 @@ describe('the answer on screen', () => {
 
   it('is none once the User asks again and the new reply has no answer', async () => {
     const { shown } = await hold([ASKED, replied(2, MEAL_ANSWER), said(3, '고마워'), replied(4, null)]);
+
+    expect(shown().answer).toBeNull();
+  });
+});
+
+// Partitions: a reply that only refuses to answer for a Friend (board n8b), and one with a refusal of another kind.
+describe('the answer on screen under a refusal', () => {
+  it('stays when the new reply only refuses to accept for a Friend, which keeps what is on screen', async () => {
+    const forMinsu = refusing(4, 'for-someone-else', '수락은 민수가 직접 해요');
+
+    const { shown } = await hold([ASKED, replied(2, MEAL_ANSWER), said(3, '민수 대신 수락해 줘'), forMinsu]);
+
+    expect(shown().answer).toBe(MEAL_ANSWER);
+    expect(shown().plan?.id).toBe('302동식당');
+  });
+
+  it('is none once a reply refuses anything else', async () => {
+    const offCampus = refusing(4, 'off-campus', '캠퍼스 안의 일만 도와 드려요.');
+
+    const { shown } = await hold([ASKED, replied(2, MEAL_ANSWER), said(3, '강남역 맛집 추천해 줘'), offCampus]);
 
     expect(shown().answer).toBeNull();
   });

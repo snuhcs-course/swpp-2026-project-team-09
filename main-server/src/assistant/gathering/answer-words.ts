@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -144,4 +145,5 @@ export class GatheringNaming<Args extends GatheringArgs = GatheringArgs> extends
 
 export type Naming = GatheringNaming<MealAnswerArgs>;
 
-export const mealWord = ({ args }: Naming): string => (args.input.meal === 'lunch' ? '점심' : '저녁');
+export const mealWord = ({ args }: { args: Pick<MealAnswerArgs, 'input'> }): string =>
+  args.input.meal === 'lunch' ? '점심' : '저녁';
