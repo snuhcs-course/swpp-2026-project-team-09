@@ -52,10 +52,10 @@ const FIXED_SETTINGS = {
   // Not reached: the tests give startApp a MatchServerStub from test/match-server.ts in the match server's place.
   MATCH_SERVER_URL: 'http://match-server:3003',
   MATCH_SERVER_TOKEN: 'test-match-server-token-of-32-characters',
-  // Not a key: the tests give startApp a ScriptedModel from test/scripted-model.ts in the model's place.
-  OPENROUTER_API_KEY: 'test-openrouter-api-key',
-  ASSISTANT_MODEL: 'test/model',
+  // Not a key, with OpenRouter's prefix: the tests give startApp a ScriptedModel (test/scripted-model.ts) for it.
+  OPENROUTER_API_KEY: 'sk-or-test-openrouter-api-key',
   LLM_KEYS: '{}',
+  MODEL_CACHE: 'breakpoints',
   // The defaults. A test of a limit starts an app with a smaller one.
   ASSISTANT_DAILY_MESSAGES: '50',
   ASSISTANT_MAX_STEPS: '8',

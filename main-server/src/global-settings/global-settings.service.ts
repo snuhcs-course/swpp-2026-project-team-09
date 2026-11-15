@@ -19,10 +19,7 @@ import {
   type ValueOf,
 } from './registry.js';
 
-// A caller's check of a value beyond the registry's: the reason it is refused, or null.
-export type ExtraCheck = (value: SettingValue) => string | null;
-
-export interface SettingRow extends ResolvedSetting {
+export interface SettingRow extends Omit<ResolvedSetting, 'check'> {
   readonly value: SettingValue;
 }
 
@@ -79,14 +76,10 @@ export class GlobalSettings implements OnModuleInit {
     }));
   }
 
-  // Saves a value given as text, with its history row and the revision's increment, in one transaction. No pod reads
-  // it, this one included, before the next minute's check, which is the time it answers.
-  async save(
-    name: string,
-    text: string,
-    administratorId: string,
-    extraCheck?: ExtraCheck,
-  ): Promise<{ appliesAt: Date }> {
+  // Saves a value given as text, once it passed the setting's type, allowed values and own check, with its history row
+  // and the revision's increment, in one transaction. No pod reads it, this one included, before the next minute's
+  // check, which is the time it answers.
+  async save(name: string, text: string, administratorId: string): Promise<{ appliesAt: Date }> {
     const setting = this.registry.get(name);
     if (setting === undefined) {
       throw new SettingRefused(`${name} is not a setting.`);
@@ -95,7 +88,7 @@ export class GlobalSettings implements OnModuleInit {
     if (!parsed.ok) {
       throw new SettingRefused(parsed.reason);
     }
-    const refusal = extraCheck?.(parsed.value) ?? null;
+    const refusal = setting.check?.(parsed.value) ?? null;
     if (refusal !== null) {
       throw new SettingRefused(refusal);
     }

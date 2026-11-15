@@ -326,7 +326,7 @@ What the project was built and run with:
 | Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                                                                      |
 | Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                                                                      |
 | Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                                                                             |
-| Assistant              | Vercel AI SDK 7 with the OpenRouter provider; the model set by `ASSISTANT_MODEL`                                                                  |
+| Assistant              | Vercel AI SDK 7 with the OpenRouter and Anthropic providers; the key, and with it the provider, chosen by the global setting `llm.key`            |
 | Admin site             | Next.js 16 with React 19, in a desktop browser                                                                                                    |
 | App                    | Expo SDK 57, React Native 0.86, Expo Router, expo-updates; local modules: Kakao Maps SDK, ML Kit, cookies                                         |
 | Android build          | JDK 17 (Temurin) locally, JDK 21 (Temurin) for the Production APK in CI; Android SDK Platform and Build-Tools 36, Gradle 9.3.1                    |
@@ -446,8 +446,7 @@ file's.
 | `MATCH_SERVER_URL`                 | Where the match server is reached.                                                                                                       |
 | `MATCH_SERVER_TOKEN`               | The secret the main and match servers send each other; generated in [Setup](#setup).                                                     |
 | `DEMO_ACCOUNT_EMAILS`              | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.                                        |
-| `OPENROUTER_API_KEY`               | The OpenRouter key SNU Now AI calls its model with. Empty, the Assistant answers it is unavailable.                                      |
-| `ASSISTANT_MODEL`                  | The OpenRouter id of the Assistant's model; `anthropic/claude-haiku-5.5` in `.env.example`.                                              |
+| `OPENROUTER_API_KEY`               | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.   |
 | `ASSISTANT_DAILY_MESSAGES`         | Optional: the messages a User may send in a day in Korea; 50 unless set.                                                                 |
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                                                     |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                                                        |

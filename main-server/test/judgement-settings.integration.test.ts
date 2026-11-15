@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
+import { wrapLanguageModel } from 'ai';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { type JudgementsService } from '../src/global-events/judgements.service.js';
@@ -115,6 +117,55 @@ describe('The service step over one Draft, with AUTOMATIC_JUDGEMENT off', () => 
     const { id } = await world.prisma.globalEvent.create({ data: { title: '직접 만든 행사', description: '' } });
 
     await expect(judgements.judgeDraft(id)).rejects.toThrow('no post of its own');
+  });
+});
+
+describe("A Judgement's key", () => {
+  it('is read once, at its start, and the call uses it when the copy changes during the Judgement', async () => {
+    const [claude, other] = [new ScriptedModel(), new ScriptedModel()];
+    let change: (() => void) | null = null;
+    const changing = wrapLanguageModel({
+      model: claude.model,
+      middleware: {
+        wrapGenerate: ({ doGenerate }) => {
+          change?.();
+          return doGenerate();
+        },
+      },
+    });
+    const keyed = await startApp(
+      { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'off', LLM_KEYS: '{"claude":"sk-ant-test-claude-key"}' },
+      [],
+      undefined,
+      undefined,
+      undefined,
+      [],
+      undefined,
+      undefined,
+      { modelFactory: ({ name }) => (name === 'claude' ? changing : other.model) },
+    );
+    const { GlobalSettings } = await import('../src/global-settings/global-settings.service.js');
+    const service = keyed.get((await import('../src/global-events/judgements.service.js')).JudgementsService);
+    // The copy names claude when the Judgement starts, and default from its call on, as a minute's check would make it.
+    const read = vi.spyOn(keyed.get(GlobalSettings), 'get').mockReturnValue('claude');
+    change = (): void => {
+      read.mockReturnValue('default');
+    };
+    const { id } = await storedDraft();
+    claude.script(answer());
+    other.script(answer());
+
+    let judgement;
+    try {
+      judgement = await service.judgeDraft(id);
+    } finally {
+      await keyed.close();
+    }
+
+    expect(judgement).toMatchObject({ outcome: 'judged', attempts: 1 });
+    expect(claude.received()).toHaveLength(1);
+    expect(other.received()).toHaveLength(0);
+    expect(read).toHaveBeenCalledTimes(1);
   });
 });
 
