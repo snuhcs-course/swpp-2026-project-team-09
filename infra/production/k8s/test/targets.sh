@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Renders each target with stand-in secrets, as a Release would, and checks the objects that the cluster would receive.
@@ -46,6 +47,7 @@ WORKER_TOKEN=stand-in
 MATCH_SERVER_TOKEN=stand-in
 KAKAO_REST_API_KEY=stand-in
 OPENROUTER_API_KEY=stand-in
+LLM_KEYS={"anthropic":"stand-in","team-2":"stand-in-2"}
 INITIAL_ADMINISTRATOR_EMAILS=stand-in@example.com
 EOF
   echo stand-in >"$secrets/access-token-private-key.pem"
@@ -113,6 +115,21 @@ names_generated_objects_as_all_does() {
 # The deploy role's rights stop at the namespace.
 holds_only_objects_in_snunow() {
   jq -e 'all(.[]; .metadata.namespace == "snunow")' "$work/$1.json" >/dev/null
+}
+
+# The main server's AI keys: OPENROUTER_API_KEY and LLM_KEYS from the Secret, under the names it reads, and LLM_KEYS's
+# JSON kept as release.sh writes it.
+passes_the_ai_keys() {
+  jq -e '(.[] | select(.kind == "Secret") | .data) as $secrets
+    | [.[] | select(.kind == "Deployment" and .metadata.name == "main-server")
+        | .spec.template.spec.containers[] | select(.name == "main-server") | .env[]
+        | {key: .name, value: .valueFrom.secretKeyRef}] | from_entries as $env
+    | ($secrets.OPENROUTER_API_KEY | @base64d) == "stand-in"
+      and ($secrets.LLM_KEYS | @base64d | fromjson) == {"anthropic": "stand-in", "team-2": "stand-in-2"}
+      and ($env | all(
+        (.OPENROUTER_API_KEY.key == "OPENROUTER_API_KEY" and (.OPENROUTER_API_KEY.name | startswith("secrets-"))),
+        (.LLM_KEYS.key == "LLM_KEYS" and (.LLM_KEYS.name | startswith("secrets-")))
+      ; .))' "$work/$1.json" >/dev/null
 }
 
 ignored_by_git() {
@@ -185,6 +202,9 @@ kubectl patch --local --type merge --patch '{}' --filename "$k8s/database-setup.
   >"$work/database-setup.json"
 check "all's policies allow exactly the listed connections" allows_only_the_listed_connections all
 check "every Service's port is its pods' container port" serves_on_container_ports all
+for target in main-server all; do
+  check "$target passes the main server OPENROUTER_API_KEY and LLM_KEYS from the Secret" passes_the_ai_keys "$target"
+done
 for file in secrets.env access-token-private-key.pem access-token-public-key.pem; do
   check "git ignores $file" ignored_by_git "parts/shared/secrets/$file"
 done

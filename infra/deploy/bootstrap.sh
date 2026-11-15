@@ -5,6 +5,7 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Readies a course server for the deploy timer. Run as root, once and again whenever: it never overwrites the settings
@@ -137,6 +138,7 @@ KAKAO_REST_API_KEY=CHANGE_ME
 INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME
 DEMO_ACCOUNT_EMAILS=CHANGE_ME
 OPENROUTER_API_KEY=
+LLM_KEYS={}
 EOF
   chgrp "$TEAM_GROUP" "$ENV_FILE.partial"
   chmod 0660 "$ENV_FILE.partial"
