@@ -59,6 +59,41 @@ describe('The words of the time to leave', () => {
   });
 });
 
+describe('The words of a new match of a watched interest', () => {
+  const news = { kind: 'interest-new', id: QUEST_ID, startsAt: AT, placeLabel: '학생회관' } as const;
+
+  it('names an event with the subject particle, with its start in Korea and its Place, on its card, and rings', () => {
+    expect(wordsOf({ ...news, subject: 'event', title: '2026 하반기 채용박람회' }, AT)).toEqual({
+      title: '2026 하반기 채용박람회가 떴어요',
+      ahead: null,
+      line: '12:18 학생회관',
+      card: { kind: 'event', id: QUEST_ID },
+      about: null,
+      rings: true,
+      body: '12:18 학생회관이에요.',
+    });
+  });
+
+  it('names a Quest as recruiting, on its party card', () => {
+    expect(wordsOf({ ...news, subject: 'quest', title: '배드민턴 칠 사람' }, AT)).toMatchObject({
+      title: '배드민턴 칠 사람 모집이 떴어요',
+      card: { kind: 'party', id: QUEST_ID },
+    });
+  });
+
+  it.each([
+    [null, '학생회관', '학생회관', '학생회관이에요.'],
+    [null, '아크로', '아크로', '아크로예요.'],
+    [AT, null, '12:18', '12:18에 시작해요.'],
+    [null, null, '', '맡겨 둔 관심에 맞아요.'],
+  ])('leaves out what is unknown: %s and %s give "%s" and "%s"', (startsAt, placeLabel, line, body) => {
+    expect(wordsOf({ ...news, subject: 'event', title: '전시', startsAt, placeLabel }, AT)).toMatchObject({
+      line,
+      body,
+    });
+  });
+});
+
 describe('The identity of a Notification', () => {
   it('is its kind and its card', () => {
     expect(identityOf('accepted', { kind: 'party', id: QUEST_ID })).toBe(

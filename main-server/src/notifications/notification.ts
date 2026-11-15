@@ -12,7 +12,15 @@ import { type Card } from './card-address.js';
 export type Told =
   | { kind: 'accepted'; questId: string; questTitle: string; friendId: string; friendName: string }
   | { kind: 'declined'; questId: string; questTitle: string; friendId: string; friendName: string }
-  | { kind: 'leave-by'; questId: string; placeLabel: string; walkMinutes: number };
+  | { kind: 'leave-by'; questId: string; placeLabel: string; walkMinutes: number }
+  | {
+      kind: 'interest-new';
+      subject: 'event' | 'quest';
+      id: string;
+      title: string;
+      startsAt: Date | null;
+      placeLabel: string | null;
+    };
 
 export type NotificationKind = Told['kind'];
 
