@@ -5,11 +5,12 @@
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
-import type { Friend, MyParty, Place } from '@/api/types';
+import type { Friend, LatLng, MyParty, Place } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { pass } from './support/app';
 import { givePhone, ME, NEAR_LIBRARY, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -49,6 +50,10 @@ const SEO_JUN: Friend = {
 };
 
 const ENGINEERING: Place = { id: 'p301', number: '301', name: '제1공학관', latitude: 37.45016, longitude: 126.95259 };
+
+// North of ON_CAMPUS by about 22 m, then by about 44 m: each step under 30 m, the two together over it.
+const A_FEW_STEPS: LatLng = { latitude: 37.45925, longitude: ON_CAMPUS.longitude };
+const A_FEW_MORE: LatLng = { latitude: 37.45945, longitude: ON_CAMPUS.longitude };
 
 // The User's Party with 김민준, the User's own switch for it on.
 const LUNCH: MyParty = {
@@ -184,7 +189,8 @@ describe('the rows of the switches', () => {
   });
 });
 
-// Partitions: GET /places/at answers a Place the User is inside, one they are near, and none.
+// Partitions: GET /places/at answers a Place the User is inside, one they are near, and none; the User moves less
+// than 30 m from where it was asked, and then more (the boundary of decision 10).
 describe('the line under the head', () => {
   it.each([['inside'], ['near']])('is the Place the User is %s, by its number', async (relation) => {
     server.on('GET /places/at', { status: 200, body: { place: ENGINEERING, relation } });
@@ -203,5 +209,23 @@ describe('the line under the head', () => {
 
     expect(myCard().getByRole('header', { name: HEAD })).toBeVisible();
     expect(myCard().queryByTestId('my-place')).toBeNull();
+  });
+
+  it('is asked again only once the User is more than 30 m from where it was asked', async () => {
+    const phone = givePhone({ permission: 'granted', position: ON_CAMPUS });
+    await openMyCard();
+
+    await phone.moveTo(A_FEW_STEPS);
+    await pass(500);
+    const afterSteps = server.received('GET /places/at').length;
+    await phone.moveTo(A_FEW_MORE);
+    await pass(500);
+
+    expect(afterSteps).toBe(1);
+    expect(server.received('GET /places/at').map(({ query }) => query)).toEqual([
+      { latitude: String(ON_CAMPUS.latitude), longitude: String(ON_CAMPUS.longitude) },
+      { latitude: String(A_FEW_MORE.latitude), longitude: String(A_FEW_MORE.longitude) },
+    ]);
+    expect(myCard().getByTestId('my-place')).toHaveTextContent('301동');
   });
 });
