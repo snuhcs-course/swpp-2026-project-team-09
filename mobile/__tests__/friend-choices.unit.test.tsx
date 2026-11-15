@@ -28,7 +28,7 @@ function mockFriend(id: string): Choice {
   }
   const at = POSITIONS.find(({ userId }) => userId === id);
   const position = at === undefined ? null : { latitude: at.latitude, longitude: at.longitude };
-  return { id, name: friend.name, position, minutesOld: null };
+  return { id, name: friend.name, department: friend.department, position, minutesOld: null };
 }
 
 // 강도윤, 김민준, 서지우 (no position), 임채원, and 정하은, in the mock's order. By the spec's flat map (a degree of
@@ -45,6 +45,7 @@ async function show(props: Partial<Props> = {}): Promise<void> {
       friends={FRIENDS_SHOWN}
       onChoose={noop}
       pending={null}
+      onProfile={null}
       pick={PICK}
       room={null}
       {...props}
@@ -58,19 +59,22 @@ function cells(): unknown[] {
 
 describe('FriendChoices in order', () => {
   // Partitions: Friends at a distance under a kilometre and from one, one without a position, and no Plan to measure
-  // from. The rule: the decision of 2026-11-15, the given name, the distance to the picked Restaurant ("350m" to 10
-  // metres under a kilometre, "1.2km" from one), "자리 모름" without a position; nearest first, those without last.
-  it('lists the Friends nearest first by their given names and distances, those without a position last', async () => {
+  // from. The rule: the decision of 2026-11-15, with ticket 18's full name and department, the distance to the picked
+  // Restaurant ("350m" to 10 metres under a kilometre, "1.2km" from one), "자리 모름" without a position; nearest first,
+  // those without last.
+  it('lists the Friends nearest first by their full names and distances, those without a position last', async () => {
     await show();
 
     expect(cells()).toEqual([
-      '하은, 160m, 추가',
-      '도윤, 720m, 추가',
-      '채원, 1.1km, 추가',
-      '민준, 1.2km, 추가',
-      '지우, 자리 모름, 추가',
+      '정하은, 컴퓨터공학부, 160m, 추가',
+      '강도윤, 수리과학부, 720m, 추가',
+      '임채원, 화학생물공학부, 1.1km, 추가',
+      '김민준, 컴퓨터공학부, 1.2km, 추가',
+      '서지우, 심리학과, 자리 모름, 추가',
     ]);
-    expect(screen.getByRole('button', { name: '하은, 160m, 추가' })).toHaveTextContent('하은160m');
+    expect(screen.getByRole('button', { name: '정하은, 컴퓨터공학부, 160m, 추가' })).toHaveTextContent(
+      '정하은컴퓨터공학부160m',
+    );
   });
 
   it('orders two Friends at one distance by name', async () => {
@@ -79,21 +83,28 @@ describe('FriendChoices in order', () => {
 
     await show({ friends: [seoyeon, mockFriend('f6')] });
 
-    expect(cells()).toEqual(['도윤, 720m, 추가', '서연, 720m, 추가']);
+    expect(cells()).toEqual(['강도윤, 수리과학부, 720m, 추가', '이서연, 경영학과, 720m, 추가']);
   });
 
   it('orders by name, without distances, for an answer without a Plan', async () => {
     await show({ pick: null });
 
-    expect(cells()).toEqual(['도윤, 추가', '민준, 추가', '채원, 추가', '하은, 추가', '지우, 자리 모름, 추가']);
+    expect(cells()).toEqual([
+      '강도윤, 수리과학부, 추가',
+      '김민준, 컴퓨터공학부, 추가',
+      '임채원, 화학생물공학부, 추가',
+      '정하은, 컴퓨터공학부, 추가',
+      '서지우, 심리학과, 자리 모름, 추가',
+    ]);
   });
 });
 
-// A Friend named `name` that far north of 302동식당.
+// A Friend named `name` that far north of 302동식당, with no department.
 function northOfPick(name: string, metres: number): Choice {
   return {
     id: name,
     name,
+    department: '',
     position: { latitude: PICK.latitude + metres / METRES_PER_DEGREE, longitude: PICK.longitude },
     minutesOld: null,
   };
@@ -108,7 +119,7 @@ describe('FriendChoices distances and ages', () => {
   ])('says %d metres as %s', async (metres, words) => {
     await show({ friends: [northOfPick('김하늘', metres)] });
 
-    expect(cells()).toEqual([`하늘, ${words}, 추가`]);
+    expect(cells()).toEqual([`김하늘, ${words}, 추가`]);
   });
 
   it("says an old position's age in place of its distance, and keeps it in the order of distances", async () => {
@@ -118,7 +129,7 @@ describe('FriendChoices distances and ages', () => {
 
     await show({ friends });
 
-    expect(cells()[3]).toBe('민준, 3분 전, 추가');
+    expect(cells()[3]).toBe('김민준, 컴퓨터공학부, 3분 전, 추가');
   });
 });
 
@@ -164,7 +175,7 @@ describe('FriendChoices pressed', () => {
     const onChoose = jest.fn<void, [string]>();
     await show({ onChoose });
 
-    await userEvent.press(screen.getByRole('button', { name: '지우, 자리 모름, 추가' }));
+    await userEvent.press(screen.getByRole('button', { name: '서지우, 심리학과, 자리 모름, 추가' }));
 
     expect(onChoose).toHaveBeenCalledWith('f11');
   });
@@ -173,9 +184,38 @@ describe('FriendChoices pressed', () => {
     const onChoose = jest.fn<void, [string]>();
     await show({ disabled: true, onChoose });
 
-    await userEvent.press(screen.getByRole('button', { name: '하은, 160m, 추가' }));
+    await userEvent.press(screen.getByRole('button', { name: '정하은, 컴퓨터공학부, 160m, 추가' }));
 
     expect(onChoose).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: '하은, 160m, 추가' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '정하은, 컴퓨터공학부, 160m, 추가' })).toBeDisabled();
+  });
+});
+
+describe('FriendChoices of people', () => {
+  // Partitions: a Friend with a department and one without; a way to open a profile, and none. The rule: ticket 18,
+  // the department under the full name, and a mark at the cell's end that opens the Friend's profile without choosing.
+  it("writes each Friend's department under the full name, and none for a Friend without one", async () => {
+    await show({ friends: [mockFriend('f1'), northOfPick('김하늘', 500)] });
+
+    const minJun = screen.getByRole('button', { name: '김민준, 컴퓨터공학부, 1.2km, 추가' });
+    expect(minJun).toHaveTextContent('김민준컴퓨터공학부1.2km');
+    expect(screen.getByRole('button', { name: '김하늘, 500m, 추가' })).toHaveTextContent('김하늘500m');
+  });
+
+  it("opens the Friend's profile with the mark, and chooses nobody", async () => {
+    const onProfile = jest.fn<void, [string]>();
+    const onChoose = jest.fn<void, [string]>();
+    await show({ onChoose, onProfile });
+
+    await userEvent.press(screen.getByRole('button', { name: '김민준 프로필' }));
+
+    expect(onProfile).toHaveBeenCalledWith('f1');
+    expect(onChoose).not.toHaveBeenCalled();
+  });
+
+  it('draws no mark without a way to open a profile', async () => {
+    await show();
+
+    expect(screen.queryAllByRole('button', { name: /프로필$/u })).toEqual([]);
   });
 });

@@ -20,6 +20,7 @@ import type { CardActions } from '../chat-cards';
 import { ChatMarkdown } from '../chat-markdown';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
+import { FriendProfileOver } from '../friend-profile';
 import { ANSWER_PILL, listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
 import { CloseButton } from './close-button';
@@ -177,7 +178,8 @@ interface FramedProps {
 }
 
 // The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
-// ✕ and Android's back button forget the conversation, a reply on its way included.
+// ✕ and Android's back button forget the conversation, a reply on its way included. A Friend's profile opened from
+// the card stands over it, and the back button closes the profile first.
 function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
   const { chat, leaving } = control;
   const { reset } = chat;
@@ -188,7 +190,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
   useBackToClose(useIsFocused(), close, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   return (
-    <>
+    <FriendProfileOver keyboardUp={keyboardUp}>
       <AnswerPill asked={turnOf(chat.bubbles)?.asked ?? ''} onClose={close} />
       <AnswerCard
         barRoom={barRoom}
@@ -200,7 +202,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
         stageHeight={stageHeight}
       />
       {sheets}
-    </>
+    </FriendProfileOver>
   );
 }
 
