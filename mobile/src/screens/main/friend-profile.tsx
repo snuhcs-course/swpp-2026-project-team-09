@@ -47,10 +47,12 @@ export function useProfileOver(replyId: number | null): ProfileOver {
 }
 
 function ignore(): void {
-  // The frame's camera is the answer's: the card has no "가까이 보기".
+  // A profile card has no "가까이 보기": over the answer frame the camera is the answer's, and a Friend whom the map
+  // does not show has no face to look closer at.
 }
 
-// The everyday map's card of a Friend, which is their profile, also for a Friend whom the map does not show.
+// A Friend's profile card, over the answer frame's card and for a Friend whom the everyday map does not show: no
+// "가까이 보기", and "파티 만들기" with the Friend.
 function profileCardProps(friend: FriendView, onHeight?: (height: number) => void): Omit<CardProps, 'onClose'> {
   return {
     canLookCloser: false,
