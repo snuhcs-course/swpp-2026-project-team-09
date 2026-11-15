@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -13,8 +14,17 @@ import { useLocationExplanation } from './use-location-explanation';
 import type { MainMap } from './use-main-map';
 
 // The identifier of the User's own Avatar on the map. It takes no press, as in the frame: a press on it reaches a
-// Friend's marker that it stands over.
+// Friend's marker that it stands over. With the switch of the answer on the map on, it takes one (`pressableMe`).
 export const ME_AVATAR_ID = 'me';
+
+// Under every other Avatar, whose order is 0 or more.
+const UNDER_FACES = -1;
+
+// The User's own Avatar as it is drawn while the switch of the answer on the map is on, as row 6's boards draw it: it
+// takes a press, which opens the User's own card, and lies under the faces, so that a face over it keeps its press.
+export function pressableMe(avatars: readonly MapAvatar[]): MapAvatar[] {
+  return avatars.map((avatar) => ({ ...avatar, passive: false, order: UNDER_FACES }));
+}
 
 export const OFF_CAMPUS = '캠퍼스 밖에 있어요';
 export const FINDING_POSITION = '위치를 찾는 중이에요';
