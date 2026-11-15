@@ -28,7 +28,7 @@ import { color, text } from '@/design-system';
 import { useMotionAllowed } from '@/hooks/use-reduce-motion';
 import { IMAGE_MARGIN } from './marker-images';
 import { NATIVE_MAP_MODULE } from './native-module';
-import { type CameraRules, fit, lowestZoom, outerRules, type Size } from './projection';
+import { type CameraRules, fit, lowestZoom, outerRules, project, type Size, unproject } from './projection';
 import type {
   FitOptions,
   FitPadding,
@@ -50,7 +50,8 @@ import type {
 // - the rectangle the lowest zoom fits (`fitBounds`), which the module does not take: once the view's size is known,
 //   the module is handed the fit zoom as its `minZoom`, so that its own rule, the view inside `bounds` and no lower
 //   than `minZoom`, comes to the interface's;
-// - on Android, a zoom in a view whose height changed since the module opened (`useScaleShift`);
+// - on Android, a zoom in a view whose height changed since the module opened (`useScaleShift`), and the camera's area
+//   the module is handed in a view grown since then (`sentBounds`);
 // - a zoom further out than the rules' lowest (`outerZoom`), which the module is handed as its `minZoom` while it is
 //   given, so that it does not bring a camera moved there back.
 // A line's dashes are the module's to draw: it draws a solid line in the colour and the width it is given.
@@ -251,6 +252,29 @@ function useHandle(
   );
 }
 
+// The module brings a camera it is sent inside `bounds` at the zoom it is sent, the zoom shown less `shift`, in the
+// view as large as it is: in a view grown since it opened it counts 2^shift times the ground the view shows, and would
+// move a camera whose view lies inside `bounds` near an edge. So it is handed `bounds` grown on each side by that
+// excess at the lowest zoom it may be sent, the most there is, and keeps every camera the rules keep; a camera at rest
+// may then stop that much past `bounds` (49 points on the emulator at the answer's outer zoom).
+function sentBounds(allowed: CameraRules | null, shift: number, bounds: MapBounds): MapBounds {
+  if (allowed === null || shift <= 0) {
+    return bounds;
+  }
+  const grow = (2 ** shift - 1) / 2 / 2 ** lowestZoom(allowed);
+  const [across, along] = [grow * allowed.size.width, grow * allowed.size.height];
+  const topLeft = project({ latitude: bounds.north, longitude: bounds.west }, 0);
+  const bottomRight = project({ latitude: bounds.south, longitude: bounds.east }, 0);
+  const northWest = unproject({ x: topLeft.x - across, y: topLeft.y - along }, 0);
+  const southEast = unproject({ x: bottomRight.x + across, y: bottomRight.y + along }, 0);
+  return {
+    south: southEast.latitude,
+    west: northWest.longitude,
+    north: northWest.latitude,
+    east: southEast.longitude,
+  };
+}
+
 // The camera's rules once the view's size is known, and the rules the camera keeps to with the outer zoom.
 function useRules(
   { bounds, fitBounds, minZoom, maxZoom, outerZoom }: MapProps,
@@ -275,6 +299,7 @@ export default function NativeMap(props: MapProps): ReactElement {
   const { rules, allowed } = useRules(props, size);
   const report = useReports(rules, props);
   const { shift, reported } = useScaleShift(size);
+  const handedBounds = useMemo(() => sentBounds(allowed, shift, bounds), [allowed, shift, bounds]);
   useHandle(ref, view, allowed, shift);
   const inset = useInset(props.inset);
   const passive = new Set([...markers, ...avatars].filter((one) => one.passive === true).map(({ id }) => id));
@@ -291,7 +316,7 @@ export default function NativeMap(props: MapProps): ReactElement {
     >
       <NativeView
         avatars={avatars.map((avatar) => thing(avatar, gliding ? avatar.glideMs : 0))}
-        bounds={bounds}
+        bounds={handedBounds}
         inset={inset}
         lines={lines.map((line) => nativeLine(line))}
         looks={LOOKS}

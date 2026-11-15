@@ -12,9 +12,11 @@ import { INVITATION_CARD } from '@/api/mock/data/invitation-card';
 import type { LatLng } from '@/api/types';
 import { answerCamera } from '@/features/assistant/answer-camera';
 import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
-import { inView, type MapCamera, type MapHandle, ZOOM_OFFSET } from '@/map';
+import { inView, type MapBounds, type MapCamera, type MapHandle, ZOOM_OFFSET } from '@/map';
 import NativeMap from '@/map/native-map';
+import { type CameraRules, settle } from '@/map/projection';
 import { paddingOf } from '@/screens/main/use-answer-map';
+import { FIRST_CAMERA, THIRD_CAMERA } from './support/answer-view';
 import { EMPTY } from './support/map';
 
 // What `native-map.tsx` sends the module's `moveCamera`.
@@ -26,7 +28,9 @@ interface Sent {
 }
 
 interface MockViewProps {
+  bounds: MapBounds;
   minZoom: number;
+  maxZoom: number;
   onCameraIdle: (event: { nativeEvent: LatLng & { zoom: number } }) => void;
   ref: Ref<{ moveCamera: (move: Sent) => Promise<void>; fitTo: (...asked: unknown[]) => Promise<void> }>;
 }
@@ -111,10 +115,10 @@ interface Opened {
 }
 
 // The map laid out `height` high, and the module's first report of its camera once it opened.
-async function openedAt(height: number): Promise<Opened> {
+async function openedAt(height: number, outerZoom?: number): Promise<Opened> {
   const ref = createRef<MapHandle>();
   const onFitZoom = jest.fn<void, [number]>();
-  await render(<NativeMap {...EMPTY} onFitZoom={onFitZoom} ref={ref} />);
+  await render(<NativeMap {...EMPTY} onFitZoom={onFitZoom} outerZoom={outerZoom} ref={ref} />);
   await layOut(height);
   await act(() => {
     mockProps?.onCameraIdle({ nativeEvent: { latitude: 37.458, longitude: 126.954, zoom: 15.2 } });
@@ -242,5 +246,45 @@ describe("the module's lowest zoom with an outer zoom", () => {
     await layOut(FRAMED);
 
     expect(mockProps?.minZoom).toBeCloseTo(14.765 - Math.log2(FRAMED / OPENED), 6);
+  });
+});
+
+// The rules the Android module keeps a camera to (`CameraRules.kt`, the sums of `settle`), from what it is handed: the
+// view as large as it is laid out.
+function moduleRules(): CameraRules {
+  if (mockProps === null) {
+    throw new Error('The module was handed nothing');
+  }
+  const { bounds, minZoom, maxZoom } = mockProps;
+  return { bounds, minZoom, maxZoom, size: { width: WIDTH, height: FRAMED } };
+}
+
+function sentCamera(move: Sent | undefined): MapCamera {
+  if (move?.latitude === undefined || move.longitude === undefined || move.zoom === undefined) {
+    throw new Error('The module was sent no camera');
+  }
+  return { centre: { latitude: move.latitude, longitude: move.longitude }, zoom: move.zoom };
+}
+
+// Partitions: the answer's camera of the stored first Plan, whose view ends 3 points inside the camera's area at the
+// bottom, and of the third, further inside; the view grown from 826 to 914 since the module opened, with the answer's
+// outer zoom. The module's `moveCamera` brings what it is sent inside its rules at the zoom sent, the zoom shown less
+// log2(914 / 826) = 0.146, and its `rest` brings the camera it shows inside them again. Expected values: the cameras
+// worked by hand in `support/answer-view.ts`, unchanged by both.
+describe("the answer's camera in the Android module's rules", () => {
+  it.each([
+    ['first', FIRST_CAMERA],
+    ['third', THIRD_CAMERA],
+  ])("keeps the stored answer's %s Plan's camera where it is sent and where it then shows", async (_, camera) => {
+    const map = await openedAt(OPENED, 14.765);
+    await layOut(FRAMED);
+
+    map.ref.current?.moveCamera({ ...camera, animated: true });
+
+    const sent = sentCamera(mockMoveCamera.mock.lastCall?.[0]);
+    const shown = { centre: sent.centre, zoom: sent.zoom + Math.log2(FRAMED / OPENED) };
+    expect(shown.zoom).toBeCloseTo(camera.zoom, 6);
+    expect(settle(sent, moduleRules())).toEqual(sent);
+    expect(settle(shown, moduleRules())).toEqual(shown);
   });
 });
