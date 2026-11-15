@@ -4,8 +4,9 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen, within } from '@testing-library/react-native';
+import { act, screen, within } from '@testing-library/react-native';
 import type { Friend, FriendLevel, Place } from '@/api/types';
+import { setAnswerSwitch } from '@/features/assistant/answer-switch';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, shownAddress } from './support/app';
@@ -159,6 +160,31 @@ describe("Android's back button over the card", () => {
   });
 });
 
+// Partitions: the switch turned off while the card is shown, then Android's back, or the switch on again. The rule:
+// "어디까지 보이나" is shown only while the switch is on, and is gone once it goes off.
+describe('the switch turned off while the card is shown', () => {
+  it("shows the Friend card, which Android's back closes at once", async () => {
+    const back = holdBackButton();
+    await openSeen(MIN_JUN);
+
+    await act(() => setAnswerSwitch(false));
+    expect(shownCard().getByRole('header', { name: '김민준' })).toBeVisible();
+    expect(await back()).toBe(true);
+
+    expect(screen.queryByTestId('map-card')).toBeNull();
+  });
+
+  it('leaves the Friend card, not this one, once the switch is on again', async () => {
+    await openSeen(MIN_JUN);
+
+    await act(() => setAnswerSwitch(false));
+    await act(() => setAnswerSwitch(true));
+
+    expect(shownCard().getByRole('header', { name: '김민준' })).toBeVisible();
+    expect(shownCard().getByRole('button', { name: SEEN })).toBeVisible();
+  });
+});
+
 // Partitions: the card's ✕ and "바꾸기".
 describe('what the card leads to', () => {
   it('goes back to the Friend card by its ✕', async () => {
@@ -177,6 +203,23 @@ describe('what the card leads to', () => {
     await pass(500);
 
     expect(shownAddress()).toBe('/me/location-sharing');
+  });
+});
+
+// Partitions: the same Friend's face, their row with a position, and their row without one. The rule: a press on the
+// Friend means the Friend, whose card it brings back.
+describe('the same Friend pressed while the card is shown', () => {
+  it.each([
+    ['face', MIN_JUN, MIN_JUN.name],
+    ['row', MIN_JUN, `${MIN_JUN.name} 지도에서 보기`],
+    ['row without a position', JI_WOO, `${JI_WOO.name} 지도에서 보기`],
+  ])("brings back the Friend card by the Friend's %s", async (_, friend, pressed) => {
+    const user = await openSeen(friend);
+
+    await press(user, pressed);
+
+    expect(shownCard().getByRole('header', { name: friend.name })).toBeVisible();
+    expect(shownCard().getByRole('button', { name: SEEN })).toBeVisible();
   });
 });
 

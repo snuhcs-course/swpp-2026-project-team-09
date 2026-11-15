@@ -9,8 +9,10 @@ import { createContext, type ReactElement, type ReactNode, use, useCallback, use
 import type { FriendView } from '@/features/friends/adapter';
 import { friendProfileCard } from '@/features/friends/profile';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
+import { useFriends } from '@/features/friends/use-friends';
 import { Card, type CardProps } from './card';
 import { CardOrSeen, type SeenSelection } from './seen-card';
+import type { OffMapFriends } from './use-selection';
 
 const OpenProfile = createContext<((userId: string) => void) | null>(null);
 
@@ -63,6 +65,13 @@ function profileCardProps(friend: FriendView, onHeight?: (height: number) => voi
 
 function ProfileCard({ friend, onClose }: { friend: FriendView; onClose: () => void }): ReactElement {
   return <Card {...profileCardProps(friend)} onClose={onClose} />;
+}
+
+// The Friends whose card a row of a list may open without their mark on the map: the User's Friends while `onMap`,
+// the switch of the answer on the map, is on, and none while they cannot be read.
+export function useOffMapFriends(onMap: boolean): OffMapFriends {
+  const friends = useFriends().data;
+  return onMap ? (friends ?? []).map(({ id }) => id) : null;
 }
 
 // The card of a Friend whom the map does not show, which a row of the friend list opens over the everyday map while

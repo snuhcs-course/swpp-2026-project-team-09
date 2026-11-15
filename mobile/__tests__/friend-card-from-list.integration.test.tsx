@@ -5,13 +5,17 @@
  ******************************************************************************/
 
 import { act, screen, within } from '@testing-library/react-native';
+import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type { Friend } from '@/api/types';
 import { setAnswerSwitch } from '@/features/assistant/answer-switch';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, shownAddress } from './support/app';
+import { askOnMap } from './support/answer-map';
+import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS, openMain, placeOf } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -40,6 +44,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const JI_WOO_PROFILED: Friend = { ...JI_WOO, friendId: 'SJ5U9BVN', friendsSince: '2026-11-05T15:35:00+09:00' };
 
 const LOCATION_OFF = '서지우님은 위치가 꺼져 있어요';
+const ZOOM_IN = '확대';
 
 let server: FakeServer;
 
@@ -97,26 +102,29 @@ describe("a Friend's row with the switch on", () => {
   });
 });
 
-// Partitions: the card's ✕, a face pressed while it is open, and the switch turned off while it is open. The rule: one
-// card at a time, which the switch's card closes with it.
+// Partitions: the card's ✕ and Android's back button; a face pressed while it is open, and the answer frame. The rule:
+// one card at a time, which takes the bottom of the map as any card does.
 describe('the open card of a Friend with no position', () => {
-  it('closes once the switch is turned off', async () => {
+  it('takes the bottom of the map, where the zoom control gives way to it until its ✕ closes it', async () => {
     const user = await openMain({ answerOnMap: true });
     await press(user, row(JI_WOO));
-    expect(friendCard().getByRole('header', { name: '서지우' })).toBeVisible();
-
-    await act(() => setAnswerSwitch(false));
-
-    expect(screen.queryByTestId('map-card')).toBeNull();
-  });
-
-  it('closes by its ✕', async () => {
-    const user = await openMain({ answerOnMap: true });
-    await press(user, row(JI_WOO));
+    expect(screen.queryByRole('button', { name: ZOOM_IN })).toBeNull();
 
     await user.press(friendCard().getByRole('button', { name: '닫기' }));
 
     expect(screen.queryByTestId('map-card')).toBeNull();
+    expect(screen.getByRole('button', { name: ZOOM_IN })).toBeVisible();
+  });
+
+  it("closes by Android's back button", async () => {
+    const back = holdBackButton();
+    const user = await openMain({ answerOnMap: true });
+    await press(user, row(JI_WOO));
+
+    expect(await back()).toBe(true);
+
+    expect(screen.queryByTestId('map-card')).toBeNull();
+    expect(screen.getByRole('button', { name: ZOOM_IN })).toBeVisible();
   });
 
   it('gives way to the card of a face pressed after it, as one card at a time', async () => {
@@ -127,6 +135,52 @@ describe('the open card of a Friend with no position', () => {
 
     expect(screen.getAllByTestId('map-card')).toHaveLength(1);
     expect(friendCard().getByRole('header', { name: '김민준' })).toBeVisible();
+  });
+
+  it('gives way to the answer frame', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY, async (user) => {
+      await press(user, row(JI_WOO));
+      expect(friendCard().getByRole('header', { name: '서지우' })).toBeVisible();
+    });
+
+    expect(screen.getByTestId('answer-card')).toBeVisible();
+    expect(screen.queryByTestId('map-card')).toBeNull();
+  });
+});
+
+// Partitions: the switch turned off, and the Friend no longer among the User's Friends. The rule: the selection is
+// dropped, as a thing's that left the map, so the bottom is free again and nothing opens later.
+describe('the card of a Friend with no position closed for good', () => {
+  it('once the switch is turned off: the zoom control comes back, and the switch on again opens no card', async () => {
+    const user = await openMain({ answerOnMap: true });
+    await press(user, row(JI_WOO));
+    expect(friendCard().getByRole('header', { name: '서지우' })).toBeVisible();
+
+    await act(() => setAnswerSwitch(false));
+    expect(screen.queryByTestId('map-card')).toBeNull();
+    expect(screen.getByRole('button', { name: ZOOM_IN })).toBeVisible();
+    await act(() => setAnswerSwitch(true));
+
+    expect(screen.queryByTestId('map-card')).toBeNull();
+  });
+
+  it('once the Friend is no longer among the Friends: the zoom control comes back', async () => {
+    const user = await openMain({ answerOnMap: true });
+    await socketServer((socket) => {
+      socket.accept();
+    });
+    await press(user, row(JI_WOO));
+    expect(friendCard().getByRole('header', { name: '서지우' })).toBeVisible();
+
+    // The friendship ended: GET /friends answers without 서지우, and the main server says the Friends changed.
+    server.on('GET /friends', { status: 200, body: [MIN_JUN] });
+    await socketServer((socket) => {
+      socket.send('friends-changed');
+    });
+    await pass(500);
+
+    expect(screen.queryByTestId('map-card')).toBeNull();
+    expect(screen.getByRole('button', { name: ZOOM_IN })).toBeVisible();
   });
 });
 
