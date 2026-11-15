@@ -32,11 +32,13 @@ const input = z.object({
       "The User's words for the Friend's department, when they gave some to tell Friends of one name apart: 경영, 컴퓨터공학부. Left out otherwise.",
     ),
   // Only words: a value it cannot take is left out, as when none is given.
+  // oxlint-disable-next-line unicorn/prefer-top-level-await -- zod's catch, not a promise's
   forTool: z
     .string()
     .trim()
     .max(50)
     .optional()
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- the fallback is the field left out
     .catch(undefined)
     .describe(
       'The tool the Friend is found for, such as planMeal or planMeet, so that a question of which one asks for that. Left out otherwise.',
