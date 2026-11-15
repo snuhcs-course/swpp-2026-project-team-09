@@ -97,6 +97,7 @@ describe('proposeQuest, with a complete Open Proposal', () => {
       proposal: LUNCH,
       answer: null,
       lookup: null,
+      refusal: null,
     });
     expect(model.toolResults()).toEqual([{ result: 'proposed', proposal: LUNCH }]);
   });

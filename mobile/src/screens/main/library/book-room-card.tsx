@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -13,11 +14,12 @@ import type { ConfirmedPress } from '@/library/client';
 import { spaceWords } from '@/library/cards/bookings';
 import { doneOf } from '@/library/cards/done';
 import { roomBookingOf, type Slot } from '@/library/cards/payloads';
+import { isWaitingCard } from '@/library/cards/room-window';
 import { freeRooms, nearestStarts } from '@/library/cards/rooms';
 import { nextStart, whenWords } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibraryRoomTimes } from '@/library/replies';
-import { keepRoomBooking, reportRoomBooked } from '@/library/room-bookings';
+import { forgetWaitingRoom, keepRoomBooking, reportRoomBooked } from '@/library/room-bookings';
 import { roomCancelCardOf } from '@/library/cards/made';
 import { useAskForPush } from '@/push/push-ask-host';
 import { type RoomRequest, roomRequests } from '@/api/room-requests';
@@ -26,6 +28,7 @@ import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './libr
 import { Choices, Pledge } from './room-parts';
 import { checkedCompanions, PartyStatus, usePartyRequest } from './room-party';
 import { roomTimesFor } from './room-times';
+import { WaitingRoomCard } from './waiting-room-card';
 import {
   bseqnoOf,
   type CardFailure,
@@ -41,7 +44,8 @@ import {
 // The book card of a room: a group study room or a media room. It reads the sector's rooms that day and offers those
 // free for the whole slot, the first chosen, or else the nearest free starts. It asks the 사용 용도 when the card has
 // none, and a media room's 서약서 must be agreed to; 예약하기 waits for both. With companions it waits for their consent
-// too, through the room request (`./room-party.tsx`).
+// too, through the room request (`./room-party.tsx`). A card for a date after the booking window waits for it
+// (`./waiting-room-card.tsx`).
 
 export const NO_FREE_ROOM = '그 시간에 빈 방이 없어요';
 
@@ -94,6 +98,7 @@ async function sendBooking(
   actions.addOwn({ text: done.title, done });
   if (request !== null) {
     await keepRoomBooking(Number(bseqno), request.id).catch(() => null);
+    void forgetWaitingRoom(request.questId).catch(() => null);
     const reported = await reportRoomBooked(request.id).catch(() => 'queued' as const);
     if (reported === 'ended') {
       actions.addOwn({
@@ -267,5 +272,5 @@ function LiveRoomCard(props: BookRoomCardProps): ReactElement {
 }
 
 export function BookRoomCard(props: BookRoomCardProps): ReactElement {
-  return <LiveRoomCard {...props} />;
+  return isWaitingCard(props.card, now()) ? <WaitingRoomCard {...props} /> : <LiveRoomCard {...props} />;
 }

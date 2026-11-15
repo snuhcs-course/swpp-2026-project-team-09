@@ -5,6 +5,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -199,9 +200,9 @@ jobs_from_json() {
     else .jobs[] | [.name, .status, .conclusion // ""] end | @tsv'
 }
 
-# Prints `name<TAB>outcome` for each CI job, given the jobs of every CI run of the commit as jobs_from_json prints them.
-# The Dev Server's deploy script (infra/deploy/deploy.sh) reads its checks the same way: a commit pushed to a branch and
-# tagged has a CI run for each push, and one success among them is enough. A run cancelled by a newer push to its
+# Prints `name<TAB>outcome` for each CI job, given the jobs of the CI runs that read_ci_jobs reads as jobs_from_json
+# prints them. The Dev Server's deploy script (infra/deploy/deploy.sh) reads its checks the same way: a commit merged by
+# the queue and tagged has a CI run of each, and one success among them is enough. A run cancelled by a newer push to its
 # branch (ci.yml's concurrency) may be run again, so it is waited for, not failed.
 summarize_jobs() {
   awk -F '\t' '
@@ -295,8 +296,11 @@ unused_generated() {
 
 # --- Doing --------------------------------------------------------------------------------------------------------
 
-# Prints the jobs of every CI run of the commit, as jobs_from_json prints them. GitHub may list the run of the tag's own
-# push a little after the Release starts, so until it does, that run counts as one that will run every job.
+# Prints the jobs of the commit's CI runs that always do every job, as jobs_from_json prints them: the tag's own, the
+# merge queue's, and those of pushes to main or development. A working branch's run may skip work its changes cannot
+# reach, and a Main's the work the merge queue already passed on the commit (.github/ci/changes.sh), so neither is read.
+# GitHub may list the run of the tag's own push a little after the Release starts, so until it does, that run counts as
+# one that will run every job.
 read_ci_jobs() {
   local repository=$1 commit=$2 tag=$3 runs id run_status jobs
   runs=$(gh api "repos/$repository/actions/workflows/ci.yml/runs?head_sha=$commit&per_page=100") || return 1
@@ -304,7 +308,9 @@ read_ci_jobs() {
   while IFS=$'\t' read -r id run_status; do
     jobs=$(gh api "repos/$repository/actions/runs/$id/jobs?per_page=100") || return 1
     jobs_from_json "$run_status" <<<"$jobs"
-  done < <(jq -r '.workflow_runs[] | [.id, .status] | @tsv' <<<"$runs")
+  done < <(jq -r --arg tag "$tag" '.workflow_runs[] |
+    select(.head_branch == $tag or .event == "merge_group" or .head_branch == "main" or .head_branch == "development") |
+    [.id, .status] | @tsv' <<<"$runs")
 }
 
 # Prints the app's Android and iOS fingerprints, its `version`, and the decision (app_decision) as job outputs, given

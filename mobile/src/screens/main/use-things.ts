@@ -71,20 +71,28 @@ function everyLook(cards: readonly CardView[]): MarkerLook[] {
   return cards.flatMap((card) => DETAILS.map((detail) => lookOf(card, detail, false)));
 }
 
-// The words under a person's Avatar from the "names" level of detail: the given name, and for an old position its
-// age, "민준 · 3분 전". A place has none: words of places side by side overlap, and its card says what it is.
-function wordsOf({ mark, marker }: CardView, detail: ZoomDetail): string | undefined {
+// The words under a person's Avatar from the "names" level of detail: the given name, or the full name with
+// `fullNames`, and for an old position its age, "민준 · 3분 전". A place has none: words of places side by side
+// overlap, and its card says what it is.
+function wordsOf({ mark, marker }: CardView, detail: ZoomDetail, fullNames: boolean): string | undefined {
   if (detail !== 'names' || mark.type !== 'person') {
     return undefined;
   }
-  return marker.minutesOld === null ? marker.short : `${marker.short} · ${marker.minutesOld}분 전`;
+  const name = fullNames ? mark.name : marker.short;
+  return marker.minutesOld === null ? name : `${name} · ${marker.minutesOld}분 전`;
 }
 
-// Turns the cards into what the map shows at a level of detail. From the "names" level a person has their given name
-// under them, in the map's own text. The selected one is drawn selected and above the others. A thing within a place
-// has no marker: the place's stands for it, and is selected while the thing is, as a made Quest's flag for its Quest.
-// A received invitation has none.
-export function useThings(all: readonly CardView[], detail: ZoomDetail, selectedId: string | null): Things {
+// Turns the cards into what the map shows at a level of detail. From the "names" level a person has their name under
+// them, in the map's own text: the full name with `fullNames`, as while the switch of the answer on the map is on,
+// else the given name. The selected one is drawn selected and above the others. A thing within a place has no marker:
+// the place's stands for it, and is selected while the thing is, as a made Quest's flag for its Quest. A received
+// invitation has none.
+export function useThings(
+  all: readonly CardView[],
+  detail: ZoomDetail,
+  selectedId: string | null,
+  fullNames: boolean,
+): Things {
   const cards = all.filter(({ kind }) => kind !== 'invitation');
   const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
   const isSelected = (card: CardView): boolean => card.id === selectedId || card.id === selectedWithin;
@@ -100,7 +108,7 @@ export function useThings(all: readonly CardView[], detail: ZoomDetail, selected
         name: card.marker.name,
         position: card.position,
         image,
-        text: wordsOf(card, detail),
+        text: wordsOf(card, detail, fullNames),
         order: isSelected(card) ? SELECTED_ORDER : 0,
       };
       if (card.mark.type === 'person' || card.glideMs !== undefined) {

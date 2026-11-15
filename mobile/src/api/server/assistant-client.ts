@@ -30,6 +30,7 @@ import { isMenuLine } from './menu-answers';
 import { isRecruitingQuest } from './party-client';
 import { isLookup } from './lookup-answers';
 import { isAnswerReply } from './plan-answers';
+import { isRefusal } from './refusal-answers';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request says
 // that this app draws library cards (`clientCapabilities`), and one with a context that it draws an answer on the map.
@@ -129,13 +130,15 @@ function isAssistantReply(value: unknown): value is AssistantReply {
   const proposal = field(value, 'proposal');
   const answer = field(value, 'answer');
   const lookup = field(value, 'lookup');
+  const refusal = field(value, 'refusal');
   return (
     hasTexts(value, ['text']) &&
     listOf(isMapLayer)(field(value, 'mapButtons')) &&
     listOf(isChatCard)(field(value, 'cards')) &&
     (isNothing(proposal) || isQuestProposal(proposal)) &&
     (answer === undefined || isNothing(answer) || isAnswerReply(answer)) &&
-    (lookup === undefined || isNothing(lookup) || isLookup(lookup))
+    (lookup === undefined || isNothing(lookup) || isLookup(lookup)) &&
+    (refusal === undefined || isNothing(refusal) || isRefusal(refusal))
   );
 }
 

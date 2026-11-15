@@ -27,6 +27,7 @@ import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
+import { refusalReplyTo } from './data/refusals';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
 import {
@@ -45,8 +46,9 @@ import { isLibraryAsk, libraryReply } from './library-replies';
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
 // the map, and with a context asked where something is (어디), 301동식당's menu, or where 민수 is, with the main
-// server's real Lookups of 문화관, of that menu, and of 민수. A press on a building or a face is answered with the main
-// server's real cards of row 6.
+// server's real Lookups of 문화관, of that menu, and of 민수. The words of a board of row 8 with a context get the main
+// server's real refusal, before anything else. A press on a building or a face is answered with the main server's real
+// cards of row 6.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -174,8 +176,13 @@ export function mockTap(tapped: Tapped): Lookup {
   return FRIEND_TAPS[tapped.userId] ?? STAND_IN_FRIEND_TAP;
 }
 
-// The stored answer of 배고파 and Lookups of 301동식당's menu and of where 민수 is, for a message sent with a context.
+// The stored refusal of a board of row 8, answer of 배고파, and Lookups of 301동식당's menu and of where 민수 is, for a
+// message sent with a context.
 function drawnReplyOf(last: string): AssistantReply | null {
+  const refused = refusalReplyTo(last);
+  if (refused !== null) {
+    return refused;
+  }
   if (last.includes('배고파')) {
     return MEAL_ANSWER_REPLY;
   }
