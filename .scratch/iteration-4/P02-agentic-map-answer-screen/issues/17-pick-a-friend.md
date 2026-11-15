@@ -37,7 +37,7 @@ The app must accept `pick-friend` before package A sends it: the reply check is 
 
 ### Agent usage (2026-11-15)
 
-One implementing subagent (Opus 5.5), resumed twice (the full-name cells and the choice grid left as it was). This session's review and the pull request are counted under P03 ticket 07.
+One implementing subagent (Opus 5.5), resumed four times (the full-name cells, the choice grid left as it was, and the cells moved onto P02-18's grid). This session's review and the pull request are counted under P03 ticket 07.
 
-- Agent time: about 45 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
-- Tokens: output 82,737; input 18,300,552, of which 17,932,877 were cache reads, 367,457 cache writes, and 218 uncached. Without cache reads: 450,412.
+- Agent time: about 52 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 101,867; input 25,892,194, of which 25,272,878 were cache reads, 619,040 cache writes, and 276 uncached. Without cache reads: 721,183.
