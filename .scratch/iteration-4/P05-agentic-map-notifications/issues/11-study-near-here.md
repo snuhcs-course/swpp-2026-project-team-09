@@ -86,9 +86,14 @@ Details the contract left to the implementation, listed so that any of them can 
 11. **`WayNaming.me`** takes only the start, so that the Lookup draws the User as a way does without a whole way.
 12. **The app announces `area`** in `ANSWER_CAPABILITIES` from this change on. It sends no `viewport` until P02 ticket 23, so the tool answers none and nothing new is drawn. The tests that pin the capabilities sent were updated.
 13. **The mock's copy** of a9 was written by `studyAnswer` over the seed for a student of 경제학부 with the mock's User id, and the mock answers it for any area the app sends.
-14. **`AssistantService`'s constructor** went over oxlint's 50-line limit with the one new injected service, and carries a `max-lines-per-function` exception that gives the reason: one parameter per service the chat's tools call. Raising the limit for injected constructors in the lint configuration would replace it.
-15. **The app's map-scene checks** moved from `api/server/plan-answers.ts` to `api/server/scene-answers.ts` when the merge with P01-18 took the file over 300 lines; `plan-answers.ts` re-exports `isScene` and `isPlacePoint`, so no importer changed.
+14. **The study spaces' service** reaches the chat's tools through `LookupServices` (`studyAreas`), as the other Lookups' services do.
+15. **The `away` flag's tone** in the answer's groups is a next place's (`next`), since it points to a place outside the area.
 
 ### Found while building (2026-11-15)
 
 - The main server refuses a request whose `clientCapabilities` holds a value it does not know (`z.enum(CLIENT_CAPABILITIES)`, 400). An app that sends `area` therefore needs a main server with this change: the server must be deployed with or before the app's update, or every request with a context fails. The server and the APK are released together from the same Main, so a Release meets this.
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 1 h 10 min (an estimate): 55 min for the subagent that built the ticket, and about 15 min in the package session for two merges of `4.0/Main` and the PR.
+- Tokens, the building subagent: input 67,586,654, of which 65,540,242 cache reads, 2,045,970 cache writes, and 442 uncached; output 196,794. The package session's share of its tokens is counted with its other tickets.

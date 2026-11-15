@@ -75,7 +75,9 @@ describe('the mock of an answer drawn on the map', () => {
   ])("answers %s with a context by the main server's Lookup", async (text, reply) => {
     await expect(answered(mockClient.askAssistant([{ role: 'user', text }], CONTEXT))).resolves.toEqual(reply);
   });
+});
 
+describe('the mock of a question answered with nothing drawn', () => {
   it('answers where a Place is without a context as before, with no Lookup', async () => {
     await expect(answered(mockClient.askAssistant(WHERE))).resolves.not.toHaveProperty('lookup');
   });

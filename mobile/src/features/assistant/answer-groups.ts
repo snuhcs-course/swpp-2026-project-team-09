@@ -37,13 +37,15 @@ export const ROUTE_STYLES = {
   alt: { color: color.inkSubtle, width: 2 },
 } as const;
 
-// A place's flag away from the pick keeps the pick's tone.
+// A place's flag away from the pick keeps the pick's tone; a flag at the area's edge towards a place outside it (관정)
+// is a next place's.
 export const FLAG_TONES: Record<FlagRole, AnswerLabel['tone']> = {
   place: 'pick',
   meeting: 'meeting',
   leave: 'leave',
   late: 'late',
   shuttle: 'shuttle',
+  away: 'next',
 };
 
 // A mark of a scene before its label is placed (`answer-marks.ts`).
