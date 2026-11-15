@@ -10,14 +10,10 @@ import { type Position } from '../../common/geometry.js';
 import { QuestBoard } from '../../generated/prisma/client.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import { clockTime } from '../free-time/tool-parts.js';
-import { type RefusalOffer } from '../refusals/refusal.dto.js';
+import type { LocationMissing, WithMark, WithMissing } from '../refusals/refusal.dto.js';
 
 // The contract of an answer drawn on the map, declared with the same shape in the app's Assistant types. Times are
 // Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
-
-// Why the app sends no location: the permission is not granted, or the position is outside the Campus Boundary and
-// is not sent. Null when it says nothing, as an app before P02-13 does.
-export type LocationMissing = 'permission' | 'off-campus' | null;
 
 // What the app knows when the User asks.
 export interface RequestContext {
@@ -103,7 +99,7 @@ export type PersonConstraint =
   | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
   | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
 
-export interface AnswerReply {
+export interface AnswerReply extends WithMissing {
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];
@@ -112,22 +108,13 @@ export interface AnswerReply {
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
-  // Screens the card opens beside its buttons, as a refusal's offers do, when an input was missing.
-  offers?: AnswerOffer[];
-  // One short line of the card above its buttons.
-  note?: string;
 }
 
-export type AnswerOffer = Extract<RefusalOffer, { kind: 'open' }>;
-
 // `from` is the start the User fixed for a meet.
-export interface ConditionChip {
+export interface ConditionChip extends WithMark {
   kind: 'origin' | 'from' | 'until' | 'person';
   text: string;
   userId: string | null;
-  // Drawn in the Quest colour: `assumed` when the server took it in place of a missing input, `relaxed` when a
-  // condition was eased.
-  mark?: 'assumed' | 'relaxed';
 }
 
 export type AnswerLine = { text: string; strong: boolean }[];
@@ -234,6 +221,7 @@ export interface TimeBand {
 }
 
 export type { CardFact, Lookup, LookupAction, LookupCard } from './lookup.dto.js';
+export type { AnswerOffer, LocationMissing } from '../refusals/refusal.dto.js';
 
 // The most people of a plan, and the most constraints on each.
 const PEOPLE_MAX = 8;
@@ -332,7 +320,6 @@ const tappedSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('place'), placeId: z.uuid() }),
   z.strictObject({ kind: z.literal('friend'), userId: z.uuid() }),
 ]);
-
 const locationMissingSchema = z.enum(['permission', 'off-campus']).nullable().default(null);
 
 export const requestContextSchema = z.strictObject({

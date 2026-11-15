@@ -19,7 +19,7 @@ import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
 import { ConditionChips, type CornerAction } from './condition-chips';
 import { FriendChoices } from './friend-choices';
-import { openScreen } from './refusal-reply';
+import { MainButtons } from './main-buttons';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
 
@@ -90,41 +90,6 @@ function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; 
     >
       <Icon color={disabled ? color.inkMuted : color.ink} name={next ? 'chevronRight' : 'chevronLeft'} size={20} />
     </Pressable>
-  );
-}
-
-interface MainButtonsProps {
-  busy: boolean;
-  invitation: PlanInvitation | null;
-  offers: readonly AnswerOffer[];
-}
-
-// "이대로 초대" for a Plan with a Friend, then the answer's offers, each a secondary button that opens its screen and
-// fills the middle when there is no "이대로 초대".
-function MainButtons({ busy, invitation, offers }: MainButtonsProps): ReactElement {
-  return (
-    <>
-      {invitation === null ? null : (
-        <View style={styles.main}>
-          <Button disabled={busy} full onPress={invitation.invite}>
-            {invitation.sending ? '보내는 중이에요' : '이대로 초대'}
-          </Button>
-        </View>
-      )}
-      {offers.map(({ label, screen }) => (
-        <View key={label} style={invitation === null ? styles.main : undefined}>
-          <Button
-            full
-            onPress={() => {
-              openScreen(screen);
-            }}
-            variant="secondary"
-          >
-            {label}
-          </Button>
-        </View>
-      ))}
-    </>
   );
 }
 
@@ -327,7 +292,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85 },
   middle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2] },
   undo: { width: UNDO_WIDTH },
-  main: { flex: 1 },
   count: {
     ...text.label,
     width: COUNT_WIDTH,

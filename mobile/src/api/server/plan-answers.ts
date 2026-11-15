@@ -8,7 +8,6 @@
 import type {
   AnswerLine,
   AnswerReply,
-  ConditionChip,
   DroppedPlace,
   MapScene,
   PlacePoint,
@@ -18,6 +17,7 @@ import type {
 } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
+import { isChip } from './chip-answers';
 import { hasMissingParts } from './missing-input-answers';
 import { isRecruitingQuest } from './party-client';
 import { isInput, isOneOf } from './plan-inputs';
@@ -63,16 +63,6 @@ function isLatLng(value: unknown): value is LatLng {
 // A mode is absent for a walk.
 function isMode(value: unknown): boolean {
   return value === undefined || isOneOf(['walk', 'shuttle'])(value);
-}
-
-export function isChip(value: unknown): value is ConditionChip {
-  const mark = field(value, 'mark');
-  return (
-    isOneOf(['origin', 'from', 'until', 'person'])(field(value, 'kind')) &&
-    isText(field(value, 'text')) &&
-    isTextOrNull(field(value, 'userId')) &&
-    (mark === undefined || isOneOf(['assumed', 'relaxed'])(mark))
-  );
 }
 
 export function isLine(value: unknown): value is AnswerLine {

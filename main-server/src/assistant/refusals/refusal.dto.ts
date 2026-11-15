@@ -43,3 +43,27 @@ export interface Refusal {
   // In the board's order.
   offers: RefusalOffer[];
 }
+
+// Row 8's other cases (P02-13): why the app sends no location, and what an answer says when an input is missing,
+// declared with the same shapes in the app's `refusal-types.ts`.
+
+// The permission is not granted, or the position is outside the Campus Boundary and is not sent. Null when the app says
+// nothing, as an app before P02-13 does.
+export type LocationMissing = 'permission' | 'off-campus' | null;
+
+// An answer's offers only open screens, as a refusal's `open` offers do.
+export type AnswerOffer = Extract<RefusalOffer, { kind: 'open' }>;
+
+// An answer's part when an input was missing.
+export interface WithMissing {
+  // Screens the card opens beside its buttons.
+  offers?: AnswerOffer[];
+  // One short line of the card above its buttons.
+  note?: string;
+}
+
+// A condition chip's part, drawn in the Quest colour: `assumed` when the server took it in place of a missing input,
+// `relaxed` when a condition was eased.
+export interface WithMark {
+  mark?: 'assumed' | 'relaxed';
+}
