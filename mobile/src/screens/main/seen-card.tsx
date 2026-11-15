@@ -14,6 +14,7 @@ import { seenCardOf } from '@/features/friends/profile';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
 import { type CardMark, friendIdOf } from '@/features/map/adapter';
 import { usePlaceNear } from '@/features/places/use-place-at';
+import { useMasterSwitch } from '@/features/sharing/use-master-switch';
 import { Card, CardFrame, type CardProps, Head, Line } from './card';
 import { placeWords } from './my-card';
 
@@ -26,10 +27,11 @@ interface SeenCardProps {
 }
 
 // "어디까지 보이나" of a Friend (row 9 board 2): the Friend with the Place the map shows them at, as `GET /places/at`
-// finds it for their position, the User's own end, what the two see, and "바꾸기" to 위치 공유.
+// finds it for their position, the User's own end as the Friend sees it, what the two see, and "바꾸기" to 위치 공유.
 function SeenCard({ friend, mark, onClose, onHeight }: SeenCardProps): ReactElement {
   const place = usePlaceNear(friend.position);
-  const { title, mine, both } = seenCardOf(friend, place === undefined || place === null ? null : placeWords(place));
+  const where = place === undefined || place === null ? null : placeWords(place);
+  const { title, mine, both } = seenCardOf(friend, where, useMasterSwitch().on);
   return (
     <CardFrame onHeight={onHeight}>
       <Head card={{ mark, subLabel: '어디까지 보이나', title }} onClose={onClose} />

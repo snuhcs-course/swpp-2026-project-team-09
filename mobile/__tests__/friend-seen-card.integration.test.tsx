@@ -14,7 +14,7 @@ import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
-import { answerMainScreen, askMainServer, JI_WOO, LIBRARY_POSITION, MIN_JUN, PHONE_NOW } from './support/server';
+import { answerMainScreen, askMainServer, JI_WOO, LIBRARY_POSITION, LOBBY, MIN_JUN, PHONE_NOW } from './support/server';
 
 // The card "어디까지 보이나" (P02 ticket 21, row 9 board 2), which a Friend's card opens in its place on the everyday
 // map while the switch is on, over the fake main server's Friends: 김민준, whom the map shows at the Place the main
@@ -46,6 +46,8 @@ beforeEach(async () => {
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
+  // The User's Master Switch on, so that a Friend sees the User's own end of the friendship.
+  server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
   server.on('GET /places/at', { status: 200, body: { place: ENGINEERING, relation: 'inside' } });
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
@@ -109,6 +111,21 @@ describe('the words of what the two see', () => {
 
     expect(shownCard().getByText(`내가 김민준에게: ${mine}`)).toBeVisible();
     expect(shownCard().getByText(note)).toBeVisible();
+  });
+});
+
+// Partitions: the User's Master Switch on (every case above) and off.
+describe("my end with the User's Master Switch off", () => {
+  it('is the Timetable only, which the two then see, with no reason after it', async () => {
+    server.on('POST /lobby', { status: 200, body: LOBBY });
+    // The main server's answer while the User's Master Switch is off: `seen` is the Timetable, `level` the User's choice.
+    const friend: Friend = { ...MIN_JUN, seen: 'timetable' };
+    server.on('GET /friends', { status: 200, body: [friend, JI_WOO] });
+
+    await openSeen(friend);
+
+    expect(shownCard().getByText('내가 김민준에게: 시간표만')).toBeVisible();
+    expect(shownCard().getByText('서로 시간표만 보여요')).toBeVisible();
   });
 });
 
