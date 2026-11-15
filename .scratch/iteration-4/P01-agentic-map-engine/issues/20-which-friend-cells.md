@@ -43,6 +43,7 @@ Blocked by: None. The app side is package C's P02-17 (#293), on `4.0/Main`.
 - **A tapped Friend among the matches is the one.** When the request's tapped Friend is among those the words fit, `resolveFriend` answers 'one' with them. So a press on one of two Friends named 김민수, whose `text` fits both, settles that one also where the model resolves the name again, as for proposeQuest, planNewQuest, and the library booking, which take no tapped id.
 - **A later 'one' answers the question.** A 'one' that names a candidate of the question drops it ("민수", then "민수" with "경영" in one message). A 'one' for another Friend keeps it.
 - **Beside an answer or a Lookup** no question is put, as `refuse` puts none, and the 'several' answer then carries no note.
+- **A 'one' reaches the model without the department** (2026-11-16). A run on the real servers wrote a single Friend's department into the sentence ("김민수(경영학과)와 301동식당에서 …"). The department only tells several apart, so a 'one' gives the id and the full name, a 'several' keeps the department in each candidate, and the chat's rules say to name a Friend by full name and never write a department, except in the question of which one.
 - **The count** is every Friend the words fit; the cells are the first ten, the resolver's cap of candidates.
 - **The kinds.** `REFUSE_KINDS` are the ten cases `refuse` takes; `REFUSAL_KINDS` adds `which-friend`, matching the app's list.
 - **Gating by `answer`.** No release since 26.11.04 holds #271's reply check without #293's `which-friend` kind, so no installed app rejects the kind.

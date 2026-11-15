@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -81,10 +82,11 @@ function tappedAmong<Friend extends { id: string }>(matched: Friend[], { tapped 
 
 // A resolver: the User's Friends the words name, as candidates of name, department and id. Only Friends, and never
 // where they are. The tools that take a Friend accept the id of a 'one', and none of a 'several' until a later 'one'.
-// An app that draws answers shows a several as the question of which one, with a cell for each (P01-20).
+// An app that draws answers shows a several as the question of which one, with a cell for each (P01-20). The
+// department only tells several apart, so a 'one' leaves it out.
 export function resolveFriend(friends: Pick<FriendViewService, 'list'>): Tool {
   return defineTool({
-    description: `Finds the User's Friends a name the User wrote refers to, to invite to a 파티. Answers result 'one' with the Friend, 'several' with the candidates, each with full name and department, or 'none' with the reason. No tool takes a Friend of a 'several' until a later 'one' names them. On 'several', ask the User which one ${WHICH_FRIEND}; on 'none', say there is no Friend of that name.`,
+    description: `Finds the User's Friends a name the User wrote refers to, to invite to a 파티. Answers result 'one' with the Friend's id and full name, 'several' with the candidates, each with full name and department to tell them apart, or 'none' with the reason. No tool takes a Friend of a 'several' until a later 'one' names them. On 'several', ask the User which one ${WHICH_FRIEND}; on 'none', say there is no Friend of that name.`,
     input,
     run: async ({ name, department, forTool }, toolContext) => {
       const { userId, found, presented, context } = toolContext;
@@ -100,8 +102,10 @@ export function resolveFriend(friends: Pick<FriendViewService, 'list'>): Tool {
           : `No Friend of the User has a name holding ${name} and a department holding ${department}.`,
       );
       if (answer.result === 'one') {
-        found.settle('friend', answer.candidate.id);
-        answeredBy(answer.candidate.id, presented);
+        const { id, name: fullName } = answer.candidate;
+        found.settle('friend', id);
+        answeredBy(id, presented);
+        return { result: 'one', candidate: { id, name: fullName } };
       }
       if (answer.result === 'several') {
         found.contest(

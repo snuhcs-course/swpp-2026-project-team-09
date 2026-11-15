@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -62,14 +63,27 @@ describe("resolveFriend's input", () => {
 });
 
 describe('resolveFriend in an app that draws answers', () => {
-  it('answers words that fit one Friend with no note, and puts no question in the reply', async () => {
+  it('answers words that fit one Friend by id and full name only, with no note, and puts no question in the reply', async () => {
     const context = contextOf(null);
 
     const answer = await tool.run({ name: '지은', forTool: 'planMeal' }, context);
 
-    expect(answer).toMatchObject({ result: 'one', candidate: { id: 'jieun' } });
-    expect(answer).not.toHaveProperty('note');
+    expect(answer).toStrictEqual({
+      result: 'one',
+      candidate: { id: 'jieun', name: '<data label="friend.name">박지은</data>' },
+    });
     expect(context.presented.refusal).toBeNull();
+  });
+
+  it('keeps the department in each candidate of a several, to tell them apart', async () => {
+    const answer = await tool.run({ name: '민수' }, contextOf(null));
+
+    expect(answer).toMatchObject({
+      candidates: [
+        { id: 'kim', department: '<data label="friend.department">컴퓨터공학부</data>' },
+        { id: 'lee', department: '<data label="friend.department">경영학과</data>' },
+      ],
+    });
   });
 
   it('still answers several when the tapped Friend is not among those the words fit', async () => {
