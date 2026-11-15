@@ -10,7 +10,7 @@ import { type ComponentProps, useEffect, useState } from 'react';
 import type { PlanInput } from '@/api/assistant-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
-import { peopleOf, withBound, withOrigin, withoutPerson, withPerson } from '@/features/assistant/plan-input';
+import { peopleOf, withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
 import type { BandBound } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
@@ -27,6 +27,7 @@ export interface Corrections {
   toggleAdding: () => void;
   // The User's Friends who are not in the conditions.
   choices: readonly Choice[];
+  // Adds the Friend, and the list stays open until the answer comes.
   choose: (userId: string) => void;
   remove: (userId: string) => void;
   chooseOrigin: () => void;
@@ -68,7 +69,7 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
 
 // What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
 // recalculation. The list of Friends leaves out those `input` holds.
-export function useCorrections({ change, adding, setAdding }: ShownAnswer, input: PlanInput): Corrections {
+export function useCorrections({ change, add, adding, setAdding }: ShownAnswer, input: PlanInput): Corrections {
   const showToast = useToast();
   const choices = useChoices(input);
   const { focus, focusUntil } = useFocus();
@@ -78,10 +79,7 @@ export function useCorrections({ change, adding, setAdding }: ShownAnswer, input
       setAdding(!adding);
     },
     choices,
-    choose: (userId) => {
-      setAdding(false);
-      change((shown) => withPerson(shown, userId));
-    },
+    choose: add,
     remove: (userId) => {
       change((shown) => withoutPerson(shown, userId));
     },
