@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BackHandler } from 'react-native';
@@ -113,7 +114,7 @@ describe('an open card', () => {
 
     await press(user, '닫기');
     expect(screen.queryByTestId('map-card')).toBeNull();
-    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1:exact');
     expect(screen.getByRole('button', { name: '확대' })).toBeVisible();
   });
 
@@ -154,7 +155,7 @@ describe('"가까이 보기"', () => {
     await press(user, CLOSER);
 
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
     expect(wordsUnder(FRIEND, '민준')).toBeVisible();
     expect(screen.queryByRole('button', { name: CLOSER })).toBeNull();
   });

@@ -69,6 +69,10 @@ async function seenOf(id: string): Promise<string | undefined> {
   return (await answered(mockClient.listFriends())).find((friend) => friend.id === id)?.seen;
 }
 
+async function levelOf(id: string): Promise<string | undefined> {
+  return (await answered(mockClient.listPositions())).find(({ userId }) => userId === id)?.level;
+}
+
 describe('the mock of what the User and a Friend see of each other', () => {
   it("gives the two with their location off the Timetable, and every other Friend the User's end", async () => {
     const friends = await answered(mockClient.listFriends());
@@ -84,6 +88,14 @@ describe('the mock of what the User and a Friend see of each other', () => {
     expect(await seenOf('f1')).toBe('exact');
     await answered(mockClient.setFriendLevel('f11', 'building'));
     expect(await seenOf('f11')).toBe('timetable');
+  });
+
+  it("writes on a Friend's position the level the two see each other at, as GET /positions does", async () => {
+    expect(await levelOf('f1')).toBe('exact');
+    expect(await levelOf('pm1')).toBeUndefined();
+
+    await answered(mockClient.setFriendLevel('f1', 'building'));
+    expect(await levelOf('f1')).toBe('building');
   });
 });
 

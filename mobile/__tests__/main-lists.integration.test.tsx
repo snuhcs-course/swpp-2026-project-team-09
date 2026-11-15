@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Animated } from 'react-native';
@@ -140,7 +141,7 @@ describe("a press on a Friend's row", () => {
     await press(user, FRIEND_ROW);
 
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
     // The "close" level is past the "names" level: the given name is under the marker.
     expect(wordsUnder(FRIEND, '민준')).toBeVisible();
     expect(placeOf(FRIEND)).not.toEqual(before);
@@ -185,7 +186,7 @@ describe("a press on a Friend's row before the map's cards came", () => {
     expect(screen.queryByTestId('map-card')).toBeNull();
     await pass(3000);
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
   });
 
   it('opens nothing when the card was closed or another was asked for before the cards came', async () => {

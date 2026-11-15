@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from './support/app';
@@ -50,9 +51,9 @@ describe('the map of the main screen, with the whole campus in view', () => {
   it('shows the Friends who can be seen and the member of the Party as small teardrops in their colours', async () => {
     await openMain();
 
-    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
-    expect(lookOf('정하은 · 수업 중 · 301동 · 13:50에 끝나요')).toBe('person:small:class:f5');
-    expect(lookOf('임채원 · 이동 중 · 교내 순환 셔틀 · 302동 방향')).toBe('person:small:moving:f10');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1:exact');
+    expect(lookOf('정하은 · 수업 중 · 301동 · 13:50에 끝나요')).toBe('person:small:class:f5:exact');
+    expect(lookOf('임채원 · 이동 중 · 교내 순환 셔틀 · 302동 방향')).toBe('person:small:moving:f10:exact');
     expect(lookOf(MEMBER)).toBe('person:small:member:pm1');
     expect(screen.getAllByTestId(/^person:small:(free|class|moving):/u)).toHaveLength(10);
   });
@@ -81,7 +82,7 @@ describe('the map of the main screen, closer', () => {
 
     await zoomIn(user, 2);
 
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact');
     expect(lookOf(MEMBER)).toBe('person:full:member:pm1');
     // One Party goes to the Global Event: its pin has no count.
     expect(lookOf(EVENT)).toBe('official:pin');
@@ -110,7 +111,7 @@ describe('the map of the main screen, closest', () => {
     await press(user, FRIEND);
     await press(user, '가까이 보기');
 
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
     expect(lookOf(DINNER)).toBe('party:pin');
     expect(wordsUnder(FRIEND, '민준')).toBeVisible();
     expect(wordsUnder(DINNER, '저녁 약속')).toBeNull();
@@ -144,10 +145,10 @@ describe('a selected marker', () => {
     const user = await openMain();
 
     await press(user, FRIEND);
-    expect(lookOf(FRIEND)).toBe('person:small:free:f1:selected');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1:exact:selected');
 
     await press(user, EVENT);
-    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1:exact');
     expect(lookOf(EVENT)).toBe('official:dot:selected');
   });
 
