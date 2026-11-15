@@ -32,6 +32,7 @@ import { withApprovalLine } from './approval-line.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
 import { FoundIds } from './found-ids.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
+import { keptRefusal, textBeside } from './refusals/refusals.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
@@ -277,7 +278,7 @@ export async function runFeature(
     capabilities: new Set(asker.capabilities),
     found: new FoundIds(),
     shown: lastShown(messages),
-    presented: { mapButtons: [], cards: [], proposal: null, answer: null, lookup: null },
+    presented: { mapButtons: [], cards: [], proposal: null, answer: null, lookup: null, refusal: null },
     judged: new Map(),
     restaurants: new Map(),
   };
@@ -323,11 +324,14 @@ function withLine(reply: FeatureReply, messages: readonly ChatMessage[], observe
   return { ...reply, text };
 }
 
-// The reply of a run that ended: the model's text, the fixed sentence over what it showed without any, or none.
+// The reply of a run that ended: the model's text, a refusal's lines without any, the fixed sentence over what it
+// showed without either, or none.
 function replyOf(text: string, finishReason: string, feature: Feature, context: ToolContext): FeatureReply | null {
   const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
-  if (text !== '') {
-    return { ...presented, text, noTextFinishReason: null };
+  presented.refusal = keptRefusal(presented);
+  const said = textBeside(text, presented.refusal);
+  if (said !== '') {
+    return { ...presented, text: said, noTextFinishReason: null };
   }
   const { cards, mapButtons, proposal, answer, lookup } = presented;
   if (cards.length === 0 && mapButtons.length === 0 && proposal === null && answer === null && lookup === null) {

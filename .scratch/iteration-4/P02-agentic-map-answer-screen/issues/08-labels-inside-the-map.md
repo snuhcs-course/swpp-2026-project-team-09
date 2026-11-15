@@ -1,0 +1,68 @@
+# 08: The answer's labels and the pick's card stay inside the map the pill and the card leave
+
+Parent: [P02 spec](../spec.md) ("The answer on the map")
+Status: ready-for-agent
+Blocked by: 03
+
+## What to build
+
+A label of an answer's mark never lies under the pill, under the card, or across a screen edge, and labels on one side of nearby marks line up. Today the side of a label is chosen by the other marks of the answer alone, in metres, so on a phone "14분밖에 못 있어요" can be cut by the left edge, "13:00 수업 · 24동" can lie half under the pill, and the pick's card can be cut by the card's top.
+
+## Acceptance criteria
+
+- [x] One area in the map's points: 16 from the left and the right edges, from the pill's bottom plus 8 down to the card's top minus 8.
+- [x] Choosing a label's side, a side also counts as blocked when the label's box, at the camera the answer is shown at, would leave that area; the next side of the label's list is tried, and a label with no side left is left out as today, its mark's name still said to a screen reader.
+- [x] Labels at the left of marks within 60 points of each other up and down share their right edge, and labels at the right share their left edge.
+- [x] The camera's room for labels (`roomsOf`) and this check use the same label sizes.
+- [x] Unit tests on the stored copies of real answers with the emulator's view (411 by 914, the pill and the card as measured), worked by hand.
+- [x] Pictures: the first and the third Plan of the stored answer, and the answer for a fixed start, with no label touching an edge, the pill, or the card.
+- [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
+
+## Comments
+
+From the design review of 2026-11-15 (`answer-screen-design/brief.md`, fix 7), split off as its own ticket because the side of a label must then be chosen in the view's points, after the camera is known, where today it is chosen in metres before it.
+
+### Decisions (2026-11-15)
+
+1. The order has no loop: the Plan is drawn with its labels' sides chosen in metres, the camera is worked out from that drawing as before (`roomsOf`, `paddingOf`, `answerCamera`), the Plan is drawn again with the sides chosen at that camera, the labels at the left and the right then share their edges, and the map moves once. The second drawing never feeds the camera: a side the camera made room for is still inside the area at that camera, and a side that is not is dropped instead of moving the camera again.
+2. `paddingOf` keeps the area's 8 at the top and at the bottom, so that the room the camera leaves for a label lies inside the area. Without it the first Plan's two lines under 302동 ended on the card's top, 8 past the area, and went above, over 301동's labels.
+3. At a view, sides are chosen in its points alone: a side is free when its box stays inside the area and covers neither another point's symbol box nor a label placed before it, and a label with no free side is left out, so that no label lies over another mark of the answer. The spec's metre reach, with its fallback to the first side not taken, stays only for a drawing without a view: before the stage is laid out and the map has told its fit zoom, and for the camera's room.
+4. A box less than a point over the area's edge counts as inside, and the Plan's own points count as fitting the camera's area within a point: a camera's fit rests in its last digits, and the first Plan's pick ends exactly on the area's bottom.
+5. The one source of label sizes is `answerLabelBox` beside the label's styles in `design-system/map-answer.tsx`, which `roomsOf` and the side check both read. Heights stay the tallest of each kind, 26 and 46, as `roomsOf` had them; widths come from a small table of Pretendard's advance widths (decision 20), worked out once from the font files, with the padding, the pick's border, and the number's badge, at most 180.
+6. Labels share an edge only when their marks are also within 36 points (a symbol box) across, so that a label never moves far from its mark. Neighbours are counted pair by pair, each label moving to the edge furthest out among its own neighbours, in whole points, and only as far as the area lets it. The move is the label's `shift`, a margin between the symbol box and the label, and it is part of the look's name.
+7. Each Plan's looks are made at the camera that Plan is shown at, so the arrows still never wait for a picture.
+8. A received invitation hands its scene to the map instead of a drawing, so that its way is drawn by the same steps; its area starts 8 under the status bar. A made Quest's card after inviting (ticket 07) hands its scene the same way, kept by what it draws, and its labels take the same area under its card.
+9. On the emulator (411 by 914, the pill's bottom at 100, the card of 406), the Plan's own points of the stored answer are 370.85 high at a campus map's lowest zoom, 15.26, more than the area leaves them, so the camera goes further out: for the first Plan to 14.96, filling 132 to 434; for the third Plan and the answer for a fixed start to 15.15, filling 132 to 476. Every label of the Plan's own marks keeps a side: in the first Plan "나 · 3분" at the right and the pick's two lines below 302동, from 454 to 500; in the third, the flag above 301동, "나 · 15분" at the right, and 민수's "18분" at the right of 302동 at 476, from 463 to 489, the pick's lines below 학생회관. "13:00 수업 · 24동" stays at the left in all three; 학생회관식당 goes to the right in the first Plan, its left covering 24동; 자하연식당 2층 lies under the pill and is left out.
+10. In the third Plan, 302동식당's label goes at the left of 302동, from 129.2 to 221.2, moved 2 to share 301동식당's right edge. At the lowest zoom, where it had been pushed above 302동 over the User's dot and tag, it would now be left out.
+11. An answer's camera goes below a campus map's lowest zoom only when the Plan's own points do not fit there, and only until they do: to `nativeLevelZoom(14) + 0.25`, 14.765. `nativeLevelZoom` in `map/campus.ts` gives the zoom from which a camera is at a level of Kakao's or above (decision 24). The quarter of a level covers the Android view grown since the module opened, whose zooms are sent lower by the scale's shift (0.146 on the emulator).
+12. The map takes `outerZoom`: while it is given the plain map and the native map keep a camera down to it, and the module is handed it, less the shift, as its `minZoom`, so that it does not bring an answer's camera back. The fit zoom the map tells stays the campus map's, so that the screen's zoom levels and the "close" level of an answer's camera do not move. The everyday map gives none.
+13. The labels of the whole answer take sides by kind, flags first, then the pick, the people, the next Class, the candidates, and the Restaurants that do not fit, so that the Plan's own marks place theirs before others can take their room. Within a point the order is as before.
+14. A label moved to share an edge stays where it is when the move would cover another point's symbol or another label.
+15. A received invitation's camera may go further out in the same way. Its stored way fits at the lowest zoom under its card of 411, so nothing changes there; under a taller card, such as ticket 06's 480, its own points do not fit and it now goes out.
+16. The camera's room for labels is measured from the points it fits: `paddingOf` of every point for their fit, and of the Plan's own points for their fit alone, further out or centred at the lowest zoom (`answerCamera`'s `own`). A candidate beyond the Plan's own points then no longer takes the room of their labels: with 3식당 200 metres south of the first Plan's 302동, the room below was 24 and the pick's two lines were left out; it is now 66 and they stay. A mark beyond the own points still counts by its distance, as if inside, which only leaves more room.
+17. On closing, the everyday map keeps the answer's limits (Kakao's level 14 and the outer zoom) while its camera rests more than 0.01 further out than its lowest zoom, the noise of the module's measure; it asks one glide, the module's 300 ms move, to the same centre at that zoom, again whenever the camera rests short of it, and drops the limits once the camera rests there. The order rests on the camera's rest, not on a timer of the glide's length. A received invitation's way closes the same way.
+18. A move of the main screen's camera to a camera (`moveTo`) sends its zoom as asked, and the map's own rules hold it, while the screen's other moves stay no further out than the fit zoom: so an answer's camera further out than a campus map's lowest zoom is reached.
+19. Labels move to share an edge one after another, in the order they took their sides, each checked against the others where they then stand, so that two moved labels never cover each other; of two that would, the first moves.
+20. The width classes of a label's letters, each at its widest letter in either font, rounded up: a Hangul syllable 0.87 of the font's size; a space, "·", ":", ".", or "," 0.29; "W", "M", "m", "w", "%", "@", the capitals "A", "C", "D", "G", "H", "N", "O", "Q", "U", "V", "X", and "Y", and any letter outside ASCII 1.0, the widest being "W" in bold at 0.999 ("→" 0.922, "—" 0.966); any other letter 0.67, the widest "K" in bold at 0.663. A few rare symbols outside ASCII, such as "㎯" at 2.86, are wider still and are not covered.
+21. Plans' pictures are made again when the card's height changes, since each Plan's labels take their sides at the camera of that height: until the new pictures are made the map shows the ones made before, and the pictures of each height met are kept.
+22. The quarter of a level kept clear of Kakao's level 14 rests on the emulator's scale shift of 0.146: it holds while a view grows by at most 2^0.25 = 1.19 times since the module opened. The shift was not measured on other phones, where the margin may be too small or more than needed.
+23. In a view grown since it opened, the Android module brings a camera it is sent inside `bounds` at the zoom sent, the zoom shown less the shift, in the view as large as it is, so it counts the view 2^0.146 = 1.107 times taller than it shows; at rest it measures the zoom shown and keeps what it finds. The first Plan's camera, 14.964 with the view's bottom 2.8 points inside the camera's area (south edge 37.432), was sent at 14.818, where that taller view reached 41.4 points past the edge, so the module moved its centre 45.9 shown points north: 24동 at 177.9, 301동 at 442.9, and 302동 at 479.9 instead of 132, 397, and 434, the pick's lines under the card, as seen on the emulator. The third Plan's view is 112 points inside and was not moved. `native-map.tsx` now hands the module `bounds` grown on each side by that excess at the lowest zoom it may be sent (`sentBounds`): 48.7 points up and down and 21.9 across at the answer's outer zoom, 0.00195° and 0.00111°. So the module keeps every camera the rules keep, and a camera at rest may stop that much past the camera's area, half a campus past the campus already. No native file changed.
+24. The module measures how far above its number Kakao's level reaches once at each start, on the camera Kakao opens at: 0.1895, 0.415, and 0.5146 for level 15 on three starts of the emulator, so it is not a constant. `nativeLevelZoom` takes the most measured, 0.515: a camera there or closer is at the level or above on any start, since Kakao showed the level at 15.515, and the module, which asks for the level of a zoom less its measure, rounded, asks for no lower with any measure from 0.19 to 0.52 (round(14.619 − 0.52) = 14 for the answer's outer zoom sent in the emulator's grown view). The module reports no measure of its own, so none is read back; the answer's outer zoom stays 14.765.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build answering from the stored copies of real replies, with the switch on, the answer to "배고파, 민수랑 같이":
+
+- The first Plan: the camera went out past the campus zoom, "13:00 수업 · 24동" near the top, "나 · 3분" at the right of the User's dot, and the pick's two lines under 302동 just above the card; 자하연식당 2층's label, under the pill, was left out.
+- The third Plan: "18분" at the right of 민수, 302동식당 at its left, "12:18 민수와 만남" above the meeting point, and no label over another mark.
+- ✕ closed the answer to the everyday map with no correction logged by the module.
+- A received invitation (`snunow://main?card=invitation:qi-1`): 63동's label and "나 · 18분" inside the map between the status bar and the card.
+
+Found on the emulator and fixed: the module moved the first Plan's camera north, so that the pick lay under the card (decisions 23 and 24). The answer for a fixed start was not drawn on the emulator; its labels are checked by the unit tests.
+
+### Agent usage (2026-11-15)
+
+One session with four subagents for this ticket (the implementation, two reviewers, and the reviews' fixes with the module's camera); the session's own time counted is the emulator checks and the pull request.
+
+- Agent time: about 119 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 651,170; input 138,514,576, of which 136,683,074 were cache reads, 1,830,648 cache writes, and 854 uncached. Without cache reads: 2,482,672.

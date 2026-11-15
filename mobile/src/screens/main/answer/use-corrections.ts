@@ -10,7 +10,7 @@ import { type ComponentProps, useEffect, useState } from 'react';
 import type { PlanInput } from '@/api/assistant-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
-import { peopleOf, withBound, withOrigin, withoutPerson, withPerson } from '@/features/assistant/plan-input';
+import { peopleOf, withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
 import type { BandBound } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
@@ -27,6 +27,9 @@ export interface Corrections {
   toggleAdding: () => void;
   // The User's Friends who are not in the conditions.
   choices: readonly Choice[];
+  // The user ids of all the User's Friends.
+  friendIds: ReadonlySet<string>;
+  // Adds the Friend, and the list stays open until the answer comes.
   choose: (userId: string) => void;
   remove: (userId: string) => void;
   chooseOrigin: () => void;
@@ -35,11 +38,12 @@ export interface Corrections {
   drop: (bound: BandBound, time: string) => void;
 }
 
-function useChoices(input: PlanInput): Choice[] {
+function useChoices(input: PlanInput): Pick<Corrections, 'choices' | 'friendIds'> {
   const { data = [] } = useFriends();
-  return data
+  const choices = data
     .filter(({ id }) => !peopleOf(input).some(({ userId }) => userId === id))
-    .map(({ id, name, position, minutesOld }) => ({ id, name, position, minutesOld }));
+    .map(({ id, name, department, position, minutesOld }) => ({ id, name, department, position, minutesOld }));
+  return { choices, friendIds: new Set(data.map(({ id }) => id)) };
 }
 
 // The band's end handle in focus for a while after the time chip is pressed, a press anew starting the while again.
@@ -68,9 +72,9 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
 
 // What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
 // recalculation. The list of Friends leaves out those `input` holds.
-export function useCorrections({ change, adding, setAdding }: ShownAnswer, input: PlanInput): Corrections {
+export function useCorrections({ change, add, adding, setAdding }: ShownAnswer, input: PlanInput): Corrections {
   const showToast = useToast();
-  const choices = useChoices(input);
+  const { choices, friendIds } = useChoices(input);
   const { focus, focusUntil } = useFocus();
   return {
     adding,
@@ -78,10 +82,8 @@ export function useCorrections({ change, adding, setAdding }: ShownAnswer, input
       setAdding(!adding);
     },
     choices,
-    choose: (userId) => {
-      setAdding(false);
-      change((shown) => withPerson(shown, userId));
-    },
+    friendIds,
+    choose: add,
     remove: (userId) => {
       change((shown) => withoutPerson(shown, userId));
     },

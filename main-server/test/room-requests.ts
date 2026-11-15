@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -28,6 +29,11 @@ export const NOW = new Date('2026-11-04T10:05:00+09:00');
 // 그룹스터디룸 6인실 for 4 to 6 people, Thursday 15:00 for an hour.
 export const ROOM_KEY = 'book:4F-group-6:2026-11-05:1500:60';
 
+// The same room, Thursday 15:30–18:30.
+export const LONG_KEY = 'book:4F-group-6:2026-11-05:1530:180';
+
+export const ROOM_LABEL = '관정 4층 6인실';
+
 export const DECLINED = '파티 구성원이 제안을 거절했습니다';
 
 export const PARTY_REFUSAL = '파티는 최대 8명까지라 9명 이상 방 예약은 아직 못 해요 — 직접 예약해 주세요';
@@ -48,6 +54,8 @@ export const roomRequestSchema = z.strictObject({
   reason: z.string().nullable(),
   failed: personSchema.nullable(),
   consents: z.array(personSchema.extend({ consented: z.boolean().nullable() })),
+  companions: z.array(personSchema.extend({ state: z.enum(['asked', 'consented', 'declined', 'unanswered']) })),
+  moreNeeded: z.number(),
 });
 
 export type RoomRequestBody = z.infer<typeof roomRequestSchema>;
@@ -67,6 +75,18 @@ export const inboxSchema = z.strictObject({
   ),
   notices: z.array(z.strictObject({ id: z.string(), requestId: z.string(), text: z.string() })),
 });
+
+const notificationSchema = z.strictObject({
+  id: z.string(),
+  kind: z.string(),
+  title: z.string(),
+  ahead: z.string().nullable(),
+  line: z.string(),
+  at: z.string(),
+  url: z.string(),
+});
+
+export type NotificationBody = z.infer<typeof notificationSchema>;
 
 export const companionsSchema = z.array(
   z.strictObject({ userId: z.string(), registeredName: z.string(), studentNumber: z.string().nullable() }),
@@ -200,6 +220,41 @@ export class RoomStage {
 
   cancelled(user: TestUser, id: string): request.Test {
     return this.post(user, `/library/room-requests/${id}/cancelled`);
+  }
+
+  // One more Friend into the request.
+  askOneMore(user: TestUser, id: string, friendId: string): request.Test {
+    return this.kept(
+      withAccessToken(
+        request(this.app.getHttpServer()).post(`/library/room-requests/${id}/companions`),
+        user.accessToken,
+      )
+        .set('Idempotency-Key', randomUUID())
+        .send({ friendId }),
+    );
+  }
+
+  async notifications(user: TestUser): Promise<NotificationBody[]> {
+    const response = await withAccessToken(
+      request(this.app.getHttpServer()).get('/notifications'),
+      user.accessToken,
+    ).expect(200);
+    return z.array(notificationSchema).parse(response.body);
+  }
+
+  // The User's Notifications of this kind, once at least `count` are kept: they are kept after the answer.
+  notificationsOf(user: TestUser, kind: string, count = 1): Promise<NotificationBody[]> {
+    return vi.waitFor(async () => {
+      const kept = (await this.notifications(user)).filter((notification) => notification.kind === kind);
+      expect(kept.length).toBeGreaterThanOrEqual(count);
+      return kept;
+    });
+  }
+
+  // The state of each companion by name.
+  async states(user: TestUser, id: string): Promise<Record<string, string>> {
+    const { companions } = await this.status(user, id);
+    return Object.fromEntries(companions.map(({ name, state }) => [name, state]));
   }
 
   // Not kept: the one reply that may hold a 학번.

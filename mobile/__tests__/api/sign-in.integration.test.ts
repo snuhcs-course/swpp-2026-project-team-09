@@ -43,6 +43,7 @@ const NOTHING_LATER = {
   ...NO_BACKGROUND,
   declinedParties: [],
   answerOnMap: false,
+  madeQuests: [],
   pushAsked: false,
   pushUnregisterOwed: false,
 };
@@ -58,6 +59,7 @@ const FIRST_STATE = {
   ...NO_BACKGROUND,
   declinedParties: [],
   answerOnMap: false,
+  madeQuests: [],
   pushAsked: false,
   pushUnregisterOwed: false,
 };
@@ -81,6 +83,7 @@ describe('sign-in', () => {
       ...NO_BACKGROUND,
       declinedParties: [],
       answerOnMap: false,
+      madeQuests: [],
       pushAsked: false,
       pushUnregisterOwed: false,
     });
@@ -120,6 +123,7 @@ describe('what the phone keeps', () => {
       ...NO_BACKGROUND,
       declinedParties: [],
       answerOnMap: false,
+      madeQuests: [],
       pushAsked: false,
       pushUnregisterOwed: false,
     });

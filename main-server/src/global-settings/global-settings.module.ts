@@ -11,7 +11,8 @@ import { GlobalSettings } from './global-settings.service.js';
 import { registeredSettings, SETTING_REGISTRY } from './registered-settings.js';
 import { type SettingDefinition } from './registry.js';
 
-// Makes GlobalSettings available to every feature, and serves the admin site's Settings page. AppModule starts the scheduler that runs its minute check.
+// Makes GlobalSettings available to every feature, and serves the admin site's Settings page. AppModule starts the
+// scheduler that runs its minute check.
 @Global()
 @Module({
   controllers: [AdminSettingsController],

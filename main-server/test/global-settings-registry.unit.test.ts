@@ -54,22 +54,24 @@ describe('a global setting value', () => {
   });
 });
 
+// As llm.key's check refuses a value it allows but the server cannot use now.
+const check = (value: unknown): string | null => (value === 'beta' ? 'beta has no key.' : null);
+
 describe('the global settings registry at start', () => {
-  it('evaluates allowed values and a default given as functions once, at start', () => {
-    const names = vi.fn(() => ['alpha', 'beta']);
+  it('keeps a definition made at start from what the server holds, with its check', () => {
     const key = defineSetting({
       name: 'test.key',
       type: 'STRING',
       description: 'Which named key.',
-      default: () => names()[0],
-      allowed: names,
+      default: 'alpha',
+      allowed: ['alpha', 'beta'],
+      check,
     });
     const setting = resolved('test.key', [key]);
 
-    expect(setting).toMatchObject({ default: 'alpha', allowed: ['alpha', 'beta'] });
+    expect(setting).toMatchObject({ default: 'alpha', allowed: ['alpha', 'beta'], check });
     expect(parseValue(setting, 'beta').ok).toBe(true);
     expect(parseValue(setting, 'gamma').ok).toBe(false);
-    expect(names).toHaveBeenCalledTimes(2);
   });
 
   it('refuses to start with a default that is not allowed', () => {

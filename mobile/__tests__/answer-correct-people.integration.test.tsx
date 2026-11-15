@@ -22,9 +22,9 @@ import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './s
 
 // Correcting who eats together (P02 ticket 03, "Taking a Friend out" and "Adding a Friend"), over the stored answer
 // to "배고파, 민수랑 같이" and the fake main server's Friends, 김민준, whom the User sees on the map, and 서지우, whom
-// the User cannot see. The list says each by the given name and the distance from their position to the picked
-// Restaurant, 302동식당: 김민준's at 37.4598, 126.9521 is 1217.7 metres from it by the spec's flat map, "1.2km";
-// 서지우 has no position, "자리 모름".
+// the User cannot see. The list says each by the full name with the department (ticket 18) and the distance from their
+// position to the picked Restaurant, 302동식당: 김민준's at 37.4598, 126.9521 is 1217.7 metres from it by the spec's
+// flat map, "1.2km"; 서지우 has no position, "자리 모름".
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -42,8 +42,8 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const ASKER = MEAL_ANSWER.input.people[0];
 const ADD = '같이 먹을 친구 추가';
-const MIN_JUN_CELL = '민준, 1.2km, 추가';
-const JI_WOO_CELL = '지우, 자리 모름, 추가';
+const MIN_JUN_CELL = '김민준, 컴퓨터공학부, 1.2km, 추가';
+const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
 
 let server: FakeServer;
 
@@ -67,7 +67,7 @@ describe('taking a Friend out', () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
     await pass(500);
 
     expect(recalculations(server)).toEqual([{ input: { ...MEAL_ANSWER.input, people: [ASKER] }, location: ON_CAMPUS }]);
@@ -76,7 +76,7 @@ describe('taking a Friend out', () => {
     expect(card().getByText('12:45엔 나서야 해요')).toBeVisible();
     expect(card().getByText('1/5')).toBeVisible();
     expect(card().getByRole('button', { name: '301동에서' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '민수 빼기' })).toBeNull();
+    expect(card().queryByRole('button', { name: '김민수 빼기' })).toBeNull();
     expect(mapThings()).not.toContain('민수');
   });
 });
@@ -91,8 +91,9 @@ describe('adding a Friend', () => {
     const cells = within(card().getByTestId('choice-grid'))
       .getAllByRole('button')
       .map(({ props }): unknown => props.accessibilityLabel);
-    expect(cells).toEqual([MIN_JUN_CELL, JI_WOO_CELL]);
-    expect(card().getByRole('button', { name: MIN_JUN_CELL })).toHaveTextContent('민준1.2km');
+    // Each cell is followed by the mark at its end that opens the Friend's profile (ticket 18).
+    expect(cells).toEqual([MIN_JUN_CELL, '김민준 프로필', JI_WOO_CELL, '서지우 프로필']);
+    expect(card().getByRole('button', { name: MIN_JUN_CELL })).toHaveTextContent('김민준컴퓨터공학부1.2km');
     await user.press(card().getByRole('button', { name: '그대로' }));
     expect(card().queryByRole('button', { name: MIN_JUN_CELL })).toBeNull();
   });

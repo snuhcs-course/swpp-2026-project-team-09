@@ -1,0 +1,247 @@
+{
+  "a1": {
+    "kind": "place",
+    "chips": [
+      { "kind": "origin", "text": "301동에서", "userId": null },
+      { "kind": "until", "text": "13:00 수업까지", "userId": null }
+    ],
+    "lines": [],
+    "basis": ["301동에서 63동까지 걸어서 15분", "셔틀은 기다림 없이도 15분(정류장 2 · 타기 4 · 내려서 9)이라 걸어요"],
+    "scene": {
+      "people": [],
+      "places": [
+        {
+          "place": {
+            "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+            "label": "63동",
+            "latitude": 37.45932,
+            "longitude": 126.95058
+          },
+          "role": "pick",
+          "tag": null
+        }
+      ],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [
+      {
+        "kind": "plan",
+        "label": "여기서 먹기",
+        "input": {
+          "kind": "meal",
+          "date": "2026-11-17",
+          "meal": "lunch",
+          "people": [{ "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee", "constraints": [] }],
+          "window": { "from": null, "until": null },
+          "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b"
+        }
+      },
+      {
+        "kind": "guide",
+        "to": {
+          "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+          "label": "63동",
+          "latitude": 37.45932,
+          "longitude": 126.95058
+        }
+      }
+    ],
+    "card": {
+      "title": "63동",
+      "subtitle": "학생회관",
+      "facts": [
+        { "icon": "route", "text": "걸어서 15분 · 12:25 도착", "strong": true, "userId": null },
+        { "icon": "clock", "text": "13:00 수업 전까지 34분 머물 수 있어요", "strong": false, "userId": null },
+        { "icon": "meal", "text": "학생회관식당 · 오늘 순두부찌개", "strong": false, "userId": null }
+      ],
+      "note": "점심시간이에요. 여기서 드실래요?"
+    }
+  },
+  "a2": {
+    "kind": "place",
+    "chips": [
+      { "kind": "origin", "text": "24동에서", "userId": null },
+      { "kind": "until", "text": "15:30 수업까지", "userId": null }
+    ],
+    "lines": [],
+    "basis": ["24동에서 73동까지 걸어서 4분"],
+    "scene": {
+      "people": [],
+      "places": [
+        {
+          "place": {
+            "placeId": "1d3c1a4b-333a-50a9-b092-e142be72e481",
+            "label": "73동",
+            "latitude": 37.46159,
+            "longitude": 126.95104
+          },
+          "role": "pick",
+          "tag": null
+        }
+      ],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [
+      {
+        "kind": "plan",
+        "label": "행사 보기",
+        "input": {
+          "kind": "events",
+          "date": "2026-11-20",
+          "eventIds": ["42b86020-4f3a-42e0-9efb-8a60e66a7d0b", "c750f9a0-887e-4dc1-99d1-34b065ff6257"]
+        }
+      },
+      {
+        "kind": "plan",
+        "label": "같이 갈 파티",
+        "input": { "kind": "quests", "globalEventId": "42b86020-4f3a-42e0-9efb-8a60e66a7d0b", "questIds": null }
+      },
+      {
+        "kind": "guide",
+        "to": {
+          "placeId": "1d3c1a4b-333a-50a9-b092-e142be72e481",
+          "label": "73동",
+          "latitude": 37.46159,
+          "longitude": 126.95104
+        }
+      }
+    ],
+    "card": {
+      "title": "73동",
+      "subtitle": "문화관",
+      "facts": [
+        { "icon": "route", "text": "걸어서 4분 · 13:54 도착", "strong": true, "userId": null },
+        { "icon": "clock", "text": "15:30 수업 전까지 78분 머물 수 있어요", "strong": false, "userId": null },
+        { "icon": "flag", "text": "채용박람회 · 17:00까지 열려요", "strong": false, "userId": null },
+        { "icon": "flag", "text": "기업 설명회 · 16:00–17:00", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "a3": {
+    "kind": "place",
+    "chips": [
+      { "kind": "origin", "text": "301동에서", "userId": null },
+      { "kind": "until", "text": "13:00 수업까지", "userId": null }
+    ],
+    "lines": [],
+    "basis": ["301동에서 39동까지 걸어서 8분"],
+    "scene": {
+      "people": [],
+      "places": [
+        {
+          "place": {
+            "placeId": "567ed1bd-92d1-549f-9ae2-32375c75e818",
+            "label": "39동",
+            "latitude": 37.45465,
+            "longitude": 126.95157
+          },
+          "role": "pick",
+          "tag": null
+        }
+      ],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [
+      {
+        "kind": "guide",
+        "to": {
+          "placeId": "567ed1bd-92d1-549f-9ae2-32375c75e818",
+          "label": "39동",
+          "latitude": 37.45465,
+          "longitude": 126.95157
+        }
+      }
+    ],
+    "card": {
+      "title": "39동",
+      "subtitle": "대학원연구동(1단계)",
+      "facts": [
+        { "icon": "route", "text": "걸어서 8분 · 12:18 도착", "strong": true, "userId": null },
+        { "icon": "clock", "text": "13:00 수업 전까지 33분 머물 수 있어요", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "a14": {
+    "kind": "place",
+    "chips": [
+      { "kind": "origin", "text": "301동에서", "userId": null },
+      { "kind": "until", "text": "13:00 수업까지", "userId": null }
+    ],
+    "lines": [],
+    "basis": ["301동에서 302동까지 걸어서 3분"],
+    "scene": {
+      "people": [
+        {
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+          "name": "김민수",
+          "me": false,
+          "at": { "latitude": 37.44887, "longitude": 126.95265 },
+          "source": "building",
+          "tag": "김민수 · 지금 302동"
+        }
+      ],
+      "places": [
+        {
+          "place": {
+            "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+            "label": "302동",
+            "latitude": 37.44887,
+            "longitude": 126.95265
+          },
+          "role": "pick",
+          "tag": null
+        }
+      ],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [
+      {
+        "kind": "plan",
+        "label": "여기서 먹기",
+        "input": {
+          "kind": "meal",
+          "date": "2026-11-17",
+          "meal": "lunch",
+          "people": [{ "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee", "constraints": [] }],
+          "window": { "from": null, "until": null },
+          "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3"
+        }
+      },
+      {
+        "kind": "guide",
+        "to": {
+          "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+          "label": "302동",
+          "latitude": 37.44887,
+          "longitude": 126.95265
+        }
+      }
+    ],
+    "card": {
+      "title": "302동",
+      "subtitle": "제2공학관",
+      "facts": [
+        { "icon": "route", "text": "걸어서 3분 · 12:13 도착", "strong": true, "userId": null },
+        { "icon": "clock", "text": "13:00 수업 전까지 30분 머물 수 있어요", "strong": false, "userId": null },
+        { "icon": "meal", "text": "302동식당 · 오늘 돈까스", "strong": false, "userId": null },
+        {
+          "icon": "user",
+          "text": "김민수가 여기 있어요 · 수업 중 12:15까지",
+          "strong": false,
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37"
+        }
+      ],
+      "note": null
+    }
+  }
+}

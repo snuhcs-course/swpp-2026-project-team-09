@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
 import type { PositionPermission } from '@/position';
 import { keep, readKept } from '@/storage/kept';
+import { useLocationOffer } from './answer/location-offer';
 
 export interface LocationExplaining {
   explaining: boolean;
@@ -56,6 +58,7 @@ export function useLocationExplanation(permission: PositionPermission): Location
   const explain = useCallback(() => {
     setAsked(true);
   }, []);
+  useLocationOffer(explain);
   const close = useCallback(() => {
     answer();
     setAsked(false);

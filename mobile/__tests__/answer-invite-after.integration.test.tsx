@@ -86,8 +86,8 @@ describe('how 민수 stands after inviting', () => {
 
     await signal('invitation-accepted', { questId: PLAN_QUEST.quest.id, userId: MINSU });
 
-    expect(card().getByText('민수 · 수락')).toBeVisible();
-    expect(card().queryByText('민수 · 아직 안 봄')).toBeNull();
+    expect(card().getByText('김민수 · 수락')).toBeVisible();
+    expect(card().queryByText('김민수 · 아직 안 봄')).toBeNull();
     expect(mapThings()).toContain('민수 · 수락');
     expect(mapThings()).not.toContain('민수');
   });
@@ -97,7 +97,7 @@ describe('how 민수 stands after inviting', () => {
 
     await signal('invitation-declined', { questId: PLAN_QUEST.quest.id, userId: MINSU });
 
-    expect(card().getByText('민수 · 거절')).toBeVisible();
+    expect(card().getByText('김민수 · 거절')).toBeVisible();
   });
 
   it('reads "수락" once the User\'s Quests are read again with the Quest\'s members', async () => {
@@ -114,7 +114,7 @@ describe('how 민수 stands after inviting', () => {
 
     await signal('quests-changed');
 
-    expect(card().getByText('민수 · 수락')).toBeVisible();
+    expect(card().getByText('김민수 · 수락')).toBeVisible();
   });
 });
 
