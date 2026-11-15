@@ -3481,11 +3481,17 @@ names, on a failed call, or on an answer of another shape, it gives none and nev
 is kept with its normalised words as its one topic.
 
 **The topics step.** `TopicsStep.run()` takes up to 10 published Global Events that have not ended and up to 10
-recruiting Quests (Open or Approval, on a Board, with a Sub Quest ahead) that were never read, or that have no topics
-and were tried fewer than 2 times. For each it counts the try and its time (`topicsTries`, `topicsReadAt`) before it
-asks, so that two servers never ask for the same one, reads the topics of its title and description, and stores them.
-It never throws. `TopicsTimer` runs it every `TOPICS_TICK_SECONDS` seconds (0 to 3600, 60 by default; 0 never, as in
-the tests, which run the step themselves).
+recruiting Quests (Open or Approval, on a Board, with a Sub Quest ahead) that were never read, or that have no topics,
+were tried fewer than 2 times, and were last tried longer ago than the topics call's time limit (`ASSISTANT_TIMEOUT_MS`)
+and a minute, so that no server asks about a text while another's call about it may still be running; a failed call is
+tried once more at a later step. For each it counts the try and its time (`topicsTries`, `topicsReadAt`) before it
+asks, and only while the count is unchanged and the text is still unread by that rule, so that two servers never ask
+for the same one. It then reads the topics of its title and description and stores them. The topics in use are read
+once a step, and each text's topics join that list, so that two texts of one step that mean the same get the same word.
+A Quest without a Sub Quest ahead is not loaded and no try is counted, so that it is read once a new Sub Quest makes it
+recruiting. An event or a Quest edited after its topics were stored keeps them: the step does not read it again. It
+never throws. `TopicsTimer` runs it every `TOPICS_TICK_SECONDS` seconds (0 to 3600, 60 by default; 0 never, as in the
+tests, which run the step themselves).
 
 **A match** is an event or a Quest whose topics share one with the User's interests: the profile's hashtags and the
 watched interests' topics. `watched` says whether a watched interest matched, not only a hashtag. Each new match of a

@@ -33,13 +33,14 @@ export class TopicsReader {
     };
   }
 
-  async read(text: string): Promise<string[]> {
+  // `inUse` is read from the database when not given.
+  async read(text: string, inUse?: readonly string[]): Promise<string[]> {
     const chosen = this.models.chosen();
     if (chosen === null) {
       return [];
     }
     try {
-      return await askForTopics(chosen.model, text, await this.inUse(), this.limits);
+      return await askForTopics(chosen.model, text, inUse ?? (await this.inUse()), this.limits);
     } catch (error) {
       this.logger.warn(`Reading topics failed: ${causeOf(error)}`);
       return [];
@@ -47,7 +48,7 @@ export class TopicsReader {
   }
 
   // The distinct topics of the watched interests and of the tagged events and Quests, the most used first.
-  private async inUse(): Promise<string[]> {
+  async inUse(): Promise<string[]> {
     const rows = await this.prisma.$queryRaw<{ topic: string }[]>`
       SELECT topic FROM (
         SELECT unnest(topics) AS topic FROM watched_interests
