@@ -25,3 +25,8 @@ An event published in the last 24 hours shows on the map with an exclamation mar
 - [ ] The "Events on the map" row of `he-revision-log.md` gets this pull request and its state.
 
 ## Comments
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 2.5 hours in one session, an estimate. About 11 minutes of it went to one jest run that, by a wrong flag order (`--selectProjects` takes every name after it), ran every app unit test instead of four files; later runs named the files first.
+- Tokens: the two review subagents (Standards and Spec) used about 84k and 91k tokens. The main session's input and output counts, with cache reads and cache writes, are not visible to the agent. Read them from the session's usage report and add them here.
