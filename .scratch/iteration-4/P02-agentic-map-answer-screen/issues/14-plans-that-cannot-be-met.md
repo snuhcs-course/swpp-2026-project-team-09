@@ -2,7 +2,7 @@
 
 Parent: [P02 spec](../spec.md); the design's row 8, boards n10, n11, n11b, n12, n23, principle 3
 Status: ready-for-agent
-Blocked by: package A's review of the seam (`row-8-seams.md`, ticket 14); ticket 16 for n12
+Blocked by: package A's review of the seam (`row-8-seams.md`, ticket 14); #265 (P02-09 changes `use-shown-answer.ts` and `plan-card.tsx`); ticket 16 for n12
 
 ## What to build
 
@@ -22,5 +22,6 @@ Blocked by: package A's review of the seam (`row-8-seams.md`, ticket 14); ticket
 ## Comments
 
 - This changes how package A's engine plans (`gathering.ts` takes the next stretch silently today) and its answer words. It is built last, after package A has seen the seam.
+- Naming who is busy (n11's "{지은}이 **12:00**에 다시 수업이에요") holds only between Friends, and only for what the lowest Friend level shows: the Timetable's building and end. Someone who is not the asker's Friend (a candidate, another party's member) is never named or timed. `plan-tools.ts:161` changes only that far.
 - Decision to review: n11's time chip "지금" relaxes the plan when pressed, as the board's play shows, while P02's rule says the time chip focuses the band; "지금" is not a time on the band, so it relaxes.
 - n10's "16:48" is an example value: the next meal is dinner, whose window opens at 17:00, unless the Restaurant's own hours (ticket 16) open earlier.

@@ -967,7 +967,10 @@ Iteration 2 (P06), and commit `2f4f201` holds its code.
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its
 time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A Notification whose time is still to
 come shows its title for that (`ahead`), such as "12:18 나설 시각" for the time to leave (`leave-by`, a clock on the
-navy round), and its own title once the time has come. A new match of a watched interest (`interest-new`, "채용박람회가
+navy round), and its own title once the time has come. A room request's kinds have their own rounds: a companion out
+(`room-declined`, a person) and everyone agreed (`room-agreed`, a group) as an acceptance's, the room's end
+(`room-ending`) as the time to leave's, and the booking window opening (`room-window`, a calendar) in the colour of
+the requests to join, which also wait for the User. A new match of a watched interest (`interest-new`, "채용박람회가
 떴어요") is on the navy round too, a calendar for an event and people for a recruiting party, by its address. A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
@@ -1784,7 +1787,8 @@ that phone.
   closes (`router.dismissTo`); on the tabs, where `dismissTo` does nothing, the app goes there with
   `router.navigate`. `/main` reads `card` once: the map moves to the card with that id and opens it, and without
   one the app opens the screen of the matching row of "알림". For an invitation that is the "파티" tab's
-  invitations, `/party?tab=invites`.
+  invitations, `/party?tab=invites`. A party's card whose room request this phone made from a card that waited for
+  the booking window also opens that room card again in the chat (Group study rooms).
 - **A push in front.** While the app is open, a push drops no banner and plays no sound; it goes to the phone's
   notification list. On Android a banner cannot show without sound. The app instead fetches again the lists "알림"
   and the "파티" badge are made from (`src/push/push-arrivals.tsx`).
@@ -1837,8 +1841,10 @@ end-session.ts       "end the library session", the one shared logout step
 web-cookies.ts       the JS wrapper of modules/snu-now-web-cookies
 errors.ts            the failure kinds and what a card says for each
 press.ts             the confirm press that a write needs
-room-bookings.ts     the phone's map from a room booking's BSEQNO to its room request
-cards/               the library cards' logic: the payloads, seats, rooms, bookings, times and the done message
+room-bookings.ts     the phone's map from a room booking's BSEQNO to its room request, and the requests that wait for
+                     the booking window with their cards
+cards/               the library cards' logic: the payloads, seats, rooms, bookings, times, the done message and a room
+                     request's companions
 ```
 
 ### The endpoints
@@ -1948,12 +1954,26 @@ A group study room with companions goes through a room request on the main serve
 main-server `src/library/`), the app's routes and never the Assistant's: `POST /library/room-requests` with an
 `Idempotency-Key`, `GET /library/room-requests` (the requests that ask the User, and the one-time notices),
 `GET /library/room-requests/:id` (which the booker's card polls), `POST …/:id/consent`, `POST …/:id/decline` (거절 and
-철회), `GET …/:id/companions`, `POST …/:id/result { ok, failedUserId? }`, `POST …/:id/cancelled` and
-`POST /library/room-notices/:id/seen`. Once every companion consents, the booker's phone reads the companions' names and
-학번 (the one reply that holds them, `Cache-Control: no-store`), checks each with `getUserCheck`, books with
-`setRoomBooking` and reports only `ok` or the companion the library did not know. The BSEQNO stays on the phone, in
-`room-bookings.ts`'s map, so that a later cancel can tell the server "the booking of request X was cancelled" with no
-body.
+철회), `GET …/:id/companions`, `POST …/:id/companions { friendId }` with an `Idempotency-Key` (one more Friend),
+`POST …/:id/result { ok, failedUserId? }`, `POST …/:id/cancelled` and `POST /library/room-notices/:id/seen`. A
+companion who declines, or does not answer by 20:00 the day before, goes out and the request keeps gathering. The
+booker's card then says who consented, who is asked and who is out (`companions`), and "N명 더 필요해요"
+(`moreNeeded`); while a request made for booking gathers, it offers "친구 한 명 더 부르기", the party form's Friend
+picker for one Friend (`room-ask-more.tsx`). From a server that sends neither field, the card reads `consents` alone.
+In the mock build (`src/api/mock/room-requests.ts`) every companion still asked consents by the second look.
+A card of a study plan for a date after the booking window has a key that ends in `:wait`
+(`src/library/cards/room-window.ts`): while the window (today to 3 days later) does not hold its date, the card reads
+no rooms, shows the day, the time, the room's size and each person's note, gathers the consents, and says
+"11월 6일 09:00 예약 창이 열리면 예약할 수 있어요" (for 9 November) with 예약하기 unavailable (`waiting-room-card.tsx`). The phone
+keeps the request with its card by its Quest in `room-bookings.ts`, until the room is booked; the room-window
+Notification's address, `/main?card=party:<questId>`, then opens the chat with "예약 창이 열렸어요" and that card
+again, bound to the request, which reads the rooms and books once everyone agreed (`waiting-room.ts`). The server
+keeps no way to find a requester's request by its Quest, so a request made on another phone, or before the app was
+reinstalled, opens only the party's card.
+Once the request is ready, the booker's phone reads the companions' names and 학번 (the one reply that holds them,
+`Cache-Control: no-store`), checks each with `getUserCheck`, books with `setRoomBooking` and reports only `ok` or the
+companion the library did not know. The BSEQNO stays on the phone, in `room-bookings.ts`'s map, so that a later cancel
+can tell the server "the booking of request X was cancelled" with no body.
 
 ### Privacy
 

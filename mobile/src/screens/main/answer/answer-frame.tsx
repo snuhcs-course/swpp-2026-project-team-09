@@ -26,6 +26,7 @@ import { AnswerLines } from './answer-lines';
 import { CloseButton } from './close-button';
 import { InvitedCard } from './invited-card';
 import { PlanCard } from './plan-card';
+import { RefusalReply } from './refusal-reply';
 
 // Above the first of the card's parts.
 const CONTENT_TOP = space[5];
@@ -53,12 +54,13 @@ interface WordsProps {
   // How high the Plan's card may stand before the card scrolls, null until it is known.
   room: number | null;
   onClose: () => void;
+  onAsk: (words: string) => void;
 }
 
 // A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
-// made into one, else the lines of its answer's first Plan, or those that say why it has none, in place of the
-// model's sentence; otherwise the sentence as Markdown.
-function Words({ bubble, shown, invitation, room, onClose }: WordsProps): ReactElement {
+// made into one, else a refusal's lines and offers, or the lines of its answer's first Plan, or those that say why it
+// has none, in place of the model's sentence; otherwise the sentence as Markdown.
+function Words({ bubble, shown, invitation, room, onClose, onAsk }: WordsProps): ReactElement {
   const { answer } = bubble;
   if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
     const { made, standings } = invitation;
@@ -73,6 +75,9 @@ function Words({ bubble, shown, invitation, room, onClose }: WordsProps): ReactE
         steps={made.quest.subQuests}
       />
     );
+  }
+  if (bubble.refusal !== undefined && bubble.refusal !== null) {
+    return <RefusalReply onAsk={onAsk} refusal={bubble.refusal} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
@@ -153,6 +158,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                   <Words
                     bubble={bubble}
                     invitation={control.invitation}
+                    onAsk={control.chat.send}
                     onClose={onClose}
                     room={contentMax === null ? null : contentMax - CONTENT_TOP}
                     shown={control.answer}

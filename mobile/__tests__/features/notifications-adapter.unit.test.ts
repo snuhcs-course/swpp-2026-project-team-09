@@ -245,6 +245,19 @@ describe('toNotices of the kept Notifications', () => {
   });
 });
 
+describe('toNotices of a room request’s Notifications', () => {
+  it.each([
+    ['room-declined', 'user'],
+    ['room-agreed', 'users'],
+    ['room-ending', 'clock'],
+    ['room-window', 'calendar'],
+  ])('a room request’s %s → its own kind with the %s icon', (kind, icon) => {
+    const [row] = toNotices({ ...NONE, kept: [kept('n1', '2026-11-17T11:58:00+09:00', { kind })] });
+    expect(row?.kind).toBe(kind);
+    expect(row?.icon).toBe(icon);
+  });
+});
+
 // The Leader's time to leave at 12:18 in Korea on 17 November 2026.
 const LEAVE_BY: KeptNotification = {
   id: 'leave-by:party:q1',

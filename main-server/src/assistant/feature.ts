@@ -20,6 +20,7 @@ import { type RestaurantCard } from './free-time/restaurant-card.js';
 import { type JudgedCandidates } from './free-time/travel-boxes.js';
 import { type LibraryCard } from './library/library-card.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
+import { type Refusal } from './refusals/refusal.dto.js';
 
 // The parts of an AI feature that know nothing of the model library (ADR 0005). A tool is a zod schema of its input
 // and a plain function that calls the main server's services as the signed-in User. A feature is an entry point with
@@ -84,6 +85,8 @@ export interface Presented {
   // one that puts a Lookup there clears the answer.
   answer: AnswerReply | null;
   lookup: Lookup | null;
+  // What refuse wrote; the reply keeps it only without an answer or a Lookup.
+  refusal: Refusal | null;
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.
