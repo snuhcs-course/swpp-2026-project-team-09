@@ -58,14 +58,15 @@ function offMapFriend(selectedId: string | null): string | null {
 // One thing at a time is selected. The card's X and Android's back button close it, the button only while the map
 // is `inFront`; a press on another thing replaces it. A press on the map beside the things leaves it open, as in the
 // frames. `meShown`: the User's own dot is on the map and takes a press; once it does not, the User's own card is
-// closed for good, as a thing's that left the map. A Friend whom the map does not show stays selected until another
-// selection or a close, also once the map shows them.
-export function useSelection(cards: readonly CardView[], inFront: boolean, meShown = false): Selection {
+// closed for good, as a thing's that left the map. `offMap`: a Friend whom the map does not show may be selected; such
+// a card stays until another selection or a close, also once the map shows them, and is closed for good once `offMap`
+// is false.
+export function useSelection(cards: readonly CardView[], inFront: boolean, meShown = false, offMap = false): Selection {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [wait, setWait] = useState<Wait | null>(null);
   const selected = cards.find(({ id }) => id === selectedId) ?? null;
   const mine = meShown && selectedId === ME_AVATAR_ID;
-  const friend = offMapFriend(selectedId);
+  const friend = offMap ? offMapFriend(selectedId) : null;
   // The selected thing left the map: the selection is dropped, during this render, so that its return opens nothing.
   if (selectedId !== null && selected === null && !mine && friend === null) {
     setSelectedId(null);

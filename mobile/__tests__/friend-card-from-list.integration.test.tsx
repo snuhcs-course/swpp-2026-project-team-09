@@ -4,8 +4,9 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen, within } from '@testing-library/react-native';
+import { act, screen, within } from '@testing-library/react-native';
 import type { Friend } from '@/api/types';
+import { setAnswerSwitch } from '@/features/assistant/answer-switch';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, shownAddress } from './support/app';
@@ -96,8 +97,19 @@ describe("a Friend's row with the switch on", () => {
   });
 });
 
-// Partitions: the card's ✕, and a face pressed while it is open. The rule: one card at a time.
+// Partitions: the card's ✕, a face pressed while it is open, and the switch turned off while it is open. The rule: one
+// card at a time, which the switch's card closes with it.
 describe('the open card of a Friend with no position', () => {
+  it('closes once the switch is turned off', async () => {
+    const user = await openMain({ answerOnMap: true });
+    await press(user, row(JI_WOO));
+    expect(friendCard().getByRole('header', { name: '서지우' })).toBeVisible();
+
+    await act(() => setAnswerSwitch(false));
+
+    expect(screen.queryByTestId('map-card')).toBeNull();
+  });
+
   it('closes by its ✕', async () => {
     const user = await openMain({ answerOnMap: true });
     await press(user, row(JI_WOO));
