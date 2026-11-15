@@ -11,7 +11,15 @@ import { isInput, isOneOf } from './plan-inputs';
 
 // The app's check of a reply's Lookup, every field of it, as the answer screen draws each.
 
-const isKind = isKeyOf<Lookup['kind']>({ way: true, friend: true, menu: true, place: true, day: true, tutorial: true });
+const isKind = isKeyOf<Lookup['kind']>({
+  way: true,
+  friend: true,
+  menu: true,
+  place: true,
+  day: true,
+  tutorial: true,
+  study: true,
+});
 
 function isStep(value: unknown): value is LookupStep {
   return isTextOrNull(field(value, 'at')) && isText(field(value, 'text'));

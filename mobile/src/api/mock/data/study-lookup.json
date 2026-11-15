@@ -1,0 +1,142 @@
+{
+  "kind": "study",
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    },
+    {
+      "kind": "until",
+      "text": "13:00 수업까지",
+      "userId": null
+    },
+    {
+      "kind": "area",
+      "text": "보는 범위",
+      "userId": null
+    },
+    {
+      "kind": "what",
+      "text": "조용한 곳",
+      "userId": null
+    }
+  ],
+  "lines": [
+    [
+      {
+        "text": "보는 범위에선 ",
+        "strong": false
+      },
+      {
+        "text": "공대 신양학술정보관",
+        "strong": true
+      }
+    ],
+    [
+      {
+        "text": "빈 자리 수는 관정만 알 수 있어요",
+        "strong": false
+      }
+    ]
+  ],
+  "basis": ["지도에 보이는 범위 안의 공부공간만 찾았어요", "학과 전용 열람실은 흐리게 두었어요"],
+  "scene": {
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "name": "유상",
+        "me": true,
+        "at": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "source": "exact",
+        "tag": "나"
+      }
+    ],
+    "places": [
+      {
+        "place": {
+          "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+          "label": "공대 신양학술정보관(44-1동)",
+          "latitude": 37.4552,
+          "longitude": 126.95206
+        },
+        "role": "pick",
+        "tag": "3층 자유열람실 · 학기 중 24시간"
+      },
+      {
+        "place": {
+          "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+          "label": "제1공학관(301동)",
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "role": "dropped",
+        "tag": "해동학술정보실 · 전기·정보공학부·컴퓨터공학부"
+      },
+      {
+        "place": {
+          "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+          "label": "제2공학관(302동)",
+          "latitude": 37.44887,
+          "longitude": 126.95265
+        },
+        "role": "dropped",
+        "tag": "화생공 해동학술정보실·학생라운지 · 화학생물공학부"
+      }
+    ],
+    "routes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "me",
+        "from": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "to": {
+          "latitude": 37.4552,
+          "longitude": 126.95206
+        },
+        "minutes": 8
+      }
+    ],
+    "flags": [
+      {
+        "at": {
+          "latitude": 37.4552,
+          "longitude": 126.95206
+        },
+        "text": "걸어서 8분 · 12:52까지 34분",
+        "role": "place"
+      },
+      {
+        "at": {
+          "latitude": 37.456,
+          "longitude": 126.95248207171315
+        },
+        "text": "↑ 관정",
+        "role": "away",
+        "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9"
+      }
+    ]
+  },
+  "band": null,
+  "actions": [
+    {
+      "kind": "guide",
+      "to": {
+        "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+        "label": "공대 신양학술정보관(44-1동)",
+        "latitude": 37.4552,
+        "longitude": 126.95206
+      }
+    },
+    {
+      "kind": "ask",
+      "label": "관정 보기",
+      "text": "관정 지금 자리 있어?"
+    }
+  ]
+}
