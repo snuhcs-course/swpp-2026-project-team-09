@@ -2528,13 +2528,15 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       Restaurants. It can answer `needs` as `findFreeTimeEvents` does. A Friend's item without a Place only leaves out
       that side's travel.
     - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
-    - `planMeal(date, meal, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
+    - `planMeal(date, meal?, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
       `PLAN_RULES` that of the meal part of the 공강 rules, for an app that sends `answer` (`gathering/`). It plans the
       meal on the map: `MealPlanService` reads each person's day, the asker's location from the request context, and a
       Friend's position only as the asker's map shows it, computes the plans and words them, and the tool puts them in
-      the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
-      person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
-      or rooms.
+      the reply's `answer`. The model gives `meal` only when the User's words name it; otherwise the server takes it by
+      the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
+      and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
+      meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
+      never coordinates, course names, or rooms.
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
