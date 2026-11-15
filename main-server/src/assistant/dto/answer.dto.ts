@@ -127,6 +127,8 @@ export interface PlacePoint {
 export interface DroppedPlace {
   place: PlacePoint;
   reason: string;
+  // Each person's part there, given for the Place the input fixed.
+  parts?: PlanPart[];
 }
 
 export interface Plan {
@@ -166,6 +168,8 @@ export interface PlanPart {
   origin: { place: PlacePoint; basis: 'timetable' | 'location' | 'chosen' } | null;
   leaveAt: string | null;
   walkMinutes: number | null;
+  // The earliest they can be at the place, null when the position is unknown. Given by a meal's and a meet's Plans.
+  arriveAt?: string | null;
   // Null when nothing follows.
   leaveBy: string | null;
   next: { startAt: string; place: PlacePoint | null } | null;

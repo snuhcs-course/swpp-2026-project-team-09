@@ -17,9 +17,10 @@ import { clockOf } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
 import { type GatheringArgs, GatheringNaming } from './answer-words.js';
 import { type GatheringFit, MINUTE_MS } from './gathering.js';
-import { basisOf, meetingOf, originChip, partOf, personChips, subQuestsOf, untilChip } from './meal-answer.js';
+import { basisOf, meetingOf, originChip, personChips, subQuestsOf, untilChip } from './meal-answer.js';
 import { halfHoursAround, lanesOf, sceneOf } from './meal-scene.js';
-import { meetHours } from './meet-gathering.js';
+import { meetHours, meetWindow } from './meet-gathering.js';
+import { droppedOf, partOf, unfitLines } from './plan-parts.js';
 
 // The words of a calculated meet, drawn as a meal's are. Nothing here is sent to the model.
 
@@ -46,16 +47,17 @@ function chipsOf(naming: MeetNaming): ConditionChip[] {
   return [...chips, ...personChips(naming)];
 }
 
-function noPlanOf({ input, gathering }: MeetAnswerArgs): AnswerReply['noPlan'] {
+// A fixed Place that does not fit says who stays there shortest, and why.
+function noPlanOf(naming: MeetNaming): AnswerReply['noPlan'] {
+  const { input, gathering } = naming.args;
   if (gathering.shared === null) {
     return { reason: 'no-shared-time', lines: [plain('같이 비는 시간이 없어요')] };
   }
-  const shortest = `${SHORTEST_MEAL_SECONDS / 60}분`;
-  const text =
-    input.placeId === null
-      ? `함께 ${shortest} 이상 있을 수 있는 곳이 없어요`
-      : `그곳에서는 함께 ${shortest}도 있을 수 없어요`;
-  return { reason: 'no-fit', lines: [plain(text)] };
+  const unfit = unfitLines(naming, meetWindow(input), { word: MEETING_WORD, stay: '있을 수 있어요' });
+  return {
+    reason: 'no-fit',
+    lines: unfit ?? [plain(`함께 ${SHORTEST_MEAL_SECONDS / 60}분 이상 있을 수 있는 곳이 없어요`)],
+  };
 }
 
 function linesOf({ key, start, end, togetherMinutes }: GatheringFit): AnswerLine[] {
@@ -119,10 +121,7 @@ export function meetAnswer(args: MeetAnswerArgs): AnswerReply {
     input: args.input,
     chips: chipsOf(naming),
     plans,
-    dropped: args.gathering.dropped.map((drop) => ({
-      place: naming.labelledPoint(drop.placeId, drop.key),
-      reason: naming.dropReason(drop),
-    })),
-    noPlan: plans.length > 0 ? null : noPlanOf(args),
+    dropped: droppedOf(naming),
+    noPlan: plans.length > 0 ? null : noPlanOf(naming),
   };
 }

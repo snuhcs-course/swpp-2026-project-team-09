@@ -33,9 +33,11 @@ import { WAY_LOOKUP_REPLY } from './data/way-lookup';
 import { LATE_LOOKUP_REPLY, LEAVE_LOOKUP_REPLY, SHUTTLE_LOOKUP_REPLY } from './data/way-lookups';
 import {
   MEAL_ANSWER_ALONE,
+  MEAL_ANSWER_FIXED_PLACE,
   MEAL_ANSWER_FIXED_START,
   MEAL_ANSWER_OTHER_ORIGIN,
   MEAL_ANSWER_THREE,
+  MEAL_ANSWER_UNFIT_PLACE,
 } from './data/meal-answers';
 import { MEET_ANSWER } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
@@ -145,6 +147,7 @@ function menusReply(): string {
 }
 
 // The mock holds copies of meal answers and of one meet, so other conditions are read as a meal of the User alone.
+// Three people at a pressed Place get the copy of that Place when there is one ("여기면 어때?").
 function copyFor(input: PlanInput): AnswerReply {
   if (input.kind === 'meet') {
     return MEET_ANSWER;
@@ -155,7 +158,9 @@ function copyFor(input: PlanInput): AnswerReply {
     return MEAL_ANSWER_ALONE;
   }
   if (people.length >= 3) {
-    return MEAL_ANSWER_THREE;
+    const placeId = input.kind === 'meal' ? input.placeId : null;
+    const pressed = [MEAL_ANSWER_FIXED_PLACE, MEAL_ANSWER_UNFIT_PLACE].find((copy) => copy.input.placeId === placeId);
+    return pressed ?? MEAL_ANSWER_THREE;
   }
   if (from !== null) {
     return MEAL_ANSWER_FIXED_START;

@@ -2352,7 +2352,11 @@ Proposal)`.
   - **What the User fixed.** `window.from` and `window.until` narrow the meal's window; a plan that starts later than
     `from` or ends earlier than `until` says what holds it: who arrives last or leaves first, and when, or the meal's
     own serving time. `placeId` plans only the open Restaurants at that Place, and the answer says `그곳에는 여는 식당이 없어요`
-    when none is. A person's constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
+    when none is. A fixed Place that does not fit is in `dropped` with each person's `parts`, and `noPlan.lines` say who
+    stays there shortest and why (`지은은 12:31에 도착해 13분만 먹어요` / `13:00 수업에 가려면 12:44엔 나서야 해요`), or,
+    when everyone could stay 15 minutes alone, who arrives last and who leaves first. Each person's part of a meal or a
+    meet carries `arriveAt`, the earliest they can be at the place, `null` when their position is unknown. A person's
+    constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
@@ -2360,8 +2364,9 @@ Proposal)`.
     place where they
     are together longest, from the latest arrival to the earliest leave-by, at least 15 minutes; at most five Plans. The
     places are 학생회관, the buildings of `GET /study-spaces`, the Restaurants open that day, and the buildings each
-    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip.
-    `people` holds the asker and at least one Friend.
+    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip, and a
+    fixed Place that does not fit is worded as a meal's (`12:45부터 14분만 있을 수 있어요`). `people` holds the asker and
+    at least one Friend.
   - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
     person is not the User, a person who is not the User's Friend, the same User twice, a day before today or more than
     a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown

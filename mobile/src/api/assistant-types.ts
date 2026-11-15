@@ -15,6 +15,7 @@ import type { Lookup } from './lookup-types';
 import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
+import type { DroppedPlace, PlanPart } from './plan-part-types';
 import type { WithRefusal } from './refusal-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
@@ -248,11 +249,6 @@ export interface PlacePoint {
   longitude: number;
 }
 
-export interface DroppedPlace {
-  place: PlacePoint;
-  reason: string;
-}
-
 export interface Plan {
   // Unique within the answer.
   id: string;
@@ -280,21 +276,6 @@ export interface Plan {
   friendNames?: string[];
   // A new recruiting Quest's Plan: the Friends free then who are not in it, each with the line of their day.
   candidates?: { userId: string; name: string; line: string }[];
-}
-
-export interface PlanPart {
-  userId: string;
-  name: string;
-  me: boolean;
-  // Null when the position is unknown.
-  origin: { place: PlacePoint; basis: 'timetable' | 'location' | 'chosen' } | null;
-  leaveAt: string | null;
-  walkMinutes: number | null;
-  // Null when nothing follows.
-  leaveBy: string | null;
-  next: { startAt: string; place: PlacePoint | null } | null;
-  // How they travel, absent for a walk.
-  mode?: 'walk' | 'shuttle';
 }
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
