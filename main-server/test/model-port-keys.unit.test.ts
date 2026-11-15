@@ -10,9 +10,10 @@ import { APICallError, generateText } from 'ai';
 import { MockLanguageModelV4 } from 'ai/test';
 import { type Model } from '../src/assistant/adapter.js';
 import { MODEL_FACTORY_PROVIDER, type ModelFactory, ModelPort } from '../src/assistant/model-port.js';
-import { aiKeysOf } from '../src/common/llm-keys.js';
+import { type AiKeys, aiKeysOf } from '../src/common/llm-keys.js';
 import { type Settings } from '../src/common/settings.js';
 import { type GlobalSettings } from '../src/global-settings/global-settings.service.js';
+import { llmKeySetting } from '../src/global-settings/registered-settings.js';
 
 // The models of the AI's keys (spec A02): the keys offered by their prefix, a model built at start for each, the one
 // llm.key names when it is asked, the refusal of a name the server has no key for, and the log line of each call. No
@@ -67,6 +68,8 @@ function namedModels(): { factory: ModelFactory; built: string[] } {
   return { factory, built };
 }
 
+const keysOf = (values: Parameters<typeof aiKeysOf>[0]): AiKeys => aiKeysOf(values);
+
 const KEYS = { OPENROUTER_API_KEY: OPENROUTER_KEY, LLM_KEYS: { claude: ANTHROPIC_KEY, odd: 'neither-prefix' } };
 
 let logged: string[];
@@ -115,7 +118,7 @@ describe('The model port', () => {
   it('builds one model at start for each offered key, and logs the left-out key by its name only', () => {
     const { factory, built } = namedModels();
 
-    const port = new ModelPort(settingsAt('default').settings, factory, configOf(KEYS));
+    const port = new ModelPort(settingsAt('default').settings, factory, keysOf(KEYS));
 
     expect(port).toBeInstanceOf(ModelPort);
     expect(built).toEqual(['default', 'claude']);
@@ -126,7 +129,7 @@ describe('The model port', () => {
   it('gives the model of the key llm.key names when it is asked, each time it is asked', async () => {
     const { factory } = namedModels();
     const { settings, set } = settingsAt('claude');
-    const port = new ModelPort(settings, factory, configOf(KEYS));
+    const port = new ModelPort(settings, factory, keysOf(KEYS));
 
     const first = port.chosen();
     set('default');
@@ -137,24 +140,18 @@ describe('The model port', () => {
     expect((await ask(first?.model ?? fail())).text).toBe('claude');
   });
 
-  it('without OPENROUTER_API_KEY, default → no model, and saving it is refused', () => {
+  it('without OPENROUTER_API_KEY, default → no model', () => {
     const { factory } = namedModels();
-    const port = new ModelPort(
-      settingsAt('default').settings,
-      factory,
-      configOf({ LLM_KEYS: { claude: ANTHROPIC_KEY } }),
-    );
+    const port = new ModelPort(settingsAt('default').settings, factory, keysOf({ ...KEYS, OPENROUTER_API_KEY: '' }));
 
     expect(port.chosen()).toBeNull();
-    expect(port.refusal('default')).toBe('The server has no key named default.');
-    expect(port.refusal('claude')).toBeNull();
   });
 });
 
 describe("The model port's log", () => {
   it("has one line for each call, with the key's name, its provider and the outcome, never a key or the content", async () => {
     const { factory } = namedModels();
-    const port = new ModelPort(settingsAt('claude').settings, factory, configOf(KEYS));
+    const port = new ModelPort(settingsAt('claude').settings, factory, keysOf(KEYS));
     logged = [];
 
     await ask(port.chosen()?.model ?? fail());
@@ -173,7 +170,7 @@ describe("The model port's log", () => {
     });
     const failingFactory: ModelFactory = () =>
       new MockLanguageModelV4({ doGenerate: (): Promise<Result> => Promise.reject(failure) });
-    const port = new ModelPort(settingsAt('default').settings, failingFactory, configOf(KEYS));
+    const port = new ModelPort(settingsAt('default').settings, failingFactory, keysOf(KEYS));
     logged = [];
 
     await expect(ask(port.chosen()?.model ?? fail())).rejects.toThrow();
@@ -188,3 +185,22 @@ describe("The model port's log", () => {
 function fail(): never {
   throw new Error('The port gave no model');
 }
+
+describe('The setting llm.key', () => {
+  it('allows default and every offered key, default first, and not a key left out', () => {
+    expect(llmKeySetting(keysOf(KEYS))).toMatchObject({
+      name: 'llm.key',
+      default: 'default',
+      allowed: ['default', 'claude'],
+    });
+  });
+
+  it('checks a save: default only with OPENROUTER_API_KEY, and any key the server offers', () => {
+    const withDefault = llmKeySetting(keysOf(KEYS));
+    const without = llmKeySetting(keysOf({ ...KEYS, OPENROUTER_API_KEY: '' }));
+
+    expect(withDefault.check('default')).toBeNull();
+    expect(without.check('default')).toBe('The server has no key named default.');
+    expect(without.check('claude')).toBeNull();
+  });
+});

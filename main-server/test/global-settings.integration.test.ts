@@ -25,6 +25,8 @@ const TEST_KEY = defineSetting({
   description: 'Which named key a test uses.',
   default: () => KEY_NAMES[0],
   allowed: () => KEY_NAMES,
+  // As a setting refuses a value it allows but the server cannot use now.
+  check: (value) => (value === 'gamma' ? 'gamma has no key.' : null),
 });
 const TEST_LIMIT = defineSetting({ name: 'test.limit', type: 'INTEGER', description: 'A limit.', default: 3 });
 const REGISTRY: SettingDefinition[] = [TEST_KEY, TEST_LIMIT];
@@ -129,7 +131,7 @@ describe('saving global settings at the same moment, or refused', () => {
     expect(await revision()).toBe(4);
   });
 
-  it('refuses an unregistered name, a wrong value and what the caller refuses, and writes nothing', async () => {
+  it("refuses an unregistered name, a wrong value and what the setting's check refuses, and writes nothing", async () => {
     const { settings } = await startPod();
 
     await expect(settings.save('test.unknown', 'x', administratorId)).rejects.toThrow(
@@ -137,9 +139,9 @@ describe('saving global settings at the same moment, or refused', () => {
     );
     await expect(settings.save('test.key', 'delta', administratorId)).rejects.toBeInstanceOf(SettingRefused);
     await expect(settings.save('test.limit', 'many', administratorId)).rejects.toBeInstanceOf(SettingRefused);
-    await expect(
-      settings.save('test.key', 'gamma', administratorId, (value) => (value === 'gamma' ? 'gamma has no key.' : null)),
-    ).rejects.toThrow(new SettingRefused('gamma has no key.'));
+    await expect(settings.save('test.key', 'gamma', administratorId)).rejects.toThrow(
+      new SettingRefused('gamma has no key.'),
+    );
 
     expect(await revision()).toBe(0);
     expect(await prisma.settingChange.count()).toBe(0);

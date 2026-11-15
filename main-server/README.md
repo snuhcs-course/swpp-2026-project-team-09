@@ -469,15 +469,15 @@ export class AdminEventsController {
 Global settings are the settings an Administrator changes at run time, for the whole service, without a Release.
 They are separate from the env settings in `src/common/settings.ts`, which stay as they are and are read at start.
 
-- Each one is registered in code, in `REGISTERED_SETTINGS` in `src/global-settings/registered-settings.ts`, with a
-  name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values. One is
-  registered: `llm.key`, the name of the AI's key ([Assistant](#assistant)).
+- Each one is registered in code, in `registeredSettings()` in `src/global-settings/registered-settings.ts`, with a
+  name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values and a check of
+  its own. One is registered: `llm.key`, the name of the AI's key ([Assistant](#assistant)).
 - The table `settings` holds a row only for a setting that was saved. A setting with no row has its default. The table
   `setting_changes` keeps every save: the old and the new value, the Administrator and the time. The one row of
   `settings_revision` counts the saves.
 - A save checks the name against the registry and the value against its type and allowed values, and writes the
-  setting, its history row and the revision in one transaction. The caller may give a check of its own, whose reason
-  refuses the save.
+  setting, its history row and the revision in one transaction. A setting's own `check`, when it has one, refuses a
+  save with its reason, whoever saves.
 - Each pod loads every row at start and does not start when it cannot. Every minute at second 0 it reads the revision
   and reloads the rows when it changed, so a change applies on every pod at the next minute, the saving pod included.
   A failed check keeps the last copy and logs. A read of a setting makes no query.
@@ -496,8 +496,9 @@ export const ROUND_MINUTES = defineSetting({
 });
 ```
 
-A default or allowed values known only when the server starts, such as the names of the keys it holds, are given as
-functions; each is evaluated once, at start. A server whose registry gives a default that is not allowed, or one name
+`registeredSettings()` takes what the server holds at start, such as the AI's keys (`AI_KEYS`, built once from the
+checked settings in `src/common/ai-keys.module.ts`), and `GlobalSettingsModule` provides the registry from it. A default
+or allowed values may also be functions; each is evaluated once, at start. A server whose registry gives a default that is not allowed, or one name
 twice, does not start.
 
 ## Global Events
@@ -2326,7 +2327,7 @@ Proposal)`.
 - A model is built at start for each key. Each chat answer reads `llm.key` once, at its start, and uses that key's model
   for every call of the answer, so a change at the minute's check never mixes two keys in one answer. A Judgement does
   the same, and the same-event choice reads it for each call. Saving a name the server has no key for is refused (the
-  registry's allowed values, and `ModelPort.refusal` for `default` without `OPENROUTER_API_KEY`); a saved name whose key a
+  allowed values, and the setting's check for `default` without `OPENROUTER_API_KEY`); a saved name whose key a
   later Release removed reads as `default` and logs a warning.
 - Without the key `llm.key` names, the server still starts, and the endpoint answers 503. `.env.example` says how to set
   up a key. Give each key a credit or spend limit at its provider as well: the daily limit bounds what one User spends,

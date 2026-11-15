@@ -22,6 +22,9 @@ export const PROVIDER_NAMES: Readonly<Record<LlmProvider, string>> = {
   openrouter: 'OpenRouter',
 };
 
+// Injection token of the AI's keys (AiKeys), built once at start from the checked settings (ai-keys.module.ts).
+export const AI_KEYS = 'AI_KEYS';
+
 // The name `llm.key` gives OPENROUTER_API_KEY.
 export const DEFAULT_KEY = 'default';
 

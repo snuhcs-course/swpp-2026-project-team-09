@@ -7,10 +7,10 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { type AiKey, aiKeysOf, type LlmProvider, MODEL_IDS, PROVIDER_NAMES } from '../common/llm-keys.js';
+import { AI_KEYS, type AiKey, type AiKeys, type LlmProvider, MODEL_IDS, PROVIDER_NAMES } from '../common/llm-keys.js';
 import { type ModelCache, type Settings } from '../common/settings.js';
 import { GlobalSettings } from '../global-settings/global-settings.service.js';
-import { LLM_KEY } from '../global-settings/registered-settings.js';
+import { llmKeySetting, type LlmKeySetting } from '../global-settings/registered-settings.js';
 import { anthropicModel, loggedModel, type Model, openRouterModel } from './adapter.js';
 
 // The model port (spec A02, "The model port"): one model for each of the AI's keys, built at start, and the one the
@@ -57,15 +57,15 @@ export class ModelPort {
   private readonly logger = new Logger(ModelPort.name);
   private readonly models = new Map<string, ChosenModel>();
 
+  private readonly setting: LlmKeySetting;
+
   constructor(
     private readonly globalSettings: GlobalSettings,
     @Inject(MODEL_FACTORY) factory: ModelFactory,
-    settings: ConfigService<Settings, true>,
+    @Inject(AI_KEYS) keys: AiKeys,
   ) {
-    const { offered, unknown } = aiKeysOf({
-      OPENROUTER_API_KEY: settings.get('OPENROUTER_API_KEY', { infer: true }),
-      LLM_KEYS: settings.get('LLM_KEYS', { infer: true }),
-    });
+    const { offered, unknown } = keys;
+    this.setting = llmKeySetting(keys);
     for (const name of unknown) {
       this.logger.warn(`The AI's key ${name} is not offered: its value names no provider (sk-ant- or sk-or-)`);
     }
@@ -81,13 +81,9 @@ export class ModelPort {
   }
 
   // The model of the key `llm.key` names now, read once: null when this server has no key by that name, which is only
-  // `default` without OPENROUTER_API_KEY, since a saved name it does not have reads as `default`.
+  // `default` without OPENROUTER_API_KEY, since a saved name it does not have reads as `default` and the setting's
+  // check refuses saving `default` then.
   chosen(): ChosenModel | null {
-    return this.models.get(this.globalSettings.get(LLM_KEY)) ?? null;
+    return this.models.get(this.globalSettings.get(this.setting)) ?? null;
   }
-
-  // The refusal of saving `llm.key` as `name` when this server has no key by it, for GlobalSettings.save's extra
-  // check. The registry refuses a name that is not a key's; this refuses `default` without OPENROUTER_API_KEY.
-  readonly refusal = (name: unknown): string | null =>
-    typeof name === 'string' && this.models.has(name) ? null : `The server has no key named ${String(name)}.`;
 }

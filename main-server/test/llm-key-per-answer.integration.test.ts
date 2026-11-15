@@ -156,7 +156,7 @@ describe('A saved key the server no longer has', () => {
     const { app, settings, token } = await pod({ LLM_KEYS: '{}' });
     scripted.default.script({ text: '기본 키' });
 
-    expect(settings.get((await import('../src/global-settings/registered-settings.js')).LLM_KEY)).toBe('default');
+    expect(settings.list().find(({ name }) => name === 'llm.key')?.value).toBe('default');
     expect(logs()).toContain('The setting llm.key holds a value it does not take; it reads as its default.');
     expect((await postAssistantMessages(app, token, ask('안녕'))).body).toMatchObject({ text: '기본 키' });
   });
@@ -171,14 +171,13 @@ describe('A saved key the server no longer has', () => {
 });
 
 describe('Without OPENROUTER_API_KEY', () => {
-  it('default is refused by the model port’s check, and with it saved the chat answers 503 calling no model', async () => {
+  it('default cannot be saved, and with it in effect the chat answers 503 calling no model', async () => {
     const { app, settings, token } = await pod({ ...KEYS, OPENROUTER_API_KEY: '' });
-    const { ModelPort } = await import('../src/assistant/model-port.js');
     scripted.default.script({ text: '네' });
 
-    await expect(
-      settings.save('llm.key', 'default', administratorId, app.get(ModelPort).refusal),
-    ).rejects.toMatchObject({ reason: 'The server has no key named default.' });
+    await expect(settings.save('llm.key', 'default', administratorId)).rejects.toMatchObject({
+      reason: 'The server has no key named default.',
+    });
     const response = await postAssistantMessages(app, token, ask('안녕'));
 
     expect(response.status).toBe(503);
