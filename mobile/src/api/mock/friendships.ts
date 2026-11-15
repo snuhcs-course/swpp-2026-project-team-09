@@ -7,6 +7,7 @@
 
 import { ApiError } from '@/api/errors';
 import type {
+  AskedMoment,
   Friend,
   FriendLevel,
   InviteLink,
@@ -111,8 +112,25 @@ function hasPosition(id: string): boolean {
 function befriend(id: string): void {
   const { name, department } = personOf(id);
   state.requests = state.requests.filter(({ from, to }) => from !== id && to !== id);
-  const friend: Friend = { id, name, department, level: 'building', sharing: true, visible: hasPosition(id) };
+  const friend: Friend = {
+    id,
+    name,
+    department,
+    level: 'building',
+    sharing: true,
+    visible: hasPosition(id),
+    askedOff: false,
+    askedPlan: false,
+  };
   state.friends = [...state.friends, friend].toSorted((one, other) => one.name.localeCompare(other.name, 'ko'));
+}
+
+const FROM_LEAST: readonly FriendLevel[] = ['timetable', 'building', 'exact'];
+
+// The mock keeps the User's end only, and takes the Friend's to be as high.
+function atLevel(friend: Friend, level: FriendLevel): Friend {
+  const sharing = level !== 'timetable';
+  return { ...friend, level, sharing, visible: sharing && hasPosition(friend.id) };
 }
 
 function friendOrRefuse(userId: string): Friend {
@@ -171,13 +189,25 @@ export const mockFriendships = {
       ({ userId }) =>
         !FRIENDS.some(({ id }) => id === userId) || state.friends.some(({ id, visible }) => id === userId && visible),
     ),
-  // The mock keeps the User's end only, and takes the Friend's to be as high.
   setFriendLevel: (userId: string, level: FriendLevel): void => {
     const friend = friendOrRefuse(userId);
-    const sharing = level !== 'timetable';
-    state.friends = state.friends.map((other) =>
-      other === friend ? { ...friend, level, sharing, visible: sharing && hasPosition(userId) } : other,
-    );
+    state.friends = state.friends.map((other) => (other === friend ? atLevel(friend, level) : other));
+  },
+  // Refused as a whole when one is no Friend.
+  recordAsked: (userIds: string[], moment: AskedMoment): void => {
+    for (const userId of userIds) {
+      friendOrRefuse(userId);
+    }
+    state.friends = state.friends.map((friend) => {
+      if (!userIds.includes(friend.id)) {
+        return friend;
+      }
+      return moment === 'off' ? { ...friend, askedOff: true } : { ...friend, askedPlan: true };
+    });
+  },
+  lowerLevels: (level: FriendLevel): void => {
+    const above = new Set(FROM_LEAST.slice(FROM_LEAST.indexOf(level) + 1));
+    state.friends = state.friends.map((friend) => (above.has(friend.level) ? atLevel(friend, level) : friend));
   },
   endFriendship: (userId: string): void => {
     const friend = friendOrRefuse(userId);

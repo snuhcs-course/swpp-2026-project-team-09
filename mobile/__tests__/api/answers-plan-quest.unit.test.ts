@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The checks of the replies of a Plan made into a Quest and of a better Plan after a decline: the main server's real
@@ -22,8 +23,13 @@ describe('isPlanQuest', () => {
   it.each([
     ['without the Quest', { invitations: PLAN_QUEST.invitations }],
     ['with a Quest without its Sub Quests', { ...PLAN_QUEST, quest: { ...PLAN_QUEST.quest, subQuests: undefined } }],
-    ['without the invitations', { quest: PLAN_QUEST.quest }],
+    ['without the invitations', { quest: PLAN_QUEST.quest, askLevels: [] }],
     ['with an invitation without its User', { ...PLAN_QUEST, invitations: [{ id: 'invitation' }] }],
+    ['without the Friends to ask about', { quest: PLAN_QUEST.quest, invitations: PLAN_QUEST.invitations }],
+    [
+      'with a Friend to ask about at a level that is none',
+      { ...PLAN_QUEST, askLevels: [{ userId: 'u', name: '민수', level: 'college' }] },
+    ],
   ])('refuses a reply %s', (_, reply) => {
     expect(isPlanQuest(reply)).toBe(false);
   });

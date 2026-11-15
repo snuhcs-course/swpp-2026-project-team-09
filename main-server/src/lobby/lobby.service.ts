@@ -3,6 +3,7 @@
  *
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -16,6 +17,10 @@ export class LobbyService {
   // The onboarding check in AccessTokenGuard lets only an onboarded User in.
   async enter(userId: string): Promise<LobbyDto> {
     const user = await this.users.findById(userId);
-    return { profile: this.users.profileOf(user), masterSwitch: user.masterSwitchOn };
+    return {
+      profile: this.users.profileOf(user),
+      masterSwitch: user.masterSwitchOn,
+      masterOffAsked: user.masterOffAskedAt !== null,
+    };
   }
 }
