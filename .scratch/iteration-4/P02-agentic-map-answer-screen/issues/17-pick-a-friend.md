@@ -35,3 +35,10 @@ The app must accept `pick-friend` before package A sends it: the reply check is 
 4. **The move to the choice grid.** Package B's P02-18 adds to the design system's `ChoiceGrid` a line under the name (`sub`) and a trailing mark that opens the Friend's profile without picking (`more`); it is not on Main yet, so these cells have no profile mark, and `ChoiceGrid` is unchanged here. Once P02-18 is on Main, the cells move to `ChoiceGrid` with `sub` (the department) and `more` (the profile), and that move decides how the grid stands up to three in a row.
 5. **Other offers beside the Friends** stay buttons under the cells. None of the server's kinds mixes them; the app does not refuse the mix.
 6. **The mock.** The mock's Friends have no two of one given name (and no 민수), so it gets no `which-friend` copy; the copy comes with package A's real reply. The fourth criterion stays open until then.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5), resumed twice (the full-name cells and the choice grid left as it was). This session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 45 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 82,737; input 18,300,552, of which 17,932,877 were cache reads, 367,457 cache writes, and 218 uncached. Without cache reads: 450,412.
