@@ -67,19 +67,19 @@ export function choiceRowsWithin(height: number): number {
 }
 
 // The name, with the second line under it. Beside a second line the value keeps its width and the names give way.
-function Names({ name, sub }: Pick<GridChoice, 'name' | 'sub'>): ReactElement {
+function Names({ choice }: { choice: Pick<GridChoice, 'name' | 'sub'> }): ReactElement {
   const named = (
     <Text numberOfLines={1} style={styles.name}>
-      {name}
+      {choice.name}
     </Text>
   );
-  return sub === undefined ? (
+  return choice.sub === undefined ? (
     named
   ) : (
     <View style={styles.names}>
       {named}
       <Text numberOfLines={1} style={styles.sub}>
-        {sub}
+        {choice.sub}
       </Text>
     </View>
   );
@@ -129,7 +129,7 @@ function Cell({
   disabled: boolean;
   onChoose: (key: string) => void;
 }): ReactElement {
-  const { key, name, sub, value, faint, label, busy = false, more } = choice;
+  const { key, sub, value, faint, label, busy = false, more } = choice;
   const body = (
     <Pressable
       accessibilityLabel={label}
@@ -145,7 +145,7 @@ function Cell({
         disabled && !busy && styles.disabled,
       ]}
     >
-      <Names name={name} sub={sub} />
+      <Names choice={choice} />
       <Value busy={busy} faint={faint} sub={sub} value={value} />
     </Pressable>
   );

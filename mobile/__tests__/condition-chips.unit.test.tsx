@@ -200,8 +200,8 @@ describe('ConditionChips while a recalculation is on its way', () => {
 
 describe("ConditionChips of a Friend's chip", () => {
   // Partitions: the chip of a Friend and of someone who is none, while enabled and while a recalculation is on its
-  // way. The rule: ticket 18, a press on a person chip opens the person's profile, the chip's ✕ still takes them out,
-  // and someone who is not a Friend has no profile to open.
+  // way; the name's touch area. The rule: ticket 18, a press on a person chip opens the person's profile, the chip's ✕
+  // still takes them out, someone who is not a Friend has no profile to open, and a touch area is at least 48.
   it("opens the Friend's profile with a press on the chip, and the ✕ still takes the person out", async () => {
     const onProfile = jest.fn<void, [string]>();
     const onRemove = jest.fn<void, [string]>();
@@ -214,6 +214,19 @@ describe("ConditionChips of a Friend's chip", () => {
     await userEvent.press(screen.getByRole('button', { name: '김민수 빼기' }));
     expect(onRemove).toHaveBeenCalledWith(MINSU);
     expect(onProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives the name a touch 48 high, the chip's whole height with its slop, as a sibling chip has", async () => {
+    await show({ friendIds: new Set([MINSU]), onProfile: noop });
+
+    // A chip is 34 high within a border of 1. The name stretches to the 32 inside the border, and 8 above and below
+    // make 48; a sibling chip's 34 with 7 above and below make 48 too.
+    const named = screen.getByRole('button', { name: '김민수 프로필' });
+    expect(named.parent).toHaveStyle({ height: 34, borderWidth: 1 });
+    expect(named).toHaveStyle({ alignSelf: 'stretch' });
+    expect(named).toHaveProp('hitSlop', { top: 8, bottom: 8, left: 7 });
+    expect(screen.getByRole('button', { name: '301동에서' })).toHaveStyle({ height: 34 });
+    expect(screen.getByRole('button', { name: '301동에서' })).toHaveProp('hitSlop', 7);
   });
 
   it('opens no profile from the chip of someone who is not a Friend', async () => {

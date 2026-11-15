@@ -37,6 +37,7 @@ interface ConditionChipsProps {
 }
 
 const CHIP_HEIGHT = 34;
+const CHIP_BORDER = 1;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
 
 function pressedStyle(base: StyleProp<ViewStyle>): ({ pressed }: { pressed: boolean }) => StyleProp<ViewStyle> {
@@ -86,14 +87,16 @@ interface PersonChipProps {
   onProfile: (() => void) | null;
 }
 
-// The chip's words reach to its ✕, which keeps its own touch area at the right.
-const NAME_SLOP = { top: HIT_SLOP, bottom: HIT_SLOP, left: HIT_SLOP } as const;
+// The chip's words take the chip's height inside its border and reach to its ✕, which keeps its own touch area at the
+// right: as high a touch as a sibling chip's.
+const NAME_SLOP_Y = (size.touchMin - (CHIP_HEIGHT - 2 * CHIP_BORDER)) / 2;
+const NAME_SLOP = { top: NAME_SLOP_Y, bottom: NAME_SLOP_Y, left: HIT_SLOP } as const;
 
 // A person's chip: their name, which opens their profile when they are a Friend, also while a recalculation is on its
 // way, and the ✕ that takes them out.
 function PersonChip({ chip, disabled, onRemove, onProfile }: PersonChipProps): ReactElement {
   const { userId } = chip;
-  const name = (
+  const named = (
     <Text numberOfLines={1} style={[styles.label, styles.personLabel]}>
       {chip.text}
     </Text>
@@ -101,7 +104,7 @@ function PersonChip({ chip, disabled, onRemove, onProfile }: PersonChipProps): R
   return (
     <View style={[styles.chip, styles.person]}>
       {onProfile === null ? (
-        name
+        named
       ) : (
         <Pressable
           accessibilityLabel={profileLabel(chip.text)}
@@ -110,7 +113,7 @@ function PersonChip({ chip, disabled, onRemove, onProfile }: PersonChipProps): R
           onPress={onProfile}
           style={({ pressed }) => [styles.name, pressed && styles.pressed]}
         >
-          {name}
+          {named}
         </Pressable>
       )}
       {userId === null ? null : (
@@ -207,7 +210,7 @@ const styles = StyleSheet.create({
     height: CHIP_HEIGHT,
     paddingHorizontal: space[3],
     borderRadius: radius.full,
-    borderWidth: 1,
+    borderWidth: CHIP_BORDER,
     borderColor: color.borderStrong,
     backgroundColor: color.surface,
   },
@@ -217,7 +220,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
   label: { ...text.label, color: color.ink },
   personLabel: { color: color.snuBlue },
-  name: { flexShrink: 1 },
+  name: { flexShrink: 1, alignSelf: 'stretch', justifyContent: 'center' },
   remove: { marginRight: -space[1], padding: 2, borderRadius: radius.full },
   corner: { flexDirection: 'row', alignItems: 'center', gap: 2, height: CHIP_HEIGHT },
   cornerLabel: { ...text.label, color: color.blue600 },
