@@ -10,7 +10,7 @@ import type { FriendView } from '@/features/friends/adapter';
 import { friendProfileCard } from '@/features/friends/profile';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
 import { Card, type CardProps } from './card';
-import { CardOrSeen } from './seen-card';
+import { CardOrSeen, type SeenSelection } from './seen-card';
 
 const OpenProfile = createContext<((userId: string) => void) | null>(null);
 
@@ -48,18 +48,11 @@ function ignore(): void {
   // The frame's camera is the answer's: the card has no "가까이 보기".
 }
 
-interface ProfileCardProps {
-  friend: FriendView;
-  onClose: () => void;
-  onHeight?: (height: number) => void;
-}
-
 // The everyday map's card of a Friend, which is their profile, also for a Friend whom the map does not show.
-function profileCardProps({ friend, onClose, onHeight }: ProfileCardProps): CardProps {
+function profileCardProps(friend: FriendView, onHeight?: (height: number) => void): Omit<CardProps, 'onClose'> {
   return {
     canLookCloser: false,
     card: friendProfileCard(friend),
-    onClose,
     onHeight,
     onLookCloser: ignore,
     onPrimary: () => {
@@ -68,18 +61,23 @@ function profileCardProps({ friend, onClose, onHeight }: ProfileCardProps): Card
   };
 }
 
-function ProfileCard(props: ProfileCardProps): ReactElement {
-  return <Card {...profileCardProps(props)} />;
+function ProfileCard({ friend, onClose }: { friend: FriendView; onClose: () => void }): ReactElement {
+  return <Card {...profileCardProps(friend)} onClose={onClose} />;
 }
 
 // The card of a Friend whom the map does not show, which a row of the friend list opens over the everyday map while
 // the switch of the answer on the map is on: their profile, with what the app holds of them.
 export function OffMapFriendCard({
   userId,
-  ...card
-}: { userId: string } & Omit<ProfileCardProps, 'friend'>): ReactElement | null {
+  selection,
+  onHeight,
+}: {
+  userId: string;
+  selection: SeenSelection;
+  onHeight: (height: number) => void;
+}): ReactElement | null {
   const friend = useFriendProfile(userId)?.friend ?? null;
-  return friend === null ? null : <CardOrSeen {...profileCardProps({ ...card, friend })} />;
+  return friend === null ? null : <CardOrSeen {...profileCardProps(friend, onHeight)} selection={selection} />;
 }
 
 // What is inside the answer frame may open a Friend's profile (`useOpenFriendProfile`), which stands over the frame's

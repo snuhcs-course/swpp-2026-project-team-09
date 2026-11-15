@@ -14,6 +14,7 @@ import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
+import { holdBackButton } from './support/back';
 import { answerMainScreen, askMainServer, JI_WOO, LIBRARY_POSITION, LOBBY, MIN_JUN, PHONE_NOW } from './support/server';
 
 // The card "어디까지 보이나" (P02 ticket 21, row 9 board 2), which a Friend's card opens in its place on the everyday
@@ -126,6 +127,35 @@ describe("my end with the User's Master Switch off", () => {
 
     expect(shownCard().getByText('내가 김민준에게: 시간표만')).toBeVisible();
     expect(shownCard().getByText('서로 시간표만 보여요')).toBeVisible();
+  });
+});
+
+// Partitions: the button pressed over the card, and pressed again after 위치 공유, opened from it, was left by it. The
+// rule: the back button takes the steps back that the ✕ takes, as in ticket 18's profile.
+describe("Android's back button over the card", () => {
+  it('goes back to the Friend card, and a second press closes it', async () => {
+    const back = holdBackButton();
+    await openSeen(MIN_JUN);
+
+    expect(await back()).toBe(true);
+    expect(shownCard().getByRole('header', { name: '김민준' })).toBeVisible();
+    expect(await back()).toBe(true);
+
+    expect(screen.queryByTestId('map-card')).toBeNull();
+  });
+
+  it('goes back to the Friend card also after 위치 공유 was opened from 바꾸기 and left', async () => {
+    const back = holdBackButton();
+    const user = await openSeen(MIN_JUN);
+    await user.press(shownCard().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+    expect(await back()).toBe(true);
+    await pass(500);
+    expect(shownCard().getByText('내가 김민준에게: 정확한 위치')).toBeVisible();
+
+    expect(await back()).toBe(true);
+
+    expect(shownCard().getByRole('header', { name: '김민준' })).toBeVisible();
   });
 });
 

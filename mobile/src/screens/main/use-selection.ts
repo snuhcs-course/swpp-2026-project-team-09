@@ -36,6 +36,10 @@ export interface Selection {
   // row of the friend list.
   selectFriend: (userId: string) => void;
   close: () => void;
+  // "어디까지 보이나" stands in the place of the open Friend card, until it is hidden, another selection, or a close.
+  seen: boolean;
+  showSeen: () => void;
+  hideSeen: () => void;
 }
 
 // The id that is waited for, and the cards that did not have it.
@@ -53,6 +57,30 @@ const OFF_MAP = 'off-map:';
 
 function offMapFriend(selectedId: string | null): string | null {
   return selectedId?.startsWith(OFF_MAP) === true ? selectedId.slice(OFF_MAP.length) : null;
+}
+
+// Android's back button over an open card (`shown` while the map is in front): it hides "어디까지 보이나" first, then
+// closes the card. The two are registered in this order, which is also the order they come back in when the map is
+// in front again, and the latest takes the press first.
+function useBackAndSeen(
+  selectedId: string | null,
+  shown: boolean,
+  close: () => void,
+): Pick<Selection, 'seen' | 'showSeen' | 'hideSeen'> {
+  useBackToClose(shown, close, { edge: false });
+  const [seenOf, setSeenOf] = useState<string | null>(null);
+  if (seenOf !== null && seenOf !== selectedId) {
+    setSeenOf(null);
+  }
+  const seen = seenOf !== null && seenOf === selectedId;
+  const showSeen = useCallback(() => {
+    setSeenOf(selectedId);
+  }, [selectedId]);
+  const hideSeen = useCallback(() => {
+    setSeenOf(null);
+  }, []);
+  useBackToClose(seen && shown, hideSeen, { edge: false });
+  return { seen, showSeen, hideSeen };
 }
 
 // One thing at a time is selected. The card's X and Android's back button close it, the button only while the map
@@ -108,6 +136,6 @@ export function useSelection(cards: readonly CardView[], inFront: boolean, meSho
     setSelectedId(null);
     setWait(null);
   }, []);
-  useBackToClose(open && inFront, close, { edge: false });
-  return { selected, mine, friend, open, select, selectOrWait, selectFriend, close };
+  const seen = useBackAndSeen(selectedId, open && inFront, close);
+  return { selected, mine, friend, open, select, selectOrWait, selectFriend, close, ...seen };
 }

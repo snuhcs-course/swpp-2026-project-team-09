@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, useState } from 'react';
+import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, color, font, radius, space, text } from '@/design-system';
 import { useAnswerSwitch } from '@/features/assistant/answer-switch';
@@ -17,6 +17,10 @@ import { usePlaceNear } from '@/features/places/use-place-at';
 import { useMasterSwitch } from '@/features/sharing/use-master-switch';
 import { Card, CardFrame, type CardProps, Head, Line } from './card';
 import { placeWords } from './my-card';
+import type { Selection } from './use-selection';
+
+// The selection whose card is shown: its close, and its "어디까지 보이나".
+export type SeenSelection = Pick<Selection, 'close' | 'seen' | 'showSeen' | 'hideSeen'>;
 
 interface SeenCardProps {
   friend: FriendView;
@@ -53,42 +57,20 @@ function SeenCard({ friend, mark, onClose, onHeight }: SeenCardProps): ReactElem
   );
 }
 
-function OneCardOrSeen(props: CardProps): ReactElement {
+// The selected card of the everyday map, which its selection closes. While the switch of the answer on the map is on,
+// a Friend's "어디까지 보이나" opens its own card in this card's place (`selection.seen`), whose ✕ and Android's back
+// bring the Friend's card back; while it is off, it opens 위치 공유.
+export function CardOrSeen({
+  selection,
+  ...props
+}: Omit<CardProps, 'onClose' | 'onSeen'> & { selection: SeenSelection }): ReactElement {
   const onMap = useAnswerSwitch();
-  const [seen, setSeen] = useState(false);
   const { card, onHeight } = props;
-  const friend = useFriendProfile(onMap && seen ? friendIdOf(card.id) : null)?.friend ?? null;
+  const friend = useFriendProfile(onMap && selection.seen ? friendIdOf(card.id) : null)?.friend ?? null;
   if (friend !== null) {
-    return (
-      <SeenCard
-        friend={friend}
-        mark={card.mark}
-        onClose={() => {
-          setSeen(false);
-        }}
-        onHeight={onHeight}
-      />
-    );
+    return <SeenCard friend={friend} mark={card.mark} onClose={selection.hideSeen} onHeight={onHeight} />;
   }
-  return (
-    <Card
-      {...props}
-      onSeen={
-        onMap
-          ? () => {
-              setSeen(true);
-            }
-          : undefined
-      }
-    />
-  );
-}
-
-// A card of the everyday map. While the switch of the answer on the map is on, a Friend's "어디까지 보이나" opens its
-// own card in this card's place, whose ✕ brings the Friend's card back; while it is off, it opens 위치 공유. Another
-// card selected in its place opens as itself.
-export function CardOrSeen(props: CardProps): ReactElement {
-  return <OneCardOrSeen key={props.card.id} {...props} />;
+  return <Card {...props} onClose={selection.close} onSeen={onMap ? selection.showSeen : undefined} />;
 }
 
 // The board's note: its blue ground and its words.

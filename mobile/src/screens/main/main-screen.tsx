@@ -121,7 +121,6 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
       canLookCloser={map.detail !== 'names' && !top}
       card={card}
       onChoose={selection.select}
-      onClose={onClose}
       onHeight={onHeight}
       onLookCloser={() => {
         map.goTo(card.position, 'close');
@@ -152,6 +151,7 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
           onClose();
         }
       }}
+      selection={selection}
       top={top ? listsTop(inset) : undefined}
     />
   );
@@ -166,7 +166,7 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
   }
   if (selection.friend !== null) {
     return chat.framed ? null : (
-      <OffMapFriendCard onClose={selection.close} onHeight={onHeight} userId={selection.friend} />
+      <OffMapFriendCard onHeight={onHeight} selection={selection} userId={selection.friend} />
     );
   }
   return <ThingCard {...props} />;
