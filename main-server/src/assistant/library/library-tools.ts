@@ -35,6 +35,18 @@ export interface LibraryTools {
 export interface LibraryToolOptions extends BookingOptions {
   // The app draws answers on the map: the Assistant picks a study group's time in a group study room.
   picksStudyTime?: boolean;
+  // The app draws answers on the map: of several seat spaces, the first is filled.
+  picksFirstSeat?: boolean;
+}
+
+// The options for an app that draws answers on the map, or for any other.
+export function answeringOptions(drawsAnswers: boolean): LibraryToolOptions {
+  return {
+    fillsSeatTime: drawsAnswers,
+    notesOwnPress: drawsAnswers,
+    picksStudyTime: drawsAnswers,
+    picksFirstSeat: drawsAnswers,
+  };
 }
 
 export function libraryTools(
@@ -42,7 +54,7 @@ export function libraryTools(
   options?: LibraryToolOptions,
 ): LibraryTools | (LibraryTools & { proposeStudyRoom: Tool }) {
   const tools: LibraryTools = {
-    findLibrarySpace: findLibrarySpace(services),
+    findLibrarySpace: findLibrarySpace(services, { picksFirstSeat: options?.picksFirstSeat ?? false }),
     findLibraryFreeSlots: findLibraryFreeSlots(services),
     proposeLibraryBooking: proposeLibraryBooking(services, options),
     proposeLibraryCancel: proposeLibraryCancel(services),

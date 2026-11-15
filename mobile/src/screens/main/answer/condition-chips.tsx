@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
 import { color, Icon, radius, size, space, text } from '@/design-system';
+import { profileLabel } from '@/features/friends/profile';
 
 // What stands at the right of the first line: "근거" or "근거 접기" with its chevron, or "그대로", which closes the list
 // of Friends.
@@ -28,11 +29,15 @@ interface ConditionChipsProps {
   onUntil: () => void;
   onRemove: (userId: string) => void;
   onAdd: () => void;
+  // Opens a person's profile from their chip, for the User's Friends (`friendIds`) alone; null for none.
+  onProfile: ((userId: string) => void) | null;
+  friendIds: ReadonlySet<string>;
   // Null for nothing there, as for an answer without a Plan, which has no basis.
   corner: CornerAction | null;
 }
 
 const CHIP_HEIGHT = 34;
+const CHIP_BORDER = 1;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
 
 function pressedStyle(base: StyleProp<ViewStyle>): ({ pressed }: { pressed: boolean }) => StyleProp<ViewStyle> {
@@ -78,15 +83,39 @@ interface PersonChipProps {
   chip: ConditionChip;
   disabled: boolean;
   onRemove: (userId: string) => void;
+  // Null for someone whose profile does not open.
+  onProfile: (() => void) | null;
 }
 
-function PersonChip({ chip, disabled, onRemove }: PersonChipProps): ReactElement {
+// The chip's words take the chip's height inside its border and reach to its ✕, which keeps its own touch area at the
+// right: as high a touch as a sibling chip's.
+const NAME_SLOP_Y = (size.touchMin - (CHIP_HEIGHT - 2 * CHIP_BORDER)) / 2;
+const NAME_SLOP = { top: NAME_SLOP_Y, bottom: NAME_SLOP_Y, left: HIT_SLOP } as const;
+
+// A person's chip: their name, which opens their profile when they are a Friend, also while a recalculation is on its
+// way, and the ✕ that takes them out.
+function PersonChip({ chip, disabled, onRemove, onProfile }: PersonChipProps): ReactElement {
   const { userId } = chip;
+  const named = (
+    <Text numberOfLines={1} style={[styles.label, styles.personLabel]}>
+      {chip.text}
+    </Text>
+  );
   return (
     <View style={[styles.chip, styles.person]}>
-      <Text numberOfLines={1} style={[styles.label, styles.personLabel]}>
-        {chip.text}
-      </Text>
+      {onProfile === null ? (
+        named
+      ) : (
+        <Pressable
+          accessibilityLabel={profileLabel(chip.text)}
+          accessibilityRole="button"
+          hitSlop={NAME_SLOP}
+          onPress={onProfile}
+          style={({ pressed }) => [styles.name, pressed && styles.pressed]}
+        >
+          {named}
+        </Pressable>
+      )}
       {userId === null ? null : (
         <Pressable
           accessibilityLabel={`${chip.text} 빼기`}
@@ -124,7 +153,14 @@ function AddChip({ adding, disabled, onAdd }: { adding: boolean; disabled: boole
 
 // The first row of the answer's card: the conditions the answer used, each a control that corrects it, then
 // "＋ 같이", in lines that wrap so that no chip is cut, with the corner's action fixed at the right of the first line.
-export function ConditionChips({ chips, adding, disabled, corner, ...on }: ConditionChipsProps): ReactElement {
+export function ConditionChips(props: ConditionChipsProps): ReactElement {
+  const { chips, adding, disabled, corner, onProfile, friendIds, ...on } = props;
+  const profileOf = (userId: string | null): (() => void) | null =>
+    userId === null || onProfile === null || !friendIds.has(userId)
+      ? null
+      : (): void => {
+          onProfile(userId);
+        };
   return (
     <View style={styles.row} testID="condition-chips">
       <View style={styles.chips} testID="condition-chips-lines">
@@ -134,6 +170,7 @@ export function ConditionChips({ chips, adding, disabled, corner, ...on }: Condi
               chip={chip}
               disabled={disabled}
               key={`person-${chip.userId ?? chip.text}`}
+              onProfile={profileOf(chip.userId)}
               onRemove={on.onRemove}
             />
           ) : (
@@ -173,7 +210,7 @@ const styles = StyleSheet.create({
     height: CHIP_HEIGHT,
     paddingHorizontal: space[3],
     borderRadius: radius.full,
-    borderWidth: 1,
+    borderWidth: CHIP_BORDER,
     borderColor: color.borderStrong,
     backgroundColor: color.surface,
   },
@@ -183,6 +220,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
   label: { ...text.label, color: color.ink },
   personLabel: { color: color.snuBlue },
+  name: { flexShrink: 1, alignSelf: 'stretch', justifyContent: 'center' },
   remove: { marginRight: -space[1], padding: 2, borderRadius: radius.full },
   corner: { flexDirection: 'row', alignItems: 'center', gap: 2, height: CHIP_HEIGHT },
   cornerLabel: { ...text.label, color: color.blue600 },

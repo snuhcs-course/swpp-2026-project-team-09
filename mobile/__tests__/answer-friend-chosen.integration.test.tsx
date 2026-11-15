@@ -40,10 +40,10 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const ADD = '같이 먹을 친구 추가';
-const MIN_JUN_CELL = '민준, 1.2km, 추가';
-const JI_WOO_CELL = '지우, 자리 모름, 추가';
-const MIN_JUN_ADDING = '민준, 넣는 중';
-const JI_WOO_ADDING = '지우, 넣는 중';
+const MIN_JUN_CELL = '김민준, 컴퓨터공학부, 1.2km, 추가';
+const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
+const MIN_JUN_ADDING = '김민준, 컴퓨터공학부, 넣는 중';
+const JI_WOO_ADDING = '서지우, 경영학과, 넣는 중';
 const QUESTION = '누구와 같이 먹을까요?';
 const HELD_MS = 3000;
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
@@ -88,11 +88,11 @@ describe('a Friend chosen in the list', () => {
 
     expect(card().getByText(QUESTION)).toBeVisible();
     const pressed = card().getByRole('button', { name: JI_WOO_ADDING });
-    expect(pressed).toHaveTextContent('지우넣는 중');
+    expect(pressed).toHaveTextContent('서지우경영학과넣는 중');
     expect(within(pressed).getByTestId('choice-grid-spinner')).toBeVisible();
     expect(pressed).toBeDisabled();
     expect(card().getByRole('button', { name: MIN_JUN_CELL })).toBeDisabled();
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeDisabled();
+    expect(card().getByRole('button', { name: '김민수 빼기' })).toBeDisabled();
     expect(card().getByRole('button', { name: '301동에서' })).toBeDisabled();
     await user.press(card().getByRole('button', { name: MIN_JUN_CELL }));
     await press(user, MIN_JUN.name);
@@ -134,7 +134,7 @@ describe("a Friend's face pressed on the map", () => {
     await press(user, MIN_JUN.name);
 
     expect(lookOf(MIN_JUN.name)).toMatch(/^person:.+:selected$/u);
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeDisabled();
+    expect(card().getByRole('button', { name: '김민수 빼기' })).toBeDisabled();
     expect(card().getByRole('button', { name: ADD })).toBeDisabled();
     await press(user, MIN_JUN.name);
     await pass(HELD_MS);
@@ -147,7 +147,7 @@ describe("a Friend's face pressed on the map", () => {
 
     await press(user, MIN_JUN.name);
 
-    expect(card().getByRole('button', { name: MIN_JUN_ADDING })).toHaveTextContent('민준넣는 중');
+    expect(card().getByRole('button', { name: MIN_JUN_ADDING })).toHaveTextContent('김민준컴퓨터공학부넣는 중');
     expect(card().getByRole('button', { name: JI_WOO_CELL })).toBeDisabled();
   });
 });
@@ -200,7 +200,7 @@ describe('a failed add', () => {
     expect(card().getByText(QUESTION)).toBeVisible();
     expect(card().getByRole('button', { name: MIN_JUN_CELL })).toBeEnabled();
     expect(card().queryByRole('button', { name: MIN_JUN_ADDING })).toBeNull();
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeEnabled();
+    expect(card().getByRole('button', { name: '김민수 빼기' })).toBeEnabled();
     expect(lookOf(MIN_JUN.name)).toMatch(/^person:.+:addable$/u);
   });
 });

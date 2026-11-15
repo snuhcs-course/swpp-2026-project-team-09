@@ -194,13 +194,15 @@ Request to it. The routes, all a User's:
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
 - `GET /friends` answers the User's Friends in the order of their names:
-  `[{ "id", "name", "department", "level", "seen", "sharing", "visible", "askedOff", "askedPlan" }]`, where `id` is
-  the Friend's User id, `level` the User's own end of the friendship, `seen` what the two see of each other by the
-  friendship (the lower of the two ends, `timetable` while either Master Switch is off; a common Party does not raise
-  it, and nothing else of the Friend's own end is given), `sharing` whether `level` is above `timetable`, `visible`
-  whether the User sees the Friend's position or Place on the map now, never why not (see
-  [Location Sharing](#location-sharing)), and `askedOff` and `askedPlan` whether the app has asked the User about the
-  Friend (see [Asking once](#asking-once)).
+  `[{ "id", "name", "department", "friendId", "level", "seen", "sharing", "visible", "askedOff", "askedPlan", "friendsSince" }]`,
+  where `id` is the Friend's User id, `friendId` the Friend's Friend ID, `level` the User's own end of the friendship, `seen` what the two see of each
+  other by the friendship (the lower of the two ends, `timetable` while either Master Switch is off; a common Party
+  does not raise it, and nothing else of the Friend's own end is given), `sharing` whether `level` is above
+  `timetable`, `visible` whether the User sees the Friend's position or Place on the map now, never why not (see
+  [Location Sharing](#location-sharing)), `askedOff` and `askedPlan` whether the app has asked the User about the
+  Friend (see [Asking once](#asking-once)), and `friendsSince` when the friendship was accepted, in Korea with its
+  offset (`2026-11-15T14:03:27+09:00`). The Friend ID and the date tell apart two Friends of the same name on their
+  profile card.
 - `DELETE /friends/:userId` ends the friendship for both and answers 204.
 - `PUT /friends/:userId/level` with `{ "level": "timetable" }`, `"building"`, or `"exact"` sets what the User lets the
   Friend see of where they are, and answers 204. It changes the User's own end only.
@@ -463,6 +465,42 @@ export class AdminEventsController {
 - In a test, `signInAsAdministrator(app)` from `test/sign-in.ts` signs in as `admin@example.com`, the initial
   Administrator of the test settings, and `signInAsNewAdministrator(app)` registers a new one and signs in as them. The
   test files share one database, so sign out or remove only a new one.
+
+## Global settings
+
+Global settings are the settings an Administrator changes at run time, for the whole service, without a Release.
+They are separate from the env settings in `src/common/settings.ts`, which stay as they are and are read at start.
+
+- Each one is registered in code, in `REGISTERED_SETTINGS` in `src/global-settings/registered-settings.ts`, with a
+  name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values. None is
+  registered yet; the first comes with the AI's model port.
+- The table `settings` holds a row only for a setting that was saved. A setting with no row has its default. The table
+  `setting_changes` keeps every save: the old and the new value, the Administrator and the time. The one row of
+  `settings_revision` counts the saves.
+- A save checks the name against the registry and the value against its type and allowed values, and writes the
+  setting, its history row and the revision in one transaction. The caller may give a check of its own, whose reason
+  refuses the save.
+- Each pod loads every row at start and does not start when it cannot. Every minute at second 0 it reads the revision
+  and reloads the rows when it changed, so a change applies on every pod at the next minute, the saving pod included.
+  A failed check keeps the last copy and logs. A read of a setting makes no query.
+- A row whose value the registry no longer takes, for example a value that is no longer allowed, reads as the default
+  and logs a warning. A row of a name no longer registered is ignored.
+
+To register a setting, add it with `defineSetting()` from `src/global-settings/registry.ts`, and read it with
+`GlobalSettings.get(THE_SETTING)`, which answers a value of its type:
+
+```ts
+export const ROUND_MINUTES = defineSetting({
+  name: 'rounds.minutes',
+  type: 'INTEGER',
+  description: 'How long a round lasts.',
+  default: 10,
+});
+```
+
+A default or allowed values known only when the server starts, such as the names of the keys it holds, are given as
+functions; each is evaluated once, at start. A server whose registry gives a default that is not allowed, or one name
+twice, does not start.
 
 ## Global Events
 
@@ -2327,6 +2365,29 @@ Proposal)`.
     a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown
     Place in a `from` or in `placeId`.
 
+- `POST /assistant/taps` with a User's access token, what the User pressed on the everyday map, a building
+  (`{ "kind": "place", "placeId" }`) or a Friend's face (`{ "kind": "friend", "userId" }`), and where the User is now
+  (`location`, as above):
+
+  ```json
+  { "tapped": { "kind": "place", "placeId": "…" }, "location": { "latitude": 37.45016, "longitude": 126.95259 } }
+  ```
+
+  answers `200` with a Lookup that carries a `card` (`title`, `subtitle`, `facts`, and `note`), worked out by
+  `src/assistant/lookup/place-lookup.ts` or `friend-lookup.ts`. The model is not called, and the User's daily messages
+  are not counted.
+
+  - **A building** (kind `place`): the walk there and when the User arrives, or `지금 여기 있어요` only when the outline
+    of the Place holds their location; how long they can stay before their next item today; each Restaurant there with
+    a menu for the meal now; the published events there today; and the Friends the User's map shows in it. Its actions
+    are `plan` buttons (`여기서 먹기`, `행사 보기`, `같이 갈 파티`), whose `input` goes to `POST /assistant/answers`, and the
+    way there unless the User is in it.
+  - **A Friend** (kind `friend`): the Friend Lookup with a card of their full name, what the User sees of them, and
+    their Timetable label, Place, and walk from the User, or at the Timetable only their Class and the next one. It is
+    read only through the Friend view, as `findFriend` is.
+  - **Refused with 400:** a body of another shape, and a `placeId` that is no Place. **Refused with 404
+    `FRIEND_NOT_FOUND`:** a `userId` who is not the User's Friend.
+
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
   `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
   `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds
@@ -2493,7 +2554,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     for, and `shown` adds `arrival` (`at`, the Place's name as `from`, `walkMinutes`) and `leaveBy` (when to leave
     for the next Class or Sub Quest with a Place that starts before the booking ends, or null, also when that time is
     not later than the arrival). A room, a named start or another day is checked as before, and any other app is asked
-    for the time.
+    for the time. For the same app, words that fit several bookable seat spaces are not asked back: `findLibrarySpace`
+    answers `found` with only the first of them, in the catalogue's order with `7F-7A-zone2` first, its card's notes
+    say "맞는 곳이 N곳이라 첫 곳으로 채웠어요", and the phone's room chip lets the User choose another; several rooms
+    are still asked about. The card's space carries the
+    catalogue's `kind`, by which the phone groups the seat spaces of a floor.
   - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers only: the
     answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
     with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one
@@ -2981,6 +3046,8 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
+├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's
+│                                    copy, checked every minute
 ├── parties/                         a feature: Parties, who sees, enters and leaves them, the Leader's controls and the switches
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
@@ -3430,9 +3497,9 @@ the Quest.
 (`src/assistant/interests/interest-tools.ts`): `watchInterest({ words })` keeps an interest and answers
 `{ result: 'watching', words, topics }`, or result `none` when 20 are kept; `unwatchInterest({ words })` removes each
 interest whose normalised words, or one of whose topics, equal the normalised words and answers
-`{ result: 'removed', words }` with the words removed, or result `none`. The rules call neither for a shuttle, a free
-seat or a Friend's Class ("지켜봐 드리는 것은 행사와 모집뿐이에요"), nor for words too vague to match, which are asked
-about.
+`{ result: 'removed', words }` with the words removed, or result `none`. The rules call neither for a Friend or the
+shuttle, which `refuse` answers (`not-watched-friend`, `not-watched-shuttle`), nor for a free seat ("지켜봐 드리는 것은
+행사와 모집뿐이에요"), nor for words too vague to match, which are asked about.
 
 ## Requests from the worker server
 

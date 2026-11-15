@@ -6,13 +6,13 @@ Blocked by: 01, 02
 
 ## What to build
 
-An Administrator opens "Settings" in the admin site's menu and sees every registered setting with its value. They change one, confirm, and the row shows "applies at HH:MM:00" until that minute has passed, then "applied". The page lists the history of changes. Today the only setting is `llm.provider`, shown as a select.
+An Administrator opens "Settings" in the admin site's menu and sees every registered setting with its value. They change one, confirm, and the row shows "applies at HH:MM:00" until that minute has passed, then "applied". The page lists the history of changes. Today the only setting is `llm.key`, shown as a select of the keys' names, each with its provider. No key's value reaches the page.
 
 ## Acceptance criteria
 
 - [ ] Main server, under `admin/settings`, guarded like the other admin routes: the registered settings with their values, types, allowed values and the time the last change applies; saving one; the history.
-- [ ] A save goes through ticket 01's service: an unregistered name, a wrong type, a value not allowed, or a provider without a key (ticket 02) is refused with 400 and a reason the page shows.
-- [ ] Admin site: `admin/src/app/(signed-in)/settings/page.tsx` and a "Settings" entry in `SECTIONS` in `site-menu.tsx`. The page is generic over the registry: each row has the value, an input for its type and allowed values (a select for `llm.provider`), and a save that asks for confirmation.
+- [ ] A save goes through ticket 01's service: an unregistered name, a wrong type, a value not allowed, or a key name the pod has no key for (ticket 02) is refused with 400 and a reason the page shows.
+- [ ] Admin site: `admin/src/app/(signed-in)/settings/page.tsx` and a "Settings" entry in `SECTIONS` in `site-menu.tsx`. The page is generic over the registry: each row has the value, an input for its type and allowed values (for `llm.key`, a select of the keys' names with their providers), and a save that asks for confirmation.
 - [ ] After a save, the row shows "applies at HH:MM:00" (the next minute), and "applied" once that time has passed.
 - [ ] The history lists who changed what, when, and the old and new value, newest first.
 - [ ] Any Administrator may change any setting; nothing depends on which Administrator.

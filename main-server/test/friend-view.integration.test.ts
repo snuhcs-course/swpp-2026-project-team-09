@@ -12,7 +12,7 @@ import { inject } from 'vitest';
 import { z } from 'zod';
 import { type FriendView } from '../src/friends/dto/friend-view.dto.js';
 import { type FriendViewService } from '../src/friends/friend-view.service.js';
-import { befriend, getFriends, signInUser, type TestUser } from './friends.js';
+import { A_KOREA_TIME, befriend, getFriends, signInUser, type TestUser } from './friends.js';
 import {
   expectStatus,
   ON_CAMPUS,
@@ -61,10 +61,12 @@ async function libraryPlaceId(user: TestUser): Promise<string> {
   return library.id;
 }
 
-const atTimetable = (friend: TestUser): FriendView => ({
+const atTimetable = (friend: TestUser): Omit<FriendView, 'friendsSince'> & { friendsSince: unknown } => ({
   id: friend.id,
   name: ONBOARDED_PROFILE.name,
   department: ONBOARDED_PROFILE.department,
+  friendId: friend.friendId,
+  friendsSince: A_KOREA_TIME,
   level: 'timetable',
   position: null,
   placeId: null,
@@ -146,29 +148,37 @@ describe('A common Party', () => {
 });
 
 describe('Every Friend', () => {
-  it('is listed whatever their level, in the order of GET /friends', SLOW, async () => {
-    const [[viewer, seen], hidden, without] = await Promise.all([
-      sharingFriends(app),
-      signInUser(app),
-      signInUser(app),
-    ]);
-    await Promise.all([befriend(app, viewer, hidden), befriend(app, viewer, without)]);
-    await Promise.all([
-      expectStatus(setMasterSwitch(app, hidden, true), 204),
-      expectStatus(setMasterSwitch(app, without, true), 204),
-      expectStatus(uploadPosition(app, seen, position()), 200),
-    ]);
-    await expectStatus(uploadPosition(app, hidden, position()), 200);
-    await expectStatus(setFriendSharing(app, hidden, viewer.id, false), 204);
+  it(
+    'is listed whatever their level, in the order of GET /friends, with its Friend ID and since when',
+    SLOW,
+    async () => {
+      const [[viewer, seen], hidden, without] = await Promise.all([
+        sharingFriends(app),
+        signInUser(app),
+        signInUser(app),
+      ]);
+      await Promise.all([befriend(app, viewer, hidden), befriend(app, viewer, without)]);
+      await Promise.all([
+        expectStatus(setMasterSwitch(app, hidden, true), 204),
+        expectStatus(setMasterSwitch(app, without, true), 204),
+        expectStatus(uploadPosition(app, seen, position()), 200),
+      ]);
+      await expectStatus(uploadPosition(app, hidden, position()), 200);
+      await expectStatus(setFriendSharing(app, hidden, viewer.id, false), 204);
 
-    const listed = await view.list(viewer.id);
+      const listed = await view.list(viewer.id);
 
-    const friends = z.array(z.object({ id: z.string() })).parse((await getFriends(app, viewer)).body);
-    expect(listed.map(({ id }) => id)).toEqual(friends.map(({ id }) => id));
-    expect(Object.fromEntries(listed.map(({ id, level }) => [id, level]))).toEqual({
-      [seen.id]: 'exact',
-      [hidden.id]: 'timetable',
-      [without.id]: 'timetable',
-    });
-  });
+      const friendSchema = z.object({ id: z.string(), friendId: z.string(), friendsSince: z.string() });
+      const friends = z.array(friendSchema).parse((await getFriends(app, viewer)).body);
+      expect(listed.map(({ id, friendId, friendsSince }) => ({ id, friendId, friendsSince }))).toEqual(friends);
+      expect(new Set(friends.map(({ friendId }) => friendId))).toEqual(
+        new Set([seen.friendId, hidden.friendId, without.friendId]),
+      );
+      expect(Object.fromEntries(listed.map(({ id, level }) => [id, level]))).toEqual({
+        [seen.id]: 'exact',
+        [hidden.id]: 'timetable',
+        [without.id]: 'timetable',
+      });
+    },
+  );
 });

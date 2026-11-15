@@ -122,6 +122,10 @@ export interface Friend {
   // them became a Quest. Each is asked once.
   askedOff: boolean;
   askedPlan: boolean;
+  // The Friend's own Friend ID, "7KX2M9QD", and when the two became Friends, in ISO 8601 with Korea's offset. Left
+  // out until the main server sends them.
+  friendId?: string;
+  friendsSince?: string;
 }
 
 // The two moments the app asks a User about a Friend at, which the main server keeps.

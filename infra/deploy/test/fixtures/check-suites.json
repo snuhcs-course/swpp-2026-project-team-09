@@ -1,0 +1,13 @@
+{
+  "total_count": 1,
+  "check_suites": [
+    {
+      "id": 102805331519,
+      "head_branch": "development",
+      "head_sha": "2f4f201af779b0c47201d256c54a019eec5b72f8",
+      "status": "completed",
+      "conclusion": "success",
+      "app": { "id": 15368, "slug": "github-actions", "name": "GitHub Actions" }
+    }
+  ]
+}

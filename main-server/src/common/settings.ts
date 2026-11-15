@@ -15,6 +15,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -46,6 +47,30 @@ function es256Key(type: 'private' | 'public'): z.ZodString {
     }
   }, `Expected a P-256 ${type} key in PEM, beginning with ${header}`);
 }
+
+// The AI's other keys by name, as the Release writes them from the llm-key-<name> parameters
+// (infra/production/README.md: The AI's keys): a JSON object of name to key, {} or empty when there is none. A refusal
+// never repeats the text, since JSON.parse's own message would quote part of it. `default` is OPENROUTER_API_KEY's.
+const llmKeys = z
+  .string()
+  .default('{}')
+  .transform((text, context): unknown => {
+    try {
+      return text.trim() === '' ? {} : JSON.parse(text);
+    } catch {
+      context.addIssue({ code: 'custom', message: 'Expected a JSON object of key names to keys' });
+      return z.NEVER;
+    }
+  })
+  .pipe(
+    z.record(
+      z
+        .string()
+        .regex(/^[a-z0-9-]+$/u, 'Expected key names of lowercase letters, digits and dashes')
+        .refine((name) => name !== 'default', 'The key named default is OPENROUTER_API_KEY'),
+      z.string().min(1, 'Expected a non-empty key'),
+    ),
+  );
 
 // Every setting arrives as a string from the environment; the schema converts it to the type the code uses.
 export const settingsSchema = z
@@ -80,6 +105,7 @@ export const settingsSchema = z
     // the model, such as anthropic/claude-haiku-5.5.
     OPENROUTER_API_KEY: z.string().default(''),
     ASSISTANT_MODEL: z.string().default(''),
+    LLM_KEYS: llmKeys,
     // The Assistant's limits: the messages a User may send in a day in Korea, and per message the model calls, the
     // time in milliseconds and the tokens the model may write in each call. Its reasoning counts towards those tokens,
     // and at 1,000 it could use them all and leave no answer (eval/p5/r0a.md).

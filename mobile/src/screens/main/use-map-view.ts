@@ -14,7 +14,7 @@ import { type AnswerMap, ignorePress, useAnswerMap, useEverydayLimits, useInvita
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
 import type { MadeQuestCard } from './use-made-quest-card';
-import type { Me } from './use-me';
+import { type Me, pressableMe } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
 import type { Selection } from './use-selection';
 import { useThings } from './use-things';
@@ -54,10 +54,10 @@ export interface UnaskedCards {
 }
 
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
-// selected, the tutorial place pin over them, the User's own Avatar, and the lines. While a Plan of an answer is
-// shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received invitation's
-// card is, its own way is; while a made Quest's card is, its Places and the User are. Once any of them closes, a
-// camera left further out than the everyday map allows glides back in.
+// selected, the tutorial place pin over them, the User's own Avatar, which takes a press while the switch is on, and
+// the lines. While a Plan of an answer is shown, the Plan is drawn in their place, and a press on a candidate shows its
+// Plan; while a received invitation's card is, its own way is; while a made Quest's card is, its Places and the User
+// are. Once any of them closes, a camera left further out than the everyday map allows glides back in.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
@@ -65,7 +65,7 @@ export function useMapView(
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
 ): AnswerMap {
-  const things = useThings(cards, map.detail, selection.selected?.id ?? null);
+  const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
@@ -77,8 +77,9 @@ export function useMapView(
     return way;
   }
   const avatars = unasked ? withoutPeople(things.avatars, cards) : things.avatars;
+  const mine = chat.onMap ? pressableMe(me.avatars) : me.avatars;
   return {
-    contents: { markers: [...things.markers, ...pin.markers], avatars: [...avatars, ...me.avatars], lines },
+    contents: { markers: [...things.markers, ...pin.markers], avatars: [...avatars, ...mine], lines },
     onPress: chat.framed || unasked ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
     ...limits,
   };
