@@ -14,7 +14,7 @@ import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
-import { wayAnswer, type WayAnswer } from './way-lookup.js';
+import { wayAnswer, type WayAnswer, type WayArgs } from './way-lookup.js';
 
 // The Place a way from off campus starts at.
 const MAIN_GATE = '서울대 정문';
@@ -37,6 +37,14 @@ export class WayService {
     ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null },
     at: { now: Date; location: Position | null },
   ): Promise<WayAnswer> {
+    return wayAnswer(await this.argsFor(userId, ask, at));
+  }
+
+  async argsFor(
+    userId: string,
+    ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null },
+    at: { now: Date; location: Position | null },
+  ): Promise<WayArgs> {
     const { now, location } = at;
     const [user, items, { stops }, vehicles] = await Promise.all([
       this.users.findById(userId),
@@ -44,7 +52,7 @@ export class WayService {
       this.shuttle.route(),
       this.shuttle.reportedVehicles(),
     ]);
-    return wayAnswer({
+    return {
       now,
       me: { userId, name: user.name, items },
       location:
@@ -59,7 +67,7 @@ export class WayService {
         reported: (vehicles ?? []).map(({ stop, receivedAt }) => ({ stop: stop.name, at: new Date(receivedAt) })),
       },
       placeOf: (placeId) => this.placeOf(placeId),
-    });
+    };
   }
 
   private gatePlaceId(): string {

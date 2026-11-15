@@ -139,7 +139,7 @@ function isAssistantReply(value: unknown): value is AssistantReply {
   );
 }
 
-export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer'> = {
+export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer' | 'answerTap'> = {
   askAssistant: async (messages, context) => {
     const body =
       context === undefined
@@ -150,4 +150,5 @@ export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswe
   },
   recalculateAnswer: (input, location) =>
     call('POST', '/assistant/answers', isAnswerReply, { body: { input, location } }),
+  answerTap: (tapped, location) => call('POST', '/assistant/taps', isLookup, { body: { tapped, location } }),
 };

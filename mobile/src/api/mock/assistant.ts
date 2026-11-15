@@ -17,6 +17,7 @@ import type {
   QuestProposal,
   RequestContext,
 } from '@/api/assistant-types';
+import type { Lookup, Tapped } from '@/api/lookup-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { now } from '@/clock';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
@@ -26,6 +27,7 @@ import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
+import { TAP_LOOKUPS } from './data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
 import {
   MEAL_ANSWER_ALONE,
@@ -43,7 +45,8 @@ import { isLibraryAsk, libraryReply } from './library-replies';
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
 // the map, and with a context asked where something is (어디), 301동식당's menu, or where 민수 is, with the main
-// server's real Lookups of 문화관, of that menu, and of 민수.
+// server's real Lookups of 문화관, of that menu, and of 민수. A press on a building or a face is answered with the main
+// server's real cards of row 6.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -158,6 +161,19 @@ function copyFor(input: PlanInput): AnswerReply {
 // sets out from, holding the input it was given.
 export function mockRecalculation(input: PlanInput): AnswerReply {
   return { ...copyFor(input), input };
+}
+
+// A press without a main server: the stored card of that building or Friend, else 학생회관's or 김민수's.
+export function mockTap(tapped: Tapped): Lookup {
+  const copies = Object.values(TAP_LOOKUPS);
+  if (tapped.kind === 'place') {
+    const stored = copies.find(
+      ({ kind, scene }) => kind === 'place' && scene.places[0]?.place.placeId === tapped.placeId,
+    );
+    return stored ?? TAP_LOOKUPS.a1;
+  }
+  const stored = copies.find(({ kind, scene }) => kind === 'friend' && scene.people[0]?.userId === tapped.userId);
+  return stored ?? TAP_LOOKUPS.a4;
 }
 
 // The stored answer of 배고파 and Lookups of 301동식당's menu and of where 민수 is, for a message sent with a context.
