@@ -3458,9 +3458,9 @@ the Quest.
 (`src/assistant/interests/interest-tools.ts`): `watchInterest({ words })` keeps an interest and answers
 `{ result: 'watching', words, topics }`, or result `none` when 20 are kept; `unwatchInterest({ words })` removes each
 interest whose normalised words, or one of whose topics, equal the normalised words and answers
-`{ result: 'removed', words }` with the words removed, or result `none`. The rules call neither for a shuttle, a free
-seat or a Friend's Class ("지켜봐 드리는 것은 행사와 모집뿐이에요"), nor for words too vague to match, which are asked
-about.
+`{ result: 'removed', words }` with the words removed, or result `none`. The rules call neither for a Friend or the
+shuttle, which `refuse` answers (`not-watched-friend`, `not-watched-shuttle`), nor for a free seat ("지켜봐 드리는 것은
+행사와 모집뿐이에요"), nor for words too vague to match, which are asked about.
 
 ## Requests from the worker server
 
