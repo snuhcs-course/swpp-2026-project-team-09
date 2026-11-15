@@ -67,7 +67,7 @@ describe('a5: 민수, from now', () => {
 });
 
 describe('a5 on the map', () => {
-  it('draws the place, the others numbered, the User walking there and on to 24동, and 민수 where his Class ends', () => {
+  it('draws the place, the others numbered, the User walking there and on to 24동, and 민수 where the Class ends', () => {
     const [first] = meetOf([me(), minsu()]).plans;
 
     expect(first?.scene).toEqual({
