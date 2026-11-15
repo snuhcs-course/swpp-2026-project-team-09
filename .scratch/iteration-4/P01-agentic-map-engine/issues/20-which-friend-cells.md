@@ -37,6 +37,7 @@ Blocked by: None. The app side is package C's P02-17 (#293), on `4.0/Main`.
 ### Decided in the build (2026-11-15)
 
 - **What was asked.** The usual flow asks right after `resolveFriend` and calls no planner, so the resolver cannot tell a meal from a meet by itself. It takes an optional `forTool` ("The tool the Friend is found for, such as planMeal or planMeet"), a lenient string: planMeal and planMeet pick their line, anything else or none "누구인가요?". When the model calls planMeal or planMeet with a contested id anyway, their guard sets their line.
+- **Line 2 is "누구와 먹을까요?" only when the model passes `forTool`**; otherwise it is "누구인가요?". The schema's description asks for `forTool`, and no rule does. A value the schema cannot take (null, a non-string, over 50 characters) is left out, as when none is given, so it never fails the call.
 - **The model's text.** The 'several' answer of an app that shows the question carries `note` (`QUESTION_SHOWN`): the app asks with a cell for each, write nothing more and call nothing else. `REFUSAL_RULES` gains the same rule. With no text, the reply's text is the two lines (`textBeside`), which the conversation sends back. Text the model writes anyway stays the reply's text; the app shows the refusal in its place.
 - **The first line ends with a period**, as the other refusals' first lines and ticket 16's wording do.
 - **A tapped Friend among the matches is the one.** When the request's tapped Friend is among those the words fit, `resolveFriend` answers 'one' with them. So a press on one of two Friends named 김민수, whose `text` fits both, settles that one also where the model resolves the name again, as for proposeQuest, planNewQuest, and the library booking, which take no tapped id.
@@ -46,4 +47,11 @@ Blocked by: None. The app side is package C's P02-17 (#293), on `4.0/Main`.
 - **The kinds.** `REFUSE_KINDS` are the ten cases `refuse` takes; `REFUSAL_KINDS` adds `which-friend`, matching the app's list.
 - **Gating by `answer`.** No release since 26.11.04 holds #271's reply check without #293's `which-friend` kind, so no installed app rejects the kind.
 - **Files.** `refusals/friend-question.ts` (new: the lines, the offers, when the reply carries the question, the guard's line, and a later 'one'); `refusals/refusal.dto.ts` (the kinds and the offer); `refusals/refusals.ts` and `refusals/refusal-tools.ts` (`REFUSE_KINDS`, the rule); `tools/resolve-friend.ts` (`forTool`, the tapped Friend, the question); `gathering/plan-tools.ts` and `gathering/meet-tools.ts` (the guard's line); `tools/which-friend.ts` (the words).
-- **Tests.** Unit: `test/assistant-friend-question.unit.test.ts`. Integration: `test/assistant-which-friend.integration.test.ts`. `test/assistant-same-name-friends.integration.test.ts` expects the note in the 'several' of an app that draws answers, and `test/fixtures/library/text-chat-rules.txt` holds the new words.
+- **Tests.** Unit: `test/assistant-friend-question.unit.test.ts`, and `test/resolve-friend-tool.unit.test.ts` (the input the model reads, a forTool it cannot take, one match with no note and no question, a tapped Friend outside the matches still asked about, and one inside them taken alone). Integration: `test/assistant-which-friend.integration.test.ts`. `test/assistant-same-name-friends.integration.test.ts` expects the note in the 'several' of an app that draws answers, and `test/fixtures/library/text-chat-rules.txt` holds the new words.
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 1 hour 20 minutes, an estimate from the session transcripts: the build about 64 minutes, a review of the diff about 12, and the coordinating session about 6.
+- Tokens, subagents included (the coordinating session's figures cover its whole stretch, most of which went to other pull requests):
+  - Input: 498 uncached, plus 54,891,523 cache reads and 454,129 cache writes.
+  - Output: 165,670.

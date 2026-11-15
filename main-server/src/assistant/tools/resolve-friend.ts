@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { FriendViewService } from '../../friends/friend-view.service.js';
+import { type FriendViewService } from '../../friends/friend-view.service.js';
 import { type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Tool } from '../feature.js';
 import { othersText } from '../others-text.js';
@@ -31,11 +31,13 @@ const input = z.object({
     .describe(
       "The User's words for the Friend's department, when they gave some to tell Friends of one name apart: 경영, 컴퓨터공학부. Left out otherwise.",
     ),
+  // Only words: a value it cannot take is left out, as when none is given.
   forTool: z
     .string()
     .trim()
     .max(50)
     .optional()
+    .catch(undefined)
     .describe(
       'The tool the Friend is found for, such as planMeal or planMeet, so that a question of which one asks for that. Left out otherwise.',
     ),
@@ -78,7 +80,7 @@ function tappedAmong<Friend extends { id: string }>(matched: Friend[], { tapped 
 // A resolver: the User's Friends the words name, as candidates of name, department and id. Only Friends, and never
 // where they are. The tools that take a Friend accept the id of a 'one', and none of a 'several' until a later 'one'.
 // An app that draws answers shows a several as the question of which one, with a cell for each (P01-20).
-export function resolveFriend(friends: FriendViewService): Tool {
+export function resolveFriend(friends: Pick<FriendViewService, 'list'>): Tool {
   return defineTool({
     description: `Finds the User's Friends a name the User wrote refers to, to invite to a 파티. Answers result 'one' with the Friend, 'several' with the candidates, each with full name and department, or 'none' with the reason. No tool takes a Friend of a 'several' until a later 'one' names them. On 'several', ask the User which one ${WHICH_FRIEND}; on 'none', say there is no Friend of that name.`,
     input,
