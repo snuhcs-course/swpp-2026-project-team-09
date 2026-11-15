@@ -4,6 +4,7 @@
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
+# 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # One run of the Dev Server's deployment, started by snu-now-deploy.timer: brings the stack up to the tip of
@@ -49,9 +50,18 @@ plan_run() {
   fi
 }
 
-# Prints `name<TAB>status<TAB>conclusion` for each check run of GitHub's check-runs answer on stdin.
+# Prints the ids of the check suites of GitHub's check-suites answer on stdin whose CI runs do every job: those of
+# pushes to development, main or a Main. A working branch's or a merge queue's run may skip the work its changes cannot
+# reach (.github/ci/changes.sh), so its checks are not counted.
+full_run_suites_from_json() {
+  jq -r '.check_suites[]? | select((.head_branch // "") | test("^([^/]+/Main|main|development)$")) | .id'
+}
+
+# Prints `name<TAB>status<TAB>conclusion` for each check run of GitHub's check-runs answer on stdin that belongs to one
+# of the check suites given as the argument, one id per line.
 check_runs_from_json() {
-  jq -r '.check_runs[]? | [.name, .status, .conclusion] | @tsv'
+  jq -r --arg suites "$1" '($suites | split("\n") | map(select(length > 0) | tonumber)) as $ids |
+    .check_runs[]? | select(.check_suite.id as $id | any($ids[]; . == $id)) | [.name, .status, .conclusion] | @tsv'
 }
 
 # Prints `name<TAB>outcome` for each required check, given the check runs as check_runs_from_json prints them.
@@ -157,17 +167,21 @@ compose() {
     --file compose.yaml --file compose.deploy.yaml "$@"
 }
 
+ask_github() {
+  "$CURL" --fail --silent --show-error --location --max-time 30 --header 'Accept: application/vnd.github+json' \
+    "https://api.github.com/repos/$REPOSITORY/$1"
+}
+
 # Without a token, GitHub answers 60 requests an hour from one address; a refused request is asked again next run.
 gate_on_ci() {
-  local answer
-  if ! answer=$("$CURL" --fail --silent --show-error --location --max-time 30 \
-    --header 'Accept: application/vnd.github+json' \
-    "https://api.github.com/repos/$REPOSITORY/commits/$tip/check-runs?per_page=100"); then
+  local suites answer
+  if ! suites=$(ask_github "commits/$tip/check-suites?per_page=100") ||
+    ! answer=$(ask_github "commits/$tip/check-runs?per_page=100"); then
     log "ci: GitHub did not answer"
     verdict=waiting-for-ci
     return
   fi
-  checks=$(check_runs_from_json <<<"$answer" | summarize_checks)
+  checks=$(check_runs_from_json "$(full_run_suites_from_json <<<"$suites")" <<<"$answer" | summarize_checks)
   verdict=$(judge_checks <<<"$checks")
   log "ci: $(tr '\t\n' '= ' <<<"$checks")"
 }

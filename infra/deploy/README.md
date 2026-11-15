@@ -33,9 +33,11 @@ site is not deployed: run it on a laptop with `MAIN_SERVER_URL=http://swpp26t09.
 systemd never starts it while a run is going. The service runs `infra/deploy/deploy.sh` from the checkout, as root:
 
 1. Fetches `development`. When its tip is the deployed commit, the result is `up-to-date` and the run stops.
-2. Reads the tip's check runs from GitHub's public API, without a token. The CI checks `main-server`,
-   `socket-server`, `worker-server`, `match-server` and `flow-tests` must have succeeded; `admin`, `mobile` and
-   `deploy-scripts` are not consulted. One success of each among its runs is enough. Otherwise a check missing, still
+2. Reads the tip's check suites and check runs from GitHub's public API, without a token, and keeps the runs of pushes
+   to `development`, `main` or a Main, which do every job; a working branch's or the merge queue's run may skip work its
+   changes cannot reach. The CI checks `main-server`, `socket-server`, `worker-server`, `match-server` and `flow-tests`
+   must have succeeded; `admin`, `mobile` and `deploy-scripts` are not consulted. One success of each among those runs
+   is enough. Otherwise a check missing, still
    running, cancelled (as a newer push cancels it), stale or waiting for an action gives `waiting-for-ci`, asked again
    next run; one failed, timed out, neutral or skipped gives `ci-failed`, and the commit is not asked about again.
 3. Dumps the databases with `pg_dumpall` into the backups folder and keeps the newest 7. No dump while no database

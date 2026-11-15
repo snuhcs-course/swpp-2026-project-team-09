@@ -98,6 +98,21 @@ push_documents_branch() {
   ci_checkout "$1"
 }
 
+# Pushes a merge group, as the queue makes one for pull request N on 4.0/Main, that changes these paths, checks it out
+# as CI does, and writes the event that names the group's base.
+push_merge_group() {
+  local group
+  group=gh-readonly-queue/4.0/Main/pr-$1-$(git -C "$WORK" rev-parse 4.0/Main)
+  shift
+  branch_off "$group"
+  commit "$@"
+  publish "$group"
+  ci_checkout "$group"
+  printf '{"merge_group": {"base_sha": "%s", "base_ref": "refs/heads/4.0/Main"}}\n' \
+    "$(git rev-parse origin/4.0/Main)" >"$BATS_TEST_TMPDIR/event.json"
+  export GITHUB_EVENT_NAME=merge_group GITHUB_EVENT_PATH="$BATS_TEST_TMPDIR/event.json"
+}
+
 # The jobs whose work runs on the checkout, in KEYS's order, as the script decides for each key with these extra
 # variables. Fails unless each decision is exactly one run= line.
 jobs_that_run() {
@@ -469,7 +484,28 @@ origin/4.0/Main at ${base:0:7}" ]
 
 @test "a run that a push did not start runs every job" {
   push_documents_branch 4.0/documents
-  expect_full_run 'the run was started by workflow_dispatch, not by a push' GITHUB_EVENT_NAME=workflow_dispatch
+  expect_full_run 'the run was started by workflow_dispatch, not by a push or the merge queue' \
+    GITHUB_EVENT_NAME=workflow_dispatch
+}
+
+@test "a merge group is compared with the queue's base, so it runs only the jobs its changes reach" {
+  push_merge_group 9 docs/guide.md
+  expect_jobs ''
+  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
+  [[ "$output" == "::notice::The job mobile skips its work: $GITHUB_REF_NAME changes 1 path since it left the merge queue's base at "* ]] || false
+
+  push_merge_group 10 mobile/App.tsx
+  expect_jobs "$APP"
+}
+
+@test "a merge group whose event names no base, or whose base cannot be read, runs every job" {
+  push_merge_group 9 docs/guide.md
+  expect_full_run "the merge queue's event names no base commit" GITHUB_EVENT_PATH="$BATS_TEST_TMPDIR/missing.json"
+  echo '{"merge_group": {}}' >"$BATS_TEST_TMPDIR/empty.json"
+  expect_full_run "the merge queue's event names no base commit" GITHUB_EVENT_PATH="$BATS_TEST_TMPDIR/empty.json"
+  echo '{"merge_group": {"base_sha": "0123456789abcdef0123456789abcdef01234567"}}' >"$BATS_TEST_TMPDIR/unknown.json"
+  expect_full_run "the merge queue's base 0123456789abcdef0123456789abcdef01234567 cannot be read" \
+    GITHUB_EVENT_PATH="$BATS_TEST_TMPDIR/unknown.json"
 }
 
 @test "a ref that is not a branch, such as a Release tag, runs every job" {

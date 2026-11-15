@@ -6,12 +6,13 @@
 ################################################################################
 
 # Says whether a CI job (.github/workflows/ci.yml) has work on this run: run=false only when no path that the pushed
-# branch changes reaches the job. A branch <line>/<name> is compared with origin/<line>/Main from all their common
-# ancestors, never with the previous push, whose run may have been cancelled before it checked anything. Every other
-# case, and any doubt or failure, gives run=true.
+# branch or the merge group changes reaches the job. A branch <line>/<name> is compared with origin/<line>/Main from all
+# their common ancestors, never with the previous push, whose run may have been cancelled before it checked anything; a
+# merge group with the queue's base. Every other case, and any doubt or failure, gives run=true. The Release and Dev
+# Server gates read only runs that do every job: those of tags and of pushes to a Main, main or development.
 #
-# Usage: changes.sh <job key>, from the repository root, with GitHub's GITHUB_EVENT_NAME, GITHUB_REF, GITHUB_REF_NAME
-# and GITHUB_SHA. It appends run=true or run=false to GITHUB_OUTPUT, or prints it when that is unset, prints one line
+# Usage: changes.sh <job key>, from the repository root, with GitHub's GITHUB_EVENT_NAME, GITHUB_REF, GITHUB_REF_NAME,
+# GITHUB_SHA and, for a merge group, GITHUB_EVENT_PATH. It appends run=true or run=false to GITHUB_OUTPUT, or prints it when that is unset, prints one line
 # that says why, and always exits 0.
 
 JOBS=(main-server socket-server worker-server match-server admin mobile flow-tests mobile-tests app-fingerprint
@@ -69,8 +70,8 @@ reaches() {
 
 # Sets `run` and `why` for the job.
 decide() {
-  local job=$1 known='' one branch line main main_commit sha shallow holders holder status bases base at='' path count=0
-  local paths hit=''
+  local job=$1 known='' one queue='' branch line main main_commit base_sha sha shallow holders holder status bases base
+  local at='' path count=0 paths hit=''
   run=true
   if [[ -z $job ]]; then
     why='no job key was given'
@@ -83,10 +84,14 @@ decide() {
     why="$job is not a job key that this script knows"
     return
   fi
-  if [[ ${GITHUB_EVENT_NAME:-} != push ]]; then
-    why="the run was started by ${GITHUB_EVENT_NAME:-an unnamed event}, not by a push"
-    return
-  fi
+  case ${GITHUB_EVENT_NAME:-} in
+    push) ;;
+    merge_group) queue=1 ;;
+    *)
+      why="the run was started by ${GITHUB_EVENT_NAME:-an unnamed event}, not by a push or the merge queue"
+      return
+      ;;
+  esac
   if [[ ${GITHUB_REF:-} != refs/heads/* ]]; then
     why="${GITHUB_REF:-the unnamed ref} is not a branch"
     return
@@ -96,15 +101,17 @@ decide() {
     why="GITHUB_REF_NAME ($branch) does not name $GITHUB_REF"
     return
   fi
-  line=${branch%%/*}
-  if [[ $branch != */* || -z $line || -z ${branch#*/} ]]; then
-    why="$branch is not named <line>/<name>"
-    return
-  fi
-  main=origin/$line/Main
-  if [[ ${branch#*/} == Main ]]; then
-    why="$branch is a Main"
-    return
+  if [[ -z $queue ]]; then
+    line=${branch%%/*}
+    if [[ $branch != */* || -z $line || -z ${branch#*/} ]]; then
+      why="$branch is not named <line>/<name>"
+      return
+    fi
+    main=origin/$line/Main
+    if [[ ${branch#*/} == Main ]]; then
+      why="$branch is a Main"
+      return
+    fi
   fi
 
   # A shallow history can hide the common ancestors.
@@ -112,7 +119,19 @@ decide() {
     why='the checkout is shallow, or git cannot read it'
     return
   fi
-  if ! main_commit=$(git rev-parse --verify --quiet "refs/remotes/$main^{commit}"); then
+  if [[ -n $queue ]]; then
+    # A merge group is its base, the Main it merges into, with the queued pull requests on top.
+    main="the merge queue's base"
+    if ! base_sha=$(jq -r '.merge_group.base_sha // empty' "${GITHUB_EVENT_PATH:-}") ||
+      [[ ! $base_sha =~ ^[0-9a-f]{40}$ ]]; then
+      why="the merge queue's event names no base commit"
+      return
+    fi
+    if ! main_commit=$(git rev-parse --verify --quiet "$base_sha^{commit}"); then
+      why="the merge queue's base $base_sha cannot be read"
+      return
+    fi
+  elif ! main_commit=$(git rev-parse --verify --quiet "refs/remotes/$main^{commit}"); then
     why="$main is missing or is not a commit"
     return
   fi
@@ -120,8 +139,7 @@ decide() {
     why="the pushed commit ${GITHUB_SHA:-(unset)} cannot be read"
     return
   fi
-  # The Release and Dev Server gates take any passed run of a commit, so a commit already on a Main of any line, on main
-  # or on development never skips.
+  # A commit already on a Main of any line, on main or on development is checked in full wherever it is pushed.
   if ! holders=$(git for-each-ref --contains "$sha" --format='%(refname)' refs/remotes/origin); then
     why='git could not tell which branches hold the commit'
     return

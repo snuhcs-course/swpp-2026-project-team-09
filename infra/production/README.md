@@ -653,8 +653,10 @@ The next Release brings the committed value back, so also set it in that file an
 The run appears in the repository's **Actions** tab under the Release workflow, named after the tag:
 
 1. It checks the tag's name.
-2. It waits for CI's results on the tagged commit. Every CI job must have passed; CI runs on the tag's push too, so a
-   tagged commit always gets results. While a job is queued or running, the Release waits. A failed job fails the
+2. It waits for CI's results on the tagged commit. Every CI job must have passed, in the runs that do every job: the
+   tag's own and those of pushes to a Main, `main` or `development`. A working branch's or the merge queue's run may skip
+   work its changes cannot reach, so it is not read. CI runs on the tag's push too, so a tagged commit always gets
+   results. While a job is queued or running, the Release waits. A failed job fails the
    Release before any AWS step: fix the commit through a pull request and release the new one.
 3. It builds the target's arm64 images and pushes them to ECR, tagged with the commit and with the tag's name with `/`
    as `-`, for example `main-server-26.11.13-1`. An image already built for the commit is tagged, not built again.

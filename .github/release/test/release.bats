@@ -5,6 +5,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
@@ -34,7 +35,7 @@ setup() {
 }
 
 # Makes the faked GitHub list these CI runs of the commit, each "id status conclusion push", in every poll or, after
-# --poll N, in poll N. The push is `branch` or `tag`, the Release's tag.
+# --poll N, in poll N. The push is `branch`, a push to 2.0/Main, `tag`, the Release's tag, or another branch's name.
 serve_runs() {
   local file=$FAKE_GITHUB/runs.json
   if [[ "$1" == --poll ]]; then
@@ -44,7 +45,7 @@ serve_runs() {
   printf '%s\n' "$@" | jq --raw-input --slurp --arg commit "$COMMIT" --arg tag "$TAG" '
     [split("\n")[] | select(length > 0) | split(" ") |
       {id: (.[0] | tonumber), name: "CI", path: ".github/workflows/ci.yml", head_sha: $commit,
-        head_branch: (if .[3] == "tag" then $tag else "2.0/Main" end), status: .[1],
+        head_branch: (if .[3] == "tag" then $tag elif .[3] == "branch" then "2.0/Main" else .[3] end), status: .[1],
         conclusion: (if .[2] == "null" then null else .[2] end)}] |
     {total_count: length, workflow_runs: .}' >"$file"
 }
@@ -380,6 +381,24 @@ print_certs() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"mobile=failure"* ]] || false
   [[ "$output" == *"gate: CI failed on $COMMIT"* ]] || false
+  [ "$(polls)" -eq 1 ]
+}
+
+@test "the runs of a working branch and of the merge queue are not read, since their jobs may skip work" {
+  mapfile -t failed < <(ci_jobs completed success mobile; echo 'mobile completed failure')
+  mapfile -t passed < <(ci_jobs completed success)
+  serve_runs '41 completed failure branch' '57 completed success 2.0/feature' \
+    '63 completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d' '77 completed failure tag'
+  serve_jobs 41 "${failed[@]}"
+  serve_jobs 57 "${passed[@]}"
+  serve_jobs 63 "${passed[@]}"
+  serve_jobs 77 "${failed[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"mobile=failure"* ]] || false
+  grep -E 'runs/(57|63)/jobs' "$FAKE_CALLS" && false
   [ "$(polls)" -eq 1 ]
 }
 
