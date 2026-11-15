@@ -44,3 +44,10 @@ Blocked by: None (can start immediately). The one-press question waits for packa
 - **The question's wording** lives in `WHICH_FRIEND`, used by the resolver's description, the chat's resolver rule, the Friend lookup rule, the library rule, the meal plan rule, the old chat's meal rule and the refusal. The findFreeFriends detour in `PLAN_RULES` and `FREE_TIME_MEAL_RULES` became "ask which one … and wait for the answer", so a meal still has a rule for 'several' in both chats.
 - **Two Friends of one full name and one department** cannot be told apart by words until package C's label: `department` narrows nothing, so the answer stays 'several'. A press on a face (tapped) still picks one.
 - **Tests.** Unit: `test/resolve-friend-words.unit.test.ts` (`friendsNamed`), `test/assistant-contested-ids.unit.test.ts` (`FoundIds`). Integration: `test/assistant-same-name-friends.integration.test.ts` (two 민수 and nothing planned, a tapped one planned, findFreeFriends then planMeal refused and a later 'one' planned, two 김민수 answered by "경영", "민수 어디야?" then findFriend, and the old chat's proposeQuest refused). `test/assistant-resolvers.integration.test.ts` now expects the department in each candidate. `MealPlanStage.friend` takes a department.
+
+### Agent usage (2026-11-15)
+
+This session (the ticket, the review, and the pull request) and the implementer subagent.
+
+- Agent time: about 21 minutes, an estimate from the transcripts' timestamps (the union of active stretches, gaps over 5 minutes left out).
+- Tokens: output 96,162; input 41,958,517, of which 41,684,623 were cache reads, 273,638 cache writes, and 256 uncached. Without cache reads: 370,056.
