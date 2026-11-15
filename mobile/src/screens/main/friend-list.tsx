@@ -140,12 +140,14 @@ function Rows({ friends, shown, onPress }: RowsProps): ReactElement {
 }
 
 // The friend list of the `Main` frame, at the left over the map: the pill, the round button that collapses the list,
-// and every Friend in a window of up to three rows. The pill opens the friend panel over the whole screen.
+// and every Friend in a window of up to three rows. The pill opens the friend panel over the whole screen, whose rows,
+// while the switch of the answer on the map is on, close it and do what a row of the list does.
 export function FriendList({ map, selection, room }: FriendListProps): ReactElement {
   const friends = useFriends().data;
   const [open, setOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const show = useShow({ map, selection });
+  const onMap = useAnswerSwitch();
   const { top } = useSafeAreaInsets();
   const shown = listRows(room, top).friends;
   return (
@@ -171,6 +173,14 @@ export function FriendList({ map, selection, room }: FriendListProps): ReactElem
         onClose={() => {
           setPanelOpen(false);
         }}
+        onShow={
+          onMap
+            ? (friend) => {
+                setPanelOpen(false);
+                show(friend);
+              }
+            : undefined
+        }
         open={panelOpen}
       />
     </View>
