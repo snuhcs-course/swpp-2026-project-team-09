@@ -9,12 +9,11 @@
 # branch changes reaches the job. A branch <line>/<name> is compared with origin/<line>/Main from all their common
 # ancestors, never with the previous push, whose run may have been cancelled before it checked anything. A push to a
 # Main skips the work that the merge queue's run of the same commit has already passed. Every other case, and any doubt
-# or failure, gives run=true. It also says which tests a job runs: tests=unit on a working branch's push, whose pull
-# request's integration and flow tests run in the merge queue, unless CI's own files changed; tests=all otherwise.
+# or failure, gives run=true.
 #
 # Usage: changes.sh <job key>, from the repository root, with GitHub's GITHUB_EVENT_NAME, GITHUB_REF, GITHUB_REF_NAME,
-# GITHUB_SHA and GITHUB_REPOSITORY, and GH_TOKEN for gh. It appends run=true or run=false and tests=unit or tests=all to
-# GITHUB_OUTPUT, or prints them when that is unset, prints one line that says why, and always exits 0.
+# GITHUB_SHA and GITHUB_REPOSITORY, and GH_TOKEN for gh. It appends run=true or run=false to GITHUB_OUTPUT, or prints it when that is unset, prints one line
+# that says why, and always exits 0.
 
 JOBS=(main-server socket-server worker-server match-server admin mobile flow-tests mobile-tests app-fingerprint
   deploy-scripts release-script terraform manifests)
@@ -72,10 +71,10 @@ reaches() {
 # Whether a merge_group run of CI passed on the commit: 0 when one did, 1 when none did, 2 when GitHub did not answer.
 # The queue moves Main to the very commit it tested, so that run is the Main commit's full run.
 queue_passed() {
-  local runs answer
+  local answer
   [[ -n ${GITHUB_REPOSITORY:-} && $1 =~ ^[0-9a-f]{40}$ ]] || return 2
-  runs="repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs"
-  answer=$(gh api "$runs?head_sha=$1&event=merge_group&per_page=100") || return 2
+  answer=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$1&event=merge_group&per_page=100") ||
+    return 2
   jq -e --arg sha "$1" 'any(.workflow_runs[];
     .event == "merge_group" and .head_sha == $sha and .status == "completed" and .conclusion == "success")' \
     <<<"$answer" >/dev/null && return 0
@@ -130,7 +129,6 @@ decide() {
     esac
     return
   fi
-  tests=unit
 
   # A shallow history can hide the common ancestors.
   if ! shallow=$(git rev-parse --is-shallow-repository) || [[ $shallow != false ]]; then
@@ -179,9 +177,6 @@ decide() {
   sort -z -u -o "$changed" "$changed"
   while IFS= read -r -d '' path; do
     count=$((count + 1))
-    case $path in
-      .github/workflows/ci.yml | .github/ci/*) tests=all ;;
-    esac
     if [[ -z $hit ]] && reaches "$path" "$job"; then
       hit=$reason
     fi
@@ -200,21 +195,17 @@ decide() {
   fi
 }
 
-# Records the decision once: run=… and tests=… in GITHUB_OUTPUT, or on stdout when that is unset, after the line that
-# says why.
+# Records the decision once: run=… in GITHUB_OUTPUT, or on stdout when that is unset, after the line that says why.
 record() {
   local run=$1 why=$2 text
   [[ -z $recorded ]] || return 0
   recorded=1
-  if [[ -n ${GITHUB_OUTPUT:-} ]] && ! { printf 'run=%s\ntests=%s\n' "$run" "$tests" >>"$GITHUB_OUTPUT"; } 2>/dev/null
-  then
-    run=true tests=all
+  if [[ -n ${GITHUB_OUTPUT:-} ]] && ! { echo "run=$run" >>"$GITHUB_OUTPUT"; } 2>/dev/null; then
+    run=true
     why="$why; GITHUB_OUTPUT cannot be written, so the step sets no output"
   fi
   if [[ $run == false ]]; then
     text="The job ${job:-without a key} skips its work: $why"
-  elif [[ $tests == unit ]]; then
-    text="The job ${job:-without a key} does its work, with unit tests only, as on every pull request's push: $why"
   else
     text="The job ${job:-without a key} does its work: $why"
   fi
@@ -227,13 +218,13 @@ record() {
   else
     echo "$text"
   fi
-  [[ -n ${GITHUB_OUTPUT:-} ]] || printf 'run=%s\ntests=%s\n' "$run" "$tests"
+  [[ -n ${GITHUB_OUTPUT:-} ]] || echo "run=$run"
 }
 
 main() {
-  job=${1:-} recorded='' changed='' tests=all
-  trap 'tests=all; record true "the script stopped before it decided" || true; [[ -z $changed ]] || rm -f "$changed" ||
-    true; exit 0' EXIT
+  job=${1:-} recorded='' changed=''
+  trap 'record true "the script stopped before it decided" || true; [[ -z $changed ]] || rm -f "$changed" || true; exit 0' \
+    EXIT
   decide "$job"
   record "$run" "$why"
 }
