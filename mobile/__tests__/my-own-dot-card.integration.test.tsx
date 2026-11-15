@@ -96,6 +96,7 @@ describe('the open card of the User', () => {
     await press(user, ME);
     await pass(500);
 
+    expect(myCard().getByRole('header', { name: HEAD })).toBeVisible();
     expect(placeOf(ME)).toEqual(before.at);
     expect(mapThings()).toEqual(before.things);
   });
@@ -138,6 +139,7 @@ describe('what the card leads to', () => {
   it('gives way to the answer of words sent under it', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY, async (user) => {
       await press(user, ME);
+      expect(myCard().getByRole('header', { name: HEAD })).toBeVisible();
     });
 
     expect(screen.queryByTestId('map-card')).toBeNull();
