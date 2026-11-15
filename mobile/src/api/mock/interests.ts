@@ -6,9 +6,10 @@
 
 import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
-import type { WatchedInterest } from '@/api/interest-types';
+import type { InterestMatches, WatchedInterest } from '@/api/interest-types';
 import { now } from '@/clock';
 import { answer } from './answer';
+import { GLOBAL_EVENTS } from './data/quests';
 
 // The watched interests as the main server keeps them (main-server's README, Interests), in memory while the app
 // runs. The mock reads no topics: an interest's one topic is its words, normalised, as on a main server without a
@@ -59,8 +60,21 @@ function remove(interestId: string): void {
   interests = interests.filter(({ id }) => id !== interestId);
 }
 
-export const mockInterests: Pick<ApiClient, 'listInterests' | 'watchInterest' | 'removeInterest'> = {
+// The mock's events whose title or description holds a topic of a watched interest. The mock reads no hashtags and
+// keeps no recruiting Quest's topics.
+function matches(): InterestMatches {
+  const topics = interests.flatMap((interest) => interest.topics);
+  const globalEvents = GLOBAL_EVENTS.filter(({ title, description }) =>
+    topics.some((topic) => normalised(`${title}${description}`).includes(topic)),
+  );
+  return { globalEvents: globalEvents.map(({ id }) => ({ id, watched: true })), quests: [] };
+}
+
+type MockInterests = Pick<ApiClient, 'listInterests' | 'watchInterest' | 'removeInterest' | 'listInterestMatches'>;
+
+export const mockInterests: MockInterests = {
   listInterests: () => answer('listInterests', () => [...interests], []),
+  listInterestMatches: () => answer('listInterestMatches', matches, { globalEvents: [], quests: [] }),
   watchInterest: (words) => answer('watchInterest', () => watch(words)),
   removeInterest: async (interestId) => {
     await answer('removeInterest', () => {

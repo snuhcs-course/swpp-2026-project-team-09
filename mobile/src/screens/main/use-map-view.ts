@@ -7,6 +7,7 @@
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
+import { useMarkPresses } from '@/features/map/use-interest-marks';
 import type { MapAvatar, MapLine } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
@@ -57,7 +58,8 @@ export interface UnaskedCards {
 // selected, the tutorial place pin over them, the User's own Avatar, which takes a press while the switch is on, and
 // the lines. While a Plan of an answer is shown, the Plan is drawn in their place, and a press on a candidate shows its
 // Plan; while a received invitation's card is, its own way is; while a made Quest's card is, its Places and the User
-// are. Once any of them closes, a camera left further out than the everyday map allows glides back in.
+// are. Once any of them closes, a camera left further out than the everyday map allows glides back in. While the switch
+// is on, a press on an interest mark opens its answer instead of a card.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
@@ -65,7 +67,8 @@ export function useMapView(
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
 ): AnswerMap {
-  const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap);
+  const marks = useMarkPresses(chat.chat, me.position);
+  const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap, marks.byId);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
@@ -80,7 +83,8 @@ export function useMapView(
   const mine = chat.onMap ? pressableMe(me.avatars) : me.avatars;
   return {
     contents: { markers: [...things.markers, ...pin.markers], avatars: [...avatars, ...mine], lines },
-    onPress: chat.framed || unasked ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
+    onPress:
+      chat.framed || unasked ? ignorePress : pressWithPin(pin, marks.pressing(pressOnMap(cards, map, selection))),
     ...limits,
   };
 }

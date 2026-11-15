@@ -28,6 +28,7 @@ import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
+import { useAskApp } from './app-turn';
 
 // Why the Assistant gave no answer: it could not answer now, which 다시 시도 sends again, or the User's messages of
 // the day are used up.
@@ -100,6 +101,10 @@ export interface Chat {
   reset: () => void;
   // Adds the app's own bubble, which no request sends.
   addOwn: (bubble: OwnBubble) => void;
+  // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
+  // User's words and `reply`'s answer as the Assistant's. `forgotten` when the conversation was forgotten meanwhile;
+  // a failure takes the turn back.
+  askApp: (asked: string, reply: () => Promise<AnswerReply>) => Promise<'shown' | 'forgotten' | 'failed'>;
   // How each library card of the conversation ended, by the card's place: its bubble and its key.
   outcomes: ReadonlyMap<string, CardOutcome>;
   finish: (card: string, outcome: CardOutcome) => void;
@@ -170,7 +175,7 @@ async function answerTo(messages: ChatMessage[], context: RequestContext | undef
   }
 }
 
-interface Bubbles {
+export interface Bubbles {
   bubbles: readonly ChatBubble[];
   // What was said, as the next request sends it, without waiting for a render.
   said: { readonly current: readonly ChatBubble[] };
@@ -316,6 +321,7 @@ export function useChat(readContext?: () => RequestContext | undefined): Chat {
   }, [forget, show]);
 
   const addOwn = useAddOwn(add);
+  const askApp = useAskApp({ said, show, add }, conversation, setWaiting);
 
-  return { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish, unfinish, rooms, showRoom };
+  return { bubbles, waiting, send, retry, reset, addOwn, askApp, outcomes, finish, unfinish, rooms, showRoom };
 }
