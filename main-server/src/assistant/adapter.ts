@@ -32,7 +32,7 @@ import { withApprovalLine } from './approval-line.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
 import { FoundIds } from './found-ids.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
-import { keptRefusal, textBeside } from './refusals/refusals.js';
+import { keptRefusal, lookupBeside, textBeside } from './refusals/refusals.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
@@ -329,6 +329,7 @@ function withLine(reply: FeatureReply, messages: readonly ChatMessage[], observe
 function replyOf(text: string, finishReason: string, feature: Feature, context: ToolContext): FeatureReply | null {
   const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
   presented.refusal = keptRefusal(presented);
+  presented.lookup = lookupBeside(presented);
   const said = textBeside(text, presented.refusal);
   if (said !== '') {
     return { ...presented, text: said, noTextFinishReason: null };

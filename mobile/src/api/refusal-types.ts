@@ -21,6 +21,9 @@ export const REFUSAL_KINDS = [
   'not-watched-friend',
   'not-watched-shuttle',
   'which-friend',
+  'course-and-room',
+  'other-library',
+  'for-someone-else',
 ] as const;
 
 export type RefusalKind = (typeof REFUSAL_KINDS)[number];

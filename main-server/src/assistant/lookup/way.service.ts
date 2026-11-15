@@ -34,7 +34,7 @@ export class WayService {
 
   async find(
     userId: string,
-    ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null },
+    ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null; about?: 'shuttle' },
     at: { now: Date; location: Position | null },
   ): Promise<WayAnswer> {
     return wayAnswer(await this.argsFor(userId, ask, at));

@@ -7,21 +7,31 @@
 import { z } from 'zod';
 import { type FriendViewService } from '../../friends/friend-view.service.js';
 import { type PlaceLookup } from '../../places/place-lookup.js';
-import { defineTool, type NoneFound, noneFound, type Tool } from '../feature.js';
+import { defineTool, type NoneFound, noneFound, type Tool, type ToolContext } from '../feature.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { placeLabelOf } from '../gathering/place-naming.js';
 import { koreaDate } from '../korea-time.js';
-import { FRIEND_KINDS, type FriendKind, type Refusal, REFUSE_KINDS, type RefuseKind } from './refusal.dto.js';
-import { friendNowLine, friendRefusal, plainRefusal } from './refusals.js';
+import { friendLookup } from '../lookup/friend.service.js';
+import {
+  FRIEND_KINDS,
+  type FriendKind,
+  PLACE_KINDS,
+  type PlaceKind,
+  type Refusal,
+  REFUSE_KINDS,
+  type RefuseKind,
+} from './refusal.dto.js';
+import { friendNowLine, friendRefusal, placeRefusal, plainRefusal, standsBeside } from './refusals.js';
 
 // The refusal presenter of an app that draws answers: the model names the case, and the server writes the words and
-// the buttons from its table, a Friend's name and where they are now from the Friend view.
+// the buttons from its table, a Friend's name and what is seen of them from the Friend view, a library's from the
+// Places.
 
-// What the words of a Friend are read from: the Friend view, the Friend's Classes of the day, and Place names.
+// What the words of a Friend are read from: the Friend view, the Friend's Classes of the day, and the Places.
 export interface RefusalSources {
   friends: Pick<FriendViewService, 'list'>;
   days: Pick<UserDayService, 'itemsOn'>;
-  places: Pick<PlaceLookup, 'byId'>;
+  places: Pick<PlaceLookup, 'byId' | 'nearTo'>;
 }
 
 const input = z.object({
@@ -30,18 +40,72 @@ const input = z.object({
     .uuid()
     .optional()
     .describe(
-      "For past-location, others-sharing and not-watched-friend: the Friend's id, as resolveFriend returned it in this message or [Tapped: friend …] gives it. Left out for the other cases.",
+      "For past-location, others-sharing, not-watched-friend, course-and-room and for-someone-else: the Friend's id, as resolveFriend returned it in this message or [Tapped: friend …] gives it. Left out for the other cases.",
+    ),
+  placeId: z
+    .uuid()
+    .optional()
+    .describe(
+      'For other-library: the library, as resolvePlace returned it in this message or [Tapped: place …] gives it. Left out for the other cases.',
     ),
 });
 
+type Input = z.output<typeof input>;
+
 const isFriendKind = (kind: RefuseKind): kind is FriendKind => FRIEND_KINDS.some((each) => each === kind);
 
-async function refusalFor(
-  { friends, days, places }: RefusalSources,
-  kind: RefuseKind,
-  friendId: string | undefined,
-  { userId, now }: { userId: string; now: Date },
-): Promise<Refusal | NoneFound> {
+const isPlaceKind = (kind: RefuseKind): kind is PlaceKind => PLACE_KINDS.some((each) => each === kind);
+
+async function friendWords(
+  sources: RefusalSources,
+  kind: FriendKind,
+  friendId: string,
+  { userId, now }: ToolContext,
+): Promise<Refusal> {
+  const { friends, days, places } = sources;
+  const friend = (await friends.list(userId)).find(({ id }) => id === friendId);
+  if (friend === undefined) {
+    return plainRefusal('not-a-friend');
+  }
+  const { name } = friend;
+  if (kind === 'course-and-room') {
+    const answer = await friendLookup(sources, userId, friendId, now);
+    return answer === null ? plainRefusal('not-a-friend') : friendRefusal(kind, { name, seen: answer.unseen });
+  }
+  if (kind !== 'past-location') {
+    return friendRefusal(kind, { name, seen: [] });
+  }
+  const classes = (await days.itemsOn(friendId, koreaDate(now))).filter(({ isClass }) => isClass);
+  const placeLabel = (placeId: string): string | null => {
+    const place = places.byId(placeId);
+    return place === null ? null : placeLabelOf(place);
+  };
+  const seen = friendNowLine(friend, classes, now, placeLabel);
+  return friendRefusal(kind, { name, seen: [{ text: seen, strong: false }] });
+}
+
+function placeWords(
+  { places }: RefusalSources,
+  kind: PlaceKind,
+  placeId: string,
+  context: ToolContext,
+): Refusal | NoneFound {
+  const tapped = context.context.tapped?.kind === 'place' ? context.context.tapped.placeId : null;
+  context.found.refuseUnfound('place', placeId === tapped ? [] : [placeId]);
+  const place = places.byId(placeId);
+  return place === null ? noneFound('There is no such Place.') : placeRefusal(kind, place.name);
+}
+
+function refusalFor(
+  sources: RefusalSources,
+  { kind, userId: friendId, placeId }: Input,
+  context: ToolContext,
+): Refusal | NoneFound | Promise<Refusal | NoneFound> {
+  if (isPlaceKind(kind)) {
+    return placeId === undefined
+      ? noneFound(`${kind} names a library: find it with resolvePlace and give its placeId.`)
+      : placeWords(sources, kind, placeId, context);
+  }
   if (!isFriendKind(kind)) {
     return plainRefusal(kind);
   }
@@ -50,19 +114,7 @@ async function refusalFor(
       `${kind} names a Friend: find them with resolveFriend and give their userId. When resolveFriend answers none, refuse with not-a-friend.`,
     );
   }
-  const friend = (await friends.list(userId)).find(({ id }) => id === friendId);
-  if (friend === undefined) {
-    return plainRefusal('not-a-friend');
-  }
-  if (kind !== 'past-location') {
-    return friendRefusal(kind, { name: friend.name, now: '' });
-  }
-  const classes = (await days.itemsOn(friendId, koreaDate(now))).filter(({ isClass }) => isClass);
-  const placeLabel = (placeId: string): string | null => {
-    const place = places.byId(placeId);
-    return place === null ? null : placeLabelOf(place);
-  };
-  return friendRefusal(kind, { name: friend.name, now: friendNowLine(friend, classes, now, placeLabel) });
+  return friendWords(sources, kind, friendId, context);
 }
 
 export function refuse(sources: RefusalSources): Tool {
@@ -70,12 +122,13 @@ export function refuse(sources: RefusalSources): Tool {
     description:
       "Refuses a request the app cannot or will not answer, one of the cases its rules list. The app shows the server's words for the case and buttons of what it can do instead; write nothing beside the call or after it.",
     input,
-    run: async ({ kind, userId: friendId }, context) => {
+    run: async (asked, context) => {
       const { presented } = context;
-      if (presented.answer !== null || presented.lookup !== null) {
+      const { answer, lookup } = presented;
+      if (answer !== null || (lookup !== null && !standsBeside(asked.kind, lookup))) {
         return { result: 'not shown', reason: 'The app already draws an answer on the map.' };
       }
-      const refusal = await refusalFor(sources, kind, friendId, context);
+      const refusal = await refusalFor(sources, asked, context);
       if ('result' in refusal) {
         return refusal;
       }
@@ -103,8 +156,12 @@ export const REFUSAL_RULES = `A request the app cannot or will not answer is ref
   - others-sharing: changing what a Friend shares, such as turning their location on (민수 위치 켜 줘).
   - not-watched-friend: telling the User later when they meet or pass a Friend (민수랑 마주칠 때 알려 줘).
   - not-watched-shuttle: telling the User later when the shuttle comes (셔틀 오면 알려 줘). Asking when the shuttle comes now is not this case.
-- For past-location, others-sharing and not-watched-friend, first find the Friend with resolveFriend and give their userId, or take it from [Tapped: friend …]. When resolveFriend answers none, refuse with not-a-friend; when it answers several, ask which one.
+  - course-and-room: a Friend's course, class name, or room (민수 지금 무슨 수업 들어?, 지은이 어느 강의실이야?). The app never shows them; where and when the Class ends is shown.
+  - other-library: booking a room or a seat at a library other than 관정, which the app does not book (신양 스터디룸 예약해 줘).
+  - for-someone-else: accepting, declining, or answering an invitation in a Friend's place (민수 대신 수락해 줘).
+- For past-location, others-sharing, not-watched-friend, course-and-room and for-someone-else, first find the Friend with resolveFriend and give their userId, or take it from [Tapped: friend …]. When resolveFriend answers none, refuse with not-a-friend; when it answers several, ask which one.
 - When resolveFriend answers several with a note that the app asks which one, the app shows the question with a cell for each candidate: write nothing beside the call or after it, and call nothing else. The User's choice comes back as the Friend's full name with [Tapped: friend …], which gives their id.
+- course-and-room and other-library also answer, on the map, the part that can be answered, in the same message: for course-and-room, call findFriend with the Friend too; for other-library, find the library with resolvePlace, call findWay with it as to, and give it to refuse as placeId. The app draws the Friend or the way with the refusal's words, so write nothing there either, not even the one sentence the rules of findFriend and findWay ask for.
 - Greetings and thanks are answered in a short sentence, not refused.`;
 
 // An app that draws answers also gets refuse and its rules.

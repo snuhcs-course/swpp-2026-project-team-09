@@ -159,6 +159,8 @@ interface CardProps {
   invitation: PlanInvitation;
   // How high the card may stand before it scrolls, null until it is known.
   room: number | null;
+  // A refusal's lines, which stand in place of the Plan's first (board n8b).
+  over?: readonly AnswerLine[];
 }
 
 interface BelowProps extends CardProps {
@@ -228,12 +230,13 @@ function linesOf({ plan }: ShownAnswer, answer: AnswerReply, adding: boolean): r
 // place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
 // none takes a press while a recalculation or "이대로 초대" is on its way. A Friend's chip and the mark of a Friend's
 // cell open the Friend's profile over the card.
-export function PlanCard({ shown, answer, invitation, room }: CardProps): ReactElement {
+export function PlanCard({ shown, answer, invitation, room, over = [] }: CardProps): ReactElement {
   const { plan, basisOpen, recalculating } = shown;
   const busy = recalculating || invitation.sending;
   const fix = useCorrections(shown, answer.input);
   const openProfile = useOpenFriendProfile();
-  const lines = linesOf(shown, answer, fix.adding);
+  const own = linesOf(shown, answer, fix.adding);
+  const lines = fix.adding ? own : [...over, ...own.slice(over.length)];
   return (
     <View style={styles.plan}>
       <ConditionChips

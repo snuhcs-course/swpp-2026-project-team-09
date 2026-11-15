@@ -78,9 +78,15 @@ type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 
 const NO_RECALCULATION: Recalculation = { location: null, onFailed: sayNothing };
 
-// A failure and the app's own bubble are no reply.
+// A reply that only refuses to answer for a Friend, which the server never sends with an answer or a Lookup, keeps
+// what is on screen, and the card puts its lines over the kept card's (board n8b).
+export const keepsShown = ({ refusal }: ChatBubble): boolean => refusal?.kind === 'for-someone-else';
+
+// A failure, the app's own bubble, and a reply that keeps what is on screen are no reply.
 export function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefined {
-  return bubbles.findLast(({ role, failure, own = false }) => role === 'assistant' && failure === null && !own);
+  return bubbles.findLast(
+    (bubble) => bubble.role === 'assistant' && bubble.failure === null && bubble.own !== true && !keepsShown(bubble),
+  );
 }
 
 function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
