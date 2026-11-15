@@ -2355,6 +2355,29 @@ Proposal)`.
     a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown
     Place in a `from` or in `placeId`.
 
+- `POST /assistant/taps` with a User's access token, what the User pressed on the everyday map, a building
+  (`{ "kind": "place", "placeId" }`) or a Friend's face (`{ "kind": "friend", "userId" }`), and where the User is now
+  (`location`, as above):
+
+  ```json
+  { "tapped": { "kind": "place", "placeId": "…" }, "location": { "latitude": 37.45016, "longitude": 126.95259 } }
+  ```
+
+  answers `200` with a Lookup that carries a `card` (`title`, `subtitle`, `facts`, and `note`), worked out by
+  `src/assistant/lookup/place-lookup.ts` or `friend-lookup.ts`. The model is not called, and the User's daily messages
+  are not counted.
+
+  - **A building** (kind `place`): the walk there and when the User arrives, or `지금 여기 있어요` only when the outline
+    of the Place holds their location; how long they can stay before their next item today; each Restaurant there with
+    a menu for the meal now; the published events there today; and the Friends the User's map shows in it. Its actions
+    are `plan` buttons (`여기서 먹기`, `행사 보기`, `같이 갈 파티`), whose `input` goes to `POST /assistant/answers`, and the
+    way there unless the User is in it.
+  - **A Friend** (kind `friend`): the Friend Lookup with a card of their full name, what the User sees of them, and
+    their Timetable label, Place, and walk from the User, or at the Timetable only their Class and the next one. It is
+    read only through the Friend view, as `findFriend` is.
+  - **Refused with 400:** a body of another shape, and a `placeId` that is no Place. **Refused with 404
+    `FRIEND_NOT_FOUND`:** a `userId` who is not the User's Friend.
+
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
   `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
   `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds

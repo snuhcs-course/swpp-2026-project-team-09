@@ -9,15 +9,25 @@
 
 import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Post } from '@nestjs/common';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
+import { friendNotFound } from '../friends/friends.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { AssistantService } from './assistant.service.js';
-import { type AnswerReply, type Recalculation, recalculationSchema } from './dto/answer.dto.js';
+import {
+  type AnswerReply,
+  type Lookup,
+  type Recalculation,
+  recalculationSchema,
+  type Tap,
+  tapSchema,
+} from './dto/answer.dto.js';
 import {
   type AssistantMessages,
   assistantMessagesSchema,
   type AssistantReplyDto,
 } from './dto/assistant-messages.dto.js';
 import { outOfReach } from './free-time/tool-parts.js';
+import { FriendLookupService } from './lookup/friend.service.js';
+import { PlaceCardService } from './lookup/place.service.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 
 @Controller('assistant')
@@ -25,6 +35,8 @@ export class AssistantController {
   constructor(
     private readonly assistant: AssistantService,
     private readonly answers: PlanAnswersService,
+    private readonly placeCards: PlaceCardService,
+    private readonly friendLookups: FriendLookupService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -56,5 +68,27 @@ export class AssistantController {
       throw new BadRequestException('A plan is for a day from today to a week ahead');
     }
     return this.answers.plan(user.id, input, { now, location });
+  }
+
+  // The card of a pressed building or Friend's face, without the model and without counting the User's messages.
+  @Post('taps')
+  @HttpCode(HttpStatus.OK)
+  async tap(
+    @CurrentUser() user: SignedInUser,
+    @Body({ schema: tapSchema }) { tapped, location }: Tap,
+  ): Promise<Lookup> {
+    const at = { now: this.clock.now(), location };
+    if (tapped.kind === 'place') {
+      const card = await this.placeCards.find(user.id, tapped.placeId, at);
+      if (card === null) {
+        throw new BadRequestException('No Place has this id');
+      }
+      return card;
+    }
+    const card = await this.friendLookups.tap(user.id, tapped.userId, at);
+    if (card === null) {
+      throw friendNotFound();
+    }
+    return card;
   }
 }
