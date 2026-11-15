@@ -8,12 +8,12 @@
 import type { LibrarySpace } from '@/api/assistant-types';
 import type { StudyBuilding, StudySpace } from '@/api/study-types';
 import { type CardView, cardId, type StudyRow } from '@/features/map/adapter';
+import { middleOf, mergedCards, overlapSets } from '@/features/map/overlap';
 import { seatState } from '@/library/cards/seats';
 import { tappedSlot } from '@/library/cards/made';
 import type { Slot } from '@/library/cards/payloads';
 import { minutesOf } from '@/library/cards/times';
 import type { LibrarySeat } from '@/library/replies';
-import { middleOf, mergedCards, overlapSets } from '@/features/map/overlap';
 import { shortTitle } from '@/features/map/short-name';
 
 // The 공부공간 layer: one pin per building, its card listing its Study Spaces, and the pins merged while the whole

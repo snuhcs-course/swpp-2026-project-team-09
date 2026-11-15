@@ -14,7 +14,7 @@ import { middleOf, mergedCards, overlapSets } from './overlap';
 // other kinds keeps its own pin.
 
 // An event's own pin, or a place's pin of events alone, that is not within another.
-function merges({ kind, mark, within }: CardView): boolean {
+function mergeable({ kind, mark, within }: CardView): boolean {
   if (within !== undefined) {
     return false;
   }
@@ -55,7 +55,7 @@ function clusterCard(members: readonly CardView[]): CardView {
 // Which events' pins would overlap at this zoom: the ids of each set of two or more, in the cards' order. Without a
 // zoom, none. As with `studyMerges`, the main screen keys its cards by these sets.
 export function eventMerges(cards: readonly CardView[], zoom: number | null): string[][] {
-  return overlapSets(cards, zoom, merges);
+  return overlapSets(cards, zoom, mergeable);
 }
 
 // The cards with each set of `eventMerges` merged, as `clusteredStudy` does.

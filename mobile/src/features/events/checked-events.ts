@@ -43,7 +43,10 @@ export function useCheckEvent(): (eventId: string) => void {
       queryClient.setQueryData<CheckedEvents>(CHECKED_EVENTS_KEY, (checked = {}) =>
         stillNew({ ...checked, [eventId]: publishedAt }, at, NEW_FOR_MS),
       );
-      void keepChecked(eventId, publishedAt, at, NEW_FOR_MS).catch(() => null);
+      // Read again once kept, so that a first read still on its way does not take the check back.
+      void keepChecked(eventId, publishedAt, at, NEW_FOR_MS)
+        .then(() => queryClient.invalidateQueries({ queryKey: CHECKED_EVENTS_KEY }))
+        .catch(() => null);
     },
     [queryClient],
   );

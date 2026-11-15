@@ -285,17 +285,17 @@ function useBottomRoom(
 // mounted while another tab is shown, so that the map, the selection, the route and the lists are kept.
 //
 // How it grows: `useMainMap` owns the map's handle, its camera and the moves; `useSelection` holds what is selected,
-// which is the card that is open; a Global Event's card that closes checks its event (`useCheckingSelection`). A part of
-// the screen takes `map`, `me` for the User's position and `selection`, and gives what it shows. What floats over the
-// map is a child of `OverMap`, in the frame's order, the later above the earlier; a part that a card hides asks
+// which is the card that is open; a Global Event's card that closes checks its event (`useCheckingSelection`). A part
+// of the screen takes `map`, `me` for the User's position and `selection`, and gives what it shows. What floats over
+// the map is a child of `OverMap`, in the frame's order, the later above the earlier; a part that a card hides asks
 // `selection.open`. A row of a list selects a thing with `selection.select(cardId.friend(id))` and moves the map with
-// `map.goTo`. Any part reads the User's position with
-// `usePosition()`: the signed-in place's layout holds the one watch of the phone. The map is told what the controls
-// cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
-// itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
-// the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing; while
-// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`). After Onboarding on this
-// phone the first run asks its three things, one card at a time, while nothing else takes the bottom (`useFirstRun`).
+// `map.goTo`. Any part reads the User's position with `usePosition()`: the signed-in place's layout holds the one watch
+// of the phone. The map is told what the controls cover of its edges (`mapInset`), so that its credit and the
+// provider's logo stay clear of them. A part that fits itself to the screen takes `room`: the stage's size and the open
+// card's height. While the answer frame is shown, the lists, the zoom control and the selected thing's card give way,
+// and a press on a marker does nothing; while its answer has a Plan, the map draws the Plan in place of its usual
+// things (`useMapView`). After Onboarding on this phone the first run asks its three things, one card at a time, while
+// nothing else takes the bottom (`useFirstRun`).
 export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();

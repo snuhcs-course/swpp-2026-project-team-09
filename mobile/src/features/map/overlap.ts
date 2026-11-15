@@ -29,19 +29,19 @@ function apart(one: LatLng, other: LatLng, zoom: number): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-// The ids of each set of two or more of the cards that `merges` that would overlap at this zoom, in the cards' order:
+// The ids of each set of two or more of the `mergeable` cards that would overlap at this zoom, in the cards' order:
 // a card joins the first set whose first card is near it. Without a zoom, none.
 export function overlapSets(
   cards: readonly CardView[],
   zoom: number | null,
-  merges: (card: CardView) => boolean,
+  mergeable: (card: CardView) => boolean,
 ): string[][] {
   if (zoom === null) {
     return [];
   }
   const seeds: CardView[][] = [];
   for (const card of cards) {
-    if (merges(card)) {
+    if (mergeable(card)) {
       const near = seeds.find(
         ([seed]) => seed !== undefined && apart(seed.position, card.position, zoom) < OVERLAP_POINTS,
       );

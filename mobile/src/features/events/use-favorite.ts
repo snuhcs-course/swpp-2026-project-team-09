@@ -19,7 +19,7 @@ export interface Favorite {
   on: boolean;
   // Shows the new state at once, and the old one again with a toast when the main server did not take it; the list is
   // then fetched again, so that quick taps of which one failed end as the main server holds them. Starring a New Event
-  // checks it, even if the main server does not take the star: the User has seen it.
+  // checks it once the main server took the star, so that a star that turns back leaves the event as it was.
   turn: (on: boolean) => void;
 }
 
@@ -43,14 +43,18 @@ export function useFavorite(eventId: string): Favorite {
       // A fetch on its way holds the list from before the change.
       void queryClient.cancelQueries({ queryKey: GLOBAL_EVENTS_KEY });
       show(next);
-      if (next) {
-        check(eventId);
-      }
-      apiClient.setFavoriteEvent(eventId, next).catch(() => {
-        show(!next);
-        showToast(FAVORITE_NOT_CHANGED);
-        void queryClient.invalidateQueries({ queryKey: GLOBAL_EVENTS_KEY });
-      });
+      apiClient
+        .setFavoriteEvent(eventId, next)
+        .then(() => {
+          if (next) {
+            check(eventId);
+          }
+        })
+        .catch(() => {
+          show(!next);
+          showToast(FAVORITE_NOT_CHANGED);
+          void queryClient.invalidateQueries({ queryKey: GLOBAL_EVENTS_KEY });
+        });
     },
     [check, eventId, queryClient, showToast],
   );
