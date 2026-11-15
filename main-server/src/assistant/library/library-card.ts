@@ -20,6 +20,8 @@ export interface LibraryCardSpace {
   id: string;
   name: string;
   floor: number;
+  // The catalogue's kind, such as 'reading-room' or 'notebook-zone': the phone groups the seat spaces of a floor by it.
+  kind: string;
   placeNumber: string;
   unit: 'seat' | 'room';
   roomNo: number;
@@ -102,14 +104,15 @@ function hhmm(clock: string): string {
 
 // A space as a card or the 공부공간 layer carries it; null for one the catalogue lacks the parts of.
 export function cardSpace(space: LibrarySpace, seatNos: number[]): LibraryCardSpace | null {
-  const { floor, unit, roomNo, sectorNo, hours } = space;
-  if (floor === null || unit === null || roomNo === null || sectorNo === null || hours === null) {
+  const { floor, kind, unit, roomNo, sectorNo, hours } = space;
+  if (floor === null || kind === null || unit === null || roomNo === null || sectorNo === null || hours === null) {
     return null;
   }
   return {
     id: space.id,
     name: space.name,
     floor,
+    kind,
     placeNumber: KWANJEONG_PLACE_NUMBER,
     unit,
     roomNo,

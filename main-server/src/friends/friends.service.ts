@@ -38,11 +38,9 @@ function pairOf(userId: string, otherUserId: string): Pair {
 
 const USER_SUMMARY = { select: { id: true, name: true, department: true } } as const;
 
-const WITH_SWITCH = { select: { ...USER_SUMMARY.select, masterSwitchOn: true } } as const;
+const AS_FRIEND = { select: { ...USER_SUMMARY.select, friendId: true, masterSwitchOn: true } } as const;
 
-type UserSummary = Pick<User, 'id' | 'name' | 'department'>;
-
-function otherOf(row: { userAId: string; userA: UserSummary; userB: UserSummary }, userId: string): UserSummary {
+function otherOf<T>(row: { userAId: string; userA: T; userB: T }, userId: string): T {
   return row.userAId === userId ? row.userB : row.userA;
 }
 
@@ -208,18 +206,22 @@ export class FriendsService {
   async listFriends(userId: string): Promise<FriendDto[]> {
     const rows = await this.prisma.friendship.findMany({
       where: { acceptedAt: { not: null }, ...ofUser(userId) },
-      include: { userA: WITH_SWITCH, userB: WITH_SWITCH },
+      include: { userA: AS_FRIEND, userB: AS_FRIEND },
     });
     const visible = await this.visibility.visibleTo(userId);
     return rows
-      .map((row) => {
+      .flatMap((row) => {
+        const { acceptedAt } = row;
+        if (acceptedAt === null) {
+          return [];
+        }
         const friend = otherOf(row, userId);
         const seen = levelSeen({
           bothMasterSwitchesOn: row.userA.masterSwitchOn && row.userB.masterSwitchOn,
           commonParty: false,
           friendship: [row.userALevel, row.userBLevel],
         });
-        return toFriendDto(friend, endOf(row, userId), { seen, visible: visible.has(friend.id) });
+        return [toFriendDto(friend, endOf(row, userId), { seen, visible: visible.has(friend.id), acceptedAt })];
       })
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }

@@ -1968,6 +1968,18 @@ Once the request is ready, the booker's phone reads the companions' names and �
 companion the library did not know. The BSEQNO stays on the phone, in `room-bookings.ts`'s map, so that a later cancel
 can tell the server "the booking of request X was cancelled" with no body.
 
+### The seat card's room
+
+A seat card the Assistant gave for one of 관정관's seat spaces starts with the room chip ("7층 열람실 ▾",
+`cards/seat-rooms.ts`): the floor and kind of room in use. Tapping it lists the rooms in a column per floor and a row
+per kind, each cell with the free seats, for the card's time, of the seat space of that room with the most of them;
+only then are the sectors the 공부공간 layer gives read, all at once (`screens/main/library/use-room-counts.ts`). One
+tap fills the same time in that space, and 되돌리기 returns to the room the card first showed. Without a library
+session the cells show names only, and a tap fills the largest space of the room. When the card's own room has no free
+seat for its time, the phone fills the space of the same kind with the most free seats, else the one with the most.
+The chat keeps the room shown with the card, and later requests send the card by the key of that room's book card,
+which names the space and the time and no count.
+
 ### Privacy
 
 Library data never leaves the phone. The session stays in the web views' cookie jar, which no app code reads; the
