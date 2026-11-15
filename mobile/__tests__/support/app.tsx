@@ -33,6 +33,7 @@ import FriendsScreen from '@/app/(signed-in)/me/friends/index';
 import FriendRequestsScreen from '@/app/(signed-in)/me/friends/requests';
 import MyPartiesScreen from '@/app/(signed-in)/me/parties';
 import InterestsScreen from '@/app/(signed-in)/me/interests';
+import LocationSharingScreen from '@/app/(signed-in)/me/location-sharing';
 import MapSourcesScreen from '@/app/(signed-in)/map-sources';
 import MenusScreen from '@/app/(signed-in)/menus';
 import ClassFormScreen from '@/app/(signed-in)/me/timetable/class';
@@ -83,6 +84,7 @@ export async function startApp(initialUrl = '/', more: Record<string, ComponentT
       '(signed-in)/me/friends/add': AddFriendScreen,
       '(signed-in)/me/parties': MyPartiesScreen,
       '(signed-in)/me/interests': InterestsScreen,
+      '(signed-in)/me/location-sharing': LocationSharingScreen,
       '(signed-in)/me/timetable/index': TimetableScreen,
       '(signed-in)/me/timetable/class': ClassFormScreen,
       '(signed-in)/invite/[token]': InviteScreen,

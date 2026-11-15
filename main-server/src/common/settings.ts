@@ -14,6 +14,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -127,6 +128,9 @@ export const settingsSchema = z
       .transform((value) => value === 'true'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
+    // How often, in seconds, the main server sends the Notifications whose time has come. 0 never sends them by itself,
+    // so an empty value is refused rather than read as 0.
+    NOTIFICATIONS_TICK_SECONDS: z.string().regex(/^\d+$/u).default('15').pipe(z.coerce.number<string>().max(3600)),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

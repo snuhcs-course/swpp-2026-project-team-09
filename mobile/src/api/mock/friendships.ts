@@ -7,6 +7,7 @@
 
 import { ApiError } from '@/api/errors';
 import type {
+  AskedMoment,
   Friend,
   FriendLevel,
   InviteLink,
@@ -59,6 +60,9 @@ const PEOPLE: readonly Person[] = [
 
 interface State {
   friends: Friend[];
+  // Each Friend's own end, which the User never changes: what the two see at the start, and the building for a new
+  // Friend.
+  ends: Map<string, FriendLevel>;
   requests: Request[];
   links: Map<string, Link>;
   made: number;
@@ -67,6 +71,7 @@ interface State {
 function firstState(): State {
   return {
     friends: [...FRIENDS],
+    ends: new Map(FRIENDS.map(({ id, seen }) => [id, seen])),
     requests: [...FRIEND_REQUESTS],
     links: new Map([
       [INVITE_LINK_FROM_YUJIAN, { senderId: 'u5', expiresAt: Date.parse(FRAME_NOW) + LINK_LIFETIME_MS, used: false }],
@@ -111,8 +116,32 @@ function hasPosition(id: string): boolean {
 function befriend(id: string): void {
   const { name, department } = personOf(id);
   state.requests = state.requests.filter(({ from, to }) => from !== id && to !== id);
-  const friend: Friend = { id, name, department, level: 'building', sharing: true, visible: hasPosition(id) };
+  const friend: Friend = {
+    id,
+    name,
+    department,
+    level: 'building',
+    seen: 'building',
+    sharing: true,
+    visible: hasPosition(id),
+    askedOff: false,
+    askedPlan: false,
+  };
+  state.ends.set(id, 'building');
   state.friends = [...state.friends, friend].toSorted((one, other) => one.name.localeCompare(other.name, 'ko'));
+}
+
+const FROM_LEAST: readonly FriendLevel[] = ['timetable', 'building', 'exact'];
+
+function lower(one: FriendLevel, other: FriendLevel): FriendLevel {
+  return FROM_LEAST.indexOf(one) < FROM_LEAST.indexOf(other) ? one : other;
+}
+
+// Whether the User sees the Friend is left to the User's end, as before the Friend's end was kept.
+function atLevel(friend: Friend, level: FriendLevel): Friend {
+  const sharing = level !== 'timetable';
+  const seen = lower(level, state.ends.get(friend.id) ?? level);
+  return { ...friend, level, seen, sharing, visible: sharing && hasPosition(friend.id) };
 }
 
 function friendOrRefuse(userId: string): Friend {
@@ -171,13 +200,25 @@ export const mockFriendships = {
       ({ userId }) =>
         !FRIENDS.some(({ id }) => id === userId) || state.friends.some(({ id, visible }) => id === userId && visible),
     ),
-  // The mock keeps the User's end only, and takes the Friend's to be as high.
   setFriendLevel: (userId: string, level: FriendLevel): void => {
     const friend = friendOrRefuse(userId);
-    const sharing = level !== 'timetable';
-    state.friends = state.friends.map((other) =>
-      other === friend ? { ...friend, level, sharing, visible: sharing && hasPosition(userId) } : other,
-    );
+    state.friends = state.friends.map((other) => (other === friend ? atLevel(friend, level) : other));
+  },
+  // Refused as a whole when one is no Friend.
+  recordAsked: (userIds: string[], moment: AskedMoment): void => {
+    for (const userId of userIds) {
+      friendOrRefuse(userId);
+    }
+    state.friends = state.friends.map((friend) => {
+      if (!userIds.includes(friend.id)) {
+        return friend;
+      }
+      return moment === 'off' ? { ...friend, askedOff: true } : { ...friend, askedPlan: true };
+    });
+  },
+  lowerLevels: (level: FriendLevel): void => {
+    const above = new Set(FROM_LEAST.slice(FROM_LEAST.indexOf(level) + 1));
+    state.friends = state.friends.map((friend) => (above.has(friend.level) ? atLevel(friend, level) : friend));
   },
   endFriendship: (userId: string): void => {
     const friend = friendOrRefuse(userId);

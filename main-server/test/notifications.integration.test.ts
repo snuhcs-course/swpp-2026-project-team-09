@@ -11,9 +11,10 @@ import { type Redis } from 'ioredis';
 import request from 'supertest';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { z } from 'zod';
+import { PrismaClient } from '../src/generated/prisma/client.js';
 import { type NotificationsService } from '../src/notifications/notifications.service.js';
 import { signInUser, TestUser } from './friends.js';
+import { connectToDatabase } from './quests.js';
 import { withAccessToken } from './sign-in.js';
 import { SignalWatcher, signalsWhile } from './signals.js';
 import { startApp } from './start-app.js';
@@ -27,6 +28,7 @@ let app: INestApplication<Server>;
 let watcher: SignalWatcher;
 let notifications: NotificationsService;
 let redis: Redis;
+let prisma: PrismaClient;
 
 beforeAll(async () => {
   [app, watcher] = await Promise.all([startApp(inject('settings')), SignalWatcher.start()]);
@@ -35,9 +37,11 @@ beforeAll(async () => {
   const { REDIS } = await import('../src/common/redis.module.js');
   notifications = app.get(registered);
   redis = app.get<Redis>(REDIS);
+  prisma = connectToDatabase();
 });
 
 afterAll(async () => {
+  await prisma.$disconnect();
   await watcher.stop();
   await app.close();
 });
@@ -202,34 +206,7 @@ describe('A cancel through the service', () => {
   });
 });
 
-describe('What the service keeps of a User', () => {
-  it('drops the one with the earliest time when a 101st is kept', async () => {
-    const user = await signInUser(app);
-    // 100 Notifications a minute apart from 00:00 UTC, kept out of order, the earliest at 00:00.
-    await Promise.all(
-      [...Array.from({ length: 99 }, (_, index) => index + 1), 0].map((minute) =>
-        notifications.schedule(
-          user.id,
-          accepted('민수', `party-${String(minute)}`),
-          new Date(Date.UTC(2026, 10, 14, 0, minute)),
-        ),
-      ),
-    );
-
-    await notifications.schedule(user.id, accepted('민수', 'party-new'), new Date('2026-11-14T03:00:00Z'));
-
-    const ids = z
-      .array(z.object({ id: z.string() }))
-      .parse((await getNotifications(user)).body)
-      .map(({ id }) => id);
-    expect(ids).toHaveLength(100);
-    expect(ids).toContain('accepted:party:party-new:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f');
-    expect(ids).toContain('accepted:party:party-1:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f');
-    expect(ids).not.toContain('accepted:party:party-0:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f');
-  });
-});
-
-describe('What the service refuses and leaves out', () => {
+describe('What the service refuses', () => {
   it('refuses one whose card no address opens, keeping nothing and telling nobody', async () => {
     const user = await signInUser(app);
     let refusal: unknown;
@@ -246,59 +223,15 @@ describe('What the service refuses and leaves out', () => {
     expect(notices).toBe(0);
     expect((await getNotifications(user)).body).toEqual([]);
   });
-
-  it('leaves out one it cannot read, and answers the others', async () => {
-    const user = await signInUser(app);
-    await notifications.schedule(user.id, accepted('민수'), new Date('2026-11-14T02:58:00Z'));
-    await redis.hset(
-      `notifications:${user.id}`,
-      'a-later-kind:party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
-      JSON.stringify({
-        kind: 'a-later-kind',
-        card: { kind: 'party', id: OTHER_QUEST_ID },
-        at: '2026-11-14T03:00:00.000Z',
-        title: '나중 버전의 알림',
-        line: '점심',
-      }),
-    );
-
-    expect((await getNotifications(user)).body).toEqual([
-      expect.objectContaining({
-        id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
-      }),
-    ]);
-  });
 });
 
-describe('A Notification kept before `ahead` was', () => {
-  it('answers `ahead` null', async () => {
-    const user = await signInUser(app);
-    await redis.hset(
-      `notifications:${user.id}`,
-      'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
-      JSON.stringify({
-        kind: 'accepted',
-        card: { kind: 'party', id: QUEST_ID },
-        at: '2026-11-14T02:58:00.000Z',
-        title: '민수가 수락했어요',
-        line: '저녁 같이',
-      }),
-    );
-
-    expect((await getNotifications(user)).body).toEqual([
-      expect.objectContaining({ title: '민수가 수락했어요', ahead: null }),
-    ]);
-  });
-});
-
-describe('How long the service keeps a User’s Notifications', () => {
-  it('gives the User’s Notifications a time to live of 7 days after a schedule', async () => {
+describe('Where a Notification is kept', () => {
+  it('is a row of the table, and Redis holds nothing of it', async () => {
     const user = await signInUser(app);
 
     await notifications.schedule(user.id, accepted('민수'), new Date('2026-11-14T02:58:00Z'));
 
-    const ttl = await redis.ttl(`notifications:${user.id}`);
-    expect(ttl).toBeGreaterThan(7 * 24 * 60 * 60 - 10);
-    expect(ttl).toBeLessThanOrEqual(7 * 24 * 60 * 60);
+    expect(await prisma.notification.count({ where: { userId: user.id } })).toBe(1);
+    expect(await redis.keys(`*${user.id}*`)).toEqual([]);
   });
 });
