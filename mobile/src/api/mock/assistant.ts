@@ -30,6 +30,7 @@ import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { refusalReplyTo } from './data/refusals';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
+import { LATE_LOOKUP_REPLY, LEAVE_LOOKUP_REPLY, SHUTTLE_LOOKUP_REPLY } from './data/way-lookups';
 import {
   MEAL_ANSWER_ALONE,
   MEAL_ANSWER_FIXED_START,
@@ -46,10 +47,11 @@ import { isLibraryAsk, libraryReply } from './library-replies';
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
-// the map, and with a context asked where something is (어디), 301동식당's menu, or where 민수 is, with the main
-// server's real Lookups of 문화관, of that menu, and of 민수. The words of a board of row 8 with a context get the main
-// server's real refusal, before anything else. A press on a building or a face is answered with the main server's real
-// cards of row 6.
+// the map, and with a context it answers with the main server's real Lookups: where something is (어디) with 문화관,
+// 301동식당's menu, where 민수 is, and in the words of boards q2 to q4 the way to 24동 on time (까지 몇 분), late
+// (늦나), and by the shuttle (셔틀 탈까). The words of a board of row 8 with a context get the main server's real
+// refusal, before anything else. A press on a building or a face is answered with the main server's real cards of
+// row 6.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -180,8 +182,8 @@ export function mockTap(tapped: Tapped): Lookup {
   return FRIEND_TAPS[tapped.userId] ?? STAND_IN_FRIEND_TAP;
 }
 
-// The stored refusal of a board of row 8, answer of 배고파, and Lookups of 301동식당's menu and of where 민수 is, for a
-// message sent with a context.
+// The stored refusal of a board of row 8, answer of 배고파, and Lookups of 301동식당's menu, of where 민수 is, and of a
+// way with a deadline, for a message sent with a context.
 function drawnReplyOf(last: string): AssistantReply | null {
   const refused = refusalReplyTo(last);
   if (refused !== null) {
@@ -193,7 +195,22 @@ function drawnReplyOf(last: string): AssistantReply | null {
   if (last.includes('301동식당') && last.includes('메뉴')) {
     return MENU_LOOKUP_REPLY;
   }
-  return last.includes('민수') && last.includes('어디') ? FRIEND_LOOKUP_REPLY : null;
+  if (last.includes('민수') && last.includes('어디')) {
+    return FRIEND_LOOKUP_REPLY;
+  }
+  return wayReplyOf(last);
+}
+
+// The stored Lookups of a way with a deadline, by the words of boards q4, q3, and q2: by the shuttle, late, and on
+// time. A question about the shuttle's arrival ("셔틀 몇 분 뒤에 와?") is none of them.
+function wayReplyOf(last: string): AssistantReply | null {
+  if (last.includes('셔틀 탈까')) {
+    return SHUTTLE_LOOKUP_REPLY;
+  }
+  if (last.includes('늦나')) {
+    return LATE_LOOKUP_REPLY;
+  }
+  return last.includes('까지 몇 분') ? LEAVE_LOOKUP_REPLY : null;
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {
