@@ -70,6 +70,7 @@ describe('The request context', () => {
       proposal: null,
       answer: null,
       lookup: null,
+      refusal: null,
     });
   });
 

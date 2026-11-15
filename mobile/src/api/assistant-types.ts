@@ -13,6 +13,7 @@
 import type { Lookup } from './lookup-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
+import type { WithRefusal } from './refusal-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
@@ -379,7 +380,7 @@ export interface TimeBand {
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
 // cards in the order shown, the Proposal it made, or null, and the answer or the Lookup it drew on the map, or null. A
 // main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
-export interface AssistantReply {
+export interface AssistantReply extends WithRefusal {
   text: string;
   mapButtons: MapLayer[];
   cards: ChatCard[];

@@ -14,6 +14,7 @@ import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
 import { type AnswerReply, type Lookup, NO_CONTEXT, requestContextSchema } from './answer.dto.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
+import { type Refusal } from '../refusals/refusal.dto.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
 export const USER_MESSAGE_MAX = 1000;
@@ -89,4 +90,5 @@ export interface AssistantReplyDto {
   proposal: QuestProposal | null;
   answer: AnswerReply | null;
   lookup: Lookup | null;
+  refusal: Refusal | null;
 }

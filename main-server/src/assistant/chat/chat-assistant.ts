@@ -33,6 +33,7 @@ import { type LibraryServices, libraryTools } from '../library/library-tools.js'
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { type WayService } from '../lookup/way.service.js';
 import { DELIMITER } from '../others-text.js';
+import { withRefusals } from '../refusals/refusal-tools.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
 import { proposeQuest } from '../tools/propose-quest.js';
@@ -172,7 +173,11 @@ export function chatAssistant(
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const drawsAnswers = options?.drawsAnswers ?? false;
-  const planned = withWays(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), ways, drawsAnswers);
+  const planned = withRefusals(
+    withWays(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), ways, drawsAnswers),
+    freeTime,
+    drawsAnswers,
+  );
   return {
     instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
