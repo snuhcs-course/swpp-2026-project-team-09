@@ -53,4 +53,7 @@ Blocked by: 17 (the contract's `plan` action)
 
 ### Agent usage (2026-11-15)
 
-Left for the coordinator.
+- Agent time: about 1 hour 15 minutes, an estimate from the session transcripts: the build about 53 minutes, a review of the diff about 12, and the coordinating session about 8 (writing the ticket, the review's fixes, the Main merge, and the pull request; part of that stretch went to other pull requests).
+- Tokens, subagents included:
+  - Input: 662 uncached, plus 90,092,557 cache reads and 727,497 cache writes.
+  - Output: 293,222.
