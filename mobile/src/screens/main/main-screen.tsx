@@ -32,6 +32,7 @@ import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { Card } from './card';
 import { FriendList } from './friend-list';
+import { OffMapFriendCard } from './friend-profile';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
 import { MapBottom, openMenus, type Taken } from './map-bottom';
@@ -156,11 +157,17 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
   );
 }
 
-// The open card: the User's own, which gives way to the answer frame as a thing's does, or the selected thing's.
+// The open card: the User's own, or that of a Friend whom the map does not show, each giving way to the answer frame
+// as a thing's does, or the selected thing's.
 function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const { selection, chat, onHeight } = props;
   if (selection.mine) {
     return chat.framed ? null : <MyCard onClose={selection.close} onHeight={onHeight} />;
+  }
+  if (selection.friend !== null) {
+    return chat.framed ? null : (
+      <OffMapFriendCard onClose={selection.close} onHeight={onHeight} userId={selection.friend} />
+    );
   }
   return <ThingCard {...props} />;
 }

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -22,6 +23,7 @@ import {
   textHalo,
   useToast,
 } from '@/design-system';
+import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type FriendView, withAge } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 import { cardId } from '@/features/map/adapter';
@@ -97,10 +99,16 @@ function FriendRow({ friend, onPress }: { friend: FriendView; onPress: () => voi
 }
 
 // What a press on a Friend's row does: it brings the map to the Friend at the "close" level and opens their card,
-// also when the map's cards are still to come; for a Friend whose position is not known it says so.
+// also when the map's cards are still to come. For a Friend whose position is not known it opens their card where the
+// map is while the switch of the answer on the map is on, and says so while it is off.
 function useShow({ map, selection }: Pick<FriendListProps, 'map' | 'selection'>): (friend: FriendView) => void {
   const showToast = useToast();
+  const onMap = useAnswerSwitch();
   return (friend) => {
+    if (friend.position === null && onMap) {
+      selection.selectFriend(friend.id);
+      return;
+    }
     if (friend.position === null) {
       showToast(`${friend.name}님은 위치가 꺼져 있어요`, LOCATION_OFF_MS);
       return;

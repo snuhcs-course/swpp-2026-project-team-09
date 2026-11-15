@@ -47,19 +47,36 @@ function ignore(): void {
   // The frame's camera is the answer's: the card has no "가까이 보기".
 }
 
+interface ProfileCardProps {
+  friend: FriendView;
+  onClose: () => void;
+  onHeight?: (height: number) => void;
+}
+
 // The everyday map's card of a Friend, which is their profile, also for a Friend whom the map does not show.
-function ProfileCard({ friend, onClose }: { friend: FriendView; onClose: () => void }): ReactElement {
+function ProfileCard({ friend, onClose, onHeight }: ProfileCardProps): ReactElement {
   return (
     <Card
       canLookCloser={false}
       card={friendProfileCard(friend)}
       onClose={onClose}
+      onHeight={onHeight}
       onLookCloser={ignore}
       onPrimary={() => {
         router.push({ pathname: '/party-form', params: { friendId: friend.id } });
       }}
     />
   );
+}
+
+// The card of a Friend whom the map does not show, which a row of the friend list opens over the everyday map while
+// the switch of the answer on the map is on: their profile, with what the app holds of them.
+export function OffMapFriendCard({
+  userId,
+  ...card
+}: { userId: string } & Omit<ProfileCardProps, 'friend'>): ReactElement | null {
+  const friend = useFriendProfile(userId)?.friend ?? null;
+  return friend === null ? null : <ProfileCard {...card} friend={friend} />;
 }
 
 // What is inside the answer frame may open a Friend's profile (`useOpenFriendProfile`), which stands over the frame's
