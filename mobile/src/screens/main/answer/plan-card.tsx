@@ -13,6 +13,7 @@ import { Button, color, Icon, size, space, text } from '@/design-system';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { useOpenFriendProfile } from '../friend-profile';
 import { AnswerLines } from './answer-lines';
 import { ConditionChips, type CornerAction } from './condition-chips';
 import { FriendChoices } from './friend-choices';
@@ -161,10 +162,11 @@ interface CardProps {
 interface BelowProps extends CardProps {
   fix: Corrections;
   busy: boolean;
+  onProfile: ((userId: string) => void) | null;
 }
 
 // Under the lines: the list of Friends while it is open, else the Plan's time band and the steps.
-function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): ReactElement {
+function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowProps): ReactElement {
   const { plan, ghost } = shown;
   if (fix.adding) {
     return (
@@ -172,6 +174,7 @@ function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): Reac
         disabled={busy}
         friends={fix.choices}
         onChoose={fix.choose}
+        onProfile={onProfile}
         pending={shown.pendingAdd}
         pick={plan?.place ?? null}
         room={room}
@@ -221,11 +224,13 @@ function linesOf({ plan }: ShownAnswer, answer: AnswerReply, adding: boolean): r
 // the Plan's two lines or those that say why there is none, the basis while open, and the time band with the steps.
 // While the list of Friends to add is open, the lines ask who comes, "그대로" closes the list, and the list stands in
 // place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
-// none takes a press while a recalculation or "이대로 초대" is on its way.
+// none takes a press while a recalculation or "이대로 초대" is on its way. A Friend's chip and the mark of a Friend's
+// cell open the Friend's profile over the card.
 export function PlanCard({ shown, answer, invitation, room }: CardProps): ReactElement {
   const { plan, basisOpen, recalculating } = shown;
   const busy = recalculating || invitation.sending;
   const fix = useCorrections(shown, answer.input);
+  const openProfile = useOpenFriendProfile();
   const lines = linesOf(shown, answer, fix.adding);
   return (
     <View style={styles.plan}>
@@ -234,8 +239,10 @@ export function PlanCard({ shown, answer, invitation, room }: CardProps): ReactE
         chips={answer.chips}
         corner={cornerOf(shown, fix)}
         disabled={busy}
+        friendIds={fix.friendIds}
         onAdd={fix.toggleAdding}
         onOrigin={fix.chooseOrigin}
+        onProfile={openProfile}
         onRemove={fix.remove}
         onUntil={fix.focusUntil}
       />
@@ -249,7 +256,15 @@ export function PlanCard({ shown, answer, invitation, room }: CardProps): ReactE
           ))}
         </View>
       ) : null}
-      <Below answer={answer} busy={busy} fix={fix} invitation={invitation} room={room} shown={shown} />
+      <Below
+        answer={answer}
+        busy={busy}
+        fix={fix}
+        invitation={invitation}
+        onProfile={openProfile}
+        room={room}
+        shown={shown}
+      />
     </View>
   );
 }
