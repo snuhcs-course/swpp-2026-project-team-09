@@ -78,8 +78,8 @@ function Whole(): ReactElement {
   );
 }
 
-// The 위치 공유 card: the Master Switch, with the Friends and the 파티 members the User allows under it, the row for
-// background sharing, the line that says the User is not shared off campus, and the way to the 위치 공유 screen.
+// The 위치 공유 card: the Master Switch, with the Friends and the 파티 members the User allows under it while it is on
+// (while it is off nobody is shared with, so no number shows), the row for background sharing, the line that says the User is not shared off campus, and the way to the 위치 공유 screen.
 export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): ReactElement {
   const friends = useQuery({ ...friendsQuery, select: friendsLine }).data;
   const party = useQuery({ ...myPartyQuery, select: partyLine }).data ?? null;
@@ -89,8 +89,13 @@ export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): 
       <Text accessibilityRole="header" style={styles.title}>
         위치 공유
       </Text>
-      <SwitchRow description={friends} label="위치 공유" onValueChange={sharing.change} value={sharing.on} />
-      {party === null ? null : <Text style={styles.party}>{party}</Text>}
+      <SwitchRow
+        description={sharing.on ? friends : undefined}
+        label="위치 공유"
+        onValueChange={sharing.change}
+        value={sharing.on}
+      />
+      {sharing.on && party !== null ? <Text style={styles.party}>{party}</Text> : null}
       <BackgroundRow masterOn={sharing.on} />
       {sharing.on && offCampus ? <Text style={styles.offCampus}>캠퍼스 밖이라 위치가 공유되지 않아요</Text> : null}
       <Whole />

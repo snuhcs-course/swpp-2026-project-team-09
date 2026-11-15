@@ -167,19 +167,35 @@ describe('the week', () => {
   });
 });
 
+// The mocks start with the Master Switch off.
+async function turnMasterOn(): Promise<void> {
+  const turned = apiClient.setMasterSwitch(true);
+  await pass(300);
+  await turned;
+}
+
 describe('the 위치 공유 card', () => {
-  it('has the Master Switch with the Friends the User allows, and no 비공개 구역', async () => {
+  it('has the Master Switch off with no number under it, and no 비공개 구역', async () => {
     await openMe();
 
     expect(screen.getByRole('header', { name: '위치 공유' })).toBeVisible();
     expect(screen.getByRole('switch', { name: '위치 공유' })).not.toBeChecked();
+    expect(screen.queryByText(/위치 공유를 허용한/u)).toBeNull();
+    expect(screen.queryByText('비공개 구역 관리')).toBeNull();
+  });
+
+  it('says, while the Master Switch is on, the Friends and the 파티 members the User allows', async () => {
+    await turnMasterOn();
+    await openMe();
+
+    expect(screen.getByRole('switch', { name: '위치 공유' })).toBeChecked();
     expect(screen.getByText('위치 공유를 허용한 친구 12명')).toBeVisible();
     expect(screen.getByText('AI 커리어 설명회 같이 가요 파티에서 위치 공유를 허용한 멤버 3명')).toBeVisible();
-    expect(screen.queryByText('비공개 구역 관리')).toBeNull();
   });
 
   it('has no 파티 line while no 파티 is on', async () => {
     process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
+    await turnMasterOn();
     await openMe();
 
     expect(screen.getByText('위치 공유를 허용한 친구 12명')).toBeVisible();

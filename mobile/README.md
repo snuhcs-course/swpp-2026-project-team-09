@@ -898,19 +898,20 @@ cards from the top:
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
   (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
   불러오기" and "빈 시간 말하기" say "준비 중이에요";
-- 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch, with "위치 공유를 허용한 친구
-  N명" (Friends whose level the User set above 시간표만) and, while a 파티 is on with the User's own switch on, "○○
-  파티에서 위치 공유를 허용한 멤버 M명" (its other members). Both count the User's own end only. While the Master
-  Switch is off, the Friends' levels on 친구 and 위치 공유 and the room's "내 위치 공유" show off and disabled under
-  "전체 위치 공유가 꺼져 있어요 · 켜기", keeping their stored values; and "캠퍼스 밖이라 위치가 공유되지 않아요"
-  while the last upload was off campus. Turning it on without the location permission shows the map's explanation and the system's prompt first; a refusal leaves it off with
-  "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
-  못했어요" when the main server did not take it. While the Lobby's `masterOffAsked` is false, turning it off asks
-  first with the Friends' question in the words "모든 친구에게는 지금 있는 건물만 보여 줄 수도 있어요." and "어느 쪽을
-  골라도 친구에게는 아무 표시도 가지 않아요.": "위치 끄기" turns it off ("껐어요 · 친구에게 알림은 가지 않아요"),
-  "건물까지만" leaves it on and sends `lowerFriendLevels('building')` ("모든 친구에게 지금 있는 건물까지만 보여요"),
-  and "취소" leaves it on; each sends `recordMasterOffAsked`. Its last row, "위치 공유 보기", opens the 위치 공유 screen.
-  At `/me?show=sharing` the screen scrolls to the card and outlines it for 1.2 s;
+- 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch, with "위치 공유를 허용한 친구 N명"
+  (Friends whose level the User set above 시간표만) and, while a 파티 is on with the User's own switch on, "○○ 파티에서
+  위치 공유를 허용한 멤버 M명" (its other members), both only while it is on. Both count the User's own end only. While
+  the Master Switch is off, the Friends' levels on 친구 and 위치 공유 and the room's "내 위치 공유" show off and
+  disabled under "전체 위치 공유가 꺼져 있어요 · 켜기", keeping their stored values; and "캠퍼스 밖이라 위치가 공유되지
+  않아요" while the last upload was off campus. Turning it on without the location permission shows the map's
+  explanation and the system's prompt first; a refusal leaves it off with "위치 권한을 허용해야 공유할 수 있어요". The
+  new state shows at once, and turns back with "위치 공유를 바꾸지 못했어요" when the main server did not take it. While
+  the Lobby's `masterOffAsked` is false, turning it off asks first with the Friends' question in the words "모든
+  친구에게는 지금 있는 건물만 보여 줄 수도 있어요." and "어느 쪽을 골라도 친구에게는 아무 표시도 가지 않아요.": "위치
+  끄기" turns it off ("껐어요 · 친구에게 알림은 가지 않아요"), "건물까지만" leaves it on and sends
+  `lowerFriendLevels('building')` ("모든 친구에게 지금 있는 건물까지만 보여요"), and "취소" leaves it on; each sends
+  `recordMasterOffAsked`. Its last row, "위치 공유 보기", opens the 위치 공유 screen. At `/me?show=sharing` the screen
+  scrolls to the card and outlines it for 1.2 s;
 - "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티), "내 퀘스트" (the Quest list on the
   whole screen), and "관심사 {n}" (관심사, with the number of watched interests).
 
