@@ -6,13 +6,13 @@ Blocked by: None (can start immediately)
 
 ## What to build
 
-The main server keeps global settings in a generic `settings` table, with a history of every change and a one-row revision. The settings are registered in code. Each pod loads them into memory at start and, every minute at second 0, reloads them when the revision changed. A02 registers one setting, `llm.provider`; nothing reads it until ticket 02.
+The main server keeps global settings in a generic `settings` table, with a history of every change and a one-row revision. The settings are registered in code. Each pod loads them into memory at start and, every minute at second 0, reloads them when the revision changed. The store is generic: ticket 02 registers A02's one setting, `llm.key`.
 
 ## Acceptance criteria
 
-- [ ] A registry in code: each setting's name, type (`STRING`, `INTEGER`, `BOOLEAN`), default and allowed values. `llm.provider` is registered: `openrouter` or `anthropic`, default `openrouter`.
+- [ ] A registry in code: each setting's name, type (`STRING`, `INTEGER`, `BOOLEAN`), default and allowed values. Allowed values may be known only at start, as `llm.key`'s are (the names of the keys the pod has, ticket 02). The tests register settings of their own.
 - [ ] Prisma models `Setting` (table `settings`: `name` unique, `value_type` enum `SettingValueType`, `value` text, `updated_at`), `SettingChange` (table `setting_changes`: name, old value, new value, Administrator, time) and a one-row revision table, with one migration.
-- [ ] A save checks the name against the registry and the value against its type and allowed values, and writes the setting, its history row and the revision's increment in one transaction. The service takes an extra check from the caller, so that ticket 02 can refuse a provider without a key.
+- [ ] A save checks the name against the registry and the value against its type and allowed values, and writes the setting, its history row and the revision's increment in one transaction. The service takes an extra check from the caller, so that ticket 02 can refuse a key name the pod has no key for.
 - [ ] At start (`onModuleInit`), each pod loads every row and the revision. A pod that cannot load them does not start. A setting with no row reads as its default.
 - [ ] `@nestjs/schedule` added to main-server (the same major as worker-server's). `@Cron('0 * * * * *')` reads only the revision and reloads all rows when it changed. A failed check keeps the last copy and logs.
 - [ ] Reads come from the copy, with no query. A save is not seen by any pod, the saving one included, before the next minute's check.

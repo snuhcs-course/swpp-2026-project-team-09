@@ -5,6 +5,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -270,6 +271,27 @@ pem_parameter() {
   printf '%s\n' "$value"
 }
 
+# The AI's keys (infra/production/README.md: The AI's keys): every llm-key-<name> parameter, as one JSON object of
+# name to key, `{}` when there is none. `default` is openrouter-api-key's, so no parameter takes that name. A name or a
+# value that cannot be a key is refused naming the parameter, never printing the value.
+llm_keys() {
+  local refused key='^[^[:space:]"'"'"'\\]+$'
+  refused=$(jq -r --arg prefix "$PARAMETER_PATH/llm-key-" --arg key "$key" '
+    .Parameters[] | select(.Name | startswith($prefix)) | (.Name | ltrimstr($prefix)) as $name |
+    if ($name | test("^[a-z0-9-]+$") | not) or $name == "default" then
+      "secrets: \(.Name) is not llm-key-<name>, with a name of lowercase letters, digits and dashes other than default"
+    elif .Value | test($key) | not then
+      "secrets: \(.Name) holds whitespace, a quote or a backslash, which no key has"
+    else empty end' <<<"$parameters") || return 1
+  if [[ -n "$refused" ]]; then
+    printf '%s\n' "$refused" >&2
+    return 1
+  fi
+  jq -c --arg prefix "$PARAMETER_PATH/llm-key-" '
+    [.Parameters[] | select(.Name | startswith($prefix)) | {key: (.Name | ltrimstr($prefix)), value: .Value}] |
+    sort_by(.key) | from_entries' <<<"$parameters"
+}
+
 database_url() {
   local user=$1 password
   password=$(line_parameter "$user-db-password") || return 1
@@ -378,6 +400,7 @@ write_secrets() {
     env+=$'\n'"MATCH_SERVER_TOKEN=$(line_parameter match-server-token)" &&
     env+=$'\n'"KAKAO_REST_API_KEY=$(line_parameter kakao-rest-api-key)" &&
     env+=$'\n'"OPENROUTER_API_KEY=$(line_parameter openrouter-api-key)" &&
+    env+=$'\n'"LLM_KEYS=$(llm_keys)" &&
     env+=$'\n'"INITIAL_ADMINISTRATOR_EMAILS=$(line_parameter initial-administrator-emails)" &&
     private_key=$(pem_parameter access-token-private-key) &&
     public_key=$(pem_parameter access-token-public-key) || return 1
