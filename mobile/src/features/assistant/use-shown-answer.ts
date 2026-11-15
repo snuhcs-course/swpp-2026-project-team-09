@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnswerReply, Plan, PlanInput } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import type { LatLng } from '@/api/types';
+import { withPerson } from './plan-input';
 import type { Stretch } from './time-band';
 import type { ChatBubble } from './use-chat';
 
@@ -34,6 +35,11 @@ export interface ShownAnswer {
   // replaces the one on screen. Without an answer on screen, or when `alter` gives the same conditions back, it does
   // nothing.
   change: (alter: (input: PlanInput) => PlanInput, by?: 'drag') => void;
+  // Adds a Friend to the conditions as `change` does, chosen in the list or on the map, and holds them as the pending
+  // add until the answer comes: the list of Friends stays open until then and closes with that answer.
+  add: (userId: string) => void;
+  // The Friend whose add is on its way, or null.
+  pendingAdd: string | null;
   // The band of the Plan shown before the last drag, while "되돌리기" can bring that answer back.
   ghost: Stretch | null;
   undo: () => void;
@@ -59,6 +65,7 @@ interface AnswerState extends Shown {
   // What was shown before the last drag.
   kept: Shown | null;
   recalculating: boolean;
+  pendingAdd: string | null;
   // Counts the replies: an answer that comes for an earlier one is dropped.
   epoch: number;
 }
@@ -87,6 +94,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     adding: false,
     kept: null,
     recalculating: false,
+    pendingAdd: null,
     epoch,
   };
 }
@@ -107,7 +115,8 @@ function replaced(last: AnswerState, next: AnswerReply, by: 'drag' | undefined):
         )
       : 0;
   const kept = by === 'drag' ? { answer: last.answer, index: last.index } : null;
-  return { ...last, answer: next, index, basisOpen: false, kept, recalculating: false };
+  const adding = last.adding && last.pendingAdd === null;
+  return { ...last, answer: next, index, basisOpen: false, adding, kept, recalculating: false, pendingAdd: null };
 }
 
 function ghostOf(kept: Shown | null): Stretch | null {
@@ -157,16 +166,19 @@ function useBrowsing(setStored: SetStored): {
   return { browse, show, toggleBasis, setAdding, undo };
 }
 
+// A change of the conditions, and the Friend it adds, when it adds one.
+type Ask = (alter: (input: PlanInput) => PlanInput, by: 'drag' | undefined, adds: string | null) => void;
+
 // Asks for a recalculation of the answer on screen when it is called, unless one of that epoch is on its way: a
 // control may call a `change` of an earlier render. Its answer, or its failure, counts only while the epoch it was
 // asked in is still the one on screen.
-function useChange(current: AnswerState, setStored: SetStored, recalculation: Recalculation): ShownAnswer['change'] {
+function useChange(current: AnswerState, setStored: SetStored, recalculation: Recalculation): Ask {
   const live = useRef({ current, recalculation });
   const flight = useRef<number | null>(null);
   useEffect(() => {
     live.current = { current, recalculation };
   });
-  return (alter, by) => {
+  return (alter, by, adds) => {
     const {
       current: { answer, epoch },
       recalculation: { location, onFailed },
@@ -176,7 +188,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
       return;
     }
     flight.current = epoch;
-    setStored((last) => (last.epoch === epoch ? { ...last, recalculating: true } : last));
+    setStored((last) => (last.epoch === epoch ? { ...last, recalculating: true, pendingAdd: adds } : last));
     const settle = (update: (last: AnswerState) => AnswerState): boolean => {
       if (flight.current === epoch) {
         flight.current = null;
@@ -190,7 +202,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
         settle((last) => replaced(last, next, by));
       },
       () => {
-        if (settle((last) => ({ ...last, recalculating: false }))) {
+        if (settle((last) => ({ ...last, recalculating: false, pendingAdd: null }))) {
           onFailed();
         }
       },
@@ -212,7 +224,7 @@ export function useShownAnswer(
   if (current !== stored) {
     setStored(current);
   }
-  const change = useChange(current, setStored, { location, onFailed });
+  const ask = useChange(current, setStored, { location, onFailed });
   const browsing = useBrowsing(setStored);
   return {
     source: current.source,
@@ -223,7 +235,13 @@ export function useShownAnswer(
     basisOpen: current.basisOpen,
     adding: current.adding,
     recalculating: current.recalculating,
-    change,
+    change: (alter, by) => {
+      ask(alter, by, null);
+    },
+    add: (userId) => {
+      ask((input) => withPerson(input, userId), undefined, userId);
+    },
+    pendingAdd: current.pendingAdd,
     ghost: ghostOf(current.kept),
   };
 }

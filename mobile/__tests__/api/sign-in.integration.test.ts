@@ -7,6 +7,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -42,6 +43,7 @@ const NOTHING_LATER = {
   ...NO_BACKGROUND,
   declinedParties: [],
   answerOnMap: false,
+  madeQuests: [],
   pushAsked: false,
   pushUnregisterOwed: false,
 };
@@ -57,6 +59,7 @@ const FIRST_STATE = {
   ...NO_BACKGROUND,
   declinedParties: [],
   answerOnMap: false,
+  madeQuests: [],
   pushAsked: false,
   pushUnregisterOwed: false,
 };
@@ -80,6 +83,7 @@ describe('sign-in', () => {
       ...NO_BACKGROUND,
       declinedParties: [],
       answerOnMap: false,
+      madeQuests: [],
       pushAsked: false,
       pushUnregisterOwed: false,
     });
@@ -119,6 +123,7 @@ describe('what the phone keeps', () => {
       ...NO_BACKGROUND,
       declinedParties: [],
       answerOnMap: false,
+      madeQuests: [],
       pushAsked: false,
       pushUnregisterOwed: false,
     });
@@ -221,6 +226,7 @@ describe('the Lobby', () => {
         affiliation: null,
       },
       masterSwitch: false,
+      masterOffAsked: false,
     });
   });
 });

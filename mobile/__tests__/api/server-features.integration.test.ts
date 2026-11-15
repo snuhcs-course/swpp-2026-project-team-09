@@ -87,6 +87,7 @@ describe('the Friends from the main server', () => {
         visible: true,
         level: 'exact',
         sharing: true,
+        askedOff: false,
       },
       {
         id: JI_WOO.id,
@@ -102,6 +103,7 @@ describe('the Friends from the main server', () => {
         visible: false,
         level: 'exact',
         sharing: true,
+        askedOff: false,
       },
     ]);
   });

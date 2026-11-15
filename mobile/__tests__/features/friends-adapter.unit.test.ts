@@ -13,7 +13,16 @@ import type { Friend, FriendStatus } from '@/api/types';
 import { keptPositions, minutesOld, toFriendRequestViews, toFriendViews, withAge } from '@/features/friends/adapter';
 
 function friend(visible: boolean, more: Partial<Friend> = {}): Friend {
-  return { ...MIN_JUN, level: 'exact', sharing: true, visible, ...more };
+  return {
+    ...MIN_JUN,
+    level: 'exact',
+    seen: 'exact',
+    sharing: true,
+    visible,
+    askedOff: false,
+    askedPlan: false,
+    ...more,
+  };
 }
 
 const LIBRARY: FriendStatus = {
@@ -67,6 +76,7 @@ describe('toFriendViews of one Friend seen', () => {
       visible: true,
       level: 'exact',
       sharing: true,
+      askedOff: false,
     });
   });
 

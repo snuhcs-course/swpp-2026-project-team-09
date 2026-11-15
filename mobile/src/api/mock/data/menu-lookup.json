@@ -1,0 +1,133 @@
+{
+  "kind": "menu",
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    },
+    {
+      "kind": "until",
+      "text": "13:00 수업까지",
+      "userId": null
+    }
+  ],
+  "lines": [
+    [
+      {
+        "text": "301동식당",
+        "strong": true
+      },
+      {
+        "text": " 오늘 점심은 부대짬뽕&군만두",
+        "strong": false
+      }
+    ],
+    [
+      {
+        "text": "12:45까지 55분 먹을 수 있어요",
+        "strong": false
+      }
+    ]
+  ],
+  "basis": ["24동까지 걸어서 15분이라 12:45에 나서요"],
+  "scene": {
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "name": "유상",
+        "me": true,
+        "at": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "source": "timetable",
+        "tag": "나"
+      }
+    ],
+    "places": [
+      {
+        "place": {
+          "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+          "label": "301동식당",
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "role": "pick",
+        "tag": "301동식당"
+      },
+      {
+        "place": {
+          "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+          "label": "24동",
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "role": "next",
+        "tag": "13:00 수업 · 24동"
+      }
+    ],
+    "routes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "next",
+        "from": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "to": {
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "minutes": 15
+      }
+    ],
+    "flags": [
+      {
+        "at": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "text": "부대짬뽕&군만두 · (뚝)순댓국&계란장조림",
+        "role": "place"
+      }
+    ]
+  },
+  "band": {
+    "range": {
+      "startAt": "2026-11-17T11:30:00+09:00",
+      "endAt": "2026-11-17T13:30:00+09:00"
+    },
+    "now": "2026-11-17T11:40:00+09:00",
+    "lanes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "name": "나",
+        "busy": [
+          {
+            "startAt": "2026-11-17T11:30:00+09:00",
+            "endAt": "2026-11-17T11:50:00+09:00"
+          },
+          {
+            "startAt": "2026-11-17T13:00:00+09:00",
+            "endAt": "2026-11-17T13:30:00+09:00"
+          }
+        ]
+      }
+    ],
+    "startAt": "2026-11-17T11:50:00+09:00",
+    "endAt": "2026-11-17T12:45:00+09:00",
+    "text": "11:50–12:45 · 식사 55분"
+  },
+  "actions": [
+    {
+      "kind": "guide",
+      "to": {
+        "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+        "label": "301동식당",
+        "latitude": 37.45016,
+        "longitude": 126.95259
+      }
+    }
+  ]
+}

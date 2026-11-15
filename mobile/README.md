@@ -655,16 +655,18 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   name that short ("18분" beside the face "민수"). The looks of every Plan are asked for when the answer comes. The camera
   goes in one glide to where `answerCamera` (`src/features/assistant/answer-camera.ts`) works it out for the view:
   the fit of the answer's points between the pill and the card, with the room the marks there need (`roomsOf`) and 64
-  at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the Plan's
-  own points centred there, or, when they do not fit either, the picked Restaurant's side kept in view. It moves
-  again when the Plan on screen changes and when the card's height or the stage's size changes; closing the answer
-  moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its lowest in place of 15, which on a
-  phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기")
-  at the right of its chips' first line, the Plan's two lines, the basis while it is open, and, when the answer has more than one
-  Plan, round buttons "‹" ("이전 후보") and "›" ("다음 후보") at the two ends of the last row, 40 high as its buttons are,
-  with "되돌리기" at a fixed width at the row's start while a drag is kept and the count ("3/5") in a box of its own
-  right before "›"; a sideways swipe over the two lines does the same, to the left the next Plan and to the right the
-  previous one. The arrows and the swipe go round, and a new Plan closes the basis. An answer without a Plan draws nothing and keeps the everyday map.
+  at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the
+  Plan's own points centred there, or, when they do not fit either, the picked Restaurant's side kept in view. It moves
+  again when the Plan on screen changes and when the card's height or the stage's size changes; after an answer replaced
+  the one on screen, as a recalculation's does, it moves once, when the drawing and the card's height have stayed the
+  same for 120 ms. Closing the answer moves nothing. While a Plan is drawn the map is handed Kakao's level 14 as its
+  lowest in place of 15, which on a phone is closer than that lowest zoom. The card shows "근거" (or "근거 접기") at the right
+  of its chips' first line, the Plan's two lines, the basis while it is open, and, when the answer has more than one
+  Plan, round buttons "‹" ("이전 후보") and "›" ("다음 후보") at the two ends of the last row, 40 high as its buttons are, with
+  "되돌리기" at a fixed width at the row's start while a drag is kept and the count ("3/5") in a box of its own right before
+  "›"; a sideways swipe over the two lines does the same, to the left the next Plan and to the right the previous one.
+  The arrows and the swipe go round, and a new Plan closes the basis. An answer without a Plan draws nothing and keeps
+  the everyday map.
 - **Correcting the answer** (`answer/plan-card.tsx`, `answer/use-corrections.ts`). The card's first row holds the
   answer's chips (`condition-chips.tsx`) and "＋ 같이", in lines that wrap so that no chip is cut. The ✕ of a person's
   chip takes the person out; "＋ 같이" lists in the card the User's Friends who are not in the conditions in the design
@@ -672,7 +674,12 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   to the picked Restaurant ("350m", "1.2km"), "N분 전" for an old position, or "자리 모름", nearest first. While the
   list is open the card's lines ask "누구와 같이 먹을까요?", "그대로" stands where "근거" did and closes it, the band,
   the arrows, and the input give way, and the grid shows at most four whole rows that scroll inside, with a fade
-  while more are below. A press adds the Friend, as does a press on a Friend's Avatar on the map; the origin
+  while more are below; its second line says "지도의 얼굴을 누르거나 아래에서 골라요" while a Plan is drawn, and
+  "가까운 친구부터 보여요" over an answer without one, whose map takes no press on a face. A press on a cell adds the Friend,
+  as does a press on the Avatar of a Friend who is not in the conditions, which carries a "+" (the person look's
+  `addable`) until "이대로 초대". Both start one add (`add` and `pendingAdd` of `useShownAnswer`): the Friend's cell
+  reads "넣는 중" with a spinner, the face takes the selected look at once (its "+" and selected looks are asked for
+  ahead), the list stays open until the answer comes, and a wrong add is undone with that person's ✕. The origin
   chip opens 장소 선택's map view, and a Place chosen there becomes the User's own `from` (a point that is no Place
   says "건물을 골라 주세요"); the time chip closes the list and puts the focus on the band's end handle for two seconds. Letting go of a
   handle of the time band (`time-band.tsx`), dragged or stepped by a screen reader, fixes that bound of the window.
@@ -703,6 +710,41 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   while invited and "✓" once in (accepted or late), its name read aloud the state after the name, and its tag the
   state alone beside a face that shows the whole name ("아직 안 봄"). A new answer, another Plan, or ✕ drops
   the made Quest from the screen.
+- **A made Quest after closing** (`src/features/assistant/made-quests.ts`, `made-quest-ids.ts`, `use-made-quests.ts`,
+  `use-made-quest-card.ts`, `answer/made-quest-frame.tsx`, `made-quest-line.tsx`). Nothing the server sends tells a
+  Quest made from a Plan from a matched Shared Quest or a library booking's, so the phone keeps the id of each Quest
+  `POST /plans` made (`Kept.madeQuests`); with the switch on, a Quest whose id is kept, which the User leads, and whose
+  destination (the last step not cancelled with a start and a point) has not ended by the clock when the Quests were
+  read counts as made from a Plan. Ids of Quests gone or ended are dropped when the Quests are read. It is drawn as a
+  flag at its destination, the pick's dot with two lines above it, "12:15 점심" over "수락 0/1" (the start and the meal
+  the title names after "에서", or a meeting step's title once the meal was cancelled, over the day when not today and
+  the Friends accepted or late out of all in its members; its name says them in one line): a card of kind
+  `made-quest`, `made-quest:<id>`, outside the place groups, with the Quest's own card `party:<id>` within it, which
+  an address or a row of the Quest list opens with its "길찾기" as before. The first made Quest's line says the same
+  in one line at the left above the row of buttons (and above the start button
+  and the line that asks for interests), and gives way to the keyboard, a card at the bottom, and the answer frame. A
+  press on either opens the card after inviting again, built from the Quest: a chip for each Friend with the state,
+  the lines with the destination's start, the steps, and "닫기"; without a pill, the input, or the tab bar, as a
+  received invitation's, with the destination, a dark flag at each other step, and the User's own dot where the phone
+  was at the press or first was after it, and no Avatar. Its drawing is kept by what it draws, so a signal moves no
+  camera. The signals of an answer count at once, after which the Quests' members do; the flag and its card go when
+  the Quests come again without it or with its meal ended. With the switch off nothing of this is read, drawn, or
+  listened to. The mock lists the Quest its `POST /plans` made, with the mock's User as its asker.
+- **A received invitation** (`use-received-invitation.ts`, `answer/received-invitation-card.tsx`). With the switch
+  on, each invitation of `GET /quest-invitations` is a card of the main screen, `invitation:<invitationId>`, with no
+  marker, so `/main?card=invitation:<id>` opens it once the switch's stored value is read; with the switch off that
+  address opens 파티's 초대 as before. The address moves no camera. While its card is open (and no answer frame is),
+  the app reads `GET /quest-invitations/:id` with the User's position on campus (`invitationCardQuery`, under the
+  invitations' key, so `quests-changed` reads it again), draws the invitee's own way by the marks and the camera of
+  an answer (`drawingOfScene`) and no one else's Avatar, and the lists, the bottom controls, the zoom control, the AI
+  input, and the tab bar give way, without a pill. The card in the frame's card container shows "유상의 파티 초대"
+  with ✕, the destination step's start and title, "유상과 함께", the way's lines in body text after the route arrow
+  (off campus, where the server cannot tell the way, its words "캠퍼스 밖이라 길은 그리지 못해요."), the steps, "수락"
+  and "거절", and that only the User's own way is shown. 수락 and 거절 use the 파티 tab's endpoints, toasts, and
+  fetches again ("파티에 참여했어요", or "초대를 거절했어요"), once for each invitation at a time, and close the card
+  while it is still shown. "이미 끝난 초대예요" closes it after a 404 read (which reads the list again) or when the
+  list comes back without it, and an address of an invitation the known list does not hold says it on the map;
+  another failure offers "다시 시도". Android's back button closes it as ✕ does.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
@@ -793,7 +835,13 @@ slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to wh
   that Friend as three cells of one width in a row, "시간표만", "지금 있는 건물", and "정확한 위치"
   ("{이름}님에게 보일 위치"), with the note "둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요". A choice shows at
   once, sends `setFriendLevel`, and turns back with "위치 공유를 바꾸지 못했어요" when that fails; the Friends and the
-  positions are fetched again after it. A press on a Friend opens a bottom sheet with
+  positions are fetched again after it. The first "시간표만" for a Friend above it asks first, in a bottom sheet
+  (`off-question.tsx`): "{이름}에게는 지금 있는 건물만 보여 줄 수도 있어요." over "어느 쪽을 골라도 {이름}에게는 아무
+  표시도 가지 않아요.", the cells "위치 끄기", "건물까지만", and "취소" of one width, and "시간표는 계속 보여요" under
+  them. "위치 끄기" sets `timetable` ("껐어요 · {이름}에게 알림은 가지 않아요"), "건물까지만" `building` ("{이름}에게
+  지금 있는 건물까지만 보여요"), and "취소" or closing the sheet nothing; each records the question with
+  `recordFriendsAsked([id], 'off')`, and a Friend whose `askedOff` is true is not asked again. A press on a Friend opens
+  a bottom sheet with
   "친구 끊기", which a danger dialog confirms; the Friend then leaves the list, the friend panel and the map. A
   friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
 - **친구 요청** (`/me/friends/requests`, also from a Friend Request in 알림): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
@@ -807,6 +855,15 @@ slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to wh
 
 Only the friend panel's "+ 친구 추가" opens one of them in the app so far: 내 정보 and its 알림 lead to the others when
 they are built.
+
+**After a Plan became a Quest**, whatever screen made it, `apiClient.makePlanQuest` tells `src/api/plan-asks.ts` the
+Friends the reply's `askLevels` names, and `PlanLevelsQuestion` (`src/screens/friends/plan-levels-question.tsx`,
+inside the overlay host beside the push sheet) asks once: "{이름들}에게 평소에 어디까지 보일까요?", a line of what they
+see now ("지금은 둘에게 시간표만 보여요. 뺀 친구는 그대로 둬요."), each name a chip with an ×, the three levels as
+cells of one width with the current one chosen when all are at it, "넘기기", and "넘기면 지금처럼 둬요. 친구에게
+알림은 가지 않아요". A level sets it with `setFriendLevel` for the Friends left ("{이름들}에게 지금 있는 건물까지
+보여요"); a removed Friend stays as they are. An answer, a skip, and closing the sheet record the question for every
+Friend named with `recordFriendsAsked(ids, 'plan')`.
 
 **An Invite Link** is `<PUBLIC_URL>/invite/<token>`, and the main server's page opens `snunow://invite/<token>` where a
 messenger shows the address in its own browser. Both reach the route `/invite/[token]`. A link opened before the User
@@ -845,10 +902,26 @@ cards from the top:
   Friends, and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off campus. Turning it on without the
   location permission shows the map's explanation and the system's prompt first; a refusal leaves it off with
   "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
-  못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
-  it for 1.2 s;
+  못했어요" when the main server did not take it. While the Lobby's `masterOffAsked` is false, turning it off asks
+  first with the Friends' question in the words "모든 친구에게는 지금 있는 건물만 보여 줄 수도 있어요." and "어느 쪽을
+  골라도 친구에게는 아무 표시도 가지 않아요.": "위치 끄기" turns it off ("껐어요 · 친구에게 알림은 가지 않아요"),
+  "건물까지만" leaves it on and sends `lowerFriendLevels('building')` ("모든 친구에게 지금 있는 건물까지만 보여요"),
+  and "취소" leaves it on; each sends `recordMasterOffAsked`. Its last row, "위치 공유 보기", opens the 위치 공유 screen.
+  At `/me?show=sharing` the screen scrolls to the card and outlines it for 1.2 s;
 - "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티), "내 퀘스트" (the Quest list on the
   whole screen), and "관심사 {n}" (관심사, with the number of watched interests).
+
+위치 공유 (`/me/location-sharing`, `src/screens/me/location-sharing-screen.tsx`, P02 ticket 11, board n7b), from the
+card's "위치 공유 보기", has three cards. The first is the switch "위치 공유" over
+"끄면 친구 모두에게 시간표만 보여요", the same Master Switch as 내 정보's, with the same explanation and question
+(`use-sharing-switch.ts`). "친구마다" lists the Friends of `GET /friends`, each with what the two see of each other
+from `seen`, "서로 시간표만 보여요", "서로 지금 있는 건물까지 보여요" or "서로 정확한 위치까지 보여요", and the
+User's own end as the three cells of 친구 관리, which ask and set the level as there (`use-levels.ts`). The line is
+lowered at once by a choice or a switch on its way, and raised only once `GET /friends` says so, since the app does not
+know the Friend's end. Its foot: "시간표의 건물과 끝나는 시각은 친구 모두에게 보여요. 위치를 꺼도 시간표는 보여요."
+and "새 친구는 '지금 있는 건물'에서 시작해요.". "남기지 않는 것" has the rows "누가 나를 찾았는지 · 기록 안 함" and
+"지난 위치 · 저장 안 함", the name at the start and the fact at the end, over "과목과 강의실은 보이지 않고, 후보로 검토된
+것은 누구에게도 알리지 않아요.". The board's "비공개 구역" row is not drawn: no ticket builds the Private Zone yet.
 
 관심사 (`/me/interests`, `src/screens/me/interests-screen.tsx`, P05 ticket 08) has two cards. "프로필 관심사" shows the
 profile's hashtags from the Lobby as chips ("#러닝"), or "프로필에 넣은 관심사가 없어요", over "프로필 편집에서 바꿀 수
@@ -1122,6 +1195,8 @@ Behind a hook are three layers:
 | `uploadPosition`                                                     | Whether the position was off campus                          | `POST /positions`                                                       |
 | `listFriends`                                                        | The Friends                                                  | `GET /friends`                                                          |
 | `setFriendLevel`, `endFriendship`                                    | Nothing                                                      | `PUT /friends/:userId/level`, `DELETE /friends/:userId`                 |
+| `recordFriendsAsked`, `recordMasterOffAsked`                         | Nothing                                                      | `POST /friends/asked`, `POST /users/me/master-switch/asked`             |
+| `lowerFriendLevels`                                                  | Nothing                                                      | `PUT /users/me/friend-levels`                                           |
 | `findFriendId`                                                       | The owner of a Friend ID                                     | `GET /friend-ids/:friendId`                                             |
 | `sendFriendRequest`                                                  | Whether the request waits or made two Friends                | `POST /friend-requests`                                                 |
 | `listFriendRequests`                                                 | The Friend Requests received and sent                        | `GET /friend-requests`                                                  |
@@ -1550,7 +1625,7 @@ of the design system's tokens. How it keeps the rules:
 
 - **Zoom**: the SDK takes whole levels only. The module measures the Web Mercator zoom from what the view's width
   shows, and sets a fractional zoom through the camera's height, whose relation to the zoom it measures once when the
-  map is ready.
+  map is ready, which holds only while the view keeps its height (see "In TypeScript" below).
 - **The rectangle**: the SDK does not keep the camera inside one. When a move ends outside the rules, the module
   moves the camera back inside, at once, and reports only a camera inside them.
 - **Markers and Avatars** are labels on two layers, the Avatars' above the markers', ranked by `order` and their
@@ -1571,6 +1646,13 @@ of the design system's tokens. How it keeps the rules:
   - a fit, worked out once the view's size is known and sent as the module's `moveCamera`, so that a padding for
     each edge and `maxZoom` hold. Before that, the module's own `fitTo`, which takes one number, is asked with the
     largest side of the padding;
+  - on Android, a camera in a view whose height changed since the module opened. The module measures how the
+    camera's height gives the zoom once, and Kakao's camera shows as much from top to bottom at one height whatever
+    the view's height: in a view taller than then, as when the tab bar gives way to the answer frame or a received
+    invitation's card, every camera would show closer than asked by the binary logarithm of the heights' ratio (10% on
+    a phone 914 high over a tab bar of 88). A zoom is sent less that logarithm, and the module's lowest zoom is lowered
+    by as much; the view's height at the module's first report stands for its height when it opened. The module's
+    next native release can measure the scale again where the camera rests, as the iOS module does, and drop this;
   - a passive marker's press, which the module sends, is dropped. A marker under a passive one still cannot be
     pressed on a phone: that is the module's to add.
     None of this was checked on a phone.

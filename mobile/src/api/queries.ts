@@ -16,9 +16,10 @@
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
+import type { InvitationCard } from './invitation-card-types';
 import type { RestaurantMenus } from './menu-types';
 import type { PartyMessage, ShownJoinRequest, ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
-import type { Board, Person, Place } from './types';
+import type { Board, LatLng, Person, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -83,6 +84,17 @@ export const questInvitationsQuery = queryOptions({
   queryKey: QUEST_INVITATIONS_KEY,
   queryFn: () => apiClient.listQuestInvitations(),
 });
+// A received invitation's card, read with the User's position at that moment. Under the key of the invitations, so
+// that whatever fetches them again reads it again too: the Leader may have changed the steps.
+export function invitationCardQuery(
+  invitationId: string,
+  location: () => LatLng | null,
+): UseQueryOptions<InvitationCard, Error, InvitationCard, string[]> {
+  return {
+    queryKey: [...QUEST_INVITATIONS_KEY, invitationId],
+    queryFn: () => apiClient.getInvitationCard(invitationId, location()),
+  };
+}
 export const notificationsQuery = queryOptions({
   queryKey: NOTIFICATIONS_KEY,
   queryFn: () => apiClient.listNotifications(),

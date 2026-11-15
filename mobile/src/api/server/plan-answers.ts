@@ -26,12 +26,34 @@ import type { LatLng } from '@/api/types';
 import { field, hasTexts, isBoard, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isRecruitingQuest } from './party-client';
 
-// The `answer` of the Assistant's reply, as main-server `assistant/dto/answer.dto.ts` fixes it: every field, since the
-// answer screen draws each. An answer the app cannot read fails the reply.
+// The `answer` and the `lookup` of the Assistant's reply, as main-server `assistant/dto/answer.dto.ts` fixes them:
+// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply.
 
-function isOneOf<Value extends string>(values: readonly Value[]): (value: unknown) => value is Value {
+export function isOneOf<Value extends string>(values: readonly Value[]): (value: unknown) => value is Value {
   return (value: unknown): value is Value => values.some((one) => one === value);
 }
+
+// The keys of a record typed by a union of the contract, so that the compiler refuses a value left out or one too many.
+function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
+  return (value: unknown): value is Value => typeof value === 'string' && Object.hasOwn(values, value);
+}
+
+type Role<Part extends 'places' | 'routes' | 'flags'> = MapScene[Part][number]['role'];
+
+const isPlaceRole = isKeyOf<Role<'places'>>({
+  pick: true,
+  candidate: true,
+  dropped: true,
+  next: true,
+  meeting: true,
+  stop: true,
+});
+
+const isRouteRole = isKeyOf<Role<'routes'>>({ me: true, friend: true, next: true, shuttle: true, alt: true });
+
+const isFlagRole = isKeyOf<Role<'flags'>>({ place: true, meeting: true, leave: true, late: true, shuttle: true });
+
+const isPersonSource = isKeyOf<MapScene['people'][number]['source']>({ exact: true, building: true, timetable: true });
 
 function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
@@ -115,7 +137,7 @@ function isMode(value: unknown): boolean {
   return value === undefined || isOneOf(['walk', 'shuttle'])(value);
 }
 
-function isChip(value: unknown): value is ConditionChip {
+export function isChip(value: unknown): value is ConditionChip {
   return (
     isOneOf(['origin', 'until', 'person'])(field(value, 'kind')) &&
     isText(field(value, 'text')) &&
@@ -184,23 +206,19 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
     hasTexts(value, ['userId', 'name']) &&
     isBoolean(field(value, 'me')) &&
     isLatLng(field(value, 'at')) &&
-    isOneOf(['exact', 'building', 'timetable'])(field(value, 'source')) &&
+    isPersonSource(field(value, 'source')) &&
     isTextOrNull(field(value, 'tag'))
   );
 }
 
 function isScenePlace(value: unknown): value is MapScene['places'][number] {
-  return (
-    isPlacePoint(field(value, 'place')) &&
-    isOneOf(['pick', 'candidate', 'dropped', 'next', 'meeting'])(field(value, 'role')) &&
-    isTextOrNull(field(value, 'tag'))
-  );
+  return isPlacePoint(field(value, 'place')) && isPlaceRole(field(value, 'role')) && isTextOrNull(field(value, 'tag'));
 }
 
 function isRoute(value: unknown): value is MapScene['routes'][number] {
   return (
     isText(field(value, 'userId')) &&
-    isOneOf(['me', 'friend', 'next'])(field(value, 'role')) &&
+    isRouteRole(field(value, 'role')) &&
     isLatLng(field(value, 'from')) &&
     isLatLng(field(value, 'to')) &&
     isNumber(field(value, 'minutes')) &&
@@ -209,9 +227,7 @@ function isRoute(value: unknown): value is MapScene['routes'][number] {
 }
 
 function isFlag(value: unknown): value is MapScene['flags'][number] {
-  return (
-    isLatLng(field(value, 'at')) && isText(field(value, 'text')) && isOneOf(['place', 'meeting'])(field(value, 'role'))
-  );
+  return isLatLng(field(value, 'at')) && isText(field(value, 'text')) && isFlagRole(field(value, 'role'));
 }
 
 export function isScene(value: unknown): value is MapScene {
@@ -231,7 +247,7 @@ function isLane(value: unknown): value is TimeBand['lanes'][number] {
   return hasTexts(value, ['userId', 'name']) && listOf(isSpan)(field(value, 'busy'));
 }
 
-function isBand(value: unknown): value is TimeBand {
+export function isBand(value: unknown): value is TimeBand {
   return (
     isSpan(field(value, 'range')) &&
     hasTexts(value, ['now', 'startAt', 'endAt', 'text']) &&

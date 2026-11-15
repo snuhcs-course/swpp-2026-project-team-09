@@ -44,6 +44,7 @@ const ABOVE_TABS: readonly (readonly [name: string, edge: Edge])[] = [
   ['me/friends/add', 'right'],
   ['me/parties', 'right'],
   ['me/interests', 'right'],
+  ['me/location-sharing', 'right'],
   ['me/timetable/index', 'right'],
   ['me/timetable/class', 'right'],
   ['invite/[token]', 'bottom'],

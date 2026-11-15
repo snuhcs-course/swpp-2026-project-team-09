@@ -9,7 +9,7 @@
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
-import { type MealInput, type PlacePoint } from '../dto/answer.dto.js';
+import { type MealInput } from '../dto/answer.dto.js';
 import { type DayItem } from '../free-time/free-time.js';
 import {
   type Gathering,
@@ -18,6 +18,7 @@ import {
   type GatheringSide,
   type PersonPart,
 } from './gathering.js';
+import { PlaceNaming } from './place-naming.js';
 
 // What the words of a meal's answer share: who is who, how a Place is called, and the pieces of a way.
 
@@ -51,7 +52,8 @@ const HANGUL_FIRST = 0xac_00;
 const HANGUL_SYLLABLES = 11_172;
 const FINALS = 28;
 
-// Whether the last syllable of a word has a final consonant, which picks 은 over 는, 과 over 와, and 이 over 가.
+// Whether the last syllable of a word has a final consonant, which picks 은 over 는, 과 over 와, 이 over 가, and 이에요
+// over 예요.
 function hasFinal(word: string): boolean {
   const syllable = (word.at(-1)?.codePointAt(0) ?? 0) - HANGUL_FIRST;
   return syllable >= 0 && syllable < HANGUL_SYLLABLES && syllable % FINALS !== 0;
@@ -63,6 +65,7 @@ export const withAnd = (word: string): string => `${word}${hasFinal(word) ? '과
 
 export const withSubject = (word: string): string => `${word}${hasFinal(word) ? '이' : '가'}`;
 
+export const withCopula = (word: string): string => `${word}${hasFinal(word) ? '이에요' : '예요'}`;
 // 으로 after a final consonant other than ㄹ, and 로 otherwise.
 const FINAL_RIEUL = 8;
 export const withToward = (word: string): string => {
@@ -105,13 +108,13 @@ export function wayOn(part: PersonPart | undefined): { placeId: string; minutes:
   return { placeId: next.placeId, minutes: next.walkMinutes };
 }
 
-// A Place is called by its number, as the app calls it (301동), and otherwise by its name.
-export const placeLabelOf = ({ number, name }: Pick<PlaceDto, 'number' | 'name'>): string =>
-  number === null ? name : `${number}동`;
+export { placeLabelOf } from './place-naming.js';
 
-// Who is who and how Places are called: a Place by placeLabelOf, a Restaurant by its key.
-export class Naming {
-  constructor(readonly args: MealAnswerArgs) {}
+// Who is who and how Places are called; a Restaurant by its key.
+export class Naming extends PlaceNaming {
+  constructor(readonly args: MealAnswerArgs) {
+    super(args.placeOf);
+  }
 
   get asker(): AnswerPerson {
     return this.args.people[0];
@@ -123,23 +126,6 @@ export class Naming {
       throw new Error(`No person ${userId} in the plan`);
     }
     return person;
-  }
-
-  placeLabel(placeId: string): string {
-    return placeLabelOf(this.args.placeOf(placeId));
-  }
-
-  position(placeId: string): Position {
-    const { latitude, longitude } = this.args.placeOf(placeId);
-    return { latitude, longitude };
-  }
-
-  placePoint(placeId: string): PlacePoint {
-    return this.labelledPoint(placeId, this.placeLabel(placeId));
-  }
-
-  labelledPoint(placeId: string, label: string): PlacePoint {
-    return { placeId, label, ...this.position(placeId) };
   }
 
   mealWord(): string {

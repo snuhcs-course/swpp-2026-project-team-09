@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type AnswerReply, type RequestContext } from './dto/answer.dto.js';
+import { type AnswerReply, type Lookup, type RequestContext } from './dto/answer.dto.js';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
@@ -80,8 +80,10 @@ export interface Presented {
   readonly cards: Card[];
   // At most one Proposal: the last that passed proposeQuest.
   proposal: QuestProposal | null;
-  // At most one answer drawn on the map: the last a tool put there.
+  // At most one answer drawn on the map: the last a tool put there. A tool that puts a Plan there clears the Lookup, and
+  // one that puts a Lookup there clears the answer.
   answer: AnswerReply | null;
+  lookup: Lookup | null;
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -23,6 +24,11 @@ export class RestaurantPlaces implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     const { restaurants } = await readSeedFile(SEED_DIRECTORY, 'restaurant-places.json', fileSchema);
     this.numbers = new Map(Object.entries(restaurants));
+  }
+
+  // Every Restaurant the seed holds, by its key.
+  names(): string[] {
+    return [...this.numbers.keys()];
   }
 
   placeOf(restaurant: string): PlaceDto | null {
