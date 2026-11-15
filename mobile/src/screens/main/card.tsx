@@ -8,14 +8,17 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, color, font, Icon, type IconName, radius, shadow, space, text } from '@/design-system';
+import { useFriendFacts } from '@/features/assistant/use-tap-answer';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
 import { type CardMark, type CardView, friendIdOf } from '@/features/map/adapter';
+import { CardFacts } from './card-facts';
 import { Choices, GroupMark } from './card-choices';
 import { CARD } from './layout';
 import { StudyRows } from './study-rows';
@@ -161,10 +164,13 @@ function SeenRow({ seen, onPress = openSharing }: { seen: string; onPress?: () =
 }
 
 // The card's lines. A Friend's card is their profile: what the User sees of them before the lines, and their Friend
-// ID and since when the two have been Friends after them, each where the main server sends it.
+// ID and since when the two have been Friends after them, each where the main server sends it. With the switch on, the
+// fact lines of the main server's card of the Friend stand in place of the lines once they came.
 function Lines({ card, onSeen }: Pick<CardProps, 'card' | 'onSeen'>): ReactElement | null {
-  const facts = useFriendProfile(friendIdOf(card.id))?.facts ?? null;
-  if (card.lines.length === 0 && facts === null) {
+  const userId = friendIdOf(card.id);
+  const facts = useFriendProfile(userId)?.facts ?? null;
+  const tapped = useFriendFacts(userId);
+  if (card.lines.length === 0 && facts === null && tapped === null) {
     return null;
   }
   const friendId = facts?.friendId ?? null;
@@ -172,9 +178,11 @@ function Lines({ card, onSeen }: Pick<CardProps, 'card' | 'onSeen'>): ReactEleme
   return (
     <View style={styles.lines}>
       {facts === null ? null : <SeenRow onPress={onSeen} seen={facts.seen} />}
-      {card.lines.map(({ icon, text: words }) => (
-        <Line icon={icon} key={`${icon}:${words}`} words={words} />
-      ))}
+      {tapped === null ? (
+        card.lines.map(({ icon, text: words }) => <Line icon={icon} key={`${icon}:${words}`} words={words} />)
+      ) : (
+        <CardFacts facts={tapped} />
+      )}
       {friendId === null ? null : <Line icon="user" words={friendId} />}
       {since === null ? null : <Line icon="calendar" words={since} />}
     </View>

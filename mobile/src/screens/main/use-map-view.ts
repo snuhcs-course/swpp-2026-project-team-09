@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -17,14 +18,16 @@ import type { MainMap } from './use-main-map';
 import type { MadeQuestCard } from './use-made-quest-card';
 import { type Me, pressableMe } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
+import { bothTouches, type MapTouches, usePressedPlace } from './use-pressed-place';
 import type { Selection } from './use-selection';
 import { useThings } from './use-things';
 import { TUTORIAL_PIN_ID, type TutorialPin } from './tutorial/use-tutorial-pin';
 
-// A press on the map: the tutorial place pin takes its own first; any other goes to the map's things, where merged
-// study pins zoom in.
-function pressWithPin(pin: TutorialPin, onThing: (id: string) => void): (id: string) => void {
+// A press on the map, which keeps a tap on the ground from being a press on a building: the tutorial place pin takes
+// its own first; any other goes to the map's things, where merged study pins zoom in.
+function pressWithPin(pin: TutorialPin, onThing: (id: string) => void, keep: () => void): (id: string) => void {
   return (id) => {
+    keep();
     if (id === TUTORIAL_PIN_ID) {
       pin.press(id);
     } else {
@@ -54,36 +57,45 @@ export interface UnaskedCards {
   made: MadeQuestCard;
 }
 
+// What the map draws, what a press on it does, and what watches the touches around it.
+export type MapView = AnswerMap & { around: MapTouches };
+
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, which takes a press while the switch is on, and
-// the lines. While a Plan of an answer is shown, the Plan is drawn in their place, and a press on a candidate shows its
-// Plan; while a received invitation's card is, its own way is; while a made Quest's card is, its Places and the User
-// are. A Lookup on screen is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera
-// left further out than the everyday map allows glides back in.
+// the lines. While the switch is on, a tap on a building opens its card and the Place is marked. While a Plan of an
+// answer is shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received
+// invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A Lookup on screen
+// is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left further out than
+// the everyday map allows glides back in.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
   room: Room,
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
-): AnswerMap {
+): MapView {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap);
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
   const limits = useEverydayLimits(map, answer !== null || way !== null);
+  const everyday = answer === null && way === null && !chat.framed && !unasked;
+  const pressed = usePressedPlace(map.camera, selection, chat.setTapped, chat.onMap && everyday);
+  const around = bothTouches(pin.touches, pressed);
   if (answer !== null) {
-    return answer;
+    return { ...answer, around };
   }
   if (way !== null) {
-    return way;
+    return { ...way, around };
   }
   const avatars = unasked ? withoutPeople(things.avatars, cards) : things.avatars;
   const mine = chat.onMap ? pressableMe(me.avatars) : me.avatars;
+  const markers = [...things.markers, ...pressed.markers, ...pin.markers];
   return {
-    contents: { markers: [...things.markers, ...pin.markers], avatars: [...avatars, ...mine], lines },
-    onPress: chat.framed || unasked ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
+    contents: { markers, avatars: [...avatars, ...mine], lines },
+    onPress: chat.framed || unasked ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection), pressed.keep),
+    around,
     ...limits,
   };
 }

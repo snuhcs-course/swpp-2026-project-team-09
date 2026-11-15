@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -97,8 +98,13 @@ function moment({ nativeEvent }: TouchEventLike): TouchMoment {
 }
 
 // Calls `onTap` `TAP_WAIT_MS` after a tap of one finger on the map, unless `keep` comes within that time either side
-// of it. A second finger makes the touch a pinch, which is no tap. While `active` is false no tap counts.
-export function useMapTap(onTap: () => void, active: boolean, timers: Timers = GLOBAL_TIMERS): MapTap {
+// of it, with the point the finger was lifted at. A second finger makes the touch a pinch, which is no tap. While
+// `active` is false no tap counts.
+export function useMapTap(
+  onTap: (at: { x: number; y: number }) => void,
+  active: boolean,
+  timers: Timers = GLOBAL_TIMERS,
+): MapTap {
   const start = useRef<TouchMoment | null>(null);
   const pending = useOneTimer(timers);
   const kept = useOneTimer(timers);
@@ -111,9 +117,12 @@ export function useMapTap(onTap: () => void, active: boolean, timers: Timers = G
     (event: TouchEventLike) => {
       const began = start.current;
       start.current = null;
-      const tapped = began !== null && event.nativeEvent.touches.length === 0 && isTap(began, moment(event));
+      const end = moment(event);
+      const tapped = began !== null && event.nativeEvent.touches.length === 0 && isTap(began, end);
       if (active && tapped && !kept.running()) {
-        pending.start(onTap);
+        pending.start(() => {
+          onTap({ x: end.x, y: end.y });
+        });
       }
     },
     [active, kept, pending, onTap],
