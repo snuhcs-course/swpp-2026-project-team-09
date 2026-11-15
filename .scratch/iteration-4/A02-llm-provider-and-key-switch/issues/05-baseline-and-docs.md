@@ -16,17 +16,17 @@ The eval suites run once on the merged code, so that later work is measured agai
 
 ## Acceptance criteria
 
-- [ ] **Person: cost approval.** Before any run, the ticket gives 안진영 an estimate per run (about USD 3.5 in all), and 안진영 approves it in writing in the PR or this file. No run starts before that.
+- [x] **Person: cost approval.** Before any run, the ticket gives 안진영 an estimate per run (about USD 3.5 in all), and 안진영 approves it in writing in the PR or this file. No run starts before that.
 - [ ] Runs on one commit of 4.0/Main after 01 to 04 are merged, from the local `.env` keys with `--provider`:
   - P19 (`pnpm eval`) and the P5 small world (`--world p5`) on OpenRouter and on Anthropic;
   - the P5 large world (`--world large-world-v1`), P6 (`--world p6`) and the collection evaluations A and B (`pnpm eval:collection`) on Anthropic only;
   - no P4.
 - [ ] A record beside the last OpenRouter run of each suite: pass rate, cost per turn, cache hit rate, time per turn, provider, caching mode and commit, and each comparison stated as a different condition (metrics 4.3).
-- [ ] ADR 0013: the Assistant, the Judgement and the same-event choice call Claude through the Anthropic API or OpenRouter, the key, and with it the provider, chosen by name on the admin site from the keys in Secret `secrets`; why (A01's three reasons, the switch without a Release); what was considered (A01's start-up setting, one key per provider, a Redis copy of the settings, keys managed on the admin site). ADR 0005 marked superseded on the provider only.
-- [ ] `GLOSSARY.md`: the Administrator entry says an Administrator also changes global settings, such as the AI's key.
-- [ ] Root README: the Assistant row of the stack table, the settings table, the AI-in-the-product paragraph and the external-services table (Anthropic beside OpenRouter).
-- [ ] `infra/production/README.md`: checked against ticket 03's sections, with a short walk-through of switching to an Anthropic key: put `llm-key-<name>`, release, and choose it on the Settings page.
-- [ ] Each changed source file has its AI-generated row (the Markdown files get none).
+- [x] ADR 0013: the Assistant, the Judgement and the same-event choice call Claude through the Anthropic API or OpenRouter, the key, and with it the provider, chosen by name on the admin site from the keys in Secret `secrets`; why (A01's three reasons, the switch without a Release); what was considered (A01's start-up setting, one key per provider, a Redis copy of the settings, keys managed on the admin site). ADR 0005 marked superseded on the provider only.
+- [x] `GLOSSARY.md`: the Administrator entry says an Administrator also changes global settings, such as the AI's key.
+- [x] Root README: the Assistant row of the stack table, the settings table, the AI-in-the-product paragraph and the external-services table (Anthropic beside OpenRouter).
+- [x] `infra/production/README.md`: checked against ticket 03's sections, with a short walk-through of switching to an Anthropic key: put `llm-key-<name>`, release, and choose it on the Settings page.
+- [x] Each changed source file has its AI-generated row (the Markdown files get none).
 
 ## Comments
 
@@ -51,3 +51,25 @@ Each run's estimate is the last run of the suite on the same provider and cachin
 | **All** | | | | **4.23** | **5.51** |
 
 The OpenRouter key had USD 54.25 of its USD 100 limit left before the runs.
+
+### Runs so far (2026-11-15)
+
+All on `edd356ae`; the record is `main-server/eval/a02-baseline.md`.
+
+| Run | Provider | Estimate (with 30%) | Measured |
+| --- | --- | --- | --- |
+| P19, first attempt (stopped before any call: disk full) | Anthropic | 0.11 | 0.0000 |
+| Collection A `judgement`, run 1 | Anthropic | 0.10 | 0.0735 |
+| Collection B `ai-choice` | Anthropic | 0.01 | 0.0055 |
+| Collection A `judgement`, run 2 (added to read C2 and C3) | Anthropic | 0.10 | 0.0685 |
+| **Anthropic** | | | **0.1475** |
+| **OpenRouter** | | | **0.0000** |
+
+**Stopped: the disk is full.** The machine's root volume had 0 MB free for users other than root, so the evals' PostgreSQL container could not run `initdb` (`No space left on device`). The chat suites (P19 and the P5 small world on both providers, the P5 large world and P6 on Anthropic) need it and did not run. The collection runs need no database and ran. Nothing was deleted to make room. Once space is freed, the chat suites run from a detached worktree at `edd356ae` with the commands in the record, and the two run criteria above are ticked then.
+
+`edd356ae` also carries a fix found before the first run: `src/common/settings.ts` imported `./llm-keys.js` (ticket 02), which plain Node cannot resolve, so `pnpm eval` stopped with `ERR_MODULE_NOT_FOUND`. It now imports `./llm-keys.ts`.
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 50 minutes, in one session, of which about 25 minutes were the model runs (an estimate).
+- Tokens (estimates): input about 4.5M, of which about 4.2M cache reads, about 250k cache writes and about 40k uncached; output about 45k. No subagents.
