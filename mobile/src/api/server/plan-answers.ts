@@ -21,6 +21,7 @@ import type {
   PlanPerson,
   TimeBand,
 } from '@/api/assistant-types';
+import type { MeetInput } from '@/api/meet-plan-types';
 import type { NewQuestInput, QuestsInput } from '@/api/recruiting-plan-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isBoard, isNumber, isText, isTextOrNull, listOf } from './answers';
@@ -86,17 +87,24 @@ function isPerson(value: unknown): value is PlanPerson {
   return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
 }
 
-function isMealInput(value: unknown): value is MealInput {
+// The people, the window, and the Place a meal and a meet share.
+function isGathering(value: unknown): boolean {
   const window = field(value, 'window');
   return (
-    field(value, 'kind') === 'meal' &&
     isText(field(value, 'date')) &&
-    isOneOf(['lunch', 'dinner'])(field(value, 'meal')) &&
     listOf(isPerson)(field(value, 'people')) &&
     isTextOrNull(field(window, 'from')) &&
     isTextOrNull(field(window, 'until')) &&
     isTextOrNull(field(value, 'placeId'))
   );
+}
+
+function isMealInput(value: unknown): value is MealInput {
+  return field(value, 'kind') === 'meal' && isOneOf(['lunch', 'dinner'])(field(value, 'meal')) && isGathering(value);
+}
+
+function isMeetInput(value: unknown): value is MeetInput {
+  return field(value, 'kind') === 'meet' && isGathering(value);
 }
 
 function isEventsInput(value: unknown): value is EventsInput {
@@ -129,7 +137,7 @@ function isNewQuestInput(value: unknown): value is NewQuestInput {
 }
 
 export function isInput(value: unknown): value is PlanInput {
-  return isMealInput(value) || isEventsInput(value) || isQuestsInput(value) || isNewQuestInput(value);
+  return [isMealInput, isEventsInput, isQuestsInput, isNewQuestInput, isMeetInput].some((isKind) => isKind(value));
 }
 
 // A mode is absent for a walk.
@@ -139,7 +147,7 @@ function isMode(value: unknown): boolean {
 
 export function isChip(value: unknown): value is ConditionChip {
   return (
-    isOneOf(['origin', 'until', 'person'])(field(value, 'kind')) &&
+    isOneOf(['origin', 'from', 'until', 'person'])(field(value, 'kind')) &&
     isText(field(value, 'text')) &&
     isTextOrNull(field(value, 'userId'))
   );
@@ -243,8 +251,14 @@ function isSpan(value: unknown): value is { startAt: string; endAt: string } {
   return hasTexts(value, ['startAt', 'endAt']);
 }
 
+// A busy stretch says what it is on a Plan's band, and need not elsewhere.
+function isBusy(value: unknown): value is TimeBand['lanes'][number]['busy'][number] {
+  const label = field(value, 'label');
+  return isSpan(value) && (label === undefined || isText(label));
+}
+
 function isLane(value: unknown): value is TimeBand['lanes'][number] {
-  return hasTexts(value, ['userId', 'name']) && listOf(isSpan)(field(value, 'busy'));
+  return hasTexts(value, ['userId', 'name']) && listOf(isBusy)(field(value, 'busy'));
 }
 
 export function isBand(value: unknown): value is TimeBand {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -70,6 +71,26 @@ describe('The lines of a request context', () => {
 
   it('are none for a context with neither', () => {
     expect(contextLines(NO_CONTEXT)).toEqual([]);
+  });
+});
+
+describe('The line of a meet on screen', () => {
+  it('gives its kind and its conditions, as a meal is given', () => {
+    const meet: PlanInput = {
+      kind: 'meet',
+      date: '2087-01-07',
+      people: [
+        { userId: ASKER, constraints: [] },
+        { userId: MINSU, constraints: [] },
+      ],
+      window: { from: '14:00', until: null },
+      placeId: null,
+    };
+
+    expect(contextLines({ ...NO_CONTEXT, conditions: meet, planId: '302동 앞' })).toEqual([
+      `[Plan on screen: {"plan":"302동 앞","kind":"meet","date":"2087-01-07","friendIds":["${MINSU}"],` +
+        `"from":"14:00","until":null,"placeId":null}]`,
+    ]);
   });
 });
 
