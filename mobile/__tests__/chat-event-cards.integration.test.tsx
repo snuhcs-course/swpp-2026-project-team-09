@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -53,9 +54,10 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Opens the chat, sends a question and lets the Assistant answer with the cards of MAJOR, then CAREER.
-async function answered(): Promise<User> {
-  const cards = [MAJOR, CAREER].map((globalEvent) => ({ kind: 'globalEvent', globalEvent }));
+// Opens the chat, sends a question and lets the Assistant answer with the cards of `events`, MAJOR then CAREER unless
+// given.
+async function answered(events: readonly object[] = [MAJOR, CAREER]): Promise<User> {
+  const cards = events.map((globalEvent) => ({ kind: 'globalEvent', globalEvent }));
   server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards, proposal: null } });
   const user = await openMain();
   await user.press(screen.getByLabelText(AI_INPUT));
@@ -106,6 +108,16 @@ describe('the event cards of an answer', () => {
         { role: 'user', text: '고마워' },
       ],
     });
+  });
+});
+
+describe("an event card's ☆", () => {
+  it("is on an event of the User's list, and not on one the list no longer holds, such as an ended one", async () => {
+    const ended = { ...CAREER, id: 'e-ended', title: '지난주 설명회' };
+    await answered([MAJOR, ended]);
+
+    expect(chatCard(MAJOR.id).getByRole('button', { name: '즐겨찾기' })).toBeVisible();
+    expect(chatCard(ended.id).queryByRole('button', { name: '즐겨찾기' })).toBeNull();
   });
 });
 

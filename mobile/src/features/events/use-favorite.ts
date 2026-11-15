@@ -14,7 +14,9 @@ import { useToast } from '@/design-system';
 export const FAVORITE_NOT_CHANGED = '즐겨찾기를 바꾸지 못했어요';
 
 export interface Favorite {
-  // The User starred the event. An event the User's list does not hold is not starred.
+  // The User's list holds the event. One it does not, such as an ended event in an old chat answer, cannot be starred.
+  held: boolean;
+  // The User starred the event.
   on: boolean;
   // Shows the new state at once, and the old one again with a toast when the main server did not take it; the list is
   // then fetched again, so that quick taps of which one failed end as the main server holds them.
@@ -26,9 +28,9 @@ export interface Favorite {
 export function useFavorite(eventId: string): Favorite {
   const queryClient = useQueryClient();
   const showToast = useToast();
-  const on = useQuery({
+  const favorite = useQuery({
     ...globalEventsQuery,
-    select: (events: ListedGlobalEvent[]) => events.some(({ id, favorite }) => id === eventId && favorite),
+    select: (events: ListedGlobalEvent[]) => events.find(({ id }) => id === eventId)?.favorite,
   }).data;
   const turn = useCallback(
     (next: boolean) => {
@@ -48,5 +50,5 @@ export function useFavorite(eventId: string): Favorite {
     },
     [eventId, queryClient, showToast],
   );
-  return { on: on === true, turn };
+  return { held: favorite !== undefined, on: favorite === true, turn };
 }
