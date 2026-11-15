@@ -9,8 +9,8 @@ import type { Lookup } from '@/api/lookup-types';
 import { isLookup } from '@/api/server/lookup-answers';
 import copy from './friend-lookup.json';
 
-// The main server's Lookup for "민수 어디야?", asked on Tuesday 2026-11-17 at 12:05 while 민수, in his Class in 302동
-// until 12:15, shows the User the building he is in, copied whole, with 민수's id that of `meal-answer.ts`.
+// The main server's Lookup for "민수 어디야?", asked on Tuesday 2026-11-17 at 12:05 while 민수, in a Class in 302동
+// until 12:15, shows the User the building 민수 is in, copied whole, with 민수's id that of `meal-answer.ts`.
 
 function checked(value: unknown): Lookup {
   if (!isLookup(value)) {

@@ -77,8 +77,6 @@ spec:
             # The AI's other keys by name, as JSON (infra/production/README.md: The AI's keys).
             - name: LLM_KEYS
               valueFrom: { secretKeyRef: { name: secrets, key: LLM_KEYS } }
-            - name: ASSISTANT_MODEL
-              valueFrom: { configMapKeyRef: { name: settings, key: ASSISTANT_MODEL } }
             - name: AUTOMATIC_PUBLICATION
               valueFrom: { configMapKeyRef: { name: settings, key: AUTOMATIC_PUBLICATION } }
             - name: AUTOMATIC_JUDGEMENT

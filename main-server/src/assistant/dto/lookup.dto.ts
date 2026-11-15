@@ -6,13 +6,13 @@
 
 import type { AnswerLine, ConditionChip, MapScene, PlacePoint, PlanInput, TimeBand } from './answer.dto.js';
 
-// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, or a
-// pressed Place.
+// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, a
+// pressed Place, a day's Classes, the Tutorial Quests in order, or the study spaces of the visible area.
 export interface Lookup {
-  kind: 'way' | 'friend' | 'menu' | 'place';
+  kind: 'way' | 'friend' | 'menu' | 'place' | 'day' | 'tutorial' | 'study';
   // The conditions it used; a Lookup is not recalculated.
   chips: ConditionChip[];
-  // At most two.
+  // At most two, after a day's title.
   lines: AnswerLine[];
   basis: string[];
   scene: MapScene;
@@ -22,6 +22,14 @@ export interface Lookup {
   actions: LookupAction[];
   // A pressed Place's or Friend's card; absent for a Lookup the User asked for.
   card?: LookupCard | null;
+  // The list the card shows under the lines: a day's Classes, or the Tutorial Quests in order.
+  steps?: LookupStep[];
+}
+
+// A row of a Lookup's list: the time at the left ("13:51", or "11:00–11:50" for a Class), and the text at the right.
+export interface LookupStep {
+  at: string | null;
+  text: string;
 }
 
 export interface LookupCard {

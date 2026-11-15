@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { TutorialCompletion, type User } from '../generated/prisma/client.js';
 import { notFound } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
 import { TutorialDto } from './dto/tutorial.dto.js';
-import { type TutorialContent, type TutorialQuest } from './tutorial-content.js';
+import { type TutorialContent, type TutorialQuest, type TutorialVisit } from './tutorial-content.js';
 import { eligibleByDefault, questStatus, tutorialState } from './tutorial-state.js';
 
 export const TUTORIAL_CONTENT = 'TUTORIAL_CONTENT';
@@ -66,6 +67,13 @@ export class TutorialService {
   // The facts of each quest by its key, which only the Assistant reads.
   facts(): ReadonlyMap<string, TutorialQuest['facts']> {
     return new Map(this.content.quests.map(({ key, facts }) => [key, facts]));
+  }
+
+  // When each quest with a `visit` can be done, by its key, which only the Assistant reads.
+  visits(): ReadonlyMap<string, TutorialVisit> {
+    return new Map(
+      this.content.quests.flatMap(({ key, visit }) => (visit === undefined ? [] : [[key, visit] as const])),
+    );
   }
 
   // 진행하기: keeps the quests' progress and shows the 내 정보 row again. A finished tutorial stays finished unless the
@@ -181,7 +189,7 @@ export class TutorialService {
       rowHidden: progress !== null && progress.rowHiddenAt !== null,
       eligibleByDefault: isEligibleByDefault(user, new Date()),
       categories: this.content.categories,
-      quests: this.content.quests.map(({ facts: _facts, ...quest }) => ({
+      quests: this.content.quests.map(({ facts: _facts, visit: _visit, ...quest }) => ({
         ...quest,
         status: questStatus(rows.find(({ questKey }) => questKey === quest.key)),
       })),

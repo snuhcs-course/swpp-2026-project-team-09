@@ -63,7 +63,13 @@ export interface Way {
 
 // A Place the User named; else the main gate when their location is off campus; else the Place of their location;
 // else that of their last item today that has ended.
-export function startOf({ fromPlaceId, location, gatePlaceId, me, now }: WayArgs): WayStart | null {
+export function startOf({
+  fromPlaceId,
+  location,
+  gatePlaceId,
+  me,
+  now,
+}: Pick<WayArgs, 'fromPlaceId' | 'location' | 'gatePlaceId' | 'me' | 'now'>): WayStart | null {
   if (fromPlaceId !== null) {
     return { placeId: fromPlaceId, basis: 'chosen' };
   }
