@@ -238,19 +238,24 @@ interface Drawn {
   drawing: AnswerDrawing;
 }
 
+// The drawing with its labels' sides chosen in metres.
+function useBase(draw: Draw | null): AnswerDrawing | null {
+  return useMemo(() => (draw === null ? null : draw(null)), [draw]);
+}
+
 // A drawing's markers and lines on the map in place of the everyday map's markers, lines, and the User's own Avatar,
-// with the camera of an answer. The camera is worked out from the drawing with its sides chosen in metres, and the
-// marks are drawn with their sides chosen at that camera. Null while there is nothing to draw. `looks` are asked for
-// with the drawing's own, so that a change of drawing never waits for a picture. `answer` is the answer drawn, for the
-// camera to tell one that replaced another.
+// with the camera of an answer. The camera is worked out from the drawing with its sides chosen in metres (`base`),
+// and the marks are drawn with their sides chosen at that camera. Null while there is nothing to draw. `looks` are
+// asked for with the drawing's own, so that a change of drawing never waits for a picture. `answer` is the answer
+// drawn, for the camera to tell one that replaced another.
 function useDrawnMap(
   draw: Draw | null,
+  base: AnswerDrawing | null,
   answer: AnswerReply | null,
   looks: readonly MarkerLook[],
   map: MainMap,
   framing: Framing,
 ): Drawn | null {
-  const base = useMemo(() => (draw === null ? null : draw(null)), [draw]);
   const shown = useMemo(() => (base === null ? null : labelViewOf(base, framing)), [base, framing]);
   const drawing = useMemo(() => (draw === null || shown === null ? base : draw(shown)), [draw, base, shown]);
   const things = drawing?.things ?? [];
@@ -282,7 +287,7 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
     [scene],
   );
   const framing = useFraming(map, room, false);
-  const drawn = useDrawnMap(draw, null, NO_LOOKS, map, framing);
+  const drawn = useDrawnMap(draw, useBase(draw), null, NO_LOOKS, map, framing);
   if (drawn === null) {
     return null;
   }
@@ -321,9 +326,10 @@ export function useAnswerMap(
     () => (answer === null ? NO_LOOKS : looksOf(answer, (drawing) => labelViewOf(drawing, framing))),
     [answer, framing],
   );
-  const drawn = useDrawnMap(draw, answer, looks, map, framing);
-  const others = drawn === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, drawn.drawing);
+  const base = useBase(draw);
+  const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const faces = useFaces(others, shown, made !== null);
+  const drawn = useDrawnMap(draw, base, answer, looks, map, framing);
   if (drawn === null) {
     return null;
   }
