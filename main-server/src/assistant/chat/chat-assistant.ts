@@ -236,8 +236,8 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
       findFreeFriends,
       ...planned.tools,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
-      // showLibrarySeats and showMyLibraryBookings.
-      ...libraryTools(library, { fillsSeatTime: drawsAnswers }),
+      // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom for an app that draws answers.
+      ...libraryTools(library, { fillsSeatTime: drawsAnswers, picksStudyTime: drawsAnswers }),
       getTutorial: getTutorial(tutorial),
     },
   };
