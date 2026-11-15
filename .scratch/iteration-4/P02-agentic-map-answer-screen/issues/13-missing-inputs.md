@@ -42,7 +42,7 @@ Blocked by: ticket 10 (its offers); #265 (P02-09 changes `use-shown-answer.ts` a
 
 ### Agent usage (2026-11-15)
 
-One implementing subagent (Opus 5.5), resumed once for the recalculation. This session's review and the pull request are counted under P03 ticket 07.
+One implementing subagent (Opus 5.5), resumed for the recalculation and twice to rebuild it on #270 and then on `4.0/Main`. This session's review and the pull request are counted under P03 ticket 07.
 
-- Agent time: about 56 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
-- Tokens: output 183,142; input 69,062,332, of which 68,596,264 were cache reads, 465,660 cache writes, and 408 uncached. Without cache reads: 649,210.
+- Agent time: about 113 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 252,863; input 127,335,757, of which 126,279,072 were cache reads, 1,056,067 cache writes, and 618 uncached. Without cache reads: 1,309,548.
