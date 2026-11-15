@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -30,6 +31,9 @@ export function postAssistantMessages(
     ...more,
   });
 }
+
+// A reply's parts beside its text when it shows nothing.
+export const NOTHING_SHOWN = { mapButtons: [], cards: [], proposal: null, answer: null, lookup: null, refusal: null };
 
 // One message of the User's.
 export function ask(text: string): SentMessage[] {

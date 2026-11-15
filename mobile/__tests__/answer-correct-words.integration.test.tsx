@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -86,7 +87,7 @@ describe('words sent with an answer on screen', () => {
   it('carry the recalculated conditions after a recalculation', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
     await pass(500);
 
     await say(user);

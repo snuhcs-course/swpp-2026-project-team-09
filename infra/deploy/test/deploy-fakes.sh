@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Stands in for git, docker and curl in the deploy tests, linked under each name on PATH.
@@ -21,6 +22,10 @@ case "$(basename "$0")" in
   curl)
     for arg; do
       case "$arg" in
+        https://api.github.com/*/check-suites*)
+          cat "$FAKE_CHECK_SUITES"
+          exit "${FAKE_GITHUB_STATUS:-0}"
+          ;;
         https://api.github.com/*)
           cat "$FAKE_CHECK_RUNS"
           exit "${FAKE_GITHUB_STATUS:-0}"
