@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { type Position } from '../../common/geometry.js';
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { FriendViewService } from '../../friends/friend-view.service.js';
 import { MenusService } from '../../menus/menus.service.js';
+import { RestaurantHours } from '../../menus/restaurant-hours.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
@@ -20,10 +22,11 @@ import { type AnswerReply, type LocationMissing, type MealInput } from '../dto/a
 import { freeTimeOf } from '../free-time/free-time.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { UserDayService } from '../free-time/user-day.service.js';
-import { gather, type GatheringPerson, MINUTE_MS } from './gathering.js';
+import { type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
 import { type MissingInputs } from './missing-inputs.js';
-import { conditionsOf, windowOf } from './plan-conditions.js';
+import { conditionsOf } from './plan-conditions.js';
+import { gatherMeal, withHours } from './unmet-plans.js';
 
 // The one place that gathers what a meal's plan needs: the tool, the recalculation, and the making of a Quest call it,
 // so that the three agree.
@@ -51,6 +54,7 @@ export class MealPlanService {
     private readonly restaurantPlaces: RestaurantPlaces,
     private readonly places: PlaceLookup,
     private readonly timetable: TimetableService,
+    private readonly hours: RestaurantHours,
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
@@ -89,18 +93,14 @@ export class MealPlanService {
       placeId: place.id,
     }));
     const candidates = input.placeId === null ? open : open.filter(({ placeId }) => placeId === input.placeId);
-    const when = { window: windowOf(input), now };
-    const gathering = gather([askerPerson, ...friendPeople], candidates, when, this.travel);
-    const aloneMinutes =
-      friendPeople.length === 0
-        ? null
-        : (gather([askerPerson], candidates, when, this.travel).fits[0]?.togetherMinutes ?? null);
+    const hours = await Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date)));
+    const { places, window } = withHours(input, candidates, hours);
+    const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, window }, this.travel);
     return mealAnswer({
       input,
       now,
       people,
-      gathering,
-      aloneMinutes,
+      ...gathered,
       menus: menusOf(collected.length, open.length, candidates.length),
       placeOf: (placeId) => this.placeOf(placeId),
       missing,
@@ -166,6 +166,7 @@ export class MealPlanService {
         name,
         me: false,
         items: theirs[index] ?? [],
+        level,
         // The only place the Assistant uses a Friend's position: what the Friend view lets the asker see.
         position:
           level === 'exact' && position !== null

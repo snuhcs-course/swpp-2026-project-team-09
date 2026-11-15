@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -28,6 +29,9 @@ export interface GatheringPerson {
 export interface GatheringPlace {
   key: string;
   placeId: string;
+  // A Restaurant's own window, from the hours its page gave, in place of the gathering's; and when it closes.
+  window?: Interval;
+  closesAt?: Date;
 }
 
 export type OriginBasis = 'timetable' | 'location' | 'chosen';
@@ -80,6 +84,8 @@ export interface GatheringDrop {
   shortest: { personId: string; minutes: number };
   // In the order of the people.
   parts: PersonPart[];
+  // The Restaurant closes before a meal fits: when, and the asker's walk there.
+  closing?: { at: Date; walkMinutes: number | null };
 }
 
 export interface Gathering {
@@ -102,20 +108,27 @@ export type GatheringPlaces =
   readonly GatheringPlace[] | ((sides: readonly GatheringSide[]) => readonly GatheringPlace[]);
 
 // The asker is the first person. `now` is a whole minute. Without `merging`, everyone walks to the place on their own,
-// as for a meet, where meeting on the way would be the meet itself.
+// as for a meet, where meeting on the way would be the meet itself. With `startsBy`, only a stretch that starts by then
+// is planned: when none fits, the first stretch's sides come back with nothing fitted.
 export function gather(
   people: readonly [GatheringPerson, ...GatheringPerson[]],
   places: GatheringPlaces,
   when: { window: Interval; now: Date },
   travel: Pick<TravelProvider, 'walkingSeconds'>,
-  { merging = true }: { merging?: boolean } = {},
+  { merging = true, startsBy }: { merging?: boolean; startsBy?: Date } = {},
 ): Gathering {
   const stretches = sharedTime(
     people.map(({ free }) => free),
     when.window,
   );
   const plans = stretches.map((stretch) => planIn(stretch, people, places, when, { travel, merging }));
-  return plans.find(({ fits }) => fits.length > 0) ?? plans[0] ?? { shared: null, sides: [], fits: [], dropped: [] };
+  const held =
+    startsBy === undefined ? plans : plans.filter(({ shared }) => shared !== null && shared.start <= startsBy);
+  const first = plans[0] ?? { shared: null, sides: [], fits: [], dropped: [] };
+  return (
+    held.find(({ fits }) => fits.length > 0) ??
+    (startsBy === undefined ? first : { ...first, fits: [], dropped: held[0]?.dropped ?? [] })
+  );
 }
 
 function planIn(
@@ -130,9 +143,9 @@ function planIn(
     ...friends.map((friend) => sideOf(friend, stretch, now)),
   ];
   const candidates = typeof places === 'function' ? places(sides) : places;
-  const all = candidates.map((place) => fitAt(place, sides, window, { travel, merging }));
-  const fits = all.filter((fit) => fitsTogether(fit)).toSorted(byLongestTogether);
-  const dropped = all.filter((fit) => !fitsTogether(fit)).map((fit) => dropOf(fit, window));
+  const all = candidates.map((place) => ({ place, fit: fitAt(place, sides, window, { travel, merging }) }));
+  const fits = all.flatMap(({ fit }) => (fitsTogether(fit) ? [fit] : [])).toSorted(byLongestTogether);
+  const dropped = all.flatMap(({ place, fit }) => (fitsTogether(fit) ? [] : [dropOf(fit, place, window)]));
   return { shared: stretch, sides, fits, dropped };
 }
 
@@ -146,7 +159,9 @@ function byLongestTogether(a: GatheringFit, b: GatheringFit): number {
 
 const fitsTogether = ({ togetherMinutes }: GatheringFit): boolean => togetherMinutes >= SHORTEST_MEAL_SECONDS / 60;
 
-function dropOf({ key, placeId, togetherMinutes, parts }: GatheringFit, window: Interval): GatheringDrop {
+function dropOf(fit: GatheringFit, place: GatheringPlace, gatheringWindow: Interval): GatheringDrop {
+  const { key, placeId, togetherMinutes, end, parts } = fit;
+  const window = place.window ?? gatheringWindow;
   const stays = parts.map(({ personId, canArriveAt, readyAt, leaveBy }) => ({
     personId,
     minutes: Math.max(
@@ -155,7 +170,11 @@ function dropOf({ key, placeId, togetherMinutes, parts }: GatheringFit, window: 
     ),
   }));
   const shortest = stays.reduce((least, stay) => (stay.minutes < least.minutes ? stay : least));
-  return { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest, parts };
+  const drop = { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest, parts };
+  const { closesAt } = place;
+  return closesAt === undefined || end.getTime() !== closesAt.getTime()
+    ? drop
+    : { ...drop, closing: { at: closesAt, walkMinutes: parts[0]?.walkMinutes ?? null } };
 }
 
 type Walking = Pick<TravelProvider, 'walkingSeconds'>;
@@ -279,11 +298,13 @@ function settingOut(part: Omit<PersonPart, 'leaveAt'>, start: Date): PersonPart 
 }
 
 function fitAt(
-  place: GatheringPlace,
+  { key, placeId, window: own }: GatheringPlace,
   [asker, ...friends]: readonly [GatheringSide, ...GatheringSide[]],
-  window: Interval,
+  gatheringWindow: Interval,
   { travel, merging }: { travel: Walking; merging: boolean },
 ): GatheringFit {
+  const place = { key, placeId };
+  const window = own ?? gatheringWindow;
   const earliestMeeting = merging ? meetingOf(place.placeId, asker, friends, travel) : null;
   const arriving = [asker, ...friends].map((side) => partOf(side, place.placeId, earliestMeeting, travel));
   const start = latest([window.start, ...arriving.map((part) => part.canArriveAt ?? part.readyAt)]);

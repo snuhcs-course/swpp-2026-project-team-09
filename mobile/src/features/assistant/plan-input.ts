@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, PlanInput, PlanPerson } from '@/api/assistant-types';
@@ -43,7 +44,7 @@ export function withPerson(input: PlanInput, userId: string): PlanInput {
   return { ...input, people: [...input.people, { userId, constraints: [] }] };
 }
 
-export function withBound(input: PlanInput, bound: 'from' | 'until', time: string): PlanInput {
+export function withBound(input: PlanInput, bound: 'from' | 'until', time: string | null): PlanInput {
   return input.kind === 'meal' ? { ...input, window: { ...input.window, [bound]: time } } : input;
 }
 

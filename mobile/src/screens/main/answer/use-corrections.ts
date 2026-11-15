@@ -3,14 +3,17 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import { type ComponentProps, useEffect, useState } from 'react';
-import type { PlanInput } from '@/api/assistant-types';
+import type { ConditionChip, PlanInput } from '@/api/assistant-types';
+import type { RelaxOffer } from '@/api/relax-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
 import { peopleOf, withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
+import { backToNow, relaxed, timeChipChange } from '@/features/assistant/relaxed-plan';
 import type { BandBound } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
@@ -34,8 +37,11 @@ export interface Corrections {
   remove: (userId: string) => void;
   chooseOrigin: () => void;
   focus: BandBound | null;
-  focusUntil: () => void;
+  focusUntil: (chip: ConditionChip) => void;
   drop: (bound: BandBound, time: string) => void;
+  // A button of an answer that nothing fits 지금, and 처음으로 back to 지금.
+  relax: (offer: RelaxOffer) => void;
+  back: () => void;
 }
 
 function useChoices(input: PlanInput): Pick<Corrections, 'choices' | 'friendIds'> {
@@ -72,7 +78,8 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
 
 // What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
 // recalculation. The list of Friends leaves out those `input` holds.
-export function useCorrections({ change, add, adding, setAdding }: ShownAnswer, input: PlanInput): Corrections {
+export function useCorrections(shown: ShownAnswer, input: PlanInput): Corrections {
+  const { change, add, adding, setAdding } = shown;
   const showToast = useToast();
   const { choices, friendIds } = useChoices(input);
   const { focus, focusUntil } = useFocus();
@@ -85,25 +92,36 @@ export function useCorrections({ change, add, adding, setAdding }: ShownAnswer, 
     friendIds,
     choose: add,
     remove: (userId) => {
-      change((shown) => withoutPerson(shown, userId));
+      change((conditions) => withoutPerson(conditions, userId));
     },
     chooseOrigin: () => {
       waitForPlace(({ placeId }) => {
         if (placeId === null) {
           showToast('건물을 골라 주세요');
         } else {
-          change((shown) => withOrigin(shown, placeId));
+          change((conditions) => withOrigin(conditions, placeId));
         }
       });
       router.push('/place-map');
     },
     focus,
-    focusUntil: () => {
+    focusUntil: (chip) => {
+      const eased = timeChipChange(chip, shown.answer);
+      if (eased !== null) {
+        change(eased);
+        return;
+      }
       setAdding(false);
       focusUntil();
     },
     drop: (bound, time) => {
-      change((shown) => withBound(shown, bound, time), 'drag');
+      change((conditions) => withBound(conditions, bound, time), 'drag');
+    },
+    relax: (offer) => {
+      change((conditions) => relaxed(conditions, offer));
+    },
+    back: () => {
+      change(backToNow);
     },
   };
 }

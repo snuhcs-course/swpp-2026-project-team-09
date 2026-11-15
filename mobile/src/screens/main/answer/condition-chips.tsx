@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -26,7 +27,8 @@ interface ConditionChipsProps {
   adding: boolean;
   disabled: boolean;
   onOrigin: () => void;
-  onUntil: () => void;
+  // A time chip pressed: it focuses the band, or eases or restores 지금 (P02-14).
+  onUntil: (chip: ConditionChip) => void;
   onRemove: (userId: string) => void;
   onAdd: () => void;
   // Opens a person's profile from their chip, for the User's Friends (`friendIds`) alone; null for none.
@@ -153,6 +155,15 @@ function AddChip({ adding, disabled, onAdd }: { adding: boolean; disabled: boole
   );
 }
 
+// The origin chip picks the building to set out from; a time chip is handed on as it is.
+function pressOf(chip: ConditionChip, on: Pick<ConditionChipsProps, 'onOrigin' | 'onUntil'>): () => void {
+  return chip.kind === 'origin'
+    ? on.onOrigin
+    : (): void => {
+        on.onUntil(chip);
+      };
+}
+
 // The first row of the answer's card: the conditions the answer used, each a control that corrects it, then
 // "＋ 같이", in lines that wrap so that no chip is cut, with the corner's action fixed at the right of the first line.
 export function ConditionChips(props: ConditionChipsProps): ReactElement {
@@ -181,7 +192,7 @@ export function ConditionChips(props: ConditionChipsProps): ReactElement {
               key={chip.kind}
               label={chip.text}
               marked={chip.mark !== undefined}
-              onPress={chip.kind === 'origin' ? on.onOrigin : on.onUntil}
+              onPress={pressOf(chip, on)}
             />
           ),
         )}
