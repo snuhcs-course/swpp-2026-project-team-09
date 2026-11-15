@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo } from 'react';
@@ -24,8 +25,9 @@ import { type Corrections, useCorrections } from './use-corrections';
 const ARROW = 40;
 const ARROW_SLOP = (size.touchMin - ARROW) / 2;
 const UNDO_WIDTH = 96;
-// The count stands in a box of its own, so that it never moves.
-const COUNT_WIDTH = 36;
+// The count stands in a box of its own, so that it never moves. Wide enough for "11/11": the main server answers a
+// meal with up to eleven Plans.
+const COUNT_WIDTH = 44;
 // A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
 const SWIPE_STARTS = 10;
 const SWIPE_COUNTS = 48;
@@ -134,7 +136,7 @@ function Steps({ shown, count, busy, invitation }: StepsProps): ReactElement | n
         )}
       </View>
       {arrows ? (
-        <Text style={styles.count} testID="plan-count">
+        <Text numberOfLines={1} style={styles.count} testID="plan-count">
           {`${index + 1}/${count}`}
         </Text>
       ) : null}
