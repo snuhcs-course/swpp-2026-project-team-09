@@ -20,6 +20,7 @@ export const REFUSAL_KINDS = [
   'not-understood',
   'not-watched-friend',
   'not-watched-shuttle',
+  'which-friend',
 ] as const;
 
 export type RefusalKind = (typeof REFUSAL_KINDS)[number];
@@ -29,9 +30,21 @@ export const REFUSAL_SCREENS = ['friend-add', 'location-sharing', 'timetable', '
 // `location` is the map's explanation of the User's location.
 export type RefusalScreen = (typeof REFUSAL_SCREENS)[number];
 
+// One of the Friends the User's words fit (`which-friend`): its press sends `text` as the User's words with that
+// Friend tapped, so that the server takes them by id. Two Friends of one full name may send the same words.
+export interface PickFriendOffer {
+  kind: 'pick-friend';
+  userId: string;
+  label: string;
+  aside: string | null;
+  text: string;
+}
+
 // `ask` sends its text as if the User typed it; `open` opens a screen.
 export type RefusalOffer =
-  { kind: 'ask'; label: string; text: string } | { kind: 'open'; label: string; screen: RefusalScreen };
+  | { kind: 'ask'; label: string; text: string }
+  | { kind: 'open'; label: string; screen: RefusalScreen }
+  | PickFriendOffer;
 
 export interface Refusal {
   kind: RefusalKind;
