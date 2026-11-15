@@ -194,13 +194,15 @@ Request to it. The routes, all a User's:
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
 - `GET /friends` answers the User's Friends in the order of their names:
-  `[{ "id", "name", "department", "level", "seen", "sharing", "visible", "askedOff", "askedPlan" }]`, where `id` is
-  the Friend's User id, `level` the User's own end of the friendship, `seen` what the two see of each other by the
-  friendship (the lower of the two ends, `timetable` while either Master Switch is off; a common Party does not raise
-  it, and nothing else of the Friend's own end is given), `sharing` whether `level` is above `timetable`, `visible`
-  whether the User sees the Friend's position or Place on the map now, never why not (see
-  [Location Sharing](#location-sharing)), and `askedOff` and `askedPlan` whether the app has asked the User about the
-  Friend (see [Asking once](#asking-once)).
+  `[{ "id", "name", "department", "friendId", "level", "seen", "sharing", "visible", "askedOff", "askedPlan", "friendsSince" }]`,
+  where `id` is the Friend's User id, `friendId` the Friend's Friend ID, `level` the User's own end of the friendship, `seen` what the two see of each
+  other by the friendship (the lower of the two ends, `timetable` while either Master Switch is off; a common Party
+  does not raise it, and nothing else of the Friend's own end is given), `sharing` whether `level` is above
+  `timetable`, `visible` whether the User sees the Friend's position or Place on the map now, never why not (see
+  [Location Sharing](#location-sharing)), `askedOff` and `askedPlan` whether the app has asked the User about the
+  Friend (see [Asking once](#asking-once)), and `friendsSince` when the friendship was accepted, in Korea with its
+  offset (`2026-11-15T14:03:27+09:00`). The Friend ID and the date tell apart two Friends of the same name on their
+  profile card.
 - `DELETE /friends/:userId` ends the friendship for both and answers 204.
 - `PUT /friends/:userId/level` with `{ "level": "timetable" }`, `"building"`, or `"exact"` sets what the User lets the
   Friend see of where they are, and answers 204. It changes the User's own end only.

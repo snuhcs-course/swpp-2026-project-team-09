@@ -5,6 +5,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
@@ -530,6 +531,7 @@ WORKER_TOKEN=3f9a1c77d2e0
 MATCH_SERVER_TOKEN=8e21b4a09c5d
 KAKAO_REST_API_KEY=5c1d0e9f8a7b
 OPENROUTER_API_KEY=sk-or-v1-77aa
+LLM_KEYS={}
 INITIAL_ADMINISTRATOR_EMAILS=a@snu.ac.kr,b@snu.ac.kr
 EOF
   diff "$secrets/access-token-private-key.pem" <(printf '%s\n' "$PRIVATE_KEY")
@@ -561,6 +563,40 @@ EOF
   run "$RELEASE" write-secrets "$secrets" '' <"$BATS_TEST_TMPDIR/parameters.json"
   [ "$status" -eq 1 ]
   [[ "$output" == *"database endpoint"* ]] || false
+}
+
+@test "every llm-key-<name> parameter is one LLM_KEYS line, a JSON object of name to key sorted by name, beside OPENROUTER_API_KEY, and no key is printed" {
+  serve_parameters "${PARAMETERS[@]}" llm-key-team-2 sk-ant-api03-Zq9/x+b= llm-key-anthropic sk-ant-api03-7f3c \
+    llm-key-or-backup sk-or-v1-9e1d
+  local secrets=$BATS_TEST_TMPDIR/secrets
+
+  run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+
+  [ "$status" -eq 0 ]
+  [ "$(grep -c '^LLM_KEYS=' "$secrets/secrets.env")" -eq 1 ]
+  [ "$(sed -n 's/^LLM_KEYS=//p' "$secrets/secrets.env")" = \
+    '{"anthropic":"sk-ant-api03-7f3c","or-backup":"sk-or-v1-9e1d","team-2":"sk-ant-api03-Zq9/x+b="}' ]
+  [ "$(sed -n 's/^OPENROUTER_API_KEY=//p' "$secrets/secrets.env")" = sk-or-v1-77aa ]
+  [[ "$output" != *sk-ant* && "$output" != *sk-or* ]] || false
+}
+
+@test "a key's name outside lowercase letters, digits and dashes, the name default, or a value with whitespace, a quote or a backslash fails, naming the parameter and printing no value" {
+  local secrets=$BATS_TEST_TMPDIR/secrets name value
+
+  for name in llm-key-Team llm-key-team_2 llm-key- llm-key-default; do
+    serve_parameters "${PARAMETERS[@]}" "$name" sk-ant-api03-7f3c
+    run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"/snunow/production/$name is not"* && "$output" != *sk-ant* ]] || false
+  done
+
+  for value in 'sk-ant 7f3c' $'sk-ant\n7f3c' 'sk-ant"7f3c' "sk-ant'7f3c" 'sk-ant\7f3c' $'sk-ant\t7f3c'; do
+    serve_parameters "${PARAMETERS[@]}" llm-key-anthropic "$value"
+    run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"/snunow/production/llm-key-anthropic holds"* && "$output" != *7f3c* ]] || false
+  done
+  [ ! -e "$secrets/secrets.env" ]
 }
 
 # A ConfigMap or Secret as `kubectl get -o json` lists it: kind, name, and creation time.
