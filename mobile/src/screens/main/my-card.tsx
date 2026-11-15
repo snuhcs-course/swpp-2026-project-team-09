@@ -8,21 +8,18 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { friendsQuery, lobbyQuery, myPartyQuery } from '@/api/queries';
-import type { Lobby, Place } from '@/api/types';
+import { friendsQuery, myPartyQuery } from '@/api/queries';
+import type { Place } from '@/api/types';
 import { Button, color, font, radius, RoundIcon, space, text } from '@/design-system';
 import { seenOfMe } from '@/features/friends/seen-of-me';
 import { usePlaceNear } from '@/features/places/use-place-at';
+import { useMasterSwitch } from '@/features/sharing/use-master-switch';
 import { usePosition } from '@/position';
 import { CardFrame, CloseButton } from './card';
 
-function masterSwitchOf(lobby: Lobby): boolean {
-  return lobby.masterSwitch;
-}
-
 // "301동", or the name of a Place without a number.
-function placeWords({ number, name }: Place): string {
-  return number === null ? name : `${number}동`;
+function placeWords(place: Place): string {
+  return place.number === null ? place.name : `${place.number}동`;
 }
 
 // The head, and under it the Place the User is in or near, which a Friend at the building level sees; none without one.
@@ -51,7 +48,7 @@ function Head({ onClose }: { onClose: () => void }): ReactElement {
 function Rows(): ReactElement | null {
   const friends = useQuery(friendsQuery).data;
   const party = useQuery(myPartyQuery).data ?? null;
-  const masterOn = useQuery({ ...lobbyQuery, select: masterSwitchOf }).data === true;
+  const masterOn = useMasterSwitch().on;
   if (friends === undefined) {
     return null;
   }
@@ -60,10 +57,10 @@ function Rows(): ReactElement | null {
   }
   return (
     <ScrollView contentContainerStyle={styles.rows} style={styles.box}>
-      {seenOfMe(friends, party, masterOn).map(({ id, name, words }) => (
-        <View accessibilityLabel={`${name}, ${words}`} accessible key={id} style={styles.row} testID="seen-row">
+      {seenOfMe(friends, party, masterOn).map(({ id, name: fullName, words }) => (
+        <View accessibilityLabel={`${fullName}, ${words}`} accessible key={id} style={styles.row} testID="seen-row">
           <Text numberOfLines={1} style={styles.name}>
-            {name}
+            {fullName}
           </Text>
           <Text style={styles.value}>{words}</Text>
         </View>

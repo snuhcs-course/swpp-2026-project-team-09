@@ -173,7 +173,7 @@ function Lines({ card }: Pick<CardProps, 'card'>): ReactElement | null {
 // A card over the map, as the `MapOverviewSelect` frame draws it: above the AI input's place, or at `top`.
 export function CardFrame({
   onHeight,
-  top,
+  top: fromTop,
   children,
 }: Pick<CardProps, 'onHeight' | 'top'> & { children: ReactNode }): ReactElement {
   return (
@@ -181,7 +181,7 @@ export function CardFrame({
       onLayout={({ nativeEvent: { layout } }) => {
         onHeight?.(layout.height);
       }}
-      style={[styles.card, top === undefined ? styles.atBottom : { top }]}
+      style={[styles.card, fromTop === undefined ? styles.atBottom : { top: fromTop }]}
       testID="map-card"
     >
       {children}
