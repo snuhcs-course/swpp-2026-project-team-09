@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -31,7 +32,7 @@ interface ChipsProps {
 
 // The conditions the Lookup used, which take no press, in lines that wrap, with "근거" or "근거 접기" fixed at the
 // right of the first line, as on a Plan's card.
-function Chips({ chips, basis }: ChipsProps): ReactElement {
+export function Chips({ chips, basis }: ChipsProps): ReactElement {
   const words = basis?.open === true ? '근거 접기' : '근거';
   return (
     <View style={styles.row}>

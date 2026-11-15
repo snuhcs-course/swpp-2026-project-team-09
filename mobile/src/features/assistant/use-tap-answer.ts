@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -44,11 +45,11 @@ export function useCampusPosition(): LatLng | null {
 // answer is kept for the same thing pressed again, which asks again behind it. An answer without a card counts as a
 // failure.
 export function useTapAnswer(tapped: Tapped | null): TapAnswer {
-  const location = useCampusPosition();
+  const position = useCampusPosition();
   const query = useQuery({
     queryKey: ['assistant-tap', tapped?.kind ?? null, idOf(tapped)],
     queryFn: () =>
-      tapped === null ? Promise.reject(new Error('Nothing pressed')) : apiClient.answerTap(tapped, location),
+      tapped === null ? Promise.reject(new Error('Nothing pressed')) : apiClient.answerTap(tapped, position),
     enabled: tapped !== null,
     select: withCard,
   });
