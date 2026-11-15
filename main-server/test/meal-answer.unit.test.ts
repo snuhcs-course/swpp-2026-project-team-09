@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -59,7 +60,7 @@ describe('Lunch with 민수 and 지은: the plan', () => {
 
   it('says when everyone is there and how much shorter the meal is than alone', () => {
     expect(firstPlan(withBoth()).lines).toEqual([
-      [strong('12:33 학생회관식당')],
+      [plain('점심 '), strong('12:33 학생회관식당')],
       [plain('같이 먹으면 식사가 33분 줄어요')],
     ]);
   });
@@ -83,6 +84,7 @@ describe("Lunch with 민수 and 지은: each person's part", () => {
         origin: { place: point('제1공학관', '301동'), basis: 'timetable' },
         leaveAt: time('12:18'),
         walkMinutes: 15,
+        arriveAt: time('12:33'),
         leaveBy: time('12:59'),
         next: { startAt: time('13:00'), place: point('자연과학관6', '24동') },
       },
@@ -93,6 +95,7 @@ describe("Lunch with 민수 and 지은: each person's part", () => {
         origin: { place: point('제2공학관', '302동'), basis: 'timetable' },
         leaveAt: time('12:15'),
         walkMinutes: 18,
+        arriveAt: time('12:33'),
         leaveBy: null,
         next: null,
       },
@@ -103,6 +106,7 @@ describe("Lunch with 민수 and 지은: each person's part", () => {
         origin: { place: point('두산인문관', '8동'), basis: 'timetable' },
         leaveAt: time('12:28'),
         walkMinutes: 5,
+        arriveAt: time('12:20'),
         leaveBy: time('12:55'),
         next: { startAt: time('13:00'), place: point('두산인문관', '8동') },
       },

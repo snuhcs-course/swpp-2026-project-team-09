@@ -9,6 +9,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -16,6 +17,7 @@ import { type ReactElement, type RefObject, useCallback, useEffect, useRef, useS
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal, RequestContext } from '@/api/assistant-types';
+import type { Tapped } from '@/api/lookup-types';
 import type { LatLng } from '@/api/types';
 import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answer-switch';
@@ -191,6 +193,8 @@ export interface ChatSheetControl {
   invitation: PlanInvitation;
   // The Lookup on screen, which the map and the frame's card draw: none while the switch is off.
   lookup: ShownLookup;
+  // What was pressed on the map and is open in its card, which every request carries from then on; null for nothing.
+  setTapped: (tapped: Tapped | null) => void;
 }
 
 // A change of the switch of the answer on the map closes the sheet and forgets the conversation.
@@ -211,12 +215,12 @@ function stay(): void {
   // A card that leads elsewhere leaves the answer frame as it is.
 }
 
-// What the app knows when the User asks: where the User is on campus, and the conditions and the Plan of the answer
-// on screen.
-function contextAt(position: LatLng | null, shown: ShownAnswer | null): RequestContext {
+// What the app knows when the User asks: where the User is on campus, what was pressed on the map, and the conditions
+// and the Plan of the answer on screen.
+function contextAt(position: LatLng | null, shown: ShownAnswer | null, tapped: Tapped | null): RequestContext {
   const conditions = shown?.answer?.input ?? null;
   const planId = shown?.plan?.id ?? null;
-  return { location: position, viewport: null, tapped: null, conditions, planId };
+  return { location: position, viewport: null, tapped, conditions, planId };
 }
 
 // A map button of the answer frame: forgets the conversation and turns its layer on.
@@ -251,6 +255,23 @@ function useAnswerOnScreen(
   return { answer: shown, invitation };
 }
 
+// The conversation, whose requests carry the context while the switch is on: the answer on screen kept in `shownNow`,
+// and what was pressed on the map, which `setTapped` keeps.
+function useContextChat(
+  onMap: boolean,
+  position: LatLng | null,
+  shownNow: RefObject<ShownAnswer | null>,
+): { chat: Chat; setTapped: ChatSheetControl['setTapped'] } {
+  const tappedNow = useRef<Tapped | null>(null);
+  const chat = useChat(
+    onMap ? (): RequestContext => contextAt(position, shownNow.current, tappedNow.current) : undefined,
+  );
+  const setTapped = useCallback((tapped: Tapped | null): void => {
+    tappedNow.current = tapped;
+  }, []);
+  return { chat, setTapped };
+}
+
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
 // sheet and turns its layer on with `turnOn`, the map's own layers; an event card closes it and opens the 행사 tab at
 // the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does; a Proposal,
@@ -270,7 +291,7 @@ export function useChatSheet(
 ): ChatSheetControl {
   const onMap = useAnswerSwitch();
   const shownNow = useRef<ShownAnswer | null>(null);
-  const chat = useChat(onMap ? (): RequestContext => contextAt(position, shownNow.current) : undefined);
+  const { chat, setTapped } = useContextChat(onMap, position, shownNow);
   const [shown, setShown] = useState(false);
   const open = useCallback((): void => {
     if (!onMap) {
@@ -295,6 +316,7 @@ export function useChatSheet(
     leaving: { showLayer: forgettingFor(chat.reset, turnOn), openEvent, openQuestPost, openPartyForm, proposals },
     ...useAnswerOnScreen(onMap, chat.bubbles, position, shownNow),
     lookup: useShownLookup(onMap ? chat.bubbles : NO_BUBBLES, start, chat.reset),
+    setTapped,
     sheet: (inputTop) =>
       sheetShown ? (
         <ChatSheet

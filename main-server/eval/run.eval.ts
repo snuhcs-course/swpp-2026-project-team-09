@@ -9,6 +9,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
@@ -40,6 +41,7 @@ const SEEDERS: Record<WorldName, typeof seedWorld> = {
   p5: seedP5World,
   'large-world-v1': seedLargeWorld,
   p6: seedP6World,
+  'p4-answer': seedP4World,
 };
 
 const options = runOptionsFromEnv();
@@ -65,7 +67,7 @@ beforeAll(async () => {
     rawResponses,
   );
   started.world = await SEEDERS[options.world](started.evalApp.app, inject('settings').DATABASE_URL);
-  if (options.world === 'p4') {
+  if (options.world === 'p4' || options.world === 'p4-answer') {
     started.evalApp.travel.bind(started.world.seeds);
   }
   started.names = namesOf(started.world.seeds);

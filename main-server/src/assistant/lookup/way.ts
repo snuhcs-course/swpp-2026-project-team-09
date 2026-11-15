@@ -30,6 +30,8 @@ export interface WayArgs {
   toPlaceId: string | null;
   // The time the User named to be there by, as HH:MM.
   by: string | null;
+  // What the User asked about, when it changes the words: the shuttle (board n21).
+  about?: 'shuttle';
   // The main gate, where a way from off campus starts.
   gatePlaceId: string;
   travel: Pick<TravelProvider, 'walkingSeconds' | 'shuttleWay'>;

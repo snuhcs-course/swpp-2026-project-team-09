@@ -5,23 +5,33 @@
  ******************************************************************************/
 
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
-import { type AnswerLine } from '../dto/answer.dto.js';
+import { type AnswerLine, type Lookup } from '../dto/answer.dto.js';
 import { type Presented } from '../feature.js';
 import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
 import { withAnd, withSubject, withTopic } from '../gathering/answer-words.js';
-import { type FriendKind, type Refusal, type RefusalKind, type RefusalOffer } from './refusal.dto.js';
+import { withTimetableChip } from '../lookup/friend-unseen.js';
+import {
+  BESIDE_LOOKUP,
+  type FriendKind,
+  type PlaceKind,
+  type Refusal,
+  type RefusalKind,
+  type RefusalOffer,
+  type RefuseKind,
+} from './refusal.dto.js';
 
-// The words of each refusal, as row 8 of the design writes them (boards n1–n9, n19, n22, n22b).
+// The words of each refusal, as row 8 of the design writes them (boards n1–n9, n19, n20, n22, n22b, n4, n8b).
 
-// A Friend as the words name them, from the Friend view: their name, and where they are now, which only past-location
-// says and the others leave empty.
+// A Friend as the words name them, from the Friend view: their name, and the line of what is seen of them now, which
+// past-location and course-and-room say and the others leave empty.
 export interface NamedFriend {
   name: string;
-  now: string;
+  seen: AnswerLine;
 }
 
-interface Words {
-  lines: string[];
+export interface Words {
+  // A plain line, or one with bold spans.
+  lines: (string | AnswerLine)[];
   offers: RefusalOffer[];
 }
 
@@ -33,7 +43,7 @@ const TODAY = ask('오늘 볼 만한 거 있어?');
 const SHARING = { kind: 'open', label: '위치 공유 보기', screen: 'location-sharing' } as const satisfies RefusalOffer;
 const WATCHED = '지켜봐 드리는 것은 행사와 모집뿐이에요.';
 
-const PLAIN: Record<Exclude<RefusalKind, FriendKind>, Words> = {
+const PLAIN: Record<Exclude<RefuseKind, FriendKind | PlaceKind>, Words> = {
   'off-campus': { lines: ['캠퍼스 안의 일만 도와 드려요.'], offers: [HUNGRY, TODAY] },
   'general-work': {
     lines: ['과제는 도와 드릴 수 없어요.', '캠퍼스에서 먹을 곳, 공부할 자리, 행사, 파티, 길을 찾아 드려요.'],
@@ -65,10 +75,13 @@ const withAlong = (name: string): string => (withAnd(name).endsWith('과') ? `${
 const meet = (name: string): RefusalOffer => ask('만나고 싶다', `${withAlong(name)} 만나고 싶어`);
 
 const WITH_FRIEND: Record<FriendKind, (friend: NamedFriend) => Words> = {
-  'past-location': ({ name, now }) => ({
-    lines: ['지난 위치는 저장하지 않아요. 지금과 시간표만 알아요.', now],
+  'past-location': ({ name, seen }) => ({
+    lines: ['지난 위치는 저장하지 않아요. 지금과 시간표만 알아요.', seen],
     offers: [meet(name)],
   }),
+  'course-and-room': ({ name, seen }) => ({ lines: ['과목과 강의실은 보이지 않아요', seen], offers: [meet(name)] }),
+  // The second line of board n8b, when to go, is the kept card's: the request does not tell the server the party's time.
+  'for-someone-else': ({ name }) => ({ lines: [`수락은 ${withSubject(name)} 직접 해요`], offers: [] }),
   'others-sharing': ({ name }) => ({
     lines: [`${withSubject(name)} 정하는 일이에요.`, `내가 ${name}에게 보일 단계는 바꿀 수 있어요.`],
     offers: [SHARING],
@@ -79,12 +92,22 @@ const WITH_FRIEND: Record<FriendKind, (friend: NamedFriend) => Words> = {
   }),
 };
 
-function refusalOf(kind: RefusalKind, { lines, offers }: Words): Refusal {
-  const answerLines: AnswerLine[] = lines.map((text) => [{ text, strong: false }]);
+// The library a booking was asked of, by the Place's name (board n20).
+const WITH_PLACE: Record<PlaceKind, (place: string) => Words> = {
+  'other-library': (place) => ({
+    lines: ['앱이 예약하는 곳은 관정뿐이에요', `${withTopic(place)} 그곳의 방식으로 예약해요`],
+    offers: [ask('관정 스터디룸')],
+  }),
+};
+
+export function refusalOf(kind: RefusalKind, { lines, offers }: Words): Refusal {
+  const answerLines = lines.map((line): AnswerLine =>
+    typeof line === 'string' ? [{ text: line, strong: false }] : line,
+  );
   return { kind, lines: answerLines, offers };
 }
 
-export function plainRefusal(kind: Exclude<RefusalKind, FriendKind>): Refusal {
+export function plainRefusal(kind: Exclude<RefuseKind, FriendKind | PlaceKind>): Refusal {
   return refusalOf(kind, PLAIN[kind]);
 }
 
@@ -92,9 +115,26 @@ export function friendRefusal(kind: FriendKind, friend: NamedFriend): Refusal {
   return refusalOf(kind, WITH_FRIEND[kind](friend));
 }
 
-// The refusal a reply keeps: none beside an answer or a Lookup, whichever tool came last.
+export function placeRefusal(kind: PlaceKind, place: string): Refusal {
+  return refusalOf(kind, WITH_PLACE[kind](place));
+}
+
+// Whether the refusal stands beside the Lookup: only a kind that answers the part it can, beside its kind of Lookup.
+export const standsBeside = (kind: RefusalKind, lookup: Lookup): boolean => BESIDE_LOOKUP[kind] === lookup.kind;
+
+// The refusal a reply keeps: none beside an answer, and beside a Lookup only one that stands beside it, whichever
+// tool came last.
 export function keptRefusal({ answer, lookup, refusal }: Presented): Refusal | null {
-  return answer === null && lookup === null ? refusal : null;
+  if (refusal === null || answer !== null) {
+    return null;
+  }
+  return lookup === null || standsBeside(refusal.kind, lookup) ? refusal : null;
+}
+
+// The Lookup of a reply that keeps a refusal beside it: a Friend's beside the refusal of their course and room names
+// the Timetable in the chip when that is all the map shows of them (board n4).
+export function lookupBeside({ lookup, refusal }: Pick<Presented, 'lookup' | 'refusal'>): Lookup | null {
+  return lookup !== null && refusal?.kind === 'course-and-room' ? withTimetableChip(lookup) : lookup;
 }
 
 // The reply's text: the model's, or the refusal's lines when it wrote none, for an app that does not draw the refusal.

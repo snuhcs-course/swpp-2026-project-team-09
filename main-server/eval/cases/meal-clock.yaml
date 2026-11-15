@@ -1,0 +1,36 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-16  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A meal by the clock (P01 ticket 21): asked at 15:00 on a Monday, after lunch's window (11:00–14:30) has ended, a meal
+# is planned as dinner on the map. The P4 world asked from an app that draws answers (`pnpm eval --world p4-answer`):
+# 김하늘 is in class until 15:15 and from 16:00 to 17:15, and 이민수, the only Friend called 민수, from 15:30 to 16:45.
+# planMeal is not one of the scorer's tools, so a run is read by its planMeal call and the answer in its reply.
+
+- id: meal-clock-hungry-with-minsu
+  category: meal-clock
+  world: p4-answer
+  now: '2026-11-02T15:00:00+09:00'
+  repeat: 5
+  turns:
+    - user: 배고파, 민수랑 같이
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest]
+
+- id: meal-clock-dinner-at-three
+  category: meal-clock
+  world: p4-answer
+  now: '2026-11-02T15:00:00+09:00'
+  repeat: 5
+  turns:
+    - user: 오후 3시쯤 민수랑 저녁 먹자
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest]

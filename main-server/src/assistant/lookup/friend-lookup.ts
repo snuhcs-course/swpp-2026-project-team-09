@@ -14,6 +14,7 @@ import { minutesBetween, RECENT_CLASS_MINUTES } from '../gathering/gathering.js'
 import { PlaceNaming } from '../gathering/place-naming.js';
 import { othersText } from '../others-text.js';
 import { cardOf, fact } from './card.js';
+import { unseenLine } from './friend-unseen.js';
 import { part } from './way-naming.js';
 
 // Where a Friend is, drawn with what the asker's map shows of them and nothing more: their position at the exact level,
@@ -46,6 +47,8 @@ export interface FriendWords {
 export interface FriendAnswer {
   lookup: Lookup;
   words: FriendWords;
+  // The line under a refusal of what the map does not show of them, their course and room (board n4).
+  unseen: AnswerLine;
 }
 
 const HIDDEN = '지금 위치는 보여 주지 않아요';
@@ -206,8 +209,10 @@ function drawnOf(args: FriendArgs, naming: PlaceNaming): Drawn {
 
 export function friendAnswer(args: FriendArgs): FriendAnswer {
   const { friend } = args;
-  const { lines, basis, scene, words } = drawnOf(args, new PlaceNaming(args.placeOf));
+  const naming = new PlaceNaming(args.placeOf);
+  const { lines, basis, scene, words } = drawnOf(args, naming);
   return {
+    unseen: unseenLine(args.classes, args.now, lines, naming),
     lookup: {
       kind: 'friend',
       chips: [{ kind: 'person', text: friend.name, userId: friend.id }],

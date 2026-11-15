@@ -31,14 +31,16 @@ import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
-import { Card } from './card';
 import { FriendList } from './friend-list';
+import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
 import { MapBottom, openMenus, type Taken } from './map-bottom';
 import { MyCard } from './my-card';
+import { PlaceCard } from './place-card';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
+import { CardOrSeen } from './seen-card';
 import type { ChatSheetControl } from './chat-sheet';
 import type { MapContents } from './use-answer-map';
 import { askAssistant, useMainLayers } from './use-main-layers';
@@ -48,6 +50,7 @@ import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import type { MainRoute } from './use-route';
 import { useMapView } from './use-map-view';
+import type { MapTouches } from './use-pressed-place';
 import { useFramedRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
@@ -117,11 +120,10 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
   }
   const { primary } = card;
   return (
-    <Card
+    <CardOrSeen
       canLookCloser={map.detail !== 'names' && !top}
       card={card}
       onChoose={selection.select}
-      onClose={onClose}
       onHeight={onHeight}
       onLookCloser={() => {
         map.goTo(card.position, 'close');
@@ -152,16 +154,26 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
           onClose();
         }
       }}
+      selection={selection}
       top={top ? listsTop(inset) : undefined}
     />
   );
 }
 
-// The open card: the User's own, which gives way to the answer frame as a thing's does, or the selected thing's.
+// The open card: the User's own, a pressed building's, or that of a Friend whom the map does not show, each giving way
+// to the answer frame as a thing's does, or the selected thing's.
 function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const { selection, chat, onHeight } = props;
   if (selection.mine) {
     return chat.framed ? null : <MyCard onClose={selection.close} onHeight={onHeight} />;
+  }
+  if (selection.place !== null) {
+    return chat.framed ? null : <PlaceCard {...props} key={selection.place.id} place={selection.place} />;
+  }
+  if (selection.friend !== null) {
+    return chat.framed ? null : (
+      <OffMapFriendCard onHeight={onHeight} selection={selection} userId={selection.friend} />
+    );
   }
   return <ThingCard {...props} />;
 }
@@ -194,8 +206,8 @@ interface MainMapViewProps {
   map: MainMap;
   contents: MapContents;
   room: Room;
-  // The tutorial place pin, which watches the map's touches.
-  pin: TutorialPin;
+  // What watches the map's touches and its size: the tutorial place pin's tap and a press on a building.
+  around: MapTouches;
   // What a press on a marker does: the tutorial pin's press for its own marker, else the things'.
   onPress: (id: string) => void;
   nativeMinLevel: number;
@@ -203,17 +215,16 @@ interface MainMapViewProps {
 }
 
 // The map with what it draws. Its credit opens the sources of its data. The View around it watches its touches for a
-// tap, which removes the pin.
-function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel, outerZoom }: MainMapViewProps): ReactElement {
+// tap, which removes the pin or presses a building.
+function MainMapView({ map, contents, room, around, onPress, ...limits }: MainMapViewProps): ReactElement {
   return (
-    <View style={styles.map} testID="main-map-touches" {...pin.touches}>
+    <View style={styles.map} testID="main-map-touches" {...around}>
       <Map
         avatars={contents.avatars}
         {...CAMPUS_CAMERA}
         inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight, room.interestsHint, room.madeLine)}
         markers={contents.markers}
-        nativeMinLevel={nativeMinLevel}
-        outerZoom={outerZoom}
+        {...limits}
         onCameraIdle={map.onCameraIdle}
         onCreditPress={() => {
           router.push('/map-sources');
@@ -298,7 +309,7 @@ export function MainScreen(): ReactElement {
   const me = useMe(map);
   const layers = useMainLayers(inFront, map, me);
   const { stack, shuttle, cards, ready, chat, route } = layers;
-  const selection = useSelection(cards, inFront, chat.onMap && me.position !== null);
+  const selection = useSelection(cards, inFront, chat.onMap && me.position !== null, useOffMapFriends(chat.onMap));
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection, chat);
@@ -308,7 +319,7 @@ export function MainScreen(): ReactElement {
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
-        <MainMapView {...view} map={map} pin={pin} room={room} />
+        <MainMapView {...view} map={map} room={room} />
         <OverMap onStage={bottom.setStage}>
           <Lists hidden={listsHidden(taken, framed)} map={map} room={room} selection={selection} tutorial={tutorial} />
           {zoomShown(taken, stack.open, framed) ? <MainZoomControl map={map} me={me} /> : null}

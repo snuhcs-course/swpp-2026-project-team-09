@@ -12,6 +12,7 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
 import { FRIENDS } from '@/api/mock/data/friends';
+import { STUDY_LOOKUP_REPLY } from '@/api/mock/data/study-lookup';
 import { FRIEND_TAPS, TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import { LATE_LOOKUP_REPLY, LEAVE_LOOKUP_REPLY, SHUTTLE_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
@@ -61,6 +62,12 @@ describe('the mock of an answer drawn on the map', () => {
     await expect(answered(mockClient.askAssistant(FRIEND, CONTEXT))).resolves.toEqual(FRIEND_LOOKUP_REPLY);
   });
 
+  it("answers a place to study near here with a context by the main server's Lookup of board a9", async () => {
+    const near: ChatMessage[] = [{ role: 'user', text: '이 근처 조용히 공부할 곳' }];
+
+    await expect(answered(mockClient.askAssistant(near, CONTEXT))).resolves.toEqual(STUDY_LOOKUP_REPLY);
+  });
+
   it.each([
     ['24동까지 몇 분?', LEAVE_LOOKUP_REPLY],
     ['24동까지 몇 분? 늦나', LATE_LOOKUP_REPLY],
@@ -68,7 +75,9 @@ describe('the mock of an answer drawn on the map', () => {
   ])("answers %s with a context by the main server's Lookup", async (text, reply) => {
     await expect(answered(mockClient.askAssistant([{ role: 'user', text }], CONTEXT))).resolves.toEqual(reply);
   });
+});
 
+describe('the mock of a question answered with nothing drawn', () => {
   it('answers where a Place is without a context as before, with no Lookup', async () => {
     await expect(answered(mockClient.askAssistant(WHERE))).resolves.not.toHaveProperty('lookup');
   });
