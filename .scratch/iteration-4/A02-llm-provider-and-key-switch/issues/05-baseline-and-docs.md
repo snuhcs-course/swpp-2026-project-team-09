@@ -29,3 +29,25 @@ The eval suites run once on the merged code, so that later work is measured agai
 - [ ] Each changed source file has its AI-generated row (the Markdown files get none).
 
 ## Comments
+
+### Estimate before the runs (2026-11-15)
+
+안진영 (PM) approved up to USD 10 in total for these runs on 2026-11-15, through the session that started this ticket, to run without asking again while the estimate stays clearly under it (stop and report if it could pass USD 8; stop if the running total passes USD 9). This replaces the spec's "about USD 3.5, approved in the PR".
+
+Each run's estimate is the last run of the suite on the same provider and caching mode, plus 30% for the prompt's growth since then. OpenRouter turns are priced from the last OpenRouter runs at `40cb60e5` (P12 after set, no cache). Anthropic turns are priced at A01's `breakpoints` cost (`../../../iteration-3/A01-openrouter-to-claude-console/caching-experiment.md`): input read from the cache at 0.1x, about 1.1k tokens a turn written at 1.25x (3k in the large world), output in full, at `eval/cost.ts`'s prices (USD 0.10 and 0.50 per million).
+
+| Run | Provider | Turns or calls | Basis | Base | With 30% |
+| --- | --- | --- | --- | --- | --- |
+| P19 | OpenRouter | 75 | `40cb60e5` `-3`–`-5`: USD 1.6275 for 3 runs | 0.54 | 0.71 |
+| P5 small world | OpenRouter | 300 | `40cb60e5`: USD 2.4994 | 2.50 | 3.25 |
+| P19 | Anthropic | 75 | A01's run at `08e1fe50` (`74a6a710`): USD 0.085 | 0.09 | 0.11 |
+| P5 small world | Anthropic | 300 | 79.5k in, 760 out a turn: USD 0.0013 | 0.40 | 0.52 |
+| P5 large world | Anthropic | 240 | 89k in, 940 out, 3k written a turn: USD 0.0018 | 0.43 | 0.56 |
+| P6 | Anthropic | 192 | `869acde2` `-3`: 54k in, 590 out a turn: USD 0.0010 | 0.19 | 0.25 |
+| Collection A (`judgement`, held-out) | Anthropic | 141 calls | A01: USD 0.00052 a call | 0.07 | 0.10 |
+| Collection B (`ai-choice`, held-out) | Anthropic | about 14 calls | `40cb60e5`: 14 calls, 3.1k in, 320 out | 0.01 | 0.01 |
+| **OpenRouter** | | | | **3.04** | **3.96** |
+| **Anthropic** | | | | **1.19** | **1.55** |
+| **All** | | | | **4.23** | **5.51** |
+
+The OpenRouter key had USD 54.25 of its USD 100 limit left before the runs.
