@@ -7,20 +7,19 @@
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
-import { createRef } from 'react';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
 import type { AnswerLabel } from '@/design-system';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
-import { inView, type MapCamera, type MapHandle, type MarkerLook } from '@/map';
+import { inView, type MapCamera, type MarkerLook } from '@/map';
 import type * as MarkerImages from '@/map/marker-images';
 import { useMarkerImages } from '@/map/marker-images';
 import type { Room } from '@/screens/main/layout';
 import { type AnswerMap, useAnswerMap } from '@/screens/main/use-answer-map';
-import type { MainMap } from '@/screens/main/use-main-map';
 import { placeMoved, withScene } from './support/answer-view';
+import { type Asked, mapOf, nothing } from './support/main-map-stand-in';
 
 jest.mock('@/map/marker-images', () => {
   const actual = jest.requireActual<typeof MarkerImages>('@/map/marker-images');
@@ -38,37 +37,6 @@ jest.mock('react-native-safe-area-context', () => ({
 const SIZE = { width: 411, height: 914 };
 const ROOM: Room = { stage: SIZE, cardHeight: null, answerHeight: 274, tutorialStart: false, interestsHint: false };
 const FIT_ZOOM = 15.26;
-
-function nothing(): void {
-  // A move the test does not follow.
-}
-
-interface Asked {
-  fits: number;
-  cameras: MapCamera[];
-}
-
-// A stand-in for the main screen's map, which records the fits and the moves it is asked.
-function mapOf(fitZoom: number | null, asked: Asked): MainMap {
-  return {
-    ref: createRef<MapHandle>(),
-    onCameraIdle: nothing,
-    onFitZoom: nothing,
-    camera: null,
-    fitZoom,
-    detail: 'overview',
-    zoomBy: nothing,
-    goTo: nothing,
-    showCampus: nothing,
-    fitTo: nothing,
-    fitAnswer: (): void => {
-      asked.fits += 1;
-    },
-    moveTo: (camera): void => {
-      asked.cameras.push(camera);
-    },
-  };
-}
 
 const NO_ANSWER: ShownAnswer = {
   source: null,
