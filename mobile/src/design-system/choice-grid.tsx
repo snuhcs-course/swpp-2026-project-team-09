@@ -6,6 +6,7 @@
 
 import { type ReactElement, type ReactNode, useId, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -29,6 +30,8 @@ export interface GridChoice {
   faint: boolean;
   // What a screen reader says of the cell: the whole fact.
   label: string;
+  // The choice is on its way: a spinner before the value, which says so, on the pressed cell's ground, and no press.
+  busy?: boolean;
 }
 
 interface ChoiceGridProps {
@@ -43,6 +46,7 @@ const COLUMNS = 2;
 const CELL_HEIGHT = 44;
 const GAP = space[2];
 const FADE_HEIGHT = space[4];
+const SPINNER = 16;
 
 function heightOf(rows: number): number {
   return rows * CELL_HEIGHT + (rows - 1) * GAP;
@@ -62,28 +66,37 @@ function Cell({
   disabled: boolean;
   onChoose: (key: string) => void;
 }): ReactElement {
-  const { key, name, value, faint, label } = choice;
+  const { key, name, value, faint, label, busy = false } = choice;
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled: disabled || busy, busy }}
+      disabled={disabled || busy}
       onPress={() => {
         onChoose(key);
       }}
       style={({ pressed }): StyleProp<ViewStyle> => [
         styles.cell,
-        pressed && styles.pressed,
-        disabled && styles.disabled,
+        (pressed || busy) && styles.pressed,
+        disabled && !busy && styles.disabled,
       ]}
     >
       <Text numberOfLines={1} style={styles.name}>
         {name}
       </Text>
-      <Text numberOfLines={1} style={[styles.value, faint && styles.faint]}>
-        {value}
-      </Text>
+      {busy ? (
+        <View style={styles.busy}>
+          <ActivityIndicator color={color.snuBlue} size={SPINNER} testID="choice-grid-spinner" />
+          <Text numberOfLines={1} style={styles.busyValue}>
+            {value}
+          </Text>
+        </View>
+      ) : (
+        <Text numberOfLines={1} style={[styles.value, faint && styles.faint]}>
+          {value}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -202,6 +215,8 @@ const styles = StyleSheet.create({
   // The rest of the cell, so that the value is what gives way first.
   value: { ...text.caption, flex: 1, color: color.inkMuted, textAlign: 'right' },
   faint: { color: color.inkSubtle },
+  busy: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: space[1] },
+  busyValue: { ...text.caption, flexShrink: 1, color: color.snuBlue },
   empty: { flex: 1 },
   fade: { position: 'absolute', right: 0, bottom: 0, left: 0 },
 });
