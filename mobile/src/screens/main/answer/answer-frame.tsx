@@ -69,10 +69,10 @@ function Words({ bubble, shown, lookup: onScreen, invitation, room, onClose }: W
     ) : (
       <InvitedCard
         chips={shown.answer.chips}
-        made={made}
         onClose={onClose}
         standings={standings}
         startAt={shown.plan.startAt}
+        steps={made.quest.subQuests}
       />
     );
   }

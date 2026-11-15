@@ -10,7 +10,7 @@ import type { Friend, FriendStatus, Position } from '@/api/types';
 import { FRAME_NOW, frameTime } from './frame';
 
 // The twelve Friends of the `Main` frame, in the order of their names as the main server lists them. Two have their
-// location off: the User cannot see them, and no position exists for them.
+// location off: the User cannot see them, no position exists for them, and the two see each other's Timetable only.
 interface MockFriend extends Friend {
   latitude: number | null;
   longitude: number | null;
@@ -29,6 +29,7 @@ function friend(
     name,
     department,
     level: 'exact',
+    seen: at === null ? 'timetable' : 'exact',
     sharing: true,
     visible: at !== null,
     askedOff: false,
@@ -126,11 +127,12 @@ const PARTY_MEMBER_POSITION: Position = {
 };
 
 export const FRIENDS: Friend[] = MOCK_FRIENDS.map(
-  ({ id, name, department, level, sharing, visible, askedOff, askedPlan }) => ({
+  ({ id, name, department, level, seen, sharing, visible, askedOff, askedPlan }) => ({
     id,
     name,
     department,
     level,
+    seen,
     sharing,
     visible,
     askedOff,

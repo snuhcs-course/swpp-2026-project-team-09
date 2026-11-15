@@ -710,6 +710,26 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   while invited and "✓" once in (accepted or late), its name read aloud the state after the name, and its tag the
   state alone beside a face that shows the whole name ("아직 안 봄"). A new answer, another Plan, or ✕ drops
   the made Quest from the screen.
+- **A made Quest after closing** (`src/features/assistant/made-quests.ts`, `made-quest-ids.ts`, `use-made-quests.ts`,
+  `use-made-quest-card.ts`, `answer/made-quest-frame.tsx`, `made-quest-line.tsx`). Nothing the server sends tells a
+  Quest made from a Plan from a matched Shared Quest or a library booking's, so the phone keeps the id of each Quest
+  `POST /plans` made (`Kept.madeQuests`); with the switch on, a Quest whose id is kept, which the User leads, and whose
+  destination (the last step not cancelled with a start and a point) has not ended by the clock when the Quests were
+  read counts as made from a Plan. Ids of Quests gone or ended are dropped when the Quests are read. It is drawn as a
+  flag at its destination, the pick's dot with two lines above it, "12:15 점심" over "수락 0/1" (the start and the meal
+  the title names after "에서", or a meeting step's title once the meal was cancelled, over the day when not today and
+  the Friends accepted or late out of all in its members; its name says them in one line): a card of kind
+  `made-quest`, `made-quest:<id>`, outside the place groups, with the Quest's own card `party:<id>` within it, which
+  an address or a row of the Quest list opens with its "길찾기" as before. The first made Quest's line says the same
+  in one line at the left above the row of buttons (and above the start button
+  and the line that asks for interests), and gives way to the keyboard, a card at the bottom, and the answer frame. A
+  press on either opens the card after inviting again, built from the Quest: a chip for each Friend with the state,
+  the lines with the destination's start, the steps, and "닫기"; without a pill, the input, or the tab bar, as a
+  received invitation's, with the destination, a dark flag at each other step, and the User's own dot where the phone
+  was at the press or first was after it, and no Avatar. Its drawing is kept by what it draws, so a signal moves no
+  camera. The signals of an answer count at once, after which the Quests' members do; the flag and its card go when
+  the Quests come again without it or with its meal ended. With the switch off nothing of this is read, drawn, or
+  listened to. The mock lists the Quest its `POST /plans` made, with the mock's User as its asker.
 - **A received invitation** (`use-received-invitation.ts`, `answer/received-invitation-card.tsx`). With the switch
   on, each invitation of `GET /quest-invitations` is a card of the main screen, `invitation:<invitationId>`, with no
   marker, so `/main?card=invitation:<id>` opens it once the switch's stored value is read; with the switch off that
@@ -886,10 +906,22 @@ cards from the top:
   first with the Friends' question in the words "모든 친구에게는 지금 있는 건물만 보여 줄 수도 있어요." and "어느 쪽을
   골라도 친구에게는 아무 표시도 가지 않아요.": "위치 끄기" turns it off ("껐어요 · 친구에게 알림은 가지 않아요"),
   "건물까지만" leaves it on and sends `lowerFriendLevels('building')` ("모든 친구에게 지금 있는 건물까지만 보여요"),
-  and "취소" leaves it on; each sends `recordMasterOffAsked`. At `/me?show=sharing` the screen scrolls to the card and
-  outlines it for 1.2 s;
+  and "취소" leaves it on; each sends `recordMasterOffAsked`. Its last row, "위치 공유 보기", opens the 위치 공유 screen.
+  At `/me?show=sharing` the screen scrolls to the card and outlines it for 1.2 s;
 - "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티), "내 퀘스트" (the Quest list on the
   whole screen), and "관심사 {n}" (관심사, with the number of watched interests).
+
+위치 공유 (`/me/location-sharing`, `src/screens/me/location-sharing-screen.tsx`, P02 ticket 11, board n7b), from the
+card's "위치 공유 보기", has three cards. The first is the switch "위치 공유" over
+"끄면 친구 모두에게 시간표만 보여요", the same Master Switch as 내 정보's, with the same explanation and question
+(`use-sharing-switch.ts`). "친구마다" lists the Friends of `GET /friends`, each with what the two see of each other
+from `seen`, "서로 시간표만 보여요", "서로 지금 있는 건물까지 보여요" or "서로 정확한 위치까지 보여요", and the
+User's own end as the three cells of 친구 관리, which ask and set the level as there (`use-levels.ts`). The line is
+lowered at once by a choice or a switch on its way, and raised only once `GET /friends` says so, since the app does not
+know the Friend's end. Its foot: "시간표의 건물과 끝나는 시각은 친구 모두에게 보여요. 위치를 꺼도 시간표는 보여요."
+and "새 친구는 '지금 있는 건물'에서 시작해요.". "남기지 않는 것" has the rows "누가 나를 찾았는지 · 기록 안 함" and
+"지난 위치 · 저장 안 함", the name at the start and the fact at the end, over "과목과 강의실은 보이지 않고, 후보로 검토된
+것은 누구에게도 알리지 않아요.". The board's "비공개 구역" row is not drawn: no ticket builds the Private Zone yet.
 
 관심사 (`/me/interests`, `src/screens/me/interests-screen.tsx`, P05 ticket 08) has two cards. "프로필 관심사" shows the
 profile's hashtags from the Lobby as chips ("#러닝"), or "프로필에 넣은 관심사가 없어요", over "프로필 편집에서 바꿀 수

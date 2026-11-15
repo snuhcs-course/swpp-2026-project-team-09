@@ -11,9 +11,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToastAbove } from '@/design-system';
 import { type FirstRun, useFirstRun } from '@/features/first-run/use-first-run';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
+import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import type { ChatSheetControl } from './chat-sheet';
 import { type Room, takenUnderToast, takenUnderToastOverAnswer, takenUnderToastOverCard } from './layout';
 import { type Taken, takenBy } from './map-bottom';
+import type { MainLayers } from './use-main-layers';
+import { useMadeQuestCard } from './use-made-quest-card';
+import type { UnaskedCards } from './use-map-view';
+import type { Me } from './use-me';
+import { useReceivedInvitation } from './use-received-invitation';
 import type { Selection } from './use-selection';
 
 // While the map is in front, a toast sits over the row of buttons or above an open card; while the answer frame is
@@ -36,6 +42,7 @@ export function useRoom(
   tutorialStart: boolean,
   framed: boolean,
   interestsHint = false,
+  madeLine = false,
 ): {
   room: Room;
   setStage: (stage: Room['stage']) => void;
@@ -55,6 +62,7 @@ export function useRoom(
     answerHeight: framed ? answerHeight : null,
     tutorialStart: tutorialStart && !atBottom,
     interestsHint: interestsHint && !atBottom,
+    madeLine: madeLine && !atBottom,
   };
   useToastOverMap(room, framed);
   return {
@@ -66,17 +74,34 @@ export function useRoom(
 }
 
 // What takes the bottom of the map, and the room the rest has. The first run's card shows while nothing is selected
-// and neither the chat nor the answer frame is shown. `framed`: the answer frame or a received invitation's card.
+// and neither the chat nor the answer frame is shown. `framed`: the answer frame, a received invitation's card, or a
+// made Quest's. `madeLine`: a Quest made from a Plan has its line over the input.
 export function useBottomRoom(
   selection: Selection,
   chat: ChatSheetControl,
   shuttle: ShuttleLayer,
-  tutorialStart: boolean,
-  framed: boolean,
+  { tutorialStart, framed, madeLine }: { tutorialStart: boolean; framed: boolean; madeLine: boolean },
 ): ReturnType<typeof useRoom> & { taken: Taken; firstRun: FirstRun } {
   const asked = useFirstRun();
   const free = selection.selected === null && !chat.shown && !framed;
   const firstRun = { ...asked, card: free ? asked.card : null };
   const taken = takenBy(selection.selected, shuttle.serviceHours, firstRun.card !== null);
-  return { taken, firstRun, ...useRoom(taken, tutorialStart, framed, asked.asksForInterests) };
+  return { taken, firstRun, ...useRoom(taken, tutorialStart, framed, asked.asksForInterests, madeLine) };
+}
+
+// The cards nobody asked for, a received invitation's and a made Quest's card after inviting; whether the answer
+// frame or one of them is shown, which the tab bar gives way to; and what takes the bottom of the map then.
+export function useFramedRoom(
+  selection: Selection,
+  { cards, made, chat, shuttle }: Pick<MainLayers, 'cards' | 'made' | 'chat' | 'shuttle'>,
+  me: Me,
+  tutorialStart: boolean,
+): ReturnType<typeof useBottomRoom> & { unasked: UnaskedCards; framed: boolean } {
+  const invitation = useReceivedInvitation(selection, cards, me, chat.framed);
+  const madeCard = useMadeQuestCard(selection, made, me, chat.framed);
+  const framed = chat.framed || invitation.shown || madeCard.shown !== null;
+  useHideTabBarOnMain(framed);
+  const madeLine = madeCard.first !== null;
+  const bottom = useBottomRoom(selection, chat, shuttle, { tutorialStart, framed, madeLine });
+  return { unasked: { invitation, made: madeCard }, framed, ...bottom };
 }
