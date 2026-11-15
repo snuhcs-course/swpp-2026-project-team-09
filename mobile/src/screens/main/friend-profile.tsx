@@ -6,9 +6,9 @@
 
 import { router } from 'expo-router';
 import { createContext, type ReactElement, type ReactNode, use, useCallback, useState } from 'react';
+import type { FriendView } from '@/features/friends/adapter';
 import { friendProfileCard } from '@/features/friends/profile';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
-import { useBackToClose } from '@/hooks/use-back-to-close';
 import { Card } from './card';
 
 const OpenProfile = createContext<((userId: string) => void) | null>(null);
@@ -19,17 +19,36 @@ export function useOpenFriendProfile(): ((userId: string) => void) | null {
   return use(OpenProfile);
 }
 
+// The Friend whose profile the answer frame shows, null for none, and how it is shown and hidden.
+export interface ProfileOver {
+  friend: FriendView | null;
+  show: (userId: string) => void;
+  hide: () => void;
+}
+
+// The answer frame's Friend profile, which belongs to the reply it was opened over (`replyId`, the id of its bubble): a
+// new reply hides it. A user id that is none of the User's Friends shows nothing.
+export function useProfileOver(replyId: number | null): ProfileOver {
+  const [opened, setOpened] = useState<{ userId: string; replyId: number | null } | null>(null);
+  const friend = useFriendProfile(opened?.replyId === replyId ? opened.userId : null)?.friend ?? null;
+  const show = useCallback(
+    (userId: string): void => {
+      setOpened({ userId, replyId });
+    },
+    [replyId],
+  );
+  const hide = useCallback((): void => {
+    setOpened(null);
+  }, []);
+  return { friend, show, hide };
+}
+
 function ignore(): void {
   // The frame's camera is the answer's: the card has no "가까이 보기".
 }
 
 // The everyday map's card of a Friend, which is their profile, also for a Friend whom the map does not show.
-function ProfileCard({ userId, onClose }: { userId: string; onClose: () => void }): ReactElement | null {
-  const friend = useFriendProfile(userId)?.friend ?? null;
-  useBackToClose(friend !== null, onClose, { edge: false });
-  if (friend === null) {
-    return null;
-  }
+function ProfileCard({ friend, onClose }: { friend: FriendView; onClose: () => void }): ReactElement {
   return (
     <Card
       canLookCloser={false}
@@ -43,24 +62,22 @@ function ProfileCard({ userId, onClose }: { userId: string; onClose: () => void 
   );
 }
 
-// The answer frame's Friend profile: what is inside it may open one (`useOpenFriendProfile`), which stands over the
-// frame's card, as the everyday map's card stands over the map, while the keyboard is down. Its ✕ and Android's back
-// button close it, and the frame under it is as it was.
+// What is inside the answer frame may open a Friend's profile (`useOpenFriendProfile`), which stands over the frame's
+// card, as the everyday map's card stands over the map, while the keyboard is down. Its ✕ hides it, and the frame
+// under it is as it was; the frame's own back button hides it too.
 export function FriendProfileOver({
+  profile,
   keyboardUp,
   children,
 }: {
+  profile: ProfileOver;
   keyboardUp: boolean;
   children: ReactNode;
 }): ReactElement {
-  const [userId, setUserId] = useState<string | null>(null);
-  const close = useCallback(() => {
-    setUserId(null);
-  }, []);
   return (
-    <OpenProfile value={setUserId}>
+    <OpenProfile value={profile.show}>
       {children}
-      {userId === null || keyboardUp ? null : <ProfileCard onClose={close} userId={userId} />}
+      {profile.friend === null || keyboardUp ? null : <ProfileCard friend={profile.friend} onClose={profile.hide} />}
     </OpenProfile>
   );
 }

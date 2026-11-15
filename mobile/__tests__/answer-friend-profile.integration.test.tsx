@@ -6,16 +6,18 @@
 
 import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
-import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
+import { MEAL_ANSWER_ALONE, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
 import type { Friend } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { pass } from './support/app';
+import { pass, shownAddress } from './support/app';
 import { askOnMap, card } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { hideKeyboard, KEYBOARD, showKeyboard } from './support/keyboard';
+import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './support/server';
@@ -130,6 +132,58 @@ describe('a person chip of an answer', () => {
       { input: { ...reply.answer.input, people: [ASKER] }, location: ON_CAMPUS },
     ]);
     expect(card().queryByRole('button', { name: '김민준 프로필' })).toBeNull();
+  });
+});
+
+// Partitions: the way back from a screen the profile pushed, Android's back button and the screen's own 뒤로; then
+// the back button over the profile. The rule: decision 13, one handler owns the back button while a profile is open.
+describe('a screen pushed from the profile', () => {
+  it.each([
+    ["Android's back button", 'android'],
+    ["the screen's 뒤로", 'screen'],
+  ])(
+    'returns by %s to the profile over the answer, and the back button then closes the profile alone',
+    async (_, way) => {
+      const back = holdBackButton();
+      const user = await askOnMap(server, replyWithMinJun());
+      await user.press(card().getByRole('button', { name: '김민준 프로필' }));
+      await user.press(profileCard().getByRole('button', { name: '어디까지 보이나' }));
+      await pass(500);
+      expect(shownAddress()).toBe('/me/location-sharing');
+
+      if (way === 'android') {
+        expect(await back()).toBe(true);
+      } else {
+        await user.press(screen.getByRole('button', { name: '뒤로' }));
+      }
+      await pass(500);
+
+      expect(shownAddress()).toBe('/main');
+      expect(profileCard().getByRole('header', { name: '김민준' })).toBeVisible();
+      expect(await back()).toBe(true);
+      expect(screen.queryByTestId('map-card')).toBeNull();
+      expect(card().getByText('12:15 302동식당')).toBeVisible();
+      expect(screen.getByTestId('answer-pill')).toBeVisible();
+    },
+  );
+});
+
+// Partitions: words sent while the profile gives way to the keyboard, answered with another answer. The rule:
+// decision 14, the profile belongs to the reply it was opened over.
+describe('a new reply', () => {
+  it('closes the profile opened over the answer before it', async () => {
+    const user = await askOnMap(server, replyWithMinJun());
+    await user.press(card().getByRole('button', { name: '김민준 프로필' }));
+    server.on('POST /assistant/messages', { status: 200, body: { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_THREE } });
+
+    await showKeyboard(KEYBOARD);
+    await user.type(screen.getByLabelText(AI_INPUT), '지은이도 불러 줘');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await hideKeyboard();
+    await pass(500);
+
+    expect(card().getByText('12:33 학생회관식당')).toBeVisible();
+    expect(screen.queryByTestId('map-card')).toBeNull();
   });
 });
 

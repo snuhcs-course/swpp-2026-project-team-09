@@ -13,14 +13,14 @@ import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
-import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { lastReply, type ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
 import type { CardActions } from '../chat-cards';
 import { ChatMarkdown } from '../chat-markdown';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
-import { FriendProfileOver } from '../friend-profile';
+import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { ANSWER_PILL, listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
 import { CloseButton } from './close-button';
@@ -179,7 +179,8 @@ interface FramedProps {
 
 // The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
 // ✕ and Android's back button forget the conversation, a reply on its way included. A Friend's profile opened from
-// the card stands over it, and the back button closes the profile first.
+// the card stands over it until a new reply; while it is shown, the back button hides it alone. This handler is the
+// only one, and listens only while the main screen is in front, so a screen pushed from the profile goes back to it.
 function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
   const { chat, leaving } = control;
   const { reset } = chat;
@@ -187,10 +188,12 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
     Keyboard.dismiss();
     reset();
   }, [reset]);
-  useBackToClose(useIsFocused(), close, { edge: false });
+  const profile = useProfileOver(lastReply(chat.bubbles)?.id ?? null);
+  const profileShown = profile.friend !== null && !keyboardUp;
+  useBackToClose(useIsFocused(), profileShown ? profile.hide : close, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   return (
-    <FriendProfileOver keyboardUp={keyboardUp}>
+    <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <AnswerPill asked={turnOf(chat.bubbles)?.asked ?? ''} onClose={close} />
       <AnswerCard
         barRoom={barRoom}
