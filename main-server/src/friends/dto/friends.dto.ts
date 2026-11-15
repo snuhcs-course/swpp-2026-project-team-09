@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
+import { koreaTime } from '../../assistant/korea-time.js';
 import { type Friendship, FriendLevel, User } from '../../generated/prisma/client.js';
 
 // Read in capitals, so that a Friend ID typed in small letters is found too. Any other text is a Friend ID nobody holds.
@@ -53,31 +54,36 @@ export function endOf(row: Friendship, userId: string): FriendEnd {
 // sharing whether it is above the Timetable, for an app of before. seen is what the two see of each other by the
 // friendship, the same from both sides, and the only word on the Friend's own end. visible is whether the User sees the
 // Friend's position or Place now, never why not. askedOff and askedPlan say whether the app has asked the User about
-// the Friend before turning location off for them, and after a Plan with them became a Quest.
+// the Friend before turning location off for them, and after a Plan with them became a Quest. friendId and
+// friendsSince, when the friendship was accepted, tell apart two Friends of the same name on their profile card.
 export interface FriendDto extends UserSummaryDto {
   id: string;
+  friendId: string;
   level: FriendLevel;
   seen: FriendLevel;
   sharing: boolean;
   visible: boolean;
   askedOff: boolean;
   askedPlan: boolean;
+  friendsSince: string;
 }
 
 export function toFriendDto(
-  user: Pick<User, 'id' | 'name' | 'department'>,
+  user: Pick<User, 'id' | 'name' | 'department' | 'friendId'>,
   { level, offAskedAt, planAskedAt }: FriendEnd,
-  { seen, visible }: { seen: FriendLevel; visible: boolean },
+  { seen, visible, acceptedAt }: { seen: FriendLevel; visible: boolean; acceptedAt: Date },
 ): FriendDto {
   return {
     id: user.id,
     ...toUserSummaryDto(user),
+    friendId: user.friendId,
     level,
     seen,
     sharing: level !== FriendLevel.timetable,
     visible,
     askedOff: offAskedAt !== null,
     askedPlan: planAskedAt !== null,
+    friendsSince: koreaTime(acceptedAt),
   };
 }
 

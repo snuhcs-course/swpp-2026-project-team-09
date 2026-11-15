@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -211,5 +212,31 @@ describe('fitting the camera with clear room that differs from edge to edge', ()
     const apart = LIBRARY.latitude - GATE.latitude;
     expect(camera?.centre.latitude).toBeCloseTo((GATE.latitude + LIBRARY.latitude) / 2 + apart / 8, 5);
     expect(camera?.centre.longitude).toBeCloseTo((GATE.longitude + LIBRARY.longitude) / 2, 6);
+  });
+});
+
+// Partitions: a zoom between the outer zoom and the fit zoom, one below the outer zoom, and the fit zoom told. Expected
+// values: the outer zoom given, 14.6, below the 14.895 at which the view fits inside the campus; a view inside the
+// camera's area, twice the campus each way, would allow 13.895.
+describe('a camera let out further than the fit zoom', () => {
+  it('stays where it is moved below the fit zoom, and goes no further out than the outer zoom', async () => {
+    const map = await holdMap({ outerZoom: 14.6 });
+
+    await map.move((handle) => {
+      handle.moveCamera({ centre: centreOf(CAMPUS_BOUNDS), zoom: 14.7 });
+    });
+    expect(map.camera()?.zoom).toBe(14.7);
+
+    await map.move((handle) => {
+      handle.moveCamera({ zoom: 1 });
+    });
+    expect(map.camera()?.zoom).toBe(14.6);
+  });
+
+  it('still tells the fit zoom of the campus', async () => {
+    const onFitZoom = jest.fn<void, [number]>();
+    await holdMap({ outerZoom: 14.6, onFitZoom });
+
+    expect(onFitZoom.mock.lastCall?.[0]).toBeCloseTo(WHOLE_CAMPUS, 3);
   });
 });

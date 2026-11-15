@@ -21,7 +21,7 @@ import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
-import { mockAssistantReply, mockRecalculation } from './assistant';
+import { mockAssistantReply, mockRecalculation, mockTap } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { LATE_WAY } from './data/late-way';
@@ -34,7 +34,7 @@ import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
 import { mockParty } from './party';
-import { mockBetterPlan, mockChangedPlanQuest, mockPlanQuest } from './plan-quest';
+import { mockBetterPlan, mockChangedPlanQuest, mockMadeQuests, mockPlanQuest } from './plan-quest';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
@@ -196,7 +196,7 @@ export const mockClient: ApiClient = {
   },
   listPositions: () => answer('listPositions', friendships.listPositions, []),
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
-  listQuests: () => answer('listQuests', () => QUESTS, []),
+  listQuests: () => answer('listQuests', () => [...QUESTS, ...mockMadeQuests()], []),
   listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
   listNotifications: () => answer('listNotifications', () => [], []),
   // The User leads no Quest of the mock's.
@@ -232,6 +232,7 @@ export const mockClient: ApiClient = {
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
+  answerTap: (tapped) => answer('answerTap', () => mockTap(tapped)),
   makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
   getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
   changePlanQuest: () => answer('changePlanQuest', mockChangedPlanQuest),

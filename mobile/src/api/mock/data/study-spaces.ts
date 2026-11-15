@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -19,13 +20,14 @@ function place(number: string, name: string, latitude: number, longitude: number
 function sector(
   id: string,
   name: string,
-  { floor, roomNo, sectorNo }: { floor: number; roomNo: number; sectorNo: number },
+  { floor, kind, roomNo, sectorNo }: { floor: number; kind: string; roomNo: number; sectorNo: number },
   width: number,
 ): LibrarySpace {
   return {
     id,
     name,
     floor,
+    kind,
     placeNumber: '62-1',
     unit: 'seat',
     roomNo,
@@ -39,22 +41,40 @@ function sector(
   };
 }
 
+const READING = 'reading-room';
+const NOTEBOOK = 'notebook-zone';
+
 // 관정관's seat sectors a User with no 소속 may book: every reading room but the 대학원 열람실.
 export const KWANJEONG_SECTORS: LibrarySpace[] = [
-  sector('7F-7A-zone1-notebook', '7A 열람실 1 구역(노트북존)', { floor: 7, roomNo: 172, sectorNo: 17201 }, 1190),
-  sector('7F-7A-zone2', '7A 열람실 2 구역', { floor: 7, roomNo: 172, sectorNo: 17202 }, 2529),
-  sector('7F-notebook-171', '노트북존', { floor: 7, roomNo: 171, sectorNo: 17101 }, 1987),
-  sector('7F-7B-notebook', '7B 노트북존', { floor: 7, roomNo: 173, sectorNo: 17301 }, 1190),
-  sector('8F-8A-zone1-quiet', '8A 열람실 1 구역(QUIET ZONE)', { floor: 8, roomNo: 182, sectorNo: 18201 }, 1190),
-  sector('8F-8A-zone2-notebook', '8A 열람실 2 구역(노트북존)', { floor: 8, roomNo: 182, sectorNo: 18202 }, 2467),
-  sector('8F-notebook-181', '노트북 존', { floor: 8, roomNo: 181, sectorNo: 18101 }, 1987),
+  sector(
+    '7F-7A-zone1-notebook',
+    '7A 열람실 1 구역(노트북존)',
+    { floor: 7, kind: NOTEBOOK, roomNo: 172, sectorNo: 17201 },
+    1190,
+  ),
+  sector('7F-7A-zone2', '7A 열람실 2 구역', { floor: 7, kind: READING, roomNo: 172, sectorNo: 17202 }, 2529),
+  sector('7F-notebook-171', '노트북존', { floor: 7, kind: NOTEBOOK, roomNo: 171, sectorNo: 17101 }, 1987),
+  sector('7F-7B-notebook', '7B 노트북존', { floor: 7, kind: NOTEBOOK, roomNo: 173, sectorNo: 17301 }, 1190),
+  sector(
+    '8F-8A-zone1-quiet',
+    '8A 열람실 1 구역(QUIET ZONE)',
+    { floor: 8, kind: READING, roomNo: 182, sectorNo: 18201 },
+    1190,
+  ),
+  sector(
+    '8F-8A-zone2-notebook',
+    '8A 열람실 2 구역(노트북존)',
+    { floor: 8, kind: NOTEBOOK, roomNo: 182, sectorNo: 18202 },
+    2467,
+  ),
+  sector('8F-notebook-181', '노트북 존', { floor: 8, kind: NOTEBOOK, roomNo: 181, sectorNo: 18101 }, 1987),
 ];
 
 // Added for a 대학원생.
 export const GRADUATE_SECTOR = sector(
   '8F-grad-reading-room',
   '대학원 열람실',
-  { floor: 8, roomNo: 183, sectorNo: 18301 },
+  { floor: 8, kind: 'grad-reading-room', roomNo: 183, sectorNo: 18301 },
   1190,
 );
 

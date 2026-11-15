@@ -10,10 +10,6 @@ import { defineSetting, type SettingCheck, type SettingDefinition, type SettingL
 // Injected as the registry, so that a test can register a setting of its own.
 export const SETTING_REGISTRY = Symbol('SETTING_REGISTRY');
 
-// The name of the key the AI calls its model with, and with it the provider (spec A02). A chat answer and a Judgement
-// read it once, at their start (src/assistant/model-port.ts). Its values are `default` and the name of each key the
-// server offers; `default` is always among them, being the default, and its check refuses saving it without
-// OPENROUTER_API_KEY.
 // What llm.key is, with the type GlobalSettings.get answers by.
 export interface LlmKeySetting {
   readonly name: 'llm.key';
@@ -25,6 +21,10 @@ export interface LlmKeySetting {
   readonly label: SettingLabel;
 }
 
+// The name of the key the AI calls its model with, and with it the provider (spec A02). A chat answer and a Judgement
+// read it once, at their start (src/assistant/model-port.ts). Its values are `default` and the name of each key the
+// server offers; `default` is always among them, being the default, and its check refuses saving it without
+// OPENROUTER_API_KEY.
 export function llmKeySetting({ offered }: AiKeys): LlmKeySetting {
   const names = offered.map(({ name }) => name);
   // A key's name with its provider, such as "default (OpenRouter)"; never its value.

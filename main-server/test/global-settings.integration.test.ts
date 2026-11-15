@@ -16,15 +16,15 @@ import { SettingRefused } from '../src/global-settings/setting-refused.js';
 import { connect, createDatabase } from './containers.js';
 import { startApp } from './start-app.js';
 
-// A test-only setting whose allowed values and default come from a function evaluated at start, as a setting whose
-// values another module knows only then registers them.
+// A test-only setting with allowed values and a check of its own, as the registry's factory makes llm.key from the keys
+// the server holds.
 const KEY_NAMES = ['alpha', 'beta', 'gamma'];
 const TEST_KEY = defineSetting({
   name: 'test.key',
   type: 'STRING',
   description: 'Which named key a test uses.',
-  default: () => KEY_NAMES[0],
-  allowed: () => KEY_NAMES,
+  default: 'alpha',
+  allowed: KEY_NAMES,
   // As a setting refuses a value it allows but the server cannot use now.
   check: (value) => (value === 'gamma' ? 'gamma has no key.' : null),
 });

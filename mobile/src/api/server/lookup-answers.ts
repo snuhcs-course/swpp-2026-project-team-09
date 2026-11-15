@@ -4,9 +4,9 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { Lookup, LookupAction } from '@/api/lookup-types';
-import { field, hasTexts, isText, listOf } from './answers';
-import { isBand, isChip, isLine, isOneOf, isPlacePoint, isScene } from './plan-answers';
+import type { CardFact, Lookup, LookupAction, LookupCard } from '@/api/lookup-types';
+import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
+import { isBand, isChip, isInput, isLine, isOneOf, isPlacePoint, isScene } from './plan-answers';
 
 // The app's check of a reply's Lookup, every field of it, as the answer screen draws each.
 
@@ -18,20 +18,47 @@ function isAction(value: unknown): value is LookupAction {
       return hasTexts(value, ['at', 'text']);
     case 'meet':
       return isText(field(value, 'userId'));
+    case 'plan':
+      return isText(field(value, 'label')) && isInput(field(value, 'input'));
+    case 'ask':
+      return hasTexts(value, ['label', 'text']);
     default:
       return false;
   }
 }
 
+const isIcon = isOneOf<CardFact['icon']>(['route', 'clock', 'meal', 'flag', 'user', 'pin', 'lock', 'calendar']);
+
+function isFact(value: unknown): value is CardFact {
+  return (
+    isIcon(field(value, 'icon')) &&
+    isText(field(value, 'text')) &&
+    typeof field(value, 'strong') === 'boolean' &&
+    isTextOrNull(field(value, 'userId'))
+  );
+}
+
+function isCard(value: unknown): value is LookupCard {
+  return (
+    isText(field(value, 'title')) &&
+    isTextOrNull(field(value, 'subtitle')) &&
+    listOf(isFact)(field(value, 'facts')) &&
+    isTextOrNull(field(value, 'note'))
+  );
+}
+
+// An asked Lookup has no card, and a main server before P01-17 sends none.
 export function isLookup(value: unknown): value is Lookup {
   const band = field(value, 'band');
+  const card = field(value, 'card');
   return (
-    isOneOf(['way', 'friend', 'menu'])(field(value, 'kind')) &&
+    isOneOf(['way', 'friend', 'menu', 'place'])(field(value, 'kind')) &&
     listOf(isChip)(field(value, 'chips')) &&
     listOf(isLine)(field(value, 'lines')) &&
     listOf(isText)(field(value, 'basis')) &&
     isScene(field(value, 'scene')) &&
     (band === null || isBand(band)) &&
-    listOf(isAction)(field(value, 'actions'))
+    listOf(isAction)(field(value, 'actions')) &&
+    (card === undefined || card === null || isCard(card))
   );
 }

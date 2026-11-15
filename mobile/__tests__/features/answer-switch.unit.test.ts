@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -10,6 +11,7 @@ import {
   onAnswerSwitchChange,
   setAnswerSwitch,
   useAnswerSwitch,
+  useKeptAnswerSwitch,
 } from '@/features/assistant/answer-switch';
 import { type Kept, keep, readKept } from '@/storage/kept';
 
@@ -60,6 +62,43 @@ describe('the switch of the answer on the map, as the phone kept it', () => {
     phoneKeeps(false);
 
     const { result } = await renderHook(() => useAnswerSwitch());
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current).toBe(false);
+  });
+});
+
+// Partitions: before the phone has said, after it said on, and a phone that cannot be read.
+describe('the switch of the answer on the map, with whether the phone has said', () => {
+  it('is null until the phone has said', async () => {
+    jest.mocked(readKept).mockReturnValue(
+      new Promise(() => {
+        // The phone has not said yet.
+      }),
+    );
+
+    const { result } = await renderHook(() => useKeptAnswerSwitch());
+
+    expect(result.current).toBeNull();
+  });
+
+  it('is what the phone kept once it has said', async () => {
+    phoneKeeps(true);
+
+    const { result } = await renderHook(() => useKeptAnswerSwitch());
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current).toBe(true);
+  });
+
+  it('is off once the phone could not be read', async () => {
+    jest.mocked(readKept).mockRejectedValueOnce(new Error('the phone could not be read'));
+
+    const { result } = await renderHook(() => useKeptAnswerSwitch());
     await act(async () => {
       await Promise.resolve();
     });

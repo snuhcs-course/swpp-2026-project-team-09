@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
@@ -41,6 +42,8 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const SEAT_TEST_ID = `library-book-${SEAT_CARD.library.key}`;
+// The main server's note when the User asked the Assistant to book the seat itself.
+const OWN_PRESS = '예약은 직접 눌러 주세요';
 
 let server: FakeServer;
 let library: FakeLibrary;
@@ -82,11 +85,19 @@ describe('the seat book card', () => {
     ]);
     expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
     expect(seatCard().getByText('오늘 17:00–18:00')).toBeVisible();
-    for (const name of ['예약하기', '다른 자리 고르기', '취소']) {
+    for (const name of ['예약하기', '닫기', '다른 자리 고르기']) {
       expect(seatCard().getByRole('button', { name })).toBeVisible();
     }
-    expect(seatCard().getByText(`· ${SEAT_NOTES[0] ?? ''}`)).toBeVisible();
+    expect(seatCard().getByText(`· ${SEAT_NOTES[1] ?? ''}`)).toBeVisible();
     expectNoWrite(library);
+  });
+
+  it('says under its buttons until when a seat booked now is confirmed at the kiosk, and that once', async () => {
+    await askForCards({ server, library }, [SEAT_CARD]);
+
+    expect(seatCard().getByText('예약하면 16:30까지 좌석배정기에서 확인해야 해요.')).toBeVisible();
+    // The site's note on the kiosk is left out: the foot says it.
+    expect(seatCard().getAllByText(/좌석배정기/u)).toHaveLength(1);
   });
 
   it('offers the named seat while it is free', async () => {
@@ -154,11 +165,26 @@ describe('the done message', () => {
   });
 });
 
-describe('취소 and 다른 자리 고르기 on the seat book card', () => {
-  it('says "알겠어요. 예약하지 않았어요." on 취소 and books nothing', async () => {
+describe('the seat book card when the User asked the Assistant to book it ("그냥 예약해 줘")', () => {
+  const asked = card({ ...SEAT_CARD.library, notes: [OWN_PRESS, ...SEAT_NOTES] });
+
+  it("says first among its notes that the booking is the User's own press, with 닫기 beside 예약하기", async () => {
+    await askForCards({ server, library }, [asked], { words: '그냥 예약해 줘' });
+
+    expect(seatCard().getAllByText(/^· /u)[0]).toHaveTextContent(`· ${OWN_PRESS}`);
+    const buttons = seatCard()
+      .getAllByRole('button')
+      .map((button) => String(button.props.accessibilityLabel));
+    expect(buttons.indexOf('닫기')).toBe(buttons.indexOf('예약하기') + 1);
+    expectNoWrite(library);
+  });
+});
+
+describe('닫기 and 다른 자리 고르기 on the seat book card', () => {
+  it('says "알겠어요. 예약하지 않았어요." on 닫기 and books nothing', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
 
-    await press('취소');
+    await press('닫기');
 
     expect(screen.getByText('알겠어요. 예약하지 않았어요.')).toBeVisible();
     expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();

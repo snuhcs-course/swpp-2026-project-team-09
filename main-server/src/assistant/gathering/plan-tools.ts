@@ -12,13 +12,14 @@ import { defineTool, type Tool } from '../feature.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { othersText } from '../others-text.js';
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { WHICH_FRIEND } from '../tools/which-friend.js';
 import { type MealPlanService } from './meal-plan.service.js';
 
 // A meal planned on the map, for an app that draws answers (ADR 0009): the server decides everything, the model passes
 // the User's words as conditions and writes one sentence. Coordinates, ids of Places, course names, and rooms stay here.
 
 // The most Friends of a plan, the asker making it eight people.
-const FRIENDS_MAX = 7;
+export const FRIENDS_MAX = 7;
 
 const NONE_REASONS: Record<NonNullable<AnswerReply['noPlan']>['reason'], string> = {
   'no-menu': 'No Restaurant is open for that meal that day, or no menu was collected for it.',
@@ -31,9 +32,13 @@ const clock = (time: string | null): string | null => (time === null ? null : ti
 const nameOf = ({ me, name }: Plan['parts'][number]): string => (me ? '나' : othersText('friend.name', name));
 
 function planWords(plan: Plan): object {
-  const { id, startAt, endAt, togetherMinutes, meeting, parts } = plan;
+  return { restaurant: plan.id, ...timesAndWays(plan) };
+}
+
+// When everyone is there and until when, where they meet on the way, and each person's way, in words and minutes.
+export function timesAndWays(plan: Plan): object {
+  const { startAt, endAt, togetherMinutes, meeting, parts } = plan;
   return {
-    restaurant: id,
     start: clock(startAt),
     end: clock(endAt),
     togetherMinutes,
@@ -83,7 +88,7 @@ const input = z
 
 // An id is accepted when a resolver returned it in this message, or when it is on screen or tapped. The asker heads
 // the conditions on screen and is no Friend of them.
-function refuseUnseen(found: FoundIds, kind: FoundKind, ids: readonly string[], seen: readonly string[]): void {
+export function refuseUnseen(found: FoundIds, kind: FoundKind, ids: readonly string[], seen: readonly string[]): void {
   found.refuseUnfound(
     kind,
     ids.filter((id) => !seen.includes(id)),
@@ -160,7 +165,7 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 - The app draws the plans on the map and writes their times, ways, and minutes itself, the first one first, and the User browses the others with arrows. Your reply is one sentence about the first plan only, its Restaurant and when everyone is there, such as "12:33에 학생회관식당에서 먹어요." Write nothing more: no second sentence, no other plan, nobody's walking minutes or time to set out, nothing about the map, and nothing that was dropped. Do not call showOnMap for a plan: the app already draws it.
 - When planMeal answers none, say plainly why, without naming who is busy.
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.
-- When resolveFriend answers several, call findFreeFriends for that meal, read the departments there, and name them in your question.
+- When resolveFriend answers several, ask which one ${WHICH_FRIEND}, and wait for the answer.
 - Breakfast is not covered: say that lunch and dinner are.
 - A line [Plan on screen: …] after the User's message gives the plan the app shows and its conditions. To change it (민수는 빼고, 지은이도 불러 줘, 12:30까지만, 학생회관에서 먹자), call planMeal again with those conditions and only that change: the same date, meal, friendIds, from, until, and placeId, except what the User changed. A Friend to add is found with resolveFriend first and added to friendIds. A Friend to take out is found with resolveFriend and left out of friendIds. An end the User names is until, and a start is from, as HH:MM. A Place to eat at is found with resolvePlace and given as placeId. To move the plan by an amount of time (10분 늦춰 줘), first call planMeal with the conditions as they are, read the start of the plan the line names, and call it again with from set to that start moved by the amount.
 - A line [Tapped: friend …] gives the id of the Friend the User tapped on the map (이 사람, 얘): use it as that Friend's id. A line [Tapped: place …] gives the Place they tapped (여기): give it as placeId to eat there.
