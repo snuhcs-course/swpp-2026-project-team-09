@@ -6,7 +6,7 @@
 
 import { inject } from 'vitest';
 import { type TestUser } from './friends.js';
-import { NOW, RoomStage } from './room-requests.js';
+import { lunchQuest, NOW, roomRequestSchema, RoomStage } from './room-requests.js';
 
 // A companion who has not answered by 20:00 on the day before the meeting is out at the next read.
 //
@@ -87,5 +87,51 @@ describe('Requests with no deadline', () => {
     at(korea('2026-11-04T15:00:00'));
 
     expect(await states(booker, id)).toEqual(['asked', 'asked', 'consented']);
+  });
+});
+
+describe('A companion asked after the deadline', () => {
+  // A request made on Monday for Wednesday 15:30, whose first asked companions are out at Tuesday 20:00.
+  const WEDNESDAY = 'book:4F-group-6:2026-11-04:1530:60';
+
+  it('stays asked at the next read when the booker asks them at Tuesday 21:00, and the booker is not told', async () => {
+    count += 1;
+    const names = [`늦게${count}부`, `늦게${count}a`, `늦게${count}b`, `늦게${count}c`, `늦게${count}d`] as const;
+    const [booker, minsu, jieun, seojun, haeun] = await stage.party(names);
+    at(korea('2026-11-02T10:00:00'));
+    const { id } = await stage.made(booker, [minsu, jieun, seojun], WEDNESDAY);
+    await stage.consent(minsu, id).expect(200);
+    at(korea('2026-11-03T20:00:00'));
+    await stage.status(booker, id);
+
+    at(korea('2026-11-03T21:00:00'));
+    await stage.askOneMore(booker, id, haeun.id).expect(201);
+    at(korea('2026-11-03T21:30:00'));
+
+    expect(await stage.states(booker, id)).toEqual({
+      [names[1]]: 'consented',
+      [names[2]]: 'unanswered',
+      [names[3]]: 'unanswered',
+      [names[4]]: 'asked',
+    });
+    const told = await stage.notificationsOf(booker, 'room-declined', 2);
+    expect(told.map(({ title }) => title).join(' ')).not.toContain(names[4]);
+  });
+
+  it('stays asked when a Holder joins the request’s own Quest after the deadline', async () => {
+    count += 1;
+    const names = [`합류${count}부`, `합류${count}a`, `합류${count}b`, `합류${count}c`, `합류${count}d`] as const;
+    const [booker, minsu, jieun, seojun, haeun] = await stage.party(names);
+    const questId = await lunchQuest(stage.prisma, [booker.id, minsu.id, jieun.id, seojun.id]);
+    at(korea('2026-11-02T10:00:00'));
+    const { id } = roomRequestSchema.parse((await stage.create(booker, { key: WEDNESDAY, questId }).expect(201)).body);
+
+    at(korea('2026-11-03T21:00:00'));
+    await stage.prisma.questHolder.create({ data: { questId, userId: haeun.id } });
+    const { RoomRequestSync } = await import('../src/library/room-request-sync.service.js');
+    await stage.app.get(RoomRequestSync).questChanged(questId);
+    at(korea('2026-11-03T21:30:00'));
+
+    expect((await stage.states(booker, id))[names[4]]).toBe('asked');
   });
 });

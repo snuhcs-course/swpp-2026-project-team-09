@@ -11,6 +11,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -46,6 +47,8 @@ import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
 import { invitationCardClient } from './invitation-card-client';
+import { interestClient } from './interest-client';
+import { lateClient } from './late-client';
 import { partyClient } from './party-client';
 import { planQuestClient } from './plan-quest-client';
 import { roomClient } from './room-client';
@@ -61,6 +64,8 @@ export const serverClient: ApiClient = {
   ...assistantClient,
   ...planQuestClient,
   ...invitationCardClient,
+  ...interestClient,
+  ...lateClient,
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
@@ -86,11 +91,20 @@ export const serverClient: ApiClient = {
   },
   uploadPosition: (position) => call('POST', '/positions', isPositionKept, { body: position }),
   listFriends: () => call('GET', '/friends', isFriends),
-  setFriendSharing: async (userId, on) => {
-    await call('PUT', `/friends/${encodeURIComponent(userId)}/sharing`, isNothing, { body: { on } });
+  setFriendLevel: async (userId, level) => {
+    await call('PUT', `/friends/${encodeURIComponent(userId)}/level`, isNothing, { body: { level } });
   },
   endFriendship: async (userId) => {
     await call('DELETE', `/friends/${encodeURIComponent(userId)}`, isNothing);
+  },
+  recordFriendsAsked: async (userIds, moment) => {
+    await call('POST', '/friends/asked', isNothing, { body: { userIds, moment } });
+  },
+  recordMasterOffAsked: async () => {
+    await call('POST', '/users/me/master-switch/asked', isNothing);
+  },
+  lowerFriendLevels: async (level) => {
+    await call('PUT', '/users/me/friend-levels', isNothing, { body: { level } });
   },
   findFriendId: (friendId) => call('GET', `/friend-ids/${encodeURIComponent(friendId)}`, isUserSummary),
   sendFriendRequest: (friendId) => call('POST', '/friend-requests', isSentFriendRequest, { body: { friendId } }),

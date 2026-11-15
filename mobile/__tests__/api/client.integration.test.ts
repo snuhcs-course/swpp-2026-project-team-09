@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -36,8 +37,11 @@ describe('the mock of Friends', () => {
       id: 'f1',
       name: '김민준',
       department: '컴퓨터공학부',
+      level: 'exact',
       sharing: true,
       visible: true,
+      askedOff: false,
+      askedPlan: false,
     });
     expect(friends.filter(({ visible }) => !visible).map(({ name }) => name)).toEqual(['서지우', '신예린']);
   });

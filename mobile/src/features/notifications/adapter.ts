@@ -10,6 +10,7 @@
 import type { Party, Quest } from '@/api/types';
 import type { FriendRequests, JoinRequest, KeptNotification, QuestInvitation } from '@/api/waiting-types';
 import { koreaCalendar, koreaClock, sameKoreaDay } from '@/korea-time';
+import { readCardAddress } from '@/push/card-address';
 import { cardAddress } from './address';
 
 // The kinds of the Notifications the main server keeps; `notice` stands for a kind this app does not know yet.
@@ -21,6 +22,7 @@ const KEPT_KINDS = [
   'room-agreed',
   'room-ending',
   'room-window',
+  'interest-new',
 ] as const;
 type KeptKind = (typeof KEPT_KINDS)[number] | 'notice';
 
@@ -37,7 +39,8 @@ export interface NoticeView {
   title: string;
   // "산업공학과"
   sub: string;
-  // The Quest whose room the row opens: a running Party's, or the one others ask to join. Null for the others.
+  // The Quest whose room the row opens: a running Party's, or the one others ask to join. The time to leave's opens
+  // its card, and names the Quest whose Party it turns on. Null for the others.
   questId: string | null;
   // The card's address the row opens, `/main?card=<kind>:<id>`. Null for a row that leads elsewhere.
   address: string | null;
@@ -74,6 +77,14 @@ function keptTitle({ title, ahead, at }: KeptNotification, now: Date): string {
   return typeof ahead === 'string' && Date.parse(at) > now.getTime() ? ahead : title;
 }
 
+// A new match of a watched interest has the look of what it opens: a recruiting party's people, or an event's calendar.
+function keptIcon({ kind, url }: KeptNotification): NoticeView['icon'] {
+  if (kind === 'interest-new') {
+    return readCardAddress(url)?.kind === 'party' ? 'users' : 'calendar';
+  }
+  return KEPT_ICONS[keptKind(kind)] ?? 'calendar';
+}
+
 function timeOf(at: string, now: Date): string {
   const instant = new Date(at);
   if (sameKoreaDay(instant, now)) {
@@ -89,10 +100,10 @@ function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[]
     .map((notification) => ({
       key: `notice-${notification.id}`,
       kind: keptKind(notification.kind),
-      icon: KEPT_ICONS[keptKind(notification.kind)] ?? 'calendar',
+      icon: keptIcon(notification),
       title: keptTitle(notification, now),
       sub: notification.line,
-      questId: null,
+      questId: notification.kind === 'leave-by' ? (readCardAddress(notification.url)?.id ?? null) : null,
       address: notification.url,
       time: timeOf(notification.at, now),
     }));

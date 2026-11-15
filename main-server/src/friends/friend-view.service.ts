@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -10,8 +11,9 @@ import { PlaceLookup } from '../places/place-lookup.js';
 import { type FriendView } from './dto/friend-view.dto.js';
 import { FriendsService } from './friends.service.js';
 
-// What a viewer sees of each Friend, read from today's switches: a Friend whose position the viewer may see now is
-// exact, and every other Friend is at the Timetable. The Assistant reads Friends only through it.
+// What a viewer sees of each Friend, as the visibility rule gives it: a Friend whose position the viewer may see now is
+// exact, one of whom the viewer may see only the Place they are in is at the building, and every other Friend is at the
+// Timetable. The Assistant reads Friends only through it.
 @Injectable()
 export class FriendViewService {
   constructor(
@@ -31,6 +33,9 @@ export class FriendViewService {
       const kept = seen.get(id);
       if (kept === undefined) {
         return { id, name, department, level: 'timetable', position: null, placeId: null };
+      }
+      if (kept.level === 'building') {
+        return { id, name, department, level: 'building', position: null, placeId: kept.placeId };
       }
       const position = { latitude: kept.latitude, longitude: kept.longitude, measuredAt: kept.measuredAt };
       return { id, name, department, level: 'exact', position, placeId: this.places.at(position)?.place.id ?? null };

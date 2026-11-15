@@ -7,14 +7,15 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { type ReactElement, type RefObject, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { friendsQuery, lobbyQuery, questsQuery } from '@/api/queries';
-import type { Friend, Profile, Quest } from '@/api/types';
+import { lobbyQuery } from '@/api/queries';
+import type { Profile } from '@/api/types';
 import { signOut } from '@/auth/sign-in';
 import {
   Avatar,
@@ -25,8 +26,6 @@ import {
   Dialog,
   font,
   Icon,
-  type IconName,
-  ListRow,
   radius,
   size,
   space,
@@ -36,9 +35,11 @@ import { waitingNotices } from '@/features/notifications/adapter';
 import { useNotices } from '@/features/notifications/use-notices';
 import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
+import { OffQuestion } from '../friends/off-question';
 import { LocationExplanation } from '../main/location-explanation';
 import { yearLabel } from '../onboarding/form';
 import { TabScreen } from '../shell/tab-screen';
+import { ActivityCard } from './activity-card';
 import { BuildLine } from './build-line';
 import { SharingCard } from './sharing-card';
 import { TutorialRow } from './tutorial-row';
@@ -98,72 +99,6 @@ function ProfileCard({ profile }: { profile: Profile }): ReactElement {
       >
         프로필 편집
       </Button>
-    </View>
-  );
-}
-
-interface ActivityRowProps {
-  icon: IconName;
-  label: string;
-  value: string;
-  onPress: () => void;
-}
-
-function ActivityRow({ icon, label, value, onPress }: ActivityRowProps): ReactElement {
-  return (
-    <ListRow
-      label={value === '' ? label : `${label} ${value}`}
-      leading={<Icon color={color.inkMuted} name={icon} size={20} />}
-      onPress={onPress}
-      title={label}
-      trailing={
-        <View style={styles.value}>
-          {value === '' ? null : <Text style={styles.valueWords}>{value}</Text>}
-          <Icon color={color.inkMuted} name="chevronRight" size={16} />
-        </View>
-      }
-    />
-  );
-}
-
-function friendCountOf(friends: Friend[]): string {
-  return String(friends.length);
-}
-
-// The User's Quests that are not Class Quests: the frames draw every other Quest as a 파티.
-function partyCountOf(quests: Quest[]): string {
-  return String(quests.filter(({ classQuest }) => !classQuest).length);
-}
-
-function ActivityCard(): ReactElement {
-  const friends = useQuery({ ...friendsQuery, select: friendCountOf }).data ?? '';
-  const parties = useQuery({ ...questsQuery, select: partyCountOf }).data ?? '';
-  return (
-    <View style={[cardStyles.card, styles.activity]}>
-      <ActivityRow
-        icon="user"
-        label="친구 관리"
-        onPress={() => {
-          router.push('/me/friends');
-        }}
-        value={friends}
-      />
-      <ActivityRow
-        icon="users"
-        label="참여 중인 파티"
-        onPress={() => {
-          router.push('/me/parties');
-        }}
-        value={parties}
-      />
-      <ActivityRow
-        icon="flag"
-        label="내 퀘스트"
-        onPress={() => {
-          router.push('/quests');
-        }}
-        value=""
-      />
     </View>
   );
 }
@@ -240,7 +175,7 @@ interface MeScreenProps {
 }
 
 // The 내 정보 tab, the `Profile` frame: the User's profile, the 새내기 튜토리얼 row, the week, the Master Switch, the ways to
-// the User's Friends, Parties and Quests, the library's login, the sign-out, and below it the build and update the phone runs.
+// the User's Friends, Parties, Quests, and interests, the library's login, the sign-out, and below it the build and update the phone runs.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();
@@ -269,6 +204,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
         onLater={sharing.later}
         visible={sharing.explaining}
       />
+      <OffQuestion name={null} onAnswer={sharing.answerOff} open={sharing.askingOff} />
     </TabScreen>
   );
 }
@@ -301,9 +237,6 @@ const styles = StyleSheet.create({
   whoWords: { flex: 1, gap: 2 },
   name: { fontFamily: font.bold, fontSize: 20, lineHeight: 28, letterSpacing: -0.2, color: color.ink },
   meta: { ...text.label, fontFamily: font.regular, color: color.inkMuted },
-  activity: { paddingVertical: space[1] },
-  value: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  valueWords: { ...text.caption, fontSize: 13, lineHeight: 18, fontFamily: font.semiBold, color: color.inkMuted },
   out: {
     alignSelf: 'center',
     justifyContent: 'center',

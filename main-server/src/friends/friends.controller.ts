@@ -3,15 +3,19 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
+import { FriendLevel } from '../generated/prisma/client.js';
 import { type SwitchDto, switchSchema } from '../location-sharing/dto/switch.dto.js';
 import {
   FriendDto,
   friendIdSchema,
+  type FriendLevelDto,
+  friendLevelSchema,
   FriendRequestsDto,
   type SendFriendRequestDto,
   sendFriendRequestSchema,
@@ -73,6 +77,17 @@ export class FriendsController {
     return this.friends.end(user.id, userId);
   }
 
+  @Put('friends/:userId/level')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  setLevel(
+    @CurrentUser() user: SignedInUser,
+    @Param('userId', { schema: z.uuid() }) userId: string,
+    @Body({ schema: friendLevelSchema }) body: FriendLevelDto,
+  ): Promise<void> {
+    return this.friends.setLevel(user.id, userId, body.level);
+  }
+
+  // For an app of before the levels.
   @Put('friends/:userId/sharing')
   @HttpCode(HttpStatus.NO_CONTENT)
   setSharing(
@@ -80,6 +95,6 @@ export class FriendsController {
     @Param('userId', { schema: z.uuid() }) userId: string,
     @Body({ schema: switchSchema }) body: SwitchDto,
   ): Promise<void> {
-    return this.friends.setSharing(user.id, userId, body.on);
+    return this.friends.setLevel(user.id, userId, body.on ? FriendLevel.exact : FriendLevel.timetable);
   }
 }

@@ -53,7 +53,10 @@ Details the ticket left to the implementation, listed so that any of them can be
    the inbox's asks, and can still read the request.
 2. **The room's name in the words** is the catalogue's name without "그룹스터디룸" and the rooms counted after it:
    "관정 4층 6인실".
-3. **The deadline** is counted from the request's making, whose time is now set by the Quests' clock.
+3. **The deadline** is each companion's own, counted from when they were asked (`room_consents.asked_at`, by the
+   Quests' clock): a companion asked at or after 20:00 the day before, by "친구 한 명 더 부르기" or as a Holder who
+   joined the Quest, has no deadline, as a request made that late has none. The migration fills the column of the
+   consents kept before it with their request's making.
 4. **The last companion going out** ends the request with today's notice to everyone it asked; no "못 온대요" is kept
    then.
 5. **Asking one more Friend** is for a request made for booking. A request made with an existing Quest refuses it with

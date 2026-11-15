@@ -3,6 +3,7 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions, for each check of an answer about Users: the documented shape, each checked field left out, null and of
@@ -49,12 +50,23 @@ const PROFILE = {
   registeredName: '홍길동',
   affiliation: 'exchange',
 };
-const LOBBY = { profile: PROFILE, masterSwitch: false };
-const FRIEND = { id: 'u-min-jun', name: '김민준', department: '경영학과', sharing: true, visible: false };
+const LOBBY = { profile: PROFILE, masterSwitch: false, masterOffAsked: false };
+const FRIEND = {
+  id: 'u-min-jun',
+  name: '김민준',
+  department: '경영학과',
+  level: 'building',
+  sharing: true,
+  visible: false,
+  askedOff: true,
+  askedPlan: false,
+};
 const USER_SUMMARY = { name: '김민준', department: '경영학과' };
 const INVITE_LINK = { url: 'https://snunow.example/invite/abc', expiresAt: '2026-10-07T08:00:00.000Z' };
 const OPENED_INVITE_LINK = { sender: USER_SUMMARY, status: 'usable' };
 const POSITION = { userId: 'u-min-jun', latitude: 37.4594, longitude: 126.95199, measuredAt: '2026-10-06T08:00:00Z' };
+// What a viewer at the building is given: the Place's own point and its id.
+const AT_BUILDING = { ...POSITION, level: 'building', placeId: 'place-62' };
 
 describe('isNothing', () => {
   checks(
@@ -140,7 +152,7 @@ describe('isLobby', () => {
     isLobby,
     [['the Lobby', LOBBY]],
     [
-      ...wrongFields(LOBBY, { profile: ['홍길동'], masterSwitch: ['false'] }),
+      ...wrongFields(LOBBY, { profile: ['홍길동'], masterSwitch: ['false'], masterOffAsked: ['true'] }),
       ['a profile without a friendId', { ...LOBBY, profile: omit(PROFILE, 'friendId') }],
     ],
   );
@@ -168,7 +180,16 @@ describe('isFriends', () => {
       ['one Friend outside a list', FRIEND],
       ...inList(
         FRIEND,
-        wrongFields(FRIEND, { id: [1], name: [1], department: [1], sharing: ['true'], visible: ['false'] }),
+        wrongFields(FRIEND, {
+          id: [1],
+          name: [1],
+          department: [1],
+          level: ['college'],
+          sharing: ['true'],
+          visible: ['false'],
+          askedOff: ['true'],
+          askedPlan: [0],
+        }),
       ),
     ],
   );
@@ -213,11 +234,13 @@ describe('isPositions', () => {
     isPositions,
     [
       ['the positions the User may see', [POSITION]],
+      ['a position and a Place at their levels', [{ ...POSITION, level: 'exact' }, AT_BUILDING]],
       ['no position', []],
     ],
-    inList(
-      POSITION,
-      wrongFields(POSITION, { userId: [1], latitude: ['37.4594'], longitude: ['126.95199'], measuredAt: [1] }),
-    ),
+    inList(POSITION, [
+      ...wrongFields(POSITION, { userId: [1], latitude: ['37.4594'], longitude: ['126.95199'], measuredAt: [1] }),
+      ['level "timetable"', { ...AT_BUILDING, level: 'timetable' }],
+      ['placeId 62', { ...AT_BUILDING, placeId: 62 }],
+    ]),
   );
 });

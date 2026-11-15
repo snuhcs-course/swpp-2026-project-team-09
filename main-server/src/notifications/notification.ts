@@ -43,12 +43,9 @@ export interface NotificationWords {
   card: Card;
   // Whom, beside the card, the Notification is about: the Friend who answered. Null when the card says it all.
   about: string | null;
-}
-
-// A Notification as it is kept for its User. `at` is the time it is for.
-export interface KeptNotification extends Omit<NotificationWords, 'about'> {
-  kind: NotificationKind;
-  at: Date;
+  // Whether it is pushed to the User's phone when its time comes, with `body` under the title.
+  rings: boolean;
+  body: string | null;
 }
 
 // At most one Notification of a kind about a card, and about the same person, for a User: two Friends who accept

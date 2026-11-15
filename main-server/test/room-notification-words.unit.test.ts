@@ -22,6 +22,8 @@ describe('The words of a companion going out of a room request', () => {
       line: '관정 4층 6인실 · 1명 더 필요해요',
       card: CARD,
       about: FRIEND_ID,
+      rings: true,
+      body: '관정 4층 6인실 · 1명 더 필요해요.',
     });
   });
 
@@ -44,7 +46,15 @@ describe('The words of a room request every companion agreed to', () => {
         { kind: 'room-agreed', questId: QUEST_ID, roomLabel: ROOM, date, start, minutes, names: ['민수', '서준'] },
         AT,
       ),
-    ).toEqual({ title: '모두 동의했어요', ahead: null, line, card: CARD, about: null });
+    ).toEqual({
+      title: '모두 동의했어요',
+      ahead: null,
+      line,
+      card: CARD,
+      about: null,
+      rings: true,
+      body: `${line}, 이제 예약할 수 있어요.`,
+    });
   });
 });
 
@@ -60,6 +70,8 @@ describe('The words of a room request waiting for the booking window', () => {
       line,
       card: CARD,
       about: null,
+      rings: true,
+      body: `${line}를 이제 예약할 수 있어요.`,
     });
   });
 });
@@ -72,6 +84,8 @@ describe('The words of a booked room ending', () => {
       line: '관정 4층 6인실 · 18:30에 끝나요',
       card: CARD,
       about: null,
+      rings: true,
+      body: '관정 4층 6인실 · 18:30에 끝나요.',
     });
   });
 });

@@ -38,6 +38,8 @@ import { alreadyHolder, conflict, notFound } from './refusals.js';
 
 export type CreatedInvitation = Prisma.QuestInvitationGetPayload<{ include: typeof WAITING_INCLUDE }>;
 
+export type AcceptedListener = (userId: string, questId: string) => void;
+
 const invitationNotFound = (): NotFoundException => notFound('QUEST_INVITATION_NOT_FOUND', 'No such invitation waits.');
 
 // The Leader's invitations of Friends. An invitation admits whatever the Join Policy is, waits until the invited User
@@ -45,6 +47,7 @@ const invitationNotFound = (): NotFoundException => notFound('QUEST_INVITATION_N
 @Injectable()
 export class InvitationsService {
   private readonly logger = new Logger(InvitationsService.name);
+  private readonly accepted: AcceptedListener[] = [];
 
   constructor(
     private readonly prisma: PrismaService,
@@ -83,6 +86,7 @@ export class InvitationsService {
     if ((await tx.questInvitation.findUnique({ where: { questId_userId: { questId, userId } } })) !== null) {
       throw conflict('QUEST_INVITATION_ALREADY_SENT', 'An invitation of this User into the Quest is waiting.');
     }
+    await tx.questDecline.deleteMany({ where: { questId, userId } });
     return tx.questInvitation.create({ data: { questId, userId }, include: WAITING_INCLUDE });
   }
 
@@ -154,23 +158,36 @@ export class InvitationsService {
       friendId: userId,
       friendName: answered.user.name,
     });
+    this.accepted.forEach((listener) => {
+      listener(userId, questId);
+    });
     await this.roomRequests.questChanged(questId);
     return this.quests.read(userId, questId);
   }
 
-  // Tells the Holders too, whose members drop the User.
+  // For a module this one cannot import: each listener hears of an acceptance once it is stored and signalled, and
+  // must not throw.
+  onAccepted(listener: AcceptedListener): void {
+    this.accepted.push(listener);
+  }
+
+  // Keeps the decline in place of the invitation. Tells the Holders too, whose members list the User as declined.
   async decline(userId: string, invitationId: string): Promise<void> {
     const invitation = await this.prisma.questInvitation.findFirst({
       where: { id: invitationId, userId },
       include: { quest: { include: { holders: { select: { userId: true } } } }, user: { select: { name: true } } },
     });
-    if (
-      invitation === null ||
-      (await this.prisma.questInvitation.deleteMany({ where: { id: invitationId, userId } })).count === 0
-    ) {
+    if (invitation === null) {
       throw invitationNotFound();
     }
     const { questId, quest } = invitation;
+    await this.prisma.$transaction(async (tx) => {
+      if ((await tx.questInvitation.deleteMany({ where: { id: invitationId, userId } })).count === 0) {
+        throw invitationNotFound();
+      }
+      await tx.questDecline.deleteMany({ where: { questId, userId } });
+      await tx.questDecline.create({ data: { questId, userId } });
+    });
     this.signals.send([userId, ...quest.holders.map((holder) => holder.userId)], 'quests-changed');
     this.signals.send([quest.leaderId], 'invitation-declined', { questId, userId });
     // The booker of a room request made with this party hears of it from the request, with the room's count.

@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
-import { Share, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { ApiError } from '@/api/errors';
 import type { UserSummary } from '@/api/types';
 import {
@@ -25,6 +26,7 @@ import {
 } from '@/design-system';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { useMyFriendId } from '@/features/friends/use-my-friend-id';
+import { useSendInviteLink } from '@/features/friends/use-send-invite-link';
 import { alreadyFriends, becameFriends, NO_ANSWER } from './words';
 
 const FRIEND_ID_LENGTH = 8;
@@ -170,17 +172,9 @@ function ByFriendId(): ReactElement {
 }
 
 function ByInviteLink(): ReactElement {
-  const changes = useFriendChanges();
-  const showToast = useToast();
+  const sendInviteLink = useSendInviteLink();
   const send = (): void => {
-    changes.createInviteLink().then(
-      ({ url }) => {
-        void Share.share({ message: `SNU Now에서 친구 해요! ${url}` }).catch(() => null);
-      },
-      () => {
-        showToast('초대 링크를 만들지 못했어요');
-      },
-    );
+    void sendInviteLink();
   };
   return (
     <View style={styles.part}>

@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
   type AnswerReply,
+  type MealInput,
   type PersonConstraint,
   type PlacePoint,
-  type PlanInput,
 } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
 import { type GatheringPlace } from '../src/assistant/gathering/gathering.js';
@@ -52,12 +53,12 @@ export const haeun = (): AnswerPerson => person(HAEUN, '하은', []);
 
 // What the User fixed: the window, the Place, and each person's constraints by their id.
 export interface Fixed {
-  window?: PlanInput['window'];
+  window?: MealInput['window'];
   placeId?: string | null;
   constraints?: Record<string, PersonConstraint[]>;
 }
 
-const inputOf = (people: readonly AnswerPerson[], fixed: Fixed): PlanInput => ({
+const inputOf = (people: readonly AnswerPerson[], fixed: Fixed): MealInput => ({
   kind: 'meal',
   date: DATE,
   meal: 'lunch',

@@ -155,6 +155,7 @@ The signals and what the app does on each:
 | `quests-changed`        | nothing                                       | fetches `GET /quests`, the requests to join and the invitations of the main server again                   |
 | `invitation-accepted`   | `{ questId, userId }`                         | fetches `GET /quests` and the sent invitations again, and tells the screen that listens; to the Leader     |
 | `invitation-declined`   | `{ questId, userId }`                         | fetches `GET /quests` and the sent invitations again, and tells the screen that listens; to the Leader     |
+| `late`                  | `{ questId, userId, minutes, arriveAt }`      | fetches `GET /quests` again, and tells the screen that listens; to the other Holders, with no position     |
 | `plan-changed`          | `{ questId }`                                 | fetches `GET /quests` and the invitations again; to every Holder and invited User of the Quest             |
 | `party-changed`         | nothing                                       | fetches `GET /parties/mine`, `GET /parties`, the Party requests and invitations of the main server again   |
 | `matching-changed`      | nothing                                       | fetches `GET /matching-requests` and each request it shows, `GET /matching-requests/:globalEventId`, again |
@@ -175,7 +176,9 @@ socket.on('position-removed', ({ userId }) => {
 ```
 
 A `position` goes only to the Users who may see that User at that moment, and `position-removed` to each User who could
-see them and no longer can (see the [main server](../main-server/README.md#location-sharing)). `fetchCurrentState`
+see them and no longer can (see the [main server](../main-server/README.md#location-sharing)). A `position` also
+carries `level`: `exact` for the User's position, or `building` with `placeId` for a viewer who may see only the Place
+the User is in, at the Place's own point. `fetchCurrentState`
 includes the main server's `GET /positions`. The app dims an Avatar whose `measuredAt` is more than 2 minutes old and
 removes it at 10 minutes, so that one whose phone stopped reporting leaves the map by itself.
 

@@ -22,27 +22,43 @@ function timesWords({ date, start, minutes }: { date: string; start: string; min
   return `${weekdayWord(date)} ${start}–${clockOfMinutes(minutesOfClock(start) + minutes)}`;
 }
 
+// A room request's Notifications ring, with the line as the push's body.
 function roomWords(told: Of<'room-declined'> | Of<'room-agreed'> | Of<'room-ending'>): NotificationWords {
   const card = { kind: 'party', id: told.questId };
   if (told.kind === 'room-declined') {
     const plan = told.moreNeeded > 0 ? `${String(told.moreNeeded)}명 더 필요해요` : '계획은 그대로예요';
+    const line = `${told.roomLabel} · ${plan}`;
     return {
       title: `${withSubject(told.friendName)} 못 온대요`,
       ahead: null,
-      line: `${told.roomLabel} · ${plan}`,
+      line,
       card,
       about: told.friendId,
+      rings: true,
+      body: `${line}.`,
     };
   }
   if (told.kind === 'room-agreed') {
-    return { title: '모두 동의했어요', ahead: null, line: `${timesWords(told)} ${told.roomLabel}`, card, about: null };
+    const line = `${timesWords(told)} ${told.roomLabel}`;
+    return {
+      title: '모두 동의했어요',
+      ahead: null,
+      line,
+      card,
+      about: null,
+      rings: true,
+      body: `${line}, 이제 예약할 수 있어요.`,
+    };
   }
+  const line = `${told.roomLabel} · ${told.end}에 끝나요`;
   return {
     title: '10분 뒤 끝나요',
     ahead: `${told.end} 방 예약 끝`,
-    line: `${told.roomLabel} · ${told.end}에 끝나요`,
+    line,
     card,
     about: null,
+    rings: true,
+    body: `${line}.`,
   };
 }
 
@@ -55,6 +71,8 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       line: `${told.placeLabel}까지 걸어서 ${String(told.walkMinutes)}분`,
       card: { kind: 'party', id: told.questId },
       about: null,
+      rings: true,
+      body: `${told.placeLabel}까지 걸어서 ${String(told.walkMinutes)}분이에요.`,
     };
   }
   if (told.kind === 'room-window') {
@@ -64,6 +82,8 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       line: `${timesWords(told)} 스터디`,
       card: { kind: 'party', id: told.questId },
       about: null,
+      rings: true,
+      body: `${timesWords(told)} 스터디를 이제 예약할 수 있어요.`,
     };
   }
   if (told.kind === 'accepted' || told.kind === 'declined') {
@@ -73,6 +93,8 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       line: told.questTitle,
       card: { kind: 'party', id: told.questId },
       about: told.friendId,
+      rings: false,
+      body: null,
     };
   }
   return roomWords(told);

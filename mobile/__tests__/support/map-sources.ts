@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // What the map and friends adapters' unit tests build their sources from: 13:00 in Korea on Tuesday 6 October 2026,
@@ -98,7 +99,7 @@ export function measured(userId: string, ago: number, at = HALL): Position {
 
 // A Friend seen at the point, free, with a detail and a walk.
 export function friendView(person: Person, more: Partial<FriendView> = {}): FriendView {
-  const friend: Friend = { ...person, sharing: true, visible: true };
+  const friend: Friend = { ...person, level: 'exact', sharing: true, visible: true, askedOff: false, askedPlan: false };
   return {
     ...friend,
     presence: 'free',

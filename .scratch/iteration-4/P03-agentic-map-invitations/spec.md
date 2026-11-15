@@ -204,6 +204,93 @@ interface FriendView {
 - A Plan's scene marks a Friend by the level the view gave. With today's switches that is exact or the Timetable, which the scene already tells apart; the mark of the building level comes with the levels.
 - The map's own answers (`GET /friends`, `GET /positions`, and the `position` signal) stay as they are: they already follow the visibility rule the view reads.
 
+### Events and recruiting Quests answered on the map
+
+The answer of a question about events or recruiting Quests has the shape a meal's answer has, so the screen draws it with what it has: the conditions, Plans in order with the arrows, what was dropped with its reason, and for each Plan its lines, basis, scene, and band. The conditions say what is planned:
+
+```ts
+type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput;   // MealInput is today's, kind 'meal'
+
+// The Global Events of a day the asker can attend.
+interface EventsInput {
+  kind: 'events';
+  date: string;                    // YYYY-MM-DD in Korea
+  eventIds: string[] | null;       // only these, as a search or a mark gave them; null for every event of the day
+}
+
+// Recruiting Quests the asker could join.
+interface QuestsInput {
+  kind: 'quests';
+  globalEventId: string | null;    // the ones going to that Global Event
+  questIds: string[] | null;       // or these, as a search gave them
+}
+
+// A recruiting Quest the asker would make.
+interface NewQuestInput {
+  kind: 'new-quest';
+  date: string;
+  globalEventId: string | null;    // for that Global Event, at its Place
+  title: string | null;            // else what the User asked for ("배드민턴")
+  placeId: string | null;          // the Place the User said or the answer chose
+  time: string | null;             // HH:MM the User said; null for the earliest everyone can be there
+  people: PlanPerson[];            // the asker first, then the Friends to invite
+}
+```
+
+- **A new client capability, `events`**, says that the app draws these answers. Only then do the tools below join the chat, and only then does a reply carry an answer of these kinds. The recalculation endpoint and `POST /plans` take the new kinds whatever the capability, since only such an app sends them.
+- **A Plan** gains what these answers need, all optional so that a meal's Plan is as it was: a person's part and a route say how they travel (`mode: 'walk' | 'shuttle'`, absent for a walk), and a Plan of a recruiting Quest carries the Quest as the recruiting list gives it, with the names of the Friends who hold it.
+- **Travel Time** is the faster of walking and the shuttle as the travel provider gives it, the rule the 공강 cards use.
+- **Where the asker sets out from** is the gathering calculation's rule: the Place of the Class or Sub Quest that keeps them until then, else the Place of the location the request gives, else the Place of an item that ended at most 15 minutes ago, else unknown. With an unknown origin no way is counted, and only the times decide.
+- **The words** are the server's, as a meal's are.
+
+**Events** (`kind: 'events'`): one Plan for each published Global Event of the day that has a Place and is not over.
+
+- An event under way when the asker can be there is attended from their arrival; one that has not started, from its start. They stay until its end or until they must leave for their next item, whichever is first.
+- **It fits** when the asker arrives before a not-yet-started event starts, or can stay 30 minutes or more at one under way, in a stretch of Free Time.
+- **It clashes** when it fits no Free Time because a Class or a held Sub Quest lies over it. It is kept as a Plan, after those that fit, and says which item it clashes with; its way is counted as if the asker went.
+- **Order**: the Plans that fit, the longer stay first, then the earlier start, then the title; then those that clash, by start.
+- **Dropped**, with the reason: an event the asker cannot reach before it starts, or could stay at for less than 30 minutes.
+- **Lines**: for one under way, "13:54 도착 · 78분 볼 수 있어요" and "15:30 수업이라 15:12엔 나서요"; for one that has not started, "동아리 정기공연 · 18:00 시작" and when the asker sets out and how ("17:42에 셔틀로 가요", "17:56에 나서면 돼요"); for a clash, "기업 설명회 · 16:00 문화관" and "15:30 수업과 겹쳐요". With no Plan: "오늘은 다녀올 만한 행사가 없어요".
+- A Plan's id is the Global Event's, its title the event's, its Place the event's, and it has no Sub Quests: the asker attends through the Quest of the event, as today.
+- A tool of the chat, `planEvents`, takes the day and, when the User asked for a kind of event, the ids a search returned in the same message.
+
+**Recruiting Quests** (`kind: 'quests'`): one Plan for each Quest the asker could enter, judged on its first Sub Quest ahead that has a start and a Place.
+
+- **It fits** when the asker can be at that Place before the Sub Quest starts.
+- **Order**: the Quests a Friend holds first, then the earlier start, then the title.
+- **Dropped**, with the reason: one that has started ("13:30 파티 · 이미 시작했어요"), and one the asker cannot reach in time ("17:00 파티는 17:02에야 도착해요").
+- **Lines**: "18:00 체육관 · 17:43에 나서요", and with a Friend among the Holders "14:20 문화관 앞 파티에" and "민수가 있어요".
+- Joining stays the User's press, through the routes of today.
+- A tool of the chat, `planQuests`, takes the Global Event or the ids a search returned in the same message.
+
+**A new recruiting Quest** (`kind: 'new-quest'`): one Plan.
+
+- **The Place** is the Global Event's, or the one the User said; with neither, the Place where the recruiting Quests of the same search meet, when they all meet at one; otherwise the answer asks for it.
+- **The time** is the one the User said; otherwise the earliest everyone of the Plan can be there, rounded up to the next ten minutes.
+- **Friends who could come** are those free at that time who hold no Quest for the same Global Event; the answer lists them, each with the line of their day ("지은 · 13:50 38동 수업 끝"), for the screen to offer.
+- `POST /plans` makes it: Open on the Board of the request (Hobby when none is given), capacity 4 or the number of people when that is more, with the steps the Plan gives and an invitation for each Friend of it. For a Global Event it is the asker's Quest of that event.
+- A tool of the chat, `planNewQuest`, takes what the User said.
+
+### The three Friend levels
+
+Above the Timetable, each User chooses for each Friend what that Friend sees of them: `timetable` (the Timetable only; the screens' "시간표만", location off), `building` (the Place they are in now; "지금 있는 건물"), or `exact` (their position; "정확한 위치"). The design's section 7 decides the behaviour; this section says how it is stored and sent.
+
+- **Stored** on each end of a friendship, `user_a_level` and `user_b_level`, in place of today's two sharing switches. The migration turns a switch that is on into `exact` and one that is off into `timetable`, so that nobody sees more or less than before. A new friendship starts at `building` on both ends.
+- **What a viewer sees of a Friend** is the lower of the two ends' levels, and `timetable` while either Master Switch is off. Members of a common Party who both share with it see each other `exact`, whatever the levels, as today. The rule stays in the one visibility service, and the Friend view reads it.
+- **Sent at the building level**: no position of the person leaves the server. A viewer at `building` receives `{ userId, placeId, latitude, longitude, measuredAt, level: 'building' }` with the Place's own point, when the person is in a Place, and nothing when they are in none. A viewer at `exact` receives what they receive today with `level: 'exact'`. `GET /positions` and the `position` signal both follow this. A building viewer is told when the Place changes, again every 50 seconds while the person stays in it (so that the app, which dims an Avatar after two minutes, keeps it fresh), and `position-removed` when the person leaves every Place. An app of before draws a building viewer's Friend at the Place's point, which is what that viewer may see.
+- **Changing a level** works at once and tells the other User nothing but what their map now shows: lowering from `exact` to `building` replaces the position with the Place, and lowering to `timetable` removes it.
+- **The routes**: `PUT /friends/:userId/level` with `{ level }`. `PUT /friends/:userId/sharing` with `{ on }` stays for an app of before: on is `exact` and off is `timetable`. `GET /friends` gives each Friend's `level` (the User's own end) beside `sharing` (true unless the level is `timetable`) and `visible`.
+- **The Friend view** gives `building` with the Place and no position. A meal's Plan sets such a Friend out from that Place, and its scene marks them `building`: `MapScene` people gain the source `building`, drawn at the Place's point.
+
+### Asking once
+
+The Assistant asks at two moments and remembers that it asked (design section 7, "The two moments the Assistant asks"). The server keeps when each question was asked; the app asks.
+
+- **Turning location off**: before a Friend's level is set to `timetable` from above it, the app asks once for that Friend, and before the Master Switch is turned off, once for the Master Switch. "건물까지만" from a Friend's question sets that Friend to `building`; from the Master Switch's question it lowers every Friend at `exact` to `building` and leaves the Master Switch on. Stored: `off_asked_at` on each end of a friendship, and `users.master_off_asked_at`.
+- **The first plan with a Friend**: when a Plan the User made becomes a Quest, the reply of `POST /plans` names the Friends of it whom the User was not asked about yet, with each one's current level (`askLevels: [{ userId, name, level }]`). The app asks once ("민수, 지은에게 평소에 어디까지 보일까요?"), each name removable. Answering or skipping is recorded with `POST /friends/asked` and `{ userIds, moment: 'plan' }`; a chosen level is set with the level route. Stored: `plan_asked_at` on each end. Accepting an invitation never asks.
+- `GET /friends` gives `askedOff` and `askedPlan` for each Friend, and the Lobby `masterOffAsked`, so that the app knows whether to ask.
+- `PUT /users/me/friend-levels` with `{ level: 'building' }` lowers every Friend above that level to it, for the Master Switch's "건물까지만".
+
 ### The app
 
 - The contract is declared in the app as it is in the server: the body and reply of `POST /plans`, the invitation's card, a Quest's members, and the signals' payloads.
@@ -230,8 +317,8 @@ A good test states a behaviour a User or another package depends on, through a p
 - The buttons and cards that show any of this: "이대로 초대", the card of a received invitation, the person chips, the flag of a Quest on the everyday map, and the question after a decline. Package B's.
 - The push of an invitation and its richer words, the leave-by notification, the notification list's stored rows, and "파티 켜기" on a notification. Packages D and P04.
 - The preview of being late, what changes for each other Holder when one is late, and the question whether to go anyway or drop out. Package A's.
-- Storing the three Friend levels, sending a location at the building level, and the two moments the Assistant asks. Iteration 5.
-- The answers for events and recruiting Quests (rows 4 and 5), a recruiting Quest made from a Plan, and the start rounded up to ten minutes.
+- Lowering by place: a Private Zone, and buildings whose name reveals a situation. A position off campus is already never kept.
+- Watching interests, and the order they give events: package D's.
 - An invitation link sent through a messenger.
 - A constraint an invited person sets, and keeping the asker's conditions with a Quest.
 - The requirements and the acceptance test document that say a Friend's Classes are not shown.

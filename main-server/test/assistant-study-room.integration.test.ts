@@ -36,9 +36,9 @@ describe('A study with three Friends in the days a room can be booked', () => {
 
     expect(cards).toHaveLength(1);
     expect(cards[0]).toMatchObject({
-      key: 'book:4F-group-6:2026-11-19:1530:180',
+      key: 'book:4F-group-6:2026-11-05:1530:180',
       action: 'book',
-      date: '2026-11-19',
+      date: '2026-11-05',
       start: '15:30',
       minutes: 180,
       companions: companionsOf(people),
@@ -59,7 +59,7 @@ describe('A study with three Friends in the days a room can be booked', () => {
 
     expect(result).toEqual({
       result: 'shown',
-      summary: '2026-11-19(목) 15:30–18:30 관정 4층 6인실, 4명 예약 카드를 보여 줬어요. 예약하기를 눌러야 예약돼요.',
+      summary: '2026-11-05(목) 15:30–18:30 관정 4층 6인실, 4명 예약 카드를 보여 줬어요. 예약하기를 눌러야 예약돼요.',
       people: [
         { name: '나', arrival: '15:29', from: '15:30', until: '18:30', minutes: 180 },
         { name: friendName('민수'), arrival: '17:01', from: '17:01', until: '18:30', minutes: 89 },
@@ -67,9 +67,9 @@ describe('A study with three Friends in the days a room can be booked', () => {
         { name: friendName('서준'), arrival: '14:54', from: '15:30', until: '18:30', minutes: 180 },
       ],
       otherDays: [
-        { date: '2026-11-17', start: '20:00', end: '23:00', shortestMinutes: 59 },
-        { date: '2026-11-18', start: '20:00', end: '23:00', shortestMinutes: 59 },
-        { date: '2026-11-20', start: '20:00', end: '23:00', shortestMinutes: 59 },
+        { date: '2026-11-03', start: '20:00', end: '23:00', shortestMinutes: 59 },
+        { date: '2026-11-04', start: '20:00', end: '23:00', shortestMinutes: 59 },
+        { date: '2026-11-06', start: '20:00', end: '23:00', shortestMinutes: 59 },
       ],
       noBookingOn: [],
     });
@@ -78,11 +78,11 @@ describe('A study with three Friends in the days a room can be booked', () => {
 
 describe('A study on a named day', () => {
   it('uses the day and the length as said: Friday for 120 minutes', async () => {
-    const { cards, result } = await stage.study(people, { date: '2026-11-20', minutes: 120 });
+    const { cards, result } = await stage.study(people, { date: '2026-11-06', minutes: 120 });
 
     expect(cards[0]).toMatchObject({
-      key: 'book:4F-group-6:2026-11-20:2100:120',
-      date: '2026-11-20',
+      key: 'book:4F-group-6:2026-11-06:2100:120',
+      date: '2026-11-06',
       start: '21:00',
       minutes: 120,
       notes: ['나 21:00부터', '민수 22:01 도착', '지은 21:00부터', '서준 21:00부터', ...SITE_NOTES],
@@ -91,12 +91,12 @@ describe('A study on a named day', () => {
   });
 
   it('says so when no time leaves nobody out: 민수 is in Class until 22:50 on Saturday', async () => {
-    const { cards, result } = await stage.study(people, { date: '2026-11-21' });
+    const { cards, result } = await stage.study(people, { date: '2026-11-07' });
 
     expect(result).toEqual({
       result: 'none',
       reason: '그 기간에는 모두가 30분 이상 함께 있을 수 있는 시간이 없어요.',
-      days: ['2026-11-21'],
+      days: ['2026-11-07'],
     });
     expect(cards).toEqual([]);
   });

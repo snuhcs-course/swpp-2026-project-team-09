@@ -136,8 +136,9 @@ lobby, which gives it what it needs to run, after a sign-in or a start with stor
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are required, and the
    profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false }`, the profile as
-   `GET /users/me/profile` gives it and whether the User's [Master Switch](#location-sharing) is on. Later features add
+4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false }`,
+   the profile as `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, and
+   whether the app has asked the User before they turned it off (see [Asking once](#asking-once)). Later features add
    what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
@@ -193,23 +194,27 @@ Request to it. The routes, all a User's:
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
 - `GET /friends` answers the User's Friends in the order of their names:
-  `[{ "id", "name", "department", "sharing", "visible" }]`, where `id` is the Friend's User id, `sharing` the User's own
-  switch for the friendship and `visible` whether the User can see the Friend on the map now, never why not (see
-  [Location Sharing](#location-sharing)).
+  `[{ "id", "name", "department", "level", "sharing", "visible", "askedOff", "askedPlan" }]`, where `id` is the
+  Friend's User id, `level` the User's own end of the friendship, `sharing` whether it is above `timetable`, `visible`
+  whether the User sees the Friend's position or Place on the map now, never why not (see
+  [Location Sharing](#location-sharing)), and `askedOff` and `askedPlan` whether the app has asked the User about the
+  Friend (see [Asking once](#asking-once)).
 - `DELETE /friends/:userId` ends the friendship for both and answers 204.
-- `PUT /friends/:userId/sharing` with `{ "on": false }` turns the User's switch for the friendship off, `{ "on": true }`
-  on, and answers 204. It changes the User's own end only.
+- `PUT /friends/:userId/level` with `{ "level": "timetable" }`, `"building"`, or `"exact"` sets what the User lets the
+  Friend see of where they are, and answers 204. It changes the User's own end only.
+- `PUT /friends/:userId/sharing`, for an app of before the levels: `{ "on": true }` sets the User's end to `exact`, and
+  `{ "on": false }` to `timetable`.
 
 A Friend ID is read in capitals, so one typed in small letters is found too. The refusals each have a `code`:
 
-| Refusal                                                                     | Status | `code`                        |
-| --------------------------------------------------------------------------- | ------ | ----------------------------- |
-| A Friend ID nobody holds, looked up or sent to                              | 404    | `FRIEND_ID_NOT_FOUND`         |
-| A Friend Request to the sender's own Friend ID                              | 400    | `OWN_FRIEND_ID`               |
-| A Friend Request to a Friend                                                | 409    | `ALREADY_FRIENDS`             |
-| A Friend Request to a User the sender's request already waits for           | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
-| An answer to a request that is not waiting for it from this User            | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
-| Ending a friendship, or turning its switch, with a User who is not a Friend | 404    | `FRIEND_NOT_FOUND`            |
+| Refusal                                                                    | Status | `code`                        |
+| -------------------------------------------------------------------------- | ------ | ----------------------------- |
+| A Friend ID nobody holds, looked up or sent to                             | 404    | `FRIEND_ID_NOT_FOUND`         |
+| A Friend Request to the sender's own Friend ID                             | 400    | `OWN_FRIEND_ID`               |
+| A Friend Request to a Friend                                               | 409    | `ALREADY_FRIENDS`             |
+| A Friend Request to a User the sender's request already waits for          | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
+| An answer to a request that is not waiting for it from this User           | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
+| Ending a friendship, or setting its level, with a User who is not a Friend | 404    | `FRIEND_NOT_FOUND`            |
 
 A request answered or cancelled already is not waiting, so a second answer gets `FRIEND_REQUEST_NOT_FOUND`.
 
@@ -225,8 +230,30 @@ After each change, `friends-changed` goes to both Users: when a request is sent,
 when a friendship ends. It carries nothing, and the app fetches `GET /friends` and `GET /friend-requests` again (see
 [Signals](#signals)).
 
-A friendship starts with both switches on, so accepting a Friend Request starts Location Sharing between the two. The
-table keeps each User's switch at their own end, in `user_a_sharing` and `user_b_sharing`.
+A friendship starts at `building` on both ends, so accepting a Friend Request starts Location Sharing between the two
+at the building. The table keeps each User's level at their own end, in `user_a_level` and `user_b_level`.
+
+### Asking once
+
+The app asks a User at two moments and asks each once; the server keeps when it first asked
+(`src/friends/friend-asks.service.ts`). Nothing about a question reaches the other User, and none of these routes sends
+a signal of its own.
+
+- **Before turning location off**: before a Friend's level is set to `timetable` from above it, the app asks about that
+  Friend, and before the Master Switch is turned off, about the Master Switch. Each answer, "취소" included, is recorded:
+  `POST /friends/asked` with `{ "userIds": ["..."], "moment": "off" }`, or `POST /users/me/master-switch/asked` with no
+  body. The Master Switch's "건물까지만" sends `PUT /users/me/friend-levels` with `{ "level": "building" }`, which
+  lowers every Friend above that level to it at the User's end, with the announcements a change of each level sends.
+- **After a first Plan with a Friend**: the reply of `POST /plans` gains
+  `"askLevels": [{ "userId", "name", "level" }]`, the Friends of the Plan whom the User was not asked about yet, in the
+  Plan's order, each with the User's end; none once all were asked. The app records an answer or a skip with
+  `POST /friends/asked` and `"moment": "plan"`, and sets a chosen level with `PUT /friends/:userId/level`. Accepting an
+  invitation never asks.
+
+Each answers 204, and a repeat keeps the first time. `POST /friends/asked` takes 1 to 8 User ids and is refused with
+`FRIEND_NOT_FOUND` when one is no Friend, recording nothing. Stored: `off_asked_at` and `plan_asked_at` at each end of a
+friendship (`user_a_off_asked_at`, …), and `users.master_off_asked_at`. `GET /friends` gives them as `askedOff` and
+`askedPlan`, and the lobby as `masterOffAsked`.
 
 An Administrator sets up demo accounts through `src/friends/admin-friends.controller.ts`, whose routes need an
 Administrator's access token (see [Administrators](#administrators)). Nothing else about a User is read or changed
@@ -239,7 +266,7 @@ there:
 - `GET /admin/users/:id/friends` answers the User's Friends in the order of `GET /friends`, each as
   `{ "id", "name", "email", "department", "friendId", "since" }`, `since` being when the friendship started.
 - `POST /admin/friendships` with `{ "userAId": "...", "userBId": "..." }`, in either order, makes the two Friends and
-  answers 204. The friendship is stored and announced as an accepted Friend Request's: the same row, both switches on,
+  answers 204. The friendship is stored and announced as an accepted Friend Request's: the same row, both at `building`,
   and `friends-changed` to both once it is stored. A Friend Request waiting between the two becomes the friendship and
   keeps its sender, as accepting an Invite Link does; otherwise the sender is `userAId`. A repeat is refused as already
   Friends, so it takes no `Idempotency-Key`.
@@ -320,12 +347,15 @@ numbers below are provisional until P17 has checked them on a phone.
   (`users.master_switch_on`), starts off, and signing in and signing out leave it as it is.
   `PUT /users/me/master-switch` with `{ "on": true }` or `{ "on": false }` answers 204, and the lobby returns it as
   `masterSwitch`. Turning it off clears the User's position.
-- **The switch of a friendship** is each Friend's own, on their end of the friendship, and starts on (see
+- **The level of a friendship** is each Friend's own, on their end of the friendship: `timetable` (the Timetable
+  only), `building` (the Place they are in), or `exact` (their position). It starts at `building` (see
   [Friends](#friends)).
-- **Who sees whom**: a viewer sees a subject when both Master Switches are on, the subject has a position, which is
-  kept only inside the [Campus Boundary](#campus-boundary), and a relationship between the two has its switch on at
-  both ends. A friendship is the one relationship so far. Sharing is mutual: the rule is the same both ways, and a User
-  who turns a switch off also stops seeing the other. A Friend off campus, one with sharing off and one whose position
+- **Who sees what of whom** (`src/location-sharing/friend-level.ts`): nothing while either Master Switch is off; the
+  position between members of a common Party who both have its switch on; and otherwise the lower of the two ends of
+  their friendship. The rule is the same both ways, and a User who lowers their end also sees the other no higher. A
+  viewer at `exact` sees the subject's position, which is kept only inside the [Campus Boundary](#campus-boundary). A
+  viewer at `building` sees only the Place the position is in, at the Place's own point, and nothing while it is in no
+  Place: no position of the subject ever reaches them. A Friend off campus, one at `timetable` and one whose position
   has expired look the same: no position, and `visible` false.
 - `POST /positions` with `{ "latitude": 37.4594, "longitude": 126.95199, "accuracy": 12, "measuredAt": "..." }`
   uploads a position, where `accuracy` is the radius in metres within which the phone places itself and `measuredAt`
@@ -334,9 +364,10 @@ numbers below are provisional until P17 has checked them on a phone.
   `200 { "offCampus": true }`: the app tells the User that they are not shared because they are off campus. The
   Boundary is checked in server code, without a database query. Each upload replaces the one before, so it takes no
   `Idempotency-Key`.
-- `GET /positions` answers the positions the User may see now:
-  `[{ "userId", "latitude", "longitude", "measuredAt" }]`. The app fetches it when it connects, reconnects and returns
-  to the front.
+- `GET /positions` answers what the User may see now of each subject: `{ "userId", "latitude", "longitude",
+"measuredAt", "level": "exact" }` with the position, or `{ "userId", "placeId", "latitude", "longitude",
+"measuredAt", "level": "building" }` with the Place's id and point. The app fetches it when it connects, reconnects
+  and returns to the front.
 
 An upload is refused, and nothing is stored, with these codes. The three numbers are `MAX_POSITION_AGE_MS`,
 `MAX_POSITION_LEAD_MS` and `MAX_ACCURACY_METRES` in `src/location-sharing/location-sharing.service.ts`.
@@ -349,30 +380,36 @@ An upload is refused, and nothing is stored, with these codes. The three numbers
 | An accuracy radius over 100 metres                        | 400    | `POSITION_TOO_INACCURATE` |
 
 What is stored: only each User's latest position, in Redis under `position:<userId>` as
-`{ "latitude", "longitude", "measuredAt" }`, which expires 10 minutes after it was stored. Redis counts the 10
+`{ "latitude", "longitude", "measuredAt", "placeId" }`, `placeId` being the Place it is in or null, which expires 10
+minutes after it was stored. Redis counts the 10
 minutes. No position is written to the database or to a log, and no history is kept. The position is cleared when the
 User turns the Master Switch off, uploads a position off campus, and when the User's session ends, by a sign-in on
 another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
 
 What is pushed, through the [socket server](../socket-server/README.md#signals):
 
-- Each position kept goes as `position`, with `{ "userId", "latitude", "longitude", "measuredAt" }`, to the Users who
-  may see the subject at that moment. Delivery is lossy on purpose: only the newest position matters.
-- `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see the subject before a
-  change and cannot after it: when either turns the Master Switch or the friendship's switch off, when the friendship
-  ends, when the subject leaves the Campus Boundary and when the subject's session ends.
+- Each position kept goes as `position`, in the form `GET /positions` gives, to the Users who may see the subject at
+  that moment: to a viewer at `exact` each time, and to one at `building` only when the Place differs from the one of
+  the position before. Delivery is lossy on purpose: only the newest position matters.
+- `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see something of the
+  subject before a change and nothing after it: when either turns the Master Switch off or lowers the friendship to
+  `timetable`, when the friendship ends, when the subject leaves the Campus Boundary, or every Place for a viewer at
+  `building`, and when the subject's session ends.
+- A viewer who sees only the subject's Place after a change and saw the position, or nothing, before it gets
+  `position` with the Place at once: when the friendship is lowered from `exact` to `building`, or raised from
+  `timetable`, and when a common Party ends for Friends at `building`. One raised to `exact` gets the next upload.
 
 `VisibilityService` in `src/location-sharing/visibility.service.ts`, exported by `LocationSharingModule`, is the one
-place that decides who sees whom:
+place that decides who sees what of whom:
 
-- `viewersOf(subjectId)`: who may see the subject now.
-- `visibleTo(viewerId)`: whom the viewer may see now.
-- `announceRemovals(userId, change)`: runs `change`, a change that may end what the User sees or who sees the User,
-  and sends `position-removed` to each viewer who saw a subject before and does not after. It compares who sees whom
-  among the pairs that include the User, before and after the change. Pass the User whose switch, relationship or
-  position the change touches: every sight it can end includes that User, so a new cause, such as leaving a Party,
-  only wraps its change in it. A change that touches several Users at once, as the end of a Party does, passes them
-  all as a list, and each sight is announced once.
+- `viewersOf(subjectId)`: who may see the subject now, each with their level.
+- `visibleTo(viewerId)`: what the viewer may see now of each subject, as `GET /positions` gives it.
+- `announceRemovals(userId, change)`: runs `change`, a change that may alter what the User sees or what others see
+  of the User, and tells each viewer whose sight of a subject it altered, as above. It compares who sees what of whom
+  among the pairs that include the User, before and after the change. Pass the User whose switch, level, relationship
+  or position the change touches: every sight it can alter includes that User, so a new cause, such as leaving a
+  Party, only wraps its change in it. A change that touches several Users at once, as the end of a Party does, passes
+  them all as a list, and each sight is announced once.
 
 ## Administrators
 
@@ -2207,8 +2244,11 @@ its model through OpenRouter with the Vercel AI SDK
   other than the asker, or the one tapped. An app that sends `"clientCapabilities": ["answer"]` draws an answer on the
   map. The reply always carries `answer`, `null` when there is none: the plans of a meal, each with its place, times,
   each person's part (`parts`), the Sub Quests of the Quest it becomes (`subQuests`), map scene, and time band; the
-  condition chips; the dropped places; and the `input` to send back changed to recalculate. The full shape of both is in
-  `src/assistant/dto/answer.dto.ts`.
+  condition chips; the dropped places; and the `input` to send back changed to recalculate. It also always carries
+  `lookup`, `null` when there is none: an answer drawn on the map that has no Plan (`kind` `way`), with its condition
+  chips, at most two lines, basis, map scene, time band or `null`, and the card's actions (`guide`, `remind`, `meet`).
+  A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer. The full shape of each is
+  in `src/assistant/dto/answer.dto.ts`.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -2287,7 +2327,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 - **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
   OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
-- **Tools** (`tools/`, `free-time/` for the 공강 tools, and `gathering/` for `planMeal`): each is a zod schema of its
+- **Tools** (`tools/`, `free-time/` for the 공강 tools, `gathering/` for `planMeal`, and `lookup/` for `findWay`): each is a zod schema of its
   input and a plain function calling this server's services, made with `defineTool` (`feature.ts`). It is given the
   signed-in User's id, the time of the request, and the request context. A tool answers only
   what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
@@ -2403,6 +2443,22 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
       person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
       or rooms.
+    - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
+      to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
+      the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
+      nearest within 150 m; else the Place of their last item today that has ended. The way's deadline is `by`
+      (`HH:MM`), else the next item's start when the way goes to its Place. `WayService` reads the User's day, and the
+      tool puts the Lookup in the reply's `lookup`: the minutes, when to set out, how late the User is if they set out
+      now, and a leave-by notification while that time is ahead and the walk takes 5 minutes or more. It answers the
+      model `found` with Place names, minutes, and clock times, or `none` with the reason.
+    - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
+      It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
+      `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps
+      those that fit, the longer stay first, then those that clash with an item, and drops those the asker cannot
+      reach in time or stay at for 30 minutes. `eventIds` are accepted only when `searchGlobalEvents` returned them in
+      the message. It answers the model `planned` with each plan's title, place, arrival, stay, leave-by, and clash in
+      words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` refuses any but a
+      meal's with 400 `PLAN_KIND`.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
@@ -3123,11 +3179,14 @@ and do not await it: it never throws, and a User with no usable token is skipped
 
 Pushed today:
 
-| When                      | To          | Title                           | Body              | Address                      |
-| ------------------------- | ----------- | ------------------------------- | ----------------- | ---------------------------- |
-| A Leader invites a Friend | The invitee | `<Leader's name>님의 파티 초대` | The Quest's title | `/main?card=invitation:<id>` |
+| When                      | To          | Title                           | Body                              | Address                      |
+| ------------------------- | ----------- | ------------------------------- | --------------------------------- | ---------------------------- |
+| A Leader invites a Friend | The invitee | `<Leader's name>님의 파티 초대` | The Quest's title                 | `/main?card=invitation:<id>` |
+| The time to leave comes   | The User    | `지금 나서요`                   | `<Place>까지 걸어서 <N>분이에요.` | `/main?card=party:<questId>` |
 
-Accepting, declining or cancelling an invitation, Friend Requests, requests to join and Parties push nothing.
+The time to leave is a [Notification](#notifications) that rings a phone, sent by the Notifications' sender with the
+words of its kind. Accepting, declining or cancelling an invitation, Friend Requests, requests to join and Parties push
+nothing.
 
 Expo's answer holds a ticket for each message, in message order. A `DeviceNotRegistered` ticket deletes its row and
 logs an info line; the row goes only while it still holds the token that was sent. Any other ticket error, an answer
@@ -3180,24 +3239,30 @@ a User has at most one Notification of a kind about a card, and two Friends who 
 words and gives it its address. A feature imports `NotificationsModule` and calls:
 
 - `schedule(userId, told, at)` keeps the Notification for the time `at`, overwriting one kept under the same identity.
+  One that was sent is sent again at `at`.
 - `replace(userId, told, at)` does the same only when one is kept under that identity, and answers whether it did, so
-  that a change arriving after a cancel keeps nothing.
+  that a change arriving after a cancel keeps nothing. One that was sent is sent again only when `at` changes.
 - `cancel(userId, kind, card, about?)` forgets it; `about` is the person of a kind kept for each one.
 
 `told` holds the facts of a kind, never text. The caller gives the time, and the service reads no clock. After each
-call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing sends
-none. `schedule` and `replace` refuse, by throwing, a card no address opens. The calls throw when Redis fails too, so
-a caller that must not fail catches and logs.
+call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing, or a
+`cancel` that forgot nothing, sends none. `schedule` and `replace` refuse, by throwing, a card no address opens. The
+calls throw when the database fails too, so a caller that must not fail catches and logs.
 
-| Kind            | Told to                               | When                                                                      | Title                 | Ahead                          | Line                                                                                | Card              |
-| --------------- | ------------------------------------- | ------------------------------------------------------------------------- | --------------------- | ------------------------------ | ----------------------------------------------------------------------------------- | ----------------- |
-| `accepted`      | The Leader                            | An invited User accepts                                                   | `<name>가 수락했어요` | None                           | The Quest's title                                                                   | `party:<questId>` |
-| `declined`      | The Leader                            | An invited User declines                                                  | `<name>이 못 온대요`  | None                           | The Quest's title                                                                   | `party:<questId>` |
-| `leave-by`      | The Leader                            | A Plan becomes a party                                                    | `지금 나서요`         | `<HH:MM> 나설 시각`            | `<Place>까지 걸어서 <N>분`                                                          | `party:<questId>` |
-| `room-declined` | A room request's requester            | A companion goes out and the request stays                                | `<name>이 못 온대요`  | None                           | `<room> · N명 더 필요해요`, or `<room> · 계획은 그대로예요` when the minimum is met | `party:<questId>` |
-| `room-agreed`   | A room request's requester            | The request becomes `ready`                                               | `모두 동의했어요`     | None                           | `<요일> <start>–<end> <room>`, such as `목 15:30–18:30 관정 4층 6인실`              | `party:<questId>` |
-| `room-ending`   | Every Holder of a booked room's Quest | 10 minutes before the room's end                                          | `10분 뒤 끝나요`      | `<end> 방 예약 끝`             | `<room> · <end>에 끝나요`                                                           | `party:<questId>` |
-| `room-window`   | A room request's requester            | 09:00 on the day the booking window opens for a request that waits for it | `예약 창이 열렸어요`  | `<M월 D일> 09:00 예약 창 열림` | `<요일> <start>–<end> 스터디`, such as `월 09:00–12:00 스터디`                      | `party:<questId>` |
+| Kind            | Told to                                       | When                                                                      | Title                 | Ahead                          | Line                                                                                | Card              | Rings |
+| --------------- | --------------------------------------------- | ------------------------------------------------------------------------- | --------------------- | ------------------------------ | ----------------------------------------------------------------------------------- | ----------------- | ----- |
+| `accepted`      | The Leader                                    | An invited User accepts                                                   | `<name>가 수락했어요` | None                           | The Quest's title                                                                   | `party:<questId>` | No    |
+| `declined`      | The Leader                                    | An invited User declines                                                  | `<name>이 못 온대요`  | None                           | The Quest's title                                                                   | `party:<questId>` | No    |
+| `leave-by`      | The Leader, and each invited User who accepts | A Plan becomes a party, or the User accepts                               | `지금 나서요`         | `<HH:MM> 나설 시각`            | `<Place>까지 걸어서 <N>분`                                                          | `party:<questId>` | Yes   |
+| `room-declined` | A room request's requester                    | A companion goes out and the request stays                                | `<name>이 못 온대요`  | None                           | `<room> · N명 더 필요해요`, or `<room> · 계획은 그대로예요` when the minimum is met | `party:<questId>` | Yes   |
+| `room-agreed`   | A room request's requester                    | The request becomes `ready`                                               | `모두 동의했어요`     | None                           | `<요일> <start>–<end> <room>`, such as `목 15:30–18:30 관정 4층 6인실`              | `party:<questId>` | Yes   |
+| `room-ending`   | Every Holder of a booked room's Quest         | 10 minutes before the room's end                                          | `10분 뒤 끝나요`      | `<end> 방 예약 끝`             | `<room> · <end>에 끝나요`                                                           | `party:<questId>` | Yes   |
+| `room-window`   | A room request's requester                    | 09:00 on the day the booking window opens for a request that waits for it | `예약 창이 열렸어요`  | `<M월 D일> 09:00 예약 창 열림` | `<요일> <start>–<end> 스터디`, such as `월 09:00–12:00 스터디`                      | `party:<questId>` | Yes   |
+
+A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
+`leave-by`, `<Place>까지 걸어서 <N>분이에요.`; for a room request's kinds, the line as a sentence ("모두 동의했어요" adds
+"이제 예약할 수 있어요.", and `room-window` reads `<요일> <start>–<end> 스터디를 이제 예약할 수 있어요.`). A kind that
+does not ring has no body.
 
 The name is the User's name as stored, with the subject particle that fits its last syllable (이 or 가). An invitation
 the Leader cancels tells nobody. `InvitationsService` tells the Leader after the invitation's change is stored and
@@ -3207,14 +3272,57 @@ warning and the answer stays as it is.
 `leave-by` is kept when `POST /plans` makes a party: `PlansService` schedules the Leader's for the time the Leader's
 part of the Plan sets out, with the Plan's Place and the Leader's own walking minutes, after the transaction and its
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
-Place is unknown or the walk is 0 minutes. A User has one for a party. When the Leader ends the Quest, `LeaderService`
-cancels the `leave-by` of every Holder it had, in the same way.
+Place is unknown or the walk is 0 minutes.
 
-A User's Notifications are kept in Redis, in one hash `notifications:<userId>` with the identity as the field,
-`<kind>:<card kind>:<card id>` followed by `:<user id>` of the person it is about when the kind has one, and the
-Notification as JSON. A User keeps at most 100: one more drops the one with the earliest time. Each Notification kept sets the hash to expire 7 days later, by Redis's own expiry. No
-table holds them. A stored Notification this version cannot read, such as one of a kind a later version kept, is left
-out of the list.
+An invited User's `leave-by` is kept when they accept an invitation into a Quest whose steps give a gathering, as a
+party's do. `InvitationsService` tells the listeners given to its `onAccepted()` once the acceptance is stored and
+signalled, so that the Quests' module need not import the Plans' module. `InviteeTimeToLeave` from
+`src/plans/invitee-time-to-leave.service.ts` is one: it works out the User's own way as the invitation's card does, from
+their Timetable alone since the accept carries no position, and leaves the Quest's own steps out of their day. It
+schedules the `leave-by` for the time that way sets out, with the Restaurant of a Plan's meal step (its title reads
+"<Restaurant>에서 식사") or else the gathering's Place as `placeLabel()` names it, and the walking minutes of the whole
+way, without the answer waiting for it; a failure is logged as a warning. None is kept when the way has no time to set
+out or the walk is 0 minutes.
+
+A User has one `leave-by` for a party. It is cancelled when the User leaves the Quest, by dropping it or by the Leader's
+removal, and when the Leader ends the Quest, for every Holder it had. No answer waits for a cancel, and a failure is
+logged as a warning.
+
+The table `notifications` holds them, one row a Notification, deleted with its User:
+
+| Column       | Holds                                                        |
+| ------------ | ------------------------------------------------------------ |
+| `id`         | The row's id                                                 |
+| `user_id`    | The User it is told to                                       |
+| `kind`       | Its kind                                                     |
+| `card_kind`  | The kind of the card it opens                                |
+| `card_id`    | The id of that card                                          |
+| `about`      | The person it is about, or empty when the kind has none      |
+| `at`         | The time it is for                                           |
+| `title`      | The title once its time has come                             |
+| `ahead`      | The title while its time is still to come, or null           |
+| `line`       | The line under the title                                     |
+| `body`       | The push's body, or null for a kind that does not ring       |
+| `rings`      | Whether it is pushed to the User's phone when its time comes |
+| `sent_at`    | When the sender took it to push, or null                     |
+| `created_at` | When the row was first stored                                |
+
+`user_id`, `kind`, `card_kind`, `card_id` and `about` are unique together: that is the identity. A row of a kind this
+version does not know, such as one a later version kept, is left out of the list.
+
+**The sender.** `NotificationSender.sendDue()` from `src/notifications/notification-sender.ts` is one step. By the
+Quests' `CLOCK`, in one statement it marks as sent at most 100 rows that ring, are not sent and whose time has come,
+the earliest first, skipping rows another transaction holds, so that every pod of the main server can run it. Then,
+outside the transaction, it sends each through `PushService.send` with its title, body and address, and the signal
+`notice` to its User. A Notification is sent at most once: it is marked before it is pushed, so a pod that stops in
+between sends nothing, and it stays in the list. The step also deletes the rows whose time is more than 30 days ago.
+It never throws: a failure is logged as a warning and the next step runs. It answers how many it sent.
+
+**The interval.** `NotificationSenderModule` runs the step every `NOTIFICATIONS_TICK_SECONDS` seconds, a whole number
+from 0 to 3600, 15 by default; an empty value is refused at start-up. 0 runs no step; the tests' settings give 0, and a
+test moves the clock with `vi.spyOn(app.get(CLOCK), 'now')` and calls `sendDue()` itself. A step claims and deletes
+the rows of every User, so the sender's tests keep their Notifications in a year before every other test file's. The
+timer does not keep the process alive and stops at shutdown.
 
 `GET /notifications` answers the signed-in User's Notifications, the latest time first, and 401 without a sign-in. One
 whose time is still to come is in the answer:
@@ -3237,13 +3345,12 @@ whose time is still to come is in the answer:
 `/main?card=<kind>:<id>`. `cardAddress()` from `src/notifications/card-address.ts` makes it and refuses a card kind
 outside lowercase letters and `-`, or an id outside letters, digits, `-`, `.` and `,`. `ahead` is the title while `at`
 is still to come, with `at` in Korea in it, and null for a kind that has none: the service reads no clock, and the
-phone shows `ahead` while `at` is after its own now. A Notification kept without `ahead` answers null.
+phone shows `ahead` while `at` is after its own now.
 
-Nothing is pushed from this service: a Notification stays in the list only.
-
-**A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its title ahead, its card
-and whom it is about to `wordsOf()` in `src/notifications/notification-words.ts`, its kind to the stored schema in
-`src/notifications/notification-store.ts`, and its caller in the feature it belongs to.
+**A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its title ahead, its card,
+whom it is about, whether it rings and its push's body to `wordsOf()` in `src/notifications/notification-words.ts`,
+its kind to the kinds the list reads in `src/notifications/notifications.service.ts`, and its caller in the feature it
+belongs to.
 
 ## Requests from the worker server
 

@@ -108,7 +108,7 @@ export class RoomRequestsService {
           useDesc,
           // By the Quests' clock, from which the answers' deadline is counted.
           createdAt: now,
-          consents: { create: companionIds.map((companion) => ({ userId: companion })) },
+          consents: { create: companionIds.map((companion) => ({ userId: companion, askedAt: now })) },
         },
       });
       return request;
@@ -233,10 +233,11 @@ export class RoomRequestsService {
     if (refusal !== null) {
       throw refusedWith([refusal]);
     }
-    const asked = { consented: null, answeredAt: null };
+    // Asked now: their answer's deadline is counted from it, so a Friend asked late is not out at once.
+    const asked = { consented: null, answeredAt: null, askedAt: this.clock.now() };
     await tx.roomConsent.upsert({
       where: { requestId_userId: { requestId: held.id, userId: friendId } },
-      create: { requestId: held.id, userId: friendId },
+      create: { requestId: held.id, userId: friendId, askedAt: asked.askedAt },
       update: asked,
     });
     await tx.quest.updateMany({ where: { id: held.questId, capacity: { lt: people } }, data: { capacity: people } });

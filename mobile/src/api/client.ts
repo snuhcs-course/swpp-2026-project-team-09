@@ -14,21 +14,26 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
-import type { InvitationCard } from './invitation-card-types';
+import type { InvitationCard, OwnWay } from './invitation-card-types';
 import { mockClient } from './mock/client';
+import { tellAskLevels } from './plan-asks';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
+import type { WatchedInterest } from './interest-types';
 import type { MatchingRequest } from './matching-types';
 import type {
+  AskedMoment,
   Board,
   ClassSave,
   Footprints,
   Friend,
+  FriendLevel,
   FriendStatus,
   GlobalEvent,
   InviteLink,
@@ -73,9 +78,16 @@ export interface ApiClient {
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
   listFriends: () => Promise<Friend[]>;
-  // Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
-  setFriendSharing: (userId: string, on: boolean) => Promise<void>;
+  // The User's own end of the friendship. Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
+  setFriendLevel: (userId: string, level: FriendLevel) => Promise<void>;
   endFriendship: (userId: string) => Promise<void>;
+  // That the app asked the User about these Friends at that moment, whatever the answer. Refused with 404
+  // FRIEND_NOT_FOUND when one is no Friend.
+  recordFriendsAsked: (userIds: string[], moment: AskedMoment) => Promise<void>;
+  // That the app asked the User before they turned the Master Switch off.
+  recordMasterOffAsked: () => Promise<void>;
+  // Lowers every Friend above the level to it, at the User's own end.
+  lowerFriendLevels: (level: FriendLevel) => Promise<void>;
   // Refused with 404 FRIEND_ID_NOT_FOUND.
   findFriendId: (friendId: string) => Promise<UserSummary>;
   // Also refused with 400 OWN_FRIEND_ID, 409 ALREADY_FRIENDS and 409 FRIEND_REQUEST_ALREADY_SENT.
@@ -181,6 +193,8 @@ export interface ApiClient {
   declineInvitation: (invitationId: string) => Promise<void>;
   // A received invitation with the User's own way to it, worked out from where the User is now when the app knows.
   getInvitationCard: (invitationId: string, location: LatLng | null) => Promise<InvitationCard>;
+  // A Holder reports being late by a whole number of minutes from 1 to 120, and gets their own way as it now is.
+  reportLate: (questId: string, minutes: number, location: LatLng | null) => Promise<OwnWay>;
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked when it gives that.
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
@@ -203,6 +217,13 @@ export interface ApiClient {
   hideTutorialRow: () => Promise<Tutorial>;
   startTutorialQuest: (key: string) => Promise<Tutorial>;
   completeTutorialQuest: (key: string, by: TutorialCompletedBy) => Promise<Tutorial>;
+  // The User's watched interests, the newest first. Null from a main server that does not keep them yet.
+  listInterests: () => Promise<WatchedInterest[] | null>;
+  // Keeps the words, 1 to 60 characters once trimmed, or answers the interest of the same words the User has. Refused
+  // with 400 for other words and with 409 INTERESTS_FULL for a 21st.
+  watchInterest: (words: string) => Promise<WatchedInterest>;
+  // Refused with 404 INTEREST_NOT_FOUND.
+  removeInterest: (interestId: string) => Promise<void>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -222,8 +243,11 @@ export const apiClient: ShownClient = {
   registerPushToken: (token) => chosen().registerPushToken(token),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
-  setFriendSharing: (userId, on) => chosen().setFriendSharing(userId, on),
+  setFriendLevel: (userId, level) => chosen().setFriendLevel(userId, level),
   endFriendship: (userId) => chosen().endFriendship(userId),
+  recordFriendsAsked: (userIds, moment) => chosen().recordFriendsAsked(userIds, moment),
+  recordMasterOffAsked: () => chosen().recordMasterOffAsked(),
+  lowerFriendLevels: (level) => chosen().lowerFriendLevels(level),
   findFriendId: (friendId) => chosen().findFriendId(friendId),
   sendFriendRequest: (friendId) => chosen().sendFriendRequest(friendId),
   listFriendRequests: () => chosen().listFriendRequests(),
@@ -304,14 +328,23 @@ export const apiClient: ShownClient = {
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
-  makePlanQuest: (making, key) => chosen().makePlanQuest(making, key),
+  // Whatever screen made the Quest, the question about the Friends the reply names is asked by its own host.
+  makePlanQuest: async (making, key) => {
+    const made = await chosen().makePlanQuest(making, key);
+    tellAskLevels(made.askLevels);
+    return made;
+  },
   getBetterPlan: (questId, location) => chosen().getBetterPlan(questId, location),
   changePlanQuest: (questId, making) => chosen().changePlanQuest(questId, making),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
+  reportLate: (questId, minutes, location) => chosen().reportLate(questId, minutes, location),
   getTutorial: () => chosen().getTutorial(),
   enableTutorial: () => chosen().enableTutorial(),
   stopTutorial: () => chosen().stopTutorial(),
   hideTutorialRow: () => chosen().hideTutorialRow(),
   startTutorialQuest: (key) => chosen().startTutorialQuest(key),
   completeTutorialQuest: (key, by) => chosen().completeTutorialQuest(key, by),
+  listInterests: () => chosen().listInterests(),
+  watchInterest: (words) => chosen().watchInterest(words),
+  removeInterest: (interestId) => chosen().removeInterest(interestId),
 };
