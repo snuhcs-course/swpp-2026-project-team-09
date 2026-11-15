@@ -29,7 +29,8 @@ import { LevelTrack } from '../friends/level-track';
 import { OffQuestion } from '../friends/off-question';
 import { type Levels, useLevels } from '../friends/use-levels';
 import { LocationExplanation } from '../main/location-explanation';
-import { MasterOffLine } from './master-off-line';
+import { useMasterSwitch } from '@/features/sharing/use-master-switch';
+import { MasterOffLine } from '../master-off-line';
 import { useSharingSwitch } from './use-sharing-switch';
 
 const SEEN_WORDS: Readonly<Record<FriendLevel, string>> = {
@@ -53,11 +54,11 @@ interface FriendRowProps {
   friend: Friend;
   level: FriendLevel;
   seen: FriendLevel;
-  masterOn: boolean;
+  masterOff: boolean;
   onChoose: (level: FriendLevel) => void;
 }
 
-function FriendRow({ friend, level, seen, masterOn, onChoose }: FriendRowProps): ReactElement {
+function FriendRow({ friend, level, seen, masterOff, onChoose }: FriendRowProps): ReactElement {
   const line = SEEN_WORDS[seen];
   return (
     <View style={styles.friend}>
@@ -72,7 +73,7 @@ function FriendRow({ friend, level, seen, masterOn, onChoose }: FriendRowProps):
           </Text>
         </View>
       </View>
-      <LevelTrack disabled={!masterOn} label={`${friend.name}님에게 보일 위치`} level={level} onChoose={onChoose} />
+      <LevelTrack label={`${friend.name}님에게 보일 위치`} level={level} masterOff={masterOff} onChoose={onChoose} />
     </View>
   );
 }
@@ -85,6 +86,7 @@ interface PerFriendProps {
 // "친구마다": what the two see of each other, and the User's own end as three cells, shown off and disabled under one
 // line while the Master Switch is off.
 function PerFriend({ levels, masterOn }: PerFriendProps): ReactElement {
+  const masterOff = useMasterSwitch().off;
   const { data, isPending, refetch } = useQuery(friendsQuery);
   return (
     <View style={[cardStyles.card, styles.card]}>
@@ -106,7 +108,7 @@ function PerFriend({ levels, masterOn }: PerFriendProps): ReactElement {
             friend={friend}
             key={friend.id}
             level={level}
-            masterOn={masterOn}
+            masterOff={masterOff}
             onChoose={(chosen) => {
               levels.choose(friend, chosen);
             }}

@@ -25,18 +25,18 @@ interface LevelTrackProps {
   level: FriendLevel | null;
   onChoose: (level: FriendLevel) => void;
   // While the Master Switch is off: 시간표만 shown chosen, the off look, and no press. `level` is kept for later.
-  disabled?: boolean;
+  masterOff?: boolean;
 }
 
 // The three levels as cells of one width in a track, whatever the length of their words.
-export function LevelTrack({ label, level, onChoose, disabled = false }: LevelTrackProps): ReactElement {
-  const shown = disabled ? 'timetable' : level;
+export function LevelTrack({ label, level, onChoose, masterOff = false }: LevelTrackProps): ReactElement {
+  const shown = masterOff ? 'timetable' : level;
   return (
     <View
       accessibilityLabel={label}
       accessibilityRole="radiogroup"
-      accessibilityState={{ disabled }}
-      style={[styles.track, disabled && styles.trackOff]}
+      accessibilityState={{ disabled: masterOff }}
+      style={[styles.track, masterOff && styles.trackOff]}
     >
       {LEVELS.map(({ level: each, words }) => {
         const chosen = each === shown;
@@ -44,9 +44,9 @@ export function LevelTrack({ label, level, onChoose, disabled = false }: LevelTr
           <Pressable
             accessibilityLabel={words}
             accessibilityRole="radio"
-            accessibilityState={{ checked: chosen, disabled }}
+            accessibilityState={{ checked: chosen, disabled: masterOff }}
             aria-checked={chosen}
-            disabled={disabled}
+            disabled={masterOff}
             key={each}
             onPress={() => {
               onChoose(each);

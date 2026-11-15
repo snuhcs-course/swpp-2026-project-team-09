@@ -15,7 +15,7 @@ import { useMasterSwitch } from '@/features/sharing/use-master-switch';
 import type { OtherParty, RoomView } from '@/features/quests/room-adapter';
 import { opensParty } from '@/features/quests/rules';
 import { myUserId } from '@/auth/sign-in';
-import { MasterOffLine } from '../me/master-off-line';
+import { MasterOffLine } from '../master-off-line';
 import type { Ask } from './confirm-sheet';
 import type { RoomActions } from './use-room-actions';
 
@@ -200,7 +200,7 @@ function useShown(props: ActivationBoxProps): Shown {
 export function ActivationBox(props: ActivationBoxProps): ReactElement {
   const { room, actions } = props;
   const { title, sub, buttons } = useShown(props);
-  const masterOn = useMasterSwitch().on;
+  const masterOff = useMasterSwitch().off;
   const tone = TONES[room.activation.state];
   return (
     <View
@@ -221,10 +221,10 @@ export function ActivationBox(props: ActivationBoxProps): ReactElement {
           <MasterOffLine />
           {/* Off and disabled while the Master Switch is off; the stored value comes back with it. */}
           <SwitchRow
-            disabled={!masterOn}
+            disabled={masterOff}
             label="내 위치 공유"
             onValueChange={(on) => void actions.setSharing(on)}
-            value={masterOn && room.activation.switchOn}
+            value={!masterOff && room.activation.switchOn}
           />
         </View>
       ) : null}

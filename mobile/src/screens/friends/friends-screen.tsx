@@ -32,7 +32,7 @@ import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { useFriendRequests } from '@/features/friends/use-friend-requests';
 import { useFriends } from '@/features/friends/use-friends';
 import { useMasterSwitch } from '@/features/sharing/use-master-switch';
-import { MasterOffLine } from '../me/master-off-line';
+import { MasterOffLine } from '../master-off-line';
 import { EndFriendship } from './end-friendship';
 import { LevelTrack } from './level-track';
 import { OffQuestion } from './off-question';
@@ -78,14 +78,14 @@ function Entries({ received }: { received: number | undefined }): ReactElement {
 interface FriendRowProps {
   friend: FriendView;
   level: FriendLevel;
-  masterOn: boolean;
+  masterOff: boolean;
   onChoose: (level: FriendLevel) => void;
   onPress: () => void;
 }
 
 // A Friend, with the three levels the User may let them see under the name, off and disabled while the Master Switch
 // is off.
-function FriendRow({ friend, level, masterOn, onChoose, onPress }: FriendRowProps): ReactElement {
+function FriendRow({ friend, level, masterOff, onChoose, onPress }: FriendRowProps): ReactElement {
   return (
     <View style={styles.friend}>
       <Pressable
@@ -104,7 +104,7 @@ function FriendRow({ friend, level, masterOn, onChoose, onPress }: FriendRowProp
           </Text>
         </View>
       </Pressable>
-      <LevelTrack disabled={!masterOn} label={`${friend.name}님에게 보일 위치`} level={level} onChoose={onChoose} />
+      <LevelTrack label={`${friend.name}님에게 보일 위치`} level={level} masterOff={masterOff} onChoose={onChoose} />
     </View>
   );
 }
@@ -118,7 +118,7 @@ interface ListProps {
 // The list, and the question before a Friend's location is turned off the first time.
 function Friends({ friends, query, onPress }: ListProps): ReactElement {
   const { levelOf, choose, asked, answer } = useLevels();
-  const masterOn = useMasterSwitch().on;
+  const masterOff = useMasterSwitch().off;
   const shown = friends.filter((friend) => found(friend, query));
   return (
     <>
@@ -135,7 +135,7 @@ function Friends({ friends, query, onPress }: ListProps): ReactElement {
             onPress(friend);
           }}
           level={levelOf(friend)}
-          masterOn={masterOn}
+          masterOff={masterOff}
           onChoose={(level) => {
             choose(friend, level);
           }}

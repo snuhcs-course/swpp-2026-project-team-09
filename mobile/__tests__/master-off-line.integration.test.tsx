@@ -99,7 +99,7 @@ describe.each([
     await user.press(levels(MIN_SU.name).getByRole('radio', { name: '지금 있는 건물' }));
     expect(server.received(LEVEL_ROUTE)).toHaveLength(0);
 
-    await user.press(screen.getByRole('button', { name: '켜기' }));
+    await user.press(screen.getByRole('button', { name: '전체 위치 공유 켜기' }));
     await pass(500);
 
     expect(server.received(SWITCH_ROUTE).map(({ body }) => body)).toEqual([{ on: true }]);
@@ -126,7 +126,7 @@ describe("The room's 내 위치 공유 while the Master Switch is off", () => {
     expect(sharing()).not.toBeChecked();
     expect(sharing()).toBeDisabled();
 
-    await user.press(activationBox().getByRole('button', { name: '켜기' }));
+    await user.press(activationBox().getByRole('button', { name: '전체 위치 공유 켜기' }));
     await pass(500);
 
     expect(activationBox().queryByText(OFF_LINE)).toBeNull();
