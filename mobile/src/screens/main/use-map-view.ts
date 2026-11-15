@@ -13,6 +13,7 @@ import type { Room } from './layout';
 import { type AnswerMap, ignorePress, useAnswerMap, useEverydayLimits, useInvitationMap } from './use-answer-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
+import type { MadeQuestCard } from './use-made-quest-card';
 import type { Me } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
 import type { Selection } from './use-selection';
@@ -46,20 +47,28 @@ export interface Everyday {
   selection: Selection;
 }
 
+// The cards nobody asked for: a received invitation's, and a made Quest's card after inviting.
+export interface UnaskedCards {
+  invitation: ReceivedInvitation;
+  made: MadeQuestCard;
+}
+
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, and the lines. While a Plan of an answer is
 // shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received invitation's
-// card is, its own way is. Once either closes, a camera left further out than the everyday map allows glides back in.
+// card is, its own way is; while a made Quest's card is, its Places and the User are. Once any of them closes, a
+// camera left further out than the everyday map allows glides back in.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
   room: Room,
   { me, pin, lines, cards, selection }: Everyday,
-  invitation: ReceivedInvitation,
+  { invitation, made }: UnaskedCards,
 ): AnswerMap {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
-  const way = useInvitationMap(invitation.shown ? invitation.scene : null, map, room);
+  const unasked = invitation.shown || made.shown !== null;
+  const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
   const limits = useEverydayLimits(map, answer !== null || way !== null);
   if (answer !== null) {
     return answer;
@@ -67,10 +76,10 @@ export function useMapView(
   if (way !== null) {
     return way;
   }
-  const avatars = invitation.shown ? withoutPeople(things.avatars, cards) : things.avatars;
+  const avatars = unasked ? withoutPeople(things.avatars, cards) : things.avatars;
   return {
     contents: { markers: [...things.markers, ...pin.markers], avatars: [...avatars, ...me.avatars], lines },
-    onPress: chat.framed || invitation.shown ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
+    onPress: chat.framed || unasked ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
     ...limits,
   };
 }

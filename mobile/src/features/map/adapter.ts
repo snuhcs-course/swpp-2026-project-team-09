@@ -67,7 +67,8 @@ export interface CardView {
   // on. `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a
   // building of the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view.
   // `invitation` is an invitation the User received, while the switch of the answer on the map is on: it has no
-  // marker, and its card is the invitee's own way.
+  // marker, and its card is the invitee's own way. `made-quest` is the flag of a Quest made from a Plan while the
+  // switch is on, whose marker's name is the flag's words and whose card is the one after inviting.
   kind:
     | 'global-event'
     | 'place-group'
@@ -80,7 +81,8 @@ export interface CardView {
     | 'shuttle-vehicle'
     | 'study'
     | 'study-cluster'
-    | 'invitation';
+    | 'invitation'
+    | 'made-quest';
   mark: CardMark;
   marker: CardMarker;
   // "공식 행사 · 컴퓨터공학부 공지"
@@ -105,8 +107,10 @@ export interface CardView {
   // Avatar glides as the positions come.
   glideMs?: number;
   // For a thing at a place with others: the id of the place's card, whose marker stands for the thing. The thing has
-  // no marker of its own, and its card opens from the place's.
+  // no marker of its own, and its card opens from the place's. For a Quest made from a Plan: the id of its flag.
   within?: string;
+  // For the flag of a Quest made from a Plan: its two lines, the start and the step over the day and the count.
+  flag?: { title: string; line: string };
   // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
   // such as its time.
   choices?: { id: string; kind: PlaceKind; title: string; detail: string }[];
@@ -150,6 +154,7 @@ export const cardId = {
   shuttleVehicle: (carId: string): string => `shuttle-vehicle:${carId}`,
   study: (placeId: string): string => `study:${placeId}`,
   invitation: (invitationId: string): string => `${INVITATION_CARD}${invitationId}`,
+  madeQuest: (questId: string): string => `made-quest:${questId}`,
 } as const;
 
 // The Friend's user id of a card's id, which a marker or an Avatar on the map carries, or null for anything else.
