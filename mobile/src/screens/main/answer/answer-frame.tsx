@@ -13,7 +13,7 @@ import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
-import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { lastReply, type ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
@@ -21,12 +21,14 @@ import type { CardActions } from '../chat-cards';
 import { ChatMarkdown } from '../chat-markdown';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
+import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { ANSWER_PILL, listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
 import { CloseButton } from './close-button';
 import { InvitedCard } from './invited-card';
 import { LookupCard } from './lookup-card';
 import { PlanCard } from './plan-card';
+import { RefusalReply } from './refusal-reply';
 
 // Above the first of the card's parts.
 const CONTENT_TOP = space[5];
@@ -55,12 +57,14 @@ interface WordsProps {
   // How high the Plan's card may stand before the card scrolls, null until it is known.
   room: number | null;
   onClose: () => void;
+  onAsk: (words: string) => void;
 }
 
 // A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
-// made into one, the card of the Lookup on screen for its reply, else the lines of its answer's first Plan, those that
-// say why it has none, or its Lookup's, in place of the model's sentence; otherwise the sentence as Markdown.
-function Words({ bubble, shown, lookup: onScreen, invitation, room, onClose }: WordsProps): ReactElement {
+// made into one, the card of the Lookup on screen for its reply, else a refusal's lines and offers, or the lines of its
+// answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence; otherwise the
+// sentence as Markdown.
+function Words({ bubble, shown, lookup: onScreen, invitation, room, onClose, onAsk }: WordsProps): ReactElement {
   const { answer, lookup = null } = bubble;
   if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
     const { made, standings } = invitation;
@@ -78,6 +82,9 @@ function Words({ bubble, shown, lookup: onScreen, invitation, room, onClose }: W
   }
   if (lookup !== null && lookup === onScreen.lookup) {
     return <LookupCard lookup={lookup} onClose={onClose} shown={onScreen} />;
+  }
+  if (bubble.refusal !== undefined && bubble.refusal !== null) {
+    return <RefusalReply onAsk={onAsk} refusal={bubble.refusal} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? lookup?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
@@ -159,6 +166,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                     bubble={bubble}
                     invitation={control.invitation}
                     lookup={control.lookup}
+                    onAsk={control.chat.send}
                     onClose={onClose}
                     room={contentMax === null ? null : contentMax - CONTENT_TOP}
                     shown={control.answer}
@@ -184,7 +192,9 @@ interface FramedProps {
 }
 
 // The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
-// ✕ and Android's back button forget the conversation, a reply on its way included.
+// ✕ and Android's back button forget the conversation, a reply on its way included. A Friend's profile opened from
+// the card stands over it until a new reply; while it is shown, the back button hides it alone. This handler is the
+// only one, and listens only while the main screen is in front, so a screen pushed from the profile goes back to it.
 function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
   const { chat, leaving } = control;
   const { reset } = chat;
@@ -192,10 +202,12 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
     Keyboard.dismiss();
     reset();
   }, [reset]);
-  useBackToClose(useIsFocused(), close, { edge: false });
+  const profile = useProfileOver(lastReply(chat.bubbles)?.id ?? null);
+  const profileShown = profile.friend !== null && !keyboardUp;
+  useBackToClose(useIsFocused(), profileShown ? profile.hide : close, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   return (
-    <>
+    <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <AnswerPill asked={turnOf(chat.bubbles)?.asked ?? ''} onClose={close} />
       <AnswerCard
         barRoom={barRoom}
@@ -207,7 +219,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
         stageHeight={stageHeight}
       />
       {sheets}
-    </>
+    </FriendProfileOver>
   );
 }
 

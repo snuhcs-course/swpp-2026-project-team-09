@@ -67,7 +67,7 @@ export function useMapView(
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
 ): AnswerMap {
-  const things = useThings(cards, map.detail, selection.selected?.id ?? null);
+  const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap);
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const unasked = invitation.shown || made.shown !== null;

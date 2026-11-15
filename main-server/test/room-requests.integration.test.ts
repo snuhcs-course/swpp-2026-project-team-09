@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
 import { befriend, type TestUser } from './friends.js';
 import { answerInvitation, invite } from './quest-recruiting.js';
-import { DECLINED, inboxSchema, lunchQuest, PARTY_REFUSAL, ROOM_KEY, RoomStage } from './room-requests.js';
+import { inboxSchema, lunchQuest, PARTY_REFUSAL, ROOM_KEY, RoomStage } from './room-requests.js';
 
 // A room request from the book card: the booking party it makes, the consents that make it ready, the people it
 // holds, what the booking came to, its cancel and its expiry.
@@ -141,36 +142,39 @@ describe('Consent', () => {
 });
 
 describe('A decline', () => {
-  it('dissolves the request, deletes a booking party made for it and tells everyone it asked', async () => {
+  it('takes only the companion out: the request and its booking party stay, and nobody gets a notice', async () => {
     const [booker, minsu, jieun, haneul] = await fourOf('거절');
     const { id, questId } = await stage.made(booker, [minsu, jieun, haneul]);
     await stage.consent(minsu, id).expect(200);
     await stage.decline(jieun, id).expect(204);
 
-    expect(await stage.status(booker, id)).toMatchObject({ status: 'dissolved', reason: DECLINED, consents: [] });
-    expect(await stage.prisma.quest.count({ where: { id: questId } })).toBe(0);
+    expect(await stage.status(booker, id)).toMatchObject({ status: 'gathering', reason: null, moreNeeded: 1 });
+    expect(await stage.prisma.quest.count({ where: { id: questId } })).toBe(1);
+    expect(await asksOf(jieun)).toEqual([]);
+    await stage.consent(jieun, id).expect(404);
     for (const user of [booker, minsu, jieun, haneul]) {
       // oxlint-disable-next-line no-await-in-loop -- one User at a time
-      expect(await stage.notices(user)).toEqual([DECLINED]);
+      expect(await stage.notices(user)).toEqual([]);
     }
   });
 
-  it('declining the booking party’s invitation dissolves it too', async () => {
+  it('declining the booking party’s invitation takes the companion out too', async () => {
     const [booker, minsu, jieun, haneul] = await fourOf('초대');
     const { id } = await stage.made(booker, [minsu, jieun, haneul]);
     await answerInvitation(stage.app, minsu, await stage.invitationOf(minsu), 'decline').expect(204);
 
-    expect((await stage.status(booker, id)).status).toBe('dissolved');
+    expect(await stage.status(booker, id)).toMatchObject({ status: 'gathering', moreNeeded: 1 });
+    expect(await stage.states(booker, id)).toMatchObject({ 초대민수: 'declined', 초대지은: 'asked' });
   });
 
-  it('never deletes or changes an existing Quest: only the request ends', async () => {
+  it('never deletes or changes an existing Quest', async () => {
     const people = await fourOf('점심');
     const [booker, , , haneul] = people;
     const lunch = await lunchQuest(stage.prisma, [booker.id, ...ids(people.slice(1))]);
     const id = await askingQuest(booker, lunch);
     await stage.decline(haneul, id).expect(204);
 
-    expect((await stage.status(booker, id)).status).toBe('dissolved');
+    expect((await stage.status(booker, id)).status).toBe('gathering');
     expect((await stage.holderIds(lunch)).toSorted()).toEqual(ids(people).toSorted());
     expect(await stage.prisma.quest.findUniqueOrThrow({ where: { id: lunch } })).toMatchObject({ title: '점심 파티' });
   });

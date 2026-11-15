@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -172,7 +173,12 @@ export function proposeLibraryBooking(services: LibraryServices, options?: Booki
       const { booking } = result;
       showCard(
         context.presented,
-        bookCard(space, { ...booking, companions: party.companions, questId: party.questId, note: filling?.fill.note }),
+        bookCard(space, {
+          ...booking,
+          companions: party.companions,
+          questId: party.questId,
+          notes: filling === null ? [] : [filling.fill.note],
+        }),
       );
       if (filling === null) {
         return { result: 'shown', summary: summaryOf(space, booking, party, context.now) };

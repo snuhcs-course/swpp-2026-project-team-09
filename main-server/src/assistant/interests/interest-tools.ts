@@ -65,6 +65,6 @@ export const INTEREST_RULES = `The User can ask to be told when campus events or
 
 - When the User asks to be told when events or recruiting parties of a kind come up ("채용 관련 행사 뜨면 알려 줘"), call watchInterest with the kind as the words, such as 채용 관련 행사.
 - When the User asks to stop being told of a kind ("배드민턴 이제 그만 알려 줘"), call unwatchInterest with the kind as the words, such as 배드민턴.
-- Only events and recruiting parties are watched. For anything else, such as the shuttle, a free seat, or a Friend's Class, say "지켜봐 드리는 것은 행사와 모집뿐이에요" and call no tool.
+- Only events and recruiting parties are watched. To be told later about a Friend (meeting or passing them) or about the shuttle, call refuse with not-watched-friend or not-watched-shuttle. For anything else, such as a free seat, say "지켜봐 드리는 것은 행사와 모집뿐이에요" and call no tool.
 - When the words are too vague to match anything ("재밌는 거 뜨면 알려 줘"), ask which interest the User means, and call no tool.
 - After watchInterest or unwatchInterest answers, say in one sentence what is watched now, or its reason when it answers none.`;
