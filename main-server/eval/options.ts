@@ -6,6 +6,7 @@
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -56,10 +57,16 @@ export const runOptionsSchema = z.strictObject({
 
 export type RunOptions = z.infer<typeof runOptionsSchema>;
 
-// main-server/.env as text values, or none when there is no file. Its key is read from here and never printed.
+// main-server/.env as text values, or none when there is no file, with a provider's key from the command's environment
+// over the file's, as a worktree without its own .env is given one. The key is read from here and never printed.
 export function dotEnv(): Record<string, string | undefined> {
   const file = new URL('../.env', import.meta.url);
-  return existsSync(file) ? parseEnv(readFileSync(file, 'utf8')) : {};
+  const values = existsSync(file) ? parseEnv(readFileSync(file, 'utf8')) : {};
+  const given = Object.values(EVAL_KEYS).flatMap((name) => {
+    const key = process.env[name];
+    return key === undefined || key === '' ? [] : [[name, key] as const];
+  });
+  return { ...values, ...Object.fromEntries(given) };
 }
 
 const DEFAULT_BUDGET_USD = 5;
