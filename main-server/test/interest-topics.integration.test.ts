@@ -12,6 +12,10 @@ import { ownQuest, storeEvent } from './quests.js';
 
 const stage = new InterestsStage();
 
+// The topics step reads the unread events and recruiting Quests of the shared database, other files' too, ten of each a
+// step, before it reaches this test's own: on a loaded runner that takes longer than Vitest's 5 s.
+vi.setConfig({ testTimeout: 30_000 });
+
 beforeAll(() => stage.start());
 
 afterAll(() => stage.stop());
