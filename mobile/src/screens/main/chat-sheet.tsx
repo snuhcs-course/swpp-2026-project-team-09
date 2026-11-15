@@ -219,11 +219,8 @@ type Where = Pick<Me, 'position' | 'locationMissing'>;
 
 // What the app knows when the User asks: where the User is on campus or why that is not known, what was pressed on
 // the map, and the conditions and the Plan of the answer on screen.
-function contextAt(
-  { position, locationMissing }: Where,
-  shown: ShownAnswer | null,
-  tapped: Tapped | null,
-): RequestContext {
+function contextAt(where: Where, shown: ShownAnswer | null, tapped: Tapped | null): RequestContext {
+  const { position, locationMissing } = where;
   const conditions = shown?.answer?.input ?? null;
   const planId = shown?.plan?.id ?? null;
   return { location: position, locationMissing, viewport: null, tapped, conditions, planId };
