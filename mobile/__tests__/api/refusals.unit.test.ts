@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { KIM_MINSU, LEE_MINSU, WHICH_MINSU, whichFriend } from '../support/which-friend';
 import { REFUSAL_REPLIES } from '@/api/mock/data/refusals';
+import { REFUSAL_KINDS } from '@/api/refusal-types';
 import { isLookup } from '@/api/server/lookup-answers';
 import { isRefusal } from '@/api/server/refusal-answers';
 
@@ -22,8 +24,8 @@ function first(): NonNullable<typeof FIRST> {
 }
 
 describe('the check of a refusal', () => {
-  it('keeps a copy of each of the thirteen kinds', () => {
-    expect(new Set([...REFUSAL_REPLIES.values()].map(({ refusal }) => refusal.kind)).size).toBe(13);
+  it('keeps a copy of each kind', () => {
+    expect(new Set([...REFUSAL_REPLIES.values()].map(({ refusal }) => refusal.kind))).toEqual(new Set(REFUSAL_KINDS));
   });
 
   it.each([...REFUSAL_REPLIES.entries()])('passes the copy for "%s"', (_, reply) => {

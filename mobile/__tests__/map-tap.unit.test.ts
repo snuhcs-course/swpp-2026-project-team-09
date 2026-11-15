@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
 import { isTap, TAP_WAIT_MS, type TouchEventLike, useMapTap } from '@/screens/main/tutorial/use-map-tap';
 
 // A tap on the map, told from the touches on a View around it: a short touch of one finger that moves little
-// removes the tutorial place pin, unless the pin's own marker press comes with it.
+// removes the tutorial place pin, unless the pin's own marker press comes with it. It tells where the finger was
+// lifted, which a press on a building turns into a position (P02 ticket 22).
 
 interface Touch {
   x: number;
@@ -26,8 +28,8 @@ function touch({ x, y, at, fingers }: Touch): TouchEventLike {
 async function setUp(active = true): Promise<{ onTap: jest.Mock; tap: () => ReturnType<typeof useMapTap> }> {
   const onTap = jest.fn();
   const { result } = await renderHook(() =>
-    useMapTap(() => {
-      onTap();
+    useMapTap((at) => {
+      onTap(at);
     }, active),
   );
   return { onTap, tap: () => result.current };
@@ -79,6 +81,15 @@ describe('a touch on the map', () => {
     await wait(TAP_WAIT_MS);
 
     expect(onTap).toHaveBeenCalledTimes(1);
+  });
+
+  it("tells the point the finger was lifted at, in the screen's points", async () => {
+    const { onTap, tap } = await setUp();
+
+    await touchAndLift(tap, DOWN, UP);
+    await wait(TAP_WAIT_MS);
+
+    expect(onTap).toHaveBeenCalledWith({ x: UP.x, y: UP.y });
   });
 });
 

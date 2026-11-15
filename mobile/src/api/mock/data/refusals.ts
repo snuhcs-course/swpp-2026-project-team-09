@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply } from '@/api/assistant-types';
@@ -14,7 +15,8 @@ import copies from './refusals.json';
 // The main server's reply to each board of row 8 that refuses, by the board's words, copied whole from the endpoint
 // with the scripted model naming the case: asked on a Tuesday at 11:50, with the Friend 민수 in a Class in 302동 until
 // 12:15, and "신양 스터디룸 예약해 줘" at 14:10 at 301동. The replies of boards n4 and n20 keep the Lookup the refusal
-// stands beside, 민수's with the id of `meal-answer.ts`.
+// stands beside, 민수's with the id of `meal-answer.ts`. "민수랑 점심" holds the question package A's guard asked of
+// "배고파, 민수랑 같이" when the words fit two Friends, 김민수 and 이민수; those words stay the meal answer's.
 
 export type RefusalReply = AssistantReply & { refusal: Refusal };
 

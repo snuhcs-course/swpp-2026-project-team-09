@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Meal } from '../../generated/prisma/client.js';
@@ -14,7 +15,8 @@ import {
   SHORTEST_MEAL_SECONDS,
 } from '../../travel/judgement-constants.js';
 import { shownMinutes, type Travel, type TravelMode, type TravelProvider } from '../../travel/travel.js';
-import { type FreeInterval, onDay } from './free-time.js';
+import { koreaDate } from '../korea-time.js';
+import { type FreeInterval, onDay, startOfDay } from './free-time.js';
 
 // Who can eat when, and where a meal fits. Nothing here is sent to the model as it is, and every comparison uses the
 // exact seconds: rounding is only for what is shown.
@@ -77,6 +79,14 @@ export function mealWindow(date: string, meal: HandledMeal, asked?: ClockWindow)
   }
   const { start, end } = windowOn(date, asked);
   return { start: latest([window.start, start]), end: earliest([window.end, end]) };
+}
+
+// The meal of a plan whose User named none: lunch until lunch's window ends, then dinner, judged at the start they
+// asked for, and today no earlier than now. Today after dinner's end it stays dinner, which then has no time left.
+export function mealByClock(date: string, now: Date, from?: string): HandledMeal {
+  const asked = from === undefined ? [] : [onDay(date, from)];
+  const at = date === koreaDate(now) ? latest([now, ...asked]) : (asked[0] ?? startOfDay(date));
+  return at < mealWindow(date, 'lunch').end ? 'lunch' : 'dinner';
 }
 
 export function overlapOf(one: readonly Interval[], other: readonly Interval[]): Interval[] {
