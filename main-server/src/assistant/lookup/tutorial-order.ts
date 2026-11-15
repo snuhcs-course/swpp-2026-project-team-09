@@ -7,13 +7,17 @@
 import { MINUTE_MS } from '../gathering/gathering.js';
 
 // The order of the Tutorial Quests the User walks to: of every order of at most five stops that ends before their next
-// item, the one with the most stops, then the shortest total walk, the walk on to the next item included, then the one
-// done first. Five stops make 120 orders, so every order is tried.
+// item, the one with the most stops, then the one done first, then the shortest total walk, the walk on to the next
+// item included. Ending first comes before walking less, so that a short walk to an office that has not opened yet does
+// not win over the stops that can be done now. Five stops make 120 orders, so every order is tried.
 
 export const STOPS_MAX = 5;
 
 // What one stop takes, as board q12's "받는 데 10분", until the content gives a quest minutes of its own.
 export const STOP_MINUTES = 10;
+
+// With no next item the order ends when campus offices close, so that a stop without hours is not offered at night.
+export const NO_NEXT_CLOSING = '18:00';
 
 export interface Span {
   from: Date;
@@ -31,9 +35,10 @@ export interface Stop {
 export interface OrderArgs {
   // Where and when the User sets out.
   from: { placeId: string; at: Date };
-  // The next item, which the order ends before; null with none later that day.
-  until: { placeId: string; at: Date } | null;
-  dayEnd: Date;
+  // The next item, which the order ends before, with its Place when it has one; null with none later that day.
+  until: { placeId: string | null; at: Date } | null;
+  // When the order ends with no next item.
+  closing: Date;
   stops: readonly Stop[];
   walkMinutes: (fromPlaceId: string, toPlaceId: string) => number;
 }
@@ -51,9 +56,10 @@ export interface Order {
   visits: Visit[];
   // Every walk, the one on to the next item included.
   walkMinutes: number;
-  // The walk on to the next item, or null with none.
+  // Null when there is no next item, or it has no Place.
   onwardMinutes: number | null;
-  // The stops left out: closed until the next item, without the time, or one more than five.
+  // `closed`: its hours leave no stop between the User's arrival and the deadline. `no-time`: the gap is too short
+  // whatever the hours, or it fits alone but not with the others. `more`: one more than five.
   left: { stop: Stop; reason: 'closed' | 'no-time' | 'more' }[];
 }
 
@@ -89,21 +95,15 @@ function better(one: Candidate, best: Candidate | null): boolean {
   if (one.visits.length !== best.visits.length) {
     return one.visits.length > best.visits.length;
   }
-  if (one.walkMinutes !== best.walkMinutes) {
-    return one.walkMinutes < best.walkMinutes;
+  if (one.end.getTime() !== best.end.getTime()) {
+    return one.end < best.end;
   }
-  return one.end < best.end;
+  return one.walkMinutes < best.walkMinutes;
 }
 
-// No span lets its whole stay fall between setting out and the deadline.
-function closedThen({ open, stayMinutes }: Stop, setOut: Date, deadline: Date): boolean {
-  return (
-    open !== null &&
-    !open.some(({ from, until }) => plus(later(setOut, from), stayMinutes) <= (until < deadline ? until : deadline))
-  );
-}
+const onwardFrom = ({ until, walkMinutes }: OrderArgs, placeId: string): number | null =>
+  until === null || until.placeId === null ? null : walkMinutes(placeId, until.placeId);
 
-// The stop walked to from a place at a time, or null when it is not open for its whole stay before the deadline.
 function visitOf(
   stop: Stop,
   from: { placeId: string; at: Date },
@@ -121,12 +121,13 @@ function visitOf(
 }
 
 // Every order of at most five stops, depth first, keeping the best that ends in time for the next item.
-function bestOrder({ from, until, stops, walkMinutes }: OrderArgs, deadline: Date): Candidate | null {
+function bestOrder(args: OrderArgs, deadline: Date): Candidate | null {
+  const { from, until, stops, walkMinutes } = args;
   const used = stops.map(() => false);
   const visits: Visit[] = [];
   const found: { best: Candidate | null } = { best: null };
   const consider = (placeId: string, at: Date, walked: number): void => {
-    const onward = until === null ? null : walkMinutes(placeId, until.placeId);
+    const onward = onwardFrom(args, placeId);
     if (until !== null && plus(at, onward ?? 0) > until.at) {
       return;
     }
@@ -156,21 +157,31 @@ function bestOrder({ from, until, stops, walkMinutes }: OrderArgs, deadline: Dat
   return found.best;
 }
 
+// Why a stop is left out, judged as the only stop after the walk to it, so that the reason holds whatever the others.
+function reasonOf(stop: Stop, args: OrderArgs, deadline: Date, chosen: number): Order['left'][number]['reason'] {
+  const arrival = plus(args.from.at, args.walkMinutes(args.from.placeId, stop.placeId));
+  const latestEnd = plus(deadline, -(onwardFrom(args, stop.placeId) ?? 0));
+  if (plus(arrival, stop.stayMinutes) > latestEnd) {
+    return 'no-time';
+  }
+  const start = startOf(stop, arrival);
+  if (start === null || plus(start, stop.stayMinutes) > latestEnd) {
+    return 'closed';
+  }
+  return chosen === STOPS_MAX ? 'more' : 'no-time';
+}
+
 export function orderOf(args: OrderArgs): Order {
-  const { from, until, dayEnd, stops } = args;
-  const deadline = until?.at ?? dayEnd;
+  const { from, until, closing, stops } = args;
+  const deadline = until?.at ?? closing;
   const chosen = bestOrder(args, deadline) ?? { visits: [], walkMinutes: 0, onwardMinutes: null, end: from.at };
   const keys = new Set(chosen.visits.map(({ stop }) => stop.key));
-  const reasonOf = (stop: Stop): Order['left'][number]['reason'] => {
-    if (closedThen(stop, from.at, deadline)) {
-      return 'closed';
-    }
-    return chosen.visits.length === STOPS_MAX ? 'more' : 'no-time';
-  };
   return {
     visits: chosen.visits,
     walkMinutes: chosen.walkMinutes,
     onwardMinutes: chosen.onwardMinutes,
-    left: stops.filter(({ key }) => !keys.has(key)).map((stop) => ({ stop, reason: reasonOf(stop) })),
+    left: stops
+      .filter(({ key }) => !keys.has(key))
+      .map((stop) => ({ stop, reason: reasonOf(stop, args, deadline, chosen.visits.length) })),
   };
 }

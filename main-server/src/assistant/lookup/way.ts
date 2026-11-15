@@ -87,7 +87,7 @@ export function startOf({
 export const atPlace = ({ start, toPlaceId }: Pick<Way, 'start' | 'toPlaceId'>): boolean => start.placeId === toPlaceId;
 
 // The User's next item today that has a Place.
-export function nextOf(items: readonly DayItem[], now: Date): DayItem | null {
+function nextOf(items: readonly DayItem[], now: Date): DayItem | null {
   return items.filter(({ start, placeId }) => start > now && placeId !== null).toSorted(byStart)[0] ?? null;
 }
 

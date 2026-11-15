@@ -68,14 +68,12 @@ function durationWords(minutes: number): string {
   return rest === 0 ? `${minutes / 60}시간` : `${Math.floor(minutes / 60)}시간 ${rest}분`;
 }
 
-// "11월 17일 화요일".
 function dateWords(date: string): string {
   return `${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일 ${WEEKDAY_WORDS[weekdayOf(date)]}요일`;
 }
 
 const spanOf = ({ start, end }: DayItem): string => `${clockOf(start)}–${clockOf(end)}`;
 
-// The Free Time between one Class and the next, where there is any.
 function gapsOf(classes: readonly DayItem[]): number[] {
   return classes.slice(1).flatMap((next, index) => {
     const minutes = minutesBetween(classes[index]?.end ?? next.start, next.start);
@@ -83,7 +81,6 @@ function gapsOf(classes: readonly DayItem[]): number[] {
   });
 }
 
-// The walk from one Class to the next, when both have a Place and they differ.
 function walksOf(classes: readonly DayItem[], travel: DayArgs['travel']): Walk[] {
   return classes.slice(1).flatMap((to, index) => {
     const fromPlaceId = classes[index]?.placeId ?? null;

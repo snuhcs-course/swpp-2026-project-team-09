@@ -4,80 +4,31 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type Lookup, type PlacePoint } from '../src/assistant/dto/answer.dto.js';
-import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
-import { tutorialAnswer, type TutorialAnswer } from '../src/assistant/lookup/tutorial-lookup.js';
-import { type Position } from '../src/common/geometry.js';
-import { readTutorialContent, TUTORIAL_FILE, type TutorialContent } from '../src/tutorial/tutorial-content.js';
-import { classAt, id, ME, numbered, placeOf, readCampus, seedTravel, TUESDAY } from './way-example.js';
+import { type Lookup } from '../src/assistant/dto/answer.dto.js';
+import { type TutorialAnswer } from '../src/assistant/lookup/tutorial-lookup.js';
+import {
+  BOARD_Q10,
+  CARD,
+  CARD_NOTE,
+  CLINIC,
+  CLINIC_NOTE,
+  LOST,
+  LOST_NOTE,
+  lookupOf,
+  plain,
+  pointOf,
+  positionOf,
+  readTutorial,
+  strong,
+  tutorialAt,
+} from './tutorial-example.js';
+import { classAt, ME, TUESDAY } from './way-example.js';
 
 // The Tutorial Quests in order before the next Class (board q10): "새내기 퀘스트 뭐부터?" on Tuesday at 13:50, as the
 // Class in 24동 ends and the next is at 17:00 in 58동, with the quests of content/tutorial.yaml and the seed's Places and
 // walking table.
 
-let content: TutorialContent;
-
-beforeAll(async () => {
-  await readCampus();
-  content = await readTutorialContent(TUTORIAL_FILE);
-});
-
-const strong = (text: string): { text: string; strong: boolean } => ({ text, strong: true });
-const plain = (text: string): { text: string; strong: boolean } => ({ text, strong: false });
-
-// Board q10's three quests left: the 보건진료소, the 학생증, and the 분실물센터.
-const BOARD_Q10 = ['health-clinic', 's-card', 'lost-and-found'];
-
-const CLINIC = '서울대 보건진료소 이용';
-const LOST = '분실물센터 위치 알아두기';
-const CARD = '학생증(S-CARD) 발급받기';
-const CLINIC_NOTE = '보건진료소는 평일 09:00–12:00, 13:30–17:30에 진료해요 · 금요일은 16:30까지';
-const LOST_NOTE = '분실물센터는 09:00–18:00에 열어요';
-const CARD_NOTE = '학생증은 MySNU 신청 다음 날부터 받아요 · 평일 09:00–17:50';
-
-const positionOf = (number: string): Position => {
-  const { latitude, longitude } = numbered(number);
-  return { latitude, longitude };
-};
-
-const pointOf = (number: string, label: string): PlacePoint => ({
-  placeId: numbered(number).id,
-  label,
-  ...positionOf(number),
-});
-
-// The Class in 24동 that ends at 13:50 and the one in 58동 at 17:00.
-const afternoon = (): DayItem[] => [
-  classAt(TUESDAY, '13:00', '13:50', '자연과학관6'),
-  classAt(TUESDAY, '17:00', '18:15', 'SK경영관'),
-];
-
-function tutorialAt(clock: string, keys: readonly string[], items: DayItem[] = afternoon()): TutorialAnswer {
-  return tutorialAnswer({
-    now: onDay(TUESDAY, clock),
-    me: { userId: ME, name: '유상', items },
-    location: null,
-    gatePlaceId: id('서울대 정문'),
-    quests: content.quests
-      .filter(({ key }) => keys.includes(key))
-      .map(({ key, title, places, visit }) => ({ key, title, places, visit: visit ?? null })),
-    placeIdOf: (place) => {
-      if (!('place' in place)) {
-        throw new Error('No quest of a point is open here');
-      }
-      return numbered(place.place).id;
-    },
-    travel: seedTravel(),
-    placeOf,
-  });
-}
-
-function lookupOf(answer: TutorialAnswer): Lookup {
-  if (answer.result !== 'found') {
-    throw new Error(`No order: ${answer.reason}`);
-  }
-  return answer.lookup;
-}
+beforeAll(() => readTutorial());
 
 const boardQ10 = (): Lookup => lookupOf(tutorialAt('13:50', BOARD_Q10));
 
@@ -115,7 +66,7 @@ describe('Three quests left at 13:50, before the 17:00 Class in 58동 (board q10
 
   it('say first what decides the order, then when each quest can be done', () => {
     expect(boardQ10().basis).toEqual([
-      '가장 적게 걷는 순서예요 · 58동까지 모두 걸어서 14분',
+      '가장 일찍 끝나는 순서예요 · 58동까지 모두 걸어서 14분',
       '한 곳에 10분씩 잡았어요',
       CLINIC_NOTE,
       LOST_NOTE,
@@ -188,14 +139,14 @@ describe('The 보건진료소 at 12:05, before a 13:00 Class in 58동', () => {
       [plain('다음은 '), strong('13:00 수업'), plain(' · 58동')],
     ]);
     expect(lookup.basis).toEqual([
-      '가장 적게 걷는 순서예요 · 58동까지 모두 걸어서 12분',
+      '가장 일찍 끝나는 순서예요 · 58동까지 모두 걸어서 12분',
       '한 곳에 10분씩 잡았어요',
       LOST_NOTE,
       `${CLINIC} · 13:00 수업 전에는 열지 않아 뺐어요`,
       CLINIC_NOTE,
     ]);
     expect(lunchtime()).toMatchObject({
-      words: { leftOut: [{ quest: CLINIC, reason: 'closed then', when: CLINIC_NOTE }] },
+      words: { leftOut: [{ quest: CLINIC, reason: 'closed when the User could be there', when: CLINIC_NOTE }] },
     });
   });
 });

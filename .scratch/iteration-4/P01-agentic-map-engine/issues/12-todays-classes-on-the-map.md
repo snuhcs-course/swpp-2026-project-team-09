@@ -43,7 +43,7 @@ Blocked by: None for the server; the app's part after 11 (#270)
 6. **No chips.** The board's "오늘" chip needs a kind of chip the contract does not have (`origin`, `until`, `person`), and the title line already names the day.
 7. **What the model is given**: the date, each Class's start, end, and building, `freeMinutes`, and `walkMinutes`; no course name, room, id, or coordinate. `DAY_RULES` sends "오늘 수업 뭐 있어?" to findDay, not getMyDay, keeps the reply to one sentence without listing the Classes or calling showOnMap, and has the model say that there is no Class when findDay answers none. findDay takes a day from today to a week ahead, as getMyDay does.
 8. **The code.** The words and the scene are `lookup/day-lookup.ts` (`dayAnswer`), the reads `lookup/day.service.ts` (`DayLookupService`), and the tool with its rules `lookup/day-tools.ts` (`findDay`, `DAY_RULES`).
-9. **The app.** The contract gained `MapScene.places[].order`, `Lookup.steps` (`LookupStep`), and the kind `day` on both sides. The reply check takes the kinds from a record the compiler holds to `Lookup['kind']` (`isKeyOf`, now exported from `plan-answers.ts`), a step as a text or null and a text, and a place's `order` as a number when it has one. The copy `mobile/src/api/mock/data/day-lookup.json` was written by the server's `dayAnswer` over the seed's Places and walking table, for board q14 on Tuesday 2026-11-17 at 10:30, with the asker's id of the meal copies; the reply check passes it, and the mock answers no message with it.
+9. **The app.** The contract gained `MapScene.places[].order`, `Lookup.steps` (`LookupStep`), and the kind `day` on both sides. The reply check takes the kinds from a record the compiler holds to `Lookup['kind']` (`isKeyOf`, now exported from `plan-answers.ts`), a step as a text or null and a text, and a place's `order` as an integer of 1 or more when it has one. The copy `mobile/src/api/mock/data/day-lookup.json` was written by the server's `dayAnswer` over the seed's Places and walking table, for board q14 on Tuesday 2026-11-17 at 10:30, with the asker's id of the meal copies; the reply check passes it, and the mock answers no message with it.
 
 ### Where the data differs from the boards
 
@@ -51,9 +51,13 @@ Blocked by: None for the server; the app's part after 11 (#270)
 - The chip "오늘" is left out (decision 6), and the User at 관정 is not drawn (decision 2).
 - "나설 때 알림" is the leave-by notification at 12:45, which the board does not time.
 
-The tests were run on the build machine and pass: `day-lookup.unit.test.ts` (11), the endpoint's `assistant-day.integration.test.ts` (2), and the app's `day-lookup.unit.test.ts` (5), with lint, typecheck, and format of both projects.
+The tests were run on the build machine and pass: `day-lookup.unit.test.ts` (11), the endpoint's `assistant-day.integration.test.ts` (2), and the app's `day-lookup.unit.test.ts` (7), with lint, typecheck, and format of both projects.
 
 ### For the app's part (after #270)
 
 - Every Class is a place of role `next`, which `answer-marks.ts` keys by `answer:next:<placeId>`: two Classes in one building share that id until the drawing keys a numbered place by its `order`.
 - The card draws `steps`; the `remind` action waits for package D's notification, as ticket 11 has it.
+
+### Agent usage (2026-11-15)
+
+Left for the coordinator.

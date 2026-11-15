@@ -11,7 +11,8 @@ import { BUTTON_KEYS, completeAll } from './tutorial.js';
 
 // The Tutorial Quests in order before the next Class, drawn on the map as a Lookup, at the Assistant's endpoint with
 // the scripted model, the seed's walking table and Places, and content/tutorial.yaml: board q10 (a Tuesday at 13:50, as
-// the Class in 24동 ends, with the next at 17:00 in 58동, and three quests left), and what the model is given.
+// the Class in 24동 ends, with the next at 17:00 in 58동, and three quests left), what the model is given, no order
+// when where the User sets out from is not known, and a start the User names.
 
 const stage = new MealPlanStage();
 
@@ -112,5 +113,45 @@ describe('The Tutorial Quests left before the 17:00 Class (board q10)', () => {
     expect(stage.model.toolResults()[0]).toEqual(BOARD_Q10_WORDS);
     expect(JSON.stringify(response.body)).not.toContain(COURSE);
     expect(JSON.stringify(response.body)).not.toContain(ROOM);
+  });
+});
+
+// A User before their first Class, whose location the app does not send.
+async function beforeTheDay(date: string): Promise<void> {
+  await stage.asking(date, '09:00');
+  await stage.classAt(stage.asker, '13:00', '13:50', '24');
+}
+
+describe('No order', () => {
+  it('is answered when where the User sets out from is not known, and nothing is drawn', async () => {
+    await beforeTheDay('2093-02-03');
+
+    const response = await stage.send([{ tool: 'findTutorialOrder', input: {} }, { text: '어디서 출발해요?' }]);
+
+    expect(response.status).toBe(200);
+    expect(stage.model.toolResults()[0]).toMatchObject({
+      result: 'none',
+      reason: expect.stringContaining('Where the User sets out from is not known') as unknown,
+    });
+    expect(replySchema.parse(response.body).lookup).toBeNull();
+  });
+});
+
+describe('A start the User names', () => {
+  it('is where the order sets out from, once resolvePlace returned it', async () => {
+    await beforeTheDay('2093-02-10');
+    const place301 = await stage.numbered('301');
+
+    const response = await stage.send([
+      { tool: 'resolvePlace', input: { words: '301동' } },
+      { tool: 'findTutorialOrder', input: { from: place301.id } },
+      { text: '…' },
+    ]);
+
+    expect(replySchema.parse(response.body).lookup?.chips[0]).toEqual({
+      kind: 'origin',
+      text: '301동에서',
+      userId: null,
+    });
   });
 });

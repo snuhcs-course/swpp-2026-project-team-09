@@ -25,6 +25,11 @@ describe('the check of a Lookup of a day', () => {
       'with a building numbered in words',
       { ...DAY_LOOKUP, scene: { ...DAY_LOOKUP.scene, places: [{ ...FIRST, order: '1' }] } },
     ],
+    ['with a building numbered 0', { ...DAY_LOOKUP, scene: { ...DAY_LOOKUP.scene, places: [{ ...FIRST, order: 0 }] } }],
+    [
+      'with a building numbered 1.5',
+      { ...DAY_LOOKUP, scene: { ...DAY_LOOKUP.scene, places: [{ ...FIRST, order: 1.5 }] } },
+    ],
   ])('refuses one %s', (_, lookup) => {
     expect(isLookup(lookup)).toBe(false);
   });

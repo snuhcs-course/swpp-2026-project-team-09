@@ -7,32 +7,31 @@
 import { shownMinutes } from '../../travel/travel.js';
 import { type TutorialVisit } from '../../tutorial/tutorial-content.js';
 import { type Lookup } from '../dto/answer.dto.js';
-import { clockOf, type DayItem, endOfDay, onDay, weekdayOf } from '../free-time/free-time.js';
+import { byStart, clockOf, type DayItem, onDay, weekdayOf } from '../free-time/free-time.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { PlaceNaming } from '../gathering/place-naming.js';
 import { koreaDate } from '../korea-time.js';
-import { type Order, orderOf, type Span, STOP_MINUTES } from './tutorial-order.js';
+import { NO_NEXT_CLOSING, type Order, orderOf, type Span, STOP_MINUTES } from './tutorial-order.js';
 import {
   type Drawn,
   type LeftReason,
   type LeftWords,
   type Located,
+  leftWords,
   lookupOf,
-  MODEL_REASONS,
   type Next,
-  noteOf,
   type OpenQuest,
   type TutorialArgs,
   type TutorialWords,
   wordsOf,
 } from './tutorial-words.js';
-import { nextOf, startOf, type WayStart } from './way.js';
+import { startOf, type WayStart } from './way.js';
 
 export { type OpenQuest, type TutorialArgs } from './tutorial-words.js';
 
 // The Tutorial Quests the User has not completed, in the order that fits before their next item: where the User sets
-// out from and when, where each quest is done and when it is open that day, and the order of the shortest walk. Only
-// the words are sent to the model.
+// out from and when, where each quest is done and when it is open that day, and the order that ends first. Only the
+// words are sent to the model.
 
 export type TutorialAnswer =
   | { result: 'found'; start: WayStart; lookup: Lookup; words: TutorialWords }
@@ -68,21 +67,23 @@ function spansOn(visit: TutorialVisit | null, date: string): Span[] | null {
     .toSorted((one, other) => one.from.getTime() - other.from.getTime());
 }
 
-// Now, rounded up to the minute, or the end of the item going on then.
+// An item that starts within the minute counts as begun: no stop fits before it.
 function readyAt(items: readonly DayItem[], now: Date): Date {
   const rounded = new Date(Math.ceil(now.getTime() / MINUTE_MS) * MINUTE_MS);
   return items
-    .filter(({ start, end }) => start <= now && end > rounded)
+    .filter(({ start, end }) => start <= rounded && end > rounded)
     .reduce((ready, { end }) => (end > ready ? end : ready), rounded);
 }
 
+// The next item of any kind, since the User is busy then whether or not it has a Place.
 function nextIn(items: readonly DayItem[], at: Date, naming: PlaceNaming): Next | null {
-  const item = nextOf(items, at);
-  if (item === null || item.placeId === null) {
+  const item = items.filter(({ start }) => start > at).toSorted(byStart)[0];
+  if (item === undefined) {
     return null;
   }
+  const { placeId } = item;
   const due = `${clockOf(item.start)}${item.isClass ? ' 수업' : ''}`;
-  return { item, placeId: item.placeId, due, label: naming.placeLabel(item.placeId) };
+  return { item, placeId, due, label: placeId === null ? null : naming.placeLabel(placeId) };
 }
 
 interface Setting {
@@ -98,7 +99,7 @@ function orderFor({ now, travel }: TutorialArgs, { start, setOut, next, located 
   return orderOf({
     from: { placeId: start.placeId, at: setOut },
     until: next === null ? null : { placeId: next.placeId, at: next.item.start },
-    dayEnd: endOfDay(date),
+    closing: onDay(date, NO_NEXT_CLOSING),
     stops: [...located.values()].map(({ quest, placeId }) => ({
       key: quest.key,
       placeId,
@@ -109,7 +110,6 @@ function orderFor({ now, travel }: TutorialArgs, { start, setOut, next, located 
   });
 }
 
-// The quests the order left out, then those whose place is not on the walking table.
 function leftOf(
   order: Order,
   located: ReadonlyMap<string, Located>,
@@ -132,7 +132,7 @@ export function tutorialAnswer(args: TutorialArgs): TutorialAnswer {
     return { result: 'none', reason: 'no-quests', leftOut: [], online };
   }
   const setOut = readyAt(me.items, now);
-  const start = startOf({ fromPlaceId: null, location: args.location, gatePlaceId: args.gatePlaceId, me, now: setOut });
+  const start = startOf({ ...args, me, now: setOut });
   if (start === null) {
     return { result: 'none', reason: 'no-start', leftOut: [], online };
   }
@@ -146,11 +146,7 @@ export function tutorialAnswer(args: TutorialArgs): TutorialAnswer {
   );
   const order = orderFor(args, { start, setOut, next, located });
   const left = leftOf(order, located, placed);
-  const leftOut = left.map(({ quest, reason }) => ({
-    quest: quest.title,
-    reason: MODEL_REASONS[reason],
-    when: noteOf(quest),
-  }));
+  const leftOut = left.map(({ quest, reason }) => leftWords(quest, reason, next));
   const visits = order.visits.flatMap((visit) => {
     const where = located.get(visit.stop.key);
     return where === undefined ? [] : [{ visit, located: where }];

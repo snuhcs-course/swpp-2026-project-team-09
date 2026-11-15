@@ -4,11 +4,12 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { clockOf, endOfDay, onDay } from '../src/assistant/free-time/free-time.js';
+import { clockOf, onDay } from '../src/assistant/free-time/free-time.js';
 import { type Order, orderOf, type Stop } from '../src/assistant/lookup/tutorial-order.js';
 
-// The order of the Tutorial Quests, with walks and stays chosen by hand: the User sets out from S at 13:50, and their
-// next item is at N at 17:00 unless a test says otherwise. Each stop takes 10 minutes unless it says otherwise.
+// The order of the Tutorial Quests, with walks and stays chosen by hand: the User sets out from S at 13:50, their next
+// item is at N at 17:00, and with none the order ends at 18:00, unless a test says otherwise. Each stop takes 10
+// minutes unless it says otherwise.
 
 const DAY = '2026-11-17';
 
@@ -38,11 +39,27 @@ const stop = (key: string, more: Partial<Stop> = {}): Stop => ({
   ...more,
 });
 
-function order(stops: Stop[], walkMinutes: Walks, until: string | null = '17:00'): Order {
+// Minutes on foot between places on a line, at these positions.
+function line(positions: Record<string, number>): Walks {
+  return (from, to) => Math.abs((positions[from] ?? Number.NaN) - (positions[to] ?? Number.NaN));
+}
+
+interface When {
+  from?: string;
+  until?: string | null;
+  // Null for a next item without a Place.
+  untilPlace?: string | null;
+}
+
+function order(
+  stops: Stop[],
+  walkMinutes: Walks,
+  { from = '13:50', until = '17:00', untilPlace = 'N' }: When = {},
+): Order {
   return orderOf({
-    from: { placeId: 'S', at: at('13:50') },
-    until: until === null ? null : { placeId: 'N', at: at(until) },
-    dayEnd: endOfDay(DAY),
+    from: { placeId: 'S', at: at(from) },
+    until: until === null ? null : { placeId: untilPlace, at: at(until) },
+    closing: at('18:00'),
     stops,
     walkMinutes,
   });
@@ -54,18 +71,45 @@ const visited = ({ visits }: Order): [string, string][] =>
 const leftOut = ({ left }: Order): [string, string][] => left.map(({ stop: { key }, reason }) => [key, reason]);
 
 describe('The order of three quests that all fit', () => {
-  // A is nearest the start and the next item, B and C are near each other.
-  const walks = table({ SA: 1, SB: 4, SC: 5, SN: 3, AB: 6, AC: 6, BC: 1, AN: 1, BN: 6, CN: 6 });
-
-  it('is the one with the shortest total walk, the walk on included, not the nearest stop first', () => {
-    const found = order([stop('A'), stop('B'), stop('C')], walks);
+  it('is the one that ends earliest, which is not the nearest stop first', () => {
+    const found = order([stop('A'), stop('B'), stop('C')], line({ S: 0, A: 1, B: -2, C: 3, N: 4 }));
 
     expect(visited(found)).toEqual([
-      ['B', '13:54'],
-      ['C', '14:05'],
-      ['A', '14:21'],
+      ['B', '13:52'],
+      ['A', '14:05'],
+      ['C', '14:17'],
     ]);
-    expect(found).toMatchObject({ walkMinutes: 12, onwardMinutes: 1, left: [] });
+    expect(found).toMatchObject({ walkMinutes: 8, onwardMinutes: 1, left: [] });
+  });
+
+  it('is, among those that end together, the one with the shorter walk on', () => {
+    const found = order([stop('B'), stop('A')], table({ SA: 1, SB: 1, SN: 1, AB: 1, AN: 5, BN: 1 }));
+
+    expect(visited(found)).toEqual([
+      ['A', '13:51'],
+      ['B', '14:02'],
+    ]);
+    expect(found.walkMinutes).toBe(3);
+  });
+});
+
+describe('An office open twice a day', () => {
+  // C closes at 12:00 and opens again at 13:30; A has no hours.
+  const twice = stop('C', {
+    open: [
+      { from: at('09:00'), until: at('12:00') },
+      { from: at('13:30'), until: at('17:30') },
+    ],
+  });
+
+  it('is waited for when it fits only in its second opening, and the order that ends earliest wins over a shorter walk', () => {
+    const found = order([twice, stop('A')], table({ SA: 5, SC: 1, SN: 1, AC: 5, AN: 1, CN: 1 }), { from: '11:50' });
+
+    expect(visited(found)).toEqual([
+      ['A', '11:55'],
+      ['C', '13:30'],
+    ]);
+    expect(clockOf(found.visits[1]?.arrival ?? at('00:00'))).toBe('12:10');
   });
 });
 
@@ -73,7 +117,7 @@ describe('A quest that does not fit before the next item', () => {
   it('is left out for want of time, and the one that fits with the shorter walk is kept', () => {
     const walks = table({ SA: 1, SB: 4, SN: 3, AB: 6, AN: 1, BN: 6 });
 
-    const found = order([stop('A', { stayMinutes: 30 }), stop('B', { stayMinutes: 30 })], walks, '14:30');
+    const found = order([stop('A', { stayMinutes: 30 }), stop('B', { stayMinutes: 30 })], walks, { until: '14:30' });
 
     expect(visited(found)).toEqual([['A', '13:51']]);
     expect(leftOut(found)).toEqual([['B', 'no-time']]);
@@ -87,6 +131,16 @@ describe('An office with hours', () => {
     const closed = stop('C', { open: [{ from: at('09:00'), until: at('12:00') }] });
 
     const found = order([stop('A'), closed], walks);
+
+    expect(visited(found)).toEqual([['A', '13:51']]);
+    expect(leftOut(found)).toEqual([['C', 'closed']]);
+  });
+
+  it('is left out as closed when it closes before the walk gets there', () => {
+    const found = order(
+      [stop('A'), stop('C', { open: [{ from: at('09:00'), until: at('14:00') }] })],
+      table({ SA: 1, SC: 15, SN: 1, AC: 15, AN: 1, CN: 1 }),
+    );
 
     expect(visited(found)).toEqual([['A', '13:51']]);
     expect(leftOut(found)).toEqual([['C', 'closed']]);
@@ -121,9 +175,32 @@ describe('Six quests that all fit', () => {
   });
 });
 
+describe('A gap shorter than one stop', () => {
+  it('leaves every quest out for want of time, an open office too', () => {
+    const open = stop('C', { open: [{ from: at('09:00'), until: at('18:00') }] });
+
+    const found = order([stop('A'), open], table({ SA: 1, SC: 1, SN: 1, AC: 1, AN: 1, CN: 1 }), { until: '13:55' });
+
+    expect(visited(found)).toEqual([]);
+    expect(leftOut(found)).toEqual([
+      ['A', 'no-time'],
+      ['C', 'no-time'],
+    ]);
+  });
+});
+
+describe('A next item without a Place', () => {
+  it('ends the order with no walk on to it', () => {
+    const found = order([stop('A', { stayMinutes: 30 })], table({ SA: 1 }), { until: '14:30', untilPlace: null });
+
+    expect(visited(found)).toEqual([['A', '13:51']]);
+    expect(found).toMatchObject({ walkMinutes: 1, onwardMinutes: null });
+  });
+});
+
 describe('A day with no next item', () => {
-  it('counts no walk on, and orders the stops by their own walk', () => {
-    const found = order([stop('B'), stop('A')], table({ SA: 1, SB: 2, AB: 1 }), null);
+  it('counts no walk on', () => {
+    const found = order([stop('B'), stop('A')], table({ SA: 1, SB: 2, AB: 1 }), { until: null });
 
     expect(visited(found)).toEqual([
       ['A', '13:51'],

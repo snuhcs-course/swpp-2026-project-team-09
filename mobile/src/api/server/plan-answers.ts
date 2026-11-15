@@ -217,7 +217,7 @@ function isScenePlace(value: unknown): value is MapScene['places'][number] {
     isPlacePoint(field(value, 'place')) &&
     isPlaceRole(field(value, 'role')) &&
     isTextOrNull(field(value, 'tag')) &&
-    (order === undefined || isNumber(order))
+    (order === undefined || (typeof order === 'number' && Number.isInteger(order) && order >= 1))
   );
 }
 

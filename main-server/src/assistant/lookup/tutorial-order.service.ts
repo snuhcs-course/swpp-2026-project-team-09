@@ -29,7 +29,11 @@ export class TutorialOrderService {
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
-  async orderFor(userId: string, at: { now: Date; location: Position | null }): Promise<TutorialAnswer> {
+  async orderFor(
+    userId: string,
+    ask: { fromPlaceId: string | null },
+    at: { now: Date; location: Position | null },
+  ): Promise<TutorialAnswer> {
     const { now, location } = at;
     const [user, items, { quests }] = await Promise.all([
       this.users.findById(userId),
@@ -41,6 +45,7 @@ export class TutorialOrderService {
       now,
       me: { userId, name: user.name, items },
       location: this.ways.located(location),
+      fromPlaceId: ask.fromPlaceId,
       gatePlaceId: this.ways.gatePlaceId(),
       quests: quests
         .filter(({ status }) => status !== 'completed')

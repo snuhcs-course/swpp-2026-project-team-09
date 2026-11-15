@@ -11,7 +11,7 @@ import { type TutorialPlace, type TutorialVisit } from '../../tutorial/tutorial-
 import { type AnswerLine, type ConditionChip, type Lookup, type MapScene, type PlacePoint } from '../dto/answer.dto.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { type PlaceNaming } from '../gathering/place-naming.js';
-import { type Order, STOP_MINUTES, STOPS_MAX, type Visit } from './tutorial-order.js';
+import { NO_NEXT_CLOSING, type Order, STOP_MINUTES, STOPS_MAX, type Visit } from './tutorial-order.js';
 import { type WayArgs, type WayStart } from './way.js';
 import { part } from './way-naming.js';
 
@@ -30,6 +30,8 @@ export interface TutorialArgs {
   now: Date;
   me: { userId: string; name: string; items: readonly DayItem[] };
   location: WayArgs['location'];
+  // The Place the User named to set out from.
+  fromPlaceId: string | null;
   gatePlaceId: string;
   // In the content's order.
   quests: readonly OpenQuest[];
@@ -51,7 +53,7 @@ export interface TutorialWords {
   from: string;
   stops: { at: string; quest: string; place: string; walkMinutes: number; when: string | null }[];
   doneAt: string;
-  next: { at: string; isClass: boolean; place: string; walkMinutes: number } | null;
+  next: { at: string; isClass: boolean; place: string | null; walkMinutes: number | null } | null;
   minutesPerStop: number;
   leftOut: LeftWords[];
   online: string[];
@@ -69,10 +71,10 @@ export interface Located {
 
 export interface Next {
   item: DayItem;
-  placeId: string;
+  placeId: string | null;
   // "17:00 수업", or the clock time of an item that is not a Class.
   due: string;
-  label: string;
+  label: string | null;
 }
 
 export interface Drawn {
@@ -91,19 +93,28 @@ const COUNTS = ['한', '두', '세', '네', '다섯'];
 
 const countWord = (count: number): string => COUNTS[count - 1] ?? String(count);
 
-export const MODEL_REASONS: Record<LeftReason, string> = {
-  closed: 'closed then',
-  'no-time': 'no time before the next item',
-  more: 'at most five are ordered at once',
-  unmapped: 'its place is not on the walking table',
+const MODEL_REASONS: Record<LeftReason, (next: Next | null) => string> = {
+  closed: () => 'closed when the User could be there',
+  'no-time': (next) =>
+    next === null ? `no time before ${NO_NEXT_CLOSING}, when the order ends` : 'no time before the next item',
+  more: () => 'at most five are ordered at once',
+  unmapped: () => 'its place is not on the walking table',
 };
 
+const dueOf = (next: Next | null): string => next?.due ?? NO_NEXT_CLOSING;
+
 const LEFT_BASIS: Record<LeftReason, (next: Next | null) => string> = {
-  closed: (next) => (next === null ? '오늘은 더 열지 않아 뺐어요' : `${next.due} 전에는 열지 않아 뺐어요`),
-  'no-time': (next) => (next === null ? '오늘 안에 시간이 모자라 뺐어요' : `${next.due} 전에 시간이 모자라 뺐어요`),
+  closed: (next) => `${dueOf(next)} 전에는 열지 않아 뺐어요`,
+  'no-time': (next) => `${dueOf(next)} 전에 시간이 모자라 뺐어요`,
   more: () => `한 번에 ${countWord(STOPS_MAX)} 곳까지라 뺐어요`,
   unmapped: () => '걸어서 몇 분인지 몰라 뺐어요',
 };
+
+export const leftWords = (quest: OpenQuest, reason: LeftReason, next: Next | null): LeftWords => ({
+  quest: quest.title,
+  reason: MODEL_REASONS[reason](next),
+  when: noteOf(quest),
+});
 
 export const noteOf = ({ visit }: OpenQuest): string | null => visit?.note ?? null;
 
@@ -114,28 +125,27 @@ function linesOf({ visits, doneAt, next }: Drawn): AnswerLine[] {
     [part(`${countWord(visits.length)} 곳을 돌면 `), part(clockOf(doneAt), true), part('에 끝나요')],
     next === null
       ? [part('오늘 남은 일정이 없어요')]
-      : [part('다음은 '), part(next.due, true), part(` · ${next.label}`)],
+      : [part('다음은 '), part(next.due, true), ...(next.label === null ? [] : [part(` · ${next.label}`)])],
   ];
 }
 
 // What decides the order, the minutes each stop is given, when each quest ordered can be done, the quests left out with
-// why, a closed one with its hours, and those done online.
+// why and when they can be done, and those done online.
 function basisOf({ visits, order, left, online, next }: Drawn): string[] {
-  const onward = next === null ? '' : `${next.label}까지 `;
+  const onward = next === null || next.label === null ? '' : `${next.label}까지 `;
   return [
-    `가장 적게 걷는 순서예요 · ${onward}모두 걸어서 ${order.walkMinutes}분`,
+    `가장 일찍 끝나는 순서예요 · ${onward}모두 걸어서 ${order.walkMinutes}분`,
     `한 곳에 ${STOP_MINUTES}분씩 잡았어요`,
     ...visits.flatMap(({ located }) => noteOf(located.quest) ?? []),
     ...left.flatMap(({ quest, reason }) => {
       const line = `${quest.title} · ${LEFT_BASIS[reason](next)}`;
-      const note = reason === 'closed' ? noteOf(quest) : null;
+      const note = noteOf(quest);
       return note === null ? [line] : [line, note];
     }),
     ...(online.length === 0 ? [] : [`${online.join(', ')} · 온라인으로 할 수 있어요`]),
   ];
 }
 
-// The User where they are when that is the start, else at the start's Place.
 function meOf({ args, start, naming }: Drawn): MapScene['people'][number] {
   const { me, location } = args;
   const here = start.basis === 'location' ? (location?.at ?? null) : null;
@@ -149,7 +159,6 @@ function meOf({ args, start, naming }: Drawn): MapScene['people'][number] {
   };
 }
 
-// The walks from the start's Place from one stop to the next, and on to the next item.
 function routesOf({ args, start, visits, order, next, naming }: Drawn): MapScene['routes'] {
   const { userId } = args.me;
   let from = naming.position(start.placeId);
@@ -160,7 +169,7 @@ function routesOf({ args, start, visits, order, next, naming }: Drawn): MapScene
     }
     from = located.at;
   }
-  if (next !== null && order.onwardMinutes !== null && order.onwardMinutes > 0) {
+  if (next !== null && next.placeId !== null && order.onwardMinutes !== null && order.onwardMinutes > 0) {
     routes.push({ userId, role: 'next', from, to: naming.position(next.placeId), minutes: order.onwardMinutes });
   }
   return routes;
@@ -175,9 +184,15 @@ function sceneOf(drawn: Drawn): MapScene {
     order: index + 1,
   }));
   const after =
-    next === null
+    next === null || next.placeId === null
       ? []
-      : [{ place: naming.placePoint(next.placeId), role: 'next' as const, tag: `${next.due} · ${next.label}` }];
+      : [
+          {
+            place: naming.placePoint(next.placeId),
+            role: 'next' as const,
+            tag: `${next.due} · ${naming.placeLabel(next.placeId)}`,
+          },
+        ];
   return { people: [meOf(drawn)], places: [...stops, ...after], routes: routesOf(drawn), flags: [] };
 }
 
@@ -200,7 +215,7 @@ export function wordsOf(drawn: Drawn, from: string, leftOut: LeftWords[]): Tutor
             at: clockOf(next.item.start),
             isClass: next.item.isClass,
             place: next.label,
-            walkMinutes: order.onwardMinutes ?? 0,
+            walkMinutes: order.onwardMinutes,
           },
     minutesPerStop: STOP_MINUTES,
     leftOut,
