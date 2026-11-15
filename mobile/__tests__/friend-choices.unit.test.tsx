@@ -59,9 +59,10 @@ function cells(): unknown[] {
 
 describe('FriendChoices in order', () => {
   // Partitions: Friends at a distance under a kilometre and from one, one without a position, and no Plan to measure
-  // from. The rule: the decision of 2026-11-15, with ticket 18's full name and department, the distance to the picked
-  // Restaurant ("350m" to 10 metres under a kilometre, "1.2km" from one), "자리 모름" without a position; nearest first,
-  // those without last.
+  // from; a tie between two whose full names and given names go in opposite orders. The rule: the decision of
+  // 2026-11-15, with ticket 18's full name and department, the distance to the picked Restaurant ("350m" to 10 metres
+  // under a kilometre, "1.2km" from one), "자리 모름" without a position; nearest first, those without last, and ties
+  // by the full name (ticket 18's decision 10).
   it('lists the Friends nearest first by their full names and distances, those without a position last', async () => {
     await show();
 
@@ -84,6 +85,13 @@ describe('FriendChoices in order', () => {
     await show({ friends: [seoyeon, mockFriend('f6')] });
 
     expect(cells()).toEqual(['강도윤, 수리과학부, 720m, 추가', '이서연, 경영학과, 720m, 추가']);
+  });
+
+  it('orders a tie by the full name, where the given names would go the other way', async () => {
+    // 박지호 comes before 이서연, though 서연 would come before 지호.
+    await show({ friends: [mockFriend('f2'), mockFriend('f3')], pick: null });
+
+    expect(cells()).toEqual(['박지호, 전기정보공학부, 추가', '이서연, 경영학과, 추가']);
   });
 
   it('orders by name, without distances, for an answer without a Plan', async () => {
