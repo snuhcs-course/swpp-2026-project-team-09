@@ -20,7 +20,8 @@
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
 import { z } from 'zod';
-import { aiKeysOf } from './llm-keys.js';
+// .ts, not .js: `pnpm eval` loads this file in plain Node, which does not map .js to .ts.
+import { aiKeysOf } from './llm-keys.ts';
 
 const port = z.string().pipe(z.coerce.number<string>().int().min(1).max(65535));
 

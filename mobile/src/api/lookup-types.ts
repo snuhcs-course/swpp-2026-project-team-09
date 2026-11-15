@@ -17,9 +17,9 @@ import type {
 // The main server's `Lookup` (`assistant/dto/answer.dto.ts`), the same shape.
 
 // An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, a
-// pressed Place, a day's Classes, or the Tutorial Quests in order.
+// pressed Place, a day's Classes, the Tutorial Quests in order, or the study spaces of the visible area.
 export interface Lookup {
-  kind: 'way' | 'friend' | 'menu' | 'place' | 'day' | 'tutorial';
+  kind: 'way' | 'friend' | 'menu' | 'place' | 'day' | 'tutorial' | 'study';
   // The conditions it used; a Lookup is not recalculated.
   chips: ConditionChip[];
   // At most two, after a day's title.

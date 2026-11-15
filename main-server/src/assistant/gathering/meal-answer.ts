@@ -6,7 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan, type PlanPart } from '../dto/answer.dto.js';
+import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan } from '../dto/answer.dto.js';
 import { clockOf, onDay } from '../free-time/free-time.js';
 import { mealWindow } from '../free-time/meal-fit.js';
 import { koreaTime } from '../korea-time.js';
@@ -26,12 +26,11 @@ import { type GatheringFit, type GatheringSide, type PersonPart } from './gather
 import { bandOf, sceneOf } from './meal-scene.js';
 import { missingLines, missingParts, NEAREST_BASIS, nearestFirst } from './missing-inputs.js';
 import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
+import { droppedOf, partOf, unfitLines } from './plan-parts.js';
 
 export { type AnswerPerson, type MealAnswerArgs } from './answer-words.js';
 
 // The words of a calculated meal: what the app draws and writes for each plan. Nothing here is sent to the model.
-
-const timeOf = (at: Date | null): string | null => (at === null ? null : koreaTime(at));
 
 const plain = (text: string): AnswerLine => [{ text, strong: false }];
 
@@ -96,7 +95,8 @@ function chipsOf(naming: Naming): ConditionChip[] {
   return [...chips, ...personChips(naming)];
 }
 
-function noPlanOf({ menus, gathering, people }: MealAnswerArgs): AnswerReply['noPlan'] {
+function noPlanOf(naming: Naming): AnswerReply['noPlan'] {
+  const { menus, gathering, people, input } = naming.args;
   if (menus === 'none') {
     return { reason: 'no-menu', lines: [plain('그날은 수집된 메뉴가 없어요')] };
   }
@@ -110,25 +110,8 @@ function noPlanOf({ menus, gathering, people }: MealAnswerArgs): AnswerReply['no
     const text = people.length > 1 ? '그 시간에는 같이 비는 시간이 없어요' : '그 시간에는 비는 시간이 없어요';
     return { reason: 'no-shared-time', lines: [plain(text)] };
   }
-  return { reason: 'no-fit', lines: [plain('시간 안에 다녀올 수 있는 식당이 없어요')] };
-}
-
-export function partOf(part: PersonPart, naming: GatheringNaming): PlanPart {
-  const { userId, name, me } = naming.personOf(part.personId);
-  const { origin, next } = part;
-  return {
-    userId,
-    name,
-    me,
-    origin: origin === null ? null : { place: naming.placePoint(origin.placeId), basis: origin.basis },
-    leaveAt: timeOf(part.leaveAt),
-    walkMinutes: part.walkMinutes,
-    leaveBy: timeOf(part.leaveBy),
-    next:
-      next === null
-        ? null
-        : { startAt: koreaTime(next.start), place: next.placeId === null ? null : naming.placePoint(next.placeId) },
-  };
+  const unfit = unfitLines(naming, windowOf(input), { word: mealWord(naming), stay: '먹어요' });
+  return { reason: 'no-fit', lines: unfit ?? [plain('시간 안에 다녀올 수 있는 식당이 없어요')] };
 }
 
 // The merging point's step, then the one at the place, titled as given.
@@ -314,11 +297,8 @@ export function mealAnswer(args: MealAnswerArgs): AnswerReply {
     input: args.input,
     chips: chipsOf(naming),
     plans,
-    dropped: args.gathering.dropped.map((drop) => ({
-      place: naming.labelledPoint(drop.placeId, drop.key),
-      reason: naming.dropReason(drop),
-    })),
-    noPlan: plans.length > 0 ? null : noPlanOf(args),
+    dropped: droppedOf(naming),
+    noPlan: plans.length > 0 ? null : noPlanOf(naming),
     ...missingParts(args.missing),
   };
 }

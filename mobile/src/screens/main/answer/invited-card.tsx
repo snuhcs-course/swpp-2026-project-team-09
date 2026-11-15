@@ -21,6 +21,8 @@ interface InvitedCardProps {
   startAt: string;
   steps: readonly SubQuest[];
   standings: ReadonlyMap<string, Standing>;
+  // A refusal's lines, which stand in place of the card's first (board n8b).
+  over?: readonly AnswerLine[];
   onClose: () => void;
 }
 
@@ -57,11 +59,11 @@ function SentChips({ chips, standings }: Pick<InvitedCardProps, 'chips' | 'stand
 // The card of the answer on screen once its Plan was made into a Quest: the conditions with how each Friend stands,
 // two lines that say the invitations went out and when to be there, the Quest's steps in order, and "닫기" across the
 // card, where "이대로 초대" stood. A Quest made from a Plan opened again from the everyday map has the same card.
-export function InvitedCard({ chips, startAt, steps, standings, onClose }: InvitedCardProps): ReactElement {
+export function InvitedCard({ chips, startAt, steps, standings, over = [], onClose }: InvitedCardProps): ReactElement {
   return (
     <View style={styles.card} testID="invited-card">
       <SentChips chips={chips} standings={standings} />
-      <AnswerLines lines={linesOf(startAt)} />
+      <AnswerLines lines={[...over, ...linesOf(startAt).slice(over.length)]} />
       <QuestSteps steps={steps} />
       <Button full onPress={onClose} variant="secondary">
         닫기

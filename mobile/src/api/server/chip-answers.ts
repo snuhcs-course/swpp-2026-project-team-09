@@ -9,7 +9,7 @@ import { field, isText, isTextOrNull } from './answers';
 
 // The app's check of a condition chip of an answer or a Lookup, with the mark of one the server assumed (P02-13).
 
-const KINDS: readonly ConditionChip['kind'][] = ['origin', 'from', 'until', 'person'];
+const KINDS: readonly ConditionChip['kind'][] = ['origin', 'from', 'until', 'person', 'area', 'what'];
 const MARKS: readonly NonNullable<ConditionChip['mark']>[] = ['assumed', 'relaxed'];
 
 export function isChip(value: unknown): value is ConditionChip {

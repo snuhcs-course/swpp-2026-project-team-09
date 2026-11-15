@@ -8,13 +8,12 @@
 import type {
   AnswerLine,
   AnswerReply,
-  DroppedPlace,
   MapScene,
   PlacePoint,
   Plan,
-  PlanPart,
   TimeBand,
 } from '@/api/assistant-types';
+import type { DroppedPlace, PlanPart } from '@/api/plan-part-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isChip } from './chip-answers';
@@ -44,7 +43,14 @@ const isPlaceRole = isKeyOf<Role<'places'>>({
 
 const isRouteRole = isKeyOf<Role<'routes'>>({ me: true, friend: true, next: true, shuttle: true, alt: true });
 
-const isFlagRole = isKeyOf<Role<'flags'>>({ place: true, meeting: true, leave: true, late: true, shuttle: true });
+const isFlagRole = isKeyOf<Role<'flags'>>({
+  place: true,
+  meeting: true,
+  leave: true,
+  late: true,
+  shuttle: true,
+  away: true,
+});
 
 const isPersonSource = isKeyOf<MapScene['people'][number]['source']>({ exact: true, building: true, timetable: true });
 
@@ -75,8 +81,14 @@ export function isPlacePoint(value: unknown): value is PlacePoint {
   return hasTexts(value, ['placeId', 'label']) && isLatLng(value);
 }
 
+// The Place the input fixed carries each person's part there.
 function isDropped(value: unknown): value is DroppedPlace {
-  return isPlacePoint(field(value, 'place')) && isText(field(value, 'reason'));
+  const parts = field(value, 'parts');
+  return (
+    isPlacePoint(field(value, 'place')) &&
+    isText(field(value, 'reason')) &&
+    (parts === undefined || listOf(isPart)(parts))
+  );
 }
 
 function isNoPlan(value: unknown): value is AnswerReply['noPlan'] {
@@ -106,11 +118,13 @@ export function isNext(value: unknown): value is PlanPart['next'] {
 }
 
 function isPart(value: unknown): value is PlanPart {
+  const arriveAt = field(value, 'arriveAt');
   return (
     hasTexts(value, ['userId', 'name']) &&
     isBoolean(field(value, 'me')) &&
     isOrigin(field(value, 'origin')) &&
     ['leaveAt', 'leaveBy'].every((name) => isTextOrNull(field(value, name))) &&
+    (arriveAt === undefined || isTextOrNull(arriveAt)) &&
     isNumberOrNull(field(value, 'walkMinutes')) &&
     isNext(field(value, 'next')) &&
     isMode(field(value, 'mode'))
@@ -152,8 +166,15 @@ function isRoute(value: unknown): value is MapScene['routes'][number] {
   );
 }
 
+// `placeId` names the Place an `away` flag points to, such as 관정, whose free seats the phone adds.
 function isFlag(value: unknown): value is MapScene['flags'][number] {
-  return isLatLng(field(value, 'at')) && isText(field(value, 'text')) && isFlagRole(field(value, 'role'));
+  const placeId = field(value, 'placeId');
+  return (
+    isLatLng(field(value, 'at')) &&
+    isText(field(value, 'text')) &&
+    isFlagRole(field(value, 'role')) &&
+    (placeId === undefined || isText(placeId))
+  );
 }
 
 export function isScene(value: unknown): value is MapScene {

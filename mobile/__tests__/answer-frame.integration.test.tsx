@@ -191,13 +191,17 @@ describe('what gives way to the frame', () => {
 });
 
 describe('the request with the switch on', () => {
-  it("carries the User's position, nulls for the rest, and the capability that says the app draws answers", async () => {
+  it("carries the User's position, nulls for the rest, and the capabilities that say the app draws answers", async () => {
     const user = await openFramed();
 
     await ask(user);
 
     expect(sentBodies()).toEqual([
-      { messages: [{ role: 'user', text: ASKED }], context: CONTEXT, clientCapabilities: ['library', 'answer'] },
+      {
+        messages: [{ role: 'user', text: ASKED }],
+        context: CONTEXT,
+        clientCapabilities: ['library', 'answer', 'area'],
+      },
     ]);
   });
 
@@ -227,7 +231,7 @@ describe('the request with the switch on', () => {
         { role: 'user', text: '한식' },
       ],
       context: CONTEXT,
-      clientCapabilities: ['library', 'answer'],
+      clientCapabilities: ['library', 'answer', 'area'],
     });
   });
 });

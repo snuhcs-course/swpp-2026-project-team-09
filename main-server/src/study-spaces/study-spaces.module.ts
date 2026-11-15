@@ -13,7 +13,7 @@ import { StudySpacesController } from './study-spaces.controller.js';
 import { STUDY_CATALOGUE, StudySpacesService } from './study-spaces.service.js';
 
 // The 공부공간 layer. Its files and 관정's catalogue are read once when the server starts; a bad file, or a building
-// at a Place number the seed does not hold, stops the start.
+// at a Place number the seed does not hold, stops the start. The Assistant reads the layer for "이 근처".
 @Module({
   imports: [PlacesModule, UsersModule],
   controllers: [StudySpacesController],

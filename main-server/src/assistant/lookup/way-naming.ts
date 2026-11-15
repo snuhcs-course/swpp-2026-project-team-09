@@ -40,7 +40,7 @@ export class WayNaming extends PlaceNaming {
   }
 
   // The User where they are when that is the start, else at the start's Place.
-  me({ start }: Way): MapScene['people'][number] {
+  me({ start }: Pick<Way, 'start'>): MapScene['people'][number] {
     const { me, location } = this.args;
     const here = start.basis === 'location' ? (location?.at ?? null) : null;
     return {

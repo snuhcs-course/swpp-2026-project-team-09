@@ -110,9 +110,10 @@ export interface AnswerReply extends WithMissing {
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
 }
 
-// `from` is the start the User fixed for a meet.
+// `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
+// of "이 근처".
 export interface ConditionChip extends WithMark {
-  kind: 'origin' | 'from' | 'until' | 'person';
+  kind: 'origin' | 'from' | 'until' | 'person' | 'area' | 'what';
   text: string;
   userId: string | null;
 }
@@ -129,6 +130,8 @@ export interface PlacePoint {
 export interface DroppedPlace {
   place: PlacePoint;
   reason: string;
+  // Each person's part there, given for the Place the input fixed.
+  parts?: PlanPart[];
 }
 
 export interface Plan {
@@ -168,6 +171,8 @@ export interface PlanPart {
   origin: { place: PlacePoint; basis: 'timetable' | 'location' | 'chosen' } | null;
   leaveAt: string | null;
   walkMinutes: number | null;
+  // The earliest they can be at the place, null when the position is unknown. Given by a meal's and a meet's Plans.
+  arriveAt?: string | null;
   // Null when nothing follows.
   leaveBy: string | null;
   next: { startAt: string; place: PlacePoint | null } | null;
@@ -181,8 +186,9 @@ type PlaceRole = 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting' | 'stop';
 // `shuttle` is a ride between two stops; `alt` is the way not taken, drawn faded.
 type RouteRole = 'me' | 'friend' | 'next' | 'shuttle' | 'alt';
 
-// `leave` is when to set out, `late` an arrival after the deadline, `shuttle` the stop a shuttle passed last.
-type FlagRole = 'place' | 'meeting' | 'leave' | 'late' | 'shuttle';
+// `leave` is when to set out, `late` an arrival after the deadline, `shuttle` the stop a shuttle passed last, `away`
+// the edge of the visible area towards a Place outside it.
+type FlagRole = 'place' | 'meeting' | 'leave' | 'late' | 'shuttle' | 'away';
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {
@@ -207,7 +213,8 @@ export interface MapScene {
     minutes: number;
     mode?: 'walk' | 'shuttle';
   }[];
-  flags: { at: Position; text: string; role: FlagRole }[];
+  // `placeId`: the Place an `away` flag points to.
+  flags: { at: Position; text: string; role: FlagRole; placeId?: string }[];
 }
 
 export interface TimeBand {

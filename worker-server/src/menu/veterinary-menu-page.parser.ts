@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { load } from 'cheerio';
 import { type MenuDay } from './dto/menus-collected.dto.js';
+import { readMealHours } from './menu-hours.js';
 import { readMenuLines } from './menu-line.js';
 
 // The page names no restaurant.
@@ -47,7 +49,10 @@ export function parseVeterinaryMenuPage(html: string, dates: string[]): MenuDay[
           ({ month, dayOfMonth, weekday }) =>
             month === day.getUTCMonth() + 1 && dayOfMonth === day.getUTCDate() && weekday === WEEKDAYS[day.getUTCDay()],
         )
-        .map(({ lunch }) => ({ name: RESTAURANT, lines: readMenuLines('lunch', lunch) })),
+        .map(({ lunch }) => {
+          const lines = readMenuLines('lunch', lunch);
+          return { name: RESTAURANT, lines, hours: readMealHours(lines) };
+        }),
     };
   });
 }
