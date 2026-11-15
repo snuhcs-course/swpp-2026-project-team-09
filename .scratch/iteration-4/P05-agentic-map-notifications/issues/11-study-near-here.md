@@ -46,11 +46,12 @@ Change (package A's files, these lines only):
 - `main-server/src/assistant/dto/lookup.dto.ts`: `Lookup.kind` gains `study`.
 - `main-server/src/assistant/feature.ts`: `CLIENT_CAPABILITIES` gains `area`.
 - `main-server/src/assistant/chat/chat-assistant.ts`: the service, the option `drawsArea`, and `withStudyArea` around the planned tools.
-- `main-server/src/assistant/assistant.service.ts`: the service, and the chats with `area`.
+- `main-server/src/assistant/assistant.service.ts`: the chats with `area`.
+- `main-server/src/assistant/lookup/lookup-services.ts`: `StudyAreaService` beside the other Lookups' services.
 - `main-server/src/assistant/assistant.module.ts`: imports `StudySpacesModule`, provides `StudyAreaService`.
 - `main-server/src/assistant/lookup/way-naming.ts`: `me` takes only the start.
 - `main-server/src/study-spaces/study-spaces.module.ts`: exports `StudySpacesService`.
-- App: `api/lookup-types.ts` (kind), `api/scene-roles.ts` (`away`), `api/assistant-types.ts` (chip kinds, `placeId?`, `ANSWER_CAPABILITIES`), `api/server/plan-answers.ts` (`isChip`; its map-scene checks, with `isFlagRole` and `isFlag`, moved to a new `api/server/scene-answers.ts`), `api/server/lookup-answers.ts` (`isLookup`), `api/mock/assistant.ts` (a9's words), and the tests that pin the capabilities sent.
+- App: `api/lookup-types.ts` (kind), `api/scene-roles.ts` (`away`), `api/assistant-types.ts` (chip kinds, `placeId?`, `ANSWER_CAPABILITIES`), `api/server/plan-answers.ts` (`isChip`, `isFlagRole`, `isFlag`), `api/server/lookup-answers.ts` (`isLookup`), `api/mock/assistant.ts` (a9's words), `features/assistant/answer-groups.ts` (the `away` flag's tone), and the tests that pin the capabilities sent.
 - `main-server/README.md` (the chat's tools) and `mobile/README.md` (the capabilities a request with a context carries).
 
 ## Must not change
