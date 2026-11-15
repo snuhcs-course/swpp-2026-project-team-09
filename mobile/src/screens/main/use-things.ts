@@ -28,7 +28,7 @@ export const SELECTED_ORDER = 2;
 const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
 // A card's look at a level of detail. A person is the frames' teardrop at every level, small while the whole campus
-// is in view, and dimmed while their position is old. A place is a dot there, and a pin with its count closer; a
+// is in view, dimmed while their position is old, and with a green dot for a Friend seen at the exact level. A place is a dot there, and a pin with its count closer; a
 // restaurant, a study building and the shuttle's stops and vehicles look the same at every level: a stop a dot and a
 // vehicle a pin, so that a vehicle standing at its stop is seen, and stops at one place stay a dot. A study building
 // none of whose spaces the User may use is grey, and study pins merged at the overview level are their cluster.
@@ -45,8 +45,8 @@ function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetai
     return { kind: 'study-cluster', count: marker.count, selected };
   }
   if (mark.type === 'person') {
-    const { id, name, photo, presence, stale } = mark;
-    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, stale, name, photo };
+    const { id, name, photo, presence, stale, exact } = mark;
+    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, stale, exact, name, photo };
   }
   if (mark.type === 'group') {
     return { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected };
