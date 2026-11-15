@@ -169,7 +169,7 @@ export function invitationIdOf(id: string): string | null {
 
 type Line = CardView['lines'][number];
 
-function line(icon: CardIcon, text: string): Line {
+export function line(icon: CardIcon, text: string): Line {
   return { icon, text };
 }
 
@@ -302,7 +302,7 @@ function staleMinutes({ positions, now }: MapSources, userId: string): number | 
   return keptPositions([position], now).length === 0 ? Number.POSITIVE_INFINITY : minutesOld(position, now);
 }
 
-function staleLine(minutes: number): Line {
+export function staleLine(minutes: number): Line {
   return line('info', `마지막 위치 ${minutes}분 전`);
 }
 

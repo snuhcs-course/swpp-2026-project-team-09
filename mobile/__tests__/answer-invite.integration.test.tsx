@@ -96,7 +96,7 @@ describe('a press of "이대로 초대"', () => {
     const steps = within(card().getByTestId('quest-steps'));
     expect(steps.getByText('12:15')).toBeVisible();
     expect(steps.getByText('302동식당에서 식사')).toBeVisible();
-    expect(card().getByText('민수 · 아직 안 봄')).toBeVisible();
+    expect(card().getByText('김민수 · 아직 안 봄')).toBeVisible();
     expect(card().getByText('301동에서')).toBeVisible();
     expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
   });
@@ -111,7 +111,7 @@ describe('a press of "이대로 초대"', () => {
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
     expect(card().queryByRole('button', { name: '다음 후보' })).toBeNull();
     expect(card().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
-    expect(card().queryByRole('button', { name: '민수 빼기' })).toBeNull();
+    expect(card().queryByRole('button', { name: '김민수 빼기' })).toBeNull();
     expect(card().queryByRole('button', { name: '301동에서' })).toBeNull();
     expect(card().queryByRole('button', { name: INVITE })).toBeNull();
   });
@@ -170,7 +170,7 @@ describe('"이대로 초대" on its way', () => {
 
     const waiting = card().getByRole('button', { name: '보내는 중이에요' });
     expect(waiting).toBeDisabled();
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeDisabled();
+    expect(card().getByRole('button', { name: '김민수 빼기' })).toBeDisabled();
     expect(card().getByRole('button', { name: '301동에서' })).toBeDisabled();
     expect(card().getByRole('button', { name: '다음 후보' })).toBeDisabled();
     expect(screen.getByRole('adjustable', { name: '시작 시각' })).toBeDisabled();

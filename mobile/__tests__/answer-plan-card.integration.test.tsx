@@ -225,7 +225,7 @@ describe("a swipe over the answer's lines", () => {
   it('changes nothing while a recalculation is on its way', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE, afterMs: 3000 });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
 
     await swipe('plan-swipe', { fromX: 200, dx: -60 });
 
