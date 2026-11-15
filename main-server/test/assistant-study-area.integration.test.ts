@@ -150,4 +150,12 @@ describe('An app without the capability area', () => {
 
     expect(toolNames()).toEqual(expect.arrayContaining(['findStudyNearby', 'planEvents']));
   });
+
+  it('is offered findStudyNearby beside planMeet with meet', async () => {
+    await stage.asking('2077-02-09', '12:10');
+
+    await stage.send([{ text: '네' }], { clientCapabilities: ['library', 'answer', 'meet', 'area'] }, ASKED);
+
+    expect(toolNames()).toEqual(expect.arrayContaining(['findStudyNearby', 'planMeet']));
+  });
 });

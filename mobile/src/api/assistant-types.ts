@@ -12,6 +12,7 @@
 
 import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
+import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { WithRefusal } from './refusal-types';
@@ -186,7 +187,7 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput;
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
 
 export interface MealInput {
   kind: 'meal';
@@ -232,9 +233,10 @@ export interface AnswerReply {
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
 }
 
-// `area` is the visible map area and `what` the kind of place asked for, of "이 근처".
+// `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
+// of "이 근처".
 export interface ConditionChip {
-  kind: 'origin' | 'until' | 'person' | 'area' | 'what';
+  kind: 'origin' | 'from' | 'until' | 'person' | 'area' | 'what';
   text: string;
   userId: string | null;
 }
@@ -326,7 +328,8 @@ export interface MapScene {
 export interface TimeBand {
   range: { startAt: string; endAt: string };
   now: string;
-  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string }[] }[];
+  // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
+  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
   startAt: string;
   endAt: string;
   text: string;

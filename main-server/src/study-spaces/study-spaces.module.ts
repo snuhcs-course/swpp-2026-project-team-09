@@ -21,6 +21,7 @@ import { STUDY_CATALOGUE, StudySpacesService } from './study-spaces.service.js';
     { provide: STUDY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     StudySpacesService,
   ],
+  // The libraries are among the places a meet may be at.
   exports: [StudySpacesService],
 })
 export class StudySpacesModule {}

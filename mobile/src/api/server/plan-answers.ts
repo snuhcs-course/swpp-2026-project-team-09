@@ -11,67 +11,32 @@ import type {
   ConditionChip,
   DroppedPlace,
   EventsInput,
-  MapScene,
   MealInput,
   PersonConstraint,
-  PlacePoint,
   Plan,
   PlanInput,
   PlanPart,
   PlanPerson,
   TimeBand,
 } from '@/api/assistant-types';
+import type { MeetInput } from '@/api/meet-plan-types';
 import type { NewQuestInput, QuestsInput } from '@/api/recruiting-plan-types';
-import type { LatLng } from '@/api/types';
 import { field, hasTexts, isBoard, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isRecruitingQuest } from './party-client';
+import { isBoolean, isMode, isPlacePoint, isScene } from './scene-answers';
 
 // The `answer` and the `lookup` of the Assistant's reply, as main-server `assistant/dto/answer.dto.ts` fixes them:
-// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply.
+// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply. The map
+// scene's checks are in `scene-answers.ts`.
+
+export { isPlacePoint, isScene };
 
 export function isOneOf<Value extends string>(values: readonly Value[]): (value: unknown) => value is Value {
   return (value: unknown): value is Value => values.some((one) => one === value);
 }
 
-// The keys of a record typed by a union of the contract, so that the compiler refuses a value left out or one too many.
-function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
-  return (value: unknown): value is Value => typeof value === 'string' && Object.hasOwn(values, value);
-}
-
-type Role<Part extends 'places' | 'routes' | 'flags'> = MapScene[Part][number]['role'];
-
-const isPlaceRole = isKeyOf<Role<'places'>>({
-  pick: true,
-  candidate: true,
-  dropped: true,
-  next: true,
-  meeting: true,
-  stop: true,
-});
-
-const isRouteRole = isKeyOf<Role<'routes'>>({ me: true, friend: true, next: true, shuttle: true, alt: true });
-
-const isFlagRole = isKeyOf<Role<'flags'>>({
-  place: true,
-  meeting: true,
-  leave: true,
-  late: true,
-  shuttle: true,
-  away: true,
-});
-
-const isPersonSource = isKeyOf<MapScene['people'][number]['source']>({ exact: true, building: true, timetable: true });
-
-function isBoolean(value: unknown): value is boolean {
-  return typeof value === 'boolean';
-}
-
 function isNumberOrNull(value: unknown): value is number | null {
   return value === null || isNumber(value);
-}
-
-function isLatLng(value: unknown): value is LatLng {
-  return isNumber(field(value, 'latitude')) && isNumber(field(value, 'longitude'));
 }
 
 function isConstraint(value: unknown): value is PersonConstraint {
@@ -93,17 +58,24 @@ function isPerson(value: unknown): value is PlanPerson {
   return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
 }
 
-function isMealInput(value: unknown): value is MealInput {
+// The people, the window, and the Place a meal and a meet share.
+function isGathering(value: unknown): boolean {
   const window = field(value, 'window');
   return (
-    field(value, 'kind') === 'meal' &&
     isText(field(value, 'date')) &&
-    isOneOf(['lunch', 'dinner'])(field(value, 'meal')) &&
     listOf(isPerson)(field(value, 'people')) &&
     isTextOrNull(field(window, 'from')) &&
     isTextOrNull(field(window, 'until')) &&
     isTextOrNull(field(value, 'placeId'))
   );
+}
+
+function isMealInput(value: unknown): value is MealInput {
+  return field(value, 'kind') === 'meal' && isOneOf(['lunch', 'dinner'])(field(value, 'meal')) && isGathering(value);
+}
+
+function isMeetInput(value: unknown): value is MeetInput {
+  return field(value, 'kind') === 'meet' && isGathering(value);
 }
 
 function isEventsInput(value: unknown): value is EventsInput {
@@ -136,17 +108,12 @@ function isNewQuestInput(value: unknown): value is NewQuestInput {
 }
 
 export function isInput(value: unknown): value is PlanInput {
-  return isMealInput(value) || isEventsInput(value) || isQuestsInput(value) || isNewQuestInput(value);
-}
-
-// A mode is absent for a walk.
-function isMode(value: unknown): boolean {
-  return value === undefined || isOneOf(['walk', 'shuttle'])(value);
+  return [isMealInput, isEventsInput, isQuestsInput, isNewQuestInput, isMeetInput].some((isKind) => isKind(value));
 }
 
 export function isChip(value: unknown): value is ConditionChip {
   return (
-    isOneOf(['origin', 'until', 'person', 'area', 'what'])(field(value, 'kind')) &&
+    isOneOf(['origin', 'from', 'until', 'person', 'area', 'what'])(field(value, 'kind')) &&
     isText(field(value, 'text')) &&
     isTextOrNull(field(value, 'userId'))
   );
@@ -156,10 +123,6 @@ export function isLine(value: unknown): value is AnswerLine {
   return listOf((part): part is AnswerLine[number] => isText(field(part, 'text')) && isBoolean(field(part, 'strong')))(
     value,
   );
-}
-
-export function isPlacePoint(value: unknown): value is PlacePoint {
-  return hasTexts(value, ['placeId', 'label']) && isLatLng(value);
 }
 
 function isDropped(value: unknown): value is DroppedPlace {
@@ -208,53 +171,18 @@ function isSubQuest(value: unknown): value is Plan['subQuests'][number] {
   return hasTexts(value, ['at', 'placeId', 'title']);
 }
 
-function isScenePerson(value: unknown): value is MapScene['people'][number] {
-  return (
-    hasTexts(value, ['userId', 'name']) &&
-    isBoolean(field(value, 'me')) &&
-    isLatLng(field(value, 'at')) &&
-    isPersonSource(field(value, 'source')) &&
-    isTextOrNull(field(value, 'tag'))
-  );
-}
-
-function isScenePlace(value: unknown): value is MapScene['places'][number] {
-  return isPlacePoint(field(value, 'place')) && isPlaceRole(field(value, 'role')) && isTextOrNull(field(value, 'tag'));
-}
-
-function isRoute(value: unknown): value is MapScene['routes'][number] {
-  return (
-    isText(field(value, 'userId')) &&
-    isRouteRole(field(value, 'role')) &&
-    isLatLng(field(value, 'from')) &&
-    isLatLng(field(value, 'to')) &&
-    isNumber(field(value, 'minutes')) &&
-    isMode(field(value, 'mode'))
-  );
-}
-
-// A main server before P05-11 sends no `placeId`.
-function isFlag(value: unknown): value is MapScene['flags'][number] {
-  const placeId = field(value, 'placeId');
-  const pointed = placeId === undefined || isText(placeId);
-  return pointed && isLatLng(field(value, 'at')) && isText(field(value, 'text')) && isFlagRole(field(value, 'role'));
-}
-
-export function isScene(value: unknown): value is MapScene {
-  return (
-    listOf(isScenePerson)(field(value, 'people')) &&
-    listOf(isScenePlace)(field(value, 'places')) &&
-    listOf(isRoute)(field(value, 'routes')) &&
-    listOf(isFlag)(field(value, 'flags'))
-  );
-}
-
 function isSpan(value: unknown): value is { startAt: string; endAt: string } {
   return hasTexts(value, ['startAt', 'endAt']);
 }
 
+// A busy stretch says what it is on a Plan's band, and need not elsewhere.
+function isBusy(value: unknown): value is TimeBand['lanes'][number]['busy'][number] {
+  const label = field(value, 'label');
+  return isSpan(value) && (label === undefined || isText(label));
+}
+
 function isLane(value: unknown): value is TimeBand['lanes'][number] {
-  return hasTexts(value, ['userId', 'name']) && listOf(isSpan)(field(value, 'busy'));
+  return hasTexts(value, ['userId', 'name']) && listOf(isBusy)(field(value, 'busy'));
 }
 
 export function isBand(value: unknown): value is TimeBand {

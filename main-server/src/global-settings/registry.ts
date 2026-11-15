@@ -17,26 +17,27 @@ interface ValueOfType {
 
 export type SettingValue = ValueOfType[SettingValueType];
 
-// A constant, or a function evaluated once when the server starts, for values that another module knows only then,
-// such as the names of the keys the server holds.
-export type AtStart<T> = T | (() => T);
+export type SettingCheck = (value: SettingValue) => string | null;
 
 // One global setting, as it is registered. `allowed`, when given, lists every value it may take; without it any value
-// of its type is allowed.
+// of its type is allowed. What is known only at start, such as the names of the keys the server holds, reaches the
+// definition through the registry's factory (registered-settings.ts).
 export type SettingDefinition = {
   [Type in SettingValueType]: {
     readonly name: string;
     readonly type: Type;
     // What the Settings page says the setting does.
     readonly description: string;
-    readonly default: AtStart<ValueOfType[Type]>;
-    readonly allowed?: AtStart<readonly ValueOfType[Type][]>;
+    readonly default: ValueOfType[Type];
+    readonly allowed?: readonly ValueOfType[Type][];
+    // A check of a save beyond the type and the allowed values: the reason it is refused, or null. Only a save runs it.
+    readonly check?: SettingCheck;
   };
 }[SettingValueType];
 
 export type ValueOf<Definition extends SettingDefinition> = ValueOfType[Definition['type']];
 
-// A definition with its default and allowed values evaluated, as the server holds it after it started.
+// A definition as the server holds it after it started, `allowed` null when any value of the type is.
 export interface ResolvedSetting {
   readonly name: string;
   readonly type: SettingValueType;
@@ -44,6 +45,7 @@ export interface ResolvedSetting {
   readonly default: SettingValue;
   // Null when any value of the type is allowed.
   readonly allowed: readonly SettingValue[] | null;
+  readonly check: SettingCheck | null;
 }
 
 // Keeps the type of a definition's values, so that `GlobalSettings.get` answers it.
@@ -51,11 +53,7 @@ export function defineSetting<const Definition extends SettingDefinition>(defini
   return definition;
 }
 
-function evaluate<T extends SettingValue | readonly SettingValue[]>(value: AtStart<T>): T {
-  return typeof value === 'function' ? value() : value;
-}
-
-// Evaluates every definition's default and allowed values. Throws when two share a name or a default is not among the
+// Resolves every definition. Throws when two share a name or a default is not among the
 // allowed values, so that a server with a wrong registry does not start.
 export function resolveRegistry(definitions: readonly SettingDefinition[]): Map<string, ResolvedSetting> {
   const resolved = new Map<string, ResolvedSetting>();
@@ -67,8 +65,9 @@ export function resolveRegistry(definitions: readonly SettingDefinition[]): Map<
       name: definition.name,
       type: definition.type,
       description: definition.description,
-      default: evaluate<SettingValue>(definition.default),
-      allowed: definition.allowed === undefined ? null : evaluate<readonly SettingValue[]>(definition.allowed),
+      default: definition.default,
+      allowed: definition.allowed ?? null,
+      check: definition.check ?? null,
     };
     const refusal = refusalOf(setting, setting.default);
     if (refusal !== null) {

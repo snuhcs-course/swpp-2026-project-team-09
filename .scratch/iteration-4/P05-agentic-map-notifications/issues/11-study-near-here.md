@@ -50,7 +50,7 @@ Change (package A's files, these lines only):
 - `main-server/src/assistant/assistant.module.ts`: imports `StudySpacesModule`, provides `StudyAreaService`.
 - `main-server/src/assistant/lookup/way-naming.ts`: `me` takes only the start.
 - `main-server/src/study-spaces/study-spaces.module.ts`: exports `StudySpacesService`.
-- App: `api/lookup-types.ts` (kind), `api/scene-roles.ts` (`away`), `api/assistant-types.ts` (chip kinds, `placeId?`, `ANSWER_CAPABILITIES`), `api/server/plan-answers.ts` (`isChip`, `isFlagRole`, `isFlag`), `api/server/lookup-answers.ts` (`isLookup`), `api/mock/assistant.ts` (a9's words), and the tests that pin the capabilities sent.
+- App: `api/lookup-types.ts` (kind), `api/scene-roles.ts` (`away`), `api/assistant-types.ts` (chip kinds, `placeId?`, `ANSWER_CAPABILITIES`), `api/server/plan-answers.ts` (`isChip`; its map-scene checks, with `isFlagRole` and `isFlag`, moved to a new `api/server/scene-answers.ts`), `api/server/lookup-answers.ts` (`isLookup`), `api/mock/assistant.ts` (a9's words), and the tests that pin the capabilities sent.
 - `main-server/README.md` (the chat's tools) and `mobile/README.md` (the capabilities a request with a context carries).
 
 ## Must not change
@@ -63,7 +63,7 @@ Change (package A's files, these lines only):
 
 - [x] Unit tests of the area and its edge (inside, on the edge, each side's arrow and point, a corner), the ready time, start, and next item (free now, rounded up, a Class under way, nothing later, no start, off campus), the stay (board a9's 8 + 8 minutes: 12:18 to 12:52, 34; 421 seconds as 8 minutes; in the building; a Class under way, 32; a next item without a Place; nothing to follow), and the pick (the longer stay over the nearer space, ties by walk then order, the nearest with nothing to follow, the least short when none fits), with values worked out by hand.
 - [x] Unit tests of board a9 on the seed: the chips, lines, basis, scene (pick, two faded department rooms, route, the `place` flag "걸어서 8분 · 12:52까지 34분", the `away` flag "↑ 관정" at the north edge with 관정관's Place), actions, and the model's words without coordinates; a 컴퓨터공학부 student picks 301동's own room (35 minutes); an area holding 관정관 has no `away` flag; `any`; the gate; nothing to follow; and each none.
-- [x] Integration test at the endpoint with the scripted model: a9 drawn, what the model is given (no coordinate of the area or the User), none without `viewport`; an app without `area` gets the same prompt and tools but for `findStudyNearby` and its rules; `area` without `answer` gets neither; `events` with `area` gets both.
+- [x] Integration test at the endpoint with the scripted model: a9 drawn, what the model is given (no coordinate of the area or the User), none without `viewport`; an app without `area` gets the same prompt and tools but for `findStudyNearby` and its rules; `area` without `answer` gets neither; `events` with `area` gets both, and so does `meet` with `area` (`planMeet` beside `findStudyNearby`).
 - [x] App: the check passes the stored a9 copy and refuses an unknown chip kind, a non-text `placeId`, and an unknown flag role; a flag without `placeId` still passes; the mock answers "이 근처 … 공부" with a context by the stored copy.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass in both projects; the touched tests pass.
 
@@ -82,12 +82,13 @@ Details the contract left to the implementation, listed so that any of them can 
 7. **Route guidance** is left out when the walk is 0 (the User sets out from the pick's building); "관정 보기" is always there.
 8. **The gate's line** joins the basis when the walk starts at the main gate, as in the way Lookup.
 9. **None is drawn** without an area, without a space of the kind in it, with only rooms open to others (the model is told which, to whom), or without a known start.
-10. **The chats** are built once per kind of app: an app with `answer` and `area` gets the chat of `answer` (or `events`) with the tool and its rules added last, so that removing them gives today's prompt and tools exactly.
+10. **The chats** are built once per kind of app: an app with `answer` and `area` gets the chat of `answer` (or `events`, each with or without P01-18's `meet`) with the tool and its rules added last, so that removing them gives today's prompt and tools exactly.
 11. **`WayNaming.me`** takes only the start, so that the Lookup draws the User as a way does without a whole way.
 12. **The app announces `area`** in `ANSWER_CAPABILITIES` from this change on. It sends no `viewport` until P02 ticket 23, so the tool answers none and nothing new is drawn. The tests that pin the capabilities sent were updated.
 13. **The mock's copy** of a9 was written by `studyAnswer` over the seed for a student of 경제학부 with the mock's User id, and the mock answers it for any area the app sends.
 14. **`AssistantService`'s constructor** went over oxlint's 50-line limit with the one new injected service, and carries a `max-lines-per-function` exception that gives the reason: one parameter per service the chat's tools call. Raising the limit for injected constructors in the lint configuration would replace it.
+15. **The app's map-scene checks** moved from `api/server/plan-answers.ts` to `api/server/scene-answers.ts` when the merge with P01-18 took the file over 300 lines; `plan-answers.ts` re-exports `isScene` and `isPlacePoint`, so no importer changed.
 
 ### Found while building (2026-11-15)
 
-- The main server refuses a request whose `clientCapabilities` holds a value it does not know (`z.enum(CLIENT_CAPABILITIES)`, 400). An app that sends `area` therefore needs a main server with this change: the server must be deployed with or before the app's update, or every request with a context fails.
+- The main server refuses a request whose `clientCapabilities` holds a value it does not know (`z.enum(CLIENT_CAPABILITIES)`, 400). An app that sends `area` therefore needs a main server with this change: the server must be deployed with or before the app's update, or every request with a context fails. The server and the APK are released together from the same Main, so a Release meets this.

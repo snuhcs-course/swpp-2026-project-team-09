@@ -9,6 +9,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -100,9 +101,14 @@ function refetch(queryClient: QueryClient, keys: readonly QueryKey[]): void {
   }
 }
 
-// A position replaces the User's one before, which the Avatar glides from.
+// A position replaces the User's one before, which the Avatar glides from. One without a level keeps the level of the
+// one before, which GET /positions gave.
 export function withPosition(positions: readonly Position[], position: Position): Position[] {
-  return [...positions.filter(({ userId }) => userId !== position.userId), position];
+  const level = position.level ?? positions.find(({ userId }) => userId === position.userId)?.level;
+  return [
+    ...positions.filter(({ userId }) => userId !== position.userId),
+    level === undefined ? position : { ...position, level },
+  ];
 }
 
 // A position that arrives for a Friend or a member whom the answers say the User cannot see means that those answers

@@ -501,7 +501,10 @@ above the navigation.
 selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under its card's id. A Friend who can be
   seen and a member of the User's Party who is no Friend are the wireframe's teardrop at every zoom, in the status's
   colour or the Party's: small while the whole campus is in view, at full size from the `pins` level, and with the
-  given name under it from the `names` level. A Friend whose position is not known has no marker. The Global Event,
+  given name under it from the `names` level. While the switch of the answer on the map is on, a Friend whose
+  position is at the exact level (`Position.level`) carries a green dot at the face, none at the building level or
+  while dimmed; with the switch off no face has one. A live position's level replaces the one before; one without a
+  level keeps it. A Friend whose position is not known has no marker. The Global Event,
   the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
   with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. A short name is the title cut at a word's end within 8 characters,
@@ -653,7 +656,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
   User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
   marks, which they would lie over (`nearOwnMark`). A face shows two characters of the name, so its tag leaves out a
-  name that short ("18분" beside the face "민수"). The looks of every Plan are asked for when the answer comes. The camera
+  name that short ("18분" beside the face "민수"). A face's ring says how the Friend is seen: a green dot at its lower
+  right for the source `exact`, a plain ring for `building`, and a dashed one for `timetable`. The looks of every Plan
+  are asked for when the answer comes. The camera
   goes in one glide to where `answerCamera` (`src/features/assistant/answer-camera.ts`) works it out for the view:
   the fit of the answer's points between the pill and the card, with the room the marks there need (`roomsOf`) and 64
   at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the
@@ -1450,8 +1455,10 @@ white border. A selected one is 4 larger, inside a ring of the key colour.
 `MapPerson` is a person on the map, which the `Main` wireframe draws and the design system does not name: a teardrop
 filled with a colour of `presence`, with the person's small Avatar in it, 24 wide in its `small` form and 36
 otherwise. Its box ends at its tip. A selected one is 1.18 times as large, inside a white ring and a ring of the key
-colour. `presence` names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses,
-which an Avatar's dot uses too, and `member`, a member of the User's Party who is no Friend.
+colour. `exact` puts a green dot of 11 on the drop's rim at the face's lower right, outside the Avatar, and `addable` a
+"+" at its upper right; with either the box grows at the sides and the top, and the tip keeps its place. `presence`
+names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses, which an Avatar's dot
+uses too, and `member`, a member of the User's Party who is no Friend.
 
 `MapRestaurant` is the `MapDining` frame's single 학식 on the map: a round of 22 in the dining colour with 학, a white
 ring and a small tail; selected, 26 inside a ring of the key colour. `DayTile` is a day to choose as the
