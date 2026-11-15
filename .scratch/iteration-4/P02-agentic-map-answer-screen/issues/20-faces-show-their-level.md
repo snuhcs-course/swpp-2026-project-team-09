@@ -21,7 +21,7 @@ The design gives a face three looks: a green dot for an exact location measured 
 - [x] A live position without a level keeps the dot of the level `GET /positions` gave.
 - [x] Each look has its own name, and two looks that draw the same picture share one, as the marker looks' rule says; the looks are asked for ahead, so that no picture is waited for.
 - [x] Unit tests of the face's looks (the everyday Avatar and the answer's face), and an integration test at the main screen of the three Friends of board a0.
-- [ ] The screen is run on an Android emulator, and the pull request carries the everyday map with an exact and a building Friend.
+- [x] The screen is run on an Android emulator, and the pull request carries the everyday map with an exact and a building Friend.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
@@ -43,3 +43,14 @@ The design gives a face three looks: a green dot for an exact location measured 
 9. No stored answer has a Friend at the exact level, so the answer's test takes the stored "민수 어디야?" Lookup and changes 민수's `source`, with a comment.
 10. `CardMark`'s person holds `stale` and `exact` in a type of their own (`PersonSeen`), which keeps `adapter.ts` within the lint's 300 lines.
 11. The mock's `GET /positions` writes on each Friend's position the level the two see each other at (`seen`), as the main server sends it, so the dot shows on the mock build with the switch on; a Friend lowered to the building in 위치 공유 loses it. The mock keeps the Friend's own point at the building level, where the main server gives the Place's point.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build on the mock with its campus walk, the switch on: every mock Friend at the exact level carried the green dot at the lower right of the face, and 현우, a Party member who is no Friend, none. On the answer to "배고파, 민수랑 같이" the faces carried the "+" at the upper right and the dot at the lower right, clear of each other and of the letters. Not seen there: a dimmed face (the mock's positions do not age) and a live position's level (package C's #281 is not yet on Main); the tests cover the first, and decision 6 holds the second.
+
+### Agent usage (2026-11-15)
+
+One session with three subagents for this ticket (the implementation with its mock levels and the switch's gate, a review of the spec and the standards, and the merge with Main); the session's own time counted is the emulator check.
+
+- Agent time: about 75 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 214,697; input 84,958,454, of which 83,904,024 were cache reads, 1,053,848 cache writes, and 582 uncached. Without cache reads: 1,269,127.
