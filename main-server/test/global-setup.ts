@@ -14,6 +14,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -62,6 +63,7 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     // Not a key: the tests give startApp a ScriptedModel from test/scripted-model.ts in the model's place.
     OPENROUTER_API_KEY: 'test-openrouter-api-key',
     ASSISTANT_MODEL: 'test/model',
+    LLM_KEYS: '{}',
     // The defaults. A test of a limit starts an app with a smaller one.
     ASSISTANT_DAILY_MESSAGES: '50',
     ASSISTANT_MAX_STEPS: '8',
