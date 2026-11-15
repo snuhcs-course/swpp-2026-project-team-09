@@ -6,7 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { renderHook } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 import { createRef } from 'react';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
@@ -81,6 +81,8 @@ const NO_ANSWER: ShownAnswer = {
   setAdding: nothing,
   recalculating: false,
   change: nothing,
+  add: nothing,
+  pendingAdd: null,
   ghost: null,
   undo: nothing,
 };
@@ -180,6 +182,86 @@ describe("the answer's camera before the view is known", () => {
 
     expect(asked.fits).toBe(1);
     expect(asked.cameras).toHaveLength(1);
+  });
+});
+
+async function wait(milliseconds: number): Promise<void> {
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(milliseconds);
+  });
+}
+
+// The list of Friends open, which makes the card taller, over the first Plan.
+const LIST_OPEN: Given = { ...FIRST, room: { ...ROOM, answerHeight: 380 } };
+
+// A recalculation's answer: a new object, as every answer of the server is, here with the stored answer's Plans.
+function recalculated(plans = MEAL_ANSWER.plans): ShownAnswer {
+  const answer = { ...MEAL_ANSWER, plans };
+  return { ...shownAt(0), answer, plan: answer.plans[0] ?? null };
+}
+
+function onFakeTimers(): void {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+}
+
+// Partitions: the card laid out again within 120 ms of the answer, and the moment of 120 ms still; an answer without a
+// Plan. Expected values: the first Plan's area under a card of 274 is from 124 to 574, as above.
+describe("the answer's camera after a recalculation", () => {
+  onFakeTimers();
+
+  it('moves once, after the drawing and the card have stayed the same for 120 ms, to the card then laid out', async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, LIST_OPEN);
+    const shown = recalculated();
+
+    await rerender({ ...LIST_OPEN, shown });
+    await wait(60);
+    // The list closed with the answer, and the card is laid out again.
+    await rerender({ ...FIRST, shown });
+    await wait(119);
+    expect(asked.cameras).toHaveLength(1);
+    await wait(1);
+
+    expect(asked.cameras).toHaveLength(2);
+    const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 0).points, asked.cameras[1]);
+    expect(top).toBeCloseTo(124, 0);
+    expect(bottom).toBeCloseTo(574, 0);
+    await wait(1000);
+    expect(asked.cameras).toHaveLength(2);
+  });
+
+  it('stays where it is when the answer has no Plan', async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, LIST_OPEN);
+
+    // The recalculated answer with its Plans emptied for the boundary.
+    await rerender({ ...FIRST, shown: recalculated([]) });
+    await wait(1000);
+
+    expect(asked.cameras).toHaveLength(1);
+    expect(asked.fits).toBe(0);
+  });
+});
+
+// Partitions: a change of the card after the one move.
+describe("the answer's camera after the move for a recalculation", () => {
+  onFakeTimers();
+
+  it('moves at once again for a change of the card', async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, LIST_OPEN);
+    const shown = recalculated();
+    await rerender({ ...FIRST, shown });
+    await wait(120);
+
+    await rerender({ ...FIRST, shown, room: { ...ROOM, answerHeight: 336 } });
+
+    expect(asked.cameras).toHaveLength(3);
   });
 });
 

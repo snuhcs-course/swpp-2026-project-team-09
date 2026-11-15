@@ -40,7 +40,15 @@ const noop = (): void => undefined;
 
 async function show(props: Partial<Props> = {}): Promise<void> {
   await render(
-    <FriendChoices disabled={false} friends={FRIENDS_SHOWN} onChoose={noop} pick={PICK} room={null} {...props} />,
+    <FriendChoices
+      disabled={false}
+      friends={FRIENDS_SHOWN}
+      onChoose={noop}
+      pending={null}
+      pick={PICK}
+      room={null}
+      {...props}
+    />,
   );
 }
 

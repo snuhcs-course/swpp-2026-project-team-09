@@ -3,12 +3,13 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { type ImageSourcePropType, StyleSheet, View, type ViewStyle } from 'react-native';
+import { type ImageSourcePropType, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { Avatar } from './avatar';
-import { color, presence, radius, shadow } from './tokens';
+import { color, mapText, presence, radius, shadow, text } from './tokens';
 
 // What fills a person's marker: a Friend's status, or `member` for a member of the User's Party who is no Friend.
 export type PersonTone = keyof typeof presence;
@@ -24,6 +25,9 @@ interface MapPersonProps {
   selected?: boolean;
   // Dimmed: the position it stands on is old.
   stale?: boolean;
+  // A "+" at the drop's upper right, outside the Avatar, as an answer's face carries "?" and "✓": a press adds the
+  // person.
+  addable?: boolean;
   // Called once the photo is shown or has failed, for a caller that waits for the finished look.
   onPhotoSettled?: () => void;
   testID?: string;
@@ -34,6 +38,11 @@ const SMALL_SIDE = 24;
 // The face is the small Avatar, drawn smaller still in the small marker.
 const SMALL_FACE = 0.68;
 const SELECTED = 1.18;
+const BADGE = 14;
+// While the "+" is carried the box grows this much at both sides and at the top, so that the badge in its upper right
+// corner lies outside the Avatar, on the drop's rim, and whole inside the box the picture is made from. The drop and
+// its tip keep their place in the box, so the face stands where it stood.
+const BADGE_ROOM = 6;
 // A square turned by 45° reaches (√2 − 1) / 2 of its side below its own box: the marker's tip.
 const TIP = (Math.SQRT2 - 1) / 2;
 
@@ -58,17 +67,19 @@ export function MapPerson({
   small = false,
   selected = false,
   stale = false,
+  addable = false,
   onPhotoSettled,
   testID,
 }: MapPersonProps): ReactElement {
   const grown = selected ? SELECTED : 1;
   const side = (small ? SMALL_SIDE : SIDE) * grown;
+  const room = addable ? BADGE_ROOM : 0;
   return (
-    <View style={[{ width: side, height: side * (1 + TIP) }, stale && styles.stale]} testID={testID}>
+    <View style={[{ width: side + room * 2, height: side * (1 + TIP) + room }, stale && styles.stale]} testID={testID}>
       <View
         style={[
           styles.drop,
-          { width: side, height: side, backgroundColor: presence[tone] },
+          { width: side, height: side, marginTop: room, marginLeft: room, backgroundColor: presence[tone] },
           roundBut(side / 2),
           selected && styles.selected,
         ]}
@@ -78,6 +89,11 @@ export function MapPerson({
           <Avatar name={name} onPhotoSettled={onPhotoSettled} size="sm" source={source} />
         </View>
       </View>
+      {addable ? (
+        <View style={styles.badge} testID={testID === undefined ? undefined : `${testID}:badge`}>
+          <Text style={styles.plus}>+</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -98,4 +114,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     boxShadow: `0 0 0 2px ${color.surface}`,
   },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: BADGE,
+    height: BADGE,
+    borderRadius: radius.full,
+    backgroundColor: color.snuBlue,
+  },
+  plus: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
 });
