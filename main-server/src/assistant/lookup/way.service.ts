@@ -12,6 +12,7 @@ import { PlaceLookup } from '../../places/place-lookup.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
+import { type LocationMissing } from '../dto/answer.dto.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
 import { wayAnswer, type WayAnswer, type WayArgs } from './way-lookup.js';
@@ -35,7 +36,7 @@ export class WayService {
   async find(
     userId: string,
     ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null },
-    at: { now: Date; location: Position | null },
+    at: { now: Date; location: Position | null; locationMissing: LocationMissing },
   ): Promise<WayAnswer> {
     return wayAnswer(await this.argsFor(userId, ask, at));
   }
@@ -43,9 +44,9 @@ export class WayService {
   async argsFor(
     userId: string,
     ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null },
-    at: { now: Date; location: Position | null },
+    at: { now: Date; location: Position | null; locationMissing?: LocationMissing },
   ): Promise<WayArgs> {
-    const { now, location } = at;
+    const { now, location, locationMissing = null } = at;
     const [user, items, { stops }, vehicles] = await Promise.all([
       this.users.findById(userId),
       this.days.itemsOn(userId, koreaDate(now)),
@@ -56,6 +57,7 @@ export class WayService {
       now,
       me: { userId, name: user.name, items },
       location: this.located(location),
+      locationMissing,
       ...ask,
       gatePlaceId: this.gatePlaceId(),
       travel: this.travel,

@@ -11,6 +11,7 @@ import type { Lookup } from '@/api/lookup-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import { type GuideAction, mainActionOf, type ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { AnswerLines } from './answer-lines';
+import { CardNote } from './card-note';
 import { ReadOnlyChip } from './condition-chips';
 import { TimeBand } from './time-band';
 
@@ -129,6 +130,7 @@ export function LookupCard({ lookup, shown, onClose }: LookupCardProps): ReactEl
           onDrop={ignoreDrop}
         />
       )}
+      <CardNote note={lookup.note} />
       <Buttons guide={guide} main={mainActionOf(lookup)} onClose={onClose} />
     </View>
   );

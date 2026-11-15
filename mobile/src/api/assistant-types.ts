@@ -15,7 +15,7 @@ import type { Lookup } from './lookup-types';
 import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
-import type { WithRefusal } from './refusal-types';
+import type { WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
@@ -174,7 +174,7 @@ export function referenceOf(card: ChatCard): CardReference {
 // Times are Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
 
 // What the app knows when the User asks, each part null when it does not know it.
-export interface RequestContext {
+export interface RequestContext extends WithLocationMissing {
   location: LatLng | null;
   // The visible map area.
   viewport: { south: number; west: number; north: number; east: number } | null;
@@ -221,7 +221,7 @@ export type PersonConstraint =
   | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
   | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
 
-export interface AnswerReply {
+export interface AnswerReply extends WithMissing {
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];
@@ -233,7 +233,7 @@ export interface AnswerReply {
 }
 
 // `from` is the start the User fixed for a meet.
-export interface ConditionChip {
+export interface ConditionChip extends WithMark {
   kind: 'origin' | 'from' | 'until' | 'person';
   text: string;
   userId: string | null;

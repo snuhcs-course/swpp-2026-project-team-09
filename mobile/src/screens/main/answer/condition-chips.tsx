@@ -46,11 +46,13 @@ function pressedStyle(base: StyleProp<ViewStyle>): ({ pressed }: { pressed: bool
 
 interface ChipButtonProps {
   label: string;
+  // Drawn in the Quest colour: the server assumed it, or eased it.
+  marked: boolean;
   disabled: boolean;
   onPress: () => void;
 }
 
-function ChipButton({ label, disabled, onPress }: ChipButtonProps): ReactElement {
+function ChipButton({ label, marked, disabled, onPress }: ChipButtonProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={label}
@@ -59,9 +61,9 @@ function ChipButton({ label, disabled, onPress }: ChipButtonProps): ReactElement
       disabled={disabled}
       hitSlop={HIT_SLOP}
       onPress={onPress}
-      style={pressedStyle(styles.chip)}
+      style={pressedStyle([styles.chip, marked && styles.marked])}
     >
-      <Text numberOfLines={1} style={styles.label}>
+      <Text numberOfLines={1} style={[styles.label, marked && styles.markedLabel]}>
         {label}
       </Text>
     </Pressable>
@@ -178,6 +180,7 @@ export function ConditionChips(props: ConditionChipsProps): ReactElement {
               disabled={disabled}
               key={chip.kind}
               label={chip.text}
+              marked={chip.mark !== undefined}
               onPress={chip.kind === 'origin' ? on.onOrigin : on.onUntil}
             />
           ),
@@ -215,6 +218,8 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   person: { borderColor: color.snuBlue, backgroundColor: color.blue50 },
+  marked: { borderColor: color.quest, backgroundColor: color.questSoft },
+  markedLabel: { color: color.quest },
   add: { borderStyle: 'dashed' },
   adding: { borderStyle: 'solid', borderColor: color.snuBlue, backgroundColor: color.blue100 },
   pressed: { opacity: 0.6 },

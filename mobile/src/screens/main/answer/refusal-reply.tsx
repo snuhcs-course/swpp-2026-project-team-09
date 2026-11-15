@@ -38,7 +38,7 @@ const ROUTES: Record<Exclude<RefusalScreen, 'location'>, Href> = {
   interests: '/me/interests',
 };
 
-function opened(screen: RefusalScreen): void {
+export function openScreen(screen: RefusalScreen): void {
   if (screen === 'location') {
     offerLocation();
   } else {
@@ -66,7 +66,7 @@ function OfferCell({ offer, main, onAsk }: OfferCellProps): ReactElement {
         if (offer.kind === 'ask') {
           onAsk(offer.text);
         } else {
-          opened(offer.screen);
+          openScreen(offer.screen);
         }
       }}
       style={({ pressed }): StyleProp<ViewStyle> => [

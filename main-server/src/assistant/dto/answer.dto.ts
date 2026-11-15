@@ -10,13 +10,19 @@ import { type Position } from '../../common/geometry.js';
 import { QuestBoard } from '../../generated/prisma/client.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import { clockTime } from '../free-time/tool-parts.js';
+import { type RefusalOffer } from '../refusals/refusal.dto.js';
 
 // The contract of an answer drawn on the map, declared with the same shape in the app's Assistant types. Times are
 // Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
 
+// Why the app sends no location: the permission is not granted, or the position is outside the Campus Boundary and
+// is not sent. Null when it says nothing, as an app before P02-13 does.
+export type LocationMissing = 'permission' | 'off-campus' | null;
+
 // What the app knows when the User asks.
 export interface RequestContext {
   location: Position | null;
+  locationMissing: LocationMissing;
   // The visible map area.
   viewport: { south: number; west: number; north: number; east: number } | null;
   tapped: { kind: 'place'; placeId: string } | { kind: 'friend'; userId: string } | null;
@@ -106,13 +112,22 @@ export interface AnswerReply {
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
+  // Screens the card opens beside its buttons, as a refusal's offers do, when an input was missing.
+  offers?: AnswerOffer[];
+  // One short line of the card above its buttons.
+  note?: string;
 }
+
+export type AnswerOffer = Extract<RefusalOffer, { kind: 'open' }>;
 
 // `from` is the start the User fixed for a meet.
 export interface ConditionChip {
   kind: 'origin' | 'from' | 'until' | 'person';
   text: string;
   userId: string | null;
+  // Drawn in the Quest colour: `assumed` when the server took it in place of a missing input, `relaxed` when a
+  // condition was eased.
+  mark?: 'assumed' | 'relaxed';
 }
 
 export type AnswerLine = { text: string; strong: boolean }[];
@@ -320,6 +335,7 @@ const tappedSchema = z.discriminatedUnion('kind', [
 
 export const requestContextSchema = z.strictObject({
   location: z.strictObject({ latitude, longitude }).nullable().default(null),
+  locationMissing: z.enum(['permission', 'off-campus']).nullable().default(null),
   viewport: z
     .strictObject({ south: latitude, west: longitude, north: latitude, east: longitude })
     .nullable()
@@ -347,6 +363,7 @@ export type Tap = z.infer<typeof tapSchema>;
 
 export const NO_CONTEXT: RequestContext = {
   location: null,
+  locationMissing: null,
   viewport: null,
   tapped: null,
   conditions: null,

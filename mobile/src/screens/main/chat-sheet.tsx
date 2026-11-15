@@ -28,6 +28,7 @@ import { openPost } from '../party/post-card';
 import { ChatBubbles, ChatEmpty } from './chat-bubbles';
 import { type CardLeaving, useCardActions } from './chat-card-actions';
 import type { ProposalActions } from './chat-cards';
+import type { Me } from './use-me';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 interface ChatSheetProps {
@@ -211,12 +212,14 @@ function stay(): void {
   // A card that leads elsewhere leaves the answer frame as it is.
 }
 
-// What the app knows when the User asks: where the User is on campus, and the conditions and the Plan of the answer
-// on screen.
-function contextAt(position: LatLng | null, shown: ShownAnswer | null): RequestContext {
+type Where = Pick<Me, 'position' | 'locationMissing'>;
+
+// What the app knows when the User asks: where the User is on campus or why that is not known, and the conditions and
+// the Plan of the answer on screen.
+function contextAt({ position, locationMissing }: Where, shown: ShownAnswer | null): RequestContext {
   const conditions = shown?.answer?.input ?? null;
   const planId = shown?.plan?.id ?? null;
-  return { location: position, viewport: null, tapped: null, conditions, planId };
+  return { location: position, locationMissing, viewport: null, tapped: null, conditions, planId };
 }
 
 // A map button of the answer frame: forgets the conversation and turns its layer on.
@@ -257,7 +260,7 @@ function useAnswerOnScreen(
 // once made, closes it and shows 내 파티, as the party form does, and its 수정, like a Restaurant card's 파티 만들기, closes
 // it and opens that form. However the sheet closes, the keyboard goes down with it: the AI input would keep the focus
 // otherwise.
-// With the switch of the answer on the map on, every request carries the context at the User's `position`, the sheet
+// With the switch of the answer on the map on, every request carries the context at `where` the User is, the sheet
 // never opens, and the answer frame shows the conversation instead: a card that leads elsewhere leaves the frame as
 // it is, and a map button forgets the conversation and turns its layer on. A change of the switch closes the sheet and
 // forgets the conversation. A Lookup's "길 안내" starts the route guidance with `start` and forgets the conversation
@@ -265,12 +268,13 @@ function useAnswerOnScreen(
 export function useChatSheet(
   inFront: boolean,
   turnOn: (layer: MapLayer) => void,
-  position: LatLng | null,
+  where: Where,
   start: StartGuidance,
 ): ChatSheetControl {
+  const { position } = where;
   const onMap = useAnswerSwitch();
   const shownNow = useRef<ShownAnswer | null>(null);
-  const chat = useChat(onMap ? (): RequestContext => contextAt(position, shownNow.current) : undefined);
+  const chat = useChat(onMap ? (): RequestContext => contextAt(where, shownNow.current) : undefined);
   const [shown, setShown] = useState(false);
   const open = useCallback((): void => {
     if (!onMap) {

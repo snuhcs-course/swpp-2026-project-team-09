@@ -24,6 +24,7 @@ import {
 } from './answer-words.js';
 import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
 import { bandOf, sceneOf } from './meal-scene.js';
+import { missingLines, missingParts, NEAREST_BASIS, nearestFirst } from './missing-inputs.js';
 import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
 
 export { type AnswerPerson, type MealAnswerArgs } from './answer-words.js';
@@ -46,10 +47,14 @@ function askerFixed({
   return { ...conditions, end };
 }
 
-// The asker's chosen origin, else the one of their side.
+// The asker's chosen origin, else the one of their side, marked when it was assumed for a missing location.
 export function originChip(naming: GatheringNaming, mine: GatheringSide | undefined): ConditionChip | null {
   const placeId = askerFixed(naming.args.input).chosenPlaceId ?? mine?.origin?.placeId ?? null;
-  return placeId === null ? null : { kind: 'origin', text: `${naming.placeLabel(placeId)}에서`, userId: null };
+  if (placeId === null) {
+    return null;
+  }
+  const chip: ConditionChip = { kind: 'origin', text: `${naming.placeLabel(placeId)}에서`, userId: null };
+  return mine?.origin?.assumed === true ? { ...chip, mark: 'assumed' } : chip;
 }
 
 // The end the User fixed when it is earlier than both the asker's next item and the window's own end (the meal's),
@@ -278,8 +283,10 @@ export function basisOf(fit: GatheringFit, naming: GatheringNaming): string[] {
   return lines;
 }
 
-function planOf(fit: GatheringFit, naming: Naming): Plan {
+// `first` for the Plan shown first, `nearest` when the Plans come nearest first for want of a Timetable.
+function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: boolean; nearest: boolean }): Plan {
   const { key, placeId, start, end, togetherMinutes } = fit;
+  const basis = basisOf(fit, naming);
   return {
     id: key,
     title: `${key}에서 ${mealWord(naming)}`,
@@ -290,8 +297,8 @@ function planOf(fit: GatheringFit, naming: Naming): Plan {
     meeting: meetingOf(fit, naming),
     parts: fit.parts.map((part) => partOf(part, naming)),
     subQuests: subQuestsOf(fit, naming, `${key}에서 식사`),
-    lines: linesOf(fit, naming),
-    basis: basisOf(fit, naming),
+    lines: (first ? missingLines(fit, naming, nearest) : null) ?? linesOf(fit, naming),
+    basis: nearest ? [NEAREST_BASIS, ...basis] : basis,
     scene: sceneOf(fit, naming, mealWord(naming)),
     band: bandOf(fit, naming),
   };
@@ -299,7 +306,10 @@ function planOf(fit: GatheringFit, naming: Naming): Plan {
 
 export function mealAnswer(args: MealAnswerArgs): AnswerReply {
   const naming = new GatheringNaming(args);
-  const plans = args.gathering.fits.map((fit) => planOf(fit, naming));
+  const nearest = nearestFirst(args);
+  const plans = (nearest ?? args.gathering.fits).map((fit, index) =>
+    planOf(fit, naming, { first: index === 0, nearest: nearest !== null }),
+  );
   return {
     input: args.input,
     chips: chipsOf(naming),
@@ -309,5 +319,6 @@ export function mealAnswer(args: MealAnswerArgs): AnswerReply {
       reason: naming.dropReason(drop),
     })),
     noPlan: plans.length > 0 ? null : noPlanOf(args),
+    ...missingParts(args.missing),
   };
 }

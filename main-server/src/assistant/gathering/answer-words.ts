@@ -18,6 +18,7 @@ import {
   type GatheringSide,
   type PersonPart,
 } from './gathering.js';
+import { type MissingInputs } from './missing-inputs.js';
 import { PlaceNaming } from './place-naming.js';
 
 // What the words of a meal's answer share: who is who, how a Place is called, and the pieces of a way.
@@ -49,6 +50,8 @@ export interface MealAnswerArgs extends GatheringArgs<MealInput> {
   // No menu collected for the day, menus but no Restaurant with a Place open for the meal, open ones but none at the
   // Place the User fixed, or open ones.
   menus: 'none' | 'closed' | 'closed-at-place' | 'open';
+  // What the app could not give, left out when nothing was missing.
+  missing?: MissingInputs;
 }
 
 const SHORTEST_MEAL_MINUTES = SHORTEST_MEAL_SECONDS / 60;

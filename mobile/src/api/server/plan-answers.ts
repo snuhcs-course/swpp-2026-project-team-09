@@ -18,6 +18,7 @@ import type {
 } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
+import { hasMissingParts } from './missing-input-answers';
 import { isRecruitingQuest } from './party-client';
 import { isInput, isOneOf } from './plan-inputs';
 
@@ -65,10 +66,12 @@ function isMode(value: unknown): boolean {
 }
 
 export function isChip(value: unknown): value is ConditionChip {
+  const mark = field(value, 'mark');
   return (
     isOneOf(['origin', 'from', 'until', 'person'])(field(value, 'kind')) &&
     isText(field(value, 'text')) &&
-    isTextOrNull(field(value, 'userId'))
+    isTextOrNull(field(value, 'userId')) &&
+    (mark === undefined || isOneOf(['assumed', 'relaxed'])(mark))
   );
 }
 
@@ -233,6 +236,7 @@ export function isAnswerReply(value: unknown): value is AnswerReply {
     listOf(isChip)(field(value, 'chips')) &&
     listOf(isPlan)(field(value, 'plans')) &&
     listOf(isDropped)(field(value, 'dropped')) &&
-    isNoPlan(field(value, 'noPlan'))
+    isNoPlan(field(value, 'noPlan')) &&
+    hasMissingParts(value)
   );
 }

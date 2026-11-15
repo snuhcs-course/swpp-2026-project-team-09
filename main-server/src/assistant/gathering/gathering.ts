@@ -17,6 +17,8 @@ export interface GatheringPerson {
   free: readonly FreeInterval[];
   // The Place of the position the asker may use for them now, or null.
   locationPlaceId: string | null;
+  // The asker's app sent no location and said why: they set out from their previous item's Place at any time.
+  locationMissing?: boolean;
   // What the asker fixed for them: where they set out from, the earliest they are ready, and the latest they leave.
   chosenPlaceId?: string;
   notBefore?: Date;
@@ -33,7 +35,8 @@ export type OriginBasis = 'timetable' | 'location' | 'chosen';
 export interface PersonPart {
   personId: string;
   readyAt: Date;
-  origin: { placeId: string; basis: OriginBasis } | null;
+  // `assumed`: taken from the Timetable because the location was missing.
+  origin: { placeId: string; basis: OriginBasis; assumed?: true } | null;
   // Their whole way, to the merging point and on to the place. Null when the origin is unknown.
   walkMinutes: number | null;
   // The earliest they can be at the place. Null when the origin is unknown.
@@ -166,9 +169,10 @@ function minutes(from: string, to: string, travel: Walking): number {
 }
 
 // Where a person sets out from for a stretch of Free Time: what the asker chose, else the Place of the item that keeps
-// them until then, else the Place of their location, else that of an item that ended at most RECENT_CLASS_MINUTES ago.
+// them until then, else the Place of their location, else, when their location is said to be missing, that of the
+// previous item however long ago it ended, else that of an item that ended at most RECENT_CLASS_MINUTES ago.
 export function originOf(
-  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId'>,
+  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId' | 'locationMissing'>,
   { start, previous }: Pick<FreeInterval, 'start' | 'previous'>,
   now: Date,
 ): PersonPart['origin'] {
@@ -182,6 +186,9 @@ export function originOf(
   }
   if (person.locationPlaceId !== null) {
     return { placeId: person.locationPlaceId, basis: 'location' };
+  }
+  if (person.locationMissing === true) {
+    return timetable === null ? null : { ...timetable, assumed: true };
   }
   return previous !== null && minutesBetween(previous.end, now) <= RECENT_CLASS_MINUTES ? timetable : null;
 }

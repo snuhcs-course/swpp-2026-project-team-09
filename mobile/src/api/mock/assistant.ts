@@ -27,6 +27,7 @@ import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
+import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
@@ -40,6 +41,7 @@ import {
 import { MEET_ANSWER } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
+import { mockTimetable } from './timetable';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
 // the shuttle with its layer's button, one about 관정도서관 with a library card, a request to make or recruit for a 파티
@@ -50,8 +52,9 @@ import { isLibraryAsk, libraryReply } from './library-replies';
 // the map, and with a context it answers with the main server's real Lookups: where something is (어디) with 문화관,
 // 301동식당's menu, where 민수 is, and in the words of boards q2 to q4 the way to 24동 on time (까지 몇 분), late
 // (늦나), and by the shuttle (셔틀 탈까). The words of a board of row 8 with a context get the main server's real
-// refusal, before anything else. A press on a building or a face is answered with the main server's real cards of
-// row 6.
+// refusal, before anything else. 배고파 without the location permission, or with no Class in the mock's Timetable,
+// gets the main server's real answer of board n13 or n15. A press on a building or a face is answered with the main
+// server's real cards of row 6.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -182,15 +185,24 @@ export function mockTap(tapped: Tapped): Lookup {
   return FRIEND_TAPS[tapped.userId] ?? STAND_IN_FRIEND_TAP;
 }
 
-// The stored refusal of a board of row 8, answer of 배고파, and Lookups of 301동식당's menu, of where 민수 is, and of a
+// The stored answer of 배고파, the one of board n13 without the location permission, and else that of board n15 when
+// the mock's Timetable holds no Class.
+function hungryReplyOf({ locationMissing }: RequestContext): AssistantReply {
+  if (locationMissing === 'permission') {
+    return NO_LOCATION_REPLY;
+  }
+  return mockTimetable.listClasses().length === 0 ? NO_TIMETABLE_REPLY : MEAL_ANSWER_REPLY;
+}
+
+// The stored refusal of a board of row 8, answers of 배고파, and Lookups of 301동식당's menu, of where 민수 is, and of a
 // way with a deadline, for a message sent with a context.
-function drawnReplyOf(last: string): AssistantReply | null {
+function drawnReplyOf(last: string, context: RequestContext): AssistantReply | null {
   const refused = refusalReplyTo(last);
   if (refused !== null) {
     return refused;
   }
   if (last.includes('배고파')) {
-    return MEAL_ANSWER_REPLY;
+    return hungryReplyOf(context);
   }
   if (last.includes('301동식당') && last.includes('메뉴')) {
     return MENU_LOOKUP_REPLY;
@@ -215,7 +227,7 @@ function wayReplyOf(last: string): AssistantReply | null {
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {
   const last = messages.at(-1)?.text ?? '';
-  const drawn = context === undefined ? null : drawnReplyOf(last);
+  const drawn = context === undefined ? null : drawnReplyOf(last, context);
   if (drawn !== null) {
     return drawn;
   }

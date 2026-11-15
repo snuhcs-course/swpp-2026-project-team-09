@@ -141,7 +141,8 @@ export function planMeal(plans: MealPlanService): Tool {
         window: { from: from ?? null, until: until ?? null },
         placeId: placeId ?? null,
       };
-      const answer = await plans.plan(userId, planInput, { now, location: context.location });
+      const { location, locationMissing } = context;
+      const answer = await plans.plan(userId, planInput, { now, location, locationMissing });
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;
