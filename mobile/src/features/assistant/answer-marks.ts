@@ -12,6 +12,7 @@ import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelS
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
+import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -58,10 +59,6 @@ const ROUTE_STYLES = {
 } as const;
 
 const ONE_POINT = 15;
-// How far a label reaches from its point: sideways and how far up or down for a side label, up or down and how far
-// sideways for one above or below.
-const SIDE_REACH = { along: 400, across: 50 };
-const UPRIGHT_REACH = { along: 120, across: 150 };
 // How many characters of a name a face shows (`MapAnswerMark`).
 const FACE_LETTERS = 2;
 
@@ -228,57 +225,57 @@ function byGroup(order: Group[]): (one: Draft, other: Draft) => number {
   return (one, other) => order.indexOf(one.group) - order.indexOf(other.group);
 }
 
-// Whether another point lies within a label's reach on that side of its point.
-function blocked(at: LatLng, side: LabelSide, others: LatLng[]): boolean {
-  return others.some((other) => {
-    const { east, north } = offset(at, other);
-    const [along, across, reach] =
-      side === 'right' || side === 'left'
-        ? [side === 'right' ? east : -east, north, SIDE_REACH]
-        : [side === 'above' ? north : -north, east, UPRIGHT_REACH];
-    return along > 0 && along <= reach.along && Math.abs(across) <= reach.across;
-  });
-}
-
 interface Placed {
   draft: Draft;
   symbol: AnswerSymbol | null;
-  side: LabelSide | null;
+  label: AnswerLabel | null;
 }
 
-// One symbol at a point, and each label at the first free side of its list.
-function placeAll(drafts: Draft[]): Placed[] {
-  const points = pointsOf(drafts);
-  return points.flatMap(({ position, drafts: here }, index) => {
-    const others = points.filter((_, other) => other !== index).map((other) => other.position);
-    const drawn = here.filter(({ symbol }) => symbol !== null).toSorted(byGroup(SYMBOL_ORDER))[0];
-    const taken = new Set<LabelSide>();
-    return here.toSorted(byGroup(SIDE_ORDER)).map((draft) => {
-      const list = draft.title === null ? [] : SIDES[draft.group].filter((side) => !taken.has(side));
-      const side = list.find((one) => !blocked(position, one, others)) ?? list[0] ?? null;
-      if (side !== null) {
-        taken.add(side);
-      }
-      return { draft, symbol: draft === drawn ? draft.symbol : null, side };
-    });
-  });
+// A draft at the point of that index, its label without its side: a pick or a candidate whose dot is not drawn
+// carries its number in it.
+function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null): Unplaced {
+  const { position, group, tone, title, line, number } = draft;
+  const words = title === null ? null : { tone, title, line, number: symbol === null ? number : null };
+  return { point, position, words, sides: SIDES[group] };
 }
 
-function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
-  const { id, name, position, planId, tone, title, line, number } = draft;
-  const label: AnswerLabel | null =
-    side === null || title === null ? null : { side, tone, title, line, number: symbol === null ? number : null };
+// One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
+// Plan's own marks take theirs first.
+function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
+  const points = pointsOf(drafts).map(({ position, drafts: here }) => ({
+    position,
+    here,
+    drawn: here.filter(({ symbol }) => symbol !== null).toSorted(byGroup(SYMBOL_ORDER))[0],
+  }));
+  const placed = points
+    .flatMap(({ here, drawn }, point) =>
+      here.map((draft) => ({ draft, point, symbol: draft === drawn ? draft.symbol : null })),
+    )
+    .toSorted((one, other) => byGroup(SIDE_ORDER)(one.draft, other.draft));
+  const marks = placed.map(({ draft, point, symbol }) => unplaced(draft, point, symbol));
+  const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
+  const labels = placeLabels(symbols, marks, view);
+  return placed.map(({ draft, symbol }, at) => ({ draft, symbol, label: labels[at] ?? null }));
+}
+
+function thingOf({ draft, symbol, label }: Placed, order: number): AnswerThing {
+  const { id, name, position, planId } = draft;
   return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
 }
 
-// What the map shows for a scene: its marks, its lines, and the points the camera fits.
-export function drawingOfScene(scene: MapScene, setting: SceneSetting = BARE): AnswerDrawing {
+// What the map shows for a scene: its marks, its lines, and the points the camera fits. At a view, the labels' sides
+// are chosen in its points too.
+export function drawingOfScene(
+  scene: MapScene,
+  view: LabelView | null = null,
+  setting: SceneSetting = BARE,
+): AnswerDrawing {
   const drafts = [
     ...personDrafts(scene, setting.standings),
     ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
   ];
-  const placed = placeAll(drafts).toSorted(
+  const placed = placeAll(drafts, view).toSorted(
     (one, other) =>
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),
   );
@@ -300,21 +297,29 @@ export function drawingOfScene(scene: MapScene, setting: SceneSetting = BARE): A
 
 // What the map shows for the Plan at `planIndex` of an answer: its scene, with the Plan's number on the pick and the
 // other Plans as candidates. `standings` holds how each invited Friend stands, by user id, once the Plan was made
-// into a Quest.
+// into a Quest. At a view, the labels' sides are chosen in its points too.
 export function drawingOf(
   answer: AnswerReply,
   planIndex: number,
   standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
+  view: LabelView | null = null,
 ): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
     return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
-  return drawingOfScene(plan.scene, { number: planIndex + 1, plans: answer.plans, standings });
+  return drawingOfScene(plan.scene, view, { number: planIndex + 1, plans: answer.plans, standings });
 }
 
-// The looks of every Plan's drawing, each once.
-export function looksOf(answer: AnswerReply): MarkerLook[] {
-  const looks = answer.plans.flatMap((_, index) => drawingOf(answer, index).things.map(({ look }) => look));
+// The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides
+// chosen in metres, or with those sides.
+export function looksOf(
+  answer: AnswerReply,
+  viewOf: (drawing: AnswerDrawing) => LabelView | null = (): null => null,
+): MarkerLook[] {
+  const looks = answer.plans.flatMap((_, index) => {
+    const view = viewOf(drawingOf(answer, index));
+    return drawingOf(answer, index, NO_STANDINGS, view).things.map(({ look }) => look);
+  });
   return looks.filter((look, index) => looks.findIndex((other) => lookName(other) === lookName(look)) === index);
 }

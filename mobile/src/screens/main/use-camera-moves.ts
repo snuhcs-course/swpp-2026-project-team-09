@@ -3,11 +3,12 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RefObject, useCallback, useRef } from 'react';
 import type { LatLng } from '@/api/types';
-import { type FitPadding, type MapHandle, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { type FitPadding, type MapCamera, type MapHandle, MAX_ZOOM, MIN_ZOOM } from '@/map';
 
 // A move of the camera, said from what the map tells: the fit zoom, and the zoom the camera rests at or is on its
 // way to.
@@ -25,10 +26,21 @@ function sendingOf(wish: CameraWish): Sending {
   };
 }
 
+// A move to a camera: its zoom is the map's own rules' to hold, and may be further out than the fit zoom, as an
+// answer's camera may be.
+function placingOf(camera: MapCamera): Sending {
+  return (handle) => {
+    handle.moveCamera({ centre: camera.centre, zoom: camera.zoom, animated: true });
+    return camera.zoom;
+  };
+}
+
 export interface CameraMoves {
   // Carries the move out, or keeps it until the map is ready. Of several kept, the last one counts, a fit among
   // them.
   move: (wish: CameraWish) => void;
+  // To a camera. Kept like a move.
+  place: (camera: MapCamera) => void;
   // To the closest view that shows all the points inside what the padding leaves of the view, and no closer than
   // `offset` above the fit zoom. Kept like a move.
   fit: (points: readonly LatLng[], padding: FitPadding, offset: number) => void;
@@ -119,5 +131,11 @@ export function useCameraMoves(ref: RefObject<MapHandle | null>): CameraMoves {
     },
     [sendOrKeep],
   );
-  return { move, fit, rested, fitted };
+  const place = useCallback(
+    (camera: MapCamera) => {
+      sendOrKeep(placingOf(camera));
+    },
+    [sendOrKeep],
+  );
+  return { move, place, fit, rested, fitted };
 }
