@@ -49,9 +49,7 @@ import { koreaDate } from './korea-time.js';
 import { ModelPort } from './model-port.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
-import { FriendLookupService } from './lookup/friend.service.js';
-import { MenuLookupService } from './lookup/menu.service.js';
-import { WayService } from './lookup/way.service.js';
+import { LookupServices } from './lookup/lookup-services.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
@@ -90,9 +88,7 @@ export class AssistantService {
     users: UsersService,
     tutorial: TutorialService,
     plans: PlanAnswersService,
-    ways: WayService,
-    menuLookups: MenuLookupService,
-    friendLookups: FriendLookupService,
+    lookups: LookupServices,
     interests: InterestsService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
@@ -109,9 +105,7 @@ export class AssistantService {
       library: { catalogue, freeTime, friends, quests, users, arrival: { days, places: placeLookup, travel }, enabled },
       tutorial,
       plans,
-      ways,
-      menuLookups,
-      friendLookups,
+      lookups,
       interests,
     };
     this.chats = chatsOf(services);

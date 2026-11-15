@@ -55,10 +55,7 @@ export class WayService {
     return {
       now,
       me: { userId, name: user.name, items },
-      location:
-        location === null
-          ? null
-          : { at: location, placeId: this.placeIdAt(location), onCampus: this.campus.contains(location) },
+      location: this.located(location),
       ...ask,
       gatePlaceId: this.gatePlaceId(),
       travel: this.travel,
@@ -70,7 +67,14 @@ export class WayService {
     };
   }
 
-  private gatePlaceId(): string {
+  // Where the app says the User is, with the Place it is in or the nearest within 150 m, and whether it is on campus.
+  located(location: Position | null): WayArgs['location'] {
+    return location === null
+      ? null
+      : { at: location, placeId: this.placeIdAt(location), onCampus: this.campus.contains(location) };
+  }
+
+  gatePlaceId(): string {
     const placeId = this.places.placeIdOf({ placeId: null, label: MAIN_GATE, latitude: null, longitude: null });
     if (placeId === null) {
       throw new Error(`No Place ${MAIN_GATE}`);
@@ -79,11 +83,11 @@ export class WayService {
   }
 
   // The Place the position is in, or the nearest within 150 m.
-  private placeIdAt(position: Position): string | null {
+  placeIdAt(position: Position): string | null {
     return (this.places.at(position)?.place ?? this.places.nearTo(position))?.id ?? null;
   }
 
-  private placeOf(placeId: string): PlaceDto {
+  placeOf(placeId: string): PlaceDto {
     const place = this.places.byId(placeId);
     if (place === null) {
       throw new Error(`No Place ${placeId}`);
