@@ -26,7 +26,7 @@ import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
-import type { WatchedInterest } from './interest-types';
+import type { InterestMatches, WatchedInterest } from './interest-types';
 import type { MatchingRequest } from './matching-types';
 import type {
   AskedMoment,
@@ -229,6 +229,8 @@ export interface ApiClient {
   watchInterest: (words: string) => Promise<WatchedInterest>;
   // Refused with 404 INTEREST_NOT_FOUND.
   removeInterest: (interestId: string) => Promise<void>;
+  // What matches the User's hashtags and watched interests. Null from a main server that does not answer it yet.
+  listInterestMatches: () => Promise<InterestMatches | null>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -353,4 +355,5 @@ export const apiClient: ShownClient = {
   listInterests: () => chosen().listInterests(),
   watchInterest: (words) => chosen().watchInterest(words),
   removeInterest: (interestId) => chosen().removeInterest(interestId),
+  listInterestMatches: () => chosen().listInterestMatches(),
 };

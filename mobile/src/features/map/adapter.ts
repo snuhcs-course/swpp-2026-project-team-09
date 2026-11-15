@@ -13,6 +13,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -100,7 +101,7 @@ export interface CardView {
   primary:
     | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' | 'library-seats' }
     | { label: string; action: 'menu'; restaurant: string }
-    | { label: string; action: 'room'; questId: string }
+    | { label: string; action: 'room' | 'post'; questId: string }
     | { label: string; action: 'recruit'; eventId: string }
     | { label: string; action: 'private-party'; userId: string }
     | null;
