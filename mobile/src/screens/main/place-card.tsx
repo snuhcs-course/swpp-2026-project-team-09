@@ -1,0 +1,280 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import { type ReactElement, useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { ConditionChip } from '@/api/assistant-types';
+import { apiClient } from '@/api/client';
+import type { LookupAction, LookupCard } from '@/api/lookup-types';
+import type { Place } from '@/api/types';
+import { Button, color, Icon, RoundIcon, size, space, text, useToast } from '@/design-system';
+import { useCampusPosition, useTapAnswer } from '@/features/assistant/use-tap-answer';
+import { cardId } from '@/features/map/adapter';
+import { ReadOnlyChip } from './answer/condition-chips';
+import { CardFacts } from './card-facts';
+import { CardFrame, CloseButton } from './card';
+import type { ChatSheetControl } from './chat-sheet';
+import { placeWords } from './my-card';
+import type { MainRoute } from './use-route';
+import type { Selection } from './use-selection';
+
+type PlanAction = Extract<LookupAction, { kind: 'plan' }>;
+type GuideAction = Extract<LookupAction, { kind: 'guide' }>;
+
+export const NOT_ANSWERED = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
+
+// As high as the answer's chips, whose touch area "근거" shares.
+const CHIP_HEIGHT = 34;
+const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
+
+interface PlaceCardProps {
+  place: Place;
+  selection: Selection;
+  chat: ChatSheetControl;
+  route: MainRoute;
+  onHeight: (height: number) => void;
+}
+
+// A `plan` button is drawn only for an answer the frame draws: a meal. Row 4's events and Quests have no screen in the
+// frame yet (note (11)).
+function shownPlans(actions: readonly LookupAction[]): PlanAction[] {
+  return actions.filter((action): action is PlanAction => action.kind === 'plan' && action.input.kind === 'meal');
+}
+
+// A `plan` button asks the recalculation for its input, and its answer opens in the answer frame as a turn whose pill
+// reads "{title} · {label}". One is asked at a time; the answer of a card that closed or gave way meanwhile is dropped.
+function usePlanAsk(chat: ChatSheetControl, title: string): { asking: boolean; ask: (action: PlanAction) => void } {
+  const location = useCampusPosition();
+  const showToast = useToast();
+  const [asking, setAsking] = useState(false);
+  const shown = useRef(true);
+  useEffect(() => {
+    shown.current = true;
+    return (): void => {
+      shown.current = false;
+    };
+  }, []);
+  const { addRecalculated } = chat.chat;
+  const ask = (action: PlanAction): void => {
+    if (asking) {
+      return;
+    }
+    setAsking(true);
+    apiClient.recalculateAnswer(action.input, location).then(
+      (answer) => {
+        if (shown.current) {
+          setAsking(false);
+          addRecalculated(`${title} · ${action.label}`, answer);
+        }
+      },
+      () => {
+        if (shown.current) {
+          setAsking(false);
+          showToast(NOT_ANSWERED);
+        }
+      },
+    );
+  };
+  return { asking, ask };
+}
+
+function Head({
+  title,
+  subtitle,
+  onClose,
+}: {
+  title: string;
+  subtitle: string | null;
+  onClose: () => void;
+}): ReactElement {
+  return (
+    <View style={styles.head}>
+      <RoundIcon fill={color.questSoft} icon="pin" ink={color.quest} />
+      <View style={styles.titles}>
+        <Text accessibilityRole="header" numberOfLines={2} style={styles.title}>
+          {title}
+        </Text>
+        {subtitle === null ? null : <Text style={styles.subtitle}>{subtitle}</Text>}
+      </View>
+      <CloseButton onClose={onClose} />
+    </View>
+  );
+}
+
+// The conditions the card used, which take no press, with "근거" or "근거 접기" at the right of the first line.
+function Chips({
+  chips,
+  open,
+  onToggle,
+}: {
+  chips: readonly ConditionChip[];
+  open: boolean;
+  onToggle: () => void;
+}): ReactElement {
+  const words = open ? '근거 접기' : '근거';
+  return (
+    <View style={styles.row}>
+      <View style={styles.chips}>
+        {chips.map((chip) => (
+          <ReadOnlyChip key={`${chip.kind}-${chip.text}`} label={chip.text} marked={chip.kind === 'person'} />
+        ))}
+      </View>
+      <Pressable
+        accessibilityLabel={words}
+        accessibilityRole="button"
+        hitSlop={HIT_SLOP}
+        onPress={onToggle}
+        style={({ pressed }) => [styles.corner, pressed && styles.pressed]}
+      >
+        <Text style={styles.cornerLabel}>{words}</Text>
+        <Icon color={color.blue600} name={open ? 'chevronUp' : 'chevronRight'} size={14} />
+      </Pressable>
+    </View>
+  );
+}
+
+interface ButtonsProps {
+  actions: readonly LookupAction[];
+  plan: ReturnType<typeof usePlanAsk>;
+  onGuide: (action: GuideAction) => void;
+}
+
+// Each `plan` by its label, then the way as "가는 길"; the first is the main one.
+function Buttons({ actions, plan, onGuide }: ButtonsProps): ReactElement {
+  const guide = actions.find((action): action is GuideAction => action.kind === 'guide');
+  const plans = shownPlans(actions);
+  return (
+    <View style={styles.buttons}>
+      {plans.map((action, index) => (
+        <Button
+          disabled={plan.asking}
+          key={action.label}
+          onPress={() => {
+            plan.ask(action);
+          }}
+          variant={index === 0 ? 'primary' : 'secondary'}
+        >
+          {action.label}
+        </Button>
+      ))}
+      {guide === undefined ? null : (
+        <Button
+          onPress={() => {
+            onGuide(guide);
+          }}
+          variant={plans.length === 0 ? 'primary' : 'secondary'}
+        >
+          가는 길
+        </Button>
+      )}
+    </View>
+  );
+}
+
+interface AnsweredProps extends ButtonsProps {
+  card: LookupCard;
+  chips: readonly ConditionChip[];
+  basis: readonly string[];
+  onFriend: (userId: string) => void;
+}
+
+// The card as the main server wrote it: the facts, the note in the Quest colour, the chips with the basis, and the
+// buttons. Only what the card gives is drawn.
+function Answered({ card, chips, basis, onFriend, ...buttons }: AnsweredProps): ReactElement {
+  const [basisOpen, setBasisOpen] = useState(false);
+  return (
+    <>
+      <CardFacts facts={card.facts} onFriend={onFriend} />
+      {card.note === null ? null : <Text style={styles.note}>{card.note}</Text>}
+      {chips.length === 0 && basis.length === 0 ? null : (
+        <Chips
+          chips={chips}
+          onToggle={() => {
+            setBasisOpen((open) => !open);
+          }}
+          open={basisOpen}
+        />
+      )}
+      {basisOpen
+        ? basis.map((line) => (
+            <Text key={line} style={styles.basis}>
+              {line}
+            </Text>
+          ))
+        : null}
+      <Buttons {...buttons} />
+    </>
+  );
+}
+
+// While the card is asked, and after a failure, as row 8 words it.
+function NotYet({ failed, onRetry }: { failed: boolean; onRetry: () => void }): ReactElement {
+  return (
+    <View style={styles.notYet}>
+      <Text style={styles.status}>{failed ? '답을 가져오지 못했어요' : '보는 중이에요'}</Text>
+      {failed ? (
+        <Button onPress={onRetry} variant="secondary">
+          다시 시도
+        </Button>
+      ) : null}
+    </View>
+  );
+}
+
+// The card of a building pressed on the everyday map (P02 ticket 22): the Place's name while the main server is asked,
+// with "보는 중이에요", then its card. A failure says so, with "다시 시도". A Friend's line opens that Friend's card,
+// "가는 길" starts the route guidance and closes the card, and a `plan` button opens its answer in the frame.
+export function PlaceCard({ place, selection, chat, route, onHeight }: PlaceCardProps): ReactElement {
+  const tap = useTapAnswer({ kind: 'place', placeId: place.id });
+  const card = tap.answer?.card ?? null;
+  const title = card?.title ?? placeWords(place);
+  const plan = usePlanAsk(chat, title);
+  return (
+    <CardFrame onHeight={onHeight}>
+      <Head
+        onClose={selection.close}
+        subtitle={card === null ? (place.number === null ? null : place.name) : card.subtitle}
+        title={title}
+      />
+      {tap.answer === null ? (
+        <NotYet failed={tap.failed} onRetry={tap.retry} />
+      ) : (
+        <Answered
+          actions={tap.answer.actions}
+          basis={tap.answer.basis}
+          card={tap.answer.card}
+          chips={tap.answer.chips}
+          onFriend={(userId) => {
+            selection.select(cardId.friend(userId));
+          }}
+          onGuide={({ to }) => {
+            if (route.routeTo({ title: to.label, position: { latitude: to.latitude, longitude: to.longitude } })) {
+              selection.close();
+            }
+          }}
+          plan={plan}
+        />
+      )}
+    </CardFrame>
+  );
+}
+
+const styles = StyleSheet.create({
+  head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  titles: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
+  title: { ...text.title, color: color.ink },
+  subtitle: { ...text.caption, color: color.inkMuted },
+  notYet: { alignItems: 'flex-start', gap: space[2] },
+  status: { ...text.body, color: color.inkMuted },
+  note: { ...text.body, color: color.quest },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
+  chips: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  corner: { flexDirection: 'row', alignItems: 'center', gap: 2, height: CHIP_HEIGHT },
+  cornerLabel: { ...text.label, color: color.blue600 },
+  pressed: { opacity: 0.6 },
+  basis: { ...text.body, color: color.inkMuted },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+});

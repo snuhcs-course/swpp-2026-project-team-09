@@ -18,7 +18,7 @@ import { usePosition } from '@/position';
 import { CardFrame, CloseButton } from './card';
 
 // "301동", or the name of a Place without a number.
-function placeWords(place: Place): string {
+export function placeWords(place: Place): string {
   return place.number === null ? place.name : `${place.number}동`;
 }
 

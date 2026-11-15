@@ -74,7 +74,7 @@ export function useRoom(
 }
 
 // What takes the bottom of the map, and the room the rest has. The first run's card shows while nothing is selected,
-// the User's own card neither, and neither the chat nor the answer frame is shown. `framed`: the answer frame, a
+// the User's own card and a pressed building's neither, and neither the chat nor the answer frame is shown. `framed`: the answer frame, a
 // received invitation's card, or a made Quest's. `madeLine`: a Quest made from a Plan has its line over the input.
 export function useBottomRoom(
   selection: Selection,
@@ -85,7 +85,8 @@ export function useBottomRoom(
   const asked = useFirstRun();
   const free = !selection.open && !chat.shown && !framed;
   const firstRun = { ...asked, card: free ? asked.card : null };
-  const taken = takenBy(selection.selected, shuttle.serviceHours, firstRun.card !== null || selection.mine);
+  const otherCard = firstRun.card !== null || selection.mine || selection.place !== null;
+  const taken = takenBy(selection.selected, shuttle.serviceHours, otherCard);
   return { taken, firstRun, ...useRoom(taken, tutorialStart, framed, asked.asksForInterests, madeLine) };
 }
 

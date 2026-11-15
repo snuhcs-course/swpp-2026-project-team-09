@@ -54,6 +54,9 @@ export interface ChatBubble {
   answer?: AnswerReply | null;
   lookup?: Lookup | null;
   refusal?: Refusal | null;
+  // A turn a card's button asked of the recalculation, not of the Assistant: its words and its answer are a turn and a
+  // reply on screen, and never sent to the Assistant.
+  recalculated?: boolean;
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
@@ -100,6 +103,8 @@ export interface Chat {
   reset: () => void;
   // Adds the app's own bubble, which no request sends.
   addOwn: (bubble: OwnBubble) => void;
+  // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
+  addRecalculated: (asked: string, answer: AnswerReply) => void;
   // How each library card of the conversation ended, by the card's place: its bubble and its key.
   outcomes: ReadonlyMap<string, CardOutcome>;
   finish: (card: string, outcome: CardOutcome) => void;
@@ -129,7 +134,9 @@ export function messagesToSend(
   bubbles: readonly ChatBubble[],
   rooms: ReadonlyMap<string, CardRoom> = new Map(),
 ): ChatMessage[] {
-  const said = bubbles.filter(({ failure, own = false }) => failure === null && !own);
+  const said = bubbles.filter(
+    ({ failure, own = false, recalculated = false }) => failure === null && !own && !recalculated,
+  );
   const proposing = said.findLast(({ proposal }) => proposal !== null);
   let messages = said
     .map((bubble): ChatMessage => {
@@ -196,14 +203,23 @@ function useBubbles(): Bubbles {
   return { bubbles, said, show, add };
 }
 
-// The app's own bubbles, added after what was said.
-function useAddOwn(add: Bubbles['add']): Chat['addOwn'] {
-  return useCallback(
+// The app's own bubbles, added after what was said, and the turns of a card's button.
+function useAddOwn(add: Bubbles['add']): Pick<Chat, 'addOwn' | 'addRecalculated'> {
+  const addOwn = useCallback(
     ({ text, cards = [], done }: OwnBubble): void => {
       add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done });
     },
     [add],
   );
+  const addRecalculated = useCallback(
+    (asked: string, answer: AnswerReply): void => {
+      const parts = { cards: [], mapButtons: [], proposal: null, failure: null, recalculated: true };
+      add({ role: 'user', text: asked, ...parts });
+      add({ role: 'assistant', text: '', ...parts, answer });
+    },
+    [add],
+  );
+  return { addOwn, addRecalculated };
 }
 
 // How the library cards ended, kept with the conversation.
@@ -315,7 +331,7 @@ export function useChat(readContext?: () => RequestContext | undefined): Chat {
     setWaiting(false);
   }, [forget, show]);
 
-  const addOwn = useAddOwn(add);
+  const { addOwn, addRecalculated } = useAddOwn(add);
 
-  return { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish, unfinish, rooms, showRoom };
+  return { bubbles, waiting, send, retry, reset, addOwn, addRecalculated, outcomes, finish, unfinish, rooms, showRoom };
 }
