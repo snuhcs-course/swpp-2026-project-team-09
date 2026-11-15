@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
-import { byStart, clockOf, onDay } from '../free-time/free-time.js';
+import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
 import { itemAt, mergingLegs, type Naming, wayOn, withAnd } from './answer-words.js';
 import { type GatheringFit, MINUTE_MS, type PersonPart } from './gathering.js';
@@ -22,7 +23,9 @@ function scenePerson({ personId, origin, walkMinutes }: PersonPart, naming: Nami
     return [];
   }
   const person = naming.personOf(personId);
-  const exact = origin.basis === 'location' ? person.position : null;
+  const located = origin.basis === 'location';
+  // A Friend the asker sees only at the building has a location Place and no position.
+  const exact = located ? person.position : null;
   const label = person.me ? '나' : person.name;
   return [
     {
@@ -30,7 +33,7 @@ function scenePerson({ personId, origin, walkMinutes }: PersonPart, naming: Nami
       name: person.name,
       me: person.me,
       at: exact ?? naming.position(origin.placeId),
-      source: exact === null ? 'timetable' : 'exact',
+      source: exact === null ? (located ? 'building' : 'timetable') : 'exact',
       tag: walkMinutes !== null && walkMinutes > 0 ? `${label} · ${walkMinutes}분` : label,
     },
   ];
@@ -122,6 +125,25 @@ export function sceneOf(fit: GatheringFit, naming: Naming): MapScene {
   };
 }
 
+// From the half hour at or before `earliest` to the half hour at or after `latest`, both in milliseconds.
+export function halfHoursAround(earliest: number, latest: number): { from: Date; until: Date } {
+  return {
+    from: new Date(Math.floor(earliest / HALF_HOUR_MS) * HALF_HOUR_MS),
+    until: new Date(Math.ceil(latest / HALF_HOUR_MS) * HALF_HOUR_MS),
+  };
+}
+
+// A lane's items in the range, cut to it, without their names.
+export function busyIn(items: readonly DayItem[], from: Date, until: Date): TimeBand['lanes'][number]['busy'] {
+  return items
+    .filter((item) => item.start < until && item.end > from)
+    .toSorted(byStart)
+    .map((item) => ({
+      startAt: koreaTime(item.start < from ? from : item.start),
+      endAt: koreaTime(item.end > until ? until : item.end),
+    }));
+}
+
 // From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after half
 // an hour past its end, reaching out to the half hours around the window the User fixed. `now` is given as it is, even
 // outside the range.
@@ -135,21 +157,14 @@ export function bandOf({ start, end, togetherMinutes }: GatheringFit, naming: Na
   if (input.window.until !== null) {
     closes.push(onDay(input.date, input.window.until).getTime());
   }
-  const from = new Date(Math.floor(Math.min(...opens) / HALF_HOUR_MS) * HALF_HOUR_MS);
-  const until = new Date(Math.ceil(Math.max(...closes) / HALF_HOUR_MS) * HALF_HOUR_MS);
+  const { from, until } = halfHoursAround(Math.min(...opens), Math.max(...closes));
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),
     lanes: people.map(({ userId, name, me, items }) => ({
       userId,
       name: me ? '나' : name,
-      busy: items
-        .filter((item) => item.start < until && item.end > from)
-        .toSorted(byStart)
-        .map((item) => ({
-          startAt: koreaTime(item.start < from ? from : item.start),
-          endAt: koreaTime(item.end > until ? until : item.end),
-        })),
+      busy: busyIn(items, from, until),
     })),
     startAt: koreaTime(start),
     endAt: koreaTime(end),

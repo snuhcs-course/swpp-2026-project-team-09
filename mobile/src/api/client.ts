@@ -20,6 +20,7 @@
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
 import type { InvitationCard, OwnWay } from './invitation-card-types';
 import { mockClient } from './mock/client';
+import { tellAskLevels } from './plan-asks';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
@@ -27,10 +28,12 @@ import { asksMainServer } from './servers';
 import type { WatchedInterest } from './interest-types';
 import type { MatchingRequest } from './matching-types';
 import type {
+  AskedMoment,
   Board,
   ClassSave,
   Footprints,
   Friend,
+  FriendLevel,
   FriendStatus,
   GlobalEvent,
   InviteLink,
@@ -75,9 +78,16 @@ export interface ApiClient {
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
   listFriends: () => Promise<Friend[]>;
-  // Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
-  setFriendSharing: (userId: string, on: boolean) => Promise<void>;
+  // The User's own end of the friendship. Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
+  setFriendLevel: (userId: string, level: FriendLevel) => Promise<void>;
   endFriendship: (userId: string) => Promise<void>;
+  // That the app asked the User about these Friends at that moment, whatever the answer. Refused with 404
+  // FRIEND_NOT_FOUND when one is no Friend.
+  recordFriendsAsked: (userIds: string[], moment: AskedMoment) => Promise<void>;
+  // That the app asked the User before they turned the Master Switch off.
+  recordMasterOffAsked: () => Promise<void>;
+  // Lowers every Friend above the level to it, at the User's own end.
+  lowerFriendLevels: (level: FriendLevel) => Promise<void>;
   // Refused with 404 FRIEND_ID_NOT_FOUND.
   findFriendId: (friendId: string) => Promise<UserSummary>;
   // Also refused with 400 OWN_FRIEND_ID, 409 ALREADY_FRIENDS and 409 FRIEND_REQUEST_ALREADY_SENT.
@@ -233,8 +243,11 @@ export const apiClient: ShownClient = {
   registerPushToken: (token) => chosen().registerPushToken(token),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
-  setFriendSharing: (userId, on) => chosen().setFriendSharing(userId, on),
+  setFriendLevel: (userId, level) => chosen().setFriendLevel(userId, level),
   endFriendship: (userId) => chosen().endFriendship(userId),
+  recordFriendsAsked: (userIds, moment) => chosen().recordFriendsAsked(userIds, moment),
+  recordMasterOffAsked: () => chosen().recordMasterOffAsked(),
+  lowerFriendLevels: (level) => chosen().lowerFriendLevels(level),
   findFriendId: (friendId) => chosen().findFriendId(friendId),
   sendFriendRequest: (friendId) => chosen().sendFriendRequest(friendId),
   listFriendRequests: () => chosen().listFriendRequests(),
@@ -315,7 +328,12 @@ export const apiClient: ShownClient = {
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
   recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
-  makePlanQuest: (making, key) => chosen().makePlanQuest(making, key),
+  // Whatever screen made the Quest, the question about the Friends the reply names is asked by its own host.
+  makePlanQuest: async (making, key) => {
+    const made = await chosen().makePlanQuest(making, key);
+    tellAskLevels(made.askLevels);
+    return made;
+  },
   getBetterPlan: (questId, location) => chosen().getBetterPlan(questId, location),
   changePlanQuest: (questId, making) => chosen().changePlanQuest(questId, making),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),

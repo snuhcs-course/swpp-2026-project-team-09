@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -48,14 +49,14 @@ async function refusalOf(asked: Promise<unknown>): Promise<[number, string | nul
   throw new Error('It was not refused');
 }
 
-describe("a friendship's switch and its end", () => {
-  it('turns the switch with PUT /friends/:userId/sharing', async () => {
-    server.on(`PUT /friends/${MIN_JUN.id}/sharing`, { status: 204 });
+describe("a friendship's level and its end", () => {
+  it('sets the level with PUT /friends/:userId/level', async () => {
+    server.on(`PUT /friends/${MIN_JUN.id}/level`, { status: 204 });
 
-    await apiClient.setFriendSharing(MIN_JUN.id, false);
+    await apiClient.setFriendLevel(MIN_JUN.id, 'building');
 
-    expect(server.received(`PUT /friends/${MIN_JUN.id}/sharing`)).toEqual([
-      expect.objectContaining({ authorization: BEARER, body: { on: false } }),
+    expect(server.received(`PUT /friends/${MIN_JUN.id}/level`)).toEqual([
+      expect.objectContaining({ authorization: BEARER, body: { level: 'building' } }),
     ]);
   });
 
@@ -66,8 +67,32 @@ describe("a friendship's switch and its end", () => {
 
     server.on(`DELETE /friends/${MIN_JUN.id}`, refusal(404, 'FRIEND_NOT_FOUND'));
     expect(await refusalOf(apiClient.endFriendship(MIN_JUN.id))).toEqual([404, 'FRIEND_NOT_FOUND']);
-    server.on(`PUT /friends/${MIN_JUN.id}/sharing`, refusal(404, 'FRIEND_NOT_FOUND'));
-    expect(await refusalOf(apiClient.setFriendSharing(MIN_JUN.id, true))).toEqual([404, 'FRIEND_NOT_FOUND']);
+    server.on(`PUT /friends/${MIN_JUN.id}/level`, refusal(404, 'FRIEND_NOT_FOUND'));
+    expect(await refusalOf(apiClient.setFriendLevel(MIN_JUN.id, 'exact'))).toEqual([404, 'FRIEND_NOT_FOUND']);
+  });
+});
+
+describe('asking once', () => {
+  it('records the moment for the Friends with POST /friends/asked, refused for a User who is no Friend', async () => {
+    server.on('POST /friends/asked', { status: 204 });
+    await apiClient.recordFriendsAsked([MIN_JUN.id], 'plan');
+    expect(server.received('POST /friends/asked')).toEqual([
+      expect.objectContaining({ authorization: BEARER, body: { userIds: [MIN_JUN.id], moment: 'plan' } }),
+    ]);
+
+    server.on('POST /friends/asked', refusal(404, 'FRIEND_NOT_FOUND'));
+    expect(await refusalOf(apiClient.recordFriendsAsked([MIN_JUN.id], 'off'))).toEqual([404, 'FRIEND_NOT_FOUND']);
+  });
+
+  it("records the Master Switch's with POST /users/me/master-switch/asked and lowers every Friend with PUT", async () => {
+    server.on('POST /users/me/master-switch/asked', { status: 204 });
+    server.on('PUT /users/me/friend-levels', { status: 204 });
+
+    await apiClient.recordMasterOffAsked();
+    await apiClient.lowerFriendLevels('building');
+
+    expect(server.received('POST /users/me/master-switch/asked')).toHaveLength(1);
+    expect(server.received('PUT /users/me/friend-levels').map(({ body }) => body)).toEqual([{ level: 'building' }]);
   });
 });
 

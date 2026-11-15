@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type PersonConstraint, type PlanInput } from '../dto/answer.dto.js';
+import { type MealInput, type PersonConstraint } from '../dto/answer.dto.js';
 import { onDay } from '../free-time/free-time.js';
 import { earliest, type Interval, latest, mealWindow } from '../free-time/meal-fit.js';
 import { type GatheringPerson } from './gathering.js';
@@ -14,7 +15,7 @@ import { type GatheringPerson } from './gathering.js';
 export type PersonConditions = Pick<GatheringPerson, 'chosenPlaceId' | 'notBefore' | 'leaveBy'>;
 
 // The meal's window narrowed on each side the User fixed. It may come out empty.
-export function windowOf({ date, meal, window }: PlanInput): Interval {
+export function windowOf({ date, meal, window }: MealInput): Interval {
   const { start, end } = mealWindow(date, meal);
   return {
     start: window.from === null ? start : latest([start, onDay(date, window.from)]),

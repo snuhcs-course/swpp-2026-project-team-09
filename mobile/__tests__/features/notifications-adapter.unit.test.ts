@@ -259,7 +259,7 @@ const LEAVE_BY: KeptNotification = {
 const onThatDay = (clock: string): Date => new Date(`2026-11-17T${clock}:00+09:00`);
 
 describe('toNotices of the time to leave', () => {
-  it("the Leader's time to leave → the clock's icon, its words, the party's card, and its time", () => {
+  it("the Leader's time to leave → the clock's icon, its words, its Quest, the party's card, and its time", () => {
     expect(toNotices({ ...NONE, now: onThatDay('12:10'), kept: [LEAVE_BY] })).toEqual([
       {
         key: 'notice-leave-by:party:q1',
@@ -267,7 +267,7 @@ describe('toNotices of the time to leave', () => {
         icon: 'clock',
         title: '12:18 나설 시각',
         sub: '학생회관식당까지 걸어서 15분',
-        questId: null,
+        questId: 'q1',
         address: '/main?card=party:q1',
         time: '12:18',
       },

@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -20,8 +21,8 @@ export function showOnMap(): Tool {
       'Adds a button under your reply that closes the chat and shows a layer on the map: dining, the restaurants, after an answer about menus; shuttle, the circular shuttle, after an answer about the shuttle.',
     input,
     run: ({ layer }, { presented }) => {
-      // An answer drawn on the map takes the map, which a layer's button would replace.
-      if (presented.answer !== null) {
+      // An answer or a Lookup drawn on the map takes the map, which a layer's button would replace.
+      if (presented.answer !== null || presented.lookup !== null) {
         return Promise.resolve({ result: 'not shown', reason: 'The app already draws the answer on the map.' });
       }
       if (!presented.mapButtons.includes(layer)) {

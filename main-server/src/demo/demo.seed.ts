@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Place, PrismaClient, type User } from '../generated/prisma/client.js';
@@ -49,6 +50,9 @@ function at(now: Date, time: DemoTime): Date {
 function pair(oneId: string, otherId: string): { userAId: string; userBId: string } {
   return oneId < otherId ? { userAId: oneId, userBId: otherId } : { userAId: otherId, userBId: oneId };
 }
+
+// Demo Friends see each other's Avatars walk, so both ends let the other see the position.
+const BOTH_EXACT = { userALevel: 'exact', userBLevel: 'exact' } as const;
 
 async function placesByNumber(prisma: PrismaClient): Promise<PlaceOf> {
   const places = await prisma.place.findMany({ where: { origin: 'campus_map', number: { not: null } } });
@@ -96,8 +100,8 @@ async function seedUsers(prisma: PrismaClient, now: Date): Promise<void> {
       const users = pair(demoUserId(one), demoUserId(other));
       return prisma.friendship.upsert({
         where: { userAId_userBId: users },
-        create: { ...users, senderId: demoUserId(one), acceptedAt: now },
-        update: { acceptedAt: now, userASharing: true, userBSharing: true },
+        create: { ...users, senderId: demoUserId(one), acceptedAt: now, ...BOTH_EXACT },
+        update: { acceptedAt: now, ...BOTH_EXACT },
       });
     }),
   );
@@ -221,7 +225,7 @@ async function prepareAccount(prisma: PrismaClient, now: Date, account: User): P
     const users = pair(account.id, demoUserId(key));
     return prisma.friendship.upsert({
       where: { userAId_userBId: users },
-      create: { ...users, senderId: demoUserId(key), acceptedAt: accepted ? now : null },
+      create: { ...users, senderId: demoUserId(key), acceptedAt: accepted ? now : null, ...BOTH_EXACT },
       update: {},
     });
   };

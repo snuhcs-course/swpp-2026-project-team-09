@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: a position's age at 2 and 10 minutes; a Friend seen or not, with a status, without one and with one
@@ -12,7 +13,16 @@ import type { Friend, FriendStatus } from '@/api/types';
 import { keptPositions, minutesOld, toFriendRequestViews, toFriendViews, withAge } from '@/features/friends/adapter';
 
 function friend(visible: boolean, more: Partial<Friend> = {}): Friend {
-  return { ...MIN_JUN, sharing: true, visible, ...more };
+  return {
+    ...MIN_JUN,
+    level: 'exact',
+    seen: 'exact',
+    sharing: true,
+    visible,
+    askedOff: false,
+    askedPlan: false,
+    ...more,
+  };
 }
 
 const LIBRARY: FriendStatus = {
@@ -64,8 +74,15 @@ describe('toFriendViews of one Friend seen', () => {
       position: HALL,
       minutesOld: null,
       visible: true,
+      level: 'exact',
       sharing: true,
+      askedOff: false,
     });
+  });
+
+  it("a Friend seen at the building → the User's own level for them, and the Place's point", () => {
+    const [view] = toFriendViews([friend(true, { level: 'building' })], [measured('min-jun', MINUTE)], [], NOW);
+    expect(view).toMatchObject({ level: 'building', position: HALL });
   });
 
   it('a Friend seen with an old position → its age in minutes', () => {

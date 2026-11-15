@@ -10,6 +10,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
+import { peopleOf, windowOf } from '@/features/assistant/plan-input';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { AnswerLines } from './answer-lines';
@@ -176,7 +177,7 @@ function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): Reac
       />
     );
   }
-  const invitable = plan !== null && answer.input.people.length > 1;
+  const invitable = plan !== null && peopleOf(answer.input).length > 1;
   return (
     <>
       {plan === null ? null : (
@@ -186,7 +187,7 @@ function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): Reac
           focus={fix.focus}
           ghost={ghost}
           onDrop={fix.drop}
-          fixed={answer.input.window}
+          fixed={windowOf(answer.input)}
         />
       )}
       <Steps busy={busy} count={answer.plans.length} invitation={invitable ? invitation : null} shown={shown} />

@@ -11,7 +11,7 @@ import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
-import type { AnswerDrawing, AnswerThing } from './answer-drawing';
+import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -53,9 +53,10 @@ const ROUTE_STYLES = {
   me: { color: color.snuBlue, width: 5 },
   friend: { color: color.friend, width: 4 },
   next: { color: color.borderStrong, width: 3 },
+  shuttle: { color: color.svcShuttle, width: 4 },
+  alt: { color: color.border, width: 2 },
 } as const;
 
-const METRES_PER_DEGREE = 111_320;
 const ONE_POINT = 15;
 // How far a label reaches from its point: sideways and how far up or down for a side label, up or down and how far
 // sideways for one above or below.
@@ -63,19 +64,6 @@ const SIDE_REACH = { along: 400, across: 50 };
 const UPRIGHT_REACH = { along: 120, across: 150 };
 // How many characters of a name a face shows (`MapAnswerMark`).
 const FACE_LETTERS = 2;
-
-// The metres east and north from one position to another.
-export function offset(from: LatLng, to: LatLng): { east: number; north: number } {
-  const north = (to.latitude - from.latitude) * METRES_PER_DEGREE;
-  const east = (to.longitude - from.longitude) * METRES_PER_DEGREE * Math.cos((from.latitude * Math.PI) / 180);
-  return { east, north };
-}
-
-// The metres in a straight line from one position to another.
-export function metresBetween(from: LatLng, to: LatLng): number {
-  const { east, north } = offset(from, to);
-  return Math.hypot(east, north);
-}
 
 function samePoint(one: LatLng, other: LatLng): boolean {
   return metresBetween(one, other) <= ONE_POINT;
@@ -186,7 +174,8 @@ function placeDraft(
       number,
     };
   }
-  if (role === 'meeting') {
+  // A stop is not drawn until its look is settled (P01 ticket 11).
+  if (role === 'meeting' || role === 'stop') {
     return null;
   }
   const id = role === 'next' ? `answer:next:${place.placeId}` : `answer:dropped:${place.label}`;

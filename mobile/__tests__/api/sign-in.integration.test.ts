@@ -226,6 +226,7 @@ describe('the Lobby', () => {
         affiliation: null,
       },
       masterSwitch: false,
+      masterOffAsked: false,
     });
   });
 });

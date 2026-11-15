@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -20,6 +21,7 @@ import {
   type RequestContext,
   sentProposalOf,
 } from '@/api/assistant-types';
+import type { Lookup } from '@/api/lookup-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
@@ -46,8 +48,9 @@ export interface ChatBubble {
   own?: boolean;
   // A booking a library card made, as its done message shows it.
   done?: LibraryDone;
-  // The answer an Assistant's reply drew on the map, or null. It is not sent back.
+  // The answer or the Lookup an Assistant's reply drew on the map, or null. They are not sent back.
   answer?: AnswerReply | null;
+  lookup?: Lookup | null;
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
@@ -126,8 +129,8 @@ async function answerTo(messages: ChatMessage[], context: RequestContext | undef
     const reply = await (context === undefined
       ? apiClient.askAssistant(messages)
       : apiClient.askAssistant(messages, context));
-    const { text, cards, mapButtons, proposal, answer = null } = reply;
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, answer };
+    const { text, cards, mapButtons, proposal, answer = null, lookup = null } = reply;
+    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, answer, lookup };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };
