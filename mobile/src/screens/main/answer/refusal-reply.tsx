@@ -8,12 +8,12 @@ import { type Href, router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { PickFriendOffer, Refusal, RefusalOffer, RefusalScreen } from '@/api/refusal-types';
-import { ChoiceGrid, color, font, type GridChoice, radius, size, space, text } from '@/design-system';
+import { color, font, radius, size, space, text } from '@/design-system';
 import { offerLocation } from './location-offer';
 
 // What cannot be answered (row 8): the server's lines in place of the model's sentence, and under them its offers as
-// buttons of one width in one row, in the board's order. The Friends of the question of which Friend stand as the
-// cells of a choice grid instead.
+// buttons of one width in one row, in the board's order. The Friends of the question of which Friend stand as cells
+// of one width instead.
 
 // Sends words as if the User typed them, with the Friend they were said of when a cell was pressed.
 export type RefusalAsk = (words: string, tapped?: { kind: 'friend'; userId: string }) => void;
@@ -82,30 +82,43 @@ function OfferCell({ offer, main, onAsk }: OfferCellProps): ReactElement {
 
 const PICKS_IN_ONE_ROW = 3;
 
-function choiceOf({ userId, label, aside }: PickFriendOffer): GridChoice {
-  return {
-    key: userId,
-    name: label,
-    value: aside ?? '',
-    faint: false,
-    label: aside === null ? label : `${label}, ${aside}`,
-  };
+function PickCell({ pick, onAsk }: { pick: PickFriendOffer; onAsk: RefusalAsk }): ReactElement {
+  const { userId, label, aside, text: words } = pick;
+  return (
+    <Pressable
+      accessibilityLabel={aside === null ? label : `${label}, ${aside}`}
+      accessibilityRole="button"
+      onPress={() => {
+        onAsk(words, { kind: 'friend', userId });
+      }}
+      style={({ pressed }): StyleProp<ViewStyle> => [styles.pick, pressed && styles.otherPressed]}
+    >
+      <Text style={styles.pickName}>{label}</Text>
+      {aside === null ? null : <Text style={styles.pickAside}>{aside}</Text>}
+    </Pressable>
+  );
 }
 
-// One cell per Friend, the name at the left and the fact at the right: up to three in one row, else two to a row.
+// One cell per Friend, the full name with the department under it: up to three in one row, else two to a row. Until
+// the design system's choice grid draws a line under a name (P02-18), the cells are drawn here.
 function FriendPicks({ picks, onAsk }: { picks: readonly PickFriendOffer[]; onAsk: RefusalAsk }): ReactElement {
+  const columns = picks.length > PICKS_IN_ONE_ROW ? 2 : picks.length;
+  const rows = Array.from({ length: Math.ceil(picks.length / columns) }, (_, row) =>
+    picks.slice(row * columns, (row + 1) * columns),
+  );
   return (
-    <ChoiceGrid
-      choices={picks.map((pick) => choiceOf(pick))}
-      columns={picks.length > PICKS_IN_ONE_ROW ? 2 : picks.length}
-      disabled={false}
-      onChoose={(userId) => {
-        const picked = picks.find((pick) => pick.userId === userId);
-        if (picked !== undefined) {
-          onAsk(picked.text, { kind: 'friend', userId });
-        }
-      }}
-    />
+    <View style={styles.picks} testID="refusal-picks">
+      {rows.map((row) => (
+        <View key={row.map(({ userId }) => userId).join(' ')} style={styles.offers}>
+          {row.map((pick) => (
+            <PickCell key={pick.userId} onAsk={onAsk} pick={pick} />
+          ))}
+          {Array.from({ length: columns - row.length }, (_, empty) => (
+            <View key={`empty ${empty}`} style={styles.empty} testID="refusal-pick-empty" />
+          ))}
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -169,4 +182,19 @@ const styles = StyleSheet.create({
   otherPressed: { backgroundColor: color.blue50 },
   label: { ...text.label, color: color.snuBlue, textAlign: 'center' },
   mainLabel: { color: color.onPrimary },
+  picks: { gap: space[2] },
+  pick: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: size.touchMin,
+    paddingHorizontal: space[3],
+    paddingVertical: space[1],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surface,
+  },
+  pickName: { ...text.label, color: color.ink },
+  pickAside: { ...text.caption, color: color.inkMuted },
+  empty: { flex: 1 },
 });

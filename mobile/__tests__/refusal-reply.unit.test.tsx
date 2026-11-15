@@ -129,13 +129,13 @@ describe('an offer pressed', () => {
   });
 });
 
-// The question of which Friend (P02 ticket 17): one cell per candidate, of one width, the name at the left and the
-// department at the right. Partitions: two and three candidates (one row), five (two to a row, an odd last cell);
-// an aside and none; candidates of different names and of one full name.
+// The question of which Friend (P02 ticket 17): one cell per candidate, of one width, the full name with the
+// department under it in small muted text. Partitions: two and three candidates (one row), five (two to a row, an odd
+// last cell); an aside and none; candidates of different names and of one full name.
 
-// The grid's rows, each as what a screen reader says of its cells, the empty partner by its id.
+// The cells' rows, each as what a screen reader says of its cells, the empty partner by its id.
 function rows(): string[][] {
-  return screen.getByTestId('choice-grid').children.map((row) =>
+  return screen.getByTestId('refusal-picks').children.map((row) =>
     typeof row === 'string'
       ? [row]
       : row.children.map((part) => {
@@ -153,15 +153,23 @@ const CHOI_MINSU = pick('minsu-choi', '최민수', '사회학과');
 const JUNG_MINSU = pick('minsu-jung', '정민수', null);
 
 describe('the Friends to pick', () => {
-  it('stand as cells of one width in one row, the name at the left and the department at the right', async () => {
+  it('stand as cells of one width in one row, the full name with the department under it', async () => {
     await show(WHICH_MINSU);
 
     expect(rows()).toEqual([['김민수, 컴퓨터공학부', '이민수, 경영학과']]);
     const kim = screen.getByRole('button', { name: '김민수, 컴퓨터공학부' });
     expect(kim).toHaveTextContent('김민수컴퓨터공학부');
     expect(kim).toHaveStyle({ flex: 1 });
-    expect(screen.getByText('컴퓨터공학부')).toHaveStyle({ textAlign: 'right' });
+    expect(kim).not.toHaveStyle({ flexDirection: 'row' });
+    expect(screen.getByText('김민수')).toHaveStyle({ fontSize: 14, color: color.ink });
+    expect(screen.getByText('컴퓨터공학부')).toHaveStyle({ fontSize: 12, color: color.inkMuted });
     expect(screen.queryByTestId('refusal-offers')).toBeNull();
+  });
+
+  it('never cut the name', async () => {
+    await show(WHICH_MINSU);
+
+    expect(screen.getByText('김민수').props.numberOfLines).toBeUndefined();
   });
 
   it('stand three in one row', async () => {
@@ -177,7 +185,7 @@ describe('the Friends to pick', () => {
     expect(rows()).toEqual([
       ['김민수, 컴퓨터공학부', '이민수, 경영학과'],
       ['박민수, 기계공학부', '최민수, 사회학과'],
-      ['정민수, 물리학과', 'choice-grid-empty'],
+      ['정민수, 물리학과', 'refusal-pick-empty'],
     ]);
   });
 

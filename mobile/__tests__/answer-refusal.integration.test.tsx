@@ -155,7 +155,8 @@ function sent(): unknown[] {
 describe('a Friend picked from the question', () => {
   it("sends the cell's words as the User's with that Friend tapped, for that request only", async () => {
     const user = await askWhich();
-    expect(card().getByText('민수가 두 명이에요.')).toBeVisible();
+    expect(card().getByText('민수가 두 명이에요')).toBeVisible();
+    expect(card().getByText('누구와 먹을까요?')).toBeVisible();
 
     await user.press(card().getByRole('button', { name: '이민수, 경영학과' }));
     await pass(1000);
