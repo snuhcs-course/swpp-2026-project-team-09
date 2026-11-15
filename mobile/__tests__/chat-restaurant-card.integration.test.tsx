@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -228,6 +229,6 @@ describe('a card the app does not know', () => {
   it('fails the reply as an ordinary failure, as an APK from before the Restaurant card does', async () => {
     await answered([{ kind: 'menu', menu: {} }]);
 
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent('지금은 답할 수 없어요', { exact: false });
+    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent('답을 가져오지 못했어요.', { exact: false });
   });
 });

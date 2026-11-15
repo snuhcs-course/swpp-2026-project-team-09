@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -102,19 +103,40 @@ export function Notes({ notes }: { notes: readonly string[] }): ReactElement | n
   );
 }
 
+// What a card that read the library offers when the read failed for another reason than the session: what it could
+// not read, 다시 시도, which reads again, and 닫기.
+export interface ReadAgain {
+  words: string;
+  onRetry: () => void;
+  onClose: () => void;
+}
+
 // A failure in the card, with 로그인 when the library session is missing or ended.
 export function FailureNote({
   failure,
   message,
   onLogIn,
+  reading,
 }: {
   failure: LibraryFailure | null;
   // The library's own words, or a card's sentence for the failure.
   message?: string;
   onLogIn: () => void;
+  reading?: ReadAgain;
 }): ReactElement | null {
   if (failure === null && message === undefined) {
     return null;
+  }
+  if (reading !== undefined && failure !== null && !needsLogin(failure)) {
+    return (
+      <View style={styles.failure}>
+        <Said tone="danger">{reading.words}</Said>
+        <Pills>
+          <Pill label="다시 시도" onPress={reading.onRetry} primary />
+          <Pill label="닫기" onPress={reading.onClose} />
+        </Pills>
+      </View>
+    );
   }
   return (
     <View style={styles.failure}>

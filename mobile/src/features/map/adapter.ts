@@ -28,6 +28,10 @@ import { givenName, shortTitle, withParticle } from './short-name';
 // The icons a card's lines use, by their names in the design system.
 export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
 
+// How a person's Avatar shows their position. `stale`: the position is over two minutes old, and the Avatar is
+// dimmed. `exact`: a Friend seen at the exact level on a position that is not old, whose Avatar carries a green dot.
+type PersonSeen = { stale: boolean; exact?: boolean };
+
 // What stands for the thing, at the head of its card and as its marker on the map:
 // - a person: the Avatar, with the status for a Friend; `presence` is null for a member of the User's Party who is
 //   no Friend, whose marker has the Party's colour; `id` is the person's own, which stays while what is shown of
@@ -36,8 +40,7 @@ export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
 //   shuttle's vehicle as its stops;
 // - a group: the kinds of the things at one place, in the order `place-groups.ts` draws them.
 export type CardMark =
-  // `stale`: the position is over two minutes old, and the Avatar is dimmed.
-  | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null; stale: boolean }
+  | ({ type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null } & PersonSeen)
   | { type: 'place'; place: PlaceKind }
   | { type: 'group'; kinds: readonly PlaceKind[] };
 
@@ -314,11 +317,12 @@ function friendCards(sources: MapSources): CardView[] {
       return [];
     }
     const info = stale === null ? (detail === '' ? [] : [line('info', detail)]) : [staleLine(stale)];
+    const exact = stale === null && sources.positions.find(({ userId }) => userId === id)?.level === 'exact';
     return [
       {
         id: cardId.friend(id),
         kind: 'friend',
-        mark: { type: 'person', id, name, photo, presence, stale: stale !== null },
+        mark: { type: 'person', id, name, photo, presence, stale: stale !== null, ...(exact ? { exact } : {}) },
         marker: {
           name: detail === '' ? name : `${name} · ${detail}`,
           short: givenName(name),
