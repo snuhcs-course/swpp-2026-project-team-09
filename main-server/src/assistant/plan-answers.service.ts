@@ -9,6 +9,7 @@ import { type Position } from '../common/geometry.js';
 import { type AnswerReply, type PlanInput } from './dto/answer.dto.js';
 import { EventsPlanService } from './events/events-plan.service.js';
 import { MealPlanService } from './gathering/meal-plan.service.js';
+import { MeetPlanService } from './gathering/meet-plan.service.js';
 import { NewQuestPlanService } from './recruiting/new-quest-plan.service.js';
 import { QuestsPlanService } from './recruiting/quests-plan.service.js';
 
@@ -20,11 +21,15 @@ export class PlanAnswersService {
     readonly events: EventsPlanService,
     readonly quests: QuestsPlanService,
     readonly newQuests: NewQuestPlanService,
+    readonly meets: MeetPlanService,
   ) {}
 
   plan(askerId: string, input: PlanInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
     if (input.kind === 'meal') {
       return this.meals.plan(askerId, input, at);
+    }
+    if (input.kind === 'meet') {
+      return this.meets.plan(askerId, input, at);
     }
     if (input.kind === 'events') {
       return this.events.plan(askerId, input, at);

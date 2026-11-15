@@ -51,6 +51,7 @@ export const SEAT_TAKEN = '그 자리는 방금 다른 사람이 예약했어요
 export const NO_FREE_SEAT = '그 시간에 빈 자리가 없어요';
 export const NOT_BOOKED = '알겠어요. 예약하지 않았어요.';
 export const BOOK_FAILED = '예약하지 못했어요';
+export const SEATS_UNREAD = '관정의 자리 정보를 받지 못했어요';
 // 대학원 열람실, which the library may refuse to an undergraduate: the card then says only that it failed.
 const GRADUATE_ROOM = '8F-grad-reading-room';
 
@@ -277,7 +278,17 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
     <>
       {room.chip === null ? null : <RoomWords free={free} full={room.full} rooms={room.counting.rooms} shown={shown} />}
       {loaded.state === 'loading' || searching ? <Said>빈 자리를 찾고 있어요</Said> : null}
-      <FailureNote failure={loaded.state === 'failed' ? loaded.failure : null} onLogIn={logIn} />
+      <FailureNote
+        failure={loaded.state === 'failed' ? loaded.failure : null}
+        onLogIn={logIn}
+        reading={{
+          words: SEATS_UNREAD,
+          onRetry: reload,
+          onClose: () => {
+            close('declined');
+          },
+        }}
+      />
       {loaded.state === 'ready' && seat === null && !searching ? (
         <NoFreeSeat actions={actions} card={card} space={shown} />
       ) : null}

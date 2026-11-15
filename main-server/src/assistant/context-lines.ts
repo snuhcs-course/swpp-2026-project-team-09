@@ -21,6 +21,11 @@ export function contextLines({ conditions, planId, tapped }: RequestContext): st
     const friendIds = people.slice(1).map(({ userId }) => userId);
     const plan = { plan: planId, kind: 'new-quest', date, globalEventId, title, placeId, time, friendIds, board };
     lines.push(`[Plan on screen: ${JSON.stringify(plan)}]`);
+  } else if (conditions?.kind === 'meet') {
+    const { date, people, window, placeId } = conditions;
+    const friendIds = people.slice(1).map(({ userId }) => userId);
+    const plan = { plan: planId, kind: 'meet', date, friendIds, from: window.from, until: window.until, placeId };
+    lines.push(`[Plan on screen: ${JSON.stringify(plan)}]`);
   } else if (conditions !== null) {
     const { date, meal, people, window, placeId } = conditions;
     const plan = {
