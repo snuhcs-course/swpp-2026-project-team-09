@@ -17,16 +17,16 @@ The AI input stays under the card, as under any card of the everyday map; words 
 
 ## Acceptance criteria
 
-- [ ] With the switch on, a press on the User's own dot opens the card; with it off the dot takes no press, as today. A Friend's face over the dot still takes its own press.
-- [ ] The card's ✕ and Android's back close it; the camera does not move; every Friend's face stays.
-- [ ] Board a11 with the mock's Friends at those levels: 민수 "지금 있는 건물", 지은 "정확한 위치", 서준 "시간표만", and the sub-line "301동".
-- [ ] The User's Master Switch turned off reads "시간표만" in every row, as `seen` gives it, a Friend in the User's Party too. A Friend's own Master Switch turned off shows only through that Friend's `seen`, so their row reads "시간표만" unless they are in the User's Party.
-- [ ] A Friend in the User's active Party reads "정확한 위치 · 파티 중" (row 6's decision D4).
-- [ ] "바꾸기" opens the 위치 공유 screen; a level changed there shows in its row when the card is seen again.
-- [ ] Words sent from the card replace it with their answer, as from the everyday map.
-- [ ] Tests at the main screen over the fake main server: the press with the switch on and off, the rows, the Master Switch, the Party, and "바꾸기"'s route.
-- [ ] The screen is run on an Android emulator, and the pull request carries the screen of board a11.
-- [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
+- [x] With the switch on, a press on the User's own dot opens the card; with it off the dot takes no press, as today. A Friend's face over the dot still takes its own press.
+- [x] The card's ✕ and Android's back close it; the camera does not move; every Friend's face stays.
+- [x] Board a11 with the mock's Friends at those levels: 민수 "지금 있는 건물", 지은 "정확한 위치", 서준 "시간표만", and the sub-line "301동".
+- [x] The User's Master Switch turned off reads "시간표만" in every row, as `seen` gives it, a Friend in the User's Party too. A Friend's own Master Switch turned off shows only through that Friend's `seen`, so their row reads "시간표만" unless they are in the User's Party.
+- [x] A Friend in the User's active Party reads "정확한 위치 · 파티 중" (row 6's decision D4).
+- [x] "바꾸기" opens the 위치 공유 screen; a level changed there shows in its row when the card is seen again.
+- [x] Words sent from the card replace it with their answer, as from the everyday map.
+- [x] Tests at the main screen over the fake main server: the press with the switch on and off, the rows, the Master Switch, the Party, and "바꾸기"'s route.
+- [x] The screen is run on an Android emulator, and the pull request carries the screen of board a11.
+- [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
 
@@ -47,3 +47,14 @@ The AI input stays under the card, as under any card of the everyday map; words 
 8. The head is the person icon in a round of the key colour's lightest tint, with "지금 친구에게 보이는 나" as the card's title. The AI input under the card keeps its everyday placeholder.
 9. Of the two Master Switches the app knows only the User's. The User's turned off reads "시간표만" in every row, a Friend in the User's Party too, since the Party's row needs it on (decision 5). A Friend's turned off reaches the app only as that Friend's `seen`, "시간표만"; in the User's Party their row still reads "정확한 위치 · 파티 중".
 10. While the card is open, `GET /places/at` is asked again only once the User's position is more than 30 m from the one last asked about, not with each new position (about every 5 s); the last answer stays until the new one comes. The distance is measured from the position asked about, not from the last one, so a slow walk is asked again too. A query keyed by a rounded position was not chosen: a User standing on a cell's edge would ask with each small change.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build on the mock with its campus walk, the switch on: a press on the User's own dot opened "지금 친구에게 보이는 나" with the Place the walk stood in ("62-1동"), one row per mock Friend with what they see of the User ("강도윤 · 정확한 위치", "서지우 · 시간표만", …), scrolling after about six rows, "바꾸기", and the foot line. The board's own people (민수, 지은, 서준 at 301동) are not the mock's Friends; the integration tests check the rows by level. The mock's walk moves the dot every few seconds, so the press was made by finding the dot in a screenshot.
+
+### Agent usage (2026-11-15)
+
+One session with three subagents for this ticket (the implementation, a review of the spec and the standards, and the review's fixes); the session's own time counted is the emulator check, which took long because the emulator had to be rebooted and restarted under the Mac's load, and the pull request.
+
+- Agent time: about 87 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 229,017; input 105,036,800, of which 104,319,454 were cache reads, 716,676 cache writes, and 670 uncached. Without cache reads: 946,363.
