@@ -13,12 +13,17 @@ The Master Switch is renamed "위치 공유", since it also stops 파티 sharing
 
 ## Acceptance criteria
 
-- [ ] The switch reads "위치 공유".
-- [ ] With it off, Friend and 파티 switches render off and disabled with the line and its 켜기 link; stored values are untouched and come back when it is turned on.
-- [ ] The card's two lines use exactly the words above, never "봐요" or "볼 수 있어요"; the 파티 line is hidden when no 파티 is on.
-- [ ] No server change; nothing on the map changes.
-- [ ] Tests (ADR 0007): a unit test of the two counts and their words, with a Friend whose own end is off still counted; an app integration test of the disabled state and its restore.
-- [ ] Wiki Requirements US-LOC-01 and UI-09 use the new name. UAT-3's fixed wording is not changed; the pull request notes the rename.
-- [ ] The H3 and H10 rows of `he-revision-log.md` get this pull request.
+- [x] The switch reads "위치 공유".
+- [x] With it off, Friend and 파티 switches render off and disabled with the line and its 켜기 link; stored values are untouched and come back when it is turned on.
+- [x] The card's two lines use exactly the words above, never "봐요" or "볼 수 있어요"; the 파티 line is hidden when no 파티 is on.
+- [x] No server change; nothing on the map changes.
+- [x] Tests (ADR 0007): a unit test of the two counts and their words, with a Friend whose own end is off still counted; an app integration test of the disabled state and its restore.
+- [x] Wiki Requirements US-LOC-01 and UI-09 use the new name. UAT-3's fixed wording is not changed; the pull request notes the rename.
+- [x] The H3 and H10 rows of `he-revision-log.md` get this pull request.
 
 ## Comments
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 1 h 35 min in one session (an estimate; the time waiting for answers is left out). The two review subagents ran for under a minute each, in parallel.
+- Tokens, the session and its two subagents together: input 28,907,716, of which 28,545,554 were cache reads and 361,798 cache writes (364 uncached); output 104,068.
