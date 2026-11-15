@@ -95,6 +95,7 @@ describe("친구 관리's levels", () => {
     expect(choice('정확한 위치')).toBeChecked();
 
     await user.press(choice('시간표만'));
+    await user.press(screen.getByRole('button', { name: '위치 끄기' }));
     expect(choice('시간표만')).toBeChecked();
     await pass(1000);
     expect(screen.getByText('컴퓨터공학부 · 위치 꺼짐')).toBeVisible();
@@ -113,6 +114,7 @@ describe("친구 관리's levels", () => {
     const user = await openFriendScreen('/me/friends');
 
     await user.press(choice('시간표만'));
+    await user.press(screen.getByRole('button', { name: '위치 끄기' }));
     await pass(1000);
 
     expect(choice('정확한 위치')).toBeChecked();

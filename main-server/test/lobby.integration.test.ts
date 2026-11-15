@@ -5,6 +5,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -32,6 +33,9 @@ function postLobby(accessToken?: string): request.Test {
   return withAccessToken(request(app.getHttpServer()).post('/lobby'), accessToken);
 }
 
+// A new User's Master Switch is off, and the app has not asked before it was turned off.
+const NEW_SWITCH = { masterSwitch: false, masterOffAsked: false };
+
 describe('The lobby', () => {
   it('answers an onboarded User with their latest profile', async () => {
     const { accessToken } = await signIn(app, {}, { name: '김철수', department: '경영학과' });
@@ -49,7 +53,7 @@ describe('The lobby', () => {
         friendId: A_FRIEND_ID,
         ...NO_LIBRARY_DETAILS,
       },
-      masterSwitch: false,
+      ...NEW_SWITCH,
     });
   });
 

@@ -31,6 +31,8 @@ export interface FriendView {
   // The User's own end of this friendship.
   level: FriendLevel;
   sharing: boolean;
+  // Whether the app has asked the User before turning location off for this Friend.
+  askedOff: boolean;
 }
 
 export const PRESENCE_LABEL: Record<Presence, string> = {
@@ -79,7 +81,7 @@ export function toFriendViews(
   now: Date,
 ): FriendView[] {
   const kept = keptPositions(positions, now);
-  return friends.map(({ id, name, department, visible, level, sharing }) => {
+  return friends.map(({ id, name, department, visible, level, sharing, askedOff }) => {
     // The main server's word on whether the Friend is seen wins over the app's own status.
     const status = statuses.find(({ userId, presence }) => userId === id && (presence !== 'off') === visible);
     const position = visible ? kept.find(({ userId }) => userId === id) : undefined;
@@ -99,6 +101,7 @@ export function toFriendViews(
       visible,
       level,
       sharing,
+      askedOff,
     };
   });
 }
