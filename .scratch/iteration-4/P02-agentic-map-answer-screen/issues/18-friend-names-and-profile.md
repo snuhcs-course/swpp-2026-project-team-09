@@ -10,16 +10,16 @@ Two Friends with the same given name, 김민수 (컴퓨터공학부) and 이민�
 
 ## Acceptance criteria
 
-- [ ] **Full names.** Wherever a Friend's name is written out, it is the full name: the "＋ 같이" cells, the tags beside faces on the map, the person chips of an answer (also on the mock build, whose stored chips say "민수" where the main server says "김민수"), and what a screen reader says. `givenName()` stays only where two letters are all that fit: the letters in a face, and the time band's 40 pt lane.
-- [ ] **The department in a person's cell.** In the "＋ 같이" grid each cell shows the full name with the department under it in small muted text; the distance stays at the right; the cells stay equal in width and the rows whole (ticket 03's limits). The design system's `ChoiceGrid` takes this as an option of a choice, so that another list of people (package C's "which Friend" question, P02-17) draws the same cells.
-- [ ] **A trailing mark that opens the profile.** A person's cell in a `ChoiceGrid` may carry a small mark at its trailing end, an option of the grid, which opens that person's profile card without choosing them; a press anywhere else in the cell chooses at once, as today. Its touch target is at least 44 points, and a screen reader hears it as its own button ("김민수 프로필").
-- [ ] **The profile card** says who the person is: the full name; the department; what the User may see of where they are and until when, by the Friend's level (row 6's three cards: the building they are in now with the class and until when, a4; the exact position, a13; the Timetable only, "시간표로는 12:50까지 43-1동", a10); the Friend ID; and since when they have been Friends. The Friend ID and the date are optional fields of the Friend until the main server sends them; a line whose field is missing is left out. No student number and no admission year.
-- [ ] **Ways in.** The same card opens from a press on a Friend's face on the everyday map (the existing Friend card, extended to this), from a press on a person chip of an answer (the chip's ✕ still removes), and from a cell's trailing mark in the "＋ 같이" grid. Inside the answer frame, closing the card returns to the answer as it was.
-- [ ] Someone who is not a Friend keeps today's card ("친구 아님") and has no trailing mark.
-- [ ] With the switch off, the everyday map's Friend card is extended the same way; nothing else changes.
-- [ ] Tests: unit tests of the cells (the department line, the trailing mark and its press without choosing) and of the card's lines at each level and with the optional fields missing; at the main screen over the fake main server, each way in, and the chip's ✕ still removing.
-- [ ] The screen is run on an Android emulator, and the pull request carries its screens.
-- [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
+- [x] **Full names.** Wherever a Friend's name is written out, it is the full name: the "＋ 같이" cells, the tags beside faces on the map, the person chips of an answer (also on the mock build, whose stored chips say "민수" where the main server says "김민수"), and what a screen reader says. `givenName()` stays only where two letters are all that fit: the letters in a face, and the time band's 40 pt lane.
+- [x] **The department in a person's cell.** In the "＋ 같이" grid each cell shows the full name with the department under it in small muted text; the distance stays at the right; the cells stay equal in width and the rows whole (ticket 03's limits). The design system's `ChoiceGrid` takes this as an option of a choice, so that another list of people (package C's "which Friend" question, P02-17) draws the same cells.
+- [x] **A trailing mark that opens the profile.** A person's cell in a `ChoiceGrid` may carry a small mark at its trailing end, an option of the grid, which opens that person's profile card without choosing them; a press anywhere else in the cell chooses at once, as today. Its touch target is at least 44 points, and a screen reader hears it as its own button ("김민수 프로필").
+- [x] **The profile card** says who the person is: the full name; the department; what the User may see of where they are and until when, by the Friend's level (row 6's three cards: the building they are in now with the class and until when, a4; the exact position, a13; the Timetable only, "시간표로는 12:50까지 43-1동", a10); the Friend ID; and since when they have been Friends. The Friend ID and the date are optional fields of the Friend until the main server sends them; a line whose field is missing is left out. No student number and no admission year.
+- [x] **Ways in.** The same card opens from a press on a Friend's face on the everyday map (the existing Friend card, extended to this), from a press on a person chip of an answer (the chip's ✕ still removes), and from a cell's trailing mark in the "＋ 같이" grid. Inside the answer frame, closing the card returns to the answer as it was.
+- [x] Someone who is not a Friend keeps today's card ("친구 아님") and has no trailing mark.
+- [x] With the switch off, the everyday map's Friend card is extended the same way; nothing else changes.
+- [x] Tests: unit tests of the cells (the department line, the trailing mark and its press without choosing) and of the card's lines at each level and with the optional fields missing; at the main screen over the fake main server, each way in, and the chip's ✕ still removing.
+- [x] The screen is run on an Android emulator, and the pull request carries its screens.
+- [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
 
@@ -43,3 +43,21 @@ From the decision of 2026-11-15 on Friends with the same name (the user: "바로
 14. The profile belongs to the reply it was opened over, told by that reply's bubble (`lastReply`, `features/assistant/use-shown-answer.ts`): a new reply hides it, with an answer or without one, also one that brings the same answer again. A failure, a follow-up on its way, and a recalculation keep it; while the keyboard is up it only gives way. The state is `useProfileOver` in `screens/main/friend-profile.tsx`, held by the frame.
 15. An answer's own faces show the everyday Avatar's letters (`initials`, the design system's `avatar.tsx`): the last two syllables of a Korean name, "민수" for "김민수", and the first letters of the words of another. A face's tag leaves the name out only where those letters are the whole name, so the tag "Li · 18분" stays whole beside a face that shows "L".
 16. The mock's twelve Friends carry the Friend IDs the mock already gave them (`FRIEND_IDS`, eight characters each of the main server's alphabet, all different) and a `friendsSince` the mock invents, from 3 October to 9 November 2026 with Korea's offset, 김민준's on 3 October; so the profile shows its two lines on the mock build. A Friend the mock befriends while it runs has neither.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build answering from the stored copies of real replies and the mock's Friends, with the switch on:
+
+- The "＋ 같이" grid: each cell the full name with the department under it, the distance at the right, and the ⓘ mark; a screen reader reads "윤태오, 물리천문학부, 680m, 추가" and "윤태오 프로필".
+- A press on 유나's face on the everyday map: "디자인학부 / 최유나", "정확한 위치까지 보여요 ›", today's status and walking lines, "친구 ID CY6N9TUD", "10월 12일부터 친구", "가까이 보기" and "파티 만들기".
+- A cell's ⓘ in the answer: the same card over the answer card; "어디까지 보이나" opened 위치 공유; Android's back returned to the profile over the answer, and a second back closed the profile alone, the answer and its open list as they were.
+- The plan's person chip reads "김민수 ✕".
+
+Fixed after the review and checked again here: Android's back after a screen pushed from the profile (decision 13). Not seen on the mock build: a chip's profile for 김민수, who is not one of the mock's Friends, and the faces' letters on a server build (the tests cover both).
+
+### Agent usage (2026-11-15)
+
+One session with three subagents for this ticket (the implementation, a review of the spec and the standards, and the review's fixes), plus the row-6 planning it was cut from; the session's own time counted is the screens and the pull request.
+
+- Agent time: about 75 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 344,600; input 112,756,605, of which 111,795,243 were cache reads, 960,604 cache writes, and 758 uncached. Without cache reads: 1,305,962.
