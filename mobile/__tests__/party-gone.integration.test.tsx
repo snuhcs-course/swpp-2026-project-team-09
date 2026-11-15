@@ -184,6 +184,21 @@ describe("the User's own leave or end", () => {
   });
 });
 
+describe("the User's own Quest for a Global Event", () => {
+  it('is not told when joining another 파티 for the event deleted it', async () => {
+    const festival = { id: 'eeeeeeee-0000-4000-8000-000000000001', title: '가을 축제' };
+    server.on('GET /quests', { status: 200, body: [{ ...PICNIC, globalEvent: festival }] });
+    await openMain();
+    await connect();
+
+    server.on('GET /quests', { status: 200, body: [{ ...DINNER, globalEvent: festival }] });
+    server.on(`GET /quests/${PICNIC.id}`, refusal(404, 'QUEST_NOT_FOUND'));
+    await questsChanged();
+
+    expect(await toastsOver(TOAST_GONE_MS)).toEqual([]);
+  });
+});
+
 describe("a refused leave of the User's own", () => {
   it('keeps a later removal told', async () => {
     answerRoom(server, HIS_PICNIC);

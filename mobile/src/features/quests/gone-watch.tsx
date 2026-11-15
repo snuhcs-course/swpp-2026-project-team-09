@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { apiClient } from '@/api/client';
 import { questsQuery } from '@/api/queries';
+import type { Quest } from '@/api/types';
 import { useToast } from '@/design-system';
 
 // The Quests the User is leaving or ending on this phone. Their disappearance from the list is the User's own doing,
@@ -47,16 +48,18 @@ async function tellIfGone(questId: string, title: string, showToast: (words: str
 export function GoneQuestsWatch(): null {
   const { data } = useQuery(questsQuery);
   const showToast = useToast();
-  const known = useRef<ReadonlyMap<string, string> | null>(null);
+  const known = useRef<ReadonlyMap<string, Quest> | null>(null);
   useEffect(() => {
     if (data === undefined) {
       return;
     }
-    const held = new Map(data.filter(({ classQuest }) => !classQuest).map(({ id, title }) => [id, title]));
+    const held = new Map(data.filter(({ classQuest }) => !classQuest).map((quest) => [quest.id, quest]));
+    // Joining a 파티 for a Global Event deletes the User's own one-person Quest for it: the event is still held.
+    const events = new Set([...held.values()].map(({ globalEvent }) => globalEvent?.id));
     const before = known.current;
     known.current = held;
-    for (const [questId, title] of before ?? []) {
-      if (!held.has(questId)) {
+    for (const [questId, { title, globalEvent }] of before ?? []) {
+      if (!held.has(questId) && (globalEvent === null || !events.has(globalEvent.id))) {
         void tellIfGone(questId, title, showToast);
       }
     }
