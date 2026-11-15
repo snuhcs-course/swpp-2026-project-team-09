@@ -51,6 +51,11 @@ export class FakeSettings {
     );
   }
 
+  // The value the answering server holds, as after a change applied.
+  hasInEffect(name: string, value: string): void {
+    this.settings = this.settings.map((setting) => (setting.name === name ? { ...setting, value } : setting));
+  }
+
   list(): Setting[] {
     return this.settings;
   }
