@@ -51,7 +51,22 @@ describe("a person's look on the map", () => {
   });
 });
 
-// Partitions: a person's look with the "+" and without it.
+// Partitions: a Friend at the exact level and one not, alone and with "selected" or the "+" after it. Expected values:
+// P02 ticket 20, a look for the green dot of its own, and one name for two looks that draw one picture; the ends
+// "selected" and "addable" stay last, as the answer's faces read them.
+describe("a person's look at the exact level", () => {
+  it('has a name of its own, and the name of a face without the dot when `exact` is false', () => {
+    expect(lookName({ ...SEO_YEON, exact: true })).toBe('person:full:free:f2:photo:exact');
+    expect(lookName({ ...SEO_YEON, exact: false })).toBe(lookName(SEO_YEON));
+  });
+
+  it('keeps "selected" and the "+" at the end of the name', () => {
+    expect(lookName({ ...SEO_YEON, exact: true, selected: true })).toBe('person:full:free:f2:photo:exact:selected');
+    expect(lookName({ ...SEO_YEON, exact: true, addable: true })).toBe('person:full:free:f2:photo:exact:addable');
+  });
+});
+
+// Partitions: a person's look with the "+" and without it; with the green dot and without it.
 describe("a person's look drawn", () => {
   it('carries the "+" of a Friend who can be added, and none without it', async () => {
     const { rerender } = await render(<LookView look={{ ...SEO_YEON, addable: true }} />);
@@ -59,6 +74,14 @@ describe("a person's look drawn", () => {
 
     await rerender(<LookView look={SEO_YEON} />);
     expect(screen.queryByText('+')).toBeNull();
+  });
+
+  it('carries the green dot of a Friend at the exact level, and none without it', async () => {
+    const { rerender } = await render(<LookView look={{ ...SEO_YEON, exact: true }} testID="look" />);
+    expect(screen.getByTestId('look:exact')).toBeVisible();
+
+    await rerender(<LookView look={SEO_YEON} testID="look" />);
+    expect(screen.queryByTestId('look:exact')).toBeNull();
   });
 });
 

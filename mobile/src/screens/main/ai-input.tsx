@@ -6,12 +6,14 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { USER_MESSAGE_MAX } from '@/api/assistant-types';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
+import type { Restore } from '@/features/assistant/restore';
 import { AI_INPUT } from './layout';
 
 interface AiInputProps {
@@ -28,6 +30,8 @@ interface AiInputProps {
   onHeight: (height: number) => void;
   // In place of "무엇이든 부탁해 보세요".
   placeholder?: string;
+  // The words of a message that failed, while that failure is the last thing said.
+  restore?: Restore | null;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -56,6 +60,20 @@ function useBarHeight(onHeight: (height: number) => void): [number, (event: Layo
   return [height, laidOut];
 }
 
+// The field's words. A failed message's words go into the empty field once per failure, and out again, if still as
+// they were put, once that failure is no longer the last thing said (다시 시도 sent them again, or the conversation
+// was forgotten). What the User wrote meanwhile stays.
+function useMessage(restore: Restore | null): [string, (message: string) => void] {
+  const [message, setMessage] = useState(restore?.words ?? '');
+  const [put, setPut] = useState(restore);
+  if (restore?.id !== put?.id) {
+    setPut(restore);
+    const kept = put !== null && message === put.words ? '' : message;
+    setMessage(restore !== null && kept === '' ? restore.words : kept);
+  }
+  return [message, setMessage];
+}
+
 // The AI input of the `Main` frame: the white bar with the placeholder and the send button. Focusing it opens the
 // chat, and it stays at the bottom as the chat's input. It grows with its text up to 120, takes at most the characters
 // the Assistant takes in a message, Enter starts a new line, and only the send button sends, in the key colour while
@@ -63,8 +81,8 @@ function useBarHeight(onHeight: (height: number) => void): [number, (event: Layo
 // The field grows by itself, between its least and its most height: nothing sets its height from its content, which
 // would lay it out again and could swing it between two heights.
 export function AiInput(props: AiInputProps): ReactElement {
-  const { chatOpen, onOpen, waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요' } = props;
-  const [message, setMessage] = useState('');
+  const { chatOpen, onOpen, waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요', restore } = props;
+  const [message, setMessage] = useMessage(restore ?? null);
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '' && !waiting;
   const send = (): void => {

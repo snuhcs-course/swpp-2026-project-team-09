@@ -4,10 +4,11 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerReply } from '@/api/assistant-types';
+import type { AnswerReply, MapScene } from '@/api/assistant-types';
+import { FRIEND_LOOKUP } from '@/api/mock/data/friend-lookup';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
-import { drawingOf } from '@/features/assistant/answer-marks';
+import { drawingOf, drawingOfScene } from '@/features/assistant/answer-marks';
 import { JIEUN_ID, label, MINSU_ID, seen } from '../support/answer-marks';
 
 // The stored answer for two people with 민수's name in the scene of its third Plan changed to `name`, and the tag to
@@ -74,5 +75,35 @@ describe("a face's tag", () => {
       symbol: { type: 'me' },
       label: { title: '나 · 3분' },
     });
+  });
+});
+
+type Source = MapScene['people'][number]['source'];
+
+// The stored Lookup for "민수 어디야?", whose 민수 is seen at the building he is in, with his source changed to
+// `source` for the level it stands for.
+function minsuSeenAt(source: Source): MapScene {
+  const { scene } = FRIEND_LOOKUP;
+  const [minsu] = scene.people;
+  if (minsu === undefined) {
+    throw new Error('The stored Lookup has no 민수');
+  }
+  return { ...scene, people: [{ ...minsu, source }] };
+}
+
+// Partitions: a Friend at the exact level, at the building level, and from the Timetable; the User's own symbol.
+// Expected values: P02 ticket 20, the green dot at the exact level only, the plain ring at the building level, and
+// the dashed ring from the Timetable as before.
+describe("a face's level", () => {
+  it.each([
+    ['exact', { type: 'face', name: '민수', dashed: false, exact: true }],
+    ['building', { type: 'face', name: '민수', dashed: false }],
+    ['timetable', { type: 'face', name: '민수', dashed: true }],
+  ] as const)('draws a Friend at the %s level as the ticket says', (source, symbol) => {
+    expect(seen(drawingOfScene(minsuSeenAt(source)), `answer:person:${MINSU_ID}`).symbol).toEqual(symbol);
+  });
+
+  it("keeps the User's own dot, whose source is the exact level", () => {
+    expect(seen(drawingOf(MEAL_ANSWER, 0), 'answer:me').symbol).toEqual({ type: 'me' });
   });
 });

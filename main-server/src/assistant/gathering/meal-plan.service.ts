@@ -36,7 +36,7 @@ const menusOf = (collected: number, open: number, there: number): MealAnswerArgs
 };
 
 // The Place the Friend view puts a Friend in now: the one of their position at 'exact', and all there is at 'building'.
-const locationPlaceOf = (friend: FriendView | undefined): string | null =>
+export const locationPlaceOf = (friend: FriendView | undefined): string | null =>
   friend === undefined || friend.level === 'timetable' ? null : friend.placeId;
 
 @Injectable()
@@ -101,8 +101,8 @@ export class MealPlanService {
   }
 
   // The Friends of the plan, in its order, refusing a plan that does not start with the asker, names anyone else or
-  // anyone twice, or holds a constraint the asker did not set.
-  private async friendsOf(askerId: string, input: MealInput): Promise<FriendView[]> {
+  // anyone twice, or holds a constraint the asker did not set. A meet's people are read the same way.
+  async friendsOf(askerId: string, input: Pick<MealInput, 'people'>): Promise<FriendView[]> {
     const [first, ...others] = input.people;
     if (first?.userId !== askerId) {
       throw new BadRequestException('The first person of a plan is the asker');
@@ -123,7 +123,7 @@ export class MealPlanService {
     });
   }
 
-  private refuseUnknownPlaces({ placeId, people }: MealInput): void {
+  refuseUnknownPlaces({ placeId, people }: Pick<MealInput, 'placeId' | 'people'>): void {
     const placeIds = people.flatMap(({ constraints }) =>
       constraints.flatMap((constraint) => (constraint.kind === 'from' ? [constraint.placeId] : [])),
     );
@@ -132,7 +132,7 @@ export class MealPlanService {
     }
   }
 
-  private async peopleOf(
+  async peopleOf(
     askerId: string,
     friends: readonly FriendView[],
     date: string,
@@ -159,11 +159,11 @@ export class MealPlanService {
     ];
   }
 
-  private placeIdAt(position: Position | null): string | null {
+  placeIdAt(position: Position | null): string | null {
     return position === null ? null : (this.places.at(position)?.place.id ?? null);
   }
 
-  private placeOf(placeId: string): PlaceDto {
+  placeOf(placeId: string): PlaceDto {
     const place = this.places.byId(placeId);
     if (place === null) {
       throw new Error(`No Place ${placeId}`);

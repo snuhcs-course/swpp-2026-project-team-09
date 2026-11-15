@@ -20,6 +20,7 @@ import { MenusModule } from '../menus/menus.module.js';
 import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
 import { ShuttleModule } from '../shuttle/shuttle.module.js';
+import { StudySpacesModule } from '../study-spaces/study-spaces.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';
 import { TravelModule } from '../travel/travel.module.js';
 import { TutorialModule } from '../tutorial/tutorial.module.js';
@@ -30,6 +31,7 @@ import { AssistantService } from './assistant.service.js';
 import { EventsPlanService } from './events/events-plan.service.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { MealPlanService } from './gathering/meal-plan.service.js';
+import { MeetPlanService } from './gathering/meet-plan.service.js';
 import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
 import { DayLookupService } from './lookup/day.service.js';
@@ -57,6 +59,8 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     PlacesModule,
     QuestsModule,
     ShuttleModule,
+    // The libraries among the places a meet may be at.
+    StudySpacesModule,
     TimetableModule,
     TravelModule,
     TutorialModule,
@@ -67,6 +71,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     AssistantService,
     UserDayService,
     MealPlanService,
+    MeetPlanService,
     WayService,
     EventsPlanService,
     QuestsPlanService,
