@@ -38,3 +38,10 @@ The co-op's menu pages already carry each Restaurant's hours, and the worker kee
 - **A message without `hours`** is taken as none read, so the tests and benchmark worlds that post menus without them, and a worker of the previous release during a deploy, change no hours.
 - **`hoursOf(restaurant, meal, date)`** takes the Restaurant's name as `GET /menus` and the plans' candidates (`openRestaurants`' `key`) have it, a meal and a `YYYY-MM-DD` day in Asia/Seoul. `MenusModule` exports `RestaurantHours` for ticket 14.
 - **Migration**, provisional until the schema turn: `20261115230202_add_restaurant_hours`, made with `prisma migrate diff` from the schema at `fe5f8b98`.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). This session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 69 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 104,607; input 25,154,379, of which 24,910,345 were cache reads, 243,782 cache writes, and 252 uncached. Without cache reads: 348,641.
