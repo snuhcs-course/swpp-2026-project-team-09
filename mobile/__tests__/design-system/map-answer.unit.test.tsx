@@ -121,6 +121,22 @@ describe("MapAnswerMark: a label's side", () => {
   });
 });
 
+// Partitions: a label moved to share an edge at the left of its mark and at the right. Expected values:
+// ticket 08's labels sharing an edge, the move away from the symbol box.
+describe("MapAnswerMark: a label's shift", () => {
+  it('stands a label at the left its shift further from the symbol box', async () => {
+    await render(<MapAnswerMark label={{ ...PLAIN, side: 'left', shift: 9 }} symbol={null} testID="mark" />);
+
+    expect(screen.getByTestId('mark:label')).toHaveStyle({ marginRight: 9 });
+  });
+
+  it('stands a label at the right its shift further from the symbol box', async () => {
+    await render(<MapAnswerMark label={{ ...PLAIN, shift: 2 }} symbol={null} testID="mark" />);
+
+    expect(screen.getByTestId('mark:label')).toHaveStyle({ marginLeft: 2 });
+  });
+});
+
 // Partitions: a plain tone and the pick's; a label with a line and without; with a number badge and without.
 // Expected values: the brief's look of a mark.
 describe("MapAnswerMark: a label's tone", () => {

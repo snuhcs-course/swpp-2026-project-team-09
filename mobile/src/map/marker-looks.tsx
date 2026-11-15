@@ -98,7 +98,16 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
       ? [symbol.name, symbol.dashed, ...(symbol.badge === undefined ? [] : [symbol.badge])]
       : null,
     symbol?.type === 'dot' ? [symbol.role, symbol.number] : null,
-    label === null ? null : [label.side, label.tone, label.title, label.line, label.number],
+    label === null
+      ? null
+      : [
+          label.side,
+          label.tone,
+          label.title,
+          label.line,
+          label.number,
+          ...(label.shift === undefined ? [] : [label.shift]),
+        ],
   ];
   return `answer:${JSON.stringify(drawn)}`;
 }
