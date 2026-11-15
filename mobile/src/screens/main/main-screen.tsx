@@ -16,6 +16,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -30,14 +31,15 @@ import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
-import { Card } from './card';
 import { FriendList } from './friend-list';
+import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
 import { MapBottom, openMenus, type Taken } from './map-bottom';
 import { MyCard } from './my-card';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
+import { CardOrSeen } from './seen-card';
 import type { ChatSheetControl } from './chat-sheet';
 import type { MapContents } from './use-answer-map';
 import { askAssistant, useMainLayers } from './use-main-layers';
@@ -116,11 +118,10 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
   }
   const { primary } = card;
   return (
-    <Card
+    <CardOrSeen
       canLookCloser={map.detail !== 'names' && !top}
       card={card}
       onChoose={selection.select}
-      onClose={onClose}
       onHeight={onHeight}
       onLookCloser={() => {
         map.goTo(card.position, 'close');
@@ -151,16 +152,23 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
           onClose();
         }
       }}
+      selection={selection}
       top={top ? listsTop(inset) : undefined}
     />
   );
 }
 
-// The open card: the User's own, which gives way to the answer frame as a thing's does, or the selected thing's.
+// The open card: the User's own, or that of a Friend whom the map does not show, each giving way to the answer frame
+// as a thing's does, or the selected thing's.
 function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const { selection, chat, onHeight } = props;
   if (selection.mine) {
     return chat.framed ? null : <MyCard onClose={selection.close} onHeight={onHeight} />;
+  }
+  if (selection.friend !== null) {
+    return chat.framed ? null : (
+      <OffMapFriendCard onHeight={onHeight} selection={selection} userId={selection.friend} />
+    );
   }
   return <ThingCard {...props} />;
 }
@@ -297,7 +305,7 @@ export function MainScreen(): ReactElement {
   const me = useMe(map);
   const layers = useMainLayers(inFront, map, me);
   const { stack, shuttle, cards, ready, chat, route } = layers;
-  const selection = useSelection(cards, inFront, chat.onMap && me.position !== null);
+  const selection = useSelection(cards, inFront, chat.onMap && me.position !== null, useOffMapFriends(chat.onMap));
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection, chat);

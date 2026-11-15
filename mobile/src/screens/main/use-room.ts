@@ -85,7 +85,8 @@ export function useBottomRoom(
   const asked = useFirstRun();
   const free = !selection.open && !chat.shown && !framed;
   const firstRun = { ...asked, card: free ? asked.card : null };
-  const taken = takenBy(selection.selected, shuttle.serviceHours, firstRun.card !== null || selection.mine);
+  const otherCard = firstRun.card !== null || selection.mine || selection.friend !== null;
+  const taken = takenBy(selection.selected, shuttle.serviceHours, otherCard);
   return { taken, firstRun, ...useRoom(taken, tutorialStart, framed, asked.asksForInterests, madeLine) };
 }
 

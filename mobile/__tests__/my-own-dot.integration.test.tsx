@@ -189,6 +189,32 @@ describe('the rows of the switches', () => {
   });
 });
 
+// Partitions: GET /parties/mine still on its way, then answered; and failed. The rule: no row says a level before the
+// Party is known, since a Friend in it sees more than `seen`.
+describe("the rows while the User's Party is not known", () => {
+  it('are none until the Party is read, and then say the Party', async () => {
+    server.on('GET /parties/mine', { status: 200, body: LUNCH, afterMs: 10_000 });
+
+    await openMyCard();
+    expect(myCard().getByRole('header', { name: HEAD })).toBeVisible();
+    expect(rows()).toEqual([]);
+    await pass(10_000);
+
+    expect(rows()).toEqual(['김민준, 정확한 위치 · 파티 중', '서지우, 정확한 위치', '박서준, 시간표만']);
+  });
+
+  it('are none once the Party cannot be read', async () => {
+    server.on('GET /parties/mine', { status: 500, body: { statusCode: 500, message: 'Internal Server Error' } });
+
+    await openMyCard();
+    // Past the one retry of a failed read.
+    await pass(3000);
+
+    expect(myCard().getByRole('header', { name: HEAD })).toBeVisible();
+    expect(rows()).toEqual([]);
+  });
+});
+
 // Partitions: GET /places/at answers a Place the User is inside, one they are near, and none; the User moves less
 // than 30 m from where it was asked, and then more (the boundary of decision 10).
 describe('the line under the head', () => {

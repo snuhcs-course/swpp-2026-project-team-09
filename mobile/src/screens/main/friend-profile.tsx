@@ -9,7 +9,10 @@ import { createContext, type ReactElement, type ReactNode, use, useCallback, use
 import type { FriendView } from '@/features/friends/adapter';
 import { friendProfileCard } from '@/features/friends/profile';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
-import { Card } from './card';
+import { useFriends } from '@/features/friends/use-friends';
+import { Card, type CardProps } from './card';
+import { CardOrSeen, type SeenSelection } from './seen-card';
+import type { OffMapFriends } from './use-selection';
 
 const OpenProfile = createContext<((userId: string) => void) | null>(null);
 
@@ -44,22 +47,48 @@ export function useProfileOver(replyId: number | null): ProfileOver {
 }
 
 function ignore(): void {
-  // The frame's camera is the answer's: the card has no "가까이 보기".
+  // A profile card has no "가까이 보기": over the answer frame the camera is the answer's, and a Friend whom the map
+  // does not show has no face to look closer at.
 }
 
-// The everyday map's card of a Friend, which is their profile, also for a Friend whom the map does not show.
+// A Friend's profile card, over the answer frame's card and for a Friend whom the everyday map does not show: no
+// "가까이 보기", and "파티 만들기" with the Friend.
+function profileCardProps(friend: FriendView, onHeight?: (height: number) => void): Omit<CardProps, 'onClose'> {
+  return {
+    canLookCloser: false,
+    card: friendProfileCard(friend),
+    onHeight,
+    onLookCloser: ignore,
+    onPrimary: () => {
+      router.push({ pathname: '/party-form', params: { friendId: friend.id } });
+    },
+  };
+}
+
 function ProfileCard({ friend, onClose }: { friend: FriendView; onClose: () => void }): ReactElement {
-  return (
-    <Card
-      canLookCloser={false}
-      card={friendProfileCard(friend)}
-      onClose={onClose}
-      onLookCloser={ignore}
-      onPrimary={() => {
-        router.push({ pathname: '/party-form', params: { friendId: friend.id } });
-      }}
-    />
-  );
+  return <Card {...profileCardProps(friend)} onClose={onClose} />;
+}
+
+// The Friends whose card a row of a list may open without their mark on the map: the User's Friends while `onMap`,
+// the switch of the answer on the map, is on, and none while they cannot be read.
+export function useOffMapFriends(onMap: boolean): OffMapFriends {
+  const friends = useFriends().data;
+  return onMap ? (friends ?? []).map(({ id }) => id) : null;
+}
+
+// The card of a Friend whom the map does not show, which a row of the friend list opens over the everyday map while
+// the switch of the answer on the map is on: their profile, with what the app holds of them.
+export function OffMapFriendCard({
+  userId,
+  selection,
+  onHeight,
+}: {
+  userId: string;
+  selection: SeenSelection;
+  onHeight: (height: number) => void;
+}): ReactElement | null {
+  const friend = useFriendProfile(userId)?.friend ?? null;
+  return friend === null ? null : <CardOrSeen {...profileCardProps(friend, onHeight)} selection={selection} />;
 }
 
 // What is inside the answer frame may open a Friend's profile (`useOpenFriendProfile`), which stands over the frame's

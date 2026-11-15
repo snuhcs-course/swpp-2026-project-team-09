@@ -8,17 +8,17 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { friendsQuery, myPartyQuery } from '@/api/queries';
+import { friendsQuery } from '@/api/queries';
 import type { Place } from '@/api/types';
 import { Button, color, font, radius, RoundIcon, space, text } from '@/design-system';
 import { seenOfMe } from '@/features/friends/seen-of-me';
+import { useMySwitches } from '@/features/friends/use-my-switches';
 import { usePlaceNear } from '@/features/places/use-place-at';
-import { useMasterSwitch } from '@/features/sharing/use-master-switch';
 import { usePosition } from '@/position';
 import { CardFrame, CloseButton } from './card';
 
 // "301동", or the name of a Place without a number.
-function placeWords(place: Place): string {
+export function placeWords(place: Place): string {
   return place.number === null ? place.name : `${place.number}동`;
 }
 
@@ -47,17 +47,19 @@ function Head({ onClose }: { onClose: () => void }): ReactElement {
 // scrolls inside the card.
 function Rows(): ReactElement | null {
   const friends = useQuery(friendsQuery).data;
-  const party = useQuery(myPartyQuery).data ?? null;
-  const masterOn = useMasterSwitch().on;
+  const switches = useMySwitches();
   if (friends === undefined) {
     return null;
   }
   if (friends.length === 0) {
     return <Text style={styles.none}>아직 친구가 없어요</Text>;
   }
+  if (switches === null) {
+    return null;
+  }
   return (
     <ScrollView contentContainerStyle={styles.rows} style={styles.box}>
-      {seenOfMe(friends, party, masterOn).map(({ id, name: fullName, words }) => (
+      {seenOfMe(friends, switches).map(({ id, name: fullName, words }) => (
         <View accessibilityLabel={`${fullName}, ${words}`} accessible key={id} style={styles.row} testID="seen-row">
           <Text numberOfLines={1} style={styles.name}>
             {fullName}
