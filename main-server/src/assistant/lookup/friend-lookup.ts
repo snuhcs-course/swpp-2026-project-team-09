@@ -46,6 +46,8 @@ export interface FriendWords {
 export interface FriendAnswer {
   lookup: Lookup;
   words: FriendWords;
+  // The line under a refusal of what the map does not show of them, their course and room (board n4).
+  unseen: AnswerLine;
 }
 
 const HIDDEN = '지금 위치는 보여 주지 않아요';
@@ -204,10 +206,22 @@ function drawnOf(args: FriendArgs, naming: PlaceNaming): Drawn {
   return byTimetable(args, naming);
 }
 
+// Where and when their Class ends, which the Timetable shows every Friend, while it goes on in a Place; else the
+// Lookup's first line.
+function unseenLine({ classes, now }: FriendArgs, lines: AnswerLine[], naming: PlaceNaming): AnswerLine {
+  const current = currentOf(classes, now);
+  if (current === null || current.placeId === null) {
+    return lines[0] ?? [];
+  }
+  return [part(clockOf(current.end), true), part(`에 ${naming.placeLabel(current.placeId)}에서 수업이 끝나요`)];
+}
+
 export function friendAnswer(args: FriendArgs): FriendAnswer {
   const { friend } = args;
-  const { lines, basis, scene, words } = drawnOf(args, new PlaceNaming(args.placeOf));
+  const naming = new PlaceNaming(args.placeOf);
+  const { lines, basis, scene, words } = drawnOf(args, naming);
   return {
+    unseen: unseenLine(args, lines, naming),
     lookup: {
       kind: 'friend',
       chips: [{ kind: 'person', text: friend.name, userId: friend.id }],
@@ -308,4 +322,17 @@ export function friendTap(args: FriendTapArgs): Lookup {
     chips: from === null ? [] : [{ kind: 'origin', text: `${from}에서`, userId: null }],
     card: cardOf(args.friend.name, LEVEL_WORDS[words.shows], facts, null),
   };
+}
+
+// Beside a refusal of their course and room (board n4), the chip of a Friend the map shows through the Timetable only,
+// drawn dashed or not drawn, says so.
+export function withTimetableChip(lookup: Lookup): Lookup {
+  const timetableOnly = lookup.scene.people.every(({ source }) => source === 'timetable');
+  if (lookup.kind !== 'friend' || !timetableOnly) {
+    return lookup;
+  }
+  const chips = lookup.chips.map((chip) =>
+    chip.kind === 'person' ? { ...chip, text: `${chip.text} · 시간표` } : chip,
+  );
+  return { ...lookup, chips };
 }

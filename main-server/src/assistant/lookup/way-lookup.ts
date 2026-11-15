@@ -18,6 +18,7 @@ import { MINUTE_MS } from '../gathering/gathering.js';
 import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import {
+  NOT_RUNNING,
   shuttleActions,
   shuttleBand,
   shuttleBasis,
@@ -227,6 +228,22 @@ function hereLookup(way: Way, naming: WayNaming): Lookup {
   };
 }
 
+// Asked about the shuttle while it is not running and nothing is due (board n21): that it is not, in the words of the
+// basis, the walk, its arrival, and no button.
+function notRunning(lookup: Lookup, way: Way, naming: WayNaming): Lookup {
+  const { toPlaceId, walkMinutes, arrival } = way;
+  const flag = { at: naming.position(toPlaceId), text: `${clockOf(arrival)} 도착 · ${naming.placeLabel(toPlaceId)}` };
+  return {
+    ...lookup,
+    lines: [
+      [part(NOT_RUNNING)],
+      [part(`${naming.to(way).label}까지 걸어서 `), part(`${walkMinutes}분`, true), part('이에요')],
+    ],
+    scene: { ...lookup.scene, flags: [{ ...flag, role: 'place' }] },
+    actions: [],
+  };
+}
+
 export function wayAnswer(args: WayArgs): WayAnswer {
   const way = wayOf(args);
   if (typeof way === 'string') {
@@ -244,5 +261,11 @@ export function wayAnswer(args: WayArgs): WayAnswer {
         band: bandOf(way, args, naming),
         actions: actionsOf(way, naming),
       };
-  return { result: 'found', way, lookup, labels: { from: naming.from(way), to: naming.to(way).label } };
+  const asked = args.about === 'shuttle' && way.shuttle === 'not running' && way.deadline === null;
+  return {
+    result: 'found',
+    way,
+    lookup: asked ? notRunning(lookup, way, naming) : lookup,
+    labels: { from: naming.from(way), to: naming.to(way).label },
+  };
 }
