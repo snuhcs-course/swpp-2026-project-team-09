@@ -99,10 +99,13 @@ function shortestLines(
   const from = clockOf(latest([window.start, arrivalOf(part)]));
   const arrives = part.canArriveAt !== null && part.canArriveAt >= window.start;
   let first: string;
-  if (arrives) {
-    first = minutes > 0 ? `${who}${from}에 도착해 ${minutes}분만 ${words.stay}` : `${who}${from}에야 도착해요`;
+  if (minutes > 0) {
+    first = arrives
+      ? `${who}${from}에 도착해 ${minutes}분만 ${words.stay}`
+      : `${who}${from}부터 ${minutes}분만 ${words.stay}`;
   } else {
-    first = minutes > 0 ? `${who}${from}부터 ${minutes}분만 ${words.stay}` : `${who}${from}부터 가능해요`;
+    // An arrival is timed only when it is known and is why there is no time.
+    first = arrives ? `${who}${from}에야 도착해요` : `${who}시간이 안 돼요`;
   }
   return [plain(first), plain(leaveLine(part, naming, window, words.word))];
 }
@@ -112,10 +115,12 @@ function togetherLines(drop: GatheringDrop, naming: GatheringNaming, window: Int
   const leaving = (part: PersonPart): Date => part.leaveBy ?? window.end;
   const last = drop.parts.reduce((one, other) => (arrivalOf(other) > arrivalOf(one) ? other : one));
   const first = drop.parts.reduce((one, other) => (leaving(other) < leaving(one) ? other : one));
-  const arriving = `${topicOf(last, naming)} ${clockOf(arrivalOf(last))}에 도착하고`;
+  const when = clockOf(arrivalOf(last));
+  // One whose position is unknown is not said to arrive.
+  const coming = last.canArriveAt === null ? `${when}부터 시간이 되고` : `${when}에 도착하고`;
   return [
     plain(naming.dropReason(drop)),
-    plain(`${arriving} ${topicOf(first, naming)} ${clockOf(leaving(first))}엔 나서야 해요`),
+    plain(`${topicOf(last, naming)} ${coming} ${topicOf(first, naming)} ${clockOf(leaving(first))}엔 나서야 해요`),
   ];
 }
 

@@ -97,7 +97,7 @@ describe('a8: 301동식당 pressed', () => {
     ]);
   });
 
-  it('names 지은, who stays shortest, and the Class she leaves for', () => {
+  it('names 지은, who stays shortest, and the Class 지은 leaves for', () => {
     expect(pressed([me(), minsu(), jieun()], at301()).noPlan).toEqual(
       lines('지은은 12:31에 도착해 13분만 먹어요', '13:00 수업에 가려면 12:44엔 나서야 해요'),
     );
@@ -150,8 +150,20 @@ describe('Who stays shortest at a fixed Place, and why', () => {
       lines('하은은 14:20부터 10분만 먹어요', '점심은 14:30까지예요'),
     );
   });
+});
 
-  it('names who arrives last and who leaves first when everyone could stay long enough alone', () => {
+describe('No time at all, or nobody alone the reason', () => {
+  // 민수's second Class runs to the meal's end, so that no later stretch is shared.
+  it('says only that there is no time when the stay is 0 minutes and the arrival is before the window opens', () => {
+    const minsuDay = [classAt('11:00', '12:00', '제1공학관'), classAt('12:50', '14:30', '제1공학관')];
+    const window = { from: '12:45', until: null };
+
+    expect(
+      pressed([person(ME, '유상', []), person(MINSU, '민수', minsuDay)], studentCenter(), { window }).noPlan,
+    ).toEqual(lines('민수는 시간이 안 돼요', '12:50 수업에 가려면 12:35엔 나서야 해요'));
+  });
+
+  it('names who comes last and who leaves first when everyone could stay long enough alone', () => {
     const fixed: Fixed = {
       constraints: {
         [MINSU]: [{ kind: 'leaveBy', time: '12:20', source: 'asker' }],
@@ -161,7 +173,7 @@ describe('Who stays shortest at a fixed Place, and why', () => {
     const friends = [person(MINSU, '민수', []), person(JIEUN, '지은', [])] as const;
 
     expect(pressed([me(), ...friends], studentCenter(), fixed).noPlan).toEqual(
-      lines('같이 있는 시간이 10분뿐이에요', '지은은 12:10에 도착하고 민수는 12:20엔 나서야 해요'),
+      lines('같이 있는 시간이 10분뿐이에요', '지은은 12:10부터 시간이 되고 민수는 12:20엔 나서야 해요'),
     );
   });
 });
