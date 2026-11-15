@@ -8,6 +8,7 @@ import type { FriendLevel } from '@/api/types';
 import { type CardView, cardId, line, staleLine } from '@/features/map/adapter';
 import { koreaCalendar } from '@/korea-time';
 import type { FriendView } from './adapter';
+import { levelWords, type MySwitches, type SeenLevels, seenLevels } from './seen-of-me';
 
 // What the User sees of where a Friend is, by what the two see of each other, as row 6's boards say it.
 const SEEN_WORDS: Readonly<Record<FriendLevel, string>> = {
@@ -42,15 +43,6 @@ export function profileOf({
   };
 }
 
-const FROM_LEAST: readonly FriendLevel[] = ['timetable', 'building', 'exact'];
-
-// A level as the 위치 공유 screen names it.
-const LEVEL_WORDS: Readonly<Record<FriendLevel, string>> = {
-  timetable: '시간표만',
-  building: '지금 있는 건물',
-  exact: '정확한 위치',
-};
-
 // What the two see of each other, as the 위치 공유 screen says it.
 const BOTH_SEE: Readonly<Record<FriendLevel, string>> = {
   timetable: '서로 시간표만 보여요',
@@ -58,32 +50,39 @@ const BOTH_SEE: Readonly<Record<FriendLevel, string>> = {
   exact: '서로 정확한 위치까지 보여요',
 };
 
-// "어디까지 보이나" of a Friend (row 9 board 2): the Friend with where the map shows them, the User's own end as the
-// Friend sees it, and what the two see, the lower end, which says so when the User's end is above it. The Friend's
-// own end is never said.
+const BOTH_IN_PARTY = '파티 중에는 서로 정확한 위치까지 보여요';
+
+// "어디까지 보이나" of a Friend (row 9 board 2): the Friend with where the map shows them, and the User's own end as the
+// Friend sees it with what the two see: in the User's Party the exact position, otherwise the lower end, which says so
+// when the User's end is above it. The Friend's own end is never said.
 export interface SeenCardWords {
   title: string;
-  mine: string;
-  both: string;
+  // Null while the User's switches are not known.
+  levels: { mine: string; both: string } | null;
 }
 
-function lowerOf(one: FriendLevel, other: FriendLevel): FriendLevel {
-  return FROM_LEAST.indexOf(one) < FROM_LEAST.indexOf(other) ? one : other;
+function bothWords({ mine, both, inParty }: SeenLevels): string {
+  if (inParty) {
+    return BOTH_IN_PARTY;
+  }
+  return both === mine ? BOTH_SEE[both] : `${BOTH_SEE[both]} (낮은 쪽을 따라요)`;
 }
 
-// `where`: the Place the map shows the Friend at, "301동", or null for none. With the User's Master Switch off
-// (`masterOn` false) every Friend sees the User's Timetable only, whatever the User's end.
+// `where`: the Place the map shows the Friend at, "301동", or null for none.
 export function seenCardOf(
-  { name, level, seen }: Pick<FriendView, 'name' | 'level' | 'seen'>,
+  friend: Pick<FriendView, 'id' | 'name' | 'level' | 'seen'>,
   where: string | null,
-  masterOn: boolean,
+  switches: MySwitches | null,
 ): SeenCardWords {
-  const mine = masterOn ? level : 'timetable';
-  const both = lowerOf(seen, mine);
+  const { name } = friend;
+  const title = where === null ? name : `${name} · 지금 ${where}`;
+  if (switches === null) {
+    return { title, levels: null };
+  }
+  const levels = seenLevels(friend, switches);
   return {
-    title: where === null ? name : `${name} · 지금 ${where}`,
-    mine: `내가 ${name}에게: ${LEVEL_WORDS[mine]}`,
-    both: both === mine ? BOTH_SEE[both] : `${BOTH_SEE[both]} (낮은 쪽을 따라요)`,
+    title,
+    levels: { mine: `내가 ${name}에게: ${levelWords(levels.mine, levels.inParty)}`, both: bothWords(levels) },
   };
 }
 
