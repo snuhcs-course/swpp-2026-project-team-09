@@ -583,5 +583,46 @@
       ],
       "offers": []
     }
+  },
+  "민수랑 점심": {
+    "text": "민수가 두 명이에요.\n누구와 먹을까요?",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "which-friend",
+      "lines": [
+        [
+          {
+            "text": "민수가 두 명이에요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "누구와 먹을까요?",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "pick-friend",
+          "userId": "a2c30e3b-3498-440f-ac50-443416acda68",
+          "label": "김민수",
+          "aside": "컴퓨터공학부",
+          "text": "김민수"
+        },
+        {
+          "kind": "pick-friend",
+          "userId": "645d5d6b-4d9d-4f41-9e03-53f06d0686bb",
+          "label": "이민수",
+          "aside": "경영학과",
+          "text": "이민수"
+        }
+      ]
+    }
   }
 }
