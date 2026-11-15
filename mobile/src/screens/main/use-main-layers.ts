@@ -11,9 +11,11 @@ import { useMemo } from 'react';
 import { questInvitationsQuery } from '@/api/queries';
 import type { LatLng } from '@/api/types';
 import { useKeptAnswerSwitch } from '@/features/assistant/answer-switch';
+import { type MadeQuestView, useMadeQuests } from '@/features/assistant/use-made-quests';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
 import { invitationCards } from '@/features/map/invitation-cards';
+import { besideFlags, madeQuestCards } from '@/features/map/made-quest-cards';
 import { groupedByPlace } from '@/features/map/place-groups';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
@@ -45,20 +47,22 @@ export function useInvitationCards(): { cards: readonly CardView[]; known: boole
 
 // The map's cards, and the 식당, shuttle and 공부공간 layers' while they are on, with the things at one place
 // grouped: a layer turned off takes its things out of the groups. While the whole campus is in view, study pins that
-// would overlap merge. The received invitations' cards stand apart from the groups. `ready` once the map's own cards
-// and the invitations are known.
+// would overlap merge. The received invitations' cards, the flags of the Quests made from a Plan, and those Quests' own
+// cards within their flags stand apart from the groups. `ready` once the map's own cards and the invitations are known.
 function useCards(
   layers: { dining: boolean; study: boolean },
   shuttle: ShuttleLayer,
   zoom: number | null,
+  made: readonly MadeQuestView[],
 ): { cards: readonly CardView[]; ready: boolean } {
   const { data } = useMapCards();
-  const mapCards = data ?? NO_CARDS;
+  const flags = useMemo(() => madeQuestCards(made), [made]);
+  const { rest, flagged } = useMemo(() => besideFlags(data ?? NO_CARDS, made), [data, made]);
   const diningCards = useDiningCards(layers.dining);
   const studyCards = useStudyCards(layers.study);
   const grouped = useMemo(
-    () => groupedByPlace([...mapCards, ...diningCards, ...studyCards, ...shuttle.cards]),
-    [mapCards, diningCards, studyCards, shuttle.cards],
+    () => groupedByPlace([...rest, ...diningCards, ...studyCards, ...shuttle.cards]),
+    [rest, diningCards, studyCards, shuttle.cards],
   );
   // Keyed by what merges, not by the zoom: a camera that moves, as a press on a list's row makes it, keeps the same
   // cards unless the merged pins change. A selection waiting for the cards (`selectOrWait`) waits for new cards.
@@ -67,7 +71,10 @@ function useCards(
   // `mergesKey` stands for `merges`, which is new each render.
   const clustered = useMemo(() => clusteredStudy(grouped, merges), [grouped, mergesKey]);
   const invitations = useInvitationCards();
-  const cards = useMemo(() => [...clustered, ...invitations.cards], [clustered, invitations.cards]);
+  const cards = useMemo(
+    () => [...clustered, ...flags, ...flagged, ...invitations.cards],
+    [clustered, flags, flagged, invitations.cards],
+  );
   return { cards, ready: data !== undefined && invitations.known };
 }
 
@@ -97,6 +104,8 @@ export interface MainLayers {
   cards: readonly CardView[];
   ready: boolean;
   chat: ChatSheetControl;
+  // The Quests made from a Plan, none while the switch is off.
+  made: readonly MadeQuestView[];
 }
 
 // The 편의기능 stack and what its layers put on the map, with the map's own cards, and the chat's sheet, which turns a
@@ -104,7 +113,8 @@ export interface MainLayers {
 export function useMainLayers(inFront: boolean, map: MainMap, position: LatLng | null): MainLayers {
   const stack = useLayerStack(inFront);
   const shuttle = useShuttle(stack.layers.shuttle);
-  const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map));
+  const made = useMadeQuests();
+  const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map), made);
   const chat = useChatSheet(inFront, stack.turnOn, position);
-  return { stack, shuttle, cards, ready, chat };
+  return { stack, shuttle, cards, ready, chat, made };
 }

@@ -7,7 +7,7 @@
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AnswerLine, ConditionChip } from '@/api/assistant-types';
-import type { PlanQuest } from '@/api/plan-quest-types';
+import type { SubQuest } from '@/api/types';
 import { Button, space } from '@/design-system';
 import { type Standing, standingWords } from '@/features/assistant/invited-friends';
 import { koreaClock } from '@/korea-time';
@@ -19,7 +19,7 @@ interface InvitedCardProps {
   chips: readonly ConditionChip[];
   // The start of the Plan that was sent.
   startAt: string;
-  made: PlanQuest;
+  steps: readonly SubQuest[];
   standings: ReadonlyMap<string, Standing>;
   onClose: () => void;
 }
@@ -56,13 +56,13 @@ function SentChips({ chips, standings }: Pick<InvitedCardProps, 'chips' | 'stand
 
 // The card of the answer on screen once its Plan was made into a Quest: the conditions with how each Friend stands,
 // two lines that say the invitations went out and when to be there, the Quest's steps in order, and "닫기" across the
-// card, where "이대로 초대" stood.
-export function InvitedCard({ chips, startAt, made, standings, onClose }: InvitedCardProps): ReactElement {
+// card, where "이대로 초대" stood. A Quest made from a Plan opened again from the everyday map has the same card.
+export function InvitedCard({ chips, startAt, steps, standings, onClose }: InvitedCardProps): ReactElement {
   return (
     <View style={styles.card} testID="invited-card">
       <SentChips chips={chips} standings={standings} />
       <AnswerLines lines={linesOf(startAt)} />
-      <QuestSteps steps={made.quest.subQuests} />
+      <QuestSteps steps={steps} />
       <Button full onPress={onClose} variant="secondary">
         닫기
       </Button>
