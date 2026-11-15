@@ -2213,7 +2213,10 @@ its model through OpenRouter with the Vercel AI SDK
   `lookup`, `null` when there is none: an answer drawn on the map that has no Plan (`kind` `way`), with its condition
   chips, at most two lines, basis, map scene, time band or `null`, and the card's actions (`guide`, `remind`, `meet`).
   A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer. The full shape of each is
-  in `src/assistant/dto/answer.dto.ts`.
+  in `src/assistant/dto/answer.dto.ts`. An app that also sends `meet` is offered `planMeet` ("민수랑 만나고 싶어"),
+  whose answer is a meet's (`kind` `meet`, below); one that does not keeps the prompt and the tools it had. A busy
+  stretch of a Plan's time band carries a `label`: `302동 수업` for a Class with a Place, `수업` without one, and `일정`
+  for a Sub Quest.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -2275,6 +2278,13 @@ Proposal)`.
     when none is. A person's constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
+  - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
+    earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
+    place where they
+    are together longest, from the latest arrival to the earliest leave-by, at least 15 minutes; at most five Plans. The
+    places are 학생회관, the buildings of `GET /study-spaces`, the Restaurants open that day, and the buildings each
+    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip.
+    `people` holds the asker and at least one Friend.
   - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
     person is not the User, a person who is not the User's Friend, the same User twice, a day before today or more than
     a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown

@@ -27,7 +27,7 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput;
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
 
 export interface MealInput {
   kind: 'meal';
@@ -39,6 +39,17 @@ export interface MealInput {
   // What the User fixed on the time band or in words.
   window: { from: string | null; until: string | null };
   // The Place the User fixed.
+  placeId: string | null;
+}
+
+// When the asker and their Friends are free together that day, and where they meet.
+export interface MeetInput {
+  kind: 'meet';
+  // YYYY-MM-DD in Korea.
+  date: string;
+  // The asker first, then the Friends.
+  people: PlanPerson[];
+  window: { from: string | null; until: string | null };
   placeId: string | null;
 }
 
@@ -97,8 +108,9 @@ export interface AnswerReply {
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
 }
 
+// `from` is the start the User fixed for a meet.
 export interface ConditionChip {
-  kind: 'origin' | 'until' | 'person';
+  kind: 'origin' | 'from' | 'until' | 'person';
   text: string;
   userId: string | null;
 }
@@ -198,7 +210,8 @@ export interface MapScene {
 export interface TimeBand {
   range: { startAt: string; endAt: string };
   now: string;
-  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string }[] }[];
+  // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
+  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
   startAt: string;
   endAt: string;
   text: string;
@@ -245,17 +258,29 @@ const personConstraintSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('leaveBy'), time: clockTime, source: constraintSource }),
 ]);
 
+const planPeopleSchema = z
+  .array(z.strictObject({ userId: z.uuid(), constraints: z.array(personConstraintSchema).max(CONSTRAINTS_MAX) }))
+  .max(PEOPLE_MAX);
+
+const windowSchema = z
+  .strictObject({ from: clockTime.nullable(), until: clockTime.nullable() })
+  .refine(({ from, until }) => from === null || until === null || from < until, 'Expected from before until');
+
 const mealInputSchema = z.strictObject({
   kind: z.literal('meal'),
   date: z.iso.date(),
   meal: z.enum(['lunch', 'dinner']),
-  people: z
-    .array(z.strictObject({ userId: z.uuid(), constraints: z.array(personConstraintSchema).max(CONSTRAINTS_MAX) }))
-    .min(1)
-    .max(PEOPLE_MAX),
-  window: z
-    .strictObject({ from: clockTime.nullable(), until: clockTime.nullable() })
-    .refine(({ from, until }) => from === null || until === null || from < until, 'Expected from before until'),
+  people: planPeopleSchema.min(1),
+  window: windowSchema,
+  placeId: z.uuid().nullable(),
+});
+
+// A meet has a Friend: without one there is nobody to meet.
+const meetInputSchema = z.strictObject({
+  kind: z.literal('meet'),
+  date: z.iso.date(),
+  people: planPeopleSchema.min(2),
+  window: windowSchema,
   placeId: z.uuid().nullable(),
 });
 
@@ -302,6 +327,7 @@ export const planInputSchema = z.discriminatedUnion('kind', [
   eventsInputSchema,
   questsInputSchema,
   newQuestInputSchema,
+  meetInputSchema,
 ]);
 
 const latitude = z.number().min(-90).max(90);

@@ -71,7 +71,7 @@ const COUNT_LIFETIME_SECONDS = 2 * 24 * 60 * 60;
 export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
   // The chat, the same for an app that draws answers on the map, and for one that also draws a day's events.
-  private readonly chats: Record<'plain' | 'answer' | 'events', Feature>;
+  private readonly chats: Record<ChatKind, Feature>;
   private readonly keyConfigured: boolean;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
@@ -170,7 +170,8 @@ export class AssistantService {
     if (!capabilities.includes('answer')) {
       return this.chats.plain;
     }
-    return capabilities.includes('events') ? this.chats.events : this.chats.answer;
+    const drawn = capabilities.includes('events') ? 'events' : 'answer';
+    return this.chats[capabilities.includes('meet') ? (`${drawn}-meet` as const) : drawn];
   }
 
   // Counts the User's message in their day in Korea, and answers how many they have sent that day.
@@ -182,11 +183,15 @@ export class AssistantService {
   }
 }
 
-function chatsOf(services: ChatAssistantServices): Record<'plain' | 'answer' | 'events', Feature> {
+type ChatKind = 'plain' | 'answer' | 'events' | 'answer-meet' | 'events-meet';
+
+function chatsOf(services: ChatAssistantServices): Record<ChatKind, Feature> {
   return {
     plain: chatAssistant(services),
     answer: chatAssistant(services, { drawsAnswers: true }),
     events: chatAssistant(services, { drawsAnswers: true, drawsEvents: true }),
+    'answer-meet': chatAssistant(services, { drawsAnswers: true, drawsMeets: true }),
+    'events-meet': chatAssistant(services, { drawsAnswers: true, drawsEvents: true, drawsMeets: true }),
   };
 }
 

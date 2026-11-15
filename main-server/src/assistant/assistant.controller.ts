@@ -36,7 +36,10 @@ export class AssistantController {
     @Body({ schema: assistantMessagesSchema }) { messages, clientCapabilities, context }: AssistantMessages,
   ): Promise<AssistantReplyDto> {
     const { conditions } = context;
-    const withPeople = conditions?.kind === 'meal' || conditions?.kind === 'new-quest' ? conditions : null;
+    const withPeople =
+      conditions?.kind === 'meal' || conditions?.kind === 'new-quest' || conditions?.kind === 'meet'
+        ? conditions
+        : null;
     if (withPeople !== null && withPeople.people[0]?.userId !== user.id) {
       throw new BadRequestException('The first person of a plan is the asker');
     }

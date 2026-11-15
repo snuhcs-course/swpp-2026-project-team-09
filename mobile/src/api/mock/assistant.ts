@@ -33,6 +33,7 @@ import {
   MEAL_ANSWER_OTHER_ORIGIN,
   MEAL_ANSWER_THREE,
 } from './data/meal-answers';
+import { MEET_ANSWER } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
 
@@ -136,8 +137,11 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
-// The mock holds copies of meal answers only, so other conditions are read as a meal of the User alone.
+// The mock holds copies of meal answers and of one meet, so other conditions are read as a meal of the User alone.
 function copyFor(input: PlanInput): AnswerReply {
+  if (input.kind === 'meet') {
+    return MEET_ANSWER;
+  }
   const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
   const from = input.kind === 'meal' ? input.window.from : null;
   if (people.length <= 1) {
