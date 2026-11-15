@@ -15,16 +15,17 @@ import { pass, screen } from './support/app';
 import { askOnMap } from './support/answer-map';
 import { JIEUN_ID, MINSU_ID } from './support/answer-marks';
 import type { FakeServer } from './support/fake-server';
-import { sockets } from './support/fake-socket';
-import { openLive, socketServer } from './support/live';
-import { givePhone, ON_CAMPUS } from './support/main';
+import { type FakeSocket, sockets } from './support/fake-socket';
+import { openLive, socketServer, theSocket } from './support/live';
+import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { lookOf } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // Board a0 of the design's row 6 on the everyday map, against the fake main server and the fake socket: 김민수, seen
 // at the building he is in, 박지은, seen at the exact level, and 최서준, seen through the Timetable only, whom no
-// position shows.
+// position shows. The green dot is a look of the switch of the answer on the map: with the switch off every face is
+// as before.
 
 jest.mock('expo-location');
 jest.mock('@/map/marker-images', () => {
@@ -82,6 +83,15 @@ function dotted(name: string): boolean {
   return String(lookOf(name)).split(':').includes('exact');
 }
 
+// The main screen with the switch of the answer on the map on, and its connection open.
+async function openLiveOnMap(): Promise<FakeSocket> {
+  await openMain({ answerOnMap: true });
+  await socketServer((socket) => {
+    socket.accept();
+  });
+  return theSocket();
+}
+
 let server: FakeServer;
 
 beforeEach(async () => {
@@ -100,12 +110,26 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Partitions: the switch off and on. Expected values: P02 ticket 20's decision that the dot is a look of the switch
+// on, and rule 3 of the package, nothing changes with the switch off.
+describe("a Friend's green dot and the switch of the answer on the map", () => {
+  it.each([
+    ['off', false],
+    ['on', true],
+  ] as const)('with the switch %s, the Friend at the exact level carries the dot: %s', async (switched, dot) => {
+    await (switched === 'on' ? openLiveOnMap() : openLive());
+
+    expect(dotted(JI_EUN.name)).toBe(dot);
+    expect(dotted(MIN_SU.name)).toBe(false);
+  });
+});
+
 // Partitions: a Friend at the exact level, one at the building level, and one at the Timetable only; a fresh
-// position, one dimmed after two minutes, and a fresh one after it; a live position without a level. Expected values:
-// P02 ticket 20, boards a0, a4, and a13, and row 6's decision D10.
+// position, one dimmed after two minutes, and a fresh one after it; a live position without a level; all with the
+// switch on. Expected values: P02 ticket 20, boards a0, a4, and a13, and row 6's decision D10.
 describe("a Friend's face on the everyday map", () => {
   it('carries the green dot at the exact level, none at the building level, and is not drawn from the Timetable', async () => {
-    await openLive();
+    await openLiveOnMap();
 
     expect(dotted(JI_EUN.name)).toBe(true);
     expect(dotted(MIN_SU.name)).toBe(false);
@@ -113,7 +137,7 @@ describe("a Friend's face on the everyday map", () => {
   });
 
   it('loses the dot while dimmed, and has it again with a fresh position', async () => {
-    const socket = await openLive();
+    const socket = await openLiveOnMap();
 
     await pass(2 * MINUTE);
     expect(String(lookOf(JI_EUN.name))).toContain('stale');
@@ -127,7 +151,7 @@ describe("a Friend's face on the everyday map", () => {
   });
 
   it('keeps the level GET /positions gave when a live position comes without one', async () => {
-    const socket = await openLive();
+    const socket = await openLiveOnMap();
 
     await socketServer(() => {
       socket.send('position', live(JI_EUN_MEASURED));

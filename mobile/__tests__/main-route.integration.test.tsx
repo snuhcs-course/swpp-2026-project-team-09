@@ -4,7 +4,6 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
- * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -190,7 +189,7 @@ describe('"길찾기" without a position to start from', () => {
     expect(screen.getByText('캠퍼스 밖에 있어요')).toBeVisible();
     expect(findWalkingRoute).not.toHaveBeenCalled();
     // Closer than the whole campus, and the card is still there to try again.
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1');
     expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
   });
 
@@ -204,7 +203,7 @@ describe('"길찾기" without a position to start from', () => {
 
     expect(screen.getByRole('header', { name: EXPLANATION })).toBeVisible();
     expect(findWalkingRoute).not.toHaveBeenCalled();
-    expect(lookOf(FRIEND)).toBe('person:small:free:f1:exact');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
   });
 
   it('says that the position is being looked for when the phone has told none yet', async () => {

@@ -35,9 +35,9 @@ import type { Size } from './projection';
 // that look the same share one, and the number of pictures is the number of names:
 // - two for the User's own Avatar;
 // - for each person, the two sizes in each tone the person was seen in, with and without a photo, with the green dot
-//   of a Friend seen at the exact level or dimmed while the person's position was old, and each of them selected,
-//   which only the one selected person ever asks for, or with the "+" of a Friend who can be added to the answer on
-//   screen;
+//   of a Friend seen at the exact level while the switch of the answer on the map is on or dimmed while the person's
+//   position was old, and each of them selected, which only the one selected person ever asks for, or with the "+" of
+//   a Friend who can be added to the answer on screen;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
 // - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected;
 // - one for the tutorial's place pin.
@@ -48,9 +48,9 @@ import type { Size } from './projection';
 // photo changes keeps the picture made first until the app starts again.
 //
 // What a release of unused pictures (ticket 07) has to cover, since no picture is released while the app runs: the
-// looks of a person who is no longer on the map or no longer a Friend, a person's looks in the tones and at the levels
-// they are no longer in, the selected looks once nothing is selected, a pin's looks for the counts it no longer shows, and a
-// person's pictures when their name or their photo changed, which are then made again.
+// looks of a person who is no longer on the map or no longer a Friend, a person's looks in the tones and at the
+// levels they are no longer in, the selected looks once nothing is selected, a pin's looks for the counts it no
+// longer shows, and a person's pictures when their name or their photo changed, which are then made again.
 
 // A dot is the look from far away, a pin the look from close.
 export type MarkerForm = 'dot' | 'pin';
