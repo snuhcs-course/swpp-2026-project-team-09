@@ -171,6 +171,12 @@ rather than `CHANGE_ME`: while it is empty, the Assistant answers that it is una
 settings file written before the Assistant lacks it and `ASSISTANT_MODEL`: copy both lines from
 [`snu-now.env.example`](snu-now.env.example) and apply them as in [Changing a setting later](#changing-a-setting-later).
 
+`LLM_KEYS`, the AI's other keys by name, is `{}` and may stay so: the Assistant then uses `OPENROUTER_API_KEY`, the key
+named `default`. To add keys, write them as one JSON object in single quotes, such as
+`LLM_KEYS='{"anthropic":"sk-ant-..."}'`, with names of lowercase letters, digits and dashes, and apply it as in
+[Changing a setting later](#changing-a-setting-later). Use keys of the Dev Server's own, never Production's. A settings
+file without the line is read as `{}`.
+
 The file belongs to the team group, so any member edits it without `sudo`, for example with
 `nano /srv/team/snu-now-secrets/snu-now.env`. `grep CHANGE_ME /srv/team/snu-now-secrets/snu-now.env` prints nothing
 once every value is in.

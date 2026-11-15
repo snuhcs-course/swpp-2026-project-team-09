@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { io, type Socket } from 'socket.io-client';
@@ -42,12 +43,17 @@ function field(value: unknown, name: string): unknown {
   return typeof value === 'object' && value !== null ? Reflect.get(value, name) : undefined;
 }
 
+// A position comes at 'exact', or at 'building' with its Place; the server sends none at 'timetable'.
 function isPosition(value: unknown): value is Position {
+  const level = field(value, 'level');
+  const placeId = field(value, 'placeId');
   return (
     typeof field(value, 'userId') === 'string' &&
     typeof field(value, 'latitude') === 'number' &&
     typeof field(value, 'longitude') === 'number' &&
-    typeof field(value, 'measuredAt') === 'string'
+    typeof field(value, 'measuredAt') === 'string' &&
+    (level === undefined || level === 'building' || level === 'exact') &&
+    (placeId === undefined || typeof placeId === 'string')
   );
 }
 
@@ -119,8 +125,8 @@ function listen(socket: Socket, handlers: LiveHandlers, end: (replaced: boolean)
   });
   socket.on('position', (position: unknown) => {
     if (isPosition(position)) {
-      const { userId, latitude, longitude, measuredAt } = position;
-      handlers.onPosition({ userId, latitude, longitude, measuredAt });
+      const { userId, latitude, longitude, measuredAt, level, placeId } = position;
+      handlers.onPosition({ userId, latitude, longitude, measuredAt, level, placeId });
     }
   });
   socket.on('position-removed', (event: unknown) => {

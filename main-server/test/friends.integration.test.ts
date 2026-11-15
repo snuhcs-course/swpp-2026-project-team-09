@@ -10,7 +10,19 @@ import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { befriend, endFriendship, getFriends, NEW_FRIENDSHIP, sendFriendRequest, signInUser } from './friends.js';
+import { z } from 'zod';
+import {
+  answerFriendRequest,
+  befriend,
+  endFriendship,
+  getFriends,
+  KOREA_TIME,
+  NEW_FRIENDSHIP,
+  requestFriendship,
+  sendFriendRequest,
+  signInUser,
+  type TestUser,
+} from './friends.js';
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
 
@@ -25,8 +37,15 @@ afterAll(async () => {
   await app.close();
 });
 
+const ONE_FRIEND = z.tuple([z.object({ id: z.string(), friendId: z.string(), friendsSince: z.string() })]);
+
+async function onlyFriendOf(user: TestUser): Promise<z.infer<typeof ONE_FRIEND>[0]> {
+  const [friend] = ONE_FRIEND.parse((await getFriends(app, user)).body);
+  return friend;
+}
+
 describe('The list of Friends', () => {
-  it('names each Friend with the name and the department, in the order of the names', async () => {
+  it('names each Friend with the name, the department and the Friend ID, in the order of the names', async () => {
     const user = await signInUser(app);
     const gildong = await signInUser(app, { name: '홍길동', department: '컴퓨터공학부' });
     const cheolsu = await signInUser(app, { name: '김철수', department: '경영학과' });
@@ -37,9 +56,26 @@ describe('The list of Friends', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
-      { id: cheolsu.id, name: '김철수', department: '경영학과', ...NEW_FRIENDSHIP },
-      { id: gildong.id, name: '홍길동', department: '컴퓨터공학부', ...NEW_FRIENDSHIP },
+      { id: cheolsu.id, name: '김철수', department: '경영학과', friendId: cheolsu.friendId, ...NEW_FRIENDSHIP },
+      { id: gildong.id, name: '홍길동', department: '컴퓨터공학부', friendId: gildong.friendId, ...NEW_FRIENDSHIP },
     ]);
+  });
+
+  it('gives since when the request was accepted, the same at both ends', async () => {
+    const [user, friend] = await Promise.all([signInUser(app), signInUser(app)]);
+    const requestId = await requestFriendship(app, user, friend);
+    // The time is given to the second.
+    const before = Math.floor(Date.now() / 1000) * 1000;
+    expect((await answerFriendRequest(app, friend, requestId, 'accept')).status).toBe(204);
+    const after = Date.now();
+
+    const [toUser, toFriend] = await Promise.all([onlyFriendOf(user), onlyFriendOf(friend)]);
+
+    expect(toUser).toEqual({ id: friend.id, friendId: friend.friendId, friendsSince: toFriend.friendsSince });
+    expect(toFriend).toMatchObject({ id: user.id, friendId: user.friendId });
+    expect(toUser.friendsSince).toMatch(KOREA_TIME);
+    expect(Date.parse(toUser.friendsSince)).toBeGreaterThanOrEqual(before);
+    expect(Date.parse(toUser.friendsSince)).toBeLessThanOrEqual(after);
   });
 
   it('leaves out the Users a Friend Request waits for', async () => {
