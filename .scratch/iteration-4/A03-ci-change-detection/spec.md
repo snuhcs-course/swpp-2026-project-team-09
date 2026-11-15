@@ -61,6 +61,8 @@ The workflow also answers a merge queue: `merge_group` is a trigger, and pushes 
 
 The queue moves Main to the very commit it tested, so Main's push would check that commit a second time. A job of a push to a `<line>/Main` therefore asks GitHub (`gh api`, with the run's token and `actions: read`) whether a `merge_group` run of CI completed with success on exactly that commit. If one did, the job skips its work; if none did, or GitHub does not answer, it does its work. A direct push to a Main, which no queue run tested, runs everything.
 
+A pull request's own push checks less than the queue does. Each job its changes reach runs its lint, format and type checks and only the unit tests (`pnpm test:unit`; `changes.sh` answers `tests=unit`). The app's unit tests run in the `mobile` job, so the app's four test shards do nothing there, and flow-tests runs no tests. A change to CI's own files runs every test on the branch too. The merge queue runs every job with every test, so an integration or flow failure is first seen there: the entry leaves the queue and the ones behind it are rebuilt.
+
 ## Decisions
 
 - The decision is a script file with bats tests (the pattern of `.github/release/release.sh`), not a separate `changes` job that every job waits for. Under load a separate job adds a second wait for a runner to every run, and a long script inside YAML cannot be tested. The cost is one history fetch per job; it carries no file contents.
@@ -70,7 +72,8 @@ The queue moves Main to the very commit it tested, so Main's push would check th
 
 ## What changes for the team
 
-- A pull request no longer re-tests areas it does not touch on its branch. A documents-only pull request finishes in about a minute in quiet hours. In the merge queue every job runs, and Main's push after the queue's merge does no work again.
+- A pull request no longer re-tests areas it does not touch on its branch, and runs only the unit tests there. A documents-only pull request finishes in about a minute in quiet hours. In the merge queue every job runs with every test, and Main's push after the queue's merge does no work again.
+- Before a pull request is ready, the integration and end-to-end test files it touches are run locally, since its own push runs only the unit tests.
 - A broken Main no longer blocks pull requests that do not touch the broken area. Main's own full run shows the break.
 - Main's own runs are no longer cancelled by the next merge; the run of a merge that lands during a Main run waits for that run to finish.
 - A dependency across folders that the map does not know is missed on a branch and shows on Main's next run. When a new test reads a file outside its package, its rule is added to the map.
