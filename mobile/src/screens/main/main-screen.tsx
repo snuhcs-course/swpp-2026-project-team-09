@@ -16,6 +16,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -137,8 +138,8 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
         } else if (primary.action === 'shuttle-line') {
           map.fitTo(shuttleLine, ROUTE_PADDING);
           onClose();
-        } else if (primary.action === 'room') {
-          router.push(`/room/${primary.questId}`);
+        } else if (primary.action === 'room' || primary.action === 'post') {
+          router.push(primary.action === 'room' ? `/room/${primary.questId}` : `/post/${primary.questId}`);
         } else if (primary.action === 'active-party') {
           onActiveParty();
         } else if (primary.action === 'recruit') {

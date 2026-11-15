@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput } from '@/api/assistant-types';
@@ -31,6 +32,14 @@ export type MarkSource =
 const LOOKS = ['fresh', 'plain', 'faded'] as const;
 export type MarkLook = (typeof LOOKS)[number];
 
+// An item of a mark: its card's id, the event's or the Quest's own id, its start, and whether it carries "!".
+export interface MarkItem {
+  id: string;
+  ownId: string;
+  start: string | null;
+  fresh: boolean;
+}
+
 export interface InterestMark {
   // The id of the card whose marker stands for the mark: the item's own when it stands alone, else the place's.
   id: string;
@@ -41,10 +50,8 @@ export interface InterestMark {
   look: MarkLook;
   // The items' card ids: events by their start, then parties by their next step's.
   items: readonly string[];
-  eventIds: readonly string[];
-  questIds: readonly string[];
-  // The earliest event's start; null for a mark of parties only.
-  firstStart: string | null;
+  events: readonly MarkItem[];
+  parties: readonly MarkItem[];
 }
 
 export interface MarkInputs {
@@ -170,19 +177,23 @@ function itemsOf(inputs: MarkInputs): Item[] {
     .toSorted(inOrder);
 }
 
+function markItemsOf(members: readonly Item[], type: Item['type']): MarkItem[] {
+  return members
+    .filter((member) => member.type === type)
+    .map(({ id, ownId, start, look }) => ({ id, ownId, start, fresh: look === 'fresh' }));
+}
+
 function markOf(id: string, first: Item, members: readonly Item[]): InterestMark {
   const title = members.length === 1 ? first.title : `${first.title} 외 ${members.length - 1}`;
   const look = firstLook(members.map((member) => member.look));
-  const events = members.filter(({ type }) => type === 'event');
   return {
     id,
     title,
     name: look === 'fresh' ? `${title} · ${FRESH_WORDS}` : title,
     look,
     items: members.map((member) => member.id),
-    eventIds: events.map(({ ownId }) => ownId),
-    questIds: members.filter(({ type }) => type === 'party').map(({ ownId }) => ownId),
-    firstStart: events[0]?.start ?? null,
+    events: markItemsOf(members, 'event'),
+    parties: markItemsOf(members, 'party'),
   };
 }
 
@@ -200,19 +211,50 @@ export function marksOf(inputs: MarkInputs): InterestMark[] {
   });
 }
 
-// What a tap on the mark asks, as asking would: its events on the day of the earliest, today once it started, or for
-// a mark of parties only, its Quests.
-export function answerInputOf({ eventIds, questIds, firstStart }: InterestMark, now: Date): PlanInput {
-  if (eventIds.length === 0) {
-    return { kind: 'quests', globalEventId: null, questIds: questIds.slice(0, IDS_MOST) };
-  }
-  const day = Math.max(firstStart === null ? 0 : Date.parse(firstStart), now.getTime());
-  return { kind: 'events', date: koreaDateKey(new Date(day)), eventIds: eventIds.slice(0, IDS_MOST) };
+// The marks whose marker the map draws as the mark's: a mark of one item, or of a place where nothing else of the map
+// stands. Where another thing (a Quest of the User's, a restaurant of a layer) shares the point, the place's own
+// card stands as before, and its rows open the mark's items.
+export function marksAlone(marks: readonly InterestMark[], cards: readonly CardView[]): Map<string, InterestMark> {
+  const alone = marks.filter((mark) => {
+    const items = new Set(mark.items);
+    return cards.every(({ id, within }) => within !== mark.id || items.has(id));
+  });
+  return new Map(alone.map((mark) => [mark.id, mark]));
 }
 
-// A recruiting party's card, worded as an open Party's: its members and 참여하기 to its room.
+// What a tap on the mark asks, as asking would, and the items its answer shows, which then lose "!".
+export interface MarkAsk {
+  input: PlanInput;
+  shown: readonly string[];
+}
+
+// The Korea day an item is asked on: its start's, or today once it started.
+function askedDay(start: string | null, now: Date): string {
+  return koreaDateKey(new Date(Math.max(start === null ? 0 : Date.parse(start), now.getTime())));
+}
+
+// The events of one day, that of the earliest new event, else of the earliest event; or the Quests, for a mark of
+// parties only or one whose new items are all parties. So the answer of a mark with "!" holds what is new.
+export function askOf({ events, parties }: InterestMark, now: Date): MarkAsk {
+  const newEvent = events.find(({ fresh }) => fresh);
+  const first = newEvent ?? (parties.some(({ fresh }) => fresh) ? undefined : events[0]);
+  if (first === undefined) {
+    const asked = parties.slice(0, IDS_MOST);
+    const questIds = asked.map(({ ownId }) => ownId);
+    return { input: { kind: 'quests', globalEventId: null, questIds }, shown: asked.map(({ id }) => id) };
+  }
+  const date = askedDay(first.start, now);
+  const asked = events.filter(({ start }) => askedDay(start, now) === date).slice(0, IDS_MOST);
+  return {
+    input: { kind: 'events', date, eventIds: asked.map(({ ownId }) => ownId) },
+    shown: asked.map(({ id }) => id),
+  };
+}
+
+// A recruiting party's card, worded as an open Party's: its members, and 참여하기 (참여 신청 for an Approval Quest) to
+// its post, where a User who does not hold it joins.
 function partyCards(quest: RecruitingQuest, now: Date): CardView[] {
-  const { id, title, holderCount, capacity } = quest;
+  const { id, title, holderCount, capacity, joinPolicy } = quest;
   const { startsAt, place } = quest.nextSubQuest;
   if (place === null || place.latitude === null || place.longitude === null) {
     return [];
@@ -228,7 +270,7 @@ function partyCards(quest: RecruitingQuest, now: Date): CardView[] {
       ...(startsAt === null ? [] : [line('clock', `${koreaDay(startsAt, now)} ${koreaClock(startsAt)}`)]),
       line('pin', place.label),
     ],
-    primary: { label: '참여하기', action: 'room', questId: id },
+    primary: { label: joinPolicy === 'approval' ? '참여 신청' : '참여하기', action: 'post', questId: id },
     secondary: null,
     position: { latitude: place.latitude, longitude: place.longitude },
   };

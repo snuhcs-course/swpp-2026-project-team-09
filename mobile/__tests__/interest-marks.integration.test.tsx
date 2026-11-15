@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -15,6 +16,7 @@ import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
+import { socketServer } from './support/live';
 import { lookOf } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, LOBBY, PHONE_NOW } from './support/server';
@@ -163,6 +165,8 @@ describe('the switch on', () => {
     expect(drawn(FRESH_MARK)).toBe(false);
     expect(drawn(MARK)).toBe(true);
     expect(looks(MARK, 'fresh')).toBe(false);
+    // An answer may have kept or dropped an interest: the matches are read again.
+    expect(server.received('GET /interests/matches').length).toBeGreaterThan(1);
   });
 
   it('keeps "!" when the answer cannot be had', async () => {
@@ -175,6 +179,29 @@ describe('the switch on', () => {
     expect(screen.getByText('답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
     expect(screen.queryByTestId('answer-pill')).toBeNull();
     expect(looks(FRESH_MARK, 'fresh')).toBe(true);
+  });
+});
+
+// Partitions: a notice of the main server. Expected values: the review of PR 306, a match posted while the app runs
+// is drawn without a restart.
+describe('the matches read again', () => {
+  it('on a notice, drawing a new match', async () => {
+    await openMain({ answerOnMap: true });
+    server.on('GET /interests/matches', {
+      status: 200,
+      body: { globalEvents: [{ id: CONCERT.id, watched: true }], quests: [] },
+    });
+
+    await socketServer((socket) => {
+      socket.accept();
+    });
+    await socketServer((socket) => {
+      socket.send('notice');
+    });
+    await pass(500);
+
+    expect(drawn('동아리 정기공연')).toBe(true);
+    expect(drawn(FRESH_MARK)).toBe(false);
   });
 });
 

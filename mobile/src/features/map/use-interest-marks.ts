@@ -2,15 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryClient, queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { apiClient } from '@/api/client';
 import type { InterestMatches } from '@/api/interest-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import {
   globalEventsQuery,
+  INTERESTS_KEY,
   interestMatchesQuery,
   interestsQuery,
   lobbyQuery,
@@ -27,7 +29,7 @@ import type { Chat } from '@/features/assistant/use-chat';
 import { useNow } from '@/hooks/use-now';
 import { keepOpenedMarks, readOpenedMarks } from '@/storage/opened-marks';
 import type { CardView } from './adapter';
-import { answerInputOf, cardsWithMarks, type InterestMark, marksOf, sourcesOf, toldItems } from './interest-marks';
+import { askOf, cardsWithMarks, type InterestMark, marksAlone, marksOf, sourcesOf, toldItems } from './interest-marks';
 
 // The interest marks of the everyday map while the switch of the answer on the map is on (P05 ticket 13), and what a
 // press on one does. With the switch off nothing is asked and the map is as before.
@@ -134,20 +136,43 @@ export interface MarkPresses {
   pressing: (onThing: (id: string) => void) => (id: string) => void;
 }
 
+// The matches change with no signal when the Assistant keeps or drops an interest, or the profile's hashtags are
+// saved: while the switch is on, the interests are read again after each answer and at each change of the hashtags.
+function useMatchesRefresh(bubbles: Chat['bubbles']): void {
+  const on = useAnswerSwitch();
+  const queryClient = useQueryClient();
+  const hashtags = useQuery({ ...lobbyQuery, enabled: on }).data?.profile.hashtags.join('\n');
+  const answers = bubbles.filter(({ role }) => role === 'assistant').length;
+  const state = hashtags === undefined ? null : `${String(answers)}\n${hashtags}`;
+  const last = useRef<string | null>(null);
+  useEffect(() => {
+    if (state === null) {
+      return;
+    }
+    if (on && last.current !== null && last.current !== state) {
+      void queryClient.invalidateQueries({ queryKey: INTERESTS_KEY });
+    }
+    last.current = state;
+  }, [on, state, queryClient]);
+}
+
 // A press on a mark gives the same answer as asking: the mark's name as the words and the answer of its items, which
-// the arrows browse. Its items are kept as opened once the answer is shown, and lose "!". `location` is the User's
-// position, which the answer starts from.
-export function useMarkPresses(chat: Chat, location: LatLng | null): MarkPresses {
+// the arrows browse. The items the answer shows are kept as opened once it is on screen, and lose "!". `location` is
+// the User's position, which the answer starts from; `cards` are the map's, by which a mark sharing its point with
+// another thing leaves the place's card as it is.
+export function useMarkPresses(chat: Chat, location: LatLng | null, cards: readonly CardView[]): MarkPresses {
   const { marks } = useInterestMarks();
-  const byId = useMemo(() => (marks === null ? NO_MARKS : new Map(marks.map((mark) => [mark.id, mark]))), [marks]);
+  const byId = useMemo(() => (marks === null ? NO_MARKS : marksAlone(marks, cards)), [marks, cards]);
   const queryClient = useQueryClient();
   const showToast = useToast();
+  useMatchesRefresh(chat.bubbles);
   const open = (mark: InterestMark): void => {
+    const { input, shown } = askOf(mark, now());
     void chat
-      .askApp(mark.title, () => apiClient.recalculateAnswer(answerInputOf(mark, now()), location))
+      .askApp(mark.title, () => apiClient.recalculateAnswer(input, location))
       .then((ended) => {
         if (ended === 'shown') {
-          keepOpened(queryClient, mark.items);
+          keepOpened(queryClient, shown);
         } else if (ended === 'failed') {
           showToast(NOT_ANSWERED);
         }

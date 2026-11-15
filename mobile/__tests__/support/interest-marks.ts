@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { InterestMatches } from '@/api/interest-types';
 import type { RecruitingQuest } from '@/api/party-types';
-import { type InterestMark, type MarkInputs, sourcesOf } from '@/features/map/interest-marks';
+import { type InterestMark, type MarkInputs, type MarkItem, sourcesOf } from '@/features/map/interest-marks';
 import { event, GYM_POINT, HALL, LIBRARY_POINT, NOW, recruitingFor } from './map-sources';
 
 // The interest marks' events and recruiting parties (P05 ticket 13), at 13:00 on 6 October 2026 in Korea
@@ -98,6 +99,11 @@ export function inputs(found: InterestMatches, more: Partial<MarkInputs> = {}): 
   };
 }
 
+// An item of a mark, by its card's id, not new unless said.
+export function markItem(id: string, start: string | null, fresh = false): MarkItem {
+  return { id, ownId: id.slice(id.indexOf(':') + 1), start, fresh };
+}
+
 // The job fair's mark alone.
 export function markOf(more: Partial<InterestMark>): InterestMark {
   return {
@@ -106,9 +112,8 @@ export function markOf(more: Partial<InterestMark>): InterestMark {
     name: '채용박람회',
     look: 'plain',
     items: ['event:job'],
-    eventIds: ['job'],
-    questIds: [],
-    firstStart: JOB.startsAt,
+    events: [markItem('event:job', JOB.startsAt)],
+    parties: [],
     ...more,
   };
 }

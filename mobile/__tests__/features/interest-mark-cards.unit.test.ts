@@ -2,39 +2,101 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { KeptNotification } from '@/api/waiting-types';
-import { toCards } from '@/features/map/adapter';
-import { answerInputOf, cardsWithMarks, marksOf, markedLook, toldItems } from '@/features/map/interest-marks';
-import { CONCERT, FIELD, inputs, JOB, markOf, matches, RECRUITING } from '../support/interest-marks';
+import { type CardView, toCards } from '@/features/map/adapter';
+import { askOf, cardsWithMarks, marksAlone, marksOf, markedLook, toldItems } from '@/features/map/interest-marks';
+import {
+  CONCERT,
+  FIELD,
+  HALL_ID,
+  inputs,
+  JOB,
+  markItem,
+  markOf,
+  matches,
+  RECRUITING,
+  RUN,
+  TALK,
+} from '../support/interest-marks';
 import { friendView, MIN_JUN, NOW, sources } from '../support/map-sources';
 
 // What the interest marks (P05 ticket 13) give the rest of the app: the answer a tap asks for, the map's cards, the
 // items told as newly posted, and a mark's look.
 
+const JOB_ITEM = markItem('event:job', JOB.startsAt);
+const TALK_ITEM = markItem('event:talk', TALK.startsAt);
+const TOMORROW = '2026-10-07T12:00:00+09:00';
+const RUN_ITEM = markItem('party:run', '2026-10-06T19:30:00+09:00');
+
 // Partitions: a mark of events later today, of an event under way since yesterday, of an event on another day, of
-// parties only. Expected values: the ticket's tap, the same answer as asking with the mark's items.
+// events on two days with and without "!", of more events than an answer takes, of parties only, of events and a new
+// party. Expected values: the ticket's tap, the same answer as asking, and the review of PR 306: "!" is cleared only
+// for what the answer shows, and a mark with "!" answers with what is new.
 describe("a mark's answer", () => {
-  it('asks for its events on the day of the earliest', () => {
-    expect(answerInputOf(markOf({ eventIds: ['job', 'talk'] }), NOW)).toEqual({
-      kind: 'events',
-      date: '2026-10-06',
-      eventIds: ['job', 'talk'],
+  it('asks for its events on the day of the earliest, and shows them', () => {
+    expect(askOf(markOf({ events: [JOB_ITEM, TALK_ITEM] }), NOW)).toEqual({
+      input: { kind: 'events', date: '2026-10-06', eventIds: ['job', 'talk'] },
+      shown: ['event:job', 'event:talk'],
     });
   });
 
   it.each([
     ['an event under way since yesterday', '2026-10-06', '2026-10-05T10:00:00+09:00'],
-    ['an event tomorrow', '2026-10-07', '2026-10-07T12:00:00+09:00'],
-  ])('%s → %s', (_case, date, firstStart) => {
-    expect(answerInputOf(markOf({ firstStart }), NOW)).toMatchObject({ kind: 'events', date });
+    ['an event tomorrow', '2026-10-07', TOMORROW],
+  ])('%s → %s', (_case, date, start) => {
+    expect(askOf(markOf({ events: [markItem('event:job', start)] }), NOW).input).toMatchObject({
+      kind: 'events',
+      date,
+    });
   });
 
-  it('asks for the Quests of a mark of parties only', () => {
-    const parties = markOf({ eventIds: [], questIds: ['run'], firstStart: null });
+  it('leaves an event of another day out of the answer and out of what loses "!"', () => {
+    const twoDays = markOf({ events: [JOB_ITEM, markItem('event:fair', TOMORROW, true)] });
 
-    expect(answerInputOf(parties, NOW)).toEqual({ kind: 'quests', globalEventId: null, questIds: ['run'] });
+    expect(askOf(markOf({ events: [JOB_ITEM, markItem('event:fair', TOMORROW)] }), NOW)).toEqual({
+      input: { kind: 'events', date: '2026-10-06', eventIds: ['job'] },
+      shown: ['event:job'],
+    });
+    expect(askOf(twoDays, NOW)).toEqual({
+      input: { kind: 'events', date: '2026-10-07', eventIds: ['fair'] },
+      shown: ['event:fair'],
+    });
+  });
+
+  it('asks for at most 20 events', () => {
+    const many = Array.from({ length: 21 }, (_none, index) => markItem(`event:e${String(index)}`, JOB.startsAt));
+
+    expect(askOf(markOf({ events: many }), NOW).shown).toHaveLength(20);
+  });
+
+  it('asks for the Quests of a mark of parties only, or of one whose new items are parties', () => {
+    const asked = { input: { kind: 'quests', globalEventId: null, questIds: ['run'] }, shown: ['party:run'] };
+
+    expect(askOf(markOf({ events: [], parties: [RUN_ITEM] }), NOW)).toEqual(asked);
+    expect(askOf(markOf({ events: [JOB_ITEM], parties: [{ ...RUN_ITEM, fresh: true }] }), NOW)).toEqual(asked);
+  });
+});
+
+// Partitions: a mark of two at a place where only its items stand, one where another thing stands too, a mark of one.
+// Expected values: decision 4, the place's own card stands where another thing shares the point.
+describe('the marks the map draws as marks', () => {
+  const [job] = toCards(sources({ globalEvents: [JOB] }));
+  const mark = markOf({ id: HALL_ID, items: ['event:job', 'event:talk'], events: [JOB_ITEM, TALK_ITEM] });
+  const within = (id: string): CardView[] => (job === undefined ? [] : [{ ...job, id, within: HALL_ID }]);
+
+  it('keeps a mark whose place holds only its items', () => {
+    expect([...marksAlone([mark], [...within('event:job'), ...within('event:talk')]).keys()]).toEqual([HALL_ID]);
+  });
+
+  it('leaves out a mark whose place holds another thing too', () => {
+    expect(marksAlone([mark], [...within('event:job'), ...within('restaurant:hall')]).size).toBe(0);
+  });
+
+  it('keeps a mark of one item', () => {
+    expect([...marksAlone([markOf({})], within('restaurant:hall')).keys()]).toEqual(['event:job']);
   });
 });
 
@@ -60,7 +122,7 @@ describe("the map's cards with the marks", () => {
     expect(cardsWithMarks(once, marks, RECRUITING, NOW).map(({ id }) => id)).toEqual(['party:run']);
   });
 
-  it("words a party's card as an open Party's, with 참여하기 to its room", () => {
+  it("words a party's card as an open Party's, with 참여하기 to its post, where the User joins", () => {
     const marks = marksOf(inputs(matches([], [['run', true]])));
 
     expect(cardsWithMarks([], marks, RECRUITING, NOW)[0]).toMatchObject({
@@ -74,8 +136,19 @@ describe("the map's cards with the marks", () => {
         { icon: 'clock', text: '오늘 19:30' },
         { icon: 'pin', text: '문화관' },
       ],
-      primary: { label: '참여하기', action: 'room', questId: 'run' },
+      primary: { label: '참여하기', action: 'post', questId: 'run' },
       position: FIELD,
+    });
+  });
+
+  it('words the button 참여 신청 for an Approval Quest', () => {
+    const marks = marksOf(inputs(matches([], [['run', true]])));
+    const approval = [{ ...RUN, joinPolicy: 'approval' as const }];
+
+    expect(cardsWithMarks([], marks, approval, NOW)[0]?.primary).toEqual({
+      label: '참여 신청',
+      action: 'post',
+      questId: 'run',
     });
   });
 });

@@ -70,7 +70,7 @@ export function useMapView(
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
 ): AnswerMap {
-  const marks = useMarkPresses(chat.chat, me.position);
+  const marks = useMarkPresses(chat.chat, me.position, cards);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap, marks.byId);
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;

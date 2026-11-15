@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type InterestMark, marksOf, sourcesOf } from '@/features/map/interest-marks';
-import { EVENTS, HALL_ID, inputs, JOB, matches, RUN } from '../support/interest-marks';
+import { EVENTS, HALL_ID, inputs, JOB, markItem, matches, RUN, TALK } from '../support/interest-marks';
 import { NOW } from '../support/map-sources';
 
 // The marks of the watched interests on the everyday map (P05 ticket 13): which items stand on it, how one place
@@ -48,9 +49,8 @@ describe('one mark at one place', () => {
       title: '채용박람회 외 1',
       name: '채용박람회 외 1',
       items: ['event:job', 'event:talk'],
-      eventIds: ['job', 'talk'],
-      questIds: [],
-      firstStart: JOB.startsAt,
+      events: [markItem('event:job', JOB.startsAt), markItem('event:talk', TALK.startsAt)],
+      parties: [],
     });
   });
 
@@ -67,7 +67,7 @@ describe('one mark at one place', () => {
       id: HALL_ID,
       title: '채용박람회 외 2',
       items: ['event:job', 'event:talk', 'party:going'],
-      questIds: ['going'],
+      parties: [markItem('party:going', '2026-10-06T13:55:00+09:00')],
     });
   });
 
