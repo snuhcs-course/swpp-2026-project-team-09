@@ -12,6 +12,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -65,6 +66,9 @@ export interface CardView {
   // Place of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is
   // on. `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a
   // building of the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view.
+  // `invitation` is an invitation the User received, while the switch of the answer on the map is on: it has no
+  // marker, and its card is the invitee's own way. `made-quest` is the flag of a Quest made from a Plan while the
+  // switch is on, whose marker's name is the flag's words and whose card is the one after inviting.
   kind:
     | 'global-event'
     | 'place-group'
@@ -76,7 +80,9 @@ export interface CardView {
     | 'shuttle-stop'
     | 'shuttle-vehicle'
     | 'study'
-    | 'study-cluster';
+    | 'study-cluster'
+    | 'invitation'
+    | 'made-quest';
   mark: CardMark;
   marker: CardMarker;
   // "공식 행사 · 컴퓨터공학부 공지"
@@ -101,8 +107,10 @@ export interface CardView {
   // Avatar glides as the positions come.
   glideMs?: number;
   // For a thing at a place with others: the id of the place's card, whose marker stands for the thing. The thing has
-  // no marker of its own, and its card opens from the place's.
+  // no marker of its own, and its card opens from the place's. For a Quest made from a Plan: the id of its flag.
   within?: string;
+  // For the flag of a Quest made from a Plan: its two lines, the start and the step over the day and the count.
+  flag?: { title: string; line: string };
   // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
   // such as its time.
   choices?: { id: string; kind: PlaceKind; title: string; detail: string }[];
@@ -132,6 +140,7 @@ export interface StudyDetail {
 }
 
 const FRIEND_CARD = 'friend:';
+const INVITATION_CARD = 'invitation:';
 
 // A card's id from the id of what it shows, for a part of a screen that holds the thing and not its card.
 export const cardId = {
@@ -144,11 +153,18 @@ export const cardId = {
   shuttleStop: (stopId: string): string => `shuttle-stop:${stopId}`,
   shuttleVehicle: (carId: string): string => `shuttle-vehicle:${carId}`,
   study: (placeId: string): string => `study:${placeId}`,
+  invitation: (invitationId: string): string => `${INVITATION_CARD}${invitationId}`,
+  madeQuest: (questId: string): string => `made-quest:${questId}`,
 } as const;
 
 // The Friend's user id of a card's id, which a marker or an Avatar on the map carries, or null for anything else.
 export function friendIdOf(id: string): string | null {
   return id.startsWith(FRIEND_CARD) ? id.slice(FRIEND_CARD.length) : null;
+}
+
+// The invitation's id of a card's id, or null for anything else.
+export function invitationIdOf(id: string): string | null {
+  return id.startsWith(INVITATION_CARD) ? id.slice(INVITATION_CARD.length) : null;
 }
 
 type Line = CardView['lines'][number];

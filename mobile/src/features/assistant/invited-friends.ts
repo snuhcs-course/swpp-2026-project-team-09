@@ -4,7 +4,6 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { PlanQuest } from '@/api/plan-quest-types';
 import type { MemberState, QuestMember } from '@/api/types';
 import type { InvitationAnswer } from '@/live/invitation-answers';
 
@@ -30,10 +29,17 @@ export interface ReadMembers {
 const INVITED: Standing = { state: 'invited', lateMinutes: null };
 const DROPPED: Standing = { state: 'dropped', lateMinutes: null };
 
+// The Quest and the Friends invited to it: the reply of POST /plans, or a Quest made from a Plan as the User's Quests
+// hold it.
+interface InvitedTo {
+  quest: { id: string };
+  invitations: readonly { userId: string }[];
+}
+
 // How each invited Friend of a Quest made from a Plan stands, by user id: the latest word counts, a signal heard for
 // this Quest after the members were read, else the members, else invited, as the reply made them.
 export function friendStandings(
-  made: PlanQuest,
+  made: InvitedTo,
   read: ReadMembers | null,
   heard: readonly HeardAnswer[],
 ): Map<string, Standing> {
