@@ -21,7 +21,7 @@ The server takes the meal by the clock when the User's words name none, and a ti
 - [x] Tests:
   - unit (`test/meal-by-clock.unit.test.ts`): the clock's choice today at 09:00, 14:29, 14:30, 14:31, 15:00, 17:00 and 19:31, on another day, and with a start asked for; `planMeal` filling `meal`, keeping the constraints on screen for the meal it takes, and keeping a lunch the User named;
   - integration (`test/assistant-meal-by-clock.integration.test.ts`): at `POST /assistant/messages` with the scripted model at 15:00, `planMeal` without `meal` gives dinner Plans from 17:00, dinner from 15:00 starts at 17:00 with its line, and a named lunch answers that no lunch time is left.
-- [ ] The two sentences against the real model, several times each, in the benchmark (`eval/cases/meal-clock.yaml`).
+- [x] The two sentences against the real model, five times each, in the benchmark (`eval/cases/meal-clock.yaml`, `pnpm eval --world p4-answer --category meal-clock`): on this branch "배고파, 민수랑 같이" planned dinner with Plans 5 of 5 (the model left `meal` out each time) and "오후 3시쯤 민수랑 저녁 먹자" 5 of 5 (`dinner` with `from: '15:00'` each time); on Main's code, 2 of 5 (three lunches with no Plan, and one of the two only after a second call) and 4 of 5 (one question back about the time).
 
 ## Comments
 
@@ -34,3 +34,6 @@ The server takes the meal by the clock when the User's words name none, and a ti
 - **The model is told the meal**: `planMeal` answers `meal` beside `result`, so that its one sentence and its reason for no Plan can name it.
 - **`planMeal` takes `Pick<MealPlanService, 'plan'>`**, so that the unit test gives it a stand-in.
 - **`findMenu`'s rule** keeps "the one being served now or the next one": it only reads a menu, and this ticket changes only the meal plan.
+- **The benchmark's `p4-answer` world** is the P4 world (its seeds, clock, and travel fixture) asked with `clientCapabilities: ['library', 'answer']`, as the app asks with a context, so that `planMeal` is offered. Its cases live in `eval/cases/` and stay out of the P4 suite's 40. `planMeal` is not one of the scorer's tools, so the case file only requires the call; the counts above were read from each run's `planMeal` input and the reply's `answer`. The model was OpenRouter's `anthropic/claude-haiku-5.5`, the server's default, with the clock at Monday 2026-11-02 15:00. `dotEnv()` also takes a provider's key from the command's environment, so that a worktree without its own `.env` can run it.
+- **`pnpm eval` does not start on `4.0/Main`**: `src/common/settings.ts` imports `./llm-keys.js`, which Node's type stripping cannot resolve to the `.ts` file. The runs here used a resolve hook outside the repository (`node --import <hook> eval/cli.ts …`); fixing the import is left for its own change.
+- **"오후 3시쯤 민수랑 저녁 먹자" in the P4 world** gives "저녁 17:15 301동식당" / "17:15에야 도착해요": the asker's Class in 301동 ends at 17:15, after dinner opens at 17:00, so the line names the asker's arrival, as it does for any start the User fixed.
