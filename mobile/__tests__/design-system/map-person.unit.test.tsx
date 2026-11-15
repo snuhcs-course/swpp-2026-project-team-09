@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen, within } from '@testing-library/react-native';
@@ -107,6 +108,7 @@ describe('MapPerson', () => {
       free: '#0B7A55',
       class: '#001A72',
       moving: '#9A5200',
+      on: '#0B7A55',
       off: '#8A90A3',
       member: '#B63A07',
     });

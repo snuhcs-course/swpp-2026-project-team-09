@@ -15,6 +15,7 @@
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
+import { clockMoves } from '@/clock';
 import { apiClient } from './client';
 import type { InvitationCard } from './invitation-card-types';
 import type { RestaurantMenus } from './menu-types';
@@ -68,11 +69,12 @@ export const lobbyQuery = queryOptions({
 export const friendsQuery = queryOptions({ queryKey: FRIENDS_KEY, queryFn: () => apiClient.listFriends() });
 // The socket's `position` moves a Friend between fetches but carries no `nearPlace` or `walkMinutes`, so while a
 // screen shows the positions they are fetched again every minute, and the Place and the walk lag by a minute at most.
+// Only the main server gives them: against the mock, whose clock stands still, nothing is fetched again.
 const POSITIONS_EVERY_MS = 60_000;
 export const positionsQuery = queryOptions({
   queryKey: POSITIONS_KEY,
   queryFn: () => apiClient.listPositions(),
-  refetchInterval: POSITIONS_EVERY_MS,
+  refetchInterval: () => (clockMoves() ? POSITIONS_EVERY_MS : false),
 });
 export const friendStatusesQuery = queryOptions({
   queryKey: FRIEND_STATUSES_KEY,
