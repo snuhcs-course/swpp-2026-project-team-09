@@ -355,7 +355,8 @@ export interface MapScene {
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
-  places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
+  // `order`: the number a place carries in a list (1, 2, 3), as a day's Classes.
+  places: { place: PlacePoint; role: PlaceRole; tag: string | null; order?: number }[];
   // `mode` is absent for a walk.
   routes: {
     userId: string;

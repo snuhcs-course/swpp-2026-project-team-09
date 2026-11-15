@@ -30,6 +30,8 @@ import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { DAY_RULES, findDay } from '../lookup/day-tools.js';
+import { type DayLookupService } from '../lookup/day.service.js';
 import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { type FriendLookupService } from '../lookup/friend.service.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
@@ -68,11 +70,12 @@ export interface ChatAssistantServices {
   ways: WayService;
   menuLookups: MenuLookupService;
   friendLookups: FriendLookupService;
+  dayLookups: DayLookupService;
 }
 
 export interface ChatAssistantOptions {
   // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards, and a way to a
-  // Place, a Restaurant's menu, and where a Friend is are drawn there.
+  // Place, a Restaurant's menu, where a Friend is, and a day's Classes are drawn there.
   drawsAnswers: boolean;
   // With drawsAnswers, it also draws the events of a day and recruiting Quests planned there.
   drawsEvents?: boolean;
@@ -153,23 +156,24 @@ function plannedOnMap(
   };
 }
 
-// An app that draws answers also gets the Lookups drawn on the map: the way to a Place, a Restaurant's menu, and where a
-// Friend is.
+// An app that draws answers also gets the Lookups drawn on the map: the way to a Place, a Restaurant's menu, where a
+// Friend is, and a day's Classes.
 function withLookups(
   planned: { rules: string[]; tools: Record<string, Tool> },
-  { ways, menuLookups, friendLookups }: ChatAssistantServices,
+  { ways, menuLookups, friendLookups, dayLookups }: ChatAssistantServices,
   drawsAnswers: boolean,
 ): { rules: string[]; tools: Record<string, Tool> } {
   if (!drawsAnswers) {
     return planned;
   }
   return {
-    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES],
+    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES, DAY_RULES],
     tools: {
       ...planned.tools,
       findWay: findWay(ways),
       findMenu: findMenu(menuLookups),
       findFriend: findFriend(friendLookups),
+      findDay: findDay(dayLookups),
     },
   };
 }

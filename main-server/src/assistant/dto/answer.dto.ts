@@ -182,7 +182,8 @@ export interface MapScene {
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
-  places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
+  // `order`: the number a place carries in a list (1, 2, 3), as a day's Classes.
+  places: { place: PlacePoint; role: PlaceRole; tag: string | null; order?: number }[];
   // `mode` is absent for a walk.
   routes: {
     userId: string;
@@ -204,12 +205,13 @@ export interface TimeBand {
   text: string;
 }
 
-// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, or a menu.
+// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, or a
+// day's Classes.
 export interface Lookup {
-  kind: 'way' | 'friend' | 'menu';
+  kind: 'way' | 'friend' | 'menu' | 'day';
   // The conditions it used; a Lookup is not recalculated.
   chips: ConditionChip[];
-  // At most two.
+  // At most two, after a day's title.
   lines: AnswerLine[];
   basis: string[];
   scene: MapScene;
@@ -217,6 +219,14 @@ export interface Lookup {
   band: TimeBand | null;
   // The card's buttons, the main one first.
   actions: LookupAction[];
+  // The list the card shows under the lines, such as a day's Classes.
+  steps?: LookupStep[];
+}
+
+// A row of a Lookup's list: the time at the left ("13:51", or "11:00–11:50" for a Class), and the text at the right.
+export interface LookupStep {
+  at: string | null;
+  text: string;
 }
 
 export type LookupAction =

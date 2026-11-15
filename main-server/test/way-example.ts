@@ -42,6 +42,14 @@ export async function readCampus(): Promise<void> {
   }));
 }
 
+// The seed's walking table and shuttle timing.
+export function seedTravel(): SeedTravel {
+  if (travel === null) {
+    throw new Error('Read the campus first');
+  }
+  return travel;
+}
+
 // The Place of that name.
 export function place(name: string): PlaceDto {
   const found = places.find((each) => each.name === name);
