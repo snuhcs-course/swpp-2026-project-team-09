@@ -15,7 +15,7 @@
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
 // components from here and writes no look of its own.
 export { AppBar, IconButton } from './app-bar';
-export { Avatar, type PresenceStatus } from './avatar';
+export { Avatar, initials, type PresenceStatus } from './avatar';
 export { Badge, type BadgeTone } from './badge';
 export { BottomNav, type BottomNavItem } from './bottom-nav';
 export { BottomSheet } from './bottom-sheet';

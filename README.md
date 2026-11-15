@@ -669,13 +669,15 @@ the location to a point on campus in the extended controls.
 
 ## Running the tests
 
-Each project has the same four checks, which CI runs on every push. A test's level, unit, integration or end-to-end, is
-in its file name ([ADR 0007](docs/adr/0007-test-levels-by-what-a-test-starts.md)), and follows what the test starts: a
-unit test (`.unit.test.ts(x)`) calls one module with stand-ins and does no I/O; an integration test
-(`.integration.test.ts(x)`) joins two of our layers or crosses a real boundary, such as a database container or a
-started server; an end-to-end test (`.e2e.test.ts`) drives the whole system from outside, through a screen or the
-servers' public interfaces. A Maestro flow's level is its folder. Each runner picks up only its own level's suffix. Run
-them in the project's folder:
+Each project has the same four checks. On a pull request's own push, CI runs them for the projects its changes reach,
+with the unit tests only (`pnpm test:unit`); the merge queue runs every check with every test before the merge, and a
+failure there sends the pull request back. So run the integration and end-to-end test files you touched before a pull
+request is ready. A test's level, unit, integration or end-to-end, is in its file name ([ADR
+0007](docs/adr/0007-test-levels-by-what-a-test-starts.md)), and follows what the test starts: a unit test
+(`.unit.test.ts(x)`) calls one module with stand-ins and does no I/O; an integration test (`.integration.test.ts(x)`)
+joins two of our layers or crosses a real boundary, such as a database container or a started server; an end-to-end test
+(`.e2e.test.ts`) drives the whole system from outside, through a screen or the servers' public interfaces. A Maestro
+flow's level is its folder. Each runner picks up only its own level's suffix. Run them in the project's folder:
 
 ```bash
 pnpm lint

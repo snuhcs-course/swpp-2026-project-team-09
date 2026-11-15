@@ -65,7 +65,7 @@ export function useMapView(
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
 ): AnswerMap {
-  const things = useThings(cards, map.detail, selection.selected?.id ?? null);
+  const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation);
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);

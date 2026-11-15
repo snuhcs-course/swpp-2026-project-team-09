@@ -1,0 +1,350 @@
+{
+  "강남역 맛집 추천해 줘": {
+    "text": "캠퍼스 안의 일만 도와 드려요.",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "off-campus",
+      "lines": [
+        [
+          {
+            "text": "캠퍼스 안의 일만 도와 드려요.",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "배고파",
+          "text": "배고파"
+        },
+        {
+          "kind": "ask",
+          "label": "오늘 볼 만한 거 있어?",
+          "text": "오늘 볼 만한 거 있어?"
+        }
+      ]
+    }
+  },
+  "자료구조 과제 풀어 줘": {
+    "text": "과제는 도와 드릴 수 없어요.\n캠퍼스에서 먹을 곳, 공부할 자리, 행사, 파티, 길을 찾아 드려요.",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "general-work",
+      "lines": [
+        [
+          {
+            "text": "과제는 도와 드릴 수 없어요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "캠퍼스에서 먹을 곳, 공부할 자리, 행사, 파티, 길을 찾아 드려요.",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "배고파",
+          "text": "배고파"
+        },
+        {
+          "kind": "ask",
+          "label": "공부할 자리",
+          "text": "공부할 자리"
+        },
+        {
+          "kind": "ask",
+          "label": "오늘 볼 만한 거 있어?",
+          "text": "오늘 볼 만한 거 있어?"
+        }
+      ]
+    }
+  },
+  "심심해": {
+    "text": "무엇을 해 볼까요?",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "vague",
+      "lines": [
+        [
+          {
+            "text": "무엇을 해 볼까요?",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "지금 비는 친구",
+          "text": "지금 비는 친구"
+        },
+        {
+          "kind": "ask",
+          "label": "같이 놀 파티",
+          "text": "같이 놀 파티"
+        },
+        {
+          "kind": "ask",
+          "label": "오늘 볼 만한 행사",
+          "text": "오늘 볼 만한 행사"
+        }
+      ]
+    }
+  },
+  "우리 과 조교님 어디 계셔?": {
+    "text": "친구로 맺은 사람만 볼 수 있어요.\n친구가 되면 서로 시간표의 건물과 끝나는 시각이 보여요.",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "not-a-friend",
+      "lines": [
+        [
+          {
+            "text": "친구로 맺은 사람만 볼 수 있어요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "친구가 되면 서로 시간표의 건물과 끝나는 시각이 보여요.",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "open",
+          "label": "친구 추가",
+          "screen": "friend-add"
+        }
+      ]
+    }
+  },
+  "민수 어제 어디 있었어?": {
+    "text": "지난 위치는 저장하지 않아요. 지금과 시간표만 알아요.\n민수는 지금 302동에서 수업 중이에요 · 12:15까지",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "past-location",
+      "lines": [
+        [
+          {
+            "text": "지난 위치는 저장하지 않아요. 지금과 시간표만 알아요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "민수는 지금 302동에서 수업 중이에요 · 12:15까지",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "만나고 싶다",
+          "text": "민수랑 만나고 싶어"
+        }
+      ]
+    }
+  },
+  "누가 내 위치 찾아봤어?": {
+    "text": "누가 찾았는지는 기록하지 않아요.\n후보로 검토된 것은 누구에게도 알리지 않아요.",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "who-looked",
+      "lines": [
+        [
+          {
+            "text": "누가 찾았는지는 기록하지 않아요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "후보로 검토된 것은 누구에게도 알리지 않아요.",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "open",
+          "label": "위치 공유 보기",
+          "screen": "location-sharing"
+        }
+      ]
+    }
+  },
+  "민수 위치 켜 줘": {
+    "text": "민수가 정하는 일이에요.\n내가 민수에게 보일 단계는 바꿀 수 있어요.",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "others-sharing",
+      "lines": [
+        [
+          {
+            "text": "민수가 정하는 일이에요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "내가 민수에게 보일 단계는 바꿀 수 있어요.",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "open",
+          "label": "위치 공유 보기",
+          "screen": "location-sharing"
+        }
+      ]
+    }
+  },
+  "ㅂㄱㅍ": {
+    "text": "잘 못 알아들었어요.\n이렇게 말해 보세요.",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "not-understood",
+      "lines": [
+        [
+          {
+            "text": "잘 못 알아들었어요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "이렇게 말해 보세요.",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "배고파",
+          "text": "배고파"
+        },
+        {
+          "kind": "ask",
+          "label": "공부할 자리",
+          "text": "공부할 자리"
+        },
+        {
+          "kind": "ask",
+          "label": "오늘 볼 만한 거 있어?",
+          "text": "오늘 볼 만한 거 있어?"
+        }
+      ]
+    }
+  },
+  "민수랑 마주칠 때 알려 줘": {
+    "text": "지켜봐 드리는 것은 행사와 모집뿐이에요.\n민수와 만나려면 함께 비는 때를 찾아 드려요.",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "not-watched-friend",
+      "lines": [
+        [
+          {
+            "text": "지켜봐 드리는 것은 행사와 모집뿐이에요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "민수와 만나려면 함께 비는 때를 찾아 드려요.",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "만나고 싶다",
+          "text": "민수랑 만나고 싶어"
+        },
+        {
+          "kind": "open",
+          "label": "관심 맡겨 두기",
+          "screen": "interests"
+        }
+      ]
+    }
+  },
+  "셔틀 오면 알려 줘": {
+    "text": "지켜봐 드리는 것은 행사와 모집뿐이에요.\n지금 물으면 셔틀이 언제 올지 어림해 드려요.",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "not-watched-shuttle",
+      "lines": [
+        [
+          {
+            "text": "지켜봐 드리는 것은 행사와 모집뿐이에요.",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "지금 물으면 셔틀이 언제 올지 어림해 드려요.",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "셔틀 언제 와?",
+          "text": "셔틀 언제 와?"
+        }
+      ]
+    }
+  }
+}

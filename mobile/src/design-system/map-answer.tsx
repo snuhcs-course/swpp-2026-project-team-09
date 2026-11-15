@@ -8,6 +8,7 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { initials } from './avatar';
 import { MapPin } from './map-pin';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
@@ -68,7 +69,7 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
           style={[styles.face, { borderStyle: symbol.dashed ? 'dashed' : 'solid' }]}
           testID={partOf(testID, 'face')}
         >
-          <Text style={styles.letters}>{Array.from(symbol.name).slice(0, 2).join('')}</Text>
+          <Text style={styles.letters}>{initials(symbol.name)}</Text>
         </View>
         {symbol.badge === undefined ? null : (
           <View style={[styles.faceBadge, styles[symbol.badge]]} testID={partOf(testID, 'badge')}>

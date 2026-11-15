@@ -170,15 +170,25 @@ describe('isPositionKept', () => {
   );
 });
 
+// A Friend with the two fields package C adds, which may be left out but are text where they are sent.
+const FRIEND_PROFILED = { ...FRIEND, friendId: 'KM4J8QZA', friendsSince: '2026-10-03T14:05:00+09:00' };
+
 describe('isFriends', () => {
   checks(
     isFriends,
     [
       ['the Friends', [FRIEND]],
       ['no Friends', []],
+      ['a Friend with the Friend ID and the date', [FRIEND_PROFILED]],
     ],
     [
       ['one Friend outside a list', FRIEND],
+      ...inList(FRIEND, [
+        ['friendId null', { ...FRIEND_PROFILED, friendId: null }],
+        ['friendId 1', { ...FRIEND_PROFILED, friendId: 1 }],
+        ['friendsSince null', { ...FRIEND_PROFILED, friendsSince: null }],
+        ['friendsSince 1', { ...FRIEND_PROFILED, friendsSince: 1 }],
+      ]),
       ...inList(
         FRIEND,
         wrongFields(FRIEND, {
