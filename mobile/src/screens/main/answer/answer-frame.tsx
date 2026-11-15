@@ -66,10 +66,10 @@ function Words({ bubble, shown, invitation, room, onClose }: WordsProps): ReactE
     ) : (
       <InvitedCard
         chips={shown.answer.chips}
-        made={made}
         onClose={onClose}
         standings={standings}
         startAt={shown.plan.startAt}
+        steps={made.quest.subQuests}
       />
     );
   }
