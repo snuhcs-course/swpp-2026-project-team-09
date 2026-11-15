@@ -35,6 +35,7 @@ import { FriendList } from './friend-list';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
 import { MapBottom, openMenus, type Taken } from './map-bottom';
+import { MyCard } from './my-card';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
 import type { ChatSheetControl } from './chat-sheet';
@@ -104,7 +105,7 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
 // the card. "파티 열기" and "참여하기" open a Quest's room, "같이 갈 사람 찾기" 파티 만들기 for the Global Event, and a
 // Friend's "파티 만들기" 파티 만들기 as 비공개 with the Friend invited. Every other button belongs to another task and says that it is not ready. A
 // choice, such as an event at a place, opens its own card.
-function SelectedCard(props: SelectedCardProps): ReactElement | null {
+function ThingCard(props: SelectedCardProps): ReactElement | null {
   const { selection, map, route, shuttleLine, onActiveParty, chat, onHeight, top } = props;
   const showNotReady = useNotReadyToast();
   const openPartyCreate = useOpenPartyCreate();
@@ -153,6 +154,15 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
       top={top ? listsTop(inset) : undefined}
     />
   );
+}
+
+// The open card: the User's own, which gives way to the answer frame as a thing's does, or the selected thing's.
+function SelectedCard(props: SelectedCardProps): ReactElement | null {
+  const { selection, chat, onHeight } = props;
+  if (selection.mine) {
+    return chat.framed ? null : <MyCard onClose={selection.close} onHeight={onHeight} />;
+  }
+  return <ThingCard {...props} />;
 }
 
 // The zoom control gives way to a card at the bottom, the shuttle's notice, the open 편의기능 stack and the answer frame.
@@ -264,7 +274,7 @@ function useMainTutorial(
   const tutorial = useTutorialFlow();
   useAskedTutorialQuest(tutorial.openSheet);
   const pin = useTutorialPin({ cards, selection, goTo: map.goTo, tutorialState: tutorial.tutorial?.state });
-  return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null, pin };
+  return { tutorial, start: showsStartButton(tutorial.tutorial) && !selection.open, pin };
 }
 
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
@@ -292,7 +302,7 @@ export function MainScreen(): ReactElement {
   const me = useMe(map);
   const layers = useMainLayers(inFront, map, me.position);
   const { stack, shuttle, cards, ready, chat } = layers;
-  const selection = useSelection(cards, inFront);
+  const selection = useSelection(cards, inFront, chat.onMap && me.position !== null);
   const { route, lines } = useLines(shuttle, map, me);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection);

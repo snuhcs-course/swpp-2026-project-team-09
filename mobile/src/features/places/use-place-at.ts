@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import type { PlaceAt } from '@/api/room-types';
-import type { LatLng } from '@/api/types';
+import type { LatLng, Place } from '@/api/types';
 import type { PickedPlace } from './picked-place';
 
 // What the map view's sheet shows for the point under its pin, and what choosing it gives.
@@ -34,12 +35,36 @@ export function toPlaceAt(at: PlaceAt, point: LatLng): PlaceAtView {
   return { words, hint: '건물 위치예요', choice: { placeId: id, position: { latitude, longitude }, words } };
 }
 
+function placeAtKey(point: LatLng | null): (string | number | undefined)[] {
+  return ['place-at', point?.latitude, point?.longitude];
+}
+
+function askPlaceAt(point: LatLng | null): Promise<PlaceAt> {
+  return point === null ? Promise.reject(new Error('No point')) : apiClient.findPlaceAt(point);
+}
+
 // The Place at the point, asked when the camera stops there. Undefined until it is known.
 export function usePlaceAt(point: LatLng | null): PlaceAtView | undefined {
   return useQuery({
-    queryKey: ['place-at', point?.latitude, point?.longitude],
-    queryFn: () => (point === null ? Promise.reject(new Error('No point')) : apiClient.findPlaceAt(point)),
+    queryKey: placeAtKey(point),
+    queryFn: () => askPlaceAt(point),
     enabled: point !== null,
     select: (at: PlaceAt) => (point === null ? undefined : toPlaceAt(at, point)),
+  }).data;
+}
+
+function placeOf(at: PlaceAt): Place | null {
+  return at.place;
+}
+
+// The Place a point is in or near, the one a Friend at the building level is shown, null for none, and undefined until
+// it is known. The last point's answer stays while a new point is asked about.
+export function usePlaceNear(point: LatLng | null): Place | null | undefined {
+  return useQuery({
+    queryKey: placeAtKey(point),
+    queryFn: () => askPlaceAt(point),
+    enabled: point !== null,
+    select: placeOf,
+    placeholderData: keepPreviousData,
   }).data;
 }
