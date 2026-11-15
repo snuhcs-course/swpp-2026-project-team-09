@@ -7,6 +7,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
+import { KIM_MINSU, LEE_MINSU, pick, WHICH_MINSU, whichFriend } from './support/which-friend';
 import { REFUSAL_REPLIES } from '@/api/mock/data/refusals';
 import type { Refusal, RefusalOffer } from '@/api/refusal-types';
 import { color } from '@/design-system';
@@ -27,7 +28,7 @@ function copy(words: string): Refusal {
   return reply.refusal;
 }
 
-const onAsk = jest.fn<undefined, [string]>();
+const onAsk = jest.fn<undefined, [string, { kind: 'friend'; userId: string }?]>();
 
 async function show(refusal: Refusal): Promise<void> {
   await render(<RefusalReply onAsk={onAsk} refusal={refusal} />);
@@ -125,5 +126,85 @@ describe('an offer pressed', () => {
 
     expect(say).toHaveBeenCalledTimes(1);
     expect(router.push).not.toHaveBeenCalled();
+  });
+});
+
+// The question of which Friend (P02 ticket 17): one cell per candidate, of one width, the name at the left and the
+// department at the right. Partitions: two and three candidates (one row), five (two to a row, an odd last cell);
+// an aside and none; candidates of different names and of one full name.
+
+// The grid's rows, each as what a screen reader says of its cells, the empty partner by its id.
+function rows(): string[][] {
+  return screen.getByTestId('choice-grid').children.map((row) =>
+    typeof row === 'string'
+      ? [row]
+      : row.children.map((part) => {
+          if (typeof part === 'string') {
+            return part;
+          }
+          const name: unknown = part.props.accessibilityLabel ?? part.props.testID;
+          return typeof name === 'string' ? name : '';
+        }),
+  );
+}
+
+const PARK_MINSU = pick('minsu-park', '박민수', '기계공학부');
+const CHOI_MINSU = pick('minsu-choi', '최민수', '사회학과');
+const JUNG_MINSU = pick('minsu-jung', '정민수', null);
+
+describe('the Friends to pick', () => {
+  it('stand as cells of one width in one row, the name at the left and the department at the right', async () => {
+    await show(WHICH_MINSU);
+
+    expect(rows()).toEqual([['김민수, 컴퓨터공학부', '이민수, 경영학과']]);
+    const kim = screen.getByRole('button', { name: '김민수, 컴퓨터공학부' });
+    expect(kim).toHaveTextContent('김민수컴퓨터공학부');
+    expect(kim).toHaveStyle({ flex: 1 });
+    expect(screen.getByText('컴퓨터공학부')).toHaveStyle({ textAlign: 'right' });
+    expect(screen.queryByTestId('refusal-offers')).toBeNull();
+  });
+
+  it('stand three in one row', async () => {
+    await show(whichFriend('민수', [KIM_MINSU, LEE_MINSU, PARK_MINSU]));
+
+    expect(rows()).toEqual([['김민수, 컴퓨터공학부', '이민수, 경영학과', '박민수, 기계공학부']]);
+  });
+
+  it('go two to a row when there are more than three, an odd last one keeping its width', async () => {
+    const jung = { ...JUNG_MINSU, aside: '물리학과' };
+    await show(whichFriend('민수', [KIM_MINSU, LEE_MINSU, PARK_MINSU, CHOI_MINSU, jung]));
+
+    expect(rows()).toEqual([
+      ['김민수, 컴퓨터공학부', '이민수, 경영학과'],
+      ['박민수, 기계공학부', '최민수, 사회학과'],
+      ['정민수, 물리학과', 'choice-grid-empty'],
+    ]);
+  });
+
+  it('show the name alone when there is no aside', async () => {
+    await show(whichFriend('민수', [KIM_MINSU, JUNG_MINSU]));
+
+    expect(rows()).toEqual([['김민수, 컴퓨터공학부', '정민수']]);
+    expect(screen.getByRole('button', { name: '정민수' })).toHaveTextContent('정민수');
+  });
+});
+
+describe('a Friend picked', () => {
+  it("sends the cell's words with that Friend tapped", async () => {
+    await show(WHICH_MINSU);
+
+    await fireEvent.press(screen.getByRole('button', { name: '이민수, 경영학과' }));
+
+    expect(onAsk).toHaveBeenCalledTimes(1);
+    expect(onAsk).toHaveBeenCalledWith('이민수', { kind: 'friend', userId: 'minsu-lee' });
+  });
+
+  it('tells two Friends of one full name apart by their id', async () => {
+    const other = pick('minsu-kim-2', '김민수', '경영학과');
+    await show(whichFriend('김민수', [KIM_MINSU, other]));
+
+    await fireEvent.press(screen.getByRole('button', { name: '김민수, 경영학과' }));
+
+    expect(onAsk).toHaveBeenCalledWith('김민수', { kind: 'friend', userId: 'minsu-kim-2' });
   });
 });

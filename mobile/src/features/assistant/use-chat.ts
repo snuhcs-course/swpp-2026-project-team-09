@@ -28,6 +28,8 @@ import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
 
+type Tapped = NonNullable<RequestContext['tapped']>;
+
 // Why the Assistant gave no answer: it could not answer now, which 다시 시도 sends again, or the User's messages of
 // the day are used up.
 export type ChatFailure = 'unavailable' | 'usedUp';
@@ -53,6 +55,9 @@ export interface ChatBubble {
   answer?: AnswerReply | null;
   lookup?: Lookup | null;
   refusal?: Refusal | null;
+  // What a User's message was said of by a press, such as a Friend picked from a question: the requests that send it
+  // last carry it as `tapped`, 다시 시도's included, and no later one does.
+  tapped?: Tapped;
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
@@ -75,7 +80,7 @@ export interface Chat {
   bubbles: readonly ChatBubble[];
   // While the Assistant works on the User's last message: the "···" bubble, and nothing more is sent.
   waiting: boolean;
-  send: (text: string) => void;
+  send: (text: string, tapped?: Tapped) => void;
   // Sends the User's last message again, after a failure the Assistant may get over.
   retry: () => void;
   // 새 대화: forgets the conversation, and a reply still on its way.
@@ -123,6 +128,11 @@ export function messagesToSend(bubbles: readonly ChatBubble[]): ChatMessage[] {
 }
 
 type NewBubble = Omit<ChatBubble, 'id'>;
+
+function withTapped(context: RequestContext | undefined, bubbles: readonly ChatBubble[]): RequestContext | undefined {
+  const tapped = bubbles.findLast(({ role }) => role === 'user')?.tapped;
+  return context === undefined || tapped === undefined ? context : { ...context, tapped };
+}
 
 // The Assistant's bubble for the conversation: its reply, or the failure. A request without a context is sent as
 // before the answer on the map.
@@ -209,7 +219,7 @@ export function useChat(readContext?: () => RequestContext | undefined): Chat {
   const ask = useCallback((): void => {
     const asked = conversation.current;
     setWaiting(true);
-    void answerTo(messagesToSend(said.current), context.current?.()).then((answer) => {
+    void answerTo(messagesToSend(said.current), withTapped(context.current?.(), said.current)).then((answer) => {
       if (asked === conversation.current) {
         add(answer);
         setWaiting(false);
@@ -218,8 +228,8 @@ export function useChat(readContext?: () => RequestContext | undefined): Chat {
   }, [add, said]);
 
   const send = useCallback(
-    (text: string): void => {
-      add({ role: 'user', text, cards: [], mapButtons: [], proposal: null, failure: null });
+    (text: string, tapped?: Tapped): void => {
+      add({ role: 'user', text, cards: [], mapButtons: [], proposal: null, failure: null, tapped });
       ask();
     },
     [add, ask],

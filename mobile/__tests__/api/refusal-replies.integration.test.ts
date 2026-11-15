@@ -7,6 +7,7 @@
 import type * as SecureStoreFake from '../support/secure-store';
 import { answered, startFresh } from '../support/mocks';
 import { askMainServer, PHONE_NOW } from '../support/server';
+import { KIM_MINSU, LEE_MINSU, WHICH_MINSU, WHICH_MINSU_REPLY } from '../support/which-friend';
 import type { ChatMessage, RequestContext } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { mockClient } from '@/api/mock/client';
@@ -74,6 +75,26 @@ describe("the Assistant's refusal from the main server", () => {
     server.on('POST /assistant/messages', { status: 200, body: { ...OFF_CAMPUS, refusal: malformed } });
 
     await expect(apiClient.askAssistant(asked('강남역 맛집 추천해 줘'), CONTEXT)).rejects.toMatchObject({
+      status: 0,
+      code: 'UNEXPECTED_ANSWER',
+    });
+  });
+
+  // P02 ticket 17: the question of which Friend, which package A sends after this app is out.
+  it('is believed and kept as the question of which Friend', async () => {
+    const server = await askMainServer({ signedIn: true });
+    server.on('POST /assistant/messages', { status: 200, body: WHICH_MINSU_REPLY });
+
+    await expect(apiClient.askAssistant(asked('민수랑 점심'), CONTEXT)).resolves.toMatchObject(WHICH_MINSU_REPLY);
+  });
+
+  it('is refused when a Friend to pick has no id', async () => {
+    const server = await askMainServer({ signedIn: true });
+    const { userId: _id, ...noId } = KIM_MINSU;
+    const malformed = { ...WHICH_MINSU, offers: [noId, LEE_MINSU] };
+    server.on('POST /assistant/messages', { status: 200, body: { ...WHICH_MINSU_REPLY, refusal: malformed } });
+
+    await expect(apiClient.askAssistant(asked('민수랑 점심'), CONTEXT)).rejects.toMatchObject({
       status: 0,
       code: 'UNEXPECTED_ANSWER',
     });

@@ -9,12 +9,13 @@ import { Text } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
-import type { FakeServer } from './support/fake-server';
+import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { LEE_MINSU, WHICH_MINSU_REPLY } from './support/which-friend';
 import { REFUSAL_REPLIES, type RefusalReply } from '@/api/mock/data/refusals';
 
 // What cannot be answered, in the answer frame against the fake main server (P02 ticket 10): the card shows the
@@ -131,5 +132,64 @@ describe('the card of a refusal', () => {
 
     expect(shownAddress()).toBe('/me/location-sharing');
     expect(screen.getByText('위치 공유 화면')).toBeVisible();
+  });
+});
+
+// P02 ticket 17: the question of which Friend, answered with one press.
+const ASKED = '민수랑 점심';
+const LEE = { kind: 'friend', userId: LEE_MINSU.userId };
+
+async function askWhich(): Promise<User> {
+  server.on('POST /assistant/messages', { status: 200, body: WHICH_MINSU_REPLY, afterMs: 1000 });
+  const user = await openMain({ answerOnMap: true }, MORE);
+  await user.type(screen.getByLabelText(AI_INPUT), ASKED);
+  await user.press(screen.getByRole('button', { name: '보내기' }));
+  await pass(1000);
+  return user;
+}
+
+function sent(): unknown[] {
+  return server.received('POST /assistant/messages').map(({ body }) => body);
+}
+
+describe('a Friend picked from the question', () => {
+  it("sends the cell's words as the User's with that Friend tapped, for that request only", async () => {
+    const user = await askWhich();
+    expect(card().getByText('민수가 두 명이에요.')).toBeVisible();
+
+    await user.press(card().getByRole('button', { name: '이민수, 경영학과' }));
+    await pass(1000);
+
+    expect(lastSent()).toMatchObject({
+      messages: [
+        { role: 'user', text: ASKED },
+        { role: 'assistant', text: WHICH_MINSU_REPLY.text },
+        { role: 'user', text: '이민수' },
+      ],
+      context: { tapped: LEE },
+    });
+
+    await user.type(screen.getByLabelText(AI_INPUT), '1시에');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(1000);
+
+    expect(sent()).toHaveLength(3);
+    expect(lastSent()).toMatchObject({ context: { tapped: null } });
+    expect(sent()[0]).toMatchObject({ context: { tapped: null } });
+  });
+
+  it('sends the same Friend tapped again with 다시 시도', async () => {
+    const user = await askWhich();
+    server.on('POST /assistant/messages', refusal(503));
+
+    await user.press(card().getByRole('button', { name: '이민수, 경영학과' }));
+    await pass(1000);
+    server.on('POST /assistant/messages', { status: 200, body: copyOf('강남역 맛집 추천해 줘'), afterMs: 1000 });
+    await user.press(card().getByRole('button', { name: '다시 시도' }));
+    await pass(1000);
+
+    const [, pressed, again] = sent();
+    expect(pressed).toMatchObject({ context: { tapped: LEE } });
+    expect(again).toEqual(pressed);
   });
 });
