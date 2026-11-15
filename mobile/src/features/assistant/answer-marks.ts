@@ -13,6 +13,7 @@ import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
 import {
+  destinationOf,
   DRAW_ORDER,
   FLAG_TONES,
   type Group,
@@ -296,7 +297,7 @@ export function drawingOfScene(scene: MapScene, setting: SceneSetting = BARE): A
     lines,
     points: [...things.map(({ position }) => position), ...scene.routes.flatMap(({ from, to }) => [from, to])],
     own: drafts.filter(({ group }) => OWN.has(group)).map(({ position }) => position),
-    pick: drafts.find(({ group }) => group === 'pick')?.position ?? null,
+    pick: destinationOf(drafts),
     userIds: scene.people.map(({ userId }) => userId),
   };
 }

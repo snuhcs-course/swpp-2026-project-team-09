@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import type { FlagRole } from '@/api/scene-roles';
+import type { LatLng } from '@/api/types';
 import { type AnswerLabel, color, type LabelSide } from '@/design-system';
 
 // The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
@@ -43,3 +44,10 @@ export const FLAG_TONES: Record<FlagRole, AnswerLabel['tone']> = {
   late: 'late',
   shuttle: 'shuttle',
 };
+
+// The destination, whose side the camera keeps when not every point fits: the pick, or for a way, which has none, its
+// next item.
+export function destinationOf(marks: readonly { group: Group; position: LatLng }[]): LatLng | null {
+  const destination = marks.find(({ group }) => group === 'pick') ?? marks.find(({ group }) => group === 'next');
+  return destination?.position ?? null;
+}

@@ -50,7 +50,7 @@ export interface Everyday {
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, and the lines. While a Plan of an answer is
 // shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received invitation's
-// card is, its own way is.
+// card is, its own way is. A Lookup on screen is drawn as a Plan is, and takes no press (`useLookupMap`).
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
@@ -59,7 +59,7 @@ export function useMapView(
   invitation: ReceivedInvitation,
 ): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
-  const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards });
+  const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const way = useInvitationMap(invitation.shown ? invitation.drawing : null, map, room);
   if (answer !== null) {

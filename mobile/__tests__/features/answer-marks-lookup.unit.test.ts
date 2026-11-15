@@ -190,3 +190,20 @@ describe('the drawing of where a Friend is (q6)', () => {
     expect(drawing.userIds).toEqual([MINSU_ID]);
   });
 });
+
+// Partitions: a scene with a pick, ways without one to a next Class on foot and by the shuttle, and a scene with
+// neither. Expected values: the copies, and design section 4, "the map shows the destination's side": a way's
+// destination is its next item.
+describe('the destination the camera keeps on its side', () => {
+  it.each([
+    ['q1, the pick 문화관', WAY_LOOKUP, { latitude: 37.46159, longitude: 126.95104 }],
+    ['q2, 24동 without a pick', lookupOf(leave), { latitude: 37.45942, longitude: 126.94989 }],
+    ['q4, 58동 by the shuttle', lookupOf(shuttle), { latitude: 37.46568, longitude: 126.95203 }],
+  ])('is %s', (_, lookup, destination) => {
+    expect(drawingOfScene(lookup.scene).pick).toEqual(destination);
+  });
+
+  it('is none for 민수, a person alone (q6)', () => {
+    expect(drawingOfScene(FRIEND_LOOKUP.scene).pick).toBeNull();
+  });
+});

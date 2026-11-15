@@ -8,7 +8,7 @@ import { apiClient } from '@/api/client';
 import { pass, screen } from './support/app';
 import { card, mapLines, mapThings } from './support/answer-map';
 import { AI_INPUT } from './support/lists';
-import { givePhone, ON_CAMPUS, openMain } from './support/main';
+import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 
 // A Lookup in the answer frame (P01 ticket 11) over the mocks, whose Assistant answers "문화관이 어디야?", "오늘
@@ -86,6 +86,7 @@ describe('the map of a way to a Place (q1)', () => {
     await ask('문화관이 어디야?');
 
     expect(mapThings()).toEqual(expect.arrayContaining(['나', '문화관(73동) · 걸어서 18분']));
+    expect(mapThings()).not.toContain(ME);
     expect(mapLines()).toEqual(['answer:route:0']);
   });
 
@@ -154,6 +155,12 @@ describe('where a Friend is (q6)', () => {
     expect(mapThings()).toContain('민수 · 지금 302동');
   });
 
+  it("keeps the User's own Avatar, which the Lookup does not draw", async () => {
+    await ask('민수 어디야?');
+
+    expect(mapThings()).toContain(ME);
+  });
+
   it('returns to the everyday map with "닫기"', async () => {
     const user = await ask('민수 어디야?');
 
@@ -161,5 +168,22 @@ describe('where a Friend is (q6)', () => {
 
     expect(screen.queryByTestId('answer-pill')).toBeNull();
     expect(mapThings()).not.toContain('민수 · 지금 302동');
+  });
+});
+
+// Partitions: "길 안내" while the phone has told no position yet. Expected values: the main screen's "길찾기" without a
+// position (`useRoute`, `useMe`).
+describe('"길 안내" without a position', () => {
+  it('says that the position is being found, and the answer stays', async () => {
+    givePhone({ permission: 'granted' });
+    const user = await ask('문화관이 어디야?');
+
+    await user.press(card().getByRole('button', { name: '길 안내' }));
+    await pass(500);
+
+    expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
+    expect(findWalkingRoute).not.toHaveBeenCalledWith(expect.anything(), CULTURE_HALL);
+    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(card().getByTestId('lookup-card')).toBeVisible();
   });
 });

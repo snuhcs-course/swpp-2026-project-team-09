@@ -19,6 +19,9 @@ export type GuideAction = Extract<LookupAction, { kind: 'guide' }>;
 export interface ShownLookup {
   // The Lookup of the conversation's last reply, or null: the frame's card finds its bubble by it.
   lookup: Lookup | null;
+  // The conversation's last reply, a Lookup's or a Plan's, which the camera follows: a Lookup that replaces another
+  // reply waits for the card, as a Plan's recalculation does.
+  reply: ChatBubble | null;
   basisOpen: boolean;
   toggleBasis: () => void;
   // "길 안내": starts the route guidance to the Place, and closes the answer once it started, so that the everyday map
@@ -47,6 +50,7 @@ export function useShownLookup(bubbles: readonly ChatBubble[], start: StartGuida
   const [turned, setTurned] = useState<number | null>(null);
   return {
     lookup,
+    reply: reply ?? null,
     basisOpen: opensBasis(lookup) !== (replyId !== null && turned === replyId),
     toggleBasis: () => {
       setTurned((last) => (last === replyId ? null : replyId));

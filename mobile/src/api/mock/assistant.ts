@@ -43,8 +43,9 @@ import { isLibraryAsk, libraryReply } from './library-replies';
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
-// the map, and with a context asked where something is (어디), 301동식당's menu, or where 민수 is, with the main
-// server's real Lookups of 문화관, of that menu, and of 민수.
+// the map, and with a context it answers with the main server's real Lookups: where something is (어디) with 문화관,
+// 301동식당's menu, where 민수 is, and in the words of boards q2 to q4 the way to 24동 on time (까지 몇 분), late
+// (늦나), and by the shuttle (셔틀 탈까).
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -176,15 +177,16 @@ function drawnReplyOf(last: string): AssistantReply | null {
   return wayReplyOf(last);
 }
 
-// The stored Lookups of a way with a deadline: on time, late, and by the shuttle.
+// The stored Lookups of a way with a deadline, by the words of boards q4, q3, and q2: by the shuttle, late, and on
+// time. A question about the shuttle's arrival ("셔틀 몇 분 뒤에 와?") is none of them.
 function wayReplyOf(last: string): AssistantReply | null {
-  if (last.includes('셔틀') && last.includes('걸을까')) {
+  if (last.includes('셔틀 탈까')) {
     return SHUTTLE_LOOKUP_REPLY;
   }
-  if (last.includes('늦')) {
+  if (last.includes('늦나')) {
     return LATE_LOOKUP_REPLY;
   }
-  return last.includes('몇 분') ? LEAVE_LOOKUP_REPLY : null;
+  return last.includes('까지 몇 분') ? LEAVE_LOOKUP_REPLY : null;
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {

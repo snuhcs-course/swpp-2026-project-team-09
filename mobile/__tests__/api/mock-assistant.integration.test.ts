@@ -114,3 +114,24 @@ describe('the mock of a recalculation', () => {
     );
   });
 });
+
+// Partitions: words near those of a way that ask something else. Expected values: the mock's replies without a
+// context, and the boards' words of a way (q2 to q4).
+describe('the mock of a question that is no way', () => {
+  it('answers when the shuttle comes with a context by the shuttle layer, as without one', async () => {
+    const reply = await answered(mockClient.askAssistant([{ role: 'user', text: '셔틀 몇 분 뒤에 와?' }], CONTEXT));
+
+    expect(reply).toEqual({
+      text: '셔틀이 어디 있는지 지도에서 볼 수 있어요.',
+      mapButtons: ['shuttle'],
+      cards: [],
+      proposal: null,
+    });
+  });
+
+  it('answers a question that says 늦게 of no way with no Lookup', async () => {
+    const asked = mockClient.askAssistant([{ role: 'user', text: '늦게까지 여는 식당?' }], CONTEXT);
+
+    await expect(answered(asked)).resolves.not.toHaveProperty('lookup');
+  });
+});

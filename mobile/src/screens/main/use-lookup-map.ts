@@ -26,31 +26,36 @@ function unselected({ image: { view } }: MapAvatar): MarkerLook {
   return view.kind === 'person' ? { ...view, selected: false } : view;
 }
 
-// The everyday Avatars with their faces unselected: a selection made before asking stands behind the frame. A look
-// whose picture is still to be made keeps the picture the face has.
+// The everyday Avatars with their faces unselected and in the everyday order: a selection made before asking stands
+// behind the frame. A look whose picture is still to be made keeps the picture the face has.
 function useUnselected(avatars: readonly MapAvatar[]): MapAvatar[] {
   const images = useMarkerImages(avatars.map((avatar) => unselected(avatar)));
   return avatars.map((avatar, at) => {
     const image = images[at];
-    return image === undefined || (image.uri === null && avatar.image.uri !== null) ? avatar : { ...avatar, image };
+    const made = image === undefined || (image.uri === null && avatar.image.uri !== null) ? avatar.image : image;
+    return { ...avatar, image: made, order: 0 };
   });
 }
 
-// The Lookup on screen drawn on the map as a Plan is, under the answer's pill, in place of the everyday map's markers,
-// lines, and the User's own Avatar. The everyday Friends' Avatars stay but for those it draws, none with a "+": a
-// Lookup is not recalculated, so nothing on the map takes a press. Null while no Lookup is shown.
+// The Lookup on screen drawn on the map as a Plan is, under the answer's pill, in place of the everyday map's markers
+// and lines. The everyday Friends' Avatars stay but for those it draws, none with a "+": a Lookup is not recalculated,
+// so nothing on the map takes a press. The User's own Avatar (`mine`) stays when the Lookup does not draw the User, as
+// for a Friend. The camera follows the conversation's last reply. Null while no Lookup is shown.
 export function useLookupMap(
-  { lookup }: ShownLookup,
+  { lookup, reply }: ShownLookup,
   map: MainMap,
   room: Room,
   everyday: EverydayAvatars,
+  mine: readonly MapAvatar[],
 ): AnswerMap | null {
   const drawing = useMemo(() => (lookup === null ? null : drawingOfScene(lookup.scene)), [lookup]);
   const others = drawing === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, drawing);
   const faces = useUnselected(others);
-  const drawn = useDrawnMap(drawing, null, NO_LOOKS, map, room, true);
-  if (drawn === null) {
+  const drawn = useDrawnMap(drawing, reply, NO_LOOKS, map, room, true);
+  if (drawn === null || lookup === null) {
     return null;
   }
-  return { contents: { ...drawn, avatars: faces }, onPress: ignorePress, nativeMinLevel: ANSWER_MIN_LEVEL };
+  const drawsMe = lookup.scene.people.some(({ me }) => me);
+  const avatars = drawsMe ? faces : [...faces, ...mine];
+  return { contents: { ...drawn, avatars }, onPress: ignorePress, nativeMinLevel: ANSWER_MIN_LEVEL };
 }

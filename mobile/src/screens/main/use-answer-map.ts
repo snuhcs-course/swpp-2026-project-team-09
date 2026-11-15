@@ -8,7 +8,7 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { AnswerReply, PlanInput } from '@/api/assistant-types';
+import type { PlanInput } from '@/api/assistant-types';
 import { answerCamera, roomsOf } from '@/features/assistant/answer-camera';
 import { type AnswerDrawing, drawingOf, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import { peopleOf } from '@/features/assistant/plan-input';
@@ -92,7 +92,7 @@ function showDrawing(
 // drawing moves nothing, so closing the answer leaves the camera where it is.
 function useAnswerCamera(
   drawing: AnswerDrawing | null,
-  answer: AnswerReply | null,
+  answer: object | null,
   map: MainMap,
   room: Room,
   pill: boolean,
@@ -102,7 +102,7 @@ function useAnswerCamera(
   const { fitZoom } = map;
   const width = stage?.width;
   const height = stage?.height;
-  const followed = useRef<AnswerReply | null>(null);
+  const followed = useRef<object | null>(null);
   const waiting = useRef(false);
   const move = (): void => {
     showDrawing(drawing, map, room, top, pill);
@@ -161,7 +161,7 @@ export type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly C
 // asked for with the drawing's own, so that a change of drawing never waits for a picture.
 export function useDrawnMap(
   drawing: AnswerDrawing | null,
-  answer: AnswerReply | null,
+  answer: object | null,
   looks: readonly MarkerLook[],
   map: MainMap,
   room: Room,
