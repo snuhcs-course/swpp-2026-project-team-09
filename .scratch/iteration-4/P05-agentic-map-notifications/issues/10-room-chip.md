@@ -83,10 +83,10 @@ The list's cells: row 1 열람실 | 정숙 열람실, row 2 노트북존 | 노�
 
 ### Agent usage (2026-11-15)
 
-One implementing subagent (Opus 5.5) built the main server's part, the app's part, and the design document's
-sentences.
+Two implementing subagents (Opus 5.5): one built the room chip on the main server and the app with the design
+document's sentences; one added the seat card's words for a User who asks the Assistant to book.
 
-- Agent time: about 57 minutes, an estimate from the transcript's timestamps; part of it was waiting for the shared
-  check slots.
-- Tokens: output 237,426; input 81,126,953, of which 80,168,582 were cache reads, 957,905 cache writes, and 466
-  uncached. Without cache reads: 1,195,797.
+- Agent time: about 57 and 28 minutes, an estimate from the transcripts' timestamps; part of it was waiting for the
+  shared check slots.
+- Tokens: output 237,426 and 77,771; input 81,126,953 and 18,753,983, of which 80,168,582 and 18,523,036 were cache
+  reads, 957,905 and 230,743 cache writes, and 466 and 204 uncached. Without cache reads: 1,195,797 and 308,718.
