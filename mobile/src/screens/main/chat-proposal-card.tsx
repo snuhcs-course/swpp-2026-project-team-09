@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { openBrowserAsync } from 'expo-web-browser';
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { QuestProposal } from '@/api/assistant-types';
+import type { FacilityBooking, QuestProposal } from '@/api/assistant-types';
 import { Button, cardStyles, color, font, Icon, type IconName, space, text } from '@/design-system';
 import { boardName } from '@/features/party/boards';
 import { type PartyForm, proposalForm } from '@/features/party/making';
@@ -63,9 +65,30 @@ function rowsOf(proposal: QuestProposal, form: PartyForm): Row[] {
 
 const MAKE_WORDS: Record<ProposalMaking, string> = { ready: '만들기', making: '만드는 중', made: '만들었어요' };
 
+// 시설 예약하기 under a made Proposal at a Place booked online: it opens the Place's booking page, since the Assistant
+// cannot book the facility itself. Its label names the page, such as 체육시설 예약 목록.
+function BookingButton({ booking }: { booking: FacilityBooking }): ReactElement {
+  return (
+    <View style={styles.booking}>
+      <Button
+        full
+        label={`시설 예약하기, ${booking.label}`}
+        onPress={() => {
+          void openBrowserAsync(booking.url).catch(() => null);
+        }}
+        variant="secondary"
+      >
+        시설 예약하기
+      </Button>
+      <Text style={styles.bookingLabel}>{booking.label}</Text>
+    </View>
+  );
+}
+
 // The Proposal of an answer: the 파티 the Assistant filled in, as rows of the form's fields and its recruiting text
 // under them, which the Assistant may have written, with 수정 and 만들기. Nothing is made until 만들기 is pressed, or
-// until the form 수정 opens is sent. Once on its way or made, neither does anything more.
+// until the form 수정 opens is sent. Once on its way or made, neither does anything more. Made, a Proposal whose
+// Place is booked online shows 시설 예약하기 under them.
 export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatProposalCardProps): ReactElement {
   const form = proposalForm(proposal);
   return (
@@ -95,6 +118,7 @@ export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatPropo
           </Button>
         </View>
       </View>
+      {making === 'made' && proposal.place?.booking ? <BookingButton booking={proposal.place.booking} /> : null}
     </View>
   );
 }
@@ -116,4 +140,6 @@ const styles = StyleSheet.create({
   empty: { color: color.inkMuted },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[3] },
   button: { flex: 1 },
+  booking: { gap: space[1], marginTop: space[2] },
+  bookingLabel: { ...text.caption, textAlign: 'center', color: color.inkMuted },
 });

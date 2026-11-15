@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -77,6 +78,9 @@ function dinner(changes: object = {}): object {
   return { ...DINNER, ...changes };
 }
 
+// 301's study rooms, booked on 예약하샤 (seed/facility-booking.json).
+const STUDY_ROOMS = { label: '예약하샤 스터디룸 예약', url: 'https://ssims.snu.ac.kr/index.do' };
+
 const resolveHaneul: Step = { tool: 'resolveFriend', input: { name: '육칠하늘' } };
 const resolveFriends: Step[] = [resolveHaneul, { tool: 'resolveFriend', input: { name: '육칠바다' } }];
 
@@ -114,7 +118,7 @@ describe('a Closed Proposal with Friends, a Place and a Global Event', () => {
       ...DINNER,
       board: null,
       startsAt: '2095-06-10T18:00:00+09:00',
-      place: { id: place301, name: '제1공학관' },
+      place: { id: place301, name: '제1공학관', booking: STUDY_ROOMS },
       globalEvent: expect.objectContaining({ id: festival.id, title: festival.title }) as unknown,
       invitees: [
         { id: bada.id, name: '육칠바다' },

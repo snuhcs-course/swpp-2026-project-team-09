@@ -1,0 +1,418 @@
+{
+  "checkedOn": "2026-11-04",
+  "buildings": [
+    {
+      "place": "62",
+      "name": "중앙도서관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "central-library",
+          "name": "중앙도서관",
+          "kind": "library",
+          "hours": "3A열람실 24시간 · 3B열람실 07:00–23:00 · 정보검색실·자료실 평일 09:00–21:00 · 토 10:00–17:00 · 일 13:00–17:00",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/hour-directions/hours/central/",
+          "source": "https://lib.snu.ac.kr/about/hour-directions/",
+          "confidence": "medium",
+          "note": "3A열람실 24시간: the library's hours page and snu.ac.kr say 24시간, 나무위키 (2026-06-17) says it is not open all night. Research items 1, 2, 5, 6, 7 in one row; SNU Commons (1·2층, 평일 09–18) and 헤리티지 라운지 are not rows."
+        }
+      ]
+    },
+    {
+      "place": "62-1",
+      "name": "관정관",
+      "liveSeats": "kwanjeong",
+      "spaces": [
+        {
+          "key": "kwanjeong",
+          "name": "관정관",
+          "kind": "reading",
+          "hours": "7A·7B·8A열람실 07:00–23:00 · 8B열람실 대학원생 전용 07:00–23:00 · 그룹스터디룸·정보검색실 09:00–23:00",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/hour-directions/",
+          "source": "https://lib.snu.ac.kr/about/hour-directions/",
+          "confidence": "medium",
+          "note": "Research items 8–11 and 13–20 in one row. The 7·8층 seat count differs by source (1,786 in 2015, about 2,000, 4,000여)."
+        }
+      ]
+    },
+    {
+      "place": "58",
+      "name": "경영학도서관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "business-reading-room",
+          "name": "열람실",
+          "kind": "reading",
+          "hours": "07:00–23:00",
+          "restriction": {
+            "colleges": ["경영대학"],
+            "label": "경영대학"
+          },
+          "link": "https://cba.snu.ac.kr/campus/library",
+          "source": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+          "confidence": "medium",
+          "note": "Hours conflict: the library's branch page says 07:00–23:00 every day, cba.snu.ac.kr says 평일 09:00–23:00 and closed on weekends. Who may use it is from a 2009 notice."
+        },
+        {
+          "key": "business-free-seats",
+          "name": "자유열람석",
+          "kind": "reading",
+          "hours": "07:00–23:00",
+          "restriction": null,
+          "link": "https://cba.snu.ac.kr/campus/library",
+          "source": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+          "confidence": "medium",
+          "note": "Hours conflict as for 열람실."
+        },
+        {
+          "key": "business-group-rooms",
+          "name": "그룹스터디룸·세미나실",
+          "kind": "group",
+          "hours": null,
+          "restriction": {
+            "colleges": ["경영대학"],
+            "label": "경영대학"
+          },
+          "link": "https://ssims.snu.ac.kr",
+          "source": "https://www.mycba.co.kr/seminar-room",
+          "confidence": "medium",
+          "note": "Booked on 예약하샤, up to 3 hours, 3 people at least; no opening hours given."
+        }
+      ]
+    },
+    {
+      "place": "72",
+      "name": "법학도서관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "law-reading-room",
+          "name": "열람실",
+          "kind": "reading",
+          "hours": "06:00–01:00",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/libraries/law-library/",
+          "source": "https://lib.snu.ac.kr/about/libraries/law-library/l-guide/",
+          "confidence": "medium",
+          "note": "Who may use it is not stated (probably mostly 법학); shown as usable until the PM checks it. 서암법학관 2층 136석 and 국산법학도서관 3층 86석."
+        }
+      ]
+    },
+    {
+      "place": "15",
+      "name": "제1법학관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "law-hall-reading-room",
+          "name": "열람실",
+          "kind": "reading",
+          "hours": "06:00–01:00",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/libraries/law-library/",
+          "source": "https://lib.snu.ac.kr/about/libraries/law-library/l-guide/",
+          "confidence": "medium",
+          "note": "Who may use it is not stated; shown as usable until the PM checks it."
+        }
+      ]
+    },
+    {
+      "place": "16",
+      "name": "사회과학도서관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "social-sciences-stacks",
+          "name": "자료실",
+          "kind": "library",
+          "hours": "평일 09:00–18:00",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/libraries/socialsciences-library/",
+          "source": "https://social.snu.ac.kr/en/library/",
+          "confidence": "medium",
+          "note": null
+        },
+        {
+          "key": "social-sciences-group-rooms",
+          "name": "그룹스터디룸",
+          "kind": "group",
+          "hours": "평일 09:00–19:50",
+          "restriction": {
+            "colleges": ["사회과학대학"],
+            "label": "사회과학대학"
+          },
+          "link": "https://lib.snu.ac.kr/about/libraries/socialsciences-library/",
+          "source": "https://social.snu.ac.kr/en/library/",
+          "confidence": "medium",
+          "note": "Its booking site sslib.snu.ac.kr/reserve/study_room has no DNS now."
+        }
+      ]
+    },
+    {
+      "place": "75-1",
+      "name": "농학도서관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "agriculture-larchiveum",
+          "name": "상록 라키비움",
+          "kind": "reading",
+          "hours": "06:30–22:30",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+          "source": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+          "confidence": "medium",
+          "note": "Building conflict: the library's page says 75-1, cals.snu.ac.kr says 202 (not in the seed). Reopened 2026-04-03."
+        },
+        {
+          "key": "agriculture-stacks",
+          "name": "1층 자료실·열람실",
+          "kind": "library",
+          "hours": "평일 09:00–18:00",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+          "source": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+          "confidence": "medium",
+          "note": "Building as for 상록 라키비움."
+        }
+      ]
+    },
+    {
+      "place": "81",
+      "name": "수의학도서관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "veterinary-library",
+          "name": "자료실·그룹스터디룸",
+          "kind": "library",
+          "hours": "평일 09:00–18:00",
+          "restriction": null,
+          "link": "https://libguide.snu.ac.kr/vetlib/home",
+          "source": "https://www.dailyvet.co.kr/v/300189",
+          "confidence": "medium",
+          "note": null
+        },
+        {
+          "key": "veterinary-healing-space",
+          "name": "힐링·회복 공간",
+          "kind": "lounge",
+          "hours": "07:00–23:00",
+          "restriction": {
+            "colleges": ["수의과대학"],
+            "label": "수의과대학"
+          },
+          "link": "https://libguide.snu.ac.kr/vetlib/home",
+          "source": "https://www.dailyvet.co.kr/v/300189",
+          "confidence": "medium",
+          "note": "Opened on 10월 8일, probably 2026."
+        }
+      ]
+    },
+    {
+      "place": "74",
+      "name": "음악도서관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "music-library",
+          "name": "열람실·그룹스터디룸",
+          "kind": "reading",
+          "hours": "평일 09:00–18:00",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/libraries/music-library/",
+          "source": "https://lib.snu.ac.kr/about/libraries/music-library/",
+          "confidence": "medium",
+          "note": null
+        }
+      ]
+    },
+    {
+      "place": "140-1",
+      "name": "국제학도서관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "international-library",
+          "name": "자료실",
+          "kind": "library",
+          "hours": "평일 09:00–18:00",
+          "restriction": null,
+          "link": "https://lib.snu.ac.kr/about/libraries/international-library/",
+          "source": "https://lib.snu.ac.kr/about/libraries/international-library/",
+          "confidence": "medium",
+          "note": "Whether it has reading seats is not stated."
+        }
+      ]
+    },
+    {
+      "place": "44-1",
+      "name": "공대 신양학술정보관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "engineering-sinyang-free-room",
+          "name": "3층 자유열람실",
+          "kind": "reading",
+          "hours": "학기 중 24시간 · 방학 08:00–24:00",
+          "restriction": null,
+          "link": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
+          "source": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
+          "confidence": "medium",
+          "note": "The page has no date; it says the room is open to all but some facilities need a 학생증."
+        },
+        {
+          "key": "engineering-sinyang-pc-rooms",
+          "name": "정보화열람실·PC실",
+          "kind": "pc",
+          "hours": null,
+          "restriction": null,
+          "link": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
+          "source": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
+          "confidence": "medium",
+          "note": null
+        },
+        {
+          "key": "engineering-sinyang-group-rooms",
+          "name": "4층 그룹스터디실",
+          "kind": "group",
+          "hours": null,
+          "restriction": {
+            "colleges": ["공과대학"],
+            "label": "공과대학"
+          },
+          "link": "https://ssims.snu.ac.kr",
+          "source": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
+          "confidence": "medium",
+          "note": "Booked on 예약하샤; no opening hours given."
+        }
+      ]
+    },
+    {
+      "place": "300",
+      "name": "유회진학술정보관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "yuhoejin-study-rooms",
+          "name": "스터디룸",
+          "kind": "group",
+          "hours": null,
+          "restriction": {
+            "colleges": ["공과대학"],
+            "label": "공과대학"
+          },
+          "link": "https://ssims.snu.ac.kr",
+          "source": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
+          "confidence": "medium",
+          "note": "Booked on 예약하샤; no opening hours given."
+        }
+      ]
+    },
+    {
+      "place": "301",
+      "name": "제1공학관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "ece-haedong",
+          "name": "해동학술정보실",
+          "kind": "reading",
+          "hours": "24시간",
+          "restriction": {
+            "departments": ["전기·정보공학부", "컴퓨터공학부"],
+            "label": "전기·정보공학부·컴퓨터공학부"
+          },
+          "link": "https://cse.snu.ac.kr/ko/about/facilities",
+          "source": "https://cse.snu.ac.kr/ko/community/notice/13088",
+          "confidence": "medium",
+          "note": "Building conflict: cse.snu.ac.kr says 310동 312호, the notice 301동 312호; 178 seats (2015) or 230. Registered with the S-card in 301동 319호."
+        },
+        {
+          "key": "me-haedong-study-hall",
+          "name": "기계공학부 해동스터디홀",
+          "kind": "group",
+          "hours": null,
+          "restriction": {
+            "departments": ["기계공학부"],
+            "label": "기계공학부"
+          },
+          "link": "https://me.snu.ac.kr/%EC%98%88%EC%95%BD-%EB%B0%8F-%EC%8B%A0%EC%B2%AD/%EA%B7%B8%EB%A3%B9%EC%8A%A4%ED%84%B0%EB%94%94%EB%A3%B8/",
+          "source": "https://me.snu.ac.kr/%EC%98%88%EC%95%BD-%EB%B0%8F-%EC%8B%A0%EC%B2%AD/%EA%B7%B8%EB%A3%B9%EC%8A%A4%ED%84%B0%EB%94%94%EB%A3%B8/",
+          "confidence": "medium",
+          "note": "Booked on 예약하샤, once a day for up to 3 hours; no opening hours given."
+        },
+        {
+          "key": "cse-student-space",
+          "name": "컴퓨터공학부 학생공간",
+          "kind": "pc",
+          "hours": null,
+          "restriction": {
+            "departments": ["컴퓨터공학부"],
+            "label": "컴퓨터공학부"
+          },
+          "link": "https://cse.snu.ac.kr/ko/about/facilities",
+          "source": "https://cse.snu.ac.kr/ko/about/facilities",
+          "confidence": "medium",
+          "note": "301동 315호; no opening hours given."
+        }
+      ]
+    },
+    {
+      "place": "302",
+      "name": "제2공학관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "cbe-haedong",
+          "name": "화생공 해동학술정보실·학생라운지",
+          "kind": "reading",
+          "hours": "24시간 · 복수전공·자유전공은 302동 909호에서 등록",
+          "restriction": {
+            "departments": ["화학생물공학부"],
+            "label": "화학생물공학부"
+          },
+          "link": "https://cbe.snu.ac.kr/cbe/main/contents.do?menuNo=300007",
+          "source": "https://cbe.snu.ac.kr/cbe/main/contents.do?menuNo=300007",
+          "confidence": "high",
+          "note": null
+        },
+        {
+          "key": "cse-software-lab",
+          "name": "소프트웨어실습실",
+          "kind": "pc",
+          "hours": null,
+          "restriction": {
+            "departments": ["컴퓨터공학부"],
+            "label": "컴퓨터공학부"
+          },
+          "link": "https://cse.snu.ac.kr/ko/about/facilities",
+          "source": "https://cse.snu.ac.kr/ko/about/facilities",
+          "confidence": "medium",
+          "note": "302동 311-1호; no opening hours given."
+        }
+      ]
+    },
+    {
+      "place": "4",
+      "name": "인문대 신양학술정보관",
+      "liveSeats": null,
+      "spaces": [
+        {
+          "key": "humanities-sinyang-lounge",
+          "name": "1층 라운지",
+          "kind": "lounge",
+          "hours": null,
+          "restriction": null,
+          "link": "https://humanities.snu.ac.kr/community/notice?md=v&bbsidx=2205",
+          "source": "https://humanities.snu.ac.kr/community/notice?md=v&bbsidx=2205",
+          "confidence": "medium",
+          "note": "For 서울대 구성원 only since 2022-02-22; no opening hours given."
+        }
+      ]
+    }
+  ]
+}

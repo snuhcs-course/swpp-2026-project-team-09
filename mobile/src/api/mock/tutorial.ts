@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -12,7 +13,7 @@ import { now } from '@/clock';
 import { koreaYear } from '@/korea-time';
 import { readKept } from '@/storage/kept';
 import { answer } from './answer';
-import { TUTORIAL_CONTENT } from './data/tutorial';
+import { TUTORIAL_CATEGORIES, TUTORIAL_CONTENT, type TutorialContent } from './data/tutorial';
 
 // The tutorial's routes as the main server answers them (P06 spec "Progress: server-side" and "Endpoints"), with the
 // User's progress kept in memory while the app runs. Each call answers with the new `GET /tutorial` body. For the
@@ -25,6 +26,17 @@ async function mockEligibleByDefault(): Promise<boolean> {
   const { answers } = await readKept();
   const admissionYear = answers?.admissionYear ?? null;
   return admissionYear !== null && admissionYear >= koreaYear(now());
+}
+
+// The mock's TUTORIAL_KWANJEONG_CHECK, off as on the main server by default: the 관정 quest is then served, and
+// completed, as a button quest. An object, so that a test of the phone's check can turn it on.
+export const MOCK_TUTORIAL_SWITCHES = { kwanjeongCheck: false };
+
+// A quest as the main server serves it (`servedContent`), with 관정 booking on.
+function served(quest: TutorialContent): TutorialContent {
+  return quest.completion.kind === 'kwanjeongCheck' && !MOCK_TUTORIAL_SWITCHES.kwanjeongCheck
+    ? { ...quest, completion: { kind: 'button' } }
+    : quest;
 }
 
 interface Progress {
@@ -66,9 +78,13 @@ async function body(): Promise<Tutorial> {
     state: stateOf(),
     rowHidden: progress.rowHidden,
     eligibleByDefault: await mockEligibleByDefault(),
-    quests: TUTORIAL_CONTENT.map((quest) => {
-      const kept = progress.quests.get(quest.key);
-      return { ...quest, status: kept === undefined ? 'notStarted' : kept === null ? 'started' : 'completed' };
+    categories: [...TUTORIAL_CATEGORIES],
+    quests: TUTORIAL_CONTENT.map((content) => {
+      const kept = progress.quests.get(content.key);
+      return {
+        ...served(content),
+        status: kept === undefined ? 'notStarted' : kept === null ? 'started' : 'completed',
+      };
     }),
   };
 }
@@ -81,12 +97,12 @@ async function read(): Promise<Tutorial> {
   return body();
 }
 
-function questOf(key: string): (typeof TUTORIAL_CONTENT)[number] {
+function questOf(key: string): TutorialContent {
   const quest = TUTORIAL_CONTENT.find((each) => each.key === key);
   if (quest === undefined) {
     throw new ApiError(404, 'TUTORIAL_QUEST_NOT_FOUND');
   }
-  return quest;
+  return served(quest);
 }
 
 function isCompleted(key: string): boolean {

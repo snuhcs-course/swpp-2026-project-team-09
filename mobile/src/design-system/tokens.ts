@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -104,6 +105,8 @@ export const halo = {
   selected: 'rgba(0, 26, 114, 0.18)',
   // Around a selected dot, as the `Main` frame draws it: the key colour at 25%.
   selectedDot: 'rgba(0, 26, 114, 0.25)',
+  // Around merged study pins, the frame's translucent outer square: the study colour at 22%.
+  study: 'rgba(3, 105, 161, 0.22)',
 } as const;
 
 // The colour that says what a person is doing: a status's dot on an Avatar, a row's dot in the friend list and the

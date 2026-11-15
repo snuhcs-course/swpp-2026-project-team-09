@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -10,13 +11,14 @@ import { shortTitle } from './short-name';
 
 // The kinds in the order a group draws and lists them, each with its word on a chip and, for a group of that kind
 // alone, its word as its own pin says it.
-export const PLACE_KINDS: readonly PlaceKind[] = ['official', 'party', 'quest', 'dining', 'shuttle'];
+export const PLACE_KINDS: readonly PlaceKind[] = ['official', 'party', 'quest', 'dining', 'library', 'shuttle'];
 
 export const KIND_WORDS: Readonly<Record<PlaceKind, { chip: string; alone: string }>> = {
   official: { chip: '행사', alone: '공식 행사' },
   party: { chip: '파티', alone: '파티' },
   quest: { chip: '퀘스트', alone: '퀘스트' },
   dining: { chip: '식당', alone: '식당' },
+  library: { chip: '공부', alone: '공부공간' },
   shuttle: { chip: '셔틀', alone: '셔틀버스' },
 };
 
@@ -43,9 +45,9 @@ function placeWords({ card }: Member): string | null {
   return pin ?? (card.kind === 'shuttle-stop' ? card.title : null);
 }
 
-// Whose words name a place first: where an event says it is, then a restaurant's Place, a Party's or a Quest's place,
-// a stop.
-const NAMED_FIRST: readonly PlaceKind[] = ['official', 'dining', 'party', 'quest', 'shuttle'];
+// Whose words name a place first: where an event says it is, then a restaurant's Place, a study building's, a Party's
+// or a Quest's place, a stop.
+const NAMED_FIRST: readonly PlaceKind[] = ['official', 'dining', 'library', 'party', 'quest', 'shuttle'];
 
 // The place's name, from the first of its things that says where it is, or "같은 장소".
 function placeName(members: readonly Member[]): string {

@@ -3,11 +3,12 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { screen as found } from '@testing-library/react-native';
 import { holdBackButton } from './support/back';
-import { pass, screen, shownAddress } from './support/app';
+import { screen } from './support/app';
 import { button, findButton, LAYERS } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND, NOT_READY, press } from './support/markers';
@@ -82,20 +83,35 @@ describe('the 편의기능 button', () => {
 });
 
 describe('the stack', () => {
-  it('holds 식당 and 셔틀버스 from the bottom up, off, and the 메뉴 tile above them', async () => {
+  it('holds 식당, 셔틀버스 and 공부공간 from the bottom up, off, and no 메뉴 tile', async () => {
     const user = await openMain();
     await press(user, LAYERS);
 
     expect(toggle('식당 켜기')).toHaveTextContent('식당OFF');
     expect(toggle('셔틀버스 켜기')).toHaveTextContent('셔틀버스OFF');
+    expect(toggle('공부공간 켜기')).toHaveTextContent('공부공간OFF');
     expect(toggle('식당 켜기')).toHaveProp('accessibilityState', { checked: false });
-    expect(button('메뉴 보기')).toHaveTextContent('메뉴');
+    expect(findButton('메뉴 보기')).toBeNull();
+    expect(screen.queryByText('메뉴')).toBeNull();
     expect(stack()).toHaveStyle({ flexDirection: 'column-reverse' });
     const names = screen
-      .getAllByRole(/^(togglebutton|button)$/u)
+      .getAllByRole('togglebutton')
       .map((element) => String(element.props.accessibilityLabel))
-      .filter((name) => ['식당 켜기', '셔틀버스 켜기', '메뉴 보기'].includes(name));
-    expect(names).toEqual(['식당 켜기', '셔틀버스 켜기', '메뉴 보기']);
+      .filter((name) => ['식당 켜기', '셔틀버스 켜기', '공부공간 켜기'].includes(name));
+    expect(names).toEqual(['식당 켜기', '셔틀버스 켜기', '공부공간 켜기']);
+  });
+
+  it('turns 공부공간 on and off, filled with its colour while it is on', async () => {
+    const user = await openMain();
+    await press(user, LAYERS);
+
+    await user.press(toggle('공부공간 켜기'));
+    expect(toggle('공부공간 끄기')).toHaveTextContent('공부공간ON');
+    expect(toggle('공부공간 끄기')).toHaveStyle({ backgroundColor: '#0369A1' });
+    expect(found.getByTestId('layer-dot', { includeHiddenElements: true })).toHaveStyle({ backgroundColor: '#0369A1' });
+
+    await user.press(toggle('공부공간 끄기'));
+    expect(toggle('공부공간 켜기')).toHaveTextContent('공부공간OFF');
   });
 
   it('turns 식당 on and off, filled with its colour while it is on', async () => {
@@ -179,22 +195,6 @@ describe('the stack, open', () => {
     await press(user, LAYERS);
 
     expect(toggle('식당 끄기')).toHaveTextContent('식당ON');
-  });
-});
-
-describe('the 메뉴 tile', () => {
-  it("opens the menu panel at today's next meal and closes the stack", async () => {
-    const user = await openMain();
-    await press(user, LAYERS);
-
-    await press(user, '메뉴 보기');
-    await pass(500);
-
-    // The mocks' clock is 13:37 on 1 October 2026.
-    expect(shownAddress()).toBe('/menus?date=2026-10-01&meal=lunch');
-    expect(screen.getByRole('header', { name: '메뉴' })).toBeVisible();
-    await user.press(screen.getByRole('button', { name: '닫기' }));
-    expect(stack()).toBeNull();
   });
 });
 

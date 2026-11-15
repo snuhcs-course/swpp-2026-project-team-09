@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -25,7 +26,7 @@ import {
 } from '@/design-system';
 import { type QuestRowView, toQuestGroups } from '@/features/quests/adapter';
 import { useQuestRows } from '@/features/quests/use-quest-rows';
-import { questsInList, stepOf } from '@/features/tutorial/rules';
+import { kickerOf, questsInList } from '@/features/tutorial/rules';
 import { useTutorial } from '@/features/tutorial/use-tutorial';
 import type { Tutorial } from '@/api/tutorial-types';
 import { now } from '@/clock';
@@ -58,7 +59,7 @@ function press(row: QuestRowView): void {
   }
 }
 
-// The group "새내기 튜토리얼" on top (MainTutorialList): each started quest with "새내기 튜토리얼 · n/N" and its
+// The group "새내기 튜토리얼" on top (MainTutorialList): each started quest with "새내기 튜토리얼 · {category} · n/N" and its
 // 완료 조건. A press closes this screen and opens the quest's sheet on the main screen (`/main?tutorial=…`).
 function TutorialGroup({ tutorial }: { tutorial: Tutorial | undefined }): ReactElement | null {
   const quests = questsInList(tutorial);
@@ -69,7 +70,7 @@ function TutorialGroup({ tutorial }: { tutorial: Tutorial | undefined }): ReactE
     <View>
       <SectionHeader>새내기 튜토리얼</SectionHeader>
       {quests.map((quest) => {
-        const kicker = `새내기 튜토리얼 · ${stepOf(tutorial, quest.key)}`;
+        const kicker = kickerOf(tutorial, quest);
         const condition = `완료 조건 · ${quest.condition}`;
         return (
           <ListRow

@@ -2,103 +2,25 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { TutorialQuest } from '@/api/tutorial-types';
+import type { TutorialCategory, TutorialQuest } from '@/api/tutorial-types';
+import { FIRST_QUESTS } from './tutorial-quests-first';
+import { LAST_QUESTS } from './tutorial-quests-last';
 
-// The mock's stand-in for `main-server/content/tutorial.yaml`, with the P06 spec's five quests and texts, so that the
-// mock answers `GET /tutorial` as the main server does. The screens never read this file: they show what the client
-// answers. The S-CARD page's address is the site's start until ticket P06-02 copies the page's own.
+// The mock's stand-in for `main-server/content/tutorial.yaml`: the P13 spec's fifteen quests in its five Tutorial
+// Categories, with the file's texts and without its facts, so that the mock answers `GET /tutorial` as the main server
+// does. The screens never read this file: they show what the client answers. The 관정 quest is as the file holds it,
+// `kwanjeongCheck`; the mock serves it as the main server does (src/api/mock/tutorial.ts).
 export type TutorialContent = Omit<TutorialQuest, 'status'>;
 
-export const TUTORIAL_CONTENT: readonly TutorialContent[] = [
-  {
-    key: 's-card',
-    order: 1,
-    title: '학생증(S-CARD) 발급받기',
-    brief: '학생증(S-CARD)을 신청하고 받아 보세요.',
-    body: [
-      '학생증(S-CARD)은 도서관 출입처럼 학교생활 곳곳에서 써요.',
-      '· 신청: MySNU에서 온라인으로 신청해요.',
-      '· 수령: 신청한 다음 날부터 학생지원센터(67동 NH농협두레문예관 2층)에서 받아요. 평일 9:00–17:50에 열어요.',
-      '· 금융 기능이 있는 학생증은 우리은행(4동)에서 처리해요. 교환학생은 금융 학생증을 받을 수 없어요.',
-      "· 모바일 학생증은 '서울대학교' 앱에서 쓸 수 있어요.",
-    ],
-    condition: '학생증 받기',
-    completion: { kind: 'button' },
-    completionMessage: '학생증을 받았군요! 이제 도서관과 학교 시설을 마음껏 이용해 보세요.',
-    places: [
-      { place: '67', floor: 2 },
-      { place: '4', label: '우리은행 (4동)' },
-    ],
-    links: [
-      { label: 'MySNU', url: 'https://my.snu.ac.kr' },
-      { label: '학생처 S-CARD 발급 절차', url: 'https://student.snu.ac.kr' },
-    ],
-  },
-  {
-    key: 'admin-shuttle',
-    order: 2,
-    title: '행정관 셔틀 이용하기',
-    brief: '행정관 앞에서 셔틀을 타 보세요.',
-    body: [
-      "행정관 셔틀은 행정관 잔디광장 아래 정류장에서 타요. 카카오맵에서 '메가커피'를 검색하면 정류장을 찾기 쉬워요.",
-      '셔틀 대신 5511, 5513, 5516번 버스를 타도 돼요.',
-    ],
-    condition: '행정관 셔틀 타 보기',
-    completion: { kind: 'button' },
-    completionMessage: '셔틀 타 보니 어떠셨나요? 캠퍼스 이동이 한결 편해질 거예요!',
-    places: [
-      { point: { latitude: 37.460938, longitude: 126.950312 }, label: '행정관 셔틀 정류장 (행정관 잔디광장 아래)' },
-    ],
-    links: [],
-  },
-  {
-    key: 'kwanjeong',
-    order: 3,
-    title: '관정도서관 예약하기',
-    brief: '관정도서관 열람실을 예약하고 이용해 보세요.',
-    body: [
-      '관정도서관은 관정도서관 내부 키오스크에 로그인한 후 좌석을 예약하거나, 관정도서관 공식 앱, 또는 이 SNU Now에서 어시스턴트에게 부탁해 예약을 진행할 수 있어요. 이번 튜토리얼에서는 관정도서관을 이용해보세요!',
-      '열람실 좌석은 예약한 뒤 30분 안에 좌석배정기(키오스크)에서 확인해야 해요. 확인하지 않으면 자동으로 반납돼요.',
-      '확인하지 않거나 반납하지 않은 일이 한 달에 5번이면 10일 동안 예약할 수 없어요. 그룹스터디룸은 1시간 안에 들어가지 않으면 취소되고, 7일에 3번이면 3일 동안 예약할 수 없어요.',
-      '사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!',
-    ],
-    condition: '관정도서관 열람실이나 스터디룸 예약 및 이용',
-    completion: { kind: 'kwanjeongCheck', skipLabel: '이미 예약 및 이용해본 적이 있어요' },
-    completionMessage: '관정도서관 이용은 어떠셨나요? 도서관을 자주 이용해 보아요!',
-    places: [{ place: '62-1' }],
-    links: [],
-  },
-  {
-    key: 'health-clinic',
-    order: 4,
-    title: '서울대 보건진료소 이용',
-    brief: '보건진료소가 어디 있는지 알아 두세요.',
-    body: [
-      '서울대 보건진료소는 학생회관(63동) 2층에 있어요. 진료 시간과 이용 방법은 보건진료소 홈페이지에서 확인할 수 있어요.',
-    ],
-    condition: '보건진료소 위치와 이용 방법 확인하기',
-    completion: { kind: 'button' },
-    completionMessage: '아플 땐 참지 말고 보건진료소를 찾아 주세요!',
-    places: [{ place: '63', floor: 2 }],
-    links: [{ label: '보건진료소 홈페이지', url: 'https://health4u.snu.ac.kr/index.do' }],
-  },
-  {
-    key: 'art-museum',
-    order: 5,
-    title: '서울대 미술관/파워플랜트 관람',
-    brief: '캠퍼스 안의 미술관과 파워플랜트에서 전시를 봐요.',
-    body: [
-      '서울대학교 미술관(151동)과 파워플랜트(68동)에서 전시를 볼 수 있어요. 지금 하는 전시는 각 홈페이지에서 확인해 보세요.',
-    ],
-    condition: '미술관이나 파워플랜트 전시 관람하기',
-    completion: { kind: 'button' },
-    completionMessage: '전시는 즐거우셨나요? 캠퍼스 곳곳의 문화 공간을 자주 찾아 보세요!',
-    places: [{ place: '151' }, { place: '68' }],
-    links: [
-      { label: '서울대학교 미술관', url: 'http://www.snumoa.org/' },
-      { label: '파워플랜트', url: 'https://culture.snu.ac.kr/event/powerplant365/' },
-    ],
-  },
+export const TUTORIAL_CATEGORIES: readonly TutorialCategory[] = [
+  { key: 'life', label: '생활' },
+  { key: 'study', label: '공부·학사' },
+  { key: 'transit', label: '이동' },
+  { key: 'health', label: '건강' },
+  { key: 'culture', label: '문화·여가' },
 ];
+
+export const TUTORIAL_CONTENT: readonly TutorialContent[] = [...FIRST_QUESTS, ...LAST_QUESTS];

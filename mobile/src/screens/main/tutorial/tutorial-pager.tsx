@@ -2,12 +2,27 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
-import { Badge, Button, color, font, Icon, Overlay, radius, shadow, space, text, tutorialTone } from '@/design-system';
+import {
+  Badge,
+  Button,
+  Chip,
+  color,
+  font,
+  Icon,
+  Overlay,
+  radius,
+  shadow,
+  space,
+  text,
+  tutorialTone,
+} from '@/design-system';
+import { categoryOf } from '@/features/tutorial/rules';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import type { PagerView, TutorialFlow } from './use-tutorial-flow';
 
@@ -74,22 +89,62 @@ function PageActions({ flow, quest }: { flow: TutorialFlow; quest: TutorialQuest
   );
 }
 
+// The row of the Tutorial Categories' chips, the shown quest's selected; a press moves to that category's first quest
+// not started, or its first quest.
+function CategoryChips({
+  tutorial,
+  quest,
+  flow,
+}: {
+  tutorial: Tutorial;
+  quest: TutorialQuest;
+  flow: TutorialFlow;
+}): ReactElement | null {
+  if (tutorial.categories.length === 0) {
+    return null;
+  }
+  return (
+    <ScrollView
+      accessibilityLabel="퀘스트 카테고리"
+      contentContainerStyle={styles.chips}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.chipScroll}
+    >
+      {tutorial.categories.map(({ key, label }) => (
+        <Chip
+          key={key}
+          onPress={() => {
+            flow.showCategory(key);
+          }}
+          selected={key === quest.category}
+          size="sm"
+        >
+          {label}
+        </Chip>
+      ))}
+    </ScrollView>
+  );
+}
+
 interface PageProps {
   tutorial: Tutorial;
   pager: Exclude<PagerView, { kind: 'done' }>;
   flow: TutorialFlow;
 }
 
-// One quest's page: its title and brief between ◀ and ▶, its status, and 퀘스트 시작 or, once it is started, 내용 보기.
+// One quest's page: the categories' chips, its category's label over its title and brief between ◀ and ▶, its status, and 퀘스트 시작 or, once it is started, 내용 보기.
 function Page({ tutorial, pager, flow }: PageProps): ReactElement | null {
   const quest = tutorial.quests[pager.index];
   if (quest === undefined) {
     return null;
   }
   const last = tutorial.quests.length - 1;
+  const category = categoryOf(tutorial, quest);
   return (
     <>
       <Text style={styles.kicker}>{kickerOf(pager, tutorial.quests.length)}</Text>
+      <CategoryChips flow={flow} quest={quest} tutorial={tutorial} />
       <View style={styles.paging}>
         <Arrow
           direction={-1}
@@ -99,6 +154,7 @@ function Page({ tutorial, pager, flow }: PageProps): ReactElement | null {
           }}
         />
         <View style={styles.words}>
+          {category === null ? null : <Text style={styles.category}>{category}</Text>}
           <Text accessibilityRole="header" style={styles.title}>
             {quest.title}
           </Text>
@@ -197,6 +253,9 @@ const styles = StyleSheet.create({
     backgroundColor: tutorialTone.pagerRound,
   },
   kicker: { fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: tutorialTone.ink },
+  chipScroll: { alignSelf: 'stretch', flexGrow: 0 },
+  chips: { flexGrow: 1, justifyContent: 'center', gap: space[1] },
+  category: { fontFamily: font.bold, fontSize: 12, lineHeight: 16, color: tutorialTone.words },
   paging: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: space[1] },
   words: { flex: 1, alignItems: 'center', gap: space[1] },
   title: { ...text.title, fontFamily: font.bold, fontSize: 20, lineHeight: 28, textAlign: 'center', color: color.ink },

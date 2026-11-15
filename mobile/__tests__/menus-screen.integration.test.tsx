@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -11,13 +12,12 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { act, fireEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { ScrollView } from 'react-native';
+import { openMenus } from '@/screens/main/map-bottom';
 import { pass, screen } from './support/app';
 import { answerDining, BUFFET, HOURS, NO_PRICE, STEW, TODAY_MENUS } from './support/dining';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { LAYERS } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
@@ -60,11 +60,13 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// From the 메뉴 tile of the 편의기능 stack.
+// As a 식당 pin's 메뉴 보기 opens it, at the meal served next, here at the top of the list (P13 took the 메뉴 tile
+// away; `dining-layer.integration.test.tsx` presses the pin's button).
 async function openFromStack(): Promise<User> {
   const user = await openMain();
-  await press(user, LAYERS);
-  await press(user, '메뉴 보기');
+  await act(() => {
+    openMenus();
+  });
   await pass(500);
   return user;
 }

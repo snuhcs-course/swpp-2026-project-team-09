@@ -1995,7 +1995,11 @@ The 새내기 튜토리얼 walks a new student through campus life, one Tutorial
 `body` (the sheet's paragraphs), `condition` (완료 조건), `completion` (`{ kind: button }`, or
 `{ kind: kwanjeongCheck, skipLabel }` for the quest the phone checks against the User's library bookings),
 `completionMessage`, `places` (a Place of the seed by its number, with `floor` and `label` when they help, or a
-`point` with its `label`) and `links` (`label` and `url`). The server reads and checks it once when it starts, in
+`point` with its `label`), `links` (`label` and `url`), `category` (the key of its Tutorial Category), an optional
+`ask` (the words 어시스턴트에게 예약 부탁하기 sends) and `facts` (what the Assistant answers from, each with its `source`
+and the day it was `checked`). A top-level `categories` list gives each Tutorial Category's `key` and `label`, in the
+order the app shows them; every quest names one of them, every category holds a quest, and a category's quests come
+one after another in `order`. The server reads and checks it once when it starts, in
 `src/tutorial/tutorial-content.ts`, and a file that does not match stops the start with the reason. Adding a quest is
 an entry in the file. `test/tutorial-content.unit.test.ts` checks that each Place number is in the seed.
 
@@ -2025,13 +2029,16 @@ started) and `available`.
 The routes name no User, so they never reach another User's progress. Each is safe to repeat, takes no
 `Idempotency-Key` and answers 200 with what `GET /tutorial` would answer:
 
-- `GET /tutorial` answers `{ state, quests }`, each quest as the file holds it with its `status`: `notStarted`,
-  `started` or `completed`.
+- `GET /tutorial` answers `{ state, categories, quests }`, each quest as the file holds it, without its `facts`, with
+  its `status`: `notStarted`, `started` or `completed`. The 관정 quest is served as the file holds it,
+  `kwanjeongCheck`, only while `LIBRARY_BOOKING_ENABLED` and `TUTORIAL_KWANJEONG_CHECK` are both on; otherwise it is
+  served, and completed, as a `button` quest. With `LIBRARY_BOOKING_ENABLED` off it also links to the official site,
+  and no quest has `ask`.
 - `POST /tutorial/enable` (진행하기), `POST /tutorial/stop` (튜토리얼 그만하기, 끄기) and `POST /tutorial/hide-row` (the ✕
   of the 내 정보 row) set the times above. The quests' progress stays.
 - `POST /tutorial/quests/:key/start` starts a quest.
-- `POST /tutorial/quests/:key/complete` with `{ "by": "button" }` completes a `button` quest, and with `checked`,
-  `forced` or `skipped` the `kwanjeongCheck` quest. The phone does the check, so the server records how and does not
+- `POST /tutorial/quests/:key/complete` with `{ "by": "button" }` completes a quest served as `button`, and with
+  `checked`, `forced` or `skipped` one served as `kwanjeongCheck`. The phone does the check, so the server records how and does not
   verify it. A quest completed once keeps how.
 
 The refusals: a key the file does not hold gets 404 with `code` `TUTORIAL_QUEST_NOT_FOUND`, and a `by` the quest's
@@ -2494,6 +2501,8 @@ into the database.
 | `srtm-elevation.json`            | SRTM 30 m heights over the campus, read only by the builder                                             | NASA SRTM, through OpenTopoData                      |
 | `walking-table.json`             | Seconds on foot for every pair of Places and of Places and stops, with each one's elevation             | `pnpm walking:build`, from the seed files above      |
 | `restaurant-places.json`         | The number of each Restaurant's Place, by its name as `GET /menus` gives it, read by the server         | Written by hand                                      |
+| `study-spaces.json`              | The 공부공간 layer's Study Spaces by building, each at a Place number, read by the server               | Written by hand from P13's research                  |
+| `department-colleges.json`       | The college of each department of the app's list, or `null`, read by the server                         | Written by hand from the app's department list       |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
@@ -2534,6 +2543,16 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **When the Co-op renames or moves a restaurant**, correct its row in `restaurant-places.json`, with the name exactly as
   the worker sends it and the number as the Places have it. A restaurant the file does not hold has no Place: no pin, no
   "N동" and no place in 공강에 밥. It stays in the menu panel.
+- **The 공부공간 layer** (`GET /study-spaces`, signed in): `study-spaces.json` holds each building at a Place number
+  of the seed and its Study Spaces, each with its `hours` (display text, or `null`), its `restriction` (`colleges`,
+  `departments` or `graduateOnly`, with the `label` of "○○ 학생만 사용할 수 있어요"), `link`, `source`, `confidence` and a
+  `note` for the reviewer, which is never served. The server reads it once at start, with `department-colleges.json`;
+  a Place number the seed does not hold, or a restriction naming a college or a department the table does not hold,
+  stops the start. A space is `usable` for a User whose 학과 is listed, or whose 학과's college is, or, for
+  `graduateOnly`, whose 소속 is 대학원; an empty or unknown 학과, or no 소속, is not. A building is `usable` when any of
+  its spaces is. 관정관's entry lists the seat sectors of the library catalogue the User may book, which the phone reads
+  through the User's own Library Session; no count comes back. When the app's department list changes, add the new
+  names to `department-colleges.json`: the app's test fails until every name has an entry.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.

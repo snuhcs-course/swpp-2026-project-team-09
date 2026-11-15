@@ -3,6 +3,7 @@
  *
  * 2026-09-29  Opus 5.5   prompted by TaeHyun79
  * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +15,7 @@ import { StartedTestContainer } from 'testcontainers';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { mainDatabaseUrl, migrate, startPostgres } from './containers.js';
+import { mainDatabaseUrl, migrate, seed, startPostgres } from './containers.js';
 import { ADMINISTRATOR, administratorIdToken, googleSubject } from './google.js';
 import { registerAdministrator, signInAsAdministrator, signInAsNewAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -42,6 +43,8 @@ beforeAll(async () => {
   postgres = await startPostgres();
   const databaseUrl = mainDatabaseUrl(postgres);
   migrate(databaseUrl);
+  // The seed's Places, which the server's start checks the 공부공간 layer against; it holds no User or Administrator.
+  await seed(databaseUrl);
   emptySettings = {
     ...settings,
     DATABASE_URL: databaseUrl,

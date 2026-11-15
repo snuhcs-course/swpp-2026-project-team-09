@@ -3,10 +3,11 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
-import type { Tutorial, TutorialPlace, TutorialQuest } from '@/api/tutorial-types';
+import type { Tutorial, TutorialCategory, TutorialPlace, TutorialQuest } from '@/api/tutorial-types';
 import { field, hasTexts, isNumber, isText, listOf } from './answers';
 import { call } from './http';
 
@@ -53,6 +54,8 @@ function isQuest(value: unknown): value is TutorialQuest {
   return (
     hasTexts(value, ['key', 'title', 'brief', 'condition', 'completionMessage']) &&
     isNumber(field(value, 'order')) &&
+    isOptional(field(value, 'category'), isText) &&
+    isOptional(field(value, 'ask'), isText) &&
     listOf(isText)(field(value, 'body')) &&
     isCompletion(field(value, 'completion')) &&
     listOf(isPlace)(field(value, 'places')) &&
@@ -68,6 +71,9 @@ export function isTutorial(value: unknown): value is Tutorial {
     isOneOf(field(value, 'state'), STATES) &&
     isFlag(field(value, 'rowHidden')) &&
     isFlag(field(value, 'eligibleByDefault')) &&
+    listOf((category: unknown): category is TutorialCategory => hasTexts(category, ['key', 'label']))(
+      field(value, 'categories'),
+    ) &&
     listOf(isQuest)(field(value, 'quests'))
   );
 }

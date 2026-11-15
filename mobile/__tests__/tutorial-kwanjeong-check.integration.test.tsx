@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -14,6 +15,7 @@ import { answered, startFresh } from './support/mocks';
 import { KWANJEONG_ROW, openSheet, pressAndWait, SHEET } from './support/tutorial';
 import { forgetWebViews } from './support/web-view';
 import { apiClient } from '@/api/client';
+import { MOCK_TUTORIAL_SWITCHES } from '@/api/mock/tutorial';
 import { isLibraryLoggedIn, markLibraryLoggedIn } from '@/library/flag';
 import { hiddenTransport } from '@/library/library';
 import { isLibraryWrite } from '@/library/site';
@@ -21,7 +23,8 @@ import { TUTORIAL_SHEET_FLAGS } from '@/screens/main/tutorial/tutorial-sheet';
 
 // The 관정 quest's 완료했어요 on the main screen (MainTutorialOk and MainTutorialFail): the phone asks the fake
 // 관정도서관 for the User's bookings through the library client and completes the quest by what it finds, against the
-// main server's mock. The check only reads, and nothing of the library reaches the main server.
+// main server's mock. The check only reads, and nothing of the library reaches the main server. The quest is served as
+// `kwanjeongCheck`, as the main server serves it with TUTORIAL_KWANJEONG_CHECK on (off by default since P13).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -48,6 +51,7 @@ let library: FakeLibrary;
 
 async function setUp(now: Date, loggedIn = true): Promise<void> {
   jest.useFakeTimers({ now });
+  jest.replaceProperty(MOCK_TUTORIAL_SWITCHES, 'kwanjeongCheck', true);
   await startFresh();
   forgetWebViews();
   givePhone({ permission: 'granted', position: ON_CAMPUS });
@@ -98,7 +102,7 @@ describe('완료했어요 with a booking that counts', () => {
     expect(complete.mock.calls).toEqual([['kwanjeong', 'checked']]);
     expect(await status()).toBe('completed');
     expect(screen.queryByLabelText(SHEET)).toBeNull();
-    expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 4/5')).toBeVisible();
+    expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 6/15')).toBeVisible();
   });
 });
 
@@ -187,7 +191,7 @@ describe('완료했어요 without a booking that counts', () => {
 
     expect(complete.mock.calls).toEqual([['kwanjeong', 'forced']]);
     expect(await status()).toBe('completed');
-    expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 4/5')).toBeVisible();
+    expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 6/15')).toBeVisible();
   });
 });
 

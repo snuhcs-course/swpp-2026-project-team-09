@@ -8,6 +8,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -37,6 +38,7 @@ import {
 } from './answers';
 import { isMenus } from './menu-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
+import { isStudyBuildings } from './study-answers';
 import { isFriendRequests, isJoinRequests, isQuestInvitations } from './waiting-answers';
 import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
@@ -142,4 +144,5 @@ export const serverClient: ApiClient = {
   listMenus: (date) => call('GET', '/menus', isMenus, { query: { date } }),
   getShuttle: () => call('GET', '/shuttle', isShuttleRoute),
   listShuttleVehicles: () => call('GET', '/shuttle/vehicles', isShuttleVehicles),
+  listStudySpaces: () => call('GET', '/study-spaces', isStudyBuildings),
 };

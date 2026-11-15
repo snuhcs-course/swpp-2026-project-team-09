@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { JoinPolicy, QuestBoard } from '../generated/prisma/client.js';
 import { descriptionSchema, titleSchema } from '../quests/dto/quest-requests.dto.js';
+import { type FacilityBooking } from './facility-booking.js';
 import { othersText } from './others-text.js';
 
 // A Proposal: a Quest the Assistant filled in, which does not exist until the User makes it with 만들기. It holds what
@@ -15,10 +17,12 @@ import { othersText } from './others-text.js';
 // capacity and when it starts, in Korea time, and the Place, the Global Event and the Friends to invite that the
 // resolvers found, each with the words the card shows for it.
 
-// A Place by its name, as a Sub Quest's place shows it.
+// A Place by its name, as a Sub Quest's place shows it, with the page where it is booked online, if one is known
+// (seed/facility-booking.json), which the made card opens with 시설 예약하기.
 export interface ProposalPlace {
   id: string;
   name: string;
+  booking: FacilityBooking | null;
 }
 
 // A Friend to invite, by name and id only: never where they are.
@@ -54,7 +58,18 @@ export const questProposalSchema = z.strictObject({
   board: z.enum(QuestBoard).nullable(),
   capacity: z.int(),
   startsAt: z.iso.datetime({ offset: true }),
-  place: z.strictObject({ id: z.uuid(), name: nameSchema }).nullable().default(null),
+  // Its booking page is taken and dropped: proposeQuest finds it again from the table.
+  place: z
+    .strictObject({
+      id: z.uuid(),
+      name: nameSchema,
+      booking: z
+        .strictObject({ label: nameSchema, url: z.string().max(2000) })
+        .nullable()
+        .optional(),
+    })
+    .nullable()
+    .default(null),
   globalEvent: z.strictObject({ id: z.uuid(), title: nameSchema }).nullable().default(null),
   // More than any capacity, so that only proposeQuest decides how many fit.
   invitees: z
@@ -73,10 +88,11 @@ export function proposalLength({ title, description, place, globalEvent, invitee
 }
 
 // The Proposal as the model reads it, in a tool's answer or sent back: the event's title and the Friends' names, which
-// other people wrote, inside delimiters.
-export function proposalForModel({ globalEvent, invitees, ...values }: SentProposal): object {
+// other people wrote, inside delimiters. The Place's booking page is the card's alone: the model is not told of it.
+export function proposalForModel({ globalEvent, invitees, place, ...values }: SentProposal): object {
   return {
     ...values,
+    place: place === null ? null : { id: place.id, name: place.name },
     globalEvent:
       globalEvent === null ? null : { id: globalEvent.id, title: othersText('globalEvent.title', globalEvent.title) },
     invitees: invitees.map(({ id, name }) => ({ id, name: othersText('friend.name', name) })),

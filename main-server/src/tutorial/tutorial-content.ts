@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { readFile } from 'node:fs/promises';
@@ -33,9 +34,16 @@ const completionSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('kwanjeongCheck'), skipLabel: text }),
 ]);
 
+const keySchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, 'Expected a key in lowercase words joined by dashes');
+
+// A Tutorial Category: one of the groups the quests are shown in, by its key, with the words the app shows.
+const categorySchema = z.strictObject({ key: keySchema, label: text });
+
 const questSchema = z.strictObject({
-  key: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, 'Expected a key in lowercase words joined by dashes'),
+  key: keySchema,
   order: z.int().min(1),
+  // The key of its Tutorial Category.
+  category: keySchema.optional(),
   title: text,
   // The pager's line.
   brief: text,
@@ -47,33 +55,82 @@ const questSchema = z.strictObject({
   completionMessage: text,
   places: z.array(placeSchema),
   links: z.array(z.strictObject({ label: text, url: z.url({ protocol: /^https?$/u }) })),
+  // The words 어시스턴트에게 예약 부탁하기 sends to the Assistant; the sheet shows the button only for a quest with them.
+  ask: text.optional(),
   // What the Assistant answers from beyond the sheet's text, each with where it was read and when. GET /tutorial does
   // not serve them.
   facts: z.array(z.strictObject({ text, source: z.url({ protocol: /^https?$/u }), checked: z.iso.date() })).default([]),
 });
 
-const contentSchema = z
-  .strictObject({ quests: z.array(questSchema).min(1) })
-  .superRefine(({ quests }, context) => {
-    for (const field of ['key', 'order'] as const) {
-      const seen = new Set<string | number>();
-      quests.forEach((quest, index) => {
-        if (seen.has(quest[field])) {
-          context.addIssue({
-            code: 'custom',
-            path: ['quests', index, field],
-            message: `Repeats the ${field} ${quest[field]}`,
-          });
-        }
-        seen.add(quest[field]);
+type Quest = z.infer<typeof questSchema>;
+type Issues = z.core.$RefinementCtx;
+
+function refuseRepeats(quests: readonly Quest[], context: Issues): void {
+  for (const field of ['key', 'order'] as const) {
+    const seen = new Set<string | number>();
+    quests.forEach((quest, index) => {
+      if (seen.has(quest[field])) {
+        context.addIssue({
+          code: 'custom',
+          path: ['quests', index, field],
+          message: `Repeats the ${field} ${quest[field]}`,
+        });
+      }
+      seen.add(quest[field]);
+    });
+  }
+}
+
+// Every quest names a listed category, every category holds a quest, and each category's quests come one after
+// another in `order`, so that the app shows them as a group. A file without `categories` has no quest with a
+// `category`: the P6 suite's frozen copy (eval/p6/tutorial.yaml) is of that shape until it is revised.
+function refuseCategoryMistakes(
+  categories: readonly z.infer<typeof categorySchema>[],
+  quests: readonly Quest[],
+  context: Issues,
+): void {
+  const keys = categories.map(({ key }) => key);
+  categories.forEach(({ key }, index) => {
+    if (keys.indexOf(key) !== index) {
+      context.addIssue({ code: 'custom', path: ['categories', index, 'key'], message: `Repeats the category ${key}` });
+    }
+  });
+  quests.forEach(({ category }, index) => {
+    if (categories.length === 0 ? category !== undefined : category === undefined || !keys.includes(category)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['quests', index, 'category'],
+        message: `Names no category of \`categories\`: ${category ?? '(none)'}`,
       });
     }
+  });
+  const inOrder = quests.toSorted((a, b) => a.order - b.order).map(({ category }) => category);
+  for (const key of keys) {
+    const first = inOrder.indexOf(key);
+    if (first === -1) {
+      context.addIssue({ code: 'custom', path: ['categories'], message: `The category ${key} holds no quest` });
+    } else if (inOrder.lastIndexOf(key) - first + 1 !== inOrder.filter((one) => one === key).length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['categories'],
+        message: `The quests of the category ${key} are not one after another in \`order\``,
+      });
+    }
+  }
+}
+
+const contentSchema = z
+  .strictObject({ categories: z.array(categorySchema).default([]), quests: z.array(questSchema).min(1) })
+  .superRefine(({ categories, quests }, context) => {
+    refuseRepeats(quests, context);
+    refuseCategoryMistakes(categories, quests, context);
   })
-  .transform(({ quests }) => ({ quests: quests.toSorted((a, b) => a.order - b.order) }));
+  .transform(({ categories, quests }) => ({ categories, quests: quests.toSorted((a, b) => a.order - b.order) }));
 
 export type TutorialContent = z.infer<typeof contentSchema>;
 export type TutorialQuest = TutorialContent['quests'][number];
 export type TutorialPlace = TutorialQuest['places'][number];
+export type TutorialCategory = TutorialContent['categories'][number];
 
 // Read once when the server starts. A file that does not parse or does not match stops the start with the reason.
 export async function readTutorialContent(file: string): Promise<TutorialContent> {
@@ -90,18 +147,33 @@ export const KWANJEONG_SITE = {
   url: 'https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main',
 };
 
-// The content as GET /tutorial serves it. With 관정 booking turned off (LIBRARY_BOOKING_ENABLED), a quest checked
-// through the library is completed by its button instead, so that the phone never calls the library for it, and links
-// to the official site.
-export function servedContent(content: TutorialContent, libraryBooking: boolean): TutorialContent {
-  if (libraryBooking) {
-    return content;
-  }
+// The switches the served content follows: LIBRARY_BOOKING_ENABLED and TUTORIAL_KWANJEONG_CHECK.
+export interface TutorialSwitches {
+  libraryBooking: boolean;
+  kwanjeongCheck: boolean;
+}
+
+// The content as GET /tutorial serves it. A quest checked through the library is served as the file holds it only
+// while both 관정 booking and the check are on; otherwise it is completed by its button, so that the phone never calls
+// the library for it. With 관정 booking turned off, it also links to the official site, and no quest offers to ask
+// the Assistant, which then cannot book.
+export function servedContent(
+  content: TutorialContent,
+  { libraryBooking, kwanjeongCheck }: TutorialSwitches,
+): TutorialContent {
   return {
-    quests: content.quests.map((quest) =>
-      quest.completion.kind === 'kwanjeongCheck'
-        ? { ...quest, completion: { kind: 'button' }, links: [...quest.links, KWANJEONG_SITE] }
-        : quest,
-    ),
+    ...content,
+    quests: content.quests.map((quest) => {
+      const { ask: _ask, ...rest } = quest;
+      const served = libraryBooking ? quest : rest;
+      if (quest.completion.kind !== 'kwanjeongCheck' || (libraryBooking && kwanjeongCheck)) {
+        return served;
+      }
+      return {
+        ...served,
+        completion: { kind: 'button' },
+        links: libraryBooking ? quest.links : [...quest.links, KWANJEONG_SITE],
+      };
+    }),
   };
 }

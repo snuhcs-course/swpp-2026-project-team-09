@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -57,6 +58,8 @@ interface CategoryPinProps {
   selected?: boolean;
   // Another icon than the kind's own.
   icon?: IconName;
+  // Translucent grey: a place the User may not use, such as a study building none of whose spaces is open to them.
+  muted?: boolean;
 }
 
 type MapPinProps = MePinProps | FriendPinProps | CategoryPinProps;
@@ -69,8 +72,16 @@ function Label({ children }: { children: string }): ReactElement {
   );
 }
 
-function CategoryPin({ kind, label, count = 0, selected = false, icon }: CategoryPinProps): ReactElement {
-  const { fill, icon: kindIcon, service, name } = CATEGORIES[kind];
+function CategoryPin({
+  kind,
+  label,
+  count = 0,
+  selected = false,
+  icon,
+  muted = false,
+}: CategoryPinProps): ReactElement {
+  const { fill: kindFill, icon: kindIcon, service, name } = CATEGORIES[kind];
+  const fill = muted ? color.inkSubtle : kindFill;
   const spoken = count > 0 ? `${label ?? name} ${count}` : (label ?? name);
   return (
     <View
@@ -78,7 +89,7 @@ function CategoryPin({ kind, label, count = 0, selected = false, icon }: Categor
       accessibilityRole="image"
       accessibilityState={{ selected }}
       accessible
-      style={styles.pin}
+      style={[styles.pin, muted && styles.muted]}
     >
       <View
         style={[styles.head, service && styles.serviceHead, { backgroundColor: fill }, selected && styles.selectedHead]}
@@ -257,6 +268,7 @@ const styles = StyleSheet.create({
     borderRightColor: 'transparent',
     borderTopColor: color.svcDining,
   },
+  muted: { opacity: 0.55 },
   tail: {
     width: 2,
     height: 8,

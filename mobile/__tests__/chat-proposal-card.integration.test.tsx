@@ -3,9 +3,11 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
+import { openBrowserAsync } from 'expo-web-browser';
 import type { QuestProposal } from '@/api/assistant-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -34,6 +36,7 @@ jest.mock('@/auth/google', () => ({
 }));
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
+jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(() => Promise.resolve({ type: 'opened' })) }));
 
 const ASKED = '내일 점심에 학식 같이 먹을 사람 4명 모집해줘, 식사 게시판에';
 const REPLY = '이렇게 만들까요? 만들기를 누르기 전에는 아무것도 만들지 않아요.';
@@ -189,5 +192,62 @@ describe('만들기', () => {
     expect(toast()).toHaveTextContent('게시판을 골라 주세요');
     expect(screen.getByTestId('chat-sheet')).toBeVisible();
     expect(make()).toBeEnabled();
+  });
+});
+
+// LUNCH at 종합운동장, whose field athletics.snu.ac.kr books.
+const AT_THE_FIELD: QuestProposal = {
+  ...LUNCH,
+  place: {
+    id: 'p-field',
+    name: '종합운동장',
+    booking: { label: '종합운동장 예약', url: 'https://athletics.snu.ac.kr/facility/list?mode=view&facility_idx=1' },
+  },
+};
+
+function booking(): ReturnType<typeof screen.queryByRole> {
+  return card().queryByRole('button', { name: /^시설 예약하기/u });
+}
+
+// Makes the card's Proposal, then goes back from 내 파티 to the map and opens the chat again, which making closed.
+async function made(user: User): Promise<void> {
+  await user.press(make());
+  await pass(500);
+  await user.press(screen.getByRole('tab', { name: '지도' }));
+  await pass(500);
+  await user.press(screen.getByLabelText(AI_INPUT));
+  await pass(500);
+}
+
+describe('시설 예약하기', () => {
+  it('is not shown before 만들기', async () => {
+    await proposed(AT_THE_FIELD);
+
+    expect(booking()).toBeNull();
+  });
+
+  it('is not shown on a made Proposal whose Place has no booking page', async () => {
+    const user = await proposed({ ...LUNCH, place: { id: 'p63', name: '학생회관', booking: null } });
+
+    await made(user);
+
+    expect(card().getByRole('button', { name: '만들었어요' })).toBeDisabled();
+    expect(booking()).toBeNull();
+  });
+
+  it("opens the Place's booking page once the Proposal is made", async () => {
+    const user = await proposed(AT_THE_FIELD);
+
+    await made(user);
+    const button = booking();
+    expect(button).toBeVisible();
+    expect(card().getByText('종합운동장 예약')).toBeVisible();
+    if (button !== null) {
+      await user.press(button);
+    }
+
+    expect(jest.mocked(openBrowserAsync)).toHaveBeenCalledWith(
+      'https://athletics.snu.ac.kr/facility/list?mode=view&facility_idx=1',
+    );
   });
 });

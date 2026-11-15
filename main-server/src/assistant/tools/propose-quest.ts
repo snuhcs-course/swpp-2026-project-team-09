@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -11,6 +12,7 @@ import { GlobalEventsService } from '../../global-events/global-events.service.j
 import { JoinPolicy, QuestBoard } from '../../generated/prisma/client.js';
 import { PlacesService } from '../../places/places.service.js';
 import { makeQuestSchema } from '../../quests/dto/quest-requests.dto.js';
+import { facilityBookingOf } from '../facility-booking.js';
 import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { type FoundKind } from '../found-ids.js';
 import { koreaTime } from '../korea-time.js';
@@ -107,7 +109,7 @@ async function placeOf(placeId: string, context: ToolContext, places: PlacesServ
   const place = (await places.list()).find(({ id }) => id === placeId);
   return place === undefined
     ? { failure: 'This Place is no longer in the list. Tell the User.' }
-    : { value: { id: place.id, name: place.name } };
+    : { value: { id: place.id, name: place.name, booking: await facilityBookingOf(place) } };
 }
 
 async function eventOf(

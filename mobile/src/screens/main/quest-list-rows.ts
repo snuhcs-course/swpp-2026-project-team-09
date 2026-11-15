@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial } from '@/api/tutorial-types';
 import { type IconName, questTone, tutorialTone } from '@/design-system';
 import type { QuestRowView } from '@/features/quests/adapter';
-import { questsInList, stepOf } from '@/features/tutorial/rules';
+import { kickerOf, questsInList } from '@/features/tutorial/rules';
 
 // The rows of the main screen's Quest list: the started tutorial quests on top, then today's Quests.
 
@@ -22,11 +23,11 @@ export interface RowLook {
   onPress: () => void;
 }
 
-// The started tutorial quests' rows (MainTutorialList): "새내기 튜토리얼 · n/N", the title and its 완료 조건.
+// The started tutorial quests' rows (MainTutorialList): "새내기 튜토리얼 · {category} · n/N", the title and its 완료 조건.
 export function tutorialRows(tutorial: Tutorial | undefined, onTutorial: (key: string) => void): RowLook[] {
   return questsInList(tutorial).map((quest) => ({
     id: `tutorial-${quest.key}`,
-    kicker: tutorial === undefined ? '' : `새내기 튜토리얼 · ${stepOf(tutorial, quest.key)}`,
+    kicker: tutorial === undefined ? '' : kickerOf(tutorial, quest),
     title: quest.title,
     meta: `완료 조건 · ${quest.condition}`,
     icon: 'flag',

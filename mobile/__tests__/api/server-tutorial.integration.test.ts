@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -10,7 +11,7 @@ import { refusal } from '../support/fake-server';
 import { answered, startFresh } from '../support/mocks';
 import { askMainServer, PHONE_NOW, TOKENS } from '../support/server';
 import { apiClient } from '@/api/client';
-import { TUTORIAL_CONTENT } from '@/api/mock/data/tutorial';
+import { TUTORIAL_CATEGORIES, TUTORIAL_CONTENT } from '@/api/mock/data/tutorial';
 import { TUTORIAL_SERVED, tutorialClient } from '@/api/server/tutorial-client';
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
 import { googleAvailable } from '@/auth/google';
@@ -33,7 +34,7 @@ function bodyOf(): Tutorial {
   for (const [index, quest] of TUTORIAL_CONTENT.entries()) {
     quests.push({ ...quest, status: index === 0 ? 'started' : 'notStarted' });
   }
-  return { state: 'active', rowHidden: false, eligibleByDefault: true, quests };
+  return { state: 'active', rowHidden: false, eligibleByDefault: true, categories: [...TUTORIAL_CATEGORIES], quests };
 }
 
 const BODY = bodyOf();
@@ -104,6 +105,8 @@ describe("the main server's tutorial answers", () => {
     ['an unknown state', { ...BODY, state: 'paused' }],
     ['no rowHidden', { ...BODY, rowHidden: undefined }],
     ['no eligibleByDefault', { ...BODY, eligibleByDefault: undefined }],
+    ['no categories', { ...BODY, categories: undefined }],
+    ['a category without its label', { ...BODY, categories: [{ key: 'life' }] }],
     ['a quest without its body', { ...BODY, quests: [{ ...BODY.quests[0], body: undefined }] }],
     ['an unknown status', { ...BODY, quests: [{ ...BODY.quests[0], status: 'done' }] }],
     ['a place without a point or a number', { ...BODY, quests: [{ ...BODY.quests[0], places: [{ floor: 2 }] }] }],
@@ -137,18 +140,17 @@ describe('the mock build', () => {
   it('answers the content in order, with the row shown and no rule met before the onboarding', async () => {
     const tutorial = await answered(apiClient.getTutorial());
 
-    expect(tutorial.quests.map(({ key }) => key)).toEqual([
-      's-card',
-      'admin-shuttle',
-      'kwanjeong',
-      'health-clinic',
-      'art-museum',
-    ]);
+    expect(tutorial.quests.map(({ key }) => key)).toEqual(TUTORIAL_CONTENT.map(({ key }) => key));
+    expect(tutorial.quests).toHaveLength(15);
+    expect(tutorial.categories.map(({ label }) => label)).toEqual(['생활', '공부·학사', '이동', '건강', '문화·여가']);
     expect(tutorial).toMatchObject({ state: 'off', rowHidden: false, eligibleByDefault: false });
   });
 
   it("the mock refuses a completion that does not fit the quest's kind, and an unknown key", async () => {
     await expect(answered(apiClient.completeTutorialQuest('s-card', 'skipped'))).rejects.toMatchObject({
+      status: 400,
+    });
+    await expect(answered(apiClient.completeTutorialQuest('kwanjeong', 'skipped'))).rejects.toMatchObject({
       status: 400,
     });
     await expect(answered(apiClient.startTutorialQuest('nope'))).rejects.toMatchObject({ status: 404 });

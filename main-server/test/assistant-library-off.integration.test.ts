@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -54,7 +55,7 @@ describe('With 관정 booking turned off', () => {
     });
   });
 
-  it('GET /tutorial serves the 관정 quest as a button quest with the official site, and completes it by the button', async () => {
+  it('GET /tutorial serves the 관정 quest as a button quest with the official site and no ask, and completes it by the button', async () => {
     const tutorial = tutorialSchema.parse((await getTutorial(stage.app, user)).body);
     const kwanjeong = tutorial.quests.find(({ key }) => key === 'kwanjeong');
 
@@ -62,6 +63,7 @@ describe('With 관정 booking turned off', () => {
       completion: { kind: 'button' },
       links: [{ label: '관정도서관 예약 사이트', url: OFFICIAL }],
     });
+    expect(tutorial.quests.filter(({ ask }) => ask !== undefined)).toEqual([]);
 
     const completed = await tutorialAfter(postTutorial(stage.app, user, 'quests/kwanjeong/complete', { by: 'button' }));
 

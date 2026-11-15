@@ -11,6 +11,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage } from './assistant-types';
@@ -48,6 +49,7 @@ import type {
 } from './types';
 import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
+import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
 import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
@@ -124,6 +126,8 @@ export interface ApiClient {
   getShuttle: () => Promise<ShuttleRoute>;
   // The vehicles in service, [] when none runs.
   listShuttleVehicles: () => Promise<ShuttleVehicle[]>;
+  // The 공부공간 layer's buildings, each Study Space marked usable or not for the User by 내 정보.
+  listStudySpaces: () => Promise<StudyBuilding[]>;
   // One of the User's Quests, ended or not; 404 QUEST_NOT_FOUND for one the User does not hold.
   getQuest: (questId: string) => Promise<Quest>;
   dropQuest: (questId: string) => Promise<void>;
@@ -231,6 +235,7 @@ export const apiClient: ShownClient = {
   listMenus: (date) => chosen().listMenus(date),
   getShuttle: () => chosen().getShuttle(),
   listShuttleVehicles: () => chosen().listShuttleVehicles(),
+  listStudySpaces: () => chosen().listStudySpaces(),
   getQuest: (questId) => chosen().getQuest(questId),
   dropQuest: (questId) => chosen().dropQuest(questId),
   addSubQuest: (questId, content, key) => chosen().addSubQuest(questId, content, key),

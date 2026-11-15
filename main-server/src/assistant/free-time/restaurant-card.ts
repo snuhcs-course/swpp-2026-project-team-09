@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { JoinPolicy } from '../../generated/prisma/client.js';
@@ -54,7 +55,8 @@ function mealProposal(
     board: null,
     capacity: 1 + invitees.length,
     startsAt: koreaTime(start),
-    place: { id: restaurant.place.id, name: placeWords(restaurant) },
+    // A meal is not booked: the facilities of its building (301's study rooms) are not what it is for.
+    place: { id: restaurant.place.id, name: placeWords(restaurant), booking: null },
     globalEvent: null,
     invitees,
   };
