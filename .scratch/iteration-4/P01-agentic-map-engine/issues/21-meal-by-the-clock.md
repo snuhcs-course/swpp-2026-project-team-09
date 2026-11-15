@@ -37,3 +37,11 @@ The server takes the meal by the clock when the User's words name none, and a ti
 - **The benchmark's `p4-answer` world** is the P4 world (its seeds, clock, and travel fixture) asked with `clientCapabilities: ['library', 'answer']`, as the app asks with a context, so that `planMeal` is offered. Its cases live in `eval/cases/` and stay out of the P4 suite's 40. `planMeal` is not one of the scorer's tools, so the case file only requires the call; the counts above were read from each run's `planMeal` input and the reply's `answer`. The model was OpenRouter's `anthropic/claude-haiku-5.5`, the server's default, with the clock at Monday 2026-11-02 15:00. `dotEnv()` also takes a provider's key from the command's environment, so that a worktree without its own `.env` can run it.
 - **`pnpm eval` does not start on `4.0/Main`**: `src/common/settings.ts` imports `./llm-keys.js`, which Node's type stripping cannot resolve to the `.ts` file. The runs here used a resolve hook outside the repository (`node --import <hook> eval/cli.ts …`); fixing the import is left for its own change.
 - **"오후 3시쯤 민수랑 저녁 먹자" in the P4 world** gives "저녁 17:15 301동식당" / "17:15에야 도착해요": the asker's Class in 301동 ends at 17:15, after dinner opens at 17:00, so the line names the asker's arrival, as it does for any start the User fixed.
+
+### Agent usage (2026-11-16)
+
+- Agent time: about 1 hour, an estimate from the session transcripts: the build, the real-model runs, and the Main merge about 45 minutes, and the coordinating session about 12.
+- Tokens, the subagent included (the coordinating session's figures cover its whole stretch, part of which went to other pull requests):
+  - Input: 412 uncached, plus 54,065,528 cache reads and 661,814 cache writes.
+  - Output: 132,353.
+- The real-model runs cost about USD 0.12 each on OpenRouter.
