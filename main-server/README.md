@@ -471,7 +471,7 @@ They are separate from the env settings in `src/common/settings.ts`, which stay 
 
 - Each one is registered in code, in `registeredSettings()` in `src/global-settings/registered-settings.ts`, with a
   name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values and a check of
-  its own. One is registered: `llm.key`, the name of the AI's key ([Assistant](#assistant)).
+  its own, and a `label` that names a value on the Settings page. One is registered: `llm.key`, the name of the AI's key ([Assistant](#assistant)).
 - The table `settings` holds a row only for a setting that was saved. A setting with no row has its default. The table
   `setting_changes` keeps every save: the old and the new value, the Administrator and the time. The one row of
   `settings_revision` counts the saves.
@@ -483,6 +483,20 @@ They are separate from the env settings in `src/common/settings.ts`, which stay 
   A failed check keeps the last copy and logs. A read of a setting makes no query.
 - A row whose value the registry no longer takes, for example a value that is no longer allowed, reads as the default
   and logs a warning. A row of a name no longer registered is ignored.
+
+The admin site's Settings page changes them through these routes, guarded like every `/admin` route. Any
+Administrator may change any setting.
+
+- `GET /admin/settings` lists every registered setting in the registry's order as `{ name, type, description, default,
+value, allowed, lastChange }`. `value` is the one in effect on the pod that answers; `allowed` is null when any value
+  of the type is allowed, or each allowed value as `{ value, label }`; `lastChange` is null, or the latest save as
+  `{ newValue, appliesAt }`. `llm.key` labels each key's name with its provider, such as `default (OpenRouter)`, and
+  never gives a key's value.
+- `PUT /admin/settings/:name` with `{ "value": "..." }`, the value as text, saves it and answers `200 { appliesAt }`, the
+  next minute. An unregistered name, a value of the wrong type or not allowed, or one the setting's check refuses,
+  such as a key name the server has no key for, gets 400 with the reason as `message`, and nothing is saved.
+- `GET /admin/settings/history` lists the latest 100 saves, newest first, as `{ name, oldValue, newValue,
+administratorEmail, changedAt, appliesAt }`.
 
 To register a setting, add it with `defineSetting()` from `src/global-settings/registry.ts`, and read it with
 `GlobalSettings.get(THE_SETTING)`, which answers a value of its type:

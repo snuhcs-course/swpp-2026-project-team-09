@@ -23,6 +23,8 @@ export type AtStart<T> = T | (() => T);
 
 export type SettingCheck = (value: SettingValue) => string | null;
 
+export type SettingLabel = (value: SettingValue) => string;
+
 // One global setting, as it is registered. `allowed`, when given, lists every value it may take; without it any value
 // of its type is allowed.
 export type SettingDefinition = {
@@ -35,6 +37,8 @@ export type SettingDefinition = {
     readonly allowed?: AtStart<readonly ValueOfType[Type][]>;
     // A check of a save beyond the type and the allowed values: the reason it is refused, or null. Only a save runs it.
     readonly check?: SettingCheck;
+    // How the Settings page names a value, as llm.key names a key with its provider. Without it, the value itself.
+    readonly label?: SettingLabel;
   };
 }[SettingValueType];
 
@@ -49,6 +53,7 @@ export interface ResolvedSetting {
   // Null when any value of the type is allowed.
   readonly allowed: readonly SettingValue[] | null;
   readonly check: SettingCheck | null;
+  readonly label: SettingLabel;
 }
 
 // Keeps the type of a definition's values, so that `GlobalSettings.get` answers it.
@@ -75,6 +80,7 @@ export function resolveRegistry(definitions: readonly SettingDefinition[]): Map<
       default: evaluate<SettingValue>(definition.default),
       allowed: definition.allowed === undefined ? null : evaluate<readonly SettingValue[]>(definition.allowed),
       check: definition.check ?? null,
+      label: definition.label ?? String,
     };
     const refusal = refusalOf(setting, setting.default);
     if (refusal !== null) {
