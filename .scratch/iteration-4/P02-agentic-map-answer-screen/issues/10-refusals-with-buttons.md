@@ -81,3 +81,11 @@ The five messages were sent once through the chat feature of an app that draws a
 | 심심해 | `refuse` | `vague` | the refusal's line |
 | ㅂㄱㅍ | `refuse` | `not-understood` | the refusal's lines |
 | 누가 내 위치 찾아봤어? | `refuse` | `who-looked` | the refusal's lines |
+
+### Agent usage (2026-11-15)
+
+Two subagents (Opus 5.5): the survey of row 8's 28 boards against the code, which all of row 8's tickets were written from, and the implementation. This session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 54 minutes (survey 16, implementation 38), an estimate from the transcripts' timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 241,442; input 67,603,006, of which 66,900,552 were cache reads, 701,942 cache writes, and 512 uncached. Without cache reads: 943,896.
+- The real-model check sent five requests to the chat model.
