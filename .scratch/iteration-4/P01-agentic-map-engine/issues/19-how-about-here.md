@@ -40,3 +40,10 @@ A building pressed during a Plan becomes "여기면 어때?". The recalculation 
 
 - **a7**: the Plan's own lines are a meal's, "**12:35 자하연식당 2층**" / "같이 먹으면 식사가 28분 줄어요" (against 48 minutes alone there). The card's note "12:35–12:55 함께 20분 · 지금 계획보다 2분 짧아요" is worked out by the app (P02-26).
 - **a8**: 나's part has `arriveAt` 11:50 with 0 minutes from 301동, from which the app writes "지금 여기 있어요". The other values and both lines are the board's.
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 50 minutes, an estimate from the session transcripts: the build about 35 minutes with the review's fixes, a review of the diff about 9, and the coordinating session about 6.
+- Tokens, subagents included (the coordinating session's figures cover its whole stretch, part of which went to other pull requests):
+  - Input: 474 uncached, plus 49,766,992 cache reads and 885,511 cache writes.
+  - Output: 193,148.
