@@ -47,10 +47,9 @@ const EDGE = space[4];
 // A Plan may span the campus, and on a phone Kakao's level 15, where a campus map's pinch out stops, is closer than
 // the lowest zoom of the camera's rules: while a Plan is drawn, a native map may go one level further out.
 const ANSWER_MIN_LEVEL = NATIVE_MIN_LEVEL - 1;
-// Where the lowest zoom is too close for the Plan's own points, the camera may go out to that level's zoom, kept a
-// quarter of a level clear of it: on Android the module shows a view taller than when it opened by sending each zoom
-// that much lower (`useScaleShift` in `native-map.tsx`, 0.15 on the emulator), and Kakao holds what it is sent to the
-// level.
+// Where the lowest zoom is too close for the Plan's own points, the camera may go out to that level's zoom
+// (`nativeLevelZoom`), kept a quarter of a level clear of it: on Android the module shows a view taller than when it
+// opened by sending each zoom that much lower (`useScaleShift` in `native-map.tsx`, 0.146 on the emulator).
 const ANSWER_OUTER_ZOOM = nativeLevelZoom(ANSWER_MIN_LEVEL) + 0.25;
 
 const NO_LOOKS: readonly MarkerLook[] = [];

@@ -32,13 +32,17 @@ export const MIN_ZOOM = 14;
 export const MAX_ZOOM = 19;
 
 // The lowest level of Kakao's SDK, which takes whole levels only: pinching out stops there instead of snapping back
-// from below the lowest zoom. On the emulator it shows zoom 15.515 (`nativeLevelZoom`).
+// from below the lowest zoom.
 export const NATIVE_MIN_LEVEL = 15;
 
-// The zoom a level of Kakao's SDK shows. The native module measures it on each phone and keeps it to itself; on the
-// emulator (density 2.625) it measured level 15 at zoom 15.515.
+// How far above its number a level of Kakao's SDK reaches, at most as measured. The native module measures the zoom
+// of the level Kakao opens at once at each start and keeps it to itself: on the emulator (density 2.625) level 15
+// measured from 15.19 to 15.515 over several starts. A camera at `nativeLevelZoom` of a level or closer is at that
+// level or above on any of them: Kakao has shown the level there, and the module, which asks for the level of a zoom
+// less its own measure, rounded, asks for no lower.
 const KAKAO_LEVEL_ZOOM = 0.515;
 
+// The zoom from which a camera is at Kakao's `level` or above.
 export function nativeLevelZoom(level: number): number {
   return level + KAKAO_LEVEL_ZOOM;
 }
