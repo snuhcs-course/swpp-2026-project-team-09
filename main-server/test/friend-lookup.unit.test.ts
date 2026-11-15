@@ -29,6 +29,8 @@ const minsu = (changes: Partial<FriendView> = {}): FriendView => ({
   id: MINSU,
   name: '민수',
   department: '컴퓨터공학부',
+  friendId: 'MNS23456',
+  friendsSince: '2026-09-01T12:00:00+09:00',
   level: 'timetable',
   position: null,
   placeId: null,
