@@ -6,14 +6,13 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useEffect, useEffectEvent, useMemo } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { MapScene } from '@/api/assistant-types';
+import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import { space } from '@/design-system';
 import { answerCamera, roomsOf, type ViewArea } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
-import { withPerson } from '@/features/assistant/plan-input';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type CardView, friendIdOf } from '@/features/map/adapter';
@@ -30,6 +29,7 @@ import {
   ZOOM_OFFSET,
 } from '@/map';
 import { ANSWER_PILL, listsTop, type Room } from './layout';
+import { useFaces } from './use-answer-faces';
 import type { MainMap } from './use-main-map';
 
 // What the map draws: its markers, its Avatars, and its lines.
@@ -118,25 +118,61 @@ function labelViewOf(drawing: AnswerDrawing, { top, card, pill, view }: Framing)
   return camera === null ? null : { camera, size: view.size, area: labelArea(top, card, view.size, pill) };
 }
 
-// Shows the drawing when it comes, and again when the card's height or the stage's size changes: in one glide to the
-// camera its labels were placed at. Until the stage is laid out and the map has told its fit zoom, the map fits the
-// points itself. No drawing moves nothing, so closing the answer leaves the camera where it is.
-function useAnswerCamera(drawing: AnswerDrawing | null, shown: LabelView | null, map: MainMap, framing: Framing): void {
-  const { fitAnswer, moveTo } = map;
-  const show = useEffectEvent(() => {
-    if (drawing === null || drawing.points.length === 0) {
-      return;
+// How long the drawing and the card's height stay the same before the camera follows an answer that replaced another,
+// such as a recalculation's: the card is laid out again after that answer comes, and the camera moves once for both.
+const STILL_MS = 120;
+
+// The glide to the camera the drawing's labels were placed at. Until the stage is laid out and the map has told its fit
+// zoom, the map fits the points itself. No drawing, no move.
+function showDrawing(drawing: AnswerDrawing | null, shown: LabelView | null, map: MainMap, framing: Framing): void {
+  if (drawing === null || drawing.points.length === 0) {
+    return;
+  }
+  if (framing.view === null) {
+    map.fitAnswer(drawing.points, paddingOf(framing.top, framing.card, drawing, framing.pill));
+    return;
+  }
+  if (shown !== null) {
+    map.moveTo(shown.camera);
+  }
+}
+
+// Shows the drawing when it comes, and again when the card's height or the stage's size changes. Once an answer has
+// replaced another, the glide waits until the drawing and the card's height have stayed the same for `STILL_MS`. No
+// drawing moves nothing, so closing the answer leaves the camera where it is.
+function useAnswerCamera(
+  drawing: AnswerDrawing | null,
+  shown: LabelView | null,
+  answer: AnswerReply | null,
+  map: MainMap,
+  framing: Framing,
+): void {
+  const followed = useRef<AnswerReply | null>(null);
+  const waiting = useRef(false);
+  const move = (): void => {
+    showDrawing(drawing, shown, map, framing);
+  };
+  const follow = useEffectEvent(() => {
+    if (followed.current !== null && answer !== null && answer !== followed.current) {
+      waiting.current = true;
     }
-    if (framing.view === null) {
-      fitAnswer(drawing.points, paddingOf(framing.top, framing.card, drawing, framing.pill));
-      return;
+    followed.current = answer;
+    if (!waiting.current) {
+      move();
+      return null;
     }
-    if (shown !== null) {
-      moveTo(shown.camera);
-    }
+    return setTimeout(() => {
+      waiting.current = false;
+      move();
+    }, STILL_MS);
   });
   useEffect(() => {
-    show();
+    const timer = follow();
+    return (): void => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+    };
   }, [drawing, framing]);
 }
 
@@ -205,14 +241,21 @@ interface Drawn {
 // A drawing's markers and lines on the map in place of the everyday map's markers, lines, and the User's own Avatar,
 // with the camera of an answer. The camera is worked out from the drawing with its sides chosen in metres, and the
 // marks are drawn with their sides chosen at that camera. Null while there is nothing to draw. `looks` are asked for
-// with the drawing's own, so that a change of drawing never waits for a picture.
-function useDrawnMap(draw: Draw | null, looks: readonly MarkerLook[], map: MainMap, framing: Framing): Drawn | null {
+// with the drawing's own, so that a change of drawing never waits for a picture. `answer` is the answer drawn, for the
+// camera to tell one that replaced another.
+function useDrawnMap(
+  draw: Draw | null,
+  answer: AnswerReply | null,
+  looks: readonly MarkerLook[],
+  map: MainMap,
+  framing: Framing,
+): Drawn | null {
   const base = useMemo(() => (draw === null ? null : draw(null)), [draw]);
   const shown = useMemo(() => (base === null ? null : labelViewOf(base, framing)), [base, framing]);
   const drawing = useMemo(() => (draw === null || shown === null ? base : draw(shown)), [draw, base, shown]);
   const things = drawing?.things ?? [];
   const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
-  useAnswerCamera(base, shown, map, framing);
+  useAnswerCamera(base, shown, answer, map, framing);
   if (base === null || drawing === null || things.length === 0) {
     return null;
   }
@@ -239,7 +282,7 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
     [scene],
   );
   const framing = useFraming(map, room, false);
-  const drawn = useDrawnMap(draw, NO_LOOKS, map, framing);
+  const drawn = useDrawnMap(draw, null, NO_LOOKS, map, framing);
   if (drawn === null) {
     return null;
   }
@@ -248,18 +291,18 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
 }
 
 // A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
-function addOnPress({ change }: ShownAnswer, id: string): void {
+function addOnPress({ add }: ShownAnswer, id: string): void {
   const userId = friendIdOf(id);
-  if (userId === null) {
-    return;
+  if (userId !== null) {
+    add(userId);
   }
-  change((input) => withPerson(input, userId));
 }
 
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the
 // Avatars of the people it draws. Null while no Plan is shown. The looks of every Plan, each at its own camera, are
-// asked for when the answer comes, so that the arrows never wait for a picture. Once "이대로 초대" is pressed the faces
-// say how each invited Friend stands, and a press changes nothing: the Plan is sent.
+// asked for when the answer comes, so that the arrows never wait for a picture. A Friend's face that a press would add
+// carries a "+", and lights while that add is on its way. Once "이대로 초대" is pressed the faces say how each invited
+// Friend stands, no face carries a "+", and a press changes nothing: the Plan is sent.
 export function useAnswerMap(
   shown: ShownAnswer,
   map: MainMap,
@@ -278,13 +321,15 @@ export function useAnswerMap(
     () => (answer === null ? NO_LOOKS : looksOf(answer, (drawing) => labelViewOf(drawing, framing))),
     [answer, framing],
   );
-  const drawn = useDrawnMap(draw, looks, map, framing);
+  const drawn = useDrawnMap(draw, answer, looks, map, framing);
+  const others = drawn === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, drawn.drawing);
+  const faces = useFaces(others, shown, made !== null);
   if (drawn === null) {
     return null;
   }
   const { markers, lines, drawing } = drawn;
   return {
-    contents: { markers, lines, avatars: othersOf(everyday.avatars, everyday.cards, drawing) },
+    contents: { markers, lines, avatars: faces },
     onPress: (id) => {
       if (sending || made !== null) {
         return;

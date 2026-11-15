@@ -23,7 +23,7 @@ export interface Things {
 }
 
 // Above the others of its list. The User's own Avatar is 1, so a selected person is above it too, as in the frames.
-const SELECTED_ORDER = 2;
+export const SELECTED_ORDER = 2;
 
 const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
