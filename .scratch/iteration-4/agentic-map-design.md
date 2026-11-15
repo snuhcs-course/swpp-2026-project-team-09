@@ -183,8 +183,9 @@ The map changes only when the answer needs a place, a route, or people. A questi
 ### Watching interests
 
 - The User can ask the Assistant to watch for one kind of thing: events and recruiting that match the User's interests. This belongs to the event and party scenes. Results are not filtered by the Timetable; an overlap with the Timetable is only marked.
-- The everyday map shows only the events and recruiting that match the interests being watched. Other events are not put on the map, and are found by asking the Assistant ("오늘 볼 만한 거 있어?", Anything worth seeing today?).
-- A newly posted event or recruiting party that matches a watched interest gets a "!" mark at its place on the map. Tapping the mark gives the same answer as asking. The events or recruiting parties at one place share one mark ("채용박람회 외 1", the job fair and 1 more), and the answer browses only those with the arrows. The "!" disappears once the mark has been opened, and a mark without it gives the same answer.
+- The everyday map shows only the events and recruiting that match the interests being watched, and the events the User starred. Other events are not put on the map, and are found by asking the Assistant ("오늘 볼 만한 거 있어?", Anything worth seeing today?).
+- An event the User starred (☆) stays on the map with a star until it ends, whether or not it matches an interest. The star is the User's own choice, so it carries no "!" and sends no notification.
+- A newly posted event or recruiting party that matches a watched interest gets a "!" mark at its place on the map. Tapping the mark gives the same answer as asking. The events or recruiting parties at one place share one mark ("채용박람회 외 1", the job fair and 1 more), and the answer browses only those with the arrows. The "!" disappears once the mark has been opened, and a mark without it gives the same answer. A shared mark takes one look, in the order "!", star, plain.
 - Matching an interest means catching the same meaning in different words ("채용박람회", "커리어 페어", and "기업 설명회", all a job fair or company session), and this is the Assistant's job. In the implementation, topic tags are added in the same model call that reads collected event posts for their time and place, and a User's interests are the profile's hashtags together with the interests told to the Assistant. A match on a profile hashtag only shows on the map; notifications go only for interests told to the Assistant.
 
 ### A late member
@@ -224,7 +225,7 @@ The map changes only when the answer needs a place, a route, or people. A questi
 ### First run
 
 - A User opening the app for the first time is asked, in this order, for their Timetable, their interests, and one Friend to invite.
-- A User who has asked the Assistant to watch no interest at all sees two or three of today's events, faded, on the map.
+- A User who has asked the Assistant to watch no interest at all sees two or three of today's events, faded, on the map, beside the events they starred.
 
 ### Screen words
 
@@ -406,7 +407,7 @@ The leave-by times are 15:30 minus 18 minutes (15:12), 14:10 minus 4 minutes (14
 
 **Rules**
 
-- Starting from the mark of a watched interest on the map gives the same first answer as Alone 1, and the arrows browse only the events of that mark (the job fair and the company session). The concert, which has no mark, is found only by asking.
+- Starting from the mark of a watched interest on the map gives the same first answer as Alone 1, and the arrows browse only the events of that mark (the job fair and the company session). The concert, which has no mark, is found only by asking, until the User stars it.
 - A User holds one party per event, as now.
 - The order is: what matches a watched interest first, then what allows a longer stay. Events that clash with a class come last.
 - When no event can be attended, it says so and suggests handing over an interest to watch.

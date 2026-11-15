@@ -13,13 +13,15 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
-import { MODEL_PORT, type Model } from '../src/assistant/adapter.js';
+import { type Model } from '../src/assistant/adapter.js';
+import { MODEL_FACTORY, type ModelFactory } from '../src/assistant/model-port.js';
 import { httpAdapter } from '../src/common/http-adapter.js';
 import { JSON_BODY_LIMIT } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
@@ -42,7 +44,7 @@ import { refuseKakao } from './walking-route.js';
 // modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer. `travel`,
 // when given, answers in the place of the real Travel Times. `tutorialFile`, when given, is read as the tutorial's content
 // in the place of content/tutorial.yaml. `fetchExpo` answers in Expo's push service's place, refusing every call by
-// default.
+// default. `model` answers for every one of the AI's keys, unless `modelFactory` gives each key a model of its own.
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   controllers: Type[] = [],
@@ -52,7 +54,7 @@ export async function startApp(
   modules: (Type | DynamicModule)[] = [],
   travel?: TravelProvider,
   tutorialFile?: string,
-  { fetchExpo = refuseExpoPush }: { fetchExpo?: typeof fetch } = {},
+  { fetchExpo = refuseExpoPush, modelFactory }: { fetchExpo?: typeof fetch; modelFactory?: ModelFactory } = {},
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
@@ -76,8 +78,8 @@ export async function startApp(
     .useValue(fetchKakao)
     .overrideProvider(FETCH_MATCH_SERVER)
     .useValue(fetchMatchServer)
-    .overrideProvider(MODEL_PORT)
-    .useValue(model)
+    .overrideProvider(MODEL_FACTORY)
+    .useValue(modelFactory ?? ((): Model => model))
     .compile();
   // As src/main.ts does.
   const app = moduleRef.createNestApplication<NestExpressApplication>(httpAdapter());

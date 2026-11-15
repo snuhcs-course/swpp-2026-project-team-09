@@ -20,6 +20,7 @@
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
 import { z } from 'zod';
+import { aiKeysOf } from './llm-keys.js';
 
 const port = z.string().pipe(z.coerce.number<string>().int().min(1).max(65535));
 
@@ -72,6 +73,9 @@ const llmKeys = z
     ),
   );
 
+export const MODEL_CACHE_MODES = ['breakpoints', 'auto', 'off'] as const;
+export type ModelCache = (typeof MODEL_CACHE_MODES)[number];
+
 // Every setting arrives as a string from the environment; the schema converts it to the type the code uses.
 export const settingsSchema = z
   .object({
@@ -101,11 +105,15 @@ export const settingsSchema = z
     MATCH_SERVER_URL: z.url(),
     // The secret that this server and the match server send with each call to the other.
     MATCH_SERVER_TOKEN: z.string().min(32),
-    // The Assistant's (README.md: Assistant): the OpenRouter key, empty when there is none, and the OpenRouter id of
-    // the model, such as anthropic/claude-haiku-5.5.
+    // The AI's keys (README.md: Assistant): the OpenRouter key, the one `llm.key` names `default`, empty when there is
+    // none, and the others by name. The global setting `llm.key` chooses among them, and each provider's model is a
+    // constant (src/common/llm-keys.ts).
     OPENROUTER_API_KEY: z.string().default(''),
-    ASSISTANT_MODEL: z.string().default(''),
     LLM_KEYS: llmKeys,
+    // What the Anthropic requests cache: "breakpoints" marks the end of the constant prompt and caches the chat's
+    // conversation automatically, "auto" caches every request automatically only, "off" caches nothing. The server
+    // keeps the default; the others are there for the evaluations' --cache.
+    MODEL_CACHE: z.enum(MODEL_CACHE_MODES).default('breakpoints'),
     // The Assistant's limits: the messages a User may send in a day in Korea, and per message the model calls, the
     // time in milliseconds and the tokens the model may write in each call. Its reasoning counts towards those tokens,
     // and at 1,000 it could use them all and leave no answer (eval/p5/r0a.md).
@@ -172,17 +180,19 @@ export const settingsSchema = z
       when: ({ issues }) => issues.length === 0,
     },
   )
-  // Refused at the start, so that a Release shows the mistake and no try of a Judgement is used on it.
-  .refine(
-    ({ AUTOMATIC_JUDGEMENT, OPENROUTER_API_KEY, ASSISTANT_MODEL }) =>
-      !AUTOMATIC_JUDGEMENT || (OPENROUTER_API_KEY !== '' && ASSISTANT_MODEL !== ''),
-    { path: ['AUTOMATIC_JUDGEMENT'], message: 'Needs OPENROUTER_API_KEY and ASSISTANT_MODEL' },
-  )
-  .refine(
-    ({ SAME_EVENT_AI_CHOICE, OPENROUTER_API_KEY, ASSISTANT_MODEL }) =>
-      !SAME_EVENT_AI_CHOICE || (OPENROUTER_API_KEY !== '' && ASSISTANT_MODEL !== ''),
-    { path: ['SAME_EVENT_AI_CHOICE'], message: 'Needs OPENROUTER_API_KEY and ASSISTANT_MODEL' },
-  )
+  // Refused at the start, so that a Release shows the mistake and no try of a Judgement is used on it: a step that asks
+  // the model needs a key whose provider its value tells. Only once every setting passed its own check, so that
+  // LLM_KEYS is a record.
+  .refine(({ AUTOMATIC_JUDGEMENT, ...keys }) => !AUTOMATIC_JUDGEMENT || aiKeysOf(keys).offered.length > 0, {
+    path: ['AUTOMATIC_JUDGEMENT'],
+    message: 'Needs OPENROUTER_API_KEY or a key in LLM_KEYS',
+    when: ({ issues }) => issues.length === 0,
+  })
+  .refine(({ SAME_EVENT_AI_CHOICE, ...keys }) => !SAME_EVENT_AI_CHOICE || aiKeysOf(keys).offered.length > 0, {
+    path: ['SAME_EVENT_AI_CHOICE'],
+    message: 'Needs OPENROUTER_API_KEY or a key in LLM_KEYS',
+    when: ({ issues }) => issues.length === 0,
+  })
   // With one client ID in both settings, either sign-in would accept the other's ID token.
   .refine((settings) => settings.GOOGLE_APP_CLIENT_ID !== settings.GOOGLE_ADMIN_CLIENT_ID, {
     path: ['GOOGLE_ADMIN_CLIENT_ID'],
