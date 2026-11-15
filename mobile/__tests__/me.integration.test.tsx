@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
@@ -167,13 +168,22 @@ describe('the week', () => {
 });
 
 describe('the 위치 공유 card', () => {
-  it('has the Master Switch with the number of Friends, and no 비공개 구역', async () => {
+  it('has the Master Switch with the Friends the User allows, and no 비공개 구역', async () => {
     await openMe();
 
     expect(screen.getByRole('header', { name: '위치 공유' })).toBeVisible();
-    expect(screen.getByRole('switch', { name: '친구와 위치 공유' })).not.toBeChecked();
-    expect(screen.getByText('12명')).toBeVisible();
+    expect(screen.getByRole('switch', { name: '위치 공유' })).not.toBeChecked();
+    expect(screen.getByText('위치 공유를 허용한 친구 12명')).toBeVisible();
+    expect(screen.getByText('AI 커리어 설명회 같이 가요 파티에서 위치 공유를 허용한 멤버 3명')).toBeVisible();
     expect(screen.queryByText('비공개 구역 관리')).toBeNull();
+  });
+
+  it('has no 파티 line while no 파티 is on', async () => {
+    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
+    await openMe();
+
+    expect(screen.getByText('위치 공유를 허용한 친구 12명')).toBeVisible();
+    expect(screen.queryByText(/파티에서 위치 공유를 허용한 멤버/u)).toBeNull();
   });
 
   it('is outlined when the friend panel\'s "공유 설정" shows it, and the outline goes after 1.2 s', async () => {

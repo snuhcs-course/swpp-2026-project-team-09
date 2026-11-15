@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -30,6 +31,8 @@ import type { FriendView } from '@/features/friends/adapter';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { useFriendRequests } from '@/features/friends/use-friend-requests';
 import { useFriends } from '@/features/friends/use-friends';
+import { useMasterSwitch } from '@/features/sharing/use-master-switch';
+import { MasterOffLine } from '../me/master-off-line';
 import { EndFriendship } from './end-friendship';
 import { LevelTrack } from './level-track';
 import { OffQuestion } from './off-question';
@@ -75,12 +78,14 @@ function Entries({ received }: { received: number | undefined }): ReactElement {
 interface FriendRowProps {
   friend: FriendView;
   level: FriendLevel;
+  masterOn: boolean;
   onChoose: (level: FriendLevel) => void;
   onPress: () => void;
 }
 
-// A Friend, with the three levels the User may let them see under the name.
-function FriendRow({ friend, level, onChoose, onPress }: FriendRowProps): ReactElement {
+// A Friend, with the three levels the User may let them see under the name, off and disabled while the Master Switch
+// is off.
+function FriendRow({ friend, level, masterOn, onChoose, onPress }: FriendRowProps): ReactElement {
   return (
     <View style={styles.friend}>
       <Pressable
@@ -99,7 +104,7 @@ function FriendRow({ friend, level, onChoose, onPress }: FriendRowProps): ReactE
           </Text>
         </View>
       </Pressable>
-      <LevelTrack label={`${friend.name}님에게 보일 위치`} level={level} onChoose={onChoose} />
+      <LevelTrack disabled={!masterOn} label={`${friend.name}님에게 보일 위치`} level={level} onChoose={onChoose} />
     </View>
   );
 }
@@ -113,11 +118,13 @@ interface ListProps {
 // The list, and the question before a Friend's location is turned off the first time.
 function Friends({ friends, query, onPress }: ListProps): ReactElement {
   const { levelOf, choose, asked, answer } = useLevels();
+  const masterOn = useMasterSwitch().on;
   const shown = friends.filter((friend) => found(friend, query));
   return (
     <>
       <SectionHeader>{`친구 ${friends.length}`}</SectionHeader>
       <Text style={styles.note}>둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요</Text>
+      {friends.length === 0 ? null : <MasterOffLine />}
       {friends.length === 0 ? <EmptyState words="아직 친구가 없어요" /> : null}
       {friends.length > 0 && shown.length === 0 ? <EmptyState words="결과 없음" /> : null}
       {shown.map((friend) => (
@@ -128,6 +135,7 @@ function Friends({ friends, query, onPress }: ListProps): ReactElement {
             onPress(friend);
           }}
           level={levelOf(friend)}
+          masterOn={masterOn}
           onChoose={(level) => {
             choose(friend, level);
           }}

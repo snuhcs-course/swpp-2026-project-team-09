@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -39,7 +40,7 @@ const MASTER_ASKED = 'POST /users/me/master-switch/asked';
 const LOWER_ALL = 'PUT /users/me/friend-levels';
 const FRIEND_QUESTION = '김민준에게는 지금 있는 건물만 보여 줄 수도 있어요.';
 const MASTER_QUESTION = '모든 친구에게는 지금 있는 건물만 보여 줄 수도 있어요.';
-const SWITCH = '친구와 위치 공유';
+const SWITCH = '위치 공유';
 
 let server: FakeServer;
 
@@ -49,6 +50,8 @@ beforeEach(async () => {
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
+  // The levels take a press only while the Master Switch is on.
+  server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
   for (const route of [LEVEL, ASKED, SWITCH_ROUTE, MASTER_ASKED, LOWER_ALL]) {
     server.on(route, { status: 204 });
   }

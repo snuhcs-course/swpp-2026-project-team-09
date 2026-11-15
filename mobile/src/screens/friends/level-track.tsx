@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -23,20 +24,29 @@ interface LevelTrackProps {
   // The level shown chosen, or none.
   level: FriendLevel | null;
   onChoose: (level: FriendLevel) => void;
+  // While the Master Switch is off: 시간표만 shown chosen, the off look, and no press. `level` is kept for later.
+  disabled?: boolean;
 }
 
 // The three levels as cells of one width in a track, whatever the length of their words.
-export function LevelTrack({ label, level, onChoose }: LevelTrackProps): ReactElement {
+export function LevelTrack({ label, level, onChoose, disabled = false }: LevelTrackProps): ReactElement {
+  const shown = disabled ? 'timetable' : level;
   return (
-    <View accessibilityLabel={label} accessibilityRole="radiogroup" style={styles.track}>
+    <View
+      accessibilityLabel={label}
+      accessibilityRole="radiogroup"
+      accessibilityState={{ disabled }}
+      style={[styles.track, disabled && styles.trackOff]}
+    >
       {LEVELS.map(({ level: each, words }) => {
-        const chosen = each === level;
+        const chosen = each === shown;
         return (
           <Pressable
             accessibilityLabel={words}
             accessibilityRole="radio"
-            accessibilityState={{ checked: chosen }}
+            accessibilityState={{ checked: chosen, disabled }}
             aria-checked={chosen}
+            disabled={disabled}
             key={each}
             onPress={() => {
               onChoose(each);
@@ -60,6 +70,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: color.surfaceSunken,
   },
+  trackOff: { opacity: 0.5 },
   cell: {
     flex: 1,
     alignItems: 'center',

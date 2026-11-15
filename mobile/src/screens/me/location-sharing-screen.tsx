@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ import { LevelTrack } from '../friends/level-track';
 import { OffQuestion } from '../friends/off-question';
 import { type Levels, useLevels } from '../friends/use-levels';
 import { LocationExplanation } from '../main/location-explanation';
+import { MasterOffLine } from './master-off-line';
 import { useSharingSwitch } from './use-sharing-switch';
 
 const SEEN_WORDS: Readonly<Record<FriendLevel, string>> = {
@@ -51,10 +53,11 @@ interface FriendRowProps {
   friend: Friend;
   level: FriendLevel;
   seen: FriendLevel;
+  masterOn: boolean;
   onChoose: (level: FriendLevel) => void;
 }
 
-function FriendRow({ friend, level, seen, onChoose }: FriendRowProps): ReactElement {
+function FriendRow({ friend, level, seen, masterOn, onChoose }: FriendRowProps): ReactElement {
   const line = SEEN_WORDS[seen];
   return (
     <View style={styles.friend}>
@@ -69,7 +72,7 @@ function FriendRow({ friend, level, seen, onChoose }: FriendRowProps): ReactElem
           </Text>
         </View>
       </View>
-      <LevelTrack label={`${friend.name}님에게 보일 위치`} level={level} onChoose={onChoose} />
+      <LevelTrack disabled={!masterOn} label={`${friend.name}님에게 보일 위치`} level={level} onChoose={onChoose} />
     </View>
   );
 }
@@ -79,12 +82,14 @@ interface PerFriendProps {
   masterOn: boolean;
 }
 
-// "친구마다": what the two see of each other, and the User's own end as three cells.
+// "친구마다": what the two see of each other, and the User's own end as three cells, shown off and disabled under one
+// line while the Master Switch is off.
 function PerFriend({ levels, masterOn }: PerFriendProps): ReactElement {
   const { data, isPending, refetch } = useQuery(friendsQuery);
   return (
     <View style={[cardStyles.card, styles.card]}>
       <SectionHeader>친구마다</SectionHeader>
+      <MasterOffLine />
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? (
         <ErrorState
@@ -101,6 +106,7 @@ function PerFriend({ levels, masterOn }: PerFriendProps): ReactElement {
             friend={friend}
             key={friend.id}
             level={level}
+            masterOn={masterOn}
             onChoose={(chosen) => {
               levels.choose(friend, chosen);
             }}

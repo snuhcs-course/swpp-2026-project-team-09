@@ -898,8 +898,11 @@ cards from the top:
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
   (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
   불러오기" and "빈 시간 말하기" say "준비 중이에요";
-- 위치 공유 (`sharing-card.tsx`): the switch "친구와 위치 공유", which is the Master Switch, with the number of
-  Friends, and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off campus. Turning it on without the
+- 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch, with "위치 공유를 허용한 친구
+  N명" (Friends whose level the User set above 시간표만) and, while a 파티 is on with the User's own switch on, "○○
+  파티에서 위치 공유를 허용한 멤버 M명" (its other members). Both count the User's own end only. While the Master
+  Switch is off, the Friends' levels on 친구 and 위치 공유 and the room's "내 위치 공유" show off and disabled under
+  "전체 위치 공유가 꺼져 있어요 · 켜기", keeping their stored values; and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off campus. Turning it on without the
   location permission shows the map's explanation and the system's prompt first; a refusal leaves it off with
   "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
   못했어요" when the main server did not take it. While the Lobby's `masterOffAsked` is false, turning it off asks

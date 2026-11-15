@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -10,19 +11,17 @@ import { SwitchRow } from '@/design-system/switch';
 
 describe('SwitchRow', () => {
   it('is read as a switch by its label, with its description beside it', async () => {
-    await render(
-      <SwitchRow description="12명" label="친구와 위치 공유" onValueChange={jest.fn<void, [boolean]>()} value />,
-    );
+    await render(<SwitchRow description="12명" label="위치 공유" onValueChange={jest.fn<void, [boolean]>()} value />);
 
-    expect(screen.getByRole('switch', { name: '친구와 위치 공유' })).toBeChecked();
+    expect(screen.getByRole('switch', { name: '위치 공유' })).toBeChecked();
     expect(screen.getByText('12명')).toBeVisible();
   });
 
   it('passes on the new value', async () => {
     const onValueChange = jest.fn<void, [boolean]>();
-    await render(<SwitchRow label="친구와 위치 공유" onValueChange={onValueChange} value={false} />);
+    await render(<SwitchRow label="위치 공유" onValueChange={onValueChange} value={false} />);
 
-    await fireEvent(screen.getByRole('switch', { name: '친구와 위치 공유' }), 'valueChange', true);
+    await fireEvent(screen.getByRole('switch', { name: '위치 공유' }), 'valueChange', true);
 
     expect(onValueChange).toHaveBeenCalledWith(true);
   });
