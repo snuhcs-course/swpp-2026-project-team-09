@@ -28,5 +28,11 @@ An event published in the last 24 hours shows on the map with an exclamation mar
 
 ### Agent usage (2026-11-15)
 
-- Agent time: about 2.5 hours in one session, an estimate. About 11 minutes of it went to one jest run that, by a wrong flag order (`--selectProjects` takes every name after it), ran every app unit test instead of four files; later runs named the files first.
-- Tokens: the two review subagents (Standards and Spec) used about 84k and 91k tokens. The main session's input and output counts, with cache reads and cache writes, are not visible to the agent. Read them from the session's usage report and add them here.
+- Agent time: about 45 minutes in one session (15:58 to 16:40 KST), an estimate from the session's transcript; the one wait for a person, a short question, is included. About 11 minutes of it went to one jest run that, by a wrong flag order (`--selectProjects` takes every name after it), ran every app unit test instead of four files; later runs named the files first.
+- Tokens, summed from the session's transcript (`~/.claude/projects/…/<session>.jsonl`) and its two review subagents (Standards and Spec):
+
+  | | Input | Cache reads | Cache writes | Output |
+  |---|---|---|---|---|
+  | Main session | 360 | 35,397,932 | 299,146 | 111,418 |
+  | Subagents | 52 | 1,435,062 | 171,218 | 13,454 |
+  | Total | 412 | 36,832,994 | 470,364 | 124,872 |
