@@ -89,6 +89,7 @@ model User {
   roomConsents      RoomConsent[]
   roomNotices       RoomNotice[]
   notifications     Notification[]
+  watchedInterests  WatchedInterest[]
 
   @@map("users")
 }
@@ -357,6 +358,11 @@ model GlobalEvent {
   sessions           SourcePostSession[]
   quests             Quest[]
   questHolders       QuestHolder[]
+  // The topic words the model read in its title and description, normalised (README.md: Interests).
+  topics             String[]            @default([])
+  // When the topics were last asked for, and how many times.
+  topicsReadAt       DateTime?           @map("topics_read_at") @db.Timestamptz
+  topicsTries        Int                 @default(0) @map("topics_tries")
 
   @@map("global_events")
 }
@@ -563,6 +569,10 @@ model Quest {
   invitations   QuestInvitation[]
   declines      QuestDecline[]
   party         Party?
+  // As a Global Event's (README.md: Interests).
+  topics        String[]           @default([])
+  topicsReadAt  DateTime?          @map("topics_read_at") @db.Timestamptz
+  topicsTries   Int                @default(0) @map("topics_tries")
 
   @@index([globalEventId])
   @@map("quests")
@@ -1054,6 +1064,8 @@ model RoomConsent {
   user       User        @relation(fields: [userId], references: [id])
   answeredAt DateTime?   @map("answered_at")
   consented  Boolean?
+  // When the companion was asked, from which their answer's deadline is counted.
+  askedAt    DateTime    @default(now()) @map("asked_at")
 
   @@id([requestId, userId])
   @@index([userId])
@@ -1072,4 +1084,19 @@ model RoomNotice {
 
   @@index([userId])
   @@map("room_notices")
+}
+
+// What a User asked the Assistant to watch for (README.md: Interests). A User keeps at most 20.
+model WatchedInterest {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // As the User said them.
+  words     String
+  // The topic words the model read them as, normalised.
+  topics    String[]
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("watched_interests")
 }

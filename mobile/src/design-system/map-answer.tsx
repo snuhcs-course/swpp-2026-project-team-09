@@ -8,14 +8,16 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { initials } from './avatar';
 import { MapPin } from './map-pin';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
 export type AnswerSymbol =
   | { type: 'me' }
-  // `dashed`: the position comes from the Timetable. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's
-  // upper right; the caller says what it means.
-  | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge }
+  // `dashed`: the position comes from the Timetable. `exact`: a green dot at the face's lower right, the position
+  // measured at the exact level. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's upper right; the
+  // caller says what it means.
+  | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
   | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next'; number: number | null };
 
 export type FaceBadge = 'waiting' | 'accepted';
@@ -30,6 +32,9 @@ export interface AnswerLabel {
   line: string | null;
   // A number badge before the title, when the mark's own dot is not drawn.
   number: number | null;
+  // How much further than the gap a label at the left or the right stands from the symbol box, in points, so that it
+  // shares an edge with the labels of neighbouring marks. Left out, none.
+  shift?: number;
 }
 
 export const ANSWER_SYMBOL_BOX = 36;
@@ -65,8 +70,9 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
           style={[styles.face, { borderStyle: symbol.dashed ? 'dashed' : 'solid' }]}
           testID={partOf(testID, 'face')}
         >
-          <Text style={styles.letters}>{Array.from(symbol.name).slice(0, 2).join('')}</Text>
+          <Text style={styles.letters}>{initials(symbol.name)}</Text>
         </View>
+        {symbol.exact === true ? <View style={styles.exact} testID={partOf(testID, 'exact')} /> : null}
         {symbol.badge === undefined ? null : (
           <View style={[styles.faceBadge, styles[symbol.badge]]} testID={partOf(testID, 'badge')}>
             <Text style={styles.number}>{symbol.badge === 'waiting' ? '?' : '✓'}</Text>
@@ -79,7 +85,7 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 }
 
 function Label({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { tone, title, line, number } = label;
+  const { side, tone, title, line, number, shift } = label;
   return (
     <View
       style={[
@@ -87,6 +93,7 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
         line !== null && styles.twoLines,
         tone === 'pick' && styles.pickLabel,
         tone === 'meeting' && styles.meetingLabel,
+        shift !== undefined && (side === 'left' ? { marginRight: shift } : { marginLeft: shift }),
       ]}
       testID={partOf(testID, 'label')}
     >
@@ -146,6 +153,63 @@ const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const BADGE = 16;
 const FACE_BADGE = 14;
+const EXACT_DOT = 11;
+
+// A label's height, the tallest of its kind: one line of the pick's title with the padding and the pick's border at
+// the top and at the bottom, or that title and a line under it.
+const ONE_LINE = mapText.buttonTitle.lineHeight + 2 * GAP + 2 * RING;
+const TWO_LINES = mapText.buttonTitle.lineHeight + mapText.rowLine.lineHeight + 2 * space[1] + 2 * RING;
+// The advance widths of `assets/fonts/Pretendard-SemiBold.otf` and `Pretendard-Bold.otf` as shares of the font's
+// size, each class at its widest letter in either font, rounded up: a Hangul syllable 0.864; a space, "·", ":", ".",
+// and "," 0.287; "W", "M", "m", "w", "%", "@", and the capitals "A", "C", "D", "G", "H", "N", "O", "Q", "U", "V", "X",
+// and "Y" 0.999, and any letter outside ASCII, such as "→" (0.922), "—", or "…", no wider but for rare symbols such as
+// "㎯"; any other letter 0.663.
+const HANGUL = /\p{Script=Hangul}/u;
+const NARROW = /[\s·:.,]/u;
+const WIDE = /[WMmw%@ACDGHNOQUVXY]|\P{ASCII}/u;
+const LETTER = { hangul: 0.87, narrow: 0.29, wide: 1, other: 0.67 };
+
+function shareOf(letter: string): number {
+  if (HANGUL.test(letter)) {
+    return LETTER.hangul;
+  }
+  if (NARROW.test(letter)) {
+    return LETTER.narrow;
+  }
+  return WIDE.test(letter) ? LETTER.wide : LETTER.other;
+}
+
+function wordsWidth(words: string, size: number): number {
+  let width = 0;
+  for (const letter of words) {
+    width += shareOf(letter) * size;
+  }
+  return width;
+}
+
+// A label's box around its mark's point, in points, x to the right and y down, as `MapAnswerMark` lays it out: at its
+// side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
+// words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
+// labels and the choice of a label's side both read it.
+export function answerLabelBox({ side, tone, title, line, number, shift = 0 }: AnswerLabel): {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+} {
+  const titleSize = tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize;
+  const words = Math.max(wordsWidth(title, titleSize), line === null ? 0 : wordsWidth(line, mapText.rowLine.fontSize));
+  const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
+  const width = Math.ceil(Math.min(LABEL_MAX, frame + words));
+  const height = line === null ? ONE_LINE : TWO_LINES;
+  const reach = ANSWER_SYMBOL_BOX / 2 + GAP + shift;
+  if (side === 'left' || side === 'right') {
+    const left = side === 'right' ? reach : -reach - width;
+    return { left, top: -height / 2, right: left + width, bottom: height / 2 };
+  }
+  const top = side === 'below' ? reach : -reach - height;
+  return { left: -width / 2, top, right: width / 2, bottom: top + height };
+}
 
 const styles = StyleSheet.create({
   mark: { alignSelf: 'flex-start', alignItems: 'center', gap: GAP },
@@ -183,6 +247,17 @@ const styles = StyleSheet.create({
     width: FACE_BADGE,
     height: FACE_BADGE,
     borderRadius: radius.full,
+  },
+  exact: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: EXACT_DOT,
+    height: EXACT_DOT,
+    borderRadius: radius.full,
+    borderWidth: RING,
+    borderColor: color.surface,
+    backgroundColor: color.live,
   },
   waiting: { backgroundColor: color.inkMuted },
   accepted: { backgroundColor: color.friend },

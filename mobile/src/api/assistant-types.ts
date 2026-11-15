@@ -10,9 +10,12 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
+import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
+import type { WithRefusal } from './refusal-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
@@ -138,57 +141,7 @@ export interface RestaurantCard {
   };
 }
 
-// A space of 관정도서관 as the server's catalogue gives it: a reading room's sector, booked by the seat, or a room
-// sector (a group study room or a media room), booked by the room. `seatNos` are the sector's rooms, or an equipment
-// group's when one was asked for. `mapImage` is the size of a reading room's seat map in image pixels. `hours` are
-// "HH:MM" to "HH:MM" and the minutes are the booking's shortest, longest and step.
-export interface LibrarySpace {
-  id: string;
-  name: string;
-  floor: number;
-  placeNumber: string;
-  unit: 'seat' | 'room';
-  roomNo: number;
-  sectorNo: number;
-  seatNos: number[];
-  mapImage: { width: number; height: number } | null;
-  hours: { open: string; close: string };
-  minMinutes: number;
-  maxMinutes: number;
-  stepMinutes: number;
-}
-
-export type LibraryAction = 'book' | 'cancel' | 'return' | 'seats' | 'myBookings';
-
-// A library card of a reply, filled by the server from its catalogue and the tool's checked input. It carries no live
-// data: the phone reads the seats, the rooms and the User's bookings from the library itself. `key` encodes the card,
-// such as "book:7F-7A-zone2:2026-11-04:1700:60", and is its id in the history sent back. `date` is "YYYY-MM-DD" and
-// `start` "HH:MM". `seat` is a seat's label or a room's name. `useDescOptions` are given when `useDesc` is not set,
-// `pledge` is a media room's 서약서, and `notes` the site's rules for this kind. A cancel or a return card names the
-// booking it looks for in `target`, and a space only when one was asked for. 내 예약 reads from `date` to `until`
-// when the server sets both. Every field is sent, null when unset.
-export interface LibraryCardData {
-  key: string;
-  action: LibraryAction;
-  space: LibrarySpace | null;
-  date: string | null;
-  start: string | null;
-  minutes: number | null;
-  seat: string | null;
-  useDesc: string | null;
-  useDescOptions: string[];
-  pledge: string | null;
-  companions: { friendId: string; name: string }[];
-  questId: string | null;
-  notes: string[];
-  until: string | null;
-  target: { date?: string; spaceId?: string; start?: string } | null;
-}
-
-export interface LibraryCard {
-  kind: 'library';
-  library: LibraryCardData;
-}
+export type { LibraryAction, LibraryCard, LibraryCardData, LibrarySpace } from './library-card-types';
 
 export type ChatCard = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 
@@ -233,7 +186,7 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput;
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
 
 export interface MealInput {
   kind: 'meal';
@@ -279,8 +232,9 @@ export interface AnswerReply {
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
 }
 
+// `from` is the start the User fixed for a meet.
 export interface ConditionChip {
-  kind: 'origin' | 'until' | 'person';
+  kind: 'origin' | 'from' | 'until' | 'person';
   text: string;
   userId: string | null;
 }
@@ -371,7 +325,8 @@ export interface MapScene {
 export interface TimeBand {
   range: { startAt: string; endAt: string };
   now: string;
-  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string }[] }[];
+  // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
+  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
   startAt: string;
   endAt: string;
   text: string;
@@ -380,7 +335,7 @@ export interface TimeBand {
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
 // cards in the order shown, the Proposal it made, or null, and the answer or the Lookup it drew on the map, or null. A
 // main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
-export interface AssistantReply {
+export interface AssistantReply extends WithRefusal {
   text: string;
   mapButtons: MapLayer[];
   cards: ChatCard[];

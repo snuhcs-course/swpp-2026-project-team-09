@@ -14,7 +14,17 @@ import { readCardAddress } from '@/push/card-address';
 import { cardAddress } from './address';
 
 // The kinds of the Notifications the main server keeps; `notice` stands for a kind this app does not know yet.
-type KeptKind = 'accepted' | 'declined' | 'leave-by' | 'interest-new' | 'notice';
+const KEPT_KINDS = [
+  'accepted',
+  'declined',
+  'leave-by',
+  'room-declined',
+  'room-agreed',
+  'room-ending',
+  'room-window',
+  'interest-new',
+] as const;
+type KeptKind = (typeof KEPT_KINDS)[number] | 'notice';
 
 // What a row of 알림 is about. Every kind but `friend-request` concerns 파티.
 export type NoticeKind = 'party' | 'friend-request' | 'invitation' | 'join-requests' | KeptKind;
@@ -51,21 +61,28 @@ export interface NoticeSources {
 }
 
 function keptKind(kind: string): KeptKind {
-  return kind === 'accepted' || kind === 'declined' || kind === 'leave-by' || kind === 'interest-new' ? kind : 'notice';
+  return KEPT_KINDS.find((known) => known === kind) ?? 'notice';
 }
+
+// A time comes with the clock; a room request's companion out with a person, and all agreed with the group.
+const KEPT_ICONS: Partial<Record<KeptKind, NoticeView['icon']>> = {
+  'leave-by': 'clock',
+  'room-ending': 'clock',
+  'room-declined': 'user',
+  'room-agreed': 'users',
+};
 
 // `ahead` while the time is still to come, as the main server reads no clock.
 function keptTitle({ title, ahead, at }: KeptNotification, now: Date): string {
   return typeof ahead === 'string' && Date.parse(at) > now.getTime() ? ahead : title;
 }
 
-// The time to leave has the clock, and a new match of a watched interest the look of what it opens: a recruiting
-// party's people, or an event's calendar.
+// A new match of a watched interest has the look of what it opens: a recruiting party's people, or an event's calendar.
 function keptIcon({ kind, url }: KeptNotification): NoticeView['icon'] {
-  if (kind === 'leave-by') {
-    return 'clock';
+  if (kind === 'interest-new') {
+    return readCardAddress(url)?.kind === 'party' ? 'users' : 'calendar';
   }
-  return kind === 'interest-new' && readCardAddress(url)?.kind === 'party' ? 'users' : 'calendar';
+  return KEPT_ICONS[keptKind(kind)] ?? 'calendar';
 }
 
 function timeOf(at: string, now: Date): string {

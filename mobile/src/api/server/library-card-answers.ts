@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryAction, LibraryCardData, LibrarySpace } from '@/api/assistant-types';
@@ -30,8 +31,10 @@ function isMapImage(value: unknown): value is LibrarySpace['mapImage'] {
 
 function isSpace(value: unknown): value is LibrarySpace {
   const unit = field(value, 'unit');
+  const kind = field(value, 'kind');
   return (
     hasTexts(value, ['id', 'name', 'placeNumber']) &&
+    (kind === undefined || isText(kind)) &&
     (unit === 'seat' || unit === 'room') &&
     ['floor', 'roomNo', 'sectorNo', 'minMinutes', 'maxMinutes', 'stepMinutes'].every((name) =>
       isNumber(field(value, name)),

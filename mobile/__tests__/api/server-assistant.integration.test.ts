@@ -11,6 +11,7 @@ import { askMainServer, PHONE_NOW } from '../support/server';
 import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP, WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import { googleAvailable } from '@/auth/google';
 
@@ -144,5 +145,27 @@ describe('a recalculation by the main server', () => {
       status: 0,
       code: 'UNEXPECTED_ANSWER',
     });
+  });
+});
+
+describe('a press on the map answered by the main server', () => {
+  const TAPPED = { kind: 'place', placeId: TAP_LOOKUPS.a1.scene.places[0]?.place.placeId ?? '' } as const;
+  const LOCATION = { latitude: 37.45016, longitude: 126.95259 };
+
+  it("posts what was pressed and the location, and gives the card's Lookup", async () => {
+    const server = await askMainServer({ signedIn: true });
+    server.on('POST /assistant/taps', { status: 200, body: TAP_LOOKUPS.a1 });
+
+    await expect(apiClient.answerTap(TAPPED, LOCATION)).resolves.toEqual(TAP_LOOKUPS.a1);
+    expect(server.received('POST /assistant/taps').map(({ body }) => body)).toEqual([
+      { tapped: TAPPED, location: LOCATION },
+    ]);
+  });
+
+  it('is refused with a card of another shape', async () => {
+    const server = await askMainServer({ signedIn: true });
+    server.on('POST /assistant/taps', { status: 200, body: { ...TAP_LOOKUPS.a1, card: { title: '63동' } } });
+
+    await expect(apiClient.answerTap(TAPPED, null)).rejects.toMatchObject({ status: 0, code: 'UNEXPECTED_ANSWER' });
   });
 });

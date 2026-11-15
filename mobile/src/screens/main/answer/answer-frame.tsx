@@ -6,26 +6,29 @@
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
-import { type ReactElement, useCallback } from 'react';
-import { type LayoutChangeEvent, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, type ReactNode, useCallback } from 'react';
+import { type LayoutChangeEvent, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
-import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { lastReply, type ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
 import type { CardActions } from '../chat-cards';
 import { ChatMarkdown } from '../chat-markdown';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
+import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { ANSWER_PILL, listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
+import { CloseButton } from './close-button';
+import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { InvitedCard } from './invited-card';
 import { PlanCard } from './plan-card';
+import { type RefusalAsk, RefusalReply } from './refusal-reply';
 
-const CLOSE = 36;
 // Above the first of the card's parts.
 const CONTENT_TOP = space[5];
 
@@ -39,9 +42,7 @@ function AnswerPill({ asked, onClose }: { asked: string; onClose: () => void }):
         <Text ellipsizeMode="tail" numberOfLines={1} style={styles.asked}>
           {asked}
         </Text>
-        <Pressable accessibilityLabel="답 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
-          <Icon color={color.ink} name="x" size={18} />
-        </Pressable>
+        <CloseButton label="답 닫기" onPress={onClose} />
       </View>
     </View>
   );
@@ -54,12 +55,13 @@ interface WordsProps {
   // How high the Plan's card may stand before the card scrolls, null until it is known.
   room: number | null;
   onClose: () => void;
+  onAsk: RefusalAsk;
 }
 
 // A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
-// made into one, else the lines of its answer's first Plan, or those that say why it has none, in place of the
-// model's sentence; otherwise the sentence as Markdown.
-function Words({ bubble, shown, invitation, room, onClose }: WordsProps): ReactElement {
+// made into one, else a refusal's lines and offers, a failure's lines, or the lines of its answer's first Plan, or those
+// that say why it has none, in place of the model's sentence; otherwise the sentence as Markdown.
+function Words({ bubble, shown, invitation, room, onClose, onAsk }: WordsProps): ReactElement {
   const { answer } = bubble;
   if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
     const { made, standings } = invitation;
@@ -68,12 +70,18 @@ function Words({ bubble, shown, invitation, room, onClose }: WordsProps): ReactE
     ) : (
       <InvitedCard
         chips={shown.answer.chips}
-        made={made}
         onClose={onClose}
         standings={standings}
         startAt={shown.plan.startAt}
+        steps={made.quest.subQuests}
       />
     );
+  }
+  if (bubble.refusal !== undefined && bubble.refusal !== null) {
+    return <RefusalReply onAsk={onAsk} refusal={bubble.refusal} />;
+  }
+  if (bubble.failure === 'unavailable') {
+    return <FailedLines text={bubble.text} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
@@ -84,34 +92,65 @@ interface AnswerCardProps {
   cardActions: CardActions;
   // From the stage's bottom to a little above the bar's top: the room the card keeps for the bar.
   barRoom: number;
-  // The most the content takes, null until the stage is laid out.
-  contentMax: number | null;
+  // The stage's height, null until it is laid out.
+  stageHeight: number | null;
   keyboardUp: boolean;
   onHeight: (height: number) => void;
   onClose: () => void;
 }
 
-// The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중이에요", and under them the room
-// of the bar. Its content scrolls inside it, and gives way to the keyboard.
-function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, cardActions, barRoom, contentMax, keyboardUp, onHeight, onClose } = props;
-  const { bubbles, waiting, retry } = control.chat;
-  const after = turnOf(bubbles)?.after ?? [];
-  const last = bubbles.at(-1);
+interface FrameCardProps {
+  // From the stage's bottom: the room the card keeps under its content.
+  barRoom: number;
+  // The stage's height, null until it is laid out: the card takes at most about half of it.
+  stageHeight: number | null;
+  onHeight: (height: number) => void;
+  testID: string;
+  // Null leaves the card empty, as while the keyboard is up.
+  children: ReactNode;
+}
+
+// The most the card's content takes, about half the stage, null until the stage is laid out.
+function contentMaxOf(stageHeight: number | null, barRoom: number): number | null {
+  return stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom);
+}
+
+// The frame's card, attached to the bottom of the screen. Its content scrolls inside it.
+export function FrameCard({ barRoom, stageHeight, onHeight, testID, children }: FrameCardProps): ReactElement {
+  const contentMax = contentMaxOf(stageHeight, barRoom);
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
       style={[styles.card, { paddingBottom: barRoom }]}
-      testID="answer-card"
+      testID={testID}
     >
-      {keyboardUp ? null : (
+      {children === null ? null : (
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           style={contentMax === null ? undefined : { maxHeight: contentMax }}
         >
+          {children}
+        </ScrollView>
+      )}
+    </View>
+  );
+}
+
+// The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중" with 그만, and under them the
+// room of the bar. Its content gives way to the keyboard.
+function AnswerCard(props: AnswerCardProps): ReactElement {
+  const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose } = props;
+  const { bubbles, waiting, retry } = control.chat;
+  const after = turnOf(bubbles)?.after ?? [];
+  const last = bubbles.at(-1);
+  const contentMax = contentMaxOf(stageHeight, barRoom);
+  return (
+    <FrameCard barRoom={barRoom} onHeight={onHeight} stageHeight={stageHeight} testID="answer-card">
+      {keyboardUp ? null : (
+        <>
           {after.map((bubble) => (
             <View key={bubble.id} style={styles.part}>
               <BubbleParts
@@ -123,6 +162,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                   <Words
                     bubble={bubble}
                     invitation={control.invitation}
+                    onAsk={control.chat.send}
                     onClose={onClose}
                     room={contentMax === null ? null : contentMax - CONTENT_TOP}
                     shown={control.answer}
@@ -131,10 +171,10 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
               />
             </View>
           ))}
-          {waiting ? <Text style={styles.words}>보는 중이에요</Text> : null}
-        </ScrollView>
+          {waiting ? <WaitingReply onStop={onClose} /> : null}
+        </>
       )}
-    </View>
+    </FrameCard>
   );
 }
 
@@ -148,7 +188,9 @@ interface FramedProps {
 }
 
 // The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
-// ✕ and Android's back button forget the conversation, a reply on its way included.
+// ✕ and Android's back button forget the conversation, a reply on its way included. A Friend's profile opened from
+// the card stands over it until a new reply; while it is shown, the back button hides it alone. This handler is the
+// only one, and listens only while the main screen is in front, so a screen pushed from the profile goes back to it.
 function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
   const { chat, leaving } = control;
   const { reset } = chat;
@@ -156,22 +198,24 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
     Keyboard.dismiss();
     reset();
   }, [reset]);
-  useBackToClose(useIsFocused(), close, { edge: false });
+  const profile = useProfileOver(lastReply(chat.bubbles)?.id ?? null);
+  const profileShown = profile.friend !== null && !keyboardUp;
+  useBackToClose(useIsFocused(), profileShown ? profile.hide : close, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   return (
-    <>
+    <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <AnswerPill asked={turnOf(chat.bubbles)?.asked ?? ''} onClose={close} />
       <AnswerCard
         barRoom={barRoom}
         cardActions={actions}
-        contentMax={stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom)}
         control={control}
         keyboardUp={keyboardUp}
         onClose={close}
         onHeight={onHeight}
+        stageHeight={stageHeight}
       />
       {sheets}
-    </>
+    </FriendProfileOver>
   );
 }
 
@@ -225,14 +269,6 @@ const styles = StyleSheet.create({
     boxShadow: shadow.float,
   },
   asked: { ...text.label, flexShrink: 1, color: color.ink },
-  close: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: CLOSE,
-    height: CLOSE,
-    borderRadius: CLOSE / 2,
-    backgroundColor: color.surfaceSunken,
-  },
   card: {
     position: 'absolute',
     right: 0,

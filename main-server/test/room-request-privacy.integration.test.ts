@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -70,13 +71,14 @@ describe('The companions reply', () => {
     await stage.companions(await stage.user('남'), id).expect(403);
   });
 
-  it('never holds someone who was removed after consenting: the request is dissolved', async () => {
+  it('never holds someone who was removed after consenting: the request gathers again', async () => {
     const { people, id } = await readyRequest();
     const [booker, , jieun] = people;
     const { questId } = await stage.status(booker, id);
     await removeHolder(stage.app, booker, questId, jieun.id).expect(204);
 
     await stage.companions(booker, id).expect(409);
+    expect((await stage.status(booker, id)).status).toBe('gathering');
   });
 });
 

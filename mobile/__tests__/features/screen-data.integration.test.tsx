@@ -38,6 +38,7 @@ describe('the friend list', () => {
     await settle();
 
     expect(result.current.data).toHaveLength(12);
+    // P02 ticket 18 added `seen`, `friendId`, and `friendsSince`; the mock invents the last two.
     expect(result.current.data?.find(({ name }) => name === '김민준')).toEqual({
       id: 'f1',
       name: '김민준',
@@ -51,8 +52,11 @@ describe('the friend list', () => {
       minutesOld: null,
       visible: true,
       level: 'exact',
+      seen: 'exact',
       sharing: true,
       askedOff: false,
+      friendId: 'KM4J8QZA',
+      friendsSince: '2026-10-03T14:05:00+09:00',
     });
   });
 

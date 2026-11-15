@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Ref } from 'react';
@@ -171,6 +172,9 @@ export interface MapProps {
   // The lowest level of a native map's SDK, which takes whole levels only: pinching out stops there. The plain map
   // has no levels and keeps to the camera's rules alone. Left out, the SDK's own.
   nativeMinLevel?: number;
+  // A zoom further out than the camera's rules allow, to which the camera may then go, its view kept inside `bounds`
+  // alone (`outerRules`). The fit zoom stays the rules' own. Left out, the rules' lowest zoom.
+  outerZoom?: number;
   maxZoom: number;
   markers: readonly MapMarker[];
   avatars: readonly MapAvatar[];

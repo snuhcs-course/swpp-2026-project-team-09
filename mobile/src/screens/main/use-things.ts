@@ -8,6 +8,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -22,24 +23,37 @@ export interface Things {
 }
 
 // Above the others of its list. The User's own Avatar is 1, so a selected person is above it too, as in the frames.
-const SELECTED_ORDER = 2;
+export const SELECTED_ORDER = 2;
 
 const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
 // A card's look at a level of detail. A person is the frames' teardrop at every level, small while the whole campus
-// is in view, and dimmed while their position is old. A place is a dot there, and a pin with its count closer; a
+// is in view, dimmed while their position is old, and, while the switch of the answer on the map is on (`onMap`),
+// with a green dot for a Friend seen at the exact level. A place is a dot there, and a pin with its count closer; a
 // restaurant, a study building and the shuttle's stops and vehicles look the same at every level: a stop a dot and a
 // vehicle a pin, so that a vehicle standing at its stop is seen, and stops at one place stay a dot. A study building
 // none of whose spaces the User may use is grey, and study pins merged at the overview level are their cluster.
-// Things of several kinds at one place are a group's dot or pin.
-function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
+// Things of several kinds at one place are a group's dot or pin. A Quest made from a Plan is its flag at every level:
+// the dot in the Quest colour with its two lines above it, as an answer draws its pick.
+function lookOf(
+  { kind, mark, marker, muted, flag }: CardView,
+  detail: ZoomDetail,
+  selected: boolean,
+  onMap: boolean,
+): MarkerLook {
   const far = detail === 'overview';
+  if (kind === 'made-quest') {
+    const { title, line } = flag ?? { title: marker.name, line: null };
+    const label = { side: 'above', tone: 'pick', title, line, number: null } as const;
+    return { kind: 'answer', symbol: { type: 'dot', role: 'pick', number: null }, label };
+  }
   if (kind === 'study-cluster') {
     return { kind: 'study-cluster', count: marker.count, selected };
   }
   if (mark.type === 'person') {
     const { id, name, photo, presence, stale } = mark;
-    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, stale, name, photo };
+    const dot = onMap && mark.exact === true ? { exact: true } : {};
+    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, stale, ...dot, name, photo };
   }
   if (mark.type === 'group') {
     return { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected };
@@ -60,27 +74,37 @@ function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, sel
 
 // Every look the cards have at any level, unselected: asked for when the cards come, so that a change of level
 // never hands a native map an image whose picture is still to be made. A selected look is made when it is asked.
-function everyLook(cards: readonly CardView[]): MarkerLook[] {
-  return cards.flatMap((card) => DETAILS.map((detail) => lookOf(card, detail, false)));
+function everyLook(cards: readonly CardView[], onMap: boolean): MarkerLook[] {
+  return cards.flatMap((card) => DETAILS.map((detail) => lookOf(card, detail, false, onMap)));
 }
 
-// The words under a person's Avatar from the "names" level of detail: the given name, and for an old position its
-// age, "민준 · 3분 전". A place has none: words of places side by side overlap, and its card says what it is.
-function wordsOf({ mark, marker }: CardView, detail: ZoomDetail): string | undefined {
+// The words under a person's Avatar from the "names" level of detail: the given name, or the full name with
+// `fullNames`, and for an old position its age, "민준 · 3분 전". A place has none: words of places side by side
+// overlap, and its card says what it is.
+function wordsOf({ mark, marker }: CardView, detail: ZoomDetail, fullNames: boolean): string | undefined {
   if (detail !== 'names' || mark.type !== 'person') {
     return undefined;
   }
-  return marker.minutesOld === null ? marker.short : `${marker.short} · ${marker.minutesOld}분 전`;
+  const name = fullNames ? mark.name : marker.short;
+  return marker.minutesOld === null ? name : `${name} · ${marker.minutesOld}분 전`;
 }
 
-// Turns the cards into what the map shows at a level of detail. From the "names" level a person has their given name
-// under them, in the map's own text. The selected one is drawn selected and above the others. A thing within a place
-// has no marker: the place's stands for it, and is selected while the thing is.
-export function useThings(cards: readonly CardView[], detail: ZoomDetail, selectedId: string | null): Things {
+// Turns the cards into what the map shows at a level of detail. While the switch of the answer on the map is on
+// (`onMap`), a person has their full name under them from the "names" level, in the map's own text, and a Friend seen
+// at the exact level a green dot; else the given name and no dot. The selected one is drawn selected and above the
+// others. A thing within a place has no marker: the place's stands for it, and is selected while the thing is, as a
+// made Quest's flag for its Quest. A received invitation has none.
+export function useThings(
+  all: readonly CardView[],
+  detail: ZoomDetail,
+  selectedId: string | null,
+  onMap: boolean,
+): Things {
+  const cards = all.filter(({ kind }) => kind !== 'invitation');
   const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
   const isSelected = (card: CardView): boolean => card.id === selectedId || card.id === selectedWithin;
-  const shown = cards.map((card) => lookOf(card, detail, isSelected(card)));
-  const images = useMarkerImages([...shown, ...everyLook(cards)]);
+  const shown = cards.map((card) => lookOf(card, detail, isSelected(card), onMap));
+  const images = useMarkerImages([...shown, ...everyLook(cards, onMap)]);
   const markers: MapMarker[] = [];
   const avatars: MapAvatar[] = [];
   for (const [index, card] of cards.entries()) {
@@ -91,7 +115,7 @@ export function useThings(cards: readonly CardView[], detail: ZoomDetail, select
         name: card.marker.name,
         position: card.position,
         image,
-        text: wordsOf(card, detail),
+        text: wordsOf(card, detail, onMap),
         order: isSelected(card) ? SELECTED_ORDER : 0,
       };
       if (card.mark.type === 'person' || card.glideMs !== undefined) {

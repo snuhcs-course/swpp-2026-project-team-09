@@ -27,7 +27,7 @@ What changes from A01: `MODEL_PROVIDER`, chosen at start-up, is replaced by `llm
 
 - [x] `llm.key` is registered: a key's name, default `default`; its allowed values are `default` and the names in `LLM_KEYS`, and saving `default` when `OPENROUTER_API_KEY` is not set is refused by the setting's own check.
 - [x] A model is built at start for each key, with its provider's fixed model id (`anthropic/claude-haiku-5.5`, `claude-haiku-5-5`). The provider is told by the key's value: `sk-ant-` is Anthropic, `sk-or-` OpenRouter. A key with neither is not offered, and the start-up log names it, never its value.
-- [x] Each answer of the chat and each Judgement reads `llm.key` once, at its start, and keeps it for every model call of that answer (up to 8 in the chat). The same-event choice reads it per call.
+- [x] Each answer of the chat and each Judgement reads `llm.key` once, at its start, and keeps it for every model call of that answer (up to 8 in the chat). The same-event choice and the topics reading read it per call.
 - [x] A call when no key is set fails with 503, as it does today. A saved name whose key a later Release removed reads as `default`, and the pod logs it. The server refuses to start when the Assistant or the Judgement is on and no key is set.
 - [x] Saving `llm.key` with a name the pod has no key for is refused, through ticket 01's checks.
 - [x] On Anthropic: the chat's explicit breakpoint after the system prompt and automatic caching of the conversation; one breakpoint after the Judgement's and the same-event choice's constant instructions; effort `medium`; no sampling parameters. On OpenRouter: today's options.

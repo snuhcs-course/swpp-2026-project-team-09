@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFile } from 'node:fs/promises';
@@ -178,6 +179,18 @@ export function statusOf(space: LibrarySpace | undefined, affiliation: string | 
     return 'notEligible';
   }
   return 'implemented';
+}
+
+// "관정 4층 6인실": the space's name without the kind of room before it or the rooms named after it.
+export function roomLabelOf(space: LibrarySpace | undefined, spaceId: string): string {
+  if (space === undefined) {
+    return spaceId;
+  }
+  const name = space.name
+    .replace(/^그룹스터디룸 /u, '')
+    .replace(/ \(.*\)$/u, '')
+    .trim();
+  return space.floor === null ? `관정 ${name}` : `관정 ${space.floor}층 ${name}`;
 }
 
 // Whether a label names a seat of the sector: "7193" or "7193번" in 7193–7670.

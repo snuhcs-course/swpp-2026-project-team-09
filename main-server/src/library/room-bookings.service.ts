@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
+import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { type Catalogue } from '../assistant/library/catalogue.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { RoomRequestStatus } from '../generated/prisma/client.js';
@@ -15,11 +17,14 @@ import { UsersService } from '../users/users.service.js';
 import { type RoomCompanionDto, type RoomResultDto } from './dto/room-request.dto.js';
 import {
   type HeldRequest,
+  isIn,
   notInStatus,
   refusedFor,
+  roomLabelOf,
   type Settling,
   settleOwn,
   spaceOf,
+  startsAtOf,
   whenWords,
 } from './room-request-parts.js';
 import { ROOM_CATALOGUE, RoomRequestSync } from './room-request-sync.service.js';
@@ -28,6 +33,8 @@ import { ROOM_CATALOGUE, RoomRequestSync } from './room-request-sync.service.js'
 // phone books with the library; the server is told only whether it did, with no library data.
 
 type Companions = { refused: RoomRequestStatus } | { userIds: string[] };
+
+const ENDING_AHEAD_MS = 10 * 60 * 1000;
 
 @Injectable()
 export class RoomBookingsService {
@@ -98,6 +105,9 @@ export class RoomBookingsService {
       const holders = await this.quests.holderIds(held.questId, settling.tx);
       const members = holders.filter((holder) => holder !== userId);
       await this.sync.notify(settling, held, members, await this.doneText(held, '예약을 취소했어요'));
+      for (const holder of holders) {
+        this.sync.forgetLater(settling, holder, 'room-ending', { kind: 'party', id: held.questId });
+      }
       await this.sync.finish(settling, held);
     });
   }
@@ -117,13 +127,26 @@ export class RoomBookingsService {
 
   private async booked(settling: Settling, held: HeldRequest): Promise<void> {
     await settling.tx.roomRequest.update({ where: { id: held.id }, data: { status: RoomRequestStatus.booked } });
-    const companions = held.consents.map(({ userId }) => userId);
+    const companions = held.consents.filter(isIn).map(({ userId }) => userId);
     await this.sync.notify(settling, held, companions, await this.doneText(held, '예약을 마쳤어요'));
+    await this.tellEnding(settling, held);
     await this.sync.finish(settling, held, { keepQuest: true });
   }
 
+  // Every Holder but a companion out of the request hears 10 minutes before the room's end.
+  private async tellEnding(settling: Settling, held: HeldRequest): Promise<void> {
+    const out = new Set(held.consents.filter((consent) => !isIn(consent)).map(({ userId }) => userId));
+    const holders = await this.quests.holderIds(held.questId, settling.tx);
+    const end = clockOfMinutes(minutesOfClock(held.start) + held.minutes);
+    const at = new Date(startsAtOf(held.date, held.start).getTime() + held.minutes * 60_000 - ENDING_AHEAD_MS);
+    const roomLabel = roomLabelOf(this.catalogue.byId.get(held.spaceId), held.spaceId);
+    for (const holder of holders.filter((userId) => !out.has(userId))) {
+      this.sync.tellLater(settling, holder, { kind: 'room-ending', questId: held.questId, roomLabel, end }, at);
+    }
+  }
+
   private async unrecognised(settling: Settling, held: HeldRequest, failedUserId: string): Promise<void> {
-    if (!held.consents.some(({ userId }) => userId === failedUserId)) {
+    if (!held.consents.some((consent) => consent.userId === failedUserId && isIn(consent))) {
       throw refusedFor('failedUserId', 'This User is not a companion of the request.');
     }
     const { tx } = settling;
