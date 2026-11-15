@@ -347,6 +347,243 @@
       ]
     }
   },
+  "민수 지금 무슨 수업 들어?": {
+    "text": "과목과 강의실은 보이지 않아요\n12:15에 302동에서 수업이 끝나요",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": {
+      "kind": "friend",
+      "chips": [
+        {
+          "kind": "person",
+          "text": "민수 · 시간표",
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "민수는 ",
+            "strong": false
+          },
+          {
+            "text": "12:15까지 302동 수업",
+            "strong": true
+          },
+          {
+            "text": "이에요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "지금 위치는 보여 주지 않아요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["민수는 내게 시간표만 보여요", "민수에게 묻거나 알리지 않아요"],
+      "scene": {
+        "people": [
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "me": false,
+            "at": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "source": "timetable",
+            "tag": "민수 · 수업 중 12:15까지"
+          }
+        ],
+        "places": [],
+        "routes": [],
+        "flags": []
+      },
+      "band": null,
+      "actions": [
+        {
+          "kind": "meet",
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37"
+        }
+      ]
+    },
+    "refusal": {
+      "kind": "course-and-room",
+      "lines": [
+        [
+          {
+            "text": "과목과 강의실은 보이지 않아요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "12:15",
+            "strong": true
+          },
+          {
+            "text": "에 302동에서 수업이 끝나요",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "만나고 싶다",
+          "text": "민수랑 만나고 싶어"
+        }
+      ]
+    }
+  },
+  "신양 스터디룸 예약해 줘": {
+    "text": "앱이 예약하는 곳은 관정뿐이에요\n신양학술정보관은 그곳의 방식으로 예약해요",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": {
+      "kind": "way",
+      "chips": [
+        {
+          "kind": "origin",
+          "text": "301동에서",
+          "userId": null
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "신양학술정보관(44-1동)",
+            "strong": true
+          },
+          {
+            "text": "은 여기예요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "지금 있는 301동에서 걸어서 8분",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["301동 → 신양학술정보관(44-1동) 걸어서 8분 · 앱의 도보표"],
+      "scene": {
+        "people": [
+          {
+            "userId": "4bbd2662-7659-44a8-9e6e-911eda580bba",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "exact",
+            "tag": "나"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+              "label": "신양학술정보관(44-1동)",
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "role": "pick",
+            "tag": "신양학술정보관(44-1동)"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "4bbd2662-7659-44a8-9e6e-911eda580bba",
+            "role": "me",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "minutes": 8
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "text": "신양학술정보관(44-1동) · 걸어서 8분",
+            "role": "place"
+          }
+        ]
+      },
+      "band": null,
+      "actions": [
+        {
+          "kind": "guide",
+          "to": {
+            "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+            "label": "신양학술정보관(44-1동)",
+            "latitude": 37.4552,
+            "longitude": 126.95206
+          }
+        }
+      ]
+    },
+    "refusal": {
+      "kind": "other-library",
+      "lines": [
+        [
+          {
+            "text": "앱이 예약하는 곳은 관정뿐이에요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "신양학술정보관은 그곳의 방식으로 예약해요",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": [
+        {
+          "kind": "ask",
+          "label": "관정 스터디룸",
+          "text": "관정 스터디룸"
+        }
+      ]
+    }
+  },
+  "민수 대신 수락해 줘": {
+    "text": "수락은 민수가 직접 해요",
+    "mapButtons": [],
+    "cards": [],
+    "proposal": null,
+    "answer": null,
+    "lookup": null,
+    "refusal": {
+      "kind": "for-someone-else",
+      "lines": [
+        [
+          {
+            "text": "수락은 민수가 직접 해요",
+            "strong": false
+          }
+        ]
+      ],
+      "offers": []
+    }
+  },
   "배고파, 민수랑 같이": {
     "text": "민수가 두 명이에요.\n누구와 먹을까요?",
     "mapButtons": [],

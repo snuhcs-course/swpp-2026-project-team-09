@@ -13,7 +13,7 @@ import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
-import { lastReply, type ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { keepsShown, lastReply, type ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
@@ -62,30 +62,36 @@ interface WordsProps {
 }
 
 // A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
-// made into one, the card of the Lookup on screen for its reply, else a refusal's lines and offers, a failure's lines,
-// or the lines of its answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's
-// sentence; otherwise the sentence as Markdown.
+// made into one, the card of the Lookup on screen for its reply, with a refusal's lines over either when the refusal
+// stands beside the Lookup or keeps what is on screen, else a refusal's lines and offers, a failure's lines, or the
+// lines of its answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence;
+// otherwise the sentence as Markdown.
 function Words({ bubble, shown, lookup: onScreen, invitation, room, onClose, onAsk }: WordsProps): ReactElement {
-  const { answer, lookup = null } = bubble;
-  if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
+  const { answer, refusal = null } = bubble;
+  const keeps = keepsShown(bubble);
+  const fromReply = answer !== undefined && answer !== null && answer === shown.source;
+  if ((fromReply || keeps) && shown.answer !== null) {
     const { made, standings } = invitation;
+    const over = keeps ? refusal?.lines : undefined;
     return made === null || shown.plan === null ? (
-      <PlanCard answer={shown.answer} invitation={invitation} room={room} shown={shown} />
+      <PlanCard answer={shown.answer} invitation={invitation} over={over} room={room} shown={shown} />
     ) : (
       <InvitedCard
         chips={shown.answer.chips}
         onClose={onClose}
+        over={over}
         standings={standings}
         startAt={shown.plan.startAt}
         steps={made.quest.subQuests}
       />
     );
   }
+  const lookup = keeps ? onScreen.lookup : (bubble.lookup ?? null);
   if (lookup !== null && lookup === onScreen.lookup) {
-    return <LookupCard lookup={lookup} onClose={onClose} shown={onScreen} />;
+    return <LookupCard lookup={lookup} onAsk={onAsk} onClose={onClose} refusal={refusal} shown={onScreen} />;
   }
-  if (bubble.refusal !== undefined && bubble.refusal !== null) {
-    return <RefusalReply onAsk={onAsk} refusal={bubble.refusal} />;
+  if (refusal !== null) {
+    return <RefusalReply onAsk={onAsk} refusal={refusal} />;
   }
   if (bubble.failure === 'unavailable') {
     return <FailedLines text={bubble.text} />;

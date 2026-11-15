@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { gather, type GatheringPerson, type GatheringPlace } from '../src/assistant/gathering/gathering.js';
@@ -157,13 +158,14 @@ describe('Time together', () => {
     expect(fits).toMatchObject([{ key: 'cafe', start: at('12:01'), end: at('12:16'), togetherMinutes: 15 }]);
   });
 
-  it('drops a place with 14 minutes together, naming who could stay the shortest', () => {
+  it("drops a place with 14 minutes together, naming who could stay the shortest, with each person's part", () => {
     const { fits, dropped } = gather([alone('12:16')], [place('cafe', 'P')], { window, now: at('11:30') }, travel);
 
     expect(fits).toEqual([]);
-    expect(dropped).toEqual([
+    expect(dropped).toMatchObject([
       { key: 'cafe', placeId: 'P', togetherMinutes: 14, shortest: { personId: 'me', minutes: 14 } },
     ]);
+    expect(dropped[0]?.parts).toMatchObject([{ personId: 'me', walkMinutes: 1, canArriveAt: at('12:01') }]);
   });
 });
 

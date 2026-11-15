@@ -12,5 +12,6 @@ export type PlaceRole = 'pick' | 'candidate' | 'dropped' | 'next' | 'meeting' | 
 // `shuttle` is a ride between two stops; `alt` is the way not taken, drawn faded.
 export type RouteRole = 'me' | 'friend' | 'next' | 'shuttle' | 'alt';
 
-// `leave` is when to set out, `late` an arrival after the deadline, `shuttle` the stop a shuttle passed last.
-export type FlagRole = 'place' | 'meeting' | 'leave' | 'late' | 'shuttle';
+// `leave` is when to set out, `late` an arrival after the deadline, `shuttle` the stop a shuttle passed last, `away`
+// the edge of the visible area towards a Place outside it.
+export type FlagRole = 'place' | 'meeting' | 'leave' | 'late' | 'shuttle' | 'away';

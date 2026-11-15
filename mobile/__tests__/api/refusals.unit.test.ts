@@ -8,6 +8,7 @@
 import { KIM_MINSU, LEE_MINSU, WHICH_MINSU, whichFriend } from '../support/which-friend';
 import { REFUSAL_REPLIES } from '@/api/mock/data/refusals';
 import { REFUSAL_KINDS } from '@/api/refusal-types';
+import { isLookup } from '@/api/server/lookup-answers';
 import { isRefusal } from '@/api/server/refusal-answers';
 
 // The app's check of a reply's refusal, on the stored copies of the main server's replies to row 8's boards (P02
@@ -29,6 +30,17 @@ describe('the check of a refusal', () => {
 
   it.each([...REFUSAL_REPLIES.entries()])('passes the copy for "%s"', (_, reply) => {
     expect(isRefusal(reply.refusal)).toBe(true);
+  });
+
+  // P02 ticket 15: boards n4 and n20 refuse beside a Lookup, which their copies keep.
+  it.each([
+    ['민수 지금 무슨 수업 들어?', 'friend'],
+    ['신양 스터디룸 예약해 줘', 'way'],
+  ])('keeps the Lookup beside the refusal for "%s"', (words, kind) => {
+    const lookup = REFUSAL_REPLIES.get(words)?.lookup;
+
+    expect(isLookup(lookup)).toBe(true);
+    expect(lookup).toMatchObject({ kind });
   });
 
   it("passes an offer that opens the map's explanation of the location", () => {
