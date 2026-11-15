@@ -129,7 +129,8 @@ function isFriend(value: unknown): value is Friend {
     hasTexts(value, ['id', 'name', 'department']) &&
     isFriendLevel(field(value, 'level')) &&
     isFriendLevel(field(value, 'seen')) &&
-    ['sharing', 'visible', 'askedOff', 'askedPlan'].every((name) => typeof field(value, name) === 'boolean')
+    ['sharing', 'visible', 'askedOff', 'askedPlan'].every((name) => typeof field(value, name) === 'boolean') &&
+    ['friendId', 'friendsSince'].every((name) => field(value, name) === undefined || isText(field(value, name)))
   );
 }
 

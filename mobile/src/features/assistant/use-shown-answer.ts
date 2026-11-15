@@ -79,7 +79,7 @@ type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 const NO_RECALCULATION: Recalculation = { location: null, onFailed: sayNothing };
 
 // A failure and the app's own bubble are no reply.
-function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefined {
+export function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefined {
   return bubbles.findLast(({ role, failure, own = false }) => role === 'assistant' && failure === null && !own);
 }
 

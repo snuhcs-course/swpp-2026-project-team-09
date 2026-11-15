@@ -33,11 +33,14 @@ site is not deployed: run it on a laptop with `MAIN_SERVER_URL=http://swpp26t09.
 systemd never starts it while a run is going. The service runs `infra/deploy/deploy.sh` from the checkout, as root:
 
 1. Fetches `development`. When its tip is the deployed commit, the result is `up-to-date` and the run stops.
-2. Reads the tip's check runs from GitHub's public API, without a token. The CI checks `main-server`,
-   `socket-server`, `worker-server`, `match-server` and `flow-tests` must have succeeded; `admin`, `mobile` and
-   `deploy-scripts` are not consulted. One success of each among its runs is enough. Otherwise a check missing, still
-   running, cancelled (as a newer push cancels it), stale or waiting for an action gives `waiting-for-ci`, asked again
-   next run; one failed, timed out, neutral or skipped gives `ci-failed`, and the commit is not asked about again.
+2. Reads the tip's check suites and check runs from GitHub's public API, without a token, and keeps the runs that
+   always do every job: the merge queue's and those of pushes to `development` or `main`. A working branch's run may
+   skip work its changes cannot reach, and a Main's the work the merge queue already passed, so neither is read. The CI
+   checks `main-server`, `socket-server`, `worker-server`, `match-server` and `flow-tests` must have succeeded; `admin`,
+   `mobile` and `deploy-scripts` are not consulted. One success of each among those runs is enough. Otherwise a check
+   missing, still running, cancelled (as a newer push cancels it), stale or waiting for an action gives
+   `waiting-for-ci`, asked again next run; one failed, timed out, neutral or skipped gives `ci-failed`, and the commit
+   is not asked about again.
 3. Dumps the databases with `pg_dumpall` into the backups folder and keeps the newest 7. No dump while no database
    runs.
 4. Resets the checkout to the tip with `git reset --hard` and `git clean -fdx`.
@@ -261,8 +264,8 @@ git push origin development
 ```
 
 `git switch development` creates the local branch from `origin/development` the first time. Within a minute the Dev
-Server sees the new tip. The commit's checks already ran on its push to `2.0/Main`, so it deploys at once if they
-passed; the push to `development` runs CI again, and one success of each check is enough.
+Server sees the new tip. A commit that the merge queue merged was already checked in the queue, so it deploys at once
+if those checks passed; the push to `development` runs CI again, and one success of each check is enough.
 
 No pull request ever targets `development`. The repository allows only squash merges, so a pull request would put a
 new commit on `development` that `2.0/Main` lacks, and from then on the two branches drift and the fast-forward

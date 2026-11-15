@@ -12,7 +12,7 @@ import { ANSWER_SYMBOL_BOX, type AnswerLabel, color, MapAnswerMark } from '@/des
 const PLAIN: AnswerLabel = { side: 'right', tone: 'person', title: '민수 · 18분', line: null, number: null };
 
 // Partitions: no symbol, the User, and a Friend's face with a solid or a dashed ring. Expected values: the brief's
-// look of a mark and the wireframes.
+// look of a mark and the wireframes, and ticket 18's letters in a face, the everyday Avatar's.
 describe("MapAnswerMark: a person's symbol", () => {
   it('keeps a symbol box of 36 by 36 when no symbol is drawn', async () => {
     await render(<MapAnswerMark label={PLAIN} symbol={null} testID="mark" />);
@@ -27,10 +27,10 @@ describe("MapAnswerMark: a person's symbol", () => {
     expect(screen.getByLabelText('내 위치')).toBeVisible();
   });
 
-  it("draws a Friend as a round of 36 with the name's first two letters and a solid ring", async () => {
+  it("draws a Friend as a round of 36 with the everyday Avatar's letters and a solid ring", async () => {
     await render(<MapAnswerMark label={null} symbol={{ type: 'face', name: '김민준', dashed: false }} testID="mark" />);
 
-    expect(screen.getByText('김민')).toBeVisible();
+    expect(screen.getByText('민준')).toBeVisible();
     expect(screen.getByTestId('mark:face')).toHaveStyle({
       width: 36,
       height: 36,
