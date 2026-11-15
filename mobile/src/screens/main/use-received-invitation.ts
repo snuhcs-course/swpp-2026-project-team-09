@@ -5,13 +5,13 @@
  ******************************************************************************/
 
 import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef, useState } from 'react';
+import type { MapScene } from '@/api/assistant-types';
 import { ApiError } from '@/api/errors';
 import type { InvitationCard } from '@/api/invitation-card-types';
 import { invitationCardQuery, QUEST_INVITATIONS_KEY } from '@/api/queries';
 import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
-import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
 import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type CardView, cardId, invitationIdOf } from '@/features/map/adapter';
 import { type PartyActions, usePartyActions } from '../party/use-party-actions';
@@ -27,8 +27,8 @@ export interface ReceivedInvitation {
   retry: () => void;
   // The phone told a position outside the campus rectangle, from where the app sends none.
   offCampus: boolean;
-  // The invitee's own way, null without one.
-  drawing: AnswerDrawing | null;
+  // The scene of the invitee's own way, null without one.
+  scene: MapScene | null;
   // 수락 or 거절 of this invitation is on its way: neither takes a press.
   busy: boolean;
   accept: () => void;
@@ -130,7 +130,7 @@ function useGoneOnRead(gone: boolean, closeCard: () => void): void {
 }
 
 // The invitation the User received whose card is selected, shown while the answer frame is not: its card, read
-// from the main server, and the invitee's own way drawn. An invitation that waits no more closes with a toast.
+// from the main server, and the scene of the invitee's own way. An invitation that waits no more closes with a toast.
 export function useReceivedInvitation(
   selection: Selection,
   cards: readonly CardView[],
@@ -147,8 +147,7 @@ export function useReceivedInvitation(
   const answering = useRef(new Set<string>());
   useEndedOnList(selectedInvitation === null ? null : selectedId, cards, answering);
   const card = invitationId === null ? null : (read.data ?? null);
-  const way = card?.way ?? null;
-  const drawing = useMemo(() => (way === null ? null : drawingOfScene(way.scene)), [way]);
+  const scene = card?.way?.scene ?? null;
   const answers = useAnswers(card, selectedId, closeCard, answering);
   return {
     shown: invitationId !== null,
@@ -156,7 +155,7 @@ export function useReceivedInvitation(
     failed: read.isError && !gone,
     retry: () => void read.refetch(),
     offCampus,
-    drawing,
+    scene,
     ...answers,
     closeCard,
   };
