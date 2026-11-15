@@ -2,7 +2,7 @@
 
 Parent: [P02 spec](../spec.md); the design's row 8, boards n13, n14, n15, principle 4
 Status: ready-for-agent
-Blocked by: ticket 10 (its offers); for n14's drawing, P01 ticket 11 (the answer screen draws a Lookup); "여기로" is package D's
+Blocked by: ticket 10 (its offers); #265 (P02-09 changes `use-shown-answer.ts` and `plan-card.tsx`); for n14's drawing, P01 ticket 11 (the answer screen draws a Lookup); "여기로" is package D's
 
 ## What to build
 

@@ -39,6 +39,7 @@ import { type MenuLookupService } from '../lookup/menu.service.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { type WayService } from '../lookup/way.service.js';
 import { DELIMITER } from '../others-text.js';
+import { withRefusals } from '../refusals/refusal-tools.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
 import { proposeQuest } from '../tools/propose-quest.js';
@@ -196,9 +197,9 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const drawsAnswers = options?.drawsAnswers ?? false;
-  const onMap = withLookups(
-    plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options),
-    services,
+  const onMap = withRefusals(
+    withLookups(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), services, drawsAnswers),
+    freeTime,
     drawsAnswers,
   );
   const planned = withInterests(onMap, services.interests, drawsAnswers);
@@ -222,8 +223,8 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
       findFreeFriends,
       ...planned.tools,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
-      // showLibrarySeats and showMyLibraryBookings.
-      ...libraryTools(library, { fillsSeatTime: drawsAnswers }),
+      // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom for an app that draws answers.
+      ...libraryTools(library, { fillsSeatTime: drawsAnswers, picksStudyTime: drawsAnswers }),
       getTutorial: getTutorial(tutorial),
     },
   };

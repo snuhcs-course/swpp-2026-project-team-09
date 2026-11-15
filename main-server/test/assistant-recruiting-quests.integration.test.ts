@@ -12,7 +12,7 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
-import { ask, postAssistantMessages } from './assistant.js';
+import { ask, NOTHING_SHOWN, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { getRecruitingQuests, ownQuest } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
@@ -185,6 +185,7 @@ describe('showQuests', () => {
       proposal: null,
       answer: null,
       lookup: null,
+      refusal: null,
     });
     expect(listedOf(first)).toBeDefined();
     expect(model.toolResults().at(-1)).toEqual({ result: 'shown', ids: [second, first] });
@@ -206,7 +207,7 @@ describe('showQuests', () => {
       { role: 'user', text: '7월 5일은?' },
     ]);
 
-    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null, answer: null, lookup: null });
+    expect(response.body).toEqual({ text: '…', ...NOTHING_SHOWN });
     expect(model.toolResults().at(-1)).toEqual(
       expect.stringContaining(`No tool returned these ids in this message: ${other}`),
     );

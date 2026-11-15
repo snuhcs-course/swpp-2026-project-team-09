@@ -30,7 +30,9 @@ export const MEAL_ANSWER: AnswerReply & { input: MealInput } = {
   chips: [
     { kind: 'origin', text: '301동에서', userId: null },
     { kind: 'until', text: '13:00 수업까지', userId: null },
-    { kind: 'person', text: '민수', userId: '35976b5c-4daf-454f-b10e-c8b09a33ca37' },
+    // The main server writes a person's chip as the Friend's full name (`chipsOf` in main-server
+    // `assistant/gathering/meal-answer.ts`); the copy was asked of a database that held 민수 under the given name.
+    { kind: 'person', text: '김민수', userId: '35976b5c-4daf-454f-b10e-c8b09a33ca37' },
   ],
   plans: [MEAL_PLAN_1, MEAL_PLAN_2, MEAL_PLAN_3, MEAL_PLAN_4, MEAL_PLAN_5],
   dropped: [],
