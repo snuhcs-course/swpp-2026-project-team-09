@@ -17,6 +17,8 @@ interface GroupProps {
   selected?: boolean;
   // A Favorite Event is among them: the official round has the filled star in place of its icon.
   starred?: boolean;
+  // A New Event is among them: the official round has the exclamation mark, before the star.
+  fresh?: boolean;
 }
 
 // What a screen reader says for the kinds: "공식 행사 · 파티".
@@ -25,16 +27,18 @@ function kindNames(kinds: readonly MapPlaceKind[]): string {
 }
 
 // A small round for each kind, in the kind's colour and with its icon, side by side: inside a group's pin, and at
-// the head of its card. `starred` draws the official round's filled star.
-export function KindRounds({ kinds, starred = false }: Omit<GroupProps, 'selected'>): ReactElement {
+// the head of its card. `fresh` draws the official round's exclamation mark, else `starred` its filled star.
+export function KindRounds({ kinds, starred = false, fresh = false }: Omit<GroupProps, 'selected'>): ReactElement {
   return (
     <>
       {kinds.map((kind) => {
         const { fill, icon } = placeKindLook(kind);
-        const star = starred && kind === 'official';
+        const official = kind === 'official';
+        const star = starred && !fresh && official;
+        const name = fresh && official ? 'exclamation' : star ? 'star' : icon;
         return (
           <View key={kind} style={[styles.kind, { backgroundColor: fill }]}>
-            <Icon color={color.onPrimary} filled={star} name={star ? 'star' : icon} size={KIND_ICON} />
+            <Icon color={color.onPrimary} filled={star} name={name} size={KIND_ICON} />
           </View>
         );
       })}
@@ -45,7 +49,7 @@ export function KindRounds({ kinds, starred = false }: Omit<GroupProps, 'selecte
 // Several kinds of things at one place, from close: the pin's white round, with a small round inside it for each
 // kind, in the kind's colour and with its icon. Three or more widen the round into a pill. A selected one is larger,
 // inside a ring of the key colour, as a selected pin is. A screen reader says the kinds' names.
-export function MapGroupPin({ kinds, selected = false, starred = false }: GroupProps): ReactElement {
+export function MapGroupPin({ kinds, selected = false, starred = false, fresh = false }: GroupProps): ReactElement {
   return (
     <View
       accessibilityLabel={kindNames(kinds)}
@@ -55,7 +59,7 @@ export function MapGroupPin({ kinds, selected = false, starred = false }: GroupP
       style={styles.pin}
     >
       <View style={[styles.head, selected && styles.selectedHead]}>
-        <KindRounds kinds={kinds} starred={starred} />
+        <KindRounds fresh={fresh} kinds={kinds} starred={starred} />
       </View>
       <View style={styles.tail} />
     </View>

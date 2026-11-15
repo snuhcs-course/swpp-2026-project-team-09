@@ -5,17 +5,18 @@
  ******************************************************************************/
 
 // Partitions: a Favorite Event or not; held today, before or after; one day, several days on the first, a middle and
-// the last day; either side of midnight in Korea, which is 15:00 in UTC the day before. Expected values: ticket P06-01's
-// rule, in Korea's time.
+// the last day; either side of midnight in Korea, which is 15:00 in UTC the day before. For New Events: published
+// within 24 hours, at the edge or before, or never recorded; checked or not; its card open or not. Expected values:
+// tickets P06-01's and P06-02's rules, in Korea's time.
 
 import { event } from '../support/map-sources';
-import { eventPins } from '@/features/map/event-pins';
+import { type EventChecks, eventPins, strongestLook } from '@/features/map/event-pins';
 
 // Tuesday 6 October 2026, 13:00 in Korea.
 const NOW = new Date('2026-10-06T13:00:00+09:00');
 
-function looks(events: Parameters<typeof eventPins>[0], now = NOW): [string, string][] {
-  return eventPins(events, now).map(({ event: { id }, look }) => [id, look]);
+function looks(events: Parameters<typeof eventPins>[0], now = NOW, checks?: EventChecks): [string, string][] {
+  return eventPins(events, now, checks).map(({ event: { id }, look }) => [id, look]);
 }
 
 describe('eventPins of events of one day', () => {
@@ -92,5 +93,67 @@ describe('eventPins at midnight in Korea', () => {
     const lastMinute = new Date('2026-10-06T23:59:00+09:00');
 
     expect(looks([event('today')], lastMinute)).toEqual([['today', 'plain']]);
+  });
+});
+
+describe('eventPins of New Events', () => {
+  // Next week, so that only being new keeps it on the map.
+  const later = { startsAt: '2026-10-14T18:00:00+09:00' };
+
+  it.each([
+    ['a minute ago', '2026-10-06T12:59:00+09:00', [['fresh', 'new']]],
+    ['a minute short of 24 hours ago', '2026-10-05T13:01:00+09:00', [['fresh', 'new']]],
+    ['24 hours ago to the minute', '2026-10-05T13:00:00+09:00', []],
+    ['a day and a minute ago', '2026-10-05T12:59:00+09:00', []],
+  ])('published %s → %j', (_, publishedAt, expected) => {
+    expect(looks([event('fresh', { ...later, publishedAt })])).toEqual(expected);
+  });
+
+  it('never marks an event published before the main server recorded it', () => {
+    expect(looks([event('older', { ...later, publishedAt: null })])).toEqual([]);
+  });
+
+  it('leaves a checked one off the map, unless it is a Favorite Event or held today', () => {
+    const publishedAt = '2026-10-06T09:00:00+09:00';
+    const events = [
+      event('later', { ...later, publishedAt }),
+      event('starred', { ...later, publishedAt, favorite: true }),
+      event('today', { publishedAt }),
+    ];
+
+    expect(looks(events, NOW, { checked: new Set(['later', 'starred', 'today']), open: null })).toEqual([
+      ['starred', 'favorite'],
+      ['today', 'plain'],
+    ]);
+  });
+
+  it('keeps a checked one whose card is open, plain, until the card closes', () => {
+    const fresh = event('fresh', { ...later, publishedAt: '2026-10-06T09:00:00+09:00' });
+
+    expect(looks([fresh], NOW, { checked: new Set(['fresh']), open: 'fresh' })).toEqual([['fresh', 'plain']]);
+    expect(looks([fresh], NOW, { checked: new Set(['fresh']), open: null })).toEqual([]);
+  });
+
+  it('keeps an unchecked one new while its card is open', () => {
+    const fresh = event('fresh', { ...later, publishedAt: '2026-10-06T09:00:00+09:00' });
+
+    expect(looks([fresh], NOW, { checked: new Set(), open: 'fresh' })).toEqual([['fresh', 'new']]);
+  });
+
+  it('gives the exclamation mark before the star and the plain pin', () => {
+    const publishedAt = '2026-10-06T09:00:00+09:00';
+
+    expect(looks([event('both', { publishedAt, favorite: true })])).toEqual([['both', 'new']]);
+  });
+});
+
+describe('strongestLook', () => {
+  it.each([
+    [['plain', 'favorite', 'new'], 'new'],
+    [['plain', 'favorite'], 'favorite'],
+    [['plain', 'plain'], 'plain'],
+    [[], null],
+  ] as const)('of %j is %j', (given, expected) => {
+    expect(strongestLook(given)).toBe(expected);
   });
 });

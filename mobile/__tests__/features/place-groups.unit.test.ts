@@ -176,6 +176,32 @@ describe('a group with a Favorite Event among its things', () => {
   });
 });
 
+// A New Event's card, as the adapter makes it: the official pin with the exclamation mark.
+const FRESH: CardView = {
+  ...EVENT,
+  mark: { type: 'place', place: 'official', fresh: true },
+  event: { id: 'e1', favorite: false },
+};
+
+describe('a group with a New Event among its things', () => {
+  it('of one kind has the exclamation mark and not the star, though a Favorite Event is beside it', () => {
+    expect(groupedByPlace([STARRED, FRESH])[0]?.mark).toEqual({ type: 'place', place: 'official', fresh: true });
+  });
+
+  it('of several kinds has the exclamation mark too', () => {
+    expect(groupedByPlace([PARTY, FRESH, STARRED])[0]?.mark).toEqual({
+      type: 'group',
+      kinds: ['official', 'party'],
+      fresh: true,
+    });
+  });
+
+  it('counts its events and gives way to its last event when the New Event leaves it', () => {
+    expect(groupedByPlace([FRESH, TALK])[0]?.marker.count).toBe(2);
+    expect(groupedByPlace([TALK])).toEqual([TALK]);
+  });
+});
+
 describe('the grouping', () => {
   it('never takes in an Avatar: people and shuttle vehicles move, and stay as they are', () => {
     expect(groupedByPlace([FRIEND, EVENT, MEMBER, BUS])).toEqual([FRIEND, EVENT, MEMBER, BUS]);

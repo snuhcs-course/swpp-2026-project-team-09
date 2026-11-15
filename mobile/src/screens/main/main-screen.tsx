@@ -16,6 +16,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -45,10 +46,11 @@ import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
+import { useCheckingSelection } from './use-check-on-close';
 import { type MainRoute, useRoute } from './use-route';
 import { useMapView } from './use-map-view';
 import { useRoom } from './use-room';
-import { type Selection, useSelection } from './use-selection';
+import type { Selection } from './use-selection';
 import { useThings } from './use-things';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
 import { type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
@@ -283,10 +285,11 @@ function useBottomRoom(
 // mounted while another tab is shown, so that the map, the selection, the route and the lists are kept.
 //
 // How it grows: `useMainMap` owns the map's handle, its camera and the moves; `useSelection` holds what is selected,
-// which is the card that is open. A part of the screen takes `map`, `me` for the User's position and `selection`,
-// and gives what it shows. What floats over the map is a child of `OverMap`, in the frame's order, the later above
-// the earlier; a part that a card hides asks `selection.open`. A row of a list selects a thing with
-// `selection.select(cardId.friend(id))` and moves the map with `map.goTo`. Any part reads the User's position with
+// which is the card that is open; a Global Event's card that closes checks its event (`useCheckingSelection`). A part of
+// the screen takes `map`, `me` for the User's position and `selection`, and gives what it shows. What floats over the
+// map is a child of `OverMap`, in the frame's order, the later above the earlier; a part that a card hides asks
+// `selection.open`. A row of a list selects a thing with `selection.select(cardId.friend(id))` and moves the map with
+// `map.goTo`. Any part reads the User's position with
 // `usePosition()`: the signed-in place's layout holds the one watch of the phone. The map is told what the controls
 // cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
 // itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
@@ -297,8 +300,8 @@ export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
   const me = useMe(map);
-  const { stack, shuttle, cards, ready, chat } = useMainLayers(inFront, map, me.position);
-  const selection = useSelection(cards, inFront);
+  const { stack, shuttle, cards, ready, chat, holdEvent } = useMainLayers(inFront, map, me.position);
+  const selection = useCheckingSelection(cards, inFront, holdEvent);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
   const lines = useLines(shuttle, route);

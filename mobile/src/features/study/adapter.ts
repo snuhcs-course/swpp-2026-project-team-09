@@ -2,17 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
 import type { StudyBuilding, StudySpace } from '@/api/study-types';
-import type { LatLng } from '@/api/types';
 import { type CardView, cardId, type StudyRow } from '@/features/map/adapter';
 import { seatState } from '@/library/cards/seats';
 import { tappedSlot } from '@/library/cards/made';
 import type { Slot } from '@/library/cards/payloads';
 import { minutesOf } from '@/library/cards/times';
 import type { LibrarySeat } from '@/library/replies';
+import { middleOf, mergedCards, overlapSets } from '@/features/map/overlap';
 import { shortTitle } from '@/features/map/short-name';
 
 // The 공부공간 layer: one pin per building, its card listing its Study Spaces, and the pins merged while the whole
@@ -66,25 +67,6 @@ export function toStudyCards(buildings: readonly StudyBuilding[]): CardView[] {
 
 // --- Merging while the whole campus is in view ---
 
-// Two pins nearer than this, in points on the screen, overlap: a study pin's head is 34 wide.
-export const OVERLAP_POINTS = 36;
-
-// Where a position is drawn at a zoom, in points of the Web Mercator world 256 × 2^zoom wide.
-function pointOf({ latitude, longitude }: LatLng, zoom: number): { x: number; y: number } {
-  const world = 256 * 2 ** zoom;
-  const sin = Math.sin((latitude * Math.PI) / 180);
-  return {
-    x: ((longitude + 180) / 360) * world,
-    y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * world,
-  };
-}
-
-function apart(one: LatLng, other: LatLng, zoom: number): number {
-  const a = pointOf(one, zoom);
-  const b = pointOf(other, zoom);
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
 export function studyClusterId(first: CardView): string {
   return `study-cluster:${first.id}`;
 }
@@ -95,10 +77,6 @@ function clusterCard(members: readonly CardView[]): CardView {
     throw new Error('A cluster has members');
   }
   const count = members.length;
-  const position = {
-    latitude: members.reduce((sum, { position: { latitude } }) => sum + latitude, 0) / count,
-    longitude: members.reduce((sum, { position: { longitude } }) => sum + longitude, 0) / count,
-  };
   return {
     id: studyClusterId(first),
     kind: 'study-cluster',
@@ -109,7 +87,7 @@ function clusterCard(members: readonly CardView[]): CardView {
     lines: [],
     primary: null,
     secondary: null,
-    position,
+    position: middleOf(members.map(({ position }) => position)),
     cluster: members.map((member) => member.position),
   };
 }
@@ -118,23 +96,7 @@ function clusterCard(members: readonly CardView[]): CardView {
 // within a place's group keeps to the group. Without a zoom, none. The main screen keys its cards by these sets, so
 // that a move of the camera that merges nothing new leaves the cards as they were.
 export function studyMerges(cards: readonly CardView[], zoom: number | null): string[][] {
-  if (zoom === null) {
-    return [];
-  }
-  const seeds: CardView[][] = [];
-  for (const card of cards) {
-    if (card.kind === 'study' && card.within === undefined) {
-      const near = seeds.find(
-        ([seed]) => seed !== undefined && apart(seed.position, card.position, zoom) < OVERLAP_POINTS,
-      );
-      if (near === undefined) {
-        seeds.push([card]);
-      } else {
-        near.push(card);
-      }
-    }
-  }
-  return seeds.filter((one) => one.length > 1).map((members) => members.map(({ id }) => id));
+  return overlapSets(cards, zoom, (card) => card.kind === 'study' && card.within === undefined);
 }
 
 // The cards with each set of `studyMerges` merged: the cluster's card comes where its first building's would, and each
@@ -143,25 +105,7 @@ export function clusteredStudy(
   cards: readonly CardView[],
   merges: readonly (readonly string[])[],
 ): readonly CardView[] {
-  if (merges.length === 0) {
-    return cards;
-  }
-  const clusterOf = new Map<string, CardView[]>();
-  for (const ids of merges) {
-    const members = cards.filter(({ id }) => ids.includes(id));
-    for (const member of members) {
-      clusterOf.set(member.id, members);
-    }
-  }
-  return cards.flatMap((card): CardView[] => {
-    const members = clusterOf.get(card.id);
-    if (members === undefined) {
-      return [card];
-    }
-    const [first] = members;
-    const within = { ...card, within: studyClusterId(first ?? card) };
-    return first === card ? [clusterCard(members), within] : [within];
-  });
+  return mergedCards(cards, merges, clusterCard);
 }
 
 // --- 관정관's seats ---

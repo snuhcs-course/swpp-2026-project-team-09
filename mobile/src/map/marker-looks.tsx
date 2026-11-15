@@ -17,6 +17,7 @@ import {
   ANSWER_SYMBOL_BOX,
   type AnswerLabel,
   type AnswerSymbol,
+  type IconName,
   type LabelSide,
   MapAnswerMark,
   MapDot,
@@ -38,9 +39,9 @@ import type { Size } from './projection';
 // - for each person, the two sizes in each tone the person was seen in, with and without a photo, dimmed while the
 //   person's position was old, and each of them selected, which only the one selected person ever asks for;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
-//   an official pin also with a Favorite Event's star;
+//   an official pin also with a Favorite Event's star and with a New Event's exclamation mark;
 // - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected; the pin
-//   also with the star;
+//   also with the star and with the exclamation mark;
 // - one for the tutorial's place pin.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
@@ -75,15 +76,31 @@ export type MarkerLook =
     }
   // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
   // `muted` is translucent grey: a study building none of whose spaces the User may use. `starred` draws a pin's
-  // icon as the filled star: a Favorite Event, or official events at one place of which one is.
-  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean; muted?: boolean; starred?: boolean }
+  // icon as the filled star: a Favorite Event, or official events at one place of which one is. `fresh` draws it as
+  // the exclamation mark in the same way, for a New Event; a look has one of the two.
+  | {
+      kind: MapPlaceKind;
+      form: MarkerForm;
+      count?: number;
+      selected?: boolean;
+      muted?: boolean;
+      starred?: boolean;
+      fresh?: boolean;
+    }
   // Study pins merged while the whole campus is in view, with how many they are.
   | { kind: 'study-cluster'; count: number; selected?: boolean }
   // The Place of restaurants with menus today, at every level of detail.
   | { kind: 'restaurant'; selected?: boolean }
   // Things of several kinds at one place: a small round for each kind, in the order given. `starred` draws the
-  // official round's star on a pin: a Favorite Event is among them.
-  | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean; starred?: boolean }
+  // official round's star on a pin: a Favorite Event is among them; `fresh` its exclamation mark, for a New Event.
+  | {
+      kind: 'group';
+      kinds: readonly MapPlaceKind[];
+      form: MarkerForm;
+      selected?: boolean;
+      starred?: boolean;
+      fresh?: boolean;
+    }
   // The place 지도에서 보기 of a tutorial quest shows: a red teardrop with a white circle, at every level of detail.
   | { kind: 'tutorialPlace' }
   // A mark of an answer: its symbol and its label, words included, in one picture.
@@ -122,7 +139,14 @@ export function lookName(look: MarkerLook): string {
     return parts('restaurant', selected);
   }
   if (look.kind === 'group') {
-    return parts('group', look.kinds.join('+'), look.form, look.starred === true && 'starred', selected);
+    return parts(
+      'group',
+      look.kinds.join('+'),
+      look.form,
+      look.starred === true && 'starred',
+      look.fresh === true && 'fresh',
+      selected,
+    );
   }
   if (look.kind === 'study-cluster') {
     return parts('study-cluster', String(look.count), selected);
@@ -139,6 +163,7 @@ export function lookName(look: MarkerLook): string {
     count,
     look.muted === true && 'muted',
     look.starred === true && 'starred',
+    look.fresh === true && 'fresh',
     selected,
   );
 }
@@ -175,6 +200,14 @@ export function anchorShare(look: MarkerLook, { width, height }: Size): { x: num
   return shares[look.label.side];
 }
 
+// The icon a place's pin draws in place of its kind's: a New Event's exclamation mark, a Favorite Event's star.
+function markIcon({ fresh, starred }: { fresh?: boolean; starred?: boolean }): IconName | undefined {
+  if (fresh === true) {
+    return 'exclamation';
+  }
+  return starred === true ? 'star' : undefined;
+}
+
 // The design system's view of a look.
 export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSettled?: () => void }): ReactElement {
   if (look.kind === 'me') {
@@ -206,7 +239,7 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
     return look.form === 'dot' ? (
       <MapGroupDot kinds={look.kinds} selected={look.selected} />
     ) : (
-      <MapGroupPin kinds={look.kinds} selected={look.selected} starred={look.starred} />
+      <MapGroupPin fresh={look.fresh} kinds={look.kinds} selected={look.selected} starred={look.starred} />
     );
   }
   if (look.kind === 'study-cluster') {
@@ -218,7 +251,7 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
     <MapPin
       count={look.count}
       filled={look.starred}
-      icon={look.starred === true ? 'star' : undefined}
+      icon={markIcon(look)}
       kind={look.kind}
       muted={look.muted}
       selected={look.selected}

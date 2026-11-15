@@ -74,7 +74,10 @@ function searched({ period, title }: PublishedSearch): Prisma.GlobalEventWhereIn
 
 // What an edit or a change of state writes besides the version.
 type Change = Partial<
-  Pick<GlobalEvent, 'title' | 'description' | 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude' | 'state'>
+  Pick<
+    GlobalEvent,
+    'title' | 'description' | 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude' | 'state' | 'publishedAt'
+  >
 >;
 
 const globalEventNotFound = (): NotFoundException => notFound('GLOBAL_EVENT_NOT_FOUND', 'No Global Event has this id.');
@@ -228,8 +231,12 @@ export class GlobalEventsService {
     return this.change(id, version, [GlobalEventState.draft, GlobalEventState.published], fields);
   }
 
+  // Records when it was published, which the apps read for a New Event. An edit later keeps it.
   publish(id: string, version: number): Promise<GlobalEventDetailDto> {
-    return this.change(id, version, [GlobalEventState.draft], { state: GlobalEventState.published });
+    return this.change(id, version, [GlobalEventState.draft], {
+      state: GlobalEventState.published,
+      publishedAt: new Date(),
+    });
   }
 
   discard(id: string, version: number): Promise<GlobalEventDetailDto> {

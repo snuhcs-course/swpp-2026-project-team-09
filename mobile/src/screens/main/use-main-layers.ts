@@ -3,12 +3,14 @@
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { LatLng } from '@/api/types';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
+import { clusteredEvents, eventMerges } from '@/features/map/event-merges';
 import { groupedByPlace } from '@/features/map/place-groups';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
@@ -23,20 +25,23 @@ import type { Selection } from './use-selection';
 
 const NO_CARDS: readonly CardView[] = [];
 
-// The zoom at which overlapping study pins merge: the camera's while the whole campus is in view, else none.
+// The zoom at which overlapping study pins and events' pins merge: the camera's while the whole campus is in view, else
+// none.
 function overviewZoom(map: MainMap): number | null {
   return map.detail === 'overview' ? (map.camera?.zoom ?? map.fitZoom) : null;
 }
 
 // The map's cards, and the 식당, shuttle and 공부공간 layers' while they are on, with the things at one place
 // grouped: a layer turned off takes its things out of the groups. While the whole campus is in view, study pins that
-// would overlap merge. `ready` once the map's own cards are known.
+// would overlap merge, and so do events' pins. `openEvent` is the Global Event whose card is open, which stays on the
+// map until it closes. `ready` once the map's own cards are known.
 function useCards(
   layers: { dining: boolean; study: boolean },
   shuttle: ShuttleLayer,
   zoom: number | null,
+  openEvent: string | null,
 ): { cards: readonly CardView[]; ready: boolean } {
-  const { data } = useMapCards();
+  const { data } = useMapCards(openEvent);
   const mapCards = data ?? NO_CARDS;
   const diningCards = useDiningCards(layers.dining);
   const studyCards = useStudyCards(layers.study);
@@ -47,13 +52,14 @@ function useCards(
   // Keyed by what merges, not by the zoom: a camera that moves, as a press on a list's row makes it, keeps the same
   // cards unless the merged pins change. A selection waiting for the cards (`selectOrWait`) waits for new cards.
   const merges = studyMerges(grouped, zoom);
-  const mergesKey = JSON.stringify(merges);
-  // `mergesKey` stands for `merges`, which is new each render.
-  const cards = useMemo(() => clusteredStudy(grouped, merges), [grouped, mergesKey]);
+  const eventSets = eventMerges(grouped, zoom);
+  const mergesKey = JSON.stringify([merges, eventSets]);
+  // `mergesKey` stands for `merges` and `eventSets`, which are new each render.
+  const cards = useMemo(() => clusteredEvents(clusteredStudy(grouped, merges), eventSets), [grouped, mergesKey]);
   return { cards, ready: data !== undefined };
 }
 
-// A press on the map: merged study pins come into view, and anything else is selected.
+// A press on the map: merged study or events' pins come into view, and anything else is selected.
 export function pressOnMap(cards: readonly CardView[], map: MainMap, selection: Selection): (id: string) => void {
   return (id) => {
     const cluster = cards.find((card) => card.id === id)?.cluster;
@@ -79,6 +85,8 @@ export interface MainLayers {
   cards: readonly CardView[];
   ready: boolean;
   chat: ChatSheetControl;
+  // Holds the Global Event whose card is open on the map there, or none (`useCheckOnClose`).
+  holdEvent: (eventId: string | null) => void;
 }
 
 // The 편의기능 stack and what its layers put on the map, with the map's own cards, and the chat's sheet, which turns a
@@ -87,8 +95,9 @@ export interface MainLayers {
 export function useMainLayers(inFront: boolean, map: MainMap, position: LatLng | null): MainLayers {
   const stack = useLayerStack(inFront);
   const shuttle = useShuttle(stack.layers.shuttle);
-  const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map));
+  const [openEvent, holdEvent] = useState<string | null>(null);
+  const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map), openEvent);
   const chat = useChatSheet(inFront, stack.turnOn, position);
   useHideTabBarOnMain(chat.framed);
-  return { stack, shuttle, cards, ready, chat };
+  return { stack, shuttle, cards, ready, chat, holdEvent };
 }

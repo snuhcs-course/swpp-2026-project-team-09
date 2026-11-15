@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -112,7 +113,7 @@ async function settleOneReadByRules(
   }
   const { count } = await tx.globalEvent.updateMany({
     where: { id, state: GlobalEventState.draft, version: 1 },
-    data: { state: GlobalEventState.published, publicationRoute: PublicationRoute.rule },
+    data: { state: GlobalEventState.published, publicationRoute: PublicationRoute.rule, publishedAt: new Date() },
   });
   return count > 0;
 }
@@ -135,7 +136,8 @@ export async function settleReadByRules(
   return published;
 }
 
-// A session the post was not stored with: one more own session of the post.
+// A session the post was not stored with: one more own session of the post. Each write here that publishes an event
+// records when (`publishedAt`), which the apps read for a New Event.
 async function createEvent(
   tx: Prisma.TransactionClient,
   { id: sourcePostId, sessions }: PostWithOwnSessions,
@@ -146,6 +148,7 @@ async function createEvent(
   const { id } = await tx.globalEvent.create({
     data: {
       ...values,
+      publishedAt: new Date(),
       title,
       description,
       sessions: { create: { sourcePostId, number, attachedBy: SessionAttachment.own } },
@@ -158,7 +161,7 @@ async function createEvent(
 async function publishDraft(tx: Prisma.TransactionClient, id: string, values: JudgedValues): Promise<string | null> {
   const { count } = await tx.globalEvent.updateMany({
     where: { id, state: GlobalEventState.draft, version: 1 },
-    data: values,
+    data: { ...values, publishedAt: new Date() },
   });
   return count === 0 ? null : id;
 }

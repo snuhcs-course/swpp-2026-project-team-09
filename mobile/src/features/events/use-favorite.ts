@@ -10,6 +10,7 @@ import { apiClient } from '@/api/client';
 import { GLOBAL_EVENTS_KEY, globalEventsQuery } from '@/api/queries';
 import type { ListedGlobalEvent } from '@/api/types';
 import { useToast } from '@/design-system';
+import { useCheckEvent } from './checked-events';
 
 export const FAVORITE_NOT_CHANGED = '즐겨찾기를 바꾸지 못했어요';
 
@@ -17,7 +18,8 @@ export interface Favorite {
   // The User starred the event. An event the User's list does not hold is not starred.
   on: boolean;
   // Shows the new state at once, and the old one again with a toast when the main server did not take it; the list is
-  // then fetched again, so that quick taps of which one failed end as the main server holds them.
+  // then fetched again, so that quick taps of which one failed end as the main server holds them. Starring a New Event
+  // checks it, even if the main server does not take the star: the User has seen it.
   turn: (on: boolean) => void;
 }
 
@@ -26,6 +28,7 @@ export interface Favorite {
 export function useFavorite(eventId: string): Favorite {
   const queryClient = useQueryClient();
   const showToast = useToast();
+  const check = useCheckEvent();
   const on = useQuery({
     ...globalEventsQuery,
     select: (events: ListedGlobalEvent[]) => events.some(({ id, favorite }) => id === eventId && favorite),
@@ -40,13 +43,16 @@ export function useFavorite(eventId: string): Favorite {
       // A fetch on its way holds the list from before the change.
       void queryClient.cancelQueries({ queryKey: GLOBAL_EVENTS_KEY });
       show(next);
+      if (next) {
+        check(eventId);
+      }
       apiClient.setFavoriteEvent(eventId, next).catch(() => {
         show(!next);
         showToast(FAVORITE_NOT_CHANGED);
         void queryClient.invalidateQueries({ queryKey: GLOBAL_EVENTS_KEY });
       });
     },
-    [eventId, queryClient, showToast],
+    [check, eventId, queryClient, showToast],
   );
   return { on: on === true, turn };
 }

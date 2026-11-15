@@ -506,8 +506,10 @@ start, then by title. The app fetches it again on `global-events-changed`.
 
 - A Draft, a cancelled, a discarded and an ended event are never in it.
 - `sourceUrl` is `null` for an event an Administrator created.
-- `publishedAt` is when the event was published, `null` for an event published before it was recorded. Nothing records
-  it yet.
+- `publishedAt` is when the event was published, `null` for an event published before it was recorded. It is recorded
+  by each of the four writes that publish: the rules and a Judgement, when the step after a Collection settles a post,
+  an Administrator's publish of a Draft, and an Administrator's publish from the Same-event queue. An edit keeps it. The
+  app marks an event published in the last 24 hours as a New Event.
 - `favorite` is whether the caller starred the event, which makes it a Favorite Event.
 - An Administrator's access token gets 401, and a User before onboarding 403 `ONBOARDING_REQUIRED`, as on every User's
   route.

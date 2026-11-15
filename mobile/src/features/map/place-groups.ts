@@ -8,6 +8,7 @@
 
 import type { LatLng } from '@/api/types';
 import type { CardView, PlaceKind } from './adapter';
+import { LOOK_MARKS, markedLook, strongestLook } from './event-pins';
 import { shortTitle } from './short-name';
 
 // The kinds in the order a group draws and lists them, each with its word on a chip and, for a group of that kind
@@ -57,12 +58,12 @@ function placeName(members: readonly Member[]): string {
 }
 
 // The card of a place where two or more things are. Of one kind, its marker is that kind's pin with their count; of
-// several, a circle with a small one for each kind. Either has the star when one of them is a Favorite Event. Its card
-// lists them, each with its first line that is not where, and ★ on a Favorite Event's row.
+// several, a circle with a small one for each kind. Either has the mark of the strongest look among its events: the
+// exclamation mark when one of them is a New Event, else the star when one is a Favorite Event. Its card lists them,
+// each with its first line that is not where, and ★ on a Favorite Event's row.
 function groupCard(position: LatLng, members: readonly Member[]): CardView {
   const place = placeName(members);
-  const starred = members.some(({ card }) => card.event?.favorite === true);
-  const star = starred ? { starred } : {};
+  const marks = LOOK_MARKS[strongestLook(members.map(({ card }) => markedLook(card.mark))) ?? 'plain'];
   const kinds = PLACE_KINDS.filter((kind) => members.some((member) => member.kind === kind));
   // The one kind of a group of one kind, or null.
   const alone = kinds.length === 1 ? (kinds[0] ?? null) : null;
@@ -75,7 +76,7 @@ function groupCard(position: LatLng, members: readonly Member[]): CardView {
   return {
     id: placeGroupId(position),
     kind: 'place-group',
-    mark: alone === null ? { type: 'group', kinds, ...star } : { type: 'place', place: alone, ...star },
+    mark: alone === null ? { type: 'group', kinds, ...marks } : { type: 'place', place: alone, ...marks },
     marker: {
       name: `${subLabel} · ${place}`,
       short: shortTitle(place),

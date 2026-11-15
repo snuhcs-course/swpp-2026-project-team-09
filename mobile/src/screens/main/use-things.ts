@@ -11,7 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { CardView } from '@/features/map/adapter';
+import type { CardMark, CardView } from '@/features/map/adapter';
 import { type MapAvatar, type MapMarker, type MarkerLook, useMarkerImages, type ZoomDetail } from '@/map';
 import { POSITION_EVERY_MS } from '@/position';
 
@@ -27,13 +27,23 @@ const SELECTED_ORDER = 2;
 
 const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
+// The exclamation mark of a New Event or the star of a Favorite Event that a place's or a group's pin has, or null.
+function markOf(mark: Exclude<CardMark, { type: 'person' }>): { fresh: true } | { starred: true } | null {
+  if (mark.fresh === true) {
+    return { fresh: true };
+  }
+  return mark.starred === true ? { starred: true } : null;
+}
+
 // A card's look at a level of detail. A person is the frames' teardrop at every level, small while the whole campus
 // is in view, and dimmed while their position is old. A place is a dot there, and a pin with its count closer; a
 // restaurant, a study building and the shuttle's stops and vehicles look the same at every level: a stop a dot and a
 // vehicle a pin, so that a vehicle standing at its stop is seen, and stops at one place stay a dot. A study building
 // none of whose spaces the User may use is grey, and study pins merged at the overview level are their cluster.
-// Things of several kinds at one place are a group's dot or pin. A Favorite Event, and a place one of whose events is
-// one, is a pin with the star at every level, so that the star is seen with the whole campus in view.
+// Things of several kinds at one place are a group's dot or pin. A New Event, a Favorite Event, and a place one of
+// whose events is one, is a pin with the exclamation mark or the star at every level, so that the mark is seen with the
+// whole campus in view. Events' pins merged at the overview level are an official pin with how many they are and the
+// mark of the strongest look among them.
 function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (kind === 'study-cluster') {
@@ -43,11 +53,15 @@ function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, sel
     const { id, name, photo, presence, stale } = mark;
     return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, stale, name, photo };
   }
-  const starred = mark.starred === true;
+  // The exclamation mark goes before the star: a pin has one of them.
+  const marked = markOf(mark);
   if (mark.type === 'group') {
-    return starred
-      ? { kind: 'group', kinds: mark.kinds, form: 'pin', selected, starred }
-      : { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected };
+    return marked === null
+      ? { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected }
+      : { kind: 'group', kinds: mark.kinds, form: 'pin', selected, ...marked };
+  }
+  if (kind === 'event-cluster') {
+    return { kind: mark.place, form: 'pin', count: marker.count, selected, ...marked };
   }
   if (mark.place === 'dining') {
     return { kind: 'restaurant', selected };
@@ -58,8 +72,8 @@ function lookOf({ kind, mark, marker, muted }: CardView, detail: ZoomDetail, sel
   if (mark.place === 'shuttle') {
     return { kind: 'shuttle', form: kind === 'shuttle-vehicle' ? 'pin' : 'dot', selected };
   }
-  if (starred) {
-    return { kind: mark.place, form: 'pin', count: marker.count, selected, starred };
+  if (marked !== null) {
+    return { kind: mark.place, form: 'pin', count: marker.count, selected, ...marked };
   }
   return far
     ? { kind: mark.place, form: 'dot', selected }
