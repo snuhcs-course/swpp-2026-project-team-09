@@ -15,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { type Settings } from '../common/settings.js';
 import { FriendsModule } from '../friends/friends.module.js';
 import { GlobalEventsModule } from '../global-events/global-events.module.js';
+import { InterestsModule } from '../interests/interests.module.js';
 import { MenusModule } from '../menus/menus.module.js';
 import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
@@ -49,6 +50,8 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
   imports: [
     FriendsModule,
     GlobalEventsModule,
+    // The watched interests the interest tools keep and remove.
+    InterestsModule,
     MenusModule,
     PlacesModule,
     QuestsModule,
