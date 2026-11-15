@@ -69,3 +69,10 @@ The tests were run on the build machine and pass: the new `answer-marks-lookup.u
 6. **Open:** "길 안내" off campus is left as `routeTo` has it: it says "캠퍼스 밖에 있어요", brings the map to the Place, and the answer stays.
 
 The review's tests: the camera and the Avatars in `lookup-map-hook.unit.test.tsx` (6); the destination in `answer-marks-lookup.unit.test.ts` (4 more); the mock's words in `api/mock-assistant.integration.test.ts` (2 more); in `answer-lookup.integration.test.tsx` the User's own Avatar and "길 안내" without a position (2 more); a Plan and a Lookup replacing each other and the basis of a new reply in `answer-lookup-replies.integration.test.tsx` (2); and a Friend's face under a Lookup and a Lookup that draws nothing in `answer-lookup-server.integration.test.tsx` (2 more), the file once named `answer-lookup-late`. Those of behaviour that already held (the replies, the basis, "길 안내" without a position, the face, and the empty scene) passed at their first run.
+
+### Agent usage (2026-11-15)
+
+This session from the start of the ticket (the base merge, the review, the emulator pass, and the pull request), the implementer subagent (the build and the review's fixes), and a review subagent of the diff.
+
+- Agent time: about 1 hour 6 minutes, an estimate from the transcripts' timestamps (the union of active stretches, gaps over 5 minutes left out).
+- Tokens: output 322,066; input 147,922,106, of which 146,709,696 were cache reads, 1,211,672 cache writes, and 738 uncached. Without cache reads: 1,534,476.
