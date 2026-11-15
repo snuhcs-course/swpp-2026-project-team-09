@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -43,6 +44,7 @@ export const SEAT_TAKEN = '그 자리는 방금 다른 사람이 예약했어요
 export const NO_FREE_SEAT = '그 시간에 빈 자리가 없어요';
 export const NOT_BOOKED = '알겠어요. 예약하지 않았어요.';
 export const BOOK_FAILED = '예약하지 못했어요';
+export const SEATS_UNREAD = '관정의 자리 정보를 받지 못했어요';
 // 대학원 열람실, which the library may refuse to an undergraduate: the card then says only that it failed.
 const GRADUATE_ROOM = '8F-grad-reading-room';
 
@@ -241,7 +243,17 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   return (
     <CardBox testID={`library-book-${card.key}`}>
       {loaded.state === 'loading' ? <Said>빈 자리를 찾고 있어요</Said> : null}
-      <FailureNote failure={loaded.state === 'failed' ? loaded.failure : null} onLogIn={logIn} />
+      <FailureNote
+        failure={loaded.state === 'failed' ? loaded.failure : null}
+        onLogIn={logIn}
+        reading={{
+          words: SEATS_UNREAD,
+          onRetry: reload,
+          onClose: () => {
+            setClosed('declined');
+          },
+        }}
+      />
       {loaded.state === 'ready' && seat === null ? <NoFreeSeat {...props} /> : null}
       {seat === null ? null : <SeatOffer {...offer} seat={seat} />}
     </CardBox>

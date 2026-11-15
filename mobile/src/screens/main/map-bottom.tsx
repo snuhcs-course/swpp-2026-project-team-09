@@ -17,6 +17,7 @@ import { Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
 import { space } from '@/design-system';
+import { restoreOf } from '@/features/assistant/restore';
 import { nextMeal } from '@/features/dining/adapter';
 import type { FirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
@@ -174,8 +175,8 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const cardShown = invitation.shown || made.shown !== null;
-  // The open list of Friends to add takes the input's place in the answer's card.
-  const inputShown = !(chat.framed && chat.answer.adding);
+  // The open list of Friends to add takes the input's place in the answer's card, and so does 보는 중 with 그만.
+  const inputShown = !(chat.framed && (chat.answer.adding || chat.chat.waiting));
   const inputTop = inputShown ? AI_INPUT.bottom + lift + inputHeight : lift;
   return (
     <>
@@ -193,6 +194,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
           onHeight={setInputHeight}
           onOpen={chat.open}
           placeholder={chat.framed ? '이어서 말하기' : undefined}
+          restore={restoreOf(chat.chat.bubbles)}
           onSend={chat.onMap ? sendWithKeyboardDown(chat.chat.send) : chat.chat.send}
           waiting={chat.chat.waiting}
         />
