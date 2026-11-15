@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -31,6 +32,8 @@ const AT_24 = { latitude: 37.45942, longitude: 126.94989 };
 const ANSWER = { clientCapabilities: ['library', 'answer'] };
 const TODAY_ASK_RULE =
   '- When the User gave no time, ask for it, together with anything else missing, in one question ("몇 시부터 몇 시까지 예약할까요?"), and call no tool first.';
+const TODAY_SPACE_RESULTS =
+  "Answers result 'several' with the candidates when two or more bookable spaces fit (ask which one, listing the names); 'found' with each space's status and facts (implemented: bookable here; notOnline: used on site only; unsupported: 아직 미구현; notEligible: for graduate students only); or 'unsupported' when no id was given.";
 const TODAY_DESCRIPTION =
   "Checks a 관정도서관 booking and shows a book card, which books nothing until the User presses 예약하기 on it. Give the space's id from findLibrarySpace, the day, start, and minutes or end, as the User said them, and only what they said of the seat, the room's equipment, the 사용용도 and companions. Answers 'shown' with a summary; 'refused' with every refusal at once, each with its reason and bound; or the space's status with its reason.";
 
@@ -80,10 +83,11 @@ const ANSWER_IN_24 = { ...ANSWER, context: { location: AT_24 } };
 async function book(
   input: object,
   more: object = ANSWER_IN_24,
+  words = '공부할 자리 잡아 줘',
 ): Promise<{ cards: LibraryCardBody[]; result: unknown }> {
   const user = await student();
   model.script(find(['7F-7A-zone2']), { tool: 'proposeLibraryBooking', input }, { text: '…' } satisfies Step);
-  const response = await postAssistantMessages(app, user.accessToken, ask('공부할 자리 잡아 줘'), more);
+  const response = await postAssistantMessages(app, user.accessToken, ask(words), more);
   expect(response.status).toBe(200);
   return { cards: libraryCards(response.body), result: model.toolResults()[1] };
 }
@@ -130,6 +134,25 @@ describe('A seat asked for today without a start, from an app that draws answers
       arrival: { at: '13:54', from: places.b24.name, walkMinutes: 4 },
       leaveBy: null,
     });
+  });
+});
+
+describe('A User who asks the Assistant to book it, from an app that draws answers', () => {
+  it('is shown the same seat card with 예약은 직접 눌러 주세요 first, and the model is told it cannot book', async () => {
+    const { cards, result } = await book({ ...seatToday, askedToBook: true }, ANSWER_IN_24, '그냥 예약해 줘');
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toMatchObject({ key: 'book:7F-7A-zone2:2026-11-04:1400:360', start: '14:00', minutes: 360 });
+    expect(cards[0]?.notes.slice(0, 2)).toEqual([
+      '예약은 직접 눌러 주세요',
+      '13:54 도착에 맞춰 최대 시간으로 채웠어요',
+    ]);
+    expect(result).toMatchObject({
+      result: 'shown',
+      summary:
+        '7층 7A 열람실 2 구역, 오늘 14:00–20:00 예약 카드를 보여 줬어요. 13:54에 도착해요. 16:00 수업이라 15:56엔 나서요. 대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요.',
+    });
+    expect(model.system()).toContain('"그냥 예약해 줘" or "예약까지 해 줘"');
   });
 });
 
@@ -180,6 +203,16 @@ interface GivenTool {
   inputSchema?: unknown;
 }
 
+const schemaWithProperties = z.looseObject({ properties: z.record(z.string(), z.unknown()) });
+
+// A tool's input schema without its askedToBook property, which must be there.
+function withoutAskedToBook(schema: unknown): unknown {
+  const { properties, ...rest } = schemaWithProperties.parse(schema);
+  const { askedToBook, ...others } = properties;
+  expect(askedToBook).toBeDefined();
+  return { ...rest, properties: others };
+}
+
 function givenTools(): Map<string, GivenTool> {
   const tools = (model.received()[0]?.tools ?? []).flatMap((tool) => (tool.type === 'function' ? [tool] : []));
   return new Map(tools.map((tool) => [tool.name, tool]));
@@ -199,6 +232,7 @@ describe('An app that does not draw answers', () => {
     expect(cards).toEqual([]);
     expect(model.system()).toContain(LIBRARY_RULES);
     expect(model.system()).toContain(TODAY_ASK_RULE);
+    expect(model.system()).not.toContain('askedToBook');
     expect(givenTools().get('proposeLibraryBooking')?.description).toBe(TODAY_DESCRIPTION);
   });
 
@@ -213,10 +247,20 @@ describe('An app that does not draw answers', () => {
     const shared = [...today.keys()].filter((name) => answering.has(name));
     expect(shared).toContain('proposeLibraryBooking');
     for (const name of shared) {
-      expect(answering.get(name)?.inputSchema).toEqual(today.get(name)?.inputSchema);
-      if (name !== 'proposeLibraryBooking') {
+      const schema = answering.get(name)?.inputSchema;
+      // proposeLibraryBooking also takes askedToBook, when the User asks the Assistant to book it.
+      expect(name === 'proposeLibraryBooking' ? withoutAskedToBook(schema) : schema).toEqual(
+        today.get(name)?.inputSchema,
+      );
+      if (name !== 'proposeLibraryBooking' && name !== 'findLibrarySpace') {
         expect(answering.get(name)?.description).toBe(today.get(name)?.description);
       }
     }
+    // findLibrarySpace differs only in what it answers when several seat spaces fit.
+    const todaySpaces = today.get('findLibrarySpace')?.description ?? '';
+    const answeringSpaces = answering.get('findLibrarySpace')?.description ?? '';
+    expect(todaySpaces.endsWith(TODAY_SPACE_RESULTS)).toBe(true);
+    expect(answeringSpaces.startsWith(todaySpaces.slice(0, -TODAY_SPACE_RESULTS.length))).toBe(true);
+    expect(answeringSpaces).toContain("the first of them in the catalogue's order");
   });
 });
