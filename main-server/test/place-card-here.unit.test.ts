@@ -36,32 +36,33 @@ describe('The User inside the Place pressed', () => {
 });
 
 describe('A User whose start is the Place pressed but who is not in it', () => {
-  it('near it, outside every outline, has the walk from there and the way', () => {
+  it('near it, outside every outline, is beside it and has the way', () => {
     const lookup = pressed('학생회관', {
       ...lunch,
       location: { at: NEAR_63, placeId: id('학생회관'), onCampus: true },
       inside: null,
     });
 
-    expect(facts(lookup)[0]).toEqual(strong('route', '걸어서 0분 · 12:10 도착'));
+    expect(facts(lookup)[0]).toEqual(strong('route', '바로 옆이에요'));
+    expect(lookup.basis).toEqual(['지금 위치가 학생회관(63동) 바로 옆이에요']);
     expect(lookup.actions.map(({ kind }) => kind)).toEqual(['plan', 'guide']);
   });
 
-  it('after a Class there, with no location, has the walk from there and the way', () => {
+  it('after a Class there, with no location, states no walk and has the way', () => {
     const lookup = pressed('제1공학관', { location: null });
 
-    expect(facts(lookup)[0]).toEqual(strong('route', '걸어서 0분 · 12:10 도착'));
+    expect(facts(lookup).map(({ icon }) => icon)).not.toContain('route');
     expect(lookup.basis).toEqual(['오늘 마지막으로 끝난 일정이 제1공학관(301동)에서였어요']);
     expect(lookup.actions.map(({ kind }) => kind)).toEqual(['guide']);
   });
 
-  it('off campus, pressing the main gate, has the walk from the gate and the way', () => {
+  it('off campus, pressing the main gate, states no walk and has the way', () => {
     const lookup = pressed('서울대 정문', {
       items: [classAt(TUESDAY, '13:00', '13:50', '자연과학관6')],
       location: { at: { latitude: 37.4766, longitude: 126.9816 }, placeId: null, onCampus: false },
     });
 
-    expect(facts(lookup)[0]).toEqual(strong('route', '걸어서 0분 · 12:10 도착'));
+    expect(facts(lookup).map(({ icon }) => icon)).not.toContain('route');
     expect(lookup.basis).toEqual(['지금 위치는 캠퍼스 밖이라 쓰지 않고 정문부터 쟀어요']);
     expect(lookup.actions.map(({ kind }) => kind)).toEqual(['guide']);
   });

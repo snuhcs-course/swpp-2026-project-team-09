@@ -160,11 +160,25 @@ function eventWords({ title, start, end }: PlaceEvent, now: Date): string {
     : `${title} · ${dayAndClock(start)}–${dayAndClock(end)}`;
 }
 
+// A way that starts at the Place itself without the User in it has no walk to state: beside it when the location is
+// near, and nothing when the start is only the last item's Place or the gate.
+function routeWords({ way, here }: Held): string[] {
+  if (here) {
+    return ['지금 여기 있어요'];
+  }
+  if (way === null) {
+    return [];
+  }
+  if (atPlace(way)) {
+    return way.start.basis === 'location' ? ['바로 옆이에요'] : [];
+  }
+  return [`걸어서 ${way.walkMinutes}분 · ${clockOf(way.arrival)} 도착`];
+}
+
 function factsOf(held: Held, now: Date): CardFact[] {
-  const { way, here, next, stayMinutes } = held;
-  const arrival = way === null ? [] : [`걸어서 ${way.walkMinutes}분 · ${clockOf(way.arrival)} 도착`];
+  const { next, stayMinutes } = held;
   return [
-    ...(here ? ['지금 여기 있어요'] : arrival).map((text) => fact('route', text)),
+    ...routeWords(held).map((text) => fact('route', text)),
     ...(next === undefined || stayMinutes === null ? [] : [fact('clock', stayWords(next, stayMinutes))]),
     ...held.menus.map((text) => fact('meal', text)),
     ...held.events.map((event) => fact('flag', eventWords(event, now))),
@@ -222,6 +236,9 @@ function chipsOf({ way, next }: Held, naming: WayNaming): ConditionChip[] {
 function basisOf({ way, here, title }: Held, naming: WayNaming): string[] {
   if (way === null) {
     return [];
+  }
+  if (!here && atPlace(way) && way.start.basis === 'location') {
+    return [`지금 위치가 ${naming.to(way).label} 바로 옆이에요`];
   }
   if (here || atPlace(way)) {
     return [hereBasis(way, naming)];
