@@ -7,10 +7,10 @@
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
-import { type MapAvatar, type MapLine, NATIVE_MIN_LEVEL } from '@/map';
+import type { MapAvatar, MapLine } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
-import { ignorePress, type MapContents, useAnswerMap, useInvitationMap } from './use-answer-map';
+import { type AnswerMap, ignorePress, useAnswerMap, useEverydayLimits, useInvitationMap } from './use-answer-map';
 import { useLookupMap } from './use-lookup-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
@@ -58,19 +58,21 @@ export interface UnaskedCards {
 // selected, the tutorial place pin over them, the User's own Avatar, and the lines. While a Plan of an answer is
 // shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received invitation's
 // card is, its own way is; while a made Quest's card is, its Places and the User are. A Lookup on screen is drawn as
-// a Plan is, and takes no press (`useLookupMap`).
+// a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left further out than the everyday
+// map allows glides back in.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
   room: Room,
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
-): { contents: MapContents; onPress: (id: string) => void; nativeMinLevel: number } {
+): AnswerMap {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
-  const way = useInvitationMap(invitation.shown ? invitation.drawing : made.drawing, map, room);
+  const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
+  const limits = useEverydayLimits(map, answer !== null || way !== null);
   if (answer !== null) {
     return answer;
   }
@@ -81,6 +83,6 @@ export function useMapView(
   return {
     contents: { markers: [...things.markers, ...pin.markers], avatars: [...avatars, ...me.avatars], lines },
     onPress: chat.framed || unasked ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection)),
-    nativeMinLevel: NATIVE_MIN_LEVEL,
+    ...limits,
   };
 }

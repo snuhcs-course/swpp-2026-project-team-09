@@ -5,17 +5,20 @@
  ******************************************************************************/
 
 import { useMemo } from 'react';
-import { drawingOfScene } from '@/features/assistant/answer-marks';
+import type { LabelView } from '@/features/assistant/answer-labels';
+import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
 import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
 import type { Room } from './layout';
 import {
-  ANSWER_MIN_LEVEL,
+  ANSWER_LIMITS,
   type AnswerMap,
   type EverydayAvatars,
   ignorePress,
   othersOf,
+  useBase,
   useDrawnMap,
+  useFraming,
 } from './use-answer-map';
 import type { MainMap } from './use-main-map';
 
@@ -48,14 +51,20 @@ export function useLookupMap(
   everyday: EverydayAvatars,
   mine: readonly MapAvatar[],
 ): AnswerMap | null {
-  const drawing = useMemo(() => (lookup === null ? null : drawingOfScene(lookup.scene)), [lookup]);
-  const others = drawing === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, drawing);
+  const draw = useMemo(
+    () => (lookup === null ? null : (view: LabelView | null): AnswerDrawing => drawingOfScene(lookup.scene, view)),
+    [lookup],
+  );
+  const framing = useFraming(map, room, true);
+  const base = useBase(draw);
+  const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const faces = useUnselected(others);
-  const drawn = useDrawnMap(drawing, reply, NO_LOOKS, map, room, true);
+  const drawn = useDrawnMap(draw, base, reply, NO_LOOKS, map, framing);
   if (drawn === null || lookup === null) {
     return null;
   }
+  const { markers, lines } = drawn;
   const drawsMe = lookup.scene.people.some(({ me }) => me);
   const avatars = drawsMe ? faces : [...faces, ...mine];
-  return { contents: { ...drawn, avatars }, onPress: ignorePress, nativeMinLevel: ANSWER_MIN_LEVEL };
+  return { contents: { markers, lines, avatars }, onPress: ignorePress, ...ANSWER_LIMITS };
 }

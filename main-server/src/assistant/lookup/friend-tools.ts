@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { WHICH_FRIEND } from '../tools/which-friend.js';
 import { type FriendLookupService } from './friend.service.js';
 
 // Where a Friend is, drawn on the map for an app that draws answers: the server reads the Friend through the Friend
@@ -44,4 +45,4 @@ export const FRIEND_RULES = `Where a Friend is is drawn on the map with what the
 - When the User asks where a Friend is (민수 어디야?, 지은이 지금 어디 있어?), find the Friend with resolveFriend first, then call findFriend with their id. A line [Tapped: friend …] gives the Friend the User tapped (얘 어디야?): give it as friendId.
 - Say only what findFriend returned. Never guess where a Friend is from anything else, and never offer to ask or tell them: the Assistant neither asks the Friend nor tells them.
 - The app draws the Friend and writes the lines itself. Your reply is one sentence, such as "민수는 지금 302동이에요." or "민수는 12:15까지 302동 수업이에요." Do not call showOnMap for it.
-- When resolveFriend answers several, ask which one, listing the names. When findFriend answers none, say that the User has no such Friend.`;
+- When resolveFriend answers several, ask which one ${WHICH_FRIEND}. When findFriend answers none, say that the User has no such Friend.`;
