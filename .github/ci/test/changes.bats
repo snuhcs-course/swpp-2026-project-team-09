@@ -683,9 +683,10 @@ origin/4.0/Main at ${base:0:7}" ]
 
 @test "a failure inside the script runs the job, and the script still exits 0" {
   push_documents_branch 4.0/documents
-  mkdir "$BATS_TEST_TMPDIR/bin"
-  printf '#!/bin/sh\nexit 1\n' >"$BATS_TEST_TMPDIR/bin/mktemp"
-  chmod +x "$BATS_TEST_TMPDIR/bin/mktemp"
+  # Apart from the fakes on the tests' own PATH, whose `run` needs mktemp.
+  mkdir "$BATS_TEST_TMPDIR/broken"
+  printf '#!/bin/sh\nexit 1\n' >"$BATS_TEST_TMPDIR/broken/mktemp"
+  chmod +x "$BATS_TEST_TMPDIR/broken/mktemp"
 
-  expect_full_run 'the script stopped before it decided' PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+  expect_full_run 'the script stopped before it decided' PATH="$BATS_TEST_TMPDIR/broken:$PATH"
 }
