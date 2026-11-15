@@ -7,6 +7,7 @@
 import { type Href, router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import type { AnswerLine } from '@/api/assistant-types';
 import type { Refusal, RefusalOffer, RefusalScreen } from '@/api/refusal-types';
 import { color, font, radius, size, space, text } from '@/design-system';
 import { offerLocation } from './location-offer';
@@ -72,25 +73,33 @@ interface RefusalReplyProps {
   onAsk: (words: string) => void;
 }
 
+// The lines of a reply that is no answer, as row 8 draws them: the first in the title style, the second smaller and
+// muted.
+export function ReplyLines({ lines, testID }: { lines: readonly AnswerLine[]; testID?: string }): ReactElement {
+  return (
+    <View>
+      {lines.map((line, row) => (
+        // The lines have no id, and their order is their meaning.
+        // oxlint-disable-next-line react/no-array-index-key
+        <Text key={row} style={row === 0 ? styles.first : styles.second} testID={testID}>
+          {line.map(({ text: words, strong }, part) => (
+            // oxlint-disable-next-line react/no-array-index-key
+            <Text key={part} style={strong ? styles.strong : undefined}>
+              {words}
+            </Text>
+          ))}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
 export function RefusalReply({ refusal, onAsk }: RefusalReplyProps): ReactElement {
   const { lines, offers } = refusal;
   const main = hasMain(offers);
   return (
     <View style={styles.reply} testID="refusal-reply">
-      <View>
-        {lines.map((line, row) => (
-          // The lines have no id, and their order is their meaning.
-          // oxlint-disable-next-line react/no-array-index-key
-          <Text key={row} style={row === 0 ? styles.first : styles.second} testID="refusal-line">
-            {line.map(({ text: words, strong }, part) => (
-              // oxlint-disable-next-line react/no-array-index-key
-              <Text key={part} style={strong ? styles.strong : undefined}>
-                {words}
-              </Text>
-            ))}
-          </Text>
-        ))}
-      </View>
+      <ReplyLines lines={lines} testID="refusal-line" />
       {offers.length === 0 ? null : (
         <View style={styles.offers} testID="refusal-offers">
           {offers.map((offer, index) => (

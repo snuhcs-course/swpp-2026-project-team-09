@@ -110,7 +110,9 @@ export interface Chat {
   showRoom: (card: string, room: CardRoom | null) => void;
 }
 
-export const CHAT_FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
+// Two lines: what failed, then why and where the words are (the input holds them again).
+export const CHAT_FAILED =
+  '답을 가져오지 못했어요.\n연결이 끊겼거나 서버가 답하지 않았어요. 쓴 말은 입력칸에 그대로 두었어요.';
 export const CHAT_USED_UP = '오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요';
 
 const FAILURE_TEXT: Record<ChatFailure, string> = { unavailable: CHAT_FAILED, usedUp: CHAT_USED_UP };
