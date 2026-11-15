@@ -61,3 +61,12 @@ Details the ticket left to the implementation, listed so that any of them can be
 8. **The rows the step's Quest query gave** are read from a spy on the app's `quest.findMany`. A Prisma query is not a `Promise`, so the spy leaves it unsettled; the test awaits each again, which gives the rows the step got without asking the database again.
 9. **A second try waits until the first call is over.** The double ask showed when `interest-topics` and `interest-news` ran side by side (a job fair with `topicsTries` 2), on the base as well. The rule lives in one place, `TopicsStep.unread(now)`; the wait is `ASSISTANT_TIMEOUT_MS`, the setting the topics call's timeout comes from, plus one minute, read when the step is made. With the tests' 30 s that is 90 s, so the failed-call test moves the app's clock 2 minutes ahead before the second try.
 10. **A try's time is when it is claimed**, read from the clock at the claim, not when the step began: with the real model a step's last texts are claimed long after it began, and the wait counts from the start of their own call. The claim's check of the rule uses that time too.
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5).
+
+- Agent time: about 43 minutes, an estimate from the transcript's timestamps; part of it was waiting for the shared
+  check slots.
+- Tokens: output 126,777; input 27,697,717, of which 27,381,966 were cache reads, 315,493 cache writes, and 258
+  uncached. Without cache reads: 442,528.
