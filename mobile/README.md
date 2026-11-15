@@ -503,8 +503,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   colour or the Party's: small while the whole campus is in view, at full size from the `pins` level, and with the
   given name under it from the `names` level. While the switch of the answer on the map is on, a Friend whose
   position is at the exact level (`Position.level`) carries a green dot at the face, none at the building level or
-  while dimmed; with the switch off no face has one. A live position without a level keeps the one `GET /positions`
-  gave. A Friend whose position is not known has no marker. The Global Event,
+  while dimmed; with the switch off no face has one. A live position's level replaces the one before; one without a
+  level keeps it. A Friend whose position is not known has no marker. The Global Event,
   the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
   with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. A short name is the title cut at a word's end within 8 characters,
