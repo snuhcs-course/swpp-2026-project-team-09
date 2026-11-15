@@ -27,3 +27,8 @@ The production app stops showing sample Friend data. A visible Friend's line sho
 - [ ] The "Sample data in production" row of `he-revision-log.md` gets this pull request.
 
 ## Comments
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 45 minutes (estimate), in one Claude Code session in the worktree `swpp-p06-05`, from the branch to PR #280. Time spent waiting for answers is left out.
+- Tokens: the two review subagents used 71,799 and 78,977 tokens in all (149,776). The session's own input and output, and its cache reads and writes, are not visible from inside the session; they are to be read from the usage report and added here.
