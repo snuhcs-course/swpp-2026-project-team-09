@@ -10,7 +10,8 @@ import type { ApiClient } from '@/api/client';
 import type { AskLevel, BetterPlan, PlanQuest } from '@/api/plan-quest-types';
 import { field, hasTexts, isFriendLevel, isNumber, listOf } from './answers';
 import { call } from './http';
-import { isInput, isPlacePoint, isPlan } from './plan-answers';
+import { isPlacePoint, isPlan } from './plan-answers';
+import { isInput } from './plan-inputs';
 import { isQuest } from './quest-answers';
 
 function isInvitation(value: unknown): value is PlanQuest['invitations'][number] {

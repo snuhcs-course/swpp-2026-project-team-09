@@ -6,6 +6,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -331,7 +332,6 @@ export function useChat(readContext?: () => RequestContext | undefined): Chat {
     forget();
     setWaiting(false);
   }, [forget, show]);
-
   const addOwn = useAddOwn(add);
   const askApp = useAskApp({ said, show, add }, conversation, setWaiting);
 

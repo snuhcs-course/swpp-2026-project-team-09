@@ -42,6 +42,14 @@ export async function readCampus(): Promise<void> {
   }));
 }
 
+// The seed's walking table and shuttle timing.
+export function seedTravel(): SeedTravel {
+  if (travel === null) {
+    throw new Error('Read the campus first');
+  }
+  return travel;
+}
+
 // The Place of that name.
 export function place(name: string): PlaceDto {
   const found = places.find((each) => each.name === name);
@@ -52,6 +60,15 @@ export function place(name: string): PlaceDto {
 }
 
 export const id = (name: string): string => place(name).id;
+
+// The Place of that number.
+export function numbered(number: string): PlaceDto {
+  const found = places.find((each) => each.number === number);
+  if (found === undefined) {
+    throw new Error(`The seed has no Place numbered ${number}`);
+  }
+  return found;
+}
 
 export function placeOf(placeId: string): PlaceDto {
   const found = places.find((each) => each.id === placeId);

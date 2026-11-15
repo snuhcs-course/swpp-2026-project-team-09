@@ -8,6 +8,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -216,6 +217,21 @@ export function toSubQuestDto(
 // count.
 export function hasSubQuestsAhead(quest: StoredQuest, now: Date): boolean {
   return quest.subQuests.some((subQuest) => !passed(contentOf(subQuest, quest.globalEvent), now));
+}
+
+// The Quests that hasSubQuestsAhead holds for, as a query's where; the two change together.
+export function subQuestsAheadWhere(now: Date): Prisma.QuestWhereInput {
+  const notPassed = { OR: [{ endsAt: null }, { endsAt: { gt: now } }] };
+  return {
+    OR: [
+      { subQuests: { some: { attending: false, ...notPassed } } },
+      // The attending Sub Quest stores no time: it goes by the Global Event.
+      {
+        subQuests: { some: { attending: true } },
+        globalEvent: { is: { state: GlobalEventState.published, ...notPassed } },
+      },
+    ],
+  };
 }
 
 export function toQuestDto(quest: StoredQuest, userId: string, now: Date): QuestDto {
