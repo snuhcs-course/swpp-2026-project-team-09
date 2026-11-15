@@ -79,21 +79,6 @@ describe('ChoiceGrid laid out', () => {
   });
 });
 
-describe('ChoiceGrid with columns', () => {
-  // P02 ticket 17. Partitions: a full row of three, and a short one.
-  it('stands three in one row with three columns', async () => {
-    await show({ columns: 3 });
-
-    expect(rows()).toEqual([['하은, 160m, 추가', '도윤, 720m, 추가', '지우, 자리 모름, 추가']]);
-  });
-
-  it('gives a short row as many empty partners as it lacks', async () => {
-    await show({ choices: CHOICES.slice(0, 1), columns: 3 });
-
-    expect(rows()).toEqual([['하은, 160m, 추가', 'choice-grid-empty', 'choice-grid-empty']]);
-  });
-});
-
 describe('ChoiceGrid shown', () => {
   // Partitions: a value in the muted ink and one said faint.
   it('writes the name at the left and the value at the right, a faint value in the faint ink', async () => {

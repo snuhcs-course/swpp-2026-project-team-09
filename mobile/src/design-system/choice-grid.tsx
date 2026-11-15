@@ -40,8 +40,6 @@ interface ChoiceGridProps {
   onChoose: (key: string) => void;
   // The most rows shown at once: the rest scroll inside a window of whole rows. Without it every row is shown.
   rows?: number;
-  // Cells in a row, two unless said.
-  columns?: number;
 }
 
 const COLUMNS = 2;
@@ -174,12 +172,11 @@ function GridWindow({ rows, children }: { rows: number; children: ReactNode }): 
   );
 }
 
-// A list of choices inside a card: columns of equal cells, filled row by row, each with a name at the left and
+// A list of choices inside a card: two columns of equal cells, filled row by row, each with a name at the left and
 // the one value that decides the choice at the right, so that the names and the values stand in straight columns.
-export function ChoiceGrid(props: ChoiceGridProps): ReactElement {
-  const { choices, disabled, onChoose, rows: most, columns = COLUMNS } = props;
-  const rows = Array.from({ length: Math.ceil(choices.length / columns) }, (_, row) =>
-    choices.slice(row * columns, (row + 1) * columns),
+export function ChoiceGrid({ choices, disabled, onChoose, rows: most }: ChoiceGridProps): ReactElement {
+  const rows = Array.from({ length: Math.ceil(choices.length / COLUMNS) }, (_, row) =>
+    choices.slice(row * COLUMNS, (row + 1) * COLUMNS),
   );
   const grid = (
     <View style={styles.grid} testID="choice-grid">
@@ -189,9 +186,7 @@ export function ChoiceGrid(props: ChoiceGridProps): ReactElement {
             <Cell choice={choice} disabled={disabled} key={choice.key} onChoose={onChoose} />
           ))}
           {/* An odd last cell keeps its column's width. */}
-          {Array.from({ length: columns - row.length }, (_, empty) => (
-            <View key={`empty ${empty}`} style={styles.empty} testID="choice-grid-empty" />
-          ))}
+          {row.length < COLUMNS ? <View style={styles.empty} testID="choice-grid-empty" /> : null}
         </View>
       ))}
     </View>
