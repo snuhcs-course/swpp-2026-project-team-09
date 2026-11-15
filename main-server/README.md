@@ -2521,7 +2521,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     for, and `shown` adds `arrival` (`at`, the Place's name as `from`, `walkMinutes`) and `leaveBy` (when to leave
     for the next Class or Sub Quest with a Place that starts before the booking ends, or null, also when that time is
     not later than the arrival). A room, a named start or another day is checked as before, and any other app is asked
-    for the time.
+    for the time. For the same app, words that fit several bookable seat spaces are not asked back: `findLibrarySpace`
+    answers `found` with only the first of them, in the catalogue's order with `7F-7A-zone2` first, its card's notes
+    say "맞는 곳이 N곳이라 첫 곳으로 채웠어요", and the phone's room chip lets the User choose another; several rooms
+    are still asked about. The card's space carries the
+    catalogue's `kind`, by which the phone groups the seat spaces of a floor.
   - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers only: the
     answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
     with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one

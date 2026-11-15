@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -36,6 +37,7 @@ const libraryCardSchema = z.strictObject({
         id: z.string(),
         name: z.string(),
         floor: z.number(),
+        kind: z.string(),
         placeNumber: z.literal('62-1'),
         unit: z.enum(['seat', 'room']),
         roomNo: z.number(),
