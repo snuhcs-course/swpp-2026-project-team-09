@@ -41,7 +41,7 @@ export function useAskedCard(cards: readonly CardView[] | null, map: MainMap, se
     if (address?.kind === 'invitation' && on) {
       showToast(INVITATION_GONE);
     } else if (address !== null) {
-      router.navigate(fallbackFor(address.kind));
+      router.navigate(fallbackFor(address));
     }
   }, [card, cards, map, selection, on, showToast]);
 }
