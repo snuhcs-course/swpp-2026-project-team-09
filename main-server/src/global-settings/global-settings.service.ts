@@ -47,6 +47,7 @@ export class GlobalSettings implements OnModuleInit {
   private registry = new Map<string, ResolvedSetting>();
   private values = new Map<string, SettingValue>();
   private revision = -1;
+  private checking = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -140,9 +141,14 @@ export class GlobalSettings implements OnModuleInit {
     }));
   }
 
-  // Reads only the revision, and reloads every row when it changed. A failed check keeps the last copy.
+  // Reads only the revision, and reloads every row when it changed. A failed check keeps the last copy. A check that
+  // starts while the previous one is still running, as when the database is slow, is skipped.
   @Cron('0 * * * * *', { name: 'global-settings-check' })
   async check(): Promise<void> {
+    if (this.checking) {
+      return;
+    }
+    this.checking = true;
     try {
       const { revision } = await this.prisma.settingsRevision.findUniqueOrThrow({ where: { id: 1 } });
       if (revision !== this.revision) {
@@ -150,6 +156,8 @@ export class GlobalSettings implements OnModuleInit {
       }
     } catch (error) {
       this.logger.error(`The settings' check failed; the last copy stays: ${String(error)}`);
+    } finally {
+      this.checking = false;
     }
   }
 

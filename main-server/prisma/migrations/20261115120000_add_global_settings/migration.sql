@@ -37,9 +37,6 @@ CREATE TABLE "settings_revision" (
 -- CreateIndex
 CREATE UNIQUE INDEX "settings_name_key" ON "settings"("name");
 
--- CreateIndex
-CREATE INDEX "setting_changes_changed_at_idx" ON "setting_changes"("changed_at");
-
 -- AddForeignKey
 ALTER TABLE "setting_changes" ADD CONSTRAINT "setting_changes_administrator_id_fkey" FOREIGN KEY ("administrator_id") REFERENCES "administrators"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
