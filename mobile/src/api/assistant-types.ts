@@ -352,6 +352,7 @@ export interface MapScene {
     me: boolean;
     // At 'building', the point of the Place the person is in.
     at: LatLng;
+    // `building`: a Friend at the building they are in, as the Friend view shows them.
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];

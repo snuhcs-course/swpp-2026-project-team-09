@@ -30,6 +30,10 @@ import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
 import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
+import { type FriendLookupService } from '../lookup/friend.service.js';
+import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
+import { type MenuLookupService } from '../lookup/menu.service.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { type WayService } from '../lookup/way.service.js';
 import { DELIMITER } from '../others-text.js';
@@ -63,21 +67,31 @@ export interface ChatAssistantServices {
   // The planners of each kind of answer drawn on the map.
   plans: PlanAnswersService;
   ways: WayService;
+  menuLookups: MenuLookupService;
+  friendLookups: FriendLookupService;
 }
 
 export interface ChatAssistantOptions {
   // The app draws an answer on the map: a meal is planned there instead of shown as Restaurant cards, and a way to a
-  // Place is drawn there.
+  // Place, a Restaurant's menu, and where a Friend is are drawn there.
   drawsAnswers: boolean;
   // With drawsAnswers, it also draws the events of a day and recruiting Quests planned there.
   drawsEvents?: boolean;
 }
 
-function instructionsOf(freeTimeRules: readonly string[], libraryRules: string): (now: Date) => string {
-  return (now) => [chatRules(now), ...freeTimeRules, libraryRules, TUTORIAL_RULES].join('\n\n');
+function instructionsOf(
+  freeTimeRules: readonly string[],
+  libraryRules: string,
+  drawsAnswers: boolean,
+): (now: Date) => string {
+  return (now) => [chatRules(now, drawsAnswers), ...freeTimeRules, libraryRules, TUTORIAL_RULES].join('\n\n');
 }
 
-function chatRules(now: Date): string {
+// In the chat of an app that draws answers, findFriend answers where a Friend is.
+const NO_POSITIONS = `
+- You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.`;
+
+function chatRules(now: Date, drawsAnswers: boolean): string {
   return `You are SNU Now AI, the assistant in SNU Now, an app for campus life at Seoul National University.
 
 Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
@@ -112,8 +126,7 @@ Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such
 - Keep answers short, a few sentences or a short list, since they are read on a phone.
 - What you write beside a tool call reaches the User as part of the answer. In the last step, do not repeat it: add only what is new, or nothing.
 - Keep small talk short. To recommend a meal, first ask what the User feels like (한식, 일식, 양식, …), then recommend from that day's menus from getMenus.
-- Politely decline long general work, such as writing a report or an essay, or writing or fixing code, and say what you can help with on campus.
-- You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.`;
+- Politely decline long general work, such as writing a report or an essay, or writing or fixing code, and say what you can help with on campus.${drawsAnswers ? '' : NO_POSITIONS}`;
 }
 
 // What an app that draws answers plans on the map in place of the Restaurant cards and their rules: a meal, and the
@@ -141,45 +154,40 @@ function plannedOnMap(
   };
 }
 
-// An app that draws answers also gets the way to a Place drawn on the map.
-function withWays(
+// An app that draws answers also gets the Lookups drawn on the map: the way to a Place, a Restaurant's menu, and where a
+// Friend is.
+function withLookups(
   planned: { rules: string[]; tools: Record<string, Tool> },
-  ways: WayService,
+  { ways, menuLookups, friendLookups }: ChatAssistantServices,
   drawsAnswers: boolean,
 ): { rules: string[]; tools: Record<string, Tool> } {
   if (!drawsAnswers) {
     return planned;
   }
-  return { rules: [...planned.rules, WAY_RULES], tools: { ...planned.tools, findWay: findWay(ways) } };
+  return {
+    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES],
+    tools: {
+      ...planned.tools,
+      findWay: findWay(ways),
+      findMenu: findMenu(menuLookups),
+      findFriend: findFriend(friendLookups),
+    },
+  };
 }
 
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
-export function chatAssistant(
-  {
-    menus,
-    shuttle,
-    globalEvents,
-    recruiting,
-    friends,
-    places,
-    freeTime,
-    library,
-    tutorial,
-    plans,
-    ways,
-  }: ChatAssistantServices,
-  options?: ChatAssistantOptions,
-): Feature {
+export function chatAssistant(services: ChatAssistantServices, options?: ChatAssistantOptions): Feature {
+  const { menus, shuttle, globalEvents, recruiting, friends, places, freeTime, library, tutorial, plans } = services;
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const drawsAnswers = options?.drawsAnswers ?? false;
   const planned = withRefusals(
-    withWays(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), ways, drawsAnswers),
+    withLookups(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), services, drawsAnswers),
     freeTime,
     drawsAnswers,
   );
   return {
-    instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES),
+    instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES, drawsAnswers),
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
       getMenus: getMenus(menus),

@@ -18,6 +18,7 @@ import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import {
+  endOf,
   FriendDto,
   FriendRequestsDto,
   SentFriendRequestDto,
@@ -79,7 +80,7 @@ const alreadyFriends = (): ConflictException =>
     message: 'This User is already your Friend.',
   });
 
-const friendNotFound = (): NotFoundException =>
+export const friendNotFound = (): NotFoundException =>
   new NotFoundException({
     statusCode: HttpStatus.NOT_FOUND,
     error: 'Not Found',
@@ -209,8 +210,7 @@ export class FriendsService {
     return rows
       .map((row) => {
         const friend = otherOf(row, userId);
-        const level = row.userAId === userId ? row.userALevel : row.userBLevel;
-        return toFriendDto(friend, level, visible.has(friend.id));
+        return toFriendDto(friend, endOf(row, userId), visible.has(friend.id));
       })
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }

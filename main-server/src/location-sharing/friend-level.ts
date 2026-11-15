@@ -33,3 +33,8 @@ export function levelSeen({ bothMasterSwitchesOn, commonParty, friendship }: Bet
   const [one, other] = friendship;
   return FROM_LEAST.indexOf(one) < FROM_LEAST.indexOf(other) ? one : other;
 }
+
+// The levels that show more than this one.
+export function levelsAbove(level: FriendLevel): FriendLevel[] {
+  return FROM_LEAST.slice(FROM_LEAST.indexOf(level) + 1);
+}

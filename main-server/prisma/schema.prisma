@@ -64,6 +64,8 @@ model User {
   friendId          String             @unique @map("friend_id")
   // Location Sharing as a whole. Off until the User turns it on; signing in and out leave it as it is.
   masterSwitchOn    Boolean            @default(false) @map("master_switch_on")
+  // When the app first asked the User, before they turned the Master Switch off, whether to show the building instead.
+  masterOffAskedAt  DateTime?          @map("master_off_asked_at")
   sessions          Session[]
   friendshipsAsA    Friendship[]       @relation("FriendshipUserA")
   friendshipsAsB    Friendship[]       @relation("FriendshipUserB")
@@ -116,6 +118,12 @@ model Friendship {
   // What each User lets the other see of where they are, at their own end. The other sees the lower of the two.
   userALevel FriendLevel @default(building) @map("user_a_level")
   userBLevel FriendLevel @default(building) @map("user_b_level")
+  // When the app first asked each User about the other, at their own end: before turning location off for them, and
+  // after a Plan of the User's with them became a Quest. Each is asked once.
+  userAOffAskedAt  DateTime? @map("user_a_off_asked_at")
+  userBOffAskedAt  DateTime? @map("user_b_off_asked_at")
+  userAPlanAskedAt DateTime? @map("user_a_plan_asked_at")
+  userBPlanAskedAt DateTime? @map("user_b_plan_asked_at")
 
   @@unique([userAId, userBId])
   @@index([userBId])

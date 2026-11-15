@@ -20,7 +20,18 @@ jest.mock('@/auth/tokens', () => ({ heldTokens: jest.fn(), keepTokens: jest.fn()
 jest.mock('@/session/session-events', () => ({ endSession: jest.fn(), requireOnboarding: jest.fn() }));
 
 const TOKENS = { accessToken: 'expired-access', refreshToken: 'refresh-1' };
-const FRIENDS = [{ id: 'f1', name: '김민준', department: '경영학과', level: 'exact', sharing: true, visible: false }];
+const FRIENDS = [
+  {
+    id: 'f1',
+    name: '김민준',
+    department: '경영학과',
+    level: 'exact',
+    sharing: true,
+    visible: false,
+    askedOff: false,
+    askedPlan: false,
+  },
+];
 
 let server: FakeServer;
 
