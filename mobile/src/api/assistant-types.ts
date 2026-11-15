@@ -31,9 +31,10 @@ export interface CardReference {
 }
 
 // What the app tells the main server it can draw, with every chat request: library cards. An app without it (the
-// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map.
+// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map, and the study
+// spaces of the visible area it sends as `viewport`.
 export const CLIENT_CAPABILITIES = ['library'] as const;
-export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer'] as const;
+export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer', 'area'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -233,9 +234,10 @@ export interface AnswerReply {
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
 }
 
-// `from` is the start the User fixed for a meet.
+// `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
+// of "이 근처".
 export interface ConditionChip {
-  kind: 'origin' | 'from' | 'until' | 'person';
+  kind: 'origin' | 'from' | 'until' | 'person' | 'area' | 'what';
   text: string;
   userId: string | null;
 }
@@ -301,7 +303,8 @@ export interface MapScene {
     minutes: number;
     mode?: 'walk' | 'shuttle';
   }[];
-  flags: { at: LatLng; text: string; role: FlagRole }[];
+  // `placeId`: the Place an `away` flag points to.
+  flags: { at: LatLng; text: string; role: FlagRole; placeId?: string }[];
 }
 
 export interface TimeBand {

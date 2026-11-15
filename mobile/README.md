@@ -643,7 +643,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   button forget the conversation; a map button forgets it and turns its layer on; another card leads where it does and
   leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it is laid
   out. Turning the switch either way closes the chat sheet and forgets the conversation. Every request then carries a
-  context with the User's position on campus and the capability `answer`.
+  context with the User's position on campus and the capabilities `answer` and `area` (the study spaces of the visible
+  area, which the server answers only once the context carries a `viewport`).
 - **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the
   conversation's last reply (a failure and the app's own bubble are none), so it stays while a follow-up waits or has
   failed, or a recalculation that replaced it, held with the index of the Plan on screen and whether its basis is open
