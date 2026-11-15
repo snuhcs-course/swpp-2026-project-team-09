@@ -11,7 +11,7 @@ import { defineTool, type NoneFound, noneFound, type Tool } from '../feature.js'
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { placeLabelOf } from '../gathering/place-naming.js';
 import { koreaDate } from '../korea-time.js';
-import { FRIEND_KINDS, type FriendKind, type Refusal, REFUSAL_KINDS, type RefusalKind } from './refusal.dto.js';
+import { FRIEND_KINDS, type FriendKind, type Refusal, REFUSE_KINDS, type RefuseKind } from './refusal.dto.js';
 import { friendNowLine, friendRefusal, plainRefusal } from './refusals.js';
 
 // The refusal presenter of an app that draws answers: the model names the case, and the server writes the words and
@@ -25,7 +25,7 @@ export interface RefusalSources {
 }
 
 const input = z.object({
-  kind: z.enum(REFUSAL_KINDS).describe('The case, as the rules of refuse name it.'),
+  kind: z.enum(REFUSE_KINDS).describe('The case, as the rules of refuse name it.'),
   userId: z
     .uuid()
     .optional()
@@ -34,11 +34,11 @@ const input = z.object({
     ),
 });
 
-const isFriendKind = (kind: RefusalKind): kind is FriendKind => FRIEND_KINDS.some((each) => each === kind);
+const isFriendKind = (kind: RefuseKind): kind is FriendKind => FRIEND_KINDS.some((each) => each === kind);
 
 async function refusalFor(
   { friends, days, places }: RefusalSources,
-  kind: RefusalKind,
+  kind: RefuseKind,
   friendId: string | undefined,
   { userId, now }: { userId: string; now: Date },
 ): Promise<Refusal | NoneFound> {
@@ -90,7 +90,7 @@ export function refuse(sources: RefusalSources): Tool {
 }
 
 // The rules of refuse, a fragment of the chat's system prompt for an app that draws answers.
-export const REFUSAL_RULES = `A request the app cannot or will not answer is refused with refuse: the server writes the words, and the app shows them with buttons of what it can do instead. These rules come before the lines above on declining general work, on small talk, and on where a Friend is.
+export const REFUSAL_RULES = `A request the app cannot or will not answer is refused with refuse: the server writes the words, and the app shows them with buttons of what it can do instead. These rules come before the lines above on declining general work, on small talk, on where a Friend is, and on asking which Friend.
 
 - Call refuse for each case below, in place of declining in your own words, and write nothing beside the call or after it:
   - off-campus: anything off campus, such as a restaurant, a place, or an event outside SNU (강남역 맛집 추천해 줘).
@@ -104,6 +104,7 @@ export const REFUSAL_RULES = `A request the app cannot or will not answer is ref
   - not-watched-friend: telling the User later when they meet or pass a Friend (민수랑 마주칠 때 알려 줘).
   - not-watched-shuttle: telling the User later when the shuttle comes (셔틀 오면 알려 줘). Asking when the shuttle comes now is not this case.
 - For past-location, others-sharing and not-watched-friend, first find the Friend with resolveFriend and give their userId, or take it from [Tapped: friend …]. When resolveFriend answers none, refuse with not-a-friend; when it answers several, ask which one.
+- When resolveFriend answers several with a note that the app asks which one, the app shows the question with a cell for each candidate: write nothing beside the call or after it, and call nothing else. The User's choice comes back as the Friend's full name with [Tapped: friend …], which gives their id.
 - Greetings and thanks are answered in a short sentence, not refused.`;
 
 // An app that draws answers also gets refuse and its rules.

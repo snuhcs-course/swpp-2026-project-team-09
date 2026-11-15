@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import { type AnswerReply, type Lookup } from '../src/assistant/dto/answer.dto.js';
+import { QUESTION_SHOWN } from '../src/assistant/refusals/friend-question.js';
 import { MealPlanStage, type Named, planMeal, resolve } from './meal-plan.js';
 import { type Step } from './scripted-model.js';
 
@@ -85,6 +86,7 @@ describe('"배고파, 민수랑 같이" with 김민수 (컴퓨터공학부) and 
       result: 'several',
       candidates: [candidate(kim, '컴퓨터공학부'), candidate(lee, '경영학과')],
       more: false,
+      note: QUESTION_SHOWN,
     });
     expect(JSON.stringify(refused)).toContain(ASKS);
     expect(replySchema.parse(response.body).answer).toBeNull();
@@ -135,7 +137,7 @@ describe('Two Friends both named 김민수, of 컴퓨터공학부 and 경영학�
     const candidates = cs.id.localeCompare(biz.id) < 0 ? both : both.toReversed();
 
     await stage.send([resolve('김민수'), { text: '…' }], {}, '김민수랑 밥 먹을래');
-    expect(stage.model.toolResults()).toEqual([{ result: 'several', candidates, more: false }]);
+    expect(stage.model.toolResults()).toEqual([{ result: 'several', candidates, more: false, note: QUESTION_SHOWN }]);
 
     const response = await stage.send(
       [resolveIn('김민수', '경영'), planMeal(date, [biz.id]), { text: '…' }],
