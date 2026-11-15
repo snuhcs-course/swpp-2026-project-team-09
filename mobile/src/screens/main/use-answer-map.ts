@@ -44,12 +44,12 @@ const NO_LOOKS: readonly MarkerLook[] = [];
 
 type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings'>;
 
-// What the pill covers at the top, under a status bar `top` high, and the card at the bottom, each with the room the
-// drawing's marks there need.
-function paddingOf(top: number, cardHeight: number | null, drawing: AnswerDrawing): FitPadding {
+// What covers the map at the top under a status bar `top` high, the answer's pill or, for a received invitation, which
+// has none, nothing, and the card at the bottom, each with the room the drawing's marks there need.
+export function paddingOf(top: number, cardHeight: number | null, drawing: AnswerDrawing, pill: boolean): FitPadding {
   const { above, below } = roomsOf(drawing);
   return {
-    top: top + listsTop(top) + ANSWER_PILL.height + above,
+    top: (pill ? top + listsTop(top) + ANSWER_PILL.height : top) + above,
     right: SIDE,
     bottom: (cardHeight ?? 0) + below,
     left: SIDE,
@@ -59,7 +59,12 @@ function paddingOf(top: number, cardHeight: number | null, drawing: AnswerDrawin
 // Shows the drawing when it comes, and again when the card's height or the stage's size changes: in one glide to the
 // camera `answerCamera` works out for the view. Until the stage is laid out and the map has told its fit zoom, the
 // map fits the points itself. No drawing moves nothing, so closing the answer leaves the camera where it is.
-function useAnswerCamera(drawing: AnswerDrawing | null, map: MainMap, { answerHeight, stage }: Room): void {
+function useAnswerCamera(
+  drawing: AnswerDrawing | null,
+  map: MainMap,
+  { answerHeight, stage }: Room,
+  pill: boolean,
+): void {
   const { top } = useSafeAreaInsets();
   const { fitAnswer, moveTo, fitZoom } = map;
   const width = stage?.width;
@@ -68,7 +73,7 @@ function useAnswerCamera(drawing: AnswerDrawing | null, map: MainMap, { answerHe
     if (drawing === null || drawing.points.length === 0) {
       return;
     }
-    const padding = paddingOf(top, answerHeight, drawing);
+    const padding = paddingOf(top, answerHeight, drawing, pill);
     if (stage === null || fitZoom === null) {
       fitAnswer(drawing.points, padding);
       return;
@@ -103,6 +108,49 @@ export interface AnswerMap {
   nativeMinLevel: number;
 }
 
+// The everyday map's Avatars, and the cards that say whose they are.
+type EverydayAvatars = { avatars: readonly MapAvatar[]; cards: readonly CardView[] };
+
+// A drawing's markers and lines on the map in place of the everyday map's markers, lines, and the User's own Avatar,
+// with the camera of an answer, under the answer's `pill` or none. Null while there is nothing to draw. `looks` are
+// asked for with the drawing's own, so that a change of drawing never waits for a picture.
+function useDrawnMap(
+  drawing: AnswerDrawing | null,
+  looks: readonly MarkerLook[],
+  map: MainMap,
+  room: Room,
+  pill: boolean,
+): Omit<MapContents, 'avatars'> | null {
+  const things = drawing?.things ?? [];
+  const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
+  useAnswerCamera(drawing, map, room, pill);
+  if (drawing === null || things.length === 0) {
+    return null;
+  }
+  const markers = things.flatMap((thing, at): MapMarker[] => {
+    const image = images[at];
+    const { id, position, planId, order } = thing;
+    return image === undefined ? [] : [{ id, name: thing.name, position, image, order, passive: planId === null }];
+  });
+  return { markers, lines: drawing.lines };
+}
+
+export function ignorePress(): void {
+  // Nothing of a received invitation's way takes a press, nor, while the frame or that card is shown, the everyday
+  // map's markers.
+}
+
+const NO_AVATARS: readonly MapAvatar[] = [];
+
+// The invitee's own way of a received invitation drawn as a Plan is, with no Avatar of anyone else: the card says
+// that others are shown once the Party is on. Null while there is none to draw.
+export function useInvitationMap(drawing: AnswerDrawing | null, map: MainMap, room: Room): AnswerMap | null {
+  const drawn = useDrawnMap(drawing, NO_LOOKS, map, room, false);
+  return drawn === null
+    ? null
+    : { contents: { ...drawn, avatars: NO_AVATARS }, onPress: ignorePress, nativeMinLevel: ANSWER_MIN_LEVEL };
+}
+
 // A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
 function addOnPress({ change }: ShownAnswer, id: string): void {
   const userId = friendIdOf(id);
@@ -120,7 +168,7 @@ export function useAnswerMap(
   shown: ShownAnswer,
   map: MainMap,
   room: Room,
-  everyday: { avatars: readonly MapAvatar[]; cards: readonly CardView[] },
+  everyday: EverydayAvatars,
   { sending, made, standings }: Invited,
 ): AnswerMap | null {
   const { answer, index, show } = shown;
@@ -129,27 +177,17 @@ export function useAnswerMap(
     [answer, index, standings],
   );
   const looks = useMemo(() => (answer === null ? NO_LOOKS : looksOf(answer)), [answer]);
-  const things = drawing?.things ?? [];
-  const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
-  useAnswerCamera(drawing, map, room);
-  if (drawing === null || things.length === 0) {
+  const drawn = useDrawnMap(drawing, looks, map, room, true);
+  if (drawn === null || drawing === null) {
     return null;
   }
-  const markers = things.flatMap(({ id, name, position, planId, order }, at): MapMarker[] => {
-    const image = images[at];
-    return image === undefined ? [] : [{ id, name, position, image, order, passive: planId === null }];
-  });
   return {
-    contents: {
-      markers,
-      avatars: othersOf(everyday.avatars, everyday.cards, drawing),
-      lines: drawing.lines,
-    },
+    contents: { ...drawn, avatars: othersOf(everyday.avatars, everyday.cards, drawing) },
     onPress: (id) => {
       if (sending || made !== null) {
         return;
       }
-      const planId = things.find((thing) => thing.id === id)?.planId ?? null;
+      const planId = drawing.things.find((thing) => thing.id === id)?.planId ?? null;
       if (planId === null) {
         addOnPress(shown, id);
       } else {

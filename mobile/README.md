@@ -703,6 +703,21 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   while invited and "✓" once in (accepted or late), its name read aloud the state after the name, and its tag the
   state alone beside a face that shows the whole name ("아직 안 봄"). A new answer, another Plan, or ✕ drops
   the made Quest from the screen.
+- **A received invitation** (`use-received-invitation.ts`, `answer/received-invitation-card.tsx`). With the switch
+  on, each invitation of `GET /quest-invitations` is a card of the main screen, `invitation:<invitationId>`, with no
+  marker, so `/main?card=invitation:<id>` opens it once the switch's stored value is read; with the switch off that
+  address opens 파티's 초대 as before. The address moves no camera. While its card is open (and no answer frame is),
+  the app reads `GET /quest-invitations/:id` with the User's position on campus (`invitationCardQuery`, under the
+  invitations' key, so `quests-changed` reads it again), draws the invitee's own way by the marks and the camera of
+  an answer (`drawingOfScene`) and no one else's Avatar, and the lists, the bottom controls, the zoom control, the AI
+  input, and the tab bar give way, without a pill. The card in the frame's card container shows "유상의 파티 초대"
+  with ✕, the destination step's start and title, "유상과 함께", the way's lines in body text after the route arrow
+  (off campus, where the server cannot tell the way, its words "캠퍼스 밖이라 길은 그리지 못해요."), the steps, "수락"
+  and "거절", and that only the User's own way is shown. 수락 and 거절 use the 파티 tab's endpoints, toasts, and
+  fetches again ("파티에 참여했어요", or "초대를 거절했어요"), once for each invitation at a time, and close the card
+  while it is still shown. "이미 끝난 초대예요" closes it after a 404 read (which reads the list again) or when the
+  list comes back without it, and an address of an invitation the known list does not hold says it on the map;
+  another failure offers "다시 시도". Android's back button closes it as ✕ does.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
@@ -1587,7 +1602,7 @@ of the design system's tokens. How it keeps the rules:
 
 - **Zoom**: the SDK takes whole levels only. The module measures the Web Mercator zoom from what the view's width
   shows, and sets a fractional zoom through the camera's height, whose relation to the zoom it measures once when the
-  map is ready.
+  map is ready, which holds only while the view keeps its height (see "In TypeScript" below).
 - **The rectangle**: the SDK does not keep the camera inside one. When a move ends outside the rules, the module
   moves the camera back inside, at once, and reports only a camera inside them.
 - **Markers and Avatars** are labels on two layers, the Avatars' above the markers', ranked by `order` and their
@@ -1608,6 +1623,13 @@ of the design system's tokens. How it keeps the rules:
   - a fit, worked out once the view's size is known and sent as the module's `moveCamera`, so that a padding for
     each edge and `maxZoom` hold. Before that, the module's own `fitTo`, which takes one number, is asked with the
     largest side of the padding;
+  - on Android, a camera in a view whose height changed since the module opened. The module measures how the
+    camera's height gives the zoom once, and Kakao's camera shows as much from top to bottom at one height whatever
+    the view's height: in a view taller than then, as when the tab bar gives way to the answer frame or a received
+    invitation's card, every camera would show closer than asked by the binary logarithm of the heights' ratio (10% on
+    a phone 914 high over a tab bar of 88). A zoom is sent less that logarithm, and the module's lowest zoom is lowered
+    by as much; the view's height at the module's first report stands for its height when it opened. The module's
+    next native release can measure the scale again where the camera rests, as the iOS module does, and drop this;
   - a passive marker's press, which the module sends, is dropped. A marker under a passive one still cannot be
     pressed on a phone: that is the module's to add.
     None of this was checked on a phone.

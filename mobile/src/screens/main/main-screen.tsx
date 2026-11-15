@@ -24,18 +24,18 @@ import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
 import { color, useNotReadyToast } from '@/design-system';
-import { type FirstRun, useFirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
+import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import { Card } from './card';
 import { FriendList } from './friend-list';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
-import { MapBottom, openMenus, type Taken, takenBy } from './map-bottom';
+import { MapBottom, openMenus, type Taken } from './map-bottom';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
 import type { ChatSheetControl } from './chat-sheet';
@@ -47,9 +47,9 @@ import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import { type MainRoute, useRoute } from './use-route';
 import { useMapView } from './use-map-view';
-import { useRoom } from './use-room';
+import { type ReceivedInvitation, useReceivedInvitation } from './use-received-invitation';
+import { useBottomRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
-import { useThings } from './use-things';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
 import { type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
 import { ZoomControl } from './zoom-control';
@@ -112,7 +112,7 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const openPartyCreate = useOpenPartyCreate();
   const { top: inset } = useSafeAreaInsets();
   const { selected: card, close: onClose } = selection;
-  if (card === null || chat.framed) {
+  if (card === null || chat.framed || card.kind === 'invitation') {
     return null;
   }
   const { primary } = card;
@@ -162,8 +162,8 @@ function zoomShown({ bottomCard, notice }: Taken, stackOpen: boolean, framed: bo
   return !bottomCard && notice === null && !stackOpen && !framed;
 }
 
-// The lists give way to a 식당's card at the top and to the answer frame.
-function listsHidden({ topCard }: Taken, { framed }: ChatSheetControl): boolean {
+// The lists give way to a 식당's card at the top, and to the answer frame or a received invitation's card.
+function listsHidden({ topCard }: Taken, framed: boolean): boolean {
   return topCard || framed;
 }
 
@@ -216,9 +216,14 @@ function MainMapView({ map, contents, room, pin, onPress, nativeMinLevel }: Main
   );
 }
 
-// The shuttle's line under the walking route.
-function useLines(shuttle: ShuttleLayer, route: MainRoute): readonly MapLine[] {
-  return useMemo(() => [...shuttle.lines, ...(route.line === null ? [] : [route.line])], [shuttle.lines, route.line]);
+// The walking route, and the shuttle's line under it.
+function useLines(shuttle: ShuttleLayer, map: MainMap, me: Me): { route: MainRoute; lines: readonly MapLine[] } {
+  const route = useRoute(map, me);
+  const lines = useMemo(
+    () => [...shuttle.lines, ...(route.line === null ? [] : [route.line])],
+    [shuttle.lines, route.line],
+  );
+  return { route, lines };
 }
 
 // The friend list and the Quest list, which give way to a card at the top.
@@ -249,6 +254,19 @@ function useAskedTutorialQuest(openSheet: (key: string) => void): void {
   }, [tutorial, openSheet]);
 }
 
+// The received invitation, and whether the answer frame or its card is shown, which the tab bar gives way to.
+function useFramed(
+  selection: Selection,
+  cards: readonly CardView[],
+  me: Me,
+  chatFramed: boolean,
+): { invitation: ReceivedInvitation; framed: boolean } {
+  const invitation = useReceivedInvitation(selection, cards, me, chatFramed);
+  const framed = chatFramed || invitation.shown;
+  useHideTabBarOnMain(framed);
+  return { invitation, framed };
+}
+
 // The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), and the pin
 // of its 지도에서 보기.
 function useMainTutorial(
@@ -260,21 +278,6 @@ function useMainTutorial(
   useAskedTutorialQuest(tutorial.openSheet);
   const pin = useTutorialPin({ cards, selection, goTo: map.goTo, tutorialState: tutorial.tutorial?.state });
   return { tutorial, start: showsStartButton(tutorial.tutorial) && selection.selected === null, pin };
-}
-
-// What takes the bottom of the map, and the room the rest has. The first run's card shows while nothing is selected
-// and neither the chat nor the answer frame is shown.
-function useBottomRoom(
-  selection: Selection,
-  chat: ChatSheetControl,
-  shuttle: ShuttleLayer,
-  tutorialStart: boolean,
-): ReturnType<typeof useRoom> & { taken: Taken; firstRun: FirstRun } {
-  const asked = useFirstRun();
-  const free = selection.selected === null && !chat.shown && !chat.framed;
-  const firstRun = { ...asked, card: free ? asked.card : null };
-  const taken = takenBy(selection.selected, shuttle.serviceHours, firstRun.card !== null);
-  return { taken, firstRun, ...useRoom(taken, tutorialStart, chat.framed, asked.asksForInterests) };
 }
 
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
@@ -291,43 +294,45 @@ function useBottomRoom(
 // cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
 // itself to the screen takes `room`: the stage's size and the open card's height. While the answer frame is shown,
 // the lists, the zoom control and the selected thing's card give way, and a press on a marker does nothing; while
-// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`). After Onboarding on this
-// phone the first run asks its three things, one card at a time, while nothing else takes the bottom (`useFirstRun`).
+// its answer has a Plan, the map draws the Plan in place of its usual things (`useMapView`). A received invitation's
+// card is shown the same way, with the invitee's own way on the map, and the tab bar gives way to either. After
+// Onboarding on this phone the first run asks its three things, one card at a time, while nothing else takes the
+// bottom (`useFirstRun`).
 export function MainScreen(): ReactElement {
   const inFront = useIsFocused();
   const map = useMainMap();
   const me = useMe(map);
   const { stack, shuttle, cards, ready, chat } = useMainLayers(inFront, map, me.position);
   const selection = useSelection(cards, inFront);
-  const things = useThings(cards, map.detail, selection.selected?.id ?? null);
-  const route = useRoute(map, me);
-  const lines = useLines(shuttle, route);
+  const { route, lines } = useLines(shuttle, map, me);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { taken, firstRun, room, setStage, setCardHeight, heights } = useBottomRoom(selection, chat, shuttle, start);
-  const view = useMapView(chat, map, room, { things, me, pin, lines, cards, selection });
+  const { invitation, framed } = useFramed(selection, cards, me, chat.framed);
+  const { taken, firstRun, room, ...bottom } = useBottomRoom(selection, chat, shuttle, start, framed);
+  const view = useMapView(chat, map, room, { me, pin, lines, cards, selection }, invitation);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView {...view} map={map} pin={pin} room={room} />
-        <OverMap onStage={setStage}>
-          <Lists hidden={listsHidden(taken, chat)} map={map} room={room} selection={selection} tutorial={tutorial} />
-          {zoomShown(taken, stack.open, chat.framed) ? <MainZoomControl map={map} me={me} /> : null}
+        <OverMap onStage={bottom.setStage}>
+          <Lists hidden={listsHidden(taken, framed)} map={map} room={room} selection={selection} tutorial={tutorial} />
+          {zoomShown(taken, stack.open, framed) ? <MainZoomControl map={map} me={me} /> : null}
           <SelectedCard
             chat={chat}
             map={map}
             onActiveParty={party.open}
-            onHeight={setCardHeight}
+            onHeight={bottom.setCardHeight}
             route={route}
             selection={selection}
             shuttleLine={shuttle.line}
             top={taken.topCard}
           />
           <MapBottom
-            {...heights}
+            {...bottom.heights}
             chat={chat}
             firstRun={firstRun}
+            invitation={invitation}
             onParty={party.open}
             onShowOnMap={pin.showOnMap}
             room={room}

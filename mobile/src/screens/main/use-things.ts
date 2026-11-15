@@ -8,6 +8,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -75,8 +76,9 @@ function wordsOf({ mark, marker }: CardView, detail: ZoomDetail): string | undef
 
 // Turns the cards into what the map shows at a level of detail. From the "names" level a person has their given name
 // under them, in the map's own text. The selected one is drawn selected and above the others. A thing within a place
-// has no marker: the place's stands for it, and is selected while the thing is.
-export function useThings(cards: readonly CardView[], detail: ZoomDetail, selectedId: string | null): Things {
+// has no marker: the place's stands for it, and is selected while the thing is. A received invitation has none.
+export function useThings(all: readonly CardView[], detail: ZoomDetail, selectedId: string | null): Things {
+  const cards = all.filter(({ kind }) => kind !== 'invitation');
   const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
   const isSelected = (card: CardView): boolean => card.id === selectedId || card.id === selectedWithin;
   const shown = cards.map((card) => lookOf(card, detail, isSelected(card)));

@@ -9,36 +9,12 @@
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
-import type { MapLine, MarkerLook } from '@/map';
+import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
+import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
-export interface AnswerThing {
-  // Unique within a drawing.
-  id: string;
-  // What a screen reader says.
-  name: string;
-  position: LatLng;
-  // An 'answer' look.
-  look: MarkerLook;
-  // A press shows this Plan; null takes no press.
-  planId: string | null;
-  // The higher is drawn on top.
-  order: number;
-}
-
-export interface AnswerDrawing {
-  things: AnswerThing[];
-  lines: MapLine[];
-  // What the camera fits.
-  points: LatLng[];
-  // The Plan's own points: its people, its pick, its next Class, and its flags. The camera keeps these in view when
-  // not every point fits.
-  own: LatLng[];
-  pick: LatLng | null;
-  // The people the scene draws, the User included.
-  userIds: string[];
-}
+export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
 // The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
 // flags, which have none.
@@ -81,7 +57,6 @@ const ROUTE_STYLES = {
   alt: { color: color.border, width: 2 },
 } as const;
 
-const METRES_PER_DEGREE = 111_320;
 const ONE_POINT = 15;
 // How far a label reaches from its point: sideways and how far up or down for a side label, up or down and how far
 // sideways for one above or below.
@@ -89,19 +64,6 @@ const SIDE_REACH = { along: 400, across: 50 };
 const UPRIGHT_REACH = { along: 120, across: 150 };
 // How many characters of a name a face shows (`MapAnswerMark`).
 const FACE_LETTERS = 2;
-
-// The metres east and north from one position to another.
-export function offset(from: LatLng, to: LatLng): { east: number; north: number } {
-  const north = (to.latitude - from.latitude) * METRES_PER_DEGREE;
-  const east = (to.longitude - from.longitude) * METRES_PER_DEGREE * Math.cos((from.latitude * Math.PI) / 180);
-  return { east, north };
-}
-
-// The metres in a straight line from one position to another.
-export function metresBetween(from: LatLng, to: LatLng): number {
-  const { east, north } = offset(from, to);
-  return Math.hypot(east, north);
-}
 
 function samePoint(one: LatLng, other: LatLng): boolean {
   return metresBetween(one, other) <= ONE_POINT;
@@ -161,9 +123,18 @@ function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>)
   });
 }
 
+// What a scene is drawn with beyond itself: the number of the pick, the Plans whose candidates it shows, and how each
+// invited Friend stands, by user id.
+export interface SceneSetting {
+  number: number | null;
+  plans: readonly Plan[];
+  standings: ReadonlyMap<string, Standing>;
+}
+
+const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
+
 function placeDraft(
-  { plans }: AnswerReply,
-  planIndex: number,
+  { number: pickNumber, plans }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -174,9 +145,17 @@ function placeDraft(
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const name = flag === undefined ? title : `${title} · ${flag.text}`;
-    const number = planIndex + 1;
-    const symbol: AnswerSymbol = { type: 'dot', role, number };
-    return { ...base, id: 'answer:pick', name, group: role, symbol, tone: role, line: flag?.text ?? null, number };
+    const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
+    return {
+      ...base,
+      id: 'answer:pick',
+      name,
+      group: role,
+      symbol,
+      tone: role,
+      line: flag?.text ?? null,
+      number: pickNumber,
+    };
   }
   if (role === 'candidate') {
     const index = plans.findIndex((plan) => plan.place.placeId === place.placeId && plan.place.label === place.label);
@@ -292,21 +271,11 @@ function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
   return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
 }
 
-// What the map shows for the Plan at `planIndex` of an answer: its marks, its lines, and the points the camera fits.
-// `standings` holds how each invited Friend stands, by user id, once the Plan was made into a Quest.
-export function drawingOf(
-  answer: AnswerReply,
-  planIndex: number,
-  standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
-): AnswerDrawing {
-  const plan = answer.plans[planIndex];
-  if (plan === undefined) {
-    return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
-  }
-  const { scene } = plan;
+// What the map shows for a scene: its marks, its lines, and the points the camera fits.
+export function drawingOfScene(scene: MapScene, setting: SceneSetting = BARE): AnswerDrawing {
   const drafts = [
-    ...personDrafts(scene, standings),
-    ...scene.places.flatMap((place) => placeDraft(answer, planIndex, scene, place) ?? []),
+    ...personDrafts(scene, setting.standings),
+    ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
   ];
   const placed = placeAll(drafts).toSorted(
@@ -327,6 +296,21 @@ export function drawingOf(
     pick: drafts.find(({ group }) => group === 'pick')?.position ?? null,
     userIds: scene.people.map(({ userId }) => userId),
   };
+}
+
+// What the map shows for the Plan at `planIndex` of an answer: its scene, with the Plan's number on the pick and the
+// other Plans as candidates. `standings` holds how each invited Friend stands, by user id, once the Plan was made
+// into a Quest.
+export function drawingOf(
+  answer: AnswerReply,
+  planIndex: number,
+  standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
+): AnswerDrawing {
+  const plan = answer.plans[planIndex];
+  if (plan === undefined) {
+    return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
+  }
+  return drawingOfScene(plan.scene, { number: planIndex + 1, plans: answer.plans, standings });
 }
 
 // The looks of every Plan's drawing, each once.

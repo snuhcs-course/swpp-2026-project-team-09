@@ -24,6 +24,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { AnswerFrame } from './answer/answer-frame';
+import { InvitationFrame } from './answer/received-invitation-card';
 import { BottomControls } from './bottom-controls';
 import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
@@ -34,6 +35,7 @@ import { ShuttleNotice } from './shuttle-notice';
 import { TutorialPager } from './tutorial/tutorial-pager';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
+import type { ReceivedInvitation } from './use-received-invitation';
 import type { TutorialFlow } from './tutorial/use-tutorial-flow';
 import type { TutorialPinTarget } from './tutorial/use-tutorial-pin';
 
@@ -100,6 +102,8 @@ interface MapBottomProps {
   onShowOnMap: (target: TutorialPinTarget) => void;
   // The chat's sheet, which the main screen holds, so that a card's button can ask the Assistant.
   chat: ChatSheetControl;
+  // A received invitation, whose card stands at the bottom in place of everything else there while it is shown.
+  invitation: ReceivedInvitation;
   // The first run's card to show, null while another thing takes the bottom, and the line that asks for interests.
   firstRun: Pick<FirstRun, 'card' | 'answer' | 'openInterests'>;
 }
@@ -109,8 +113,9 @@ type EverydayProps = Pick<
   'taken' | 'onParty' | 'onNoticeHeight' | 'room' | 'stack' | 'tutorial' | 'firstRun'
 >;
 
-// What the everyday map has at its bottom while no chat and no answer is shown: the shuttle's notice, the row of
-// buttons, the 편의기능 button, the tutorial's start, and the first run's card and its line that asks for interests.
+// What the everyday map has at its bottom while no chat, no answer, and no received invitation is shown: the shuttle's
+// notice, the row of buttons, the 편의기능 button, the tutorial's start, and the first run's card and its line that
+// asks for interests.
 function EverydayBottom({
   taken,
   onParty,
@@ -144,7 +149,7 @@ function EverydayBottom({
 // keeps its last bubble clear of it there. The conversation is kept while the app runs. With the switch of the answer
 // on the map on, the answer frame takes the sheet's place, and the input is its card's.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { onAnswerHeight, room, tutorial, onShowOnMap, chat } = props;
+  const { onAnswerHeight, room, tutorial, onShowOnMap, chat, invitation } = props;
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   // The open list of Friends to add takes the input's place in the answer's card.
@@ -152,10 +157,11 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const inputTop = inputShown ? AI_INPUT.bottom + lift + inputHeight : lift;
   return (
     <>
-      {!chat.shown && !chat.framed ? <EverydayBottom {...props} /> : null}
+      {!chat.shown && !chat.framed && !invitation.shown ? <EverydayBottom {...props} /> : null}
       {chat.sheet(inputTop)}
       <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
-      {inputShown ? (
+      {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
+      {inputShown && !invitation.shown ? (
         <AiInput
           chatOpen={chat.shown}
           lift={lift}
