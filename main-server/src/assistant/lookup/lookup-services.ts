@@ -8,6 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { DayLookupService } from './day.service.js';
 import { FriendLookupService } from './friend.service.js';
 import { MenuLookupService } from './menu.service.js';
+import { StudyAreaService } from './study.service.js';
 import { TutorialOrderService } from './tutorial-order.service.js';
 import { WayService } from './way.service.js';
 
@@ -20,5 +21,6 @@ export class LookupServices {
     readonly friends: FriendLookupService,
     readonly days: DayLookupService,
     readonly tutorial: TutorialOrderService,
+    readonly studyAreas: StudyAreaService,
   ) {}
 }

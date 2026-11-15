@@ -2,9 +2,9 @@
 
 The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. Administrators sign in with Google,
 review, correct, create and publish Global Events, check the Places on a map, see whether each Source is collected, make
-and end friendships between Users, and manage the Administrators. The site keeps no data of its own: every page
-and every change goes to the main server's administrator routes (`/admin/...`, see the main server's README, sections
-Administrators, Global Events, Places and Friends).
+and end friendships between Users, manage the Administrators and change the global settings. The site keeps no data of
+its own: every page and every change goes to the main server's administrator routes (`/admin/...`, see the main
+server's README, sections Administrators, Global settings, Global Events, Places and Friends).
 
 ## Run it
 
@@ -89,18 +89,19 @@ controls and tables so that every page looks alike.
 
 ## Pages
 
-| Path              | What it does                                                                                                                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/sign-in`        | Sign in with Google                                                                                                                                                                                     |
-| `/`               | Events: Drafts with what publishing still needs, and published events not yet ended with their Publication Route, filtered by it. A flag marks what needs an Administrator.                             |
-| `/events/new`     | A new event entered by hand, with the event's form; creating it opens the new Draft's page.                                                                                                             |
-| `/events/<id>`    | One Global Event: state, Publication Route, flag, source link and post number, stored text, its Judgement, and the form that saves, publishes, discards or cancels it.                                  |
-| `/places`         | Kakao's map of the campus with every Place's outlines, or a marker for a Place without one; a search and a click select a Place and show its record.                                                    |
-| `/users`          | Lists the Users with their name, email, department, Friend ID and number of Friends, a User before onboarding marked; a search filters them. A User opens their page.                                   |
-| `/users/<id>`     | A User's Friends, "친구 맺기" with another onboarded User who is not yet their Friend, and "친구 끊기" after a confirmation. An unknown id shows the not-found page.                                    |
-| `/queue`          | Same-event queue: the sessions the system could not decide, why each waits, what the AI said and its candidates, to attach or publish as its own.                                                       |
-| `/collection`     | Collection status: each Source with its last success and last failure, a broken Source marked, and below them the posts that are not settled.                                                           |
-| `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so. |
+| Path              | What it does                                                                                                                                                                                                                                                                                                                        |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/sign-in`        | Sign in with Google                                                                                                                                                                                                                                                                                                                 |
+| `/`               | Events: Drafts with what publishing still needs, and published events not yet ended with their Publication Route, filtered by it. A flag marks what needs an Administrator.                                                                                                                                                         |
+| `/events/new`     | A new event entered by hand, with the event's form; creating it opens the new Draft's page.                                                                                                                                                                                                                                         |
+| `/events/<id>`    | One Global Event: state, Publication Route, flag, source link and post number, stored text, its Judgement, and the form that saves, publishes, discards or cancels it.                                                                                                                                                              |
+| `/places`         | Kakao's map of the campus with every Place's outlines, or a marker for a Place without one; a search and a click select a Place and show its record.                                                                                                                                                                                |
+| `/users`          | Lists the Users with their name, email, department, Friend ID and number of Friends, a User before onboarding marked; a search filters them. A User opens their page.                                                                                                                                                               |
+| `/users/<id>`     | A User's Friends, "친구 맺기" with another onboarded User who is not yet their Friend, and "친구 끊기" after a confirmation. An unknown id shows the not-found page.                                                                                                                                                                |
+| `/queue`          | Same-event queue: the sessions the system could not decide, why each waits, what the AI said and its candidates, to attach or publish as its own.                                                                                                                                                                                   |
+| `/collection`     | Collection status: each Source with its last success and last failure, a broken Source marked, and below them the posts that are not settled.                                                                                                                                                                                       |
+| `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so.                                                                                                                             |
+| `/settings`       | Settings: every global setting the main server registers, with its value, an input for its type and a save after a confirmation; `llm.key` is a select of the keys' names with their providers. A saved row shows "applies at HH:MM:00" (Seoul), then "applied"; a refused save shows the reason. Below, the history, newest first. |
 
 ## Global Events
 
@@ -245,6 +246,7 @@ src/app/(signed-in)/places/       the Places page and its map
 src/app/(signed-in)/users/        the Users page, and in [id]/ a User's page with their friendships
 src/app/(signed-in)/queue/        the same-event queue, with its Server Action
 src/app/(signed-in)/collection/   the Collection status page
+src/app/(signed-in)/settings/     the Settings page, a setting's row (setting-row.tsx) and its Server Action
 src/app/health/          /health/live and /health/ready, answered without a session; ready while the main server is live
 src/app/globals.css      the palette, the font and the shared classes
 src/main-server.ts       the only way the site calls the main server; server-only

@@ -130,6 +130,59 @@ describe('What the User fixed', () => {
   });
 });
 
+// 민수, and 지은 with Classes in 8동 until 12:15 and from 13:00.
+async function withBoth(date: string): Promise<string[]> {
+  const minsu = await withMinsu(date);
+  const jieun = await stage.friend('지은');
+  await stage.classAt(jieun, '11:00', '12:15', '8');
+  await stage.classAt(jieun, '13:00', '14:15', '8');
+  return [minsu.id, jieun.id];
+}
+
+describe('"여기면 어때?": a Place pressed during the Plan with 민수 and 지은', () => {
+  it("a7: plans 자하연식당 with each person's earliest arrival, 나 and 민수 12:35, 지은 12:18", async () => {
+    const date = '2088-07-20';
+    const time = timeOn(date);
+    const friendIds = await withBoth(date);
+    const jahayeon = await stage.numbered('109');
+
+    const response = await recalculate({ input: inputOf(date, friendIds, { placeId: jahayeon.id }) });
+
+    expect(response.status).toBe(200);
+    const [plan] = answerIn(response.body).plans;
+    expect(plan).toMatchObject({
+      id: '자하연식당 2층',
+      startAt: time('12:35'),
+      endAt: time('12:55'),
+      togetherMinutes: 20,
+    });
+    expect(plan?.parts.map(({ arriveAt }) => arriveAt)).toEqual([time('12:35'), time('12:35'), time('12:18')]);
+  });
+
+  it("a8: drops 301동식당 with each person's part, and names 지은, who stays shortest, and why", async () => {
+    const date = '2088-07-27';
+    const time = timeOn(date);
+    const friendIds = await withBoth(date);
+    const place301 = await stage.numbered('301');
+
+    const response = await recalculate({ input: inputOf(date, friendIds, { placeId: place301.id }) });
+
+    expect(response.status).toBe(200);
+    const answer = answerIn(response.body);
+    expect(answer.plans).toEqual([]);
+    expect(answer.dropped.map(({ place, parts }) => [place.label, parts?.map(({ arriveAt }) => arriveAt)])).toEqual([
+      ['301동식당', [time('11:50'), time('12:18'), time('12:31')]],
+    ]);
+    expect(answer.noPlan).toEqual({
+      reason: 'no-fit',
+      lines: [
+        [{ text: '지은은 12:31에 도착해 13분만 먹어요', strong: false }],
+        [{ text: '13:00 수업에 가려면 12:44엔 나서야 해요', strong: false }],
+      ],
+    });
+  });
+});
+
 describe('A Friend the Friend view puts at the Timetable, whose position is kept', () => {
   it('is recalculated from their Timetable alone, and the reply holds nothing of the position', async () => {
     const date = '2088-07-13';

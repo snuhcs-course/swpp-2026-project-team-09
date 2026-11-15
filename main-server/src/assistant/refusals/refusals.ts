@@ -17,6 +17,7 @@ import {
   type Refusal,
   type RefusalKind,
   type RefusalOffer,
+  type RefuseKind,
 } from './refusal.dto.js';
 
 // The words of each refusal, as row 8 of the design writes them (boards n1–n9, n19, n20, n22, n22b, n4, n8b).
@@ -28,7 +29,7 @@ export interface NamedFriend {
   seen: AnswerLine;
 }
 
-interface Words {
+export interface Words {
   // A plain line, or one with bold spans.
   lines: (string | AnswerLine)[];
   offers: RefusalOffer[];
@@ -42,7 +43,7 @@ const TODAY = ask('오늘 볼 만한 거 있어?');
 const SHARING = { kind: 'open', label: '위치 공유 보기', screen: 'location-sharing' } as const satisfies RefusalOffer;
 const WATCHED = '지켜봐 드리는 것은 행사와 모집뿐이에요.';
 
-const PLAIN: Record<Exclude<RefusalKind, FriendKind | PlaceKind>, Words> = {
+const PLAIN: Record<Exclude<RefuseKind, FriendKind | PlaceKind>, Words> = {
   'off-campus': { lines: ['캠퍼스 안의 일만 도와 드려요.'], offers: [HUNGRY, TODAY] },
   'general-work': {
     lines: ['과제는 도와 드릴 수 없어요.', '캠퍼스에서 먹을 곳, 공부할 자리, 행사, 파티, 길을 찾아 드려요.'],
@@ -99,14 +100,14 @@ const WITH_PLACE: Record<PlaceKind, (place: string) => Words> = {
   }),
 };
 
-function refusalOf(kind: RefusalKind, { lines, offers }: Words): Refusal {
+export function refusalOf(kind: RefusalKind, { lines, offers }: Words): Refusal {
   const answerLines = lines.map((line): AnswerLine =>
     typeof line === 'string' ? [{ text: line, strong: false }] : line,
   );
   return { kind, lines: answerLines, offers };
 }
 
-export function plainRefusal(kind: Exclude<RefusalKind, FriendKind | PlaceKind>): Refusal {
+export function plainRefusal(kind: Exclude<RefuseKind, FriendKind | PlaceKind>): Refusal {
   return refusalOf(kind, PLAIN[kind]);
 }
 

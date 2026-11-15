@@ -5,9 +5,12 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import 'server-only';
+
+import type { Setting, SettingChange } from '@/global-settings';
 
 export type GlobalEventState = 'draft' | 'published' | 'cancelled' | 'discarded';
 
@@ -297,6 +300,11 @@ export const mainServer = {
     request('DELETE', `/admin/friendships/${encodeURIComponent(userAId)}/${encodeURIComponent(userBId)}`, token),
   listCollectionStatuses: (token: string): Promise<CollectionStatus[]> =>
     request('GET', '/admin/collection-statuses', token),
+  listSettings: (token: string): Promise<Setting[]> => request('GET', '/admin/settings', token),
+  listSettingChanges: (token: string): Promise<SettingChange[]> => request('GET', '/admin/settings/history', token),
+  // A refused value gets 400 with the reason as its message.
+  saveSetting: (token: string, name: string, value: string): Promise<{ appliesAt: string }> =>
+    request('PUT', `/admin/settings/${encodeURIComponent(name)}`, token, { value }),
 };
 
 export type MainServer = typeof mainServer;

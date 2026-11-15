@@ -18,8 +18,8 @@ import {
   PLACE_KINDS,
   type PlaceKind,
   type Refusal,
-  REFUSAL_KINDS,
-  type RefusalKind,
+  REFUSE_KINDS,
+  type RefuseKind,
 } from './refusal.dto.js';
 import { friendNowLine, friendRefusal, placeRefusal, plainRefusal, standsBeside } from './refusals.js';
 
@@ -35,7 +35,7 @@ export interface RefusalSources {
 }
 
 const input = z.object({
-  kind: z.enum(REFUSAL_KINDS).describe('The case, as the rules of refuse name it.'),
+  kind: z.enum(REFUSE_KINDS).describe('The case, as the rules of refuse name it.'),
   userId: z
     .uuid()
     .optional()
@@ -52,9 +52,9 @@ const input = z.object({
 
 type Input = z.output<typeof input>;
 
-const isFriendKind = (kind: RefusalKind): kind is FriendKind => FRIEND_KINDS.some((each) => each === kind);
+const isFriendKind = (kind: RefuseKind): kind is FriendKind => FRIEND_KINDS.some((each) => each === kind);
 
-const isPlaceKind = (kind: RefusalKind): kind is PlaceKind => PLACE_KINDS.some((each) => each === kind);
+const isPlaceKind = (kind: RefuseKind): kind is PlaceKind => PLACE_KINDS.some((each) => each === kind);
 
 async function friendWords(
   sources: RefusalSources,
@@ -143,7 +143,7 @@ export function refuse(sources: RefusalSources): Tool {
 }
 
 // The rules of refuse, a fragment of the chat's system prompt for an app that draws answers.
-export const REFUSAL_RULES = `A request the app cannot or will not answer is refused with refuse: the server writes the words, and the app shows them with buttons of what it can do instead. These rules come before the lines above on declining general work, on small talk, and on where a Friend is.
+export const REFUSAL_RULES = `A request the app cannot or will not answer is refused with refuse: the server writes the words, and the app shows them with buttons of what it can do instead. These rules come before the lines above on declining general work, on small talk, on where a Friend is, and on asking which Friend.
 
 - Call refuse for each case below, in place of declining in your own words, and write nothing beside the call or after it:
   - off-campus: anything off campus, such as a restaurant, a place, or an event outside SNU (강남역 맛집 추천해 줘).
@@ -160,6 +160,7 @@ export const REFUSAL_RULES = `A request the app cannot or will not answer is ref
   - other-library: booking a room or a seat at a library other than 관정, which the app does not book (신양 스터디룸 예약해 줘).
   - for-someone-else: accepting, declining, or answering an invitation in a Friend's place (민수 대신 수락해 줘).
 - For past-location, others-sharing, not-watched-friend, course-and-room and for-someone-else, first find the Friend with resolveFriend and give their userId, or take it from [Tapped: friend …]. When resolveFriend answers none, refuse with not-a-friend; when it answers several, ask which one.
+- When resolveFriend answers several with a note that the app asks which one, the app shows the question with a cell for each candidate: write nothing beside the call or after it, and call nothing else. The User's choice comes back as the Friend's full name with [Tapped: friend …], which gives their id.
 - course-and-room and other-library also answer, on the map, the part that can be answered, in the same message: for course-and-room, call findFriend with the Friend too; for other-library, find the library with resolvePlace, call findWay with it as to, and give it to refuse as placeId. The app draws the Friend or the way with the refusal's words, so write nothing there either, not even the one sentence the rules of findFriend and findWay ask for.
 - Greetings and thanks are answered in a short sentence, not refused.`;
 

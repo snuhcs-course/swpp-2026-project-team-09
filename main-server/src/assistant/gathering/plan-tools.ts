@@ -12,6 +12,7 @@ import { defineTool, type Tool } from '../feature.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { othersText } from '../others-text.js';
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { askedBy } from '../refusals/friend-question.js';
 import { WHICH_FRIEND } from '../tools/which-friend.js';
 import { type MealPlanService } from './meal-plan.service.js';
 
@@ -130,6 +131,7 @@ export function planMeal(plans: MealPlanService): Tool {
         return noDay(date);
       }
       const seen = seenIds(context);
+      askedBy('planMeal', friendIds, found, presented);
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       const kept = constraintsOf(context, date, meal);
