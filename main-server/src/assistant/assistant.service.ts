@@ -152,8 +152,8 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, answer, lookup } = reply;
-      return { text, mapButtons, cards, proposal, answer, lookup };
+      const { text, mapButtons, cards, proposal, answer, lookup, refusal } = reply;
+      return { text, mapButtons, cards, proposal, answer, lookup, refusal };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();

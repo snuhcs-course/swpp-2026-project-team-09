@@ -2,7 +2,7 @@
 
 Parent: [P02 spec](../spec.md); the design's row 8, boards n4, n8b, n20, n21, principle 2
 Status: ready-for-agent
-Blocked by: ticket 10; P01 ticket 11 (the answer screen draws a Lookup) and #258 (the Friend Lookup)
+Blocked by: ticket 10; #265 (P02-09 changes `use-shown-answer.ts` and `plan-card.tsx`); P01 ticket 11 (the answer screen draws a Lookup) and #258 (the Friend Lookup)
 
 ## What to build
 
@@ -20,4 +20,5 @@ Blocked by: ticket 10; P01 ticket 11 (the answer screen draws a Lookup) and #258
 
 ## Comments
 
+- n21's first line: `lookup/shuttle-lookup.ts` already writes "셔틀은 지금 다니지 않아요 (평일 8–21시)" in a way's basis outside service hours. The two answers use the same words; choose at build time between those and the board's "셔틀은 평일 21시까지 다녀요", and change both together.
 - Not built, with the reason: n20's card values ("그룹스터디실 · 9:00–21:00", "공과대학 학생만") have no data behind them (principle 1); n8b's "카톡으로도 보내기" (sharing an invitation link) is out of P02's scope.

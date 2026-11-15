@@ -18,6 +18,11 @@ export const FRIEND_ID = /^[2-9A-HJKMNP-Z]{8}$/u;
 // Matches any Friend ID in an expected value. Typed, so that lint lets it into an object.
 export const A_FRIEND_ID: unknown = expect.stringMatching(FRIEND_ID);
 
+// A time as the server sends it, in Korea with its offset.
+export const KOREA_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:00$/u;
+
+export const A_KOREA_TIME: unknown = expect.stringMatching(KOREA_TIME);
+
 // What GET /friends gives of a new friendship besides the Friend, while the User sees nothing of them: both Master
 // Switches start off.
 export const NEW_FRIENDSHIP = {
@@ -27,6 +32,7 @@ export const NEW_FRIENDSHIP = {
   visible: false,
   askedOff: false,
   askedPlan: false,
+  friendsSince: A_KOREA_TIME,
 };
 
 export interface TestUser {

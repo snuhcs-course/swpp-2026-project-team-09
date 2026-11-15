@@ -8,7 +8,7 @@
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, initials, type LabelSide } from '@/design-system';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
@@ -59,8 +59,6 @@ const ROUTE_STYLES = {
 } as const;
 
 const ONE_POINT = 15;
-// How many characters of a name a face shows (`MapAnswerMark`).
-const FACE_LETTERS = 2;
 
 function samePoint(one: LatLng, other: LatLng): boolean {
   return metresBetween(one, other) <= ONE_POINT;
@@ -86,10 +84,10 @@ function faceOf(name: string, dashed: boolean, standing: Standing | undefined): 
   return badge === undefined ? { type: 'face', name, dashed } : { type: 'face', name, dashed, badge };
 }
 
-// The words of a face's tag that the face does not show already: a face shows the first two characters of the name,
-// so the tag of a name that short leaves the name out, and is none when the name is all it says.
+// The words of a face's tag that the face does not show already: a face shows the everyday Avatar's letters, so the
+// tag of a name they show whole leaves the name out, and is none when the name is all it says.
 function faceTitle(name: string, tag: string): string | null {
-  if (Array.from(name).length > FACE_LETTERS) {
+  if (initials(name) !== name) {
     return tag;
   }
   if (tag === name) {

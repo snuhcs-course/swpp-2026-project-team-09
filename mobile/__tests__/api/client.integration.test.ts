@@ -43,6 +43,8 @@ describe('the mock of Friends', () => {
       visible: true,
       askedOff: false,
       askedPlan: false,
+      friendId: 'KM4J8QZA',
+      friendsSince: '2026-10-03T14:05:00+09:00',
     });
     expect(friends.filter(({ visible }) => !visible).map(({ name }) => name)).toEqual(['서지우', '신예린']);
   });

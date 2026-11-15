@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -60,13 +61,13 @@ describe('a recalculation on its way', () => {
   it('leaves the chips and the handles taking no press, and a second press sends nothing', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE, afterMs: HELD_MS });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
 
     expect(card().getByRole('button', { name: '301동에서' })).toBeDisabled();
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeDisabled();
+    expect(card().getByRole('button', { name: '김민수 빼기' })).toBeDisabled();
     expect(card().getByRole('button', { name: '다음 후보' })).toBeDisabled();
     expect(handle('from')).toBeDisabled();
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
     await step('from', 'increment');
     await pass(HELD_MS);
 
@@ -80,7 +81,7 @@ describe('a recalculation on its way', () => {
       await pass(0);
       everyday.push(...mapThings());
     });
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
 
     await user.press(screen.getByRole('button', { name: '답 닫기' }));
     await pass(HELD_MS);
@@ -107,7 +108,7 @@ describe('a failed recalculation', () => {
 
     expect(within(screen.getByTestId('toast-layer')).getByText(NOT_RECALCULATED)).toBeVisible();
     expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeEnabled();
+    expect(card().getByRole('button', { name: '김민수 빼기' })).toBeEnabled();
     expect(handle('from')).toHaveAccessibilityValue({ text: '12:15' });
     expect(screen.queryByTestId('time-band-ghost')).toBeNull();
     await user.press(card().getByRole('button', { name: '다음 후보' }));

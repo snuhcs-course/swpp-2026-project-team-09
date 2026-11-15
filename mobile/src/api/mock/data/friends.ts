@@ -126,6 +126,39 @@ const PARTY_MEMBER_POSITION: Position = {
   measuredAt: FRAME_NOW,
 };
 
+// Each Friend's Friend ID, by their id.
+export const FRIEND_IDS: Readonly<Record<string, string>> = {
+  f1: 'KM4J8QZA',
+  f2: 'YS3N7WEB',
+  f3: 'PJ5H2RXC',
+  f4: 'CY6N9TUD',
+  f5: 'JH7E3VKF',
+  f6: 'KD8Y4MPG',
+  f7: 'JS9A5NRH',
+  f8: 'YT2E6QWJ',
+  f9: 'HJ3M7XSK',
+  f10: 'YC4W8ZTM',
+  f11: 'SJ5U9BVN',
+  f12: 'SY6R2CXP',
+};
+
+// Since when the User and each Friend have been Friends, by their id, as GET /friends says it. The mock invents these
+// and the Friend IDs above, so that a Friend's profile shows its two lines on a build without the main server.
+const FRIENDS_SINCE: Readonly<Record<string, string>> = {
+  f1: '2026-10-03T14:05:00+09:00',
+  f2: '2026-10-05T19:20:00+09:00',
+  f3: '2026-10-08T12:40:00+09:00',
+  f4: '2026-10-12T21:15:00+09:00',
+  f5: '2026-10-14T10:30:00+09:00',
+  f6: '2026-10-19T16:50:00+09:00',
+  f7: '2026-10-22T13:05:00+09:00',
+  f8: '2026-10-27T18:45:00+09:00',
+  f9: '2026-10-30T11:10:00+09:00',
+  f10: '2026-11-02T20:25:00+09:00',
+  f11: '2026-11-05T15:35:00+09:00',
+  f12: '2026-11-09T09:55:00+09:00',
+};
+
 export const FRIENDS: Friend[] = MOCK_FRIENDS.map(
   ({ id, name, department, level, seen, sharing, visible, askedOff, askedPlan }) => ({
     id,
@@ -137,6 +170,8 @@ export const FRIENDS: Friend[] = MOCK_FRIENDS.map(
     visible,
     askedOff,
     askedPlan,
+    friendId: FRIEND_IDS[id],
+    friendsSince: FRIENDS_SINCE[id],
   }),
 );
 
@@ -160,22 +195,6 @@ export const FRIEND_STATUSES: FriendStatus[] = MOCK_FRIENDS.map(
 
 // The User's own Friend ID, as the Lobby gives it.
 export const MY_FRIEND_ID = '7KX2M9QD';
-
-// Each Friend's Friend ID, by their id.
-export const FRIEND_IDS: Readonly<Record<string, string>> = {
-  f1: 'KM4J8QZA',
-  f2: 'YS3N7WEB',
-  f3: 'PJ5H2RXC',
-  f4: 'CY6N9TUD',
-  f5: 'JH7E3VKF',
-  f6: 'KD8Y4MPG',
-  f7: 'JS9A5NRH',
-  f8: 'YT2E6QWJ',
-  f9: 'HJ3M7XSK',
-  f10: 'YC4W8ZTM',
-  f11: 'SJ5U9BVN',
-  f12: 'SY6R2CXP',
-};
 
 // Users of the `Friends` frame who are no Friend, each with a Friend ID. The first three sent the User a Friend
 // Request, as in the frame's 친구 요청; the User sent one to 백승호; 유지안 sent the User an Invite Link.

@@ -31,7 +31,7 @@ import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
-import { type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { answeringOptions, type LibraryServices, libraryTools } from '../library/library-tools.js';
 import { DAY_RULES, findDay } from '../lookup/day-tools.js';
 import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
@@ -39,6 +39,7 @@ import { type LookupServices } from '../lookup/lookup-services.js';
 import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-order-tools.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { DELIMITER } from '../others-text.js';
+import { withRefusals } from '../refusals/refusal-tools.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
 import { proposeQuest } from '../tools/propose-quest.js';
@@ -197,9 +198,9 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const drawsAnswers = options?.drawsAnswers ?? false;
-  const onMap = withLookups(
-    plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options),
-    services,
+  const onMap = withRefusals(
+    withLookups(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), services, drawsAnswers),
+    freeTime,
     drawsAnswers,
   );
   const planned = withInterests(onMap, services.interests, drawsAnswers);
@@ -223,8 +224,8 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
       findFreeFriends,
       ...planned.tools,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
-      // showLibrarySeats and showMyLibraryBookings.
-      ...libraryTools(library, { fillsSeatTime: drawsAnswers }),
+      // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom for an app that draws answers.
+      ...libraryTools(library, answeringOptions(drawsAnswers)),
       getTutorial: getTutorial(tutorial),
     },
   };

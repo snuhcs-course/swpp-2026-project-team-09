@@ -2,18 +2,21 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { LibraryCard } from '@/api/assistant-types';
 import { space } from '@/design-system';
+import { cardPlace } from '@/features/assistant/use-chat';
+import { namesRoom } from '@/library/cards/seat-rooms';
 import { BookRoomCard } from './book-room-card';
 import { BookSeatCard } from './book-seat-card';
 import { CancelReturnCard, MyBookingsCard } from './bookings-cards';
 import { SeatsCard } from './seats-card';
 import { CardBox, Said } from './library-parts';
-import { cardPlace, type LibraryCardActions } from './use-library-call';
+import type { LibraryCardActions } from './use-library-call';
 
 // The library cards of an answer, or of the app's own bubble, each by its action. Each reads the library on the phone
 // and writes to it only on its confirm button. A card that ended (booked, cancelled, returned, dismissed) is kept so by
@@ -49,7 +52,14 @@ function One({ card, own, bubbleId, actions }: OneProps): ReactElement | null {
         return null;
       }
       return shown.unit === 'seat' ? (
-        <BookSeatCard actions={actions} adjustable={own} card={data} place={place} space={shown} />
+        <BookSeatCard
+          actions={actions}
+          adjustable={own}
+          card={data}
+          place={place}
+          roomNamed={namesRoom(actions.askedBefore(bubbleId))}
+          space={shown}
+        />
       ) : (
         <BookRoomCard actions={actions} card={data} place={place} space={shown} />
       );

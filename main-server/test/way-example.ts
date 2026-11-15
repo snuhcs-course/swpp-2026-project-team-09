@@ -119,13 +119,13 @@ export const classAt = (date: string, start: string, end: string, placeName: str
   isClass: true,
 });
 
-// The asker's way at `now`, with nothing known unless given: no shuttle is reported, and the travel times are the
-// seed's.
-export function wayFor(now: Date, given: Partial<Omit<WayArgs, 'now' | 'placeOf'>>): WayAnswer {
+// What a way of the asker at `now` is worked out from, with nothing known unless given: no shuttle is reported, and
+// the travel times are the seed's.
+export function wayArgs(now: Date, given: Partial<Omit<WayArgs, 'now' | 'placeOf'>>): WayArgs {
   if (travel === null) {
     throw new Error('Read the campus first');
   }
-  return wayAnswer({
+  return {
     now,
     me: { userId: ME, name: '유상', items: [] },
     location: null,
@@ -137,5 +137,8 @@ export function wayFor(now: Date, given: Partial<Omit<WayArgs, 'now' | 'placeOf'
     shuttle: { stops, reported: [] },
     placeOf,
     ...given,
-  });
+  };
 }
+
+export const wayFor = (now: Date, given: Partial<Omit<WayArgs, 'now' | 'placeOf'>>): WayAnswer =>
+  wayAnswer(wayArgs(now, given));

@@ -205,37 +205,7 @@ export interface TimeBand {
   text: string;
 }
 
-// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, a day's
-// Classes, or the Tutorial Quests in order.
-export interface Lookup {
-  kind: 'way' | 'friend' | 'menu' | 'day' | 'tutorial';
-  // The conditions it used; a Lookup is not recalculated.
-  chips: ConditionChip[];
-  // At most two, after a day's title.
-  lines: AnswerLine[];
-  basis: string[];
-  scene: MapScene;
-  // When a time matters; it has no handles.
-  band: TimeBand | null;
-  // The card's buttons, the main one first.
-  actions: LookupAction[];
-  // The list the card shows under the lines: a day's Classes, or the Tutorial Quests in order.
-  steps?: LookupStep[];
-}
-
-// A row of a Lookup's list: the time at the left ("13:51", or "11:00–11:50" for a Class), and the text at the right.
-export interface LookupStep {
-  at: string | null;
-  text: string;
-}
-
-export type LookupAction =
-  // 길 안내
-  | { kind: 'guide'; to: PlacePoint }
-  // A leave-by notification at `at`.
-  | { kind: 'remind'; at: string; text: string }
-  // 만나고 싶다
-  | { kind: 'meet'; userId: string };
+export type { CardFact, Lookup, LookupAction, LookupCard } from './lookup.dto.js';
 
 // The most people of a plan, and the most constraints on each.
 const PEOPLE_MAX = 8;
@@ -317,19 +287,18 @@ export const planInputSchema = z.discriminatedUnion('kind', [
 const latitude = z.number().min(-90).max(90);
 const longitude = z.number().min(-180).max(180);
 
+const tappedSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('place'), placeId: z.uuid() }),
+  z.strictObject({ kind: z.literal('friend'), userId: z.uuid() }),
+]);
+
 export const requestContextSchema = z.strictObject({
   location: z.strictObject({ latitude, longitude }).nullable().default(null),
   viewport: z
     .strictObject({ south: latitude, west: longitude, north: latitude, east: longitude })
     .nullable()
     .default(null),
-  tapped: z
-    .discriminatedUnion('kind', [
-      z.strictObject({ kind: z.literal('place'), placeId: z.uuid() }),
-      z.strictObject({ kind: z.literal('friend'), userId: z.uuid() }),
-    ])
-    .nullable()
-    .default(null),
+  tapped: tappedSchema.nullable().default(null),
   conditions: planInputSchema.nullable().default(null),
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
 }) satisfies z.ZodType<RequestContext>;
@@ -341,6 +310,14 @@ export const recalculationSchema = z.strictObject({
 });
 
 export type Recalculation = z.infer<typeof recalculationSchema>;
+
+// The body of a press on a building or a Friend's face, and where the asker is now.
+export const tapSchema = z.strictObject({
+  tapped: tappedSchema,
+  location: z.strictObject({ latitude, longitude }).nullable().default(null),
+});
+
+export type Tap = z.infer<typeof tapSchema>;
 
 export const NO_CONTEXT: RequestContext = {
   location: null,

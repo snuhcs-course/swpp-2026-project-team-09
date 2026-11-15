@@ -36,6 +36,7 @@ import { DayLookupService } from './lookup/day.service.js';
 import { FriendLookupService } from './lookup/friend.service.js';
 import { LookupServices } from './lookup/lookup-services.js';
 import { MenuLookupService } from './lookup/menu.service.js';
+import { PlaceCardService } from './lookup/place.service.js';
 import { TutorialOrderService } from './lookup/tutorial-order.service.js';
 import { WayService } from './lookup/way.service.js';
 import { PlanAnswersService } from './plan-answers.service.js';
@@ -73,6 +74,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     PlanAnswersService,
     MenuLookupService,
     FriendLookupService,
+    PlaceCardService,
     DayLookupService,
     TutorialOrderService,
     LookupServices,

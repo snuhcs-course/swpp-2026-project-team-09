@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { shownMinutes } from '../../travel/travel.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
 import { checkBooking, type CheckedBooking, clockOfMinutes, minutesOfClock, type Refusal } from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
+import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
 import { bookableSpace, dayWords, type LibraryServices, refused, showCard, spaceIdInput } from './library-parts.js';
 import { type Arrival, fillSeat, type LeaveBy, leaveByOf, type SeatFacts, type SeatFill } from './seat-arrival.js';
@@ -39,6 +41,19 @@ const input = z.object({
     .describe('The companions, by the ids resolveFriend returned in this message.'),
   questId: z.uuid().optional().describe('A 파티 the User holds, whose Holders are the companions.'),
 });
+
+// The input of an app that draws answers.
+const answeringInput = input.extend({
+  askedToBook: z
+    .boolean()
+    .optional()
+    .describe(
+      'true when the User asks you to make the booking yourself, such as "그냥 예약해 줘" or "예약까지 해 줘": you cannot, and the card says that the User presses 예약하기.',
+    ),
+});
+
+// The card's first note when the User asked the Assistant to book.
+const OWN_PRESS_NOTE = '예약은 직접 눌러 주세요';
 
 interface Party {
   people: number;
@@ -78,13 +93,22 @@ async function partyOf(
 }
 
 // The summary in words, with no live data.
-function summaryOf(space: LibrarySpace, booking: CheckedBooking, party: Party, now: Date, filled = ''): string {
+function summaryOf(
+  space: LibrarySpace,
+  booking: CheckedBooking,
+  party: Party,
+  now: Date,
+  { filled = '', askedToBook = false }: { filled?: string; askedToBook?: boolean | undefined } = {},
+): string {
   const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
   const where = `${space.floor}층 ${space.name}${booking.seat === null ? '' : ` ${booking.seat}`}`;
   const who = party.people > 1 ? `, ${party.people}명` : '';
   const asks = space.unit === 'room' && booking.useDesc === null ? ' 사용 용도는 카드에서 골라요.' : '';
   const when = `${dayWords(booking.date, now)} ${booking.start}–${end}`;
-  return `${where}, ${when}${who} 예약 카드를 보여 줬어요. ${filled}예약하기를 눌러야 예약돼요.${asks}`;
+  const press = askedToBook
+    ? '대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요.'
+    : '예약하기를 눌러야 예약돼요.';
+  return `${where}, ${when}${who} 예약 카드를 보여 줬어요. ${filled}${press}${asks}`;
 }
 
 const DESCRIPTION =
@@ -95,6 +119,8 @@ const FILLING_DESCRIPTION = `${DESCRIPTION} A seat for today without start is fi
 export interface BookingOptions {
   // The app draws answers on the map: a seat for today without a start gets its time from the User's arrival.
   fillsSeatTime: boolean;
+  // The app draws answers on the map: a card the User asked the Assistant to book says it is their own press.
+  notesOwnPress?: boolean;
 }
 
 // What a seat's arrival is read from.
@@ -143,48 +169,73 @@ async function fillingOf(
   return { facts, fill: fillSeat(facts, { ...space, hours }, asked) };
 }
 
+interface Checked {
+  space: LibrarySpace;
+  booking: CheckedBooking;
+  party: Party;
+  filling: Filling | null;
+  askedToBook: boolean | undefined;
+}
+
+// Shows the book card of a booking that passed, and answers its summary, with the arrival of a filled seat.
+function shownBooking(services: LibraryServices, context: ToolContext, checked: Checked): object {
+  const { space, booking, party, filling, askedToBook } = checked;
+  showCard(
+    context.presented,
+    bookCard(space, {
+      ...booking,
+      companions: party.companions,
+      questId: party.questId,
+      notes: [
+        ...(askedToBook === true ? [OWN_PRESS_NOTE] : []),
+        ...(filling === null ? [] : [filling.fill.note]),
+        ...firstOfSeveralNote(context, space.id),
+      ],
+    }),
+  );
+  if (filling === null) {
+    return { result: 'shown', summary: summaryOf(space, booking, party, context.now, { askedToBook }) };
+  }
+  const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
+  const leaveBy = leaveByOf(filling.facts, filling.fill.arrival.at, end);
+  const filled = filledWords(filling.fill, leaveBy);
+  return {
+    result: 'shown',
+    summary: summaryOf(space, booking, party, context.now, { filled, askedToBook }),
+    arrival: arrivalAnswer(filling.fill.arrival, services),
+    leaveBy,
+  };
+}
+
 // Checks a booking against the catalogue, every refusal at once, and shows a book card when nothing is refused.
 export function proposeLibraryBooking(services: LibraryServices, options?: BookingOptions): Tool {
   const fillsSeatTime = options?.fillsSeatTime ?? false;
-  return defineTool({
-    description: fillsSeatTime ? FILLING_DESCRIPTION : DESCRIPTION,
-    input,
-    run: async (asked, context) => {
-      const checked = await bookableSpace(services, asked.spaceId, context);
-      if ('answer' in checked) {
-        return checked.answer;
-      }
-      const { space } = checked;
-      const party = await partyOf(services, asked, context);
-      const people = 'refusal' in party ? undefined : party.people;
-      const filling = fillsSeatTime ? await fillingOf(services, context, space, asked) : null;
-      const request =
-        filling === null
-          ? asked
-          : { ...asked, start: filling.fill.start, minutes: filling.fill.minutes, end: filling.fill.end };
-      const result = checkBooking(services.catalogue, space, { ...request, people }, context.now);
-      if ('refusal' in party || 'refusals' in result) {
-        return refused([
-          ...('refusal' in party ? [party.refusal] : []),
-          ...('refusals' in result ? result.refusals : []),
-        ]);
-      }
-      const { booking } = result;
-      showCard(
-        context.presented,
-        bookCard(space, { ...booking, companions: party.companions, questId: party.questId, note: filling?.fill.note }),
-      );
-      if (filling === null) {
-        return { result: 'shown', summary: summaryOf(space, booking, party, context.now) };
-      }
-      const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
-      const leaveBy = leaveByOf(filling.facts, filling.fill.arrival.at, end);
-      return {
-        result: 'shown',
-        summary: summaryOf(space, booking, party, context.now, filledWords(filling.fill, leaveBy)),
-        arrival: arrivalAnswer(filling.fill.arrival, services),
-        leaveBy,
-      };
-    },
-  });
+  const description = fillsSeatTime ? FILLING_DESCRIPTION : DESCRIPTION;
+  const run = async (asked: z.output<typeof answeringInput>, context: ToolContext): Promise<unknown> => {
+    const checked = await bookableSpace(services, asked.spaceId, context);
+    if ('answer' in checked) {
+      return checked.answer;
+    }
+    const { space } = checked;
+    const party = await partyOf(services, asked, context);
+    const people = 'refusal' in party ? undefined : party.people;
+    const filling = fillsSeatTime ? await fillingOf(services, context, space, asked) : null;
+    const request =
+      filling === null
+        ? asked
+        : { ...asked, start: filling.fill.start, minutes: filling.fill.minutes, end: filling.fill.end };
+    const result = checkBooking(services.catalogue, space, { ...request, people }, context.now);
+    if ('refusal' in party || 'refusals' in result) {
+      return refused([
+        ...('refusal' in party ? [party.refusal] : []),
+        ...('refusals' in result ? result.refusals : []),
+      ]);
+    }
+    const { booking } = result;
+    return shownBooking(services, context, { space, booking, party, filling, askedToBook: asked.askedToBook });
+  };
+  // The text chat's input stays as it was; only an app that draws answers is told of askedToBook.
+  return options?.notesOwnPress === true
+    ? defineTool({ description, input: answeringInput, run })
+    : defineTool({ description, input, run });
 }
