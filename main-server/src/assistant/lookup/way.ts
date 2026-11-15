@@ -63,7 +63,13 @@ export interface Way {
 
 // A Place the User named; else the main gate when their location is off campus; else the Place of their location;
 // else that of their last item today that has ended.
-export function startOf({ fromPlaceId, location, gatePlaceId, me, now }: WayArgs): WayStart | null {
+export function startOf({
+  fromPlaceId,
+  location,
+  gatePlaceId,
+  me,
+  now,
+}: Pick<WayArgs, 'fromPlaceId' | 'location' | 'gatePlaceId' | 'me' | 'now'>): WayStart | null {
   if (fromPlaceId !== null) {
     return { placeId: fromPlaceId, basis: 'chosen' };
   }
@@ -81,7 +87,7 @@ export function startOf({ fromPlaceId, location, gatePlaceId, me, now }: WayArgs
 export const atPlace = ({ start, toPlaceId }: Pick<Way, 'start' | 'toPlaceId'>): boolean => start.placeId === toPlaceId;
 
 // The User's next item today that has a Place.
-function nextOf(items: readonly DayItem[], now: Date): DayItem | null {
+export function nextOf(items: readonly DayItem[], now: Date): DayItem | null {
   return items.filter(({ start, placeId }) => start > now && placeId !== null).toSorted(byStart)[0] ?? null;
 }
 

@@ -7,12 +7,14 @@
 import { z } from 'zod';
 import { type AnswerReply, type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { DAY_RULES } from '../src/assistant/lookup/day-tools.js';
+import { TUTORIAL_ORDER_RULES } from '../src/assistant/lookup/tutorial-order-tools.js';
 import { COURSE, MealPlanStage, ROOM } from './meal-plan.js';
 import { type Step } from './scripted-model.js';
 
 // A day's Classes drawn on the map as a Lookup, at the Assistant's endpoint with the scripted model, the seed's walking
 // table, and Places: board q14 (a Tuesday at 10:30, with Classes in 301동, 24동, and 58동), what the model is given,
-// and an app that does not draw answers. Each test takes a Tuesday of 2093.
+// and an app that does not draw answers, which neither the day nor the Tutorial Quests in order reach. Each test takes
+// a Tuesday of 2093.
 
 const stage = new MealPlanStage();
 
@@ -94,15 +96,17 @@ describe("Today's Classes (board q14)", () => {
 });
 
 describe('An app that does not draw answers', () => {
-  it("keeps today's prompt and tools: no findDay nor its rules, getMyDay still, and no Lookup", async () => {
+  it("keeps today's prompt and tools: no findDay, no findTutorialOrder, neither's rules, and no Lookup", async () => {
     await stage.asking('2093-01-20', '10:30');
 
     const response = await stage.send([{ text: '네' }], { clientCapabilities: ['library'] }, '오늘 수업 뭐 있어?');
 
     expect(response.status).toBe(200);
     expect(toolNames()).not.toContain('findDay');
-    expect(toolNames()).toContain('getMyDay');
+    expect(toolNames()).not.toContain('findTutorialOrder');
+    expect(toolNames()).toEqual(expect.arrayContaining(['getMyDay', 'getTutorial']));
     expect(stage.model.system()).not.toContain(DAY_RULES);
+    expect(stage.model.system()).not.toContain(TUTORIAL_ORDER_RULES);
     expect(replySchema.parse(response.body).lookup).toBeNull();
   });
 });

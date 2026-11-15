@@ -1,0 +1,193 @@
+{
+  "kind": "tutorial",
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "24동에서",
+      "userId": null
+    },
+    {
+      "kind": "until",
+      "text": "17:00 수업까지",
+      "userId": null
+    }
+  ],
+  "lines": [
+    [
+      {
+        "text": "세 곳을 돌면 ",
+        "strong": false
+      },
+      {
+        "text": "14:29",
+        "strong": true
+      },
+      {
+        "text": "에 끝나요",
+        "strong": false
+      }
+    ],
+    [
+      {
+        "text": "다음은 ",
+        "strong": false
+      },
+      {
+        "text": "17:00 수업",
+        "strong": true
+      },
+      {
+        "text": " · 58동",
+        "strong": false
+      }
+    ]
+  ],
+  "basis": [
+    "가장 적게 걷는 순서예요 · 58동까지 모두 걸어서 14분",
+    "한 곳에 10분씩 잡았어요",
+    "보건진료소는 평일 09:00–12:00, 13:30–17:30에 진료해요 · 금요일은 16:30까지",
+    "분실물센터는 09:00–18:00에 열어요",
+    "학생증은 MySNU 신청 다음 날부터 받아요 · 평일 09:00–17:50"
+  ],
+  "scene": {
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "name": "유상",
+        "me": true,
+        "at": {
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "source": "timetable",
+        "tag": "나"
+      }
+    ],
+    "places": [
+      {
+        "place": {
+          "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+          "label": "학생회관 3층",
+          "latitude": 37.45932,
+          "longitude": 126.95058
+        },
+        "role": "pick",
+        "tag": "13:51 서울대 보건진료소 이용",
+        "order": 1
+      },
+      {
+        "place": {
+          "placeId": "44b64312-1122-5bb0-8cfc-25f5b185a11c",
+          "label": "아시아연구소 1층",
+          "latitude": 37.46328,
+          "longitude": 126.95015
+        },
+        "role": "pick",
+        "tag": "14:08 분실물센터 위치 알아두기",
+        "order": 2
+      },
+      {
+        "place": {
+          "placeId": "dce055f8-29f6-5575-babc-1a243bade3d3",
+          "label": "NH농협두레문예관 2층",
+          "latitude": 37.46353,
+          "longitude": 126.94973
+        },
+        "role": "pick",
+        "tag": "14:19 학생증(S-CARD) 발급받기",
+        "order": 3
+      },
+      {
+        "place": {
+          "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+          "label": "58동",
+          "latitude": 37.46568,
+          "longitude": 126.95203
+        },
+        "role": "next",
+        "tag": "17:00 수업 · 58동"
+      }
+    ],
+    "routes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "me",
+        "from": {
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "to": {
+          "latitude": 37.45932,
+          "longitude": 126.95058
+        },
+        "minutes": 1
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "me",
+        "from": {
+          "latitude": 37.45932,
+          "longitude": 126.95058
+        },
+        "to": {
+          "latitude": 37.46328,
+          "longitude": 126.95015
+        },
+        "minutes": 7
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "me",
+        "from": {
+          "latitude": 37.46328,
+          "longitude": 126.95015
+        },
+        "to": {
+          "latitude": 37.46353,
+          "longitude": 126.94973
+        },
+        "minutes": 1
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "next",
+        "from": {
+          "latitude": 37.46353,
+          "longitude": 126.94973
+        },
+        "to": {
+          "latitude": 37.46568,
+          "longitude": 126.95203
+        },
+        "minutes": 5
+      }
+    ],
+    "flags": []
+  },
+  "band": null,
+  "actions": [
+    {
+      "kind": "guide",
+      "to": {
+        "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+        "label": "학생회관 3층",
+        "latitude": 37.45932,
+        "longitude": 126.95058
+      }
+    }
+  ],
+  "steps": [
+    {
+      "at": "13:51",
+      "text": "학생회관 3층 · 서울대 보건진료소 이용"
+    },
+    {
+      "at": "14:08",
+      "text": "아시아연구소 1층 · 분실물센터 위치 알아두기"
+    },
+    {
+      "at": "14:19",
+      "text": "NH농협두레문예관 2층 · 학생증(S-CARD) 발급받기"
+    }
+  ]
+}

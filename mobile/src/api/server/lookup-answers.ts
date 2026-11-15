@@ -10,7 +10,7 @@ import { isBand, isChip, isKeyOf, isLine, isPlacePoint, isScene } from './plan-a
 
 // The app's check of a reply's Lookup, every field of it, as the answer screen draws each.
 
-const isKind = isKeyOf<Lookup['kind']>({ way: true, friend: true, menu: true, day: true });
+const isKind = isKeyOf<Lookup['kind']>({ way: true, friend: true, menu: true, day: true, tutorial: true });
 
 function isStep(value: unknown): value is LookupStep {
   return isTextOrNull(field(value, 'at')) && isText(field(value, 'text'));

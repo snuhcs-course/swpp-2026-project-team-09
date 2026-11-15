@@ -33,7 +33,9 @@ import { type Catalogue, CATALOGUE_FILE, LIBRARY_CATALOGUE, readCatalogue } from
 import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/free-time-port.js';
 import { DayLookupService } from './lookup/day.service.js';
 import { FriendLookupService } from './lookup/friend.service.js';
+import { LookupServices } from './lookup/lookup-services.js';
 import { MenuLookupService } from './lookup/menu.service.js';
+import { TutorialOrderService } from './lookup/tutorial-order.service.js';
 import { WayService } from './lookup/way.service.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 import { NewQuestPlanService } from './recruiting/new-quest-plan.service.js';
@@ -69,6 +71,8 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     MenuLookupService,
     FriendLookupService,
     DayLookupService,
+    TutorialOrderService,
+    LookupServices,
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     // The P6 eval world binds a day of its own here.

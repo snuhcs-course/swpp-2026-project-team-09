@@ -61,6 +61,15 @@ export function place(name: string): PlaceDto {
 
 export const id = (name: string): string => place(name).id;
 
+// The Place of that number.
+export function numbered(number: string): PlaceDto {
+  const found = places.find((each) => each.number === number);
+  if (found === undefined) {
+    throw new Error(`The seed has no Place numbered ${number}`);
+  }
+  return found;
+}
+
 export function placeOf(placeId: string): PlaceDto {
   const found = places.find((each) => each.id === placeId);
   if (found === undefined) {

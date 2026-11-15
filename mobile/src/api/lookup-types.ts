@@ -8,10 +8,10 @@ import type { AnswerLine, ConditionChip, MapScene, PlacePoint, TimeBand } from '
 
 // The main server's `Lookup` (`assistant/dto/answer.dto.ts`), the same shape.
 
-// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, or a
-// day's Classes.
+// An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, a day's
+// Classes, or the Tutorial Quests in order.
 export interface Lookup {
-  kind: 'way' | 'friend' | 'menu' | 'day';
+  kind: 'way' | 'friend' | 'menu' | 'day' | 'tutorial';
   // The conditions it used; a Lookup is not recalculated.
   chips: ConditionChip[];
   // At most two, after a day's title.
@@ -22,7 +22,7 @@ export interface Lookup {
   band: TimeBand | null;
   // The card's buttons, the main one first.
   actions: LookupAction[];
-  // The list the card shows under the lines, such as a day's Classes.
+  // The list the card shows under the lines: a day's Classes, or the Tutorial Quests in order.
   steps?: LookupStep[];
 }
 

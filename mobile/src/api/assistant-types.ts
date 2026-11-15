@@ -355,7 +355,7 @@ export interface MapScene {
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
-  // `order`: the number a place carries in a list (1, 2, 3), as a day's Classes.
+  // `order`: the number a place carries in a list (1, 2, 3), as a day's Classes or the Tutorial Quests in order.
   places: { place: PlacePoint; role: PlaceRole; tag: string | null; order?: number }[];
   // `mode` is absent for a walk.
   routes: {
