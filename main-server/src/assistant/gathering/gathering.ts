@@ -75,6 +75,8 @@ export interface GatheringDrop {
   togetherMinutes: number;
   // Who could stay the shortest on their own, and for how long (never below 0). The first such person on a tie.
   shortest: { personId: string; minutes: number };
+  // In the order of the people.
+  parts: PersonPart[];
 }
 
 export interface Gathering {
@@ -150,7 +152,7 @@ function dropOf({ key, placeId, togetherMinutes, parts }: GatheringFit, window: 
     ),
   }));
   const shortest = stays.reduce((least, stay) => (stay.minutes < least.minutes ? stay : least));
-  return { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest };
+  return { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest, parts };
 }
 
 type Walking = Pick<TravelProvider, 'walkingSeconds'>;
