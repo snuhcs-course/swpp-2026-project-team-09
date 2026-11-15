@@ -15,7 +15,7 @@ A label of an answer's mark never lies under the pill, under the card, or across
 - [x] Labels at the left of marks within 60 points of each other up and down share their right edge, and labels at the right share their left edge.
 - [x] The camera's room for labels (`roomsOf`) and this check use the same label sizes.
 - [x] Unit tests on the stored copies of real answers with the emulator's view (411 by 914, the pill and the card as measured), worked by hand.
-- [ ] Pictures: the first and the third Plan of the stored answer, and the answer for a fixed start, with no label touching an edge, the pill, or the card.
+- [x] Pictures: the first and the third Plan of the stored answer, and the answer for a fixed start, with no label touching an edge, the pill, or the card.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
@@ -48,3 +48,21 @@ From the design review of 2026-11-15 (`answer-screen-design/brief.md`, fix 7), s
 22. The quarter of a level kept clear of Kakao's level 14 rests on the emulator's scale shift of 0.146: it holds while a view grows by at most 2^0.25 = 1.19 times since the module opened. The shift was not measured on other phones, where the margin may be too small or more than needed.
 23. In a view grown since it opened, the Android module brings a camera it is sent inside `bounds` at the zoom sent, the zoom shown less the shift, in the view as large as it is, so it counts the view 2^0.146 = 1.107 times taller than it shows; at rest it measures the zoom shown and keeps what it finds. The first Plan's camera, 14.964 with the view's bottom 2.8 points inside the camera's area (south edge 37.432), was sent at 14.818, where that taller view reached 41.4 points past the edge, so the module moved its centre 45.9 shown points north: 24동 at 177.9, 301동 at 442.9, and 302동 at 479.9 instead of 132, 397, and 434, the pick's lines under the card, as seen on the emulator. The third Plan's view is 112 points inside and was not moved. `native-map.tsx` now hands the module `bounds` grown on each side by that excess at the lowest zoom it may be sent (`sentBounds`): 48.7 points up and down and 21.9 across at the answer's outer zoom, 0.00195° and 0.00111°. So the module keeps every camera the rules keep, and a camera at rest may stop that much past the camera's area, half a campus past the campus already. No native file changed.
 24. The module measures how far above its number Kakao's level reaches once at each start, on the camera Kakao opens at: 0.1895, 0.415, and 0.5146 for level 15 on three starts of the emulator, so it is not a constant. `nativeLevelZoom` takes the most measured, 0.515: a camera there or closer is at the level or above on any start, since Kakao showed the level at 15.515, and the module, which asks for the level of a zoom less its measure, rounded, asks for no lower with any measure from 0.19 to 0.52 (round(14.619 − 0.52) = 14 for the answer's outer zoom sent in the emulator's grown view). The module reports no measure of its own, so none is read back; the answer's outer zoom stays 14.765.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build answering from the stored copies of real replies, with the switch on, the answer to "배고파, 민수랑 같이":
+
+- The first Plan: the camera went out past the campus zoom, "13:00 수업 · 24동" near the top, "나 · 3분" at the right of the User's dot, and the pick's two lines under 302동 just above the card; 자하연식당 2층's label, under the pill, was left out.
+- The third Plan: "18분" at the right of 민수, 302동식당 at its left, "12:18 민수와 만남" above the meeting point, and no label over another mark.
+- ✕ closed the answer to the everyday map with no correction logged by the module.
+- A received invitation (`snunow://main?card=invitation:qi-1`): 63동's label and "나 · 18분" inside the map between the status bar and the card.
+
+Found on the emulator and fixed: the module moved the first Plan's camera north, so that the pick lay under the card (decisions 23 and 24). The answer for a fixed start was not drawn on the emulator; its labels are checked by the unit tests.
+
+### Agent usage (2026-11-15)
+
+One session with four subagents for this ticket (the implementation, two reviewers, and the reviews' fixes with the module's camera); the session's own time counted is the emulator checks and the pull request.
+
+- Agent time: about 119 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 651,170; input 138,514,576, of which 136,683,074 were cache reads, 1,830,648 cache writes, and 854 uncached. Without cache reads: 2,482,672.
