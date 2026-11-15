@@ -4,8 +4,8 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { type AiKeys, DEFAULT_KEY } from '../common/llm-keys.js';
-import { defineSetting, type SettingCheck, type SettingDefinition } from './registry.js';
+import { type AiKeys, DEFAULT_KEY, PROVIDER_NAMES } from '../common/llm-keys.js';
+import { defineSetting, type SettingCheck, type SettingDefinition, type SettingLabel } from './registry.js';
 
 // Injected as the registry, so that a test can register a setting of its own.
 export const SETTING_REGISTRY = Symbol('SETTING_REGISTRY');
@@ -18,6 +18,7 @@ export interface LlmKeySetting {
   readonly default: string;
   readonly allowed: readonly string[];
   readonly check: SettingCheck;
+  readonly label: SettingLabel;
 }
 
 // The name of the key the AI calls its model with, and with it the provider (spec A02). A chat answer and a Judgement
@@ -26,6 +27,8 @@ export interface LlmKeySetting {
 // OPENROUTER_API_KEY.
 export function llmKeySetting({ offered }: AiKeys): LlmKeySetting {
   const names = offered.map(({ name }) => name);
+  // A key's name with its provider, such as "default (OpenRouter)"; never its value.
+  const providers = new Map(offered.map(({ name, provider }) => [name, PROVIDER_NAMES[provider]]));
   return defineSetting({
     name: 'llm.key',
     type: 'STRING',
@@ -34,6 +37,10 @@ export function llmKeySetting({ offered }: AiKeys): LlmKeySetting {
     default: DEFAULT_KEY,
     allowed: [DEFAULT_KEY, ...names.filter((name) => name !== DEFAULT_KEY)],
     check: (value) => (names.includes(String(value)) ? null : `The server has no key named ${String(value)}.`),
+    label: (value) => {
+      const provider = providers.get(String(value));
+      return provider === undefined ? `${String(value)} (no key)` : `${String(value)} (${provider})`;
+    },
   });
 }
 

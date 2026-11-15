@@ -28,14 +28,17 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { refusalReplyTo } from './data/refusals';
+import { STUDY_LOOKUP_REPLY } from './data/study-lookup';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
 import { LATE_LOOKUP_REPLY, LEAVE_LOOKUP_REPLY, SHUTTLE_LOOKUP_REPLY } from './data/way-lookups';
 import {
   MEAL_ANSWER_ALONE,
+  MEAL_ANSWER_FIXED_PLACE,
   MEAL_ANSWER_FIXED_START,
   MEAL_ANSWER_OTHER_ORIGIN,
   MEAL_ANSWER_THREE,
+  MEAL_ANSWER_UNFIT_PLACE,
 } from './data/meal-answers';
 import { MEET_ANSWER } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
@@ -48,10 +51,10 @@ import { isLibraryAsk, libraryReply } from './library-replies';
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
 // the map, and with a context it answers with the main server's real Lookups: where something is (어디) with 문화관,
-// 301동식당's menu, where 민수 is, and in the words of boards q2 to q4 the way to 24동 on time (까지 몇 분), late
-// (늦나), and by the shuttle (셔틀 탈까). The words of a board of row 8 with a context get the main server's real
-// refusal, before anything else. A press on a building or a face is answered with the main server's real cards of
-// row 6.
+// 301동식당's menu, where 민수 is, a place to study near here (이 근처) with board a9's study spaces over 공대, whatever
+// area the app sent, and in the words of boards q2 to q4 the way to 24동 on time (까지 몇 분), late (늦나), and by the
+// shuttle (셔틀 탈까). The words of a board of row 8 with a context get the main server's real refusal, before anything
+// else. A press on a building or a face is answered with the main server's real cards of row 6.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -145,6 +148,7 @@ function menusReply(): string {
 }
 
 // The mock holds copies of meal answers and of one meet, so other conditions are read as a meal of the User alone.
+// Three people at a pressed Place get the copy of that Place when there is one ("여기면 어때?").
 function copyFor(input: PlanInput): AnswerReply {
   if (input.kind === 'meet') {
     return MEET_ANSWER;
@@ -155,7 +159,9 @@ function copyFor(input: PlanInput): AnswerReply {
     return MEAL_ANSWER_ALONE;
   }
   if (people.length >= 3) {
-    return MEAL_ANSWER_THREE;
+    const placeId = input.kind === 'meal' ? input.placeId : null;
+    const pressed = [MEAL_ANSWER_FIXED_PLACE, MEAL_ANSWER_UNFIT_PLACE].find((copy) => copy.input.placeId === placeId);
+    return pressed ?? MEAL_ANSWER_THREE;
   }
   if (from !== null) {
     return MEAL_ANSWER_FIXED_START;
@@ -182,8 +188,8 @@ export function mockTap(tapped: Tapped): Lookup {
   return FRIEND_TAPS[tapped.userId] ?? STAND_IN_FRIEND_TAP;
 }
 
-// The stored refusal of a board of row 8, answer of 배고파, and Lookups of 301동식당's menu, of where 민수 is, and of a
-// way with a deadline, for a message sent with a context.
+// The stored refusal of a board of row 8, answer of 배고파, and Lookups of 301동식당's menu, of a place to study near
+// here, of where 민수 is, and of a way with a deadline, for a message sent with a context.
 function drawnReplyOf(last: string): AssistantReply | null {
   const refused = refusalReplyTo(last);
   if (refused !== null) {
@@ -194,6 +200,9 @@ function drawnReplyOf(last: string): AssistantReply | null {
   }
   if (last.includes('301동식당') && last.includes('메뉴')) {
     return MENU_LOOKUP_REPLY;
+  }
+  if (last.includes('이 근처') && last.includes('공부')) {
+    return STUDY_LOOKUP_REPLY;
   }
   if (last.includes('민수') && last.includes('어디')) {
     return FRIEND_LOOKUP_REPLY;

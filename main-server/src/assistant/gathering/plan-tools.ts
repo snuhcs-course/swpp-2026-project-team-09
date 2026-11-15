@@ -14,6 +14,7 @@ import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { othersText } from '../others-text.js';
 import { mealByClock } from '../free-time/meal-fit.js';
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { askedBy } from '../refusals/friend-question.js';
 import { WHICH_FRIEND } from '../tools/which-friend.js';
 import { type MealPlanService } from './meal-plan.service.js';
 
@@ -140,6 +141,7 @@ export function planMeal(plans: Pick<MealPlanService, 'plan'>): Tool {
       }
       const meal = named ?? mealByClock(date, now, from);
       const seen = seenIds(context);
+      askedBy('planMeal', friendIds, found, presented);
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       const kept = constraintsOf(context, date, meal);

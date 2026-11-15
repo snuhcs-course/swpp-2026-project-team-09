@@ -211,6 +211,25 @@ describe('No time to meet', () => {
   });
 });
 
+describe('A fixed Place ("여기면 어때?")', () => {
+  it("gives each person's earliest arrival at 학생회관", () => {
+    const [first] = meetOf([me(), minsu()], { placeId: id('학생회관') }).plans;
+
+    expect(first).toMatchObject({ id: '학생회관', startAt: time('12:32'), togetherMinutes: 27 });
+    expect(first?.parts.map(({ arriveAt }) => arriveAt)).toEqual([time('12:25'), time('12:32')]);
+  });
+
+  it("names the User, who stays shortest, and the Class they leave for, with each person's part", () => {
+    const answer = meetOf([me(), minsu()], { window: { from: '12:45', until: '13:00' }, placeId: id('학생회관') });
+
+    expect(answer.noPlan).toEqual({
+      reason: 'no-fit',
+      lines: [[plain('12:45부터 14분만 있을 수 있어요')], [plain('13:00 수업에 가려면 12:59엔 나서야 해요')]],
+    });
+    expect(answer.dropped[0]?.parts?.map(({ arriveAt }) => arriveAt)).toEqual([time('12:25'), time('12:32')]);
+  });
+});
+
 describe("The band's busy stretches", () => {
   it('name a Class with a Place by it, a Class without one as 수업, and a Sub Quest as 일정', () => {
     const items = [...myDay(), classAt('15:00', '15:20', null), subQuestAt('16:00', '16:30', '학생회관')];
