@@ -314,7 +314,6 @@ model SettingChange {
   revision           Int
   changedAt          DateTime       @default(now()) @map("changed_at")
 
-  @@index([changedAt])
   @@map("setting_changes")
 }
 
@@ -322,6 +321,7 @@ model SettingChange {
 // reloads the settings when it changed. The row lock orders the saves' commits, so a check never misses one, as a
 // check of max(updated_at) could when a transaction stamped earlier commits later.
 model SettingsRevision {
+  // An Int, not a UUID like the other tables' ids: the one row is always id 1, which a check constraint keeps.
   id       Int @id @default(1)
   revision Int @default(0)
 

@@ -219,6 +219,21 @@ describe('reloading the global settings', () => {
     await settings.check();
     expect(settings.get(TEST_LIMIT)).toBe(7);
   });
+
+  it('skips a check while the previous one is still running', async () => {
+    const { settings, client } = await startPod();
+    await settings.save('test.limit', '7', administratorId);
+    const findRevision = vi.spyOn(client.settingsRevision, 'findUniqueOrThrow');
+
+    // The second starts while the first waits for the database. Only the first reads the revision and reloads.
+    await Promise.all([settings.check(), settings.check()]);
+    expect(findRevision).toHaveBeenCalledTimes(2);
+    expect(settings.get(TEST_LIMIT)).toBe(7);
+
+    // Once it is done, the next check runs.
+    await settings.check();
+    expect(findRevision).toHaveBeenCalledTimes(3);
+  });
 });
 
 describe("the global settings' history", () => {
@@ -245,5 +260,6 @@ describe("the global settings' history", () => {
     } finally {
       await app.close();
     }
-  });
+    // Starting the whole server can take longer than a test's default 5 seconds.
+  }, 60_000);
 });
