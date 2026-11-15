@@ -51,8 +51,8 @@ The two messages were sent once through the chat feature of an app that draws an
 
 ### Agent usage (2026-11-15)
 
-One implementing subagent (Opus 5.5). This session's review and the pull request are counted under P03 ticket 07.
+One implementing subagent (Opus 5.5), resumed twice to rebuild it on #270 and then on `4.0/Main`. This session's review and the pull request are counted under P03 ticket 07.
 
-- Agent time: about 41 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
-- Tokens: output 170,480; input 47,516,897, of which 47,115,694 were cache reads, 400,885 cache writes, and 318 uncached. Without cache reads: 571,683.
+- Agent time: about 73 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 199,822; input 76,139,788, of which 74,357,394 were cache reads, 1,781,946 cache writes, and 448 uncached. Without cache reads: 1,982,216.
 - The real-model check sent two requests to the chat model.
