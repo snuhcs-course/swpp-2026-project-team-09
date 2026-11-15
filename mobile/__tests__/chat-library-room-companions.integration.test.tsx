@@ -39,8 +39,11 @@ const FRIENDS = [MIN_JUN, JI_WOO, HA_EUN].map(({ friendId, name }) => ({
   id: friendId,
   name,
   department: '컴퓨터공학부',
+  level: 'exact',
   sharing: true,
   visible: false,
+  askedOff: false,
+  askedPlan: false,
 }));
 
 // 김민준 consented and 서지우 declined: the six-person room needs one more.
