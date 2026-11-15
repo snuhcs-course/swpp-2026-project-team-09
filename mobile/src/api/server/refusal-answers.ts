@@ -6,7 +6,8 @@
 
 import { REFUSAL_KINDS, REFUSAL_SCREENS, type Refusal, type RefusalOffer } from '@/api/refusal-types';
 import { field, hasTexts, listOf } from './answers';
-import { isLine, isOneOf } from './plan-answers';
+import { isLine } from './plan-answers';
+import { isOneOf } from './plan-inputs';
 
 // The app's check of a reply's refusal, every field of it, as the answer frame draws each.
 

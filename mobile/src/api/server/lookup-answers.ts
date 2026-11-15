@@ -6,7 +6,8 @@
 
 import type { CardFact, Lookup, LookupAction, LookupCard, LookupStep } from '@/api/lookup-types';
 import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
-import { isBand, isChip, isInput, isKeyOf, isLine, isOneOf, isPlacePoint, isScene } from './plan-answers';
+import { isBand, isChip, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
+import { isInput, isOneOf } from './plan-inputs';
 
 // The app's check of a reply's Lookup, every field of it, as the answer screen draws each.
 

@@ -10,29 +10,20 @@ import type {
   AnswerReply,
   ConditionChip,
   DroppedPlace,
-  EventsInput,
   MapScene,
-  MealInput,
-  PersonConstraint,
   PlacePoint,
   Plan,
-  PlanInput,
   PlanPart,
-  PlanPerson,
   TimeBand,
 } from '@/api/assistant-types';
-import type { MeetInput } from '@/api/meet-plan-types';
-import type { NewQuestInput, QuestsInput } from '@/api/recruiting-plan-types';
 import type { LatLng } from '@/api/types';
-import { field, hasTexts, isBoard, isNumber, isText, isTextOrNull, listOf } from './answers';
+import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isRecruitingQuest } from './party-client';
+import { isInput, isOneOf } from './plan-inputs';
 
 // The `answer` and the `lookup` of the Assistant's reply, as main-server `assistant/dto/answer.dto.ts` fixes them:
-// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply.
-
-export function isOneOf<Value extends string>(values: readonly Value[]): (value: unknown) => value is Value {
-  return (value: unknown): value is Value => values.some((one) => one === value);
-}
+// every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply. The
+// input's checks are in `plan-inputs.ts`.
 
 // The keys of a record typed by a union of the contract, so that the compiler refuses a value left out or one too many.
 export function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
@@ -66,78 +57,6 @@ function isNumberOrNull(value: unknown): value is number | null {
 
 function isLatLng(value: unknown): value is LatLng {
   return isNumber(field(value, 'latitude')) && isNumber(field(value, 'longitude'));
-}
-
-function isConstraint(value: unknown): value is PersonConstraint {
-  if (!isOneOf(['asker', 'person'])(field(value, 'source'))) {
-    return false;
-  }
-  switch (field(value, 'kind')) {
-    case 'from':
-      return isText(field(value, 'placeId'));
-    case 'notBefore':
-    case 'leaveBy':
-      return isText(field(value, 'time'));
-    default:
-      return false;
-  }
-}
-
-function isPerson(value: unknown): value is PlanPerson {
-  return isText(field(value, 'userId')) && listOf(isConstraint)(field(value, 'constraints'));
-}
-
-// The people, the window, and the Place a meal and a meet share.
-function isGathering(value: unknown): boolean {
-  const window = field(value, 'window');
-  return (
-    isText(field(value, 'date')) &&
-    listOf(isPerson)(field(value, 'people')) &&
-    isTextOrNull(field(window, 'from')) &&
-    isTextOrNull(field(window, 'until')) &&
-    isTextOrNull(field(value, 'placeId'))
-  );
-}
-
-function isMealInput(value: unknown): value is MealInput {
-  return field(value, 'kind') === 'meal' && isOneOf(['lunch', 'dinner'])(field(value, 'meal')) && isGathering(value);
-}
-
-function isMeetInput(value: unknown): value is MeetInput {
-  return field(value, 'kind') === 'meet' && isGathering(value);
-}
-
-function isEventsInput(value: unknown): value is EventsInput {
-  const eventIds = field(value, 'eventIds');
-  return (
-    field(value, 'kind') === 'events' && isText(field(value, 'date')) && (eventIds === null || listOf(isText)(eventIds))
-  );
-}
-
-function isQuestsInput(value: unknown): value is QuestsInput {
-  const globalEventId = field(value, 'globalEventId');
-  const questIds = field(value, 'questIds');
-  return (
-    field(value, 'kind') === 'quests' &&
-    isTextOrNull(globalEventId) &&
-    (questIds === null || listOf(isText)(questIds)) &&
-    (globalEventId === null) !== (questIds === null)
-  );
-}
-
-function isNewQuestInput(value: unknown): value is NewQuestInput {
-  const board = field(value, 'board');
-  return (
-    field(value, 'kind') === 'new-quest' &&
-    isText(field(value, 'date')) &&
-    ['globalEventId', 'title', 'placeId', 'time'].every((name) => isTextOrNull(field(value, name))) &&
-    listOf(isPerson)(field(value, 'people')) &&
-    (board === undefined || (board !== null && isBoard(board)))
-  );
-}
-
-export function isInput(value: unknown): value is PlanInput {
-  return [isMealInput, isEventsInput, isQuestsInput, isNewQuestInput, isMeetInput].some((isKind) => isKind(value));
 }
 
 // A mode is absent for a walk.
