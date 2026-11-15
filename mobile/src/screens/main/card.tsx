@@ -25,7 +25,7 @@ export const LOOK_CLOSER = '가까이 보기';
 // What the card draws of a thing, which a Friend's card has also for a Friend whom the map does not show.
 type CardContent = Pick<CardView, 'id' | 'mark' | 'subLabel' | 'title' | 'lines' | 'primary' | 'study' | 'choices'>;
 
-interface CardProps {
+export interface CardProps {
   card: CardContent;
   // "가까이 보기" is offered: the camera is below the "names" level of detail.
   canLookCloser: boolean;
@@ -39,6 +39,8 @@ interface CardProps {
   onHeight?: (height: number) => void;
   // Its distance from the top, for a card that sits at the top of the map, as a 식당's does. Left out, at the bottom.
   top?: number;
+  // A press on what the User sees of a Friend. Left out, it opens 위치 공유.
+  onSeen?: () => void;
 }
 
 // A place's kind in the design system: its colour and its icon. A campus service's round is a rounded square, as the
@@ -96,7 +98,13 @@ export function CloseButton({ onClose }: Pick<CardProps, 'onClose'>): ReactEleme
   );
 }
 
-function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElement {
+export function Head({
+  card,
+  onClose,
+}: {
+  card: Pick<CardContent, 'mark' | 'subLabel' | 'title'>;
+  onClose: () => void;
+}): ReactElement {
   const { mark, subLabel, title } = card;
   return (
     <View style={styles.head}>
@@ -121,7 +129,7 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
   );
 }
 
-function Line({ icon, words }: { icon: IconName; words: string }): ReactElement {
+export function Line({ icon, words }: { icon: IconName; words: string }): ReactElement {
   return (
     <View style={styles.line}>
       <Icon color={color.inkMuted} name={icon} size={16} />
@@ -130,16 +138,19 @@ function Line({ icon, words }: { icon: IconName; words: string }): ReactElement 
   );
 }
 
-// What the User sees of the Friend, a row that opens 위치 공유 ("어디까지 보이나"), with a touch area of its own.
-function SeenRow({ seen }: { seen: string }): ReactElement {
+function openSharing(): void {
+  router.push('/me/location-sharing');
+}
+
+// What the User sees of the Friend, a row ("어디까지 보이나") with a touch area of its own, which opens 위치 공유 unless
+// the card says otherwise.
+function SeenRow({ seen, onPress = openSharing }: { seen: string; onPress?: () => void }): ReactElement {
   return (
     <Pressable
       accessibilityLabel="어디까지 보이나"
       accessibilityRole="button"
       accessibilityValue={{ text: seen }}
-      onPress={() => {
-        router.push('/me/location-sharing');
-      }}
+      onPress={onPress}
       style={({ pressed }) => [styles.line, styles.seen, pressed && styles.pressed]}
     >
       <Icon color={color.inkMuted} name="lock" size={16} />
@@ -151,7 +162,7 @@ function SeenRow({ seen }: { seen: string }): ReactElement {
 
 // The card's lines. A Friend's card is their profile: what the User sees of them before the lines, and their Friend
 // ID and since when the two have been Friends after them, each where the main server sends it.
-function Lines({ card }: Pick<CardProps, 'card'>): ReactElement | null {
+function Lines({ card, onSeen }: Pick<CardProps, 'card' | 'onSeen'>): ReactElement | null {
   const facts = useFriendProfile(friendIdOf(card.id))?.facts ?? null;
   if (card.lines.length === 0 && facts === null) {
     return null;
@@ -160,7 +171,7 @@ function Lines({ card }: Pick<CardProps, 'card'>): ReactElement | null {
   const since = facts?.since ?? null;
   return (
     <View style={styles.lines}>
-      {facts === null ? null : <SeenRow seen={facts.seen} />}
+      {facts === null ? null : <SeenRow onPress={onSeen} seen={facts.seen} />}
       {card.lines.map(({ icon, text: words }) => (
         <Line icon={icon} key={`${icon}:${words}`} words={words} />
       ))}
@@ -201,11 +212,12 @@ export function Card({
   onChoose,
   onHeight,
   top,
+  onSeen,
 }: CardProps): ReactElement {
   return (
     <CardFrame onHeight={onHeight} top={top}>
       <Head card={card} onClose={onClose} />
-      <Lines card={card} />
+      <Lines card={card} onSeen={onSeen} />
       {card.study === undefined ? null : <StudyRows key={`study:${card.id}`} study={card.study} />}
       <Choices card={card} key={card.id} onChoose={onChoose} />
       <View style={styles.buttons}>

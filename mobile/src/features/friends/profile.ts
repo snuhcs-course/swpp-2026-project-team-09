@@ -42,6 +42,43 @@ export function profileOf({
   };
 }
 
+const FROM_LEAST: readonly FriendLevel[] = ['timetable', 'building', 'exact'];
+
+// A level as the 위치 공유 screen names it.
+const LEVEL_WORDS: Readonly<Record<FriendLevel, string>> = {
+  timetable: '시간표만',
+  building: '지금 있는 건물',
+  exact: '정확한 위치',
+};
+
+// What the two see of each other, as the 위치 공유 screen says it.
+const BOTH_SEE: Readonly<Record<FriendLevel, string>> = {
+  timetable: '서로 시간표만 보여요',
+  building: '서로 지금 있는 건물까지 보여요',
+  exact: '서로 정확한 위치까지 보여요',
+};
+
+// "어디까지 보이나" of a Friend (row 9 board 2): the Friend with where the map shows them, the User's own end, and
+// what the two see, the lower end, which says so when the User's end is above it. The Friend's own end is never said.
+export interface SeenCardWords {
+  title: string;
+  mine: string;
+  both: string;
+}
+
+// `where`: the Place the map shows the Friend at, "301동", or null for none.
+export function seenCardOf(
+  { name, level, seen }: Pick<FriendView, 'name' | 'level' | 'seen'>,
+  where: string | null,
+): SeenCardWords {
+  const lower = FROM_LEAST.indexOf(seen) < FROM_LEAST.indexOf(level);
+  return {
+    title: where === null ? name : `${name} · 지금 ${where}`,
+    mine: `내가 ${name}에게: ${LEVEL_WORDS[level]}`,
+    both: lower ? `${BOTH_SEE[seen]} (낮은 쪽을 따라요)` : BOTH_SEE[seen],
+  };
+}
+
 // What a screen reader says of the button that opens a person's profile: "김민수 프로필".
 export function profileLabel(name: string): string {
   return `${name} 프로필`;

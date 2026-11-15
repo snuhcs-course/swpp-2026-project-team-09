@@ -30,7 +30,6 @@ import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
-import { Card } from './card';
 import { FriendList } from './friend-list';
 import { OffMapFriendCard } from './friend-profile';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
@@ -39,6 +38,7 @@ import { MapBottom, openMenus, type Taken } from './map-bottom';
 import { MyCard } from './my-card';
 import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
+import { CardOrSeen } from './seen-card';
 import type { ChatSheetControl } from './chat-sheet';
 import type { MapContents } from './use-answer-map';
 import { askAssistant, useMainLayers } from './use-main-layers';
@@ -117,7 +117,7 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
   }
   const { primary } = card;
   return (
-    <Card
+    <CardOrSeen
       canLookCloser={map.detail !== 'names' && !top}
       card={card}
       onChoose={selection.select}

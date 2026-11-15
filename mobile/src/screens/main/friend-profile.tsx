@@ -9,7 +9,8 @@ import { createContext, type ReactElement, type ReactNode, use, useCallback, use
 import type { FriendView } from '@/features/friends/adapter';
 import { friendProfileCard } from '@/features/friends/profile';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
-import { Card } from './card';
+import { Card, type CardProps } from './card';
+import { CardOrSeen } from './seen-card';
 
 const OpenProfile = createContext<((userId: string) => void) | null>(null);
 
@@ -54,19 +55,21 @@ interface ProfileCardProps {
 }
 
 // The everyday map's card of a Friend, which is their profile, also for a Friend whom the map does not show.
-function ProfileCard({ friend, onClose, onHeight }: ProfileCardProps): ReactElement {
-  return (
-    <Card
-      canLookCloser={false}
-      card={friendProfileCard(friend)}
-      onClose={onClose}
-      onHeight={onHeight}
-      onLookCloser={ignore}
-      onPrimary={() => {
-        router.push({ pathname: '/party-form', params: { friendId: friend.id } });
-      }}
-    />
-  );
+function profileCardProps({ friend, onClose, onHeight }: ProfileCardProps): CardProps {
+  return {
+    canLookCloser: false,
+    card: friendProfileCard(friend),
+    onClose,
+    onHeight,
+    onLookCloser: ignore,
+    onPrimary: () => {
+      router.push({ pathname: '/party-form', params: { friendId: friend.id } });
+    },
+  };
+}
+
+function ProfileCard(props: ProfileCardProps): ReactElement {
+  return <Card {...profileCardProps(props)} />;
 }
 
 // The card of a Friend whom the map does not show, which a row of the friend list opens over the everyday map while
@@ -76,7 +79,7 @@ export function OffMapFriendCard({
   ...card
 }: { userId: string } & Omit<ProfileCardProps, 'friend'>): ReactElement | null {
   const friend = useFriendProfile(userId)?.friend ?? null;
-  return friend === null ? null : <ProfileCard {...card} friend={friend} />;
+  return friend === null ? null : <CardOrSeen {...profileCardProps({ ...card, friend })} />;
 }
 
 // What is inside the answer frame may open a Friend's profile (`useOpenFriendProfile`), which stands over the frame's
