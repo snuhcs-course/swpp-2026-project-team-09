@@ -73,6 +73,13 @@ The list's cells: row 1 열람실 | 정숙 열람실, row 2 노트북존 | 노�
 14. The room shown is kept with the chat by the card's place, as a card's outcome is, and later requests send the card by the book key of that room (space, date, start and minutes, no seat), which the server's key grammar accepts.
 15. Going back to the card's own room brings back the seat it named.
 16. Without a library session the list still lists the sectors of the 공부공간 layer and reads nothing from the library.
+17. When the User asks the Assistant to book ("그냥 예약해 줘", "예약까지 해 줘", board n8), the model passes `askedToBook` to proposeLibraryBooking, and the server puts "예약은 직접 눌러 주세요" first among the card's notes, before the filling and first-of-several notes; its summary ends "대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요."
+18. `askedToBook` is in proposeLibraryBooking's input only for an app that draws answers (`notesOwnPress`); the text chat's input, description and rules are as before, and the test comparing the two forms' inputs allows exactly that one property more.
+19. The rule is a third part of `rulesWith`, after the sentence on a card shown, and empty for the text chat. It covers any book card of proposeLibraryBooking, a room's too, and not proposeStudyRoom.
+20. The seat card's 취소 is renamed 닫기 and stands beside 예약하기 (되돌리기 when shown, 예약하기, 닫기, 다른 자리 고르기), with the same behaviour: the card ends declined and the app's bubble says "알겠어요. 예약하지 않았어요.". Every seat card has it, the app's own included; the room and waiting-room cards keep 취소.
+21. The foot "예약하면 HH:MM까지 좌석배정기에서 확인해야 해요." stands under the seat card's buttons while they show, on every seat card; HH:MM is 30 minutes after now by the app's clock, in Korea, with the seconds dropped.
+22. The catalogue's note "예약한 뒤 30분 안에 좌석배정기(키오스크)에서 확인해야 해요. 확인하지 않으면 자동으로 반납돼요." was among the seat card's notes. The seat card now leaves out a note that names 좌석배정기, so the foot is its one wording and "확인하지 않으면 자동으로 반납돼요" is no longer on the card before booking; the server still sends the note, and the 좌석 현황 card and the done message keep their sentences.
+23. The done message's kiosk sentence ("예약한 뒤 30분 안에 …") is unchanged and gives no time; only the foot before booking does.
 
 ### Agent usage (2026-11-15)
 

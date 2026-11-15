@@ -7,8 +7,10 @@
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
+import { color, font } from '@/design-system';
 import { koreaDateKey } from '@/korea-time';
 import type { CardOutcome } from '@/features/assistant/use-chat';
 import type { ConfirmedPress } from '@/library/client';
@@ -16,7 +18,7 @@ import { seatWords, spaceWords } from '@/library/cards/bookings';
 import { doneOf } from '@/library/cards/done';
 import { type Slot, seatBookingOf } from '@/library/cards/payloads';
 import { chooseSeat, freeSeats, nextFreeSeat, seatState } from '@/library/cards/seats';
-import { nextStart, whenWords } from '@/library/cards/times';
+import { kioskDeadline, nextStart, whenWords } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibrarySeat } from '@/library/replies';
 import { useAskForPush } from '@/push/push-ask-host';
@@ -39,10 +41,11 @@ import {
 import { seatsFor } from './use-room-counts';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
-// offers the named or tapped seat, else the first free one, and books it only on 예약하기. The done message is the
-// app's own bubble. A card the Assistant gave for a seat space the room chip knows starts with that chip: it lists the
-// rooms by floor and kind and switches the card to another for the same time, and a room full for that time is
-// swapped for one with free seats.
+// offers the named or tapped seat, else the first free one, and books it only on 예약하기; 닫기 beside it ends the card
+// unbooked, and the foot under them says until when a seat booked now is confirmed at the seat kiosk. The done message
+// is the app's own bubble. A card the Assistant gave for a seat space the room chip knows starts with that chip: it
+// lists the rooms by floor and kind and switches the card to another for the same time, and a room full for that time
+// is swapped for one with free seats.
 
 export const SEAT_TAKEN = '그 자리는 방금 다른 사람이 예약했어요';
 export const NO_FREE_SEAT = '그 시간에 빈 자리가 없어요';
@@ -51,7 +54,8 @@ export const BOOK_FAILED = '예약하지 못했어요';
 // 대학원 열람실, which the library may refuse to an undergraduate: the card then says only that it failed.
 const GRADUATE_ROOM = '8F-grad-reading-room';
 
-// After 예약하기 or 취소, the card offers nothing more: the chat keeps how it ended (`LibraryCardActions.finish`).
+// After 예약하기 or 취소 (the seat card's 닫기), the card offers nothing more: the chat keeps how it ended
+// (`LibraryCardActions.finish`).
 export type Closed = 'booked' | 'declined';
 
 export const CLOSED: Readonly<Record<Closed, CardOutcome>> = {
@@ -150,16 +154,23 @@ function OfferButtons({
         }}
         primary
       />
-      <Pill label="다른 자리 고르기" onPress={onPick} />
       <Pill
-        label="취소"
+        label="닫기"
         onPress={() => {
           close('declined');
           actions.addOwn({ text: NOT_BOOKED });
         }}
       />
+      <Pill label="다른 자리 고르기" onPress={onPick} />
     </Pills>
   );
+}
+
+// The site's note on the seat kiosk, which the card's foot says with its time instead.
+const KIOSK = '좌석배정기';
+
+function KioskFoot(): ReactElement {
+  return <Text style={styles.foot}>{`예약하면 ${kioskDeadline(now())}까지 ${KIOSK}에서 확인해야 해요.`}</Text>;
 }
 
 // The seat offered, its time, the card's buttons and the site's notes.
@@ -183,8 +194,9 @@ function SeatOffer(props: OfferProps): ReactElement {
           }}
         />
       ) : null}
+      {open ? <KioskFoot /> : null}
       {write.busy ? <Said>예약하는 중이에요</Said> : null}
-      <Notes notes={card.notes} />
+      <Notes notes={card.notes.filter((note) => !note.includes(KIOSK))} />
       <LargeSeatMap
         onClose={() => {
           setPicking(false);
@@ -217,7 +229,7 @@ function NoFreeSeat({ space, card, actions }: Pick<BookSeatCardProps, 'space' | 
   );
 }
 
-// After 예약하기 or 취소: the chat keeps how the card ended, and a booking asks for push.
+// After 예약하기 or 닫기: the chat keeps how the card ended, and a booking asks for push.
 function useClose(actions: LibraryCardActions, place: string): (closed: Closed) => void {
   const askForPush = useAskForPush();
   return (closed) => {
@@ -286,3 +298,7 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
     </CardBox>
   );
 }
+
+const styles = StyleSheet.create({
+  foot: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
+});

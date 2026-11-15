@@ -41,7 +41,12 @@ export interface LibraryToolOptions extends BookingOptions {
 
 // The options for an app that draws answers on the map, or for any other.
 export function answeringOptions(drawsAnswers: boolean): LibraryToolOptions {
-  return { fillsSeatTime: drawsAnswers, picksStudyTime: drawsAnswers, picksFirstSeat: drawsAnswers };
+  return {
+    fillsSeatTime: drawsAnswers,
+    notesOwnPress: drawsAnswers,
+    picksStudyTime: drawsAnswers,
+    picksFirstSeat: drawsAnswers,
+  };
 }
 
 export function libraryTools(
