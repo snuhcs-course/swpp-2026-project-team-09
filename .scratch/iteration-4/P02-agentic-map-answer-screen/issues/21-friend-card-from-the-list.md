@@ -26,7 +26,7 @@ Waits for other tickets:
 - [x] "어디까지 보이나" for 지은 (my end exact, `seen` building): "내가 지은에게: 정확한 위치" and "서로 지금 있는 건물까지 보여요 (낮은 쪽을 따라요)". The note is the 위치 공유 screen's line for `seen` ("서로 시간표만 보여요", "서로 지금 있는 건물까지 보여요", "서로 정확한 위치까지 보여요"), with "(낮은 쪽을 따라요)" only when my end is above `seen`. "바꾸기" opens 위치 공유.
 - [x] With the switch off the list and the face open today's card.
 - [x] Tests at the main screen over the fake main server: each press, each button's route, and the three `seen` words.
-- [ ] The screen is run on an Android emulator, and the pull request carries the card from the list and the "어디까지 보이나" card.
+- [x] The screen is run on an Android emulator, and the pull request carries the card from the list and the "어디까지 보이나" card.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
@@ -48,3 +48,19 @@ Waits for other tickets:
 8. "파티 만들기" is ticket 18's: `/party-form?friendId=…`, 비공개 with the Friend chosen, from a face and from either kind of row.
 9. A press on the same Friend while their board 2 card is shown, on their face or on their row in either list, brings their card back: the press means this Friend.
 10. With the switch on, a row of the friend panel (the whole list the pill "친구" opens, `friend-panel.tsx`) closes the panel and does what a row of the list over the map does: a Friend on the map has the map go to their face, a Friend with no position gets the card of decision 1. A screen reader hears the row as "{full name} 프로필"; its calendar button keeps its own press. With the switch off the panel's rows take no press, as before.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build on the mock with its campus walk, the switch on:
+
+- A press on 김민준's row in the map's list opened his card; its "어디까지 보이나" row opened board 2's card ("내가 김민준에게: 시간표만", "서로 시간표만 보여요", the mock's User having the Master Switch off), and Android's back returned to the Friend card.
+- In the full friend panel, a press on 서지우's row, a Friend with no position, closed the panel and opened her card: "심리학과 / 서지우", "시간표만 보여요", "친구 ID SJ5U9BVN", "11월 5일부터 친구", and "파티 만들기", with no toast.
+
+Found on the emulator and fixed: the full panel's rows took no press, so a Friend with no position could not be reached (decision 10).
+
+### Agent usage (2026-11-15)
+
+One session with two subagents for this ticket (the implementation with the review's fixes, and a review of the spec and the standards); the session's own time counted is the emulator checks and the merge with Main.
+
+- Agent time: about 83 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 246,322; input 75,968,312, of which 75,000,268 were cache reads, 967,520 cache writes, and 524 uncached. Without cache reads: 1,214,366.
