@@ -168,6 +168,26 @@ describe('73동 pressed on a Friday (board a2)', () => {
   });
 });
 
+describe('8동 pressed while a Friend whose position is kept there shows the asker his Timetable only', () => {
+  // 8동's own point, which the card draws as the pick, has the kept position's first five decimals; the kept position
+  // has more.
+  it('names him nowhere, draws nobody, and holds nothing of his kept position', async () => {
+    const location = await tuesdayAt301('2078-02-22');
+    const minsu = await stage.friend('김민수');
+    await keptButHidden(stage.app, stage.asker, minsu);
+    const place8 = await stage.numbered('8');
+
+    const response = await tap({ tapped: { kind: 'place', placeId: place8.id }, location });
+
+    expect(response.status).toBe(200);
+    const lookup = lookupIn(response.body);
+    expect(lookup.card?.facts.filter(({ icon }) => icon === 'user')).toEqual([]);
+    expect(lookup.scene.people).toEqual([]);
+    const text = JSON.stringify(response.body);
+    expect(['김민수', '37.4601612345', '126.9539812345'].filter((words) => text.includes(words))).toEqual([]);
+  });
+});
+
 describe("A pressed Friend's face, at each level of the Friend view", () => {
   it.each([
     ['exact', '정확한 위치까지 보여요', '2078-01-18'],

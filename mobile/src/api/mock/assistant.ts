@@ -27,7 +27,7 @@ import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
-import { TAP_LOOKUPS } from './data/tap-lookups';
+import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
 import {
   MEAL_ANSWER_ALONE,
@@ -163,17 +163,15 @@ export function mockRecalculation(input: PlanInput): AnswerReply {
   return { ...copyFor(input), input };
 }
 
-// A press without a main server: the stored card of that building or Friend, else 학생회관's or 김민수's.
+// A press without a main server: the stored card of that building or Friend. The mock does not calculate, so a building
+// it holds no card of answers 학생회관's, and an id that is none of its Friends answers 김민준's, standing in for a card
+// it does not have.
 export function mockTap(tapped: Tapped): Lookup {
-  const copies = Object.values(TAP_LOOKUPS);
   if (tapped.kind === 'place') {
-    const stored = copies.find(
-      ({ kind, scene }) => kind === 'place' && scene.places[0]?.place.placeId === tapped.placeId,
-    );
+    const stored = Object.values(TAP_LOOKUPS).find(({ scene }) => scene.places[0]?.place.placeId === tapped.placeId);
     return stored ?? TAP_LOOKUPS.a1;
   }
-  const stored = copies.find(({ kind, scene }) => kind === 'friend' && scene.people[0]?.userId === tapped.userId);
-  return stored ?? TAP_LOOKUPS.a4;
+  return FRIEND_TAPS[tapped.userId] ?? STAND_IN_FRIEND_TAP;
 }
 
 // The stored answer of 배고파 and Lookups of 301동식당's menu and of where 민수 is, for a message sent with a context.

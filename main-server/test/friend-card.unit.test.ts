@@ -107,6 +107,10 @@ describe('김지은 at her exact location (board a13)', () => {
   });
 });
 
+// Where the asker sets out from, read only when it is needed.
+const from301 = (): Promise<Pick<FriendTapArgs, 'start' | 'walkMinutes'>> =>
+  Promise.resolve({ start: FROM_301(), walkMinutes });
+
 // 박서준's Class in 43-1동 until 12:50.
 const in431 = (): DayItem[] => [classAt(TUESDAY, '11:00', '12:50', '이공계멀티미디어강의동')];
 
@@ -177,10 +181,7 @@ describe('A Friend pressed while the Friend view shows the Timetable only', () =
   };
 
   it('holds no position and no Place beyond his Timetable in the card', async () => {
-    const lookup = await friendTapLookup(sources, ME, FRIEND, onDay(TUESDAY, '12:20'), {
-      start: FROM_301(),
-      walkMinutes,
-    });
+    const lookup = await friendTapLookup(sources, ME, FRIEND, onDay(TUESDAY, '12:20'), from301);
 
     const text = JSON.stringify(lookup);
     const { latitude, longitude } = position('두산인문관');
@@ -190,11 +191,11 @@ describe('A Friend pressed while the Friend view shows the Timetable only', () =
     expect(lookup?.card?.facts[0]).toEqual(strong('clock', '12:15에 302동 수업이 끝났어요 · 오늘 수업 끝'));
   });
 
-  it('is none for a User who is not a Friend of the asker', async () => {
+  it('is none for a User who is not a Friend of the asker, read before anything of where the asker is', async () => {
     const stranger = 'b0c2e3a4-0000-4000-8000-000000000009';
+    const from = vi.fn(from301);
 
-    expect(
-      await friendTapLookup(sources, ME, stranger, onDay(TUESDAY, '12:20'), { start: FROM_301(), walkMinutes }),
-    ).toBeNull();
+    expect(await friendTapLookup(sources, ME, stranger, onDay(TUESDAY, '12:20'), from)).toBeNull();
+    expect(from).not.toHaveBeenCalled();
   });
 });

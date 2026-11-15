@@ -56,18 +56,28 @@ export interface Pressed {
   clock?: string;
   items?: DayItem[];
   location?: PlaceArgs['way']['location'];
+  // The Place whose outline holds the location: 301동 for the default location, else none unless given.
+  inside?: string | null;
   restaurants?: { name: string; lines: MenuLineDto[] }[];
   events?: PlaceArgs['events'];
   friends?: PlaceArgs['friends'];
 }
 
-// The card of the Place of that name, pressed on Tuesday at 12:10 from 301동 unless given otherwise.
+function insideOf({ location, inside }: Pressed): string | null {
+  if (inside !== undefined) {
+    return inside;
+  }
+  return location === undefined ? id('제1공학관') : null;
+}
+
+// The card of the Place of that name, pressed on Tuesday at 12:10 from inside 301동 unless given otherwise.
 export function pressed(name: string, given: Pressed = {}): Lookup {
   const now = onDay(given.date ?? TUESDAY, given.clock ?? '12:10');
   const meal = mealAt(now);
   const location = given.location === undefined ? at301() : given.location;
   return placeAnswer({
     placeId: id(name),
+    inside: insideOf(given),
     way: wayArgs(now, { me: { userId: ME, name: '유상', items: given.items ?? tuesday() }, location }),
     meal: meal === null ? null : { meal, restaurants: given.restaurants ?? [] },
     events: given.events ?? [],

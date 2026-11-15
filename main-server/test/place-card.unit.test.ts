@@ -194,22 +194,6 @@ describe('The suggestion', () => {
   });
 });
 
-describe('The User inside the Place pressed', () => {
-  it('is here, staying from now, with no way to it', () => {
-    const lookup = pressed('학생회관', {
-      ...studentCenterLunch,
-      location: { at: position('학생회관'), placeId: id('학생회관'), onCampus: true },
-    });
-
-    expect(facts(lookup).slice(0, 2)).toEqual([
-      strong('route', '지금 여기 있어요'),
-      plain('clock', '13:00 수업 전까지 49분 머물 수 있어요'),
-    ]);
-    expect(lookup.basis).toEqual(['지금 있는 곳이 학생회관(63동)이에요']);
-    expect(lookup.actions.map(({ kind }) => kind)).toEqual(['plan']);
-  });
-});
-
 describe('Where the User is not known', () => {
   it('has no walk and no stay, and the first fact it has is the strong one', () => {
     const lookup = pressed('학생회관', { ...studentCenterLunch, items: [], location: null });

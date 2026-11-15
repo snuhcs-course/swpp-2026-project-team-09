@@ -11,7 +11,8 @@ import { mockClient } from '@/api/mock/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
-import { TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
+import { FRIENDS } from '@/api/mock/data/friends';
+import { FRIEND_TAPS, TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 
@@ -107,9 +108,8 @@ describe('the mock of a recalculation', () => {
   });
 });
 
-// The copies' Place of 302동 and Friend 박서준, by the ids they hold.
+// The copy's Place of 302동, by the id it holds.
 const PLACE_302 = TAP_LOOKUPS.a14.scene.places[0]?.place.placeId ?? '';
-const SEOJUN = TAP_LOOKUPS.a10.scene.people[0]?.userId ?? '';
 
 describe('the mock of a press on the map', () => {
   it("answers a building with the main server's card of it", async () => {
@@ -118,18 +118,19 @@ describe('the mock of a press on the map', () => {
     );
   });
 
-  it("answers a Friend with the main server's card of them", async () => {
-    await expect(answered(mockClient.answerTap({ kind: 'friend', userId: SEOJUN }, null))).resolves.toEqual(
-      TAP_LOOKUPS.a10,
-    );
+  it.each(FRIENDS.map(({ id, name }) => [name, id]))("answers %s's face with the card of %s", async (name, userId) => {
+    const card = await answered(mockClient.answerTap({ kind: 'friend', userId }, null));
+
+    expect(card.card?.title).toBe(name);
+    expect(card.actions).toEqual([{ kind: 'meet', userId }]);
   });
 
-  it("answers a building or a Friend it holds no copy of with 학생회관's or 김민수's", async () => {
+  it("answers a building or a Friend it holds no copy of with 학생회관's or 김민준's", async () => {
     await expect(answered(mockClient.answerTap({ kind: 'place', placeId: 'place-301' }, null))).resolves.toEqual(
       TAP_LOOKUPS.a1,
     );
-    await expect(answered(mockClient.answerTap({ kind: 'friend', userId: 'f6' }, null))).resolves.toEqual(
-      TAP_LOOKUPS.a4,
+    await expect(answered(mockClient.answerTap({ kind: 'friend', userId: 'pm1' }, null))).resolves.toEqual(
+      FRIEND_TAPS.f1,
     );
   });
 });

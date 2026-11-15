@@ -43,6 +43,9 @@ export interface PlaceArgs {
   placeId: string;
   // The User's way, whatever Place it names: the card's goes to the pressed one.
   way: WayArgs;
+  // The Place whose outline holds the User's location; null when none does or the location is unknown. The User is in
+  // the pressed Place only then, not when the way merely starts there.
+  inside: string | null;
   // The meal served now, with its lines at each Restaurant of the Place; null between the meals.
   meal: { meal: HandledMeal; restaurants: readonly { name: string; lines: readonly MenuLineDto[] }[] } | null;
   // The published events at the Place that have not ended, today.
@@ -82,7 +85,12 @@ interface Held {
   friends: { fact: CardFact; person: MapScene['people'][number] }[];
 }
 
-function stayOf({ way, placeId }: PlaceArgs, found: Way | null, next: DayItem | undefined): number | null {
+function stayOf(
+  { way, placeId }: PlaceArgs,
+  found: Way | null,
+  here: boolean,
+  next: DayItem | undefined,
+): number | null {
   if (found === null || next === undefined) {
     return null;
   }
@@ -90,7 +98,8 @@ function stayOf({ way, placeId }: PlaceArgs, found: Way | null, next: DayItem | 
     next.placeId === null || next.placeId === placeId
       ? 0
       : shownMinutes(way.travel.walkingSeconds(placeId, next.placeId));
-  return (next.start.getTime() - found.arrival.getTime()) / MINUTE_MS - onward;
+  const from = here ? found.now : found.arrival;
+  return (next.start.getTime() - from.getTime()) / MINUTE_MS - onward;
 }
 
 // A Restaurant with a menu for the meal now, by its main dish.
@@ -106,14 +115,15 @@ function heldOf(args: PlaceArgs): Held {
   const title = placeLabelOf(way.placeOf(placeId));
   const routed = wayOf({ ...way, fromPlaceId: null, toPlaceId: placeId, by: null });
   const found = typeof routed === 'string' ? null : routed;
+  const here = found !== null && args.inside === placeId;
   const next = way.me.items.filter(({ start }) => start > way.now).toSorted(byStart)[0];
   return {
     title,
     point: new WayNaming(way).labelledPoint(placeId, title),
     way: found,
-    here: found !== null && atPlace(found),
+    here,
     next,
-    stayMinutes: stayOf(args, found, next),
+    stayMinutes: stayOf(args, found, here, next),
     menus: menusOf(args),
     events: events.toSorted(byStart),
     friends: friends.flatMap(({ friend, classes }) => {
@@ -128,11 +138,26 @@ function stayWords(next: DayItem, minutes: number): string {
   return minutes > 0 ? `${until} ${minutes}분 머물 수 있어요` : `${until} 머물 시간이 없어요`;
 }
 
+// "11/18 18:00".
+function dayAndClock(at: Date): string {
+  const [, month, day] = koreaDate(at).split('-');
+  return `${Number(month)}/${Number(day)} ${clockOf(at)}`;
+}
+
+// An end on a later day than now, or than the start of an event ahead, is said with its day, and so is that start.
 function eventWords({ title, start, end }: PlaceEvent, now: Date): string {
   if (start <= now) {
-    return end === null ? `${title} · 열려 있어요` : `${title} · ${clockOf(end)}까지 열려요`;
+    if (end === null) {
+      return `${title} · 열려 있어요`;
+    }
+    return `${title} · ${koreaDate(end) === koreaDate(now) ? clockOf(end) : dayAndClock(end)}까지 열려요`;
   }
-  return end === null ? `${title} · ${clockOf(start)}부터` : `${title} · ${clockOf(start)}–${clockOf(end)}`;
+  if (end === null) {
+    return `${title} · ${clockOf(start)}부터`;
+  }
+  return koreaDate(end) === koreaDate(start)
+    ? `${title} · ${clockOf(start)}–${clockOf(end)}`
+    : `${title} · ${dayAndClock(start)}–${dayAndClock(end)}`;
 }
 
 function factsOf(held: Held, now: Date): CardFact[] {
@@ -192,12 +217,13 @@ function chipsOf({ way, next }: Held, naming: WayNaming): ConditionChip[] {
   return [...from, ...until];
 }
 
-// A walk's, with the shuttle's minutes when it is 15 minutes or more; where the User is when they are there.
+// A walk's, with the shuttle's minutes when it is 15 minutes or more; where the way starts when that is the Place, the
+// User being in it or not.
 function basisOf({ way, here, title }: Held, naming: WayNaming): string[] {
   if (way === null) {
     return [];
   }
-  if (here) {
+  if (here || atPlace(way)) {
     return [hereBasis(way, naming)];
   }
   const shuttle = shuttleLine(way);

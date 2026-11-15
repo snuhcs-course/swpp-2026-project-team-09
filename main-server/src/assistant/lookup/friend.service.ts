@@ -62,16 +62,16 @@ export async function friendLookup(
   return args === null ? null : friendAnswer(args);
 }
 
-// A pressed Friend's face, with the walk to them from where the asker sets out.
+// A pressed Friend's face, with the walk to them from where the asker sets out, which is read only for a Friend.
 export async function friendTapLookup(
   sources: FriendSources,
   askerId: string,
   friendId: string,
   now: Date,
-  from: Pick<FriendTapArgs, 'start' | 'walkMinutes'>,
+  from: () => Promise<Pick<FriendTapArgs, 'start' | 'walkMinutes'>>,
 ): Promise<Lookup | null> {
   const args = await friendRead(sources, askerId, friendId, now);
-  return args === null ? null : friendTap({ ...args, ...from });
+  return args === null ? null : friendTap({ ...args, ...(await from()) });
 }
 
 @Injectable()
@@ -89,12 +89,14 @@ export class FriendLookupService implements FriendSources {
   }
 
   // The asker sets out as a way of theirs does.
-  async tap(askerId: string, friendId: string, at: { now: Date; location: Position | null }): Promise<Lookup | null> {
-    const args = await this.ways.argsFor(askerId, { fromPlaceId: null, toPlaceId: null, by: null }, at);
-    const start = startOf(args);
-    return friendTapLookup(this, askerId, friendId, at.now, {
-      start: start === null ? null : { placeId: start.placeId, label: new WayNaming(args).from({ start }) },
-      walkMinutes: (from, to) => shownMinutes(this.travel.walkingSeconds(from, to)),
+  tap(askerId: string, friendId: string, at: { now: Date; location: Position | null }): Promise<Lookup | null> {
+    return friendTapLookup(this, askerId, friendId, at.now, async () => {
+      const args = await this.ways.argsFor(askerId, { fromPlaceId: null, toPlaceId: null, by: null }, at);
+      const start = startOf(args);
+      return {
+        start: start === null ? null : { placeId: start.placeId, label: new WayNaming(args).from({ start }) },
+        walkMinutes: (from, to) => shownMinutes(this.travel.walkingSeconds(from, to)),
+      };
     });
   }
 }

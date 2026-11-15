@@ -4,14 +4,14 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
+import { FRIEND_TAPS, TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP } from '@/api/mock/data/way-lookup';
 import { isLookup } from '@/api/server/lookup-answers';
 
-// The app's check of a pressed building's or Friend's Lookup, on the stored copies of the main server's cards for
-// wireframe row 6 (boards a1, a2, a3, a14, a4, a13, and a10), written by its `placeAnswer` and `friendTap` over the
-// seed's Places and walking table. Expected values: each passes as the server wrote it, and copies with one part
-// changed.
+// The app's check of a pressed building's or Friend's Lookup, on the stored copies of the main server's cards: the
+// buildings of wireframe row 6 (boards a1, a2, a3, and a14) and the mock's Friends, written by its `placeAnswer` and
+// `friendTap` over the seed's Places and walking table. Expected values: each passes as the server wrote it, and copies
+// with one part changed.
 
 const { a1: STUDENT_CENTER } = TAP_LOOKUPS;
 
@@ -26,6 +26,10 @@ const ASK = { kind: 'ask', label: '관정 보기', text: '관정 지금 자리 �
 
 describe('the check of a pressed Place or Friend', () => {
   it.each(Object.entries(TAP_LOOKUPS))('passes the stored copy of board %s', (_, lookup) => {
+    expect(isLookup(lookup)).toBe(true);
+  });
+
+  it.each(Object.entries(FRIEND_TAPS))("passes the stored copy of the mock's Friend %s", (_, lookup) => {
     expect(isLookup(lookup)).toBe(true);
   });
 

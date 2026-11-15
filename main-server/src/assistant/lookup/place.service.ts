@@ -19,8 +19,8 @@ import { shownLevel } from './friend-lookup.js';
 import { mealAt, placeAnswer, type PlaceArgs, type PlaceEvent } from './place-lookup.js';
 import { WayService } from './way.service.js';
 
-// What a pressed building's card reads: the User's way and day, the menus of the meal now, the day's published events,
-// and the Friends through the Friend view with their Classes, never their Quests.
+// What a pressed building's card reads: the User's way and day, the Place their location is in, the menus of the meal
+// now, the day's published events, and the Friends through the Friend view with their Timetables, never their Quests.
 @Injectable()
 export class PlaceCardService {
   constructor(
@@ -49,9 +49,11 @@ export class PlaceCardService {
     const restaurants = menus
       .filter((menu) => menu.placeId === placeId)
       .map(({ name, meals }) => ({ name, lines: meals.find((served) => served.meal === meal)?.lines ?? [] }));
+    const holding = at.location === null ? null : this.places.at(at.location);
     return placeAnswer({
       placeId,
       way,
+      inside: holding?.relation === 'inside' ? holding.place.id : null,
       meal: meal === null ? null : { meal, restaurants },
       events: events.flatMap((event) => this.eventAt(event, placeId) ?? []),
       friends,
@@ -63,12 +65,7 @@ export class PlaceCardService {
     const views = (await this.friendViews.list(userId)).filter(
       (friend) => shownLevel(friend) === 'timetable' || friend.placeId === placeId,
     );
-    return Promise.all(
-      views.map(async (friend) => ({
-        friend,
-        classes: (await this.days.itemsOn(friend.id, date)).filter(({ isClass }) => isClass),
-      })),
-    );
+    return Promise.all(views.map(async (friend) => ({ friend, classes: await this.days.classesOn(friend.id, date) })));
   }
 
   // A published event has a start; the search leaves out any without one.
