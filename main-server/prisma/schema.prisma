@@ -24,6 +24,7 @@
 // 2026-11-14  Opus 5.5   prompted by TaeHyun79
 // 2026-11-14  Opus 5.5   prompted by fyoon46
 // 2026-11-15  Opus 5.5   prompted by fyoon46
+// 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -273,8 +274,59 @@ model Administrator {
   googleSubject    String?   @unique @map("google_subject")
   // The last sign-out. Access tokens issued before it are refused.
   tokensValidAfter DateTime? @map("tokens_valid_after")
+  settingChanges   SettingChange[]
 
   @@map("administrators")
+}
+
+// A global setting an Administrator changed at run time. The settings are registered in code
+// (src/global-settings/registered-settings.ts); one with no row has its default.
+model Setting {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String           @unique
+  valueType SettingValueType @map("value_type")
+  // The value as text, checked against the registry when it is saved and when it is loaded.
+  value     String
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+enum SettingValueType {
+  STRING
+  INTEGER
+  BOOLEAN
+
+  @@map("setting_value_type")
+}
+
+// One save of a setting, kept as its history.
+model SettingChange {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String
+  // The value read before the save: the row's, or the default when there was no row.
+  oldValue           String         @map("old_value")
+  newValue           String         @map("new_value")
+  // None once that Administrator is removed; the address stays.
+  administratorId    String?        @map("administrator_id") @db.Uuid
+  administrator      Administrator? @relation(fields: [administratorId], references: [id], onDelete: SetNull)
+  administratorEmail String         @map("administrator_email")
+  // The revision the save raised the counter to.
+  revision           Int
+  changedAt          DateTime       @default(now()) @map("changed_at")
+
+  @@map("setting_changes")
+}
+
+// One row, id 1, whose counter every save raises in the save's transaction. Each pod checks it every minute and
+// reloads the settings when it changed. The row lock orders the saves' commits, so a check never misses one, as a
+// check of max(updated_at) could when a transaction stamped earlier commits later.
+model SettingsRevision {
+  // An Int, not a UUID like the other tables' ids: the one row is always id 1, which a check constraint keeps.
+  id       Int @id @default(1)
+  revision Int @default(0)
+
+  @@map("settings_revision")
 }
 
 // An Event published to every User, collected from the university's events list or created by an Administrator

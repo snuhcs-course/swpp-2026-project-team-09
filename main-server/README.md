@@ -464,6 +464,42 @@ export class AdminEventsController {
   Administrator of the test settings, and `signInAsNewAdministrator(app)` registers a new one and signs in as them. The
   test files share one database, so sign out or remove only a new one.
 
+## Global settings
+
+Global settings are the settings an Administrator changes at run time, for the whole service, without a Release.
+They are separate from the env settings in `src/common/settings.ts`, which stay as they are and are read at start.
+
+- Each one is registered in code, in `REGISTERED_SETTINGS` in `src/global-settings/registered-settings.ts`, with a
+  name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values. None is
+  registered yet; the first comes with the AI's model port.
+- The table `settings` holds a row only for a setting that was saved. A setting with no row has its default. The table
+  `setting_changes` keeps every save: the old and the new value, the Administrator and the time. The one row of
+  `settings_revision` counts the saves.
+- A save checks the name against the registry and the value against its type and allowed values, and writes the
+  setting, its history row and the revision in one transaction. The caller may give a check of its own, whose reason
+  refuses the save.
+- Each pod loads every row at start and does not start when it cannot. Every minute at second 0 it reads the revision
+  and reloads the rows when it changed, so a change applies on every pod at the next minute, the saving pod included.
+  A failed check keeps the last copy and logs. A read of a setting makes no query.
+- A row whose value the registry no longer takes, for example a value that is no longer allowed, reads as the default
+  and logs a warning. A row of a name no longer registered is ignored.
+
+To register a setting, add it with `defineSetting()` from `src/global-settings/registry.ts`, and read it with
+`GlobalSettings.get(THE_SETTING)`, which answers a value of its type:
+
+```ts
+export const ROUND_MINUTES = defineSetting({
+  name: 'rounds.minutes',
+  type: 'INTEGER',
+  description: 'How long a round lasts.',
+  default: 10,
+});
+```
+
+A default or allowed values known only when the server starts, such as the names of the keys it holds, are given as
+functions; each is evaluated once, at start. A server whose registry gives a default that is not allowed, or one name
+twice, does not start.
+
 ## Global Events
 
 A Global Event is an Event published to every User. The worker server collects them from the university's events list
@@ -2971,6 +3007,8 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
+├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's
+│                                    copy, checked every minute
 ├── parties/                         a feature: Parties, who sees, enters and leaves them, the Leader's controls and the switches
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
