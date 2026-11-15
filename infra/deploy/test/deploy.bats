@@ -196,20 +196,21 @@ serve_check_runs() {
   [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
 }
 
-@test "only the check runs of pushes to development, main or a Main count; a working branch's or the merge queue's may have skipped work" {
+@test "only the check runs of the merge queue and of pushes to development or main count; a Main's or a working branch's may have skipped work" {
   serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests completed success 2.0/feature' \
-    'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
+    'flow-tests completed success 2.0/Main'
   run "$DEPLOY"
   [ "$status" -eq 0 ]
   [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=failure" ]
   [ "$(field .result)" = ci-failed ]
 
   unset INVOCATION_ID
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success 2.0/feature'
+  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success 2.0/Main'
   run "$DEPLOY"
   [ "$(field .result)" = waiting-for-ci ]
 
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success 2.0/feature' 'flow-tests completed success 2.0/Main'
+  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success 2.0/Main' \
+    'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
   run "$DEPLOY"
   [ "$(field .result)" = deployed ]
 }

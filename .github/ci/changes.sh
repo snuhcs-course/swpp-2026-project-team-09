@@ -6,13 +6,13 @@
 ################################################################################
 
 # Says whether a CI job (.github/workflows/ci.yml) has work on this run: run=false only when no path that the pushed
-# branch or the merge group changes reaches the job. A branch <line>/<name> is compared with origin/<line>/Main from all
-# their common ancestors, never with the previous push, whose run may have been cancelled before it checked anything; a
-# merge group with the queue's base. Every other case, and any doubt or failure, gives run=true. The Release and Dev
-# Server gates read only runs that do every job: those of tags and of pushes to a Main, main or development.
+# branch changes reaches the job. A branch <line>/<name> is compared with origin/<line>/Main from all their common
+# ancestors, never with the previous push, whose run may have been cancelled before it checked anything. A push to a
+# Main skips the work that the merge queue's run of the same commit has already passed. Every other case, and any doubt
+# or failure, gives run=true.
 #
 # Usage: changes.sh <job key>, from the repository root, with GitHub's GITHUB_EVENT_NAME, GITHUB_REF, GITHUB_REF_NAME,
-# GITHUB_SHA and, for a merge group, GITHUB_EVENT_PATH. It appends run=true or run=false to GITHUB_OUTPUT, or prints it when that is unset, prints one line
+# GITHUB_SHA and GITHUB_REPOSITORY, and GH_TOKEN for gh. It appends run=true or run=false to GITHUB_OUTPUT, or prints it when that is unset, prints one line
 # that says why, and always exits 0.
 
 JOBS=(main-server socket-server worker-server match-server admin mobile flow-tests mobile-tests app-fingerprint
@@ -68,10 +68,24 @@ reaches() {
   esac
 }
 
+# Whether a merge_group run of CI passed on the commit: 0 when one did, 1 when none did, 2 when GitHub did not answer.
+# The queue moves Main to the very commit it tested, so that run is the Main commit's full run.
+queue_passed() {
+  local answer
+  [[ -n ${GITHUB_REPOSITORY:-} && $1 =~ ^[0-9a-f]{40}$ ]] || return 2
+  answer=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$1&event=merge_group&per_page=100") ||
+    return 2
+  jq -e --arg sha "$1" 'any(.workflow_runs[];
+    .event == "merge_group" and .head_sha == $sha and .status == "completed" and .conclusion == "success")' \
+    <<<"$answer" >/dev/null && return 0
+  jq -e '.workflow_runs | type == "array"' <<<"$answer" >/dev/null && return 1
+  return 2
+}
+
 # Sets `run` and `why` for the job.
 decide() {
-  local job=$1 known='' one queue='' branch line main main_commit base_sha sha shallow holders holder status bases base
-  local at='' path count=0 paths hit=''
+  local job=$1 known='' one branch line main main_commit sha shallow holders holder status bases base at='' path count=0
+  local paths hit=''
   run=true
   if [[ -z $job ]]; then
     why='no job key was given'
@@ -84,14 +98,10 @@ decide() {
     why="$job is not a job key that this script knows"
     return
   fi
-  case ${GITHUB_EVENT_NAME:-} in
-    push) ;;
-    merge_group) queue=1 ;;
-    *)
-      why="the run was started by ${GITHUB_EVENT_NAME:-an unnamed event}, not by a push or the merge queue"
-      return
-      ;;
-  esac
+  if [[ ${GITHUB_EVENT_NAME:-} != push ]]; then
+    why="the run was started by ${GITHUB_EVENT_NAME:-an unnamed event}, not by a push"
+    return
+  fi
   if [[ ${GITHUB_REF:-} != refs/heads/* ]]; then
     why="${GITHUB_REF:-the unnamed ref} is not a branch"
     return
@@ -101,17 +111,23 @@ decide() {
     why="GITHUB_REF_NAME ($branch) does not name $GITHUB_REF"
     return
   fi
-  if [[ -z $queue ]]; then
-    line=${branch%%/*}
-    if [[ $branch != */* || -z $line || -z ${branch#*/} ]]; then
-      why="$branch is not named <line>/<name>"
-      return
-    fi
-    main=origin/$line/Main
-    if [[ ${branch#*/} == Main ]]; then
-      why="$branch is a Main"
-      return
-    fi
+  line=${branch%%/*}
+  if [[ $branch != */* || -z $line || -z ${branch#*/} ]]; then
+    why="$branch is not named <line>/<name>"
+    return
+  fi
+  main=origin/$line/Main
+  if [[ ${branch#*/} == Main ]]; then
+    queue_passed "${GITHUB_SHA:-}" && status=0 || status=$?
+    case $status in
+      0)
+        run=false
+        why="the merge queue's run of ${GITHUB_SHA:0:7} already passed every job"
+        ;;
+      1) why="$branch is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}" ;;
+      *) why="$branch is a Main, and GitHub did not say whether the merge queue passed ${GITHUB_SHA:-the commit}" ;;
+    esac
+    return
   fi
 
   # A shallow history can hide the common ancestors.
@@ -119,19 +135,7 @@ decide() {
     why='the checkout is shallow, or git cannot read it'
     return
   fi
-  if [[ -n $queue ]]; then
-    # A merge group is its base, the Main it merges into, with the queued pull requests on top.
-    main="the merge queue's base"
-    if ! base_sha=$(jq -r '.merge_group.base_sha // empty' "${GITHUB_EVENT_PATH:-}") ||
-      [[ ! $base_sha =~ ^[0-9a-f]{40}$ ]]; then
-      why="the merge queue's event names no base commit"
-      return
-    fi
-    if ! main_commit=$(git rev-parse --verify --quiet "$base_sha^{commit}"); then
-      why="the merge queue's base $base_sha cannot be read"
-      return
-    fi
-  elif ! main_commit=$(git rev-parse --verify --quiet "refs/remotes/$main^{commit}"); then
+  if ! main_commit=$(git rev-parse --verify --quiet "refs/remotes/$main^{commit}"); then
     why="$main is missing or is not a commit"
     return
   fi

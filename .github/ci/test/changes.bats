@@ -26,8 +26,19 @@ setup() {
   export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
   export GIT_AUTHOR_NAME=Tester GIT_AUTHOR_EMAIL=tester@example.com
   export GIT_COMMITTER_NAME=Tester GIT_COMMITTER_EMAIL=tester@example.com
-  export GITHUB_EVENT_NAME=push
+  export GITHUB_EVENT_NAME=push GITHUB_REPOSITORY=snuhcs-course/swpp-2026-project-team-09
   unset GITHUB_OUTPUT GITHUB_REF GITHUB_REF_NAME GITHUB_SHA
+  serve_queue_runs
+  mkdir -p "$BATS_TEST_TMPDIR/bin"
+  cat >"$BATS_TEST_TMPDIR/bin/gh" <<'FAKE'
+#!/usr/bin/env bash
+echo "gh $*" >>"$FAKE_GH_CALLS"
+[[ $1 == api && $2 == "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?"* ]] || exit 2
+[[ -z ${FAKE_GH_STATUS:-} ]] || exit "$FAKE_GH_STATUS"
+cat "$FAKE_QUEUE_RUNS"
+FAKE
+  chmod +x "$BATS_TEST_TMPDIR/bin/gh"
+  export PATH="$BATS_TEST_TMPDIR/bin:$PATH" FAKE_GH_CALLS="$BATS_TEST_TMPDIR/gh-calls"
   ORIGIN=$BATS_TEST_TMPDIR/origin.git
   WORK=$BATS_TEST_TMPDIR/work
   CLONE=$BATS_TEST_TMPDIR/clone
@@ -37,6 +48,19 @@ setup() {
   git -C "$WORK" remote add origin "$ORIGIN"
   commit README.md mobile/App.tsx main-server/src/main.ts
   publish 4.0/Main
+}
+
+# Makes the faked gh list these merge_group runs, each "status conclusion [sha]", of the checked-out commit when the sha
+# is left out.
+serve_queue_runs() {
+  local run state conclusion sha
+  for run in "$@"; do
+    read -r state conclusion sha <<<"$run"
+    jq -n --arg state "$state" --arg conclusion "$conclusion" --arg sha "${sha:-$GITHUB_SHA}" \
+      '{event: "merge_group", head_sha: $sha, status: $state,
+        conclusion: (if $conclusion == "null" then null else $conclusion end)}'
+  done | jq -s '{total_count: length, workflow_runs: .}' >"$BATS_TEST_TMPDIR/queue-runs.json"
+  export FAKE_QUEUE_RUNS="$BATS_TEST_TMPDIR/queue-runs.json"
 }
 
 # Commits a change to each path in the working repository: a line added, the file made if missing.
@@ -96,21 +120,6 @@ push_documents_branch() {
   commit docs/guide.md
   publish "$1"
   ci_checkout "$1"
-}
-
-# Pushes a merge group, as the queue makes one for pull request N on 4.0/Main, that changes these paths, checks it out
-# as CI does, and writes the event that names the group's base.
-push_merge_group() {
-  local group
-  group=gh-readonly-queue/4.0/Main/pr-$1-$(git -C "$WORK" rev-parse 4.0/Main)
-  shift
-  branch_off "$group"
-  commit "$@"
-  publish "$group"
-  ci_checkout "$group"
-  printf '{"merge_group": {"base_sha": "%s", "base_ref": "refs/heads/4.0/Main"}}\n' \
-    "$(git rev-parse origin/4.0/Main)" >"$BATS_TEST_TMPDIR/event.json"
-  export GITHUB_EVENT_NAME=merge_group GITHUB_EVENT_PATH="$BATS_TEST_TMPDIR/event.json"
 }
 
 # The jobs whose work runs on the checkout, in KEYS's order, as the script decides for each key with these extra
@@ -484,28 +493,7 @@ origin/4.0/Main at ${base:0:7}" ]
 
 @test "a run that a push did not start runs every job" {
   push_documents_branch 4.0/documents
-  expect_full_run 'the run was started by workflow_dispatch, not by a push or the merge queue' \
-    GITHUB_EVENT_NAME=workflow_dispatch
-}
-
-@test "a merge group is compared with the queue's base, so it runs only the jobs its changes reach" {
-  push_merge_group 9 docs/guide.md
-  expect_jobs ''
-  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
-  [[ "$output" == "::notice::The job mobile skips its work: $GITHUB_REF_NAME changes 1 path since it left the merge queue's base at "* ]] || false
-
-  push_merge_group 10 mobile/App.tsx
-  expect_jobs "$APP"
-}
-
-@test "a merge group whose event names no base, or whose base cannot be read, runs every job" {
-  push_merge_group 9 docs/guide.md
-  expect_full_run "the merge queue's event names no base commit" GITHUB_EVENT_PATH="$BATS_TEST_TMPDIR/missing.json"
-  echo '{"merge_group": {}}' >"$BATS_TEST_TMPDIR/empty.json"
-  expect_full_run "the merge queue's event names no base commit" GITHUB_EVENT_PATH="$BATS_TEST_TMPDIR/empty.json"
-  echo '{"merge_group": {"base_sha": "0123456789abcdef0123456789abcdef01234567"}}' >"$BATS_TEST_TMPDIR/unknown.json"
-  expect_full_run "the merge queue's base 0123456789abcdef0123456789abcdef01234567 cannot be read" \
-    GITHUB_EVENT_PATH="$BATS_TEST_TMPDIR/unknown.json"
+  expect_full_run 'the run was started by workflow_dispatch, not by a push' GITHUB_EVENT_NAME=workflow_dispatch
 }
 
 @test "a ref that is not a branch, such as a Release tag, runs every job" {
@@ -524,14 +512,43 @@ origin/4.0/Main at ${base:0:7}" ]
   expect_full_run 'development is not named <line>/<name>'
 }
 
-@test "a Main runs every job, whatever its line" {
+@test "a push to a Main runs every job unless the merge queue's run of the same commit passed, whatever its line" {
   ci_checkout 4.0/Main
-  expect_full_run '4.0/Main is a Main'
+  expect_full_run "4.0/Main is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}"
+  grep -qxF "gh api repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=merge_group&per_page=100" \
+    "$FAKE_GH_CALLS"
 
   git -C "$WORK" branch ci-trial/Main 4.0/Main
   publish ci-trial/Main
   ci_checkout ci-trial/Main
-  expect_full_run 'ci-trial/Main is a Main'
+  serve_queue_runs 'completed success'
+  expect_jobs ''
+  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
+  [ "$output" = "::notice::The job mobile skips its work: the merge queue's run of ${GITHUB_SHA:0:7} already passed every job" ]
+}
+
+@test "a push to a Main after a failed, unfinished or other commit's merge queue run runs every job" {
+  local other
+  ci_checkout 4.0/Main
+  other=$(tr 0-9a-f 1-9a-f0 <<<"$GITHUB_SHA")
+  serve_queue_runs 'completed failure' 'completed cancelled' 'in_progress null' "completed success $other"
+  expect_full_run "4.0/Main is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}"
+}
+
+@test "a push to a Main runs every job when GitHub does not answer, gh cannot run, or the answer is not a list of runs" {
+  ci_checkout 4.0/Main
+  expect_full_run "4.0/Main is a Main, and GitHub did not say whether the merge queue passed $GITHUB_SHA" FAKE_GH_STATUS=1
+  expect_full_run "4.0/Main is a Main, and GitHub did not say whether the merge queue passed $GITHUB_SHA" FAKE_GH_STATUS=127
+  echo 'Bad Gateway' >"$FAKE_QUEUE_RUNS"
+  expect_full_run "4.0/Main is a Main, and GitHub did not say whether the merge queue passed $GITHUB_SHA"
+  echo '{"message": "Not Found"}' >"$FAKE_QUEUE_RUNS"
+  expect_full_run "4.0/Main is a Main, and GitHub did not say whether the merge queue passed $GITHUB_SHA"
+}
+
+@test "a working branch's push asks GitHub nothing" {
+  push_documents_branch 4.0/documents
+  expect_jobs ''
+  [ ! -e "$FAKE_GH_CALLS" ]
 }
 
 @test "a branch whose Main is missing runs every job" {
