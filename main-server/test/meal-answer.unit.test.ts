@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -59,7 +60,7 @@ describe('Lunch with 민수 and 지은: the plan', () => {
 
   it('says when everyone is there and how much shorter the meal is than alone', () => {
     expect(firstPlan(withBoth()).lines).toEqual([
-      [strong('12:33 학생회관식당')],
+      [plain('점심 '), strong('12:33 학생회관식당')],
       [plain('같이 먹으면 식사가 33분 줄어요')],
     ]);
   });

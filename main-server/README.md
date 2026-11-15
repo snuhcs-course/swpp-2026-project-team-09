@@ -2574,13 +2574,15 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       Restaurants. It can answer `needs` as `findFreeTimeEvents` does. A Friend's item without a Place only leaves out
       that side's travel.
     - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
-    - `planMeal(date, meal, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
+    - `planMeal(date, meal?, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
       `PLAN_RULES` that of the meal part of the 공강 rules, for an app that sends `answer` (`gathering/`). It plans the
       meal on the map: `MealPlanService` reads each person's day, the asker's location from the request context, and a
       Friend's position only as the asker's map shows it, computes the plans and words them, and the tool puts them in
-      the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
-      person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
-      or rooms.
+      the reply's `answer`. The model gives `meal` only when the User's words name it; otherwise the server takes it by
+      the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
+      and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
+      meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
+      never coordinates, course names, or rooms.
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
@@ -2713,7 +2715,7 @@ User or the model receives, never the prompt's wording or a real model's prose.
 
 `pnpm eval` puts the cases of `eval/cases/` to the real model through the real server code and records what the model
 did (P19). It calls the provider `--provider` names with the team's key in `.env` (`OPENROUTER_API_KEY`, or
-`ANTHROPIC_API_KEY` for `anthropic`), never the key `llm.key` names, so it costs credit: it never runs in `pnpm test` or CI,
+`ANTHROPIC_API_KEY` for `anthropic`, which the command's environment may give instead), never the key `llm.key` names, so it costs credit: it never runs in `pnpm test` or CI,
 which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`) on the integration tests'
 machinery: Docker, fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and the clock fixed at
 2026-10-21 (수) 14:05 in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User, with the daily
@@ -2802,6 +2804,10 @@ and the action is read as if the words were right, so that a failure lands in th
 (`eval/p4/holdout.yaml`), which P11 does not tune on. Nothing else reaches those wordings, so `pnpm eval --world p4`
 still runs exactly the 40 cases. Its scorecard gives the pass rates and the layer rates, with what the run cost and its
 settings, and names no case, and `pnpm eval:compare` refuses its runs. `eval/p4/record.md` is the record of the suite's runs.
+
+`pnpm eval --world p4-answer` runs the cases of `eval/cases/` that name that world in the P4 world, its clock and its
+travel fixture, asked as the app asks with a context (`clientCapabilities: ['library', 'answer']`), so that the meal is
+planned on the map with `planMeal`. They are outside the suite's 40: `eval/cases/meal-clock.yaml` holds P01 ticket 21's.
 
 #### The P05 suite
 
