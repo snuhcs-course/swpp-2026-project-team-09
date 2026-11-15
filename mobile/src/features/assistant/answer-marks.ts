@@ -79,9 +79,17 @@ const BADGES: Partial<Record<Standing['state'], FaceBadge>> = {
   late: 'accepted',
 };
 
-function faceOf(name: string, dashed: boolean, standing: Standing | undefined): AnswerSymbol {
+type Face = Extract<AnswerSymbol, { type: 'face' }>;
+
+function faceOf(name: string, source: MapScene['people'][number]['source'], standing: Standing | undefined): Face {
   const badge = standing === undefined ? undefined : BADGES[standing.state];
-  return badge === undefined ? { type: 'face', name, dashed } : { type: 'face', name, dashed, badge };
+  const face: Face = {
+    type: 'face',
+    name,
+    dashed: source === 'timetable',
+    ...(source === 'exact' ? { exact: true } : {}),
+  };
+  return badge === undefined ? face : { ...face, badge };
 }
 
 // The words of a face's tag that the face does not show already: a face shows the everyday Avatar's letters, so the
@@ -109,7 +117,7 @@ function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>)
       position: at,
       planId: null,
       group: 'person',
-      symbol: me ? { type: 'me' } : faceOf(name, source === 'timetable', standing),
+      symbol: me ? { type: 'me' } : faceOf(name, source, standing),
       tone: 'person',
       title: me ? said : faceTitle(name, said),
       line: null,

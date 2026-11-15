@@ -14,9 +14,10 @@ import { color, mapText, radius, shadow, space, text } from './tokens';
 
 export type AnswerSymbol =
   | { type: 'me' }
-  // `dashed`: the position comes from the Timetable. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's
-  // upper right; the caller says what it means.
-  | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge }
+  // `dashed`: the position comes from the Timetable. `exact`: a green dot at the face's lower right, the position
+  // measured at the exact level. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's upper right; the
+  // caller says what it means.
+  | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
   | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next'; number: number | null };
 
 export type FaceBadge = 'waiting' | 'accepted';
@@ -71,6 +72,7 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
         >
           <Text style={styles.letters}>{initials(symbol.name)}</Text>
         </View>
+        {symbol.exact === true ? <View style={styles.exact} testID={partOf(testID, 'exact')} /> : null}
         {symbol.badge === undefined ? null : (
           <View style={[styles.faceBadge, styles[symbol.badge]]} testID={partOf(testID, 'badge')}>
             <Text style={styles.number}>{symbol.badge === 'waiting' ? '?' : '✓'}</Text>
@@ -151,6 +153,7 @@ const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const BADGE = 16;
 const FACE_BADGE = 14;
+const EXACT_DOT = 11;
 
 // A label's height, the tallest of its kind: one line of the pick's title with the padding and the pick's border at
 // the top and at the bottom, or that title and a line under it.
@@ -244,6 +247,17 @@ const styles = StyleSheet.create({
     width: FACE_BADGE,
     height: FACE_BADGE,
     borderRadius: radius.full,
+  },
+  exact: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: EXACT_DOT,
+    height: EXACT_DOT,
+    borderRadius: radius.full,
+    borderWidth: RING,
+    borderColor: color.surface,
+    backgroundColor: color.live,
   },
   waiting: { backgroundColor: color.inkMuted },
   accepted: { backgroundColor: color.friend },
