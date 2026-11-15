@@ -14,34 +14,22 @@ import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
 import {
   destinationOf,
+  type Draft,
   DRAW_ORDER,
   FLAG_TONES,
   type Group,
   OWN,
+  restOf,
   ROUTE_STYLES,
   SIDE_ORDER,
   SIDES,
+  stopDraft,
   SYMBOL_ORDER,
 } from './answer-groups';
 import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
-
-interface Draft {
-  id: string;
-  name: string;
-  position: LatLng;
-  planId: string | null;
-  group: Group;
-  symbol: AnswerSymbol | null;
-  tone: AnswerLabel['tone'];
-  // Null for a mark that takes no label.
-  title: string | null;
-  line: string | null;
-  // The number a pick or a candidate carries in its label when its dot is not drawn.
-  number: number | null;
-}
 
 const ONE_POINT = 15;
 
@@ -64,9 +52,17 @@ const BADGES: Partial<Record<Standing['state'], FaceBadge>> = {
   late: 'accepted',
 };
 
-function faceOf(name: string, dashed: boolean, standing: Standing | undefined): AnswerSymbol {
+type Face = Extract<AnswerSymbol, { type: 'face' }>;
+
+function faceOf(name: string, source: MapScene['people'][number]['source'], standing: Standing | undefined): Face {
   const badge = standing === undefined ? undefined : BADGES[standing.state];
-  return badge === undefined ? { type: 'face', name, dashed } : { type: 'face', name, dashed, badge };
+  const face: Face = {
+    type: 'face',
+    name,
+    dashed: source === 'timetable',
+    ...(source === 'exact' ? { exact: true } : {}),
+  };
+  return badge === undefined ? face : { ...face, badge };
 }
 
 // The words of a face's tag that the face does not show already: a face shows the everyday Avatar's letters, so the
@@ -76,12 +72,6 @@ function faceTitle(name: string, tag: string): string | null {
     return tag;
   }
   return tag === name ? null : restOf(name, tag);
-}
-
-// Words without the name they start with, which the mark says already.
-function restOf(name: string, words: string): string {
-  const lead = `${name} · `;
-  return words.startsWith(lead) ? words.slice(lead.length) : words;
 }
 
 // A Friend who was invited is named with how they stand, in place of the tag.
@@ -96,7 +86,7 @@ function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>)
       position: at,
       planId: null,
       group: 'person',
-      symbol: me ? { type: 'me' } : faceOf(name, source === 'timetable', standing),
+      symbol: me ? { type: 'me' } : faceOf(name, source, standing),
       tone: 'person',
       title: me ? said : faceTitle(name, said),
       line: null,
@@ -114,23 +104,6 @@ export interface SceneSetting {
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
-
-// A shuttle stop: its name as the title, and the rest of its tag, such as the shuttle's time, as the line.
-function stopDraft({ place, tag }: MapScene['places'][number]): Draft {
-  const { label, latitude, longitude } = place;
-  return {
-    id: `answer:stop:${place.placeId}`,
-    name: tag ?? label,
-    position: { latitude, longitude },
-    planId: null,
-    group: 'stop',
-    symbol: { type: 'dot', role: 'stop', number: null },
-    tone: 'stop',
-    title: label,
-    line: tag === null || tag === label ? null : restOf(label, tag),
-    number: null,
-  };
-}
 
 function placeDraft(
   { number: pickNumber, plans }: SceneSetting,

@@ -4,9 +4,10 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { MapScene } from '@/api/assistant-types';
 import type { FlagRole } from '@/api/scene-roles';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, color, type LabelSide } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, color, type LabelSide } from '@/design-system';
 
 // The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
 // flags, which have none.
@@ -44,6 +45,45 @@ export const FLAG_TONES: Record<FlagRole, AnswerLabel['tone']> = {
   late: 'late',
   shuttle: 'shuttle',
 };
+
+// A mark of a scene before its label is placed (`answer-marks.ts`).
+export interface Draft {
+  id: string;
+  name: string;
+  position: LatLng;
+  planId: string | null;
+  group: Group;
+  symbol: AnswerSymbol | null;
+  tone: AnswerLabel['tone'];
+  // Null for a mark that takes no label.
+  title: string | null;
+  line: string | null;
+  // The number a pick or a candidate carries in its label when its dot is not drawn.
+  number: number | null;
+}
+
+// Words without the name they start with, which the mark says already.
+export function restOf(name: string, words: string): string {
+  const lead = `${name} · `;
+  return words.startsWith(lead) ? words.slice(lead.length) : words;
+}
+
+// A shuttle stop: its name as the title, and the rest of its tag, such as the shuttle's time, as the line.
+export function stopDraft({ place, tag }: MapScene['places'][number]): Draft {
+  const { label, latitude, longitude } = place;
+  return {
+    id: `answer:stop:${place.placeId}`,
+    name: tag ?? label,
+    position: { latitude, longitude },
+    planId: null,
+    group: 'stop',
+    symbol: { type: 'dot', role: 'stop', number: null },
+    tone: 'stop',
+    title: label,
+    line: tag === null || tag === label ? null : restOf(label, tag),
+    number: null,
+  };
+}
 
 // The destination, whose side the camera keeps when not every point fits: the pick, or for a way, which has none, its
 // next item.

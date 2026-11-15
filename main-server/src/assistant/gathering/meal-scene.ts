@@ -8,7 +8,7 @@
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
-import { itemAt, mergingLegs, type Naming, wayOn, withAnd } from './answer-words.js';
+import { type GatheringNaming, itemAt, mergingLegs, type Naming, wayOn, withAnd } from './answer-words.js';
 import { type GatheringFit, MINUTE_MS, type PersonPart } from './gathering.js';
 
 // What the map draws of a plan, and its time band.
@@ -18,7 +18,7 @@ const HALF_HOUR_MS = 30 * MINUTE_MS;
 const BAND_BEFORE_MS = 60 * MINUTE_MS;
 const BAND_AFTER_MS = 30 * MINUTE_MS;
 
-function scenePerson({ personId, origin, walkMinutes }: PersonPart, naming: Naming): MapScene['people'] {
+function scenePerson({ personId, origin, walkMinutes }: PersonPart, naming: GatheringNaming): MapScene['people'] {
   if (origin === null) {
     return [];
   }
@@ -39,7 +39,7 @@ function scenePerson({ personId, origin, walkMinutes }: PersonPart, naming: Nami
   ];
 }
 
-function scenePlaces(fit: GatheringFit, naming: Naming): MapScene['places'] {
+function scenePlaces(fit: GatheringFit, naming: GatheringNaming): MapScene['places'] {
   const { gathering } = naming.args;
   const places: MapScene['places'] = [
     { place: naming.labelledPoint(fit.placeId, fit.key), role: 'pick', tag: fit.key },
@@ -68,7 +68,7 @@ function scenePlaces(fit: GatheringFit, naming: Naming): MapScene['places'] {
 
 // A merging Friend to the meeting, the asker on to the place, a Friend who does not merge to the place, and the asker
 // on to their next item.
-function routes({ placeId, meeting, parts }: GatheringFit, naming: Naming): MapScene['routes'] {
+function routes({ placeId, meeting, parts }: GatheringFit, naming: GatheringNaming): MapScene['routes'] {
   const [mine, ...theirs] = parts;
   const to = naming.position(placeId);
   const ways: MapScene['routes'] = [];
@@ -103,10 +103,9 @@ function routes({ placeId, meeting, parts }: GatheringFit, naming: Naming): MapS
   return ways.filter(({ minutes }) => minutes > 0);
 }
 
-function flags({ placeId, start, meeting }: GatheringFit, naming: Naming): MapScene['flags'] {
-  const all: MapScene['flags'] = [
-    { at: naming.position(placeId), text: `${clockOf(start)} ${naming.mealWord()}`, role: 'place' },
-  ];
+// `word` is what the people gather for: the meal, or 만남.
+function flags({ placeId, start, meeting }: GatheringFit, naming: GatheringNaming, word: string): MapScene['flags'] {
+  const all: MapScene['flags'] = [{ at: naming.position(placeId), text: `${clockOf(start)} ${word}`, role: 'place' }];
   if (meeting !== null) {
     const names = meeting.personIds.slice(1).map((personId) => naming.personOf(personId).name);
     const last = names.pop() ?? '';
@@ -116,12 +115,12 @@ function flags({ placeId, start, meeting }: GatheringFit, naming: Naming): MapSc
   return all;
 }
 
-export function sceneOf(fit: GatheringFit, naming: Naming): MapScene {
+export function sceneOf(fit: GatheringFit, naming: GatheringNaming, word: string): MapScene {
   return {
     people: fit.parts.flatMap((part) => scenePerson(part, naming)),
     places: scenePlaces(fit, naming),
     routes: routes(fit, naming),
-    flags: flags(fit, naming),
+    flags: flags(fit, naming, word),
   };
 }
 
@@ -133,22 +132,45 @@ export function halfHoursAround(earliest: number, latest: number): { from: Date;
   };
 }
 
-// A lane's items in the range, cut to it, without their names.
-export function busyIn(items: readonly DayItem[], from: Date, until: Date): TimeBand['lanes'][number]['busy'] {
+// What a busy stretch is, never its name: a Class by its Place, a Class without one, or a Sub Quest.
+function busyLabel({ isClass, placeId }: DayItem, placeLabel: (placeId: string) => string): string {
+  if (!isClass) {
+    return '일정';
+  }
+  return placeId === null ? '수업' : `${placeLabel(placeId)} 수업`;
+}
+
+// A lane's items in the range, cut to it, without their names. A Plan's band labels each by what it is.
+export function busyIn(
+  items: readonly DayItem[],
+  from: Date,
+  until: Date,
+  placeLabel?: (placeId: string) => string,
+): TimeBand['lanes'][number]['busy'] {
   return items
     .filter((item) => item.start < until && item.end > from)
     .toSorted(byStart)
-    .map((item) => ({
-      startAt: koreaTime(item.start < from ? from : item.start),
-      endAt: koreaTime(item.end > until ? until : item.end),
-    }));
+    .map((item) => {
+      const startAt = koreaTime(item.start < from ? from : item.start);
+      const endAt = koreaTime(item.end > until ? until : item.end);
+      return placeLabel === undefined ? { startAt, endAt } : { startAt, endAt, label: busyLabel(item, placeLabel) };
+    });
+}
+
+// Each person's lane over the range, the asker's named 나.
+export function lanesOf(naming: GatheringNaming, from: Date, until: Date): TimeBand['lanes'] {
+  return naming.args.people.map(({ userId, name, me, items }) => ({
+    userId,
+    name: me ? '나' : name,
+    busy: busyIn(items, from, until, (placeId) => naming.placeLabel(placeId)),
+  }));
 }
 
 // From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after half
 // an hour past its end, reaching out to the half hours around the window the User fixed. `now` is given as it is, even
 // outside the range.
 export function bandOf({ start, end, togetherMinutes }: GatheringFit, naming: Naming): TimeBand {
-  const { now, people, input } = naming.args;
+  const { now, input } = naming.args;
   const opens = [Math.max(now.getTime(), start.getTime() - BAND_BEFORE_MS)];
   const closes = [end.getTime() + BAND_AFTER_MS];
   if (input.window.from !== null) {
@@ -161,11 +183,7 @@ export function bandOf({ start, end, togetherMinutes }: GatheringFit, naming: Na
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),
-    lanes: people.map(({ userId, name, me, items }) => ({
-      userId,
-      name: me ? '나' : name,
-      busy: busyIn(items, from, until),
-    })),
+    lanes: lanesOf(naming, from, until),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     text: `${clockOf(start)}–${clockOf(end)} · 식사 ${togetherMinutes}분`,

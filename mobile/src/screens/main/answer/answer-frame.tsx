@@ -25,6 +25,7 @@ import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { ANSWER_PILL, listsTop, type Room } from '../layout';
 import { AnswerLines } from './answer-lines';
 import { CloseButton } from './close-button';
+import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { InvitedCard } from './invited-card';
 import { LookupCard } from './lookup-card';
 import { PlanCard } from './plan-card';
@@ -61,9 +62,9 @@ interface WordsProps {
 }
 
 // A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
-// made into one, the card of the Lookup on screen for its reply, else a refusal's lines and offers, or the lines of its
-// answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence; otherwise the
-// sentence as Markdown.
+// made into one, the card of the Lookup on screen for its reply, else a refusal's lines and offers, a failure's lines,
+// or the lines of its answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's
+// sentence; otherwise the sentence as Markdown.
 function Words({ bubble, shown, lookup: onScreen, invitation, room, onClose, onAsk }: WordsProps): ReactElement {
   const { answer, lookup = null } = bubble;
   if (answer !== undefined && answer !== null && answer === shown.source && shown.answer !== null) {
@@ -85,6 +86,9 @@ function Words({ bubble, shown, lookup: onScreen, invitation, room, onClose, onA
   }
   if (bubble.refusal !== undefined && bubble.refusal !== null) {
     return <RefusalReply onAsk={onAsk} refusal={bubble.refusal} />;
+  }
+  if (bubble.failure === 'unavailable') {
+    return <FailedLines text={bubble.text} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? lookup?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
@@ -142,8 +146,8 @@ export function FrameCard({ barRoom, stageHeight, onHeight, testID, children }: 
   );
 }
 
-// The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중이에요", and under them the room
-// of the bar. Its content gives way to the keyboard.
+// The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중" with 그만, and under them the
+// room of the bar. Its content gives way to the keyboard.
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose } = props;
   const { bubbles, waiting, retry } = control.chat;
@@ -175,7 +179,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
               />
             </View>
           ))}
-          {waiting ? <Text style={styles.words}>보는 중이에요</Text> : null}
+          {waiting ? <WaitingReply onStop={onClose} /> : null}
         </>
       )}
     </FrameCard>

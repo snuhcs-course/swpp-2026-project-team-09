@@ -78,7 +78,7 @@ With the switch off, the app is today's: the same chat sheet, the same request, 
 - The frame is shown while the flag is on and the conversation holds something: a message waiting for its reply, or a turn. A turn is the User's last message and everything after it: the Assistant's reply, a failure, and the app's own bubbles.
 - **The pill** holds what the User asked, on one line, cut with an ellipsis, with a speech-bubble icon and a ✕. The ✕ forgets the conversation, a reply still on its way included, and the everyday map is back. Android's back button does the same.
 - **The card** is attached to the bottom edge of the screen. While the frame is shown on the main tab the tab bar is not shown. The card's parts, from the top: the condition chips with "근거" at their right, the answer, the time band, the buttons, and the input. The card takes at most about half of the screen above it, and its content scrolls inside it.
-- While the Assistant works, the card says "보는 중이에요".
+- While the Assistant works, the card says "보는 중" with "그만", which does what the ✕ does, and the input is hidden until the reply comes (ticket 12).
 - A turn is drawn with the chat's own parts, without a bubble around them: the text as Markdown, the cards with their buttons, a Proposal, the map buttons, and "다시 시도" under a failure.
 - A reply that carries a Plan shows the Plan's two lines, which the server wrote, in place of the model's sentence. A reply whose answer has no Plan shows the lines that say why.
 - While the frame is shown, the Friend list, the Quest list, the row of buttons with the footprints, the 편의기능 button, the zoom control, the shuttle's notice, the tutorial's start button, and the card of a pressed thing are not shown, and a press on a marker opens no card.

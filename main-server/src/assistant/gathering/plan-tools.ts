@@ -19,7 +19,7 @@ import { type MealPlanService } from './meal-plan.service.js';
 // the User's words as conditions and writes one sentence. Coordinates, ids of Places, course names, and rooms stay here.
 
 // The most Friends of a plan, the asker making it eight people.
-const FRIENDS_MAX = 7;
+export const FRIENDS_MAX = 7;
 
 const NONE_REASONS: Record<NonNullable<AnswerReply['noPlan']>['reason'], string> = {
   'no-menu': 'No Restaurant is open for that meal that day, or no menu was collected for it.',
@@ -32,9 +32,13 @@ const clock = (time: string | null): string | null => (time === null ? null : ti
 const nameOf = ({ me, name }: Plan['parts'][number]): string => (me ? '나' : othersText('friend.name', name));
 
 function planWords(plan: Plan): object {
-  const { id, startAt, endAt, togetherMinutes, meeting, parts } = plan;
+  return { restaurant: plan.id, ...timesAndWays(plan) };
+}
+
+// When everyone is there and until when, where they meet on the way, and each person's way, in words and minutes.
+export function timesAndWays(plan: Plan): object {
+  const { startAt, endAt, togetherMinutes, meeting, parts } = plan;
   return {
-    restaurant: id,
     start: clock(startAt),
     end: clock(endAt),
     togetherMinutes,
@@ -84,7 +88,7 @@ const input = z
 
 // An id is accepted when a resolver returned it in this message, or when it is on screen or tapped. The asker heads
 // the conditions on screen and is no Friend of them.
-function refuseUnseen(found: FoundIds, kind: FoundKind, ids: readonly string[], seen: readonly string[]): void {
+export function refuseUnseen(found: FoundIds, kind: FoundKind, ids: readonly string[], seen: readonly string[]): void {
   found.refuseUnfound(
     kind,
     ids.filter((id) => !seen.includes(id)),

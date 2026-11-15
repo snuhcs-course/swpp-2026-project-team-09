@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -20,5 +21,7 @@ import { STUDY_CATALOGUE, StudySpacesService } from './study-spaces.service.js';
     { provide: STUDY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     StudySpacesService,
   ],
+  // The libraries are among the places a meet may be at.
+  exports: [StudySpacesService],
 })
 export class StudySpacesModule {}
