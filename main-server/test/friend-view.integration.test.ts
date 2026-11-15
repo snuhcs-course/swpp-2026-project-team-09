@@ -12,7 +12,7 @@ import { inject } from 'vitest';
 import { z } from 'zod';
 import { type FriendView } from '../src/friends/dto/friend-view.dto.js';
 import { type FriendViewService } from '../src/friends/friend-view.service.js';
-import { befriend, getFriends, signInUser, type TestUser } from './friends.js';
+import { befriend, friendLabel, getFriends, signInUser, type TestUser } from './friends.js';
 import {
   expectStatus,
   ON_CAMPUS,
@@ -65,6 +65,7 @@ const atTimetable = (friend: TestUser): FriendView => ({
   id: friend.id,
   name: ONBOARDED_PROFILE.name,
   department: ONBOARDED_PROFILE.department,
+  label: friendLabel('길동'),
   level: 'timetable',
   position: null,
   placeId: null,

@@ -26,6 +26,7 @@ import {
   toFriendDto,
   toUserSummaryDto,
 } from './dto/friends.dto.js';
+import { friendLabels } from './friend-label.js';
 
 interface Pair {
   userAId: string;
@@ -211,15 +212,22 @@ export class FriendsService {
       include: { userA: WITH_SWITCH, userB: WITH_SWITCH },
     });
     const visible = await this.visibility.visibleTo(userId);
+    const labels = friendLabels(
+      rows.flatMap((row) => (row.acceptedAt === null ? [] : [{ ...otherOf(row, userId), acceptedAt: row.acceptedAt }])),
+    );
     return rows
       .map((row) => {
         const friend = otherOf(row, userId);
+        const label = labels.get(friend.id);
+        if (label === undefined) {
+          throw new Error(`No label for the Friend ${friend.id}`);
+        }
         const seen = levelSeen({
           bothMasterSwitchesOn: row.userA.masterSwitchOn && row.userB.masterSwitchOn,
           commonParty: false,
           friendship: [row.userALevel, row.userBLevel],
         });
-        return toFriendDto(friend, endOf(row, userId), { seen, visible: visible.has(friend.id) });
+        return toFriendDto(friend, endOf(row, userId), { seen, visible: visible.has(friend.id), label });
       })
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }

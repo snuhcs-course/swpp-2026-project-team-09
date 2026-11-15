@@ -22,23 +22,24 @@ export class FriendViewService {
     private readonly places: PlaceLookup,
   ) {}
 
-  // Every Friend of the viewer, in the order of GET /friends.
+  // Every Friend of the viewer, in the order of GET /friends and with its label.
   async list(viewerId: string): Promise<FriendView[]> {
     const [friends, positions] = await Promise.all([
       this.friends.listFriends(viewerId),
       this.locations.visiblePositions(viewerId),
     ]);
     const seen = new Map(positions.map((position) => [position.userId, position]));
-    return friends.map(({ id, name, department }): FriendView => {
+    return friends.map(({ id, name, department, label }): FriendView => {
       const kept = seen.get(id);
       if (kept === undefined) {
-        return { id, name, department, level: 'timetable', position: null, placeId: null };
+        return { id, name, department, label, level: 'timetable', position: null, placeId: null };
       }
       if (kept.level === 'building') {
-        return { id, name, department, level: 'building', position: null, placeId: kept.placeId };
+        return { id, name, department, label, level: 'building', position: null, placeId: kept.placeId };
       }
       const position = { latitude: kept.latitude, longitude: kept.longitude, measuredAt: kept.measuredAt };
-      return { id, name, department, level: 'exact', position, placeId: this.places.at(position)?.place.id ?? null };
+      const placeId = this.places.at(position)?.place.id ?? null;
+      return { id, name, department, label, level: 'exact', position, placeId };
     });
   }
 }

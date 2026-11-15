@@ -12,7 +12,7 @@ import { inject } from 'vitest';
 import { z } from 'zod';
 import { type FriendLevel } from '../src/generated/prisma/client.js';
 import { IN_LIBRARY, IN_NO_PLACE, LEVEL_PAIRS, placeNumbered, type SeedPlace } from './friend-levels.js';
-import { befriend, getFriends, signInUser, type TestUser } from './friends.js';
+import { befriend, friendLabel, getFriends, signInUser, type TestUser } from './friends.js';
 import {
   expectStatus,
   getPositions,
@@ -56,6 +56,7 @@ interface Shown {
 const friendOf = (friend: TestUser, { level, seen, sharing, visible }: Shown): object => ({
   id: friend.id,
   ...ONBOARDED_PROFILE,
+  label: friendLabel('길동'),
   level,
   seen,
   sharing,

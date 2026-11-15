@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { type Friendship, FriendLevel, User } from '../../generated/prisma/client.js';
+import { type FriendLabel } from '../friend-label.js';
 
 // Read in capitals, so that a Friend ID typed in small letters is found too. Any other text is a Friend ID nobody holds.
 export const friendIdSchema = z.string().trim().toUpperCase().min(1);
@@ -53,9 +54,11 @@ export function endOf(row: Friendship, userId: string): FriendEnd {
 // sharing whether it is above the Timetable, for an app of before. seen is what the two see of each other by the
 // friendship, the same from both sides, and the only word on the Friend's own end. visible is whether the User sees the
 // Friend's position or Place now, never why not. askedOff and askedPlan say whether the app has asked the User about
-// the Friend before turning location off for them, and after a Plan with them became a Quest.
+// the Friend before turning location off for them, and after a Plan with them became a Quest. label is how the Friend
+// reads among all of the User's Friends.
 export interface FriendDto extends UserSummaryDto {
   id: string;
+  label: FriendLabel;
   level: FriendLevel;
   seen: FriendLevel;
   sharing: boolean;
@@ -67,11 +70,12 @@ export interface FriendDto extends UserSummaryDto {
 export function toFriendDto(
   user: Pick<User, 'id' | 'name' | 'department'>,
   { level, offAskedAt, planAskedAt }: FriendEnd,
-  { seen, visible }: { seen: FriendLevel; visible: boolean },
+  { seen, visible, label }: { seen: FriendLevel; visible: boolean; label: FriendLabel },
 ): FriendDto {
   return {
     id: user.id,
     ...toUserSummaryDto(user),
+    label,
     level,
     seen,
     sharing: level !== FriendLevel.timetable,

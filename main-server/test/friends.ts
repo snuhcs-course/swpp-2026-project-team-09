@@ -9,6 +9,7 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { z } from 'zod';
+import { type FriendLabel } from '../src/friends/friend-label.js';
 import { getProfile } from './profile.js';
 import { getMe, ONBOARDED_PROFILE, signIn, withAccessToken } from './sign-in.js';
 
@@ -28,6 +29,9 @@ export const NEW_FRIENDSHIP = {
   askedOff: false,
   askedPlan: false,
 };
+
+// A Friend's label in GET /friends and the Friend view: the name it reads by, and what tells it apart besides, if any.
+export const friendLabel = (name: string, aside: string | null = null): FriendLabel => ({ text: name, name, aside });
 
 export interface TestUser {
   id: string;
