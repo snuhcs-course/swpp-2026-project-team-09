@@ -74,7 +74,7 @@ const JI_EUN_MEASURED: Position = {
   level: 'exact',
 };
 
-// A position as the socket passes one on today: without its level.
+// A live position without a level.
 function live({ userId, latitude, longitude }: Position): Omit<Position, 'level' | 'placeId'> {
   return { userId, latitude: latitude + 0.0001, longitude, measuredAt: new Date(Date.now()).toISOString() };
 }
@@ -160,6 +160,26 @@ describe("a Friend's face on the everyday map", () => {
 
     expect(dotted(JI_EUN.name)).toBe(true);
     expect(dotted(MIN_SU.name)).toBe(false);
+  });
+});
+
+// Partitions: a live position whose level is not the one before, from the exact level to the building level and back;
+// the switch on. Expected values: P02 ticket 20's decision 6, the level a live position carries wins.
+describe("a Friend's face when a live position carries its level", () => {
+  it('loses the dot with the building level, and has it again with the exact level', async () => {
+    const socket = await openLiveOnMap();
+
+    // At the building level the main server sends the Place's point and id: 302동's here.
+    const { latitude, longitude, placeId } = MIN_SU_AT_302;
+    await socketServer(() => {
+      socket.send('position', { ...live(JI_EUN_MEASURED), latitude, longitude, level: 'building', placeId });
+    });
+    expect(dotted(JI_EUN.name)).toBe(false);
+
+    await socketServer(() => {
+      socket.send('position', { ...live(JI_EUN_MEASURED), level: 'exact' });
+    });
+    expect(dotted(JI_EUN.name)).toBe(true);
   });
 });
 
