@@ -6,7 +6,8 @@
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
-import { friendAnswer, type FriendAnswer, withTimetableChip } from '../src/assistant/lookup/friend-lookup.js';
+import { friendAnswer, type FriendAnswer } from '../src/assistant/lookup/friend-lookup.js';
+import { withTimetableChip } from '../src/assistant/lookup/friend-unseen.js';
 import { friendLookup } from '../src/assistant/lookup/friend.service.js';
 import { type FriendView } from '../src/friends/dto/friend-view.dto.js';
 import { classAt, id, placeOf, position, readCampus, TUESDAY } from './way-example.js';

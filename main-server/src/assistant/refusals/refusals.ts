@@ -9,7 +9,7 @@ import { type AnswerLine, type Lookup } from '../dto/answer.dto.js';
 import { type Presented } from '../feature.js';
 import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
 import { withAnd, withSubject, withTopic } from '../gathering/answer-words.js';
-import { withTimetableChip } from '../lookup/friend-lookup.js';
+import { withTimetableChip } from '../lookup/friend-unseen.js';
 import {
   BESIDE_LOOKUP,
   type FriendKind,

@@ -14,6 +14,7 @@ import { minutesBetween, RECENT_CLASS_MINUTES } from '../gathering/gathering.js'
 import { PlaceNaming } from '../gathering/place-naming.js';
 import { othersText } from '../others-text.js';
 import { cardOf, fact } from './card.js';
+import { unseenLine } from './friend-unseen.js';
 import { part } from './way-naming.js';
 
 // Where a Friend is, drawn with what the asker's map shows of them and nothing more: their position at the exact level,
@@ -206,22 +207,12 @@ function drawnOf(args: FriendArgs, naming: PlaceNaming): Drawn {
   return byTimetable(args, naming);
 }
 
-// Where and when their Class ends, which the Timetable shows every Friend, while it goes on in a Place; else the
-// Lookup's first line.
-function unseenLine({ classes, now }: FriendArgs, lines: AnswerLine[], naming: PlaceNaming): AnswerLine {
-  const current = currentOf(classes, now);
-  if (current === null || current.placeId === null) {
-    return lines[0] ?? [];
-  }
-  return [part(clockOf(current.end), true), part(`에 ${naming.placeLabel(current.placeId)}에서 수업이 끝나요`)];
-}
-
 export function friendAnswer(args: FriendArgs): FriendAnswer {
   const { friend } = args;
   const naming = new PlaceNaming(args.placeOf);
   const { lines, basis, scene, words } = drawnOf(args, naming);
   return {
-    unseen: unseenLine(args, lines, naming),
+    unseen: unseenLine(args.classes, args.now, lines, naming),
     lookup: {
       kind: 'friend',
       chips: [{ kind: 'person', text: friend.name, userId: friend.id }],
@@ -322,17 +313,4 @@ export function friendTap(args: FriendTapArgs): Lookup {
     chips: from === null ? [] : [{ kind: 'origin', text: `${from}에서`, userId: null }],
     card: cardOf(args.friend.name, LEVEL_WORDS[words.shows], facts, null),
   };
-}
-
-// Beside a refusal of their course and room (board n4), the chip of a Friend the map shows through the Timetable only,
-// drawn dashed or not drawn, says so.
-export function withTimetableChip(lookup: Lookup): Lookup {
-  const timetableOnly = lookup.scene.people.every(({ source }) => source === 'timetable');
-  if (lookup.kind !== 'friend' || !timetableOnly) {
-    return lookup;
-  }
-  const chips = lookup.chips.map((chip) =>
-    chip.kind === 'person' ? { ...chip, text: `${chip.text} · 시간표` } : chip,
-  );
-  return { ...lookup, chips };
 }
