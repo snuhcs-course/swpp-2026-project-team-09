@@ -63,7 +63,7 @@ describe('The command line, from the flags', () => {
         '--category', 'menus,shuttle', '--category', 'small-talk', '--case', 'menus-today-lunch', '--yes',
         '--world', 'p4',
       ],
-      { ASSISTANT_MODEL: 'anthropic/claude-haiku-5.5' },
+      {},
     );
 
     expect(options).toEqual({
