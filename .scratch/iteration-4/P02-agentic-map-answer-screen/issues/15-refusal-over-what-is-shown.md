@@ -48,3 +48,11 @@ The two messages were sent once through the chat feature of an app that draws an
 |---|---|---|
 | 민수 지금 무슨 수업 들어? (11:50) | `resolveFriend`, `findFriend`, `refuse` (`course-and-room`, 민수's id) | the Friend Lookup with "민수 · 시간표", the refusal's lines as the text (the model wrote none) |
 | 신양 스터디룸 예약해 줘 (14:10 at 301동) | `resolvePlace` ("신양"), `findWay` (to 신양학술정보관), `refuse` (`other-library`, its id) | the way Lookup, the refusal's lines as the text |
+
+### Agent usage (2026-11-15)
+
+One implementing subagent (Opus 5.5). This session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 41 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 170,480; input 47,516,897, of which 47,115,694 were cache reads, 400,885 cache writes, and 318 uncached. Without cache reads: 571,683.
+- The real-model check sent two requests to the chat model.
