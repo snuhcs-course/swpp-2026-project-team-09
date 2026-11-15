@@ -110,6 +110,26 @@ describe('보낸 신청', () => {
   });
 });
 
+describe('a withdrawal pressed twice', () => {
+  it('sends one, and drops the row before the list comes again', async () => {
+    const user = await openAt('/party?tab=invites');
+    server.on('POST /quest-join-requests/qr1/withdraw', { status: 204, afterMs: 3000 });
+    server.on('GET /quest-join-requests', { status: 200, body: [TO_JAZZ], afterMs: 10_000 });
+
+    await user.press(row('qr1').getByRole('button', { name: '신청 취소' }));
+    await pass(100);
+    await answer(user, '신청 취소');
+    await user.press(row('qr1').getByRole('button', { name: '신청 취소' }));
+    await pass(100);
+    await answer(user, '신청 취소');
+    await pass(3000);
+
+    expect(server.received('POST /quest-join-requests/qr1/withdraw')).toHaveLength(1);
+    expect(toast()).toHaveTextContent('신청을 취소했어요');
+    expect(screen.queryByTestId('sent-request-qr1')).toBeNull();
+  });
+});
+
 describe('a withdrawal the Leader answered first', () => {
   const holding = { ...DINNER, id: CODING.id, title: CODING.title, holders: [ME_HOLDER] };
 
