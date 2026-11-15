@@ -4,12 +4,18 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { CardFact, Lookup, LookupAction, LookupCard } from '@/api/lookup-types';
+import type { CardFact, Lookup, LookupAction, LookupCard, LookupStep } from '@/api/lookup-types';
 import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
-import { isBand, isChip, isLine, isPlacePoint, isScene } from './plan-answers';
+import { isBand, isChip, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
 import { isInput, isOneOf } from './plan-inputs';
 
 // The app's check of a reply's Lookup, every field of it, as the answer screen draws each.
+
+const isKind = isKeyOf<Lookup['kind']>({ way: true, friend: true, menu: true, place: true, day: true, tutorial: true });
+
+function isStep(value: unknown): value is LookupStep {
+  return isTextOrNull(field(value, 'at')) && isText(field(value, 'text'));
+}
 
 function isAction(value: unknown): value is LookupAction {
   switch (field(value, 'kind')) {
@@ -52,14 +58,16 @@ function isCard(value: unknown): value is LookupCard {
 export function isLookup(value: unknown): value is Lookup {
   const band = field(value, 'band');
   const card = field(value, 'card');
+  const steps = field(value, 'steps');
   return (
-    isOneOf(['way', 'friend', 'menu', 'place'])(field(value, 'kind')) &&
+    isKind(field(value, 'kind')) &&
     listOf(isChip)(field(value, 'chips')) &&
     listOf(isLine)(field(value, 'lines')) &&
     listOf(isText)(field(value, 'basis')) &&
     isScene(field(value, 'scene')) &&
     (band === null || isBand(band)) &&
     listOf(isAction)(field(value, 'actions')) &&
-    (card === undefined || card === null || isCard(card))
+    (card === undefined || card === null || isCard(card)) &&
+    (steps === undefined || listOf(isStep)(steps))
   );
 }

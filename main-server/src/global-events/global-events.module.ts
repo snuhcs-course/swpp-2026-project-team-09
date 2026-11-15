@@ -7,12 +7,11 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { type Model, MODEL_PORT, openRouterModel } from '../assistant/adapter.js';
-import { type Settings } from '../common/settings.js';
+import { ModelPortModule } from '../assistant/model-port.module.js';
 import { CollectionModule } from '../collection/collection.module.js';
 import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
@@ -26,7 +25,7 @@ import { SameEventChoicesService } from './same-event-choices.service.js';
 import { SameEventQueueService } from './same-event-queue.service.js';
 
 @Module({
-  imports: [CollectionModule, PlacesModule, QuestsModule],
+  imports: [CollectionModule, ModelPortModule, PlacesModule, QuestsModule],
   controllers: [GlobalEventsController, AdminGlobalEventsController],
   providers: [
     GlobalEventsService,
@@ -35,16 +34,6 @@ import { SameEventQueueService } from './same-event-queue.service.js';
     PublicationStepService,
     SameEventChoicesService,
     SameEventQueueService,
-    // The Assistant's model. AssistantModule imports this module, so this one binds the port itself.
-    {
-      provide: MODEL_PORT,
-      inject: [ConfigService],
-      useFactory: (settings: ConfigService<Settings, true>): Model =>
-        openRouterModel(
-          settings.get('OPENROUTER_API_KEY', { infer: true }),
-          settings.get('ASSISTANT_MODEL', { infer: true }),
-        ),
-    },
   ],
   // The Assistant's searchGlobalEvents and showGlobalEvents read the published Global Events through it.
   // JudgementsService runs the step over one Draft for a later script and for the evaluation.

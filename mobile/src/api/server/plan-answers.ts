@@ -25,7 +25,7 @@ import { isInput, isOneOf } from './plan-inputs';
 // input's checks are in `plan-inputs.ts`.
 
 // The keys of a record typed by a union of the contract, so that the compiler refuses a value left out or one too many.
-function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
+export function isKeyOf<Value extends string>(values: Record<Value, true>): (value: unknown) => value is Value {
   return (value: unknown): value is Value => typeof value === 'string' && Object.hasOwn(values, value);
 }
 
@@ -146,7 +146,13 @@ function isScenePerson(value: unknown): value is MapScene['people'][number] {
 }
 
 function isScenePlace(value: unknown): value is MapScene['places'][number] {
-  return isPlacePoint(field(value, 'place')) && isPlaceRole(field(value, 'role')) && isTextOrNull(field(value, 'tag'));
+  const order = field(value, 'order');
+  return (
+    isPlacePoint(field(value, 'place')) &&
+    isPlaceRole(field(value, 'role')) &&
+    isTextOrNull(field(value, 'tag')) &&
+    (order === undefined || (typeof order === 'number' && Number.isInteger(order) && order >= 1))
+  );
 }
 
 function isRoute(value: unknown): value is MapScene['routes'][number] {

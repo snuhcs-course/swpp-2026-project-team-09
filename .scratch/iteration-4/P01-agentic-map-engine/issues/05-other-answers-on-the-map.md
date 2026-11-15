@@ -30,3 +30,7 @@ Row 7's other boards are not in these tickets:
 - q16 (this week's performances): package C's row 4.
 - q17 to q19 (Friends free for a meal, and grouping many results into circles): `findFreeFriends` exists. The circles are package B's (work split section 8).
 
+### The rest of row 7 (2026-11-15)
+
+Boards q9, q10 to q12, and q14 now have tickets: [12](12-todays-classes-on-the-map.md) (today's Classes, q14), [13](13-tutorial-quests-in-order.md) (the Tutorial Quests in order, q10), [14](14-tutorial-facts-then-the-way.md) (a Tutorial question, then the way there and back, q11 and q12; after package C's reply offers), and [15](15-a-cafe-on-the-way.md) (a café on the way, q9; waiting for café data).
+

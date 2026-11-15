@@ -471,15 +471,15 @@ export class AdminEventsController {
 Global settings are the settings an Administrator changes at run time, for the whole service, without a Release.
 They are separate from the env settings in `src/common/settings.ts`, which stay as they are and are read at start.
 
-- Each one is registered in code, in `REGISTERED_SETTINGS` in `src/global-settings/registered-settings.ts`, with a
-  name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values. None is
-  registered yet; the first comes with the AI's model port.
+- Each one is registered in code, in `registeredSettings()` in `src/global-settings/registered-settings.ts`, with a
+  name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values and a check of
+  its own. One is registered: `llm.key`, the name of the AI's key ([Assistant](#assistant)).
 - The table `settings` holds a row only for a setting that was saved. A setting with no row has its default. The table
   `setting_changes` keeps every save: the old and the new value, the Administrator and the time. The one row of
   `settings_revision` counts the saves.
 - A save checks the name against the registry and the value against its type and allowed values, and writes the
-  setting, its history row and the revision in one transaction. The caller may give a check of its own, whose reason
-  refuses the save.
+  setting, its history row and the revision in one transaction. A setting's own `check`, when it has one, refuses a
+  save with its reason, whoever saves.
 - Each pod loads every row at start and does not start when it cannot. Every minute at second 0 it reads the revision
   and reloads the rows when it changed, so a change applies on every pod at the next minute, the saving pod included.
   A failed check keeps the last copy and logs. A read of a setting makes no query.
@@ -498,8 +498,9 @@ export const ROUND_MINUTES = defineSetting({
 });
 ```
 
-A default or allowed values known only when the server starts, such as the names of the keys it holds, are given as
-functions; each is evaluated once, at start. A server whose registry gives a default that is not allowed, or one name
+`registeredSettings()` takes what the server holds at start, such as the AI's keys (`AI_KEYS`, built once from the
+checked settings in `src/common/ai-keys.module.ts`), and `GlobalSettingsModule` provides the registry from it, so a
+default or allowed values known only at start come from there. A server whose registry gives a default that is not allowed, or one name
 twice, does not start.
 
 ## Global Events
@@ -769,7 +770,7 @@ posts of one event on two pods the second sees the first.
   A session's `globalEventId` in a Judgement is the event it was published as or attached to, or its Draft while held.
 
 - **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
-  refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`). `off` calls no model, sends nothing out and asks
+  refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`). `off` calls no model, sends nothing out and asks
   nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
   with candidates the refusing rules left, whether the rules read them or a Judgement's session is compared, it makes one call,
   outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
@@ -801,7 +802,8 @@ queue/:sessionId/publish` publishes the Draft by an Administrator's route, or an
 left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
 session the rules did not read, one post at a time, after the posts that need no model. `off` calls no model, sends no post
 out and leaves the rules' publication alone; Drafts stored meanwhile are not judged when it is turned on. With `on`, the
-server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
+server refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`. Each Judgement reads `llm.key` once, at
+its start ([Assistant](#assistant)); the AI's choice reads it for each call.
 
 - **What leaves the server:** the post's title and text and the Source's name, with e-mail addresses and phone numbers
   starting with 0 masked (`judgement-post.ts`), and today's date, by which the model chooses the year of a date written
@@ -2393,18 +2395,35 @@ Proposal)`.
   - **Refused with 400:** a body of another shape, and a `placeId` that is no Place. **Refused with 404
     `FRIEND_NOT_FOUND`:** a `userId` who is not the User's Friend.
 
-- `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
-  `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
-  `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds
-  what one User spends, not what all of them do.
+- **The AI's key**, and with it the provider, is the global setting `llm.key` ([Global settings](#global-settings)),
+  which an Administrator changes on the admin site. It names one of the keys the server holds: `default` is
+  `OPENROUTER_API_KEY`, and `LLM_KEYS` holds the others by name. A key's prefix tells its provider: `sk-ant-` is
+  Anthropic and `sk-or-` OpenRouter; a key with neither is not offered, and the start-up log names it, never its value.
+  Each provider's model is a constant (`src/common/llm-keys.ts`): `claude-haiku-5-5` on Anthropic,
+  `anthropic/claude-haiku-5.5` on OpenRouter. With no row saved, `llm.key` is `default`, so the AI calls OpenRouter.
+- A model is built at start for each key. Each chat answer reads `llm.key` once, at its start, and uses that key's model
+  for every call of the answer, so a change at the minute's check never mixes two keys in one answer. A Judgement does
+  the same, and the same-event choice and the topics reading ([Interests](#interests)) read it for each call. Saving a name the server has no key for is refused (the
+  allowed values, and the setting's check for `default` without `OPENROUTER_API_KEY`); a saved name whose key a
+  later Release removed reads as `default` and logs a warning.
+- Without the key `llm.key` names, the server still starts, and the endpoint answers 503. `.env.example` says how to set
+  up a key. Give each key a credit or spend limit at its provider as well: the daily limit bounds what one User spends,
+  not what all of them do.
+- Each model call logs one line with the key's name, its provider and the outcome, such as
+  `Model call with key default on OpenRouter: answered, finish stop`, or `failed` with its cause: never a key's value or
+  what was sent.
 - **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
   call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
-  written in each call, reasoning included (4,000). A failed model call is not retried.
+  written in each call, reasoning included (4,000). A call that fails with 429 or 529 is sent once more, within the time,
+  unless the 429 says a spend limit is reached; no other failure is retried.
 
 The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
-- **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
-  OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
+- **The model port** (`ModelPort` in `model-port.ts`, over `adapter.ts`): the one place that talks to the model, with a
+  model for each key built by `MODEL_FACTORY`. The server's factory makes the Anthropic model (`anthropicModel`: a cache
+  breakpoint at the end of the system prompt, the chat's conversation cached automatically, effort `medium`, no sampling
+  parameters, as `MODEL_CACHE` says) or the OpenRouter one (`openRouterModel`); the tests give `startApp` the scripted
+  fake below for every key, or a `modelFactory` of their own.
 - **Tools** (`tools/`, `free-time/` for the 공강 tools, `gathering/` for `planMeal`, and `lookup/` for `findWay`): each is a zod schema of its
   input and a plain function calling this server's services, made with `defineTool` (`feature.ts`). It is given the
   signed-in User's id, the time of the request, and the request context. A tool answers only
@@ -2644,7 +2663,8 @@ User or the model receives, never the prompt's wording or a real model's prose.
 ### Benchmark
 
 `pnpm eval` puts the cases of `eval/cases/` to the real model through the real server code and records what the model
-did (P19). It calls OpenRouter with the team's key in `.env`, so it costs credit: it never runs in `pnpm test` or CI,
+did (P19). It calls the provider `--provider` names with the team's key in `.env` (`OPENROUTER_API_KEY`, or
+`ANTHROPIC_API_KEY` for `anthropic`), never the key `llm.key` names, so it costs credit: it never runs in `pnpm test` or CI,
 which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`) on the integration tests'
 machinery: Docker, fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and the clock fixed at
 2026-10-21 (수) 14:05 in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User, with the daily
@@ -2658,8 +2678,10 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 
 | Flag                                                   | Left out                                                                          |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `--model <OpenRouter id>`                              | `ASSISTANT_MODEL` in `.env`                                                       |
-| `--temperature`, `--top-p`                             | the provider's default (the server passes none)                                   |
+| `--provider <openrouter \| anthropic>`                 | `openrouter`                                                                      |
+| `--cache <breakpoints \| auto \| off>`                 | `MODEL_CACHE` in `.env`, else `breakpoints`; OpenRouter's requests cache nothing  |
+| `--model <the provider's id>`                          | the provider's model in `src/common/llm-keys.ts`                                  |
+| `--temperature`, `--top-p`                             | the provider's default (the server passes none); refused on `anthropic`           |
 | `--max-steps`, `--timeout <ms>`, `--max-output-tokens` | its `ASSISTANT_*` setting in `.env`, else its default in `src/common/settings.ts` |
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
@@ -2668,7 +2690,7 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
-saved run and OpenRouter's listed prices, and asks before it starts. It then starts the Vitest project with the
+saved run and the provider's listed prices (Anthropic's table in `eval/cost.ts`, or OpenRouter's list), and asks before it starts. It then starts the Vitest project with the
 options as JSON in `EVAL_RUN`. The sampling settings are applied by the recorder's model wrapper, and the limits are
 the settings given to `startApp`. During the run the tokens the model reported are summed, and the run stops past the
 budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
@@ -3451,11 +3473,11 @@ characters, trimmed), the topics they were read as, and when it was kept. A User
 normalised form equals an interest the User already has keep nothing new and answer that interest.
 
 **Topics.** A topic is one Korean word, compared normalised: lowercased, without spaces, and without a leading `#`, so
-`#채용 `, `채 용` and `채용` are one topic, as `AI` and `ai` are. `TopicsReader` asks the Assistant's model
-(`ASSISTANT_MODEL`, with the Assistant's time and output limits) for one to five topics of a text, giving it the
+`#채용 `, `채 용` and `채용` are one topic, as `AI` and `ai` are. `TopicsReader` asks the model of the key `llm.key`
+names, read for each text ([Assistant](#assistant)), with the Assistant's time and output limits, for one to five topics of a text, giving it the
 topics already in use (those of the watched interests, events and Quests, at most 200, the most used first) so that
-the same meaning gets the same word: 채용박람회, 커리어 페어 and 기업 설명회 are all 채용. Without `OPENROUTER_API_KEY`,
-on a failed call, or on an answer of another shape, it gives none and never throws. An interest whose words get none
+the same meaning gets the same word: 채용박람회, 커리어 페어 and 기업 설명회 are all 채용. Without the key `llm.key`
+names, on a failed call, or on an answer of another shape, it gives none and never throws. An interest whose words get none
 is kept with its normalised words as its one topic.
 
 **The topics step.** `TopicsStep.run()` takes up to 10 published Global Events that have not ended and up to 10

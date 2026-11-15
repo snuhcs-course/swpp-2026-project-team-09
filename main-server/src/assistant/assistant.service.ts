@@ -9,6 +9,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -38,26 +39,17 @@ import { ShuttleService } from '../shuttle/shuttle.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
 import { TutorialService } from '../tutorial/tutorial.service.js';
 import { UsersService } from '../users/users.service.js';
-import {
-  causeOf,
-  type Model,
-  MODEL_PORT,
-  RUN_OBSERVER,
-  runFeature,
-  type RunLimits,
-  type RunObserver,
-} from './adapter.js';
+import { causeOf, RUN_OBSERVER, runFeature, type RunLimits, type RunObserver } from './adapter.js';
 import { chatAssistant, type ChatAssistantServices } from './chat/chat-assistant.js';
 import { NO_CONTEXT, type RequestContext } from './dto/answer.dto.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
 import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
+import { ModelPort } from './model-port.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
-import { FriendLookupService } from './lookup/friend.service.js';
-import { MenuLookupService } from './lookup/menu.service.js';
-import { WayService } from './lookup/way.service.js';
+import { LookupServices } from './lookup/lookup-services.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
@@ -72,12 +64,11 @@ export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
   // The chat, the same for an app that draws answers on the map, and for one that also draws a day's events.
   private readonly chats: Record<ChatKind, Feature>;
-  private readonly keyConfigured: boolean;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
 
   constructor(
-    @Inject(MODEL_PORT) private readonly model: Model,
+    private readonly models: ModelPort,
     @Inject(REDIS) private readonly redis: Redis,
     @Inject(CLOCK) private readonly clock: Clock,
     settings: ConfigService<Settings, true>,
@@ -97,9 +88,7 @@ export class AssistantService {
     users: UsersService,
     tutorial: TutorialService,
     plans: PlanAnswersService,
-    ways: WayService,
-    menuLookups: MenuLookupService,
-    friendLookups: FriendLookupService,
+    lookups: LookupServices,
     interests: InterestsService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
@@ -116,13 +105,10 @@ export class AssistantService {
       library: { catalogue, freeTime, friends, quests, users, arrival: { days, places: placeLookup, travel }, enabled },
       tutorial,
       plans,
-      ways,
-      menuLookups,
-      friendLookups,
+      lookups,
       interests,
     };
     this.chats = chatsOf(services);
-    this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
     this.limits = limitsOf(settings);
   }
@@ -135,8 +121,10 @@ export class AssistantService {
     capabilities: readonly ClientCapability[] = [],
     context: RequestContext = NO_CONTEXT,
   ): Promise<AssistantReplyDto> {
-    if (!this.keyConfigured) {
-      this.logger.warn('The Assistant did not answer: no OpenRouter key is configured');
+    // Read once, so that every model call of this answer uses the same key, whatever a minute's check reloads meanwhile.
+    const chosen = this.models.chosen();
+    if (chosen === null) {
+      this.logger.warn('The Assistant did not answer: the server has no key by the name llm.key gives');
       throw unavailable();
     }
     const now = this.clock.now();
@@ -148,7 +136,7 @@ export class AssistantService {
     const latest = messages.slice(-HISTORY_MAX);
     try {
       const reply = await runFeature(
-        this.model,
+        chosen.model,
         this.chatFor(capabilities),
         { userId, now, capabilities, context },
         latest,

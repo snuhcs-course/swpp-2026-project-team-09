@@ -8,9 +8,9 @@ import { FRIEND_LOOKUP } from '@/api/mock/data/friend-lookup';
 import { MENU_LOOKUP } from '@/api/mock/data/menu-lookup';
 import { WAY_LOOKUP } from '@/api/mock/data/way-lookup';
 import { isLookup } from '@/api/server/lookup-answers';
-import late from '../fixtures/way-lookups/late.json';
-import leave from '../fixtures/way-lookups/leave.json';
-import shuttle from '../fixtures/way-lookups/shuttle.json';
+import late from '@/api/mock/data/way-lookups/late.json';
+import leave from '@/api/mock/data/way-lookups/leave.json';
+import shuttle from '@/api/mock/data/way-lookups/shuttle.json';
 
 const { chips: _chips, ...withoutChips } = WAY_LOOKUP;
 

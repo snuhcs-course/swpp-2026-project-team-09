@@ -29,6 +29,7 @@ export interface AnswerDrawing {
   // The Plan's own points: its people, its pick, its next Class, and its flags. The camera keeps these in view when
   // not every point fits.
   own: LatLng[];
+  // The destination: the pick, or without one the next item.
   pick: LatLng | null;
   // The people the scene draws, the User included.
   userIds: string[];

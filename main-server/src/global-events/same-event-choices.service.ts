@@ -3,11 +3,12 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { type Model, MODEL_PORT } from '../assistant/adapter.js';
+import { ModelPort } from '../assistant/model-port.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { Settings } from '../common/settings.js';
 import { type Judgement, JudgementOutcome, type Prisma, SameEventOutcome } from '../generated/prisma/client.js';
@@ -22,7 +23,7 @@ import {
   WITH_OWN_SESSIONS,
 } from './judgements.service.js';
 import { matchAmong, candidatesLeft, sameEventCandidates, type ComparedSession } from './same-event.js';
-import { chooseSameEvent, type SessionToCompare } from './same-event-choice.js';
+import { chooseSameEvent, failedChoice, type SameEventChoices, type SessionToCompare } from './same-event-choice.js';
 import { awaitsComparison } from './session-settling.js';
 import { verdictOf } from './session-verdict.js';
 
@@ -63,7 +64,7 @@ export class SameEventChoicesService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(MODEL_PORT) private readonly model: Model,
+    private readonly models: ModelPort,
     @Inject(CLOCK) private readonly clock: Clock,
     settings: ConfigService<Settings, true>,
   ) {
@@ -156,11 +157,16 @@ export class SameEventChoicesService {
       include: WITH_OWN_SESSIONS,
     });
     const event = post.sessions[0]?.globalEvent;
-    const { choices, modelId } = await chooseSameEvent(
-      this.model,
-      { post: { title: event?.title ?? '', text: event?.description ?? '' }, source: post.source, sessions },
-      this.limits,
-    );
+    // Read for each call: the choice is one call.
+    const chosen = this.models.chosen();
+    const { choices, modelId } =
+      chosen === null
+        ? noKeyChoices(sessions)
+        : await chooseSameEvent(
+            chosen.model,
+            { post: { title: event?.title ?? '', text: event?.description ?? '' }, source: post.source, sessions },
+            this.limits,
+          );
     const answeredAt = this.clock.now();
     for (const { startsAt, outcome, globalEventId, reason, failure } of choices) {
       if (failure !== null) {
@@ -174,4 +180,10 @@ export class SameEventChoicesService {
       });
     }
   }
+}
+
+// A call that cannot be made, the server having no key by the name llm.key gives, fails as a failed call does.
+function noKeyChoices(sessions: SessionToCompare[]): SameEventChoices {
+  const failure = 'The server has no key by the name llm.key gives';
+  return { choices: sessions.map(({ startsAt }) => failedChoice(startsAt, failure)), modelId: null };
 }
