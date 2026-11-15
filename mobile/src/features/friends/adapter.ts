@@ -62,8 +62,9 @@ export function walkWords(position: Position | undefined): string {
 // while that is not known, and "위치 꺼짐" for a Friend the User cannot see. The age of an old position goes after it
 // where the line is shown (`withAge`).
 //
-// "수업 중" and "이동 중" are not worked out here, nor "공강": C's FriendView and its three Friend levels redefine a
-// Friend's status in this iteration, and the line takes more from there. Until then the app says no more than the
+// "수업 중" and "이동 중" are not worked out here, nor "공강": the FriendView and the three Friend levels of package C
+// (`.scratch/iteration-4/agentic-map-work-split.md`) redefine a Friend's status in this iteration, and the line takes
+// more from there. Until then the app says no more than the
 // main server's positions say, so a Friend in class is never "공강".
 function knownLine(visible: boolean, position: Position | undefined): string {
   if (!visible) {

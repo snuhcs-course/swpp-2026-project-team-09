@@ -101,14 +101,16 @@ export class LocationSharingService {
   async visiblePositions(viewerId: string): Promise<SeenPositionDto[]> {
     const [seen, own] = await Promise.all([this.visibility.visibleTo(viewerId), this.positions.read([viewerId])]);
     const from = this.nearestPlace(own.get(viewerId));
-    return [...seen.values()].map((position) => {
+    const answered: SeenPositionDto[] = [];
+    for (const position of seen.values()) {
       const near = position.level === 'building' ? this.places.byId(position.placeId) : this.nearestPlace(position);
-      // Each position is the viewer's own, made for this answer.
-      return Object.assign(position, {
+      answered.push({
+        ...position,
         nearPlace: near?.name ?? null,
         walkMinutes: from === null || near === null ? null : this.walkMinutes(from.id, near.id),
       });
-    });
+    }
+    return answered;
   }
 
   // Also when the User's session ends, so that the phone's last position does not linger.
@@ -129,8 +131,9 @@ export class LocationSharingService {
       const seconds = this.travel.walkingSeconds(fromPlaceId, toPlaceId);
       return Number.isFinite(seconds) ? shownMinutes(seconds) : null;
     } catch {
-      // A Place added after the table was last built has no row in it (ADR 0010): its walk is not known, and the
-      // positions are still answered.
+      // The walking table throws for a Place it has no row for. ADR 0010 makes that an error, which the test of the
+      // committed table catches for the seeded Places; a Place an Administrator adds before the table is rebuilt
+      // would still have none. Here it leaves one walk unknown rather than fail every Friend's positions.
       return null;
     }
   }
