@@ -26,6 +26,7 @@ const FRIENDS = [
     name: '김민준',
     department: '경영학과',
     level: 'exact',
+    seen: 'exact',
     sharing: true,
     visible: false,
     askedOff: false,

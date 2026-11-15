@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type Ref, useEffect, useEffectEvent, useImperativeHandle, useState } from 'react';
@@ -16,19 +17,31 @@ import { useMotionAllowed } from '@/hooks/use-reduce-motion';
 import { centreOf } from './campus';
 import { PlainLine } from './plain-route';
 import { Thing } from './plain-things';
-import { type CameraRules, fit, inView, lowestZoom, type Point, sameCamera, settle, type Size } from './projection';
+import {
+  type CameraRules,
+  fit,
+  inView,
+  lowestZoom,
+  outerRules,
+  type Point,
+  sameCamera,
+  settle,
+  type Size,
+} from './projection';
 import type { MapCamera, MapHandle, MapMarker, MapProps } from './types';
 
-// The camera of the plain ground, by the rules of `MapHandle`. It jumps: an animated move ends where it would.
+// The camera of the plain ground, by the rules of `MapHandle`, out to `outerZoom` where it is given. It jumps: an
+// animated move ends where it would.
 function useCamera(
-  rules: CameraRules,
+  fitRules: CameraRules,
   ref: Ref<MapHandle> | undefined,
-  { onCameraIdle, onFitZoom }: Pick<MapProps, 'onCameraIdle' | 'onFitZoom'>,
+  { onCameraIdle, onFitZoom, outerZoom }: Pick<MapProps, 'onCameraIdle' | 'onFitZoom' | 'outerZoom'>,
 ): MapCamera {
+  const rules = outerRules(fitRules, outerZoom);
   const [asked, setAsked] = useState<MapCamera>({ centre: centreOf(rules.bounds), zoom: rules.minZoom });
   const camera = settle(asked, rules);
   const { centre, zoom } = camera;
-  const fitZoom = lowestZoom(rules);
+  const fitZoom = lowestZoom(fitRules);
   const report = useEffectEvent(() => {
     onCameraIdle?.(camera);
   });
@@ -78,7 +91,8 @@ export function PlainMap(props: MapProps): ReactElement {
   // Until the ground is laid out it counts as large as the window, so that it is ready at once.
   const [laidOut, setLaidOut] = useState<Size | null>(null);
   const size = laidOut ?? { width: window.width, height: window.height };
-  const camera = useCamera({ bounds, fitBounds, minZoom, maxZoom, size }, ref, { onCameraIdle, onFitZoom });
+  const cameraProps = { onCameraIdle, onFitZoom, outerZoom: props.outerZoom };
+  const camera = useCamera({ bounds, fitBounds, minZoom, maxZoom, size }, ref, cameraProps);
   const gliding = useMotionAllowed();
   const place = (position: LatLng): Point => inView(position, camera, size);
   return (

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -33,8 +34,9 @@ export interface PartyActions {
   // Joins an Open Quest and shows 내 파티, or asks to join an Approval one.
   join: (post: PostView) => Promise<void>;
   withdraw: (requestId: string) => Promise<void>;
-  accept: (invitation: QuestInvitation) => Promise<void>;
-  decline: (invitation: QuestInvitation) => Promise<void>;
+  // Each gives whether the main server did it.
+  accept: (invitation: QuestInvitation) => Promise<boolean>;
+  decline: (invitation: QuestInvitation) => Promise<boolean>;
 }
 
 // The 파티 tab at 내 파티, closing the screens above it.
@@ -77,12 +79,8 @@ export function usePartyActions(): PartyActions {
       withdraw: async (requestId) => {
         await run(() => apiClient.withdrawJoinRequest(requestId), null);
       },
-      accept: async ({ id }) => {
-        await run(() => apiClient.acceptInvitation(id), '파티에 참여했어요');
-      },
-      decline: async ({ id }) => {
-        await run(() => apiClient.declineInvitation(id), null);
-      },
+      accept: ({ id }) => run(() => apiClient.acceptInvitation(id), '파티에 참여했어요'),
+      decline: ({ id }) => run(() => apiClient.declineInvitation(id), null),
     };
   }, [queryClient, showToast]);
 }

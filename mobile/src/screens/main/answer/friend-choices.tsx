@@ -9,7 +9,7 @@ import { type ReactElement, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';
 import { ChoiceGrid, choiceRowsWithin, color, type GridChoice, text } from '@/design-system';
-import { metresBetween } from '@/features/assistant/answer-marks';
+import { metresBetween } from '@/features/assistant/answer-drawing';
 import { givenName } from '@/features/map/short-name';
 
 interface FriendChoice {
@@ -27,6 +27,8 @@ interface FriendChoicesProps {
   // The picked Restaurant of the Plan on screen, which the distances are measured to; null without a Plan.
   pick: LatLng | null;
   disabled: boolean;
+  // The Friend whose add is on its way, chosen here or on the map: their cell says so.
+  pending: string | null;
   onChoose: (userId: string) => void;
   // How high the card's Plan may stand before the card scrolls, null until it is known.
   room: number | null;
@@ -75,8 +77,11 @@ function valueOf({ friend: { position, minutesOld }, metres }: Measured): string
   return metres === null ? '' : distanceWords(metres);
 }
 
-function cellOf(measured: Measured): GridChoice {
+function cellOf(measured: Measured, pending: string | null): GridChoice {
   const { friend, given } = measured;
+  if (friend.id === pending) {
+    return { key: friend.id, name: given, value: '넣는 중', faint: false, label: `${given}, 넣는 중`, busy: true };
+  }
   const value = valueOf(measured);
   const label = [given, value, '추가'].filter((part) => part !== '').join(', ');
   return { key: friend.id, name: given, value, faint: friend.position === null, label };
@@ -84,7 +89,7 @@ function cellOf(measured: Measured): GridChoice {
 
 // The card's list of Friends to add to the Plan, opened by "＋ 같이": each by the name their face and chip show, and
 // how far they are from the picked Restaurant, nearest first, in as many whole rows as the card has room for.
-export function FriendChoices({ friends, pick, disabled, onChoose, room }: FriendChoicesProps): ReactElement {
+export function FriendChoices({ friends, pick, disabled, pending, onChoose, room }: FriendChoicesProps): ReactElement {
   const [top, setTop] = useState<number | null>(null);
   const cells = friends
     .map((friend) => ({
@@ -93,7 +98,7 @@ export function FriendChoices({ friends, pick, disabled, onChoose, room }: Frien
       metres: friend.position === null || pick === null ? null : metresBetween(pick, friend.position),
     }))
     .toSorted(byNearness)
-    .map((measured) => cellOf(measured));
+    .map((measured) => cellOf(measured, pending));
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
