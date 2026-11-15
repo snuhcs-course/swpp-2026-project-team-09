@@ -2,27 +2,37 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { checkBooking, clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
+import { checkBooking, clockOfMinutes, lastBookableDate, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { type Catalogue, KWANJEONG_PLACE_NUMBER, type LibrarySpace, statusOf } from '../assistant/library/catalogue.js';
 import { bookKeyOf } from '../assistant/library/library-card.js';
+import { windowOpening } from '../assistant/library/window-opening.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type Settings } from '../common/settings.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
-import { JoinPolicy, Prisma } from '../generated/prisma/client.js';
+import { JoinPolicy, Prisma, RoomRequest, RoomRequestStatus } from '../generated/prisma/client.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
+import { type CreatedInvitation, InvitationsService } from '../quests/invitations.service.js';
 import { QuestsService } from '../quests/quests.service.js';
+import { conflict } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
 import { type CreateRoomRequestDto, type RoomInboxDto, type RoomRequestDto } from './dto/room-request.dto.js';
 import {
   ACTIVE,
+  type HeldRequest,
+  isIn,
+  notInStatus,
+  overRefusal,
   refusedFor,
   refusedWith,
   requestNotFound,
+  type Settling,
+  settleOwn,
   spaceOf,
   startsAtOf,
   toRoomRequestDto,
@@ -34,6 +44,8 @@ import { ROOM_CATALOGUE, RoomRequestSync } from './room-request-sync.service.js'
 // booking party made for it, or the other Holders of a Quest the requester holds.
 
 const BOOKING_OFF = '관정도서관 예약은 공식 사이트나 앱에서 해 주세요.';
+
+const STRANGER = '친구가 아닌 사람이 있어요';
 
 interface Slot {
   date: string;
@@ -47,6 +59,7 @@ export class RoomRequestsService {
     private readonly prisma: PrismaService,
     private readonly sync: RoomRequestSync,
     private readonly quests: QuestsService,
+    private readonly invitations: InvitationsService,
     private readonly friends: FriendsService,
     private readonly users: UsersService,
     private readonly signals: SignalsService,
@@ -72,13 +85,14 @@ export class RoomRequestsService {
     }
     const people = 1 + companionIds.length;
     const now = this.clock.now();
-    const checked = checkBooking(this.catalogue, space, { ...asked, useDesc: body.useDesc, people }, now);
+    const waits = asked.waitsForWindow === true;
+    const checked = checkBooking(this.catalogue, space, { ...asked, useDesc: body.useDesc, people }, now, waits);
     if ('refusals' in checked) {
       throw refusedWith(checked.refusals);
     }
     const { date, start, minutes, useDesc } = checked.booking;
     const slot = { date, start, minutes };
-    const id = await this.prisma.$transaction(async (tx) => {
+    const made = await this.prisma.$transaction(async (tx) => {
       const questId =
         'questId' in body
           ? await this.sameHolders(userId, body.questId, companionIds, tx)
@@ -92,14 +106,17 @@ export class RoomRequestsService {
           spaceId: space.id,
           startsAt: startsAtOf(date, start),
           useDesc,
-          consents: { create: companionIds.map((companion) => ({ userId: companion })) },
+          // By the Quests' clock, from which the answers' deadline is counted.
+          createdAt: now,
+          consents: { create: companionIds.map((companion) => ({ userId: companion, askedAt: now })) },
         },
       });
-      return request.id;
+      return request;
     });
     this.signals.send(companionIds, 'quests-changed');
     this.signals.send([userId, ...companionIds], 'room-requests-changed');
-    return this.read(userId, id);
+    this.tellWhenWindowOpens(space, made, now);
+    return this.read(userId, made.id);
   }
 
   async read(userId: string, requestId: string): Promise<RoomRequestDto> {
@@ -123,7 +140,7 @@ export class RoomRequestsService {
   async inbox(userId: string): Promise<RoomInboxDto> {
     await this.sync.expireDue(this.clock.now());
     const consents = await this.prisma.roomConsent.findMany({
-      where: { userId, request: { status: { in: ACTIVE } } },
+      where: { userId, OR: [{ consented: null }, { consented: true }], request: { status: { in: ACTIVE } } },
       include: { request: { include: { requester: { select: { id: true, name: true } } } } },
       orderBy: { request: { createdAt: 'asc' } },
     });
@@ -146,9 +163,29 @@ export class RoomRequestsService {
     };
   }
 
+  // One more Friend into a gathering request made for booking: asked for consent and invited into the booking party,
+  // whose capacity grows when the people no longer fit. A Friend who went out before is asked again.
+  async askOneMore(userId: string, requestId: string, friendId: string): Promise<RoomRequestDto> {
+    await this.sync.expireDue(this.clock.now());
+    const invitation = await settleOwn(this.sync, userId, requestId, (settling, held) =>
+      this.addCompanion(settling, held, friendId),
+    );
+    this.invitations.announce(invitation);
+    return this.read(userId, requestId);
+  }
+
   // The notice is shown once.
   async seen(userId: string, noticeId: string): Promise<void> {
     await this.prisma.roomNotice.deleteMany({ where: { id: noticeId, userId } });
+  }
+
+  // The requester of a request made before the booking window holds its date is told when the window opens.
+  private tellWhenWindowOpens(space: LibrarySpace, request: RoomRequest, now: Date): void {
+    const { requesterId, questId, date, start, minutes } = request;
+    if (date > lastBookableDate(space, now)) {
+      const told = { kind: 'room-window', questId, date, start, minutes } as const;
+      this.sync.tellNow(requesterId, told, windowOpening(space, date));
+    }
   }
 
   // A room sector this User may book.
@@ -173,8 +210,43 @@ export class RoomRequestsService {
   private async refuseStrangers(userId: string, friendIds: readonly string[]): Promise<void> {
     const friends = new Set((await this.friends.listFriends(userId)).map(({ id }) => id));
     if (friendIds.some((friendId) => !friends.has(friendId))) {
-      throw refusedFor('friendIds', '친구가 아닌 사람이 있어요');
+      throw refusedFor('friendIds', STRANGER);
     }
+  }
+
+  private async addCompanion(settling: Settling, held: HeldRequest, friendId: string): Promise<CreatedInvitation> {
+    if (held.status !== RoomRequestStatus.gathering) {
+      return notInStatus(held.status);
+    }
+    if (!held.madeForBooking) {
+      throw conflict('ROOM_REQUEST_OF_QUEST', 'Invite the Friend into the Quest: a Holder who joins is asked.');
+    }
+    const { tx } = settling;
+    if (!(await this.friends.areFriends(held.requesterId, friendId, tx))) {
+      throw refusedFor('friendId', STRANGER);
+    }
+    if (held.consents.some((consent) => consent.userId === friendId && isIn(consent))) {
+      throw refusedFor('friendId', '이미 함께 가자고 한 친구예요');
+    }
+    const people = 2 + held.consents.filter(isIn).length;
+    const refusal = overRefusal(this.catalogue, this.catalogue.byId.get(held.spaceId), people);
+    if (refusal !== null) {
+      throw refusedWith([refusal]);
+    }
+    // Asked now: their answer's deadline is counted from it, so a Friend asked late is not out at once.
+    const asked = { consented: null, answeredAt: null, askedAt: this.clock.now() };
+    await tx.roomConsent.upsert({
+      where: { requestId_userId: { requestId: held.id, userId: friendId } },
+      create: { requestId: held.id, userId: friendId, askedAt: asked.askedAt },
+      update: asked,
+    });
+    await tx.quest.updateMany({ where: { id: held.questId, capacity: { lt: people } }, data: { capacity: people } });
+    const invitation = await this.invitations.create(held.requesterId, held.questId, friendId, tx);
+    this.sync.tell(settling, {
+      ...held,
+      consents: [...held.consents, { requestId: held.id, userId: friendId, ...asked }],
+    });
+    return invitation;
   }
 
   // The existing Quest, once locked, still held by the requester and the companions counted.
