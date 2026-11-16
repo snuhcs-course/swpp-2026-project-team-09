@@ -14,7 +14,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
-import { ask, postAssistantMessages } from './assistant.js';
+import { ask, NOTHING_SHOWN, postAssistantMessages } from './assistant.js';
 import { type PublishedEvent, publishedAmong } from './global-event-lists.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
@@ -182,6 +182,7 @@ describe('showGlobalEvents', () => {
       proposal: null,
       answer: null,
       lookup: null,
+      refusal: null,
     });
     expect(model.toolResults().at(-1)).toEqual({ result: 'shown', ids: [second.id, first.id] });
   });
@@ -202,7 +203,7 @@ describe('showGlobalEvents', () => {
       { role: 'user', text: '7월 5일은?' },
     ]);
 
-    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null, answer: null, lookup: null });
+    expect(response.body).toEqual({ text: '…', ...NOTHING_SHOWN });
     expect(model.toolResults().at(-1)).toEqual(
       expect.stringContaining(`No tool returned these ids in this message: ${other.id}`),
     );

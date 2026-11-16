@@ -12,6 +12,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -85,6 +86,8 @@ export interface Lobby {
   profile: Profile;
   // Whether the User's Master Switch is on.
   masterSwitch: boolean;
+  // Whether the app has asked the User, before they turned the Master Switch off, whether to show the building instead.
+  masterOffAsked: boolean;
 }
 
 // The fields of the profile that change; a field left out stays. `null` empties the admission year and the 소속, and an
@@ -110,11 +113,25 @@ export interface Friend {
   department: string;
   // The User's own end of this friendship.
   level: FriendLevel;
+  // What the two see of each other by the friendship: the lower of the two ends, the Timetable while either Master
+  // Switch is off. The only word on the Friend's own end.
+  seen: FriendLevel;
   // Whether the User's end is above the Timetable.
   sharing: boolean;
   // Whether the User can see the Friend on the map now, never why not.
   visible: boolean;
+  // Whether the app has asked the User about this Friend: before turning location off for them, and after a Plan with
+  // them became a Quest. Each is asked once.
+  askedOff: boolean;
+  askedPlan: boolean;
+  // The Friend's own Friend ID, "7KX2M9QD", and when the two became Friends, in ISO 8601 with Korea's offset. Left
+  // out until the main server sends them.
+  friendId?: string;
+  friendsSince?: string;
 }
+
+// The two moments the app asks a User about a Friend at, which the main server keeps.
+export type AskedMoment = 'off' | 'plan';
 
 // Another User as a Friend ID, a Friend Request or an Invite Link names them.
 export interface UserSummary {
@@ -160,9 +177,11 @@ export interface PositionUpload {
   measuredAt: string;
 }
 
-// The answer to an upload: a position off the Campus Boundary was not kept, and the User is not shared.
+// The answer to an upload: a position off the Campus Boundary, or inside one of the User's Private Zones, was not
+// kept, and the User is not shared. A main server older than the zones leaves `privateZone` out: false.
 export interface PositionKept {
   offCampus: boolean;
+  privateZone?: boolean;
 }
 
 export type Presence = 'free' | 'class' | 'moving' | 'off';

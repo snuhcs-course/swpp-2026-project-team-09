@@ -3,12 +3,13 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { z } from 'zod';
-import { type PlanInput } from '../src/assistant/dto/answer.dto.js';
+import { type AnswerReply, type PlanInput } from '../src/assistant/dto/answer.dto.js';
 import { type QuestDto } from '../src/quests/dto/quest.dto.js';
 import { type TestUser } from './friends.js';
 import { MealPlanStage, type Named } from './meal-plan.js';
@@ -64,8 +65,11 @@ export interface WorkedQuest {
 }
 
 export class BetterPlanStage extends MealPlanStage {
-  getBetter(user: TestUser, questId: string): request.Test {
-    return withAccessToken(request(this.app.getHttpServer()).get(`/plans/${questId}/better`), user.accessToken);
+  getBetter(user: TestUser, questId: string, query: Record<string, string> = {}): request.Test {
+    return withAccessToken(
+      request(this.app.getHttpServer()).get(`/plans/${questId}/better`).query(query),
+      user.accessToken,
+    );
   }
 
   changePlan(user: TestUser, questId: string, body: object): request.Test {
@@ -95,14 +99,42 @@ export class BetterPlanStage extends MealPlanStage {
     const jieun = await this.friend('지은');
     await this.classAt(jieun, '11:00', '12:15', '8');
     await this.classAt(jieun, '13:00', '14:15', '8');
+    const input = inputOf(date, [this.asker.id, minsu.id, jieun.id]);
+    return this.madeWith({ input, planId: '학생회관식당', startAt: time(date, '12:33'), location: null }, minsu, jieun);
+  }
+
+  // Board n13 on that day, asked at 12:40 without the location permission: the asker's Class in 301동 ended at 10:15,
+  // 민수's in 302동 and 지은's in 8동 end at 12:40, and 지은 has another there at 13:30. The Quest is made, as the app
+  // makes it, of the first Plan of the answer, planned from the assumed origin; 민수 accepts and 지은 declines.
+  async declinedWithoutLocation(date: string): Promise<WorkedQuest> {
+    await this.asking(date, '12:40');
+    await this.menusOn(date, RESTAURANTS);
+    await this.classAt(this.asker, '09:00', '10:15', '301');
+    const minsu = await this.friend('민수');
+    await this.classAt(minsu, '11:00', '12:40', '302');
+    const jieun = await this.friend('지은');
+    await this.classAt(jieun, '11:00', '12:40', '8');
+    await this.classAt(jieun, '13:30', '14:45', '8');
+    const input = inputOf(date, [this.asker.id, minsu.id, jieun.id]);
+    const missing = { location: null, locationMissing: 'permission' };
+    const answered = await withAccessToken(
+      request(this.app.getHttpServer()).post('/assistant/answers'),
+      this.asker.accessToken,
+    ).send({ input, ...missing });
+    const [plan] = z.custom<AnswerReply>().parse(answered.body).plans;
+    if (plan === undefined) {
+      throw new Error(`The answer has no Plan: ${JSON.stringify(answered.body)}`);
+    }
+    const worked = await this.madeWith({ input, planId: plan.id, startAt: plan.startAt, ...missing }, minsu, jieun);
+    await answerInvitation(this.app, worked.jieun, worked.jieunInvitation, 'decline');
+    return worked;
+  }
+
+  // The Quest the asker makes of the making at POST /plans, with 민수 accepting and 지은 invited.
+  private async madeWith(making: object, minsu: Named, jieun: Named): Promise<WorkedQuest> {
     const response = await withAccessToken(request(this.app.getHttpServer()).post('/plans'), this.asker.accessToken)
       .set('Idempotency-Key', randomUUID())
-      .send({
-        input: inputOf(date, [this.asker.id, minsu.id, jieun.id]),
-        planId: '학생회관식당',
-        startAt: time(date, '12:33'),
-        location: null,
-      });
+      .send(making);
     if (response.status !== 201) {
       throw new Error(`Making the Quest answered ${response.status}: ${JSON.stringify(response.body)}`);
     }

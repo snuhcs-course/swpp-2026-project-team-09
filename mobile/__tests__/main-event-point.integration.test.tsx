@@ -3,6 +3,7 @@
  *
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -34,9 +35,12 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
+// The events the User starred, which are the ones the everyday map keeps.
+const STARRED: ListedGlobalEvent = { ...CAREER, favorite: true };
+
 // Today at 15:00, where the career talk is.
 const TALK: ListedGlobalEvent = {
-  ...CAREER,
+  ...STARRED,
   id: 'e4',
   title: '컴퓨터공학부 취업 특강',
   startsAt: '2026-10-06T06:00:00.000Z',
@@ -64,35 +68,38 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// A row of the card of the merged marker, a Favorite Event's with ★.
 function listed(title: string): ReturnType<typeof screen.queryByRole> {
-  return screen.queryByRole('button', { name: title });
+  return screen.queryByRole('button', { name: `즐겨찾기 · ${title}` });
 }
 
 describe('Global Events at one point', () => {
   it('are one marker with their count on its pin, read with where they are and the count', async () => {
-    answerEvents(server, { events: [CAREER, TALK] });
+    answerEvents(server, { events: [STARRED, TALK] });
     const user = await openMain();
-    expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:dot');
+    // The star's pin at every level, with the count.
+    expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:pin:2:starred');
 
     await zoomIn(user, 2);
 
-    expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:pin:2');
+    expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:pin:2:starred');
     expect(screen.queryByRole('button', { name: EVENT })).toBeNull();
     expect(screen.queryByRole('button', { name: '공식 행사 · 컴퓨터공학부 취업 특강' })).toBeNull();
   });
 
   it('keep the marker of a single event when only one is there', async () => {
-    answerEvents(server, { events: [CAREER] });
+    answerEvents(server, { events: [STARRED] });
     await openMain();
 
-    expect(lookOf(EVENT)).toBe('official:dot');
+    // Its pin at every level, with the count of the two 파티 that gather for it.
+    expect(lookOf(EVENT)).toBe('official:pin:2:starred');
     expect(screen.queryByRole('button', { name: /^공식 행사 \d+개/u })).toBeNull();
   });
 });
 
 describe("the merged marker's card", () => {
   it('lists the events at the point, and one chosen opens its own card with its actions', async () => {
-    answerEvents(server, { events: [CAREER, TALK] });
+    answerEvents(server, { events: [STARRED, TALK] });
     const user = await openMain();
 
     await press(user, TWO_AT_ONE_POINT);
@@ -102,13 +109,13 @@ describe("the merged marker's card", () => {
     expect(listed('AI 커리어 설명회')).toBeVisible();
     expect(listed('컴퓨터공학부 취업 특강')).toBeVisible();
 
-    await press(user, 'AI 커리어 설명회');
+    await press(user, '즐겨찾기 · AI 커리어 설명회');
 
     expect(screen.getByRole('header', { name: 'AI 커리어 설명회' })).toBeVisible();
     expect(screen.getByText('오늘 18:00–20:00')).toBeVisible();
     expect(screen.getAllByTestId('map-card')).toHaveLength(1);
     // The merged marker stands for the chosen event, and looks selected.
-    expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:dot:selected');
+    expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:pin:2:starred:selected');
 
     await press(user, '같이 갈 사람 찾기');
     await pass(500);
@@ -119,20 +126,20 @@ describe("the merged marker's card", () => {
 
 describe('the merged marker, as events come and go', () => {
   it('stays the same marker with its card open, and gives way to the event that is left', async () => {
-    answerEvents(server, { events: [CAREER, TALK] });
+    answerEvents(server, { events: [STARRED, TALK] });
     const user = await openMain();
     await socketServer((socket) => {
       socket.accept();
     });
     await press(user, TWO_AT_ONE_POINT);
 
-    server.on('GET /global-events', { status: 200, body: [CAREER, TALK, SEMINAR] });
+    server.on('GET /global-events', { status: 200, body: [STARRED, TALK, SEMINAR] });
     await socketServer((socket) => {
       socket.send('global-events-changed');
     });
 
     // The same marker: its card stays open, and lists the new event.
-    expect(lookOf(THREE_AT_ONE_POINT)).toBe('official:dot:selected');
+    expect(lookOf(THREE_AT_ONE_POINT)).toBe('official:pin:3:starred:selected');
     expect(screen.getByText('공식 행사 3개')).toBeVisible();
     expect(listed('딥러닝 세미나')).toBeVisible();
 
@@ -141,15 +148,16 @@ describe('the merged marker, as events come and go', () => {
       socket.send('global-events-changed');
     });
 
-    expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:dot:selected');
+    expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:pin:2:starred:selected');
     expect(listed('AI 커리어 설명회')).toBeNull();
 
-    server.on('GET /global-events', { status: 200, body: [CAREER] });
+    server.on('GET /global-events', { status: 200, body: [STARRED] });
     await socketServer((socket) => {
       socket.send('global-events-changed');
     });
 
-    expect(lookOf(EVENT)).toBe('official:dot');
+    // Its pin at every level, with the count of the two 파티 that gather for it.
+    expect(lookOf(EVENT)).toBe('official:pin:2:starred');
     expect(screen.queryByRole('button', { name: /^공식 행사 \d+개/u })).toBeNull();
   });
 });

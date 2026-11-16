@@ -13,7 +13,16 @@ import type { Friend, FriendStatus } from '@/api/types';
 import { keptPositions, minutesOld, toFriendRequestViews, toFriendViews, withAge } from '@/features/friends/adapter';
 
 function friend(visible: boolean, more: Partial<Friend> = {}): Friend {
-  return { ...MIN_JUN, level: 'exact', sharing: true, visible, ...more };
+  return {
+    ...MIN_JUN,
+    level: 'exact',
+    seen: 'exact',
+    sharing: true,
+    visible,
+    askedOff: false,
+    askedPlan: false,
+    ...more,
+  };
 }
 
 const LIBRARY: FriendStatus = {
@@ -66,13 +75,22 @@ describe('toFriendViews of one Friend seen', () => {
       minutesOld: null,
       visible: true,
       level: 'exact',
+      seen: 'exact',
       sharing: true,
+      askedOff: false,
     });
   });
 
   it("a Friend seen at the building → the User's own level for them, and the Place's point", () => {
     const [view] = toFriendViews([friend(true, { level: 'building' })], [measured('min-jun', MINUTE)], [], NOW);
     expect(view).toMatchObject({ level: 'building', position: HALL });
+  });
+
+  it('a Friend with a Friend ID and the date the two became Friends → both on the view', () => {
+    // The two fields package C adds to GET /friends (P02 ticket 18).
+    const more = { friendId: 'KM4J8QZA', friendsSince: '2026-10-03T14:05:00+09:00' };
+    const [view] = toFriendViews([friend(true, more)], [], [], NOW);
+    expect(view).toMatchObject(more);
   });
 
   it('a Friend seen with an old position → its age in minutes', () => {

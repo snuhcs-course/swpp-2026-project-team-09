@@ -8,11 +8,17 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
+import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
+import type { DroppedPlace, PlanPart } from './plan-part-types';
+import type { RefusalOffer, WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
+import type { MealWindow, WithRelax } from './relax-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
@@ -27,9 +33,11 @@ export interface CardReference {
 }
 
 // What the app tells the main server it can draw, with every chat request: library cards. An app without it (the
-// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map.
+// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map, the study
+// spaces of the visible area it sends as `viewport`, a meet ("민수랑 만나고 싶어"), and the answers of events,
+// recruiting parties, and a new party ("오늘 볼 만한 거 있어?", "배드민턴 칠 사람").
 export const CLIENT_CAPABILITIES = ['library'] as const;
-export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer'] as const;
+export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer', 'area', 'meet', 'events'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -138,57 +146,7 @@ export interface RestaurantCard {
   };
 }
 
-// A space of 관정도서관 as the server's catalogue gives it: a reading room's sector, booked by the seat, or a room
-// sector (a group study room or a media room), booked by the room. `seatNos` are the sector's rooms, or an equipment
-// group's when one was asked for. `mapImage` is the size of a reading room's seat map in image pixels. `hours` are
-// "HH:MM" to "HH:MM" and the minutes are the booking's shortest, longest and step.
-export interface LibrarySpace {
-  id: string;
-  name: string;
-  floor: number;
-  placeNumber: string;
-  unit: 'seat' | 'room';
-  roomNo: number;
-  sectorNo: number;
-  seatNos: number[];
-  mapImage: { width: number; height: number } | null;
-  hours: { open: string; close: string };
-  minMinutes: number;
-  maxMinutes: number;
-  stepMinutes: number;
-}
-
-export type LibraryAction = 'book' | 'cancel' | 'return' | 'seats' | 'myBookings';
-
-// A library card of a reply, filled by the server from its catalogue and the tool's checked input. It carries no live
-// data: the phone reads the seats, the rooms and the User's bookings from the library itself. `key` encodes the card,
-// such as "book:7F-7A-zone2:2026-11-04:1700:60", and is its id in the history sent back. `date` is "YYYY-MM-DD" and
-// `start` "HH:MM". `seat` is a seat's label or a room's name. `useDescOptions` are given when `useDesc` is not set,
-// `pledge` is a media room's 서약서, and `notes` the site's rules for this kind. A cancel or a return card names the
-// booking it looks for in `target`, and a space only when one was asked for. 내 예약 reads from `date` to `until`
-// when the server sets both. Every field is sent, null when unset.
-export interface LibraryCardData {
-  key: string;
-  action: LibraryAction;
-  space: LibrarySpace | null;
-  date: string | null;
-  start: string | null;
-  minutes: number | null;
-  seat: string | null;
-  useDesc: string | null;
-  useDescOptions: string[];
-  pledge: string | null;
-  companions: { friendId: string; name: string }[];
-  questId: string | null;
-  notes: string[];
-  until: string | null;
-  target: { date?: string; spaceId?: string; start?: string } | null;
-}
-
-export interface LibraryCard {
-  kind: 'library';
-  library: LibraryCardData;
-}
+export type { LibraryAction, LibraryCard, LibraryCardData, LibrarySpace } from './library-card-types';
 
 export type ChatCard = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 
@@ -221,7 +179,7 @@ export function referenceOf(card: ChatCard): CardReference {
 // Times are Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
 
 // What the app knows when the User asks, each part null when it does not know it.
-export interface RequestContext {
+export interface RequestContext extends WithLocationMissing {
   location: LatLng | null;
   // The visible map area.
   viewport: { south: number; west: number; north: number; east: number } | null;
@@ -233,7 +191,7 @@ export interface RequestContext {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput;
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
 
 export interface MealInput {
   kind: 'meal';
@@ -243,7 +201,7 @@ export interface MealInput {
   // Everyone of the plan, the asker first.
   people: PlanPerson[];
   // What the User fixed on the time band or in words.
-  window: { from: string | null; until: string | null };
+  window: MealWindow;
   // The Place the User fixed.
   placeId: string | null;
 }
@@ -268,7 +226,7 @@ export type PersonConstraint =
   | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
   | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
 
-export interface AnswerReply {
+export interface AnswerReply extends WithMissing {
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];
@@ -276,11 +234,13 @@ export interface AnswerReply {
   plans: Plan[];
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
-  noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
+  noPlan: ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } & WithRelax) | null;
 }
 
-export interface ConditionChip {
-  kind: 'origin' | 'until' | 'person';
+// `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
+// of "이 근처".
+export interface ConditionChip extends WithMark {
+  kind: 'origin' | 'from' | 'until' | 'person' | 'area' | 'what';
   text: string;
   userId: string | null;
 }
@@ -292,11 +252,6 @@ export interface PlacePoint {
   label: string;
   latitude: number;
   longitude: number;
-}
-
-export interface DroppedPlace {
-  place: PlacePoint;
-  reason: string;
 }
 
 export interface Plan {
@@ -316,7 +271,7 @@ export interface Plan {
   parts: PlanPart[];
   // The Sub Quests of the Quest the plan becomes.
   subQuests: { at: string; placeId: string; title: string }[];
-  // At most two.
+  // At most three.
   lines: AnswerLine[];
   basis: string[];
   scene: MapScene;
@@ -328,21 +283,6 @@ export interface Plan {
   candidates?: { userId: string; name: string; line: string }[];
 }
 
-export interface PlanPart {
-  userId: string;
-  name: string;
-  me: boolean;
-  // Null when the position is unknown.
-  origin: { place: PlacePoint; basis: 'timetable' | 'location' | 'chosen' } | null;
-  leaveAt: string | null;
-  walkMinutes: number | null;
-  // Null when nothing follows.
-  leaveBy: string | null;
-  next: { startAt: string; place: PlacePoint | null } | null;
-  // How they travel, absent for a walk.
-  mode?: 'walk' | 'shuttle';
-}
-
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {
   people: {
@@ -351,10 +291,12 @@ export interface MapScene {
     me: boolean;
     // At 'building', the point of the Place the person is in.
     at: LatLng;
+    // `building`: a Friend at the building they are in, as the Friend view shows them.
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
-  places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
+  // `order`: the number a place carries in a list (1, 2, 3), as a day's Classes or the Tutorial Quests in order.
+  places: { place: PlacePoint; role: PlaceRole; tag: string | null; order?: number }[];
   // `mode` is absent for a walk.
   routes: {
     userId: string;
@@ -364,13 +306,15 @@ export interface MapScene {
     minutes: number;
     mode?: 'walk' | 'shuttle';
   }[];
-  flags: { at: LatLng; text: string; role: FlagRole }[];
+  // `placeId`: the Place an `away` flag points to.
+  flags: { at: LatLng; text: string; role: FlagRole; placeId?: string }[];
 }
 
 export interface TimeBand {
   range: { startAt: string; endAt: string };
   now: string;
-  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string }[] }[];
+  // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
+  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
   startAt: string;
   endAt: string;
   text: string;
@@ -379,11 +323,16 @@ export interface TimeBand {
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
 // cards in the order shown, the Proposal it made, or null, and the answer or the Lookup it drew on the map, or null. A
 // main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
-export interface AssistantReply {
+export interface AssistantReply extends WithRefusal {
   text: string;
   mapButtons: MapLayer[];
   cards: ChatCard[];
   proposal: QuestProposal | null;
   answer?: AnswerReply | null;
   lookup?: Lookup | null;
+  // Buttons under the text of a reply that draws nothing, such as a Tutorial quest's 가는 길 보기 (P01-14).
+  offers?: ReplyOffer[];
 }
+
+// A button under a reply's text, sent as the User's words.
+export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }>;

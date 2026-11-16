@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput } from '@/api/assistant-types';
@@ -24,14 +25,14 @@ interface Band {
 }
 
 const MINUTE_MS = 60_000;
-const STEP_MS = BAND_STEP_MINUTES * MINUTE_MS;
+export const STEP_MS = BAND_STEP_MINUTES * MINUTE_MS;
 const LEAST_MS = BAND_LEAST_MINUTES * MINUTE_MS;
 
-function msOf(time: string): number {
+export function msOf(time: string): number {
   return new Date(time).getTime();
 }
 
-function clockAt(ms: number): string {
+export function clockAt(ms: number): string {
   return koreaClock(new Date(ms).toISOString());
 }
 

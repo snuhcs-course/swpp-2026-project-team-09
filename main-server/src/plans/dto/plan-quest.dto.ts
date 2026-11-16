@@ -2,10 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { planInputSchema, recalculationSchema } from '../../assistant/dto/answer.dto.js';
+import { type AskLevelDto } from '../../friends/dto/friends.dto.js';
 import { type QuestDto } from '../../quests/dto/quest.dto.js';
 
 const PLAN_ID_MAX = 200;
@@ -17,6 +20,8 @@ export const planQuestSchema = z.strictObject({
   planId: z.string().min(1).max(PLAN_ID_MAX),
   startAt: z.iso.datetime({ offset: true }),
   location: recalculationSchema.shape.location,
+  // Why `location` is null; an app before P02-13 sends none.
+  locationMissing: recalculationSchema.shape.locationMissing,
 });
 
 export type PlanQuestBody = z.infer<typeof planQuestSchema>;
@@ -26,4 +31,7 @@ export interface PlanQuestDto {
   quest: QuestDto;
   // One for each Friend of the Plan, in the Plan's order.
   invitations: { id: string; userId: string }[];
+  // The Friends of the Plan whom the asker was not yet asked about after a Plan became a Quest, in the Plan's order,
+  // for the app to ask how much each usually sees.
+  askLevels: AskLevelDto[];
 }

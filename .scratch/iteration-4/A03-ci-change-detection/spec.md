@@ -45,7 +45,8 @@ A path reaches the jobs that read it. The map lives in the script, one `case` ar
 Every job does its work when:
 
 - the run was not started by a push, or the ref is not a branch (a Release tag);
-- the branch name has no slash, or is itself `<line>/Main` (`main`, `development`, the iteration branches);
+- the branch name has no slash (`main`, `development`);
+- the branch is itself `<line>/Main`, unless the merge queue's run of the same commit has passed (below);
 - `origin/<line>/Main` is missing or unreadable, or the two share no history;
 - the commit is already on a Main of any line, on `main` or on `development`;
 - any git command fails, a changed path matches no rule, the job key is unknown, or the script fails in any way.
@@ -56,7 +57,11 @@ A run on a branch whose name ends in `/Main` is no longer cancelled by the next 
 
 The script's bats tests and its shellcheck run in the `release-script` job, whose check name stays.
 
-The workflow also answers a merge queue now: `merge_group` is a trigger, and pushes to the queue's own branches (`gh-readonly-queue/**`) start no push run. Tags are named in the push trigger, because a branch filter alone would leave them out and the Release gate waits for the tag's run. Nothing changes until the ruleset requires a queue; a `merge_group` run does every job, since its event is not `push`.
+The workflow also answers a merge queue: `merge_group` is a trigger, and pushes to the queue's own branches (`gh-readonly-queue/**`) start no push run. Tags are named in the push trigger, because a branch filter alone would leave them out and the Release gate waits for the tag's run. A `merge_group` run does every job, since its event is not `push`.
+
+The queue moves Main to the very commit it tested, so Main's push would check that commit a second time. A job of a push to a `<line>/Main` therefore asks GitHub (`gh api`, with the run's token and `actions: read`) whether a `merge_group` run of CI completed with success on exactly that commit. If one did, the job skips its work; if none did, or GitHub does not answer, it does its work. A direct push to a Main, which no queue run tested, runs everything.
+
+A pull request's own push checks less than the queue does. Each job its changes reach runs its lint, format and type checks and only the unit tests (`pnpm test:unit`; `changes.sh` answers `tests=unit`). The app's unit tests run in the `mobile` job, so the app's four test shards do nothing there, and flow-tests runs no tests. A change to CI's own files runs every test on the branch too. The merge queue runs every job with every test, so an integration or flow failure is first seen there: the entry leaves the queue and the ones behind it are rebuilt.
 
 ## Decisions
 
@@ -67,20 +72,19 @@ The workflow also answers a merge queue now: `merge_group` is a trigger, and pus
 
 ## What changes for the team
 
-- A pull request no longer re-tests areas it does not touch. A documents-only pull request finishes in about a minute in quiet hours.
+- A pull request no longer re-tests areas it does not touch on its branch, and runs only the unit tests there. A documents-only pull request finishes in about a minute in quiet hours. In the merge queue every job runs with every test, and Main's push after the queue's merge does no work again.
+- Before a pull request is ready, the integration and end-to-end test files it touches are run locally, since its own push runs only the unit tests.
 - A broken Main no longer blocks pull requests that do not touch the broken area. Main's own full run shows the break.
 - Main's own runs are no longer cancelled by the next merge; the run of a merge that lands during a Main run waits for that run to finish.
 - A dependency across folders that the map does not know is missed on a branch and shows on Main's next run. When a new test reads a file outside its package, its rule is added to the map.
 
 ## Risks
 
-- The Release gate (`.github/release/release.sh`, `summarize_jobs`) and the Dev Server gate (`infra/deploy/deploy.sh`, `summarize_checks`) count a check as passed when any CI run of the commit passed it. A commit already on a Main of any line, on `main` or on `development` runs every job wherever it is pushed; tags and those branches always run every job; and squash merges make every Main commit new. So a gated commit has a run with skipped work only when a procedure is broken: a working branch's commit pushed straight onto a Main by someone who can bypass the ruleset, `development` moved to a commit that is not on Main, or a Release tag put on such a commit. In those cases the branch's earlier run, with skipped work, could pass a check that the full run failed.
+- A working branch's run and a Main's push run may skip work, and the commits they share with the gates' commits are many: the queue's commit is the Main commit itself. So the Release gate (`.github/release/release.sh`, `read_ci_jobs`) reads only the runs that always do every job: the tag's own, the merge queue's, and those of pushes to `main` or `development`. The Dev Server gate (`infra/deploy/deploy.sh`, `gate_on_ci`) does the same for its check runs, telling them apart by their check suites' branches: the merge queue's (`gh-readonly-queue/…`), `development` and `main`. Neither has to tell a skipped Main run from a full one, because neither reads Main's runs. One success of a check among the runs read is enough, as before.
 - Inputs no path covers change only what a working job sees, and Main's full runs see them: repository variables, the published `app-version.json`, floating base images and action majors, and the unpinned `shellcheck` and `bats` from apt.
 
 ## Out of Scope
 
 - Requiring a merge queue in the ruleset (ticket 02). It waits for a decision.
-- Packing the app's four test shards by time (ticket 03). It waits for a decision.
 - More app test shards, or splitting main-server's tests: both rename required checks, which needs the ruleset changed.
-- Changes to the Release and Dev Server gates.
 - `scripts/test/*.integration.test.ts`, which no CI job runs today.

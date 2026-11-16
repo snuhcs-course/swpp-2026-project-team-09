@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -16,7 +17,7 @@ import { startFresh } from './support/mocks';
 import { askMainServer, PHONE_NOW } from './support/server';
 
 // Favorite Events against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea: the ☆ on the 행사 tab's
-// cards and on the map's card of one event, and the map keeping only today's and the Favorite Events.
+// cards and on the map's card of one event, and the everyday map keeping only the Favorite Events.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -107,30 +108,30 @@ describe('the ☆ on the 행사 tab', () => {
 });
 
 describe('the events on the map', () => {
-  it("keeps today's event and a Favorite Event, the star's pin at every level, and none of the others", async () => {
+  it("keeps a Favorite Event as the star's pin at every level, and no other event, today's included", async () => {
     answerEvents(server, { events: [CAREER, { ...MAJOR, favorite: true }, BOOK_TALK] });
     await openMain();
 
-    expect(lookOf(EVENT)).toBe('official:dot');
     expect(lookOf(MAJOR_PIN)).toBe('official:pin:starred');
+    expect(screen.queryByRole('button', { name: EVENT })).toBeNull();
     expect(screen.queryByRole('button', { name: BOOK_TALK_PIN })).toBeNull();
   });
 
-  it("has the ☆ on one event's card, and starring there puts the event's star pin on the map", async () => {
-    answerEvents(server);
+  it("has the ☆ on a Favorite Event's card, and clearing it there takes the event off the map", async () => {
+    answerEvents(server, { events: [{ ...CAREER, favorite: true }] });
     answerFavorite(CAREER.id, { status: 204 });
     const user = await openMain();
     await press(user, EVENT);
+    expect(screen.getByRole('button', { name: FAVORITE })).toBeSelected();
 
     await user.press(screen.getByRole('button', { name: FAVORITE }));
     await pass(500);
 
-    expect(screen.getByRole('button', { name: FAVORITE })).toBeSelected();
-    // With the count of the 파티 that gather for it, as before.
-    expect(lookOf(EVENT)).toBe('official:pin:2:starred:selected');
+    expect(server.received(`DELETE /global-events/${CAREER.id}/favorite`)).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: EVENT })).toBeNull();
   });
 
-  it("marks a Favorite Event's row with ★ on a grouped pin's card, which has no ☆ of its own", async () => {
+  it("marks the Favorite Events' rows with ★ on a grouped pin's card, which has no ☆ of its own", async () => {
     // Today at 15:00, where the career talk is.
     const talk = {
       ...CAREER,
@@ -139,14 +140,14 @@ describe('the events on the map', () => {
       startsAt: '2026-10-06T06:00:00.000Z',
       favorite: true,
     };
-    answerEvents(server, { events: [CAREER, talk] });
+    answerEvents(server, { events: [{ ...CAREER, favorite: true }, talk] });
     const user = await openMain();
     expect(lookOf(TWO_AT_ONE_POINT)).toBe('official:pin:2:starred');
 
     await press(user, TWO_AT_ONE_POINT);
 
     expect(screen.getByRole('button', { name: `${FAVORITE} · ${talk.title}` })).toBeVisible();
-    expect(screen.getByRole('button', { name: CAREER.title })).toBeVisible();
+    expect(screen.getByRole('button', { name: `${FAVORITE} · ${CAREER.title}` })).toBeVisible();
     expect(screen.queryByRole('button', { name: FAVORITE })).toBeNull();
   });
 });

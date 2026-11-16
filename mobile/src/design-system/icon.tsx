@@ -62,8 +62,6 @@ const ICONS = {
   ],
   info: [{ circle: [12, 12, 9] }, { path: 'M12 11v6' }, { path: 'M12 7.5v.5' }],
   alert: [{ path: 'M12 3 2 20h20z' }, { path: 'M12 10v4' }, { path: 'M12 17v.5' }],
-  // A New Event's mark on the map.
-  exclamation: [{ path: 'M12 5v9' }, { path: 'M12 18.5v.5' }],
   layers: [{ path: 'M12 3 3 8l9 5 9-5z' }, { path: 'M3 13l9 5 9-5' }, { path: 'M3 17.5l9 5 9-5' }],
   // Not one of the design system's: the `Onboarding` frame draws it on the field that opens a list.
   chevronDown: [{ path: 'M6 9l6 6 6-6' }],
@@ -84,11 +82,6 @@ const ICONS = {
   // Not the design system's: the `Profile` frame draws them on the timetable versions' 이름 바꾸기 and 이 시간표 삭제.
   pencil: [{ path: 'M4 20h4L19 9l-4-4L4 16z' }],
   trash: [{ path: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3' }],
-  // Not the design system's: the `Events` frame draws it on `AI 매칭` and on the button of the requests.
-  sparkle: [
-    { path: 'M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z' },
-    { path: 'M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z' },
-  ],
   // Not the design system's: the `Party` frame draws them on the button that pauses and plays the official banner.
   pause: [{ path: 'M9 5v14' }, { path: 'M15 5v14' }],
   play: [{ path: 'M7 5l12 7-12 7z' }],

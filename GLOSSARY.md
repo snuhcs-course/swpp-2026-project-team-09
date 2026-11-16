@@ -15,7 +15,7 @@ The app signed in on one phone for a User. A User has at most one: signing in on
 _Avoid_: Login, device
 
 **Administrator**:
-A team member who signs in to the admin site to confirm, publish and create Global Events, and to make two Users Friends or end their friendship when setting up demo accounts. An Administrator is not a User, even when the same person also uses the app.
+A team member who signs in to the admin site to confirm, publish and create Global Events, to make two Users Friends or end their friendship when setting up demo accounts, and to change the global settings, such as the AI's key. An Administrator is not a User, even when the same person also uses the app.
 _Avoid_: Organizer, manager
 
 **Avatar**:
@@ -61,10 +61,6 @@ _Avoid_: Pending event, unverified event
 
 **Publication Route**:
 How a Global Event came to be published: by an Administrator, by the rules that read its post, or by a Judgement. Only Administrators see it.
-
-**New Event**:
-A Global Event published less than 24 hours ago that this User has not yet checked. It is relative to the User: the same Global Event can be new to one User and checked by another. A User checks it by closing its card on the map, or by starring it anywhere; seeing it in the 행사 tab or in chat does not. An event published before the main server recorded the time is never a New Event, however it was published. The map marks it with an exclamation mark.
-_Avoid_: Recent event, unread event
 
 **Favorite Event**:
 A Global Event this User starred (☆). It is relative to the User, kept on the main server, and stays on the User's map with a star until it ends.

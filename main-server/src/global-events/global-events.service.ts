@@ -13,6 +13,8 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
@@ -43,7 +45,7 @@ import {
 import { type RankedSearch, rankedSearchCounts, rankedSearchHits } from './ranked-search.js';
 
 // An event has ended once its end has passed or, without an end, once the day of its start has passed in Asia/Seoul.
-function notEnded(now: Date): Prisma.GlobalEventWhereInput {
+export function notEnded(now: Date): Prisma.GlobalEventWhereInput {
   return { OR: [{ endsAt: { gt: now } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(now) } }] };
 }
 
@@ -231,7 +233,7 @@ export class GlobalEventsService {
     return this.change(id, version, [GlobalEventState.draft, GlobalEventState.published], fields);
   }
 
-  // Records when it was published, which the apps read for a New Event. An edit later keeps it.
+  // Records when it was published (`publishedAt`), which the lists give. An edit later keeps it.
   publish(id: string, version: number): Promise<GlobalEventDetailDto> {
     return this.change(id, version, [GlobalEventState.draft], {
       state: GlobalEventState.published,

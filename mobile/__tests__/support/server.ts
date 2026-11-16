@@ -9,6 +9,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
@@ -54,8 +55,11 @@ export const MIN_JUN: Friend = {
   name: '김민준',
   department: '컴퓨터공학부',
   level: 'exact',
+  seen: 'exact',
   sharing: true,
   visible: true,
+  askedOff: false,
+  askedPlan: false,
 };
 
 export const JI_WOO: Friend = {
@@ -63,8 +67,11 @@ export const JI_WOO: Friend = {
   name: '서지우',
   department: '경영학과',
   level: 'exact',
+  seen: 'timetable',
   sharing: true,
   visible: false,
+  askedOff: false,
+  askedPlan: false,
 };
 
 export const LIBRARY_POSITION: Position = {
@@ -86,6 +93,7 @@ export const LOBBY: Lobby = {
     affiliation: null,
   },
   masterSwitch: false,
+  masterOffAsked: false,
 };
 
 // The moment the tests that ask the main server run at, by the phone's clock: 6 October 2026, 13:00 in Korea. Give it
@@ -141,7 +149,6 @@ export function answerMainScreen(server: FakeServer): void {
   server.on('GET /quest-invitations', { status: 200, body: [] });
   server.on('GET /global-events', { status: 200, body: [] });
   server.on('GET /quests/recruiting', { status: 200, body: [] });
-  server.on('GET /matching-requests', { status: 200, body: [] });
 }
 
 // --- What waits for the User, which 알림 lists ---

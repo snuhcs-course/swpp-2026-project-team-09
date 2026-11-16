@@ -1,0 +1,87 @@
+{
+  "kind": "way",
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "62-1동에서",
+      "userId": null
+    }
+  ],
+  "lines": [
+    [
+      {
+        "text": "셔틀은 지금 다니지 않아요 (평일 8–21시)",
+        "strong": false
+      }
+    ],
+    [
+      {
+        "text": "(관악사)학부 생활관(919동)까지 걸어서 ",
+        "strong": false
+      },
+      {
+        "text": "11분",
+        "strong": true
+      },
+      {
+        "text": "이에요",
+        "strong": false
+      }
+    ]
+  ],
+  "basis": ["62-1동 → (관악사)학부 생활관(919동) 걸어서 11분 · 앱의 도보표"],
+  "scene": {
+    "people": [
+      {
+        "userId": "3af64490-a774-4341-a74b-055fc553a1bc",
+        "name": "유상",
+        "me": true,
+        "at": {
+          "latitude": 37.45903,
+          "longitude": 126.95247
+        },
+        "source": "exact",
+        "tag": "나"
+      }
+    ],
+    "places": [
+      {
+        "place": {
+          "placeId": "1c5519cf-9daf-52e2-8700-7ee18e3e6a8f",
+          "label": "(관악사)학부 생활관(919동)",
+          "latitude": 37.46306,
+          "longitude": 126.95872
+        },
+        "role": "pick",
+        "tag": "(관악사)학부 생활관(919동)"
+      }
+    ],
+    "routes": [
+      {
+        "userId": "3af64490-a774-4341-a74b-055fc553a1bc",
+        "role": "me",
+        "from": {
+          "latitude": 37.45903,
+          "longitude": 126.95247
+        },
+        "to": {
+          "latitude": 37.46306,
+          "longitude": 126.95872
+        },
+        "minutes": 11
+      }
+    ],
+    "flags": [
+      {
+        "at": {
+          "latitude": 37.46306,
+          "longitude": 126.95872
+        },
+        "text": "22:21 도착 · 919동",
+        "role": "place"
+      }
+    ]
+  },
+  "band": null,
+  "actions": []
+}

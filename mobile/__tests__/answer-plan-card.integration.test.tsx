@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -130,7 +131,8 @@ function stepParts(): string[] {
 }
 
 // Partitions: more than one Plan without a drag, and with a drag kept. The rule: the design review of 2026-11-15, the
-// count in a box 36 wide always right before "›", and the arrows 40 across like the buttons, their touch still 48.
+// count in a box 44 wide (room for "11/11") always right before "›", and the arrows 40 across like the buttons, their
+// touch still 48.
 describe('the last row', () => {
   it('puts the count right before "›" for an answer of five Plans', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -149,14 +151,14 @@ describe('the last row', () => {
     expect(within(card().getByTestId('plan-steps')).getByRole('button', { name: '되돌리기' })).toBeVisible();
   });
 
-  it('draws the arrows 40 across with a touch of 48, and the count in a box 36 wide', async () => {
+  it('draws the arrows 40 across with a touch of 48, and the count in a box 44 wide', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
     for (const name of [BEFORE, NEXT]) {
       expect(card().getByRole('button', { name })).toHaveStyle({ width: 40, height: 40 });
       expect(card().getByRole('button', { name })).toHaveProp('hitSlop', 4);
     }
-    expect(card().getByTestId('plan-count')).toHaveStyle({ width: 36, textAlign: 'center' });
+    expect(card().getByTestId('plan-count')).toHaveStyle({ width: 44, textAlign: 'center' });
   });
 });
 
@@ -225,7 +227,7 @@ describe("a swipe over the answer's lines", () => {
   it('changes nothing while a recalculation is on its way', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE, afterMs: 3000 });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
 
     await swipe('plan-swipe', { fromX: 200, dx: -60 });
 

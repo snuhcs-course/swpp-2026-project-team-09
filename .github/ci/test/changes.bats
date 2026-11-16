@@ -26,8 +26,19 @@ setup() {
   export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
   export GIT_AUTHOR_NAME=Tester GIT_AUTHOR_EMAIL=tester@example.com
   export GIT_COMMITTER_NAME=Tester GIT_COMMITTER_EMAIL=tester@example.com
-  export GITHUB_EVENT_NAME=push
+  export GITHUB_EVENT_NAME=push GITHUB_REPOSITORY=snuhcs-course/swpp-2026-project-team-09
   unset GITHUB_OUTPUT GITHUB_REF GITHUB_REF_NAME GITHUB_SHA
+  serve_queue_runs
+  mkdir -p "$BATS_TEST_TMPDIR/bin"
+  cat >"$BATS_TEST_TMPDIR/bin/gh" <<'FAKE'
+#!/usr/bin/env bash
+echo "gh $*" >>"$FAKE_GH_CALLS"
+[[ $1 == api && $2 == "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?"* ]] || exit 2
+[[ -z ${FAKE_GH_STATUS:-} ]] || exit "$FAKE_GH_STATUS"
+cat "$FAKE_QUEUE_RUNS"
+FAKE
+  chmod +x "$BATS_TEST_TMPDIR/bin/gh"
+  export PATH="$BATS_TEST_TMPDIR/bin:$PATH" FAKE_GH_CALLS="$BATS_TEST_TMPDIR/gh-calls"
   ORIGIN=$BATS_TEST_TMPDIR/origin.git
   WORK=$BATS_TEST_TMPDIR/work
   CLONE=$BATS_TEST_TMPDIR/clone
@@ -37,6 +48,19 @@ setup() {
   git -C "$WORK" remote add origin "$ORIGIN"
   commit README.md mobile/App.tsx main-server/src/main.ts
   publish 4.0/Main
+}
+
+# Makes the faked gh list these merge_group runs, each "status conclusion [sha]", of the checked-out commit when the sha
+# is left out.
+serve_queue_runs() {
+  local run state conclusion sha
+  for run in "$@"; do
+    read -r state conclusion sha <<<"$run"
+    jq -n --arg state "$state" --arg conclusion "$conclusion" --arg sha "${sha:-$GITHUB_SHA}" \
+      '{event: "merge_group", head_sha: $sha, status: $state,
+        conclusion: (if $conclusion == "null" then null else $conclusion end)}'
+  done | jq -s '{total_count: length, workflow_runs: .}' >"$BATS_TEST_TMPDIR/queue-runs.json"
+  export FAKE_QUEUE_RUNS="$BATS_TEST_TMPDIR/queue-runs.json"
 }
 
 # Commits a change to each path in the working repository: a line added, the file made if missing.
@@ -99,19 +123,26 @@ push_documents_branch() {
 }
 
 # The jobs whose work runs on the checkout, in KEYS's order, as the script decides for each key with these extra
-# variables. Fails unless each decision is exactly one run= line.
+# variables. Fails unless each decision is exactly a run= line and a tests= line.
 jobs_that_run() {
   local key output="$BATS_TEST_TMPDIR/output" ran=''
   for key in "${KEYS[@]}"; do
     rm -f "$output"
     env "$@" GITHUB_OUTPUT="$output" "$CHANGES" "$key" >/dev/null
     case $(cat "$output") in
-      run=true) ran+=" $key" ;;
-      run=false) ;;
+      run=true$'\n'tests=unit | run=true$'\n'tests=all) ran+=" $key" ;;
+      run=false$'\n'tests=unit | run=false$'\n'tests=all) ;;
       *) return 1 ;;
     esac
   done
   echo "${ran# }"
+}
+
+# The tests the script gives a job on the checkout, unit or all, with these extra variables.
+tests_given() {
+  rm -f "$BATS_TEST_TMPDIR/output"
+  env "$@" GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile >/dev/null
+  sed -n 's/^tests=//p' "$BATS_TEST_TMPDIR/output"
 }
 
 # Fails, showing both lists, unless exactly these jobs do their work, with these extra variables.
@@ -129,7 +160,9 @@ expect_full_run() {
   expect_jobs "$EVERY" "$@"
   run --separate-stderr env "$@" GITHUB_OUTPUT="$BATS_TEST_TMPDIR/full-run" "$CHANGES" mobile
   [ "$status" -eq 0 ]
-  [[ "$output" == "The job mobile does its work: $reason"* ]] || { echo "$output" >&2; false; }
+  [[ "$output" == "The job mobile does its work: $reason"* ||
+    "$output" == "The job mobile does its work, with unit tests only, as on every pull request's push: $reason"* ]] ||
+    { echo "$output" >&2; false; }
 }
 
 # The jobs that a change to this path alone reaches through the script's map, in KEYS's order.
@@ -259,7 +292,44 @@ EOF
 
 # --- The output ---------------------------------------------------------------------------------------------------
 
-@test "a skip appends exactly one run=false after what GITHUB_OUTPUT held, prints one notice and exits 0" {
+@test "a working branch's push gives unit tests only, unless CI's own files changed" {
+  push_documents_branch 4.0/documents
+  [ "$(tests_given)" = unit ]
+
+  branch_off 4.0/ci
+  commit .github/ci/changes.sh
+  publish 4.0/ci
+  ci_checkout 4.0/ci
+  [ "$(tests_given)" = all ]
+  branch_off 4.0/workflow
+  commit .github/workflows/ci.yml
+  publish 4.0/workflow
+  ci_checkout 4.0/workflow
+  [ "$(tests_given)" = all ]
+}
+
+@test "a Main, a branch without a slash, a tag, the merge queue and any other event give every test" {
+  ci_checkout 4.0/Main
+  [ "$(tests_given)" = all ]
+  [ "$(tests_given FAKE_GH_STATUS=1)" = all ]
+  push_documents_branch development
+  [ "$(tests_given)" = all ]
+  push_documents_branch 4.0/documents
+  [ "$(tests_given GITHUB_REF=refs/tags/snunow/all/26.11.15-1 GITHUB_REF_NAME=snunow/all/26.11.15-1)" = all ]
+  [ "$(tests_given GITHUB_EVENT_NAME=merge_group)" = all ]
+  [ "$(tests_given GITHUB_EVENT_NAME=workflow_dispatch)" = all ]
+}
+
+@test "a working branch whose decision fails safe still gives unit tests, and a failure inside the script every test" {
+  push_documents_branch 4.0/documents
+  [ "$(tests_given GITHUB_SHA=0123456789abcdef0123456789abcdef01234567)" = unit ]
+  mkdir "$BATS_TEST_TMPDIR/broken-mktemp"
+  printf '#!/bin/sh\nexit 1\n' >"$BATS_TEST_TMPDIR/broken-mktemp/mktemp"
+  chmod +x "$BATS_TEST_TMPDIR/broken-mktemp/mktemp"
+  [ "$(tests_given PATH="$BATS_TEST_TMPDIR/broken-mktemp:$PATH")" = all ]
+}
+
+@test "a skip appends exactly one run=false and tests= after what GITHUB_OUTPUT held, prints one notice and exits 0" {
   local base
   push_documents_branch 4.0/documents
   base=$(git rev-parse origin/4.0/Main)
@@ -269,12 +339,12 @@ EOF
   run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
 
   [ "$status" -eq 0 ]
-  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'earlier=1\nrun=false' ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'earlier=1\nrun=false\ntests=unit' ]
   [ "$output" = "::notice::The job mobile skips its work: 4.0/documents changes 1 path since it left origin/4.0/Main at \
 ${base:0:7}, and none reaches it" ]
 }
 
-@test "a run appends exactly one run=true and prints one plain line that says why" {
+@test "a run appends exactly one run=true and tests= and prints one plain line that says why" {
   local base
   branch_off 4.0/app
   commit mobile/App.tsx docs/guide.md
@@ -285,12 +355,12 @@ ${base:0:7}, and none reaches it" ]
   run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile-tests
 
   [ "$status" -eq 0 ]
-  [ "$(cat "$BATS_TEST_TMPDIR/output")" = run=true ]
-  [ "$output" = "The job mobile-tests does its work: mobile/App.tsx reaches it; 4.0/app changes 2 paths since it left \
-origin/4.0/Main at ${base:0:7}" ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=unit' ]
+  [ "$output" = "The job mobile-tests does its work, with unit tests only, as on every pull request's push: \
+mobile/App.tsx reaches it; 4.0/app changes 2 paths since it left origin/4.0/Main at ${base:0:7}" ]
 }
 
-@test "without GITHUB_OUTPUT, the decision is printed as run= after the line that says why" {
+@test "without GITHUB_OUTPUT, the decision is printed as run= and tests= after the line that says why" {
   branch_off 4.0/app
   commit mobile/App.tsx
   publish 4.0/app
@@ -298,15 +368,18 @@ origin/4.0/Main at ${base:0:7}" ]
 
   run --separate-stderr "$CHANGES" admin
   [ "$status" -eq 0 ]
-  [ "${#lines[@]}" -eq 2 ]
+  [ "${#lines[@]}" -eq 3 ]
   [[ "${lines[0]}" == '::notice::The job admin skips its work: '* ]] || false
   [ "${lines[1]}" = run=false ]
+  [ "${lines[2]}" = tests=unit ]
 
   run --separate-stderr "$CHANGES" mobile
   [ "$status" -eq 0 ]
-  [ "${#lines[@]}" -eq 2 ]
-  [[ "${lines[0]}" == 'The job mobile does its work: mobile/App.tsx reaches it; '* ]] || false
+  [ "${#lines[@]}" -eq 3 ]
+  [[ "${lines[0]}" == 'The job mobile does its work, with unit tests only, '*': mobile/App.tsx reaches it; '* ]] ||
+    false
   [ "${lines[1]}" = run=true ]
+  [ "${lines[2]}" = tests=unit ]
 }
 
 @test "an unwritable GITHUB_OUTPUT still exits 0, and the line says that the job does its work" {
@@ -320,14 +393,14 @@ origin/4.0/Main at ${base:0:7}" ]
     false
 }
 
-@test "a failure after the decision was recorded adds no second run= line, and the script still exits 0" {
+@test "a failure after the decision was recorded adds no second run= or tests= line, and the script still exits 0" {
   local code=0
   push_documents_branch 4.0/documents
 
   GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile >&- 2>/dev/null || code=$?
 
   [ "$code" -eq 0 ]
-  [ "$(cat "$BATS_TEST_TMPDIR/output")" = run=false ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=false\ntests=unit' ]
 }
 
 @test "a % or a line break in a branch or a path is escaped, so that the decision stays one line" {
@@ -344,7 +417,7 @@ origin/4.0/Main at ${base:0:7}" ]
   run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/odd-output" "$CHANGES" mobile
   [ "$status" -eq 0 ]
   [ "${#lines[@]}" -eq 1 ]
-  [[ "$output" == 'The job mobile does its work: no rule names odd%0D%0A::error::name; '* ]] || false
+  [[ "$output" == 'The job mobile does its work, '*': no rule names odd%0D%0A::error::name; '* ]] || false
 }
 
 # --- Branches and their history -----------------------------------------------------------------------------------
@@ -488,14 +561,46 @@ origin/4.0/Main at ${base:0:7}" ]
   expect_full_run 'development is not named <line>/<name>'
 }
 
-@test "a Main runs every job, whatever its line" {
+@test "a push to a Main runs every job unless the merge queue's run of the same commit passed, whatever its line" {
+  local runs="repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs"
   ci_checkout 4.0/Main
-  expect_full_run '4.0/Main is a Main'
+  expect_full_run "4.0/Main is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}"
+  grep -qxF "gh api $runs?head_sha=$GITHUB_SHA&event=merge_group&per_page=100" "$FAKE_GH_CALLS"
 
   git -C "$WORK" branch ci-trial/Main 4.0/Main
   publish ci-trial/Main
   ci_checkout ci-trial/Main
-  expect_full_run 'ci-trial/Main is a Main'
+  serve_queue_runs 'completed success'
+  expect_jobs ''
+  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
+  [ "$output" = "::notice::The job mobile skips its work: the merge queue's run of ${GITHUB_SHA:0:7} already passed \
+every job" ]
+}
+
+@test "a push to a Main after a failed, unfinished or other commit's merge queue run runs every job" {
+  local other
+  ci_checkout 4.0/Main
+  other=$(tr 0-9a-f 1-9a-f0 <<<"$GITHUB_SHA")
+  serve_queue_runs 'completed failure' 'completed cancelled' 'in_progress null' "completed success $other"
+  expect_full_run "4.0/Main is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}"
+}
+
+@test "a push to a Main runs every job when GitHub fails, gh cannot run, or the answer is not a list of runs" {
+  local unknown
+  ci_checkout 4.0/Main
+  unknown="4.0/Main is a Main, and GitHub did not say whether the merge queue passed $GITHUB_SHA"
+  expect_full_run "$unknown" FAKE_GH_STATUS=1
+  expect_full_run "$unknown" FAKE_GH_STATUS=127
+  echo 'Bad Gateway' >"$FAKE_QUEUE_RUNS"
+  expect_full_run "$unknown"
+  echo '{"message": "Not Found"}' >"$FAKE_QUEUE_RUNS"
+  expect_full_run "$unknown"
+}
+
+@test "a working branch's push asks GitHub nothing" {
+  push_documents_branch 4.0/documents
+  expect_jobs ''
+  [ ! -e "$FAKE_GH_CALLS" ]
 }
 
 @test "a branch whose Main is missing runs every job" {
@@ -586,14 +691,14 @@ origin/4.0/Main at ${base:0:7}" ]
     rm -f "$BATS_TEST_TMPDIR/output"
     run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" "$key"
     [ "$status" -eq 0 ]
-    [ "$(cat "$BATS_TEST_TMPDIR/output")" = run=true ]
+    [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=all' ]
     [ "$output" = "The job $key does its work: $key is not a job key that this script knows" ]
   done
 
   rm "$BATS_TEST_TMPDIR/output"
   run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES"
   [ "$status" -eq 0 ]
-  [ "$(cat "$BATS_TEST_TMPDIR/output")" = run=true ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=all' ]
   [ "$output" = 'The job without a key does its work: no job key was given' ]
 }
 
@@ -630,9 +735,10 @@ origin/4.0/Main at ${base:0:7}" ]
 
 @test "a failure inside the script runs the job, and the script still exits 0" {
   push_documents_branch 4.0/documents
-  mkdir "$BATS_TEST_TMPDIR/bin"
-  printf '#!/bin/sh\nexit 1\n' >"$BATS_TEST_TMPDIR/bin/mktemp"
-  chmod +x "$BATS_TEST_TMPDIR/bin/mktemp"
+  # Apart from the fakes on the tests' own PATH, whose `run` needs mktemp.
+  mkdir "$BATS_TEST_TMPDIR/broken"
+  printf '#!/bin/sh\nexit 1\n' >"$BATS_TEST_TMPDIR/broken/mktemp"
+  chmod +x "$BATS_TEST_TMPDIR/broken/mktemp"
 
-  expect_full_run 'the script stopped before it decided' PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+  expect_full_run 'the script stopped before it decided' PATH="$BATS_TEST_TMPDIR/broken:$PATH"
 }

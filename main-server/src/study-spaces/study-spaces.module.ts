@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { StudySpacesController } from './study-spaces.controller.js';
 import { STUDY_CATALOGUE, StudySpacesService } from './study-spaces.service.js';
 
 // The 공부공간 layer. Its files and 관정's catalogue are read once when the server starts; a bad file, or a building
-// at a Place number the seed does not hold, stops the start.
+// at a Place number the seed does not hold, stops the start. The Assistant reads the layer for "이 근처".
 @Module({
   imports: [PlacesModule, UsersModule],
   controllers: [StudySpacesController],
@@ -20,5 +21,7 @@ import { STUDY_CATALOGUE, StudySpacesService } from './study-spaces.service.js';
     { provide: STUDY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     StudySpacesService,
   ],
+  // The libraries are among the places a meet may be at.
+  exports: [StudySpacesService],
 })
 export class StudySpacesModule {}

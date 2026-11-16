@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -201,7 +202,7 @@ describe('the room of a Quest the User no longer holds', () => {
     });
     await pass(500);
 
-    expect(toast()).toHaveTextContent('파티에서 빠졌어요');
+    // The toast is the signed-in layout's, which `party-gone` covers.
     expect(shownAddress()).toBe('/main');
   });
 });

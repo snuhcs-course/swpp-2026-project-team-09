@@ -4,6 +4,8 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
@@ -24,12 +26,11 @@ import type { RecruitingQuest } from '@/api/party-types';
 import type { Friend, FriendStatus, ListedGlobalEvent, MyParty, Party, Position, Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
-import { checkedEventsQuery, checkedIds } from '@/features/events/checked-events';
 import { toFriendViews } from '@/features/friends/adapter';
 import { useNow } from '@/hooks/use-now';
 import { POSITION_AGE_EVERY_MS } from '@/position';
-import type { CheckedEvents } from '@/storage/checked-events';
 import { type CardView, toCards } from './adapter';
+import { useInterestMarks, withInterestMarks } from './use-interest-marks';
 
 type Results = [
   UseQueryResult<ListedGlobalEvent[]>,
@@ -41,18 +42,15 @@ type Results = [
   UseQueryResult<Position[]>,
   UseQueryResult<FriendStatus[]>,
   UseQueryResult<RecruitingQuest[]>,
-  UseQueryResult<CheckedEvents>,
 ];
 
 // A failed operation takes away only the cards that cannot be right without it, and the others stay:
 // - a Party's card is worded by the Quest, the User's Party and the listed Parties, so it needs all three;
 // - a Friend's card needs the Friends and the positions;
 // - a card of a member of the User's Party also needs the Friends, to know that the member is not one.
-// A Global Event's card without the recruiting Quests only lacks its line of them. `openEvent` is the event whose card
-// is open on the map, which stays there until the card closes.
-function cardsOf(results: Results, at: Date, openEvent: string | null): CardView[] {
-  const [globalEvents, announcers, quests, parties, myParty, friends, positions, statuses, recruiting, checked] =
-    results;
+// A Global Event's card without the recruiting Quests only lacks its line of them.
+function cardsOf(results: Results, at: Date, forInterestMarks: boolean): CardView[] {
+  const [globalEvents, announcers, quests, parties, myParty, friends, positions, statuses, recruiting] = results;
   const cards = toCards({
     globalEvents: globalEvents.data ?? [],
     globalEventAnnouncers: announcers.data ?? [],
@@ -64,7 +62,7 @@ function cardsOf(results: Results, at: Date, openEvent: string | null): CardView
     positions: positions.data ?? [],
     meId: myUserId(),
     now: at,
-    eventChecks: { checked: checkedIds(checked.data), open: openEvent },
+    forInterestMarks,
   });
   return friends.isError ? cards.filter(({ kind }) => kind !== 'party-member') : cards;
 }
@@ -74,13 +72,13 @@ function agedAt(at: number): Date {
   return new Date(Math.max(now().getTime(), at));
 }
 
-// The announcers, the statuses and the checked New Events are the app's own, and the recruiting Quests only count, so
-// none fails the map. It runs again when an answer changes and when `at` does, which ages the positions.
-function combine(results: Results, at: number, openEvent: string | null): ScreenData<CardView[]> {
+// The announcers and the statuses are the app's own, and the recruiting Quests only count, so none fails the map. It
+// runs again when an answer changes and when `at` does, which ages the positions.
+function combine(results: Results, at: number, forInterestMarks: boolean): ScreenData<CardView[]> {
   const [globalEvents, , quests, parties, myParty, friends, positions] = results;
   const isPending = somePending(results);
   return {
-    data: isPending ? undefined : cardsOf(results, agedAt(at), openEvent),
+    data: isPending ? undefined : cardsOf(results, agedAt(at), forInterestMarks),
     isPending,
     isError: someFailed([globalEvents, quests, parties, myParty, friends, positions]),
     refetch: askAgain(results),
@@ -90,10 +88,15 @@ function combine(results: Results, at: number, openEvent: string | null): Screen
 // Everything on the map that a press opens, each with its card: Global Events, the User's Parties, Friends and the
 // members of the User's Party. After a failure `data` holds the cards that are still right and `isError` is true. The
 // age of the people's positions is looked at again every 15 seconds: an Avatar dims at two minutes and goes at ten.
-// A New Event the User checked is no longer one, except `openEvent`, whose card is open: it stays until it closes.
-export function useMapCards(openEvent: string | null = null): ScreenData<CardView[]> {
+// While the switch of the answer on the map is on, the events and recruiting parties are those of the interest marks,
+// which choose among every event; otherwise the events are the Favorite Events (`event-pins.ts`).
+export function useMapCards(): ScreenData<CardView[]> {
   const at = useNow(POSITION_AGE_EVERY_MS);
-  const combineAt = useCallback((results: Results) => combine(results, at, openEvent), [at, openEvent]);
+  const marks = useInterestMarks();
+  const combineAt = useCallback(
+    (results: Results) => withInterestMarks(combine(results, at, marks.marks !== null), marks, agedAt(at)),
+    [at, marks],
+  );
   return useQueries({
     queries: [
       globalEventsQuery,
@@ -105,7 +108,6 @@ export function useMapCards(openEvent: string | null = null): ScreenData<CardVie
       positionsQuery,
       friendStatusesQuery,
       recruitingQuestsQuery,
-      checkedEventsQuery,
     ],
     combine: combineAt,
   });

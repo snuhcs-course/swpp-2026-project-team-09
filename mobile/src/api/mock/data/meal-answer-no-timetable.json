@@ -1,0 +1,980 @@
+{
+  "input": {
+    "kind": "meal",
+    "date": "2026-11-17",
+    "meal": "lunch",
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "constraints": []
+      }
+    ],
+    "window": {
+      "from": null,
+      "until": null
+    },
+    "placeId": null
+  },
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    }
+  ],
+  "plans": [
+    {
+      "id": "301동식당",
+      "title": "301동식당에서 점심",
+      "place": {
+        "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+        "label": "301동식당",
+        "latitude": 37.45016,
+        "longitude": 126.95259
+      },
+      "startAt": "2026-11-17T11:50:00+09:00",
+      "endAt": "2026-11-17T14:30:00+09:00",
+      "togetherMinutes": 160,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-17T11:50:00+09:00",
+          "walkMinutes": 0,
+          "arriveAt": "2026-11-17T11:50:00+09:00",
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T11:50:00+09:00",
+          "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+          "title": "301동식당에서 식사"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "301동식당",
+            "strong": true
+          },
+          {
+            "text": "이 가장 가까워요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "오늘 ",
+            "strong": false
+          },
+          {
+            "text": "부대짬뽕&군만두",
+            "strong": true
+          },
+          {
+            "text": " 외 4",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "시간표가 없어 가까운 순서로 넘겨 봐요",
+        "식사: 부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원",
+        "TAKE-OUT: 베이컨감자샐러드 5,500원 · 헬스팩 6,000원",
+        "301동1층 교직원전용식당: 육개장칼국수&메밀전병 9,000원",
+        "메뉴: 오늘의 식단"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "exact",
+            "tag": "나"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동식당",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "pick",
+            "tag": "301동식당"
+          },
+          {
+            "place": {
+              "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+              "label": "학생회관식당",
+              "latitude": 37.45932,
+              "longitude": 126.95058
+            },
+            "role": "candidate",
+            "tag": "학생회관식당"
+          },
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "3식당",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "candidate",
+            "tag": "3식당"
+          },
+          {
+            "place": {
+              "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+              "label": "자하연식당 2층",
+              "latitude": 37.46098,
+              "longitude": 126.95252
+            },
+            "role": "candidate",
+            "tag": "자하연식당 2층"
+          },
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동식당",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "candidate",
+            "tag": "302동식당"
+          }
+        ],
+        "routes": [],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "text": "11:50 점심",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T11:30:00+09:00",
+          "endAt": "2026-11-17T15:00:00+09:00"
+        },
+        "now": "2026-11-17T11:50:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": []
+          }
+        ],
+        "startAt": "2026-11-17T11:50:00+09:00",
+        "endAt": "2026-11-17T14:30:00+09:00",
+        "text": "11:50–14:30 · 식사 160분"
+      }
+    },
+    {
+      "id": "302동식당",
+      "title": "302동식당에서 점심",
+      "place": {
+        "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+        "label": "302동식당",
+        "latitude": 37.44887,
+        "longitude": 126.95265
+      },
+      "startAt": "2026-11-17T11:53:00+09:00",
+      "endAt": "2026-11-17T13:30:00+09:00",
+      "togetherMinutes": 97,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-17T11:50:00+09:00",
+          "walkMinutes": 3,
+          "arriveAt": "2026-11-17T11:53:00+09:00",
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T11:53:00+09:00",
+          "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+          "title": "302동식당에서 식사"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "점심 ",
+            "strong": false
+          },
+          {
+            "text": "302동식당",
+            "strong": true
+          },
+          {
+            "text": " · 식사 97분",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "오늘 ",
+            "strong": false
+          },
+          {
+            "text": "뼈없는감자탕",
+            "strong": true
+          },
+          {
+            "text": " 외 5 · 13:30까지",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "걸어서 3분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "시간표가 없어 가까운 순서로 넘겨 봐요",
+        "301동 → 302동식당 걸어서 3분",
+        "뷔페 6,500원: 뼈없는감자탕 · 미트볼굴소스조림 · 참깨소스냉두부 · 치커리유자청무침 · 오렌지 · 그린샐러드&오늘의차",
+        "메뉴와 닫는 시각: 오늘의 식단"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "exact",
+            "tag": "나 · 3분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동식당",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "pick",
+            "tag": "302동식당"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동식당",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "candidate",
+            "tag": "301동식당"
+          },
+          {
+            "place": {
+              "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+              "label": "학생회관식당",
+              "latitude": 37.45932,
+              "longitude": 126.95058
+            },
+            "role": "candidate",
+            "tag": "학생회관식당"
+          },
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "3식당",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "candidate",
+            "tag": "3식당"
+          },
+          {
+            "place": {
+              "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+              "label": "자하연식당 2층",
+              "latitude": 37.46098,
+              "longitude": 126.95252
+            },
+            "role": "candidate",
+            "tag": "자하연식당 2층"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "minutes": 3
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "text": "11:53 점심",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T11:30:00+09:00",
+          "endAt": "2026-11-17T14:00:00+09:00"
+        },
+        "now": "2026-11-17T11:50:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": []
+          }
+        ],
+        "startAt": "2026-11-17T11:53:00+09:00",
+        "endAt": "2026-11-17T13:30:00+09:00",
+        "text": "11:53–13:30 · 식사 97분"
+      }
+    },
+    {
+      "id": "3식당",
+      "title": "3식당에서 점심",
+      "place": {
+        "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+        "label": "3식당",
+        "latitude": 37.45647,
+        "longitude": 126.94851
+      },
+      "startAt": "2026-11-17T12:03:00+09:00",
+      "endAt": "2026-11-17T14:00:00+09:00",
+      "togetherMinutes": 117,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-17T11:50:00+09:00",
+          "walkMinutes": 13,
+          "arriveAt": "2026-11-17T12:03:00+09:00",
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T12:03:00+09:00",
+          "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+          "title": "3식당에서 식사"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "점심 ",
+            "strong": false
+          },
+          {
+            "text": "3식당",
+            "strong": true
+          },
+          {
+            "text": " · 식사 117분",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "오늘 ",
+            "strong": false
+          },
+          {
+            "text": "치즈한장부대찌개",
+            "strong": true
+          },
+          {
+            "text": " 외 2 · 14:00까지",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "걸어서 13분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "시간표가 없어 가까운 순서로 넘겨 봐요",
+        "301동 → 3식당 걸어서 13분",
+        "치즈한장부대찌개 6,000원 · 오므라이스&육즙함박 6,000원",
+        "든든한끼샐러드코너: 닭가슴살마일드샐러드(채식변경가능) 8,500원",
+        "메뉴와 닫는 시각: 오늘의 식단"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "exact",
+            "tag": "나 · 13분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "3식당",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "pick",
+            "tag": "3식당"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동식당",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "candidate",
+            "tag": "301동식당"
+          },
+          {
+            "place": {
+              "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+              "label": "학생회관식당",
+              "latitude": 37.45932,
+              "longitude": 126.95058
+            },
+            "role": "candidate",
+            "tag": "학생회관식당"
+          },
+          {
+            "place": {
+              "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+              "label": "자하연식당 2층",
+              "latitude": 37.46098,
+              "longitude": 126.95252
+            },
+            "role": "candidate",
+            "tag": "자하연식당 2층"
+          },
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동식당",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "candidate",
+            "tag": "302동식당"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "minutes": 13
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "text": "12:03 점심",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T11:30:00+09:00",
+          "endAt": "2026-11-17T14:30:00+09:00"
+        },
+        "now": "2026-11-17T11:50:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": []
+          }
+        ],
+        "startAt": "2026-11-17T12:03:00+09:00",
+        "endAt": "2026-11-17T14:00:00+09:00",
+        "text": "12:03–14:00 · 식사 117분"
+      }
+    },
+    {
+      "id": "학생회관식당",
+      "title": "학생회관식당에서 점심",
+      "place": {
+        "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+        "label": "학생회관식당",
+        "latitude": 37.45932,
+        "longitude": 126.95058
+      },
+      "startAt": "2026-11-17T12:05:00+09:00",
+      "endAt": "2026-11-17T14:30:00+09:00",
+      "togetherMinutes": 145,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-17T11:50:00+09:00",
+          "walkMinutes": 15,
+          "arriveAt": "2026-11-17T12:05:00+09:00",
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T12:05:00+09:00",
+          "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+          "title": "학생회관식당에서 식사"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "점심 ",
+            "strong": false
+          },
+          {
+            "text": "학생회관식당",
+            "strong": true
+          },
+          {
+            "text": " · 식사 145분",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "오늘 ",
+            "strong": false
+          },
+          {
+            "text": "눈꽃치즈닭갈비",
+            "strong": true
+          },
+          {
+            "text": " 외 2 · 14:30까지",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "걸어서 15분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "시간표가 없어 가까운 순서로 넘겨 봐요",
+        "301동 → 학생회관식당 걸어서 15분",
+        "눈꽃치즈닭갈비 6,000원 · 단호박영양밥&양념장(#) 3,000원 · 수제탕수육 6,000원",
+        "메뉴와 닫는 시각: 오늘의 식단"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "exact",
+            "tag": "나 · 15분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+              "label": "학생회관식당",
+              "latitude": 37.45932,
+              "longitude": 126.95058
+            },
+            "role": "pick",
+            "tag": "학생회관식당"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동식당",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "candidate",
+            "tag": "301동식당"
+          },
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "3식당",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "candidate",
+            "tag": "3식당"
+          },
+          {
+            "place": {
+              "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+              "label": "자하연식당 2층",
+              "latitude": 37.46098,
+              "longitude": 126.95252
+            },
+            "role": "candidate",
+            "tag": "자하연식당 2층"
+          },
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동식당",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "candidate",
+            "tag": "302동식당"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.45932,
+              "longitude": 126.95058
+            },
+            "minutes": 15
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.45932,
+              "longitude": 126.95058
+            },
+            "text": "12:05 점심",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T11:30:00+09:00",
+          "endAt": "2026-11-17T15:00:00+09:00"
+        },
+        "now": "2026-11-17T11:50:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": []
+          }
+        ],
+        "startAt": "2026-11-17T12:05:00+09:00",
+        "endAt": "2026-11-17T14:30:00+09:00",
+        "text": "12:05–14:30 · 식사 145분"
+      }
+    },
+    {
+      "id": "자하연식당 2층",
+      "title": "자하연식당 2층에서 점심",
+      "place": {
+        "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+        "label": "자하연식당 2층",
+        "latitude": 37.46098,
+        "longitude": 126.95252
+      },
+      "startAt": "2026-11-17T12:07:00+09:00",
+      "endAt": "2026-11-17T14:00:00+09:00",
+      "togetherMinutes": 113,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-17T11:50:00+09:00",
+          "walkMinutes": 17,
+          "arriveAt": "2026-11-17T12:07:00+09:00",
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T12:07:00+09:00",
+          "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+          "title": "자하연식당 2층에서 식사"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "점심 ",
+            "strong": false
+          },
+          {
+            "text": "자하연식당 2층",
+            "strong": true
+          },
+          {
+            "text": " · 식사 113분",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "오늘 ",
+            "strong": false
+          },
+          {
+            "text": "나가사키꼬치어묵",
+            "strong": true
+          },
+          {
+            "text": " 외 1 · 14:00까지",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "걸어서 17분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "시간표가 없어 가까운 순서로 넘겨 봐요",
+        "301동 → 자하연식당 2층 걸어서 17분",
+        "나가사키꼬치어묵 5,500원 · 바비큐립& 베이컨마늘볶음밥 6,500원",
+        "메뉴와 닫는 시각: 오늘의 식단"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "source": "exact",
+            "tag": "나 · 17분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+              "label": "자하연식당 2층",
+              "latitude": 37.46098,
+              "longitude": 126.95252
+            },
+            "role": "pick",
+            "tag": "자하연식당 2층"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "301동식당",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "candidate",
+            "tag": "301동식당"
+          },
+          {
+            "place": {
+              "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+              "label": "학생회관식당",
+              "latitude": 37.45932,
+              "longitude": 126.95058
+            },
+            "role": "candidate",
+            "tag": "학생회관식당"
+          },
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "3식당",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "candidate",
+            "tag": "3식당"
+          },
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동식당",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "candidate",
+            "tag": "302동식당"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.46098,
+              "longitude": 126.95252
+            },
+            "minutes": 17
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.46098,
+              "longitude": 126.95252
+            },
+            "text": "12:07 점심",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T11:30:00+09:00",
+          "endAt": "2026-11-17T14:30:00+09:00"
+        },
+        "now": "2026-11-17T11:50:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": []
+          }
+        ],
+        "startAt": "2026-11-17T12:07:00+09:00",
+        "endAt": "2026-11-17T14:00:00+09:00",
+        "text": "12:07–14:00 · 식사 113분"
+      }
+    }
+  ],
+  "dropped": [],
+  "noPlan": null,
+  "offers": [
+    {
+      "kind": "open",
+      "label": "시간표 넣기",
+      "screen": "timetable"
+    }
+  ],
+  "note": "시간표를 넣으면 나설 시각까지 알려 드려요"
+}

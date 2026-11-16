@@ -2,16 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: events' pins that overlap at the zoom or stand apart, or no zoom; an event's own pin, a place's pin of
-// events alone and one of several kinds; the looks plain, favorite and new among the merged. Expected values: the
-// spec's rule (P06-02) that a merged pin shows the strongest look and the total count, with the study pins' measure of
-// overlap: closer than 36 points at the zoom.
+// events alone and one of several kinds; plain events, and a Favorite Event among the merged. Expected values: the
+// spec's rule (P06-02) that a merged pin shows the star of a Favorite Event among them and the total count, with the
+// study pins' measure of overlap: closer than 36 points at the zoom.
 
 import { HALL, LIBRARY_POINT } from '../support/map-sources';
 import type { CardView } from '@/features/map/adapter';
-import { clusteredEvents, eventClusterId, eventMerges } from '@/features/map/event-merges';
+import { clusteredEvents, eventClusterId, eventMerges, withClusterMarks } from '@/features/map/event-merges';
+import type { InterestMark, MarkLook } from '@/features/map/interest-marks';
 import { groupedByPlace } from '@/features/map/place-groups';
 
 // 301동 앞, about 80 metres from the hall: one pin's width apart at zoom 15, apart at zoom 17.
@@ -92,8 +94,7 @@ describe('clusteredEvents', () => {
   it.each([
     ['plain ones', [{}, {}], {}],
     ['a Favorite Event', [{}, { starred: true }], { starred: true }],
-    ['a New Event beside a Favorite Event', [{ starred: true }, { fresh: true }], { fresh: true }],
-  ])('of %s shows the strongest look', (_, marks, expected) => {
+  ])('of %s shows the star only for a Favorite Event', (_, marks, expected) => {
     const cards = marks.map((one, index) => eventCard(`e${index}`, index === 0 ? HALL : FRONT, one));
 
     expect(merged(cards)[0]?.mark).toEqual({ type: 'place', place: 'official', ...expected });
@@ -103,5 +104,38 @@ describe('clusteredEvents', () => {
     const cards = [eventCard('a', HALL), eventCard('far', LIBRARY_POINT)];
 
     expect(merged(cards)).toBe(cards);
+  });
+});
+
+function interestMark(id: string, look: MarkLook): InterestMark {
+  return { id, title: id, name: id, look, items: [id], events: [], parties: [] };
+}
+
+// Partitions: a merged pin over a member with "!", over faded members only, over a plain and a faded one, and over
+// members without a mark. Expected values: the design's one look per mark, "!" first, then plain, then faded.
+describe('withClusterMarks', () => {
+  const cards = merged([eventCard('a', HALL), eventCard('b', FRONT)]);
+  const cluster = eventClusterId(eventCard('a', HALL));
+
+  it.each<[string, MarkLook, MarkLook, MarkLook]>([
+    ['a member with "!"', 'plain', 'fresh', 'fresh'],
+    ['faded members only', 'faded', 'faded', 'faded'],
+    ['a plain and a faded member', 'plain', 'faded', 'plain'],
+  ])('gives the merged pin of %s one look', (_, a, b, look) => {
+    const marks = new Map([
+      ['event:a', interestMark('event:a', a)],
+      ['event:b', interestMark('event:b', b)],
+    ]);
+
+    const mark = withClusterMarks(cards, marks).get(cluster);
+
+    expect(mark?.look).toBe(look);
+    expect(mark?.name).toBe('공식 행사 2개 묶음 · 눌러서 확대');
+  });
+
+  it('leaves the marks as they are when no member has one', () => {
+    const marks = new Map([['event:far', interestMark('event:far', 'fresh')]]);
+
+    expect(withClusterMarks(cards, marks)).toBe(marks);
   });
 });

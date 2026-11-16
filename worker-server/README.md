@@ -192,6 +192,15 @@ restaurant fills in its later days as it posts them, and the next Collection bri
 - So a line that only names a dish has no `kind`: `잡곡밥` under a heading with a set price, or a lunch of the
   veterinary college's table. Nor has a sentence between angle brackets, which is a notice:
   `< 위 메뉴외에도 다양한 메뉴가 준비되어 있습니다>`.
+- `src/menu/menu-hours.ts` reads each meal's hours from the one hours line of its cell, and the restaurant is sent
+  with them as `hours`, times of day in Asia/Seoul with the line they were read from:
+  `{ "meal": "lunch", "opensAt": "11:00", "closesAt": "14:30", "line": "※ 운영시간 : 11:00~14:30" }`. The line is
+  still sent among the lines as a `note`. An hours line is `※`, `운영시간` or `운영 시간`, a colon or none, and two times
+  joined by `~`, with or without spaces: `※ 운영시간 : 11:00~14:30`, `※운영시간: 11:30~13:30`, `※ 운영시간 11:30~13:30`,
+  `※ 운영 시간 9 : 30 ~ 19 : 00`. These are the forms the pages have written; any other line gives no hours, so a
+  line with anything more, such as `※ 운영시간 : 학기중 평일, 주말 09 ~ 20시 / 라스트오더 19시:40분`, stays a note
+  only, as do busy times, last orders and `※ 08:20~준비수량 소진시까지`. A cell with several hours lines, one for each
+  corner as at `예술계식당` and `301동식당`, gives that meal no hours. The veterinary college's table gives none.
 
 What the collectors sent on the real pages, and how many lines got a `kind`, a `name` and a `price`, is recorded in
 `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.

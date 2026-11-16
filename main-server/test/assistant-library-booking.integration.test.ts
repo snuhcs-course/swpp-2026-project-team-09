@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -31,6 +32,7 @@ const SEAT_CARD = {
     id: '7F-7A-zone2',
     name: '7A 열람실 2 구역',
     floor: 7,
+    kind: 'reading-room',
     placeNumber: '62-1',
     unit: 'seat',
     roomNo: 172,

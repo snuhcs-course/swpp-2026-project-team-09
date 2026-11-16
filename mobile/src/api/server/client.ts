@@ -12,6 +12,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -51,6 +52,7 @@ import { interestClient } from './interest-client';
 import { lateClient } from './late-client';
 import { partyClient } from './party-client';
 import { planQuestClient } from './plan-quest-client';
+import { privateZoneClient } from './private-zone-client';
 import { roomClient } from './room-client';
 import { TUTORIAL_SERVED, tutorialClient } from './tutorial-client';
 
@@ -65,6 +67,7 @@ export const serverClient: ApiClient = {
   ...planQuestClient,
   ...invitationCardClient,
   ...interestClient,
+  ...privateZoneClient,
   ...lateClient,
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),
@@ -96,6 +99,15 @@ export const serverClient: ApiClient = {
   },
   endFriendship: async (userId) => {
     await call('DELETE', `/friends/${encodeURIComponent(userId)}`, isNothing);
+  },
+  recordFriendsAsked: async (userIds, moment) => {
+    await call('POST', '/friends/asked', isNothing, { body: { userIds, moment } });
+  },
+  recordMasterOffAsked: async () => {
+    await call('POST', '/users/me/master-switch/asked', isNothing);
+  },
+  lowerFriendLevels: async (level) => {
+    await call('PUT', '/users/me/friend-levels', isNothing, { body: { level } });
   },
   findFriendId: (friendId) => call('GET', `/friend-ids/${encodeURIComponent(friendId)}`, isUserSummary),
   sendFriendRequest: (friendId) => call('POST', '/friend-requests', isSentFriendRequest, { body: { friendId } }),

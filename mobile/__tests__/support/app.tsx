@@ -7,6 +7,8 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -21,7 +23,6 @@ import MeScreen from '@/app/(signed-in)/(tabs)/me';
 import PartyScreen from '@/app/(signed-in)/(tabs)/party';
 import BoardScreen from '@/app/(signed-in)/boards/[board]';
 import BoardsScreen from '@/app/(signed-in)/boards/index';
-import MatchingScreen from '@/app/(signed-in)/matching';
 import NotificationsScreen from '@/app/(signed-in)/notifications';
 import PartyFormScreen from '@/app/(signed-in)/party-form';
 import PlaceMapScreen from '@/app/(signed-in)/place-map';
@@ -33,6 +34,8 @@ import FriendsScreen from '@/app/(signed-in)/me/friends/index';
 import FriendRequestsScreen from '@/app/(signed-in)/me/friends/requests';
 import MyPartiesScreen from '@/app/(signed-in)/me/parties';
 import InterestsScreen from '@/app/(signed-in)/me/interests';
+import LocationSharingScreen from '@/app/(signed-in)/me/location-sharing';
+import PrivateZonesScreen from '@/app/(signed-in)/me/private-zones';
 import MapSourcesScreen from '@/app/(signed-in)/map-sources';
 import MenusScreen from '@/app/(signed-in)/menus';
 import ClassFormScreen from '@/app/(signed-in)/me/timetable/class';
@@ -83,6 +86,8 @@ export async function startApp(initialUrl = '/', more: Record<string, ComponentT
       '(signed-in)/me/friends/add': AddFriendScreen,
       '(signed-in)/me/parties': MyPartiesScreen,
       '(signed-in)/me/interests': InterestsScreen,
+      '(signed-in)/me/location-sharing': LocationSharingScreen,
+      '(signed-in)/me/private-zones': PrivateZonesScreen,
       '(signed-in)/me/timetable/index': TimetableScreen,
       '(signed-in)/me/timetable/class': ClassFormScreen,
       '(signed-in)/invite/[token]': InviteScreen,
@@ -94,7 +99,6 @@ export async function startApp(initialUrl = '/', more: Record<string, ComponentT
       '(signed-in)/boards/[board]': BoardScreen,
       '(signed-in)/post/[questId]': PostScreen,
       '(signed-in)/party-form': PartyFormScreen,
-      '(signed-in)/matching': MatchingScreen,
       ...more,
     },
     { initialUrl },

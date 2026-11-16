@@ -11,6 +11,8 @@ PR assignee: Jaehyun0320
 
 A User can star a Global Event, and the map stops drawing every event that has not ended. The 행사 tab's and chat's event items get a ☆ toggle at the top right (the source mark moves to its left), and a single event's card on the map gets one left of the close button. A starred event shows on the map as a star pin until it ends. Besides Favorite Events, the map keeps only events held today in Seoul time, as today's plain pin; an event of several days counts only on its first and last day. Starring is optimistic and rolls back with a toast when saving fails. Favorites are kept on the server, so they survive a reinstall.
 
+Changed in review (#261, 2026-11-16): events held today no longer stay on the map. The agentic map's design (after #296) puts only watched matches and Favorite Events on the everyday map, so the pin function keeps only Favorite Events; while the switch of the answer on the map is on, it passes every event on for the interest marks to choose from.
+
 The one migration of this feature lands here with both changes: `global_events.published_at` (nullable, not yet written; ticket 02 records it) and `global_event_favorites (user_id, global_event_id, created_at)`, unique on the pair and deleted with the User or the event. Its place in the team's order of `schema.prisma` changes is agreed with the team first (work split §4).
 
 ## Acceptance criteria

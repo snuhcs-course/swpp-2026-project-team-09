@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-// When each of the four writes that publish a Global Event records `publishedAt`, which the app reads for a New Event:
+// When each of the four writes that publish a Global Event records `publishedAt`, which the lists give:
 // the rules, a Judgement, an Administrator's publish of a Draft and the Same-event queue's publish. An event published
 // before it was recorded keeps null, and an edit keeps what was recorded.
 

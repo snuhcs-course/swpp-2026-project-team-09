@@ -4,13 +4,15 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
-import { type MealInput } from '../dto/answer.dto.js';
-import { type DayItem } from '../free-time/free-time.js';
+import { type MealInput, type MeetInput } from '../dto/answer.dto.js';
+import { type FriendLevel } from '../../friends/dto/friend-view.dto.js';
+import { clockOf, type DayItem } from '../free-time/free-time.js';
 import {
   type Gathering,
   type GatheringDrop,
@@ -18,7 +20,10 @@ import {
   type GatheringSide,
   type PersonPart,
 } from './gathering.js';
+import { type ServedMenu } from './meal-menu.js';
+import { type MissingInputs } from './missing-inputs.js';
 import { PlaceNaming } from './place-naming.js';
+import { type Unmet } from './unmet-plans.js';
 
 // What the words of a meal's answer share: who is who, how a Place is called, and the pieces of a way.
 
@@ -30,21 +35,33 @@ export interface AnswerPerson {
   items: readonly DayItem[];
   // The position the asker may see of them now (the asker's own for the asker), or null.
   position: Position | null;
+  // How much of a Friend the asker sees.
+  level?: FriendLevel;
 }
 
-export interface MealAnswerArgs {
-  input: MealInput;
+// What the words of a gathering's answer read, a meal's or a meet's.
+export interface GatheringArgs<Input extends MealInput | MeetInput = MealInput | MeetInput> {
+  input: Input;
   now: Date;
   // In the order of input.people, the asker first.
   people: readonly [AnswerPerson, ...AnswerPerson[]];
   gathering: Gathering;
+  placeOf: (placeId: string) => PlaceDto;
+}
+
+export interface MealAnswerArgs extends GatheringArgs<MealInput> {
   // The asker's longest meal alone under the same conditions, when Friends are in the plan; null otherwise or when
   // none fits.
   aloneMinutes: number | null;
   // No menu collected for the day, menus but no Restaurant with a Place open for the meal, open ones but none at the
   // Place the User fixed, or open ones.
   menus: 'none' | 'closed' | 'closed-at-place' | 'open';
-  placeOf: (placeId: string) => PlaceDto;
+  // What the app could not give, left out when nothing was missing.
+  missing?: MissingInputs;
+  // What of the conditions could not be met, left out when all were.
+  unmet?: Unmet;
+  // Each open Restaurant's menu for the meal, by its key, which its Plan says.
+  served?: ReadonlyMap<string, ServedMenu>;
 }
 
 const SHORTEST_MEAL_MINUTES = SHORTEST_MEAL_SECONDS / 60;
@@ -110,9 +127,9 @@ export function wayOn(part: PersonPart | undefined): { placeId: string; minutes:
 
 export { placeLabelOf } from './place-naming.js';
 
-// Who is who and how Places are called; a Restaurant by its key.
-export class Naming extends PlaceNaming {
-  constructor(readonly args: MealAnswerArgs) {
+// Who is who and how Places are called; a candidate by its key.
+export class GatheringNaming<Args extends GatheringArgs = GatheringArgs> extends PlaceNaming {
+  constructor(readonly args: Args) {
     super(args.placeOf);
   }
 
@@ -128,11 +145,10 @@ export class Naming extends PlaceNaming {
     return person;
   }
 
-  mealWord(): string {
-    return this.args.input.meal === 'lunch' ? '점심' : '저녁';
-  }
-
-  dropReason({ togetherMinutes, shortest }: GatheringDrop): string {
+  dropReason({ togetherMinutes, shortest, closing }: GatheringDrop): string {
+    if (closing !== undefined) {
+      return `${clockOf(closing.at)} 닫아요`;
+    }
     if (shortest.minutes >= SHORTEST_MEAL_MINUTES) {
       return `같이 있는 시간이 ${togetherMinutes}분뿐이에요`;
     }
@@ -141,3 +157,8 @@ export class Naming extends PlaceNaming {
     return person.me ? stay : `${withTopic(person.name)} ${stay}`;
   }
 }
+
+export type Naming = GatheringNaming<MealAnswerArgs>;
+
+export const mealWord = ({ args }: { args: Pick<MealAnswerArgs, 'input'> }): string =>
+  args.input.meal === 'lunch' ? '점심' : '저녁';

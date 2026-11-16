@@ -4,6 +4,7 @@
 # 2026-11-01  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-02  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The 새내기 튜토리얼 (README.md: Tutorial). The server checks this file when it starts and serves it with GET /tutorial,
@@ -21,6 +22,9 @@
 # `facts` are what the Assistant answers from beyond the sheet's text (getTutorial), each with its source and the day
 # it was checked; GET /tutorial does not serve them. A fact the source does not state is left out, and the Assistant
 # answers it as 확인되지 않아요 with the quest's link.
+# `visit` says when a quest can be done, for the Assistant's order of the quests (새내기 퀘스트 뭐부터?): the line it
+# says of it, and the hours its place is open, as the text above states them, on the days listed or on every day. A
+# stop outside them is left out of the order. GET /tutorial does not serve it.
 #
 # The texts marked *drafted* in the P06 spec (the briefs, conditions and completion messages of the quests other than
 # kwanjeong) wait for the owner's review before the P6 eval set freezes them. The ten quests P13 added are marked
@@ -67,6 +71,12 @@ quests:
       # student.snu.ac.kr › 대학생활 › 기타 › S-CARD › 발급 절차, copied from the site on 2026-11-01.
       - label: 학생처 S-CARD 발급 절차
         url: https://student.snu.ac.kr/%eb%8c%80%ed%95%99%ec%83%9d%ed%99%9c/%ea%b8%b0%ed%83%80/s-card/%eb%b0%9c%ea%b8%89-%ec%a0%88%ec%b0%a8/
+    # The body's 수령 line.
+    visit:
+      note: 학생증은 MySNU 신청 다음 날부터 받아요 · 평일 09:00–17:50
+      hours:
+        - days: [monday, tuesday, wednesday, thursday, friday]
+          open: ['09:00-17:50']
 
   # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
   - key: thousand-won-meals
@@ -118,6 +128,11 @@ quests:
     links:
       - label: 학생처 분실물센터 안내
         url: https://student.snu.ac.kr/%EC%86%8C%EC%8B%9D%C2%B7%EC%95%8C%EB%A6%BC/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/?mod=document&uid=153
+    # The notice states the hours and not the days, so the hours stand for every day.
+    visit:
+      note: 분실물센터는 09:00–18:00에 열어요
+      hours:
+        - open: ['09:00-18:00']
     # Left out, as the notice does not state it: the days it opens (weekends and holidays).
     facts:
       - text: 캠퍼스안전반 분실물센터는 아시아연구소 1층, 국민은행 옆에 있어요. 09:00–18:00에 운영하고 전화는 02-880-8114예요.
@@ -157,6 +172,11 @@ quests:
     links:
       - label: 정보화본부 전산장비 대여
         url: https://ist.snu.ac.kr/%ec%a0%84%ec%82%b0%ec%9e%a5%eb%b9%84%eb%8c%80%ec%97%ac/
+    visit:
+      note: 노트북은 평일 09:00–18:00에 빌리고 돌려줘요
+      hours:
+        - days: [monday, tuesday, wednesday, thursday, friday]
+          open: ['09:00-18:00']
     # Left out, as the page does not state it: the longest a laptop may be borrowed.
     facts:
       - text: 학생 개인용 노트북은 하루 1,000원이에요. 마이스누 → 캠퍼스·복지 → IT서비스 → 장비/SW대여 → 장비신청에서 신청해요.
@@ -392,6 +412,13 @@ quests:
         url: https://health4u.snu.ac.kr/operation/useProcedure/_/view.do
       - label: 진료 예약
         url: https://health4u.snu.ac.kr/medicalTreatment/newAppointment/_/init.do
+    visit:
+      note: 보건진료소는 평일 09:00–12:00, 13:30–17:30에 진료해요 · 금요일은 16:30까지
+      hours:
+        - days: [monday, tuesday, wednesday, thursday]
+          open: ['09:00-12:00', '13:30-17:30']
+        - days: [friday]
+          open: ['09:00-12:00', '13:30-16:30']
     facts:
       - text: 학생회관(63동) 3–4층에 있어요. 진료는 3층에서 하고, 접수와 수납은 329호에서 해요.
         source: https://health4u.snu.ac.kr/operation/guide/_/view.do

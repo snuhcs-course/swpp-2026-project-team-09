@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { WORLD_REQUEST_FIELDS, WORLDS } from '../eval/cases.ts';
 import { assistantMessagesSchema } from '../src/assistant/dto/assistant-messages.dto.js';
 
 // What the eval runner sends beside a case's messages, by its world: P6's runs say the app can show 관정 booking, so
-// that the library tools answer, and every other world's request is the same as before the field existed, so that
+// that the library tools answer, p4-answer's that it also draws answers on the map, as the app does with a context,
+// and every other world's request is the same as before the field existed, so that
 // P19's, P4's and P5's runs compare with their earlier ones. Reported apart from the product's pyramid (ADR 0007).
 
 const messages = [{ role: 'user', text: '관정 3층 자리 하나 잡아 줘' }];
@@ -26,7 +28,17 @@ describe('the eval runner request fields', () => {
     expect(assistantMessagesSchema.parse(body).clientCapabilities).toEqual(['library']);
   });
 
-  it.each(WORLDS.filter((world) => world !== 'p6'))('sends only the messages in the %s world', (world) => {
-    expect(JSON.stringify(bodyOf(world))).toBe(JSON.stringify({ messages }));
+  it("sends clientCapabilities ['library', 'answer'] in the p4-answer world, as the app does with a context", () => {
+    const body = bodyOf('p4-answer');
+
+    expect(body).toEqual({ messages, clientCapabilities: ['library', 'answer'] });
+    expect(assistantMessagesSchema.parse(body).clientCapabilities).toEqual(['library', 'answer']);
   });
+
+  it.each(WORLDS.filter((world) => world !== 'p6' && world !== 'p4-answer'))(
+    'sends only the messages in the %s world',
+    (world) => {
+      expect(JSON.stringify(bodyOf(world))).toBe(JSON.stringify({ messages }));
+    },
+  );
 });

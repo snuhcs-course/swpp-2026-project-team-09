@@ -5,7 +5,9 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -76,7 +78,6 @@ export async function startEvalApp(
   const app = await startApp(
     {
       ...settings,
-      ASSISTANT_MODEL: options.model,
       ASSISTANT_DAILY_MESSAGES: RUN_DAILY_MESSAGES,
       ASSISTANT_MAX_STEPS: String(options.maxSteps),
       ASSISTANT_TIMEOUT_MS: String(options.timeoutMs),

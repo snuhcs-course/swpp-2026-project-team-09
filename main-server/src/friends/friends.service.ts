@@ -14,10 +14,12 @@ import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoun
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendLevel, Prisma, User } from '../generated/prisma/client.js';
+import { levelSeen } from '../location-sharing/friend-level.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import {
+  endOf,
   FriendDto,
   FriendRequestsDto,
   SentFriendRequestDto,
@@ -36,9 +38,9 @@ function pairOf(userId: string, otherUserId: string): Pair {
 
 const USER_SUMMARY = { select: { id: true, name: true, department: true } } as const;
 
-type UserSummary = Pick<User, 'id' | 'name' | 'department'>;
+const AS_FRIEND = { select: { ...USER_SUMMARY.select, friendId: true, masterSwitchOn: true } } as const;
 
-function otherOf(row: { userAId: string; userA: UserSummary; userB: UserSummary }, userId: string): UserSummary {
+function otherOf<T>(row: { userAId: string; userA: T; userB: T }, userId: string): T {
   return row.userAId === userId ? row.userB : row.userA;
 }
 
@@ -79,7 +81,7 @@ const alreadyFriends = (): ConflictException =>
     message: 'This User is already your Friend.',
   });
 
-const friendNotFound = (): NotFoundException =>
+export const friendNotFound = (): NotFoundException =>
   new NotFoundException({
     statusCode: HttpStatus.NOT_FOUND,
     error: 'Not Found',
@@ -200,17 +202,26 @@ export class FriendsService {
     return this.answer({ id: requestId, senderId: userId }, (tx) => removeWaiting(tx, requestId));
   }
 
+  // A common Party leaves `seen` as it is: it shows the position only while it lasts, not by the friendship.
   async listFriends(userId: string): Promise<FriendDto[]> {
     const rows = await this.prisma.friendship.findMany({
       where: { acceptedAt: { not: null }, ...ofUser(userId) },
-      include: { userA: USER_SUMMARY, userB: USER_SUMMARY },
+      include: { userA: AS_FRIEND, userB: AS_FRIEND },
     });
     const visible = await this.visibility.visibleTo(userId);
     return rows
-      .map((row) => {
+      .flatMap((row) => {
+        const { acceptedAt } = row;
+        if (acceptedAt === null) {
+          return [];
+        }
         const friend = otherOf(row, userId);
-        const level = row.userAId === userId ? row.userALevel : row.userBLevel;
-        return toFriendDto(friend, level, visible.has(friend.id));
+        const seen = levelSeen({
+          bothMasterSwitchesOn: row.userA.masterSwitchOn && row.userB.masterSwitchOn,
+          commonParty: false,
+          friendship: [row.userALevel, row.userBLevel],
+        });
+        return [toFriendDto(friend, endOf(row, userId), { seen, visible: visible.has(friend.id), acceptedAt })];
       })
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
@@ -14,7 +15,7 @@ import {
 } from '@/library/client';
 import { useLibrarySession } from '@/library/library-session';
 import type { LibraryWriteResult } from '@/library/replies';
-import type { CardOutcome, OwnBubble } from '@/features/assistant/use-chat';
+import type { CardOutcome, CardRoom, OwnBubble } from '@/features/assistant/use-chat';
 
 // How a library card reads from the library and logs in: what it loaded or why it failed, and 로그인, which opens the
 // login and then does the pressed action once more.
@@ -159,11 +160,16 @@ export function bseqnoOf(info: Readonly<Record<string, unknown>>): string {
 
 // What a library card does in the chat: it adds the app's own bubbles, such as the done message or the card a tapped
 // seat gives, and keeps how it ended with the chat, by its place (`cardPlace`), so that it survives the sheet closing.
+// A seat card keeps there too the room it shows in place of its own.
 export interface LibraryCardActions {
   addOwn: (bubble: OwnBubble) => void;
   outcomeOf: (card: string) => CardOutcome | null;
   finish: (card: string, outcome: CardOutcome) => void;
   unfinish: (card: string) => void;
+  roomOf: (card: string) => CardRoom | null;
+  showRoom: (card: string, room: CardRoom | null) => void;
+  // The User's words the bubble's answer was asked with.
+  askedBefore: (bubbleId: number) => string;
 }
 
 // How a card's write is marked with the chat while it is on its way.
@@ -187,11 +193,6 @@ export function pendingMark(actions: LibraryCardActions, place: string): Pending
       actions.unfinish(place);
     },
   };
-}
-
-// A card's place in the chat: its bubble and its key, since the same card may be shown twice.
-export function cardPlace(bubbleId: number, key: string): string {
-  return `${String(bubbleId)}:${key}`;
 }
 
 // The library's own words for a refused write.

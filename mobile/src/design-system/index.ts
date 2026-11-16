@@ -15,7 +15,7 @@
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
 // components from here and writes no look of its own.
 export { AppBar, IconButton } from './app-bar';
-export { Avatar, type PresenceStatus } from './avatar';
+export { Avatar, initials, type PresenceStatus } from './avatar';
 export { Badge, type BadgeTone } from './badge';
 export { BottomNav, type BottomNavItem } from './bottom-nav';
 export { BottomSheet } from './bottom-sheet';
@@ -34,6 +34,7 @@ export { ListRow, RoundIcon, SectionHeader } from './list-row';
 export {
   ANSWER_SYMBOL_BOX,
   type AnswerLabel,
+  answerLabelBox,
   type AnswerSymbol,
   type FaceBadge,
   type LabelSide,
@@ -41,6 +42,7 @@ export {
 } from './map-answer';
 export { MapPerson, type PersonTone } from './map-person';
 export { KindRounds, MapGroupDot, MapGroupPin } from './map-group-pin';
+export { MapMarkBadge } from './map-mark-badge';
 export { MapTutorialPin } from './map-tutorial-pin';
 export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, MapRestaurant, placeKindLook } from './map-pin';
 export { MapStudyCluster } from './map-study-cluster';

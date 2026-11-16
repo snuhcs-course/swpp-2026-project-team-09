@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { changeState, patchGlobalEvent } from './global-event-changes.js';
@@ -181,13 +182,18 @@ describe('A Draft an Administrator changes later', () => {
 
   it('while the model reads the post publishes nothing of that Judgement', async () => {
     const postNumber = newPost();
-    await world.leftBeforeTheStep(postNumber);
+    const post = await world.leftBeforeTheStep(postNumber);
     const { id, version } = await world.onlyEvent(postNumber);
     const judgePost = world.judgements.judgePost.bind(world.judgements);
     world.scripted.script(answer());
+    let patched = false;
     vi.spyOn(world.judgements, 'judgePost').mockImplementation(async (sourcePostId) => {
       const judged = await judgePost(sourcePostId);
-      await patchGlobalEvent(world.judging, world.administrator, id, { version, title: '설명회 (수정)' }).expect(200);
+      // Only for this post, and once: a step the test before left running may still judge its own post here.
+      if (sourcePostId === post.id && !patched) {
+        patched = true;
+        await patchGlobalEvent(world.judging, world.administrator, id, { version, title: '설명회 (수정)' }).expect(200);
+      }
       return judged;
     });
 

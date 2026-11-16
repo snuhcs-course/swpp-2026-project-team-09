@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ClockRange, type EquipmentGroup, KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
@@ -19,6 +20,8 @@ export interface LibraryCardSpace {
   id: string;
   name: string;
   floor: number;
+  // The catalogue's kind, such as 'reading-room' or 'notebook-zone': the phone groups the seat spaces of a floor by it.
+  kind: string;
   placeNumber: string;
   unit: 'seat' | 'room';
   roomNo: number;
@@ -80,7 +83,7 @@ const MINUTES = '\\d{1,4}';
 const LABEL = '[A-Za-z0-9가-힣 ./-]{1,40}';
 export const LIBRARY_KEY = new RegExp(
   [
-    `book:${ID}:${DATE}:${HHMM}:${MINUTES}(?::s=${LABEL})?(?::e=${LABEL})?`,
+    `book:${ID}:${DATE}:${HHMM}:${MINUTES}(?::s=${LABEL})?(?::e=${LABEL})?(?::wait)?`,
     `seats:${ID}:${DATE}(?::${HHMM}:${MINUTES})?`,
     `cancel:(?:${ID}|-):(?:${DATE}|-):(?:${HHMM}|-)`,
     `return:(?:${ID}|-)`,
@@ -101,14 +104,15 @@ function hhmm(clock: string): string {
 
 // A space as a card or the 공부공간 layer carries it; null for one the catalogue lacks the parts of.
 export function cardSpace(space: LibrarySpace, seatNos: number[]): LibraryCardSpace | null {
-  const { floor, unit, roomNo, sectorNo, hours } = space;
-  if (floor === null || unit === null || roomNo === null || sectorNo === null || hours === null) {
+  const { floor, kind, unit, roomNo, sectorNo, hours } = space;
+  if (floor === null || kind === null || unit === null || roomNo === null || sectorNo === null || hours === null) {
     return null;
   }
   return {
     id: space.id,
     name: space.name,
     floor,
+    kind,
     placeNumber: KWANJEONG_PLACE_NUMBER,
     unit,
     roomNo,
@@ -147,8 +151,10 @@ export interface BookCardInput {
   useDesc: string | null;
   companions: LibraryCompanion[];
   questId: string | null;
-  // What the server filled, said before the site's notes.
-  note?: string | undefined;
+  // What the server filled or worked out, said before the site's notes.
+  notes?: readonly string[] | undefined;
+  // A room request made from the card waits for the booking window to hold its date.
+  waitsForWindow?: boolean | undefined;
 }
 
 // The seat numbers the card picks from: the named room's, else the equipment group's, else the sector's rooms.
@@ -164,11 +170,12 @@ function seatNosOf(space: LibrarySpace, { seat, equipment }: Pick<BookCardInput,
 }
 
 export function bookCard(space: LibrarySpace, input: BookCardInput): LibraryCard {
-  const { date, start, minutes, seat, equipment, useDesc, companions, questId, note } = input;
+  const { date, start, minutes, seat, equipment, useDesc, companions, questId, notes = [] } = input;
   const key = [
     `book:${space.id}:${date}:${hhmm(start)}:${minutes}`,
     ...(seat === null ? [] : [`s=${seat}`]),
     ...(equipment === null ? [] : [`e=${equipment.id}`]),
+    ...(input.waitsForWindow === true ? ['wait'] : []),
   ].join(':');
   return {
     kind: 'library',
@@ -186,7 +193,7 @@ export function bookCard(space: LibrarySpace, input: BookCardInput): LibraryCard
       pledge: space.pledge,
       companions,
       questId,
-      notes: note === undefined ? space.notes : [note, ...space.notes],
+      notes: [...notes, ...space.notes],
     },
   };
 }
@@ -247,6 +254,7 @@ export interface BookKey {
   minutes: number;
   seat?: string;
   equipment?: string;
+  waitsForWindow?: true;
 }
 
 // What a book card's key encodes, for a request the app makes from that card; null for any other key.
@@ -266,5 +274,6 @@ export function bookKeyOf(key: string): BookKey | null {
     minutes: Number(minutes),
     ...(seat === undefined ? {} : { seat }),
     ...(equipment === undefined ? {} : { equipment }),
+    ...(rest.includes('wait') ? { waitsForWindow: true } : {}),
   };
 }

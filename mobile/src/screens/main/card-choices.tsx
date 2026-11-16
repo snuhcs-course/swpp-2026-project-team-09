@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -12,7 +13,7 @@ import type { CardView, PlaceKind } from '@/features/map/adapter';
 import { KIND_WORDS, PLACE_KINDS } from '@/features/map/place-groups';
 
 interface ChoicesProps {
-  card: CardView;
+  card: Pick<CardView, 'choices'>;
   // A press on one of the choices, with the id of the card it opens.
   onChoose?: (id: string) => void;
 }

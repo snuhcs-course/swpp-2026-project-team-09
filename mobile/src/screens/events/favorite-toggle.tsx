@@ -13,9 +13,19 @@ export const FAVORITE_LABEL = '즐겨찾기';
 
 // The ☆ of a Global Event's card: filled in the official colour while the User starred it. It changes at once, and
 // back with a toast when the main server did not take the change. Its touch area is the map card's X's. `style`
-// places it, such as margins that keep its touch area from widening the row it sits in.
-export function FavoriteToggle({ eventId, style }: { eventId: string; style?: StyleProp<ViewStyle> }): ReactElement {
-  const { on, turn } = useFavorite(eventId);
+// places it, such as margins that keep its touch area from widening the row it sits in. An event the User's list does
+// not hold, such as an ended event in an old chat answer, has none.
+export function FavoriteToggle({
+  eventId,
+  style,
+}: {
+  eventId: string;
+  style?: StyleProp<ViewStyle>;
+}): ReactElement | null {
+  const { held, on, turn } = useFavorite(eventId);
+  if (!held) {
+    return null;
+  }
   return (
     <Pressable
       accessibilityLabel={FAVORITE_LABEL}

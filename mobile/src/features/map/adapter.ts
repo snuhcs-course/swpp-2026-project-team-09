@@ -13,21 +13,27 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import type { LatLng, ListedGlobalEvent, MyParty, Party, Position, Presence, Quest } from '@/api/types';
-import { eventTime, recruitingCounts } from '@/features/events/adapter';
 import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
 import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
-import { type EventChecks, eventPins, LOOK_MARKS } from './event-pins';
+import { eventCards } from './event-cards';
 import { placeGroupId } from './place-groups';
 import { givenName, shortTitle, withParticle } from './short-name';
 
 // The icons a card's lines use, by their names in the design system.
 export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
+
+// How a person's Avatar shows their position. `stale`: the position is over two minutes old, and the Avatar is
+// dimmed. `exact`: a Friend seen at the exact level on a position that is not old, whose Avatar carries a green dot.
+type PersonSeen = { stale: boolean; exact?: boolean };
 
 // What stands for the thing, at the head of its card and as its marker on the map:
 // - a person: the Avatar, with the status for a Friend; `presence` is null for a member of the User's Party who is
@@ -37,12 +43,10 @@ export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
 //   shuttle's vehicle as its stops;
 // - a group: the kinds of the things at one place, in the order `place-groups.ts` draws them.
 // `starred` is a Favorite Event's star on a place's or a group's pin: the event, or one of the events at the place.
-// `fresh` is a New Event's exclamation mark in the same way, which goes before the star: a pin has one or the other.
 export type CardMark =
-  // `stale`: the position is over two minutes old, and the Avatar is dimmed.
-  | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null; stale: boolean }
-  | { type: 'place'; place: PlaceKind; starred?: boolean; fresh?: boolean }
-  | { type: 'group'; kinds: readonly PlaceKind[]; starred?: boolean; fresh?: boolean };
+  | ({ type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null } & PersonSeen)
+  | { type: 'place'; place: PlaceKind; starred?: boolean }
+  | { type: 'group'; kinds: readonly PlaceKind[]; starred?: boolean };
 
 // The kinds of a place in the design system.
 export type PlaceKind = 'official' | 'party' | 'quest' | 'dining' | 'shuttle' | 'library';
@@ -69,7 +73,9 @@ export interface CardView {
   // Place of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is
   // on. `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a
   // building of the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view.
-  // `event-cluster` is Global Events' pins merged in the same way (`event-merges.ts`).
+  // `invitation` is an invitation the User received, while the switch of the answer on the map is on: it has no
+  // marker, and its card is the invitee's own way. `made-quest` is the flag of a Quest made from a Plan while the
+  // switch is on, whose marker's name is the flag's words and whose card is the one after inviting.
   kind:
     | 'global-event'
     | 'place-group'
@@ -82,7 +88,9 @@ export interface CardView {
     | 'shuttle-vehicle'
     | 'study'
     | 'study-cluster'
-    | 'event-cluster';
+    | 'event-cluster'
+    | 'invitation'
+    | 'made-quest';
   mark: CardMark;
   marker: CardMarker;
   // "공식 행사 · 컴퓨터공학부 공지"
@@ -97,7 +105,7 @@ export interface CardView {
   primary:
     | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' | 'library-seats' }
     | { label: string; action: 'menu'; restaurant: string }
-    | { label: string; action: 'room'; questId: string }
+    | { label: string; action: 'room' | 'post'; questId: string }
     | { label: string; action: 'recruit'; eventId: string }
     | { label: string; action: 'private-party'; userId: string }
     | null;
@@ -107,8 +115,10 @@ export interface CardView {
   // Avatar glides as the positions come.
   glideMs?: number;
   // For a thing at a place with others: the id of the place's card, whose marker stands for the thing. The thing has
-  // no marker of its own, and its card opens from the place's.
+  // no marker of its own, and its card opens from the place's. For a Quest made from a Plan: the id of its flag.
   within?: string;
+  // For the flag of a Quest made from a Plan: its two lines, the start and the step over the day and the count.
+  flag?: { title: string; line: string };
   // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
   // such as its time.
   // `favorite` marks a Favorite Event's row with ★.
@@ -141,6 +151,7 @@ export interface StudyDetail {
 }
 
 const FRIEND_CARD = 'friend:';
+const INVITATION_CARD = 'invitation:';
 
 // A card's id from the id of what it shows, for a part of a screen that holds the thing and not its card.
 export const cardId = {
@@ -153,6 +164,8 @@ export const cardId = {
   shuttleStop: (stopId: string): string => `shuttle-stop:${stopId}`,
   shuttleVehicle: (carId: string): string => `shuttle-vehicle:${carId}`,
   study: (placeId: string): string => `study:${placeId}`,
+  invitation: (invitationId: string): string => `${INVITATION_CARD}${invitationId}`,
+  madeQuest: (questId: string): string => `made-quest:${questId}`,
 } as const;
 
 // The Friend's user id of a card's id, which a marker or an Avatar on the map carries, or null for anything else.
@@ -160,9 +173,14 @@ export function friendIdOf(id: string): string | null {
   return id.startsWith(FRIEND_CARD) ? id.slice(FRIEND_CARD.length) : null;
 }
 
+// The invitation's id of a card's id, or null for anything else.
+export function invitationIdOf(id: string): string | null {
+  return id.startsWith(INVITATION_CARD) ? id.slice(INVITATION_CARD.length) : null;
+}
+
 type Line = CardView['lines'][number];
 
-function line(icon: CardIcon, text: string): Line {
+export function line(icon: CardIcon, text: string): Line {
   return { icon, text };
 }
 
@@ -177,42 +195,8 @@ export interface MapSources {
   positions: readonly Position[];
   meId: string;
   now: Date;
-  // The New Events the User checked and the event whose card is open (`event-pins.ts`); none when left out.
-  eventChecks?: EventChecks;
-}
-
-// The cards of the Global Events that stand on the map (`event-pins.ts`), a New Event's with the exclamation mark and a
-// Favorite Event's with the star. Things at one place are grouped on the main screen (`place-groups.ts`). The others
-// are in the 행사 tab only.
-function eventCards(sources: MapSources): CardView[] {
-  const { globalEvents, globalEventAnnouncers, recruiting: gathering, now, eventChecks } = sources;
-  const counts = recruitingCounts(gathering);
-  return eventPins(globalEvents, now, eventChecks).map(({ event, look }): CardView => {
-    const announcer = globalEventAnnouncers.find(({ eventId }) => eventId === event.id)?.announcer;
-    const recruiting = counts.get(event.id) ?? 0;
-    return {
-      id: cardId.globalEvent(event.id),
-      kind: 'global-event',
-      mark: { type: 'place', place: 'official', ...LOOK_MARKS[look] },
-      marker: {
-        name: `공식 행사 · ${event.title}`,
-        short: shortTitle(event.title),
-        count: recruiting > 1 ? recruiting : 0,
-        minutesOld: null,
-      },
-      subLabel: announcer === undefined ? '공식 행사' : `공식 행사 · ${announcer}`,
-      title: event.title,
-      lines: [
-        line('clock', eventTime(event, now)),
-        ...(event.place === null ? [] : [line('pin', event.place)]),
-        ...(recruiting === 0 ? [] : [line('users', `같이 갈 파티 ${recruiting}개 모집 중`)]),
-      ],
-      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: event.id },
-      secondary: null,
-      position: { latitude: event.latitude, longitude: event.longitude },
-      event: { id: event.id, favorite: event.favorite },
-    };
-  });
+  // The interest marks choose the events (`event-pins.ts`): every event's card is made, for the marks to keep some.
+  forInterestMarks?: boolean;
 }
 
 // A Party that others may join: its members and how to join, in the Quest's room.
@@ -301,7 +285,7 @@ function staleMinutes({ positions, now }: MapSources, userId: string): number | 
   return keptPositions([position], now).length === 0 ? Number.POSITIVE_INFINITY : minutesOld(position, now);
 }
 
-function staleLine(minutes: number): Line {
+export function staleLine(minutes: number): Line {
   return line('info', `마지막 위치 ${minutes}분 전`);
 }
 
@@ -313,11 +297,12 @@ function friendCards(sources: MapSources): CardView[] {
       return [];
     }
     const info = stale === null ? (detail === '' ? [] : [line('info', detail)]) : [staleLine(stale)];
+    const exact = stale === null && sources.positions.find(({ userId }) => userId === id)?.level === 'exact';
     return [
       {
         id: cardId.friend(id),
         kind: 'friend',
-        mark: { type: 'person', id, name, photo, presence, stale: stale !== null },
+        mark: { type: 'person', id, name, photo, presence, stale: stale !== null, ...(exact ? { exact } : {}) },
         marker: {
           name: detail === '' ? name : `${name} · ${detail}`,
           short: givenName(name),

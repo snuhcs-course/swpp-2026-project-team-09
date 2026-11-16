@@ -2,14 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { TutorialService } from '../../tutorial/tutorial.service.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { questWayOffer } from '../lookup/quest-way-tools.js';
 
 // The 새내기 튜토리얼's content as the repository's tutorial.yaml holds it, and the User's status of each quest. Its text
-// is the repository's own, so it is not wrapped as others' text. It never starts, completes or stops a quest.
+// is the repository's own, so it is not wrapped as others' text. It never starts, completes or stops a quest. For an app
+// that draws answers, one quest done at a place gets 가는 길 보기 under the reply (board q11).
 export function getTutorial(tutorial: TutorialService): Tool {
   return defineTool({
     description:
@@ -17,7 +20,7 @@ export function getTutorial(tutorial: TutorialService): Tool {
     input: z.object({
       questKey: z.string().trim().min(1).max(40).optional().describe('One quest by its key, such as s-card.'),
     }),
-    run: async ({ questKey }, { userId }) => {
+    run: async ({ questKey }, { userId, capabilities, presented }) => {
       const { state, quests } = await tutorial.peek(userId);
       const facts = tutorial.facts();
       const chosen = questKey === undefined ? quests : quests.filter(({ key }) => key === questKey);
@@ -25,6 +28,10 @@ export function getTutorial(tutorial: TutorialService): Tool {
         return noneFound(
           `The tutorial has no quest ${questKey}. Its quests are ${quests.map(({ key }) => key).join(', ')}.`,
         );
+      }
+      const [one] = chosen;
+      if (questKey !== undefined && one !== undefined && one.places.length > 0 && capabilities.has('answer')) {
+        presented.offers = [questWayOffer(one.title)];
       }
       return {
         result: 'found',

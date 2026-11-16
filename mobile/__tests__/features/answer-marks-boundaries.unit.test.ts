@@ -224,9 +224,15 @@ describe('an answer that draws nothing', () => {
   });
 });
 
-// Partitions: what a way by the shuttle adds to a scene, which the drawing keeps plain until P01 ticket 11 settles its
-// look: a stop among the places, a ride and a faded walk among the routes, and the flags for setting out, being late,
-// and the shuttle. Expected values: P01 ticket 08's brief. The stop stands 300 metres north of 301동.
+const SHUTTLE_FLAGS = [
+  ['16:43 나서기', 'leave'],
+  ['17:05 도착 · 5분 늦어요', 'late'],
+  ['셔틀 · 신소재공동연구소 지남', 'shuttle'],
+] as const;
+
+// Partitions: what a way by the shuttle adds to a scene: a stop among the places, a ride and a faded walk among the
+// routes, and the flags for setting out, being late, and the shuttle. Expected values: the looks agreed with package B
+// in P01 ticket 11. The stop stands 300 metres north of 301동.
 describe('a scene with a way by the shuttle', () => {
   const stop = north(AT_301, 300);
   const drawing = drawingOf(
@@ -255,22 +261,23 @@ describe('a scene with a way by the shuttle', () => {
     0,
   );
 
-  it('leaves the stop out', () => {
-    expect(drawing.things.map(({ name }) => name).filter((name) => name.includes('정류장'))).toEqual([]);
+  it("draws the stop as a dot of the shuttle, its name as the label's title and the rest of its tag as the line", () => {
+    expect(seen(drawing, 'answer:stop:test-stop')).toMatchObject({
+      symbol: { type: 'dot', role: 'stop', number: null },
+      label: { tone: 'stop', title: '301동 정류장', line: '16:45 셔틀' },
+    });
   });
 
-  it('draws the ride in the shuttle colour, and the walk not taken thin and light', () => {
+  it('draws the ride in the shuttle colour, and the walk not taken thin and faded', () => {
     expect(drawing.lines.slice(-2).map(({ style }) => style)).toEqual([
       { color: color.svcShuttle, width: 4 },
-      { color: color.border, width: 2 },
+      { color: color.inkSubtle, width: 2 },
     ]);
   });
 
-  it('draws the new flags in the pick tone', () => {
-    const flags = ['16:43 나서기', '17:05 도착 · 5분 늦어요', '셔틀 · 신소재공동연구소 지남'];
-
-    expect(flags.map((_, index) => seen(drawing, `answer:meeting:${index + 1}`))).toMatchObject(
-      flags.map((name) => ({ name, symbol: null, label: { tone: 'pick', title: name } })),
+  it('draws the flags for setting out, being late, and the shuttle each in a tone of its own', () => {
+    expect(SHUTTLE_FLAGS.map((_, index) => seen(drawing, `answer:meeting:${index + 1}`))).toMatchObject(
+      SHUTTLE_FLAGS.map(([name, tone]) => ({ name, symbol: null, label: { tone, title: name } })),
     );
   });
 });

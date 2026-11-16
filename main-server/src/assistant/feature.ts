@@ -8,10 +8,12 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type AnswerReply, type Lookup, type RequestContext } from './dto/answer.dto.js';
+import { type ReplyOffer } from './dto/assistant-messages.dto.js';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
@@ -20,6 +22,7 @@ import { type RestaurantCard } from './free-time/restaurant-card.js';
 import { type JudgedCandidates } from './free-time/travel-boxes.js';
 import { type LibraryCard } from './library/library-card.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
+import { type Refusal } from './refusals/refusal.dto.js';
 
 // The parts of an AI feature that know nothing of the model library (ADR 0005). A tool is a zod schema of its input
 // and a plain function that calls the main server's services as the signed-in User. A feature is an entry point with
@@ -67,8 +70,9 @@ export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 
 // What the app says it can show beside the cards every version shows. Library cards are attached only for an app that
 // says `library`, since older apps refuse a reply with a card they do not know. `answer`: the app draws an answer on
-// the map. `events`: with `answer`, it also draws an answer of a day's events.
-export const CLIENT_CAPABILITIES = ['library', 'answer', 'events'] as const;
+// the map. `events`: with `answer`, it also draws an answer of a day's events. `meet`: with `answer`, it also draws a
+// meet. `area`: with `answer`, it sends the visible map area and draws its study spaces.
+export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area'] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 
@@ -84,6 +88,10 @@ export interface Presented {
   // one that puts a Lookup there clears the answer.
   answer: AnswerReply | null;
   lookup: Lookup | null;
+  // What refuse wrote; the reply keeps it only without an answer or a Lookup.
+  refusal: Refusal | null;
+  // Buttons under the text, which the reply keeps only without an answer, a Lookup, or a refusal.
+  offers?: ReplyOffer[];
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.

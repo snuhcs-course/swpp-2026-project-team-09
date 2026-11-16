@@ -4,6 +4,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions, for each check of an answer about Users: the documented shape, each checked field left out, null and of
@@ -50,14 +51,17 @@ const PROFILE = {
   registeredName: '홍길동',
   affiliation: 'exchange',
 };
-const LOBBY = { profile: PROFILE, masterSwitch: false };
+const LOBBY = { profile: PROFILE, masterSwitch: false, masterOffAsked: false };
 const FRIEND = {
   id: 'u-min-jun',
   name: '김민준',
   department: '경영학과',
   level: 'building',
+  seen: 'timetable',
   sharing: true,
   visible: false,
+  askedOff: true,
+  askedPlan: false,
 };
 const USER_SUMMARY = { name: '김민준', department: '경영학과' };
 const INVITE_LINK = { url: 'https://snunow.example/invite/abc', expiresAt: '2026-10-07T08:00:00.000Z' };
@@ -150,7 +154,7 @@ describe('isLobby', () => {
     isLobby,
     [['the Lobby', LOBBY]],
     [
-      ...wrongFields(LOBBY, { profile: ['홍길동'], masterSwitch: ['false'] }),
+      ...wrongFields(LOBBY, { profile: ['홍길동'], masterSwitch: ['false'], masterOffAsked: ['true'] }),
       ['a profile without a friendId', { ...LOBBY, profile: omit(PROFILE, 'friendId') }],
     ],
   );
@@ -160,12 +164,21 @@ describe('isPositionKept', () => {
   checks(
     isPositionKept,
     [
-      ['a position kept', { offCampus: false }],
-      ['a position off campus', { offCampus: true }],
+      ['a position kept', { offCampus: false, privateZone: false }],
+      ['a position off campus', { offCampus: true, privateZone: false }],
+      ['a position inside a Private Zone', { offCampus: false, privateZone: true }],
+      ['a position kept, from a main server without Private Zones', { offCampus: false }],
     ],
-    wrongFields({ offCampus: false }, { offCampus: ['false'] }),
+    [
+      ...wrongFields({ offCampus: false, privateZone: false }, { offCampus: ['false'] }),
+      ['privateZone null', { offCampus: false, privateZone: null }],
+      ['privateZone "true"', { offCampus: false, privateZone: 'true' }],
+    ],
   );
 });
+
+// A Friend with the two fields package C adds, which may be left out but are text where they are sent.
+const FRIEND_PROFILED = { ...FRIEND, friendId: 'KM4J8QZA', friendsSince: '2026-10-03T14:05:00+09:00' };
 
 describe('isFriends', () => {
   checks(
@@ -173,9 +186,16 @@ describe('isFriends', () => {
     [
       ['the Friends', [FRIEND]],
       ['no Friends', []],
+      ['a Friend with the Friend ID and the date', [FRIEND_PROFILED]],
     ],
     [
       ['one Friend outside a list', FRIEND],
+      ...inList(FRIEND, [
+        ['friendId null', { ...FRIEND_PROFILED, friendId: null }],
+        ['friendId 1', { ...FRIEND_PROFILED, friendId: 1 }],
+        ['friendsSince null', { ...FRIEND_PROFILED, friendsSince: null }],
+        ['friendsSince 1', { ...FRIEND_PROFILED, friendsSince: 1 }],
+      ]),
       ...inList(
         FRIEND,
         wrongFields(FRIEND, {
@@ -183,8 +203,11 @@ describe('isFriends', () => {
           name: [1],
           department: [1],
           level: ['college'],
+          seen: ['college'],
           sharing: ['true'],
           visible: ['false'],
+          askedOff: ['true'],
+          askedPlan: [0],
         }),
       ),
     ],

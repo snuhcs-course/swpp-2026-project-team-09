@@ -10,7 +10,14 @@ import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { answerFriendRequest, getFriendRequests, getFriends, requestFriendship, signInUser } from './friends.js';
+import {
+  answerFriendRequest,
+  getFriendRequests,
+  getFriends,
+  NEW_FRIENDSHIP,
+  requestFriendship,
+  signInUser,
+} from './friends.js';
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
 
@@ -38,10 +45,10 @@ describe('Accepting a Friend Request', () => {
 
     expect(response.status).toBe(204);
     expect((await getFriends(app, receiver)).body).toEqual([
-      { id: sender.id, name: '홍길동', department: '컴퓨터공학부', level: 'building', sharing: true, visible: false },
+      { id: sender.id, name: '홍길동', department: '컴퓨터공학부', friendId: sender.friendId, ...NEW_FRIENDSHIP },
     ]);
     expect((await getFriends(app, sender)).body).toEqual([
-      { id: receiver.id, name: '김철수', department: '경영학과', level: 'building', sharing: true, visible: false },
+      { id: receiver.id, name: '김철수', department: '경영학과', friendId: receiver.friendId, ...NEW_FRIENDSHIP },
     ]);
     expect((await getFriendRequests(app, receiver)).body).toEqual(NO_REQUESTS);
     expect((await getFriendRequests(app, sender)).body).toEqual(NO_REQUESTS);

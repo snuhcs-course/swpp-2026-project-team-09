@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -18,7 +19,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
 import { askOnMap, distinct, FIRST_PLAN_MARKS, layAnswerCard, mapLines, mapThings } from './support/answer-map';
 import { answerDining, ENGINEERING } from './support/dining';
-import { answerEvents } from './support/events';
+import { answerEvents, BOOK_TALK, CAREER, MAJOR } from './support/events';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, LAYERS, layStage } from './support/lists';
@@ -59,7 +60,8 @@ beforeEach(async () => {
   await startFresh();
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
-  answerEvents(server);
+  // The career talk is a Favorite Event, which the everyday map keeps.
+  answerEvents(server, { events: [{ ...CAREER, favorite: true }, MAJOR, BOOK_TALK] });
   answerDining(server);
   answerShuttle(server);
   givePhone({ permission: 'granted', position: ON_CAMPUS });
@@ -228,12 +230,12 @@ const FIRST_PLAN_POINTS = distinct([
   { latitude: 37.45942, longitude: 126.94989 },
 ]);
 
-// The test's phone has no status bar: the pill's 52 from the top and its 48, and the room the marks need above the
-// top-most point, 24 (자하연식당 2층's label is at its left); below, the card and the room the marks need under the
-// bottom-most point: for the first Plan 66, half the symbol box and the gap and the two lines of the pick's label
-// under 302동, 18 + 2 + 46; 64 at each side.
+// The test's phone has no status bar: the pill's 52 from the top and its 48, the 8 of ticket 08's area, and the room
+// the marks need above the top-most point, 24 (자하연식당 2층's label is at its left); below, the card, the 8 of ticket
+// 08's area, and the room the marks need under the bottom-most point: for the first Plan 66, half the symbol box and
+// the gap and the two lines of the pick's label under 302동, 18 + 2 + 46; 64 at each side.
 function padding(cardHeight: number): object {
-  return { top: 52 + 48 + 24, right: 64, bottom: cardHeight + 66, left: 64 };
+  return { top: 52 + 48 + 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
 }
 
 // The bottom of a fit's padding, its other sides checked to be those of `padding`.
@@ -241,7 +243,8 @@ function bottomBeside(given: Parameters<typeof projection.fit>[1]['padding']): n
   if (typeof given !== 'object') {
     throw new TypeError('The fit was given no padding of each side');
   }
-  expect({ ...given, bottom: 66 }).toEqual(padding(0));
+  // 8 + 66: the 8 of ticket 08's area.
+  expect({ ...given, bottom: 8 + 66 }).toEqual(padding(0));
   return given.bottom;
 }
 
@@ -279,8 +282,9 @@ describe('the camera after the answer came', () => {
     // The Plans of the stored answer stand at the same points (their people at 301동 and 302동, and the same
     // Restaurants), so what can differ is that a fit is asked again, and with the card as it then is. The second
     // Plan's pick 301동식당 has its two lines under 301동, 0.00129° = 143.6 metres north of 302동: 66 - 143.6 / 4.5 = 34.1.
+    // The 8 is ticket 08's area.
     expect(fit.mock.calls).toHaveLength(before + 1);
-    expect(bottomBeside(fit.mock.lastCall?.[1].padding)).toBeCloseTo(240 + 66 - (0.00129 * 111_320) / 4.5, 6);
+    expect(bottomBeside(fit.mock.lastCall?.[1].padding)).toBeCloseTo(240 + 8 + 66 - (0.00129 * 111_320) / 4.5, 6);
 
     await user.press(screen.getByRole('button', { name: CLOSE }));
 

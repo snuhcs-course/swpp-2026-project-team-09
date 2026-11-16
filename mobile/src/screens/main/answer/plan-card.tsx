@@ -3,36 +3,47 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
+import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
+import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
+import { easedFromNow } from '@/features/assistant/relaxed-plan';
+import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { useOpenFriendProfile } from '../friend-profile';
 import { AnswerLines } from './answer-lines';
+import { CardNote } from './card-note';
 import { ConditionChips, type CornerAction } from './condition-chips';
 import { FriendChoices } from './friend-choices';
+import { MainButtons } from './main-buttons';
+import { RelaxButtons } from './relax-buttons';
+import { RowFourButtons } from './row-four-buttons';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
+import { addNameOf, whoOf } from './who-words';
 
 // The arrows are as high as the buttons beside them, and their touch area reaches the design system's minimum.
 const ARROW = 40;
 const ARROW_SLOP = (size.touchMin - ARROW) / 2;
 const UNDO_WIDTH = 96;
-// The count stands in a box of its own, so that it never moves.
-const COUNT_WIDTH = 36;
+// The count stands in a box of its own, so that it never moves. Wide enough for "11/11": the main server answers a
+// meal with up to eleven Plans.
+const COUNT_WIDTH = 44;
 // A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
 const SWIPE_STARTS = 10;
 const SWIPE_COUNTS = 48;
-// The card's lines while the list of Friends is open, in place of the Plan's.
-const LIST_LINES: readonly AnswerLine[] = [
-  [{ text: '누구와 같이 먹을까요?', strong: false }],
-  [{ text: '가까운 친구부터 보여요', strong: false }],
-];
+// The card's lines while the list of Friends is open, in place of the Plan's: who comes (`whoOf`). The map takes a
+// press on a face only while a Plan is drawn, so without one the second line says how the list is sorted.
+const HOW: AnswerLine = [{ text: '지도의 얼굴을 누르거나 아래에서 골라요', strong: false }];
+const HOW_WITHOUT_PLAN: AnswerLine = [{ text: '가까운 친구부터 보여요', strong: false }];
 
 // The answer's lines, which a swipe to the left turns to the next Plan and one to the right to the previous, as the
 // arrows do.
@@ -95,14 +106,19 @@ interface StepsProps {
   busy: boolean;
   // Null for a Plan of the User alone, which has no "이대로 초대".
   invitation: PlanInvitation | null;
+  // The screens the answer offers for an input that was missing.
+  offers: readonly AnswerOffer[];
+  // "처음으로" back to 지금, null for none.
+  back: (() => void) | null;
 }
 
 // The arrows at the row's two ends when the answer has more than one Plan, the count right before "›", and the
-// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend.
-function Steps({ shown, count, busy, invitation }: StepsProps): ReactElement | null {
+// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend,
+// then the answer's offers.
+function Steps({ shown, count, busy, invitation, offers, back }: StepsProps): ReactElement | null {
   const { index, browse, ghost, undo } = shown;
   const arrows = count > 1;
-  if (ghost === null && !arrows && invitation === null) {
+  if (ghost === null && !arrows && invitation === null && offers.length === 0 && back === null) {
     return null;
   }
   return (
@@ -124,16 +140,10 @@ function Steps({ shown, count, busy, invitation }: StepsProps): ReactElement | n
             </Button>
           </View>
         )}
-        {invitation === null ? null : (
-          <View style={styles.main}>
-            <Button disabled={busy} full onPress={invitation.invite}>
-              {invitation.sending ? '보내는 중이에요' : '이대로 초대'}
-            </Button>
-          </View>
-        )}
+        <MainButtons back={back} busy={busy} invitation={invitation} offers={offers} />
       </View>
       {arrows ? (
-        <Text style={styles.count} testID="plan-count">
+        <Text numberOfLines={1} style={styles.count} testID="plan-count">
           {`${index + 1}/${count}`}
         </Text>
       ) : null}
@@ -156,15 +166,18 @@ interface CardProps {
   invitation: PlanInvitation;
   // How high the card may stand before it scrolls, null until it is known.
   room: number | null;
+  // A refusal's lines, which stand in place of the Plan's first (board n8b).
+  over?: readonly AnswerLine[];
 }
 
 interface BelowProps extends CardProps {
   fix: Corrections;
   busy: boolean;
+  onProfile: ((userId: string) => void) | null;
 }
 
-// Under the lines: the list of Friends while it is open, else the Plan's time band and the steps.
-function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): ReactElement {
+// Under the lines: the list of Friends while it is open, else the Plan's time band, the answer's note, and the steps.
+function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowProps): ReactElement {
   const { plan, ghost } = shown;
   if (fix.adding) {
     return (
@@ -172,12 +185,16 @@ function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): Reac
         disabled={busy}
         friends={fix.choices}
         onChoose={fix.choose}
+        onProfile={onProfile}
+        pending={shown.pendingAdd}
         pick={plan?.place ?? null}
         room={room}
       />
     );
   }
-  const invitable = plan !== null && peopleOf(answer.input).length > 1;
+  // A new party is posted with "이대로 모집", its friends invited or not.
+  const invitable = plan !== null && answer.input.kind !== 'new-quest' && peopleOf(answer.input).length > 1;
+  const fixed = bandIsFixed(answer.input.kind);
   return (
     <>
       {plan === null ? null : (
@@ -188,9 +205,22 @@ function Below({ shown, answer, invitation, room, fix, busy }: BelowProps): Reac
           ghost={ghost}
           onDrop={fix.drop}
           fixed={windowOf(answer.input)}
+          handles={!fixed}
+          moving={shown.moving}
+          onMove={fixed ? undefined : fix.move}
         />
       )}
-      <Steps busy={busy} count={answer.plans.length} invitation={invitable ? invitation : null} shown={shown} />
+      <CardNote note={answer.note} />
+      {plan === null ? <RelaxButtons busy={busy} onRelax={fix.relax} relax={answer.noPlan?.relax ?? []} /> : null}
+      <Steps
+        back={plan !== null && easedFromNow(answer.input) ? fix.back : null}
+        busy={busy}
+        count={answer.plans.length}
+        invitation={invitable ? invitation : null}
+        offers={answer.offers ?? []}
+        shown={shown}
+      />
+      <RowFourButtons busy={busy} invitation={invitation} shown={shown} />
     </>
   );
 }
@@ -209,25 +239,46 @@ function cornerOf({ plan, basisOpen, toggleBasis }: ShownAnswer, fix: Correction
     : { words: '근거', icon: 'chevronRight', onPress: toggleBasis };
 }
 
+interface PlanCardProps extends CardProps {
+  onClose: () => void;
+}
+
+// While the band is moved over someone's busy stretch, the lines say who cannot come and why.
+function linesOf({ plan, moving }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
+  if (adding) {
+    return [whoOf(answer.input.kind), plan === null ? HOW_WITHOUT_PLAN : HOW];
+  }
+  const words = plan === null || moving === null ? null : movingWords(plan.band.lanes, moving);
+  return words?.lines ?? plan?.lines ?? answer.noPlan?.lines ?? [];
+}
+
 // The answer on screen in the answer frame's card: its condition chips with "근거" at the right of their first line,
 // the Plan's two lines or those that say why there is none, the basis while open, and the time band with the steps.
 // While the list of Friends to add is open, the lines ask who comes, "그대로" closes the list, and the list stands in
 // place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
-// none takes a press while a recalculation or "이대로 초대" is on its way.
-export function PlanCard({ shown, answer, invitation, room }: CardProps): ReactElement {
+// none takes a press while a recalculation or "이대로 초대" is on its way; the ✕ of a meet's only Friend closes the
+// answer (`onClose`, as the frame's ✕) and goes back to that Friend's card. A Friend's chip and the mark of a Friend's
+// cell open the Friend's profile over the card.
+export function PlanCard({ shown, answer, invitation, room, over = [], onClose }: PlanCardProps): ReactElement {
   const { plan, basisOpen, recalculating } = shown;
   const busy = recalculating || invitation.sending;
-  const fix = useCorrections(shown, answer.input);
-  const lines = fix.adding ? LIST_LINES : (plan?.lines ?? answer.noPlan?.lines ?? []);
+  const fix = useCorrections(shown, answer.input, onClose);
+  const openProfile = useOpenFriendProfile();
+  const own = linesOf(shown, answer, fix.adding);
+  const lines = fix.adding ? own : [...over, ...own.slice(over.length)];
   return (
     <View style={styles.plan}>
       <ConditionChips
         adding={fix.adding}
-        chips={answer.chips}
+        {...chipsWhileMoved(answer.chips, shown.moving)}
         corner={cornerOf(shown, fix)}
         disabled={busy}
+        friendIds={fix.friendIds}
+        addName={addNameOf(answer.input.kind)}
+        fixed={bandIsFixed(answer.input.kind)}
         onAdd={fix.toggleAdding}
         onOrigin={fix.chooseOrigin}
+        onProfile={openProfile}
         onRemove={fix.remove}
         onUntil={fix.focusUntil}
       />
@@ -241,7 +292,15 @@ export function PlanCard({ shown, answer, invitation, room }: CardProps): ReactE
           ))}
         </View>
       ) : null}
-      <Below answer={answer} busy={busy} fix={fix} invitation={invitation} room={room} shown={shown} />
+      <Below
+        answer={answer}
+        busy={busy}
+        fix={fix}
+        invitation={invitation}
+        onProfile={openProfile}
+        room={room}
+        shown={shown}
+      />
     </View>
   );
 }
@@ -262,7 +321,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85 },
   middle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2] },
   undo: { width: UNDO_WIDTH },
-  main: { flex: 1 },
   count: {
     ...text.label,
     width: COUNT_WIDTH,

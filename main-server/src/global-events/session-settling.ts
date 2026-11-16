@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -137,7 +138,7 @@ export async function settleReadByRules(
 }
 
 // A session the post was not stored with: one more own session of the post. Each write here that publishes an event
-// records when (`publishedAt`), which the apps read for a New Event.
+// records when (`publishedAt`), which the lists give.
 async function createEvent(
   tx: Prisma.TransactionClient,
   { id: sourcePostId, sessions }: PostWithOwnSessions,
