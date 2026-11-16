@@ -98,6 +98,7 @@ export class NewQuestPlanService {
       title: where.title,
       placeId: where.placeId,
       placeWords: where.placeWords,
+      event: where.event,
       placeOf: (placeId) => this.placeOf(placeId),
     });
     return { answer, planning };

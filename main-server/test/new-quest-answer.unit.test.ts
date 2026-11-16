@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type NewQuestInput } from '../src/assistant/dto/answer.dto.js';
@@ -92,7 +93,19 @@ function answerOf({
   );
   const [asker = fridayAsker()] = people;
   const placeId = id(building);
-  return newQuestAnswer({ input, now, asker, people, others, planning, title, placeId, placeWords: words, placeOf });
+  return newQuestAnswer({
+    input,
+    now,
+    asker,
+    people,
+    others,
+    planning,
+    title,
+    placeId,
+    placeWords: words,
+    placeOf,
+    event,
+  });
 }
 
 // Row 4: the job fair in 문화관 from 10:00 to 17:00, asked on Friday at 13:50, alone or with 지은.
@@ -186,6 +199,38 @@ describe('Row 4: a new party for the job fair, with 지은', () => {
       ['jieun', '지은 · 11분'],
     ]);
     expect(plans[0]?.band.lanes.map(({ name }) => name)).toEqual(['나', '지은']);
+  });
+});
+
+// The concert in 두레문예관 at 18:00 with no end, asked on Friday at 13:50: the party meets as the concert starts.
+const concert = (jieunToo: boolean): ReturnType<typeof newQuestAnswer> =>
+  answerOf({
+    date: DATE,
+    now: NOW,
+    at: ['두레문예관', '두레문예관'],
+    title: '동아리 정기공연',
+    event: { start: onDay(DATE, '18:00'), end: null },
+    time: null,
+    people: jieunToo ? [fridayAsker(), fridayJieun()] : [fridayAsker()],
+    others: [],
+  });
+
+// Partitions: a party alone, and one with 지은, from the concert's own start. Expected values: the Quest's attending Sub
+// Quest is the concert itself, so the Plan repeats no step of it (smoke test of 2026-11-16, row 14).
+describe("A new party from the event's own start", () => {
+  it('alone, has no step of its own: the attending Sub Quest is the concert', () => {
+    const [plan] = concert(false).plans;
+
+    expect(plan?.startAt).toBe(time(DATE, '18:00'));
+    expect(plan?.subQuests).toEqual([]);
+  });
+
+  it('with 지은, has the meeting step only', () => {
+    const [plan] = concert(true).plans;
+
+    expect(plan?.subQuests).toEqual([
+      { at: time(DATE, '18:00'), placeId: id('두레문예관'), title: '유상, 지은: 두레문예관 앞에서 만나기' },
+    ]);
   });
 });
 
