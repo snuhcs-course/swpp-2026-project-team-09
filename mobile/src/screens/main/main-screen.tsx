@@ -17,6 +17,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -179,9 +180,9 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
   return <ThingCard {...props} />;
 }
 
-// The zoom control gives way to a card at the bottom, the shuttle's notice, the open 편의기능 stack and the answer frame.
-function zoomShown({ bottomCard, notice }: Taken, stackOpen: boolean, framed: boolean): boolean {
-  return !bottomCard && notice === null && !stackOpen && !framed;
+// The zoom control gives way to a card at the bottom, the open 편의기능 stack and the answer frame.
+function zoomShown({ bottomCard }: Taken, stackOpen: boolean, framed: boolean): boolean {
+  return !bottomCard && !stackOpen && !framed;
 }
 
 // The lists give way to a 식당's card at the top, and to the answer frame or a received invitation's card.

@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -11,7 +12,6 @@ import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToastAbove } from '@/design-system';
 import { type FirstRun, useFirstRun } from '@/features/first-run/use-first-run';
-import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import { type Room, takenUnderToast, takenUnderToastOverAnswer, takenUnderToastOverCard } from './layout';
 import { type Taken, takenBy } from './map-bottom';
@@ -33,12 +33,11 @@ function useToastOverMap({ cardHeight, answerHeight }: Room, framed: boolean): v
   useToastAbove(taken, useIsFocused());
 }
 
-// The room the parts over the map have, and the toast's place. What is at the bottom card's place counts: a card at
-// the bottom, or the shuttle's notice; one that appears counts from the last one's height until it is laid out. The
-// answer frame's card counts on its own while `framed`, from its first layout on. `heights` are the bottom's parts'
-// callbacks: the shuttle's notice's, which the first run's card shares, and the answer frame's card's.
+// The room the parts over the map have, and the toast's place. A card at the bottom counts; one that appears counts
+// from the last one's height until it is laid out. The answer frame's card counts on its own while `framed`, from its
+// first layout on. `heights` are the bottom's parts' callbacks: the first run's card's and the answer frame's card's.
 export function useRoom(
-  { bottomCard, notice }: Taken,
+  { bottomCard }: Taken,
   tutorialStart: boolean,
   framed: boolean,
   interestsHint = false,
@@ -49,7 +48,7 @@ export function useRoom(
   setCardHeight: (height: number) => void;
   heights: { onNoticeHeight: (height: number) => void; onAnswerHeight: (height: number) => void };
 } {
-  const atBottom = bottomCard || notice !== null;
+  const atBottom = bottomCard;
   const [cardHeight, setCardHeight] = useState(0);
   const [answerHeight, setAnswerHeight] = useState<number | null>(null);
   const [stage, setStage] = useState<Room['stage']>(null);
@@ -79,14 +78,13 @@ export function useRoom(
 // over the input.
 export function useBottomRoom(
   selection: Selection,
-  shuttle: ShuttleLayer,
   { tutorialStart, framed, madeLine }: { tutorialStart: boolean; framed: boolean; madeLine: boolean },
 ): ReturnType<typeof useRoom> & { taken: Taken; firstRun: FirstRun } {
   const asked = useFirstRun();
   const free = !selection.open && !framed;
   const firstRun = { ...asked, card: free ? asked.card : null };
   const otherCard = firstRun.card !== null || selection.mine || selection.place !== null || selection.friend !== null;
-  const taken = takenBy(selection.selected, shuttle.serviceHours, otherCard);
+  const taken = takenBy(selection.selected, otherCard);
   return { taken, firstRun, ...useRoom(taken, tutorialStart, framed, asked.asksForInterests, madeLine) };
 }
 
@@ -94,7 +92,7 @@ export function useBottomRoom(
 // frame or one of them is shown, which the tab bar gives way to; and what takes the bottom of the map then.
 export function useFramedRoom(
   selection: Selection,
-  { cards, made, chat, shuttle }: Pick<MainLayers, 'cards' | 'made' | 'chat' | 'shuttle'>,
+  { cards, made, chat }: Pick<MainLayers, 'cards' | 'made' | 'chat'>,
   me: Me,
   tutorialStart: boolean,
 ): ReturnType<typeof useBottomRoom> & { unasked: UnaskedCards; framed: boolean } {
@@ -103,6 +101,6 @@ export function useFramedRoom(
   const framed = chat.framed || invitation.shown || madeCard.shown !== null;
   useHideTabBarOnMain(framed);
   const madeLine = madeCard.first !== null;
-  const bottom = useBottomRoom(selection, shuttle, { tutorialStart, framed, madeLine });
+  const bottom = useBottomRoom(selection, { tutorialStart, framed, madeLine });
   return { unasked: { invitation, made: madeCard }, framed, ...bottom };
 }
