@@ -70,6 +70,11 @@ Since ticket 04 the answer frame is the only screen, and three things in it fall
 10. **A made Quest's card is kept.** ✕ hides it with the frame, and "이전 답" brings it back.
 11. **The failed words stay in the input on ✕.** The failure is still the last thing said. "새 대화" empties them.
 12. **A Lookup's headline** is the first line its card draws, since a Lookup has no title of its own.
+13. **A new turn asked while a reply is on its way takes that question back first, as 그만 does.**
+    - This came from the review of pull request 335. With the frame hidden, the everyday map takes presses again: an example, a card's button, the tutorial's ask, or an interest mark. The late reply then answered the new turn, and two User messages went out in a row.
+    - The new turn takes the old question back and counts another conversation, so the late reply is dropped.
+    - It is one guard where every ask passes (`send`, `askApp`, `addRecalculated` in `use-chat.ts` and `let-go.ts`), so it also covers ways in added later.
+    - Making the new ask wait instead was not chosen: with the frame hidden, nothing shows that something waits, so a press that does nothing for seconds reads as broken.
 
 ## The acceptance-test sheet
 

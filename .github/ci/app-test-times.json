@@ -1,5 +1,6 @@
 {
   "__tests__/android-stack.integration.test.tsx": 20.7,
+  "__tests__/answer-ask-while-waiting.integration.test.tsx": 60.0,
   "__tests__/answer-conversation-kept.integration.test.tsx": 105.0,
   "__tests__/answer-correct-band.integration.test.tsx": 75.6,
   "__tests__/answer-correct-list.integration.test.tsx": 32.9,
