@@ -75,7 +75,7 @@ The server half of the Private Zone: the User's zones, each one closed outline, 
 
 ### Agent usage (2026-11-16)
 
-- Agent time: about 41 minutes. This is an estimate from the transcripts' timestamps: the union of active stretches, with gaps over 5 minutes left out. It counts the subagent that built it (about 36 minutes) and the review in the session that briefed it (about 5 minutes).
-- Tokens, the builder and the review together:
-  - output: 97,656;
-  - input: 26,159,822, of which 25,867,331 were cache reads, 292,237 cache writes, and 254 uncached.
+- Agent time: about 58 minutes. This is an estimate from the transcripts' timestamps: the union of active stretches, with gaps over 5 minutes left out. It counts the subagent that built it and changed its size rule (about 50 minutes) and the review in the session that briefed it (about 8 minutes).
+- Tokens, the builder and the review up to the first push together:
+  - output: 112,646;
+  - input: 32,662,899, of which 32,057,727 were cache reads, 604,870 cache writes, and 302 uncached.
