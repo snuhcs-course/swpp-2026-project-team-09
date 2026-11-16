@@ -74,6 +74,7 @@ import type {
 } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { BetterPlan, MakePlanQuest, PlanQuest } from './plan-quest-types';
+import type { SeatStay, SeatStayMade } from './seat-stay-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
 
@@ -223,6 +224,9 @@ export interface ApiClient {
   // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
   // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
   makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
+  // A seat booked on the library's site, held as a Quest the User holds alone, with its leave-by for the next item.
+  // Refused with 400 NOT_A_SEAT for a space that is not a seat.
+  makeSeatStay: (stay: SeatStay, idempotencyKey: string) => Promise<SeatStayMade>;
   // For the Leader after a decline: whether the people left have a better Plan than the Quest as it stands, worked
   // out from where the Leader is now when the app knows, or else from why that is not known, as the Quest was made.
   getBetterPlan: (questId: string, location: LatLng | null, missing?: LocationMissing) => Promise<BetterPlan>;
@@ -366,6 +370,7 @@ export const apiClient: ShownClient = {
     tellAskLevels(made.askLevels);
     return made;
   },
+  makeSeatStay: (stay, key) => chosen().makeSeatStay(stay, key),
   getBetterPlan: (questId, location, missing) => chosen().getBetterPlan(questId, location, missing),
   changePlanQuest: (questId, making) => chosen().changePlanQuest(questId, making),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),

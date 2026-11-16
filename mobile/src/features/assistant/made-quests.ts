@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ConditionChip, MapScene } from '@/api/assistant-types';
@@ -64,8 +65,8 @@ function destinationOf(quest: Quest, now: Date): MadeQuest['destination'] | null
 }
 
 // The Quests made from a Plan among the User's: those whose id the phone kept (`ids`), which the User leads and whose
-// destination has not ended by `now`, the earliest first. A Closed Quest that is no Class Quest and holds someone else
-// among its members, as POST /plans makes one.
+// destination has not ended by `now`, the earliest first. A Closed Quest that is no Class Quest, as POST /plans makes
+// one, with the Friends invited, or none for a Quest the User holds alone (P05-14).
 export function madeQuests(quests: readonly Quest[], meId: string, now: Date, ids: readonly string[]): MadeQuest[] {
   return quests
     .flatMap((quest): MadeQuest[] => {
@@ -75,7 +76,7 @@ export function madeQuests(quests: readonly Quest[], meId: string, now: Date, id
       }
       const friends = (quest.members ?? []).map(({ user }) => user).filter(({ id }) => id !== meId);
       const destination = destinationOf(quest, now);
-      return friends.length === 0 || destination === null ? [] : [{ quest, destination, friends }];
+      return destination === null ? [] : [{ quest, destination, friends }];
     })
     .toSorted((one, other) => Date.parse(one.destination.startsAt) - Date.parse(other.destination.startsAt));
 }
@@ -98,9 +99,20 @@ export interface FlagWords {
   flag: { title: string; line: string };
 }
 
+// A Quest the User holds alone, with nobody invited: a Plan taken with "여기로", or a seat's stay. It is no 파티.
+export function isAlone({ friends }: MadeQuest): boolean {
+  return friends.length === 0;
+}
+
 // The destination's words, and how many Friends are in, accepted or late, out of every Friend invited, one who
-// declined included: "12:33 점심 · 수락 1/2".
+// declined included: "12:33 점심 · 수락 1/2". A Quest held alone counts nobody, and its flag's line says the day.
 export function flagWords({ destination, friends }: MadeQuest, standings: ReadonlyMap<string, Standing>): FlagWords {
+  if (friends.length === 0) {
+    return {
+      words: destinationWords(destination),
+      flag: { title: destination.title, line: destination.day ?? '오늘' },
+    };
+  }
   const accepted = friends.filter(({ id }) => {
     const standing = standings.get(id);
     return standing !== undefined && IN.has(standing.state);

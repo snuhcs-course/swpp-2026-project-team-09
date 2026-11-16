@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -39,6 +40,7 @@ import {
   type Write,
 } from './use-library-call';
 import { seatsFor } from './use-room-counts';
+import { type HoldStay, useSeatStay } from './use-seat-stay';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
 // offers the named or tapped seat, else the first free one, and books it only on 예약하기; 닫기 beside it ends the card
@@ -92,6 +94,8 @@ interface Booking {
   close: (closed: Closed) => void;
   choose: (label: string) => void;
   reload: () => void;
+  // The stay held as the User's own Quest once booked (P05-14).
+  hold: HoldStay;
 }
 
 // 예약하기: the booking, then the done message; a seat just taken offers the next free one.
@@ -101,6 +105,7 @@ async function sendBooking(booking: Booking, seat: LibrarySeat, press: Confirmed
   const info = result.bookingResultInfo;
   if (info !== undefined) {
     booking.close('booked');
+    booking.hold(space, slot);
     const made = { slot, label: seat.VNAME, bseqno: bseqnoOf(info), notes: card.notes };
     const done = doneOf(space, made, now());
     booking.actions.addOwn({ text: done.title, done });
@@ -259,7 +264,8 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
     () => seatsFor(shown, slot),
     `${shown.id} ${slot.start} ${String(slot.minutes)}`,
   );
-  const booking: Booking = { card, space: shown, slot, actions, close, choose: setNamed, reload };
+  const hold = useSeatStay();
+  const booking: Booking = { card, space: shown, slot, actions, close, choose: setNamed, reload, hold };
   const write = useWrite<LibrarySeat>(
     (seat, press) => sendBooking(booking, seat, press),
     undefined,

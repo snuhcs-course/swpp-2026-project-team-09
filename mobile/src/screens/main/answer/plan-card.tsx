@@ -16,6 +16,7 @@ import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
+import { isMealAlone } from '@/features/assistant/taken-lines';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useOpenFriendProfile } from '../friend-profile';
@@ -110,15 +111,17 @@ interface StepsProps {
   offers: readonly AnswerOffer[];
   // "처음으로" back to 지금, null for none.
   back: (() => void) | null;
+  // "여기로" for a meal's Plan of the User alone, null for none.
+  here: (() => void) | null;
 }
 
 // The arrows at the row's two ends when the answer has more than one Plan, the count right before "›", and the
-// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend,
-// then the answer's offers.
-function Steps({ shown, count, busy, invitation, offers, back }: StepsProps): ReactElement | null {
+// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend or
+// "여기로" for a meal's Plan alone, then the answer's offers.
+function Steps({ shown, count, busy, invitation, offers, back, here }: StepsProps): ReactElement | null {
   const { index, browse, ghost, undo } = shown;
   const arrows = count > 1;
-  if (ghost === null && !arrows && invitation === null && offers.length === 0 && back === null) {
+  if (ghost === null && !arrows && invitation === null && offers.length === 0 && back === null && here === null) {
     return null;
   }
   return (
@@ -140,7 +143,7 @@ function Steps({ shown, count, busy, invitation, offers, back }: StepsProps): Re
             </Button>
           </View>
         )}
-        <MainButtons back={back} busy={busy} invitation={invitation} offers={offers} />
+        <MainButtons back={back} busy={busy} here={here} invitation={invitation} offers={offers} />
       </View>
       {arrows ? (
         <Text numberOfLines={1} style={styles.count} testID="plan-count">
@@ -216,6 +219,7 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
         back={plan !== null && easedFromNow(answer.input) ? fix.back : null}
         busy={busy}
         count={answer.plans.length}
+        here={plan !== null && isMealAlone(answer) ? invitation.invite : null}
         invitation={invitable ? invitation : null}
         offers={answer.offers ?? []}
         shown={shown}
