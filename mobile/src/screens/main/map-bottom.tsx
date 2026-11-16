@@ -37,9 +37,8 @@ import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { FirstRunAsk } from './first-run/first-run-ask';
 import { InterestsHint } from './first-run/interests-hint';
-import { AI_INPUT, CARD, interestsHintBottom, LAYERS_BUTTON, madeLineBottom, type Room } from './layout';
+import { AI_INPUT, interestsHintBottom, madeLineBottom, type Room } from './layout';
 import { MadeQuestLine } from './made-quest-line';
-import { ShuttleNotice } from './shuttle-notice';
 import { TutorialPager } from './tutorial/tutorial-pager';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
@@ -51,11 +50,6 @@ import type { TutorialPinTarget } from './tutorial/use-tutorial-pin';
 export function openMenus(restaurant?: string): void {
   const { date, meal } = nextMeal(now());
   router.push({ pathname: '/menus', params: restaurant === undefined ? { date, meal } : { date, meal, restaurant } });
-}
-
-// How much higher the 편의기능 button stands above the shuttle's notice, 8 above its top; 0 without it.
-function liftOver(noticeHeight: number | null): number {
-  return noticeHeight === null ? 0 : CARD.bottom + noticeHeight + space[2] - LAYERS_BUTTON.bottom;
 }
 
 // How much higher the AI input stands while the keyboard is up: the keyboard's reach less what already lies under
@@ -76,24 +70,17 @@ function sendWithKeyboardDown(send: (text: string) => void): (text: string) => v
   };
 }
 
-// What the open card, the first run's card, and the shuttle's notice take. A 식당's card sits at the top: the lists
-// give way to it, and what is at the bottom stays. The first run's card is shown only while nothing is selected, and
-// takes the bottom as a card does, as the User's own card does. The notice, the shuttle's service hours, gives way to
-// any card; what a card at the bottom hides gives way to the notice too, and the 편의기능 button stands above it.
-// `otherCard`: the first run's card or the User's own is shown.
+// What the open card and the first run's card take. A 식당's card sits at the top: the lists give way to it, and what
+// is at the bottom stays. The first run's card is shown only while nothing is selected, and takes the bottom as a card
+// does, as the User's own card does. `otherCard`: the first run's card or the User's own is shown.
 export interface Taken {
   topCard: boolean;
   bottomCard: boolean;
-  notice: string | null;
 }
 
-export function takenBy(selected: CardView | null, serviceHours: string | null, otherCard = false): Taken {
+export function takenBy(selected: CardView | null, otherCard = false): Taken {
   const topCard = selected?.kind === 'dining';
-  return {
-    topCard,
-    bottomCard: (selected !== null && !topCard) || otherCard,
-    notice: selected === null && !otherCard ? serviceHours : null,
-  };
+  return { topCard, bottomCard: (selected !== null && !topCard) || otherCard };
 }
 
 interface MapBottomProps {
@@ -145,18 +132,17 @@ function MadeLine({
   );
 }
 
-// What the everyday map has at its bottom while no answer and no card nobody asked for is shown: the shuttle's notice,
-// the row of buttons, the 편의기능 button, the tutorial's start, the first run's card and its line that asks for interests,
-// and the line of a made Quest. While the AI input has the keyboard, the tutorial's start, the first run's card and line,
-// and the made Quest's line give way to the examples above it.
+// What the everyday map has at its bottom while no answer and no card nobody asked for is shown: the row of buttons,
+// the 편의기능 button, the tutorial's start, the first run's card and its line that asks for interests, and the line of a
+// made Quest. While the AI input has the keyboard, the tutorial's start, the first run's card and line, and the made
+// Quest's line give way to the examples above it.
 function EverydayBottom(props: EverydayProps): ReactElement {
   const { taken, onParty, onNoticeHeight, room, stack, tutorial, firstRun, keyboardUp } = props;
-  const { bottomCard, notice } = taken;
+  const { bottomCard } = taken;
   return (
     <>
-      {notice === null ? null : <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} />}
-      <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} />
-      {bottomCard ? null : <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} stack={stack} />}
+      <BottomControls cardOpen={bottomCard} onActiveParty={onParty} />
+      {bottomCard ? null : <LayerControls stack={stack} />}
       {room.tutorialStart && !keyboardUp ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
       {firstRun.card === null || keyboardUp ? null : (
         <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
@@ -170,12 +156,12 @@ function EverydayBottom(props: EverydayProps): ReactElement {
 }
 
 // What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
-// card at the bottom hides the row and the button; the notice hides the row, and the button stands above it. While the
-// keyboard is up and nothing is asked, the examples stand above the input. A message sent from the AI input shows the
-// answer frame, which hides the rest, and the input is its card's: it stays in the same place in the tree, so that it
-// keeps the focus. While the keyboard is up, the input stands right above it. The conversation is kept while the app
-// runs: while the frame is hidden, "이전 답" in the input shows it again. A card nobody asked for, a received
-// invitation's or a made Quest's, takes the bottom without the input.
+// card at the bottom hides the row and the button. While the keyboard is up and nothing is asked, the examples stand
+// above the input. A message sent from the AI input shows the answer frame, which hides the rest, and the input is its
+// card's: it stays in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input
+// stands right above it. The conversation is kept while the app runs: while the frame is hidden, "이전 답" in the input
+// shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom without the
+// input.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { onAnswerHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
   const { invitation, made } = unasked;

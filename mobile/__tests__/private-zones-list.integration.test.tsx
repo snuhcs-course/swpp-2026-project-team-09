@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -12,7 +13,7 @@ import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { FIVE_AT_MOST, openZones, pencil, SCREEN_LINE, zone, ZONES_ROUTE } from './support/private-zones';
+import { FIVE_AT_MOST, openZones, pencil, savedZones, SCREEN_LINE, zone, ZONES_ROUTE } from './support/private-zones';
 import { answerMainScreen, askMainServer, LOBBY, PHONE_NOW } from './support/server';
 
 // The zone screen's saved Private Zones (P02 ticket 29) against the fake main server: each filled over the map and
@@ -59,7 +60,7 @@ describe('The zone screen', () => {
     await openZones();
 
     expect(screen.getByRole('header', { name: '비공개 구역' })).toBeVisible();
-    expect(screen.getAllByTestId('saved-zone')).toHaveLength(2);
+    expect(savedZones()).toHaveLength(2);
     expect(screen.getByText(SCREEN_LINE)).toBeVisible();
     expect(screen.getByText('301동 근처')).toBeVisible();
     expect(screen.getByText('302동 근처')).toBeVisible();
@@ -81,7 +82,7 @@ describe('The zone screen', () => {
 
     expect(server.received(removed)).toHaveLength(1);
     expect(screen.queryByText('301동 근처')).toBeNull();
-    expect(screen.getAllByTestId('saved-zone')).toHaveLength(1);
+    expect(savedZones()).toHaveLength(1);
   });
 
   it('turns the pencil off at five zones', async () => {
@@ -92,20 +93,25 @@ describe('The zone screen', () => {
 
     expect(pencil()).toBeDisabled();
     expect(screen.getByText(FIVE_AT_MOST)).toBeVisible();
-    expect(screen.getAllByTestId('saved-zone')).toHaveLength(5);
+    expect(savedZones()).toHaveLength(5);
   });
 });
 
 describe('The zones over a map that moves', () => {
-  it('are hidden while a finger is on the map, and come back after it lifts even if the camera did not move', async () => {
+  it('stay drawn while a finger is on the map and after it lifts', async () => {
     await openZones();
     const map = screen.getByTestId('zone-map');
 
     await fireEvent(map, 'touchStart', { nativeEvent: { touches: [{ pageX: 100, pageY: 100 }] } });
-    expect(screen.queryAllByTestId('saved-zone')).toHaveLength(0);
+    expect(savedZones()).toHaveLength(2);
     await fireEvent(map, 'touchEnd', { nativeEvent: { touches: [] } });
-    await pass(1000);
 
-    expect(screen.getAllByTestId('saved-zone')).toHaveLength(2);
+    expect(savedZones()).toHaveLength(2);
+  });
+
+  it('are hatched inside, by lines of the map itself', async () => {
+    await openZones();
+
+    expect(screen.queryAllByTestId(new RegExp(`^line:zone:${NEAR_301.id}:hatch:`, 'u')).length).toBeGreaterThan(3);
   });
 });

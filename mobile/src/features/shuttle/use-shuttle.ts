@@ -2,15 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { shuttleQuery, shuttleVehiclesQuery } from '@/api/queries';
 import type { ShuttleVehicle } from '@/api/shuttle-types';
 import type { LatLng } from '@/api/types';
 import { now } from '@/clock';
-import { color } from '@/design-system';
+import { color, useToast } from '@/design-system';
 import type { CardView } from '@/features/map/adapter';
 import { useLayerFailureToast } from '@/features/map/use-layer-failure';
 import { useMotionAllowed } from '@/hooks/use-reduce-motion';
@@ -18,6 +19,7 @@ import type { MapLine } from '@/map';
 import {
   CHECK_EVERY_MS,
   inService,
+  NOT_IN_SERVICE,
   nextTravels,
   type ShuttleView,
   STALE_MS,
@@ -34,7 +36,7 @@ const FAILED = '셔틀버스 정보를 불러오지 못했어요';
 // The line as the `Main` frame draws the shuttle's: purple, 3 wide, a dash of 8 after each gap of 6.
 const LINE_STYLE = { color: color.svcShuttle, width: 3, dash: [8, 6] } as const;
 
-const NOTHING: ShuttleLayer = { lines: [], cards: [], line: [], serviceHours: null };
+const NOTHING: ShuttleLayer = { lines: [], cards: [], line: [] };
 const NO_TRAVELS: readonly Travel[] = [];
 
 export interface ShuttleLayer {
@@ -43,9 +45,22 @@ export interface ShuttleLayer {
   cards: readonly CardView[];
   // The line's points, for "노선 보기".
   line: readonly LatLng[];
-  // The route's service hours while the shuttle is not in service, for the notice; null while it is, or while the
-  // layer shows nothing.
-  serviceHours: string | null;
+}
+
+// Long enough for the two short facts the words hold.
+const NOT_IN_SERVICE_MS = 3500;
+
+// Says once, as a toast, that the shuttle is not in service: when the layer shows the route outside the service
+// hours, and when the hours end while it is on.
+function useNotInServiceToast(notInService: boolean): void {
+  const showToast = useToast();
+  const said = useRef(false);
+  useEffect(() => {
+    if (notInService && !said.current) {
+      showToast(NOT_IN_SERVICE, NOT_IN_SERVICE_MS, 'bus');
+    }
+    said.current = notInService;
+  }, [notInService, showToast]);
 }
 
 // The phone's clock, read when the layer is turned on and every `CHECK_EVERY_MS` while it is on.
@@ -106,6 +121,7 @@ export function useShuttle(on: boolean): ShuttleLayer {
     [vehicles.data, checkedAt],
   );
   const travels = useTravels(view, fresh);
+  useNotInServiceToast(view !== null && !inService(new Date(checkedAt)));
   return useMemo(() => {
     if (view === null) {
       return NOTHING;
@@ -114,7 +130,6 @@ export function useShuttle(on: boolean): ShuttleLayer {
       lines: [{ id: 'shuttle', points: view.route.line, style: LINE_STYLE }],
       cards: toShuttleCards(view, travels),
       line: view.route.line,
-      serviceHours: inService(new Date(checkedAt)) ? null : view.route.serviceHours,
     };
-  }, [view, travels, checkedAt]);
+  }, [view, travels]);
 }
