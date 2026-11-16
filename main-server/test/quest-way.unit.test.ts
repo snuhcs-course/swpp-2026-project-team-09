@@ -168,7 +168,9 @@ describe('The way to a quest, at other times', () => {
     expect(free.lines[1]).toEqual([plain('10분 머물면 '), strong('14:29'), plain('에 끝나요')]);
     expect(free.basis).toContain('거기서 10분 · 14:29에 끝나요');
   });
+});
 
+describe('The way to a quest from nearby', () => {
   it('walks when the place is near, and does not weigh the shuttle', () => {
     const near = lookupOf(cardWay('11:50', { at: '63' }));
     expect(near.lines[0]).toEqual([plain('걸어서 가면 '), strong('11:58'), plain(' 도착')]);
