@@ -1,0 +1,86 @@
+{
+  "exportedFrom": "https://overpass-api.de/api/interpreter",
+  "query": "[out:json][timeout:25][bbox:37.4470628,126.9474475,37.4692598,126.9612239];nwr[\"amenity\"=\"cafe\"];out tags center;",
+  "exportedOn": "2026-11-16",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "cafes": [
+    {
+      "id": "node/10716118721",
+      "name": "메가MGC커피",
+      "latitude": 37.4605642,
+      "longitude": 126.949955
+    },
+    {
+      "id": "node/13249384365",
+      "name": "카페109",
+      "latitude": 37.4608477,
+      "longitude": 126.9526063
+    },
+    {
+      "id": "node/13617795540",
+      "name": "Cafe ING",
+      "latitude": 37.4561714,
+      "longitude": 126.9527107
+    },
+    {
+      "id": "node/13617795545",
+      "name": "투썸플레이스",
+      "latitude": 37.4602093,
+      "longitude": 126.9485169
+    },
+    {
+      "id": "node/13617795549",
+      "name": "컴포즈커피",
+      "latitude": 37.462666,
+      "longitude": 126.950892
+    },
+    {
+      "id": "node/13617883877",
+      "name": "Cafe ING",
+      "latitude": 37.457612,
+      "longitude": 126.950334
+    },
+    {
+      "id": "node/14007511635",
+      "name": "더로스터59",
+      "latitude": 37.464939,
+      "longitude": 126.9525013
+    },
+    {
+      "id": "node/1790475149",
+      "name": "Cafe MUG",
+      "latitude": 37.4607831,
+      "longitude": 126.9532999
+    },
+    {
+      "id": "node/3540602537",
+      "name": "Cafe MUG",
+      "latitude": 37.4552091,
+      "longitude": 126.9519878
+    },
+    {
+      "id": "node/4562088363",
+      "name": "공차",
+      "latitude": 37.459376,
+      "longitude": 126.950245
+    },
+    {
+      "id": "node/4752127260",
+      "name": "카페그랑",
+      "latitude": 37.4619838,
+      "longitude": 126.9576866
+    },
+    {
+      "id": "node/6243730343",
+      "name": "카페드림",
+      "latitude": 37.4510599,
+      "longitude": 126.9526488
+    },
+    {
+      "id": "way/439707885",
+      "name": "Caffè Pascucci",
+      "latitude": 37.4592137,
+      "longitude": 126.9551269
+    }
+  ]
+}

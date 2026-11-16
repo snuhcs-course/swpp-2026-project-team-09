@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
+import { CafeLookupService } from './cafe.service.js';
 import { DayLookupService } from './day.service.js';
 import { FriendLookupService } from './friend.service.js';
 import { MenuLookupService } from './menu.service.js';
@@ -22,5 +24,6 @@ export class LookupServices {
     readonly days: DayLookupService,
     readonly tutorial: TutorialOrderService,
     readonly studyAreas: StudyAreaService,
+    readonly cafes: CafeLookupService,
   ) {}
 }

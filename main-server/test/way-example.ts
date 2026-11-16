@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlacePoint } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
 import { wayAnswer, type WayAnswer, type WayArgs } from '../src/assistant/lookup/way-lookup.js';
 import { readCampusBoundary } from '../src/common/campus-boundary.js';
-import { type Position } from '../src/common/geometry.js';
+import { metresBetween, type Position } from '../src/common/geometry.js';
 import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
 import { readSeedPlaces } from '../src/places/places.seed.js';
@@ -40,6 +41,15 @@ export async function readCampus(): Promise<void> {
     latitude,
     longitude,
   }));
+}
+
+// The seeded Place whose point is nearest.
+export function nearestPlace(at: Position): PlaceDto {
+  const [nearest] = places.toSorted((one, other) => metresBetween(one, at) - metresBetween(other, at));
+  if (nearest === undefined) {
+    throw new Error('Read the campus first');
+  }
+  return nearest;
 }
 
 // The seed's walking table and shuttle timing.

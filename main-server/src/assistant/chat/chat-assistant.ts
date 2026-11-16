@@ -39,6 +39,7 @@ import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
 import { withStudyArea } from '../lookup/study-tools.js';
 import { type LookupServices } from '../lookup/lookup-services.js';
+import { CAFE_RULES, findCafeOnWay } from '../lookup/cafe-tools.js';
 import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-order-tools.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { DELIMITER } from '../others-text.js';
@@ -177,7 +178,7 @@ function mealsAndEvents(
 }
 
 // An app that draws answers also gets the Lookups drawn on the map: the way to a Place, a Restaurant's menu, where a
-// Friend is, a day's Classes, and the Tutorial Quests in order.
+// Friend is, a day's Classes, the Tutorial Quests in order, and a café on the way.
 function withLookups(
   planned: { rules: string[]; tools: Record<string, Tool> },
   { lookups }: ChatAssistantServices,
@@ -187,7 +188,7 @@ function withLookups(
     return planned;
   }
   return {
-    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES, DAY_RULES, TUTORIAL_ORDER_RULES],
+    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES, DAY_RULES, TUTORIAL_ORDER_RULES, CAFE_RULES],
     tools: {
       ...planned.tools,
       findWay: findWay(lookups.ways),
@@ -195,6 +196,7 @@ function withLookups(
       findFriend: findFriend(lookups.friends),
       findDay: findDay(lookups.days),
       findTutorialOrder: findTutorialOrder(lookups.tutorial),
+      findCafeOnWay: findCafeOnWay(lookups.cafes),
     },
   };
 }

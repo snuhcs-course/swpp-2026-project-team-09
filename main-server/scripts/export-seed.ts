@@ -3,6 +3,7 @@
  *
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -12,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
 import { z } from 'zod';
 import { type Coordinates, nationalMapOutlines } from './national-map.ts';
+import { exportOpenStreetMapCafes } from './openstreetmap-cafes.ts';
 
 // Exports the seed files named, such as `pnpm seed:export campus-boundary`. Each export is one request, or reads one
 // file that a person downloaded, and its file keeps the address or query it came from and the day of the export.
@@ -265,6 +267,8 @@ const EXPORTS: Record<string, () => Promise<void>> = {
   'campus-map-shuttle-stops': exportCampusMapShuttleStops,
   'openstreetmap-places': exportOpenStreetMapPlaces,
   'openstreetmap-outlines': exportOpenStreetMapOutlines,
+  'openstreetmap-cafes': () =>
+    exportOpenStreetMapCafes({ overpass, write, today, extent: CAMPUS_EXTENT, from: OVERPASS }),
 };
 
 // The exports that read a file a person downloaded, whose path follows the name.
