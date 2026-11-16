@@ -87,7 +87,7 @@ const TOLD: KeptNotification = {
 
 const MARK = '채용박람회 외 1';
 const FRESH_MARK = `${MARK} · 새로 올라왔어요`;
-// The names the map gives the events today, with the switch off.
+// The names the map gives the events without marks.
 const TODAY = ['공식 행사 2개 · 문화관', '공식 행사 · 동아리 정기공연', '공식 행사 · AI 특강'];
 
 let server: FakeServer;
@@ -134,11 +134,11 @@ function looks(name: string, part: string): boolean {
   return String(lookOf(name)).split(':').includes(part);
 }
 
-// Partitions: the switch on with matches, a watched match told and a hashtag match; an event that matches nothing.
-// Expected values: the design's "Watching interests" and the ticket's "newly posted".
-describe('the switch on', () => {
+// Partitions: matches, a watched match told and a hashtag match; an event that matches nothing. Expected values: the
+// design's "Watching interests" and the ticket's "newly posted".
+describe('the marks', () => {
   it('draws only the matching events, at one place under one mark named after the first, with "!"', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     expect(drawn(FRESH_MARK)).toBe(true);
     expect(looks(FRESH_MARK, 'fresh')).toBe(true);
@@ -148,7 +148,7 @@ describe('the switch on', () => {
   });
 
   it('opens the answer for the mark\'s events on a tap, as asking does, and the mark loses its "!"', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await user.press(screen.getByRole('button', { name: FRESH_MARK }));
     await pass(500);
@@ -171,7 +171,7 @@ describe('the switch on', () => {
 
   it('keeps "!" when the answer cannot be had', async () => {
     server.on('POST /assistant/answers', { status: 500, body: { statusCode: 500, message: 'Internal' } });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await user.press(screen.getByRole('button', { name: FRESH_MARK }));
     await pass(1500);
@@ -186,7 +186,7 @@ describe('the switch on', () => {
 // is drawn without a restart.
 describe('the matches read again', () => {
   it('on a notice, drawing a new match', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
     server.on('GET /interests/matches', {
       status: 200,
       body: { globalEvents: [{ id: CONCERT.id, watched: true }], quests: [] },
@@ -213,7 +213,7 @@ describe('a User who watches nothing', () => {
     server.on('GET /interests', { status: 200, body: [] });
     server.on('GET /interests/matches', { status: 200, body: { globalEvents: [], quests: [] } });
 
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     expect(looks(MARK, 'faded')).toBe(true);
     expect(looks('동아리 정기공연', 'faded')).toBe(true);
@@ -221,23 +221,12 @@ describe('a User who watches nothing', () => {
   });
 });
 
-// Partitions: the switch off; the switch on with a main server without the matches. Expected values: the ticket, the
-// map as today.
-describe('the map as today', () => {
-  it('with the switch off draws every event as before, and asks for no matches', async () => {
-    await openMain();
-
-    for (const name of TODAY) {
-      expect(drawn(name)).toBe(true);
-      expect(looks(name, 'fresh') || looks(name, 'faded')).toBe(false);
-    }
-    expect(server.received('GET /interests/matches')).toEqual([]);
-  });
-
-  it('with the switch on and a main server that answers 404 for the matches draws every event as before', async () => {
+// Partitions: a main server without the matches. Expected values: the ticket, the map without marks.
+describe('the map without marks', () => {
+  it('with a main server that answers 404 for the matches draws every event as before', async () => {
     server.on('GET /interests/matches', { status: 404, body: { statusCode: 404, message: 'Not Found' } });
 
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     for (const name of TODAY) {
       expect(drawn(name)).toBe(true);

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import type { TouchEventLike } from '@/screens/main/tutorial/use-map-tap';
 import { pass, screen } from './app';
 import type { FakeServer } from './fake-server';
 
-// A building pressed on the everyday map (P02 ticket 22), against the fake main server with the switch on.
+// A building pressed on the everyday map (P02 ticket 22), against the fake main server.
 
 // The main server's Places of boards a1, a3, a14, and a2, with the ids, numbers, names, and points of the stored cards
 // (`tap-lookups.json`).

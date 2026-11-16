@@ -2,13 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
 import type { Friend } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { shownAddress } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
@@ -58,29 +58,21 @@ function profileCard(): ReturnType<typeof within> {
   return within(screen.getByTestId('map-card'));
 }
 
-// Partitions: the switch off and on; the Friend ID and the date sent and left out.
+// Partitions: the Friend ID and the date sent and left out.
 describe("a Friend's face pressed on the everyday map", () => {
-  it.each([
-    ['off', false],
-    ['on', true],
-  ])(
-    'opens the profile with the switch %s: the name, the department, what is seen, the ID, and the date',
-    async (_, answerOnMap) => {
-      server.on('GET /friends', { status: 200, body: [MIN_JUN_PROFILED, JI_WOO] });
-      const user = await openMain({ answerOnMap });
+  it('opens the profile: the name, the department, what is seen, the ID, and the date', async () => {
+    server.on('GET /friends', { status: 200, body: [MIN_JUN_PROFILED, JI_WOO] });
+    const user = await openMain();
 
-      await press(user, MIN_JUN.name);
+    await press(user, MIN_JUN.name);
 
-      expect(profileCard().getByRole('header', { name: '김민준' })).toBeVisible();
-      expect(profileCard().getByText('컴퓨터공학부')).toBeVisible();
-      expect(profileCard().getByRole('button', { name: '어디까지 보이나' })).toHaveTextContent(
-        '정확한 위치까지 보여요',
-      );
-      expect(profileCard().getByText('친구 ID KM4J8QZA')).toBeVisible();
-      expect(profileCard().getByText('10월 3일부터 친구')).toBeVisible();
-      expect(profileCard().getByRole('button', { name: '파티 만들기' })).toBeVisible();
-    },
-  );
+    expect(profileCard().getByRole('header', { name: '김민준' })).toBeVisible();
+    expect(profileCard().getByText('컴퓨터공학부')).toBeVisible();
+    expect(profileCard().getByRole('button', { name: '어디까지 보이나' })).toHaveTextContent('정확한 위치까지 보여요');
+    expect(profileCard().getByText('친구 ID KM4J8QZA')).toBeVisible();
+    expect(profileCard().getByText('10월 3일부터 친구')).toBeVisible();
+    expect(profileCard().getByRole('button', { name: '파티 만들기' })).toBeVisible();
+  });
 
   it('leaves out the Friend ID and the date while the main server does not send them', async () => {
     const user = await openMain();
@@ -91,33 +83,16 @@ describe("a Friend's face pressed on the everyday map", () => {
     expect(profileCard().queryByText(/^친구 ID/u)).toBeNull();
     expect(profileCard().queryByText(/부터 친구$/u)).toBeNull();
   });
-
-  it('opens 위치 공유 from 어디까지 보이나', async () => {
-    const user = await openMain();
-    await press(user, MIN_JUN.name);
-
-    await user.press(profileCard().getByRole('button', { name: '어디까지 보이나' }));
-
-    expect(shownAddress()).toBe('/me/location-sharing');
-  });
 });
 
-// Partitions: the switch off and on, at the "names" level of detail, where words stand under a face.
+// Partitions: the "names" level of detail, where words stand under a face.
 describe('the words under a face', () => {
-  it('are the full name with the switch on', async () => {
-    const user = await openMain({ answerOnMap: true });
+  it('are the full name', async () => {
+    const user = await openMain();
 
     await zoomIn(user, 3);
 
     expect(wordsUnder(MIN_JUN.name, '김민준')).not.toBeNull();
     expect(wordsUnder(MIN_JUN.name, '민준')).toBeNull();
-  });
-
-  it('stay the given name with the switch off', async () => {
-    const user = await openMain();
-
-    await zoomIn(user, 3);
-
-    expect(wordsUnder(MIN_JUN.name, '민준')).not.toBeNull();
   });
 });

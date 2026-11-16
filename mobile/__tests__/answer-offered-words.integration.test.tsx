@@ -68,7 +68,7 @@ type User = Awaited<ReturnType<typeof openMain>>;
 
 async function ask(body: object): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body, afterMs: 1000 });
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await user.type(screen.getByLabelText(AI_INPUT), ASKED);
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(1000);

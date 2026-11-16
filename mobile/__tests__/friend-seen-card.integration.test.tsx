@@ -2,11 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, screen, within } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import type { Friend, FriendLevel, Place } from '@/api/types';
-import { setAnswerSwitch } from '@/features/assistant/answer-switch';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, shownAddress } from './support/app';
@@ -18,9 +18,9 @@ import { startFresh } from './support/mocks';
 import { holdBackButton } from './support/back';
 import { answerMainScreen, askMainServer, JI_WOO, LIBRARY_POSITION, LOBBY, MIN_JUN, PHONE_NOW } from './support/server';
 
-// The card "어디까지 보이나" (P02 ticket 21, row 9 board 2), which a Friend's card opens in its place on the everyday
-// map while the switch is on, over the fake main server's Friends: 김민준, whom the map shows at the Place the main
-// server finds for his position, and 서지우, whom it does not show.
+// The card "어디까지 보이나" (P02 ticket 21, row 9 board 2), which a Friend's card opens in its place on the everyday map,
+// over the fake main server's Friends: 김민준, whom the map shows at the Place the main server finds for his position, and
+// 서지우, whom it does not show.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -65,9 +65,9 @@ function shownCard(): ReturnType<typeof within> {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Opens the Friend's card from their row of the friend list, with the switch on, and then "어디까지 보이나".
+// Opens the Friend's card from their row of the friend list, and then "어디까지 보이나".
 async function openSeen(friend: Friend): Promise<User> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await press(user, `${friend.name} 지도에서 보기`);
   await user.press(shownCard().getByRole('button', { name: SEEN }));
   await pass(500);
@@ -157,31 +157,6 @@ describe("Android's back button over the card", () => {
     expect(await back()).toBe(true);
 
     expect(shownCard().getByRole('header', { name: '김민준' })).toBeVisible();
-  });
-});
-
-// Partitions: the switch turned off while the card is shown, then Android's back, or the switch on again. The rule:
-// "어디까지 보이나" is shown only while the switch is on, and is gone once it goes off.
-describe('the switch turned off while the card is shown', () => {
-  it("shows the Friend card, which Android's back closes at once", async () => {
-    const back = holdBackButton();
-    await openSeen(MIN_JUN);
-
-    await act(() => setAnswerSwitch(false));
-    expect(shownCard().getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(await back()).toBe(true);
-
-    expect(screen.queryByTestId('map-card')).toBeNull();
-  });
-
-  it('leaves the Friend card, not this one, once the switch is on again', async () => {
-    await openSeen(MIN_JUN);
-
-    await act(() => setAnswerSwitch(false));
-    await act(() => setAnswerSwitch(true));
-
-    expect(shownCard().getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(shownCard().getByRole('button', { name: SEEN })).toBeVisible();
   });
 });
 

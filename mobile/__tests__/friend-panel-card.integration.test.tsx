@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -18,8 +19,8 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './support/server';
 
 // A Friend's row of the friend panel, the whole list the pill "친구" opens (P02 ticket 21), over the fake main server's
-// Friends: 김민준, whom the map shows, and 서지우, who has no position. With the switch on a row closes the panel and
-// opens the Friend's card, as a row of the list over the map does; with it off, a row takes no press.
+// Friends: 김민준, whom the map shows, and 서지우, who has no position. A row closes the panel and opens the Friend's
+// card, as a row of the list over the map does.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -54,8 +55,8 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openMain>>;
 
 // Opens the panel over the main screen, and gives where 김민준's face stood before.
-async function openPanel(answerOnMap: boolean): Promise<{ user: User; before: ReturnType<typeof placeOf> }> {
-  const user = await openMain({ answerOnMap });
+async function openPanel(): Promise<{ user: User; before: ReturnType<typeof placeOf> }> {
+  const user = await openMain();
   const before = placeOf(MIN_JUN.name);
   await press(user, FRIEND_PILL);
   return { user, before };
@@ -74,9 +75,9 @@ function friendCard(): ReturnType<typeof within> {
 }
 
 // Partitions: a Friend on the map and one with no position; the row's calendar button.
-describe('a row of the friend panel with the switch on', () => {
+describe('a row of the friend panel', () => {
   it('closes the panel and opens the card of a Friend on the map, bringing the map to their face', async () => {
-    const { user, before } = await openPanel(true);
+    const { user, before } = await openPanel();
 
     await press(user, row(MIN_JUN));
 
@@ -86,7 +87,7 @@ describe('a row of the friend panel with the switch on', () => {
   });
 
   it('closes the panel and opens the card of a Friend with no position, where the map is', async () => {
-    const { user, before } = await openPanel(true);
+    const { user, before } = await openPanel();
 
     await press(user, row(JI_WOO));
 
@@ -97,22 +98,11 @@ describe('a row of the friend panel with the switch on', () => {
   });
 
   it('keeps its calendar button, which opens 파티 만들기 with the Friend', async () => {
-    const { user } = await openPanel(true);
+    const { user } = await openPanel();
 
     await press(user, `${JI_WOO.name}님과 파티 만들기`);
     await pass(500);
 
     expect(shownAddress()).toBe(`/party-form?friendId=${JI_WOO.id}`);
-  });
-});
-
-// Partitions: the switch off.
-describe('a row of the friend panel with the switch off', () => {
-  it('takes no press, as today', async () => {
-    await openPanel(false);
-
-    expect(panelShown()).toBe(true);
-    expect(screen.queryByRole('button', { name: row(JI_WOO) })).toBeNull();
-    expect(screen.queryByRole('button', { name: row(MIN_JUN) })).toBeNull();
   });
 });

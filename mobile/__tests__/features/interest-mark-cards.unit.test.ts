@@ -100,7 +100,7 @@ describe('the marks the map draws as marks', () => {
   });
 });
 
-// Partitions: the switch's cards of events matched and not, a Friend, a party matched and one already a card.
+// Partitions: the cards of events matched and not, a Friend, a party matched and one already a card.
 // Expected values: the ticket, other events are not on the map and a recruiting party gets a party card.
 describe("the map's cards with the marks", () => {
   const cards = toCards(sources({ globalEvents: [JOB, CONCERT], friends: [friendView(MIN_JUN)] }));

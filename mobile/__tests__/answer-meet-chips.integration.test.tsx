@@ -76,7 +76,7 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openMain>>;
 
 async function meetMinSu(): Promise<User> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await press(user, row(MIN_SU));
   await meetFromCard(user);
   return user;

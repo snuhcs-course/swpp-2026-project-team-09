@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INVITATION_CARD } from '@/api/mock/data/invitation-card';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { mapLines, mapThings } from './support/answer-map';
-import { screen, shownAddress } from './support/app';
+import { screen } from './support/app';
 import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -60,9 +61,9 @@ afterEach(() => {
 });
 
 // Partitions: the card's words, the map's marks and lines, and what gives way.
-describe('the address of a received invitation, with the switch on', () => {
+describe('the address of a received invitation', () => {
   it('opens its card: whose, when and where, with whom, the way, the steps, and the buttons', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
 
@@ -77,7 +78,7 @@ describe('the address of a received invitation, with the switch on', () => {
   });
 
   it("draws 민수's own way in place of the everyday map's markers", async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
     expect(mapThings()).toContain(DINNER);
 
     await openInvitation();
@@ -89,7 +90,7 @@ describe('the address of a received invitation, with the switch on', () => {
   });
 
   it('hides the lists, the AI input, and the tab bar', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
 
@@ -110,7 +111,7 @@ describe('the Avatars of others under an invitation', () => {
       status: 200,
       body: [{ ...LIBRARY_POSITION, latitude: 37.4547, longitude: 126.9516 }],
     });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     expect(mapThings()).toContain(FRIEND);
 
     await openInvitation();
@@ -124,7 +125,7 @@ describe('the Avatars of others under an invitation', () => {
 // Partitions: the phone on campus, and off campus.
 describe("the phone's position in the read", () => {
   it('goes with the read while the User is on campus', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
 
@@ -135,7 +136,7 @@ describe("the phone's position in the read", () => {
 
   it('does not go with it off campus', async () => {
     givePhone({ permission: 'granted', position: OFF_CAMPUS });
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
 
@@ -146,7 +147,7 @@ describe("the phone's position in the read", () => {
 // Partitions: ✕, and Android's back button.
 describe('closing the card', () => {
   it('✕ brings the everyday map back', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await openInvitation();
 
     await user.press(invitationCard().getByRole('button', { name: '초대 닫기' }));
@@ -159,7 +160,7 @@ describe('closing the card', () => {
 
   it("Android's back button closes it as ✕ does", async () => {
     const back = holdBackButton();
-    await openMain({ answerOnMap: true });
+    await openMain();
     await openInvitation();
 
     await expect(back()).resolves.toBe(true);
@@ -169,25 +170,13 @@ describe('closing the card', () => {
   });
 });
 
-// Partitions: the switch off.
-describe('the address of a received invitation, with the switch off', () => {
-  it("opens the 파티 tab's invitations, and reads no card", async () => {
-    await openMain();
-
-    await openInvitation();
-
-    expect(shownAddress()).toBe('/party?tab=invites');
-    expect(server.received(CARD_ROUTE)).toEqual([]);
-  });
-});
-
 // Partitions: the phone off campus with a way the server cannot tell, whose scene holds the destination alone; no
 // way at all.
 describe('a way that cannot be drawn', () => {
   it('says off campus that the way cannot be drawn, and draws the destination alone', async () => {
     givePhone({ permission: 'granted', position: OFF_CAMPUS });
     answerInvitation(server, { status: 200, body: UNKNOWN_WAY_CARD });
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
 
@@ -201,7 +190,7 @@ describe('a way that cannot be drawn', () => {
   it("leaves the everyday map without a way, but for others' Avatars, and the card has no line of one", async () => {
     // Changed for the boundary: no gathering, and so no way, as the contract has it.
     answerInvitation(server, { status: 200, body: { ...INVITATION_CARD, gathering: null, way: null } });
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
 
@@ -218,7 +207,7 @@ describe("the camera of an invitation's address", () => {
   it('stays where it was when there is no way to fit', async () => {
     // Changed for the boundary: no gathering, and so no way.
     answerInvitation(server, { status: 200, body: { ...INVITATION_CARD, gathering: null, way: null } });
-    await openMain({ answerOnMap: true });
+    await openMain();
     const before = placeOf(ME);
 
     await openInvitation();
@@ -227,7 +216,7 @@ describe("the camera of an invitation's address", () => {
   });
 
   it('moves nothing when the same address is opened again', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
     await openInvitation();
     const before = placeOf(OWN_DOT);
 

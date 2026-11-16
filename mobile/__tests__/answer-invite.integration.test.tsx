@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -23,7 +24,7 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // "이대로 초대" on the card of the answer to "배고파, 민수랑 같이" (P02 ticket 05), whose first Plan is "12:15
-// 302동식당", against the fake main server with the switch on. POST /plans answers with the stored reply for that
+// 302동식당", against the fake main server. POST /plans answers with the stored reply for that
 // Plan: the Quest "302동식당에서 점심" with one step, "302동식당에서 식사" at 12:15, and 민수 invited.
 
 jest.mock('expo-location');

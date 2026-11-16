@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -82,7 +83,7 @@ async function inviteAndClose(): Promise<void> {
 // Partitions: a Quest made from a Plan on this phone, and one that was not; made now, and after a restart of the app;
 // the words its name says and those its look draws. Expected values: the ticket's "12:33 점심 · 수락 1/2" with the
 // stored Quest's day and start, its meal, and 민수 invited, and its decision 18: the look draws them in two lines.
-describe('the flag of a made Quest, with the switch on', () => {
+describe('the flag of a made Quest', () => {
   it("stands on the everyday map in place of the Quest's own marker, and the dinner keeps its own", async () => {
     await openMain(KEPT_MADE);
 
@@ -123,12 +124,12 @@ describe('the flag of a made Quest, with the switch on', () => {
 // Partitions: Closed Quests the User leads with someone invited that POST /plans did not make on this phone: a Shared
 // Quest of a Global Event, which matching makes, and a library booking's Quest. Neither has a stored reply: each is the
 // stored Quest of POST /plans with the one field changed that says what it is.
-describe('a Quest the User leads that was not made from a Plan on this phone, with the switch on', () => {
+describe('a Quest the User leads that was not made from a Plan on this phone', () => {
   it('keeps its own marker when it is a Shared Quest of a Global Event', async () => {
     // Changed for the boundary: matching makes a Shared Quest of the Global Event, Closed and led by a matched User.
     answerMadeQuest(server, { ...MADE, globalEvent: CAREER_GATHERING.globalEvent });
 
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     expect(mapThings()).toContain(OWN_MARKER);
     expect(mapThings()).not.toContain(FLAG);
@@ -140,7 +141,7 @@ describe('a Quest the User leads that was not made from a Plan on this phone, wi
     const booking = { ...MADE, title: `관정 ${GROUP_ROOM.name} 예약` };
     answerMadeQuest(server, booking);
 
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     expect(mapThings()).toContain(`퀘스트 · ${booking.title}`);
     expect(mapThings()).not.toContain(FLAG);
@@ -149,7 +150,7 @@ describe('a Quest the User leads that was not made from a Plan on this phone, wi
 });
 
 // Partitions: the address of the Quest's own card, as a push, a Notification's row, and the leave-by Notification give
-// it, with the switch on, for the User who leads the Quest. Expected values: the main screen's card of a Quest, with its
+// it, for the User who leads the Quest. Expected values: the main screen's card of a Quest, with its
 // "길찾기", as before ticket 07, and the camera's one move to it.
 describe("the address of a made Quest's own card", () => {
   it('opens the own card with "길찾기", not the card after inviting, in one move of the camera', async () => {
@@ -172,35 +173,12 @@ describe("the address of a made Quest's own card", () => {
 
 // Partitions: the Quests read again without a Quest whose id the phone kept.
 describe("the kept id of a made Quest that is gone from the User's Quests", () => {
-  it('is dropped when the Quests are read again with the switch on', async () => {
+  it('is dropped when the Quests are read again', async () => {
     await openMain(KEPT_MADE);
     server.on('GET /quests', { status: 200, body: [DINNER_QUEST] });
 
     await signal('quests-changed');
 
     expect((await readKeptAfterChanges()).madeQuests).toEqual([]);
-  });
-});
-
-// Partitions: the switch off.
-describe('a made Quest with the switch off', () => {
-  it('draws no flag and no line, and the Quest keeps its own marker', async () => {
-    await openMain({ madeQuests: [MADE.id] });
-
-    expect(mapThings()).toContain(OWN_MARKER);
-    expect(mapThings()).not.toContain(FLAG);
-    expect(madeLine()).toBeNull();
-  });
-
-  it('reads nothing more than the everyday map, and leaves the kept id as it is when the Quest is gone', async () => {
-    await openMain({ madeQuests: [MADE.id] });
-    const before = server.received('GET /quests').length;
-    server.on('GET /quests', { status: 200, body: [DINNER_QUEST] });
-
-    await signal('quests-changed');
-
-    // The one read the signal asks of the everyday map, which the made Quests share.
-    expect(server.received('GET /quests')).toHaveLength(before + 1);
-    expect((await readKeptAfterChanges()).madeQuests).toEqual([MADE.id]);
   });
 });

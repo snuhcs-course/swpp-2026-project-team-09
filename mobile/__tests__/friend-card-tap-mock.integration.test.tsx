@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -11,9 +12,9 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND, press } from './support/markers';
 import { startFresh } from './support/mocks';
 
-// A Friend's card over the mocks with the switch on (P02 ticket 22's Friend half): the mock answers 김민준's face with
-// the main server's real card of him (`friend-taps.json`), whose fact lines stand in place of the status and the way
-// the mock's Friend list gives the app.
+// A Friend's card over the mocks (P02 ticket 22's Friend half): the mock answers 김민준's face with the main server's real
+// card of him (`friend-taps.json`), whose fact lines stand in place of the status and the way the mock's Friend list
+// gives the app.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -40,7 +41,7 @@ const WAY = '도보 4분';
 // Partitions: the card before the main server's card came, and after.
 describe("김민준's card over the mocks", () => {
   it("holds the app's status and way until the card comes, then the card's facts in their place", async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await press(user, FRIEND);
     const card = within(screen.getByTestId('map-card'));

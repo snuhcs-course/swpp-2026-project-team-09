@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -46,13 +47,13 @@ describe("the User's Avatar", () => {
   it('is not shown off campus, and comes when the User walks in', async () => {
     const phone = givePhone({ permission: 'granted', position: OFF_CAMPUS });
     await openMain();
-    expect(screen.queryByRole('image', { name: ME })).toBeNull();
+    expect(screen.queryByRole('button', { name: ME })).toBeNull();
 
     await phone.moveTo(ON_CAMPUS);
-    expect(screen.getByRole('image', { name: ME })).toBeVisible();
+    expect(screen.getByRole('button', { name: ME })).toBeVisible();
 
     await phone.moveTo(OFF_CAMPUS);
-    expect(screen.queryByRole('image', { name: ME })).toBeNull();
+    expect(screen.queryByRole('button', { name: ME })).toBeNull();
   });
 });
 
@@ -66,13 +67,13 @@ describe('"내 위치로 이동"', () => {
     // In the middle of the view of 750 by 1334 points, at its full size.
     expect(placeOf(ME).left).toBeCloseTo(375, 3);
     expect(placeOf(ME).top).toBeCloseTo(667, 3);
-    expect(screen.getByRole('image', { name: ME })).toHaveProp('testID', 'me');
+    expect(screen.getByRole('button', { name: ME })).toHaveProp('testID', 'me');
 
     await user.press(screen.getByRole('button', { name: '확대' }));
     await user.press(screen.getByRole('button', { name: MY_POSITION }));
     await user.press(screen.getByRole('button', { name: '축소' }));
     // One step out of the closer zoom is still past the close level: the Avatar keeps its full size.
-    expect(screen.getByRole('image', { name: ME })).toHaveProp('testID', 'me');
+    expect(screen.getByRole('button', { name: ME })).toHaveProp('testID', 'me');
   });
 
   it('says off campus that the User is there, and shows the whole campus', async () => {
@@ -87,7 +88,7 @@ describe('"내 위치로 이동"', () => {
     expect(screen.queryByText(EXPLANATION)).toBeNull();
     // Back on campus the Avatar is small again: the whole campus is in view.
     await phone.moveTo(ON_CAMPUS);
-    expect(screen.getByRole('image', { name: ME })).toHaveProp('testID', 'me:small');
+    expect(screen.getByRole('button', { name: ME })).toHaveProp('testID', 'me:small');
     await pass(2400);
     expect(screen.queryByText(OFF_CAMPUS_WORDS)).toBeNull();
   });
@@ -114,7 +115,7 @@ describe('the explanation before the location prompt', () => {
 
     expect(phone.prompts()).toBe(1);
     expect(screen.queryByText(EXPLANATION)).toBeNull();
-    expect(screen.getByRole('image', { name: ME })).toBeVisible();
+    expect(screen.getByRole('button', { name: ME })).toBeVisible();
   });
 
   it('leaves the map without an Avatar on "나중에", and asks the phone nothing', async () => {
@@ -126,7 +127,7 @@ describe('the explanation before the location prompt', () => {
 
     expect(phone.prompts()).toBe(0);
     expect(screen.queryByText(EXPLANATION)).toBeNull();
-    expect(screen.queryByRole('image', { name: ME })).toBeNull();
+    expect(screen.queryByRole('button', { name: ME })).toBeNull();
     expect(screen.getByText('지도는 Android·iOS 빌드에서 보입니다')).toBeVisible();
   });
 });
@@ -141,7 +142,7 @@ describe('a User without the location permission', () => {
 
     expect(phone.prompts()).toBe(1);
     expect(screen.queryByText(EXPLANATION)).toBeNull();
-    expect(screen.queryByRole('image', { name: ME })).toBeNull();
+    expect(screen.queryByRole('button', { name: ME })).toBeNull();
   });
 
   it('sees the explanation again on "내 위치로 이동", after "나중에" and after a refusal', async () => {
@@ -168,6 +169,6 @@ describe('a User without the location permission', () => {
     await pass(100);
 
     expect(phone.prompts()).toBe(1);
-    expect(screen.getByRole('image', { name: ME })).toBeVisible();
+    expect(screen.getByRole('button', { name: ME })).toBeVisible();
   });
 });

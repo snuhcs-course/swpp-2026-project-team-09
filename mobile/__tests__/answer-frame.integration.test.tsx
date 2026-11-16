@@ -20,8 +20,8 @@ import { DINNER, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// The answer frame (P02 ticket 01) against the fake main server: with the switch on, what the User asks stays as a
-// pill at the top and one card at the bottom holds the reply; with it off, the chat sheet is today's.
+// The answer frame (P02 tickets 01 and 04) against the fake main server: what the User asks stays as a pill at the top
+// and one card at the bottom holds the reply.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -75,7 +75,7 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openMain>>;
 
 function openFramed(): Promise<User> {
-  return openMain({ answerOnMap: true });
+  return openMain();
 }
 
 // Writes the words in the bar and sends them, without waiting for the reply.
@@ -104,20 +104,7 @@ function sentBodies(): unknown[] {
 // What gives way to the frame, by what a screen reader says of it.
 const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, FOOTPRINTS, LAYERS, '확대'];
 
-// Partitions: the switch off and on; the conversation empty, waiting, answered, and failed.
-describe('the switch off', () => {
-  it("opens the chat sheet from the bar, and the request is today's: the messages and the library capability", async () => {
-    const user = await openMain();
-
-    await user.press(screen.getByLabelText(AI_INPUT));
-    await ask(user);
-
-    expect(screen.getByTestId('chat-sheet')).toBeVisible();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
-    expect(sentBodies()).toEqual([{ messages: [{ role: 'user', text: ASKED }], clientCapabilities: ['library'] }]);
-  });
-});
-
+// Partitions: the conversation empty, waiting, answered, and failed.
 describe('the frame', () => {
   it('shows the pill with the words and the card saying 보는 중, and no chat sheet, until the reply', async () => {
     const user = await openFramed();
@@ -191,7 +178,7 @@ describe('what gives way to the frame', () => {
   });
 });
 
-describe('the request with the switch on', () => {
+describe('the request', () => {
   it("carries the User's position, nulls for the rest, and the capabilities that say the app draws answers", async () => {
     const user = await openFramed();
 
@@ -310,51 +297,5 @@ describe('the bar and the keyboard', () => {
 
     expect(screen.queryByText(NOTICE)).toBeNull();
     expect(screen.getByTestId('answer-card')).toBeVisible();
-  });
-});
-
-// The examples the empty chat offered, by their words.
-const EXAMPLES = ['식사 메뉴 추천', '현재 통학/순환 셔틀 위치', '파티 찾기'];
-
-// Partitions: the keyboard down and up with nothing asked; something asked; an example pressed.
-describe('the examples above the bar (P02 ticket 04)', () => {
-  it('are offered above the bar while the keyboard is up and nothing is asked', async () => {
-    await openFramed();
-
-    await showKeyboard(KEYBOARD);
-
-    for (const words of EXAMPLES) {
-      expect(screen.getByRole('button', { name: words })).toBeVisible();
-    }
-  });
-
-  it('are not offered while the keyboard is down', async () => {
-    await openFramed();
-
-    for (const words of EXAMPLES) {
-      expect(screen.queryByRole('button', { name: words })).toBeNull();
-    }
-  });
-
-  it('are offered no more once something is asked', async () => {
-    const user = await openFramed();
-    await showKeyboard(KEYBOARD);
-
-    await ask(user);
-
-    expect(screen.queryByRole('button', { name: EXAMPLES[0] })).toBeNull();
-  });
-
-  it('send the example pressed, with the request context, and the pill says it', async () => {
-    const user = await openFramed();
-    await showKeyboard(KEYBOARD);
-
-    await user.press(screen.getByRole('button', { name: '파티 찾기' }));
-    await pass(1000);
-
-    expect(pill().getByText('파티 찾기')).toBeVisible();
-    expect(sentBodies()).toEqual([
-      expect.objectContaining({ messages: [{ role: 'user', text: '파티 찾기' }], context: CONTEXT }),
-    ]);
   });
 });

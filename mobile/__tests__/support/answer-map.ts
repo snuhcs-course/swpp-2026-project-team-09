@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import type { FakeServer } from './fake-server';
 import { AI_INPUT } from './lists';
 import { openMain } from './main';
 
-// The answer drawn on the map (P02 ticket 02), against the fake main server with the switch on.
+// The answer drawn on the map (P02 ticket 02), against the fake main server.
 
 export const ASKED = '배고파, 민수랑 같이';
 
@@ -29,14 +30,14 @@ export const FIRST_PLAN_MARKS = [
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Starts the app with the switch on, and asks; the main server answers with `reply`.
+// Starts the app and asks; the main server answers with `reply`.
 export async function askOnMap(
   server: FakeServer,
   reply: object,
   before?: (user: User) => Promise<void>,
 ): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body: reply });
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await before?.(user);
   await user.type(screen.getByLabelText(AI_INPUT), ASKED);
   await user.press(screen.getByRole('button', { name: '보내기' }));

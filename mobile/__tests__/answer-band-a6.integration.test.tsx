@@ -62,7 +62,7 @@ type User = Awaited<ReturnType<typeof openMain>>;
 // Asks "만나고 싶다" from 민수's card, then drags the band's body from 12:15 to 14:00 on a track laid a point a minute,
 // and lets it go; the main server answers the second request with a6.
 async function letGoAt14(): Promise<User> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await press(user, row(MIN_SU));
   await meetFromCard(user);
   await layTrack(390);
