@@ -26,3 +26,8 @@ A member the Leader removed must be approved to come back, even into an Open Que
 - [ ] The H4 and "Removed members joining again" rows of `he-revision-log.md` get this pull request.
 
 ## Comments
+
+### Agent usage (2026-11-16)
+
+- Agent time: about 1 hour (estimate), one session in the worktree `swpp-p06-08` up to opening #326, two review subagents included. Time spent waiting for answers is left out.
+- Tokens: input 478,625 (cache writes 478,151, uncached 474), cache reads 44,400,721, output 138,847. Subagents included.
