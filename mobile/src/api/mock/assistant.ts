@@ -58,11 +58,11 @@ import { mockTimetable } from './timetable';
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
-// the map, and with a context it answers with the main server's real Lookups: where something is (어디) with 문화관,
+// the map, and it answers with the main server's real Lookups: where something is (어디) with 문화관,
 // 301동식당's menu, where 민수 is, a place to study near here (이 근처) with board a9's study spaces over 공대, whatever
 // area the app sent, in the words of boards q2 to q4 the way to 24동 on time (까지 몇 분), late (늦나), and by the
 // shuttle (셔틀 탈까), and of board n21 the way to 919동 when the shuttle is not running (기숙사 가는 셔틀). The words of a
-// board of row 8 with a context get the main server's real refusal, before anything else. 배고파 without the location
+// board of row 8 get the main server's real refusal, before anything else. 배고파 without the location
 // permission, or with no Class in the mock's Timetable, gets the main server's real answer of board n13 or n15. A press
 // on a building or a face is answered with the main server's real cards of row 6.
 
@@ -209,7 +209,7 @@ function hungryReplyOf({ locationMissing }: RequestContext): AssistantReply {
 }
 
 // The stored refusal of a board of row 8, answers of 배고파, and Lookups of 301동식당's menu, of a place to study near
-// here, of where 민수 is, and of a way with a deadline, for a message sent with a context.
+// here, of where 민수 is, and of a way with a deadline.
 function drawnReplyOf(last: string, context: RequestContext): AssistantReply | null {
   const refused = refusalReplyTo(last);
   if (refused !== null) {
@@ -245,9 +245,9 @@ function wayReplyOf(last: string): AssistantReply | null {
   return last.includes('까지 몇 분') ? LEAVE_LOOKUP_REPLY : null;
 }
 
-export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {
+export function mockAssistantReply(messages: readonly ChatMessage[], context: RequestContext): AssistantReply {
   const last = messages.at(-1)?.text ?? '';
-  const drawn = context === undefined ? null : drawnReplyOf(last, context);
+  const drawn = drawnReplyOf(last, context);
   if (drawn !== null) {
     return drawn;
   }
@@ -283,7 +283,7 @@ export function mockAssistantReply(messages: readonly ChatMessage[], context?: R
   if (MENU_WORDS.some((word) => last.includes(word))) {
     return { text: menusReply(), mapButtons: ['dining'], cards: [], proposal: null };
   }
-  if (context !== undefined && last.includes('어디')) {
+  if (last.includes('어디')) {
     return WAY_LOOKUP_REPLY;
   }
   return {

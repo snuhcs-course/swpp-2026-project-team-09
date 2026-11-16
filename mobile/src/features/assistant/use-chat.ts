@@ -177,20 +177,17 @@ export function messagesToSend(
 
 type NewBubble = Omit<ChatBubble, 'id'>;
 
-function withTapped(context: RequestContext | undefined, bubbles: readonly ChatBubble[]): RequestContext | undefined {
+function withTapped(context: RequestContext, bubbles: readonly ChatBubble[]): RequestContext {
   const tapped = bubbles.findLast(({ role }) => role === 'user')?.tapped;
-  return context === undefined || tapped === undefined ? context : { ...context, tapped };
+  return tapped === undefined ? context : { ...context, tapped };
 }
 
-// The Assistant's bubble for the conversation: its reply, or the failure. A request without a context is sent as
-// before the answer on the map.
-async function answerTo(messages: ChatMessage[], context: RequestContext | undefined): Promise<NewBubble> {
+// The Assistant's bubble for the conversation: its reply, or the failure.
+async function answerTo(messages: ChatMessage[], context: RequestContext): Promise<NewBubble> {
   try {
-    const reply = await (context === undefined
-      ? apiClient.askAssistant(messages)
-      : apiClient.askAssistant(messages, context));
+    const reply = await apiClient.askAssistant(messages, context);
     const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers } = reply;
-    const drawn = { answer, lookup, refusal, area: context?.viewport ?? null };
+    const drawn = { answer, lookup, refusal, area: context.viewport };
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };
     return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered };
   } catch (error) {
@@ -308,8 +305,8 @@ function useCardsKept(): ReturnType<typeof useOutcomes> & ReturnType<typeof useR
 
 // The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
 // message sends the conversation, and the reply is shown whole. `readContext` gives what the app knows when a request
-// is sent, 다시 시도's included; without one, or while it gives none, the request carries no context.
-export function useChat(readContext?: () => RequestContext | undefined): Chat {
+// is sent, 다시 시도's included.
+export function useChat(readContext: () => RequestContext): Chat {
   const { bubbles, said, show, add } = useBubbles();
   const context = useRef(readContext);
   context.current = readContext;
@@ -322,7 +319,7 @@ export function useChat(readContext?: () => RequestContext | undefined): Chat {
   const ask = useCallback((): void => {
     const asked = conversation.current;
     setWaiting(true);
-    void answerTo(messagesToSend(said.current, roomsShown.current), withTapped(context.current?.(), said.current)).then(
+    void answerTo(messagesToSend(said.current, roomsShown.current), withTapped(context.current(), said.current)).then(
       (answer) => {
         if (asked === conversation.current) {
           add(answer);

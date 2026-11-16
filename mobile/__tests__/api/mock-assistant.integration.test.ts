@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -78,27 +79,8 @@ describe('the mock of an answer drawn on the map', () => {
 });
 
 describe('the mock of a question answered with nothing drawn', () => {
-  it('answers where a Place is without a context as before, with no Lookup', async () => {
-    await expect(answered(mockClient.askAssistant(WHERE))).resolves.not.toHaveProperty('lookup');
-  });
-
-  it('answers 배고파 without a context as before, with no answer', async () => {
-    const reply = await answered(mockClient.askAssistant(HUNGRY));
-
-    expect(reply).toEqual({
-      text: '데모에서는 오늘 메뉴와 셔틀, 행사, 파티만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.',
-      mapButtons: [],
-      cards: [],
-      proposal: null,
-    });
-  });
-
-  it('answers another question with a context as it does without one', async () => {
-    const withContext = await answered(mockClient.askAssistant(MENUS, CONTEXT));
-    const without = await answered(mockClient.askAssistant(MENUS));
-
-    expect(withContext).toEqual(without);
-    expect(withContext).not.toHaveProperty('answer');
+  it('answers another question with no answer', async () => {
+    await expect(answered(mockClient.askAssistant(MENUS, CONTEXT))).resolves.not.toHaveProperty('answer');
   });
 });
 
