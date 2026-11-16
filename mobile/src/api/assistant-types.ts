@@ -8,6 +8,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCard } from './library-card-types';
@@ -16,7 +17,7 @@ import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { DroppedPlace, PlanPart } from './plan-part-types';
-import type { WithRefusal } from './refusal-types';
+import type { RefusalOffer, WithRefusal } from './refusal-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
@@ -327,4 +328,9 @@ export interface AssistantReply extends WithRefusal {
   proposal: QuestProposal | null;
   answer?: AnswerReply | null;
   lookup?: Lookup | null;
+  // Buttons under the text of a reply that draws nothing, such as a Tutorial quest's 가는 길 보기 (P01-14).
+  offers?: ReplyOffer[];
 }
+
+// A button under a reply's text, sent as the User's words.
+export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }>;
