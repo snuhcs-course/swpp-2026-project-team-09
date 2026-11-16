@@ -30,6 +30,8 @@ const NONE_REASONS: Record<NonNullable<AnswerReply['noPlan']>['reason'], string>
   'no-fit': 'No Restaurant can be reached, eaten at, and left in time.',
 };
 
+const NOT_NOW = 'There is no time now when everyone can eat together; the app offers buttons to ease it.';
+
 const clock = (time: string | null): string | null => (time === null ? null : time.slice(11, 16));
 
 const nameOf = ({ me, name }: Plan['parts'][number]): string => (me ? '나' : othersText('friend.name', name));
@@ -87,6 +89,12 @@ const input = z
     until: clockTime
       .optional()
       .describe('The end the User fixed, as HH:MM: everyone has left by it. Left out when they fixed none.'),
+    now: z
+      .boolean()
+      .optional()
+      .describe(
+        'True when the User wants the meal now (지금, 바로), or when [Plan on screen: …] has now: the plan then starts soon or not at all. Left out otherwise.',
+      ),
     placeId: z
       .uuid()
       .optional()
@@ -135,7 +143,10 @@ export function planMeal(plans: Pick<MealPlanService, 'plan'>): Tool {
     description:
       "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, the longest time together first, and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
     input,
-    run: async ({ date, meal: named, friendIds, from, until, placeId }, { userId, now, context, found, presented }) => {
+    run: async (
+      { date, meal: named, friendIds, from, until, now: soon, placeId },
+      { userId, now, context, found, presented },
+    ) => {
       if (outOfReach(date, now)) {
         return noDay(date);
       }
@@ -150,7 +161,7 @@ export function planMeal(plans: Pick<MealPlanService, 'plan'>): Tool {
         date,
         meal,
         people: [userId, ...new Set(friendIds)].map((id) => ({ userId: id, constraints: kept.get(id) ?? [] })),
-        window: { from: from ?? null, until: until ?? null },
+        window: { from: from ?? null, until: until ?? null, ...(soon === true ? { now: true } : {}) },
         placeId: placeId ?? null,
       };
       const { location, locationMissing } = context;
@@ -159,7 +170,11 @@ export function planMeal(plans: Pick<MealPlanService, 'plan'>): Tool {
       presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
-        return { result: 'none', meal, reason: NONE_REASONS[answer.noPlan.reason] };
+        return {
+          result: 'none',
+          meal,
+          reason: answer.noPlan.relax === undefined ? NONE_REASONS[answer.noPlan.reason] : NOT_NOW,
+        };
       }
       return {
         result: 'planned',
@@ -177,7 +192,7 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 
 - When the User is hungry or wants a meal (배고파, 밥 먹자, 점심 같이 먹자), alone or with Friends they name, call planMeal with the day (today when they name none), the meal only when their words name one (lunch for 점심, dinner for 저녁; left out otherwise, and the server takes it by the clock), and the Friends, each found with resolveFriend first. With no Friend it plans for the User alone. A time they name for the meal (오후 3시쯤 저녁) is from, as HH:MM, even when it is before the meal's hours: the server fits it to them. Do not ask what the User feels like first, and do not ask back about the time.
 - The app draws the plans on the map and writes their times, ways, and minutes itself, the first one first, and the User browses the others with arrows. Your reply is one sentence about the first plan only, its Restaurant and when everyone is there, such as "12:33에 학생회관식당에서 먹어요." Write nothing more: no second sentence, no other plan, nobody's walking minutes or time to set out, nothing about the map, and nothing that was dropped. Do not call showOnMap for a plan: the app already draws it.
-- When planMeal answers none, say plainly why, without naming who is busy.
+- When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend.
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.
 - When resolveFriend answers several, ask which one ${WHICH_FRIEND}, and wait for the answer.
 - Breakfast is not covered: say that lunch and dinner are.

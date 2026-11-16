@@ -448,7 +448,7 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
   (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 전체
   파티 (`/boards`), a board (`/boards/meal`), 파티 모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
-  `/party-form?questId=<id>` for its edit mode) and the AI 매칭 신청 list (`/matching`). Each is a `FullScreenPanel`
+  `/party-form?questId=<id>` for its edit mode). Each is a `FullScreenPanel`
   and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
   them also when the app opens at their address (`unstable_settings`).
@@ -650,7 +650,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   as `viewport` (`useViewport`: the stage under the status bar at the camera, null until both are known). A `study`
   Lookup ("이 근처") outlines the area its request sent, leaves the camera where it is, and adds the free seats the
   phone reads from its own library session to the flag towards 관정 (`study-area.ts`, `use-away-seats.ts`); its card's
-  main button reads "가는 길", and its `ask` action "관정 보기" sends its words as the User's.
+  main button reads "가는 길", and its `ask` action "관정 보기" sends its words as the User's. While a meal's Plan is on
+  screen, a press on a building recalculates the conditions with that Place fixed and shows "여기면 어때?" over the Plan,
+  which stays underneath: each person's arrival, the time together against the Plan, "여기로 바꾸기" and "그대로"
+  (`use-how-about.ts`, `how-about-card.tsx`); "그대로", the pill's ✕, and Android's back return to the Plan.
 - **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the
   conversation's last reply (a failure and the app's own bubble are none), so it stays while a follow-up waits or has
   failed, or a recalculation that replaced it, held with the index of the Plan on screen and whether its basis is open
@@ -1009,8 +1012,12 @@ files' renewal on the VWorld page.
 **A Quest's room** (`src/screens/room/`, the frame's `PartyDetail`, `/room/<questId>`) is the room of every Quest the
 User holds but a Class Quest: its `파티장` is the Quest's Leader, its `멤버` the Holders and its `일정` the Sub Quests.
 It reads the Quest (`GET /quests/:questId`), the User's Party and the listed Parties (`useRoom()` of the quests
-feature, `room-adapter.ts`), and closes with "파티에서 빠졌어요" once the main server no longer answers the Quest,
-after a removal, a drop on another phone or the Leader's end. From the top:
+feature, `room-adapter.ts`), and closes once the main server no longer answers the Quest, after a removal, a drop on
+another phone or the Leader's end. `GoneQuestsWatch` (`src/features/quests/gone-watch.tsx`), in the signed-in layout,
+tells it on whatever screen is shown: a Quest that was in `GET /quests` and is not when the list comes again, and that
+`GET /quests/:questId` no longer answers (`QUEST_NOT_FOUND`, or no answer at all), says "{title} 파티에서 빠졌어요" once. A Quest that only left the
+list because all its Sub Quests ended, a Class Quest, and the User's own 나가기 or 파티 없애기 on this phone, which
+mark the Quest while they run, are not told; nor is what happened before the app started. From the top:
 
 - in the app bar, "모집글 보기" for an Open or Approval Quest, which opens its post, and "수정" for the Leader, which
   opens 파티 만들기 in its edit mode;
@@ -1094,16 +1101,16 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 **행사** (`src/screens/events/`, the `Events` frame, `/events`) lists the published Global Events (`GET
 /global-events`) by their start, with the data of `useEventSources()` and the words of `src/features/events/adapter.ts`:
 
-- The app bar (`events-bar.tsx`) has "행사", the sparkle "AI 매칭 신청 내역" with a navy count of the waiting
-  requests, which opens the AI 매칭 신청 list, and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
+- The app bar (`events-bar.tsx`) has "행사" and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
   place of the title and keeps the events whose title, place or description holds the words.
 - The chips "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest)
   filter the list. Empty: "예정된 행사가 없어요" without any event, "검색 결과가 없어요" after a filter or a search.
 - A card (`event-item.tsx`) has "같이 갈 파티 {n}개" for the recruiting Quests of `GET /quests/recruiting`, "내 파티"
   when the User holds a Quest for the event, the source from the app's own list of announcers, the title, the time
   ("M월 D일까지" for an event whose end is more than 24 hours after its start, on every card and sheet that shows an
-  event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
-  "AI 매칭", or "매칭 중" while the User's request waits, which opens the list. At `/events?focus=<id>` the list shows
+  event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, and "파티 찾기/모집".
+  AI matching left the main UI on 2026-11-10 (P06-03): the card has no "AI 매칭" and the app no matching screen, though
+  the main server's matching routes and `apiClient`'s calls for them stay. At `/events?focus=<id>` the list shows
   every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
 - The ☆ "즐겨찾기" (`favorite-toggle.tsx`) at a card's top right, right of the source, stars the event or clears its
   star (`PUT` and `DELETE /global-events/:id/favorite`). It changes at once and back with "즐겨찾기를 바꾸지 못했어요"
@@ -1117,14 +1124,6 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   (`POST /quest-join-requests`). "+ 파티 모집", like the map card's "같이 갈 사람 찾기", opens the room of a Quest the
   User already holds with others for the event, with "이 행사에 함께 가는 파티가 이미 있어요", and 파티 만들기 with the
   event chosen otherwise (`/party-form?eventId=<id>`, `use-party-create.ts`).
-- **AI 매칭** (`matching-sheet.tsx`) asks only the group size, "2명", "3명" or "4명", explains what Matching does and
-  sends `POST /matching-requests`. **The AI 매칭 신청 list** (`matching-screen.tsx`, `/matching`) shows each waiting
-  request with "매칭 중", when it was asked, the event and the size, and withdraws one after "매칭 신청을 취소할까요?"
-  (`POST /matching-requests/:globalEventId/withdraw`). The requests and their refusals are in `use-event-actions.ts`,
-  and the words of every refusal in `src/features/quests/refusals.ts`.
-- `MatchingWatch` (`src/features/events/matching-watch.tsx`), in the signed-in layout, watches the waiting requests
-  wherever the User is: a request that stops waiting is read again (`GET /matching-requests/:globalEventId`), and a
-  match says "{event} 파티가 만들어졌어요" and fetches the Quests again.
 
 **The date·time sheet** (`src/screens/date-time-sheet.tsx`) is shared: "언제" with the choice in words ("오늘 19:00"),
 21 days from today in Korea's time, the hours and the minutes by tens, and "확인". **The map view**

@@ -48,7 +48,7 @@ export function withPerson(input: PlanInput, userId: string): PlanInput {
   return { ...input, people: [...input.people, { userId, constraints: [] }] };
 }
 
-export function withBound(input: PlanInput, bound: 'from' | 'until', time: string): PlanInput {
+export function withBound(input: PlanInput, bound: 'from' | 'until', time: string | null): PlanInput {
   return input.kind === 'meal' || input.kind === 'meet'
     ? { ...input, window: { ...input.window, [bound]: time } }
     : input;

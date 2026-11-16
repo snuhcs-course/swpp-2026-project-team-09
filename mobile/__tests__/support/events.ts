@@ -6,7 +6,6 @@
  ******************************************************************************/
 
 import { type userEvent, within } from '@testing-library/react-native';
-import type { MatchingRequest } from '@/api/matching-types';
 import type { GlobalEvent, ListedGlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import type { FakeServer } from './fake-server';
@@ -115,15 +114,10 @@ export const MY_CAREER: Quest = {
   ],
 };
 
-export function waiting(globalEventId: string, size = 3, arrivedAt = '2026-10-06T04:00:00.000Z'): MatchingRequest {
-  return { globalEventId, size, state: 'waiting', arrivedAt, questId: null };
-}
-
 interface Given {
   events?: ListedGlobalEvent[];
   recruiting?: RecruitingQuest[];
   quests?: Quest[];
-  matching?: MatchingRequest[];
 }
 
 // The main screen's answers and the 행사 tab's. The recruiting Quests answer by `?globalEventId=`.
@@ -138,7 +132,6 @@ export function answerEvents(server: FakeServer, given: Given = {}): void {
     ),
   }));
   server.on('GET /quests', { status: 200, body: given.quests ?? [DINNER] });
-  server.on('GET /matching-requests', { status: 200, body: given.matching ?? [] });
 }
 
 type User = ReturnType<typeof userEvent.setup>;

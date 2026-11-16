@@ -63,3 +63,11 @@ One session (package D's), no subagents; the window runs from the assignment to 
 
 - Agent time: about 50 minutes, an estimate from the transcript's timestamps (active stretches, gaps of five minutes or more left out), with the emulator check and the merges of `4.0/Main`.
 - Tokens: input 67,117,044, of which 66,768,890 cache reads, 347,748 cache writes, and 406 uncached; output 145,056.
+
+### Agent usage, review and merges (2026-11-16)
+
+The review's two points, the reply on its thread, and two merges of `4.0/Main` (with #313, #315, #317, and #320), after the pull request opened; counted apart from the window above.
+
+- Agent time: about 20 minutes, an estimate as above.
+- Tokens: input 49,766,266, of which 49,095,600 cache reads, 670,508 cache writes, and 158 uncached; output 45,498.
+
