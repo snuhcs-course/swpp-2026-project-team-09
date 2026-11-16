@@ -29,22 +29,22 @@ The main server already answers events, recruiting parties, and a new recruiting
 
 ## Acceptance criteria
 
-- [ ] A chat request with a context carries `events` among its capabilities.
-- [ ] Board Alone 1 (the mock's copy): the events answer is drawn with its Plans, the arrows, the clash marked, and the buttons "같이 갈 파티", "새로 모집", and "길 안내".
-- [ ] "같이 갈 파티" sends the quests recalculation, with its body checked, and the answer of parties is drawn: the Friend's party first, and one that has started faded with its reason.
-- [ ] A party's Plan opens its post with "참여하기" or "참여 신청", and nothing is joined by the answer.
-- [ ] "새로 모집" sends the new-quest recalculation, and its Plan draws the candidate Friends. Adding one recalculates.
-- [ ] "이대로 모집" sends `POST /plans` with the new-quest making body and shows the made Quest.
-- [ ] A building card with events shows "행사 보기" and "같이 갈 파티" and opens those answers.
-- [ ] A meal's and a meet's answers are unchanged.
-- [ ] Integration tests at the main screen over the fake main server:
+- [x] A chat request with a context carries `events` among its capabilities.
+- [x] Board Alone 1 (the mock's copy): the events answer is drawn with its Plans, the arrows, the clash marked, and the buttons "같이 갈 파티", "새로 모집", and "길 안내".
+- [x] "같이 갈 파티" sends the quests recalculation, with its body checked, and the answer of parties is drawn: the Friend's party first, and one that has started faded with its reason.
+- [x] A party's Plan opens its post with "참여하기" or "참여 신청", and nothing is joined by the answer.
+- [x] "새로 모집" sends the new-quest recalculation, and its Plan draws the candidate Friends. Adding one recalculates.
+- [x] "이대로 모집" sends `POST /plans` with the new-quest making body and shows the made Quest.
+- [x] A building card with events shows "행사 보기" and "같이 갈 파티" and opens those answers.
+- [x] A meal's and a meet's answers are unchanged.
+- [x] Integration tests at the main screen over the fake main server:
   - each button down to its request body;
   - the answers drawn;
   - "이대로 모집" and its 201;
   - a building card's plan buttons;
   - the switch off.
 - [ ] The screens are run on an Android emulator, and the pull request carries them.
-- [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
+- [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
 
@@ -63,3 +63,13 @@ The main server already answers events, recruiting parties, and a new recruiting
    - A new party's time changes only through the people, as Together 9 does when 지은 is added.
    - A time the User says ("저녁 7시에") goes to the Assistant in words.
 5. **The building card** draws its `plan` buttons for `events` and `quests` too, now that the frame draws those answers (P02-22's note (11) is lifted).
+6. **"＋ 같이" only on a new party.** Events and parties take no Friend, so their chips have no "＋ 같이". A Friend comes through "새로 모집", whose chip is read as "초대할 친구 추가" and whose list asks "누구를 초대할까요?". `ConditionChips` takes the chip's spoken name (`addName`, null to leave it out) in place of `meet`.
+7. **"같이 갈 파티" is never named after a Friend's party.** The main server's events Plan carries no Friend's party; only a party's Plan carries `friendNames`. The parties' answer it opens puts the Friend's party first.
+8. **"새로 모집" on the parties of a search goes to the Assistant in words**, with the Plan on screen. Only the Assistant knows the activity's words, and its `planNewQuest` puts the Friends free then into the party first (design 6.4, Recruit 4); a recalculation would not. On the parties of a Global Event it recalculates with no model, for that event on the party's day in Korea.
+9. **The buttons stand in a row of their own**, cells of one width, under the arrows. Three buttons beside the arrows would be cut on a phone. A new party's Plan lists its Friends who could come under "그때 비어 있는 친구", each a cell with the line of their day; a press adds one, as "＋ 같이" does.
+10. **After "이대로 모집"** the card after inviting shows the posted party's steps. With nobody invited it says "파티를 모집했어요" and "17:10에 가면 돼요". The frame does not leave for 내 파티, which would hide that card. The party is among 내 파티 at once, its id kept as a meal Quest's is. Ticket 07's flag stays for a Closed Quest with invited Friends, so a posted party has no flag after closing.
+11. **Where from, for these kinds.** A new party's people carry no constraints, which the main server refuses, so a start chosen on the map leaves a new party as it is (`withOrigin`). The where-from and until chips of events, parties, and a new party still take a press and change nothing, as the band (decision 4). Drawing them read-only needs `use-corrections.ts` or the chips' handlers in `plan-card.tsx`'s `ConditionChips` call, left for review.
+12. **The building card's buttons** are cells of one width, every `plan` button and then "가는 길".
+13. **"길 안내" and the words to the Assistant** reach the card through a context put around the answer frame in `map-bottom.tsx` (`answer/row-four-actions.tsx`), since the frame gives the Plan's card neither.
+14. **What was dropped is said in the card.** The main server's scene of events and parties draws nothing it dropped, so the card lists each dropped reason in faint ink above the buttons ("17:00 파티는 17:02에야 도착해요"). The design's browsing into a faded party with the arrows is not built.
+15. **The mock's POST /plans** still answers the meal's stored Quest for any Plan, a new party's included: no real reply to a new party is stored. The tests post with a reply built by hand.

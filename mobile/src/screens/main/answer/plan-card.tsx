@@ -21,8 +21,10 @@ import { CardNote } from './card-note';
 import { ConditionChips, type CornerAction } from './condition-chips';
 import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
+import { RowFourButtons } from './row-four-buttons';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
+import { addNameOf, whoOf } from './who-words';
 
 // The arrows are as high as the buttons beside them, and their touch area reaches the design system's minimum.
 const ARROW = 40;
@@ -34,10 +36,8 @@ const COUNT_WIDTH = 44;
 // A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
 const SWIPE_STARTS = 10;
 const SWIPE_COUNTS = 48;
-// The card's lines while the list of Friends is open, in place of the Plan's: who comes to eat, or to meet. The map
-// takes a press on a face only while a Plan is drawn, so without one the second line says how the list is sorted.
-const WHO: AnswerLine = [{ text: '누구와 같이 먹을까요?', strong: false }];
-const WHO_MEETS: AnswerLine = [{ text: '누구와 같이 만날까요?', strong: false }];
+// The card's lines while the list of Friends is open, in place of the Plan's: who comes (`whoOf`). The map takes a
+// press on a face only while a Plan is drawn, so without one the second line says how the list is sorted.
 const HOW: AnswerLine = [{ text: '지도의 얼굴을 누르거나 아래에서 골라요', strong: false }];
 const HOW_WITHOUT_PLAN: AnswerLine = [{ text: '가까운 친구부터 보여요', strong: false }];
 
@@ -186,7 +186,8 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
       />
     );
   }
-  const invitable = plan !== null && peopleOf(answer.input).length > 1;
+  // A new party is posted with "이대로 모집", its friends invited or not.
+  const invitable = plan !== null && answer.input.kind !== 'new-quest' && peopleOf(answer.input).length > 1;
   return (
     <>
       {plan === null ? null : (
@@ -207,6 +208,7 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
         offers={answer.offers ?? []}
         shown={shown}
       />
+      <RowFourButtons busy={busy} invitation={invitation} shown={shown} />
     </>
   );
 }
@@ -231,7 +233,7 @@ interface PlanCardProps extends CardProps {
 
 function linesOf({ plan }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
   if (adding) {
-    return [answer.input.kind === 'meet' ? WHO_MEETS : WHO, plan === null ? HOW_WITHOUT_PLAN : HOW];
+    return [whoOf(answer.input.kind), plan === null ? HOW_WITHOUT_PLAN : HOW];
   }
   return plan?.lines ?? answer.noPlan?.lines ?? [];
 }
@@ -258,7 +260,7 @@ export function PlanCard({ shown, answer, invitation, room, over = [], onClose }
         corner={cornerOf(shown, fix)}
         disabled={busy}
         friendIds={fix.friendIds}
-        meet={answer.input.kind === 'meet'}
+        addName={addNameOf(answer.input.kind)}
         onAdd={fix.toggleAdding}
         onOrigin={fix.chooseOrigin}
         onProfile={openProfile}

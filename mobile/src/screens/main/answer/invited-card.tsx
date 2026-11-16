@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -26,15 +27,15 @@ interface InvitedCardProps {
   onClose: () => void;
 }
 
-function linesOf(startAt: string): AnswerLine[] {
-  return [
-    [{ text: '파티를 만들고 초대를 보냈어요', strong: false }],
-    [
-      { text: '답이 없어도 ', strong: false },
-      { text: koreaClock(startAt), strong: true },
-      { text: '에 가면 돼요', strong: false },
-    ],
+// A party posted with nobody invited (P02 ticket 30) says so, and when to be there.
+function linesOf(startAt: string, invited: boolean): AnswerLine[] {
+  const when = [
+    { text: koreaClock(startAt), strong: true },
+    { text: '에 가면 돼요', strong: false },
   ];
+  return invited
+    ? [[{ text: '파티를 만들고 초대를 보냈어요', strong: false }], [{ text: '답이 없어도 ', strong: false }, ...when]]
+    : [[{ text: '파티를 모집했어요', strong: false }], when];
 }
 
 // The conditions as they were sent: no chip takes a press, and a person's chip says how the Friend stands.
@@ -63,7 +64,7 @@ export function InvitedCard({ chips, startAt, steps, standings, over = [], onClo
   return (
     <View style={styles.card} testID="invited-card">
       <SentChips chips={chips} standings={standings} />
-      <AnswerLines lines={[...over, ...linesOf(startAt).slice(over.length)]} />
+      <AnswerLines lines={[...over, ...linesOf(startAt, standings.size > 0).slice(over.length)]} />
       <QuestSteps steps={steps} />
       <Button full onPress={onClose} variant="secondary">
         닫기

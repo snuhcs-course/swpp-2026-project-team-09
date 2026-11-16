@@ -7,6 +7,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -49,6 +50,7 @@ import {
 import { MEET_ANSWER } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
+import { rowFourCopyOf, rowFourReplyOf } from './row-four-copies';
 import { mockTimetable } from './timetable';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
@@ -159,6 +161,10 @@ function menusReply(): string {
 // The mock holds copies of meal answers and of one meet, so other conditions are read as a meal of the User alone.
 // Three people at a pressed Place get the copy of that Place when there is one ("여기면 어때?").
 function copyFor(input: PlanInput): AnswerReply {
+  const rowFour = rowFourCopyOf(input);
+  if (rowFour !== null) {
+    return rowFour;
+  }
   if (input.kind === 'meet') {
     return MEET_ANSWER;
   }
@@ -225,7 +231,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes('민수') && last.includes('어디')) {
     return FRIEND_LOOKUP_REPLY;
   }
-  return wayReplyOf(last);
+  return rowFourReplyOf(last) ?? wayReplyOf(last);
 }
 
 // The stored Lookups of a way, by the words of boards q4, q3, q2, and n21: by the shuttle, late, on time, and the

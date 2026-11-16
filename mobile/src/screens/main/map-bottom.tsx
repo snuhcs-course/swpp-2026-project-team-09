@@ -9,6 +9,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -27,6 +28,7 @@ import { AiInput } from './ai-input';
 import { AnswerFrame } from './answer/answer-frame';
 import { MadeQuestFrame } from './answer/made-quest-frame';
 import { InvitationFrame } from './answer/received-invitation-card';
+import { RowFourProvider } from './answer/row-four-actions';
 import { BottomControls } from './bottom-controls';
 import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
@@ -183,7 +185,9 @@ export function MapBottom(props: MapBottomProps): ReactElement {
     <>
       {!chat.shown && !chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
       {chat.sheet(inputTop)}
-      <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+      <RowFourProvider control={chat}>
+        <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+      </RowFourProvider>
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
       {made.shown === null ? null : (
         <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
