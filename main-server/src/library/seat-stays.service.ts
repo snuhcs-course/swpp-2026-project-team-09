@@ -31,8 +31,8 @@ const notASeat = (): BadRequestException =>
     message: 'Only a seat of a 관정 reading room or zone is a stay.',
   });
 
-// A seat the app booked becomes a Quest held by the User alone for the stay at 관정관, which is no 파티, with the time
-// to leave for the next item kept as the Quest's leave-by.
+// A seat the app booked becomes a Quest taken alone (`takenAlone`) for the stay at 관정관, which is no 파티, with the
+// time to leave for the next item kept as the Quest's leave-by.
 @Injectable()
 export class SeatStaysService {
   private readonly logger = new Logger(SeatStaysService.name);
@@ -77,7 +77,7 @@ export class SeatStaysService {
         },
         [userId],
         tx,
-        { capacity: ALONE_CAPACITY },
+        { capacity: ALONE_CAPACITY, takenAlone: true },
       ),
     );
     this.signals.send([userId], 'quests-changed');

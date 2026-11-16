@@ -28,6 +28,7 @@ function stayOf({ spaceId, date, start, minutes }: SeatStay): SeatStayMade {
       leader: ME,
       capacity: 1,
       joinPolicy: 'closed',
+      takenAlone: true,
       holders: [ME],
       subQuests: [
         {

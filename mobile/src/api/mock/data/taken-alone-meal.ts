@@ -33,6 +33,7 @@ export function mealTakenAloneOf(plan: Plan, me: Person): PlanQuest {
       leader: me,
       capacity: 1,
       joinPolicy: 'closed',
+      takenAlone: true,
       board: null,
       description: '',
       createdAt: '2026-11-17T02:50:00.000Z',

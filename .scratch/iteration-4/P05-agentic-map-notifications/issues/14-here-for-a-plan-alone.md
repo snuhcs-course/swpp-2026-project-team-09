@@ -2,7 +2,7 @@
 
 Parent: [P05 spec](../spec.md) ("Notifications", "The seat card"); the glossary's Quest ("held by one or more Users"); the design's 6.1 "Alone" 4, 6.2 (the seat, alone), and the rule that a walk alone gets a leave-by push only when it takes 5 minutes or more; boards AmHungry s1 to s5, AmCant n10, n12, n13, n15, AmFrame f3, AmStudy a1, a3b and a6. P03 ticket 15 (package C) makes a Plan for one person into a Quest at `POST /plans`; this ticket is the meal's button in the app and the seat.
 Status: ready-for-agent
-Blocked by: P03 ticket 15 (`POST /plans` for one person, its `alone` reply, the taken card, `ALONE_CAPACITY`, and the `leave-by` Notification's `toward`)
+Blocked by: P03 ticket 15 (`POST /plans` for one person, its `alone` reply, the taken card, the `takenAlone` column with `ALONE_CAPACITY`, and the `leave-by` Notification's `toward`)
 Native files: no
 
 ## What to build
@@ -13,7 +13,7 @@ Everything a User does alone can be a Quest held by that User alone. A meal's Pl
 
 - **The button.** A meal's Plan whose people are the User alone has "여기로" as its main button, where a Plan with a Friend has "이대로 초대". It is the same press: `POST /plans` with the conditions on screen and the Plan, one Idempotency-Key per Plan, the push sheet asked once the Quest is made, and a Plan that changed recalculated (409 `PLAN_CHANGED`).
 - **The card after it** is package C's taken card (P03 ticket 15): the reply's two lines, "**학생회관식당**으로 가요" or "**301동식당**에서 먹어요", then "12:45에 나설 시각을 알려 드릴게요" or why no leave-by is kept. "다시 고르기" drops the Quest with its leave-by and shows the Plan again; a press after it makes a new Quest. "닫기" guides the User to the Restaurant when they walk there, as a Lookup's "길 안내" does, and only closes when they are there already.
-- **A seat's stay.** Once 예약하기 booked a seat on the library's site, the phone sends `POST /library/seat-stays` with the space and the time. The main server makes the Closed Quest "관정 7층 7A 열람실 2 구역" with capacity 1 and one Sub Quest at 관정관 for the booking's time, held by the User alone, and keeps a `leave-by` Notification for the next item.
+- **A seat's stay.** Once 예약하기 booked a seat on the library's site, the phone sends `POST /library/seat-stays` with the space and the time. The main server makes the Closed Quest "관정 7층 7A 열람실 2 구역", taken alone (`takenAlone`) with capacity 1, and one Sub Quest at 관정관 for the booking's time, and keeps a `leave-by` Notification for the next item.
 - **The seat's leave-by** is for the first item of the User's day that starts during the stay at a Place other than 관정관, at its start minus the walk from 관정관: "지금 나서요", "8동까지 걸어서 4분", "15:56 나설 시각". None is kept when that time has passed or comes before the stay starts.
 - **What the seat sends.** The space, the date, the start and the minutes. The seat and the booking number stay on the phone, as every library reply does.
 - **A failure** of the stay's request never undoes the booking or changes its done message: the seat stays booked, with no Quest.
@@ -52,9 +52,9 @@ The rule's eight decisions (`solo-quests/rule.md` of the orchestrating session) 
 3. **The card's lines are the main server's** (`alone.lines` of the reply, package C's), as every answer's words are; the app draws them and does not word them again.
 4. **A seat's Quest has its own route, `POST /library/seat-stays`**, in package D's `src/library/`, not `POST /plans`: a seat has no Plan, the phone alone books it on the library's site, and the Quest is made only after that booking succeeded. It uses `QuestsService.createWithSubQuest` and changes none of package C's files.
 5. **It sends the space and the time only.** The seat and the booking number stay on the phone, as the done message's test already requires (`expectNothingOfTheLibrarySent`), so the Quest is titled by the room, "관정 7층 7A 열람실 2 구역".
-6. **Capacity 1 marks it held alone**, as package C's `ALONE_CAPACITY` does for a Plan taken alone, so every list and count of parties leaves it out.
+6. **It is marked `takenAlone`, with capacity 1**, as package C makes a Plan taken alone: the column, not the capacity or the count of Holders, keeps it out of every list and count of parties, and the capacity keeps anyone else from entering.
 7. **A seat's leave-by is kept whatever the walk.** Board a6 keeps "15:56 나설 시각" for a walk of 4 minutes. The 5-minute rule is for a walk alone from a meal or an event, where the User sets off at once; at a seat the User is studying and needs the reminder. It uses the Quest's `leave-by` kind, so 알림 and the push read as the Leader's do.
 8. **The next item** is the first that starts during the stay at another Place than 관정관, read before the stay is stored so that the stay is not its own next item. An item at 관정관 needs no walk and is skipped.
 9. **The stay's request runs beside the done message.** Board a4 shows no leave-by in it, so the message is not held for the main server, and a failure leaves the booking as it is.
-10. **No flag on the everyday map.** Package C's hook keeps no id for a Quest held alone, so the everyday map draws no flag or line for it, and the seat follows: it shows in 알림 through its leave-by. Rule 4 also asks for "its card on the everyday map"; that card, and the plan line above the input that rule 8 leaves out, are one follow-up.
+10. **No made-Quest flag.** The flag of a Quest made from a Plan is about the Friends' answers, so package C keeps none for a Quest taken alone, and the seat follows. It is on the everyday map as the User's own Quest with a Place, worded "퀘스트" with 길찾기, and in 알림 through its leave-by. The plan line above the input stays out (rule 8).
 11. **Cancelling or returning the seat** does not end its Quest in this ticket; it ends at the booking's end as other Quests do. Ending it there needs the booking's time matched to the Quest, which is a follow-up.

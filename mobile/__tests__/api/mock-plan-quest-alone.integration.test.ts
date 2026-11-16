@@ -34,7 +34,7 @@ describe('the mock of a meal taken alone', () => {
     const taken = await answered(mockClient.makePlanQuest(making('301동식당'), 'key'));
     const quests = await answered(mockClient.listQuests());
 
-    expect(taken.quest).toMatchObject({ capacity: 1, joinPolicy: 'closed', globalEvent: null });
+    expect(taken.quest).toMatchObject({ capacity: 1, takenAlone: true, joinPolicy: 'closed', globalEvent: null });
     expect(taken.invitations).toEqual([]);
     expect(words(taken.alone?.lines)).toEqual(['301동식당에서 먹어요', '12:45에 나설 시각을 알려 드릴게요']);
     expect(taken.alone?.remindAt).toBe('2026-11-17T03:45:00.000Z');

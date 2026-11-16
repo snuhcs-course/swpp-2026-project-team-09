@@ -68,11 +68,11 @@ const S4: TakenAlone = {
   ],
   remindAt: null,
 };
-// The stored Quest as the main server makes it of a Plan for one person: Closed with capacity 1, its asker its one
-// Holder and member.
+// The stored Quest as the main server makes it of a Plan for one person: taken alone, Closed with capacity 1, its
+// asker its one Holder and member.
 const [ASKER] = PLAN_QUEST.quest.members ?? [];
 function madeAlone(alone: TakenAlone): PlanQuest {
-  const quest = { ...PLAN_QUEST.quest, capacity: 1, members: ASKER === undefined ? [] : [ASKER] };
+  const quest = { ...PLAN_QUEST.quest, capacity: 1, takenAlone: true, members: ASKER === undefined ? [] : [ASKER] };
   return { quest, invitations: [], askLevels: [], alone };
 }
 const MADE_ALONE = madeAlone(S4B);

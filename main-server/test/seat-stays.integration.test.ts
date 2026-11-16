@@ -90,6 +90,7 @@ describe('POST /library/seat-stays', () => {
         title: '관정 7층 7A 열람실 2 구역',
         capacity: 1,
         joinPolicy: 'closed',
+        takenAlone: true,
         holders: [{ id: user.id }],
         subQuests: [
           {

@@ -2330,8 +2330,8 @@ failure is logged as a warning. The room in their words is `관정 {floor}층 {n
 
 A seat the phone booked on the library's site becomes a Quest held by the User alone (`src/library/seat-stays.*`),
 which is no 파티. `POST /library/seat-stays` with `{ spaceId, date, start, minutes }` takes an `Idempotency-Key` and
-answers `{ quest, leaveAt }` (201): the Closed Quest "관정 {floor}층 {space}" with capacity 1 and one Sub Quest at
-Place 62-1 for the booking's time, as the User reads it, and when the User is told to leave. The seat and the booking
+answers `{ quest, leaveAt }` (201): the Closed Quest "관정 {floor}층 {space}", taken alone (`takenAlone`) with capacity
+1, and one Sub Quest at Place 62-1 for the booking's time, as the User reads it, and when the User is told to leave. The seat and the booking
 number stay on the phone. A space that is
 not a seat is a 400 `NOT_A_SEAT`. The leave-by is the Quest's `leave-by` Notification for the first item of the
 User's day that starts during the stay at a Place other than 관정관, at its start minus the walk from 관정관, whatever
