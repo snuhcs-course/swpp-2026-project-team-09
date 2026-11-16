@@ -113,7 +113,7 @@ describe('알림', () => {
 describe("a row of 알림's press", () => {
   // Since the switch went (P02-04) every known invitation is a card of the map, so one the map does not hold has ended
   // (P02-06): the main screen says so instead of opening 파티 at 초대.
-  it("says that an invitation has ended when the map holds no card at its address", async () => {
+  it('says that an invitation has ended when the map holds no card at its address', async () => {
     const user = await openNotifications();
 
     await user.press(screen.getByRole('button', { name: ROWS[2] }));
