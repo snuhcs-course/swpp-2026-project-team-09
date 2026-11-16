@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -27,11 +28,14 @@ import { type BetterPlanDto } from './dto/better-plan.dto.js';
 import { type PlanQuestBody } from './dto/plan-quest.dto.js';
 import { placePoint } from './own-way.js';
 import { OwnWayReader } from './own-way-reader.service.js';
-import { mealInputOf, PlansService, subQuestsOf } from './plans.service.js';
+import { mealOrMeetInputOf, PlansService, subQuestsOf } from './plans.service.js';
 
 const MEALS = ['lunch', 'dinner'] as const;
 
 const NONE: BetterPlanDto = { current: null, better: null, input: null };
+
+// The step a meet's Plan makes (meet-answer.ts). A meet has no meal's window to be planned better in.
+const isMeetStep = ({ title }: { title: string }): boolean => title.endsWith('에서 만나기');
 
 // The Leader, the other Holders in the order they entered, then the Users whose invitation waits, by when it was sent.
 const peopleOf = ({ leaderId, holders, invitations }: StoredQuest): string[] => [
@@ -40,7 +44,7 @@ const peopleOf = ({ leaderId, holders, invitations }: StoredQuest): string[] => 
   ...invitations.map(({ userId }) => userId),
 ];
 
-function refuseOtherPeople({ people }: MealInput, quest: StoredQuest): void {
+function refuseOtherPeople({ people }: Pick<MealInput, 'people'>, quest: StoredQuest): void {
   const [leaderId, ...others] = peopleOf(quest);
   const [first, ...rest] = people.map(({ userId }) => userId);
   if (first !== leaderId || rest.length !== others.length || !others.every((id) => rest.includes(id))) {
@@ -72,7 +76,7 @@ export class BetterPlanService {
     const quest = await this.stored(questId);
     const now = this.clock.now();
     const destination = this.ways.stepsOf(quest, userId, now).gathered?.destination;
-    if (destination === undefined || destination.end === null) {
+    if (destination === undefined || destination.end === null || isMeetStep(destination)) {
       return NONE;
     }
     const { start, end, placeId } = destination;
@@ -110,7 +114,7 @@ export class BetterPlanService {
       throw conflict('ATTENDING_SUB_QUEST', 'A Quest for a Global Event follows its event, and no plan changes it.');
     }
     const quest = await this.stored(questId);
-    const input = mealInputOf(making.input);
+    const input = mealOrMeetInputOf(making.input);
     refuseOtherPeople(input, quest);
     const plan = await this.plans.replanned(
       userId,
