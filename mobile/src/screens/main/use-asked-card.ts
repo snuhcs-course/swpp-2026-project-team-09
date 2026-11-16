@@ -6,10 +6,10 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useEffectEvent, useState } from 'react';
-import { QUEST_INVITATIONS_KEY } from '@/api/queries';
+import { useEffect, useEffectEvent, useRef } from 'react';
+import { questInvitationsQuery } from '@/api/queries';
 import { useToast } from '@/design-system';
 import type { CardView } from '@/features/map/adapter';
 import { fallbackFor, readCard } from '@/push/card-address';
@@ -22,9 +22,9 @@ import type { Selection } from './use-selection';
 
 // A tapped push comes by the main screen's address, `/main?card=<kind>:<id>`, once the cards are known (not null). The
 // map goes to the card with that id and opens it; without one, the app opens the screen of the row in 알림. The known
-// invitations are all cards: one that no card holds has ended, once the list read again does not hold it either, since
-// the list the map holds may be older than the push; when the list cannot be read, 파티 opens at 초대. A party's card whose room request waited for the booking window
-// also opens its room card in the chat.
+// invitations are all cards: one that no card holds has ended, once a read of the list under way and one more read
+// after the push (the list may be older than it) hold no card of it either; when the list cannot be read, 파티 opens at
+// 초대. A party's card whose room request waited for the booking window also opens its room card in the chat.
 export function useAskedCard(
   cards: readonly CardView[] | null,
   map: MainMap,
@@ -33,9 +33,9 @@ export function useAskedCard(
 ): void {
   const { card } = useLocalSearchParams<{ card?: string }>();
   const showToast = useToast();
-  const queryClient = useQueryClient();
+  const { fetchStatus, isError, refetch } = useQuery(questInvitationsQuery);
   // The invitation's address for which the list of invitations was read again.
-  const [readAgain, setReadAgain] = useState<string | null>(null);
+  const readAgain = useRef<string | null>(null);
   const showRoom = useEffectEvent((questId: string): void => {
     void showWaitingRoom(questId, chat);
   });
@@ -45,11 +45,15 @@ export function useAskedCard(
     }
     const address = readCard(card);
     const shown = cards.find(({ id }) => id === card);
-    if (shown === undefined && address?.kind === 'invitation' && readAgain !== card) {
-      void queryClient.refetchQueries({ queryKey: QUEST_INVITATIONS_KEY, exact: true }).finally(() => {
-        setReadAgain(card);
-      });
-      return;
+    if (shown === undefined && address?.kind === 'invitation') {
+      if (fetchStatus === 'fetching') {
+        return;
+      }
+      if (readAgain.current !== card) {
+        readAgain.current = card;
+        void refetch();
+        return;
+      }
     }
     router.setParams({ card: undefined });
     if (address?.kind === 'party') {
@@ -63,13 +67,12 @@ export function useAskedCard(
       selection.selectOrWait(shown.id);
       return;
     }
-    const unread = queryClient.getQueryState(QUEST_INVITATIONS_KEY)?.status === 'error';
-    if (address?.kind === 'invitation' && !unread) {
+    if (address?.kind === 'invitation' && !isError) {
       showToast(INVITATION_GONE);
     } else if (address !== null) {
       router.navigate(fallbackFor(address));
     }
-  }, [card, cards, map, selection, showToast, queryClient, readAgain]);
+  }, [card, cards, map, selection, showToast, fetchStatus, isError, refetch]);
 }
 
 // What the main screen is asked by its address: a member pressed in a Quest's room (`?person=`) and a tapped push's

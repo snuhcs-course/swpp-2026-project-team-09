@@ -146,6 +146,8 @@ describe('a push tapped while the app was closed', () => {
 
     await pass(1000);
     await pass(1000);
+    // The card's own read comes after the list's; since #280 merged it ends half a second later on the test's clock.
+    await pass(500);
 
     expect(shownAddress()).toMatch(ON_MAIN);
     expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
@@ -263,6 +265,7 @@ describe('a tap that comes twice', () => {
     await startApp();
     await pass(1000);
     await pass(1000);
+    await pass(500);
     expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
     await openTab('/me');
 
