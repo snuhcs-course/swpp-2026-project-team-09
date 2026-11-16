@@ -3,6 +3,7 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: a Global Event alone and at a shared point; a Quest alone, with a Friend, with others' Party, with the
@@ -16,7 +17,7 @@ describe('toCards of a Global Event', () => {
   it('an Event with its announcer, place and two recruiting Quests → all of them on its card', () => {
     const [card] = toCards(
       sources({
-        globalEvents: [event('e1', { endsAt: '2026-10-06T20:00:00+09:00', place: '301동 대강당' })],
+        globalEvents: [event('e1', { endsAt: '2026-10-06T20:00:00+09:00', place: '301동 대강당', favorite: true })],
         globalEventAnnouncers: [{ eventId: 'e1', announcer: '컴퓨터공학부 공지' }],
         recruiting: [recruitingFor('e1', 'r1'), recruitingFor('e1', 'r2')],
       }),
@@ -24,7 +25,7 @@ describe('toCards of a Global Event', () => {
     expect(card).toEqual({
       id: 'event:e1',
       kind: 'global-event',
-      mark: { type: 'place', place: 'official' },
+      mark: { type: 'place', place: 'official', starred: true },
       marker: { name: '공식 행사 · AI 커리어 설명회', short: 'AI 커리어', count: 2, minutesOld: null },
       subLabel: '공식 행사 · 컴퓨터공학부 공지',
       title: 'AI 커리어 설명회',
@@ -36,12 +37,14 @@ describe('toCards of a Global Event', () => {
       primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1' },
       secondary: null,
       position: HALL,
-      event: { id: 'e1', favorite: false },
+      event: { id: 'e1', favorite: true },
     });
   });
 
   it('an Event with one recruiting Quest and no announcer or place → no count on its pin, the plain kicker', () => {
-    const [card] = toCards(sources({ globalEvents: [event('e1')], recruiting: [recruitingFor('e1', 'r1')] }));
+    const [card] = toCards(
+      sources({ globalEvents: [event('e1', { favorite: true })], recruiting: [recruitingFor('e1', 'r1')] }),
+    );
     expect(card).toMatchObject({ subLabel: '공식 행사', marker: { count: 0 } });
     expect(card?.lines).toEqual([
       { icon: 'clock', text: '오늘 18:00' },
@@ -51,10 +54,28 @@ describe('toCards of a Global Event', () => {
 });
 
 // The marker that Global Events at one place share is `place-groups.ts`' (P20-04), not the adapter's.
+describe('toCards of an Event not starred', () => {
+  it('→ no card, and its plain card while the interest marks choose the events', () => {
+    const events = [event('e1')];
+
+    expect(toCards(sources({ globalEvents: events }))).toEqual([]);
+    expect(toCards(sources({ globalEvents: events, forInterestMarks: true }))[0]).toMatchObject({
+      id: 'event:e1',
+      mark: { type: 'place', place: 'official' },
+      event: { id: 'e1', favorite: false },
+    });
+  });
+});
+
 describe('toCards of Global Events at one point', () => {
   it("two Events at one point and one elsewhere → a card each, in their order, none within another's", () => {
     const elsewhere = { latitude: 37.46, longitude: 126.95 };
-    const events = [event('a'), event('b', { place: '대강당' }), event('c', elsewhere)];
+    const starred = { favorite: true };
+    const events = [
+      event('a', starred),
+      event('b', { place: '대강당', ...starred }),
+      event('c', { ...elsewhere, ...starred }),
+    ];
     const cards = toCards(sources({ globalEvents: events }));
     expect(cards.map(({ id, within }) => [id, within])).toEqual([
       ['event:a', undefined],

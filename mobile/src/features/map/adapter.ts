@@ -15,16 +15,16 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import type { LatLng, ListedGlobalEvent, MyParty, Party, Position, Presence, Quest } from '@/api/types';
-import { eventTime, recruitingCounts } from '@/features/events/adapter';
 import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
 import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
-import { eventPins } from './event-pins';
+import { eventCards } from './event-cards';
 import { placeGroupId } from './place-groups';
 import { givenName, shortTitle, withParticle } from './short-name';
 
@@ -194,38 +194,8 @@ export interface MapSources {
   positions: readonly Position[];
   meId: string;
   now: Date;
-}
-
-// The cards of the Global Events that stand on the map (`event-pins.ts`), a Favorite Event's with the star. Things at
-// one place are grouped on the main screen (`place-groups.ts`). The others are in the 행사 tab only.
-function eventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering, now }: MapSources): CardView[] {
-  const counts = recruitingCounts(gathering);
-  return eventPins(globalEvents, now).map(({ event, look }): CardView => {
-    const announcer = globalEventAnnouncers.find(({ eventId }) => eventId === event.id)?.announcer;
-    const recruiting = counts.get(event.id) ?? 0;
-    return {
-      id: cardId.globalEvent(event.id),
-      kind: 'global-event',
-      mark: { type: 'place', place: 'official', ...(look === 'favorite' ? { starred: true } : {}) },
-      marker: {
-        name: `공식 행사 · ${event.title}`,
-        short: shortTitle(event.title),
-        count: recruiting > 1 ? recruiting : 0,
-        minutesOld: null,
-      },
-      subLabel: announcer === undefined ? '공식 행사' : `공식 행사 · ${announcer}`,
-      title: event.title,
-      lines: [
-        line('clock', eventTime(event, now)),
-        ...(event.place === null ? [] : [line('pin', event.place)]),
-        ...(recruiting === 0 ? [] : [line('users', `같이 갈 파티 ${recruiting}개 모집 중`)]),
-      ],
-      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: event.id },
-      secondary: null,
-      position: { latitude: event.latitude, longitude: event.longitude },
-      event: { id: event.id, favorite: event.favorite },
-    };
-  });
+  // The interest marks choose the events (`event-pins.ts`): every event's card is made, for the marks to keep some.
+  forInterestMarks?: boolean;
 }
 
 // A Party that others may join: its members and how to join, in the Quest's room.

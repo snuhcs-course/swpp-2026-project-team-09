@@ -2,12 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ListedGlobalEvent } from '@/api/types';
-import { sameKoreaDay } from '@/korea-time';
 
-// How a Global Event's pin looks: `favorite` with the star, for a Favorite Event; `plain`, today's pin.
+// How a Global Event's pin looks: `favorite` with the star, for a Favorite Event; `plain`, any other.
 export type EventLook = 'favorite' | 'plain';
 
 export interface EventPin {
@@ -15,20 +15,17 @@ export interface EventPin {
   look: EventLook;
 }
 
-// Whether the event is held today in Korea: on the day of its start or of its end. An event of several days is so
-// only on its first and last day, so that it does not stand on the map all week.
-function heldToday({ startsAt, endsAt }: ListedGlobalEvent, now: Date): boolean {
-  return sameKoreaDay(new Date(startsAt), now) || (endsAt !== null && sameKoreaDay(new Date(endsAt), now));
-}
-
-// Which of the published events stand on the map at `now`, in their order, each with its look: a Favorite Event until
-// it ends, which the list it comes from decides, and otherwise an event held today. Any other stays off the map and
-// in the 행사 tab. Where both hold, the star wins.
-export function eventPins(events: readonly ListedGlobalEvent[], now: Date): EventPin[] {
+// Which of the published events stand on the everyday map, in their order, each with its look. The map keeps a
+// Favorite Event until it ends, which the list it comes from decides, and puts no other event on it: the others are in
+// the 행사 tab and are found by asking the Assistant (`.scratch/iteration-4/agentic-map-design.md`, Watching
+// interests). While the interest marks choose the events (`forInterestMarks`, the switch of the answer on the map on),
+// every event is passed on and the marks keep those that match a watched interest (`interest-marks.ts`). The one rule
+// of the event pins: the matches join it here once the marks are the default.
+export function eventPins(events: readonly ListedGlobalEvent[], forInterestMarks = false): EventPin[] {
   return events.flatMap((event): EventPin[] => {
     if (event.favorite) {
       return [{ event, look: 'favorite' }];
     }
-    return heldToday(event, now) ? [{ event, look: 'plain' }] : [];
+    return forInterestMarks ? [{ event, look: 'plain' }] : [];
   });
 }
