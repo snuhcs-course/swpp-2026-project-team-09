@@ -44,7 +44,7 @@ Package D builds on this: the meal's "여기로" (P05-14, reworked onto `POST /p
   - The push sheet shows after "여기로".
 - [x] 내 파티 leaves out a Quest taken alone. The Quest list and the map card call it a 퀘스트. A 비공개 파티 held alone so far, and one the form made with capacity 1, keep their words.
 - [x] The mock answers an events Plan taken alone, and its `dropQuest` ends the Quest it made.
-- [ ] The screen is run on the Android emulator by taps, and the pull request carries the taken card.
+- [x] The screen is run on the Android emulator by taps, and the pull request carries the events Plan with "여기로", the taken card, and the guidance after "닫기".
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass in both projects; no native file changed. The schema gains one column, `quests.taken_alone`, by an additive migration.
 
 ## Comments
@@ -73,3 +73,12 @@ Rules 1 to 8 are the orchestrating session's (`solo-quests/rule.md`). They are k
 18. **The push sheet** is asked after "여기로", as after "이대로 초대" and "이대로 모집".
 19. **The mock** answers an events Plan of its stored answer taken alone with a reply worked out by hand from the main server's rule (job fair 15:12, concert 17:42, company session none), and its `dropQuest` ends the Quest it made. The meal's mock is package D's.
 20. `QuestsService.columnsOf` moved to `quests/sub-quest-columns.ts`, unchanged, to keep `quests.service.ts` under the 300-line limit.
+
+### Emulator check (2026-11-16)
+
+Run on the mock dev build by taps. The mock has no event to watch and Korean cannot be typed, so for the check only, an uncommitted local change made the example chip "식사 메뉴 추천" answer with the stored events answer; the pill in the screens shows those words. "여기로" on the job fair showed "채용박람회에 가요" / "15:12에 나설 시각을 알려 드릴게요"; "다시 고르기" brought the Plan back; "닫기" started the guidance to 문화관, and the Quest list counted the Quest. The first two presses of "여기로" right after the app started did not register on the dev build; every press after that did, and it was not reproduced.
+
+### Agent usage (2026-11-16)
+
+- Agent time: about 55 minutes in this session (an estimate from the transcript's timestamps, 21:45 to 22:41, including the wait for the emulator lock while other work went on). No subagent took part.
+- Tokens: input 93.71M, of which 93.23M cache reads, 0.48M cache writes, and 550 uncached; output 0.21M.
