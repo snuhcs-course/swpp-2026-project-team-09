@@ -159,8 +159,9 @@ describe('a selected marker', () => {
 
     const drawn = screen.getAllByTestId(/^(person|me)/u).map((thing) => String(thing.props.accessibilityLabel));
 
-    // The plain ground draws the later one above: the User's own Avatar is above every other, but the selected one.
+    // The plain ground draws the later one above: the User's own Avatar lies under every face, so that a face over it
+    // keeps its press (row 6's boards), and the selected one is above it too.
     expect(drawn.indexOf(OTHER_FRIEND)).toBeGreaterThan(drawn.indexOf(ME));
-    expect(drawn.indexOf(ME)).toBeGreaterThan(drawn.indexOf(FRIEND));
+    expect(drawn.indexOf(ME)).toBeLessThan(drawn.indexOf(FRIEND));
   });
 });
