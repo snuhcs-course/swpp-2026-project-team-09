@@ -210,6 +210,8 @@ describe('a toast while the frame is shown', () => {
   });
 
   it("sits above the selected thing's card again, by that card's height, once the frame is closed", async () => {
+    // No position yet: 길찾기 says so and keeps the card.
+    givePhone({ permission: 'granted' });
     const user = await askOverCard();
     expect(screen.queryByTestId('map-card')).toBeNull();
     await fireEvent(screen.getByTestId('answer-card'), 'layout', {
@@ -218,8 +220,9 @@ describe('a toast while the frame is shown', () => {
 
     await user.press(within(screen.getByTestId('answer-pill')).getByRole('button', { name: '답 닫기' }));
     expect(screen.getByTestId('map-card')).toBeVisible();
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await press(user, '길찾기');
 
+    expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
     // The navigation's 80, the card's bottom 72 above it, its 180, and 8 of clear room.
     expect(toast()).toHaveStyle({ bottom: 340 });
   });
