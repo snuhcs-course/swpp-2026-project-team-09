@@ -12,14 +12,15 @@ import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { ANSWER_PILL, listsTop } from '../layout';
 import { CloseButton } from './close-button';
 
-// What the User asked, on one line, with its icon and ✕, which forgets the conversation.
+// What the User asked, on one line, with its icon and ✕, which forgets the conversation; or a building asked about over
+// the answer ("여기면 어때?"), with the pin.
 export function AnswerPill({
   asked,
   icon,
   onClose,
 }: {
   asked: string;
-  icon: 'chat' | 'user';
+  icon: 'chat' | 'user' | 'pin';
   onClose: () => void;
 }): ReactElement {
   const { top } = useSafeAreaInsets();

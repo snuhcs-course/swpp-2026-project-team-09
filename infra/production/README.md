@@ -581,8 +581,8 @@ the rules go on publishing. Turn it on only when all of these hold (ticket 09):
 
 - masked posts may still be sent to the model provider, as Jaehyun0320 and TaeHyun79 agreed on 2026-11-01;
 - evaluation A's floors are met, on the commit being released, and recorded;
-- the OpenRouter key's credit limit allows for it, since Judgements spend the Assistant's credit, and its account allows
-  only providers that do not train on prompts.
+- the chosen key's credit or spend limit allows for it, since Judgements spend the Assistant's key, and, on an
+  OpenRouter key, its account allows only providers that do not train on prompts.
 
 Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no
 key, neither `OPENROUTER_API_KEY` nor one in `LLM_KEYS`, so a Release with that mistake does not replace the running pods. To turn it
@@ -766,8 +766,9 @@ time.
 The Assistant, the Judgement and the same-event choice call their model with one of the AI's keys, chosen by name on the
 admin site's **Settings** page. The key named `default` is `/snunow/production/openrouter-api-key`. Every other key is a
 parameter of its own, `/snunow/production/llm-key-<name>`, where `<name>` has only lowercase letters, digits and dashes,
-such as `llm-key-anthropic` or `llm-key-team-2`. There may be none. Until the Settings page's key choice is released
-(A02's tickets 02 and 04), the main server uses only `default`. Every Release reads them all and hands the main server
+such as `llm-key-anthropic` or `llm-key-team-2`. There may be none. With no key chosen, the main server uses
+`default`. Why the key, and with it the provider, is chosen this way is
+[ADR 0013](../../docs/adr/0013-the-ai-calls-claude-through-the-anthropic-api-or-openrouter.md). Every Release reads them all and hands the main server
 one JSON object of name to key, `LLM_KEYS`, in Secret `secrets`. The deploy role reads them through its
 `GetParametersByPath` call on `/snunow/production`, so Terraform does not change, and the running servers have no AWS
 access. A Release fails at its secrets step, before it changes anything, when a parameter's name breaks the pattern or
@@ -798,6 +799,19 @@ aws ssm delete-parameter --region ap-northeast-2 --name /snunow/production/llm-k
 
 **Switching between keys** needs no Release: an Administrator chooses another key on the Settings page, and every
 main-server pod uses it from the next minute. Only adding a key, removing one or replacing a value needs a Release.
+
+**Switching to an Anthropic key, start to end.**
+
+1. Make a key in the Claude Console on an account with a monthly spend limit, and put it as
+   `/snunow/production/llm-key-anthropic` with the commands under "Adding a key" above (`name=anthropic`).
+2. Push a `main-server` or `all` Release of the newest reviewed commit ([Releases](#releases)). The pods' start-up log
+   lists the keys by name and provider, never a value.
+3. On the admin site, open **Settings**, choose `anthropic (Anthropic)` for `llm.key`, and confirm. The row says
+   "applies at HH:MM:00", the next minute, and then "applied".
+4. Ask the Assistant one question in the app, and check that the main server's log line for it says
+   `Model call with key anthropic on Anthropic: answered` ([Looking into a problem](#looking-into-a-problem)).
+
+To go back, choose `default (OpenRouter)` the same way; no Release is needed.
 
 ## Capacity
 

@@ -9,6 +9,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
@@ -148,7 +149,6 @@ export function answerMainScreen(server: FakeServer): void {
   server.on('GET /quest-invitations', { status: 200, body: [] });
   server.on('GET /global-events', { status: 200, body: [] });
   server.on('GET /quests/recruiting', { status: 200, body: [] });
-  server.on('GET /matching-requests', { status: 200, body: [] });
 }
 
 // --- What waits for the User, which 알림 lists ---
