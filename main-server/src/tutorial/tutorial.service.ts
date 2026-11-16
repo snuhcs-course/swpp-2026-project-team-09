@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -74,6 +75,11 @@ export class TutorialService {
     return new Map(
       this.content.quests.flatMap(({ key, visit }) => (visit === undefined ? [] : [[key, visit] as const])),
     );
+  }
+
+  // The quests done at a place, by key and title, which the Assistant's way to a quest names.
+  placedQuests(): { key: string; title: string }[] {
+    return this.content.quests.flatMap(({ key, title, places }) => (places.length === 0 ? [] : [{ key, title }]));
   }
 
   // 진행하기: keeps the quests' progress and shows the 내 정보 row again. A finished tutorial stays finished unless the

@@ -10,10 +10,10 @@ The Assistant's other answers that involve a Place (where a Place is, the minute
 
 ## Acceptance criteria
 
-- [ ] The contract says how an answer without a Plan carries a map scene, on both sides.
-- [ ] Each of the three answers returns its scene, computed by the server from the walking table and the User's day.
-- [ ] An app without the capability is answered as before.
-- [ ] Unit tests for each scene and integration tests at the Assistant's endpoint.
+- [x] The contract says how an answer without a Plan carries a map scene, on both sides.
+- [x] Each of the three answers returns its scene, computed by the server from the walking table and the User's day.
+- [x] An app without the capability is answered as before.
+- [x] Unit tests for each scene and integration tests at the Assistant's endpoint.
 
 ## Comments
 
@@ -33,4 +33,17 @@ Row 7's other boards are not in these tickets:
 ### The rest of row 7 (2026-11-15)
 
 Boards q9, q10 to q12, and q14 now have tickets: [12](12-todays-classes-on-the-map.md) (today's Classes, q14), [13](13-tutorial-quests-in-order.md) (the Tutorial Quests in order, q10), [14](14-tutorial-facts-then-the-way.md) (a Tutorial question, then the way there and back, q11 and q12; after package C's reply offers), and [15](15-a-cafe-on-the-way.md) (a café on the way, q9; waiting for café data).
+
+### Done (2026-11-16)
+
+Nothing is left: the tickets it was split into cover its three answers, and no commit names this ticket because none was built under it.
+
+- Where a Place is: 06 (#249).
+- The minutes and lateness: 07 and 08 (#249).
+- A Restaurant's menu: 09 (#258).
+- The contract's answer, a Lookup: 06.
+- The app's drawing: 11 (#270).
+- Each of those tickets tests that an app without the capability is answered as before.
+
+Its agent work is in their usage records.
 

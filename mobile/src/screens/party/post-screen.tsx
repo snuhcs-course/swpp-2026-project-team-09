@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -202,7 +203,7 @@ function PostFooter({
         })
       }
       onJoin={onJoin}
-      onWithdraw={(requestId) => void actions.withdraw(requestId)}
+      onWithdraw={(requestId) => void actions.withdraw(requestId, post.questId)}
       post={post}
     />
   );

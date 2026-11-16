@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -17,6 +18,7 @@ import {
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
+  type ReplyOffer,
   type RestaurantCard,
   type RestaurantTravel,
   type TravelBox,
@@ -126,7 +128,12 @@ function filled(card: ChatCard): ChatCard {
 }
 
 // A main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
+function isReplyOffer(value: unknown): value is ReplyOffer {
+  return field(value, 'kind') === 'ask' && hasTexts(value, ['label', 'text']);
+}
+
 function isAssistantReply(value: unknown): value is AssistantReply {
+  const offers = field(value, 'offers');
   const proposal = field(value, 'proposal');
   const answer = field(value, 'answer');
   const lookup = field(value, 'lookup');
@@ -138,7 +145,8 @@ function isAssistantReply(value: unknown): value is AssistantReply {
     (isNothing(proposal) || isQuestProposal(proposal)) &&
     (answer === undefined || isNothing(answer) || isAnswerReply(answer)) &&
     (lookup === undefined || isNothing(lookup) || isLookup(lookup)) &&
-    (refusal === undefined || isNothing(refusal) || isRefusal(refusal))
+    (refusal === undefined || isNothing(refusal) || isRefusal(refusal)) &&
+    (offers === undefined || listOf(isReplyOffer)(offers))
   );
 }
 

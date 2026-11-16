@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -146,8 +147,8 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, answer, lookup, refusal } = reply;
-      return { text, mapButtons, cards, proposal, answer, lookup, refusal };
+      const { text, mapButtons, cards, proposal, answer, lookup, refusal, offers = [] } = reply;
+      return { text, mapButtons, cards, proposal, answer, lookup, refusal, ...(offers.length === 0 ? {} : { offers }) };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();

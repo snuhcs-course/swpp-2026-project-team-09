@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { shownMinutes } from '../../travel/travel.js';
@@ -40,7 +41,10 @@ export type TutorialAnswer =
 const GATE = '정문';
 
 // The quest's first place: a Place by its name and floor, or a point by its label.
-function locate(quest: OpenQuest, { placeIdOf, placeOf }: TutorialArgs): Located | null {
+export function locate(
+  quest: OpenQuest,
+  { placeIdOf, placeOf }: Pick<TutorialArgs, 'placeIdOf' | 'placeOf'>,
+): Located | null {
   const [first] = quest.places;
   const placeId = first === undefined ? null : placeIdOf(first);
   if (first === undefined || placeId === null) {
@@ -55,7 +59,7 @@ function locate(quest: OpenQuest, { placeIdOf, placeOf }: TutorialArgs): Located
 }
 
 // The hours the place is open that day, or null when the content gives none.
-function spansOn(visit: TutorialVisit | null, date: string): Span[] | null {
+export function spansOn(visit: TutorialVisit | null, date: string): Span[] | null {
   const hours = visit?.hours;
   if (hours === undefined) {
     return null;
@@ -76,7 +80,7 @@ function readyAt(items: readonly DayItem[], now: Date): Date {
 }
 
 // The next item of any kind, since the User is busy then whether or not it has a Place.
-function nextIn(items: readonly DayItem[], at: Date, naming: PlaceNaming): Next | null {
+export function nextIn(items: readonly DayItem[], at: Date, naming: PlaceNaming): Next | null {
   const item = items.filter(({ start }) => start > at).toSorted(byStart)[0];
   if (item === undefined) {
     return null;

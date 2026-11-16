@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -28,6 +29,7 @@ import { CloseButton } from './close-button';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { InvitedCard } from './invited-card';
 import { LookupCard } from './lookup-card';
+import { OfferedWords } from './offered-words';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
 
@@ -95,6 +97,9 @@ function Words({ bubble, shown, lookup: onScreen, invitation, room, onClose, onA
   }
   if (bubble.failure === 'unavailable') {
     return <FailedLines text={bubble.text} />;
+  }
+  if (bubble.offers !== undefined && bubble.offers.length > 0) {
+    return <OfferedWords offers={bubble.offers} onAsk={onAsk} text={bubble.text} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? lookup?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
