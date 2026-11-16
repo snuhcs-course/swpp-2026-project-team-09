@@ -208,6 +208,29 @@ describe('a push tapped while the app runs', () => {
   });
 });
 
+describe('a push for an invitation that came after the map read its invitations', () => {
+  // The boundary of the rule that an invitation the map holds no card of has ended (P02-06): the list the map holds
+  // may be older than the push, so the app reads it again before it says so.
+  it("reads the invitations again and opens the new invitation's card, not 이미 끝난 초대예요", async () => {
+    await openMain();
+    answerInvitation(server);
+
+    await tap(tapOn(INVITATION_ADDRESS));
+
+    expect(screen.queryByText('이미 끝난 초대예요')).toBeNull();
+    expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
+  });
+
+  it('says the invitation has ended when the list read again does not hold it either', async () => {
+    await openMain();
+
+    await tap(tapOn(INVITATION_ADDRESS));
+
+    expect(screen.getByText('이미 끝난 초대예요')).toBeVisible();
+    expect(shownAddress()).toMatch(ON_MAIN);
+  });
+});
+
 describe('a push about an event the map shows no card of', () => {
   it('opens the 행사 tab at that event, as one on a later day', async () => {
     await openMain();
