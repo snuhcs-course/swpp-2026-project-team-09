@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Plan } from '@/api/assistant-types';
@@ -37,6 +38,7 @@ export const MEAL_PLAN_2: Plan = {
       },
       leaveAt: '2026-11-17T12:18:00+09:00',
       walkMinutes: 0,
+      arriveAt: '2026-11-17T11:50:00+09:00',
       leaveBy: '2026-11-17T12:45:00+09:00',
       next: {
         startAt: '2026-11-17T13:00:00+09:00',
@@ -63,6 +65,7 @@ export const MEAL_PLAN_2: Plan = {
       },
       leaveAt: '2026-11-17T12:15:00+09:00',
       walkMinutes: 3,
+      arriveAt: '2026-11-17T12:18:00+09:00',
       leaveBy: null,
       next: null,
     },
@@ -70,8 +73,26 @@ export const MEAL_PLAN_2: Plan = {
   subQuests: [
     { at: '2026-11-17T12:18:00+09:00', placeId: '1a242be2-05c6-5185-bcd1-0b78bc358f88', title: '301동식당에서 식사' },
   ],
-  lines: [[{ text: '12:18 301동식당', strong: true }], [{ text: '같이 먹으면 식사가 28분 줄어요', strong: false }]],
-  basis: ['민수 12:15 302동 수업 끝 · 301동식당까지 걸어서 3분', '301동식당 → 24동 걸어서 15분, 그래서 12:45에 나서요'],
+  lines: [
+    [
+      { text: '점심 ', strong: false },
+      { text: '12:18 301동식당', strong: true },
+    ],
+    [
+      { text: '오늘 ', strong: false },
+      { text: '부대짬뽕&군만두', strong: true },
+      { text: ' 외 4', strong: false },
+    ],
+    [{ text: '같이 먹으면 식사가 28분 줄어요', strong: false }],
+  ],
+  basis: [
+    '민수 12:15 302동 수업 끝 · 301동식당까지 걸어서 3분',
+    '301동식당 → 24동 걸어서 15분, 그래서 12:45에 나서요',
+    '식사: 부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원',
+    'TAKE-OUT: 베이컨감자샐러드 5,500원 · 헬스팩 6,000원',
+    '301동1층 교직원전용식당: 육개장칼국수&메밀전병 9,000원',
+    '메뉴: 오늘의 식단',
+  ],
   scene: {
     people: [
       {
@@ -179,14 +200,14 @@ export const MEAL_PLAN_2: Plan = {
         userId: '11ca538e-e4ef-48d9-9a1f-b7160c553bee',
         name: '나',
         busy: [
-          { startAt: '2026-11-17T11:30:00+09:00', endAt: '2026-11-17T11:50:00+09:00' },
-          { startAt: '2026-11-17T13:00:00+09:00', endAt: '2026-11-17T13:30:00+09:00' },
+          { startAt: '2026-11-17T11:30:00+09:00', endAt: '2026-11-17T11:50:00+09:00', label: '301동 수업' },
+          { startAt: '2026-11-17T13:00:00+09:00', endAt: '2026-11-17T13:30:00+09:00', label: '24동 수업' },
         ],
       },
       {
         userId: '35976b5c-4daf-454f-b10e-c8b09a33ca37',
         name: '민수',
-        busy: [{ startAt: '2026-11-17T11:30:00+09:00', endAt: '2026-11-17T12:15:00+09:00' }],
+        busy: [{ startAt: '2026-11-17T11:30:00+09:00', endAt: '2026-11-17T12:15:00+09:00', label: '302동 수업' }],
       },
     ],
     startAt: '2026-11-17T12:18:00+09:00',

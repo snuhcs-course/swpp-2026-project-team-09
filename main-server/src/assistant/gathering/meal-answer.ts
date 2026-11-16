@@ -24,6 +24,7 @@ import {
   withTopic,
 } from './answer-words.js';
 import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
+import { menuBasis, menuLine, withMenuLine } from './meal-menu.js';
 import { bandOf, sceneOf } from './meal-scene.js';
 import { missingParts, nearestFirst } from './missing-inputs.js';
 import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
@@ -282,6 +283,9 @@ export function basisOf(fit: GatheringFit, naming: GatheringNaming): string[] {
 // `first` for the Plan shown first, `nearest` when the Plans come nearest first for want of a Timetable.
 function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: boolean; nearest: boolean }): Plan {
   const { key, placeId, start, end, togetherMinutes } = fit;
+  const served = naming.args.served?.get(key);
+  const unmet = unmetLines(fit, naming, { first, nearest });
+  const menu = served === undefined ? null : menuLine(served, naming.args.input.date, naming.args.now);
   return {
     id: key,
     title: `${key}에서 ${mealWord(naming)}`,
@@ -292,8 +296,11 @@ function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: 
     meeting: meetingOf(fit, naming),
     parts: fit.parts.map((part) => partOf(part, naming)),
     subQuests: subQuestsOf(fit, naming, `${key}에서 식사`),
-    lines: unmetLines(fit, naming, { first, nearest }) ?? linesOf(fit, naming),
-    basis: unmetBasis(fit, naming, basisOf(fit, naming), nearest),
+    lines: withMenuLine(unmet ?? linesOf(fit, naming), menu, key),
+    basis: [
+      ...unmetBasis(fit, naming, basisOf(fit, naming), nearest),
+      ...(served === undefined ? [] : menuBasis(served)),
+    ],
     scene: sceneOf(fit, naming, mealWord(naming)),
     band: bandOf(fit, naming),
   };
