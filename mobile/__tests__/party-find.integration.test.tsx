@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -159,6 +160,7 @@ describe('a refused joining', () => {
     [refusal(409, 'ALREADY_HOLDER'), '이미 참여 중인 파티예요'],
     [refusal(404, 'QUEST_NOT_FOUND'), '파티를 찾을 수 없어요'],
     [refusal(409, 'QUEST_NOT_OPEN'), '참여 방식이 바뀌었어요. 다시 확인해 주세요'],
+    [refusal(409, 'QUEST_REMOVED_ASK'), '내보내진 파티라 파티장 승인이 필요해요'],
   ] as [Reply, string][])('says why joining was refused: %j', async (reply, words) => {
     server.on(`POST /quests/${RUN.id}/join`, reply);
     const user = await openAt('/party');

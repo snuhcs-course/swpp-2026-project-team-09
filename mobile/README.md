@@ -507,11 +507,13 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
   with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. Of the Global Events, only Favorite Events
-  and those held today in Korea stand on the map, an event of several days only on its first and last day
-  (`src/features/map/event-pins.ts`); the others are in the 행사 tab only, unless the interest marks keep them: once
-  the main server answers the matches, every event goes to the marks, which keep one mark per place for what matches
-  a watched interest, with "!" on what is new (`src/features/map/interest-marks.ts`). A Favorite Event is the official pin with a
-  filled star at every zoom, and so is a place one of whose events is one. A short name is the title cut at a word's end within 8 characters,
+  stand on the map (`src/features/map/event-pins.ts`), unless the interest marks keep them: once the main server
+  answers the matches, every event goes to the marks, which keep one mark per place for what matches a watched
+  interest, with "!" on what is new (`src/features/map/interest-marks.ts`); the others are in the 행사 tab only. A
+  Favorite Event is the official pin with a filled star at every zoom, and so is a place one of whose events is one.
+  With the whole campus in view, events' pins that would overlap merge, as study pins do
+  (`src/features/map/event-merges.ts`), into one official pin with their count, the star when one is a Favorite Event,
+  and an interest mark's "!" first; a press zooms in to them. A short name is the title cut at a word's end within 8 characters,
   counted in whole characters, so that an emoji is never cut. A given name is the name without its first syllable for
   a Korean name of three syllables, and the whole name otherwise (`src/features/map/short-name.ts`). A marker is read as the wireframe reads it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어
   설명회". The selected marker has the selected look and is drawn above the others, the User's own Avatar included.
@@ -981,7 +983,7 @@ the requests to join, which also wait for the User. A new match of a watched int
 떴어요") is on the navy round too, a calendar for an event and people for a recruiting party, by its address. A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
-the requests to join each Quest the User leads with Approval ("참여 신청 {n}명"). A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
+the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
 (`src/features/notifications/address.ts`): a kept Notification's address is the main server's, and an invitation's is
 `/main?card=invitation:<id>`, which ends at 파티's 초대 while the map holds no invitation card. A Friend Request's row
 opens 친구 요청, and a running Party's and the requests' the Quest's room. The count in the panel's title is of the rows

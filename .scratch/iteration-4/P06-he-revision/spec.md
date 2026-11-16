@@ -30,10 +30,7 @@ Four evaluators used the app in the heuristic evaluation and found that a User l
 
 - **Sent requests (H1, H2).** The 파티 tab gets a "보낸 신청" section beside the invitations received. Each row shows the Quest's post title and opens that post when tapped. Each row has "신청 취소", which asks for confirmation, withdraws, and says "신청을 취소했어요". If the Leader answered at the same moment and the server refuses, the app reads the User's Quests again and says "이미 파티에 들어갔어요" when the User now holds it, or "파티장이 신청을 받지 않았어요" when not.
 - **Told when a 파티 is gone (UAT-2).** Wherever the User is in the signed-in app, if a 파티 they held disappears from their list, a toast says "○○ 파티에서 빠졌어요". It is not shown when the User left or ended it themselves, and it is shown once even if the room is open. It does not tell removal from ending apart.
-- **Events on the map.** The map keeps only two kinds of Global Event pin:
-  - a **New Event**, published less than 24 hours ago and not yet checked by this User, drawn with an exclamation mark;
-  - a **Favorite Event** (☆), drawn with a star until the event ends.
-  A User checks a New Event by closing its card on the map (a single pin's card, or its row opened from a grouped pin's list) or by starring it anywhere. Seeing it in the 행사 tab or in chat does not check it. A checked event leaves the map when its card closes, unless it is a Favorite Event. The ☆ toggle sits at the top right of each event card in the 행사 tab and in chat, and left of the close button on a single event's card on the map. Grouped and merged pins show one look, in the order exclamation mark, star, plain. Pins that overlap at the current zoom merge into one, as study pins do.
+- **Events on the map.** The everyday map keeps a **Favorite Event** (☆), drawn with a star until the event ends. Every other event follows the agentic map's design (`agentic-map-design.md`, Watching interests): only events and recruiting that match a watched interest stand on the map, with "!" on a newly posted match until its mark is opened. "!" means only that: a rule that marked every event published in the last 24 hours was dropped in review of #279 (2026-11-16). The ☆ toggle sits at the top right of each event card in the 행사 tab and in chat, and left of the close button on a single event's card on the map. Grouped and merged pins show one look, in the order "!", star, plain. Pins that overlap at the campus zoom merge into one, as study pins do.
 - **Real Friend data.** 오늘의 발자국 leaves the main screen. A visible Friend's line shows where they are (the nearest Place) and how old the position is, no longer "공강". A Friend who is not visible is "위치 꺼짐". "도보 N분" is the walking time between the Places nearest to the User and to the Friend, "근처" when that is the same Place, and nothing when the User's own position is unknown.
 - **AI matching leaves the app.** The "✦ AI 매칭" entry on event cards, the matching screen, the watcher that toasts a match, and the "결과는 알림으로 와요" toast go away. The match server stays.
 
@@ -64,24 +61,15 @@ Told when a 파티 is gone
 14. As an acceptance tester running UAT-2, I want B to be told on any screen, so that criteria 4 and 6 pass once this ships.
 
 Events on the map
-15. As a User, I want the map to show only new and favorite events, so that it is not covered with pins for weeks ahead.
-16. As a User, I want events published in the last 24 hours marked with an exclamation mark, so that I notice what is new.
-17. As a User, I want a new event's mark to go once I have checked it, so that the map does not stay noisy.
-18. As a User, I want a checked event to leave the map only when I close its card, so that the pin does not vanish while I read.
-19. As a User reading an event's card on the map, I want to star it before closing, so that it stays on the map.
-20. As a User, I want opening a grouped pin's card not to check every event in it, so that I do not lose events I never looked at.
-21. As a User, I want a checked event to drop out of its grouped pin and the count to go down, so that the group shows what is left.
-22. As a User, I want a group left with one event to become that event's own pin, so that it reads like any other pin.
-23. As a User, I want a group with a new event to carry the exclamation mark, so that new events at a busy Place are not hidden.
-24. As a User, I want pins that overlap at the campus zoom to merge, so that I can still read the map, and to split when I zoom in.
-25. As a User, I want a merged or grouped pin to show the strongest look among its events, exclamation mark first, then star, then plain.
-26. As a User, I want to star an event in the 행사 tab, in chat and on the map, so that I can keep it wherever I see it.
-27. As a User, I want a starred event to show as a star pin until it ends, so that I can find it on the map.
-28. As a User, I want the star to change at once and to change back with a toast if saving fails, so that I can trust what it shows.
-29. As a User, I want starring an event to count as checking it, so that a starred event does not also carry an exclamation mark.
-30. As a User, I want seeing an event in the 행사 tab or in chat not to check it, so that the map still points me to it.
-31. As a User, I want a checked event to stay in the 행사 tab, so that I can always find it there.
-32. As a User on a new install, I want only the last day's events marked new, so that I am not flooded with marks.
+15. As a User, I want the map to show only the events I starred and those that match what I watch, so that it is not covered with pins for weeks ahead.
+16. As a User, I want "!" only on a newly posted event or party that matches what I watch, so that "!" means one thing.
+17. As a User reading an event's card on the map, I want to star it before closing, so that it stays on the map.
+18. As a User, I want a group left with one event to become that event's own pin, so that it reads like any other pin.
+19. As a User, I want pins that overlap at the campus zoom to merge, so that I can still read the map, and to split when I zoom in.
+20. As a User, I want a merged or grouped pin to show one look among its events, "!" first, then star, then plain, so that a new match at a busy Place is not hidden.
+21. As a User, I want to star an event in the 행사 tab, in chat and on the map, so that I can keep it wherever I see it.
+22. As a User, I want a starred event to show as a star pin until it ends, so that I can find it on the map.
+23. As a User, I want the star to change at once and to change back with a toast if saving fails, so that I can trust what it shows.
 33. As a User, I want events an Administrator entered by hand marked new too, so that "new" means new to me, not how it was collected.
 34. As a User whose event was cancelled, I want it gone from the map at once, as today.
 35. As a User going to an event with a 파티, I want it shown as my 파티's pin, as today.
@@ -134,7 +122,7 @@ Recording the work
 **Tickets.** Eight, each one pull request into `4.0/Main`:
 
 1. Favorite Events end to end: the migration (both columns), the favorite API, the ☆ toggle, the star pin, and the map keeping only Favorite Events.
-2. New Events end to end: recording `publishedAt`, the exclamation pin, checking, and the looks of grouped and merged pins. Built after ticket 1.
+2. Events' pins that overlap at the campus zoom merge, with their count and one look, and every publish records `publishedAt`. Built after ticket 1.
 3. The global watch for a 파티 that is gone, and removing the AI matching UI.
 4. Sent requests and withdraw.
 5. 오늘의 발자국 removed, Friend lines and walking times.
@@ -148,11 +136,11 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 - Ticket 1: `global_events.published_at` (nullable) and `global_event_favorites (user_id, global_event_id, created_at)`, unique on the pair, deleted with the User or the event.
 - Ticket 8: `quest_removals (quest_id, user_id, created_at)`, unique on the pair, deleted with the Quest or the User.
 
-**Global Events API (tickets 1 and 2).** Ticket 1: `GET /global-events` adds `publishedAt` (nullable, still null everywhere) and `favorite` (for the caller) to each event, and `PUT` and `DELETE /global-events/{id}/favorite` set and clear a favorite; both are idempotent, and both refuse an event that is not published. Ticket 2: every write that sets `state = published` records `publishedAt`. There are four: the rules that read a post and a Judgement (both when a session settles), an Administrator's publish of a Draft, and an Administrator's publish from the Same-event queue, which sets the same `administrator` route and is easy to miss. Events published before the change keep null and are never New Events. Editing an event's time does not change `publishedAt`.
+**Global Events API (tickets 1 and 2).** Ticket 1: `GET /global-events` adds `publishedAt` (nullable, still null everywhere) and `favorite` (for the caller) to each event, and `PUT` and `DELETE /global-events/{id}/favorite` set and clear a favorite; both are idempotent, and both refuse an event that is not published. Ticket 2: every write that sets `state = published` records `publishedAt`. There are four: the rules that read a post and a Judgement (both when a session settles), an Administrator's publish of a Draft, and an Administrator's publish from the Same-event queue, which sets the same `administrator` route and is easy to miss. Events published before the change keep null. Editing an event's time does not change `publishedAt`.
 
-**Which event pins stay (tickets 1 and 2).** One pure function in the map's event adapter decides it. Input: the published events, now, the ids this User has checked, and each event's `favorite`. Output: the events that stay, each with a look (`new` or `favorite`). An event stays if `publishedAt` is within 24 hours and it is not checked (`new`), or if it is a favorite (`favorite`). When both apply, `new` comes first. Ticket 1 builds the function with `favorite`; ticket 2 adds `new` and the checked ids. While the switch of the answer on the map is on, the function passes every event on, a non-favorite one as `plain`, and the interest marks keep those that match a watched interest. Events held today are not kept: the agentic map's design puts no other event on the everyday map (`agentic-map-design.md`, Watching interests, after #296; decided in review of #261 on 2026-11-16). Starring an event adds it to the checked ids. The checked ids live on the phone, keyed by User, and an id is dropped once its event is more than 24 hours past `publishedAt`. A checked event leaves the map when its card closes, never while it is open. Same-Place grouping keeps its current behaviour and takes the strongest look of its members. The study layer's overlap merge applies to every event pin, with the merged pin taking the strongest look and the total count. The exclamation mark and the star are new marker looks drawn by the JS marker images, so they ship over the air and need no native Release.
+**Which event pins stay (tickets 1 and 2).** One pure function in the map's event adapter decides it. Input: the published events and each event's `favorite`. Output: the events that stay, each with a look. A Favorite Event stays with the star. While the switch of the answer on the map is on, the function passes every event on, a non-favorite one as `plain`, and the interest marks keep those that match a watched interest, with "!" on a newly posted one (`interest-marks.ts`). Events held today are not kept: the agentic map's design puts no other event on the everyday map (`agentic-map-design.md`, Watching interests, after #296; decided in review of #261 on 2026-11-16). Same-Place grouping keeps its current behaviour. With the whole campus in view, events' pins that would overlap merge as study pins do (`event-merges.ts`), into one official pin with the total count, the star when one is a Favorite Event, and "!" first when one has an interest mark's "!". The star is a marker look drawn by the JS marker images, so it ships over the air and needs no native Release.
 
-**How this sits with the agentic map's design (tickets 1 and 2).** The design decides the same pins another way. Its "Watching interests" puts on the everyday map only the events and recruiting that match a watched interest, with a "!" on a newly posted one, and its "Many results on the map" groups every mark by one rule. Both are built in Iteration 5, by packages D and B (work split §8). Until then the rule above is the one the map follows. The tickets that build them settle how the two fit: whether New Events stay beside the events that match a watched interest, when the "!" goes, the design's grouping in place of the zoom merge, and where the ☆ sits once a tap on a mark opens the answer.
+**How this sits with the agentic map's design (tickets 1 and 2).** The design decides which events stand on the everyday map and what "!" means: its "Watching interests" keeps only the events and recruiting that match a watched interest, with "!" on a newly posted one until its mark is opened, and the starred events with their star (#296). Package D built them behind the switch of the answer on the map (#306). This revision keeps the star, the zoom merge, and `publishedAt`; its own "!" for every event of the last 24 hours, with the checked ids kept on the phone, was dropped in review of #279 (2026-11-16), so that "!" has one meaning.
 
 **The ☆ toggle (ticket 1).** On the 행사 tab's and chat's event item, at the top right, with the source mark moved to its left. On the map, only on a single event's card, left of the close button; the card's data carries the event id and `favorite`. A grouped pin's list rows show ★ for a Favorite Event without a toggle. The hit area is 44pt, like the close button. The change is optimistic, rolled back with a toast on failure. The icon set gains a `star` shape that can be filled.
 
@@ -181,7 +169,7 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 - Ticket 8: C's Friends service (the Friend Request by user id).
 
 **Wiki and glossary.** A plan the Testing Documentation has already submitted (§6.2's "Fix (Iteration 4)" column and §6.3) is not rewritten in place: the original stays, and a revision note right below it says what changed and why. Each ticket edits what it changes:
-- Ticket 2: Requirements US-EVENT-01, UI-02, UI-03, UI-05, and a new story for Favorite Events; `GLOSSARY.md` gains **New Event** and **Favorite Event**. Testing §6.3 keeps its sentence about P7, P8, and P9 as submitted, and a revision note right below it says that the work is P06, with P8's issues (H5 and H12) deferred.
+- Ticket 2: Requirements US-EVENT-01, UI-02, UI-03, UI-05, and a new story for Favorite Events; `GLOSSARY.md` gains **Favorite Event**. Testing §6.3 keeps its sentence about P7, P8, and P9 as submitted, and a revision note right below it says that the work is P06, with P8's issues (H5 and H12) deferred.
 - Ticket 3: Requirements entries on AI matching in the main UI.
 - Ticket 6: US-LOC-01 and UI-09 for the Master Switch's name. UAT-3's wording is not changed, as the criteria were fixed; the rename is noted.
 - Ticket 8: US-QUEST-03 and UI-08 for approval after removal.
@@ -198,11 +186,11 @@ A good test drives what a User or a client sees: an HTTP response, a rendered sc
   - Ticket 5: `nearPlace` and `walkMinutes` on `GET /positions`, null without the caller's position. Prior art: `friend-sharing`.
   - Ticket 8: removal then join refuses with `QUEST_REMOVED_ASK`; ask on an Open Quest succeeds only with a removal; the Leader sees `removedBefore`; acceptance clears it; leaving writes no removal; a Friend Request by user id only between Holders of the same Quest. Prior art: `party-join-requests`, `party-join-request-answers`, `friend-requests`.
 - **App, unit (pure adapter functions).**
-  - Ticket 1: the pin-selection function for favorite and not, with the interest marks choosing and not. Ticket 2: the 24-hour edge, checked and unchecked, the look order, grouped and merged looks. Prior art: `features/map-adapter-places`, the study merge.
+  - Ticket 1: the pin-selection function for favorite and not, with the interest marks choosing and not. Ticket 2: the merge of overlapping events' pins, with its count and look. Prior art: `features/map-adapter-places`, the study merge.
   - Ticket 5: the Friend line without "공강", "근처", empty walking time. Prior art: `features/friends-adapter`.
   - Ticket 6: the two counts and their words, own end only (a Friend whose own end is off still counts; the words never say "봐요" or "볼 수 있어요"). 
 - **App, integration (router and screens over a fake server).**
-  - Ticket 1: starring is optimistic and rolls back with a toast. Ticket 2: closing a New Event's card removes its pin; a starred event stays. Prior art: `map-sources`, `study-layer`.
+  - Ticket 1: starring is optimistic and rolls back with a toast. Prior art: `map-sources`, `study-layer`.
   - Ticket 3: a 파티 that disappears while another tab is shown toasts once; own leave or end does not; no matching entry remains. Prior art: `party-mine-activation`, `events-matching` (removed with the feature).
   - Ticket 4: rows, opening the post, the withdraw flow and its refusal. Prior art: `party-mine`, `party-invites`.
   - Ticket 7: the tour, its skip and replay; empty states; toast links. Prior art: `design-system/toast`.
@@ -225,5 +213,5 @@ A good test drives what a User or a client sees: an HTTP response, a rendered sc
 ## Further Notes
 
 - None of the tickets changes a native file, so all ship over the air. Marker looks are JS marker images, checked for tickets 1 and 2.
-- New Event and Favorite Event are User-relative: the same Global Event can be new to one User and checked by another.
+- A Favorite Event is User-relative: the same Global Event can be starred by one User and not by another.
 - How many events a day are published in production was not measured; the merge handles a busy day without a cap.

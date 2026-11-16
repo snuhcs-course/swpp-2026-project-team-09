@@ -31,7 +31,7 @@ The short code by which others name a User when they send a Friend Request. Each
 _Avoid_: Friend code, username, handle
 
 **Friend Request**:
-A request to become Friends, sent by a User to the holder of a Friend ID, who accepts or declines it.
+A request to become Friends, sent by a User to the holder of a Friend ID, or to another Holder of the same Quest, who accepts or declines it.
 _Avoid_: Follow request
 
 **Invite Link**:
@@ -61,6 +61,10 @@ _Avoid_: Pending event, unverified event
 
 **Publication Route**:
 How a Global Event came to be published: by an Administrator, by the rules that read its post, or by a Judgement. Only Administrators see it.
+
+**Favorite Event**:
+A Global Event this User starred (☆). It is relative to the User, kept on the main server, and stays on the User's map with a star until it ends.
+_Avoid_: Bookmark, saved event
 
 **Judgement**:
 The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. One call reads the Draft's whole Source Post, so a post has one Judgement, tried at most twice. A Judgement publishes only the sessions that pass the server's checks. The rest stay Drafts with what could be read of them, and one whose time was read may still be attached to the same event posted elsewhere, or wait in the Same-event queue. It may read a session as running over a period, such as an exhibition open for several days.
@@ -96,7 +100,7 @@ The one Holder of a Quest, or the one member of a Party, who holds authority ove
 _Avoid_: Owner, host
 
 **Join Policy**:
-The Leader's setting for how Users enter a Quest or a Party: Open (whoever can see it enters at once), Approval (the Leader accepts each request) or Closed (entry by the Leader's invitation only).
+The Leader's setting for how Users enter a Quest or a Party: Open (whoever can see it enters at once, except a User the Leader removed, who asks as for Approval), Approval (the Leader accepts each request) or Closed (entry by the Leader's invitation only).
 _Avoid_: Visibility, privacy setting
 
 The screens call an Open or Approval Quest a "공개 파티" and a Closed Quest a "비공개 파티". A plan with a Friend is a 비공개 파티.

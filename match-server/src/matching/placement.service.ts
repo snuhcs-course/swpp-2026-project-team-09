@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -19,6 +20,8 @@ const eligibleSchema = z.object({
       capacity: z.int(),
       freePlaces: z.int(),
       holderIds: z.array(z.string()),
+      // The Users its Leader removed, who come back only by asking; a main server before P06-08 sends none.
+      removedIds: z.array(z.string()).default([]),
       createdAt: z.iso.datetime(),
     }),
   ),
@@ -37,7 +40,8 @@ function poolOf({ globalEventId, size }: { globalEventId: string; size: number }
   return `${globalEventId} ${size}`;
 }
 
-// The earliest Quest takes the earliest requests of its pool whose Users do not hold it, until it is full.
+// The earliest Quest takes the earliest requests of its pool whose Users neither hold it nor were removed from it,
+// until it is full.
 export function assign(requests: readonly MatchingRequest[], quests: readonly EligibleQuest[]): Placement[] {
   const pools = new Map<string, MatchingRequest[]>();
   for (const request of requests) {
@@ -49,9 +53,9 @@ export function assign(requests: readonly MatchingRequest[], quests: readonly El
   const placements: Placement[] = [];
   for (const quest of byAge) {
     const pool = poolOf({ globalEventId: quest.globalEventId, size: quest.capacity });
-    const holders = new Set(quest.holderIds);
+    const kept = new Set([...quest.holderIds, ...quest.removedIds]);
     const left = pools.get(pool) ?? [];
-    const placed = left.filter(({ userId }) => !holders.has(userId)).slice(0, quest.freePlaces);
+    const placed = left.filter(({ userId }) => !kept.has(userId)).slice(0, quest.freePlaces);
     pools.set(
       pool,
       left.filter((request) => !placed.includes(request)),

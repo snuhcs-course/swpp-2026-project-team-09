@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ChatCard } from '@/api/assistant-types';
@@ -75,10 +76,11 @@ async function ownQuest(quest: Quest, { photo, tags }: Partial<QuestEntries>): P
 function withNotes(client: ApiClient, build: Build): Pick<ShownClient, 'listJoinRequests'> {
   return {
     listJoinRequests: async (questId) =>
-      (await client.listJoinRequests(questId)).map(({ id, user, sentAt }) => ({
+      (await client.listJoinRequests(questId)).map(({ id, user, sentAt, removedBefore }) => ({
         id,
         user,
         sentAt,
+        removedBefore,
         note: noteOf(id, build),
       })),
   };

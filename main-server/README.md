@@ -187,9 +187,11 @@ Request to it. The routes, all a User's:
 - `POST /friend-requests` with `{ "friendId": "7KX2M9QD" }` sends a Friend Request to the owner and answers
   `201 { "status": "waiting" }`. When the owner's own request to the sender is waiting, the two become Friends at once,
   no request is left, and the answer is `201 { "status": "friends" }`. A repeat is refused as a request already sent,
-  so it takes no `Idempotency-Key`.
-- `GET /friend-requests` answers the waiting requests sent to the User and those the User sent, the newest first:
-  `{ "received": [{ "id", "sender": { "name", "department" }, "sentAt" }], "sent": [{ "id", "receiver": { ... }, "sentAt" }] }`.
+  so it takes no `Idempotency-Key`. `{ "userId": "..." }` in place of the Friend ID, as a 파티's member rows send it,
+  goes only to a User who holds a Quest with the sender; a user id nobody holds is refused the same way.
+- `GET /friend-requests` answers the waiting requests sent to the User and those the User sent, the newest first, each
+  with the other User's id:
+  `{ "received": [{ "id", "sender": { "id", "name", "department" }, "sentAt" }], "sent": [{ "id", "receiver": { ... }, "sentAt" }] }`.
 - `POST /friend-requests/:id/accept` makes the two Friends, and `POST /friend-requests/:id/decline` removes the request.
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
@@ -215,6 +217,8 @@ A Friend ID is read in capitals, so one typed in small letters is found too. The
 | -------------------------------------------------------------------------- | ------ | ----------------------------- |
 | A Friend ID nobody holds, looked up or sent to                             | 404    | `FRIEND_ID_NOT_FOUND`         |
 | A Friend Request to the sender's own Friend ID                             | 400    | `OWN_FRIEND_ID`               |
+| A Friend Request to the sender's own user id                               | 400    | `OWN_USER_ID`                 |
+| A Friend Request by user id to a User who holds no Quest with the sender   | 403    | `NOT_FELLOW_HOLDER`           |
 | A Friend Request to a Friend                                               | 409    | `ALREADY_FRIENDS`             |
 | A Friend Request to a User the sender's request already waits for          | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
 | An answer to a request that is not waiting for it from this User           | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
@@ -622,8 +626,9 @@ start, then by title. The app fetches it again on `global-events-changed`.
 
 - A Draft, a cancelled, a discarded and an ended event are never in it.
 - `sourceUrl` is `null` for an event an Administrator created.
-- `publishedAt` is when the event was published, `null` for an event published before it was recorded. Nothing records
-  it yet.
+- `publishedAt` is when the event was published, `null` for an event published before it was recorded. It is recorded
+  by each of the four writes that publish: the rules and a Judgement, when the step after a Collection settles a post,
+  an Administrator's publish of a Draft, and an Administrator's publish from the Same-event queue. An edit keeps it.
 - `favorite` is whether the caller starred the event, which makes it a Favorite Event.
 - An Administrator's access token gets 401, and a User before onboarding 403 `ONBOARDING_REQUIRED`, as on every User's
   route.
@@ -1044,7 +1049,7 @@ Friend is a Closed Quest the User makes and invites the Friend into. The routes,
 - `GET /quests/recruiting` answers the list of recruiting Quests, `GET /quests/recruiting?globalEventId=...` the same
   for one Global Event and `GET /quests/recruiting?board=meal` for one board; the two combine (see below).
 - `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
-  `Idempotency-Key`.
+  `Idempotency-Key`. A User the Leader removed from the Quest is refused, and asks to join instead (below).
 - `GET /quests` answers the User's Quests in the order they were created, then today's Class Quests (below), leaving
   out each Quest whose Sub Quests have all ended, that is each is cancelled or past its end time; the User's marks of
   done do not count. `GET /quests/:questId` answers one, ended or not.
@@ -1124,6 +1129,7 @@ The refusals each have a `code`:
 | Cancelling the only Sub Quest of a Quest                  | 409    | `LAST_SUB_QUEST`         |
 | Joining a Closed Quest, or one that does not exist        | 404    | `QUEST_NOT_FOUND`        |
 | Joining an Approval Quest                                 | 409    | `QUEST_NOT_OPEN`         |
+| Joining an Open Quest the Leader removed the User from    | 409    | `QUEST_REMOVED_ASK`      |
 | Joining a Quest the User holds                            | 409    | `ALREADY_HOLDER`         |
 | Joining a Quest without a Sub Quest ahead                 | 409    | `QUEST_ENDED`            |
 | Joining a Quest whose Holders fill its capacity           | 409    | `QUEST_FULL`             |
@@ -1251,9 +1257,12 @@ as an invitation is. The routes:
 
 - `POST /quest-join-requests` with `{ "questId": "..." }` asks to join and answers 201 with the request. A second
   request is refused, so it takes no `Idempotency-Key`. `GET /quest-join-requests` answers the User's waiting requests,
-  and `POST /quest-join-requests/:id/withdraw` withdraws one and answers 204.
-- `GET /quests/:questId/join-requests` answers the Leader the Quest's requests with who asked,
-  `{ "id", "user": { "id", "name", "department" }, "sentAt" }`. `POST /quests/:questId/join-requests/:id/accept` makes
+  and `POST /quest-join-requests/:id/withdraw` withdraws one and answers 204. An Open Quest takes a request only from a
+  User the Leader removed from it. `GET /quest-removals` answers the Quests the Leader removed the User from since the
+  User last entered each, the latest first: `[{ "questId", "removedAt" }]`.
+- `GET /quests/:questId/join-requests` answers the Leader the Quest's requests, whatever its Join Policy, with who
+  asked and whether the Leader removed them from it before,
+  `{ "id", "user": { "id", "name", "department" }, "sentAt", "removedBefore" }`. `POST /quests/:questId/join-requests/:id/accept` makes
   the User a Holder and `.../decline` ends the request; both answer 204.
 - `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204.
   `GET /quest-invitations` answers the User's invitations, `POST /quest-invitations/:id/accept` makes the User a Holder
@@ -1279,7 +1288,9 @@ the lists are the newest first.
   Quest from attending `open` or `approval`, on a board, is how it starts gathering people.
 - `PUT /quests/:questId/leader` with `{ "userId": "..." }` hands the role to another Holder and answers 204.
 - `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
-  Quest, with their progress, and may enter it again.
+  Quest, with their progress. The removal is kept in `quest_removals` in the same transaction, so that the User comes
+  back only by asking to join and the Leader accepting, even to an Open Quest; entering the Quest in any way deletes
+  it. A Holder who drops the Quest leaves no removal.
 - `POST /quests/:questId/end` ends the Quest for every Holder and answers 204: it is deleted with its Sub Quests, the
   Holders' progress, its requests to join and its invitations, as when its last Holder drops it, and a running Party
   for it goes on with `quest: null`. A repeat is refused as a Quest the User does not hold, so it takes no
@@ -1293,7 +1304,7 @@ other.
 | Refusal                                                               | Status | `code`                            |
 | --------------------------------------------------------------------- | ------ | --------------------------------- |
 | Asking to join a Closed Quest, or one that does not exist             | 404    | `QUEST_NOT_FOUND`                 |
-| Asking to join an Open Quest                                          | 409    | `QUEST_NOT_APPROVAL`              |
+| Asking to join an Open Quest the Leader did not remove the User from  | 409    | `QUEST_NOT_APPROVAL`              |
 | Asking to join a Quest the User holds, or inviting one of its Holders | 409    | `ALREADY_HOLDER`                  |
 | Asking to join while holding a Shared Quest for its Global Event      | 409    | `SHARED_QUEST_HELD`               |
 | A second request to the same Quest                                    | 409    | `QUEST_JOIN_REQUEST_ALREADY_SENT` |
@@ -1440,10 +1451,11 @@ User's, an Administrator's and the worker's included. The bodies are checked as 
   not started, and their User holds no Shared Quest for it. It is `MatchingQuestsService.matchingRefusals()`, which
   also decides whether a User may ask, and it stores nothing.
 - `POST /matching-requests/eligible-quests` with `{ "pools": [{ "globalEventId": "…", "size": 3 }] }`, sizes 2 to 4,
-  answers 200 with `{ "quests": [{ "id", "globalEventId", "capacity", "freePlaces", "holderIds", "createdAt" }] }`,
+  answers 200 with `{ "quests": [{ "id", "globalEventId", "capacity", "freePlaces", "holderIds", "removedIds", "createdAt" }] }`,
   the earliest made first: the Open Quests of each pool's Global Event whose capacity is the size, that have a free
   place and a Sub Quest ahead. `holderIds` are in the order the Holders entered, so that the match server never places
-  a User into a Quest the User holds. An Approval or a Closed Quest is never answered. It is
+  a User into a Quest the User holds, and `removedIds` are the Users the Leader removed, whom it never places there
+  either. An Approval or a Closed Quest is never answered. It is
   `MatchingQuestsService.eligibleQuests()`, and it stores nothing.
 - `POST /matching-requests/placements` with `{ "questId": "…", "userId": "…", "size": 3 }` places the User into the
   Quest and answers 201 with `{ "questId": "…", "holderIds": [...] }`, the Holders the User included (see below).
@@ -1486,6 +1498,7 @@ request. Each refusal leaves the request waiting in the match server, which deci
 | The Quest is unknown                                       | 404    | `QUEST_NOT_FOUND`        |
 | The Quest is no longer Open                                | 409    | `QUEST_NOT_OPEN`         |
 | The Quest's capacity is no longer the size                 | 409    | `QUEST_CAPACITY_DIFFERS` |
+| The Leader removed the User from the Quest                 | 409    | `QUEST_REMOVED_ASK`      |
 | The Quest has no Sub Quest ahead                           | 409    | `QUEST_ENDED`            |
 | The Quest is full                                          | 409    | `QUEST_FULL`             |
 | The User holds a Shared Quest for the Global Event by then | 409    | `SHARED_QUEST_HELD`      |

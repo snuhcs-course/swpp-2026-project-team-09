@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Board, JoinPolicy, Person, UserSummary } from './types';
@@ -14,10 +15,13 @@ import type { Board, JoinPolicy, Person, UserSummary } from './types';
 // The main server's lists of what waits for the User, which 알림 and the badge on 파티 are composed from.
 
 // GET /friend-requests: the waiting requests sent to the User and those the User sent, the newest first.
+// The other User's `id` tells a 파티's member rows who was asked; a main server before P06-08 sends none.
 export interface FriendRequests {
-  received: { id: string; sender: UserSummary; sentAt: string }[];
-  sent: { id: string; receiver: UserSummary; sentAt: string }[];
+  received: { id: string; sender: RequestUser; sentAt: string }[];
+  sent: { id: string; receiver: RequestUser; sentAt: string }[];
 }
+
+export type RequestUser = UserSummary & { id?: string };
 
 // A Quest as the lists of what waits and the list of recruiting Quests show it, as it is now.
 export interface QuestSummary {
@@ -52,6 +56,14 @@ export interface JoinRequest {
   id: string;
   user: Person;
   sentAt: string;
+  // On a request to join: the Leader removed its User from the Quest before. Never on an invitation.
+  removedBefore?: boolean;
+}
+
+// GET /quest-removals: the Quests the Leader removed the User from, which the User comes back to only by asking.
+export interface QuestRemoval {
+  questId: string;
+  removedAt: string;
 }
 
 // GET /notifications, the latest first: the Notifications the main server keeps for the User. `at` is Korea's time with

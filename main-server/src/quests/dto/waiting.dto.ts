@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -25,6 +26,17 @@ export interface WaitingUserDto {
   id: string;
   user: Pick<User, 'id' | 'name' | 'department'>;
   sentAt: string;
+}
+
+// A request to join as the Leader lists it: `removedBefore` when the Leader removed its User from the Quest before.
+export interface JoinRequestUserDto extends WaitingUserDto {
+  removedBefore: boolean;
+}
+
+// A Quest the Leader removed the User from, which the User comes back to only by asking to join.
+export interface QuestRemovalDto {
+  questId: string;
+  removedAt: string;
 }
 
 export const WAITING_INCLUDE = {

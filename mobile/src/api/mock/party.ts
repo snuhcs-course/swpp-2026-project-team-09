@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -131,6 +132,7 @@ type MockParty = Pick<
   | 'joinQuest'
   | 'askToJoinQuest'
   | 'listMyJoinRequests'
+  | 'listQuestRemovals'
   | 'withdrawJoinRequest'
   | 'makeQuest'
   | 'attendGlobalEvent'
@@ -161,6 +163,7 @@ export const mockParty: MockParty = {
     await answer('askToJoinQuest', () => recruiting(questId));
   },
   listMyJoinRequests: () => answer('listMyJoinRequests', () => [], []),
+  listQuestRemovals: () => answer('listQuestRemovals', () => [], []),
   withdrawJoinRequest: () => nothing('withdrawJoinRequest'),
   makeQuest: (making) => answer('makeQuest', () => madeOf(making)),
   attendGlobalEvent: (globalEventId, title) =>
