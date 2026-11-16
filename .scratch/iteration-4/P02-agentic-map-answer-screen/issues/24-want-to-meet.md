@@ -45,3 +45,19 @@ Blocked by: package A's meet input and its planning (row-6-seams, ticket 24); 18
 10. **Words typed while a meet is on screen** carry its conditions and its Plan's id already (`chat-sheet.tsx` `contextAt` reads the answer on screen); `contextAt` is unchanged.
 11. **The capability**: `ANSWER_CAPABILITIES` gains `meet`, sent only with a context (the switch on); the switch-off request still says `library` alone. The tests that pin the list, and q6's test that drew "닫기" alone, now expect the change.
 12. **"＋ 같이" on a meet** is read aloud as "같이 만날 친구 추가", and the list it opens asks "누구와 같이 만날까요?" (`ConditionChips`' `meet`, `plan-card.tsx`'s `WHO_MEETS`); a meal and every other kind keep "같이 먹을 친구 추가" and "누구와 같이 먹을까요?".
+
+### Checked on an emulator (2026-11-16)
+
+On the Android emulator, with the mock and the switch on, at `770a01ef`:
+- 김민준's card from the friend list: "만나고 싶다" first and main, "파티 만들기" beside it; from a face, "가까이 보기" between them, all three on one row.
+- "만나고 싶다" opens a5: the pill "김민준 · 만나고 싶다" with the person icon, the chips, "12:15 302동 앞에서 만나요" / "12:43까지 함께 28분이에요", the band with 나 and 민수, "1/5"; on the map 302동 앞 with "12:15 만남", 민수 dashed at 302동, "나 · 3분", the others numbered, "13:00 수업 · 24동", and the way on to 24동. "근거" opens the server's three lines.
+- "＋ 같이" asks "누구와 같이 만날까요?".
+- "민수 ✕" closes the answer and opens 김민준's card again. The mock answers every meet with a5's copy, whose Friend is 민수, so the card is the Friend the meet was asked for.
+- Not run on the emulator: a Friend Lookup's "만나고 싶다", since typing "민수 어디야?" needs the device's keyboard switched to Korean. The integration tests cover it.
+
+### Agent usage (2026-11-16)
+
+One session with two subagents for this ticket (the implementation, then a review with its fixes); the session's own time counted is the brief, the coordination with packages A, C, and D, the merge with Main, and the emulator check.
+
+- Agent time: about 88 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 274,510; input 90,926,174, of which 90,097,995 were cache reads, 827,435 cache writes, and 744 uncached. Without cache reads: 1,102,689.
