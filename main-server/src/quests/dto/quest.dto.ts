@@ -9,6 +9,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -81,6 +82,8 @@ export interface QuestDto {
   subQuests: SubQuestDto[];
   // Computed from the timetable and never stored (class-quests.service.ts).
   classQuest: boolean;
+  // Taken alone, from a Plan for one person or a booked seat: never a 파티.
+  takenAlone: boolean;
   // The requests to join waiting for the Leader's answer, when the User who reads it leads it; 0 otherwise.
   waitingJoinRequests: number;
   // The Holders in the order they entered, then the Users whose invitation waits, by when it was sent, then the Users
@@ -249,6 +252,7 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
     classQuest: false,
+    takenAlone: quest.takenAlone,
     waitingJoinRequests: quest.leaderId === userId ? _count.joinRequests : 0,
     members: [
       ...quest.holders.map(({ user, lateMinutes }): QuestMemberDto => ({

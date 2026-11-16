@@ -79,6 +79,7 @@ describe('"여기로" on a meal\'s Plan for the asker alone', () => {
       globalEvent: null,
       leader: { id: stage.asker.id },
       capacity: 1,
+      takenAlone: true,
       joinPolicy: 'closed',
       board: null,
       holders: [{ id: stage.asker.id }],
@@ -100,7 +101,7 @@ describe('"여기로" on a meal\'s Plan for the asker alone', () => {
 
     expect(response.status).toBe(201);
     const { quest, alone } = takenSchema.parse(response.body);
-    expect(quest.capacity).toBe(1);
+    expect(quest).toMatchObject({ capacity: 1, takenAlone: true });
     expect(words(alone.lines)).toEqual(['학생회관식당으로 가요', '수업까지 1분이라 나설 알림은 없어요']);
     expect(alone.remindAt).toBeNull();
     expect(await leaveBys()).toEqual([]);

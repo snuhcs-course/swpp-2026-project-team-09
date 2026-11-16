@@ -96,13 +96,13 @@ interface PlanQuest {
 A Plan the User takes becomes a Quest held by the people in it; with one person it is a Quest held by that User (ticket 15). "여기로" sends it to the same `POST /plans`.
 
 - **Taken alone**: an events Plan, and a meal's or a meet's Plan whose people are the asker only. There is no `PLAN_ALONE`.
-- **The Quest**: the asker holds and leads it alone, Closed, on no Board, with **capacity 1**. Capacity 1 marks a Quest held alone: no one else enters it, and it is never a 파티. A meal's has the Plan's steps. An event's points at the Global Event, in place of a Quest the asker held alone for it. A Shared Quest held for the event refuses it with 409 `SHARED_QUEST_HELD`.
+- **The Quest**: the asker holds and leads it alone, Closed, on no Board, with capacity 1 so that no one else enters it, and **`takenAlone: true`**, a column of its own (`Quest.takenAlone`, `QuestDto.takenAlone`). That column, never the Holders' count or the capacity, marks a Quest taken alone: a recruiting Quest posted with no Friend, a 비공개 Quest whose invitations wait or were all refused, and a Quest the party form made with capacity 1 stay parties. A booked seat's Quest carries it too (package D). A meal's has the Plan's steps. An event's points at the Global Event, in place of a Quest the asker held alone for it. A Shared Quest held for the event refuses it with 409 `SHARED_QUEST_HELD`.
 - **No invitation and no signal to anyone else.** The asker is told with `quests-changed`. `invitations` and `askLevels` are empty.
 - **Not a 파티**: 내 파티 leaves it out. The Quest list and the everyday map call it a 퀘스트. It is in no recruiting list, being Closed. A Friend who holds an event alone is still a candidate of a new party for it: entering a party leaves the Quest held alone, with its leave-by.
 - **Its leave-by** is the `leave-by` Notification of the Quest's own mechanism (card `party:<questId>`). It is kept for the first walk of 5 minutes or more whose time is still ahead: to the Plan's Place, as for an event later in the day, or else on from it to the next item, as for a meal now. It is kept with the next item it is for ("24동까지 걸어서 15분이에요. 13:00 수업에 맞아요.") and a way by shuttle as one ("두레문예관까지 셔틀로 18분").
 - **`alone.lines`**: the first line is "**{Place}**으로 가요", "**{Place}**에서 먹어요" for a meal where the User is, or "**{event}**에 가요". The second says the leave-by: "{HH:MM}에 나설 시각을 알려 드릴게요", "{수업|일정}까지 N분이라 나설 알림은 없어요", "오늘은 다음 일정이 없어 나설 알림은 없어요", or "{HH:MM}엔 나서야 해요".
 - **"다시 고르기"** is `DELETE /quests/:questId`, which ends the Quest and its leave-by.
-- **The released app (1.0.2)** never sends a Plan taken alone. It lists such a Quest among its Quests as one it holds alone, and its leave-by as any other.
+- **The released app (1.0.2)** never sends a Plan taken alone. Its checks of a Quest let the new key through; it lists such a Quest among its Quests as one it holds alone, and its leave-by as any other.
 
 ### The invitee's own way
 

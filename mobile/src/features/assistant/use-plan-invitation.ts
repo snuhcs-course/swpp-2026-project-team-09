@@ -56,6 +56,13 @@ const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요
 const SENT = '파티를 만들고 초대를 보냈어요';
 const TAKEN = '여기로 정했어요';
 const NOT_DROPPED = '다시 고르지 못했어요. 잠시 후 다시 시도해 주세요';
+// "여기로" invites nobody.
+const NOT_TAKEN = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
+
+// A Plan "여기로" takes alone: an events Plan, or a meal's or a meet's for the asker only.
+function takenAlone(input: AnswerReply['input']): boolean {
+  return input.kind === 'events' || ((input.kind === 'meal' || input.kind === 'meet') && input.people.length < 2);
+}
 
 interface InvitationState {
   answer: AnswerReply | null;
@@ -112,12 +119,12 @@ function useHeard(made: PlanQuest | null, setStored: SetStored): void {
 }
 
 // A Plan that changed is recalculated from conditions equal to the same, as a new object, for a change must differ.
-function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['change']): void {
+function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['change'], alone: boolean): void {
   if (isRefusal(error, 409, 'PLAN_CHANGED')) {
     say(CHANGED);
     change((input) => ({ ...input }));
   } else {
-    say(FAILED);
+    say(alone ? NOT_TAKEN : FAILED);
   }
 }
 
@@ -178,7 +185,7 @@ function useInvite(
       },
       (error: unknown) => {
         if (settle()) {
-          tellRefusal(error, how.say, live.current.shown.change);
+          tellRefusal(error, how.say, live.current.shown.change, takenAlone(answer.input));
         }
       },
     );

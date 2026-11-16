@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -70,6 +71,7 @@ function toClassQuestDto(
     holders: [holder],
     subQuests,
     classQuest: true,
+    takenAlone: false,
     waitingJoinRequests: 0,
     members: [],
   };

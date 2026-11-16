@@ -53,8 +53,7 @@ export type SubQuestColumns = Pick<
   title: string;
 };
 
-// The capacity of a Quest held alone, as a Plan taken alone makes one: never a 파티, so it is in no list or count of
-// parties and no one else enters it.
+// The capacity of a Quest taken alone (`takenAlone`), so that no one else enters it.
 export const ALONE_CAPACITY = 1;
 
 // How a new Quest starts. Left out, its first Holder leads it, and it is Closed with capacity 4, no board and an empty
@@ -65,6 +64,8 @@ export interface QuestSettings {
   joinPolicy?: JoinPolicy;
   board?: QuestBoard;
   description?: string;
+  // A Quest taken alone: never a 파티, so it is in no list or count of parties.
+  takenAlone?: boolean;
 }
 
 @Injectable()
@@ -171,9 +172,9 @@ export class QuestsService {
   }
 
   // The Holders of every Quest for the Global Event, or of every 파티 for it: `alone` false leaves out the Holders of a
-  // Quest held alone (`ALONE_CAPACITY`).
+  // Quest taken alone.
   async holderIdsFor(globalEventId: string, alone = true): Promise<string[]> {
-    const party = alone ? {} : { quest: { capacity: { gt: ALONE_CAPACITY } } };
+    const party = alone ? {} : { quest: { takenAlone: false } };
     const holders = await this.prisma.questHolder.findMany({
       where: { globalEventId, ...party },
       select: { userId: true },

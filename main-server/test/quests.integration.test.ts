@@ -7,6 +7,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -33,6 +34,8 @@ afterAll(async () => {
 });
 
 const KIM = { name: '김철수', department: '경영학과' };
+// A Sub Quest nobody cancelled or marked, whose end has not passed.
+const UNTOUCHED = { cancelled: false, done: false, ended: false };
 
 describe('Attending a Global Event', () => {
   it('gives a Quest with the Global Event, the User as its Holder and a Sub Quest for attending', async () => {
@@ -62,12 +65,11 @@ describe('Attending a Global Event', () => {
           endsAt: null,
           place: { placeId: null, label: '뉴미디어통신공동연구소 이충웅홀(132동 103호)', ...place132 },
           completion: 'by_hand',
-          cancelled: false,
-          done: false,
-          ended: false,
+          ...UNTOUCHED,
         },
       ],
       classQuest: false,
+      takenAlone: false,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
     });

@@ -160,7 +160,7 @@ export class PlansService {
     return this.made(userId, questId, created);
   }
 
-  // Plans again, and makes the Plan named a Quest the asker holds alone (`ALONE_CAPACITY`): a meal's with its steps, an
+  // Plans again, and makes the Plan named a Quest taken alone, which the asker holds alone: a meal's with its steps, an
   // event's in place of the one they held alone for it. Keeps its leave-by, and answers the card's two lines.
   private async makeAlone(
     userId: string,
@@ -174,7 +174,7 @@ export class PlansService {
     const { location, locationMissing } = making;
     const answer = await this.answers.plan(userId, input, { now, location, locationMissing });
     const plan = planNamed(answer.plans, making.planId, making.startAt);
-    const settings = { capacity: ALONE_CAPACITY };
+    const settings = { capacity: ALONE_CAPACITY, takenAlone: true };
     const questId = await this.prisma.$transaction((tx) =>
       input.kind === 'events'
         ? this.forGlobalEvent(userId, { id: plan.id, title: plan.title }, tx, settings)
