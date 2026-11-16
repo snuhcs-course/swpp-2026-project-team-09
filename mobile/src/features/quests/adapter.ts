@@ -9,6 +9,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
@@ -152,6 +153,11 @@ export function partyOf(quest: Quest, myParty: MyParty | null, parties: readonly
   return { title, joinPolicy, mine: false, memberCount, capacity };
 }
 
+// A Quest taken alone, as "여기로" and a booked seat make one: never a 파티 (P03 ticket 15).
+export function heldAlone({ takenAlone }: Pick<Quest, 'takenAlone'>): boolean {
+  return takenAlone === true;
+}
+
 // The names of a Quest's other Holders, "" when the User holds it alone.
 export function otherHolders(quest: Quest, meId: string): string {
   return quest.holders
@@ -179,8 +185,11 @@ function classKicker(subQuest: SubQuest | null, next: boolean, now: Date): strin
 
 // The frames' kicker of a Quest that is not a class, as `Main` draws it: while its Party is switched on, its kind and
 // "활성화 중"; otherwise a 공개 파티 with how many hold it, and a 비공개 파티 with the first other Holder and how many
-// more. The words are the frames'; the kinds stay the glossary's.
+// more. The words are the frames'; the kinds stay the glossary's. A Quest held alone is a 퀘스트.
 function sharedKicker(quest: Quest, switchedOn: boolean, meId: string): string {
+  if (heldAlone(quest)) {
+    return '퀘스트';
+  }
   const kind = quest.joinPolicy === 'closed' ? '비공개 파티' : '공개 파티';
   if (switchedOn) {
     return `${kind} · 활성화 중`;
@@ -209,6 +218,9 @@ function kindLabel(tone: QuestRowTone, quest: Quest, meId: string): string {
   }
   if (tone === 'open') {
     return '공개 파티';
+  }
+  if (heldAlone(quest)) {
+    return '퀘스트';
   }
   const others = otherHolders(quest, meId);
   return others === '' ? '비공개 파티' : `비공개 파티 · ${others}`;

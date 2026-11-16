@@ -266,7 +266,7 @@ describe('A meet’s Quest changed at PUT /plans/:questId', () => {
 });
 
 describe('A meet with nobody but the asker', () => {
-  // The meet input's own check refuses it before the PLAN_ALONE of a meal with nobody but the asker.
+  // The meet input's own check refuses it: a meet always has a Friend, so it is never taken alone.
   it('is refused with 400 at the body and makes no Quest', async () => {
     const date = '2080-01-23';
     await stage.asking(date, '12:10');

@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { type SubQuestContentDto } from './dto/quest-requests.dto.js';
 import { SUB_QUEST_INCLUDE, SubQuestDto, toSubQuestDto } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
 import { conflict, notFound } from './refusals.js';
+import { columnsOf } from './sub-quest-columns.js';
 
 const subQuestNotFound = (): Error => notFound('SUB_QUEST_NOT_FOUND', 'This Quest has no such Sub Quest.');
 
@@ -26,7 +28,7 @@ export class SubQuestsService {
   add(userId: string, questId: string, content: SubQuestContentDto): Promise<SubQuestDto> {
     return this.quests.changeShared(userId, questId, async (tx) => {
       const subQuest = await tx.subQuest.create({
-        data: { questId, ...(await this.quests.columnsOf(content, tx)) },
+        data: { questId, ...(await columnsOf(content, tx)) },
         include: SUB_QUEST_INCLUDE,
       });
       return toSubQuestDto(subQuest, null, userId, this.clock.now());
@@ -38,7 +40,7 @@ export class SubQuestsService {
       await this.added(questId, subQuestId, tx);
       const subQuest = await tx.subQuest.update({
         where: { id: subQuestId },
-        data: await this.quests.columnsOf(content, tx),
+        data: await columnsOf(content, tx),
         include: SUB_QUEST_INCLUDE,
       });
       return toSubQuestDto(subQuest, null, userId, this.clock.now());

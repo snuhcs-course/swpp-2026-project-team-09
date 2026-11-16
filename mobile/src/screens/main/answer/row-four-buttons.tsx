@@ -40,12 +40,14 @@ function recruit(input: PlanInput, plan: Plan, { change }: ShownAnswer, { ask }:
   };
 }
 
-// An events Plan's "같이 갈 파티", "새로 모집", and "길 안내"; a party's Plan's "참여하기" or "참여 신청", which opens its
-// post, and "새로 모집". The first is the main one.
-function pressesOf(input: PlanInput, plan: Plan, shown: ShownAnswer, actions: RowFourActions): Pressed[] {
+// An events Plan's "여기로", which takes it alone as "이대로 초대" makes a Plan with a Friend and is the main one,
+// "같이 갈 파티", and "새로 모집"; a party's Plan's "참여하기" or "참여 신청", which opens its post, and "새로 모집".
+function pressesOf(input: PlanInput, plan: Plan, props: RowFourButtonsProps, actions: RowFourActions): Pressed[] {
+  const { shown, invitation } = props;
   if (input.kind === 'events') {
     const parties = partiesOf(plan);
     return [
+      { label: '여기로', onPress: invitation.invite },
       {
         label: '같이 갈 파티',
         onPress: () => {
@@ -53,12 +55,6 @@ function pressesOf(input: PlanInput, plan: Plan, shown: ShownAnswer, actions: Ro
         },
       },
       recruit(input, plan, shown, actions),
-      {
-        label: '길 안내',
-        onPress: () => {
-          actions.guide(plan.place);
-        },
-      },
     ];
   }
   const { quest } = plan;
@@ -137,7 +133,7 @@ export function RowFourButtons(props: RowFourButtonsProps): ReactElement | null 
         </Text>
       ))}
       <View style={styles.row} testID="row-four-buttons">
-        {pressesOf(input, plan, props.shown, actions).map(({ label, onPress }, index) => (
+        {pressesOf(input, plan, props, actions).map(({ label, onPress }, index) => (
           <View key={label} style={styles.cell}>
             <Button disabled={props.busy} full onPress={onPress} variant={index === 0 ? 'primary' : 'secondary'}>
               {label}

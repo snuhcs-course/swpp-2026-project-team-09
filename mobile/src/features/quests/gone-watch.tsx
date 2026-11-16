@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { apiClient } from '@/api/client';
 import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import { useToast } from '@/design-system';
+import { heldAlone } from './adapter';
 import { leftOnPurpose } from './leaving';
 
 // A Quest also leaves the list once all its Sub Quests ended, and the main server still lets the User read it. Any
@@ -30,7 +32,8 @@ async function tellIfGone(questId: string, title: string, showToast: (words: str
 // Watches the User's Quests wherever the User is in the signed-in app. A Quest that was in the list and is not when
 // the list comes again, on `quests-changed` or otherwise, is told once with a toast, unless the User left or ended it
 // here. Removal and ending are not told apart, and what happened before the app started is not told. Class Quests
-// come and go with the timetable and are not watched. Draws nothing; the room of a Quest that is gone closes itself.
+// come and go with the timetable, and a Quest taken alone ends only by the User's own doing and is no 파티: neither is
+// watched. Draws nothing; the room of a Quest that is gone closes itself.
 export function GoneQuestsWatch(): null {
   const { data } = useQuery(questsQuery);
   const showToast = useToast();
@@ -39,7 +42,8 @@ export function GoneQuestsWatch(): null {
     if (data === undefined) {
       return;
     }
-    const held = new Map(data.filter(({ classQuest }) => !classQuest).map((quest) => [quest.id, quest]));
+    const watched = data.filter((quest) => !quest.classQuest && !heldAlone(quest));
+    const held = new Map(watched.map((quest) => [quest.id, quest]));
     // Joining a 파티 for a Global Event deletes the User's own one-person Quest for it: the event is still held.
     const events = new Set([...held.values()].map(({ globalEvent }) => globalEvent?.id));
     const before = known.current;
