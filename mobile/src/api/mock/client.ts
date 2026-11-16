@@ -24,7 +24,6 @@ import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
 import { mockAssistantReply, mockRecalculation, mockTap } from './assistant';
-import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { LATE_WAY } from './data/late-way';
 import { MENUS } from './data/menus';
@@ -226,7 +225,6 @@ export const mockClient: ApiClient = {
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),
   getMyParty: () => answer('getMyParty', () => MY_PARTY, null),
-  getFootprints: () => answer('getFootprints', () => FOOTPRINTS, { friendCount: 0, faces: [] }),
   findWalkingRoute: (from, to) =>
     answer('findWalkingRoute', () => mockWalkingRoute(from, to), {
       status: 'ROUTE_RESULT_NOT_FOUND',

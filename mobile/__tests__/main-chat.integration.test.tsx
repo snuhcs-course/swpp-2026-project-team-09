@@ -6,6 +6,7 @@
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -106,7 +107,7 @@ describe('the chat with the Assistant', () => {
     await openChat();
 
     expect(screen.getByTestId('ai-input')).toBeVisible();
-    expect(screen.queryByRole('button', { name: /^오늘의 발자국/u })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^활성 파티/u })).toBeNull();
     expect(screen.queryByRole('button', { name: '편의기능 (식당 · 셔틀버스)' })).toBeNull();
   });
 

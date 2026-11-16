@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -38,6 +39,11 @@ afterAll(async () => {
 
 // 제1공학관 (301동), on campus.
 const OTHER_PLACE = { latitude: 37.4502, longitude: 126.9526 };
+
+const ANY_NUMBER: unknown = expect.any(Number);
+
+// What the fetch adds to an exact position of a viewer who has no position kept.
+const EXACT_SEEN = { level: 'exact', nearPlace: ANY_STRING, walkMinutes: null };
 
 function secondsFromNow(seconds: number): string {
   return new Date(Date.now() + seconds * 1000).toISOString();
@@ -92,7 +98,7 @@ describe('An upload taken', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ offCampus: false, privateZone: false });
     expect((await getPositions(app, friend)).body).toEqual([
-      { userId: user.id, ...ON_CAMPUS, measuredAt, level: 'exact' },
+      { userId: user.id, ...ON_CAMPUS, measuredAt, ...EXACT_SEEN },
     ]);
   });
 
@@ -112,7 +118,7 @@ describe('An upload taken', () => {
     await uploadPosition(app, user, OTHER_PLACE);
 
     expect((await getPositions(app, friend)).body).toEqual([
-      { userId: user.id, ...OTHER_PLACE, measuredAt: ANY_STRING, level: 'exact' },
+      { userId: user.id, ...OTHER_PLACE, measuredAt: ANY_STRING, ...EXACT_SEEN },
     ]);
   });
 
@@ -152,8 +158,15 @@ describe('The fetch of the positions', () => {
     expect(response.body).toHaveLength(2);
     expect(response.body).toEqual(
       expect.arrayContaining([
-        { userId: friend.id, ...ON_CAMPUS, measuredAt, level: 'exact' },
-        { userId: otherFriend.id, ...OTHER_PLACE, measuredAt, level: 'exact' },
+        { userId: friend.id, ...ON_CAMPUS, measuredAt, level: 'exact', nearPlace: ANY_STRING, walkMinutes: 0 },
+        {
+          userId: otherFriend.id,
+          ...OTHER_PLACE,
+          measuredAt,
+          level: 'exact',
+          nearPlace: ANY_STRING,
+          walkMinutes: ANY_NUMBER,
+        },
       ]),
     );
   });

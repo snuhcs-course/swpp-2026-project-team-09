@@ -6,9 +6,10 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { act, within } from '@testing-library/react-native';
+import { act } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
 import { pass, screen, shownAddress } from './support/app';
 import {
@@ -18,7 +19,6 @@ import {
   DINNER_ROW,
   findButton,
   FOLD_FRIENDS,
-  FOOTPRINTS,
   FRIEND_PILL,
   FRIEND_ROW,
   FULL_SCREEN,
@@ -29,7 +29,7 @@ import {
 } from './support/lists';
 import { expectContentUnder, hideKeyboard, KEYBOARD, LIFT, quietDismiss, showKeyboard } from './support/keyboard';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { FRIEND, NOT_READY, press } from './support/markers';
+import { FRIEND, press } from './support/markers';
 import { startFresh } from './support/mocks';
 
 jest.mock('expo-location');
@@ -53,23 +53,13 @@ afterEach(() => {
 });
 
 describe('the controls above the navigation of the main screen', () => {
-  it('shows "오늘의 발자국" with its words, and "활성 파티" with the members who share', async () => {
+  it('shows "활성 파티" with the members who share, and no "오늘의 발자국"', async () => {
     await openMain();
 
-    expect(button(FOOTPRINTS)).toHaveTextContent('민준서연지호오늘의 발자국친구 5명의 오늘');
+    expect(findButton(/^오늘의 발자국/u)).toBeNull();
     expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티3명 공유 중');
     expect(button(LAYERS)).toBeVisible();
     expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '무엇이든 부탁해 보세요');
-  });
-
-  it('draws the three faces of "오늘의 발자국" as decoration, hidden from a screen reader', async () => {
-    await openMain();
-
-    const faces = within(button(FOOTPRINTS));
-    expect(faces.queryByLabelText('이서연')).toBeNull();
-    for (const name of ['김민준', '이서연', '박지호']) {
-      expect(faces.getByLabelText(name, { includeHiddenElements: true })).toBeOnTheScreen();
-    }
   });
 
   it('has no "활성 파티" for a User in no Party', async () => {
@@ -77,14 +67,7 @@ describe('the controls above the navigation of the main screen', () => {
     await openMain();
 
     expect(findButton(/^활성 파티/u)).toBeNull();
-    expect(button(FOOTPRINTS)).toBeVisible();
-  });
-
-  it('shows "오늘의 발자국" by its name alone when what it shows did not come', async () => {
-    process.env.EXPO_PUBLIC_MOCK_FAIL = 'getFootprints';
-    await openMain();
-
-    expect(button(FOOTPRINTS)).toHaveTextContent('오늘의 발자국');
+    expect(button(LAYERS)).toBeVisible();
   });
 });
 
@@ -101,17 +84,6 @@ describe('a control of the main screen whose feature belongs to another task', (
 
     expect(shownAddress()).toBe(address);
     expect(screen.getByRole('header', { name: '파티' })).toBeVisible();
-  });
-
-  it.each([['오늘의 발자국', FOOTPRINTS]] as const)('says that it is not ready: %s', async (_control, name) => {
-    const user = await openMain();
-
-    await press(user, name);
-
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    expect(screen.queryByTestId('map-card')).toBeNull();
-    await pass(2400);
-    expect(screen.queryByText(NOT_READY)).toBeNull();
   });
 });
 
@@ -198,12 +170,11 @@ describe('what puts the keyboard down on the main screen', () => {
 });
 
 describe('the main screen while a card is open', () => {
-  it('hides "오늘의 발자국", "활성 파티" and the 편의기능 button, and keeps the lists, the AI input and the navigation', async () => {
+  it('hides "활성 파티" and the 편의기능 button, and keeps the lists, the AI input and the navigation', async () => {
     const user = await openMain();
 
     await press(user, FRIEND);
 
-    expect(findButton(FOOTPRINTS)).toBeNull();
     expect(findButton(ACTIVE_PARTY)).toBeNull();
     expect(findButton(LAYERS)).toBeNull();
     expect(button(FRIEND_PILL)).toBeVisible();
@@ -214,7 +185,7 @@ describe('the main screen while a card is open', () => {
     expect(screen.getByRole('tab', { name: '행사' })).toBeVisible();
 
     await press(user, '닫기');
-    expect(button(FOOTPRINTS)).toBeVisible();
+    expect(button(ACTIVE_PARTY)).toBeVisible();
     expect(button(LAYERS)).toBeVisible();
   });
 });

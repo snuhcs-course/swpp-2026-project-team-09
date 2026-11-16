@@ -3,12 +3,12 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
 import { startFresh } from '../support/mocks';
 import { freshWrapper, settle } from '../support/queries';
-import { useFootprints } from '@/features/footprints/use-footprints';
 import { toActiveParty } from '@/features/parties/adapter';
 import { useActiveParty } from '@/features/parties/use-active-party';
 
@@ -24,27 +24,6 @@ beforeEach(async () => {
 
 afterEach(() => {
   jest.useRealTimers();
-});
-
-describe('오늘의 발자국', () => {
-  it('has nothing beside its name while it loads, and then three faces and the number of Friends', async () => {
-    const { result } = await renderHook(useFootprints, { wrapper });
-    expect(result.current).toEqual({ faces: [], line: '' });
-
-    await settle();
-
-    expect(result.current.line).toBe('친구 5명의 오늘');
-    expect(result.current.faces.map(({ name }) => name)).toEqual(['김민준', '이서연', '박지호']);
-  });
-
-  it.each(['MOCK_FAIL', 'MOCK_EMPTY'] as const)('has its name alone with EXPO_PUBLIC_%s', async (setting) => {
-    process.env[`EXPO_PUBLIC_${setting}`] = 'getFootprints';
-    const { result } = await renderHook(useFootprints, { wrapper });
-
-    await settle();
-
-    expect(result.current).toEqual({ faces: [], line: '' });
-  });
 });
 
 describe('활성 파티', () => {
