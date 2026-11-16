@@ -8,6 +8,8 @@ import { screen } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
 import { STUDY_LOOKUP } from '@/api/mock/data/study-lookup';
 import { STUDY_BUILDINGS } from '@/api/mock/data/study-spaces';
+import type { StudyBuilding } from '@/api/study-types';
+import type { Viewport } from '@/features/assistant/study-area';
 import { markLibraryLoggedIn } from '@/library/flag';
 import { CAMPUS_BOUNDS, centreOf, project } from '@/map';
 import type * as SecureStoreFake from './support/secure-store';
@@ -53,9 +55,10 @@ const STAGE = { width: 390, height: 780 };
 const SHINYANG = { latitude: 37.4552, longitude: 126.95206 };
 const KWANJEONG_ID = STUDY_LOOKUP.scene.flags.find(({ role }) => role === 'away')?.placeId ?? '';
 // The 공부공간 layer as the main server serves it, 관정관 under its real Place id, which the flag points to.
-const LAYER = STUDY_BUILDINGS.map((building) =>
-  building.liveSeats === null ? building : { ...building, place: { ...building.place, id: KWANJEONG_ID } },
-);
+function atRealId(building: StudyBuilding): StudyBuilding {
+  return building.liveSeats === null ? building : { ...building, place: { ...building.place, id: KWANJEONG_ID } };
+}
+const LAYER = STUDY_BUILDINGS.map((building) => atRealId(building));
 // The free seats of the fake library's recorded seat lists of the seven sectors the layer gives, counted by hand
 // (STATUS 1 and USECNT 0): 179 + 470 + 110 + 182 + 164 + 512 + 112.
 const FREE_SEATS = 1729;
@@ -84,11 +87,18 @@ function contextOf(index: number): unknown {
   return typeof body === 'object' && body !== null && 'context' in body ? body.context : undefined;
 }
 
-function viewportOf(index: number): { south: number; west: number; north: number; east: number } | null {
+function isViewport(value: unknown): value is Viewport {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    ['south', 'west', 'north', 'east'].every((side) => side in value && typeof Reflect.get(value, side) === 'number')
+  );
+}
+
+function viewportOf(index: number): Viewport | null {
   const context = contextOf(index);
-  return typeof context === 'object' && context !== null && 'viewport' in context
-    ? (context.viewport as { south: number; west: number; north: number; east: number } | null)
-    : null;
+  const viewport: unknown = typeof context === 'object' && context !== null ? Reflect.get(context, 'viewport') : null;
+  return isViewport(viewport) ? viewport : null;
 }
 
 // Partitions: before the stage is laid out, and after. Expected values: the stage's size in points at the camera's
