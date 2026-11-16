@@ -4,15 +4,15 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useMemo } from 'react';
+import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { type DimensionValue, StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import type { MealInput, TimeBand } from '@/api/assistant-types';
 import { color, radius } from '@/design-system';
 import { bandMoved, bandStepped, clashesAt, movingWords } from '@/features/assistant/band-move';
 import { clashes, clockOf, shareOf, type Stretch } from '@/features/assistant/time-band';
 
-// The time band on its track, which a drag of its body moves whole (P02 ticket 25).
+// The time band on its track, which a drag on its lanes moves whole (P02 ticket 25).
 
 const PAN_STARTS = 10;
 
@@ -40,6 +40,57 @@ export function wordsOf(band: TimeBand, moving: Stretch | null): string {
   return (moving === null ? null : movingWords(band.lanes, moving)?.text) ?? band.text;
 }
 
+// The track's drag, which moves the band whole by the finger's distance in steps of five minutes and says where the
+// band is while it is dragged, and where it is let go. It starts anywhere on the lanes, the body included, outside the
+// handles' touch areas, which block it: a band narrower than the two touch areas is moved from beside it. Without
+// `onMove` it takes nothing, as for a Lookup's band.
+export function useWholeMove(
+  band: TimeBand,
+  trackWidth: number,
+  disabled: boolean,
+  onMove: OnMove | undefined,
+): PanGesture {
+  return useMemo(() => {
+    const at = (translationX: number): Stretch => bandMoved(band, translationX / trackWidth);
+    return Gesture.Pan()
+      .withTestId('time-band-lanes')
+      .runOnJS(true)
+      .enabled(onMove !== undefined && !disabled && trackWidth > 0)
+      .activeOffsetX([-PAN_STARTS, PAN_STARTS])
+      .failOffsetY([-PAN_STARTS, PAN_STARTS])
+      .onUpdate(({ translationX }) => {
+        onMove?.(at(translationX), false);
+      })
+      .onEnd(({ translationX }) => {
+        onMove?.(at(translationX), true);
+      });
+  }, [band, trackWidth, disabled, onMove]);
+}
+
+interface TrackProps {
+  whole: PanGesture;
+  onWidth: (width: number) => void;
+  children: ReactNode;
+}
+
+// The track the lanes, the band, and its handles lie on, which takes the drag that moves the band whole.
+export function Track({ whole, onWidth, children }: TrackProps): ReactElement {
+  return (
+    <GestureDetector gesture={whole}>
+      <View
+        collapsable={false}
+        onLayout={({ nativeEvent: { layout } }) => {
+          onWidth(layout.width);
+        }}
+        style={styles.track}
+        testID="time-band-track"
+      >
+        {children}
+      </View>
+    </GestureDetector>
+  );
+}
+
 interface BandProps {
   band: TimeBand;
   // Where the band is drawn.
@@ -48,48 +99,28 @@ interface BandProps {
   ghost: Stretch | null;
   // The band's place while it is moved whole, or null.
   moving: Stretch | null;
-  trackWidth: number;
   disabled: boolean;
-  // Without it the body takes no drag, as for a Lookup's band.
+  // Without it the body takes no step, as for a Lookup's band.
   onMove?: OnMove;
 }
 
-// The body between the handles: a drag moves the band whole by steps of five minutes, and a screen reader's step one
-// step; each says where the band is while it is dragged, and where it is let go.
-function Body({ band, shown, trackWidth, disabled, onMove }: BandProps & { onMove: OnMove }): ReactElement {
-  const pan = useMemo(() => {
-    const at = (translationX: number): Stretch => bandMoved(band, translationX / trackWidth);
-    return Gesture.Pan()
-      .withTestId('time-band-body')
-      .runOnJS(true)
-      .enabled(!disabled && trackWidth > 0)
-      .activeOffsetX([-PAN_STARTS, PAN_STARTS])
-      .failOffsetY([-PAN_STARTS, PAN_STARTS])
-      .onUpdate(({ translationX }) => {
-        onMove(at(translationX), false);
-      })
-      .onEnd(({ translationX }) => {
-        onMove(at(translationX), true);
-      });
-  }, [band, trackWidth, disabled, onMove]);
+// The body between the handles, which a screen reader's step moves whole by five minutes and lets go there.
+function Body({ band, shown, disabled, onMove }: BandProps & { onMove: OnMove }): ReactElement {
   return (
-    <GestureDetector gesture={pan}>
-      <View
-        accessible
-        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-        accessibilityLabel="시간 띠"
-        accessibilityRole="adjustable"
-        accessibilityState={{ disabled }}
-        accessibilityValue={{ text: `${clockOf(shown.startAt)}–${clockOf(shown.endAt)}` }}
-        collapsable={false}
-        onAccessibilityAction={({ nativeEvent: { actionName } }) => {
-          if (!disabled && (actionName === 'increment' || actionName === 'decrement')) {
-            onMove(bandStepped(band, actionName === 'increment' ? 1 : -1), true);
-          }
-        }}
-        style={[styles.band, placeOf(shown, band.range)]}
-      />
-    </GestureDetector>
+    <View
+      accessible
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      accessibilityLabel="시간 띠"
+      accessibilityRole="adjustable"
+      accessibilityState={{ disabled }}
+      accessibilityValue={{ text: `${clockOf(shown.startAt)}–${clockOf(shown.endAt)}` }}
+      onAccessibilityAction={({ nativeEvent: { actionName } }) => {
+        if (!disabled && (actionName === 'increment' || actionName === 'decrement')) {
+          onMove(bandStepped(band, actionName === 'increment' ? 1 : -1), true);
+        }
+      }}
+      style={[styles.band, placeOf(shown, band.range)]}
+    />
   );
 }
 
@@ -111,6 +142,7 @@ export function BandOnTrack(props: BandProps): ReactElement {
 }
 
 const styles = StyleSheet.create({
+  track: { flex: 1 },
   ghost: {
     position: 'absolute',
     top: 0,

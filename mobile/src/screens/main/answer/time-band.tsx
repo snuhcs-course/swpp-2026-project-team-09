@@ -8,7 +8,7 @@
 
 import { type ReactElement, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import type { MealInput, TimeBand as TimeBandData } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
 import {
@@ -20,7 +20,7 @@ import {
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
-import { BandOnTrack, percent, placeOf, redOf, wordsOf } from './band-body';
+import { BandOnTrack, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
 
 interface TimeBandProps {
   band: TimeBandData;
@@ -36,9 +36,9 @@ interface TimeBandProps {
   onDrop: (bound: BandBound, time: string) => void;
   // False draws no handles, as for a Lookup's band, which is not recalculated.
   handles?: boolean;
-  // The band's place while it is moved whole by a drag of its body, drawn in place of the Plan's.
+  // The band's place while it is moved whole by a drag on its lanes, drawn in place of the Plan's.
   moving?: Stretch | null;
-  // The body dragged to a place, or let go or stepped there. Without it the body takes no drag.
+  // Where a drag on the lanes moves the band whole, and where it is let go or stepped. Without it nothing does.
   onMove?: (at: Stretch, letGo: boolean) => void;
 }
 
@@ -67,9 +67,12 @@ interface HandleProps {
   disabled: boolean;
   onMove: (moved: Moved) => void;
   onLetGo: (moved: Moved) => void;
+  // The lanes' drag that moves the band whole, which waits while the handle has the touch.
+  whole: PanGesture;
 }
 
-function Handle({ bound, band, shown, trackWidth, focused, disabled, onMove, onLetGo }: HandleProps): ReactElement {
+function Handle(props: HandleProps): ReactElement {
+  const { bound, band, shown, trackWidth, focused, disabled, onMove, onLetGo, whole } = props;
   const own = bound === 'from' ? band.startAt : band.endAt;
   const pan = useMemo(() => {
     const at = (translationX: number): Moved => ({
@@ -80,6 +83,7 @@ function Handle({ bound, band, shown, trackWidth, focused, disabled, onMove, onL
       .withTestId(`time-band-${bound}`)
       .runOnJS(true)
       .enabled(!disabled && trackWidth > 0)
+      .blocksExternalGesture(whole)
       .hitSlop({ left: HANDLE_SLOP, right: HANDLE_SLOP })
       .activeOffsetX([-PAN_STARTS, PAN_STARTS])
       .failOffsetY([-PAN_STARTS, PAN_STARTS])
@@ -89,7 +93,7 @@ function Handle({ bound, band, shown, trackWidth, focused, disabled, onMove, onL
       .onEnd(({ translationX }) => {
         onLetGo(at(translationX));
       });
-  }, [bound, band, own, trackWidth, disabled, onMove, onLetGo]);
+  }, [bound, band, own, trackWidth, disabled, onMove, onLetGo, whole]);
   const time = bound === 'from' ? shown.startAt : shown.endAt;
   return (
     <GestureDetector gesture={pan}>
@@ -187,11 +191,12 @@ function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandPro
 }
 
 // The time band of the answer's card: each person's busy stretches, the line of now, and the Plan's band with a
-// handle at each end, which a drag or a screen reader's step moves by five minutes, and a body that moves it whole.
+// handle at each end, which a drag or a screen reader's step moves by five minutes, and lanes that move it whole.
 export function TimeBand(props: TimeBandProps): ReactElement {
-  const { band, fixed, focus, disabled, onDrop, handles = true, moving = null } = props;
+  const { band, fixed, focus, disabled, onDrop, handles = true, moving = null, onMove } = props;
   const [trackWidth, setTrackWidth] = useState(0);
   const moved = useMovedBand(band, disabled, onDrop);
+  const whole = useWholeMove(band, trackWidth, disabled, onMove);
   const shown = moving ?? moved.shown;
   const handle = (bound: BandBound): ReactElement => (
     <Handle
@@ -200,6 +205,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
       disabled={disabled}
       focused={focus === bound}
       trackWidth={trackWidth}
+      whole={whole}
       {...moved}
       shown={shown}
     />
@@ -214,18 +220,12 @@ export function TimeBand(props: TimeBandProps): ReactElement {
             </Text>
           ))}
         </View>
-        <View
-          onLayout={({ nativeEvent: { layout } }) => {
-            setTrackWidth(layout.width);
-          }}
-          style={styles.track}
-          testID="time-band-track"
-        >
+        <Track onWidth={setTrackWidth} whole={whole}>
           <Lanes band={band} fixed={fixed} moving={moving} />
-          <BandOnTrack {...props} moving={moving} shown={shown} trackWidth={trackWidth} />
+          <BandOnTrack {...props} moving={moving} shown={shown} />
           {handles ? handle('from') : null}
           {handles ? handle('until') : null}
-        </View>
+        </Track>
       </View>
       <View style={styles.ends}>
         <Text style={styles.end}>{clockOf(band.range.startAt)}</Text>
@@ -241,7 +241,6 @@ const styles = StyleSheet.create({
   lanes: { flexDirection: 'row' },
   names: { width: NAME_WIDTH },
   name: { ...text.caption, height: LANE_HEIGHT, lineHeight: LANE_HEIGHT, color: color.inkMuted },
-  track: { flex: 1 },
   lane: { height: LANE_HEIGHT, justifyContent: 'center' },
   bar: { height: BAR_HEIGHT, borderRadius: radius.full, backgroundColor: color.surfaceSunken },
   busy: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.borderStrong },

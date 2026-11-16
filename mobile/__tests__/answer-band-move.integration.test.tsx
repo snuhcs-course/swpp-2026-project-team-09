@@ -13,7 +13,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { screen } from './support/app';
 import { card } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
-import { body, holdBody, layTrack } from './support/band-move';
+import { body, holdBody, holdLanes, layTrack } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
@@ -144,5 +144,19 @@ describe('the band dragged elsewhere and held', () => {
 
     expect(body()).toHaveAccessibilityValue({ text: '12:15–12:43' });
     expect(card().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
+  });
+});
+
+// Partitions: a drag that starts on the lanes beside the band, outside the handles' touch areas. a5's band is 28
+// minutes, 28 points here, which the two handles' 44-point touch areas cover whole, so a drag that starts on the band
+// moves a handle.
+describe('the band dragged from its lanes beside it', () => {
+  it("moves whole by the finger's distance from 15:00's place, to 15:20 (board a12), not to the finger", async () => {
+    await meetMinSu();
+
+    await holdLanes(180, 185);
+
+    expect(body()).toHaveAccessibilityValue({ text: '15:20–15:48' });
+    expect(card().getByText('15:20–15:48 · 민수가 안 돼요')).toBeVisible();
   });
 });
