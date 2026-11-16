@@ -8,6 +8,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -25,9 +26,9 @@ import {
   placesNamingNoPlace,
   postAddress,
   postNumbersFrom,
-  stepOver,
 } from './global-events.js';
 import { SignalWatcher, signalsWhile } from './signals.js';
+import { collected as collectedBy } from './source-posts.js';
 import { startApp } from './start-app.js';
 import { refusal, sendAsWorker } from './worker.js';
 
@@ -66,10 +67,9 @@ function eventsStatus(): Promise<CollectionStatus | null> {
   return prisma.collectionStatus.findUnique({ where: { source: 'snu_events' } });
 }
 
-// Sends a message and waits for the step after its answer.
-async function collected(message: object): Promise<void> {
-  await sendAsWorker(app, '/global-events/collected', message);
-  await stepOver(prisma);
+// Sends a message and waits for the step after its answer to return, its signal sent.
+function collected(message: object): Promise<void> {
+  return collectedBy({ app, prisma }, message);
 }
 
 // Sends a post of its own, with `changes` applied, and gives what was stored of it.
