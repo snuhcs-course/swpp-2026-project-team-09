@@ -93,10 +93,11 @@ P11's walking and shuttle times and P12's changes to the searches and the recrui
   the User's parties, the Places' outlines, the to-do list (퀘스트) of today's classes and parties, a card for whatever
   is pressed, one marker for everything at one place (events, parties, restaurants and shuttle stops) whose card lists
   each kind, and a walking route on request.
-- **Location Sharing**: the Master Switch (친구와 위치 공유) on 내 정보, off until the User turns it on; a switch for
-  each Friend and each active party; the position sent every 5 seconds while the app is open and, on Android, every 30
-  seconds in the background under a notification; Avatars dimmed after 2 minutes without a position and removed after
-  10; nobody shown outside the Campus Boundary, and no history kept.
+- **Location Sharing**: the Master Switch (위치 공유) on 내 정보, off until the User turns it on; a level for
+  each Friend and a switch for each active party, shown off and disabled while the Master Switch is off; the position
+  sent every 5 seconds while the app is open and, on Android, every 30 seconds in the background under a
+  notification; Avatars dimmed after 2 minutes without a position and removed after 10; nobody shown outside the
+  Campus Boundary, and no history kept.
 - **Friends**: Friend Requests by Friend ID, one-time Invite Links sent through any messenger, a sharing switch per
   Friend, and ending a friendship.
 - **Parties (파티)**: a party for a Global Event or a plan of the User's own, with a capacity of 1 to 8 and a Join

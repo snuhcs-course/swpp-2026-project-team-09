@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import { givePhone, ON_CAMPUS, openMain, type Phone } from './support/main';
 import { startFresh } from './support/mocks';
 import { apiClient } from '@/api/client';
 
-// The switch "친구와 위치 공유" on 내 정보, which is the Master Switch, against the mocks, which keep it in memory and
+// The switch "위치 공유" on 내 정보, which is the Master Switch, against the mocks, which keep it in memory and
 // start with it off.
 
 jest.mock('expo-location');
@@ -21,7 +22,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const SWITCH = '친구와 위치 공유';
+const SWITCH = '위치 공유';
 const EXPLANATION = '내 위치를 지도에 표시할까요?';
 const NEEDS_PERMISSION = '위치 권한을 허용해야 공유할 수 있어요';
 
