@@ -49,7 +49,7 @@ export class SeatStaysService {
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
-  async make(userId: string, { spaceId, seat, date, start, minutes }: SeatStayBody): Promise<SeatStayDto> {
+  async make(userId: string, { spaceId, date, start, minutes }: SeatStayBody): Promise<SeatStayDto> {
     const space = this.catalogue.byId.get(spaceId);
     if (space?.unit !== 'seat') {
       throw notASeat();
@@ -63,7 +63,7 @@ export class SeatStaysService {
       kwanjeong === null
         ? null
         : seatLeaveBy(items, { startsAt, endsAt, placeId: kwanjeong.id }, this.walkingMinutes, this.clock.now());
-    const title = `${roomLabelOf(space, spaceId)} ${seat}번`;
+    const title = roomLabelOf(space, spaceId);
     const questId = await this.prisma.$transaction((tx) =>
       this.quests.createWithSubQuest(
         {

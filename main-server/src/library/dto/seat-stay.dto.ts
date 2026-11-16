@@ -7,12 +7,11 @@
 import { z } from 'zod';
 import { type QuestDto } from '../../quests/dto/quest.dto.js';
 
-// A seat the app booked on the library's site (README.md: A seat's stay).
+// A seat the app booked on the library's site (README.md: A seat's stay). The seat and the booking number stay on the
+// phone, as every library reply does.
 
 export const seatStaySchema = z.strictObject({
   spaceId: z.string().min(1).max(40),
-  // The seat as the library names it, such as "7193".
-  seat: z.string().trim().min(1).max(20),
   date: z.iso.date(),
   start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/u),
   minutes: z
