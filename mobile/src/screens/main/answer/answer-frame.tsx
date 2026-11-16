@@ -149,7 +149,7 @@ function contentMaxOf(stageHeight: number | null, barRoom: number): number | nul
 export function FrameCard(props: FrameCardProps): ReactElement {
   const { barRoom, stageHeight, onHeight, testID, hold = false, children } = props;
   const contentMax = contentMaxOf(stageHeight, barRoom);
-  const { minHeight, onContentSizeChange } = useHeldHeight(hold);
+  const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -163,6 +163,7 @@ export function FrameCard(props: FrameCardProps): ReactElement {
           contentContainerStyle={[styles.content, { minHeight }]}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={onContentSizeChange}
+          ref={scroll}
           testID={`${testID}-content`}
           style={contentMax === null ? undefined : { maxHeight: contentMax }}
         >

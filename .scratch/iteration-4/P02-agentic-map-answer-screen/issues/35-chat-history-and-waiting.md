@@ -92,6 +92,8 @@ The debug build with the mock API. The Assistant, taps, and recalculations were 
   - "대화를 지웠어요 · 되돌리기" (a12) brings the conversation back (a13);
   - the dots in "여기서 먹기" (a15).
 
+- Found while checking ticket 36's chips: a question asked from a card scrolled down left the card scrolled, so the new question stood out of sight above the dots. The card now goes back to its top when a reply starts to wait (`held-height.ts`).
+
 ### Agent usage (2026-11-17)
 
 - Agent time: about 70 minutes of one session, from the chat walk to the pull request, including the walk through the rest of the app. An estimate from the transcript's timestamps.

@@ -7,6 +7,7 @@
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -199,6 +200,17 @@ describe('waiting for the reply (n18)', () => {
     await fireEvent(content, 'contentSizeChange', 390, 120);
 
     expect(content.props.contentContainerStyle).toContainEqual({ minHeight: 420 });
+  });
+
+  it('starts at the top of the card, where the next question stands, however far the reply was scrolled', async () => {
+    const scrolled = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    const user = await openMain();
+    await ask(user);
+    scrolled.mockClear();
+
+    await send(user, '한식');
+
+    expect(scrolled).toHaveBeenCalledWith({ y: 0, animated: false });
   });
 
   it('brings the input back with the reply', async () => {
