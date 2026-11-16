@@ -1,8 +1,8 @@
-# A02 baseline: every suite on the paths production may use (2026-11-15)
+# A02 baseline: every suite on the paths production may use (2026-11-15–16)
 
 A02 ticket 05 (`.scratch/iteration-4/A02-llm-provider-and-key-switch/issues/05-baseline-and-docs.md`). After A02 an Administrator chooses the AI's key, and with it the provider, on the admin site. This record runs the eval suites on both providers, so that later work is measured against either path. Each run sits beside the last OpenRouter run of its suite **as a different condition** (metrics 4.3): the provider, the caching mode and the code all differ from that run.
 
-**Status: partly run.** The collection evaluations ran. The chat suites (P19, the P5 small and large worlds, P6) did not: the disk of the machine that runs them was full, and the evals' PostgreSQL container could not start (`initdb: could not create directory "/var/lib/postgresql/18/docker/pg_wal": No space left on device`). They run on the same commit once space is freed, and their rows are added here.
+**Status: all but one run.** Every suite ran on `edd356ae`, except the P5 small world on OpenRouter: its run was interrupted when the machine slept, and the run once more was not started ("The interrupted run" below). The chat suites waited until disk space was freed: the evals' PostgreSQL container could not start on a full disk.
 
 ## Conditions
 
@@ -66,16 +66,46 @@ C1 (35 and 38 against 40 of 64) and C6 (63 and 62 against 61 of 85) are within w
 
 **The two providers agree within noise on evaluation B.** One AI answer moved from a choice to "unsure", which the queue recall counts and D4 adds.
 
-## Chat suites: not run yet
+## Chat suites
 
-| Suite          | Providers | Beside                                            | Command (from `main-server/`)                                                                                               |
-| -------------- | --------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| P19            | both      | `40cb60e5` `-3`–`-5`, 56–59/64 (`eval/p5/p12.md`) | `pnpm eval --provider openrouter --budget 1.5 --yes`; `pnpm eval --provider anthropic --cache breakpoints --budget 1 --yes` |
-| P5 small world | both      | `40cb60e5`, 246/300 (`eval/p5/p12.md`)            | `pnpm eval --world p5 --provider <p> [--cache breakpoints] --budget 5 --yes`                                                |
-| P5 large world | Anthropic | `40cb60e5` `-2`, 162/240 (`eval/p5/p12.md`)       | `pnpm eval --world large-world-v1 --provider anthropic --cache breakpoints --budget 2 --yes`                                |
-| P6             | Anthropic | `869acde2` `-3`, 140/192 (`eval/p6/r1.md`)        | `pnpm eval --world p6 --provider anthropic --cache breakpoints --budget 1 --yes`                                            |
+Run on 2026-11-15 and 16 (KST) with the commit `edd356ae` checked out detached in the same worktree, the tree clean before each run. Beside `40cb60e5` (P12 after set, OpenRouter, `eval/p5/p12.md`) for P19 and P5, and `869acde2` (P6 R1, OpenRouter, `eval/p6/r1.md`) for P6. Time per turn is the scorecard's average latency. Pass counts leave out known failures.
 
-The first attempt, P19 on Anthropic, stopped before any model call, so it cost nothing. The runs go in a detached worktree at `edd356ae`, so that they measure the same commit as the collection runs.
+| Run                              | Provider   | Turns                            | Input      | Cache read | Cache write | Output  | Hit rate | Cost            | Per turn      | Time per turn | Steps     | Passed        | pass^3    |
+| -------------------------------- | ---------- | -------------------------------- | ---------- | ---------- | ----------- | ------- | -------- | --------------- | ------------- | ------------- | --------- | ------------- | --------- |
+| P19, `40cb60e5` `-3`, `-4`, `-5` | OpenRouter | 75 each                          | 5.14–5.26M | 0          | 0           | 41–43k  | 0%       | USD 0.535–0.547 | 0.0071–0.0073 | 4.8–4.9 s     | 2.60–2.65 | 57, 59, 56/64 | 5, 5, 4/5 |
+| P19                              | OpenRouter | 75                               | 5,310,183  | 0          | 0           | 41,728  | 0%       | USD 0.5519      | 0.00736       | 4.4 s         | 2.63      | 58/64         | 5/5       |
+| P19                              | Anthropic  | 75                               | 5,246,892  | 5,142,504  | 103,848     | 40,474  | 98.0%    | USD 0.0847      | 0.00113       | 4.4 s         | 2.60      | 58/64         | 5/5       |
+| P5 small world, `40cb60e5`       | OpenRouter | 300                              | 23,856,199 | 0          | 0           | 227,629 | 0%       | USD 2.4994      | 0.00833       | 5.9 s         | 2.92      | 246/300       | 75/100    |
+| P5 small world                   | OpenRouter | not counted: interrupted (below) |            |            |             |         |          |                 |               |               |           |               |           |
+| P5 small world                   | Anthropic  | 300                              | 24,751,446 | 23,941,999 | 807,069     | 227,529 | 96.7%    | USD 0.4543      | 0.00151       | 5.7 s         | 2.96      | 243/300       | 75/100    |
+| P5 large world, `40cb60e5` `-2`  | OpenRouter | 240                              | 21,330,094 | 0          | 0           | 221,588 | 0%       | USD 2.2438      | 0.00935       | 6.7 s         | 2.98      | 162/240       | 49/80     |
+| P5 large world                   | Anthropic  | 240                              | 21,869,529 | 20,239,840 | 1,627,773   | 228,883 | 92.5%    | USD 0.5205      | 0.00217       | 6.7 s         | 2.99      | 160/240       | 47/80     |
+| P6, `869acde2` `-3`              | OpenRouter | 192                              | 10,409,554 | 0          | 0           | 112,642 | 0%       | USD 1.0973      | 0.00571       | 3.9 s         | 2.08      | 140/192       | 43/64     |
+| P6                               | Anthropic  | 192                              | 10,734,814 | 10,539,360 | 194,272     | 113,087 | 98.2%    | USD 0.1863      | 0.00097       | 4.0 s         | 2.08      | 134/192       | 41/64     |
+
+On every suite a turn costs 77–86% less on the Anthropic path, and takes the same time. Steps and input per turn are the same on both paths.
+
+### P19: the two providers agree
+
+Both passed 58/64 on `edd356ae`, inside the 56–59/64 of the three OpenRouter runs of `40cb60e5`, with all five repeated cases passing every run. **The two providers agree within noise.**
+
+### P5 small world (Anthropic)
+
+243/300 against 246/300, and 75/100 cases passing all three runs on both. The thresholds give the same floor verdicts as `40cb60e5`. Three targets change verdict, each by one or a few runs: J3b 12/12 → 11/12 (FAIL), E5 18/18 → 17/18 (FAIL), E7 243/282 → 255/282 (now PASS). J10 stays under its floor (3/12) as before. Within noise.
+
+### P5 large world (Anthropic): E4 moved, from one case
+
+160/240 against 162/240, pass^3 47/80 against 49/80, and every other metric within a few runs (E1 88.3% against 86.2%, E3 122/129 on both, E7 325/432 against 321/432, E9 67/141 against 65/141, E8 0). **E4, the recall of the volume subset V, fell from 149/177 to 122/177 (84.2% to 68.9%) and missed its 0.8 target.** Almost all of it is `large-v-02` ("오늘 저녁 8시 이후 파티 찾아줘", about 17 parties): in 2 of 3 runs the model showed the 3 earliest and asked what kind to narrow to, where the label wants every party shown; on `40cb60e5` it showed all of them in 3 of 3. The searches were the same. It is one case's choice between listing and narrowing, which E4 counts card by card, so one case moves it by over 10 points. One run each cannot tell the provider from sampling; a second Anthropic run of the large world would.
+
+### P6 (Anthropic): group rooms moved, by wording
+
+134/192 against 140/192, pass^3 41/64 against 43/64. Five categories are within a run or three of R1; refusals are 24/30 against 27/30 (one run each in three cases). **Group rooms fell from 11/21 to 6/21.** `p6-group-rooms-g201` went from 3/3 to 0/3 and `p6-group-rooms-below-min` from 2/3 to 0/3. In both, the model called the right tools and refused correctly, as the label wants, but its reply did not repeat the number the label checks for ("8명" for the app's party limit, "1명" more needed): it explained the refusal in other words. The comparison run is `869acde2`, two weeks and P13 older, so the code differs as well as the provider. This is a wording difference, not a wrong booking; it is read as a candidate for the label's `text.mentions`, not for the code.
+
+### The interrupted run
+
+The first OpenRouter run of the P5 small world (`…-cacheoff-interrupted`) is left out. The machine slept for about nine hours during it (test time 1,173 s, wall time 00:42 to 10:08 KST). The seeded User's access token expired over the gap, so 96 turns got the server's own `401 Unauthorized`, and 2 got 503. It reads 165/300 with 98 ERROR. The OpenRouter key itself was fine (checked afterwards, USD 51.52 left). It cost USD 1.7601.
+
+**It was not repeated:** the session's permission check refused the command for the run once more, and no new paid run was started after that, so the P5 small world has no OpenRouter row on `edd356ae` yet, and whether the two providers agree on it is not measured. The command is `pnpm eval --world p5 --provider openrouter --budget 4 --yes` at `edd356ae`; its estimate is USD 2.6 (the interrupted run's 202 answered turns cost USD 1.76).
 
 ## Commands
 
@@ -85,6 +115,12 @@ From `main-server/`, with `npx -y pnpm@12.6` as `pnpm` and Node 24.14.0:
 pnpm eval:collection --run judgement --part held-out --provider anthropic --cache breakpoints --budget 1   # run 1
 pnpm eval:collection --run ai-choice --part held-out --from eval/results/collection-held-out-judgement-anthropic-cachebreakpoints-edd356ae.json --provider anthropic --cache breakpoints --budget 1
 pnpm eval:collection --run judgement --part held-out --provider anthropic --cache breakpoints --budget 1   # run 2, renamed -2
+pnpm eval --provider anthropic --cache breakpoints --budget 1 --yes
+pnpm eval --provider openrouter --budget 1.5 --yes
+pnpm eval --world p5 --provider anthropic --cache breakpoints --budget 1.5 --yes
+pnpm eval --world large-world-v1 --provider anthropic --cache breakpoints --budget 2 --yes
+pnpm eval --world p6 --provider anthropic --cache breakpoints --budget 1 --yes
+pnpm eval --world p5 --provider openrouter --budget 5 --yes   # interrupted
 ```
 
 Run 2 writes the same file name as run 1; it was renamed `…-edd356ae-2` and run 1's files put back.
@@ -96,15 +132,25 @@ In `eval/results/`, each `.json` with its `.md` scorecard, committed with `git a
 - `collection-held-out-judgement-anthropic-cachebreakpoints-edd356ae` (A, run 1)
 - `collection-held-out-judgement-anthropic-cachebreakpoints-edd356ae-2` (A, run 2)
 - `collection-held-out-ai-choice-anthropic-cachebreakpoints-edd356ae` (B, from run 1)
+- `2026-11-15-edd356ae-anthropic-claude-haiku-5-5-s8-t30000-o4000-tempdefault-toppdefault-cachebreakpoints` (P19) and `…-2` (P5 small world)
+- `2026-11-15-edd356ae-openrouter-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault-cacheoff` (P19)
+- `2026-11-16-edd356ae-anthropic-claude-haiku-5-5-s8-t30000-o4000-tempdefault-toppdefault-cachebreakpoints` (P5 large world) and `…-2` (P6)
+- `2026-11-16-edd356ae-openrouter-anthropic_claude-haiku-5.5-s8-t30000-o4000-tempdefault-toppdefault-cacheoff-interrupted` (P5 small world, not counted)
 
 ## Cost
 
-| Run                                            | Provider  | Estimate | Measured   |
-| ---------------------------------------------- | --------- | -------- | ---------- |
-| P19 (first attempt, stopped before any call)   | Anthropic | 0.11     | 0.0000     |
-| A `judgement`, run 1                           | Anthropic | 0.10     | 0.0735     |
-| B `ai-choice`                                  | Anthropic | 0.01     | 0.0055     |
-| A `judgement`, run 2 (added to read C2 and C3) | Anthropic | 0.10     | 0.0685     |
-| **Anthropic**                                  |           |          | **0.1475** |
-| **OpenRouter**                                 |           |          | **0.0000** |
-| **All so far**                                 |           |          | **0.1475** |
+| Run                                            | Provider   | Estimate | Measured   |
+| ---------------------------------------------- | ---------- | -------- | ---------- |
+| P19 (first attempt, stopped before any call)   | Anthropic  | 0.11     | 0.0000     |
+| A `judgement`, run 1                           | Anthropic  | 0.10     | 0.0735     |
+| B `ai-choice`                                  | Anthropic  | 0.01     | 0.0055     |
+| A `judgement`, run 2 (added to read C2 and C3) | Anthropic  | 0.10     | 0.0685     |
+| P19                                            | Anthropic  | 0.11     | 0.0847     |
+| P5 small world                                 | Anthropic  | 0.52     | 0.4543     |
+| P5 large world                                 | Anthropic  | 0.56     | 0.5205     |
+| P6                                             | Anthropic  | 0.25     | 0.1863     |
+| P19                                            | OpenRouter | 0.71     | 0.5519     |
+| P5 small world (interrupted)                   | OpenRouter | 3.25     | 1.7601     |
+| **Anthropic**                                  |            | 1.55     | **1.3933** |
+| **OpenRouter**                                 |            | 3.96     | **2.3120** |
+| **All**                                        |            | 5.51     | **3.7053** |

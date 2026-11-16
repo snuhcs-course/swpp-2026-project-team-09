@@ -12,13 +12,13 @@ We call Anthropic directly when it is chosen, for A01's three reasons:
 
 - **One platform per message.** OpenRouter routes `anthropic/claude-haiku-5.5` by weighted random choice over several platforms (Anthropic, Claude Platform on AWS, Amazon Bedrock, Google Vertex, Azure), and only a request with `cache_control` sticks to one. One message of ours is a loop of several model calls, and Haiku 5.5's thinking blocks belong to the conversation that produced them, so a step served by another platform may lose the earlier step's reasoning without an error.
 - **Prompt caching.** We send no `cache_control` through OpenRouter, so its calls read and write no cached tokens, while input is over 90% of a chat turn's cost. On the Anthropic API the constant part of each prompt is cached behind an explicit breakpoint, and the chat's growing conversation automatically, at a tenth of the input price on a read. A01's experiment measured a P19 turn at USD 0.0011 under `breakpoints`, against 0.0072 with no caching (`.scratch/iteration-3/A01-openrouter-to-claude-console/caching-experiment.md`). Caching changes cost and latency, never the output.
-- **One account fewer** on the path, with one monthly spend limit that 안진영 sets in the Claude Console.
+- **One account fewer** on the path, with the team's monthly spend limit in the Claude Console.
 
 We keep OpenRouter beside it, and make the choice a setting rather than a start-up value, for one more reason:
 
 - **A switch without a Release.** When a key runs out of credit or hits its spend limit, every AI feature stops. Only a person with AWS access can release, so a start-up setting kept the Assistant down until one was found. An Administrator can now choose another key on the admin site, and every pod uses it from the next minute.
 
-Both paths serve the same model snapshot with the same system prompt, tools and limits, so a switch is not expected to change what a User sees. Each eval suite ran on both paths, or on Anthropic where only one run was affordable, and those runs are the baseline (A02 ticket 05).
+Both paths serve the same model snapshot with the same system prompt, tools and limits, so a switch is not expected to change what a User sees. The baseline (A02 ticket 05, `main-server/eval/a02-baseline.md`) ran P19 on both paths, and the P5 small and large worlds, P6 and evaluations A and B on the Anthropic path; the P5 small world's OpenRouter run was interrupted and not repeated, so its last OpenRouter run (`40cb60e5`) stands beside it.
 
 ## Considered Options
 
