@@ -4,7 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine, TimeBand } from '@/api/assistant-types';
+import type { AnswerLine, ConditionChip, TimeBand } from '@/api/assistant-types';
 import { withParticle } from '@/features/map/short-name';
 
 import { clockAt, clockOf, msOf, onBandDay, STEP_MS, type Stretch } from './time-band';
@@ -63,6 +63,20 @@ export function absentNames(clashes: readonly Clash[]): string[] {
 // short-name's particle follows the last syllable's final consonant: 과 after one.
 function endsClosed(word: string): boolean {
   return withParticle(word).endsWith('과');
+}
+
+// The condition chips while the band is moved whole: the time chip, the start the User fixed or else the end the
+// answer used, says the band's start, and is the one `changed`.
+export function chipsWhileMoved(
+  chips: readonly ConditionChip[],
+  at: Stretch | null,
+): { chips: readonly ConditionChip[]; changed: ConditionChip | null } {
+  const time = chips.find(({ kind }) => kind === 'from') ?? chips.find(({ kind }) => kind === 'until');
+  if (at === null || time === undefined) {
+    return { chips, changed: null };
+  }
+  const changed = { ...time, text: clockOf(at.startAt) };
+  return { chips: chips.map((chip) => (chip === time ? changed : chip)), changed };
 }
 
 // The band's words and the card's lines while the band overlaps someone's busy stretch; null while it overlaps none.

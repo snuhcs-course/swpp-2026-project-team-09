@@ -4,9 +4,16 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine, TimeBand } from '@/api/assistant-types';
+import type { AnswerLine, ConditionChip, TimeBand } from '@/api/assistant-types';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
-import { absentNames, bandMoved, bandStepped, clashesAt, movingWords } from '@/features/assistant/band-move';
+import {
+  absentNames,
+  bandMoved,
+  bandStepped,
+  chipsWhileMoved,
+  clashesAt,
+  movingWords,
+} from '@/features/assistant/band-move';
 import type { Stretch } from '@/features/assistant/time-band';
 
 // The band of the first Plan of the stored reply to 민수's meet (board a5): the range 12:00 to 18:30, the band 12:15 to
@@ -200,5 +207,40 @@ describe('movingWords of two names, of none, and without a label', () => {
 
   it('gives no words for a band that overlaps nobody', () => {
     expect(movingWords(lanes, stretch('12:15', '12:43'))).toBeNull();
+  });
+});
+
+describe('chipsWhileMoved', () => {
+  // Partitions: no band moved; a meet's chips with the end the answer used (board a12); chips with a start the User
+  // fixed and an end; chips without a time chip.
+  const { chips } = MEET_ANSWER;
+  const [origin, until, person] = chips;
+  const FROM_CHIP: ConditionChip = { kind: 'from', text: '14:00부터', userId: null };
+
+  it('keeps the chips as they are while no band is moved', () => {
+    expect(chipsWhileMoved(chips, null)).toEqual({ chips, changed: null });
+  });
+
+  it("writes the band's start in the end's chip, and keeps the origin and the person (board a12)", () => {
+    const moved = chipsWhileMoved(chips, stretch('15:20', '15:48'));
+
+    expect(moved.chips).toEqual([origin, { ...until, text: '15:20' }, person]);
+    expect(moved.changed).toBe(moved.chips[1]);
+  });
+
+  it("writes it in the chip of the start the User fixed rather than the end's", () => {
+    // a5's chips with a start chip after the origin, as board a6 draws "14:00부터".
+    const both = chips.toSpliced(1, 0, FROM_CHIP);
+
+    const moved = chipsWhileMoved(both, stretch('15:20', '15:48'));
+
+    expect(moved.chips.map(({ text }) => text)).toEqual(['301동에서', '15:20', '13:00 수업까지', '민수']);
+    expect(moved.changed).toBe(moved.chips[1]);
+  });
+
+  it('changes nothing without a time chip', () => {
+    const untimed = chips.filter(({ kind }) => kind !== 'until');
+
+    expect(chipsWhileMoved(untimed, stretch('15:20', '15:48'))).toEqual({ chips: untimed, changed: null });
   });
 });
