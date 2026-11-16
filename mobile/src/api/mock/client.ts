@@ -240,7 +240,7 @@ export const mockClient: ApiClient = {
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
   answerTap: (tapped) => answer('answerTap', () => mockTap(tapped)),
-  makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
+  makePlanQuest: (making) => answer('makePlanQuest', () => mockPlanQuest(making)),
   getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
   changePlanQuest: () => answer('changePlanQuest', mockChangedPlanQuest),
   getInvitationCard: (invitationId) => answer('getInvitationCard', () => mockInvitationCard(invitationId)),

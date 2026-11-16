@@ -37,7 +37,6 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const ASKED = '오늘 볼 만한 거 있어?';
-const CULTURE_HALL = { latitude: 37.46159, longitude: 126.95104 };
 
 let server: FakeServer;
 
@@ -73,7 +72,7 @@ describe('an events answer (board Alone 1)', () => {
     expect(card().getByText('15:30 수업이라 15:12엔 나서요')).toBeVisible();
     expect(card().getByTestId('plan-count')).toHaveTextContent('1/3');
     expect(card().getByRole('button', { name: '다음 후보' })).toBeVisible();
-    for (const label of ['같이 갈 파티', '새로 모집', '길 안내']) {
+    for (const label of ['여기로', '같이 갈 파티', '새로 모집']) {
       expect(card().getByRole('button', { name: label })).toBeEnabled();
     }
     expect(card().queryByRole('button', { name: /친구 추가/u })).toBeNull();
@@ -146,8 +145,8 @@ describe('the buttons of an events Plan', () => {
   });
 });
 
-// Partitions: the second Plan's parties; the way to the first Plan's Place.
-describe('the buttons of another events Plan, and "길 안내"', () => {
+// Partitions: the second Plan's parties.
+describe('the buttons of another events Plan', () => {
   it('"같이 갈 파티" of the second Plan asks for the parties of the concert', async () => {
     const user = await sayOnMap(server, ASKED, EVENTS_REPLY);
     await user.press(card().getByRole('button', { name: '다음 후보' }));
@@ -161,34 +160,5 @@ describe('the buttons of another events Plan, and "길 안내"', () => {
         location: ON_CAMPUS,
       },
     ]);
-  });
-
-  it('"길 안내" starts the route guidance to the event\'s Place and returns to the everyday map', async () => {
-    // A way found, so that no "길을 찾지 못했어요" takes the guidance's words' place.
-    server.on('GET /walking-route', {
-      status: 200,
-      body: { status: 'OK', route: { line: [ON_CAMPUS, CULTURE_HALL], distance: 400, duration: 300 } },
-    });
-    const user = await sayOnMap(server, ASKED, EVENTS_REPLY);
-    const before = server.received('GET /walking-route').length;
-
-    await user.press(card().getByRole('button', { name: '길 안내' }));
-    await pass(500);
-
-    expect(
-      server
-        .received('GET /walking-route')
-        .slice(before)
-        .map(({ query }) => query),
-    ).toEqual([
-      {
-        startLatitude: String(ON_CAMPUS.latitude),
-        startLongitude: String(ON_CAMPUS.longitude),
-        endLatitude: String(CULTURE_HALL.latitude),
-        endLongitude: String(CULTURE_HALL.longitude),
-      },
-    ]);
-    expect(screen.getByText('문화관까지 길 안내')).toBeVisible();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
   });
 });
