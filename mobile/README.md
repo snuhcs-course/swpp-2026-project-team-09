@@ -647,7 +647,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   as `viewport` (`useViewport`: the stage under the status bar at the camera, null until both are known). A `study`
   Lookup ("이 근처") outlines the area its request sent, leaves the camera where it is, and adds the free seats the
   phone reads from its own library session to the flag towards 관정 (`study-area.ts`, `use-away-seats.ts`); its card's
-  main button reads "가는 길", and its `ask` action "관정 보기" sends its words as the User's.
+  main button reads "가는 길", and its `ask` action "관정 보기" sends its words as the User's. While a meal's Plan is on
+  screen, a press on a building recalculates the conditions with that Place fixed and shows "여기면 어때?" over the Plan,
+  which stays underneath: each person's arrival, the time together against the Plan, "여기로 바꾸기" and "그대로"
+  (`use-how-about.ts`, `how-about-card.tsx`); "그대로", the pill's ✕, and Android's back return to the Plan.
 - **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the
   conversation's last reply (a failure and the app's own bubble are none), so it stays while a follow-up waits or has
   failed, or a recalculation that replaced it, held with the index of the Plan on screen and whether its basis is open

@@ -25,9 +25,10 @@ import {
 } from './answer-words.js';
 import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
 import { bandOf, sceneOf } from './meal-scene.js';
-import { missingLines, missingParts, NEAREST_BASIS, nearestFirst } from './missing-inputs.js';
+import { missingParts, nearestFirst } from './missing-inputs.js';
 import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
+import { notNowPlan, timeChip, unmetBasis, unmetLines } from './unmet-words.js';
 
 export { type AnswerPerson, type MealAnswerArgs } from './answer-words.js';
 
@@ -91,8 +92,8 @@ export function personChips({ args }: GatheringNaming): ConditionChip[] {
 function chipsOf(naming: Naming): ConditionChip[] {
   const { input, gathering } = naming.args;
   const [mine] = gathering.sides;
-  const mealEnd = mealWindow(input.date, input.meal).end;
-  const chips = [originChip(naming, mine), untilChip(naming, mine, mealEnd)].filter((chip) => chip !== null);
+  const until = untilChip(naming, mine, mealWindow(input.date, input.meal).end);
+  const chips = [originChip(naming, mine), timeChip(naming) ?? until].filter((chip) => chip !== null);
   return [...chips, ...personChips(naming)];
 }
 
@@ -157,12 +158,12 @@ function firstBy(parts: readonly PersonPart[], at: (part: PersonPart) => number)
 // When a person reaches the place on their own: ready, plus their whole walk; ready alone when their origin is unknown.
 const ownArrival = ({ readyAt, walkMinutes }: PersonPart): number => readyAt.getTime() + (walkMinutes ?? 0) * 60_000;
 
-// Who keeps the plan from the window the User fixed, or the meal's own window when it, not a person, does: the start
-// first, then the end.
-function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string | null {
+// Who keeps the plan from the window the User fixed, or the window it was fitted in when that, not a person, does: the
+// meal's own, or the Restaurant's hours. The start first, then the end.
+function missedLine({ key, start, end, parts, window: own }: GatheringFit, naming: Naming): string | null {
   const { input } = naming.args;
   const { date, window } = input;
-  const held = windowOf(input);
+  const held = own ?? windowOf(input);
   const meal = mealWord(naming);
   if (window.from !== null) {
     if (start > held.start) {
@@ -177,7 +178,9 @@ function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string
         : `${withSubject(name)} ${clock}에 도착해요`;
     }
     if (held.start > onDay(date, window.from)) {
-      return `${withTopic(meal)} ${clockOf(held.start)}부터예요`;
+      return own === undefined
+        ? `${withTopic(meal)} ${clockOf(held.start)}부터예요`
+        : `${withTopic(key)} ${clockOf(held.start)}에 열어요`;
     }
   }
   if (window.until !== null) {
@@ -187,7 +190,9 @@ function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string
       return me ? `${clockOf(end)}엔 나서야 해요` : `${withTopic(name)} ${clockOf(end)}에 나서야 해요`;
     }
     if (held.end < onDay(date, window.until)) {
-      return `${withTopic(meal)} ${clockOf(held.end)}까지예요`;
+      return own === undefined
+        ? `${withTopic(meal)} ${clockOf(held.end)}까지예요`
+        : `${withTopic(key)} ${clockOf(held.end)}에 닫아요`;
     }
   }
   return null;
@@ -277,7 +282,6 @@ export function basisOf(fit: GatheringFit, naming: GatheringNaming): string[] {
 // `first` for the Plan shown first, `nearest` when the Plans come nearest first for want of a Timetable.
 function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: boolean; nearest: boolean }): Plan {
   const { key, placeId, start, end, togetherMinutes } = fit;
-  const basis = basisOf(fit, naming);
   return {
     id: key,
     title: `${key}에서 ${mealWord(naming)}`,
@@ -288,8 +292,8 @@ function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: 
     meeting: meetingOf(fit, naming),
     parts: fit.parts.map((part) => partOf(part, naming)),
     subQuests: subQuestsOf(fit, naming, `${key}에서 식사`),
-    lines: (first ? missingLines(fit, naming, nearest) : null) ?? linesOf(fit, naming),
-    basis: nearest ? [NEAREST_BASIS, ...basis] : basis,
+    lines: unmetLines(fit, naming, { first, nearest }) ?? linesOf(fit, naming),
+    basis: unmetBasis(fit, naming, basisOf(fit, naming), nearest),
     scene: sceneOf(fit, naming, mealWord(naming)),
     band: bandOf(fit, naming),
   };
@@ -306,7 +310,7 @@ export function mealAnswer(args: MealAnswerArgs): AnswerReply {
     chips: chipsOf(naming),
     plans,
     dropped: droppedOf(naming),
-    noPlan: plans.length > 0 ? null : noPlanOf(naming),
+    noPlan: plans.length > 0 ? null : (notNowPlan(naming) ?? noPlanOf(naming)),
     ...missingParts(args.missing),
   };
 }
