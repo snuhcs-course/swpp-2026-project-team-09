@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -16,10 +17,12 @@ import { KEYBOARD, showKeyboard } from './support/keyboard';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
+import { CAREER, MAJOR } from './support/events';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P02 ticket 32 against the fake main server: "지난 답 N개" at the top of the answer card opens the earlier turns
-// read-only, and while the keyboard is up the card shows the headline of the turn on screen on one line.
+// P02 tickets 32 and 35 against the fake main server: the answer card shows the turn on screen first, with its
+// question, and "지난 답 N개" under it opens the earlier turns read-only, the latest first; while the keyboard is up
+// the card shows the headline of the turn on screen on one line.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -38,6 +41,8 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const ASKED = '배고파, 민수랑 같이';
 const REPLY = '셔틀 두 대가 정문과 자연대에 있어요.\n정문 셔틀이 먼저 와요.';
 const TEXT_REPLY = { text: REPLY, mapButtons: [], cards: [], proposal: null };
+const EVENTS = [MAJOR, CAREER].map((globalEvent) => ({ kind: 'globalEvent', globalEvent }));
+const EVENTS_REPLY = { text: '설명회 두 개가 있어요.', mapButtons: [], cards: EVENTS, proposal: null };
 const PLAN_LINE = '점심 12:15 302동식당';
 const LOOKUP_TITLE = '문화관(73동)은 여기예요';
 
@@ -87,6 +92,20 @@ function earlier(): ReturnType<typeof within>[] {
 }
 
 // Partitions: no earlier turn; a Plan's, a Lookup's and a sentence's reply; opened and closed.
+describe('the turn on screen', () => {
+  it('stands first in the card with its question, and "지난 답 N개" under its reply', async () => {
+    await talk([
+      [ASKED, MEAL_ANSWER_REPLY],
+      ['셔틀 어디 있어?', TEXT_REPLY],
+    ]);
+
+    expect(card().getByTestId('turn-question')).toHaveTextContent('셔틀 어디 있어?');
+    const drawn = JSON.stringify(screen.toJSON());
+    expect(drawn.indexOf('셔틀 어디 있어?')).toBeLessThan(drawn.indexOf('정문 셔틀이 먼저 와요.'));
+    expect(drawn.indexOf('정문 셔틀이 먼저 와요.')).toBeLessThan(drawn.indexOf('지난 답 1개'));
+  });
+});
+
 describe('"지난 답 N개"', () => {
   it('is not shown on the first turn', async () => {
     await talk([[ASKED, MEAL_ANSWER_REPLY]]);
@@ -94,7 +113,7 @@ describe('"지난 답 N개"', () => {
     expect(card().queryByRole('button', { name: /^지난 답/u })).toBeNull();
   });
 
-  it("opens the earlier turns, each the words asked and the reply's lines, without a button", async () => {
+  it("opens the earlier turns under the turn on screen, the latest first, each the words asked and the reply's lines, without a button", async () => {
     const user = await talk([
       [ASKED, MEAL_ANSWER_REPLY],
       ['문화관이 어디야?', WAY_LOOKUP_REPLY],
@@ -105,7 +124,7 @@ describe('"지난 답 N개"', () => {
 
     await user.press(card().getByRole('button', { name: '지난 답 3개' }));
 
-    const [plan, lookup, words] = earlier();
+    const [words, lookup, plan] = earlier();
     expect(plan?.getByText(ASKED)).toBeVisible();
     expect(plan?.getByText(PLAN_LINE)).toBeVisible();
     expect(lookup?.getByText('문화관이 어디야?')).toBeVisible();
@@ -129,6 +148,21 @@ describe('"지난 답 N개"', () => {
 
     expect(earlier()).toHaveLength(0);
     expect(card().getByRole('button', { name: '지난 답 1개' })).toBeVisible();
+  });
+});
+
+describe('an earlier turn with cards', () => {
+  it('names the cards of an earlier turn', async () => {
+    const user = await talk([
+      ['설명회 있어?', EVENTS_REPLY],
+      ['셔틀 어디 있어?', TEXT_REPLY],
+    ]);
+
+    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
+
+    const [events] = earlier();
+    expect(events?.getByText(`· ${MAJOR.title}`)).toBeVisible();
+    expect(events?.getByText(`· ${CAREER.title}`)).toBeVisible();
   });
 });
 

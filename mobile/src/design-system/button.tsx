@@ -4,11 +4,13 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, type ViewStyle } from 'react-native';
 import { Icon, type IconName } from './icon';
+import { WaitingDots } from './waiting-dots';
 import { color, font, radius, size as sizes, space, text } from './tokens';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive';
@@ -29,6 +31,8 @@ interface ButtonProps {
   // Shown before the label.
   icon?: IconName;
   disabled?: boolean;
+  // What it asked is on its way: the dots stand in place of the label, in its colour, and it takes no press.
+  busy?: boolean;
   onPress?: () => void;
   // A fuller accessible name where the label alone is ambiguous, such as one of many cards' "관심 없음".
   label?: string;
@@ -54,6 +58,7 @@ export function Button({
   centred = false,
   icon,
   disabled = false,
+  busy = false,
   onPress,
   label,
 }: ButtonProps): ReactElement {
@@ -62,8 +67,8 @@ export function Button({
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled: disabled || busy, busy }}
+      disabled={disabled || busy}
       hitSlop={size === 'md' ? MD_HIT_SLOP : undefined}
       onPress={onPress}
       style={({ pressed }): StyleProp<ViewStyle> => [
@@ -76,10 +81,16 @@ export function Button({
         disabled && styles.disabled,
       ]}
     >
-      {icon === undefined ? null : <Icon color={labelColor} name={icon} size={size === 'lg' ? 20 : 18} />}
-      <Text numberOfLines={1} style={[size === 'lg' ? styles.labelLg : styles.label, { color: labelColor }]}>
-        {children}
-      </Text>
+      {busy ? (
+        <WaitingDots label={`${label ?? children} · 보는 중`} tint={labelColor} />
+      ) : (
+        <>
+          {icon === undefined ? null : <Icon color={labelColor} name={icon} size={size === 'lg' ? 20 : 18} />}
+          <Text numberOfLines={1} style={[size === 'lg' ? styles.labelLg : styles.label, { color: labelColor }]}>
+            {children}
+          </Text>
+        </>
+      )}
     </Pressable>
   );
 }

@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -181,9 +182,9 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const cardShown = invitation.shown || made.shown !== null;
-  // The open list of Friends to add takes the input's place in the answer's card, and so do the dots with 그만. The
-  // time band moved whole hides the input but keeps its room, so that the card and its lanes stay under the finger.
-  const inputGone = chat.framed && (chat.answer.adding || chat.chat.waiting);
+  // The open list of Friends to add takes the input's place in the answer's card. The time band moved whole hides the
+  // input but keeps its room, so that the card and its lanes stay under the finger.
+  const inputGone = chat.framed && chat.answer.adding;
   const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
   const inputTop = inputGone ? lift : AI_INPUT.bottom + lift + inputHeight;
   const send = sendWithKeyboardDown(chat.chat.send);
@@ -206,7 +207,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
           placeholder={chat.framed ? '이어서 말하기' : undefined}
           restore={restoreOf(chat.chat.bubbles)}
           onSend={send}
-          waiting={chat.chat.waiting}
+          unseen={chat.unseen}
         />
       ) : null}
       <TutorialPager flow={tutorial} />

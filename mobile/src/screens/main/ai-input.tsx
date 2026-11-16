@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -17,9 +18,8 @@ import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import type { Restore } from '@/features/assistant/restore';
 import { AI_INPUT } from './layout';
 
+// A message sent while a reply is on its way takes that question back (`useChat`'s `send`), so the input never waits.
 interface AiInputProps {
-  // Nothing is sent while the Assistant works on the message before.
-  waiting: boolean;
   onSend: (text: string) => void;
   // How much higher than its place the bar stands: over the keyboard while it is up, 0 while it is down.
   lift: number;
@@ -31,11 +31,16 @@ interface AiInputProps {
   restore?: Restore | null;
   // "이전 답" at the bar's left, which shows the hidden answer frame again; null or left out for none.
   onEarlier?: (() => void) | null;
+  // A reply arrived while the frame was hidden: a dot on "이전 답" until the frame is shown.
+  unseen?: boolean;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
 export const AI_FIELD = 40;
 const FIELD_MAX = 120;
+// The dot of a reply not yet seen, at the icon's top right.
+const UNSEEN = 10;
+const UNSEEN_INSET = 6;
 // Above and below the text.
 const FIELD_PADDING = space[2];
 
@@ -73,16 +78,17 @@ function useMessage(restore: Restore | null): [string, (message: string) => void
   return [message, setMessage];
 }
 
-function EarlierButton({ onPress }: { onPress: () => void }): ReactElement {
+function EarlierButton({ onPress, unseen }: { onPress: () => void; unseen: boolean }): ReactElement {
   return (
     <Pressable
-      accessibilityLabel="이전 답"
+      accessibilityLabel={unseen ? '이전 답, 새 답 있음' : '이전 답'}
       accessibilityRole="button"
       hitSlop={space[1]}
       onPress={onPress}
       style={styles.send}
     >
       <Icon color={color.ink} name="history" size={18} />
+      {unseen ? <View style={styles.unseen} testID="earlier-unseen" /> : null}
     </Pressable>
   );
 }
@@ -93,10 +99,18 @@ function EarlierButton({ onPress }: { onPress: () => void }): ReactElement {
 // its most height: nothing sets its height from its content, which would lay it out again and could swing it between
 // two heights. "이전 답", when given, stands at the left as the send button does at the right.
 export function AiInput(props: AiInputProps): ReactElement {
-  const { waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요', restore, onEarlier = null } = props;
+  const {
+    onSend,
+    lift,
+    onHeight,
+    placeholder = '무엇이든 부탁해 보세요',
+    restore,
+    onEarlier = null,
+    unseen = false,
+  } = props;
   const [message, setMessage] = useMessage(restore ?? null);
   const [height, laidOut] = useBarHeight(onHeight);
-  const canSend = message.trim() !== '' && !waiting;
+  const canSend = message.trim() !== '';
   const send = (): void => {
     onSend(message.trim());
     setMessage('');
@@ -112,7 +126,7 @@ export function AiInput(props: AiInputProps): ReactElement {
       ]}
       testID="ai-input"
     >
-      {onEarlier === null ? null : <EarlierButton onPress={onEarlier} />}
+      {onEarlier === null ? null : <EarlierButton onPress={onEarlier} unseen={unseen} />}
       <TextInput
         accessibilityLabel="AI에게 메시지"
         maxLength={USER_MESSAGE_MAX}
@@ -124,18 +138,24 @@ export function AiInput(props: AiInputProps): ReactElement {
         submitBehavior="newline"
         value={message}
       />
-      <Pressable
-        accessibilityLabel="보내기"
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !canSend }}
-        disabled={!canSend}
-        hitSlop={space[1]}
-        onPress={send}
-        style={[styles.send, canSend && styles.sendReady]}
-      >
-        <Icon color={canSend ? color.onPrimary : color.inkMuted} name="send" size={18} />
-      </Pressable>
+      <SendButton canSend={canSend} onPress={send} />
     </View>
+  );
+}
+
+function SendButton({ canSend, onPress }: { canSend: boolean; onPress: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel="보내기"
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !canSend }}
+      disabled={!canSend}
+      hitSlop={space[1]}
+      onPress={onPress}
+      style={[styles.send, canSend && styles.sendReady]}
+    >
+      <Icon color={canSend ? color.onPrimary : color.inkMuted} name="send" size={18} />
+    </Pressable>
   );
 }
 
@@ -176,4 +196,15 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSunken,
   },
   sendReady: { backgroundColor: color.snuBlue },
+  unseen: {
+    position: 'absolute',
+    top: UNSEEN_INSET,
+    right: UNSEEN_INSET,
+    width: UNSEEN,
+    height: UNSEEN,
+    borderRadius: UNSEEN / 2,
+    borderWidth: 2,
+    borderColor: color.surface,
+    backgroundColor: color.danger,
+  },
 });

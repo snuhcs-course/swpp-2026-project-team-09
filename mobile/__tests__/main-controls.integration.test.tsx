@@ -8,6 +8,7 @@
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
@@ -109,7 +110,7 @@ describe("the main screen's AI input", () => {
 
     await ask(user, '식사 메뉴 추천');
 
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
   });
 });
 

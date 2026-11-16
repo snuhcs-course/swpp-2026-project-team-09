@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -28,8 +29,8 @@ const PULSES: readonly Pulse[] = [
 ];
 
 // Three dots that pulse in turn while something is on its way, still while the phone asks for less motion. A screen
-// reader reads `label`, the words they stand for.
-export function WaitingDots({ label, testID }: { label: string; testID?: string }): ReactElement {
+// reader reads `label`, the words they stand for. `tint` colours them, grey unless given.
+export function WaitingDots({ label, testID, tint }: { label: string; testID?: string; tint?: string }): ReactElement {
   const moving = useMotionAllowed();
   const round = useLoop(moving, ROUND_MS, Easing.linear);
   return (
@@ -37,7 +38,11 @@ export function WaitingDots({ label, testID }: { label: string; testID?: string 
       {PULSES.map(({ key, inputRange, outputRange }) => (
         <Animated.View
           key={key}
-          style={[styles.dot, moving ? { opacity: round.interpolate({ inputRange, outputRange }) } : null]}
+          style={[
+            styles.dot,
+            tint === undefined ? null : { backgroundColor: tint },
+            moving ? { opacity: round.interpolate({ inputRange, outputRange }) } : null,
+          ]}
           testID="waiting-dot"
         />
       ))}
