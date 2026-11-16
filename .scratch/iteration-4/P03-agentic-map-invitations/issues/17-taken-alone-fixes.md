@@ -77,3 +77,8 @@ Run on the mock dev build by taps. For the check only, two uncommitted local cha
 
 - Agent time: about 15 minutes in this session, an estimate from the transcript's timestamps (23:49 to 00:04). No subagent took part.
 - Tokens: input 33.07M, of which 33.01M cache reads, 0.06M cache writes, and 96 uncached; output 0.04M.
+
+### Agent usage, the emulator check and the follow-up (2026-11-17)
+
+- Agent time: about 50 minutes in this session (00:04 to 00:52), an estimate from the transcript's timestamps, with waits for the merge queue left out where nothing else went on. No subagent took part.
+- Tokens: input 77.12M, of which 77.00M cache reads, 0.12M cache writes, and 202 uncached; output 0.07M.
