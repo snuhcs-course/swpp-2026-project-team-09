@@ -7,20 +7,29 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import { router } from 'expo-router';
+import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, color, font, Icon, type IconName, radius, shadow, space, text } from '@/design-system';
-import type { CardMark, CardView } from '@/features/map/adapter';
+import { useFriendFacts } from '@/features/assistant/use-tap-answer';
+import { useFriendProfile } from '@/features/friends/use-friend-profile';
+import { type CardMark, type CardView, friendIdOf } from '@/features/map/adapter';
+import { CardFacts } from './card-facts';
 import { Choices, GroupMark } from './card-choices';
 import { CARD } from './layout';
 import { StudyRows } from './study-rows';
 
 export const LOOK_CLOSER = '가까이 보기';
 
-interface CardProps {
-  card: CardView;
+// What the card draws of a thing, which a Friend's card has also for a Friend whom the map does not show.
+type CardContent = Pick<CardView, 'id' | 'mark' | 'subLabel' | 'title' | 'lines' | 'primary' | 'study' | 'choices'>;
+
+export interface CardProps {
+  card: CardContent;
   // "가까이 보기" is offered: the camera is below the "names" level of detail.
   canLookCloser: boolean;
   onLookCloser: () => void;
@@ -33,6 +42,11 @@ interface CardProps {
   onHeight?: (height: number) => void;
   // Its distance from the top, for a card that sits at the top of the map, as a 식당's does. Left out, at the bottom.
   top?: number;
+  // A press on what the User sees of a Friend. Left out, it opens 위치 공유.
+  onSeen?: () => void;
+  // The main button, first among the card's buttons, such as a Friend's "만나고 싶다"; the card's own one is then
+  // secondary, and the buttons wrap to a second line where they do not fit.
+  lead?: ReactNode;
 }
 
 // A place's kind in the design system: its colour and its icon. A campus service's round is a rounded square, as the
@@ -75,7 +89,28 @@ function Leading({ mark }: { mark: CardMark }): ReactElement {
   );
 }
 
-function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElement {
+// A card's ✕, at the end of its head.
+export function CloseButton({ onClose }: Pick<CardProps, 'onClose'>): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel="닫기"
+      accessibilityRole="button"
+      hitSlop={CLOSE_HIT_SLOP}
+      onPress={onClose}
+      style={styles.close}
+    >
+      <Icon color={color.inkMuted} name="x" size={20} />
+    </Pressable>
+  );
+}
+
+export function Head({
+  card,
+  onClose,
+}: {
+  card: Pick<CardContent, 'mark' | 'subLabel' | 'title'>;
+  onClose: () => void;
+}): ReactElement {
   const { mark, subLabel, title } = card;
   return (
     <View style={styles.head}>
@@ -95,22 +130,90 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
           {title}
         </Text>
       </View>
-      <Pressable
-        accessibilityLabel="닫기"
-        accessibilityRole="button"
-        hitSlop={CLOSE_HIT_SLOP}
-        onPress={onClose}
-        style={styles.close}
-      >
-        <Icon color={color.inkMuted} name="x" size={20} />
-      </Pressable>
+      <CloseButton onClose={onClose} />
     </View>
   );
 }
 
-// The card of what was pressed on the map, as the `MapOverviewSelect` frame draws it: above the AI input's place,
-// with the leading mark, the sub-label, the title, the lines or the choices, "가까이 보기" where it is offered and the
-// card's button.
+export function Line({ icon, words }: { icon: IconName; words: string }): ReactElement {
+  return (
+    <View style={styles.line}>
+      <Icon color={color.inkMuted} name={icon} size={16} />
+      <Text style={styles.lineWords}>{words}</Text>
+    </View>
+  );
+}
+
+function openSharing(): void {
+  router.push('/me/location-sharing');
+}
+
+// What the User sees of the Friend, a row ("어디까지 보이나") with a touch area of its own, which opens 위치 공유 unless
+// the card says otherwise.
+function SeenRow({ seen, onPress = openSharing }: { seen: string; onPress?: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel="어디까지 보이나"
+      accessibilityRole="button"
+      accessibilityValue={{ text: seen }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.line, styles.seen, pressed && styles.pressed]}
+    >
+      <Icon color={color.inkMuted} name="lock" size={16} />
+      <Text style={[styles.lineWords, styles.grow]}>{seen}</Text>
+      <Icon color={color.inkMuted} name="chevronRight" size={16} />
+    </Pressable>
+  );
+}
+
+// The card's lines. A Friend's card is their profile: what the User sees of them before the lines, and their Friend
+// ID and since when the two have been Friends after them, each where the main server sends it. With the switch on, the
+// fact lines of the main server's card of the Friend stand in place of the lines once they came.
+function Lines({ card, onSeen }: Pick<CardProps, 'card' | 'onSeen'>): ReactElement | null {
+  const userId = friendIdOf(card.id);
+  const facts = useFriendProfile(userId)?.facts ?? null;
+  const tapped = useFriendFacts(userId);
+  if (card.lines.length === 0 && facts === null && tapped === null) {
+    return null;
+  }
+  const friendId = facts?.friendId ?? null;
+  const since = facts?.since ?? null;
+  return (
+    <View style={styles.lines}>
+      {facts === null ? null : <SeenRow onPress={onSeen} seen={facts.seen} />}
+      {tapped === null ? (
+        card.lines.map(({ icon, text: words }) => <Line icon={icon} key={`${icon}:${words}`} words={words} />)
+      ) : (
+        <CardFacts facts={tapped} />
+      )}
+      {friendId === null ? null : <Line icon="user" words={friendId} />}
+      {since === null ? null : <Line icon="calendar" words={since} />}
+    </View>
+  );
+}
+
+// A card over the map, as the `MapOverviewSelect` frame draws it: above the AI input's place, or at `top`.
+export function CardFrame({
+  onHeight,
+  top: fromTop,
+  children,
+}: Pick<CardProps, 'onHeight' | 'top'> & { children: ReactNode }): ReactElement {
+  return (
+    <View
+      onLayout={({ nativeEvent: { layout } }) => {
+        onHeight?.(layout.height);
+      }}
+      style={[styles.card, fromTop === undefined ? styles.atBottom : { top: fromTop }]}
+      testID="map-card"
+    >
+      {children}
+    </View>
+  );
+}
+
+// The card of what was pressed on the map: the leading mark, the sub-label, the title, the lines or the choices,
+// "가까이 보기" where it is offered and the card's button. A Friend's card is their profile, with its rows among the
+// lines.
 export function Card({
   card,
   canLookCloser,
@@ -120,29 +223,17 @@ export function Card({
   onChoose,
   onHeight,
   top,
+  onSeen,
+  lead,
 }: CardProps): ReactElement {
   return (
-    <View
-      onLayout={({ nativeEvent: { layout } }) => {
-        onHeight?.(layout.height);
-      }}
-      style={[styles.card, top === undefined ? styles.atBottom : { top }]}
-      testID="map-card"
-    >
+    <CardFrame onHeight={onHeight} top={top}>
       <Head card={card} onClose={onClose} />
-      {card.lines.length === 0 ? null : (
-        <View style={styles.lines}>
-          {card.lines.map(({ icon, text: words }) => (
-            <View key={`${icon}:${words}`} style={styles.line}>
-              <Icon color={color.inkMuted} name={icon} size={16} />
-              <Text style={styles.lineWords}>{words}</Text>
-            </View>
-          ))}
-        </View>
-      )}
+      <Lines card={card} onSeen={onSeen} />
       {card.study === undefined ? null : <StudyRows key={`study:${card.id}`} study={card.study} />}
       <Choices card={card} key={card.id} onChoose={onChoose} />
-      <View style={styles.buttons}>
+      <View style={[styles.buttons, lead !== undefined && styles.wrap]}>
+        {lead}
         {canLookCloser ? (
           <Button icon="search" onPress={onLookCloser} variant="secondary">
             {LOOK_CLOSER}
@@ -150,13 +241,13 @@ export function Card({
         ) : null}
         {card.primary === null ? null : (
           <View style={styles.primary}>
-            <Button full onPress={onPrimary}>
+            <Button full onPress={onPrimary} variant={lead === undefined ? 'primary' : 'secondary'}>
               {card.primary.label}
             </Button>
           </View>
         )}
       </View>
-    </View>
+    </CardFrame>
   );
 }
 
@@ -165,6 +256,7 @@ const ROUND = 40;
 const CLOSE = 44;
 const CLOSE_HIT_SLOP = 2;
 const GAP = 10;
+const SEEN_HEIGHT = 44;
 
 const styles = StyleSheet.create({
   card: {
@@ -198,7 +290,11 @@ const styles = StyleSheet.create({
   },
   lines: { gap: space[1] },
   line: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  seen: { minHeight: SEEN_HEIGHT },
+  pressed: { opacity: 0.6 },
+  grow: { flexGrow: 1 },
   lineWords: { ...text.body, flexShrink: 1, color: color.inkMuted },
   buttons: { flexDirection: 'row', gap: space[2] },
+  wrap: { flexWrap: 'wrap' },
   primary: { flexGrow: 1, flexShrink: 1 },
 });

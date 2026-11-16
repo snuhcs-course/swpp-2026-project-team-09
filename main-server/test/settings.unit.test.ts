@@ -6,6 +6,7 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -63,7 +64,6 @@ describe('settingsSchema', () => {
       PUBLIC_URL: 'http://localhost:3000',
       ANDROID_CERTIFICATE_FINGERPRINTS: [sha256],
       MATCH_SERVER_URL: 'http://localhost:3003',
-      ASSISTANT_MODEL: 'anthropic/claude-haiku-5.5',
     });
   });
 });
@@ -206,11 +206,10 @@ describe('settingsSchema: ANDROID_CERTIFICATE_FINGERPRINTS', () => {
 
 describe("settingsSchema: the Assistant's settings", () => {
   it('unset → the defaults of .env.example, and no key or model', () => {
-    const unset = { ...valid, OPENROUTER_API_KEY: undefined, ASSISTANT_MODEL: undefined };
+    const unset = { ...valid, OPENROUTER_API_KEY: undefined };
 
     expect(settingsSchema.parse(unset)).toMatchObject({
       OPENROUTER_API_KEY: '',
-      ASSISTANT_MODEL: '',
       ASSISTANT_DAILY_MESSAGES: 50,
       ASSISTANT_MAX_STEPS: 8,
       ASSISTANT_TIMEOUT_MS: 30_000,
@@ -258,7 +257,6 @@ describe('settingsSchema: AUTOMATIC_JUDGEMENT', () => {
       ...valid,
       AUTOMATIC_JUDGEMENT: undefined,
       OPENROUTER_API_KEY: undefined,
-      ASSISTANT_MODEL: undefined,
     };
 
     expect(settingsSchema.parse(unset)).toMatchObject({
@@ -268,14 +266,16 @@ describe('settingsSchema: AUTOMATIC_JUDGEMENT', () => {
     });
   });
 
-  it('on with the key and the model → on', () => {
-    expect(settingsSchema.parse({ ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
+  it('on with a key → on', () => {
+    expect(
+      settingsSchema.parse({ ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'sk-or-key' }),
+    ).toMatchObject({
       AUTOMATIC_JUDGEMENT: true,
     });
   });
 
-  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming AUTOMATIC_JUDGEMENT', (name) => {
-    const without = { ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
+  it('on without a key → refused, naming AUTOMATIC_JUDGEMENT', () => {
+    const without = { ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: '', LLM_KEYS: '{}' };
 
     expect(refused(without)).toEqual(['AUTOMATIC_JUDGEMENT']);
   });
@@ -291,20 +291,21 @@ describe('settingsSchema: SAME_EVENT_AI_CHOICE', () => {
       ...valid,
       SAME_EVENT_AI_CHOICE: undefined,
       OPENROUTER_API_KEY: undefined,
-      ASSISTANT_MODEL: undefined,
     };
 
     expect(settingsSchema.parse(unset)).toMatchObject({ SAME_EVENT_AI_CHOICE: false });
   });
 
-  it('on with the key and the model → on', () => {
-    expect(settingsSchema.parse({ ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
+  it('on with a key → on', () => {
+    expect(
+      settingsSchema.parse({ ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'sk-or-key' }),
+    ).toMatchObject({
       SAME_EVENT_AI_CHOICE: true,
     });
   });
 
-  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming SAME_EVENT_AI_CHOICE', (name) => {
-    const without = { ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
+  it('on without a key → refused, naming SAME_EVENT_AI_CHOICE', () => {
+    const without = { ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: '', LLM_KEYS: '{}' };
 
     expect(refused(without)).toEqual(['SAME_EVENT_AI_CHOICE']);
   });

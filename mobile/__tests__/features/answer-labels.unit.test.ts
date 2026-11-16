@@ -2,15 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
+import { MEET_ANSWER_FROM_14 } from '@/api/mock/data/meet-answer';
 import { drawingOf, looksOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
+import { CAMERA_BOUNDS } from '@/map';
 import { MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
 import {
   AREA,
+  cameraPutting,
   FIRST_CAMERA,
   placeMoved,
   positionAt,
@@ -64,12 +68,12 @@ describe("the first Plan's labels at the emulator's camera", () => {
     });
   });
 
-  it("leaves the pick's two lines out when the area ends two points higher, above being over the User's dot", () => {
+  it("puts the pick's two lines above 302동 when the area ends two points higher, over 301동's symbol", () => {
     // Below would end at 500, 2 past 498; above, 184.4 to 289.4 and 368 to 414, it covers 301동's symbol box (217.5
-    // to 253.5, 379.1 to 415.1) and the User's tag.
+    // to 253.5, 379.1 to 415.1) but stays inside the area, and the pick's label is never left out (ticket 25).
     const shorter = drawingOf(MEAL_ANSWER, 0, NO_STANDINGS, viewAt(FIRST_CAMERA, { ...AREA, bottom: AREA.bottom - 2 }));
 
-    expect(seen(shorter, 'answer:pick')).toMatchObject({ name: '302동식당 · 12:15 점심', label: null });
+    expect(seen(shorter, 'answer:pick').label).toMatchObject({ side: 'above', line: '12:15 점심' });
   });
 });
 
@@ -164,6 +168,30 @@ describe('a label near the pill, the card, and other marks', () => {
     expect(sideOf(drawingOf(answer, 0, NO_STANDINGS, viewAt(FIRST_CAMERA)), 'answer:candidate:자하연식당 2층')).toBe(
       'above',
     );
+  });
+});
+
+// The first Plan of board a6's answer (`meet-answer-a6.json`) under its card of 364 on the emulator: the area runs
+// from 108 to 914 − 364 − 8 = 542. Its own points, from 58동 (37.46568) down to 302동 앞 (37.44887), do not fit the area
+// even at the outer zoom, 14.765, where a degree of latitude is about 24,930 points, and the camera rests there with
+// the view's bottom on the south edge of the camera's bounds (37.432): 302동 앞, with 민수's face over its dot, at
+// (232.8, 493.3), 제1공학관 앞 at (231.6, 461.2), and 유회진 학술정보관 앞 at (233.8, 441.4).
+//
+// Partitions: the pick with no free side: below past the area, above inside it but over other symbols.
+describe("the pick's label of board a6's first Plan at the emulator's camera", () => {
+  const camera = cameraPutting({ latitude: CAMERA_BOUNDS.south, longitude: 126.95127 }, { x: 205.5, y: 914 }, 14.765);
+  const drawing = drawingOf(MEET_ANSWER_FROM_14, 0, NO_STANDINGS, viewAt(camera, { ...AREA, bottom: 542 }));
+
+  it('puts it above 302동 앞, inside the area, over the symbols of 제1공학관 앞 and 유회진 학술정보관 앞', () => {
+    // "302동 앞" / "14:07 만남" with the pick's number, 46 high: below from 513.3 to 559.3, past 542; above from 427.3
+    // to 473.3, over 제1공학관 앞's symbol box (443.2 to 479.2) and 유회진 학술정보관 앞's (423.4 to 459.4).
+    expect(seen(drawing, 'answer:pick').label).toMatchObject({
+      side: 'above',
+      tone: 'pick',
+      title: '302동 앞',
+      line: '14:07 만남',
+      number: 1,
+    });
   });
 });
 

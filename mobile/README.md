@@ -501,7 +501,10 @@ above the navigation.
 selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under its card's id. A Friend who can be
   seen and a member of the User's Party who is no Friend are the wireframe's teardrop at every zoom, in the status's
   colour or the Party's: small while the whole campus is in view, at full size from the `pins` level, and with the
-  given name under it from the `names` level. A Friend whose position is not known has no marker. The Global Event,
+  given name under it from the `names` level. While the switch of the answer on the map is on, a Friend whose
+  position is at the exact level (`Position.level`) carries a green dot at the face, none at the building level or
+  while dimmed; with the switch off no face has one. A live position's level replaces the one before; one without a
+  level keeps it. A Friend whose position is not known has no marker. The Global Event,
   the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
   with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. A short name is the title cut at a word's end within 8 characters,
@@ -640,7 +643,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   button forget the conversation; a map button forgets it and turns its layer on; another card leads where it does and
   leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it is laid
   out. Turning the switch either way closes the chat sheet and forgets the conversation. Every request then carries a
-  context with the User's position on campus and the capability `answer`.
+  context with the User's position on campus, the capabilities `answer` and `area`, and the map's visible area at rest
+  as `viewport` (`useViewport`: the stage under the status bar at the camera, null until both are known). A `study`
+  Lookup ("이 근처") outlines the area its request sent, leaves the camera where it is, and adds the free seats the
+  phone reads from its own library session to the flag towards 관정 (`study-area.ts`, `use-away-seats.ts`); its card's
+  main button reads "가는 길", and its `ask` action "관정 보기" sends its words as the User's.
 - **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the
   conversation's last reply (a failure and the app's own bubble are none), so it stays while a follow-up waits or has
   failed, or a recalculation that replaced it, held with the index of the Plan on screen and whether its basis is open
@@ -652,7 +659,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
   User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
   marks, which they would lie over (`nearOwnMark`). A face shows two characters of the name, so its tag leaves out a
-  name that short ("18분" beside the face "민수"). The looks of every Plan are asked for when the answer comes. The camera
+  name that short ("18분" beside the face "민수"). A face's ring says how the Friend is seen: a green dot at its lower
+  right for the source `exact`, a plain ring for `building`, and a dashed one for `timetable`. The looks of every Plan
+  are asked for when the answer comes. The camera
   goes in one glide to where `answerCamera` (`src/features/assistant/answer-camera.ts`) works it out for the view:
   the fit of the answer's points between the pill and the card, with the room the marks there need (`roomsOf`) and 64
   at the sides, no closer than the "close" level; where a campus map's lowest zoom is too close for all of them, the
@@ -962,7 +971,10 @@ Iteration 2 (P06), and commit `2f4f201` holds its code.
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its
 time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A Notification whose time is still to
 come shows its title for that (`ahead`), such as "12:18 나설 시각" for the time to leave (`leave-by`, a clock on the
-navy round), and its own title once the time has come. A new match of a watched interest (`interest-new`, "채용박람회가
+navy round), and its own title once the time has come. A room request's kinds have their own rounds: a companion out
+(`room-declined`, a person) and everyone agreed (`room-agreed`, a group) as an acceptance's, the room's end
+(`room-ending`) as the time to leave's, and the booking window opening (`room-window`, a calendar) in the colour of
+the requests to join, which also wait for the User. A new match of a watched interest (`interest-new`, "채용박람회가
 떴어요") is on the navy round too, a calendar for an event and people for a recruiting party, by its address. A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
@@ -1442,8 +1454,10 @@ white border. A selected one is 4 larger, inside a ring of the key colour.
 `MapPerson` is a person on the map, which the `Main` wireframe draws and the design system does not name: a teardrop
 filled with a colour of `presence`, with the person's small Avatar in it, 24 wide in its `small` form and 36
 otherwise. Its box ends at its tip. A selected one is 1.18 times as large, inside a white ring and a ring of the key
-colour. `presence` names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses,
-which an Avatar's dot uses too, and `member`, a member of the User's Party who is no Friend.
+colour. `exact` puts a green dot of 11 on the drop's rim at the face's lower right, outside the Avatar, and `addable` a
+"+" at its upper right; with either the box grows at the sides and the top, and the tip keeps its place. `presence`
+names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses, which an Avatar's dot
+uses too, and `member`, a member of the User's Party who is no Friend.
 
 `MapRestaurant` is the `MapDining` frame's single 학식 on the map: a round of 22 in the dining colour with 학, a white
 ring and a small tail; selected, 26 inside a ring of the key colour. `DayTile` is a day to choose as the
@@ -1773,7 +1787,8 @@ that phone.
   closes (`router.dismissTo`); on the tabs, where `dismissTo` does nothing, the app goes there with
   `router.navigate`. `/main` reads `card` once: the map moves to the card with that id and opens it, and without
   one the app opens the screen of the matching row of "알림". For an invitation that is the "파티" tab's
-  invitations, `/party?tab=invites`.
+  invitations, `/party?tab=invites`. A party's card whose room request this phone made from a card that waited for
+  the booking window also opens that room card again in the chat (Group study rooms).
 - **A push in front.** While the app is open, a push drops no banner and plays no sound; it goes to the phone's
   notification list. On Android a banner cannot show without sound. The app instead fetches again the lists "알림"
   and the "파티" badge are made from (`src/push/push-arrivals.tsx`).
@@ -1826,8 +1841,10 @@ end-session.ts       "end the library session", the one shared logout step
 web-cookies.ts       the JS wrapper of modules/snu-now-web-cookies
 errors.ts            the failure kinds and what a card says for each
 press.ts             the confirm press that a write needs
-room-bookings.ts     the phone's map from a room booking's BSEQNO to its room request
-cards/               the library cards' logic: the payloads, seats, rooms, bookings, times and the done message
+room-bookings.ts     the phone's map from a room booking's BSEQNO to its room request, and the requests that wait for
+                     the booking window with their cards
+cards/               the library cards' logic: the payloads, seats, rooms, bookings, times, the done message and a room
+                     request's companions
 ```
 
 ### The endpoints
@@ -1937,12 +1954,38 @@ A group study room with companions goes through a room request on the main serve
 main-server `src/library/`), the app's routes and never the Assistant's: `POST /library/room-requests` with an
 `Idempotency-Key`, `GET /library/room-requests` (the requests that ask the User, and the one-time notices),
 `GET /library/room-requests/:id` (which the booker's card polls), `POST …/:id/consent`, `POST …/:id/decline` (거절 and
-철회), `GET …/:id/companions`, `POST …/:id/result { ok, failedUserId? }`, `POST …/:id/cancelled` and
-`POST /library/room-notices/:id/seen`. Once every companion consents, the booker's phone reads the companions' names and
-학번 (the one reply that holds them, `Cache-Control: no-store`), checks each with `getUserCheck`, books with
-`setRoomBooking` and reports only `ok` or the companion the library did not know. The BSEQNO stays on the phone, in
-`room-bookings.ts`'s map, so that a later cancel can tell the server "the booking of request X was cancelled" with no
-body.
+철회), `GET …/:id/companions`, `POST …/:id/companions { friendId }` with an `Idempotency-Key` (one more Friend),
+`POST …/:id/result { ok, failedUserId? }`, `POST …/:id/cancelled` and `POST /library/room-notices/:id/seen`. A
+companion who declines, or does not answer by 20:00 the day before, goes out and the request keeps gathering. The
+booker's card then says who consented, who is asked and who is out (`companions`), and "N명 더 필요해요"
+(`moreNeeded`); while a request made for booking gathers, it offers "친구 한 명 더 부르기", the party form's Friend
+picker for one Friend (`room-ask-more.tsx`). From a server that sends neither field, the card reads `consents` alone.
+In the mock build (`src/api/mock/room-requests.ts`) every companion still asked consents by the second look.
+A card of a study plan for a date after the booking window has a key that ends in `:wait`
+(`src/library/cards/room-window.ts`): while the window (today to 3 days later) does not hold its date, the card reads
+no rooms, shows the day, the time, the room's size and each person's note, gathers the consents, and says
+"11월 6일 09:00 예약 창이 열리면 예약할 수 있어요" (for 9 November) with 예약하기 unavailable (`waiting-room-card.tsx`). The phone
+keeps the request with its card by its Quest in `room-bookings.ts`, until the room is booked; the room-window
+Notification's address, `/main?card=party:<questId>`, then opens the chat with "예약 창이 열렸어요" and that card
+again, bound to the request, which reads the rooms and books once everyone agreed (`waiting-room.ts`). The server
+keeps no way to find a requester's request by its Quest, so a request made on another phone, or before the app was
+reinstalled, opens only the party's card.
+Once the request is ready, the booker's phone reads the companions' names and 학번 (the one reply that holds them,
+`Cache-Control: no-store`), checks each with `getUserCheck`, books with `setRoomBooking` and reports only `ok` or the
+companion the library did not know. The BSEQNO stays on the phone, in `room-bookings.ts`'s map, so that a later cancel
+can tell the server "the booking of request X was cancelled" with no body.
+
+### The seat card's room
+
+A seat card the Assistant gave for one of 관정관's seat spaces starts with the room chip ("7층 열람실 ▾",
+`cards/seat-rooms.ts`): the floor and kind of room in use. Tapping it lists the rooms in a column per floor and a row
+per kind, each cell with the free seats, for the card's time, of the seat space of that room with the most of them;
+only then are the sectors the 공부공간 layer gives read, all at once (`screens/main/library/use-room-counts.ts`). One
+tap fills the same time in that space, and 되돌리기 returns to the room the card first showed. Without a library
+session the cells show names only, and a tap fills the largest space of the room. When the card's own room has no free
+seat for its time, the phone fills the space of the same kind with the most free seats, else the one with the most.
+The chat keeps the room shown with the card, and later requests send the card by the key of that room's book card,
+which names the space and the time and no count.
 
 ### Privacy
 

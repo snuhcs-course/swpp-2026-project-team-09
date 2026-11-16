@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -68,13 +69,25 @@ export async function send(app: INestApplication<Server>, message: object): Prom
   await sendAsWorker(app, '/global-events/collected', message);
 }
 
-// Sends a message and waits for the step after its answer.
+// Sends a message and waits for the step after its answer to return. The step marks each post finished before it tells
+// the apps, so a wait for the posts alone could end before its signal, which a later test would then count as its own.
 export async function collected(
   { app, prisma }: Pick<PostsWorld, 'app' | 'prisma'>,
   message: object,
   source: Source = 'snu_events',
 ): Promise<void> {
-  await send(app, message);
+  // Imported after startApp, so that it is the same class AppModule registers.
+  const { PublicationStepService } = await import('../src/global-events/publication-step.service.js');
+  const run = vi.spyOn(app.get(PublicationStepService), 'run');
+  try {
+    await send(app, message);
+    await vi.waitFor(() => {
+      expect(run).toHaveBeenCalledWith(source);
+    });
+    await run.mock.results[0]?.value;
+  } finally {
+    run.mockRestore();
+  }
   await stepOver(prisma, source);
 }
 

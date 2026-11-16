@@ -12,6 +12,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -57,6 +58,7 @@ export const HIDDEN_POSTS_KEY = ['hidden-posts'] as const;
 export const COMPANION_SEEKERS_KEY = ['companion-seekers'] as const;
 export const TUTORIAL_KEY = ['tutorial'] as const;
 export const INTERESTS_KEY = ['interests'] as const;
+export const PRIVATE_ZONES_KEY = ['private-zones'] as const;
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
 // Entering the Lobby is done once, by the loading screen or after a sign-in, and its answer is not asked again by a
@@ -199,3 +201,11 @@ export const companionSeekersQuery = queryOptions({
 export const tutorialQuery = queryOptions({ queryKey: TUTORIAL_KEY, queryFn: () => apiClient.getTutorial() });
 // The User's watched interests: null from a main server that does not keep them yet.
 export const interestsQuery = queryOptions({ queryKey: INTERESTS_KEY, queryFn: () => apiClient.listInterests() });
+// What matches them and the profile's hashtags, under their key, so that a change of the interests asks it again: null
+// from a main server that does not answer it yet.
+export const interestMatchesQuery = queryOptions({
+  queryKey: [...INTERESTS_KEY, 'matches'],
+  queryFn: () => apiClient.listInterestMatches(),
+});
+// The User's Private Zones, the oldest first.
+export const privateZonesQuery = queryOptions({ queryKey: PRIVATE_ZONES_KEY, queryFn: () => apiClient.privateZones() });

@@ -3,12 +3,17 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { LibraryCardData } from '@/api/assistant-types';
 import { ApiError } from '@/api/errors';
 import { roomRequests } from '@/api/room-requests';
-import { leavingOnPurpose } from '@/features/quests/gone-watch';
+import { field, isText } from '@/api/server/answers';
+import { isLibraryCardData } from '@/api/server/library-card-answers';
+import { leavingOnPurpose } from '@/features/quests/leaving';
 
 // The phone's map from a room booking's BSEQNO to the room request it was booked for. It stays on the phone: the
 // server is told only that the booking of a request was cancelled, never its number.
@@ -17,6 +22,10 @@ const KEY = 'snunow.room-bookings';
 
 // The room requests whose booking was made but not yet reported, retried on the next start and the next poll.
 const RESULTS = 'snunow.room-results';
+
+// The requests made from a card that waits for the booking window, by their Quest, with that card: the room-window
+// Notification opens the Quest's card, and the phone shows the booking card again from this.
+const WAITING = 'snunow.waiting-rooms';
 
 async function readMap(): Promise<Record<string, string>> {
   try {
@@ -122,7 +131,46 @@ export async function retryRoomReports(): Promise<void> {
   await writeQueue(left);
 }
 
+export interface WaitingRoom {
+  requestId: string;
+  card: LibraryCardData;
+}
+
+function isWaitingRoom(value: unknown): value is WaitingRoom {
+  return isText(field(value, 'requestId')) && isLibraryCardData(field(value, 'card'));
+}
+
+async function readWaiting(): Promise<Record<string, WaitingRoom>> {
+  try {
+    const value = await AsyncStorage.getItem(WAITING);
+    const parsed: unknown = value === null ? {} : JSON.parse(value);
+    if (typeof parsed !== 'object' || parsed === null) {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(parsed).filter((entry): entry is [string, WaitingRoom] => isWaitingRoom(entry[1])),
+    );
+  } catch {
+    return {};
+  }
+}
+
+export async function keepWaitingRoom(questId: string, room: WaitingRoom): Promise<void> {
+  const waiting = await readWaiting();
+  await AsyncStorage.setItem(WAITING, JSON.stringify({ ...waiting, [questId]: room }));
+}
+
+export async function waitingRoomOf(questId: string): Promise<WaitingRoom | null> {
+  return (await readWaiting())[questId] ?? null;
+}
+
+// Once the room is booked.
+export async function forgetWaitingRoom(questId: string): Promise<void> {
+  const { [questId]: _gone, ...rest } = await readWaiting();
+  await AsyncStorage.setItem(WAITING, JSON.stringify(rest));
+}
+
 // For the end of the library session: nothing of this person's room bookings stays on the phone.
 export async function forgetRoomBookings(): Promise<void> {
-  await AsyncStorage.multiRemove([KEY, RESULTS]);
+  await AsyncStorage.multiRemove([KEY, RESULTS, WAITING]);
 }

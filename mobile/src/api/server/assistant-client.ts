@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -17,6 +18,7 @@ import {
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
+  type ReplyOffer,
   type RestaurantCard,
   type RestaurantTravel,
   type TravelBox,
@@ -30,6 +32,7 @@ import { isMenuLine } from './menu-answers';
 import { isRecruitingQuest } from './party-client';
 import { isLookup } from './lookup-answers';
 import { isAnswerReply } from './plan-answers';
+import { isRefusal } from './refusal-answers';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request says
 // that this app draws library cards (`clientCapabilities`), and one with a context that it draws an answer on the map.
@@ -125,21 +128,29 @@ function filled(card: ChatCard): ChatCard {
 }
 
 // A main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
+function isReplyOffer(value: unknown): value is ReplyOffer {
+  return field(value, 'kind') === 'ask' && hasTexts(value, ['label', 'text']);
+}
+
 function isAssistantReply(value: unknown): value is AssistantReply {
+  const offers = field(value, 'offers');
   const proposal = field(value, 'proposal');
   const answer = field(value, 'answer');
   const lookup = field(value, 'lookup');
+  const refusal = field(value, 'refusal');
   return (
     hasTexts(value, ['text']) &&
     listOf(isMapLayer)(field(value, 'mapButtons')) &&
     listOf(isChatCard)(field(value, 'cards')) &&
     (isNothing(proposal) || isQuestProposal(proposal)) &&
     (answer === undefined || isNothing(answer) || isAnswerReply(answer)) &&
-    (lookup === undefined || isNothing(lookup) || isLookup(lookup))
+    (lookup === undefined || isNothing(lookup) || isLookup(lookup)) &&
+    (refusal === undefined || isNothing(refusal) || isRefusal(refusal)) &&
+    (offers === undefined || listOf(isReplyOffer)(offers))
   );
 }
 
-export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer'> = {
+export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer' | 'answerTap'> = {
   askAssistant: async (messages, context) => {
     const body =
       context === undefined
@@ -148,6 +159,10 @@ export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswe
     const reply = await call('POST', '/assistant/messages', isAssistantReply, { body });
     return { ...reply, cards: reply.cards.map(filled) };
   },
-  recalculateAnswer: (input, location) =>
-    call('POST', '/assistant/answers', isAnswerReply, { body: { input, location } }),
+  // A main server before P02-13 refuses a key it does not know, so the reason is sent only when there is one.
+  recalculateAnswer: (input, location, missing) =>
+    call('POST', '/assistant/answers', isAnswerReply, {
+      body: { input, location, ...((missing ?? null) === null ? {} : { locationMissing: missing }) },
+    }),
+  answerTap: (tapped, location) => call('POST', '/assistant/taps', isLookup, { body: { tapped, location } }),
 };

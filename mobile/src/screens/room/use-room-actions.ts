@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -24,7 +25,7 @@ import type { MyParty, Quest, SubQuest } from '@/api/types';
 import type { JoinRequest } from '@/api/waiting-types';
 import { useToast } from '@/design-system';
 import { useDeclineParty } from '@/features/parties/declined';
-import { leavingOnPurpose } from '@/features/quests/gone-watch';
+import { leavingOnPurpose } from '@/features/quests/leaving';
 import { refusalWords } from '@/features/quests/refusals';
 import type { MemberView } from '@/features/quests/room-adapter';
 

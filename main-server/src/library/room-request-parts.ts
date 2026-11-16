@@ -2,15 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, ForbiddenException, HttpStatus } from '@nestjs/common';
-import { type Refusal } from '../assistant/library/booking-rules.js';
-import { type Catalogue } from '../assistant/library/catalogue.js';
+import { peopleRefusal, type Refusal } from '../assistant/library/booking-rules.js';
+import { type Catalogue, type LibrarySpace } from '../assistant/library/catalogue.js';
 import { Prisma, RoomConsent, RoomRequest, RoomRequestStatus } from '../generated/prisma/client.js';
 import { conflict, notFound } from '../quests/refusals.js';
-import { type PersonDto, type RoomRequestDto } from './dto/room-request.dto.js';
+import { type CompanionState, type PersonDto, type RoomRequestDto } from './dto/room-request.dto.js';
 import { type RoomRequestSync } from './room-request-sync.service.js';
+
+export { roomLabelOf } from '../assistant/library/catalogue.js';
 
 // What the room request services share: the statuses, the refusals and the reply.
 
@@ -20,11 +23,38 @@ export const ACTIVE: RoomRequestStatus[] = [RoomRequestStatus.gathering, RoomReq
 
 export type HeldRequest = RoomRequest & { consents: RoomConsent[] };
 
-// One transaction's settling: whom to tell once it is stored.
+// One transaction's settling: whom to tell once it is stored, and what to do then without waiting for it.
 export interface Settling {
   tx: Prisma.TransactionClient;
   told: Set<string>;
   questsChanged: Set<string>;
+  afterwards: (() => Promise<void>)[];
+}
+
+// A companion is out once their consent is false: it stays as the record of who was asked.
+export const isIn = ({ consented }: Pick<RoomConsent, 'consented'>): boolean => consented !== false;
+
+export function stateOf({ consented, answeredAt }: Pick<RoomConsent, 'consented' | 'answeredAt'>): CompanionState {
+  if (consented === null) {
+    return 'asked';
+  }
+  if (consented) {
+    return 'consented';
+  }
+  return answeredAt === null ? 'unanswered' : 'declined';
+}
+
+// More people than the room or a party holds. Fewer than its minimum only gather longer.
+export function overRefusal(catalogue: Catalogue, space: LibrarySpace | undefined, people: number): Refusal | null {
+  if (space === undefined || people < (space.capacity?.min ?? 0)) {
+    return null;
+  }
+  return peopleRefusal(catalogue, space, people);
+}
+
+// How many more people the room's minimum needs with these companions in.
+export function moreNeededOf(space: LibrarySpace | undefined, companionsIn: number): number {
+  return Math.max(0, (space?.capacity?.min ?? 0) - (1 + companionsIn));
 }
 
 // The request was deleted, or never was.
@@ -97,6 +127,10 @@ export async function toRoomRequestDto(
     reason: request.reason,
     failed: request.failedUserId === null ? null : person(request.failedUserId),
     consents: request.consents.map(({ userId, consented }) => ({ ...person(userId), consented })),
+    companions: request.consents.map((consent) => ({ ...person(consent.userId), state: stateOf(consent) })),
+    moreNeeded: ACTIVE.includes(request.status)
+      ? moreNeededOf(catalogue.byId.get(request.spaceId), request.consents.filter(isIn).length)
+      : 0,
   };
 }
 
@@ -124,7 +158,7 @@ export function settleOwn<T>(sync: RoomRequestSync, userId: string, requestId: s
   });
 }
 
-// Settles a request that asks this User and still gathers.
+// Settles a request that asks this User, who is not out of it, and still gathers.
 export function settleAsked(
   sync: RoomRequestSync,
   userId: string,
@@ -132,7 +166,7 @@ export function settleAsked(
   change: Change<void>,
 ): Promise<void> {
   return settleOr404(sync, requestId, (settling, held) => {
-    if (!held.consents.some((consent) => consent.userId === userId)) {
+    if (!held.consents.some((consent) => consent.userId === userId && isIn(consent))) {
       return requestNotFound();
     }
     if (!ACTIVE.includes(held.status)) {

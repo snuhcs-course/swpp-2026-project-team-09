@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ import { LevelTrack } from '../friends/level-track';
 import { OffQuestion } from '../friends/off-question';
 import { type Levels, useLevels } from '../friends/use-levels';
 import { LocationExplanation } from '../main/location-explanation';
+import { PrivateZoneRow } from './private-zone-row';
 import { useSharingSwitch } from './use-sharing-switch';
 
 const SEEN_WORDS: Readonly<Record<FriendLevel, string>> = {
@@ -134,8 +136,8 @@ function NeverKept(): ReactElement {
   );
 }
 
-// 위치 공유 (`/me/location-sharing`, board n7b), from "위치 공유 보기": the Master Switch, each Friend's level, and what
-// the app never keeps. The switch and the levels ask once, as on 내 정보 and 친구 관리.
+// 위치 공유 (`/me/location-sharing`, board n7b), from "위치 공유 보기": the Master Switch, each Friend's level, the way
+// to the Private Zones, and what the app never keeps. The switch and the levels ask once, as on 내 정보 and 친구 관리.
 export function LocationSharingScreen(): ReactElement {
   const sharing = useSharingSwitch();
   const levels = useLevels();
@@ -151,6 +153,7 @@ export function LocationSharingScreen(): ReactElement {
           />
         </View>
         <PerFriend levels={levels} masterOn={sharing.on} />
+        <PrivateZoneRow />
         <NeverKept />
       </View>
       <LocationExplanation

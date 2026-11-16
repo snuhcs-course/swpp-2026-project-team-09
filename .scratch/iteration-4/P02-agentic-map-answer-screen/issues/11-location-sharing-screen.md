@@ -25,7 +25,7 @@ The switch and each level ask once as P03 ticket 12 built them. 내 정보's car
 
 ## Comments
 
-- The board's row "비공개 구역 · 칠한 곳 안에서는 시간표만 보여요 · 1곳" is not built: the Private Zone (lowering by place) is a feature of its own that no ticket builds yet, and a row for it would offer what the app cannot do.
+- The board's row "비공개 구역 · 칠한 곳 안에서는 시간표만 보여요 · 1곳" is not built here: the Private Zone (lowering by place) is a feature of its own, built by tickets 28 (the server) and 29 (the app, which adds the row to this screen).
 
 ### Decisions (2026-11-15)
 

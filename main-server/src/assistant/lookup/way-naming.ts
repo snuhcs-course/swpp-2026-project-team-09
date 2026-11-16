@@ -25,7 +25,7 @@ export class WayNaming extends PlaceNaming {
     super(args.placeOf);
   }
 
-  from({ start }: Way): string {
+  from({ start }: Pick<Way, 'start'>): string {
     return start.basis === 'gate' ? GATE : this.placeLabel(start.placeId);
   }
 
@@ -40,7 +40,7 @@ export class WayNaming extends PlaceNaming {
   }
 
   // The User where they are when that is the start, else at the start's Place.
-  me({ start }: Way): MapScene['people'][number] {
+  me({ start }: Pick<Way, 'start'>): MapScene['people'][number] {
     const { me, location } = this.args;
     const here = start.basis === 'location' ? (location?.at ?? null) : null;
     return {
@@ -78,4 +78,5 @@ type Deadline = NonNullable<Way['deadline']>;
 export const gated = ({ start }: Way): boolean => start.basis === 'gate';
 
 // "13:00 수업" for a Class, else the clock time.
-export const dueWords = ({ at, isClass }: Deadline): string => (isClass ? `${clockOf(at)} 수업` : clockOf(at));
+export const dueWords = ({ at, isClass }: Pick<Deadline, 'at' | 'isClass'>): string =>
+  isClass ? `${clockOf(at)} 수업` : clockOf(at);

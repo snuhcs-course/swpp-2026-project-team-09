@@ -108,7 +108,7 @@ describe('A run that wrote no text', () => {
 
     expect(response.status).toBe(200);
     const body = { text: FIXED_SENTENCE, mapButtons: ['dining'], cards: [], proposal: null, answer: null };
-    expect(response.body).toEqual({ ...body, lookup: null });
+    expect(response.body).toEqual({ ...body, lookup: null, refusal: null });
     expect(warnings()).toContain(
       'The Assistant answered with its fixed sentence: no step had text ' +
         '(finish reason stop, 0 cards, 1 map buttons, no Proposal)',

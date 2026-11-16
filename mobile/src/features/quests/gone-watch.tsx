@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -10,28 +11,13 @@ import { apiClient } from '@/api/client';
 import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import { useToast } from '@/design-system';
-
-// The Quests the User is leaving or ending on this phone. Their disappearance from the list is the User's own doing,
-// and is not told.
-const leaving = new Set<string>();
-
-// Runs the User's own leave or end of a Quest. While it runs and once it is taken, the Quest leaving the list is not
-// told; when it is refused, the mark is dropped, so that a removal by the Leader later is still told.
-export async function leavingOnPurpose(questId: string, leave: () => Promise<boolean>): Promise<boolean> {
-  leaving.add(questId);
-  const left = await leave();
-  if (!left) {
-    leaving.delete(questId);
-  }
-  return left;
-}
+import { leftOnPurpose } from './leaving';
 
 // A Quest also leaves the list once all its Sub Quests ended, and the main server still lets the User read it. Any
 // other answer, the room's `QUEST_NOT_FOUND` or no answer at all, is told: the list has moved past the Quest, so a
 // toast lost here would never come.
 async function tellIfGone(questId: string, title: string, showToast: (words: string) => void): Promise<void> {
-  if (leaving.has(questId)) {
-    leaving.delete(questId);
+  if (leftOnPurpose(questId)) {
     return;
   }
   try {

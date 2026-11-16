@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -35,14 +36,25 @@ export const roomResultSchema = z.strictObject({ ok: z.boolean(), failedUserId: 
 
 export type RoomResultDto = z.infer<typeof roomResultSchema>;
 
+export const askCompanionSchema = z.strictObject({ friendId: z.uuid() });
+
+export type AskCompanionDto = z.infer<typeof askCompanionSchema>;
+
 export interface PersonDto {
   userId: string;
   name: string;
 }
 
 export interface RoomConsentDto extends PersonDto {
-  // Null until answered, and again after the library did not recognise the companion.
+  // Null until answered, and again after the library did not recognise the companion. False once out.
   consented: boolean | null;
+}
+
+// Out of the request: declined (any answer or change that took the companion out) or unanswered by the deadline.
+export type CompanionState = 'asked' | 'consented' | 'declined' | 'unanswered';
+
+export interface RoomCompanionStateDto extends PersonDto {
+  state: CompanionState;
 }
 
 export interface RoomRequestDto {
@@ -62,6 +74,10 @@ export interface RoomRequestDto {
   failed: PersonDto | null;
   // Empty once booked or ended.
   consents: RoomConsentDto[];
+  // The same people with their state, for the booker's card.
+  companions: RoomCompanionStateDto[];
+  // How many more people the room's minimum needs while the request gathers; 0 when met, and once it is not active.
+  moreNeeded: number;
 }
 
 // A room request that asks the User, for the consent dialog on the main screen.

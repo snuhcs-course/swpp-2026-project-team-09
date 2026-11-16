@@ -2,34 +2,47 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactElement, useState } from 'react';
 import type { LibraryCardData } from '@/api/assistant-types';
 import { newIdempotencyKey } from '@/api/idempotency-key';
 import { ROOM_REQUEST_KEY, type RoomRequest, roomRequests } from '@/api/room-requests';
+import { type CompanionsView, companionsView } from '@/library/cards/room-companions';
 import type { RoomMember } from '@/library/client';
 import { library } from '@/library/library';
 import { Pill, Pills, Said } from './library-parts';
+import { AskOneMore } from './room-ask-more';
 
 // A room card with companions runs a room request before it books: "동의 요청 보내기" makes it, the card polls it, and
-// 예약하기 waits for "모두 동의했어요". On 예약하기 the phone reads the companions' registered names and 학번 from the
-// server, checks each with the library (getUserCheck) and books with what the library answered. The server is told only
-// whether the booking was made.
+// 예약하기 waits for "모두 동의했어요". A companion out leaves the request gathering: the card says who, how many more the
+// room needs, and the booker may ask one more Friend (`./room-ask-more.tsx`). On 예약하기 the phone reads the
+// companions' registered names and 학번 from the server, checks each with the library (getUserCheck) and books with
+// what the library answered. The server is told only whether the booking was made.
 
 export const SEND_ASK = '동의 요청 보내기';
 export const ALL_CONSENTED = '모두 동의했어요';
 export const WAITING = '친구들의 동의를 기다리고 있어요';
+export const MORE_FRIENDS = '친구를 더 불러 주세요';
 
 const POLL_MS = 3000;
 
 // The request of each card, by its place in the chat, while the app runs: the sheet may mount the card anew.
 const requestOfCard = new Map<string, string>();
 
+// A request kept on the phone for a card shown again, by the card's key (`./waiting-room.ts`).
+const requestOfKey = new Map<string, string>();
+
+export function bindPartyRequest(cardKey: string, requestId: string): void {
+  requestOfKey.set(cardKey, requestId);
+}
+
 // For the tests: no card has a request.
 export function forgetPartyRequests(): void {
   requestOfCard.clear();
+  requestOfKey.clear();
 }
 
 export interface PartyRequest {
@@ -39,6 +52,8 @@ export interface PartyRequest {
   sending: boolean;
   failed: boolean;
   ready: boolean;
+  // Shows the request as a change answered it, before the next poll.
+  update: (request: RoomRequest) => void;
 }
 
 function makingOf(card: LibraryCardData, useDesc: string | null): Parameters<typeof roomRequests.make>[0] {
@@ -48,11 +63,17 @@ function makingOf(card: LibraryCardData, useDesc: string | null): Parameters<typ
     : { key: card.key, questId: card.questId, ...extra };
 }
 
-export function usePartyRequest(card: LibraryCardData, place: string, useDesc: string | null): PartyRequest {
-  const [id, setId] = useState<string | null>(requestOfCard.get(place) ?? null);
+export function usePartyRequest(
+  card: LibraryCardData,
+  place: string,
+  useDesc: string | null,
+  onMade?: (made: RoomRequest) => void,
+): PartyRequest {
+  const [id, setId] = useState<string | null>(requestOfCard.get(place) ?? requestOfKey.get(card.key) ?? null);
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
   const [key] = useState(newIdempotencyKey);
+  const queryClient = useQueryClient();
   const asked = useQuery({
     queryKey: [...ROOM_REQUEST_KEY, id],
     queryFn: () => roomRequests.get(id ?? ''),
@@ -69,6 +90,7 @@ export function usePartyRequest(card: LibraryCardData, place: string, useDesc: s
       const made = await roomRequests.make(makingOf(card, useDesc), key);
       requestOfCard.set(place, made.id);
       setId(made.id);
+      onMade?.(made);
     } catch {
       setFailed(true);
     } finally {
@@ -82,6 +104,9 @@ export function usePartyRequest(card: LibraryCardData, place: string, useDesc: s
     sending,
     failed,
     ready: request?.status === 'ready',
+    update: (next) => {
+      queryClient.setQueryData([...ROOM_REQUEST_KEY, id], next);
+    },
   };
 }
 
@@ -89,14 +114,17 @@ export function rejectedWords(name: string): string {
   return `${name}님의 정보를 도서관에서 확인하지 못했어요. 확인을 요청했어요.`;
 }
 
-// What the card says of its request.
-function statusWords(request: RoomRequest): string {
+// What the card says of its request. With `companions`, the count is over the companions not out.
+function statusWords(request: RoomRequest, view: CompanionsView | null): string {
   if (request.failed !== null && request.status === 'gathering') {
     return rejectedWords(request.failed.name);
   }
   const consented = request.consents.filter(({ consented: answer }) => answer === true).length;
+  const count = view === null ? `${consented}/${request.consents.length}` : `${view.consented}/${view.inRequest}`;
+  // Everyone still in has consented and only the room's minimum is short: nobody's answer is awaited.
+  const short = view !== null && view.consented === view.inRequest;
   const words: Record<RoomRequest['status'], string> = {
-    gathering: `${WAITING} (${consented}/${request.consents.length})`,
+    gathering: short ? MORE_FRIENDS : `${WAITING} (${count})`,
     ready: ALL_CONSENTED,
     dissolved: request.reason ?? '파티 구성원이 제안을 거절했습니다',
     expired: '예약 시간이 지나 요청이 끝났어요',
@@ -106,12 +134,21 @@ function statusWords(request: RoomRequest): string {
   return words[request.status];
 }
 
-// The request's line, or "동의 요청 보내기" before it is sent.
+// The request's lines, or "동의 요청 보내기" before it is sent.
 export function PartyStatus({ party }: { party: PartyRequest }): ReactElement {
   const { request, send, sending, failed } = party;
   if (request !== null) {
     const ended = request.status === 'dissolved' || request.status === 'expired';
-    return <Said tone={ended ? 'danger' : 'plain'}>{statusWords(request)}</Said>;
+    const view = companionsView(request);
+    return (
+      <>
+        <Said tone={ended ? 'danger' : 'plain'}>{statusWords(request, view)}</Said>
+        {view?.lines.map((line) => (
+          <Said key={line}>{line}</Said>
+        ))}
+        {view?.canAskOneMore === true ? <AskOneMore onAsked={party.update} request={request} /> : null}
+      </>
+    );
   }
   return (
     <>

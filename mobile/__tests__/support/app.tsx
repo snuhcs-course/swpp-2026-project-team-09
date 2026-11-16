@@ -8,6 +8,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -34,6 +35,7 @@ import FriendRequestsScreen from '@/app/(signed-in)/me/friends/requests';
 import MyPartiesScreen from '@/app/(signed-in)/me/parties';
 import InterestsScreen from '@/app/(signed-in)/me/interests';
 import LocationSharingScreen from '@/app/(signed-in)/me/location-sharing';
+import PrivateZonesScreen from '@/app/(signed-in)/me/private-zones';
 import MapSourcesScreen from '@/app/(signed-in)/map-sources';
 import MenusScreen from '@/app/(signed-in)/menus';
 import ClassFormScreen from '@/app/(signed-in)/me/timetable/class';
@@ -85,6 +87,7 @@ export async function startApp(initialUrl = '/', more: Record<string, ComponentT
       '(signed-in)/me/parties': MyPartiesScreen,
       '(signed-in)/me/interests': InterestsScreen,
       '(signed-in)/me/location-sharing': LocationSharingScreen,
+      '(signed-in)/me/private-zones': PrivateZonesScreen,
       '(signed-in)/me/timetable/index': TimetableScreen,
       '(signed-in)/me/timetable/class': ClassFormScreen,
       '(signed-in)/invite/[token]': InviteScreen,
