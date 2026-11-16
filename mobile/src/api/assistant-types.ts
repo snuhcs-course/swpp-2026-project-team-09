@@ -18,6 +18,7 @@ import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { DroppedPlace, PlanPart } from './plan-part-types';
 import type { RefusalOffer, WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
+import type { MealWindow, WithRelax } from './relax-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
@@ -199,7 +200,7 @@ export interface MealInput {
   // Everyone of the plan, the asker first.
   people: PlanPerson[];
   // What the User fixed on the time band or in words.
-  window: { from: string | null; until: string | null };
+  window: MealWindow;
   // The Place the User fixed.
   placeId: string | null;
 }
@@ -232,7 +233,7 @@ export interface AnswerReply extends WithMissing {
   plans: Plan[];
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
-  noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
+  noPlan: ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } & WithRelax) | null;
 }
 
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,

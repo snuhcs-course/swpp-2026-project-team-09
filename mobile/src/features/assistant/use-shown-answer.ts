@@ -12,6 +12,7 @@ import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { withPerson } from './plan-input';
+import { opensBasis } from './relaxed-plan';
 import type { Stretch } from './time-band';
 import type { ChatBubble } from './use-chat';
 
@@ -108,7 +109,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     source,
     answer: source,
     index: 0,
-    basisOpen: false,
+    basisOpen: opensBasis(source?.plans[0]),
     adding: false,
     kept: null,
     recalculating: false,
@@ -119,7 +120,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
 }
 
 function withPlan(state: AnswerState, index: number): AnswerState {
-  return index === state.index ? state : { ...state, index, basisOpen: false };
+  return index === state.index ? state : { ...state, index, basisOpen: opensBasis(state.answer?.plans[index]) };
 }
 
 // After a drag of a handle the Plan with the id of the one on screen stays when the new answer has it, otherwise the
@@ -137,7 +138,7 @@ function replaced(last: AnswerState, next: AnswerReply, by: ChangeBy | undefined
   const kept = by === undefined ? null : { answer: last.answer, index: last.index };
   const adding = last.adding && last.pendingAdd === null;
   const settled = { recalculating: false, pendingAdd: null, moving: null };
-  return { ...last, answer: next, index, basisOpen: false, adding, kept, ...settled };
+  return { ...last, answer: next, index, basisOpen: opensBasis(next.plans[index]), adding, kept, ...settled };
 }
 
 function ghostOf(kept: Shown | null): Stretch | null {
