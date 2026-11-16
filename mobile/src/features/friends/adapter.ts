@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Friend, FriendLevel, FriendStatus, LatLng, Position, Presence } from '@/api/types';
@@ -153,9 +154,10 @@ export interface FriendRequestsView {
   sent: FriendRequestView[];
 }
 
+// The request's id comes last: the other User carries their own `id`, which would take its place.
 export function toFriendRequestViews({ received, sent }: FriendRequests): FriendRequestsView {
   return {
-    received: received.map(({ id, sender }) => ({ id, ...sender })),
-    sent: sent.map(({ id, receiver }) => ({ id, ...receiver })),
+    received: received.map(({ id, sender }) => ({ ...sender, id })),
+    sent: sent.map(({ id, receiver }) => ({ ...receiver, id })),
   };
 }
