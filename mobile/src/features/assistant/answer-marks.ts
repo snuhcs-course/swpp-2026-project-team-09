@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
@@ -207,11 +208,11 @@ interface Placed {
 }
 
 // A draft at the point of that index, its label without its side: a pick or a candidate whose dot is not drawn
-// carries its number in it.
+// carries its number in it. The pick's label is kept, the answer's main mark.
 function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null): Unplaced {
   const { position, group, tone, title, line, number } = draft;
   const words = title === null ? null : { tone, title, line, number: symbol === null ? number : null };
-  return { point, position, words, sides: SIDES[group] };
+  return { point, position, words, sides: SIDES[group], kept: group === 'pick' };
 }
 
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
