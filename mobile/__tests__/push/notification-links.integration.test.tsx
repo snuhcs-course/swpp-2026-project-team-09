@@ -229,6 +229,18 @@ describe('a push for an invitation that came after the map read its invitations'
     expect(screen.getByText('이미 끝난 초대예요')).toBeVisible();
     expect(shownAddress()).toMatch(ON_MAIN);
   });
+
+  it('opens 파티 at 초대 when the invitations cannot be read, since it cannot be told that it has ended', async () => {
+    await openMain();
+    server.on('GET /quest-invitations', { status: 500, body: { statusCode: 500, message: 'Internal Server Error' } });
+
+    await tap(tapOn(INVITATION_ADDRESS));
+    // A failure of the main server's own is asked once more, a second later (`api/query-client.ts`).
+    await pass(2000);
+
+    expect(screen.queryByText('이미 끝난 초대예요')).toBeNull();
+    expect(shownAddress()).toMatch(/^\/party\?(?:card=undefined&)?tab=invites$/u);
+  });
 });
 
 describe('a push about an event the map shows no card of', () => {

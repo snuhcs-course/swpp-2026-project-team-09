@@ -23,7 +23,7 @@ import type { Selection } from './use-selection';
 // A tapped push comes by the main screen's address, `/main?card=<kind>:<id>`, once the cards are known (not null). The
 // map goes to the card with that id and opens it; without one, the app opens the screen of the row in 알림. The known
 // invitations are all cards: one that no card holds has ended, once the list read again does not hold it either, since
-// the list the map holds may be older than the push. A party's card whose room request waited for the booking window
+// the list the map holds may be older than the push; when the list cannot be read, 파티 opens at 초대. A party's card whose room request waited for the booking window
 // also opens its room card in the chat.
 export function useAskedCard(
   cards: readonly CardView[] | null,
@@ -63,7 +63,8 @@ export function useAskedCard(
       selection.selectOrWait(shown.id);
       return;
     }
-    if (address?.kind === 'invitation') {
+    const unread = queryClient.getQueryState(QUEST_INVITATIONS_KEY)?.status === 'error';
+    if (address?.kind === 'invitation' && !unread) {
       showToast(INVITATION_GONE);
     } else if (address !== null) {
       router.navigate(fallbackFor(address));
