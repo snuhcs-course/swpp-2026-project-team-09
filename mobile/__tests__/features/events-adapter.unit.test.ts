@@ -4,6 +4,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, and the sheet's own
@@ -252,5 +253,21 @@ describe('sharedQuestFor', () => {
 
   it('a Quest for the Event held alone → null', () => {
     expect(sharedQuestFor([questFor('night', [ME])], 'night')).toBeNull();
+  });
+});
+
+// Partitions: the User's Quest for the event taken alone ("여기로", P03 ticket 17). Expected values: it is no 파티, so
+// the event is not the User's and lists no row of theirs.
+describe('a Quest taken alone for the event', () => {
+  const taken = { ...questFor('night', [ME]), takenAlone: true, capacity: 1 };
+
+  it("does not make the event the User's", () => {
+    const [view] = toEventViews(sources([event('night', '2026-10-06T19:00:00+09:00')], { quests: [taken] }), 'all', '');
+
+    expect(view).toMatchObject({ mine: false });
+  });
+
+  it('is no row of 파티 찾기/모집', () => {
+    expect(toRecruitRows('night', [taken], [], ME.id, NOW)).toEqual([]);
   });
 });

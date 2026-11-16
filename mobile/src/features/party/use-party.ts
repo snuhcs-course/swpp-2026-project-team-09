@@ -7,6 +7,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -35,6 +36,7 @@ import type { MyJoinRequest } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
 import { declinedPartiesQuery } from '@/features/parties/declined';
+import { heldAlone } from '@/features/quests/adapter';
 import { sameKoreaDay } from '@/korea-time';
 import { BOARDS } from './boards';
 import { findPosts, type Reasons, reasonsFor } from './finding';
@@ -242,13 +244,13 @@ export function useSentRequests(): ScreenData<MyJoinRequest[]> {
   return combined([requests], () => requests.data ?? []);
 }
 
-// The tabs' counts: the User's Quests but the Class Quests, and what waits under 초대, the Quest invitations. 0 while
+// The tabs' counts: the User's Quests but the Class Quests and those taken alone, and what waits under 초대, the Quest invitations. 0 while
 // they load.
 export function usePartyCounts(): { mine: number; invites: number } {
   const quests = useQuery(questsQuery);
   const invitations = useQuery(questInvitationsQuery);
   return {
-    mine: (quests.data ?? []).filter(({ classQuest }) => !classQuest).length,
+    mine: (quests.data ?? []).filter((quest) => !quest.classQuest && !heldAlone(quest)).length,
     invites: invitations.data?.length ?? 0,
   };
 }

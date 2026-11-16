@@ -177,7 +177,7 @@ export class PlansService {
     const settings = { capacity: ALONE_CAPACITY, takenAlone: true };
     const questId = await this.prisma.$transaction((tx) =>
       input.kind === 'events'
-        ? this.forGlobalEvent(userId, { id: plan.id, title: plan.title }, tx, settings)
+        ? this.forGlobalEvent(userId, { id: plan.id, title: plan.title }, tx, settings, true)
         : this.quests.createWithSubQuests(plan.title, subQuestsOf(plan), [userId], tx, settings),
     );
     const leaveBy = aloneLeaveBy(plan, nextWordOf(answer), now);
@@ -192,14 +192,21 @@ export class PlansService {
     return { ...made, alone: { lines, remindAt: leaveBy.at?.toISOString() ?? null } };
   }
 
-  // The asker's Quest for the Global Event, which they may hold only when they hold no Shared Quest for it.
+  // The asker's Quest for the Global Event, which they may hold only when they hold no Shared Quest for it. Taken
+  // `alone`, it replaces only a Quest they took alone for the event: a 파티 of theirs, even one nobody joined yet,
+  // refuses it.
   private async forGlobalEvent(
     userId: string,
     event: { id: string; title: string },
     tx: Prisma.TransactionClient,
     settings: Parameters<QuestsService['createForGlobalEvent']>[3],
+    alone = false,
   ): Promise<string> {
     await this.users.lock(userId, tx);
+    const held = alone ? await this.quests.heldFor(userId, event.id, tx) : null;
+    if (held !== null && (await tx.quest.findUnique({ where: { id: held } }))?.takenAlone === false) {
+      throw sharedQuestHeld();
+    }
     if (!(await this.quests.freeForSharedQuest(userId, event.id, tx))) {
       throw sharedQuestHeld();
     }

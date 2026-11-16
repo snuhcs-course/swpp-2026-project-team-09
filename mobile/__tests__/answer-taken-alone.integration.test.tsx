@@ -11,7 +11,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
 import { card } from './support/answer-map';
-import type { FakeServer } from './support/fake-server';
+import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
@@ -140,5 +140,29 @@ describe('the card of an event taken alone', () => {
 
     expect(card().getByTestId('taken-card')).toBeVisible();
     expect(screen.getByText('다시 고르지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
+  });
+});
+
+// Partitions: a Quest already gone at "다시 고르기", and "여기로" refused by the User's own 파티 for the event. Expected
+// values: P03 ticket 17's decisions, and the words 파티 has for SHARED_QUEST_HELD.
+describe('an event taken alone, refused or gone', () => {
+  it('"다시 고르기" on a Quest already gone shows the Plan again', async () => {
+    server.on(DROP, refusal(404, 'QUEST_NOT_FOUND'));
+    const user = await takeJobFair();
+
+    await user.press(card().getByRole('button', { name: '다시 고르기' }));
+    await pass(500);
+
+    expect(card().queryByTestId('taken-card')).toBeNull();
+    expect(card().getByRole('button', { name: '여기로' })).toBeEnabled();
+    expect(screen.queryByText('다시 고르지 못했어요. 잠시 후 다시 시도해 주세요')).toBeNull();
+  });
+
+  it('"여기로" refused for a 파티 of the User\'s own for the event says so', async () => {
+    server.on('POST /plans', refusal(409, 'SHARED_QUEST_HELD'));
+    await takeJobFair();
+
+    expect(screen.getByText('이 행사에 함께 가는 파티가 이미 있어요')).toBeVisible();
+    expect(card().queryByTestId('taken-card')).toBeNull();
   });
 });
