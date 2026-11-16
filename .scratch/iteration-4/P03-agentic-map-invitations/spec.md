@@ -254,7 +254,7 @@ interface NewQuestInput {
 - A Plan's id is the Global Event's, its title the event's, its Place the event's, and it has no Sub Quests: the asker attends through the Quest of the event, as today.
 - A tool of the chat, `planEvents`, takes the day and, when the User asked for a kind of event, the ids a search returned in the same message.
 
-**Recruiting Quests** (`kind: 'quests'`): one Plan for each Quest the asker could enter, judged on its first Sub Quest ahead that has a start and a Place.
+**Recruiting Quests** (`kind: 'quests'`): one Plan for each Quest the asker could enter, judged on its first Sub Quest ahead that has a start and a Place. A step's Place is its Place id, or else the Place its point or its words are, as for a Global Event, so a party whose only step is attending its event is judged at the event's place (ticket 16).
 
 - **It fits** when the asker can be at that Place before the Sub Quest starts.
 - **Order**: the Quests a Friend holds first, then the earlier start, then the title.
@@ -268,7 +268,7 @@ interface NewQuestInput {
 - **The Place** is the Global Event's, or the one the User said; with neither, the Place where the recruiting Quests of the same search meet, when they all meet at one; otherwise the answer asks for it.
 - **The time** is the one the User said; otherwise the earliest everyone of the Plan can be there, rounded up to the next ten minutes.
 - **Friends who could come** are those free at that time who hold no Quest for the same Global Event; the answer lists them, each with the line of their day ("지은 · 13:50 38동 수업 끝"), for the screen to offer.
-- `POST /plans` makes it: Open on the Board of the request (Hobby when none is given), capacity 4 or the number of people when that is more, with the steps the Plan gives and an invitation for each Friend of it. For a Global Event it is the asker's Quest of that event.
+- `POST /plans` makes it: Open on the Board of the request (Hobby when none is given), capacity 4 or the number of people when that is more, with the steps the Plan gives and an invitation for each Friend of it. For a Global Event it is the asker's Quest of that event. The Plan gives no step that would only repeat the event (from the event's own start and not cut short), since the attending Sub Quest is the event (ticket 16).
 - A tool of the chat, `planNewQuest`, takes what the User said.
 
 ### The three Friend levels
