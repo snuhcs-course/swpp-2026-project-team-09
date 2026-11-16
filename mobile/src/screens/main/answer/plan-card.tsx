@@ -12,6 +12,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
 import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
+import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -201,6 +202,8 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
           ghost={ghost}
           onDrop={fix.drop}
           fixed={windowOf(answer.input)}
+          moving={shown.moving}
+          onMove={fix.move}
         />
       )}
       <CardNote note={answer.note} />
@@ -235,11 +238,13 @@ interface PlanCardProps extends CardProps {
   onClose: () => void;
 }
 
-function linesOf({ plan }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
+// While the band is moved over someone's busy stretch, the lines say who cannot come and why.
+function linesOf({ plan, moving }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
   if (adding) {
     return [answer.input.kind === 'meet' ? WHO_MEETS : WHO, plan === null ? HOW_WITHOUT_PLAN : HOW];
   }
-  return plan?.lines ?? answer.noPlan?.lines ?? [];
+  const words = plan === null || moving === null ? null : movingWords(plan.band.lanes, moving);
+  return words?.lines ?? plan?.lines ?? answer.noPlan?.lines ?? [];
 }
 
 // The answer on screen in the answer frame's card: its condition chips with "근거" at the right of their first line,
@@ -260,7 +265,7 @@ export function PlanCard({ shown, answer, invitation, room, over = [], onClose }
     <View style={styles.plan}>
       <ConditionChips
         adding={fix.adding}
-        chips={answer.chips}
+        {...chipsWhileMoved(answer.chips, shown.moving)}
         corner={cornerOf(shown, fix)}
         disabled={busy}
         friendIds={fix.friendIds}

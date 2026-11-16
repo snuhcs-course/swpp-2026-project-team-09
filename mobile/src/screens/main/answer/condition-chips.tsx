@@ -36,6 +36,8 @@ interface ConditionChipsProps {
   friendIds: ReadonlySet<string>;
   // Null for nothing there, as for an answer without a Plan, which has no basis.
   corner: CornerAction | null;
+  // One of `chips` whose words a drag of the band is changing: drawn marked, as one the server eased.
+  changed?: ConditionChip | null;
   // The chips are a meet's: "＋ 같이" adds a Friend to meet, not to eat with.
   meet?: boolean;
 }
@@ -176,7 +178,7 @@ function pressOf(chip: ConditionChip, on: Pick<ConditionChipsProps, 'onOrigin' |
 // The first row of the answer's card: the conditions the answer used, each a control that corrects it, then
 // "＋ 같이", in lines that wrap so that no chip is cut, with the corner's action fixed at the right of the first line.
 export function ConditionChips(props: ConditionChipsProps): ReactElement {
-  const { chips, adding, disabled, corner, onProfile, friendIds, meet = false, ...on } = props;
+  const { chips, adding, disabled, corner, onProfile, friendIds, changed = null, meet = false, ...on } = props;
   const profileOf = (userId: string | null): (() => void) | null =>
     userId === null || onProfile === null || !friendIds.has(userId)
       ? null
@@ -200,7 +202,7 @@ export function ConditionChips(props: ConditionChipsProps): ReactElement {
               disabled={disabled}
               key={chip.kind}
               label={chip.text}
-              marked={chip.mark !== undefined}
+              marked={chip.mark !== undefined || chip === changed}
               onPress={pressOf(chip, on)}
             />
           ),

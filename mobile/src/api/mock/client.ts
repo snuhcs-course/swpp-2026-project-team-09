@@ -13,6 +13,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -35,6 +36,7 @@ import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
 import { mockParty } from './party';
 import { mockBetterPlan, mockChangedPlanQuest, mockMadeQuests, mockPlanQuest } from './plan-quest';
+import { insidePrivateZone, mockPrivateZones } from './private-zones';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
@@ -135,13 +137,15 @@ export const mockClient: ApiClient = {
     }),
   // A mock build never registers for push.
   registerPushToken: () => Promise.resolve(),
-  // As the main server: refused while the switch is off, and not kept off campus, here the camera's rectangle.
+  // As the main server: refused while the switch is off, and not kept off campus, here the camera's rectangle, nor
+  // inside a Private Zone.
   uploadPosition: (position) =>
     answer('uploadPosition', () => {
       if (!masterSwitchOn) {
         throw new ApiError(409, 'MASTER_SWITCH_OFF');
       }
-      return { offCampus: !isInside(position, CAMPUS_BOUNDS) };
+      const offCampus = !isInside(position, CAMPUS_BOUNDS);
+      return { offCampus, privateZone: !offCampus && insidePrivateZone(position) };
     }),
   listFriends: () => answer('listFriends', friendships.listFriends, []),
   setFriendLevel: async (userId, level) => {
@@ -244,4 +248,5 @@ export const mockClient: ApiClient = {
   ...mockEvents,
   ...mockTutorial,
   ...mockInterests,
+  ...mockPrivateZones,
 };

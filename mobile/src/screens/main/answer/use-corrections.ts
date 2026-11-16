@@ -13,9 +13,9 @@ import type { RelaxOffer } from '@/api/relax-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
 import { onlyFriendOf } from '@/features/assistant/meet-input';
-import { peopleOf, withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
+import { peopleOf, withBound, withOrigin, withoutPerson, withStart } from '@/features/assistant/plan-input';
 import { backToNow, relaxed, timeChipChange } from '@/features/assistant/relaxed-plan';
-import type { BandBound } from '@/features/assistant/time-band';
+import { type BandBound, clockOf, msOf, type Stretch } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
 import type { FriendChoices } from './friend-choices';
@@ -43,6 +43,8 @@ export interface Corrections {
   // A button of an answer that nothing fits 지금, and 처음으로 back to 지금.
   relax: (offer: RelaxOffer) => void;
   back: () => void;
+  // The band dragged whole to a place, or let go there: let go where it started, it goes back and asks nothing.
+  move: (at: Stretch, letGo: boolean) => void;
 }
 
 function useChoices(input: PlanInput): Pick<Corrections, 'choices' | 'friendIds'> {
@@ -90,8 +92,18 @@ function removerOf(change: ShownAnswer['change'], only: string | null, close: ()
   };
 }
 
-// What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
-// recalculation, but a person's ✕ as `removerOf` says. The list of Friends leaves out those `input` holds.
+function moveOf({ plan, setMoving, change }: ShownAnswer): Corrections['move'] {
+  return (at, letGo) => {
+    const still = plan === null || msOf(at.startAt) === msOf(plan.band.startAt);
+    setMoving(letGo && still ? null : at);
+    if (letGo && !still) {
+      change((input) => withStart(input, clockOf(at.startAt)), 'move');
+    }
+  };
+}
+
+// What the card's controls do to the conditions of the answer on screen when they are pressed or dragged: each change
+// asks for a recalculation, but a person's ✕ as `removerOf` says. The list of Friends leaves out those `input` holds.
 export function useCorrections(shown: ShownAnswer, input: PlanInput, close: () => void): Corrections {
   const { change, add, adding, setAdding } = shown;
   const showToast = useToast();
@@ -135,5 +147,6 @@ export function useCorrections(shown: ShownAnswer, input: PlanInput, close: () =
     back: () => {
       change(backToNow);
     },
+    move: moveOf(shown),
   };
 }

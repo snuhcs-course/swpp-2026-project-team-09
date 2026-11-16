@@ -54,6 +54,11 @@ export function withBound(input: PlanInput, bound: 'from' | 'until', time: strin
     : input;
 }
 
+// The band moved whole: its start fixed, and its end left to the server, which plans the longest time from then.
+export function withStart(input: PlanInput, time: string): PlanInput {
+  return input.kind === 'meal' || input.kind === 'meet' ? { ...input, window: { from: time, until: null } } : input;
+}
+
 export function withOrigin(input: PlanInput, placeId: string): PlanInput {
   if (!hasPeople(input)) {
     return input;

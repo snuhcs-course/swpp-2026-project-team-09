@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
 import type { MeetInput } from '@/api/meet-plan-types';
 import { isAnswerReply } from '@/api/server/plan-answers';
+import answerFrom14 from './meet-answer-a6.json';
 import answer from './meet-answer.json';
 
 // The main server's answer to "만나고 싶다" with 민수 (the design's board a5), asked on Tuesday 2026-11-17 at 12:10 from
@@ -20,3 +22,7 @@ function checked(copy: unknown): AnswerReply & { input: MeetInput } {
 }
 
 export const MEET_ANSWER = checked(answer);
+
+// The main server's answer to the same meet asked again from 14:00, as the band of a5 let go at 14:00 asks it (board
+// a6), written the same way.
+export const MEET_ANSWER_FROM_14 = checked(answerFrom14);
