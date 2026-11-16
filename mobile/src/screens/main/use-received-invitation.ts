@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
@@ -12,7 +13,6 @@ import type { InvitationCard } from '@/api/invitation-card-types';
 import { invitationCardQuery, QUEST_INVITATIONS_KEY } from '@/api/queries';
 import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
-import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type CardView, cardId, invitationIdOf } from '@/features/map/adapter';
 import { type PartyActions, usePartyActions } from '../party/use-party-actions';
 import type { Me } from './use-me';
@@ -54,23 +54,22 @@ function useCardRead(invitationId: string | null, position: LatLng | null): UseQ
 // The ids of the invitations answered on this phone, or whose answer is on its way.
 type Answering = RefObject<Set<string>>;
 
-// The selected invitation's card left the cards while the switch stayed on: the list of invitations came again
-// without it, as after the Leader cancelled it or it was answered on another device; one answered here is no news.
-// The selection drops the card itself. `selectedId` is the selected invitation's card id.
+// The selected invitation's card left the cards: the list of invitations came again without it, as after the Leader
+// cancelled it or it was answered on another device; one answered here is no news. The selection drops the card itself.
+// `selectedId` is the selected invitation's card id.
 function useEndedOnList(selectedId: string | null, cards: readonly CardView[], answering: Answering): void {
-  const on = useAnswerSwitch();
   const showToast = useToast();
   const before = useRef(selectedId);
   useEffect(() => {
     const was = before.current;
     before.current = selectedId;
-    if (was === null || was === selectedId || !on || cards.some(({ id }) => id === was)) {
+    if (was === null || was === selectedId || cards.some(({ id }) => id === was)) {
       return;
     }
     if (!answering.current.has(invitationIdOf(was) ?? '')) {
       showToast(INVITATION_GONE);
     }
-  }, [selectedId, cards, on, showToast, answering]);
+  }, [selectedId, cards, showToast, answering]);
 }
 
 // 수락 and 거절, each as the 파티 tab's buttons do it, once for each invitation. Done, the toast says so, and the card

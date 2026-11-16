@@ -11,7 +11,6 @@ import type { CardFact, Lookup, LookupCard, Tapped } from '@/api/lookup-types';
 import type { LatLng } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map';
 import { usePosition } from '@/position';
-import { useAnswerSwitch } from './answer-switch';
 
 // The main server's answer to a building or a Friend's face pressed on the map (POST /assistant/taps): its card while
 // it is asked, after a failure, and once it came.
@@ -64,10 +63,9 @@ export function useTapAnswer(tapped: Tapped | null): TapAnswer {
   };
 }
 
-// The fact lines of the main server's card of a Friend's face (row 6's decision D11), asked while the switch of the
-// answer on the map is on; null while they are asked, after a failure, with the switch off, and for no Friend.
+// The fact lines of the main server's card of a Friend's face (row 6's decision D11); null while they are asked, after
+// a failure, and for no Friend.
 export function useFriendFacts(userId: string | null): readonly CardFact[] | null {
-  const onMap = useAnswerSwitch();
-  const { answer } = useTapAnswer(onMap && userId !== null ? { kind: 'friend', userId } : null);
+  const { answer } = useTapAnswer(userId === null ? null : { kind: 'friend', userId });
   return answer?.card.facts ?? null;
 }

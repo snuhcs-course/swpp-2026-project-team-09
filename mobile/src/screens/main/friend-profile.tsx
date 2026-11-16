@@ -72,15 +72,15 @@ function ProfileCard({ friend, onClose }: { friend: FriendView; onClose: () => v
   return <Card {...profileCardProps(friend)} onClose={onClose} />;
 }
 
-// The Friends whose card a row of a list may open without their mark on the map: the User's Friends while `onMap`,
-// the switch of the answer on the map, is on, and none while they cannot be read.
-export function useOffMapFriends(onMap: boolean): OffMapFriends {
+// The Friends whose card a row of a list may open without their mark on the map: the User's Friends, and none while
+// they cannot be read.
+export function useOffMapFriends(): OffMapFriends {
   const friends = useFriends().data;
-  return onMap ? (friends ?? []).map(({ id }) => id) : null;
+  return (friends ?? []).map(({ id }) => id);
 }
 
-// The card of a Friend whom the map does not show, which a row of the friend list opens over the everyday map while
-// the switch of the answer on the map is on: their profile, with what the app holds of them, and "만나고 싶다".
+// The card of a Friend whom the map does not show, which a row of the friend list opens over the everyday map: their
+// profile, with what the app holds of them, and "만나고 싶다".
 export function OffMapFriendCard({
   userId,
   selection,

@@ -30,17 +30,14 @@ function contextAt(where: Where, shown: ShownAnswer | null, { tapped, viewport }
   return { location: position, locationMissing, viewport, tapped, conditions, planId };
 }
 
-// The conversation, whose requests carry the context while the switch is on: the answer on screen kept in `shownNow`,
-// what was pressed on the map, which `setTapped` keeps, and the map's visible area, which `setViewport` keeps.
+// The conversation, whose requests carry the context: the answer on screen kept in `shownNow`, what was pressed on the
+// map, which `setTapped` keeps, and the map's visible area, which `setViewport` keeps.
 export function useContextChat(
-  onMap: boolean,
   where: Where,
   shownNow: RefObject<ShownAnswer | null>,
 ): { chat: Chat } & Pick<ChatSheetControl, 'setTapped' | 'setViewport'> {
   const pressedNow = useRef<Pressed>({ tapped: null, viewport: null });
-  const chat = useChat(
-    onMap ? (): RequestContext => contextAt(where, shownNow.current, pressedNow.current) : undefined,
-  );
+  const chat = useChat((): RequestContext => contextAt(where, shownNow.current, pressedNow.current));
   const setTapped = useCallback((tapped: Tapped | null): void => {
     pressedNow.current = { ...pressedNow.current, tapped };
   }, []);

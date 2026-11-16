@@ -17,9 +17,8 @@ import { type CardView, cardId, line } from './adapter';
 import { placeGroupId } from './place-groups';
 import { shortTitle } from './short-name';
 
-// The marks of the everyday map while the switch of the answer on the map is on (P05 ticket 13): only what matches
-// the User's interests stands on it, what stands at one place shares one mark, and a mark carries "!" while one of its
-// items is newly posted for the User.
+// The marks of the everyday map (P05 ticket 13): only what matches the User's interests stands on it, what stands at
+// one place shares one mark, and a mark carries "!" while one of its items is newly posted for the User.
 
 // Why items stand on the map, each named by its card's id ("event:<id>", "party:<id>"). `interest`: the matches of the
 // profile's hashtags and the watched interests, with whether a watched interest matched. `today`: a few of today's

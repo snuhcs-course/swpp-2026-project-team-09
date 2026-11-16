@@ -7,18 +7,15 @@
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
-import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { cardId, type CardView } from '@/features/map/adapter';
 import type { MainMap } from './use-main-map';
 import type { Selection } from './use-selection';
 
 // A member pressed in a Quest's room comes back by the main screen's address, `/main?person=…`: the map goes to the
 // member's Avatar, a Friend's or a Party member's, and opens its card, once the cards are known (not null). The chip of
-// a meet's only Friend asks the same; with the switch of the answer on the map on, a Friend whom the map does not show
-// gets their card where the map is.
+// a meet's only Friend asks the same; a Friend whom the map does not show gets their card where the map is.
 export function useAskedPerson(cards: readonly CardView[] | null, map: MainMap, selection: Selection): void {
   const { person } = useLocalSearchParams<{ person?: string }>();
-  const onMap = useAnswerSwitch();
   useEffect(() => {
     if (person === undefined || cards === null) {
       return;
@@ -28,8 +25,8 @@ export function useAskedPerson(cards: readonly CardView[] | null, map: MainMap, 
     if (card !== undefined) {
       map.goTo(card.position, 'close');
       selection.selectOrWait(card.id);
-    } else if (onMap) {
+    } else {
       selection.selectFriend(person);
     }
-  }, [person, cards, map, selection, onMap]);
+  }, [person, cards, map, selection]);
 }

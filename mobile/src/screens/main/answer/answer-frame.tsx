@@ -244,11 +244,10 @@ interface AnswerFrameProps {
   room: Room;
 }
 
-// The answer frame over the map while the switch is on and the conversation holds something. Before anything is
-// asked, while the bar has the keyboard, where the conversation goes stands above it.
+// The answer frame over the map while the conversation holds something. Before anything is asked, while the bar has
+// the keyboard, where the conversation goes stands above it.
 export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: AnswerFrameProps): ReactElement | null {
-  const { onMap, framed } = control;
-  if (framed) {
+  if (control.framed) {
     return (
       <Framed
         barRoom={inputTop + space[3]}
@@ -259,7 +258,7 @@ export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: A
       />
     );
   }
-  return onMap && keyboardUp ? (
+  return keyboardUp ? (
     <Text style={[styles.notice, { bottom: inputTop + space[2] }]}>대화 내용은 AI 제공자에게 전송돼요</Text>
   ) : null;
 }

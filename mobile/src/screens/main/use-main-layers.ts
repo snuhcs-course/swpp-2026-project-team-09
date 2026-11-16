@@ -4,12 +4,12 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { questInvitationsQuery } from '@/api/queries';
-import { useKeptAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type MadeQuestView, useMadeQuests } from '@/features/assistant/use-made-quests';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
@@ -35,15 +35,11 @@ function overviewZoom(map: MainMap): number | null {
   return map.detail === 'overview' ? (map.camera?.zoom ?? map.fitZoom) : null;
 }
 
-// The cards of the invitations the User received while the switch of the answer on the map is on, and whether they
-// are known: not before the phone has said where the switch is, and with it off there are none to wait for. While it
-// is off the list does not render the screen again.
+// The cards of the invitations the User received, and whether they are known.
 export function useInvitationCards(): { cards: readonly CardView[]; known: boolean } {
-  const kept = useKeptAnswerSwitch();
-  const on = kept === true;
-  const { data, isPending } = useQuery({ ...questInvitationsQuery, subscribed: on });
-  const cards = useMemo(() => (on && data !== undefined ? invitationCards(data) : NO_CARDS), [on, data]);
-  return { cards, known: kept !== null && (!on || !isPending) };
+  const { data, isPending } = useQuery(questInvitationsQuery);
+  const cards = useMemo(() => (data === undefined ? NO_CARDS : invitationCards(data)), [data]);
+  return { cards, known: !isPending };
 }
 
 // The map's cards, and the 식당, shuttle and 공부공간 layers' while they are on, with the things at one place
@@ -91,10 +87,9 @@ export function pressOnMap(cards: readonly CardView[], map: MainMap, selection: 
   };
 }
 
-// Opens the chat and sends the words, as the User would.
+// Sends the words, as the User would.
 export function askAssistant(chat: ChatSheetControl): (words: string) => void {
   return (words) => {
-    chat.open();
     chat.chat.send(words);
   };
 }
@@ -105,13 +100,13 @@ export interface MainLayers {
   cards: readonly CardView[];
   ready: boolean;
   chat: ChatSheetControl;
-  // The Quests made from a Plan, none while the switch is off.
+  // The Quests made from a Plan.
   made: readonly MadeQuestView[];
   // The main screen's one route, whose guidance a Lookup's "길 안내" starts too.
   route: MainRoute;
 }
 
-// The 편의기능 stack and what its layers put on the map, with the map's own cards, and the chat's sheet, which turns a
+// The 편의기능 stack and what its layers put on the map, with the map's own cards, and the conversation, which turns a
 // layer on from a map button and which a card's button may ask, and the main screen's route. The Assistant is told
 // where the User is (`me`), and a Lookup's "길 안내" starts the route's guidance.
 export function useMainLayers(inFront: boolean, map: MainMap, me: Me): MainLayers {
@@ -120,6 +115,6 @@ export function useMainLayers(inFront: boolean, map: MainMap, me: Me): MainLayer
   const made = useMadeQuests();
   const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map), made);
   const route = useRoute(map, me);
-  const chat = useChatSheet(inFront, stack.turnOn, me, route.routeTo);
+  const chat = useChatSheet(stack.turnOn, me, route.routeTo);
   return { stack, shuttle, cards, ready, chat, made, route };
 }

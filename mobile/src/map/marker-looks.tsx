@@ -9,6 +9,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -36,12 +37,12 @@ import type { Size } from './projection';
 // that look the same share one, and the number of pictures is the number of names:
 // - two for the User's own Avatar;
 // - for each person, the two sizes in each tone the person was seen in, with and without a photo, with the green dot
-//   of a Friend seen at the exact level while the switch of the answer on the map is on or dimmed while the person's
-//   position was old, and each of them selected, which only the one selected person ever asks for, or with the "+" of
-//   a Friend who can be added to the answer on screen;
+//   of a Friend seen at the exact level or dimmed while the person's position was old, and each of them selected,
+//   which only the one selected person ever asks for, or with the "+" of a Friend who can be added to the answer on
+//   screen;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
 // - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected;
-// - while the switch is on, the same places and sets with the "!" of a mark newly posted or faded (`fresh`, `faded`);
+// - the same places and sets with the "!" of a mark newly posted or faded (`fresh`, `faded`);
 // - one for the tutorial's place pin.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
@@ -57,8 +58,8 @@ import type { Size } from './projection';
 // A dot is the look from far away, a pin the look from close.
 export type MarkerForm = 'dot' | 'pin';
 
-// An interest mark's, while the switch of the answer on the map is on: `fresh` carries "!", something newly posted
-// for the User; `faded` is drawn faint, shown for want of anything the User watches.
+// An interest mark's: `fresh` carries "!", something newly posted for the User; `faded` is drawn faint, shown for want
+// of anything the User watches.
 interface InterestLook {
   fresh?: boolean;
   faded?: boolean;
@@ -163,7 +164,7 @@ export function lookName(look: MarkerLook): string {
   return parts(look.kind, look.form, count, look.muted === true && 'muted', selected, ...interestParts(look));
 }
 
-// Named only when set, so that every name with the switch off stays as it was.
+// Named only when set, so that every name without a mark stays as it was.
 function interestParts({ fresh, faded }: InterestLook): (string | false)[] {
   return [fresh === true && 'fresh', faded === true && 'faded'];
 }

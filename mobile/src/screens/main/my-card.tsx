@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -71,8 +72,8 @@ function Rows(): ReactElement | null {
   );
 }
 
-// The User's own card, which a press on their own dot opens while the switch of the answer on the map is on (board
-// a11): what each Friend sees of the User now, "바꾸기" to 위치 공유, and that lowering a level is never told.
+// The User's own card, which a press on their own dot opens (board a11): what each Friend sees of the User now, "바꾸기"
+// to 위치 공유, and that lowering a level is never told.
 export function MyCard({
   onClose,
   onHeight,
