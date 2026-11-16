@@ -9,8 +9,7 @@
 import { useIsFocused } from 'expo-router';
 import { type ReactElement, type ReactNode, useCallback } from 'react';
 import { type LayoutChangeEvent, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, Icon, radius, shadow, space, text } from '@/design-system';
+import { color, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -23,42 +22,19 @@ import { ChatMarkdown } from '../chat-markdown';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
-import { ANSWER_PILL, listsTop, type Room } from '../layout';
+import type { Room } from '../layout';
 import { AnswerLines } from './answer-lines';
-import { CloseButton } from './close-button';
+import { AnswerPill } from './answer-pill';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { InvitedCard } from './invited-card';
 import { LookupCard } from './lookup-card';
+import { OfferedWords } from './offered-words';
 import { pillIconOf } from './pill-icon';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
 
 // Above the first of the card's parts.
 const CONTENT_TOP = space[5];
-
-// What the User asked, on one line, with its icon and ✕, which forgets the conversation.
-function AnswerPill({
-  asked,
-  icon,
-  onClose,
-}: {
-  asked: string;
-  icon: 'chat' | 'user';
-  onClose: () => void;
-}): ReactElement {
-  const { top } = useSafeAreaInsets();
-  return (
-    <View style={[styles.pillRow, { top: listsTop(top) }]}>
-      <View style={styles.pill} testID="answer-pill">
-        <Icon color={color.ink} name={icon} size={20} testID={`answer-pill-${icon}`} />
-        <Text ellipsizeMode="tail" numberOfLines={1} style={styles.asked}>
-          {asked}
-        </Text>
-        <CloseButton label="답 닫기" onPress={onClose} />
-      </View>
-    </View>
-  );
-}
 
 interface WordsProps {
   bubble: ChatBubble;
@@ -117,6 +93,9 @@ function Words(props: WordsProps): ReactElement {
   }
   if (bubble.failure === 'unavailable') {
     return <FailedLines text={bubble.text} />;
+  }
+  if (bubble.offers !== undefined && bubble.offers.length > 0) {
+    return <OfferedWords offers={bubble.offers} onAsk={onAsk} text={bubble.text} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? lookup?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
@@ -286,26 +265,6 @@ export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: A
 }
 
 const styles = StyleSheet.create({
-  pillRow: {
-    position: 'absolute',
-    right: ANSWER_PILL.side,
-    left: ANSWER_PILL.side,
-    alignItems: 'flex-start',
-    pointerEvents: 'box-none',
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    maxWidth: '100%',
-    height: ANSWER_PILL.height,
-    paddingLeft: space[4],
-    paddingRight: space[1],
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
-  },
-  asked: { ...text.label, flexShrink: 1, color: color.ink },
   card: {
     position: 'absolute',
     right: 0,

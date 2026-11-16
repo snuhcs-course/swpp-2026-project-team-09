@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -14,7 +15,7 @@ import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
 import { type AnswerReply, type Lookup, NO_CONTEXT, requestContextSchema } from './answer.dto.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
-import { type Refusal } from '../refusals/refusal.dto.js';
+import { type Refusal, type RefusalOffer } from '../refusals/refusal.dto.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
 export const USER_MESSAGE_MAX = 1000;
@@ -91,4 +92,9 @@ export interface AssistantReplyDto {
   answer: AnswerReply | null;
   lookup: Lookup | null;
   refusal: Refusal | null;
+  // Buttons under the text of a reply that draws nothing; left out when there are none.
+  offers?: ReplyOffer[];
 }
+
+// A button under a reply's text, sent as the User's words: a Tutorial quest's 가는 길 보기 (P01-14).
+export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }>;

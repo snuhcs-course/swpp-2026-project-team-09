@@ -2,12 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { clockOf } from '../free-time/free-time.js';
 import { clockTime } from '../free-time/tool-parts.js';
+import { QUEST_FIELD, QUEST_NONE_REASONS, questsNamed } from './quest-way-tools.js';
+import { type TutorialOrderService } from './tutorial-order.service.js';
 import { atPlace, type Way } from './way.js';
 import { type WayAnswer } from './way-lookup.js';
 import { type WayService } from './way.service.js';
@@ -53,6 +56,7 @@ const input = z.object({
     .enum(['shuttle'])
     .optional()
     .describe('shuttle when the User asked about the shuttle (셔틀 언제 와?, 셔틀 탈까 걸을까). Left out otherwise.'),
+  quest: QUEST_FIELD,
 });
 
 // When the User must be there and whether it is a Class, when to set out, and how late they are if they set out now.
@@ -92,17 +96,32 @@ function shuttleWords({ shuttle }: Way): object | string | null {
   };
 }
 
-export function findWay(ways: WayService): Tool {
+export function findWay(ways: WayService, tutorial: TutorialOrderService): Tool {
   return defineTool({
     description:
-      "Finds the way from where the User is to a Place, or to the Place of their next item today, on foot or by the campus shuttle when it is at least 3 minutes faster, and the app draws it on the map. Answers result 'found' with where the User sets out from, the Place, the minutes on foot, the shuttle weighed against the walk, and, when they must be there by a time, when to set out and how many minutes late they are if they set out now, or result 'none' with the reason.",
+      "Finds the way from where the User is to a Place, or to the Place of their next item today, on foot or by the campus shuttle when it is at least 3 minutes faster, and the app draws it on the map. Answers result 'found' with where the User sets out from, the Place, the minutes on foot, the shuttle weighed against the walk, and, when they must be there by a time, when to set out and how many minutes late they are if they set out now, or result 'none' with the reason." +
+      questsNamed(tutorial),
     input,
-    run: async ({ to, from, by, about }, { userId, now, context, found, presented }) => {
+    run: async ({ to, from, by, about, quest }, { userId, now, context, found, presented }) => {
       const tapped = context.tapped?.kind === 'place' ? context.tapped.placeId : null;
       found.refuseUnfound(
         'place',
         [to, from].flatMap((placeId) => (placeId === undefined || placeId === tapped ? [] : [placeId])),
       );
+      if (quest !== undefined) {
+        const reached = await tutorial.wayTo(
+          userId,
+          { questKey: quest, fromPlaceId: from ?? null },
+          { now, location: context.location, locationMissing: context.locationMissing },
+        );
+        if (reached.result === 'none') {
+          return noneFound(QUEST_NONE_REASONS[reached.reason]);
+        }
+        presented.lookup = reached.lookup;
+        presented.answer = null;
+        presented.mapButtons.length = 0;
+        return { result: 'found', fromIs: STARTS[reached.way.start.basis], ...reached.words };
+      }
       const answer = await ways.find(
         userId,
         { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null, about },

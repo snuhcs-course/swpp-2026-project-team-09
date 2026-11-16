@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -9,7 +10,6 @@ import { Server } from 'node:http';
 import { type GlobalEvent, type Prisma, type Source } from '../src/generated/prisma/client.js';
 import { collectedPost, eventsMessage, postNumbersFrom } from './global-events.js';
 import { JudgementWorld } from './judgements.js';
-import { send } from './source-posts.js';
 
 export type Post = Record<string, unknown>;
 
@@ -101,7 +101,7 @@ export class SameEventWorld extends JudgementWorld {
   }
 
   async through(app: INestApplication<Server>, source: Source, posts: Post[]): Promise<void> {
-    await send(app, eventsMessage(posts, { source }));
+    await this.sent(app, eventsMessage(posts, { source }));
     const keys = posts.map((post) => keyOf(post));
     await vi.waitFor(
       async () => {

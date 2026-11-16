@@ -39,6 +39,7 @@ import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
 import { withStudyArea } from '../lookup/study-tools.js';
 import { type LookupServices } from '../lookup/lookup-services.js';
+import { QUEST_WAY_RULES } from '../lookup/quest-way-tools.js';
 import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-order-tools.js';
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { DELIMITER } from '../others-text.js';
@@ -187,10 +188,10 @@ function withLookups(
     return planned;
   }
   return {
-    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES, DAY_RULES, TUTORIAL_ORDER_RULES],
+    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES, DAY_RULES, TUTORIAL_ORDER_RULES, QUEST_WAY_RULES],
     tools: {
       ...planned.tools,
-      findWay: findWay(lookups.ways),
+      findWay: findWay(lookups.ways, lookups.tutorial),
       findMenu: findMenu(lookups.menus),
       findFriend: findFriend(lookups.friends),
       findDay: findDay(lookups.days),
