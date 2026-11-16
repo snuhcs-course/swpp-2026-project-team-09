@@ -187,8 +187,7 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
       />
     );
   }
-  // A meet has no "이대로 초대" until POST /plans takes one.
-  const invitable = plan !== null && peopleOf(answer.input).length > 1 && answer.input.kind !== 'meet';
+  const invitable = plan !== null && peopleOf(answer.input).length > 1;
   return (
     <>
       {plan === null ? null : (

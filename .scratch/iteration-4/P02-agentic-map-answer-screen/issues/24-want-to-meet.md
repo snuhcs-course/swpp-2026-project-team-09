@@ -41,7 +41,7 @@ Blocked by: package A's meet input and its planning (row-6-seams, ticket 24); 18
 6. **A Friend Lookup's `meet`** is its main button (`mainActionOf` takes the first `guide` or `meet`; a refusal's offer still comes first). It asks the same meet, and the answer comes as a new turn whose pill reads "{name} · 만나고 싶다", the name as the friend list says it or else as the Lookup's chip does; that turn's reply takes the Lookup's place.
 7. **"민수 ✕"**: in a meet of the User and one Friend, a person chip's ✕ closes the answer, as the frame's ✕ does, and opens that Friend's card by the main screen's address `?person=`, as a person pressed in a Quest's room does: the face's card where the map shows it, the map going there, else, with the switch on, the card of a Friend the map does not show. The Friend is the conditions', which is the chip's on the server.
 8. **A meet's conditions change as a meal's**: `plan-input.ts` reads a meet's people and window, so its ✕, "＋ 같이", a face pressed, the band's handles, and the origin chip all recalculate; with two Friends each ✕ recalculates.
-9. **"이대로 초대"** is left out of a meet by one condition in `answer/plan-card.tsx` (`Below`, `answer.input.kind !== 'meet'`), to lift once `POST /plans` takes a meet.
+9. **"이대로 초대"** on a meet makes the Quest through `POST /plans` (#315), as a meal's does (P02-05): `Below` in `answer/plan-card.tsx` draws it on every Plan with a Friend, and the body carries the meet input. The card after inviting and the Quest kept on the phone (P02-07) need no change; the made Quest's flag reads "12:15 만나기", the word after "에서" in the Quest's title, as a meal's reads "12:15 점심".
 10. **Words typed while a meet is on screen** carry its conditions and its Plan's id already (`chat-sheet.tsx` `contextAt` reads the answer on screen); `contextAt` is unchanged.
 11. **The capability**: `ANSWER_CAPABILITIES` gains `meet`, sent only with a context (the switch on); the switch-off request still says `library` alone. The tests that pin the list, and q6's test that drew "닫기" alone, now expect the change.
 12. **"＋ 같이" on a meet** is read aloud as "같이 만날 친구 추가", and the list it opens asks "누구와 같이 만날까요?" (`ConditionChips`' `meet`, `plan-card.tsx`'s `WHO_MEETS`); a meal and every other kind keep "같이 먹을 친구 추가" and "누구와 같이 먹을까요?".
@@ -61,3 +61,18 @@ One session with two subagents for this ticket (the implementation, then a revie
 
 - Agent time: about 88 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
 - Tokens: output 274,510; input 90,926,174, of which 90,097,995 were cache reads, 827,435 cache writes, and 744 uncached. Without cache reads: 1,102,689.
+
+### Package C's line in `POST /plans` (2026-11-16)
+
+- `POST /plans` makes a meet's Plan into a Quest as a meal's: the Plan's title and Sub Quest, the asker leading, the Friends invited. `PUT /plans/:questId` plans a meet again as a meet. The invitee's card gives their own way with no change to `own-way.ts` or `invitation-card.service.ts`; two tests show it.
+- `GET /plans/:questId/better` offers nothing for a meet's Quest, found by its step's title "…에서 만나기": a meet has no meal's window to be planned better in.
+- Package A's meet planner takes `leftOut`, as the meal planner does, so that a meet's Quest planned again does not meet its own step.
+- A meet with only the asker is refused by A's `meetInputSchema` (`people.min(2)`) before `PLAN_ALONE` is reached.
+- Left as it is: an invitee's time-to-leave notification names the building ("301동") where the Leader's names "301동 앞", since `invitee-time-to-leave.service.ts` reads a meal's step title.
+
+### Agent usage for package C's line (2026-11-16)
+
+Package C's line only. One implementing subagent (Opus 5.5); this session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 33 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots and the heavy lock.
+- Tokens: output 91,013; input 21,881,808, of which 21,591,605 were cache reads, 289,981 cache writes, and 222 uncached. Without cache reads: 381,216.

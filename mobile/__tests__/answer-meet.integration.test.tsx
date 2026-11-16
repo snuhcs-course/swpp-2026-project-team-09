@@ -4,8 +4,10 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
+import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import type { PlanQuest } from '@/api/plan-quest-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
@@ -141,7 +143,20 @@ describe('the answer of a meet (board a5)', () => {
   });
 });
 
-// Partitions: the basis, the next Plan by the arrow, and "이대로 초대", which a meet has not.
+// The main server's reply to POST /plans for a5's first Plan. The stored reply for the meal's first Plan has the same
+// asker, 민수 invited, and a step at 302동's Place from 12:15 to 12:43, as a5's; changed: the Quest's title and its
+// step's, which main-server `plans-meet.integration.test.ts` shows a meet's Plan writes as "302동 앞에서 만나기".
+const MET_QUEST: PlanQuest = {
+  ...PLAN_QUEST,
+  quest: {
+    ...PLAN_QUEST.quest,
+    title: '302동 앞에서 만나기',
+    // oxlint-disable-next-line no-map-spread -- a copy: the stored reply is shared with the mock and other tests
+    subQuests: PLAN_QUEST.quest.subQuests.map((step) => ({ ...step, title: '302동 앞에서 만나기' })),
+  },
+};
+
+// Partitions: the basis, the next Plan by the arrow, and "이대로 초대" down to the request and its reply.
 describe("the controls of a meet's answer", () => {
   it('opens the basis the main server wrote', async () => {
     const user = await openMain({ answerOnMap: true });
@@ -167,14 +182,23 @@ describe("the controls of a meet's answer", () => {
     expect(card().getByTestId('plan-count')).toHaveTextContent('2/5');
   });
 
-  it('has no "이대로 초대" while the main server cannot make a meet a Quest', async () => {
+  it('sends the meet and its first Plan with "이대로 초대", and the card then says the Quest was made', async () => {
+    server.on('POST /plans', { status: 201, body: MET_QUEST });
     const user = await openMain({ answerOnMap: true });
     await press(user, MIN_JUN.name);
-
     await meetFromCard(user);
 
-    expect(card().getByText('12:15 302동 앞')).toBeVisible();
-    expect(card().queryByRole('button', { name: '이대로 초대' })).toBeNull();
+    await user.press(card().getByRole('button', { name: '이대로 초대' }));
+    await pass(500);
+
+    expect(server.received('POST /plans').map(({ body }) => body)).toEqual([
+      { input: MEET_ANSWER.input, planId: '302동 앞', startAt: '2026-11-17T12:15:00+09:00', location: ON_CAMPUS },
+    ]);
+    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('답이 없어도 12:15에 가면 돼요')).toBeVisible();
+    expect(within(card().getByTestId('quest-steps')).getByText('302동 앞에서 만나기')).toBeVisible();
+    expect(card().getByText('민수 · 아직 안 봄')).toBeVisible();
+    expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
   });
 });
 

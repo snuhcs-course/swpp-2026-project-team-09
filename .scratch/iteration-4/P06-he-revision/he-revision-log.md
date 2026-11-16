@@ -8,8 +8,8 @@ Spec: `spec.md`. Tickets: `issues/`.
 
 | ID | Sev. | Issue | Fix | Ticket | PR | State |
 |---|---|---|---|---|---|---|
-| H1 | 3 | After asking to join an Approval Quest, the User cannot see which 파티 they asked to join. | A 보낸 신청 section in the 파티 tab. Each row shows the post's title and opens the post. The 알림 row when the Leader answers moves to package D's notification table (Iteration 5). | 04 | | Planned |
-| H2 | 3 | The evaluator found no way to withdraw a join request. | Withdrawing already existed on the post; it is now on each 보낸 신청 row too, with a confirmation and 신청을 취소했어요. An existing feature made easy to find, not a new one. | 04 | | Planned |
+| H1 | 3 | After asking to join an Approval Quest, the User cannot see which 파티 they asked to join. | A 보낸 신청 section in the 파티 tab. Each row shows the post's title and opens the post. The 알림 row when the Leader answers moves to package D's notification table (Iteration 5). | 04 | #264 | PR open |
+| H2 | 3 | The evaluator found no way to withdraw a join request. | Withdrawing already existed on the post; it is now on each 보낸 신청 row too, with a confirmation and 신청을 취소했어요. An existing feature made easy to find, not a new one. The post's own 신청 취소 now says 신청을 취소했어요 too, and both say 이미 파티에 들어갔어요 or 파티장이 신청을 받지 않았어요 when the Leader answered first. | 04 | #264 | PR open |
 | H3 | 2 | The Master Switch and the per-Friend switches overlap, and it is unclear which wins. | While the Master Switch is off, Friend and 파티 switches show off and disabled under one line with a 켜기 link; stored values are kept. The Master Switch is renamed 위치 공유. | 06 | | Planned |
 | H4 | 2 | A User cannot send a Friend Request to another member of the same 파티. | 친구 추가 on member rows (hidden for Friends, 요청됨, 수락), accepted by the server only between Holders of the same Quest. | 08 | | Planned |
 | H5 | 2 | Using a feature takes a lot of reading; the Assistant ends up needing more taps. | Deferred: the Assistant's replies are being reworked by the agentic map work. Judged again after it. | — | — | Deferred |

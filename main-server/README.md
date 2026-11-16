@@ -2598,7 +2598,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       reach in time or stay at for 30 minutes. `eventIds` are accepted only when `searchGlobalEvents` returned them in
       the message. It answers the model `planned` with each plan's title, place, arrival, stay, leave-by, and clash in
       words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` refuses any but a
-      meal's with 400 `PLAN_KIND`.
+      meal's, a meet's, or a new recruiting Quest's with 400 `PLAN_KIND`.
     - `findStudyNearby(what)` and `STUDY_RULES` join for an app that sends both `answer` and `area` (`lookup/study-*`).
       `StudyAreaService` reads the 공부공간 layer for the asker and keeps the spaces of the kind asked (`quiet`,
       `group`, `pc`, `any`) whose building's Place lies in the request context's `viewport`. Of those the User may use
