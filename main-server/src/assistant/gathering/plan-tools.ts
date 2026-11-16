@@ -9,13 +9,14 @@
 
 import { z } from 'zod';
 import { type AnswerReply, type MealInput, type Plan, type RequestContext } from '../dto/answer.dto.js';
-import { defineTool, type Tool } from '../feature.js';
+import { defineTool, type Presented, type Tool } from '../feature.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { othersText } from '../others-text.js';
 import { mealByClock } from '../free-time/meal-fit.js';
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { WHICH_FRIEND } from '../tools/which-friend.js';
+import { mealAfter, nextMealOffer } from './meal-after-hours.js';
 import { menuWords, type ServedMenu } from './meal-menu.js';
 import { type MealPlanService } from './meal-plan.service.js';
 
@@ -32,6 +33,31 @@ const NONE_REASONS: Record<NonNullable<AnswerReply['noPlan']>['reason'], string>
 };
 
 const NOT_NOW = 'There is no time now when everyone can eat together; the app offers buttons to ease it.';
+
+const overToday = (words: string): string =>
+  `That meal is over for today. The app shows your sentence with one button, which plans ${words}. Say in one sentence that the meal is over and that the button plans ${words}; name no other button.`;
+
+// A Friend's name as the chips write it, without " · 자리 모름".
+const friendNames = ({ chips }: AnswerReply): string[] =>
+  chips.flatMap(({ kind, text }) => (kind === 'person' ? [text.split(' · ')[0] ?? text] : []));
+
+// No plan: a meal over for today leaves the map and offers the next meal instead, and the model hears of buttons only
+// when the answer carries some.
+function noneOf(
+  answer: AnswerReply,
+  input: MealInput,
+  { now, presented }: { now: Date; presented: Presented },
+): object {
+  const relax = answer.noPlan?.relax ?? [];
+  const next = relax.length === 0 ? mealAfter(input, now) : null;
+  if (next !== null) {
+    presented.answer = null;
+    presented.offers = [nextMealOffer(next, friendNames(answer))];
+    return { result: 'none', meal: input.meal, reason: overToday(next.words) };
+  }
+  const reason = answer.noPlan?.reason ?? 'no-fit';
+  return { result: 'none', meal: input.meal, reason: relax.length > 0 ? NOT_NOW : NONE_REASONS[reason] };
+}
 
 const clock = (time: string | null): string | null => (time === null ? null : time.slice(11, 16));
 
@@ -199,11 +225,7 @@ export function planMeal(plans: Pick<MealPlanService, 'planned' | 'restaurantPla
       presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
-        return {
-          result: 'none',
-          meal,
-          reason: answer.noPlan.relax === undefined ? NONE_REASONS[answer.noPlan.reason] : NOT_NOW,
-        };
+        return noneOf(answer, planInput, { now, presented });
       }
       return {
         result: 'planned',

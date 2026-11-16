@@ -101,7 +101,7 @@ describe('A start the User names before dinner is served', () => {
 });
 
 describe('A lunch the User names at 15:00', () => {
-  it('is planned as asked, and answers that no lunch time is left', async () => {
+  it('is planned as asked and, lunch being over, offers today’s dinner instead of an answer (P01-23)', async () => {
     const date = '2087-10-21';
     const friend = await askedAtThree(date);
 
@@ -111,11 +111,10 @@ describe('A lunch the User names at 15:00', () => {
       '오늘 점심 민수랑 먹자',
     );
 
-    const answer = answerIn(response.body);
-    expect(answer.input).toMatchObject({ meal: 'lunch' });
-    expect(answer.noPlan).toEqual({
-      reason: 'no-shared-time',
-      lines: [[plain('점심 시간에는 같이 비는 시간이 없어요')]],
+    expect(stage.model.toolResults().at(-1)).toMatchObject({ result: 'none', meal: 'lunch' });
+    expect(response.body).toMatchObject({
+      answer: null,
+      offers: [{ kind: 'ask', label: '오늘 저녁 보기', text: '민수와 오늘 저녁 어디서 먹을까?' }],
     });
   });
 });
