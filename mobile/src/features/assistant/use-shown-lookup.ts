@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useState } from 'react';
@@ -34,10 +35,15 @@ export function opensBasis(lookup: Lookup | null): boolean {
   return lookup?.scene.flags.some(({ role }) => role === 'late') ?? false;
 }
 
-// The card's main button: the first action the app draws. A leave-by notification and "만나고 싶다" are not drawn
-// until their screens exist (package D's notification, package B's "만나고 싶다").
-export function mainActionOf({ actions }: Lookup): GuideAction | null {
-  return actions.find((action): action is GuideAction => action.kind === 'guide') ?? null;
+export type MeetAction = Extract<LookupAction, { kind: 'meet' }>;
+
+// The card's main button: the first action the app draws, "길 안내" or "만나고 싶다". A leave-by notification is not
+// drawn until its screen exists (package D's notification).
+export function mainActionOf({ actions }: Lookup): GuideAction | MeetAction | null {
+  return (
+    actions.find((action): action is GuideAction | MeetAction => action.kind === 'guide' || action.kind === 'meet') ??
+    null
+  );
 }
 
 // The Lookup of the conversation's last reply, and whether its basis is open: as `opensBasis` says when the reply

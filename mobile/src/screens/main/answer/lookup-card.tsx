@@ -11,7 +11,10 @@ import type { ConditionChip } from '@/api/assistant-types';
 import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
+import type { Chat } from '@/features/assistant/use-chat';
 import { mainActionOf, type ShownLookup } from '@/features/assistant/use-shown-lookup';
+import { useFriendProfile } from '@/features/friends/use-friend-profile';
+import { MEET, useMeetAsk } from '../meet-button';
 import { AnswerLines } from './answer-lines';
 import { ReadOnlyChip } from './condition-chips';
 import { isButton, pressOffer } from './refusal-reply';
@@ -98,10 +101,11 @@ interface LookupCardProps {
   refusal: Refusal | null;
   onAsk: (words: string) => void;
   onClose: () => void;
+  addRecalculated: Chat['addRecalculated'];
 }
 
-// The refusal's first offer, else "길 안내" when the Lookup has it.
-function mainOf({ lookup, shown, refusal, onAsk }: LookupCardProps): MainButton | null {
+// The refusal's first offer, else "길 안내" or "만나고 싶다" when the Lookup has it.
+function mainOf({ lookup, shown, refusal, onAsk }: LookupCardProps, meet: (userId: string) => void): MainButton | null {
   const offer = refusal?.offers.find(isButton);
   if (offer !== undefined) {
     return {
@@ -111,15 +115,32 @@ function mainOf({ lookup, shown, refusal, onAsk }: LookupCardProps): MainButton 
       },
     };
   }
-  const guide = mainActionOf(lookup);
-  return guide === null
-    ? null
+  const main = mainActionOf(lookup);
+  if (main === null) {
+    return null;
+  }
+  return main.kind === 'meet'
+    ? {
+        label: MEET,
+        onPress: () => {
+          meet(main.userId);
+        },
+      }
     : {
         label: '길 안내',
         onPress: () => {
-          shown.guide(guide.to);
+          shown.guide(main.to);
         },
       };
+}
+
+// "만나고 싶다" of a Friend Lookup, whose pill names the Friend as the friend list does, or as the Lookup's chip does.
+function useLookupMeet(lookup: Lookup, addRecalculated: Chat['addRecalculated']): (userId: string) => void {
+  const main = mainActionOf(lookup);
+  const userId = main?.kind === 'meet' ? main.userId : null;
+  const chip = lookup.chips.find((one) => one.userId !== null && one.userId === userId);
+  const name = useFriendProfile(userId)?.friend.name ?? chip?.text ?? '';
+  return useMeetAsk(addRecalculated, name).ask;
 }
 
 // A Lookup in the answer frame's card, as a Plan's card without its arrows and "이대로 초대": its chips, its two lines,
@@ -127,8 +148,9 @@ function mainOf({ lookup, shown, refusal, onAsk }: LookupCardProps): MainButton 
 // button beside "닫기". Beside a refusal, the refusal's lines stand in place of the Lookup's, and its offer in place of
 // the main button.
 export function LookupCard(props: LookupCardProps): ReactElement {
-  const { lookup, shown, refusal, onClose } = props;
+  const { lookup, shown, refusal, onClose, addRecalculated } = props;
   const { basisOpen, toggleBasis } = shown;
+  const meet = useLookupMeet(lookup, addRecalculated);
   return (
     <View style={styles.card} testID="lookup-card">
       <Chips basis={lookup.basis.length === 0 ? null : { open: basisOpen, toggle: toggleBasis }} chips={lookup.chips} />
@@ -153,7 +175,7 @@ export function LookupCard(props: LookupCardProps): ReactElement {
           onDrop={ignoreDrop}
         />
       )}
-      <Buttons main={mainOf(props)} onClose={onClose} />
+      <Buttons main={mainOf(props, meet)} onClose={onClose} />
     </View>
   );
 }

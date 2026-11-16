@@ -185,7 +185,8 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
       />
     );
   }
-  const invitable = plan !== null && peopleOf(answer.input).length > 1;
+  // A meet has no "이대로 초대" until POST /plans takes one.
+  const invitable = plan !== null && peopleOf(answer.input).length > 1 && answer.input.kind !== 'meet';
   return (
     <>
       {plan === null ? null : (
@@ -228,12 +229,20 @@ function linesOf({ plan }: ShownAnswer, answer: AnswerReply, adding: boolean): r
 // the Plan's two lines or those that say why there is none, the basis while open, and the time band with the steps.
 // While the list of Friends to add is open, the lines ask who comes, "그대로" closes the list, and the list stands in
 // place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
-// none takes a press while a recalculation or "이대로 초대" is on its way. A Friend's chip and the mark of a Friend's
+// none takes a press while a recalculation or "이대로 초대" is on its way; the ✕ of a meet's only Friend closes the
+// answer (`onClose`, as the frame's ✕) and goes back to that Friend's card. A Friend's chip and the mark of a Friend's
 // cell open the Friend's profile over the card.
-export function PlanCard({ shown, answer, invitation, room, over = [] }: CardProps): ReactElement {
+export function PlanCard({
+  shown,
+  answer,
+  invitation,
+  room,
+  over = [],
+  onClose,
+}: CardProps & { onClose: () => void }): ReactElement {
   const { plan, basisOpen, recalculating } = shown;
   const busy = recalculating || invitation.sending;
-  const fix = useCorrections(shown, answer.input);
+  const fix = useCorrections(shown, answer.input, onClose);
   const openProfile = useOpenFriendProfile();
   const own = linesOf(shown, answer, fix.adding);
   const lines = fix.adding ? own : [...over, ...own.slice(over.length)];
