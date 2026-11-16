@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ import type { WatchedInterest } from '@/api/interest-types';
 import { friendsQuery, interestsQuery, questsQuery } from '@/api/queries';
 import type { Friend, Quest } from '@/api/types';
 import { cardStyles, color, font, Icon, type IconName, ListRow, space, text } from '@/design-system';
+import { heldAlone } from '@/features/quests/adapter';
 
 interface ActivityRowProps {
   icon: IconName;
@@ -41,9 +43,9 @@ function friendCountOf(friends: Friend[]): string {
   return String(friends.length);
 }
 
-// The User's Quests that are not Class Quests: the frames draw every other Quest as a 파티.
+// The User's Quests that are not Class Quests or taken alone: the frames draw every other Quest as a 파티.
 function partyCountOf(quests: Quest[]): string {
-  return String(quests.filter(({ classQuest }) => !classQuest).length);
+  return String(quests.filter((quest) => !quest.classQuest && !heldAlone(quest)).length);
 }
 
 // None from a main server that keeps no watched interests yet.

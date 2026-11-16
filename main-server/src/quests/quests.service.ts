@@ -43,6 +43,7 @@ import {
 } from './dto/quest.dto.js';
 import { notFound, questNotFound } from './refusals.js';
 import { columnsOf } from './sub-quest-columns.js';
+import { forgetLeaveBy, gatheringFrom } from './taken-alone.js';
 import { inOrder } from './sub-quest-order.js';
 
 // What a Sub Quest that a Holder writes stores.
@@ -84,7 +85,8 @@ export class QuestsService {
 
   // The User's Quest for the Global Event, made the first time, with the title given or else the event's. The User's
   // row is locked first, so that two attempts at the same moment run one after the other and the later finds the Quest
-  // of the earlier, whose title stays.
+  // of the earlier, whose title stays. A Quest the User took alone for it, which the party form reaches here, gathers
+  // others from now on: it is no longer taken alone, takes the usual capacity, and its leave-by goes.
   async attend(userId: string, globalEventId: string, title?: string): Promise<QuestDto> {
     const { questId, created } = await this.prisma.$transaction(async (tx) => {
       const globalEvent = await tx.globalEvent.findFirst({
@@ -96,11 +98,12 @@ export class QuestsService {
       await this.users.lock(userId, tx);
       const held = await this.heldFor(userId, globalEventId, tx);
       if (held !== null) {
-        return { questId: held, created: false };
+        return { questId: held, created: await gatheringFrom(held, tx) };
       }
       return { questId: await this.createForGlobalEvent(globalEvent, [userId], tx, { title }), created: true };
     });
     if (created) {
+      await forgetLeaveBy(this.notifications, this.logger, { userId, questId });
       this.signals.send([userId], 'quests-changed');
     }
     return this.read(userId, questId);
@@ -263,10 +266,7 @@ export class QuestsService {
       return false;
     }
     await this.removeHolder(questId, userId, tx);
-    // Its leave-by goes with it, and never fails the entry.
-    await this.notifications.cancel(userId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
-      this.logger.warn(`The time to leave of a Quest held alone was not cancelled: ${String(error)}`);
-    });
+    await forgetLeaveBy(this.notifications, this.logger, { userId, questId });
     return true;
   }
 

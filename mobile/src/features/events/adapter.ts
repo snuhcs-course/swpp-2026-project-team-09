@@ -5,11 +5,12 @@
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
-import { shownSubQuest } from '@/features/quests/adapter';
+import { heldAlone, shownSubQuest } from '@/features/quests/adapter';
 import { koreaCalendar, koreaClock, koreaDay, koreaDaysAfter, koreaWeekday } from '@/korea-time';
 
 // What the 행사 tab and its sheet show of the Global Events.
@@ -107,7 +108,7 @@ export function toEventViews(sources: EventSources, filter: EventFilter, search:
       place: event.place,
       sourceUrl: event.sourceUrl,
       recruiting: counts.get(event.id) ?? 0,
-      mine: quests.some(({ globalEvent }) => globalEvent?.id === event.id),
+      mine: quests.some((quest) => quest.globalEvent?.id === event.id && !heldAlone(quest)),
     }));
 }
 
@@ -143,7 +144,7 @@ export function toRecruitRows(
   now: Date,
 ): RecruitRowView[] {
   const own = quests
-    .filter(({ globalEvent }) => globalEvent?.id === eventId)
+    .filter((quest) => quest.globalEvent?.id === eventId && !heldAlone(quest))
     .map((quest): RecruitRowView => {
       const next = shownSubQuest(quest);
       const leads = quest.leader?.id === meId;

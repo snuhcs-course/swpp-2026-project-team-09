@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { isRefusal } from '@/api/errors';
+import { refusalWords } from '@/features/quests/refusals';
 import { newIdempotencyKey } from '@/api/idempotency-key';
 import type { MakePlanQuest, PlanQuest } from '@/api/plan-quest-types';
 import type { LocationMissing } from '@/api/refusal-types';
@@ -123,8 +124,11 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
   if (isRefusal(error, 409, 'PLAN_CHANGED')) {
     say(CHANGED);
     change((input) => ({ ...input }));
+  } else if (alone) {
+    // A 파티 of the User's own for the event refuses "여기로" with SHARED_QUEST_HELD, worded as 파티 says it.
+    say(isRefusal(error, 409, 'SHARED_QUEST_HELD') ? refusalWords(error) : NOT_TAKEN);
   } else {
-    say(alone ? NOT_TAKEN : FAILED);
+    say(FAILED);
   }
 }
 
@@ -194,7 +198,8 @@ function useInvite(
 }
 
 // "다시 고르기": drops the Quest taken alone, and once it is gone shows the Plan again with a new key for it, so that
-// "여기로" makes another.
+// "여기로" makes another. A Quest already gone, ended by its time, dropped elsewhere, or replaced by a 파티, counts as
+// given up.
 function useAgain(
   made: PlanQuest | null,
   setStored: SetStored,
@@ -207,23 +212,25 @@ function useAgain(
       return;
     }
     setDropping(true);
-    apiClient.dropQuest(questId).then(
-      () => {
-        setDropping(false);
-        setStored((last) => {
-          if (last.made?.quest.id !== questId || last.planId === null) {
-            return last;
-          }
-          const keys = new Map(last.keys);
-          keys.delete(last.planId);
-          return { ...last, keys, made: null };
-        });
-      },
-      () => {
-        setDropping(false);
-        say(NOT_DROPPED);
-      },
-    );
+    const gone = (): void => {
+      setDropping(false);
+      setStored((last) => {
+        if (last.made?.quest.id !== questId || last.planId === null) {
+          return last;
+        }
+        const keys = new Map(last.keys);
+        keys.delete(last.planId);
+        return { ...last, keys, made: null };
+      });
+    };
+    apiClient.dropQuest(questId).then(gone, (error: unknown) => {
+      if (isRefusal(error, 404, 'QUEST_NOT_FOUND')) {
+        gone();
+        return;
+      }
+      setDropping(false);
+      say(NOT_DROPPED);
+    });
   }, [questId, dropping, setStored, say]);
   return { again, dropping };
 }

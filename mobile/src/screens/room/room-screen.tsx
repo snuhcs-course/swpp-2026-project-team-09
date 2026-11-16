@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -24,6 +25,7 @@ import {
   space,
   useToastAbove,
 } from '@/design-system';
+import { heldAlone } from '@/features/quests/adapter';
 import type { RoomView } from '@/features/quests/room-adapter';
 import { useRoom } from '@/features/quests/use-room';
 import { useWalkingTimes } from '@/features/quests/use-walking-times';
@@ -78,7 +80,8 @@ function Head({ room }: { room: RoomView }): ReactElement {
   );
 }
 
-// The app bar's `모집글 보기` for an Open or Approval Quest, never for a Closed one, and `수정` for its Leader.
+// The app bar's `모집글 보기` for an Open or Approval Quest, never for a Closed one, and `수정` for its Leader, but not
+// for a Quest taken alone, which gathers nobody and keeps its settings.
 function RecruitingActions({ room }: { room: RoomView }): ReactElement {
   const { quest, leads, hasPost } = room;
   return (
@@ -93,7 +96,7 @@ function RecruitingActions({ room }: { room: RoomView }): ReactElement {
           모집글 보기
         </Button>
       ) : null}
-      {leads ? (
+      {leads && !heldAlone(quest) ? (
         <Button
           onPress={() => {
             router.push({ pathname: '/party-form', params: { questId: quest.id } });
