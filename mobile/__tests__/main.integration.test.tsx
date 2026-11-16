@@ -84,21 +84,21 @@ describe("the main screen's bottom navigation", () => {
     givePhone({ permission: 'granted' });
     const user = await openMain();
 
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await user.press(screen.getByRole('button', { name: '내 위치로 이동' }));
 
+    expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
 });
 
 describe("a slot of the main screen's bottom navigation", () => {
-  it('says that 올리기 is not ready', async () => {
+  it('opens 파티 만들기 with 올리기, and says nothing', async () => {
     givePhone({ permission: 'granted' });
     const user = await openMain();
 
     await user.press(screen.getByRole('button', { name: '올리기' }));
 
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    await pass(2400);
+    expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
     expect(screen.queryByText(NOT_READY)).toBeNull();
   });
 

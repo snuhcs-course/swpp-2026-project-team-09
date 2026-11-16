@@ -434,8 +434,9 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
 
 - **The tabs** (`(signed-in)/(tabs)/`): Expo Router's `Tabs`, with `TabBar` (`src/screens/shell/tab-bar.tsx`)
   drawing the design system's `BottomNav`. 지도 is the main screen at `/main`; 파티 is `/party`, 행사 `/events`, 내
-  정보 `/me`. 올리기 is no tab and says "준비 중이에요". A tab stays mounted while another is shown, so the map keeps
-  its native view, its camera, the open card, the route and the collapsed lists. The bar has no line on top but the
+  정보 `/me`. 올리기 is no tab: it opens 파티 만들기 (`/party-form`) empty above the tabs, and 뒤로 shows the tab it
+  was pressed on. A tab stays mounted while another is shown, so the map keeps its native view, its camera, the open
+  card, the route and the collapsed lists. The bar has no line on top but the
   frames' shadow (`shadow.nav`), and under its items 16 or the phone's own inset, whichever is larger
   (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is `usePartyBadge()`: the rows of 알림
   that wait for the User and concern 파티, every row but the kept Notifications and the Friend Requests. While the

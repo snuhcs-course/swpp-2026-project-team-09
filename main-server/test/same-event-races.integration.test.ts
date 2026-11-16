@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { type PublicationStepService } from '../src/global-events/publication-step.service.js';
+import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { collectedPost, eventsMessage } from './global-events.js';
 import { answer, PLACE_LINE, TIME_LINE } from './judgements.js';
 import { PLACE, type Post, START } from './same-event.js';
@@ -127,12 +129,17 @@ describe('Another server asking', () => {
     if (startsAt === null) {
       throw new Error('The post has a start');
     }
+    const claimedAt = new Date();
     const claim = await world.prisma.sameEventAnswer.create({
-      data: { sourcePostId: session.sourcePostId, startsAt, askedEventIds: [], claimedAt: new Date() },
+      data: { sourcePostId: session.sourcePostId, startsAt, askedEventIds: [], claimedAt },
     });
     world.scripted.script();
+    // The server's clock stays at the claim, so that the claim is a call still running however slow the machine is: the
+    // server takes a claim older than twice JUDGEMENT_TIMEOUT_MS, 400 ms here, as left by a server that stopped.
+    const clock = vi.spyOn(world.judging.get<Clock>(CLOCK), 'now').mockReturnValue(claimedAt);
 
     await world.step.run('snu_events');
+    clock.mockRestore();
 
     expect(await world.onlySession('snu_events', post)).toMatchObject({
       heldFor: null,
