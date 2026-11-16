@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -18,7 +19,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
 import { askOnMap, distinct, FIRST_PLAN_MARKS, layAnswerCard, mapLines, mapThings } from './support/answer-map';
 import { answerDining, ENGINEERING } from './support/dining';
-import { answerEvents } from './support/events';
+import { answerEvents, BOOK_TALK, CAREER, MAJOR } from './support/events';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, LAYERS, layStage } from './support/lists';
@@ -59,7 +60,8 @@ beforeEach(async () => {
   await startFresh();
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
-  answerEvents(server);
+  // The career talk is a Favorite Event, which the everyday map keeps.
+  answerEvents(server, { events: [{ ...CAREER, favorite: true }, MAJOR, BOOK_TALK] });
   answerDining(server);
   answerShuttle(server);
   givePhone({ permission: 'granted', position: ON_CAMPUS });

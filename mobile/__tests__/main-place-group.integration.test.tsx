@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -37,9 +38,11 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-// A Global Event at 학생회관, at the very point of the Shared Quest.
+// A Global Event at 학생회관, at the very point of the Shared Quest, which the User starred: the everyday map keeps only
+// Favorite Events.
 const FAIR: ListedGlobalEvent = {
   ...CAREER,
+  favorite: true,
   id: 'e9',
   title: '동아리 박람회',
   place: '학생회관',
@@ -88,13 +91,14 @@ describe('things of several kinds at one place', () => {
     answerEvents(server, { events: [FAIR] });
     const user = await openMain();
 
-    expect(lookOf(EVENT_AND_PARTY)).toBe('group:official+party:dot');
+    // The star's pin at every level, since the event is a Favorite Event.
+    expect(lookOf(EVENT_AND_PARTY)).toBe('group:official+party:pin:starred');
     expect(shown(FAIR_MARKER)).toBeNull();
     expect(shown(DINNER)).toBeNull();
 
     await zoomIn(user, 2);
 
-    expect(lookOf(EVENT_AND_PARTY)).toBe('group:official+party:pin');
+    expect(lookOf(EVENT_AND_PARTY)).toBe('group:official+party:pin:starred');
   });
 
   it('take in a restaurant while the 식당 layer is on, and let it go when it is turned off', async () => {
@@ -103,13 +107,13 @@ describe('things of several kinds at one place', () => {
 
     await toggleDining(user);
 
-    expect(lookOf(WITH_DINING)).toBe('group:official+party+dining:dot');
+    expect(lookOf(WITH_DINING)).toBe('group:official+party+dining:pin:starred');
     expect(shown(EVENT_AND_PARTY)).toBeNull();
     expect(shown(STUDENT_CENTRE)).toBeNull();
 
     await toggleDining(user);
 
-    expect(lookOf(EVENT_AND_PARTY)).toBe('group:official+party:dot');
+    expect(lookOf(EVENT_AND_PARTY)).toBe('group:official+party:pin:starred');
     expect(shown(WITH_DINING)).toBeNull();
   });
 
@@ -142,13 +146,13 @@ describe("the place's card", () => {
     expect(screen.getByText('행사 1개 · 파티 1개')).toBeVisible();
     expect(chip('행사 1')).toBeSelected();
     expect(chip('파티 1')).not.toBeSelected();
-    expect(shown('동아리 박람회')).toBeVisible();
+    expect(shown('즐겨찾기 · 동아리 박람회')).toBeVisible();
     expect(shown('저녁 약속')).toBeNull();
 
     await user.press(chip('파티 1'));
 
     expect(chip('파티 1')).toBeSelected();
-    expect(shown('동아리 박람회')).toBeNull();
+    expect(shown('즐겨찾기 · 동아리 박람회')).toBeNull();
 
     await press(user, '저녁 약속');
 
@@ -157,7 +161,7 @@ describe("the place's card", () => {
     expect(screen.getByRole('button', { name: '길찾기' })).toBeVisible();
     expect(screen.getAllByTestId('map-card')).toHaveLength(1);
     // The place's marker stands for the chosen thing, and looks selected.
-    expect(lookOf(EVENT_AND_PARTY)).toBe('group:official+party:dot:selected');
+    expect(lookOf(EVENT_AND_PARTY)).toBe('group:official+party:pin:starred:selected');
   });
 
   it('lists the restaurant under 식당, whose card opens the menus', async () => {

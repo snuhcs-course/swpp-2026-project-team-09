@@ -3,12 +3,13 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import { EVENTS_ANSWER } from '@/api/mock/data/events-answer';
 import { field } from '@/api/server/answers';
-import type { GlobalEvent } from '@/api/types';
+import type { ListedGlobalEvent } from '@/api/types';
 import type { KeptNotification } from '@/api/waiting-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -45,8 +46,9 @@ function eventAt(
   title: string,
   [startsAt, endsAt]: [string, string],
   [latitude, longitude]: [number, number],
-): GlobalEvent {
-  return { id, title, description: '', startsAt, endsAt, place: '문화관', latitude, longitude, sourceUrl: null };
+): ListedGlobalEvent {
+  const event = { id, title, description: '', startsAt, endsAt, place: '문화관', latitude, longitude, sourceUrl: null };
+  return { ...event, publishedAt: null, favorite: false };
 }
 
 const HALL: [number, number] = [37.46159, 126.95104];
@@ -87,8 +89,14 @@ const TOLD: KeptNotification = {
 
 const MARK = '채용박람회 외 1';
 const FRESH_MARK = `${MARK} · 새로 올라왔어요`;
-// The names the map gives the events today, with the switch off.
+// The names the map would give the events today. With the switch off the map keeps only the Favorite Events.
 const TODAY = ['공식 행사 2개 · 문화관', '공식 행사 · 동아리 정기공연', '공식 행사 · AI 특강'];
+const STARRED = '공식 행사 · 동아리 정기공연';
+
+// The concert is a Favorite Event.
+function starConcert(): void {
+  server.on('GET /global-events', { status: 200, body: [JOB_FAIR, TALK, { ...CONCERT, favorite: true }, LECTURE] });
+}
 
 let server: FakeServer;
 
@@ -222,25 +230,31 @@ describe('a User who watches nothing', () => {
 });
 
 // Partitions: the switch off; the switch on with a main server without the matches. Expected values: the ticket, the
-// map as today.
-describe('the map as today', () => {
-  it('with the switch off draws every event as before, and asks for no matches', async () => {
+// map as with the switch off, which keeps only the Favorite Events (P06 ticket 01).
+describe('the map as with the switch off', () => {
+  it('with the switch off draws only the Favorite Event, with its star and no "!", and asks for no matches', async () => {
+    starConcert();
+
     await openMain();
 
-    for (const name of TODAY) {
-      expect(drawn(name)).toBe(true);
-      expect(looks(name, 'fresh') || looks(name, 'faded')).toBe(false);
+    expect(drawn(STARRED)).toBe(true);
+    expect(looks(STARRED, 'starred')).toBe(true);
+    expect(looks(STARRED, 'fresh') || looks(STARRED, 'faded')).toBe(false);
+    for (const name of TODAY.filter((one) => one !== STARRED)) {
+      expect(drawn(name)).toBe(false);
     }
     expect(server.received('GET /interests/matches')).toEqual([]);
   });
 
-  it('with the switch on and a main server that answers 404 for the matches draws every event as before', async () => {
+  it('with the switch on and a main server that answers 404 for the matches draws only the Favorite Event', async () => {
+    starConcert();
     server.on('GET /interests/matches', { status: 404, body: { statusCode: 404, message: 'Not Found' } });
 
     await openMain({ answerOnMap: true });
 
-    for (const name of TODAY) {
-      expect(drawn(name)).toBe(true);
+    expect(drawn(STARRED)).toBe(true);
+    for (const name of TODAY.filter((one) => one !== STARRED)) {
+      expect(drawn(name)).toBe(false);
     }
     expect(drawn(MARK)).toBe(false);
   });

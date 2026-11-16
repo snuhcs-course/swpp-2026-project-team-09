@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -292,16 +293,21 @@ function PlainLookView({ look, onPhotoSettled, testID }: LookViewProps): ReactEl
   if (look.kind === 'study-cluster') {
     return <MapStudyCluster count={look.count} selected={look.selected} />;
   }
-  return look.form === 'dot' ? (
-    <MapDot kind={look.kind} selected={look.selected} />
-  ) : (
+  return look.form === 'dot' ? <MapDot kind={look.kind} selected={look.selected} /> : <PlacePin look={look} />;
+}
+
+// A place's pin, whose icon is the filled star for a Favorite Event.
+function PlacePin({ look }: { look: Extract<MarkerLook, { kind: MapPlaceKind }> }): ReactElement {
+  const { count, kind, muted, selected, starred } = look;
+  const star = starred === true;
+  return (
     <MapPin
-      count={look.count}
-      filled={look.starred}
-      icon={look.starred === true ? 'star' : undefined}
-      kind={look.kind}
-      muted={look.muted}
-      selected={look.selected}
+      count={count}
+      filled={star}
+      icon={star ? 'star' : undefined}
+      kind={kind}
+      muted={muted}
+      selected={selected}
     />
   );
 }
