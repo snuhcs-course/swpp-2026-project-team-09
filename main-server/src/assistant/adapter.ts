@@ -13,6 +13,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -330,6 +331,9 @@ function replyOf(text: string, finishReason: string, feature: Feature, context: 
   const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
   presented.refusal = keptRefusal(presented);
   presented.lookup = lookupBeside(presented);
+  if (presented.answer !== null || presented.lookup !== null || presented.refusal !== null) {
+    delete presented.offers;
+  }
   const said = textBeside(text, presented.refusal);
   if (said !== '') {
     return { ...presented, text: said, noTextFinishReason: null };
