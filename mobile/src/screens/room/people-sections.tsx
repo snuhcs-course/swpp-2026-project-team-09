@@ -3,17 +3,20 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { type ReactElement, type ReactNode, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { joinRequestsQuery, sentInvitationsQuery } from '@/api/queries';
 import type { JoinRequest } from '@/api/waiting-types';
 import { now } from '@/clock';
-import { Avatar, Button, color, Dialog, font, Icon, radius, space, useToast } from '@/design-system';
+import { Button, color, Dialog, font, Icon, space, useToast } from '@/design-system';
 import { agoWords, type MemberView, type RoomView } from '@/features/quests/room-adapter';
+import { MemberFriendButton } from './member-friend-button';
+import { PersonRow } from './person-row';
 import type { RoomActions } from './use-room-actions';
 
 interface SectionProps {
@@ -34,73 +37,12 @@ function Heading({ children, aside }: { children: string; aside?: string | null 
   );
 }
 
-interface PersonRowProps {
-  name: string;
-  department: string;
-  line: string | null;
-  lineInk?: string;
-  leader?: boolean;
-  dimmed?: boolean;
-  onPress?: () => void;
-  children?: ReactNode;
-}
-
-function PersonRow({
-  name,
-  department,
-  line,
-  lineInk,
-  leader = false,
-  dimmed = false,
-  onPress,
-  children,
-}: PersonRowProps): ReactElement {
-  const words = (
-    <>
-      <View style={[styles.face, leader && styles.leaderRing, dimmed && styles.dimmed]}>
-        <Avatar name={name} />
-        {leader ? (
-          <View accessibilityLabel="파티장" style={styles.crown}>
-            <Icon color={color.onPrimary} name="crown" size={12} />
-          </View>
-        ) : null}
-      </View>
-      <View style={styles.words}>
-        <View style={styles.nameLine}>
-          <Text style={styles.name}>{name}</Text>
-          {leader ? <Text style={styles.leaderPill}>파티장</Text> : null}
-          <Text style={styles.department}>{department}</Text>
-        </View>
-        {line === null ? null : <Text style={[styles.line, { color: lineInk ?? color.inkMuted }]}>{line}</Text>}
-      </View>
-    </>
-  );
-  return (
-    <View style={styles.row}>
-      {onPress === undefined ? (
-        <View style={styles.person}>{words}</View>
-      ) : (
-        <Pressable
-          accessibilityLabel={`${name}${line === null ? '' : ` · ${line}`}`}
-          accessibilityRole="button"
-          onPress={onPress}
-          style={styles.person}
-        >
-          {words}
-        </Pressable>
-      )}
-      {children}
-    </View>
-  );
-}
-
-// `신청 {n}`: the requests to join an Approval Quest, for its Leader, each with the note its User wrote, or when it
-// came where no note is known.
+// `신청 {n}`: the requests to join the Quest, for its Leader, each with the note its User wrote, or when it came where
+// no note is known. An Open Quest has them too, from Users the Leader removed, each marked `전에 내보낸 멤버`.
 export function RequestsSection({ room, actions }: SectionProps): ReactElement | null {
   const { quest, leads } = room;
-  const asks = leads && quest.joinPolicy === 'approval';
-  const requests = useQuery({ ...joinRequestsQuery(quest.id), enabled: asks }).data ?? [];
-  if (!asks || requests.length === 0) {
+  const requests = useQuery({ ...joinRequestsQuery(quest.id), enabled: leads }).data ?? [];
+  if (!leads || requests.length === 0) {
     return null;
   }
   return (
@@ -111,6 +53,7 @@ export function RequestsSection({ room, actions }: SectionProps): ReactElement |
           department={request.user.department}
           key={request.id}
           line={request.note ?? agoWords(request.sentAt, now())}
+          mark={request.removedBefore === true ? '전에 내보낸 멤버' : undefined}
           name={request.user.name}
         >
           <Button onPress={() => void actions.decline(quest.id, request)} variant="secondary">
@@ -191,16 +134,21 @@ function MemberRow({ room, actions, member, walk, onHandOver }: MemberRowProps):
             }
       }
     >
-      {leads && !member.me ? (
+      {member.me ? null : (
         <View style={styles.controls}>
-          <Button onPress={onHandOver} variant="secondary">
-            파티장 넘기기
-          </Button>
-          <Button onPress={() => void actions.removeHolder(quest.id, member, fromParty)} variant="danger">
-            내보내기
-          </Button>
+          <MemberFriendButton member={member} />
+          {leads ? (
+            <>
+              <Button onPress={onHandOver} variant="secondary">
+                파티장 넘기기
+              </Button>
+              <Button onPress={() => void actions.removeHolder(quest.id, member, fromParty)} variant="danger">
+                내보내기
+              </Button>
+            </>
+          ) : null}
         </View>
-      ) : null}
+      )}
     </PersonRow>
   );
 }
@@ -254,8 +202,6 @@ export function MembersSection({
   );
 }
 
-const CROWN = 20;
-
 const styles = StyleSheet.create({
   section: { gap: space[1] },
   heading: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
@@ -271,45 +217,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F2F6',
   },
   lockWords: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    minHeight: 64,
-    borderBottomWidth: 1,
-    borderBottomColor: color.border,
-  },
-  person: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 64 },
-  face: { borderRadius: radius.full },
-  leaderRing: { boxShadow: `0 0 0 2px ${color.surface}, 0 0 0 4px #E8A400` },
-  dimmed: { opacity: 0.6 },
-  crown: {
-    position: 'absolute',
-    right: -4,
-    bottom: -4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: CROWN,
-    height: CROWN,
-    borderWidth: 2,
-    borderColor: color.surface,
-    borderRadius: radius.full,
-    backgroundColor: '#E8A400',
-  },
-  words: { flex: 1, minWidth: 0 },
-  nameLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  name: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
-  leaderPill: {
-    paddingHorizontal: 6,
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    backgroundColor: '#FFF4D6',
-    fontFamily: font.bold,
-    fontSize: 11,
-    lineHeight: 18,
-    color: '#8A5A00',
-  },
-  department: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
-  line: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
   controls: { gap: space[1] },
 });

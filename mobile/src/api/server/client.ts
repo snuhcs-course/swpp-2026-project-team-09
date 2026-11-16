@@ -13,6 +13,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -111,6 +112,7 @@ export const serverClient: ApiClient = {
   },
   findFriendId: (friendId) => call('GET', `/friend-ids/${encodeURIComponent(friendId)}`, isUserSummary),
   sendFriendRequest: (friendId) => call('POST', '/friend-requests', isSentFriendRequest, { body: { friendId } }),
+  sendFriendRequestToUser: (userId) => call('POST', '/friend-requests', isSentFriendRequest, { body: { userId } }),
   listFriendRequests: () => call('GET', '/friend-requests', isFriendRequests),
   acceptFriendRequest: async (requestId) => {
     await call('POST', `/friend-requests/${encodeURIComponent(requestId)}/accept`, isNothing);

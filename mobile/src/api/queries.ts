@@ -12,6 +12,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -176,6 +177,12 @@ export function eventRecruitingQuery(
 export const myJoinRequestsQuery = queryOptions({
   queryKey: MY_JOIN_REQUESTS_KEY,
   queryFn: () => apiClient.listMyJoinRequests(),
+});
+// The ids of the Quests the Leader removed the User from. Under the recruiting list's key, which every change to whom
+// a Quest takes fetches again.
+export const questRemovalsQuery = queryOptions({
+  queryKey: [...RECRUITING_KEY, 'removals'],
+  queryFn: async () => (await apiClient.listQuestRemovals()).map(({ questId }) => questId),
 });
 export const matchingRequestsQuery = queryOptions({
   queryKey: MATCHING_REQUESTS_KEY,

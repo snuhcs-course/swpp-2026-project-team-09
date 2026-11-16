@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -28,6 +29,7 @@ const WORDS: Readonly<Record<string, string>> = {
   QUEST_NOT_FOUND: '파티를 찾을 수 없어요',
   QUEST_NOT_OPEN: '참여 방식이 바뀌었어요. 다시 확인해 주세요',
   QUEST_NOT_APPROVAL: '참여 방식이 바뀌었어요. 다시 확인해 주세요',
+  QUEST_REMOVED_ASK: '내보내진 파티라 파티장 승인이 필요해요',
   QUEST_JOIN_REQUEST_ALREADY_SENT: '이미 참여를 신청했어요',
   QUEST_JOIN_REQUEST_NOT_FOUND: '이미 끝난 신청이에요',
   CAPACITY_BELOW_HOLDERS: '지금 멤버 수보다 적게 정할 수 없어요',

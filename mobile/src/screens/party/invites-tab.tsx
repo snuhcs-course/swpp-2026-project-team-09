@@ -6,10 +6,13 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { useQuery } from '@tanstack/react-query';
 import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { questRemovalsQuery } from '@/api/queries';
 import type { ShownQuestInvitation } from '@/api/quest-parts-types';
 import type { MyJoinRequest } from '@/api/waiting-types';
 import { now } from '@/clock';
@@ -29,7 +32,7 @@ import { whenOf } from '@/features/party/posts';
 import { useInvitations, useSentRequests } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
-import { openPost } from './post-card';
+import { openPost, REMOVED_CAPTION } from './post-card';
 import { type PartyActions, usePartyActions } from './use-party-actions';
 
 // `{when} · {where} · {names} 함께`, of what the invitation carries: the server build has none of the three yet, and
@@ -83,8 +86,17 @@ function InvitationCard({
   );
 }
 
-// A request the User sent: a press of its title opens the post, and `신청 취소` asks before withdrawing.
-function SentRequestRow({ request, onWithdraw }: { request: MyJoinRequest; onWithdraw: () => void }): ReactElement {
+// A request the User sent: a press of its title opens the post, and `신청 취소` asks before withdrawing. `removed`: the
+// Leader removed the User from the Quest before.
+function SentRequestRow({
+  request,
+  removed,
+  onWithdraw,
+}: {
+  request: MyJoinRequest;
+  removed: boolean;
+  onWithdraw: () => void;
+}): ReactElement {
   const { quest, sentAt } = request;
   return (
     <View style={[cardStyles.card, styles.sent]} testID={`sent-request-${request.id}`}>
@@ -100,6 +112,7 @@ function SentRequestRow({ request, onWithdraw }: { request: MyJoinRequest; onWit
           {quest.title}
         </Text>
         <Text numberOfLines={1} style={styles.meta}>{`${quest.leader.name} · ${agoWords(sentAt, now())} 신청`}</Text>
+        {removed ? <Text style={styles.caption}>{REMOVED_CAPTION}</Text> : null}
       </Pressable>
       <Button onPress={onWithdraw} variant="secondary">
         신청 취소
@@ -121,6 +134,8 @@ function withdrawAsk({ id, quest }: MyJoinRequest, actions: PartyActions): Ask {
 // `보낸 신청`: the User's waiting requests to join, the newest first, beside the invitations received.
 function SentRequests({ actions }: { actions: PartyActions }): ReactElement {
   const { data: requests, isPending, refetch } = useSentRequests();
+  // Only marks a row, so a list that does not come marks none.
+  const removedIds = useQuery(questRemovalsQuery).data ?? [];
   const [ask, setAsk] = useState<Ask | null>(null);
   return (
     <View style={styles.section}>
@@ -136,6 +151,7 @@ function SentRequests({ actions }: { actions: PartyActions }): ReactElement {
           onWithdraw={() => {
             setAsk(withdrawAsk(request, actions));
           }}
+          removed={removedIds.includes(request.quest.id)}
           request={request}
         />
       ))}
@@ -190,4 +206,5 @@ const styles = StyleSheet.create({
   sent: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   sentWords: { flex: 1, gap: space[1] },
   sentTitle: { ...text.label, color: color.ink },
+  caption: { ...text.caption, color: color.inkMuted },
 });

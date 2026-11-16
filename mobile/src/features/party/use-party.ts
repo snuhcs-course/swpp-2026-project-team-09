@@ -6,6 +6,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -22,6 +23,7 @@ import {
   partiesQuery,
   pastQuestsQuery,
   questInvitationsQuery,
+  questRemovalsQuery,
   questsQuery,
   recruitingQuery,
   sentInvitationsQuery,
@@ -73,20 +75,29 @@ export interface FindView {
 // 찾기's 모집 중인 파티: the recruiting Quests that match the search and that the User did not hide, those sharing more
 // tags with the User first, and otherwise the newest first as the list holds them.
 export function useFindPosts(search: string): ScreenData<FindView> {
-  const [entries, requests, friends, myTags, hidden] = useQueries({
-    queries: [recruitingQuery('all'), myJoinRequestsQuery, friendsQuery, myTagsQuery, hiddenPostsQuery],
+  const [entries, requests, friends, myTags, hidden, removals] = useQueries({
+    queries: [
+      recruitingQuery('all'),
+      myJoinRequestsQuery,
+      friendsQuery,
+      myTagsQuery,
+      hiddenPostsQuery,
+      questRemovalsQuery,
+    ],
   });
   return combined(
     [entries, requests],
     () => {
-      const posts = (entries.data ?? []).map((entry) => entryPost(entry, requests.data ?? [], friends.data ?? []));
+      const posts = (entries.data ?? []).map((entry) =>
+        entryPost(entry, requests.data ?? [], friends.data ?? [], removals.data ?? []),
+      );
       const hiddenIds = hidden.data ?? [];
       return {
         posts: findPosts(posts, { search, myTags: myTags.data ?? [], hidden: hiddenIds }),
         hidden: posts.filter(({ questId }) => hiddenIds.includes(questId)).length,
       };
     },
-    [friends, myTags, hidden],
+    [friends, myTags, hidden, removals],
   );
 }
 
@@ -127,11 +138,14 @@ export function useBoardRows(): ScreenData<BoardRowView[]> {
 }
 
 export function useBoardPosts(board: Board): ScreenData<PostView[]> {
-  const [entries, quests, requests] = useQueries({
-    queries: [recruitingQuery(board), questsQuery, myJoinRequestsQuery],
+  const [entries, quests, requests, removals] = useQueries({
+    queries: [recruitingQuery(board), questsQuery, myJoinRequestsQuery, questRemovalsQuery],
   });
-  return combined([entries, quests, requests], () =>
-    boardPosts(board, entries.data ?? [], quests.data ?? [], requests.data ?? [], myUserId()),
+  return combined(
+    [entries, quests, requests],
+    () =>
+      boardPosts(board, entries.data ?? [], quests.data ?? [], requests.data ?? [], myUserId(), removals.data ?? []),
+    [removals],
   );
 }
 
@@ -144,8 +158,16 @@ export interface PostDetailView {
 // 파티 모집글: a Quest the User holds, or a recruiting one, with the reasons it is recommended. Null when neither list
 // holds it.
 export function usePost(questId: string): ScreenData<PostDetailView | null> {
-  const [quests, entries, requests, friends, myTags, classes] = useQueries({
-    queries: [questsQuery, recruitingQuery('all'), myJoinRequestsQuery, friendsQuery, myTagsQuery, classesQuery],
+  const [quests, entries, requests, friends, myTags, classes, removals] = useQueries({
+    queries: [
+      questsQuery,
+      recruitingQuery('all'),
+      myJoinRequestsQuery,
+      friendsQuery,
+      myTagsQuery,
+      classesQuery,
+      questRemovalsQuery,
+    ],
   });
   return combined(
     [quests, entries, requests],
@@ -156,7 +178,7 @@ export function usePost(questId: string): ScreenData<PostDetailView | null> {
       if (held !== undefined) {
         post = questPost(held, myUserId(), friends.data ?? []);
       } else if (entry !== undefined) {
-        post = entryPost(entry, requests.data ?? [], friends.data ?? []);
+        post = entryPost(entry, requests.data ?? [], friends.data ?? [], removals.data ?? []);
       }
       if (post === null) {
         return null;
@@ -167,7 +189,7 @@ export function usePost(questId: string): ScreenData<PostDetailView | null> {
         : null;
       return { post, reasons };
     },
-    [friends, myTags, classes],
+    [friends, myTags, classes, removals],
   );
 }
 

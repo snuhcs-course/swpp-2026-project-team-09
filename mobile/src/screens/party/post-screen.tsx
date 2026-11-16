@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -25,6 +26,7 @@ import {
   FullScreenPanel,
   LoadingState,
   space,
+  text,
   useToastAbove,
 } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
@@ -33,7 +35,7 @@ import { agoWords } from '@/features/quests/room-adapter';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { useRoomActions } from '../room/use-room-actions';
 import { JoinSheet } from './join-sheet';
-import { Fill, Line } from './post-card';
+import { Fill, Line, REMOVED_CAPTION } from './post-card';
 import { PostReasons } from './post-reasons';
 import { Faces, PhotoView, TagBadges } from './quest-photo';
 import { useFindActions, usePartyActions } from './use-party-actions';
@@ -111,15 +113,18 @@ function Footer({ post, onJoin, onHide, onWithdraw, onEnd }: FooterProps): React
     );
   }
   return (
-    <View style={styles.buttons}>
-      <Button onPress={onHide} size="lg" variant="secondary">
-        관심 없음
-      </Button>
-      <View style={styles.button}>
-        <Button full onPress={onJoin} size="lg">
-          {role.kind === 'approval' ? '참여 신청' : '참여하기'}
+    <View style={styles.joining}>
+      <View style={styles.buttons}>
+        <Button onPress={onHide} size="lg" variant="secondary">
+          관심 없음
         </Button>
+        <View style={styles.button}>
+          <Button full onPress={onJoin} size="lg">
+            {role.kind === 'approval' ? '참여 신청' : '참여하기'}
+          </Button>
+        </View>
       </View>
+      {role.kind === 'approval' && role.removed ? <Text style={styles.caption}>{REMOVED_CAPTION}</Text> : null}
     </View>
   );
 }
@@ -266,8 +271,10 @@ const styles = StyleSheet.create({
   title: { fontFamily: font.bold, fontSize: 22, lineHeight: 30, letterSpacing: -0.33, color: color.ink },
   description: { fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.ink },
   lines: { gap: space[2] },
+  joining: { gap: space[1] },
   buttons: { flexDirection: 'row', gap: space[2] },
   button: { flex: 1 },
+  caption: { ...text.caption, textAlign: 'center', color: color.inkMuted },
   waiting: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   note: {
     flex: 1,

@@ -14,6 +14,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -175,6 +176,8 @@ export const mockClient: ApiClient = {
   },
   findFriendId: (friendId) => answer('findFriendId', () => friendships.findFriendId(friendId)),
   sendFriendRequest: (friendId) => answer('sendFriendRequest', () => friendships.sendFriendRequest(friendId)),
+  sendFriendRequestToUser: (userId) =>
+    answer('sendFriendRequestToUser', () => friendships.sendFriendRequestToUser(userId)),
   listFriendRequests: () => answer('listFriendRequests', friendships.listFriendRequests, { received: [], sent: [] }),
   acceptFriendRequest: async (requestId) => {
     await answer('acceptFriendRequest', () => {
