@@ -247,6 +247,8 @@ export interface Quest {
   subQuests: SubQuest[];
   // True for a Class Quest, which the timetable makes for today.
   classQuest: boolean;
+  // True for a Quest taken alone ("여기로", a booked seat), which is never a 파티; absent from a server before it.
+  takenAlone?: boolean;
   // The requests to join waiting for the Leader's answer, when the User leads the Quest; 0 otherwise.
   waitingJoinRequests: number;
   // Null for a Closed Quest and a Class Quest.

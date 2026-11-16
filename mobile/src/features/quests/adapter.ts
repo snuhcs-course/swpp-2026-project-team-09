@@ -153,11 +153,9 @@ export function partyOf(quest: Quest, myParty: MyParty | null, parties: readonly
   return { title, joinPolicy, mine: false, memberCount, capacity };
 }
 
-// A Quest held alone, as "여기로" makes one: its capacity is 1, so it is never a 파티 (P03 ticket 15).
-export const ALONE_CAPACITY = 1;
-
-export function heldAlone({ capacity }: Pick<Quest, 'capacity'>): boolean {
-  return capacity === ALONE_CAPACITY;
+// A Quest taken alone, as "여기로" and a booked seat make one: never a 파티 (P03 ticket 15).
+export function heldAlone({ takenAlone }: Pick<Quest, 'takenAlone'>): boolean {
+  return takenAlone === true;
 }
 
 // The names of a Quest's other Holders, "" when the User holds it alone.

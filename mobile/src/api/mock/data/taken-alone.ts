@@ -9,7 +9,7 @@ import type { PlanQuest } from '@/api/plan-quest-types';
 import type { Person } from '@/api/types';
 
 // The reply of POST /plans for an events Plan of `events-answer.ts` taken alone ("여기로", P03 ticket 15), as the main
-// server makes it: a Quest the asker holds alone (capacity 1) for the event, and the card's two lines. Each second line
+// server makes it: a Quest taken alone (capacity 1) for the event, and the card's two lines. Each second line
 // and leave-by is the main server's rule worked out by hand for that answer, asked at 13:50: the job fair's walk on to
 // the 15:30 Class at 301동 (18 minutes, leave at 15:12); the concert's way there by shuttle (leave at 17:42); the
 // company session's way there of 4 minutes, with nothing after it.
@@ -36,6 +36,7 @@ export function takenAloneOf(plan: Plan, me: Person): PlanQuest {
       globalEvent: { id: plan.id, title: plan.title },
       leader: me,
       capacity: 1,
+      takenAlone: true,
       joinPolicy: 'closed',
       board: null,
       description: '',

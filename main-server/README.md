@@ -1101,6 +1101,7 @@ A Quest reads:
     }
   ],
   "classQuest": false,
+  "takenAlone": false,
   "waitingJoinRequests": 0
 }
 ```
@@ -1114,6 +1115,8 @@ A Quest reads:
   made.
 - `classQuest` is `true` for a Class Quest and `false` for every stored Quest. `leader` and `createdAt` are `null` for
   a Class Quest only.
+- `takenAlone` is `true` for a Quest taken alone, made from a Plan for one person or from a booked seat. It gathers
+  nobody, so it is never a 파티: it is in no list or count of parties, and its capacity is 1.
 - `waitingJoinRequests` is the number of requests to join waiting for the Leader's answer when the reading User leads
   the Quest, and `0` otherwise.
 
@@ -3496,8 +3499,8 @@ part of the Plan sets out, with the Plan's Place and the Leader's own walking mi
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
 Place is unknown or the walk is 0 minutes.
 
-A Plan taken alone ("여기로": an events Plan, or a meal's whose people are the asker only) is a Quest the asker holds
-alone, with capacity 1 (`ALONE_CAPACITY` of `quests.service.ts`). Its `leave-by` is kept, awaited, for the first walk
+A Plan taken alone ("여기로": an events Plan, or a meal's whose people are the asker only) is a Quest taken alone
+(`takenAlone`), which the asker holds alone with capacity 1 (`ALONE_CAPACITY` of `quests.service.ts`). Its `leave-by` is kept, awaited, for the first walk
 of 5 minutes or more whose time is still ahead: to the Plan's Place, else on from it to the next item
 (`plans/alone-plan.ts`). Such a `leave-by` carries the next item, " 13:00 수업에 맞아요.", and says a way by shuttle
 as one. The reply's `alone` holds the card's two lines and `remindAt`. Entering a Shared Quest for a Global Event that
