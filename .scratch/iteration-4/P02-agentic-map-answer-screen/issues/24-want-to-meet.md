@@ -39,8 +39,25 @@ Blocked by: package A's meet input and its planning (row-6-seams, ticket 24); 18
 4. **One way of asking**: ticket 22's `usePlanAsk` moved to `screens/main/use-plan-ask.ts` (one ask at a time, dropped once the card closed, the toast on a failure), used by the building's card, the Friend's card, and the Lookup's button.
 5. **The pill's icon**: the frame drew the speech bubble for every turn, "여기서 먹기"'s included (there was no pin icon). It stays so for everything but a meet a button asked, which gets the person icon (`answer/pill-icon.ts`); "민수랑 만나고 싶어" typed keeps the speech bubble.
 6. **A Friend Lookup's `meet`** is its main button (`mainActionOf` takes the first `guide` or `meet`; a refusal's offer still comes first). It asks the same meet, and the answer comes as a new turn whose pill reads "{name} · 만나고 싶다", the name as the friend list says it or else as the Lookup's chip does; that turn's reply takes the Lookup's place.
-7. **"민수 ✕"**: in a meet of the User and one Friend, a person chip's ✕ closes the answer, as the frame's ✕ does, and opens that Friend's card by the main screen's address `?person=`, as a member pressed in a Quest's room does: the face's card where the map shows it, the map going there, else, with the switch on, the card of a Friend the map does not show. The Friend is the conditions', which is the chip's on the server.
+7. **"민수 ✕"**: in a meet of the User and one Friend, a person chip's ✕ closes the answer, as the frame's ✕ does, and opens that Friend's card by the main screen's address `?person=`, as a person pressed in a Quest's room does: the face's card where the map shows it, the map going there, else, with the switch on, the card of a Friend the map does not show. The Friend is the conditions', which is the chip's on the server.
 8. **A meet's conditions change as a meal's**: `plan-input.ts` reads a meet's people and window, so its ✕, "＋ 같이", a face pressed, the band's handles, and the origin chip all recalculate; with two Friends each ✕ recalculates.
 9. **"이대로 초대"** is left out of a meet by one condition in `answer/plan-card.tsx` (`Below`, `answer.input.kind !== 'meet'`), to lift once `POST /plans` takes a meet.
 10. **Words typed while a meet is on screen** carry its conditions and its Plan's id already (`chat-sheet.tsx` `contextAt` reads the answer on screen); `contextAt` is unchanged.
 11. **The capability**: `ANSWER_CAPABILITIES` gains `meet`, sent only with a context (the switch on); the switch-off request still says `library` alone. The tests that pin the list, and q6's test that drew "닫기" alone, now expect the change.
+12. **"＋ 같이" on a meet** is read aloud as "같이 만날 친구 추가", and the list it opens asks "누구와 같이 만날까요?" (`ConditionChips`' `meet`, `plan-card.tsx`'s `WHO_MEETS`); a meal and every other kind keep "같이 먹을 친구 추가" and "누구와 같이 먹을까요?".
+
+### Checked on an emulator (2026-11-16)
+
+On the Android emulator, with the mock and the switch on, at `770a01ef`:
+- 김민준's card from the friend list: "만나고 싶다" first and main, "파티 만들기" beside it; from a face, "가까이 보기" between them, all three on one row.
+- "만나고 싶다" opens a5: the pill "김민준 · 만나고 싶다" with the person icon, the chips, "12:15 302동 앞에서 만나요" / "12:43까지 함께 28분이에요", the band with 나 and 민수, "1/5"; on the map 302동 앞 with "12:15 만남", 민수 dashed at 302동, "나 · 3분", the others numbered, "13:00 수업 · 24동", and the way on to 24동. "근거" opens the server's three lines.
+- "＋ 같이" asks "누구와 같이 만날까요?".
+- "민수 ✕" closes the answer and opens 김민준's card again. The mock answers every meet with a5's copy, whose Friend is 민수, so the card is the Friend the meet was asked for.
+- Not run on the emulator: a Friend Lookup's "만나고 싶다", since typing "민수 어디야?" needs the device's keyboard switched to Korean. The integration tests cover it.
+
+### Agent usage (2026-11-16)
+
+One session with two subagents for this ticket (the implementation, then a review with its fixes); the session's own time counted is the brief, the coordination with packages A, C, and D, the merge with Main, and the emulator check.
+
+- Agent time: about 88 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 274,510; input 90,926,174, of which 90,097,995 were cache reads, 827,435 cache writes, and 744 uncached. Without cache reads: 1,102,689.

@@ -42,6 +42,8 @@ const ASKER = { userId: ME_ID, constraints: [] };
 const WITH_MIN_SU = { userId: MIN_SU.id, constraints: [] };
 const WITH_MIN_JUN = { userId: MIN_JUN.id, constraints: [] };
 const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
+// "＋ 같이" read aloud on a meet.
+const ADD = '같이 만날 친구 추가';
 
 // The stored answer given to a meet with 민수 and 김민준: it holds those conditions, and a person chip for 김민준 after
 // 민수's, as the main server writes one for each Friend. Changed for the boundary of a meet with two Friends, which no
@@ -124,11 +126,21 @@ describe("a Friend's ✕ in a meet", () => {
   });
 });
 
-// Partitions: a Friend chosen in the list of "＋ 같이", and a face pressed on the map.
+// Partitions: the words of "＋ 같이" and of the list it opens, a Friend chosen in that list, and a face pressed on the
+// map.
 describe('a Friend added to a meet', () => {
+  it('is asked for in words of a meet, not of a meal', async () => {
+    const user = await meetMinSu();
+
+    await user.press(card().getByRole('button', { name: ADD }));
+
+    expect(card().getByText('누구와 같이 만날까요?')).toBeVisible();
+    expect(card().queryByText('누구와 같이 먹을까요?')).toBeNull();
+  });
+
   it('is asked last, without constraints, when chosen in the list', async () => {
     const user = await meetMinSu();
-    await user.press(card().getByRole('button', { name: '같이 먹을 친구 추가' }));
+    await user.press(card().getByRole('button', { name: ADD }));
 
     await user.press(card().getByRole('button', { name: JI_WOO_CELL }));
     await pass(500);
