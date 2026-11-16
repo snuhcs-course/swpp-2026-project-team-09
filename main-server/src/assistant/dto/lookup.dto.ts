@@ -24,6 +24,8 @@ export interface Lookup {
   card?: LookupCard | null;
   // The list the card shows under the lines: a day's Classes, or the Tutorial Quests in order.
   steps?: LookupStep[];
+  // One short line of the card above its buttons.
+  note?: string;
 }
 
 // A row of a Lookup's list: the time at the left ("13:51", or "11:00–11:50" for a Class), and the text at the right.

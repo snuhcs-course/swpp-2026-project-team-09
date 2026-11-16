@@ -112,7 +112,7 @@ export function findWay(ways: WayService, tutorial: TutorialOrderService): Tool 
         const reached = await tutorial.wayTo(
           userId,
           { questKey: quest, fromPlaceId: from ?? null },
-          { now, location: context.location },
+          { now, location: context.location, locationMissing: context.locationMissing },
         );
         if (reached.result === 'none') {
           return noneFound(QUEST_NONE_REASONS[reached.reason]);
@@ -125,7 +125,7 @@ export function findWay(ways: WayService, tutorial: TutorialOrderService): Tool 
       const answer = await ways.find(
         userId,
         { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null, about },
-        { now, location: context.location },
+        { now, location: context.location, locationMissing: context.locationMissing },
       );
       if (answer.result === 'none') {
         return noneFound(NONE_REASONS[answer.reason]);

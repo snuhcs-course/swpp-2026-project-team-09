@@ -50,7 +50,9 @@ function cardWay(clock: string, { date = TUESDAY, items = day(date), at, shuttle
         at === undefined
           ? { at: AT_301, placeId: id('제1공학관'), onCampus: true }
           : { at: positionOf(at), placeId: numbered(at).id, onCampus: true },
-      shuttle: reporting(shuttleSeenAt === undefined ? [] : [{ stop: '신소재공동연구소', at: onDay(date, shuttleSeenAt) }]),
+      shuttle: reporting(
+        shuttleSeenAt === undefined ? [] : [{ stop: '신소재공동연구소', at: onDay(date, shuttleSeenAt) }],
+      ),
     }),
     {
       title: CARD,
@@ -91,7 +93,9 @@ describe('Board q12: the 학생증 at 11:50, before the 13:00 Class in 24동', (
       CARD_NOTE,
     ]);
   });
+});
 
+describe('Board q12 on the map', () => {
   it('draws the ride, the place picked out with its arrival, and the walk on to the Class', () => {
     const { places, routes, flags } = boardQ12().scene;
     expect(places.map(({ role, tag }) => [role, tag])).toEqual([

@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnswerReply, Plan, PlanInput } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
+import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { withPerson } from './plan-input';
 import type { Stretch } from './time-band';
@@ -45,9 +46,11 @@ export interface ShownAnswer {
   undo: () => void;
 }
 
-// Where the User is, which a recalculation sends, and what a failed one says.
+// Where the User is, or why that is not known, which a recalculation sends, and what a failed one says.
 export interface Recalculation {
   location: LatLng | null;
+  // Left out as null.
+  locationMissing?: LocationMissing;
   onFailed: () => void;
 }
 
@@ -187,7 +190,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
   return (alter, by, adds) => {
     const {
       current: { answer, epoch },
-      recalculation: { location, onFailed },
+      recalculation: { location, locationMissing = null, onFailed },
     } = live.current;
     const input = answer === null ? null : alter(answer.input);
     if (input === null || input === answer?.input || flight.current === epoch) {
@@ -203,7 +206,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
       setStored((last) => (late || last.epoch !== epoch ? last : update(last)));
       return !late;
     };
-    apiClient.recalculateAnswer(input, location).then(
+    apiClient.recalculateAnswer(input, location, locationMissing).then(
       (next) => {
         settle((last) => replaced(last, next, by));
       },
@@ -222,7 +225,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
 // unless a new reply came while it was on its way.
 export function useShownAnswer(
   bubbles: readonly ChatBubble[],
-  { location, onFailed }: Recalculation = NO_RECALCULATION,
+  recalculation: Recalculation = NO_RECALCULATION,
 ): ShownAnswer {
   const reply = lastReply(bubbles);
   const [stored, setStored] = useState<AnswerState>(() => fresh(reply, 0));
@@ -230,7 +233,7 @@ export function useShownAnswer(
   if (current !== stored) {
     setStored(current);
   }
-  const ask = useChange(current, setStored, { location, onFailed });
+  const ask = useChange(current, setStored, recalculation);
   const browsing = useBrowsing(setStored);
   return {
     source: current.source,

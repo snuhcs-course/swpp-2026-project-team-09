@@ -39,7 +39,7 @@ const ROUTES: Record<Exclude<RefusalScreen, 'location'>, Href> = {
   interests: '/me/interests',
 };
 
-function opened(screen: RefusalScreen): void {
+export function openScreen(screen: RefusalScreen): void {
   if (screen === 'location') {
     offerLocation();
   } else {
@@ -52,7 +52,7 @@ export function pressOffer(offer: ButtonOffer, onAsk: (words: string) => void): 
   if (offer.kind === 'ask') {
     onAsk(offer.text);
   } else {
-    opened(offer.screen);
+    openScreen(offer.screen);
   }
 }
 

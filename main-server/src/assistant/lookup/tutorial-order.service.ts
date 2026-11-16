@@ -12,6 +12,7 @@ import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { type TutorialPlace } from '../../tutorial/tutorial-content.js';
 import { TutorialService } from '../../tutorial/tutorial.service.js';
 import { UsersService } from '../../users/users.service.js';
+import { type LocationMissing } from '../dto/answer.dto.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
 import { questWay, type QuestWayAnswer } from './quest-way.js';
@@ -68,7 +69,7 @@ export class TutorialOrderService {
   async wayTo(
     userId: string,
     ask: { questKey: string; fromPlaceId: string | null },
-    at: { now: Date; location: Position | null },
+    at: { now: Date; location: Position | null; locationMissing: LocationMissing },
   ): Promise<QuestWayAnswer | { result: 'none'; reason: 'no-quest' | 'online' | 'unmapped' }> {
     const { quests } = await this.tutorial.peek(userId);
     const quest = quests.find(({ key }) => key === ask.questKey);

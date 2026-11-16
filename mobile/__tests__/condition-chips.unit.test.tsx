@@ -9,6 +9,8 @@ import { render, screen, userEvent, within } from '@testing-library/react-native
 import type { ComponentProps } from 'react';
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
+import { NO_LOCATION_ANSWER } from '@/api/mock/data/missing-inputs';
+import { color } from '@/design-system';
 import { ConditionChips } from '@/screens/main/answer/condition-chips';
 
 const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
@@ -59,6 +61,19 @@ describe('ConditionChips shown', () => {
 
     expect(screen.getByText('민수')).toBeVisible();
     expect(screen.queryByRole('button', { name: '민수 빼기' })).toBeNull();
+  });
+
+  // Partitions: a chip marked assumed (board n13) and one without a mark. The rule: a marked chip is drawn in the Quest
+  // colour (P02-13).
+  it('draws a chip the server assumed in the Quest colour, and one it did not as before', async () => {
+    await show({ chips: NO_LOCATION_ANSWER.chips });
+
+    expect(screen.getByRole('button', { name: '301동에서' })).toHaveStyle({
+      borderColor: color.quest,
+      backgroundColor: color.questSoft,
+    });
+    expect(screen.getByText('301동에서')).toHaveStyle({ color: color.quest });
+    expect(screen.getByRole('button', { name: '13:00 수업까지' })).toHaveStyle({ borderColor: color.borderStrong });
   });
 
   it('draws ＋ 같이 chosen while the list of Friends is open', async () => {

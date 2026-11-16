@@ -3,20 +3,15 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type {
-  AnswerLine,
-  AnswerReply,
-  ConditionChip,
-  MapScene,
-  PlacePoint,
-  Plan,
-  TimeBand,
-} from '@/api/assistant-types';
+import type { AnswerLine, AnswerReply, MapScene, PlacePoint, Plan, TimeBand } from '@/api/assistant-types';
 import type { DroppedPlace, PlanPart } from '@/api/plan-part-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
+import { isChip } from './chip-answers';
+import { hasMissingParts } from './missing-input-answers';
 import { isRecruitingQuest } from './party-client';
 import { isInput, isOneOf } from './plan-inputs';
 
@@ -68,14 +63,6 @@ function isLatLng(value: unknown): value is LatLng {
 // A mode is absent for a walk.
 function isMode(value: unknown): boolean {
   return value === undefined || isOneOf(['walk', 'shuttle'])(value);
-}
-
-export function isChip(value: unknown): value is ConditionChip {
-  return (
-    isOneOf(['origin', 'from', 'until', 'person', 'area', 'what'])(field(value, 'kind')) &&
-    isText(field(value, 'text')) &&
-    isTextOrNull(field(value, 'userId'))
-  );
 }
 
 export function isLine(value: unknown): value is AnswerLine {
@@ -254,6 +241,7 @@ export function isAnswerReply(value: unknown): value is AnswerReply {
     listOf(isChip)(field(value, 'chips')) &&
     listOf(isPlan)(field(value, 'plans')) &&
     listOf(isDropped)(field(value, 'dropped')) &&
-    isNoPlan(field(value, 'noPlan'))
+    isNoPlan(field(value, 'noPlan')) &&
+    hasMissingParts(value)
   );
 }

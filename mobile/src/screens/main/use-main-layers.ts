@@ -120,6 +120,6 @@ export function useMainLayers(inFront: boolean, map: MainMap, me: Me): MainLayer
   const made = useMadeQuests();
   const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map), made);
   const route = useRoute(map, me);
-  const chat = useChatSheet(inFront, stack.turnOn, me.position, route.routeTo);
+  const chat = useChatSheet(inFront, stack.turnOn, me, route.routeTo);
   return { stack, shuttle, cards, ready, chat, made, route };
 }

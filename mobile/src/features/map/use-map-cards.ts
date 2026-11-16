@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
@@ -27,6 +28,7 @@ import { toFriendViews } from '@/features/friends/adapter';
 import { useNow } from '@/hooks/use-now';
 import { POSITION_AGE_EVERY_MS } from '@/position';
 import { type CardView, toCards } from './adapter';
+import { useInterestMarks, withInterestMarks } from './use-interest-marks';
 
 type Results = [
   UseQueryResult<GlobalEvent[]>,
@@ -83,9 +85,14 @@ function combine(results: Results, at: number): ScreenData<CardView[]> {
 // Everything on the map that a press opens, each with its card: Global Events, the User's Parties, Friends and the
 // members of the User's Party. After a failure `data` holds the cards that are still right and `isError` is true. The
 // age of the people's positions is looked at again every 15 seconds: an Avatar dims at two minutes and goes at ten.
+// While the switch of the answer on the map is on, the events and recruiting parties are those of the interest marks.
 export function useMapCards(): ScreenData<CardView[]> {
   const at = useNow(POSITION_AGE_EVERY_MS);
-  const combineAt = useCallback((results: Results) => combine(results, at), [at]);
+  const marks = useInterestMarks();
+  const combineAt = useCallback(
+    (results: Results) => withInterestMarks(combine(results, at), marks, agedAt(at)),
+    [at, marks],
+  );
   return useQueries({
     queries: [
       globalEventsQuery,

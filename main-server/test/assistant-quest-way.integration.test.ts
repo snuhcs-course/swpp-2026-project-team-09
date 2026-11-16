@@ -112,7 +112,9 @@ describe('가는 길 보기 pressed (board q12)', () => {
       next: { due: '13:00 수업', place: '24동', walkMinutes: 8, lateMinutes: 0 },
     });
   });
+});
 
+describe("A quest's way, otherwise", () => {
   it('keeps the way and drops the button when both come in one run', async () => {
     await stage.asking('2093-03-17', '11:50');
     await stage.classAt(stage.asker, '13:00', '13:50', '24');

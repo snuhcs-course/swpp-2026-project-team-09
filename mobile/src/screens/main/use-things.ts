@@ -12,6 +12,7 @@
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
+import { type InterestMark, markedLook } from '@/features/map/interest-marks';
 import { type MapAvatar, type MapMarker, type MarkerLook, useMarkerImages, type ZoomDetail } from '@/map';
 import { POSITION_EVERY_MS } from '@/position';
 
@@ -74,9 +75,14 @@ function lookOf(
 
 // Every look the cards have at any level, unselected: asked for when the cards come, so that a change of level
 // never hands a native map an image whose picture is still to be made. A selected look is made when it is asked.
-function everyLook(cards: readonly CardView[], onMap: boolean): MarkerLook[] {
-  return cards.flatMap((card) => DETAILS.map((detail) => lookOf(card, detail, false, onMap)));
+function everyLook(cards: readonly CardView[], onMap: boolean, marks: Marks): MarkerLook[] {
+  return cards.flatMap((card) =>
+    DETAILS.map((detail) => markedLook(lookOf(card, detail, false, onMap), marks.get(card.id))),
+  );
 }
+
+type Marks = ReadonlyMap<string, InterestMark>;
+const NO_MARKS: Marks = new Map();
 
 // The words under a person's Avatar from the "names" level of detail: the given name, or the full name with
 // `fullNames`, and for an old position its age, "민준 · 3분 전". A place has none: words of places side by side
@@ -93,18 +99,20 @@ function wordsOf({ mark, marker }: CardView, detail: ZoomDetail, fullNames: bool
 // (`onMap`), a person has their full name under them from the "names" level, in the map's own text, and a Friend seen
 // at the exact level a green dot; else the given name and no dot. The selected one is drawn selected and above the
 // others. A thing within a place has no marker: the place's stands for it, and is selected while the thing is, as a
-// made Quest's flag for its Quest. A received invitation has none.
+// made Quest's flag for its Quest. A received invitation has none. A card that stands for an interest mark (`marks`,
+// by card id, only while the switch is on) has the mark's name and its "!" or fade.
 export function useThings(
   all: readonly CardView[],
   detail: ZoomDetail,
   selectedId: string | null,
   onMap: boolean,
+  marks: Marks = NO_MARKS,
 ): Things {
   const cards = all.filter(({ kind }) => kind !== 'invitation');
   const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
   const isSelected = (card: CardView): boolean => card.id === selectedId || card.id === selectedWithin;
-  const shown = cards.map((card) => lookOf(card, detail, isSelected(card), onMap));
-  const images = useMarkerImages([...shown, ...everyLook(cards, onMap)]);
+  const shown = cards.map((card) => markedLook(lookOf(card, detail, isSelected(card), onMap), marks.get(card.id)));
+  const images = useMarkerImages([...shown, ...everyLook(cards, onMap, marks)]);
   const markers: MapMarker[] = [];
   const avatars: MapAvatar[] = [];
   for (const [index, card] of cards.entries()) {
@@ -112,7 +120,7 @@ export function useThings(
     if (image !== undefined && card.within === undefined) {
       const thing: MapMarker = {
         id: card.id,
-        name: card.marker.name,
+        name: marks.get(card.id)?.name ?? card.marker.name,
         position: card.position,
         image,
         text: wordsOf(card, detail, onMap),

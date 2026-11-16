@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import type { MakePlanQuest, PlanQuest } from '@/api/plan-quest-types';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
-import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
+import { type Inviting, type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { freshWrapper } from './queries';
 import { HERE } from './shown-answer';
 
@@ -34,11 +35,15 @@ export interface HeldInvitation {
   change: Change;
 }
 
-export async function hold(first: OnScreen): Promise<HeldInvitation> {
+// `where` stands in for the position at HERE: no position, and why.
+export async function hold(
+  first: OnScreen,
+  where?: Pick<Inviting, 'location' | 'locationMissing'>,
+): Promise<HeldInvitation> {
   const say = jest.fn<void, [string]>();
   const change: Change = jest.fn<void, Parameters<ShownAnswer['change']>>();
   const { result, rerender } = await renderHook(
-    (given: OnScreen) => usePlanInvitation({ ...given, change }, { location: HERE, say }),
+    (given: OnScreen) => usePlanInvitation({ ...given, change }, { location: HERE, say, ...where }),
     { initialProps: first, wrapper: freshWrapper() },
   );
   return {
