@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -134,7 +135,7 @@ export class NewQuestPlanService {
   }
 
   // The plan's people, the asker first, each the asker's Friend and once, and the asker's other Friends who hold no
-  // Quest for the Global Event, each with their day.
+  // 파티 for the Global Event, each with their day. A Friend going alone is offered: entering leaves the Quest held alone.
   private async peopleOf(
     askerId: string,
     { people, date, globalEventId }: NewQuestInput,
@@ -143,7 +144,7 @@ export class NewQuestPlanService {
     const [asker, friends, holders] = await Promise.all([
       this.users.findById(askerId),
       this.friends.list(askerId),
-      globalEventId === null ? Promise.resolve<string[]>([]) : this.quests.holderIdsFor(globalEventId),
+      globalEventId === null ? Promise.resolve<string[]>([]) : this.quests.holderIdsFor(globalEventId, false),
     ]);
     if (ids[0] !== askerId || new Set(ids).size < ids.length) {
       throw refused('A plan starts with the asker and holds each person once');

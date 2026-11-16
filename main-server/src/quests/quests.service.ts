@@ -12,9 +12,10 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import {
@@ -27,10 +28,11 @@ import {
   SubQuest,
 } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
-import { type MakeQuestDto, type SubQuestContentDto } from './dto/quest-requests.dto.js';
+import { type MakeQuestDto } from './dto/quest-requests.dto.js';
 import {
   hasSubQuestsAhead,
   QUEST_INCLUDE,
@@ -40,6 +42,7 @@ import {
   toQuestDto,
 } from './dto/quest.dto.js';
 import { notFound, questNotFound } from './refusals.js';
+import { columnsOf } from './sub-quest-columns.js';
 import { inOrder } from './sub-quest-order.js';
 
 // What a Sub Quest that a Holder writes stores.
@@ -49,6 +52,10 @@ export type SubQuestColumns = Pick<
 > & {
   title: string;
 };
+
+// The capacity of a Quest held alone, as a Plan taken alone makes one: never a 파티, so it is in no list or count of
+// parties and no one else enters it.
+export const ALONE_CAPACITY = 1;
 
 // How a new Quest starts. Left out, its first Holder leads it, and it is Closed with capacity 4, no board and an empty
 // description.
@@ -62,6 +69,8 @@ export interface QuestSettings {
 
 @Injectable()
 export class QuestsService {
+  private readonly logger = new Logger(QuestsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
@@ -69,6 +78,7 @@ export class QuestsService {
     @Inject(CLOCK) private readonly clock: Clock,
     private readonly classQuests: ClassQuestsService,
     private readonly roomRequests: RoomRequestSync,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // The User's Quest for the Global Event, made the first time, with the title given or else the event's. The User's
@@ -98,7 +108,7 @@ export class QuestsService {
   // A Quest of the User's own, without a Global Event.
   async make(userId: string, { subQuest, ...settings }: MakeQuestDto): Promise<QuestDto> {
     const questId = await this.prisma.$transaction(async (tx) =>
-      this.createWithSubQuest(await this.columnsOf(subQuest, tx), [userId], tx, settings),
+      this.createWithSubQuest(await columnsOf(subQuest, tx), [userId], tx, settings),
     );
     this.signals.send([userId], 'quests-changed');
     return this.read(userId, questId);
@@ -160,9 +170,14 @@ export class QuestsService {
     return holder?.questId ?? null;
   }
 
-  // The Holders of every Quest for the Global Event.
-  async holderIdsFor(globalEventId: string): Promise<string[]> {
-    const holders = await this.prisma.questHolder.findMany({ where: { globalEventId }, select: { userId: true } });
+  // The Holders of every Quest for the Global Event, or of every 파티 for it: `alone` false leaves out the Holders of a
+  // Quest held alone (`ALONE_CAPACITY`).
+  async holderIdsFor(globalEventId: string, alone = true): Promise<string[]> {
+    const party = alone ? {} : { quest: { capacity: { gt: ALONE_CAPACITY } } };
+    const holders = await this.prisma.questHolder.findMany({
+      where: { globalEventId, ...party },
+      select: { userId: true },
+    });
     return holders.map(({ userId }) => userId);
   }
 
@@ -247,6 +262,10 @@ export class QuestsService {
       return false;
     }
     await this.removeHolder(questId, userId, tx);
+    // Its leave-by goes with it, and never fails the entry.
+    await this.notifications.cancel(userId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
+      this.logger.warn(`The time to leave of a Quest held alone was not cancelled: ${String(error)}`);
+    });
     return true;
   }
 
@@ -297,27 +316,6 @@ export class QuestsService {
       },
     });
     return id;
-  }
-
-  // Refuses a Place that is not in the list.
-  async columnsOf(
-    { title, startsAt, endsAt, place }: SubQuestContentDto,
-    tx: Prisma.TransactionClient,
-  ): Promise<SubQuestColumns> {
-    const point = place !== null && 'latitude' in place ? place : null;
-    const placeId = place !== null && 'placeId' in place ? place.placeId : null;
-    if (placeId !== null && (await tx.place.findUnique({ where: { id: placeId } })) === null) {
-      throw notFound('PLACE_NOT_FOUND', 'No such Place is in the list.');
-    }
-    return {
-      title,
-      startsAt: startsAt === null ? null : new Date(startsAt),
-      endsAt: endsAt === null ? null : new Date(endsAt),
-      placeId,
-      latitude: point?.latitude ?? null,
-      longitude: point?.longitude ?? null,
-      placeLabel: place !== null && 'label' in place ? place.label : null,
-    };
   }
 
   // Locks the Quest, checks that the User holds it and makes the change. Answers the change's result and the Holders
