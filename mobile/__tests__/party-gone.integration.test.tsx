@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -228,6 +229,21 @@ describe('a 파티 that leaves the list while its room is open', () => {
 
     expect(await toastsOver(TOAST_GONE_MS)).toEqual([GONE]);
     expect(shownAddress()).toBe('/main');
+    expect(await toastsOver(TOAST_GONE_MS)).toEqual([]);
+  });
+});
+
+// Partitions: a Quest taken alone ("여기로", P03 ticket 15) that leaves the list. Expected values: nothing told, as no
+// one but the User ends it, and it is no 파티.
+describe('a Quest taken alone that leaves the list', () => {
+  it('is not told', async () => {
+    answerRoom(server, { ...PICNIC, takenAlone: true });
+    await openMain();
+    await connect();
+
+    takeOut();
+    await questsChanged();
+
     expect(await toastsOver(TOAST_GONE_MS)).toEqual([]);
   });
 });

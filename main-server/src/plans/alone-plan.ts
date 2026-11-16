@@ -14,6 +14,12 @@ import { type Told } from '../notifications/notification.js';
 const MINUTE_MS = 60_000;
 // A walk alone shorter than this gets no leave-by (the design's "Notifications").
 export const LEAVE_BY_WALK_MIN = 5;
+// A way there that sets out within this of now is setting out now: a meal's start is rounded up to five minutes, so
+// its way there starts up to five minutes after the moment it is planned for.
+const SETTING_OUT_MIN = 5;
+
+// Now as the planners read it: the clock rounded up to the minute.
+const plannersNow = (now: Date): Date => new Date(Math.ceil(now.getTime() / MINUTE_MS) * MINUTE_MS);
 
 type NextWord = '수업' | '일정';
 export type LeaveByFacts = Omit<Extract<Told, { kind: 'leave-by' }>, 'questId'>;
@@ -59,14 +65,16 @@ function walkOn(plan: Plan, nextWord: NextWord, now: Date): AloneLeaveBy {
 }
 
 // The first walk of 5 minutes or more whose time is still ahead: to the Plan's Place, as for an event later in the
-// day, or else on from it to the next item, as for a meal now.
-export function aloneLeaveBy(plan: Plan, nextWord: NextWord, now: Date): AloneLeaveBy {
+// day, or else on from it to the next item, as for a meal now or an event under way. `now` is the clock; it is read as
+// the planners read it.
+export function aloneLeaveBy(plan: Plan, nextWord: NextWord, clock: Date): AloneLeaveBy {
+  const now = plannersNow(clock);
   const part = mineOf(plan);
   const leaveAt = part?.leaveAt ?? null;
   const walkMinutes = part?.walkMinutes ?? null;
   if (leaveAt !== null && walkMinutes !== null && walkMinutes >= LEAVE_BY_WALK_MIN) {
     const at = new Date(leaveAt);
-    if (at.getTime() > now.getTime()) {
+    if (at.getTime() > now.getTime() + SETTING_OUT_MIN * MINUTE_MS) {
       const by = part?.mode === 'shuttle' ? { by: 'shuttle' as const } : {};
       return kept({ kind: 'leave-by', placeLabel: plan.place.label, walkMinutes, ...by }, at);
     }
