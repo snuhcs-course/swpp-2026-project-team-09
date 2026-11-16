@@ -15,7 +15,7 @@ The app signed in on one phone for a User. A User has at most one: signing in on
 _Avoid_: Login, device
 
 **Administrator**:
-A team member who signs in to the admin site to confirm, publish and create Global Events, and to make two Users Friends or end their friendship when setting up demo accounts. An Administrator is not a User, even when the same person also uses the app.
+A team member who signs in to the admin site to confirm, publish and create Global Events, to make two Users Friends or end their friendship when setting up demo accounts, and to change the global settings, such as the AI's key. An Administrator is not a User, even when the same person also uses the app.
 _Avoid_: Organizer, manager
 
 **Avatar**:
