@@ -111,14 +111,12 @@ export class FriendsService {
 
   // To the owner of a Friend ID, or by user id to a User who holds a Quest with the sender (fellow-holders.ts).
   async sendRequest(senderId: string, to: SendFriendRequestDto): Promise<SentFriendRequestDto> {
-    const receiverId = 'friendId' in to ? (await this.ownerOf(to.friendId)).id : to.userId;
+    const [receiverId, own] =
+      'friendId' in to
+        ? [(await this.ownerOf(to.friendId)).id, { code: 'OWN_FRIEND_ID', message: 'This is your own Friend ID.' }]
+        : [to.userId, { code: 'OWN_USER_ID', message: 'This is your own user id.' }];
     if (receiverId === senderId) {
-      throw new BadRequestException({
-        statusCode: HttpStatus.BAD_REQUEST,
-        error: 'Bad Request',
-        code: 'friendId' in to ? 'OWN_FRIEND_ID' : 'OWN_USER_ID',
-        message: 'friendId' in to ? 'This is your own Friend ID.' : 'This is your own user id.',
-      });
+      throw new BadRequestException({ statusCode: HttpStatus.BAD_REQUEST, error: 'Bad Request', ...own });
     }
     const pair = pairOf(senderId, receiverId);
     return this.changeBetween(pair, async (tx) => {

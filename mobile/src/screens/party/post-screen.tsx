@@ -32,10 +32,11 @@ import {
 import type { PostView } from '@/features/party/posts';
 import { type PostDetailView, usePost } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
+import { REMOVED_CAPTION } from '@/features/quests/refusals';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { useRoomActions } from '../room/use-room-actions';
 import { JoinSheet } from './join-sheet';
-import { Fill, Line, REMOVED_CAPTION } from './post-card';
+import { Fill, Line } from './post-card';
 import { PostReasons } from './post-reasons';
 import { Faces, PhotoView, TagBadges } from './quest-photo';
 import { useFindActions, usePartyActions } from './use-party-actions';

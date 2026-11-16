@@ -29,14 +29,15 @@ import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
 import { alreadyHolder, conflict, notFound, notLeader, notRecruiting, sharedQuestHeld } from './refusals.js';
-import { removed } from './removals.js';
+import { wasRemoved } from './removals.js';
 
 const joinRequestNotFound = (): NotFoundException =>
   notFound('QUEST_JOIN_REQUEST_NOT_FOUND', 'No such request to join waits for this answer from this User.');
 
-// Requests to join an Approval Quest, or an Open one the Leader removed the User from (QuestRemoval). A request waits until the User withdraws it or the Leader answers it, and ends
-// with the Quest and when the User enters it in any way (RecruitingService.enter). Withdrawing and answering lock the
-// User who asked first, so that one request gets one of them.
+// Requests to join an Approval Quest, or an Open one the Leader removed the User from (QuestRemoval). A request waits
+// until the User withdraws it or the Leader answers it, and ends with the Quest and when the User enters it in any way
+// (RecruitingService.enter). Withdrawing and answering lock the User who asked first, so that one request gets one of
+// them.
 @Injectable()
 export class JoinRequestsService {
   constructor(
@@ -66,7 +67,7 @@ export class JoinRequestsService {
       if (quest.joinPolicy === JoinPolicy.closed) {
         throw notRecruiting();
       }
-      if (quest.joinPolicy === JoinPolicy.open && !(await removed(tx, questId, userId))) {
+      if (quest.joinPolicy === JoinPolicy.open && !(await wasRemoved(tx, questId, userId))) {
         throw conflict('QUEST_NOT_APPROVAL', 'This Quest is Open: join it instead.');
       }
       if ((await tx.questJoinRequest.findUnique({ where: { questId_userId: { questId, userId } } })) !== null) {

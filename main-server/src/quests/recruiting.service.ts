@@ -34,7 +34,7 @@ import {
 import { QuestsService } from './quests.service.js';
 import { type RecruitingSearch, recruitingSearchCounts, recruitingSearchHits } from './recruiting-search.js';
 import { alreadyHolder, conflict, notRecruiting, removedAsk, sharedQuestHeld } from './refusals.js';
-import { removed } from './removals.js';
+import { wasRemoved } from './removals.js';
 
 // A Quest of the list that the reader can still enter, with all its Sub Quests.
 export interface EnterableQuest {
@@ -160,7 +160,7 @@ export class RecruitingService {
         if (joinPolicy === JoinPolicy.approval) {
           throw conflict('QUEST_NOT_OPEN', 'The Leader accepts each User who asks to join this Quest.');
         }
-        if (await removed(tx, questId, userId)) {
+        if (await wasRemoved(tx, questId, userId)) {
           throw removedAsk();
         }
       }),

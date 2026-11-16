@@ -6,7 +6,6 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
- * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -21,9 +20,6 @@ export function openPost(questId: string): void {
 }
 
 // "참여하기", or "참여 신청" for an Approval Quest.
-// Under `참여 신청` and on the 보낸 신청 row, for a Quest the Leader removed the User from.
-export const REMOVED_CAPTION = '내보내진 파티라 파티장 승인이 필요해요';
-
 export function joinLabel(post: Pick<PostView, 'joinPolicy'>): string {
   return post.joinPolicy === 'approval' ? '참여 신청' : '참여하기';
 }

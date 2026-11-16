@@ -19,7 +19,7 @@ import {
 import { QuestsService } from '../quests/quests.service.js';
 import { RecruitingService } from '../quests/recruiting.service.js';
 import { conflict, removedAsk } from '../quests/refusals.js';
-import { removed } from '../quests/removals.js';
+import { wasRemoved } from '../quests/removals.js';
 import { UsersService } from '../users/users.service.js';
 import {
   EligibleAnswerDto,
@@ -136,7 +136,7 @@ export class MatchingService {
         if (joinPolicy !== JoinPolicy.open) {
           throw conflict('QUEST_NOT_OPEN', 'Matching places Users into Open Quests only.');
         }
-        if (await removed(tx, questId, userId)) {
+        if (await wasRemoved(tx, questId, userId)) {
           throw removedAsk();
         }
         if (capacity !== size) {

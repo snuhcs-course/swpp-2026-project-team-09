@@ -31,8 +31,9 @@ import {
 import { whenOf } from '@/features/party/posts';
 import { useInvitations, useSentRequests } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
+import { REMOVED_CAPTION } from '@/features/quests/refusals';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
-import { openPost, REMOVED_CAPTION } from './post-card';
+import { openPost } from './post-card';
 import { type PartyActions, usePartyActions } from './use-party-actions';
 
 // `{when} · {where} · {names} 함께`, of what the invitation carries: the server build has none of the three yet, and
