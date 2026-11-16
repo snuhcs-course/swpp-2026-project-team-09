@@ -77,7 +77,7 @@ export function useMapView(
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
 ): MapView {
-  const marks = useMarkPresses(chat.chat, me.position, cards);
+  const marks = useMarkPresses(chat.chat, me, cards);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap, marks.byId);
   useViewport(chat, map, room);
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
