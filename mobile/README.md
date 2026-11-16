@@ -634,7 +634,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     card's "닫기", a map button, which also turns its layer on, and the start of route guidance. A reply on its way
     still comes and is kept. While the frame is hidden, the map is the everyday map, without the answer's marks, and
     its presses and cards work as without a conversation; the AI input has the round "이전 답" at its left, which shows
-    the frame again at the turn on screen as it was, with the answer's marks and camera. A message sent from the
+    the frame again at the turn on screen as it was, with the answer's marks and camera. The frame's own way out (✕,
+    back, a card's "닫기") brings the camera back to where the everyday map was when the frame was shown
+    (`use-camera-back.ts`); a map button and route guidance leave it to their own moves. A message sent from the
     everyday map goes on with the conversation and shows the frame, and so does any turn a card's button or a mark
     asks. "새 대화" forgets the conversation and closes the frame; it is the only way the conversation is forgotten
     while the app runs. "그만" takes the question on its way back and drops its reply when it comes: the frame shows
@@ -834,8 +836,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - Every control has a Korean name for a screen reader, the wireframe's where it has one. A touch area is at least 48
   high: a row is 56, and the pills and the round buttons of 32 and 40 reach past their shapes (`hitSlop`), never
   into a neighbour's shape.
-- **The map's credit.** The map ends at the navigation's top and is told what the controls cover of its edges
-  (`mapInset` in `layout.ts`, the `inset` of `<Map>`): 126 at the bottom, the row of buttons' top, and 62 at the
+- **The map's credit.** The map is as high as the screen and lies under the navigation (`main-map-view.tsx`), so its
+  view keeps one size when the navigation gives way to the answer frame and nothing on it moves then; while the
+  navigation is shown, its height is added to the inset's bottom and to the bottom padding of the everyday map's
+  fits (`useNavCoverOnMain`). It is told what the controls cover of its edges (`mapInset` in `layout.ts`, the
+  `inset` of `<Map>`), counted from the navigation's top: 126 at the bottom, the row of buttons' top, and 62 at the
   right, the zoom control. So the credit is just above the row of buttons, 16 from the left, and a provider's logo
   belongs left of the zoom control, above "활성 파티". While a card is open the inset's bottom is the card's top,
   and the credit sits above the card. Nothing is drawn over the credit: the lists end 8 above its strip
@@ -951,7 +956,8 @@ lowered at once by a choice or a switch on its way, and raised only once `GET /f
 know the Friend's end. Its foot: "시간표의 건물과 끝나는 시각은 친구 모두에게 보여요. 위치를 꺼도 시간표는 보여요."
 and "새 친구는 '지금 있는 건물'에서 시작해요.". "남기지 않는 것" has the rows "누가 나를 찾았는지 · 기록 안 함" and
 "지난 위치 · 저장 안 함", the name at the start and the fact at the end, over "과목과 강의실은 보이지 않고, 후보로 검토된
-것은 누구에게도 알리지 않아요.". The board's "비공개 구역" row is not drawn: no ticket builds the Private Zone yet.
+것은 누구에게도 알리지 않아요.". Above it, the "비공개 구역" row ("칠한 곳 안에서는 시간표만 보여요", the number of zones)
+opens the zone screen (`me/private-zones/`).
 
 관심사 (`/me/interests`, `src/screens/me/interests-screen.tsx`, P05 ticket 08) has two cards. "프로필 관심사" shows the
 profile's hashtags from the Lobby as chips ("#러닝"), or "프로필에 넣은 관심사가 없어요", over "프로필 편집에서 바꿀 수

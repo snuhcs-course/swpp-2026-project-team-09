@@ -6,6 +6,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RefObject, useCallback, useRef, useState } from 'react';
@@ -20,6 +21,7 @@ import {
   type ZoomDetail,
   zoomDetail,
 } from '@/map';
+import { useNavCoverOnMain } from '../shell/main-tab-bar';
 import { type CameraMoves, useCameraMoves } from './use-camera-moves';
 
 export type ZoomLevel = 'pins' | 'names' | 'close';
@@ -51,13 +53,13 @@ export interface MainMap {
   moveTo: (camera: MapCamera) => void;
 }
 
-// A fit that comes no closer than `offset` above the fit zoom.
-function useFit(fit: CameraMoves['fit'], offset: number): MainMap['fitTo'] {
+// A fit that comes no closer than `offset` above the fit zoom, clear of what the navigation covers.
+function useFit(fit: CameraMoves['fit'], offset: number, covered: number): MainMap['fitTo'] {
   return useCallback(
     (points: readonly LatLng[], padding: FitPadding) => {
-      fit(points, padding, offset);
+      fit(points, { ...padding, bottom: padding.bottom + covered }, offset);
     },
-    [fit, offset],
+    [fit, offset, covered],
   );
 }
 
@@ -100,8 +102,9 @@ export function useMainMap(): MainMap {
   const showCampus = useCallback(() => {
     move((fit) => ({ centre: centreOf(CAMPUS_BOUNDS), zoom: fit }));
   }, [move]);
-  const fitTo = useFit(fitInto, ZOOM_OFFSET.pins);
-  const answerMoves = { fitAnswer: useFit(fitInto, ZOOM_OFFSET.close), moveTo: place };
+  const covered = useNavCoverOnMain();
+  const fitTo = useFit(fitInto, ZOOM_OFFSET.pins, covered);
+  const answerMoves = { fitAnswer: useFit(fitInto, ZOOM_OFFSET.close, covered), moveTo: place };
   const detail = camera === null || fitZoom === null ? 'overview' : zoomDetail(camera.zoom, fitZoom);
   return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo, ...answerMoves };
 }

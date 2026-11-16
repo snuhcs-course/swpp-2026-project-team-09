@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -127,8 +128,9 @@ describe("the main screen's lists on a low screen", () => {
   it("end the friend list above the map's credit, which sits on the row of buttons", async () => {
     await openMain();
 
-    // The credit's bottom is 134 above the navigation and its line is 14: its top is at 148, and 8 are clear.
-    expect(screen.getByRole('button', { name: CREDIT_BUTTON })).toHaveStyle({ left: 16, bottom: 134 });
+    // The credit's bottom is 134 above the navigation and its line is 14: its top is at 148, and 8 are clear. The map
+    // lies under the navigation, 80 high, and counts from the screen's bottom.
+    expect(screen.getByRole('button', { name: CREDIT_BUTTON })).toHaveStyle({ left: 16, bottom: 80 + 134 });
     expect(screen.getByText(CREDIT)).toHaveStyle({ lineHeight: 14 });
     await layStage(360, 428);
     expect(rows('friend')).toHaveStyle({ maxHeight: 172 });
@@ -145,7 +147,7 @@ describe("the main screen's lists on a low screen while a card is open", () => {
     await layCard(180);
 
     // The credit's top is 72, 180, 8 and 14 above the navigation: 274. With 8 clear, 138 are left of 520.
-    expect(screen.getByRole('button', { name: CREDIT_BUTTON })).toHaveStyle({ left: 16, bottom: 260 });
+    expect(screen.getByRole('button', { name: CREDIT_BUTTON })).toHaveStyle({ left: 16, bottom: 80 + 260 });
     expect(rows('friend')).toHaveStyle({ maxHeight: 114 });
     expect(rows('quest')).toHaveStyle({ maxHeight: 114 });
     expect(button(FRIEND_ROW).parent).toHaveStyle({ opacity: 0.4 });
