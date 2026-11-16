@@ -4,6 +4,8 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -23,6 +25,7 @@ import type { MyParty, Quest, SubQuest } from '@/api/types';
 import type { JoinRequest } from '@/api/waiting-types';
 import { useToast } from '@/design-system';
 import { useDeclineParty } from '@/features/parties/declined';
+import { leavingOnPurpose } from '@/features/quests/leaving';
 import { refusalWords } from '@/features/quests/refusals';
 import type { MemberView } from '@/features/quests/room-adapter';
 
@@ -249,16 +252,21 @@ function peopleActions({ run }: Tools): PeopleActions {
     handOver: async (questId, { id, name }) => {
       await run(() => apiClient.handOverQuest(questId, id), `${name}님이 파티장이 됐어요`);
     },
+    // The User's own leave and end are not told again as a 파티 that is gone.
     leaveQuest: (questId, party) =>
-      run(async () => {
-        await outOfParty(party, false);
-        await apiClient.dropQuest(questId);
-      }, '파티에서 나왔어요'),
+      leavingOnPurpose(questId, () =>
+        run(async () => {
+          await outOfParty(party, false);
+          await apiClient.dropQuest(questId);
+        }, '파티에서 나왔어요'),
+      ),
     endQuest: (questId, party) =>
-      run(async () => {
-        await outOfParty(party, true);
-        await apiClient.endQuest(questId);
-      }, '파티를 없앴어요'),
+      leavingOnPurpose(questId, () =>
+        run(async () => {
+          await outOfParty(party, true);
+          await apiClient.endQuest(questId);
+        }, '파티를 없앴어요'),
+      ),
   };
 }
 
