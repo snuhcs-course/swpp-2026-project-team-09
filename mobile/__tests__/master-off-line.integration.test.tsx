@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -86,12 +87,14 @@ describe.each([
   ['위치 공유', '/me/location-sharing'],
   ['친구', '/me/friends'],
 ] as const)("The Friends' levels on %s while the Master Switch is off", (_, address) => {
-  it('show 시간표만, take no press, and come back as stored once 켜기 turns it on', async () => {
+  it('keep each stored level checked and dimmed, take no press, and come back once 켜기 turns it on', async () => {
     const user = await open(address);
 
     expect(screen.getByText(OFF_LINE)).toBeVisible();
+    expect(levels(MIN_SU.name).getByRole('radio', { name: '정확한 위치' })).toBeChecked();
+    expect(levels(JI_EUN.name).getByRole('radio', { name: '지금 있는 건물' })).toBeChecked();
     for (const name of [MIN_SU.name, JI_EUN.name]) {
-      expect(levels(name).getByRole('radio', { name: '시간표만' })).toBeChecked();
+      expect(levels(name).getByRole('radio', { name: '시간표만' })).not.toBeChecked();
       for (const words of ['시간표만', '지금 있는 건물', '정확한 위치']) {
         expect(levels(name).getByRole('radio', { name: words })).toBeDisabled();
       }

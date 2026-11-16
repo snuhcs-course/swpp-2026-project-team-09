@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -24,13 +25,12 @@ interface LevelTrackProps {
   // The level shown chosen, or none.
   level: FriendLevel | null;
   onChoose: (level: FriendLevel) => void;
-  // While the Master Switch is off: 시간표만 shown chosen, the off look, and no press. `level` is kept for later.
+  // While the Master Switch is off: `level` stays checked, the track dimmed, and no press.
   masterOff?: boolean;
 }
 
 // The three levels as cells of one width in a track, whatever the length of their words.
 export function LevelTrack({ label, level, onChoose, masterOff = false }: LevelTrackProps): ReactElement {
-  const shown = masterOff ? 'timetable' : level;
   return (
     <View
       accessibilityLabel={label}
@@ -39,7 +39,7 @@ export function LevelTrack({ label, level, onChoose, masterOff = false }: LevelT
       style={[styles.track, masterOff && styles.trackOff]}
     >
       {LEVELS.map(({ level: each, words }) => {
-        const chosen = each === shown;
+        const chosen = each === level;
         return (
           <Pressable
             accessibilityLabel={words}
