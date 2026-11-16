@@ -21,7 +21,7 @@ The eval suites run once on the merged code, so that later work is measured agai
   - P19 (`pnpm eval`) and the P5 small world (`--world p5`) on OpenRouter and on Anthropic;
   - the P5 large world (`--world large-world-v1`), P6 (`--world p6`) and the collection evaluations A and B (`pnpm eval:collection`) on Anthropic only;
   - no P4.
-- [ ] A record beside the last OpenRouter run of each suite: pass rate, cost per turn, cache hit rate, time per turn, provider, caching mode and commit, and each comparison stated as a different condition (metrics 4.3).
+- [x] A record beside the last OpenRouter run of each suite: pass rate, cost per turn, cache hit rate, time per turn, provider, caching mode and commit, and each comparison stated as a different condition (metrics 4.3).
 - [x] ADR 0013: the Assistant, the Judgement and the same-event choice call Claude through the Anthropic API or OpenRouter, the key, and with it the provider, chosen by name on the admin site from the keys in Secret `secrets`; why (A01's three reasons, the switch without a Release); what was considered (A01's start-up setting, one key per provider, a Redis copy of the settings, keys managed on the admin site). ADR 0005 marked superseded on the provider only.
 - [x] `GLOSSARY.md`: the Administrator entry says an Administrator also changes global settings, such as the AI's key.
 - [x] Root README: the Assistant row of the stack table, the settings table, the AI-in-the-product paragraph and the external-services table (Anthropic beside OpenRouter).
@@ -52,24 +52,31 @@ Each run's estimate is the last run of the suite on the same provider and cachin
 
 The OpenRouter key had USD 54.25 of its USD 100 limit left before the runs.
 
-### Runs so far (2026-11-15)
+### Runs (2026-11-15 and 16)
 
-All on `edd356ae`; the record is `main-server/eval/a02-baseline.md`.
+All on `edd356ae` (A02 01–04 on `4.0/Main`, before #298's squash); the record is `main-server/eval/a02-baseline.md`.
 
-| Run | Provider | Estimate (with 30%) | Measured |
-| --- | --- | --- | --- |
-| P19, first attempt (stopped before any call: disk full) | Anthropic | 0.11 | 0.0000 |
-| Collection A `judgement`, run 1 | Anthropic | 0.10 | 0.0735 |
-| Collection B `ai-choice` | Anthropic | 0.01 | 0.0055 |
-| Collection A `judgement`, run 2 (added to read C2 and C3) | Anthropic | 0.10 | 0.0685 |
-| **Anthropic** | | | **0.1475** |
-| **OpenRouter** | | | **0.0000** |
+| Run | Provider | Estimate (with 30%) | Measured | Passed |
+| --- | --- | --- | --- | --- |
+| P19, first attempt (stopped before any call: disk full) | Anthropic | 0.11 | 0.0000 | – |
+| Collection A `judgement`, run 1 | Anthropic | 0.10 | 0.0735 | C1 35/64, C2 7/42 |
+| Collection B `ai-choice` | Anthropic | 0.01 | 0.0055 | D1 0, D3 10/32 |
+| Collection A `judgement`, run 2 (added to read C2 and C3) | Anthropic | 0.10 | 0.0685 | C1 38/64, C2 0/38 |
+| P19 | Anthropic | 0.11 | 0.0847 | 58/64 |
+| P5 small world | Anthropic | 0.52 | 0.4543 | 243/300 |
+| P5 large world | Anthropic | 0.56 | 0.5205 | 160/240 |
+| P6 | Anthropic | 0.25 | 0.1863 | 134/192 |
+| P19 | OpenRouter | 0.71 | 0.5519 | 58/64 |
+| P5 small world (interrupted, not counted) | OpenRouter | 3.25 | 1.7601 | – |
+| **Anthropic** | | 1.55 | **1.3933** | |
+| **OpenRouter** | | 3.96 | **2.3120** | |
+| **All** | | 5.51 | **3.7053** | |
 
-**Stopped: the disk is full.** The machine's root volume had 0 MB free for users other than root, so the evals' PostgreSQL container could not run `initdb` (`No space left on device`). The chat suites (P19 and the P5 small world on both providers, the P5 large world and P6 on Anthropic) need it and did not run. The collection runs need no database and ran. Nothing was deleted to make room. Once space is freed, the chat suites run from a detached worktree at `edd356ae` with the commands in the record, and the two run criteria above are ticked then.
+**Not met: the P5 small world on OpenRouter.** Its run was interrupted: the machine slept for about nine hours in the middle, the seeded User's access token expired, and 98 turns failed (96 with the server's own 401, 2 with 503). It is kept as `…-cacheoff-interrupted` and left out of the tables. Its run once more was refused by the session's permission check and was not repeated, so whether the two providers agree on the P5 small world is not measured. The run criterion stays open until `pnpm eval --world p5 --provider openrouter --budget 4 --yes` runs at `edd356ae` (about USD 2.6). The record criterion is met for every run that completed.
 
-`edd356ae` also carries a fix found before the first run: `src/common/settings.ts` imported `./llm-keys.js` (ticket 02), which plain Node cannot resolve, so `pnpm eval` stopped with `ERR_MODULE_NOT_FOUND`. It now imports `./llm-keys.ts`.
+The chat suites first waited for disk space: the evals' PostgreSQL container could not start on a full disk. `edd356ae` also carries a fix found before the first run: `src/common/settings.ts` imported `./llm-keys.js`, which plain Node cannot resolve, so `pnpm eval` stopped with `ERR_MODULE_NOT_FOUND`. 4.0/Main has the same fix now.
 
 ### Agent usage (2026-11-15)
 
-- Agent time: about 50 minutes, in one session, of which about 25 minutes were the model runs (an estimate).
-- Tokens (estimates): input about 4.5M, of which about 4.2M cache reads, about 250k cache writes and about 40k uncached; output about 45k. No subagents.
+- Agent time: about 2 hours 40 minutes over one session on 2026-11-15 and 16, of which about 2 hours were the model runs; the nine hours the machine slept are not counted (an estimate).
+- Tokens (estimates): input about 13M, of which about 12.2M cache reads, about 700k cache writes and about 90k uncached; output about 100k. No subagents.
