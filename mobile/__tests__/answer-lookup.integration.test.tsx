@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { apiClient } from '@/api/client';
@@ -139,10 +140,10 @@ describe('a menu (q8)', () => {
   });
 });
 
-// Partitions: a Lookup whose only action is not drawn yet, a person's chip, and "닫기". Expected values: the copy of
-// board q6.
+// Partitions: a Lookup whose only action is `meet` (ticket 24), a person's chip, and "닫기". Expected values: the copy
+// of board q6.
 describe('where a Friend is (q6)', () => {
-  it('shows 민수\'s chip with no ✕, the lines, and "닫기" alone, and draws his face', async () => {
+  it('shows 민수\'s chip with no ✕, the lines, and "만나고 싶다" beside "닫기", and draws his face', async () => {
     await ask('민수 어디야?');
 
     // The chip, and the strong word of the first line.
@@ -151,7 +152,8 @@ describe('where a Friend is (q6)', () => {
     expect(card().getByText('민수는 지금 302동이에요')).toBeVisible();
     expect(card().getByText('12:15까지 수업이에요')).toBeVisible();
     expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
-    expect(card().queryByRole('button', { name: '만나고 싶다' })).toBeNull();
+    expect(card().getByRole('button', { name: '만나고 싶다' })).toBeVisible();
+    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
     expect(mapThings()).toContain('민수 · 지금 302동');
   });
 
