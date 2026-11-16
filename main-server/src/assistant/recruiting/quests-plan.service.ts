@@ -128,7 +128,7 @@ type PlaceIdOf = (place: SubQuestPlaceDto) => string | null;
 // The steps with each Place read one way: `attending` for the attending step, `written` for any other.
 function stepsReadAs(quest: StoredQuest, attending: PlaceIdOf, written: PlaceIdOf): QuestStep[] {
   return subQuestContentsOf(quest).map(({ startsAt, endsAt, place, cancelled }, index) => {
-    const read = quest.subQuests[index]?.attending === true ? attending : written;
+    const read = quest.subQuests[index]?.attending ? attending : written;
     return {
       start: dateOf(startsAt),
       end: dateOf(endsAt),
