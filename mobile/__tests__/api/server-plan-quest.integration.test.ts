@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -67,10 +68,10 @@ describe('a Plan made into a Quest by the main server', () => {
   });
 });
 
-describe('the better Plan after a decline, by the main server', () => {
-  const QUEST_ID = CHANGED_PLAN_QUEST.id;
-  const READ = `GET /plans/${QUEST_ID}/better`;
+const QUEST_ID = CHANGED_PLAN_QUEST.id;
+const READ = `GET /plans/${QUEST_ID}/better`;
 
+describe('the better Plan after a decline, by the main server', () => {
   it('asks with where the phone is, and gives the reply', async () => {
     const server = await askMainServer({ signedIn: true });
     server.on(READ, { status: 200, body: BETTER_PLAN });
@@ -111,5 +112,24 @@ describe('the better Plan after a decline, by the main server', () => {
 
     await expect(apiClient.changePlanQuest(QUEST_ID, making)).resolves.toEqual(CHANGED_PLAN_QUEST);
     expect(server.received(`PUT /plans/${QUEST_ID}`).map(({ body }) => body)).toEqual([making]);
+  });
+});
+
+describe('why the location is missing, with the better Plan', () => {
+  it('is said only when the app gives no location', async () => {
+    const server = await askMainServer({ signedIn: true });
+    server.on(READ, { status: 200, body: BETTER_PLAN });
+
+    await apiClient.getBetterPlan(QUEST_ID, null, 'permission');
+    await apiClient.getBetterPlan(QUEST_ID, null, 'off-campus');
+    await apiClient.getBetterPlan(QUEST_ID, null, null);
+    await apiClient.getBetterPlan(QUEST_ID, { latitude: 37.45016, longitude: 126.95259 }, 'off-campus');
+
+    expect(server.received(READ).map(({ query }) => query)).toEqual([
+      { locationMissing: 'permission' },
+      { locationMissing: 'off-campus' },
+      {},
+      { latitude: '37.45016', longitude: '126.95259' },
+    ]);
   });
 });

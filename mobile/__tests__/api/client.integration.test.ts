@@ -39,8 +39,13 @@ describe('the mock of Friends', () => {
       name: '김민준',
       department: '컴퓨터공학부',
       level: 'exact',
+      seen: 'exact',
       sharing: true,
       visible: true,
+      askedOff: false,
+      askedPlan: false,
+      friendId: 'KM4J8QZA',
+      friendsSince: '2026-10-03T14:05:00+09:00',
     });
     expect(friends.filter(({ visible }) => !visible).map(({ name }) => name)).toEqual(['서지우', '신예린']);
   });
@@ -59,7 +64,48 @@ describe('the mock of Friends', () => {
       expect(new Date(measuredAt).toISOString()).toBe(measuredAt);
     }
   });
+});
 
+async function seenOf(id: string): Promise<string | undefined> {
+  return (await answered(mockClient.listFriends())).find((friend) => friend.id === id)?.seen;
+}
+
+async function levelOf(id: string): Promise<string | undefined> {
+  return (await answered(mockClient.listPositions())).find(({ userId }) => userId === id)?.level;
+}
+
+describe('the mock of what the User and a Friend see of each other', () => {
+  it("gives the two with their location off the Timetable, and every other Friend the User's end", async () => {
+    const friends = await answered(mockClient.listFriends());
+
+    expect(friends.filter(({ seen }) => seen === 'timetable').map(({ name }) => name)).toEqual(['서지우', '신예린']);
+    expect(friends.filter(({ visible }) => visible).every(({ seen, level }) => seen === level)).toBe(true);
+  });
+
+  it("follows the User's end down and up, and never above the Friend's", async () => {
+    await answered(mockClient.setFriendLevel('f1', 'building'));
+    expect(await seenOf('f1')).toBe('building');
+    await answered(mockClient.setFriendLevel('f1', 'exact'));
+    expect(await seenOf('f1')).toBe('exact');
+    await answered(mockClient.setFriendLevel('f11', 'building'));
+    expect(await seenOf('f11')).toBe('timetable');
+  });
+});
+
+// Partitions: a Friend seen at the exact level, the same Friend after the User lowers them to the building, and the
+// Party member who is no Friend. Expected values: GET /positions' `level`, the level the two see each other at, and
+// none on a position that is no Friend's (P02 ticket 20, the mock's positions).
+describe("the mock's level on a position", () => {
+  it("writes on a Friend's position the level the two see each other at, as GET /positions does", async () => {
+    expect(await levelOf('f1')).toBe('exact');
+    expect(await levelOf('pm1')).toBeUndefined();
+
+    await answered(mockClient.setFriendLevel('f1', 'building'));
+    expect(await levelOf('f1')).toBe('building');
+  });
+});
+
+describe('the mock of Friend statuses', () => {
   it("gives every Friend's status, which no answer of the main server holds", async () => {
     const statuses = await answered(mockClient.listFriendStatuses());
 

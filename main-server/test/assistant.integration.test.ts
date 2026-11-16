@@ -12,7 +12,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { ask, postAssistantMessages } from './assistant.js';
+import { ask, NOTHING_SHOWN, postAssistantMessages } from './assistant.js';
 import { daysOf, menusMessage, restaurant } from './menus.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
@@ -55,7 +55,7 @@ describe('The chat Assistant', () => {
     const response = await postAssistantMessages(app, accessToken, ask('안녕'));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ text, mapButtons: [], cards: [], proposal: null, answer: null, lookup: null });
+    expect(response.body).toEqual({ text, ...NOTHING_SHOWN });
   });
 
   it("gives the model the conversation, the User's new message last", async () => {
@@ -131,6 +131,7 @@ describe('getMenus', () => {
       proposal: null,
       answer: null,
       lookup: null,
+      refusal: null,
     });
     expect(model.toolResults()).toEqual([{ result: 'found', date, restaurants: [studentCentre] }]);
   });
@@ -211,6 +212,7 @@ describe('showOnMap', () => {
       proposal: null,
       answer: null,
       lookup: null,
+      refusal: null,
     });
     expect(model.toolResults()).toEqual([{ result: 'shown', layer: 'dining' }]);
   });
@@ -240,6 +242,7 @@ describe('showOnMap', () => {
       proposal: null,
       answer: null,
       lookup: null,
+      refusal: null,
     });
     expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
   });

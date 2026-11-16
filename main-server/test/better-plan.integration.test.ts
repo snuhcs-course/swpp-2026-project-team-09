@@ -4,10 +4,13 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
 import { z } from 'zod';
+import { type AnswerLine } from '../src/assistant/dto/answer.dto.js';
+import { type BetterPlanDto } from '../src/plans/dto/better-plan.dto.js';
 import { type QuestDto } from '../src/quests/dto/quest.dto.js';
 import { BetterPlanStage, betterSchema, inputOf, instantOn, steps, time, toldUsers } from './better-plan.js';
 import { type Named } from './meal-plan.js';
@@ -56,6 +59,44 @@ describe('After 지은 declines (the worked example)', () => {
       togetherMinutes: 28,
     });
     expect(input).toEqual(inputOf(date, [stage.asker.id, minsu.id]));
+  });
+});
+
+const betterOf = (body: unknown): BetterPlanDto['better'] => z.custom<BetterPlanDto>().parse(body).better;
+
+const linesOf = (lines: AnswerLine[] = []): string[] => lines.map((line) => line.map(({ text }) => text).join(''));
+
+describe('After 지은 declines a Quest made without the location permission (board n13)', () => {
+  const date = '2088-12-14';
+  let questId: string;
+
+  beforeAll(async () => {
+    ({ questId } = await stage.declinedWithoutLocation(date));
+  });
+
+  it('plans from the building of the Class that ended, as the making did, when the reason comes along', async () => {
+    const response = await stage.getBetter(stage.asker, questId, { locationMissing: 'permission' });
+
+    expect(response.status).toBe(200);
+    const better = betterOf(response.body);
+    expect(better?.id).toBe('301동식당');
+    expect(better?.parts[0]).toMatchObject({ origin: { basis: 'timetable', place: { label: '301동' } } });
+    expect(linesOf(better?.lines)).toEqual(['위치를 몰라 직전 수업의', '301동에서 출발로 잡았어요']);
+  });
+
+  it('knows no origin of the Leader without the reason, and plans where 민수 is', async () => {
+    const response = await stage.getBetter(stage.asker, questId);
+
+    expect(response.status).toBe(200);
+    const better = betterOf(response.body);
+    expect(better?.id).toBe('302동식당');
+    expect(better?.parts[0]).toMatchObject({ origin: null, walkMinutes: null });
+  });
+
+  it('refuses another reason with 400', async () => {
+    const response = await stage.getBetter(stage.asker, questId, { locationMissing: 'airplane-mode' });
+
+    expect(response.status).toBe(400);
   });
 });
 

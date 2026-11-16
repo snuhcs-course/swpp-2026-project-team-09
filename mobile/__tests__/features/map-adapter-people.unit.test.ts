@@ -3,6 +3,7 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: a Friend and a Party member, recent, old (2 minutes) and too old (10 minutes); a member who is a
@@ -24,7 +25,7 @@ import {
   SEO_YEON,
   sources,
 } from '../support/map-sources';
-import { cardId, friendIdOf, toCards } from '@/features/map/adapter';
+import { type CardView, cardId, friendIdOf, toCards } from '@/features/map/adapter';
 
 describe('toCards of Friends', () => {
   it('a Friend with a recent position → the Avatar, the status and the way, and 파티 만들기', () => {
@@ -96,6 +97,40 @@ describe("toCards of the User's Party", () => {
     ['whose position is 10 minutes old', member(SEO_YEON, true), [measured('seo-yeon', 10 * MINUTE)]],
   ])('a member %s → no card', (_, one, positions) => {
     expect(toCards(sources({ myParty: myParty(null, [one]), positions }))).toEqual([]);
+  });
+});
+
+function dotted(card: CardView | undefined): boolean {
+  return card?.mark.type === 'person' && card.mark.exact === true;
+}
+
+// Partitions: a Friend at the exact level, at the building level, and with no level; at the exact level, dimmed; a
+// Party member who is no Friend at the exact level. Expected values: P02 ticket 20 and row 6's decision D10, the green
+// dot at the exact level only, none on a dimmed face, and a member's face unchanged.
+describe("toCards: the level a person's face says", () => {
+  it.each([
+    ['exact', true],
+    ['building', false],
+    [undefined, false],
+  ] as const)('a Friend at the level %s → the dot %s', (level, dot) => {
+    const positions = [{ ...measured('min-jun', MINUTE), ...(level === undefined ? {} : { level }) }];
+    const [card] = toCards(sources({ friends: [friendView(MIN_JUN)], positions }));
+    expect(card?.kind).toBe('friend');
+    expect(dotted(card)).toBe(dot);
+  });
+
+  it('a Friend at the exact level whose position is 3 minutes old → dimmed, without the dot', () => {
+    const positions = [{ ...measured('min-jun', 3 * MINUTE), level: 'exact' as const }];
+    const [card] = toCards(sources({ friends: [friendView(MIN_JUN, { detail: '' })], positions }));
+    expect(card).toMatchObject({ mark: { stale: true } });
+    expect(dotted(card)).toBe(false);
+  });
+
+  it('a member who is no Friend at the exact level → the face without the dot', () => {
+    const positions = [{ ...measured('seo-yeon', MINUTE), level: 'exact' as const }];
+    const [card] = toCards(sources({ myParty: myParty(null, [member(SEO_YEON, true)]), positions }));
+    expect(card?.kind).toBe('party-member');
+    expect(dotted(card)).toBe(false);
   });
 });
 

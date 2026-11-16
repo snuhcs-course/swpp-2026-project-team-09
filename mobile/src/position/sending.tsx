@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -92,17 +93,21 @@ export interface Sending {
   // The last position the main server answered was off the Campus Boundary, so the User is not shared. It holds until
   // an upload is kept again.
   offCampus: boolean;
+  // The same for a position inside one of the User's Private Zones.
+  privateZone: boolean;
   // Stops the sending for good, before a sign-out.
   stop: () => void;
 }
 
 const SendingContext = createContext<Sending | null>(null);
 
+type NotKept = Pick<Sending, 'offCampus' | 'privateZone'>;
+
 // The uploads, and what the main server last answered. A refusal because the switch is off turns the switch off and
 // fetches the Lobby again; any other refusal, and no answer, drops that position.
-function useUploader(sending: boolean): { uploader: Uploader; offCampus: boolean } {
+function useUploader(sending: boolean): { uploader: Uploader; notKept: NotKept } {
   const queryClient = useQueryClient();
-  const [offCampus, setOffCampus] = useState(false);
+  const [notKept, setNotKept] = useState<NotKept>({ offCampus: false, privateZone: false });
   // What an answer arriving after the sending stopped leaves alone.
   const live = useRef(sending);
   useEffect(() => {
@@ -113,7 +118,8 @@ function useUploader(sending: boolean): { uploader: Uploader; offCampus: boolean
       try {
         const kept = await apiClient.uploadPosition(upload);
         if (live.current) {
-          setOffCampus(kept.offCampus);
+          const now = { offCampus: kept.offCampus, privateZone: kept.privateZone === true };
+          setNotKept((last) => (last.offCampus === now.offCampus && last.privateZone === now.privateZone ? last : now));
         }
       } catch (error) {
         if (live.current && isRefusal(error, 409, 'MASTER_SWITCH_OFF')) {
@@ -123,7 +129,7 @@ function useUploader(sending: boolean): { uploader: Uploader; offCampus: boolean
       }
     }),
   );
-  return { uploader, offCampus };
+  return { uploader, notKept };
 }
 
 // Sends the User's position to the main server while the Master Switch is on, the permission is granted and the app
@@ -134,7 +140,7 @@ export function PositionSending({ children }: { children: ReactNode }): ReactEle
   const front = useInFront();
   const [stopped, setStopped] = useState(false);
   const sending = switchOn && permission === 'granted' && front && !stopped;
-  const { uploader, offCampus } = useUploader(sending);
+  const { uploader, notKept } = useUploader(sending);
   useEffect(() => {
     if (sending) {
       uploader.start();
@@ -149,13 +155,13 @@ export function PositionSending({ children }: { children: ReactNode }): ReactEle
   }, [sending, position, accuracy, measuredAt, uploader]);
   const value = useMemo(
     (): Sending => ({
-      offCampus,
+      ...notKept,
       stop: (): void => {
         uploader.stop();
         setStopped(true);
       },
     }),
-    [offCampus, uploader],
+    [notKept, uploader],
   );
   return <SendingContext value={value}>{children}</SendingContext>;
 }

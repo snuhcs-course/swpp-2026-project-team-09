@@ -2,10 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlacePoint, Plan, PlanInput } from './assistant-types';
-import type { LatLng, Quest } from './types';
+import type { LocationMissing } from './refusal-types';
+import type { FriendLevel, LatLng, Quest } from './types';
 
 // --- A Plan made into a Quest (POST /plans), as main-server `plans/dto/plan-quest.dto.ts` declares it ---
 
@@ -17,6 +20,15 @@ export interface MakePlanQuest {
   startAt: string;
   // Where the asker is now.
   location: LatLng | null;
+  // Why `location` is null, left out when the app does not know, since a main server before P02-13 refuses the key.
+  locationMissing?: LocationMissing;
+}
+
+// A Friend of the Plan whom the asker was not asked about yet, with the asker's end of the friendship.
+export interface AskLevel {
+  userId: string;
+  name: string;
+  level: FriendLevel;
 }
 
 export interface PlanQuest {
@@ -24,6 +36,8 @@ export interface PlanQuest {
   quest: Quest;
   // One for each Friend of the Plan, in the Plan's order.
   invitations: { id: string; userId: string }[];
+  // The Friends to ask how much they usually see, in the Plan's order; none once all were asked.
+  askLevels: AskLevel[];
 }
 
 // --- After a decline (GET /plans/:questId/better), as main-server `plans/dto/better-plan.dto.ts` declares it ---

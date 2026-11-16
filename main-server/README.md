@@ -136,8 +136,9 @@ lobby, which gives it what it needs to run, after a sign-in or a start with stor
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are required, and the
    profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false }`, the profile as
-   `GET /users/me/profile` gives it and whether the User's [Master Switch](#location-sharing) is on. Later features add
+4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false }`,
+   the profile as `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, and
+   whether the app has asked the User before they turned it off (see [Asking once](#asking-once)). Later features add
    what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
@@ -193,9 +194,15 @@ Request to it. The routes, all a User's:
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
 - `GET /friends` answers the User's Friends in the order of their names:
-  `[{ "id", "name", "department", "level", "sharing", "visible" }]`, where `id` is the Friend's User id, `level` the
-  User's own end of the friendship, `sharing` whether it is above `timetable`, and `visible` whether the User sees the
-  Friend's position or Place on the map now, never why not (see [Location Sharing](#location-sharing)).
+  `[{ "id", "name", "department", "friendId", "level", "seen", "sharing", "visible", "askedOff", "askedPlan", "friendsSince" }]`,
+  where `id` is the Friend's User id, `friendId` the Friend's Friend ID, `level` the User's own end of the friendship, `seen` what the two see of each
+  other by the friendship (the lower of the two ends, `timetable` while either Master Switch is off; a common Party
+  does not raise it, and nothing else of the Friend's own end is given), `sharing` whether `level` is above
+  `timetable`, `visible` whether the User sees the Friend's position or Place on the map now, never why not (see
+  [Location Sharing](#location-sharing)), `askedOff` and `askedPlan` whether the app has asked the User about the
+  Friend (see [Asking once](#asking-once)), and `friendsSince` when the friendship was accepted, in Korea with its
+  offset (`2026-11-15T14:03:27+09:00`). The Friend ID and the date tell apart two Friends of the same name on their
+  profile card.
 - `DELETE /friends/:userId` ends the friendship for both and answers 204.
 - `PUT /friends/:userId/level` with `{ "level": "timetable" }`, `"building"`, or `"exact"` sets what the User lets the
   Friend see of where they are, and answers 204. It changes the User's own end only.
@@ -229,6 +236,28 @@ when a friendship ends. It carries nothing, and the app fetches `GET /friends` a
 
 A friendship starts at `building` on both ends, so accepting a Friend Request starts Location Sharing between the two
 at the building. The table keeps each User's level at their own end, in `user_a_level` and `user_b_level`.
+
+### Asking once
+
+The app asks a User at two moments and asks each once; the server keeps when it first asked
+(`src/friends/friend-asks.service.ts`). Nothing about a question reaches the other User, and none of these routes sends
+a signal of its own.
+
+- **Before turning location off**: before a Friend's level is set to `timetable` from above it, the app asks about that
+  Friend, and before the Master Switch is turned off, about the Master Switch. Each answer, "취소" included, is recorded:
+  `POST /friends/asked` with `{ "userIds": ["..."], "moment": "off" }`, or `POST /users/me/master-switch/asked` with no
+  body. The Master Switch's "건물까지만" sends `PUT /users/me/friend-levels` with `{ "level": "building" }`, which
+  lowers every Friend above that level to it at the User's end, with the announcements a change of each level sends.
+- **After a first Plan with a Friend**: the reply of `POST /plans` gains
+  `"askLevels": [{ "userId", "name", "level" }]`, the Friends of the Plan whom the User was not asked about yet, in the
+  Plan's order, each with the User's end; none once all were asked. The app records an answer or a skip with
+  `POST /friends/asked` and `"moment": "plan"`, and sets a chosen level with `PUT /friends/:userId/level`. Accepting an
+  invitation never asks.
+
+Each answers 204, and a repeat keeps the first time. `POST /friends/asked` takes 1 to 8 User ids and is refused with
+`FRIEND_NOT_FOUND` when one is no Friend, recording nothing. Stored: `off_asked_at` and `plan_asked_at` at each end of a
+friendship (`user_a_off_asked_at`, …), and `users.master_off_asked_at`. `GET /friends` gives them as `askedOff` and
+`askedPlan`, and the lobby as `masterOffAsked`.
 
 An Administrator sets up demo accounts through `src/friends/admin-friends.controller.ts`, whose routes need an
 Administrator's access token (see [Administrators](#administrators)). Nothing else about a User is read or changed
@@ -334,11 +363,13 @@ numbers below are provisional until P17 has checked them on a phone.
   has expired look the same: no position, and `visible` false.
 - `POST /positions` with `{ "latitude": 37.4594, "longitude": 126.95199, "accuracy": 12, "measuredAt": "..." }`
   uploads a position, where `accuracy` is the radius in metres within which the phone places itself and `measuredAt`
-  the time the phone measured it, in ISO 8601 with an offset. It answers `200 { "offCampus": false }` when the position
-  was kept. A position outside the Campus Boundary is not kept and clears the one stored, and the answer is
-  `200 { "offCampus": true }`: the app tells the User that they are not shared because they are off campus. The
-  Boundary is checked in server code, without a database query. Each upload replaces the one before, so it takes no
-  `Idempotency-Key`.
+  the time the phone measured it, in ISO 8601 with an offset. It answers
+  `200 { "offCampus": false, "privateZone": false }` when the position was kept. A position outside the Campus Boundary
+  is not kept and clears the one stored, and the answer is `200 { "offCampus": true, "privateZone": false }`: the app
+  tells the User that they are not shared because they are off campus. The Boundary is checked in server code, without
+  a database query. A position inside one of the User's [Private Zones](#private-zones) is not kept either and clears
+  the one stored, and the answer is `200 { "offCampus": false, "privateZone": true }`. Each upload replaces the one
+  before, so it takes no `Idempotency-Key`.
 - `GET /positions` answers what the User may see now of each subject: `{ "userId", "latitude", "longitude",
 "measuredAt", "level": "exact" }` with the position, or `{ "userId", "placeId", "latitude", "longitude",
 "measuredAt", "level": "building" }` with the Place's id and point. The app fetches it when it connects, reconnects
@@ -358,7 +389,8 @@ What is stored: only each User's latest position, in Redis under `position:<user
 `{ "latitude", "longitude", "measuredAt", "placeId" }`, `placeId` being the Place it is in or null, which expires 10
 minutes after it was stored. Redis counts the 10
 minutes. No position is written to the database or to a log, and no history is kept. The position is cleared when the
-User turns the Master Switch off, uploads a position off campus, and when the User's session ends, by a sign-in on
+User turns the Master Switch off, uploads a position off campus or inside one of their Private Zones, makes a Private
+Zone round the position stored, and when the User's session ends, by a sign-in on
 another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
 
 What is pushed, through the [socket server](../socket-server/README.md#signals):
@@ -368,7 +400,8 @@ What is pushed, through the [socket server](../socket-server/README.md#signals):
   the position before. Delivery is lossy on purpose: only the newest position matters.
 - `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see something of the
   subject before a change and nothing after it: when either turns the Master Switch off or lowers the friendship to
-  `timetable`, when the friendship ends, when the subject leaves the Campus Boundary, or every Place for a viewer at
+  `timetable`, when the friendship ends, when the subject leaves the Campus Boundary or enters one of their Private
+  Zones, or every Place for a viewer at
   `building`, and when the subject's session ends.
 - A viewer who sees only the subject's Place after a change and saw the position, or nothing, before it gets
   `position` with the Place at once: when the friendship is lowered from `exact` to `building`, or raised from
@@ -385,6 +418,32 @@ place that decides who sees what of whom:
   or position the change touches: every sight it can alter includes that User, so a new cause, such as leaving a
   Party, only wraps its change in it. A change that touches several Users at once, as the end of a Party does, passes
   them all as a list, and each sight is announced once.
+
+### Private Zones
+
+A User draws round an area of the campus, and inside it their position is not kept: Friends see them as off campus,
+at the Timetable only, with no reason given. The User's own map and Assistant are not lowered, since the phone sends
+its own position with each request. Each zone (`private_zones`) is one closed outline, a ring of points left open, and
+only its owner reads it; no Assistant tool does. A User keeps at most five.
+
+- `GET /users/me/private-zones` answers `{ "zones": [{ "id", "label", "outline", "createdAt" }] }`, the oldest first.
+- `POST /users/me/private-zones` with `{ "outline": [{ "latitude", "longitude" }, ...] }` answers 201 with the zone.
+  A last point that repeats the first is dropped. The server names the zone after the Place nearest the middle of the
+  outline's bounding box, "301동 근처", or "그린 구역" with no Place within 150 m. A zone round the position stored
+  clears it at once.
+- `DELETE /users/me/private-zones/:id` answers 204, and 404 `PRIVATE_ZONE_NOT_FOUND` for a zone that is not the
+  User's. The User shows again from their next upload outside every zone.
+
+A position is inside a zone when the outline encloses it by the nonzero winding rule, SVG's default fill, so that a
+loop that crosses itself hides everything the app shows filled, or when it lies within 10 m of the outline. Each upload
+reads the User's zones once by an indexed query, without a cache (`src/location-sharing/private-zones.service.ts`).
+
+| Refusal                                                                          | Status | `code`                    |
+| -------------------------------------------------------------------------------- | ------ | ------------------------- |
+| Not `{ outline }`, or fewer than 3 or more than 200 points                       | 400    | `PRIVATE_ZONE_INVALID`    |
+| A point more than 300 m outside the Campus Boundary, or none inside it           | 400    | `PRIVATE_ZONE_OFF_CAMPUS` |
+| An outline that fits in a 17 m square: both sides of its bounding box under 17 m | 400    | `PRIVATE_ZONE_TOO_SMALL`  |
+| Five zones already                                                               | 409    | `PRIVATE_ZONES_FULL`      |
 
 ## Administrators
 
@@ -436,6 +495,58 @@ export class AdminEventsController {
 - In a test, `signInAsAdministrator(app)` from `test/sign-in.ts` signs in as `admin@example.com`, the initial
   Administrator of the test settings, and `signInAsNewAdministrator(app)` registers a new one and signs in as them. The
   test files share one database, so sign out or remove only a new one.
+
+## Global settings
+
+Global settings are the settings an Administrator changes at run time, for the whole service, without a Release.
+They are separate from the env settings in `src/common/settings.ts`, which stay as they are and are read at start.
+
+- Each one is registered in code, in `registeredSettings()` in `src/global-settings/registered-settings.ts`, with a
+  name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values and a check of
+  its own, and a `label` that names a value on the Settings page. One is registered: `llm.key`, the name of the AI's
+  key ([Assistant](#assistant)).
+- The table `settings` holds a row only for a setting that was saved. A setting with no row has its default. The table
+  `setting_changes` keeps every save: the old and the new value, the Administrator and the time. The one row of
+  `settings_revision` counts the saves.
+- A save checks the name against the registry and the value against its type and allowed values, and writes the
+  setting, its history row and the revision in one transaction. A setting's own `check`, when it has one, refuses a
+  save with its reason, whoever saves.
+- Each pod loads every row at start and does not start when it cannot. Every minute at second 0 it reads the revision
+  and reloads the rows when it changed, so a change applies on every pod at the next minute, the saving pod included.
+  A failed check keeps the last copy and logs. A read of a setting makes no query.
+- A row whose value the registry no longer takes, for example a value that is no longer allowed, reads as the default
+  and logs a warning. A row of a name no longer registered is ignored.
+
+The admin site's Settings page changes them through these routes, guarded like every `/admin` route. Any
+Administrator may change any setting.
+
+- `GET /admin/settings` lists every registered setting in the registry's order, each with `name`, `type`,
+  `description`, `default`, `value`, `allowed` and `lastChange`. `value` is the one in effect on the pod that answers;
+  `allowed` is null when any value of the type is allowed, or each allowed value as `{ value, label }`; `lastChange`
+  is null, or the latest save as `{ newValue, appliesAt }`. `llm.key` labels each key's name with its provider, such
+  as `default (OpenRouter)`, and never gives a key's value.
+- `PUT /admin/settings/:name` with `{ "value": "..." }`, the value as text, saves it and answers `200 { appliesAt }`,
+  the next minute. An unregistered name, a value of the wrong type or not allowed, or one the setting's check refuses,
+  such as a key name the server has no key for, gets 400 with the reason as `message`, and nothing is saved.
+- `GET /admin/settings/history` lists the latest 100 saves, newest first, each with `name`, `oldValue`, `newValue`,
+  `administratorEmail`, `changedAt` and `appliesAt`.
+
+To register a setting, add it with `defineSetting()` from `src/global-settings/registry.ts`, and read it with
+`GlobalSettings.get(THE_SETTING)`, which answers a value of its type:
+
+```ts
+export const ROUND_MINUTES = defineSetting({
+  name: 'rounds.minutes',
+  type: 'INTEGER',
+  description: 'How long a round lasts.',
+  default: 10,
+});
+```
+
+`registeredSettings()` takes what the server holds at start, such as the AI's keys (`AI_KEYS`, built once from the
+checked settings in `src/common/ai-keys.module.ts`), and `GlobalSettingsModule` provides the registry from it, so a
+default or allowed values known only at start come from there. A server whose registry gives a default that is not allowed, or one name
+twice, does not start.
 
 ## Global Events
 
@@ -714,7 +825,7 @@ posts of one event on two pods the second sees the first.
   A session's `globalEventId` in a Judgement is the event it was published as or attached to, or its Draft while held.
 
 - **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
-  refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`). `off` calls no model, sends nothing out and asks
+  refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`). `off` calls no model, sends nothing out and asks
   nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
   with candidates the refusing rules left, whether the rules read them or a Judgement's session is compared, it makes one call,
   outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
@@ -746,7 +857,8 @@ queue/:sessionId/publish` publishes the Draft by an Administrator's route, or an
 left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
 session the rules did not read, one post at a time, after the posts that need no model. `off` calls no model, sends no post
 out and leaves the rules' publication alone; Drafts stored meanwhile are not judged when it is turned on. With `on`, the
-server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
+server refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`. Each Judgement reads `llm.key` once, at
+its start ([Assistant](#assistant)); the AI's choice reads it for each call.
 
 - **What leaves the server:** the post's title and text and the Source's name, with e-mail addresses and phone numbers
   starting with 0 masked (`judgement-post.ts`), and today's date, by which the model chooses the year of a date written
@@ -1636,7 +1748,8 @@ for today and the six days after, and posts them to `/menus/collected` (see
 - `text` is the line as the page wrote it, prices and markers such as `(#)` (no meat) included. The worker sets the
   rest only when it is sure, and leaves it `null` otherwise:
   - `kind`: `heading` for a corner or section, `dish`, or `note` for hours, notices and closures such as
-    `개천절 휴무`. There is no operating hours field: hours are note lines of the meal.
+    `개천절 휴무`. Hours stay note lines of the meal here; the hours read from them are kept apart
+    ([Restaurant hours](#restaurant-hours)) and are not served by this route.
   - `name`: a dish's text without its price, when the line ends with that price.
   - `price`: in won, when the line gives exactly one price. `9,900원 / 12,400원`, or a price with a typo, stays in
     `text` alone.
@@ -1656,6 +1769,31 @@ keeps getting the last menus collected.
 
 The worker server's README says how each line is read and how to run a Collection by hand. What the collectors sent
 on the real pages is recorded in `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
+
+### Restaurant hours
+
+A message to `/menus/collected` also carries each restaurant's `hours`, which the worker read from the one hours line
+of a meal's cell (`※ 운영시간 : 11:00~14:30`; the worker server's README lists the forms it reads):
+
+```json
+{ "meal": "lunch", "opensAt": "11:00", "closesAt": "14:30", "line": "※ 운영시간 : 11:00~14:30" }
+```
+
+`RestaurantHours` (`src/menus/restaurant-hours.ts`) keeps them in `restaurant_hours`, one row for each Source,
+restaurant name, meal and kind of day (`weekday`, `saturday` or `sunday`, from the day's date), with `opensAt` and
+`closesAt` as times of day in Asia/Seoul, the line they were read from, and `readAt`, the time of the Collection that
+read them. The line stays a menu line as well.
+
+- Hours rarely change, so a Collection writes a row only when it reads other times than the kept ones, or none were
+  kept. A day whose cell has no hours line, such as a closure (`개천절 휴무`) or a day not yet filled in, leaves them.
+  When the days of one message read different times for one kind of day, the earliest day's are kept.
+- The pages give no hours for a public holiday, and the server keeps no calendar of holidays, so a holiday is read by
+  its day of the week. Whether a Restaurant serves on that day is in the day's cell
+  ([ADR 0011](../docs/adr/0011-a-restaurant-is-open-when-a-meal-cell-has-a-line-that-is-not-a-note.md)).
+- `hoursOf(restaurant, meal, date)` answers `{ opensAt, closesAt }` for a restaurant's name as `GET /menus` gives it, a
+  meal and a calendar day in Asia/Seoul, or `null` when no hours were read for that kind of day. Nothing guesses hours
+  that were never read.
+- A message without `hours`, as from a worker that does not read them, keeps the hours as they are.
 
 ## Walking route
 
@@ -2105,14 +2243,31 @@ never the Assistant's tools, and the phone alone talks to the library: the serve
   is a 400 with the party's reason, as is a `friendIds` entry that is not the User's Friend. With `friendIds` it makes
   a **booking party**: the Closed Quest "관정 {space} 예약" the User leads, with one Sub Quest at Place 62-1 for the
   booking's time and a `QuestInvitation` for each Friend. With `questId` (a Quest the User holds) it makes no Quest
-  and asks its other Holders. Each companion gets a `room_consents` row.
-- `GET /library/room-requests` answers `{ asks, notices }`: the gathering requests that ask the User, for the consent
-  dialog, and the one-time notices, which `POST /library/room-notices/:id/seen` deletes.
-- `GET /library/room-requests/:id` is what the booker's card polls. `status` is `gathering`, `ready` (every current
-  Holder but the requester consented), `booked`, `cancelled`, `dissolved` (with `reason`) or `expired`.
+  and asks its other Holders. Each companion gets a `room_consents` row. A key that ends in `:wait`, the card of
+  `proposeStudyRoom` for a day after the booking window, **waits for the window**: a date after it is kept, up to 14
+  days from today, and every other check stays. The request gathers its invitations and consents as any other, and
+  the requester gets `room-window` for 09:00 in Korea on the day the window opens for its date (`windowOpening` in
+  `window-opening.ts`: the date minus the space's `bookingAheadDays`).
+- `GET /library/room-requests` answers `{ asks, notices }`: the gathering requests that ask the User and the User is
+  not out of, for the consent dialog, and the one-time notices, which `POST /library/room-notices/:id/seen` deletes.
+- `GET /library/room-requests/:id` is what the booker's card polls. `status` is `gathering`, `ready`, `booked`,
+  `cancelled`, `dissolved` (with `reason`) or `expired`. It is `ready` when every companion who is not out consented
+  and holds the Quest, and the booker with those companions are at least the room's minimum (`capacity.min` in the
+  catalogue) and at most its maximum; a `ready` request that falls below the minimum gathers again. `companions` is
+  `[{ userId, name, state }]` with `state` one of `asked`, `consented`, `declined` (out by an answer or a change) and
+  `unanswered` (out at the deadline), and `moreNeeded` is how many more people the minimum needs, 0 when it is met
+  and once the request is not `gathering` or `ready`. `consents` lists the same people with `consented`, `false` once
+  out.
 - `POST …/:id/consent` accepts the booking party's invitation as any invitation is accepted, then consents, for this
   request only. It needs the User's 학번 in 내 정보 (409 `STUDENT_NUMBER_MISSING`). `POST …/:id/decline` is 거절, and
-  철회 after consenting.
+  철회 after consenting: the User goes out of the request. A User who is out answers neither (404).
+- `POST …/:id/companions` with `{ friendId }` asks one more Friend, takes an `Idempotency-Key`, and answers the request
+  as `GET …/:id` does (201). It is the requester's only (else 403), only while `gathering` (else 409
+  `ROOM_REQUEST_STATUS`), and only for a request made with `friendIds` (else 409 `ROOM_REQUEST_OF_QUEST`: a Holder who
+  joins the Quest is asked). A User who is not the requester's Friend, a companion already asked and not out, and more
+  people than the room or a party holds are a 400 `ROOM_REQUEST_REFUSED` in the words of the request's making. The
+  Friend gets a `room_consents` row, or theirs is asked again when they went out before, and an invitation into the
+  booking party, whose capacity is raised to the people when they no longer fit.
 - `GET …/:id/companions` answers `[{ userId, registeredName, studentNumber }]` with `Cache-Control: no-store`, only to
   the requester (else 403) and only while `ready` (else 409), for the current Holders who consented, read when the
   reply is built. It is the only reply with a 학번 or a registered name.
@@ -2121,14 +2276,34 @@ never the Assistant's tools, and the phone alone talks to the library: the serve
 - `POST …/:id/cancelled`, with no body, is the requester's only while `booked`, and safe to repeat. A booking party
   made for the request is deleted with its Sub Quest, so it no longer blocks its members' Free Time.
 
+**A companion out.** A decline, a withdrawal after consenting, leaving the Quest or being removed from it, a declined
+or cancelled invitation, and an ended friendship between the requester and a companion each take that companion out
+of the request, which stays for the others. The companion keeps their `room_consents` row with `consented` false:
+`answeredAt` set for an answer or a change, and null for one who did not answer by the deadline. Out of a booking
+party they are no longer invited or a Holder, with the signals those changes send; an existing Quest keeps them. The
+requester gets the Notification `room-declined`.
+
+**The deadline.** For a `gathering` request whose start is on a later day in Korea than the day it was made, a
+companion still asked at 20:00 in Korea on the day before the start is out, as `unanswered`. A request made at or after
+that moment has none. The day it was made is its `createdAt`, by the Quests' `CLOCK`. The deadline is applied when any
+room request is read, before the read.
+
 **Keeping a request true to its Quest.** `RoomRequestSync` settles each gathering or ready request after a change to
-its Quest is stored: a companion leaving or removed, the requester leaving, the Quest deleted, a declined or cancelled
-invitation, and an ended friendship between the requester and a companion each dissolve it. A Holder who joins later
-is asked too, sending the request back to `gathering`, and people the room no longer holds dissolve it with the
-reason. A dissolved request's booking party is deleted, an existing Quest never, and everyone it asked gets the notice
+its Quest is stored, and takes out the companions the change concerns. The request is dissolved when the requester
+leaves the Quest, the Quest is deleted, or no companion is left who is not out. A Holder who joins later is asked too,
+sending the request back to `gathering`, and people the room no longer holds dissolve it with the reason. A dissolved
+request's booking party is deleted, an existing Quest never, and everyone it asked gets the notice
 "파티 구성원이 제안을 거절했습니다". A request still not booked at its start is `expired` when any room request is read
 next, and its booking party goes. Consents are deleted at `booked` and at every final status. Every change sends
 `room-requests-changed` to the Users it concerns.
+
+**Notifications.** The requester gets `room-declined` for each companion who goes out while the request stays, and
+`room-agreed` when the request becomes `ready`. A request that waits for the window keeps `room-window` for its
+requester when it is made; ending before the window opens (booked, dissolved, cancelled or expired) forgets it. When the booking is reported made, every Holder but a companion out of
+the request gets `room-ending` for the room's end minus 10 minutes; `cancelled` forgets it for every Holder. Each is
+kept once the change is stored, with the time of the Quests' `CLOCK` unless said, without the answer waiting for it; a
+failure is logged as a warning. The room in their words is `관정 {floor}층 {name}`, the catalogue's name without
+"그룹스터디룸 " before it and the rooms in brackets after it: "관정 4층 6인실".
 
 ## Assistant
 
@@ -2196,7 +2371,10 @@ its model through OpenRouter with the Vercel AI SDK
   `lookup`, `null` when there is none: an answer drawn on the map that has no Plan (`kind` `way`), with its condition
   chips, at most two lines, basis, map scene, time band or `null`, and the card's actions (`guide`, `remind`, `meet`).
   A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer. The full shape of each is
-  in `src/assistant/dto/answer.dto.ts`.
+  in `src/assistant/dto/answer.dto.ts`. An app that also sends `meet` is offered `planMeet` ("민수랑 만나고 싶어"),
+  whose answer is a meet's (`kind` `meet`, below); one that does not keeps the prompt and the tools it had. A busy
+  stretch of a Plan's time band carries a `label`: `302동 수업` for a Class with a Place, `수업` without one, and `일정`
+  for a Sub Quest.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -2255,26 +2433,78 @@ Proposal)`.
   - **What the User fixed.** `window.from` and `window.until` narrow the meal's window; a plan that starts later than
     `from` or ends earlier than `until` says what holds it: who arrives last or leaves first, and when, or the meal's
     own serving time. `placeId` plans only the open Restaurants at that Place, and the answer says `그곳에는 여는 식당이 없어요`
-    when none is. A person's constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
+    when none is. A fixed Place that does not fit is in `dropped` with each person's `parts`, and `noPlan.lines` say who
+    stays there shortest and why (`지은은 12:31에 도착해 13분만 먹어요` / `13:00 수업에 가려면 12:44엔 나서야 해요`), or,
+    when everyone could stay 15 minutes alone, who arrives last and who leaves first. Each person's part of a meal or a
+    meet carries `arriveAt`, the earliest they can be at the place, `null` when their position is unknown. A person's
+    constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
+  - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
+    earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
+    place where they
+    are together longest, from the latest arrival to the earliest leave-by, at least 15 minutes; at most five Plans. The
+    places are 학생회관, the buildings of `GET /study-spaces`, the Restaurants open that day, and the buildings each
+    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip, and a
+    fixed Place that does not fit is worded as a meal's (`12:45부터 14분만 있을 수 있어요`). `people` holds the asker and
+    at least one Friend.
   - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
     person is not the User, a person who is not the User's Friend, the same User twice, a day before today or more than
     a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown
     Place in a `from` or in `placeId`.
 
-- `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
-  `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
-  `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds
-  what one User spends, not what all of them do.
+- `POST /assistant/taps` with a User's access token, what the User pressed on the everyday map, a building
+  (`{ "kind": "place", "placeId" }`) or a Friend's face (`{ "kind": "friend", "userId" }`), and where the User is now
+  (`location`, as above):
+
+  ```json
+  { "tapped": { "kind": "place", "placeId": "…" }, "location": { "latitude": 37.45016, "longitude": 126.95259 } }
+  ```
+
+  answers `200` with a Lookup that carries a `card` (`title`, `subtitle`, `facts`, and `note`), worked out by
+  `src/assistant/lookup/place-lookup.ts` or `friend-lookup.ts`. The model is not called, and the User's daily messages
+  are not counted.
+
+  - **A building** (kind `place`): the walk there and when the User arrives, or `지금 여기 있어요` only when the outline
+    of the Place holds their location; how long they can stay before their next item today; each Restaurant there with
+    a menu for the meal now; the published events there today; and the Friends the User's map shows in it. Its actions
+    are `plan` buttons (`여기서 먹기`, `행사 보기`, `같이 갈 파티`), whose `input` goes to `POST /assistant/answers`, and the
+    way there unless the User is in it.
+  - **A Friend** (kind `friend`): the Friend Lookup with a card of their full name, what the User sees of them, and
+    their Timetable label, Place, and walk from the User, or at the Timetable only their Class and the next one. It is
+    read only through the Friend view, as `findFriend` is.
+  - **Refused with 400:** a body of another shape, and a `placeId` that is no Place. **Refused with 404
+    `FRIEND_NOT_FOUND`:** a `userId` who is not the User's Friend.
+
+- **The AI's key**, and with it the provider, is the global setting `llm.key` ([Global settings](#global-settings)),
+  which an Administrator changes on the admin site. It names one of the keys the server holds: `default` is
+  `OPENROUTER_API_KEY`, and `LLM_KEYS` holds the others by name. A key's prefix tells its provider: `sk-ant-` is
+  Anthropic and `sk-or-` OpenRouter; a key with neither is not offered, and the start-up log names it, never its value.
+  Each provider's model is a constant (`src/common/llm-keys.ts`): `claude-haiku-5-5` on Anthropic,
+  `anthropic/claude-haiku-5.5` on OpenRouter. With no row saved, `llm.key` is `default`, so the AI calls OpenRouter.
+- A model is built at start for each key. Each chat answer reads `llm.key` once, at its start, and uses that key's model
+  for every call of the answer, so a change at the minute's check never mixes two keys in one answer. A Judgement does
+  the same, and the same-event choice and the topics reading ([Interests](#interests)) read it for each call. Saving a name the server has no key for is refused (the
+  allowed values, and the setting's check for `default` without `OPENROUTER_API_KEY`); a saved name whose key a
+  later Release removed reads as `default` and logs a warning.
+- Without the key `llm.key` names, the server still starts, and the endpoint answers 503. `.env.example` says how to set
+  up a key. Give each key a credit or spend limit at its provider as well: the daily limit bounds what one User spends,
+  not what all of them do.
+- Each model call logs one line with the key's name, its provider and the outcome, such as
+  `Model call with key default on OpenRouter: answered, finish stop`, or `failed` with its cause: never a key's value or
+  what was sent.
 - **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
   call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
-  written in each call, reasoning included (4,000). A failed model call is not retried.
+  written in each call, reasoning included (4,000). A call that fails with 429 or 529 is sent once more, within the time,
+  unless the 429 says a spend limit is reached; no other failure is retried.
 
 The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
-- **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
-  OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
+- **The model port** (`ModelPort` in `model-port.ts`, over `adapter.ts`): the one place that talks to the model, with a
+  model for each key built by `MODEL_FACTORY`. The server's factory makes the Anthropic model (`anthropicModel`: a cache
+  breakpoint at the end of the system prompt, the chat's conversation cached automatically, effort `medium`, no sampling
+  parameters, as `MODEL_CACHE` says) or the OpenRouter one (`openRouterModel`); the tests give `startApp` the scripted
+  fake below for every key, or a `modelFactory` of their own.
 - **Tools** (`tools/`, `free-time/` for the 공강 tools, `gathering/` for `planMeal`, and `lookup/` for `findWay`): each is a zod schema of its
   input and a plain function calling this server's services, made with `defineTool` (`feature.ts`). It is given the
   signed-in User's id, the time of the request, and the request context. A tool answers only
@@ -2384,13 +2614,15 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       Restaurants. It can answer `needs` as `findFreeTimeEvents` does. A Friend's item without a Place only leaves out
       that side's travel.
     - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
-    - `planMeal(date, meal, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
+    - `planMeal(date, meal?, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
       `PLAN_RULES` that of the meal part of the 공강 rules, for an app that sends `answer` (`gathering/`). It plans the
       meal on the map: `MealPlanService` reads each person's day, the asker's location from the request context, and a
       Friend's position only as the asker's map shows it, computes the plans and words them, and the tool puts them in
-      the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
-      person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
-      or rooms.
+      the reply's `answer`. The model gives `meal` only when the User's words name it; otherwise the server takes it by
+      the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
+      and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
+      meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
+      never coordinates, course names, or rooms.
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
@@ -2406,7 +2638,15 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       reach in time or stay at for 30 minutes. `eventIds` are accepted only when `searchGlobalEvents` returned them in
       the message. It answers the model `planned` with each plan's title, place, arrival, stay, leave-by, and clash in
       words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` refuses any but a
-      meal's with 400 `PLAN_KIND`.
+      meal's, a meet's, or a new recruiting Quest's with 400 `PLAN_KIND`.
+    - `findStudyNearby(what)` and `STUDY_RULES` join for an app that sends both `answer` and `area` (`lookup/study-*`).
+      `StudyAreaService` reads the 공부공간 layer for the asker and keeps the spaces of the kind asked (`quiet`,
+      `group`, `pc`, `any`) whose building's Place lies in the request context's `viewport`. Of those the User may use
+      it picks the one with the longest stay: from when the User is ready (now, or the end of the item under way) and
+      where they set out from, the walk there, and the next item's start less the walk on to its Place. The Lookup
+      (kind `study`) fades the restricted rooms and, when 관정관 is outside the area, flags the area's edge towards it
+      (role `away`, with its `placeId`), where the phone adds its free seats. The model gets names, hours, and
+      minutes, never the area; without a `viewport` the tool answers `none`.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
@@ -2429,8 +2669,31 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     for, and `shown` adds `arrival` (`at`, the Place's name as `from`, `walkMinutes`) and `leaveBy` (when to leave
     for the next Class or Sub Quest with a Place that starts before the booking ends, or null, also when that time is
     not later than the arrival). A room, a named start or another day is checked as before, and any other app is asked
-    for the time. `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show
-    the other cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id
+    for the time. For the same app, words that fit several bookable seat spaces are not asked back: `findLibrarySpace`
+    answers `found` with only the first of them, in the catalogue's order with `7F-7A-zone2` first, its card's notes
+    say "맞는 곳이 N곳이라 첫 곳으로 채웠어요", and the phone's room chip lets the User choose another; several rooms
+    are still asked about. The card's space carries the
+    catalogue's `kind`, by which the phone groups the seat spaces of a floor.
+  - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers only: the
+    answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
+    with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one
+    named, a period of at most 7 days from today on, or the days a room can be booked now; each must be bookable or
+    waitable (at most 14 days ahead). The room is the smallest group study room size whose minimum and maximum hold the
+    people, the 4th floor before the 2nd (`library/study-room.ts`); fewer than its minimum or more than a party holds
+    are refused. The length is the one given, else 180 minutes. Each person's day is read as a Plan reads it (their
+    Classes and timed Sub Quests, `UserDayService`), with the walking minutes between each item's Place and Place
+    62-1, and `pickStudyTime` (`library/study-pick.ts`) picks, on each day and each half hour within the hours: nobody
+    with a stay under 30 minutes, the booker within 60 minutes of the start, the longest shortest stay, then the larger
+    total, then the earlier day and start. The best pick shows today's room book card with the Friends as companions
+    and a note for each person before the site's notes: when they arrive (`지은 15:19 도착`, from the item before
+    their stay; `<start>부터` when no item comes before it or it ends more than an hour before the start) and when they
+    leave early (`· 16:56에 먼저 나서요`). `shown` gives the model a summary of the day, the time and the room, each
+    person (`나` for the User, a Friend's name as `friend.name` text by others) with their arrival and stay, the best pick of each other day (`otherDays`) and the days with none (`noBookingOn`), and
+    never an item, a Place or a coordinate. No booking that leaves nobody out answers `none` with the days looked at.
+    A pick after the booking window has a card whose key ends in `:wait` and a first note of when the window opens, and
+    `shown` adds `windowOpens`: the room request it makes waits for the window (Group study room requests).
+  - `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
+    library cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id
     in the history, checked against its grammar. Library cards are attached only for a request with
     `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
     `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
@@ -2491,7 +2754,8 @@ User or the model receives, never the prompt's wording or a real model's prose.
 ### Benchmark
 
 `pnpm eval` puts the cases of `eval/cases/` to the real model through the real server code and records what the model
-did (P19). It calls OpenRouter with the team's key in `.env`, so it costs credit: it never runs in `pnpm test` or CI,
+did (P19). It calls the provider `--provider` names with the team's key in `.env` (`OPENROUTER_API_KEY`, or
+`ANTHROPIC_API_KEY` for `anthropic`, which the command's environment may give instead), never the key `llm.key` names, so it costs credit: it never runs in `pnpm test` or CI,
 which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`) on the integration tests'
 machinery: Docker, fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and the clock fixed at
 2026-10-21 (수) 14:05 in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User, with the daily
@@ -2505,8 +2769,10 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 
 | Flag                                                   | Left out                                                                          |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `--model <OpenRouter id>`                              | `ASSISTANT_MODEL` in `.env`                                                       |
-| `--temperature`, `--top-p`                             | the provider's default (the server passes none)                                   |
+| `--provider <openrouter \| anthropic>`                 | `openrouter`                                                                      |
+| `--cache <breakpoints \| auto \| off>`                 | `MODEL_CACHE` in `.env`, else `breakpoints`; OpenRouter's requests cache nothing  |
+| `--model <the provider's id>`                          | the provider's model in `src/common/llm-keys.ts`                                  |
+| `--temperature`, `--top-p`                             | the provider's default (the server passes none); refused on `anthropic`           |
 | `--max-steps`, `--timeout <ms>`, `--max-output-tokens` | its `ASSISTANT_*` setting in `.env`, else its default in `src/common/settings.ts` |
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
@@ -2515,7 +2781,7 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
-saved run and OpenRouter's listed prices, and asks before it starts. It then starts the Vitest project with the
+saved run and the provider's listed prices (Anthropic's table in `eval/cost.ts`, or OpenRouter's list), and asks before it starts. It then starts the Vitest project with the
 options as JSON in `EVAL_RUN`. The sampling settings are applied by the recorder's model wrapper, and the limits are
 the settings given to `startApp`. During the run the tokens the model reported are summed, and the run stops past the
 budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
@@ -2578,6 +2844,10 @@ and the action is read as if the words were right, so that a failure lands in th
 (`eval/p4/holdout.yaml`), which P11 does not tune on. Nothing else reaches those wordings, so `pnpm eval --world p4`
 still runs exactly the 40 cases. Its scorecard gives the pass rates and the layer rates, with what the run cost and its
 settings, and names no case, and `pnpm eval:compare` refuses its runs. `eval/p4/record.md` is the record of the suite's runs.
+
+`pnpm eval --world p4-answer` runs the cases of `eval/cases/` that name that world in the P4 world, its clock and its
+travel fixture, asked as the app asks with a context (`clientCapabilities: ['library', 'answer']`), so that the meal is
+planned on the map with `planMeal`. They are outside the suite's 40: `eval/cases/meal-clock.yaml` holds P01 ticket 21's.
 
 #### The P05 suite
 
@@ -2898,11 +3168,14 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
+├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's
+│                                    copy, checked every minute
 ├── parties/                         a feature: Parties, who sees, enters and leaves them, the Leader's controls and the switches
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
 │                                    the Shared Quests of its matches
-├── menus/                           a feature: the menus the worker collects, stored and served by day
+├── menus/                           a feature: the menus the worker collects, stored and served by day, and each
+│                                    Restaurant's hours
 ├── travel/                          Travel Time: the walking table's builder, and the provider that looks it up
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
@@ -2913,6 +3186,7 @@ src/
 ├── tutorial/                        a feature: the 새내기 튜토리얼's content and each User's progress
 ├── push/                            a feature: each Session's Expo push token, and the one sender of pushes
 ├── notifications/                   a feature: the Notifications the Assistant keeps for each User, and their list
+├── interests/                       a feature: watched interests, the topics step, and what matches them
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
@@ -3174,14 +3448,21 @@ call the service sends the signal `notice`, which carries nothing, to the User; 
 `cancel` that forgot nothing, sends none. `schedule` and `replace` refuse, by throwing, a card no address opens. The
 calls throw when the database fails too, so a caller that must not fail catches and logs.
 
-| Kind       | Told to                                       | When                                        | Title                 | Ahead               | Line                       | Card              | Rings |
-| ---------- | --------------------------------------------- | ------------------------------------------- | --------------------- | ------------------- | -------------------------- | ----------------- | ----- |
-| `accepted` | The Leader                                    | An invited User accepts                     | `<name>가 수락했어요` | None                | The Quest's title          | `party:<questId>` | No    |
-| `declined` | The Leader                                    | An invited User declines                    | `<name>이 못 온대요`  | None                | The Quest's title          | `party:<questId>` | No    |
-| `leave-by` | The Leader, and each invited User who accepts | A Plan becomes a party, or the User accepts | `지금 나서요`         | `<HH:MM> 나설 시각` | `<Place>까지 걸어서 <N>분` | `party:<questId>` | Yes   |
+| Kind            | Told to                                       | When                                                                      | Title                                                      | Ahead                          | Line                                                                                | Card                                         | Rings |
+| --------------- | --------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------- | ----- |
+| `accepted`      | The Leader                                    | An invited User accepts                                                   | `<name>가 수락했어요`                                      | None                           | The Quest's title                                                                   | `party:<questId>`                            | No    |
+| `declined`      | The Leader                                    | An invited User declines                                                  | `<name>이 못 온대요`                                       | None                           | The Quest's title                                                                   | `party:<questId>`                            | No    |
+| `leave-by`      | The Leader, and each invited User who accepts | A Plan becomes a party, or the User accepts                               | `지금 나서요`                                              | `<HH:MM> 나설 시각`            | `<Place>까지 걸어서 <N>분`                                                          | `party:<questId>`                            | Yes   |
+| `room-declined` | A room request's requester                    | A companion goes out and the request stays                                | `<name>이 못 온대요`                                       | None                           | `<room> · N명 더 필요해요`, or `<room> · 계획은 그대로예요` when the minimum is met | `party:<questId>`                            | Yes   |
+| `room-agreed`   | A room request's requester                    | The request becomes `ready`                                               | `모두 동의했어요`                                          | None                           | `<요일> <start>–<end> <room>`, such as `목 15:30–18:30 관정 4층 6인실`              | `party:<questId>`                            | Yes   |
+| `room-ending`   | Every Holder of a booked room's Quest         | 10 minutes before the room's end                                          | `10분 뒤 끝나요`                                           | `<end> 방 예약 끝`             | `<room> · <end>에 끝나요`                                                           | `party:<questId>`                            | Yes   |
+| `room-window`   | A room request's requester                    | 09:00 on the day the booking window opens for a request that waits for it | `예약 창이 열렸어요`                                       | `<M월 D일> 09:00 예약 창 열림` | `<요일> <start>–<end> 스터디`, such as `월 09:00–12:00 스터디`                      | `party:<questId>`                            | Yes   |
+| `interest-new`  | A User watching a match                       | The topics step reads a match                                             | `<title>이 떴어요`, or `<title> 모집이 떴어요` for a Quest | None                           | `<HH:MM> <Place>`                                                                   | `event:<globalEventId>` or `party:<questId>` | Yes   |
 
 A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
-`leave-by`, `<Place>까지 걸어서 <N>분이에요.` A kind that does not ring has no body.
+`leave-by`, `<Place>까지 걸어서 <N>분이에요.`; for a room request's kinds, the line as a sentence ("모두 동의했어요" adds
+"이제 예약할 수 있어요.", and `room-window` reads `<요일> <start>–<end> 스터디를 이제 예약할 수 있어요.`); and for an
+`interest-new`, `<HH:MM> <Place>이에요.` A kind that does not ring has no body.
 
 The name is the User's name as stored, with the subject particle that fits its last syllable (이 or 가). An invitation
 the Leader cancels tells nobody. `InvitationsService` tells the Leader after the invitation's change is stored and
@@ -3270,6 +3551,84 @@ phone shows `ahead` while `at` is after its own now.
 whom it is about, whether it rings and its push's body to `wordsOf()` in `src/notifications/notification-words.ts`,
 its kind to the kinds the list reads in `src/notifications/notifications.service.ts`, and its caller in the feature it
 belongs to.
+
+`interest-new` is kept by the topics step of [Interests](#interests), at the step's time, for each User with a watched
+interest that matches what the step has just read and that was kept before that time. A hashtag alone tells nothing.
+The title takes the subject particle as the other kinds do. The line leaves out the start or the Place when it is
+unknown, and is empty when both are. The body is then `<Place>이에요.`, `<HH:MM>에 시작해요.` or
+`맡겨 둔 관심에 맞아요.`; 이에요 is 예요 after a Place whose last syllable has no final consonant. It rings once, at the
+step's time.
+
+## Interests
+
+A User asks the Assistant to watch for a kind of event or recruiting party ("채용 관련 행사 뜨면 알려 줘"), and from
+then on what matches it is answered as a match and a new one is told as a Notification. `src/interests/` holds it.
+
+**What is kept.** A watched interest is one row of `watched_interests`: the User, the words as said (1 to 60
+characters, trimmed), the topics they were read as, and when it was kept. A User keeps at most 20. Words whose
+normalised form equals an interest the User already has keep nothing new and answer that interest.
+
+**Topics.** A topic is one Korean word, compared normalised: lowercased, without spaces, and without a leading `#`, so
+`#채용 `, `채 용` and `채용` are one topic, as `AI` and `ai` are. `TopicsReader` asks the model of the key `llm.key`
+names, read for each text ([Assistant](#assistant)), with the Assistant's time and output limits, for one to five topics of a text, giving it the
+topics already in use (those of the watched interests, events and Quests, at most 200, the most used first) so that
+the same meaning gets the same word: 채용박람회, 커리어 페어 and 기업 설명회 are all 채용. Without the key `llm.key`
+names, on a failed call, or on an answer of another shape, it gives none and never throws. An interest whose words get none
+is kept with its normalised words as its one topic.
+
+**The topics step.** `TopicsStep.run()` takes up to 10 published Global Events that have not ended and up to 10
+recruiting Quests (Open or Approval, on a Board, with a Sub Quest ahead) that were never read, or that have no topics,
+were tried fewer than 2 times, and were last tried longer ago than the topics call's time limit (`ASSISTANT_TIMEOUT_MS`)
+and a minute, so that no server asks about a text while another's call about it may still be running; a failed call is
+tried once more at a later step. For each it counts the try and its time (`topicsTries`, `topicsReadAt`) before it
+asks, and only while the count is unchanged and the text is still unread by that rule, so that two servers never ask
+for the same one. It then reads the topics of its title and description and stores them. The topics in use are read
+once a step, and each text's topics join that list, so that two texts of one step that mean the same get the same word.
+A Quest without a Sub Quest ahead is not loaded and no try is counted, so that it is read once a new Sub Quest makes it
+recruiting. An event or a Quest edited after its topics were stored keeps them: the step does not read it again. It
+never throws. `TopicsTimer` runs it every `TOPICS_TICK_SECONDS` seconds (0 to 3600, 60 by default; 0 never, as in the
+tests, which run the step themselves).
+
+**A match** is an event or a Quest whose topics share one with the User's interests: the profile's hashtags and the
+watched interests' topics. `watched` says whether a watched interest matched, not only a hashtag. Each new match of a
+watched interest is told as an `interest-new` Notification ([Notifications](#notifications)), except to a Holder of
+the Quest.
+
+**Routes**, each for the signed-in User:
+
+- `GET /interests` answers the watched interests, the newest first:
+
+  ```json
+  [
+    {
+      "id": "0b9f7c5e-2a4d-4e8b-9c1a-3f6e5d7a8b90",
+      "words": "채용 관련 행사",
+      "topics": ["채용"],
+      "createdAt": "2026-11-15T03:12:00.000Z"
+    }
+  ]
+  ```
+
+- `POST /interests` with `{ "words": "채용 관련 행사" }` keeps one and answers it, 201, in the shape of an item above.
+  It answers 400 for empty words or words over 60 characters, and 409 with the code `INTERESTS_FULL` for a 21st.
+- `DELETE /interests/:id` removes one and answers 204, or 404 with the code `INTEREST_NOT_FOUND` for another User's or
+  a missing one.
+- `GET /interests/matches` answers the matches among the published events that have not ended and the recruiting list:
+
+  ```json
+  {
+    "globalEvents": [{ "id": "6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b", "watched": true }],
+    "quests": [{ "id": "c7e17523-981f-4761-a03e-52519082d7b1", "watched": false }]
+  }
+  ```
+
+**The Assistant's tools**, only for an app that draws answers, with their rules in `INTEREST_RULES`
+(`src/assistant/interests/interest-tools.ts`): `watchInterest({ words })` keeps an interest and answers
+`{ result: 'watching', words, topics }`, or result `none` when 20 are kept; `unwatchInterest({ words })` removes each
+interest whose normalised words, or one of whose topics, equal the normalised words and answers
+`{ result: 'removed', words }` with the words removed, or result `none`. The rules call neither for a Friend or the
+shuttle, which `refuse` answers (`not-watched-friend`, `not-watched-shuttle`), nor for a free seat ("지켜봐 드리는 것은
+행사와 모집뿐이에요"), nor for words too vague to match, which are asked about.
 
 ## Requests from the worker server
 

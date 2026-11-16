@@ -9,12 +9,13 @@ import { type ReactElement, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';
 import { ChoiceGrid, choiceRowsWithin, color, type GridChoice, text } from '@/design-system';
-import { metresBetween } from '@/features/assistant/answer-marks';
-import { givenName } from '@/features/map/short-name';
+import { metresBetween } from '@/features/assistant/answer-drawing';
+import { profileLabel } from '@/features/friends/profile';
 
 interface FriendChoice {
   id: string;
   name: string;
+  department: string;
   // Null when the Friend's position is not known.
   position: LatLng | null;
   // How many minutes ago an old position was measured; null for a recent one and for none.
@@ -27,7 +28,11 @@ interface FriendChoicesProps {
   // The picked Restaurant of the Plan on screen, which the distances are measured to; null without a Plan.
   pick: LatLng | null;
   disabled: boolean;
+  // The Friend whose add is on its way, chosen here or on the map: their cell says so.
+  pending: string | null;
   onChoose: (userId: string) => void;
+  // Opens a Friend's profile from the mark at their cell's end; null for no mark.
+  onProfile: ((userId: string) => void) | null;
   // How high the card's Plan may stand before the card scrolls, null until it is known.
   room: number | null;
 }
@@ -52,7 +57,6 @@ function distanceWords(metres: number): string {
 
 interface Measured {
   friend: FriendChoice;
-  given: string;
   // Null without a position or without a pick.
   metres: number | null;
 }
@@ -61,7 +65,7 @@ interface Measured {
 function byNearness(one: Measured, other: Measured): number {
   const far = ({ friend, metres }: Measured): number =>
     friend.position === null ? Number.POSITIVE_INFINITY : (metres ?? 0);
-  return far(one) - far(other) || one.given.localeCompare(other.given, 'ko');
+  return far(one) - far(other) || one.friend.name.localeCompare(other.friend.name, 'ko');
 }
 
 // The one fact at a cell's right: how far, how old the position is when it is old, or that it is not known.
@@ -75,25 +79,46 @@ function valueOf({ friend: { position, minutesOld }, metres }: Measured): string
   return metres === null ? '' : distanceWords(metres);
 }
 
-function cellOf(measured: Measured): GridChoice {
-  const { friend, given } = measured;
-  const value = valueOf(measured);
-  const label = [given, value, '추가'].filter((part) => part !== '').join(', ');
-  return { key: friend.id, name: given, value, faint: friend.position === null, label };
+function said(...parts: string[]): string {
+  return parts.filter((part) => part !== '').join(', ');
 }
 
-// The card's list of Friends to add to the Plan, opened by "＋ 같이": each by the name their face and chip show, and
-// how far they are from the picked Restaurant, nearest first, in as many whole rows as the card has room for.
-export function FriendChoices({ friends, pick, disabled, onChoose, room }: FriendChoicesProps): ReactElement {
+function cellOf(measured: Measured, pending: string | null, onProfile: FriendChoicesProps['onProfile']): GridChoice {
+  const { id, name, department, position } = measured.friend;
+  const person = {
+    key: id,
+    name,
+    sub: department === '' ? undefined : department,
+    more:
+      onProfile === null
+        ? undefined
+        : {
+            label: profileLabel(name),
+            onPress: (): void => {
+              onProfile(id);
+            },
+          },
+  };
+  if (id === pending) {
+    return { ...person, value: '넣는 중', faint: false, label: said(name, department, '넣는 중'), busy: true };
+  }
+  const value = valueOf(measured);
+  return { ...person, value, faint: position === null, label: said(name, department, value, '추가') };
+}
+
+// The card's list of Friends to add to the Plan, opened by "＋ 같이": each by their full name with the department under
+// it, how far they are from the picked Restaurant, and the mark that opens their profile, nearest first, in as many
+// whole rows as the card has room for.
+export function FriendChoices(props: FriendChoicesProps): ReactElement {
+  const { friends, pick, disabled, pending, onChoose, onProfile, room } = props;
   const [top, setTop] = useState<number | null>(null);
   const cells = friends
     .map((friend) => ({
       friend,
-      given: givenName(friend.name),
       metres: friend.position === null || pick === null ? null : metresBetween(pick, friend.position),
     }))
     .toSorted(byNearness)
-    .map((measured) => cellOf(measured));
+    .map((measured) => cellOf(measured, pending, onProfile));
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {

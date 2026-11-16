@@ -7,6 +7,7 @@
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type ShuttleStopDto } from '../../shuttle/dto/shuttle-route.dto.js';
+import { type LocationMissing } from '../dto/answer.dto.js';
 import { SHUTTLE_ADVANTAGE_SECONDS } from '../../travel/judgement-constants.js';
 import { shownMinutes, type TravelProvider } from '../../travel/travel.js';
 import { byStart, type DayItem, onDay } from '../free-time/free-time.js';
@@ -24,12 +25,16 @@ export interface WayArgs {
   // Where the app says the User is, with the Place it is in or the nearest within 150 m and whether it is on campus,
   // or null when it sent none.
   location: { at: Position; placeId: string | null; onCampus: boolean } | null;
+  // Why the app sent none, when it said.
+  locationMissing?: LocationMissing;
   // The Place the User named to set out from.
   fromPlaceId: string | null;
   // Null for the Place of the User's next item today.
   toPlaceId: string | null;
   // The time the User named to be there by, as HH:MM.
   by: string | null;
+  // What the User asked about, when it changes the words: the shuttle (board n21).
+  about?: 'shuttle';
   // The main gate, where a way from off campus starts.
   gatePlaceId: string;
   travel: Pick<TravelProvider, 'walkingSeconds' | 'shuttleWay'>;
@@ -61,13 +66,20 @@ export interface Way {
   shuttle: { trip: ShuttleTrip; taken: boolean; lateMinutes: number } | 'not running' | null;
 }
 
-// A Place the User named; else the main gate when their location is off campus; else the Place of their location;
-// else that of their last item today that has ended.
-export function startOf({ fromPlaceId, location, gatePlaceId, me, now }: WayArgs): WayStart | null {
+// A Place the User named; else the main gate when their location is off campus, or the app says it is; else the Place
+// of their location; else that of their last item today that has ended.
+export function startOf({
+  fromPlaceId,
+  location,
+  locationMissing,
+  gatePlaceId,
+  me,
+  now,
+}: Pick<WayArgs, 'fromPlaceId' | 'location' | 'locationMissing' | 'gatePlaceId' | 'me' | 'now'>): WayStart | null {
   if (fromPlaceId !== null) {
     return { placeId: fromPlaceId, basis: 'chosen' };
   }
-  if (location !== null && !location.onCampus) {
+  if (location === null ? locationMissing === 'off-campus' : !location.onCampus) {
     return { placeId: gatePlaceId, basis: 'gate' };
   }
   if (location !== null && location.placeId !== null) {

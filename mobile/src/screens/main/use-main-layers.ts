@@ -3,22 +3,29 @@
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import type { LatLng } from '@/api/types';
+import { questInvitationsQuery } from '@/api/queries';
+import { useKeptAnswerSwitch } from '@/features/assistant/answer-switch';
+import { type MadeQuestView, useMadeQuests } from '@/features/assistant/use-made-quests';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
+import { invitationCards } from '@/features/map/invitation-cards';
+import { besideFlags, madeQuestCards } from '@/features/map/made-quest-cards';
 import { groupedByPlace } from '@/features/map/place-groups';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
 import { clusteredStudy, studyMerges } from '@/features/study/adapter';
 import { useStudyCards } from '@/features/study/use-study';
-import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 import { type ChatSheetControl, useChatSheet } from './chat-sheet';
 import { type LayerStack, useLayerStack } from './layers';
 import { ROUTE_PADDING } from './layout';
 import type { MainMap } from './use-main-map';
+import type { Me } from './use-me';
+import { type MainRoute, useRoute } from './use-route';
 import type { Selection } from './use-selection';
 
 const NO_CARDS: readonly CardView[] = [];
@@ -28,29 +35,48 @@ function overviewZoom(map: MainMap): number | null {
   return map.detail === 'overview' ? (map.camera?.zoom ?? map.fitZoom) : null;
 }
 
+// The cards of the invitations the User received while the switch of the answer on the map is on, and whether they
+// are known: not before the phone has said where the switch is, and with it off there are none to wait for. While it
+// is off the list does not render the screen again.
+export function useInvitationCards(): { cards: readonly CardView[]; known: boolean } {
+  const kept = useKeptAnswerSwitch();
+  const on = kept === true;
+  const { data, isPending } = useQuery({ ...questInvitationsQuery, subscribed: on });
+  const cards = useMemo(() => (on && data !== undefined ? invitationCards(data) : NO_CARDS), [on, data]);
+  return { cards, known: kept !== null && (!on || !isPending) };
+}
+
 // The map's cards, and the 식당, shuttle and 공부공간 layers' while they are on, with the things at one place
 // grouped: a layer turned off takes its things out of the groups. While the whole campus is in view, study pins that
-// would overlap merge. `ready` once the map's own cards are known.
+// would overlap merge. The received invitations' cards, the flags of the Quests made from a Plan, and those Quests' own
+// cards within their flags stand apart from the groups. `ready` once the map's own cards and the invitations are known.
 function useCards(
   layers: { dining: boolean; study: boolean },
   shuttle: ShuttleLayer,
   zoom: number | null,
+  made: readonly MadeQuestView[],
 ): { cards: readonly CardView[]; ready: boolean } {
   const { data } = useMapCards();
-  const mapCards = data ?? NO_CARDS;
+  const flags = useMemo(() => madeQuestCards(made), [made]);
+  const { rest, flagged } = useMemo(() => besideFlags(data ?? NO_CARDS, made), [data, made]);
   const diningCards = useDiningCards(layers.dining);
   const studyCards = useStudyCards(layers.study);
   const grouped = useMemo(
-    () => groupedByPlace([...mapCards, ...diningCards, ...studyCards, ...shuttle.cards]),
-    [mapCards, diningCards, studyCards, shuttle.cards],
+    () => groupedByPlace([...rest, ...diningCards, ...studyCards, ...shuttle.cards]),
+    [rest, diningCards, studyCards, shuttle.cards],
   );
   // Keyed by what merges, not by the zoom: a camera that moves, as a press on a list's row makes it, keeps the same
   // cards unless the merged pins change. A selection waiting for the cards (`selectOrWait`) waits for new cards.
   const merges = studyMerges(grouped, zoom);
   const mergesKey = JSON.stringify(merges);
   // `mergesKey` stands for `merges`, which is new each render.
-  const cards = useMemo(() => clusteredStudy(grouped, merges), [grouped, mergesKey]);
-  return { cards, ready: data !== undefined };
+  const clustered = useMemo(() => clusteredStudy(grouped, merges), [grouped, mergesKey]);
+  const invitations = useInvitationCards();
+  const cards = useMemo(
+    () => [...clustered, ...flags, ...flagged, ...invitations.cards],
+    [clustered, flags, flagged, invitations.cards],
+  );
+  return { cards, ready: data !== undefined && invitations.known };
 }
 
 // A press on the map: merged study pins come into view, and anything else is selected.
@@ -79,16 +105,21 @@ export interface MainLayers {
   cards: readonly CardView[];
   ready: boolean;
   chat: ChatSheetControl;
+  // The Quests made from a Plan, none while the switch is off.
+  made: readonly MadeQuestView[];
+  // The main screen's one route, whose guidance a Lookup's "길 안내" starts too.
+  route: MainRoute;
 }
 
 // The 편의기능 stack and what its layers put on the map, with the map's own cards, and the chat's sheet, which turns a
-// layer on from a map button and which a card's button may ask. The Assistant is told the User's `position`. The tab
-// bar gives way to the answer frame.
-export function useMainLayers(inFront: boolean, map: MainMap, position: LatLng | null): MainLayers {
+// layer on from a map button and which a card's button may ask, and the main screen's route. The Assistant is told
+// where the User is (`me`), and a Lookup's "길 안내" starts the route's guidance.
+export function useMainLayers(inFront: boolean, map: MainMap, me: Me): MainLayers {
   const stack = useLayerStack(inFront);
   const shuttle = useShuttle(stack.layers.shuttle);
-  const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map));
-  const chat = useChatSheet(inFront, stack.turnOn, position);
-  useHideTabBarOnMain(chat.framed);
-  return { stack, shuttle, cards, ready, chat };
+  const made = useMadeQuests();
+  const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map), made);
+  const route = useRoute(map, me);
+  const chat = useChatSheet(inFront, stack.turnOn, me, route.routeTo);
+  return { stack, shuttle, cards, ready, chat, made, route };
 }

@@ -63,6 +63,7 @@ With the switch off, the app is today's: the same chat sheet, the same request, 
 36. As an SNU student, I want the chip of each Friend to say whether they have seen, accepted, or declined, and to change while I look.
 37. As an invited Friend, I want the invitation to open on the map with my own way and when to set out, so that I can answer at once.
 38. As an invited Friend, I want to accept or decline on that card, and to see nobody else's location on it.
+39. As an SNU student who invited Friends from a Plan and closed the answer, I want the party to stay on the map with its time and how many accepted, and to open it again with one press.
 
 ## Implementation Decisions
 
@@ -77,7 +78,7 @@ With the switch off, the app is today's: the same chat sheet, the same request, 
 - The frame is shown while the flag is on and the conversation holds something: a message waiting for its reply, or a turn. A turn is the User's last message and everything after it: the Assistant's reply, a failure, and the app's own bubbles.
 - **The pill** holds what the User asked, on one line, cut with an ellipsis, with a speech-bubble icon and a ✕. The ✕ forgets the conversation, a reply still on its way included, and the everyday map is back. Android's back button does the same.
 - **The card** is attached to the bottom edge of the screen. While the frame is shown on the main tab the tab bar is not shown. The card's parts, from the top: the condition chips with "근거" at their right, the answer, the time band, the buttons, and the input. The card takes at most about half of the screen above it, and its content scrolls inside it.
-- While the Assistant works, the card says "보는 중이에요".
+- While the Assistant works, the card says "보는 중" with "그만", which does what the ✕ does, and the input is hidden until the reply comes (ticket 12).
 - A turn is drawn with the chat's own parts, without a bubble around them: the text as Markdown, the cards with their buttons, a Proposal, the map buttons, and "다시 시도" under a failure.
 - A reply that carries a Plan shows the Plan's two lines, which the server wrote, in place of the model's sentence. A reply whose answer has no Plan shows the lines that say why.
 - While the frame is shown, the Friend list, the Quest list, the row of buttons with the footprints, the 편의기능 button, the zoom control, the shuttle's notice, the tutorial's start button, and the card of a pressed thing are not shown, and a press on a marker opens no card.
@@ -110,17 +111,18 @@ With the switch off, the app is today's: the same chat sheet, the same request, 
 - **A face's tag** leaves out the name the face shows already: for a name of two characters or fewer, a tag that is the name alone draws no label and "민수 · 18분" reads "18분", while the name read aloud stays the whole tag.
 
 - **Where the words go.** Places and people of one answer often stand at one point: a Friend sets out from the building whose Restaurant is a candidate. Each mark is one picture: a symbol on its point, and its words as a label at one side of it. At one point (marks within 15 metres of each other) one symbol is drawn, by this order: a person, the picked Restaurant, the next Class, a candidate, and a Restaurant that does not fit; a picked Restaurant or a candidate whose dot is not drawn carries its number in its label. Each label takes the first free side of its kind's list: the Merging Point's flag above, then below, right, and left; the picked Restaurant below, then above; a person right, then left; the next Class left, then below, right, and above; a candidate left, then right, below, and above; a Restaurant that does not fit the same as a candidate. A side is free when no earlier label at the point took it, and no other point of the answer lies within the label's reach on that side: 400 metres sideways and 50 metres up or down for a label at the left or the right, and 120 metres up or down and 150 metres sideways for one above or below. When no side is free that way, the label takes the first side of its list that no earlier label took. A label with no side left is left out, and its mark's name still says it to a screen reader. Metres are counted on a flat map: a degree of latitude is 111,320 metres, and a degree of longitude that times the cosine of the latitude.
+- **The labels' area.** Labels stay inside one area of the map's view: 16 points from the left and the right edges, from 8 under the pill (under the status bar for a received invitation, which has no pill) down to 8 over the card. At the camera the answer is shown at, the sides are chosen in the view's points instead of in metres: the labels of the whole answer take sides by kind, the flags first, then the picked Restaurant, the people, the next Class, the candidates, and the Restaurants that do not fit, and a side is free when its label box stays inside the area and covers neither the symbol box (36 square) at another point nor a label placed before it. A label takes the first free side of its list that no earlier label at its point took, and one with none is left out, its mark's name still said to a screen reader. A label's box is the one `MapAnswerMark` draws: 20 from its point on its side, one or two lines high, and as wide as its words at Pretendard's letter widths with its padding, at most 180. Labels at the left of marks within 60 points of each other up and down and 36 across end on one right edge, the one furthest from their marks, and labels at the right start on one left edge; a label moves only as far as the area lets it, and not onto another mark or onto another label where that label then stands, moved or not.
 - **The lines.** One straight line for each route of the scene, from its start to its end: the User's in navy, a Friend's in the Friend colour, and the way to the next Class thinner and grey. All are solid until the native Release.
 - **What gives way.** While a Plan is drawn, the markers of events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, and a walking route are not drawn. Friends' Avatars stay, except those of people in the Plan, whom the scene draws, and those near one of the Plan's own marks (its people, its picked Restaurant, its next Class, and its flags), within the reach of a label above or below it: the map draws every Avatar above every marker, and such an Avatar would lie over the mark or its words. The User's own Avatar gives way to the scene's.
-- **The camera** goes, in one move, to where the points of the answer fit into what the pill and the card leave of the map, with room for the labels: the room that the marks at the top and at the bottom need, and no closer than the "close" level. It moves again when the Plan on screen changes and when the card's height changes. Where a campus map's lowest zoom is too close for all the points, the Plan's own points (its people, its picked Restaurant, its next Class, and its flags) are centred there instead; when they do not fit either, the picked Restaurant's side is kept in view. While a Plan is drawn, a native map may go one level further out than the level 15 at which a campus map's pinch out stops, which on a phone is closer than that lowest zoom. Closing the answer leaves the camera where it is.
-- The marks are pictures as every other look is. The looks of all the answer's Plans are asked for when the answer comes, so that the arrows never wait for a picture.
+- **The camera** goes, in one move, to where the points of the answer fit into the labels' area, with room for the labels: the room that the marks at the top and at the bottom need, and no closer than the "close" level. It is worked out from the labels' sides chosen in metres, before the camera is known; the labels then take their sides at that camera, in the area's points, and the marks are drawn so. It moves again when the Plan on screen changes and when the card's height changes. After an answer replaced the one on screen, as a recalculation's does, it moves once, when the drawing and the card's height have stayed the same for about 120 ms. Where a campus map's lowest zoom is too close for all the points, the Plan's own points (its people, its picked Restaurant, its next Class, and its flags) are centred there instead, with the room that their own marks at the top and at the bottom need; when they do not fit either, the camera goes further out until they do, but no further than a quarter of a level inside Kakao's level 14, and where even that is too close, the picked Restaurant's side is kept in view. While a Plan is drawn, a native map may go one level further out than the level 15 at which a campus map's pinch out stops, which on a phone is closer than that lowest zoom, and the map lets its camera go to that zoom; its fit zoom, from which the screen counts its levels, stays the campus map's. Closing the answer leaves the camera where it is, but for a camera further out than the everyday map's lowest zoom, which first glides in to that zoom at the same centre; the map keeps the answer's limits until it rests there, so that it does not jump.
+- The marks are pictures as every other look is. The looks of all the answer's Plans, each with its labels at the camera it is shown at, are asked for when the answer comes, so that the arrows never wait for a picture.
 - **The Plan in the card**: the two lines, with their strong parts in the key colour; "근거", which opens and closes the basis; and "‹" and "›" with "3/5" when the answer has more than one Plan. The arrows go round.
 - An answer without a Plan draws nothing on the map, and the everyday map stays.
 
 ### Correcting the answer
 
-- **The chips** are the answer's, in lines that wrap rather than scroll, so that none is cut, with "근거" at the right of the first line. The chip of where the User sets out from opens the map view of 장소 선택, and the Place chosen there is sent as the User's own `from` constraint; a point that is no Place is refused with a toast. The chip of the time puts the focus on the band's end handle, and opens nothing. A person's chip has a ✕ that takes the person out. "＋ 같이" opens, in the card, the Friends who are not in the Plan in two columns of equal cells, each by the name their face shows and the distance to the picked Restaurant, nearest first; a press adds the Friend. A press on a Friend's Avatar on the map adds that Friend too.
-- **The open list** follows the wireframe: the card's lines ask "누구와 같이 먹을까요?", "그대로" stands where "근거" did and closes the list, the band, the arrows, and the input give way, and the list shows whole rows only, at most four, scrolling inside the card.
+- **The chips** are the answer's, in lines that wrap rather than scroll, so that none is cut, with "근거" at the right of the first line. The chip of where the User sets out from opens the map view of 장소 선택, and the Place chosen there is sent as the User's own `from` constraint; a point that is no Place is refused with a toast. The chip of the time puts the focus on the band's end handle, and opens nothing. A person's chip has a ✕ that takes the person out. "＋ 같이" opens, in the card, the Friends who are not in the Plan in two columns of equal cells, each by the name their face shows and the distance to the picked Restaurant, nearest first. The Avatar of a Friend who is not in the conditions carries a "+" at its upper right, and a press on it adds the Friend as a press on their cell does. Either press starts the one add, shared by the list and the map: the Friend's cell reads "넣는 중" with a small spinner, the Friend's face takes the selected look at once, the list stays open, and no other cell, chip, or face takes a press. When its answer is applied the list closes; a failure clears it, with the toast of a failed recalculation. A wrong add is undone with that person's ✕. After "이대로 초대" no face carries a "+".
+- **The open list** follows the wireframe: the card's lines ask "누구와 같이 먹을까요?" and say "지도의 얼굴을 누르거나 아래에서 골라요", "그대로" stands where "근거" did and closes the list, the band, the arrows, and the input give way, and the list shows whole rows only, at most four, scrolling inside the card.
 - **The last row** keeps its slots: the arrows at its two ends as high as the buttons, the count in a box of its own right before "›", and "되돌리기" at a fixed width from the row's start.
 - **The time band** draws the Plan's band: a lane for each person with their busy stretches, the line of now, the band from the Plan's start to its end with a handle at each end, the two ends of the range, and the band's words. A handle is dragged in steps of five minutes, inside the range, and no nearer than 15 minutes to the other handle. Letting go of the start handle sends its time as the window's `from`, and of the end handle as the window's `until`; the other bound stays as the conditions hold it. The handles are also adjustable controls, five minutes a step, for a screen reader.
 - While a recalculation is on its way the band stays where it was dropped, and the chips, the handles, and the arrows take no press. One recalculation runs at a time.
@@ -141,17 +143,100 @@ Pure functions, so that the screen and the tests share them: a person taken out,
 - **A Plan that changed** (409 `PLAN_CHANGED`): the app recalculates from the same conditions, shows the answer as it is now, and says "계획이 바뀌었어요. 다시 확인해 주세요". Any other failure says "초대하지 못했어요. 잠시 후 다시 시도해 주세요" and leaves the card as it was.
 - **After inviting** the card is the invited Quest's: its two lines say that the Quest was made and the invitations sent, and when to be there ("파티를 만들고 초대를 보냈어요", "답이 없어도 12:33에 가면 돼요", the time being the Plan's start); under them the Quest's steps in order, each with its start; and "닫기", which closes the answer. The time band, the arrows, the swipe, "＋ 같이", and the ✕ of the person chips are gone, and the chips of where from and until when take no press: the Plan is sent.
 - **How each Friend stands.** A person's chip reads the name and the state: "민수 · 아직 안 봄" for an invitation that waits, "지은 · 수락" for a Friend who is in, "민수 · 거절" for one who declined, "민수 · 5분 늦음" for a late Holder, and "민수 · 빠짐" for a Friend no longer among the Quest's members (one who left, or whose invitation was taken back). The face of that person on the map carries a "?" while the invitation waits and a ✓ for a Friend who is in, accepted or late; a Friend who declined or is dropped has none. The latest word counts: the signal of an acceptance or a decline that names the Quest and the User carries the time it was heard, and the Quest's members, when the User's Quests hold the Quest with members, the time they were read. A signal heard after the members were read gives the state; otherwise the members give it, dropped for a Friend not among them. With no members known and no signal, every Friend of the request's reply is invited.
-- The invited state belongs to the answer on screen: a new reply or ✕ leaves it, and the Quest stays among the User's Quests. Opening it again from the everyday map is ticket 07's.
+- The invited state belongs to the answer on screen: a new reply or ✕ leaves it, and the Quest stays among the User's Quests, from where the everyday map shows it again (below).
 - Words typed after inviting go to the Assistant as before.
+
+### A made Quest after closing (ticket 07)
+
+- **Which Quests.** Nothing the main server sends marks a Quest as made from a Plan, and a matched Shared Quest of a Global Event or a library booking's Quest looks the same. So the phone keeps the id of each Quest that `POST /plans` made, as it keeps the switch, and with the switch on a Quest counts when its id is among them, the User leads it, and its destination has not ended. A Quest made from a Plan on another phone of the User shows no flag. An id whose Quest is gone from the User's Quests or has ended is dropped when they are read.
+- **The destination** is the last step not cancelled that has a start and a point, since a Plan writes its meeting steps before the meal. It has ended when the server marks it so or its end is not after the phone's clock, read when the Quests are read.
+- **The flag** stands at the destination's Place in place of the Quest's own marker, with the destination's day when it is not today, its start, the meal (or the step's own title when the meal was cancelled and the flag stands at a meeting step), and how many Friends are in, accepted or late, out of all invited, one who declined included: "12:33 점심 · 수락 1/2", "내일 12:33 점심 · 수락 1/2". The Quest's own card stays without a marker, so that an address of the Quest (a push, a Notification) or a row of the Quest list opens it, with its "길찾기", as before. With the switch off the Quest keeps its marker.
+- **The line** above the input says what the first made Quest's flag says, at the left above the row of buttons, and gives way while the keyboard is up, while a card takes the bottom, and while an answer or another card nobody asked for is shown.
+- **A press on either** shows the card after inviting again, built from the Quest and no old answer: a chip for each invited Friend with how they stand, the lines with the destination's start, the steps, and "닫기". It is shown as a received invitation's card is, without a pill or the input. The map draws the destination with its day, start, and meal, the Quest's other steps as flags, and the User where the phone was when the card opened, or first was after it, and nobody's location. A signal or a read of the Quests while it is shown changes the chips and moves no camera.
+- **The flag and the line follow the Quest**: a signal of an answer changes the count at once, then the Quest's members; they and an open card go when the User's Quests come back without it or with its meal ended.
 
 ### A received invitation
 
-- **A card of the main screen.** With the switch on, each invitation the User received is a card of the main screen whose id is `invitation:<invitationId>`, so that a Notification's address opens it. With the switch off there is no such card, and the address leads to the "파티" tab's invitations as today.
+- **A card of the main screen.** With the switch on, each invitation the User received is a card of the main screen whose id is `invitation:<invitationId>`, so that a Notification's address opens it. The address is answered once the phone's switch is read and, with it on, the list of invitations is known. With the switch off there is no such card, and the address leads to the "파티" tab's invitations as today.
 - **The frame without a pill.** The card nobody asked for is shown as the bottom card alone: no pill, and ✕ at the card's own corner. The lists, the bottom controls, and the tab bar give way as for an answer.
-- **The map** draws the scene the server gives for the invitee (`GET /quest-invitations/:id`, with the phone's position while it is on campus): the User's own dot, a line for each leg of their way, the flags at the Merging Point and at the destination, and the Place of what follows, by the marks, the rule of labels, and the camera of an answer. Nobody else is drawn.
-- **The card** shows whose invitation it is ("유상의 파티 초대"), the destination step's start and title ("12:33 학생회관식당에서 점심"), who is in so far ("유상, 지은과 함께"), the way's lines as the server wrote them, the Quest's steps in order, "수락" as the main button with "거절" beside it, and "초대장에는 내 길만 보여요. 다른 사람의 위치는 파티를 켠 뒤에 보여요."
-- **수락** accepts and **거절** declines, each with the endpoints the "파티" tab uses today. After either the card closes to the everyday map, and a toast says what happened. A failure says so and leaves the card.
-- **An invitation that waits no more** (404): the card says "이미 끝난 초대예요" and closes.
+- **The map** draws the scene the server gives for the invitee (`GET /quest-invitations/:id`, with the phone's position while it is on campus): the User's own dot, a line for each leg of their way, the flags at the Merging Point and at the destination, and the Place of what follows, by the marks, the rule of labels, and the camera of an answer, the camera fitting the scene under the status bar alone. The address moves no camera itself, and opening it again while its card is shown moves nothing. Nobody else is drawn: no Avatar of a Friend or of the User's Party, also when there is no scene and the everyday map stays.
+- **The card** shows whose invitation it is ("유상의 파티 초대"), the destination step's start and title ("12:33 학생회관식당에서 점심"), who is in so far ("유상, 지은과 함께"), the way's lines as the server wrote them, the Quest's steps in order, "수락" as the main button with "거절" beside it, and "초대장에는 내 길만 보여요. 다른 사람의 위치는 파티를 켠 뒤에 보여요." Off campus the app sends no position, so the server cannot tell the way (`unknown`); the card then says the server's own words for a phone off campus, "캠퍼스 밖이라 길은 그리지 못해요."
+- **수락** accepts and **거절** declines, each with the endpoints the "파티" tab uses today, once for each invitation at a time; another invitation's buttons stay free. After either a toast says what happened, and the card closes to the everyday map while that invitation's card is still the one shown. A failure says so and leaves the card.
+- **An invitation that waits no more**: a 404 read, the list of invitations read again without the shown one (the Leader cancelled it, or it was answered on another device), or an address of one that the known list does not hold. The toast says "이미 끝난 초대예요", the card closes or the map stays, and after a 404 the list is read again. A `quests-changed` signal reads the shown card again, since the Leader may have changed the steps.
+
+### The Private Zone (tickets 28 and 29)
+
+The User draws round an area of the campus with a finger, and inside it their position is not shown to anyone. This is the design's only lowering by place besides being off campus (section 7, "What happens by place"; row 9), presented as a security feature.
+
+- **A zone** is one closed outline, a ring of points.
+  - The User draws round an area with one finger. When the finger lifts, the end joins the start by itself and the inside is filled; nothing asks the User to close it.
+  - A loop that crosses itself counts everything it encloses: the nonzero winding rule, which is also SVG's default fill.
+  - A position is inside when the outline encloses it or it lies within 10 m of the outline, the margin the Campus Boundary also allows.
+  - A User keeps up to five zones and cannot edit one; they delete it and draw again.
+- **The pencil.** On the zone screen a pencil turns drawing on and off, as on the gesture board `GestureAsk`.
+  - On: the map is held still and one finger draws.
+  - Off: the map moves and zooms, and what is drawn stays in its place.
+  - Drawing again while an outline is unsaved replaces it.
+- **Where it acts.** On the server, in the position upload, beside the off-campus check. A position inside a zone is not kept, the one stored is cleared, and every viewer gets `position-removed`, as when the User leaves campus. Friends then see the Timetable only, the way they see someone who never turned location on: no mark, no reason, and no push. Saving a zone round the stored position clears it at once.
+- **What is not lowered.** The User's own map and Assistant. The phone sends its own position with each request, and the User's own location is always used exactly (design section 7).
+- **Drawing needs no native change.**
+  - With the pencil on, the zone screen lays an overlay over the map that catches the finger (`react-native-gesture-handler`), and draws the outline and its fill with `react-native-svg`.
+  - It turns screen points into coordinates and back by Web Mercator from the camera the map reports. `onCameraIdle` gives the centre and a zoom measured against the view's width, and rotation and tilt are off.
+  - The drawn outline is projected again whenever the camera settles.
+- **Names.** The server names a zone after the Place nearest its middle: "{Place} 근처".
+- **Where it shows.**
+  - The 위치 공유 screen's row "비공개 구역 · 칠한 곳 안에서는 시간표만 보여요 · N곳" opens the zone screen.
+  - While the phone's last upload was inside a zone, the User's own card says "비공개 구역 안 · 친구에게는 시간표만 보여요". Nothing asks.
+- **Zones are their owner's alone.** No other User and no Assistant tool reads them. An Assistant that reads Friends through the one visibility function finds the User without a position.
+- **Out of scope:**
+  - buildings whose name alone reveals a situation (no list of them exists);
+  - zones shared between Users;
+  - zones by time of day (the level does not change with the time).
+
+#### The contract
+
+```ts
+// GET    /users/me/private-zones        → 200 { zones: PrivateZone[] }, oldest first
+// POST   /users/me/private-zones        → 201 PrivateZone          body: { outline: LatLng[] }
+// DELETE /users/me/private-zones/:id    → 204; 404 when the zone is not the User's
+interface PrivateZone {
+  id: string;
+  label: string;           // "301동 근처"; "그린 구역" when no Place is near
+  outline: LatLng[];       // 3 to 200 points, the ring left open (the last point joins the first); each within 300 m
+                           // of the Campus Boundary, and at least one inside it
+  createdAt: string;
+}
+// POST /positions answers { offCampus: boolean; privateZone: boolean }: privateZone says the position was inside a
+// zone, was not kept, and the User is not shown.
+```
+
+Errors:
+- 400 `PRIVATE_ZONE_INVALID`: the shape or a count;
+- 400 `PRIVATE_ZONE_OFF_CAMPUS`: a point more than 300 m outside the Campus Boundary, or no point inside it;
+- 400 `PRIVATE_ZONE_TOO_SMALL`: the outline fits in a 17 m square (both sides of its bounding box under 17 m, in metres around its middle);
+- 409 `PRIVATE_ZONES_FULL`: five zones already.
+
+The server accepts a ring whose last point repeats the first and drops the repeat.
+
+#### Decisions for review
+
+1. **One closed outline per zone, drawn round the area.** The design's "painted" area and the idea's "슥슥 색칠" become a loop whose inside is filled, as on the gesture board. The end joins the start when the finger lifts; nothing asks.
+2. **A pencil turns drawing on and off.** With it off the map moves as usual, and the outline stays where it was drawn. One outline at a time; drawing again replaces the unsaved one.
+3. **A loop that crosses itself encloses everything inside any of its turns** (nonzero winding), the same rule the screen's fill uses, so what is shown filled is what hides the User.
+4. **The edge leans towards hiding:** within 10 m of the outline counts as inside, the Campus Boundary's margin.
+5. **Too small is refused with one line:**
+   - an outline that fits in a 17 m square (both sides of its bounding box under 17 m) gets "조금 더 크게 둘러 주세요" in the app before sending, and the server refuses it too;
+   - a finger that barely moves draws nothing;
+   - the bounding box, not the enclosed area, decides. An area by the shoelace sum would measure a figure eight of two equal lobes near 0 m² and refuse it, though both lobes are filled and hidden. The box is the same simple test on both sides.
+6. **The limits:** five zones and 3 to 200 points per outline.
+   - The app thins the finger's path to 200 points or fewer before saving.
+   - The outline may run past the Campus Boundary, so that a loop round a building at the campus's edge need not squeeze between its wall and the line. A position off campus is never kept anyway.
+   - Each point must lie within 300 m of the boundary and at least one inside it, which keeps the data on campus. Anything else is refused with "캠퍼스 가까이에서만 그릴 수 있어요".
+   - There is no cap on a zone's size: a zone round the whole campus hides the User as turning location off would, which they may do anyway.
+7. **No editing a zone:** delete it and draw again.
+8. **The User's own card says when they are inside a zone.** It is a line, not a question, so "once set, it asks nothing more" holds.
+9. **The words, as a security feature:** the zone screen's line "칠한 곳 안의 위치는 저장하지 않아요. 친구에게는 시간표만 보여요." The inside is filled, so "칠한 곳" still reads right.
+10. **No cache.** One indexed read of the User's zones per upload, the database first.
 
 ## Testing Decisions
 
@@ -160,7 +245,8 @@ A good test states a behaviour a User depends on, through a seam a User or anoth
 - **The main screen, integration tests.** The seam is the started app's main screen over the fake main server, as the chat's tests are today. They cover: the old path with the flag off, down to the request's body; the frame's parts and what gives way; today's cards inside the card; the Plan's marks, lines, and camera fit on the plain map, by the marks' names; the arrows and a press on a candidate; the chips, the Friend list, the handles, and "되돌리기", each down to the body of the request it sends; a failed recalculation; and words sent with the Plan's context.
 - **The marks, unit tests.** The seam is the function from an answer to its marks. The stored copies of real answers are its input, and the expected sides and numbers are worked out by hand from the rule above. Boundaries: two marks at one point, three, a point whose sides are all taken, an answer with a Restaurant that does not fit, and an answer without a Plan.
 - **The band's arithmetic and the changes to the conditions, unit tests**, with boundaries: a drag to each end of the range, a drag past the other handle, a time between two steps, and a person who is not in the conditions.
-- **Inviting and a received invitation, integration tests** at the main screen over the fake main server: the press down to the body and the key of `POST /plans`, a second press, each refusal, the card after inviting, a signal that changes a chip; the address that opens an invitation's card, its marks, and both buttons down to their requests. The replies are the stored copies of the main server's real replies that package C keeps.
+- **Inviting and a received invitation, integration tests** at the main screen over the fake main server: the press down to the body and the key of `POST /plans`, a second press, each refusal, the card after inviting, a signal that changes a chip; the address that opens an invitation's card, its marks, and both buttons down to their requests; a made Quest's flag and line, the card they open again with its marks and camera, their following the signals and the Quests read again, the id kept across a restart, a matched Shared Quest and a library booking's Quest that keep their own cards, and the Quest's address. The replies are the stored copies of the main server's real replies that package C keeps.
+- **Which Quests count as made from a Plan and their flag's words, unit tests**, with boundaries: an id the phone did not keep, another Leader, no members, the User alone among them, a Quest not Closed, two steps with the meal last, a meal one minute before its end and at it, a decline among those invited, a destination tomorrow and later, a title without "에서", and the meal cancelled.
 - **The switch, unit and integration tests**: what the phone keeps, and the long press with its toast.
 - **The marks' looks, unit tests**: each look's name, and that two looks that draw the same picture share one.
 - Prior art: the chat's integration tests and their fake main server, the route and marker tests of the main screen, the marker look and marker image unit tests, and the app's API answer tests.
@@ -169,10 +255,10 @@ A good test states a behaviour a User depends on, through a seam a User or anoth
 
 ## Out of Scope
 
-- The flag of a made Quest on the everyday map and the one line above the input after closing: ticket 07. "계획 바꾸기" and "카톡으로도 보내기" of the card after inviting, the report of being late, and the offer after a decline.
+- "계획 바꾸기" and "카톡으로도 보내기" of the card after inviting, the report of being late, and the offer after a decline.
 - "여기로", the leave-by notification, and "파티 켜기": package D's.
 - Dashed routes, a press on empty ground or on a building, and dimming the base map: the native Release. Until then the routes are solid, a Place is chosen in the map view of 장소 선택, and the usual markers are hidden.
-- The count circles for many results, the "+" badge on a Friend who can be added, and the icons of the pill for a pressed building or Friend.
+- The count circles for many results, and the icons of the pill for a pressed building or Friend.
 - The card of a pressed building and of a pressed Friend, the visible area as "이 근처", and what was tapped in the request context (row "지도에서 묻기").
 - The cases of row "답할 수 없는 말과 안 되는 경우" beyond a failed request.
 - Removing the chat sheet and the switch: ticket 04, once the acceptance tests are over and a Plan can become a Quest.

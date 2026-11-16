@@ -22,6 +22,7 @@ import {
   MapDot,
   MapGroupDot,
   MapGroupPin,
+  MapMarkBadge,
   MapPerson,
   MapPin,
   type MapPlaceKind,
@@ -35,12 +36,15 @@ import type { Size } from './projection';
 // How something on the map looks. One picture is made for each look and kept under the look's name, so two things
 // that look the same share one, and the number of pictures is the number of names:
 // - two for the User's own Avatar;
-// - for each person, the two sizes in each tone the person was seen in, with and without a photo, dimmed while the
-//   person's position was old, and each of them selected, which only the one selected person ever asks for;
+// - for each person, the two sizes in each tone the person was seen in, with and without a photo, with the green dot
+//   of a Friend seen at the exact level while the switch of the answer on the map is on or dimmed while the person's
+//   position was old, and each of them selected, which only the one selected person ever asks for, or with the "+" of
+//   a Friend who can be added to the answer on screen;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
 //   an official pin also with a Favorite Event's star;
 // - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected; the pin
 //   also with the star;
+// - while the switch is on, the same places and sets with the "!" of a mark newly posted or faded (`fresh`, `faded`);
 // - one for the tutorial's place pin.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
@@ -49,12 +53,19 @@ import type { Size } from './projection';
 // photo changes keeps the picture made first until the app starts again.
 //
 // What a release of unused pictures (ticket 07) has to cover, since no picture is released while the app runs: the
-// looks of a person who is no longer on the map or no longer a Friend, a person's looks in the tones they are no
-// longer in, the selected looks once nothing is selected, a pin's looks for the counts it no longer shows, and a
-// person's pictures when their name or their photo changed, which are then made again.
+// looks of a person who is no longer on the map or no longer a Friend, a person's looks in the tones and at the
+// levels they are no longer in, the selected looks once nothing is selected, a pin's looks for the counts it no
+// longer shows, and a person's pictures when their name or their photo changed, which are then made again.
 
 // A dot is the look from far away, a pin the look from close.
 export type MarkerForm = 'dot' | 'pin';
+
+// An interest mark's, while the switch of the answer on the map is on: `fresh` carries "!", something newly posted
+// for the User; `faded` is drawn faint, shown for want of anything the User watches.
+interface InterestLook {
+  fresh?: boolean;
+  faded?: boolean;
+}
 
 export type MarkerLook =
   // The User's own Avatar. `small` is its look while the whole campus is in view: three quarters of its size.
@@ -62,7 +73,8 @@ export type MarkerLook =
   // A person: a Friend in the status's colour, or a member of the User's Party in the tone `member`. The frames'
   // teardrop with the person's letters or photo in it. `small` is its look while the whole campus is in view.
   // `id` is the person's own, which names the look; `name` and `photo` are what is drawn. `stale` is dimmed: the
-  // position is old.
+  // position is old. `addable` carries a "+": a press adds the Friend to the answer on screen. `exact` carries a green
+  // dot: a Friend seen at the exact level.
   | {
       kind: 'person';
       id: string;
@@ -70,20 +82,36 @@ export type MarkerLook =
       small?: boolean;
       selected?: boolean;
       stale?: boolean;
+      addable?: boolean;
+      exact?: boolean;
       name: string;
       photo: string | null;
     }
   // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
   // `muted` is translucent grey: a study building none of whose spaces the User may use. `starred` draws a pin's
-  // icon as the filled star: a Favorite Event, or official events at one place of which one is.
-  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean; muted?: boolean; starred?: boolean }
+  // icon as the filled star: a Favorite Event, or official events at one place of which one is. `fresh` and `faded`
+  // are an interest mark's (`InterestLook`).
+  | ({
+      kind: MapPlaceKind;
+      form: MarkerForm;
+      count?: number;
+      selected?: boolean;
+      muted?: boolean;
+      starred?: boolean;
+    } & InterestLook)
   // Study pins merged while the whole campus is in view, with how many they are.
   | { kind: 'study-cluster'; count: number; selected?: boolean }
   // The Place of restaurants with menus today, at every level of detail.
   | { kind: 'restaurant'; selected?: boolean }
   // Things of several kinds at one place: a small round for each kind, in the order given. `starred` draws the
   // official round's star on a pin: a Favorite Event is among them.
-  | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean; starred?: boolean }
+  | ({
+      kind: 'group';
+      kinds: readonly MapPlaceKind[];
+      form: MarkerForm;
+      selected?: boolean;
+      starred?: boolean;
+    } & InterestLook)
   // The place 지도에서 보기 of a tutorial quest shows: a red teardrop with a white circle, at every level of detail.
   | { kind: 'tutorialPlace' }
   // A mark of an answer: its symbol and its label, words included, in one picture.
@@ -98,10 +126,24 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
   const drawn = [
     symbol?.type ?? null,
     symbol?.type === 'face'
-      ? [symbol.name, symbol.dashed, ...(symbol.badge === undefined ? [] : [symbol.badge])]
+      ? [
+          symbol.name,
+          symbol.dashed,
+          ...(symbol.badge === undefined ? [] : [symbol.badge]),
+          ...(symbol.exact === true ? ['exact'] : []),
+        ]
       : null,
     symbol?.type === 'dot' ? [symbol.role, symbol.number] : null,
-    label === null ? null : [label.side, label.tone, label.title, label.line, label.number],
+    label === null
+      ? null
+      : [
+          label.side,
+          label.tone,
+          label.title,
+          label.line,
+          label.number,
+          ...(label.shift === undefined ? [] : [label.shift]),
+        ],
   ];
   return `answer:${JSON.stringify(drawn)}`;
 }
@@ -122,15 +164,25 @@ export function lookName(look: MarkerLook): string {
     return parts('restaurant', selected);
   }
   if (look.kind === 'group') {
-    return parts('group', look.kinds.join('+'), look.form, look.starred === true && 'starred', selected);
+    return parts(
+      'group',
+      look.kinds.join('+'),
+      look.form,
+      look.starred === true && 'starred',
+      selected,
+      ...interestParts(look),
+    );
   }
   if (look.kind === 'study-cluster') {
     return parts('study-cluster', String(look.count), selected);
   }
   if (look.kind === 'person') {
     const photo = look.photo !== null && 'photo';
+    const exact = look.exact === true && 'exact';
     const stale = look.stale === true && 'stale';
-    return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, stale, selected);
+    const addable = look.addable === true && 'addable';
+    const size = look.small === true ? 'small' : 'full';
+    return parts('person', size, look.tone, look.id, photo, exact, stale, selected, addable);
   }
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
   return parts(
@@ -140,6 +192,24 @@ export function lookName(look: MarkerLook): string {
     look.muted === true && 'muted',
     look.starred === true && 'starred',
     selected,
+    ...interestParts(look),
+  );
+}
+
+// Named only when set, so that every name with the switch off stays as it was.
+function interestParts({ fresh, faded }: InterestLook): (string | false)[] {
+  return [fresh === true && 'fresh', faded === true && 'faded'];
+}
+
+// A mark's "!" and fade around a place's or a group's view, which grows to hold the "!".
+function withInterest(look: InterestLook & { form: MarkerForm }, view: ReactElement): ReactElement {
+  if (look.fresh !== true && look.faded !== true) {
+    return view;
+  }
+  return (
+    <MapMarkBadge faded={look.faded} form={look.form} fresh={look.fresh}>
+      {view}
+    </MapMarkBadge>
   );
 }
 
@@ -175,20 +245,30 @@ export function anchorShare(look: MarkerLook, { width, height }: Size): { x: num
   return shares[look.label.side];
 }
 
+interface LookViewProps {
+  look: MarkerLook;
+  onPhotoSettled?: () => void;
+  // Names the parts of a person's look and of an answer's.
+  testID?: string;
+}
+
 // The design system's view of a look.
-export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSettled?: () => void }): ReactElement {
+function PlainLookView({ look, onPhotoSettled, testID }: LookViewProps): ReactElement {
   if (look.kind === 'me') {
     return <MapPin kind="me" small={look.small} />;
   }
   if (look.kind === 'person') {
     return (
       <MapPerson
+        addable={look.addable}
+        exact={look.exact}
         name={look.name}
         onPhotoSettled={onPhotoSettled}
         selected={look.selected}
         small={look.small}
         source={look.photo === null ? undefined : { uri: look.photo }}
         stale={look.stale}
+        testID={testID}
         tone={look.tone}
       />
     );
@@ -200,7 +280,7 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
     return <MapTutorialPin />;
   }
   if (look.kind === 'answer') {
-    return <MapAnswerMark label={look.label} symbol={look.symbol} />;
+    return <MapAnswerMark label={look.label} symbol={look.symbol} testID={testID} />;
   }
   if (look.kind === 'group') {
     return look.form === 'dot' ? (
@@ -224,4 +304,10 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
       selected={look.selected}
     />
   );
+}
+
+// The design system's view of a look, with an interest mark's "!" or fade around a place's or a group's.
+export function LookView(props: LookViewProps): ReactElement {
+  const { look } = props;
+  return 'form' in look ? withInterest(look, <PlainLookView {...props} />) : <PlainLookView {...props} />;
 }

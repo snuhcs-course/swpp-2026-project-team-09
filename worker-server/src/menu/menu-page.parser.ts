@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { load } from 'cheerio';
 import { MEALS, type RestaurantMenu } from './dto/menus-collected.dto.js';
+import { readMealHours } from './menu-hours.js';
 import { readMenuLines } from './menu-line.js';
 
 // Reads the restaurants of the Co-op's menu page of `date`. The dormitory's page is built the same way.
@@ -21,13 +23,17 @@ export function parseMenuPage(html: string, date: string): RestaurantMenu[] {
   $('br').replaceWith('\n');
   return $('table.menu-table tbody tr')
     .toArray()
-    .map((row) => ({
-      // The Co-op page appends a telephone number: "학생회관식당 (880-5543)".
-      name: $(row)
-        .find('td.title')
-        .text()
-        .trim()
-        .replace(/\s*\(\d+-\d+\)$/u, ''),
-      lines: MEALS.flatMap((meal) => readMenuLines(meal, $(row).find(`td.${meal}`).text())),
-    }));
+    .map((row) => {
+      const lines = MEALS.flatMap((meal) => readMenuLines(meal, $(row).find(`td.${meal}`).text()));
+      return {
+        // The Co-op page appends a telephone number: "학생회관식당 (880-5543)".
+        name: $(row)
+          .find('td.title')
+          .text()
+          .trim()
+          .replace(/\s*\(\d+-\d+\)$/u, ''),
+        lines,
+        hours: readMealHours(lines),
+      };
+    });
 }

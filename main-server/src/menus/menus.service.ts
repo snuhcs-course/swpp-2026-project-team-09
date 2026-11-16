@@ -4,6 +4,7 @@
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { CollectionService } from '../collection/collection.service.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type MenusCollectedMessage } from './dto/menus-collected.dto.js';
 import { RestaurantMenusDto, toRestaurantMenusDto } from './dto/restaurant-menus.dto.js';
+import { RestaurantHours } from './restaurant-hours.js';
 import { RestaurantPlaces } from './restaurant-places.js';
 
 // A `date` column holds the calendar day of the Date in UTC.
@@ -28,11 +30,14 @@ export class MenusService {
     private readonly prisma: PrismaService,
     private readonly collection: CollectionService,
     private readonly places: RestaurantPlaces,
+    private readonly hours: RestaurantHours,
   ) {}
 
   // Replaces what the Source stored for each day the message carries, so that a repeat leaves one set of records and a
-  // restaurant the page dropped or renamed does not linger.
-  async store({ source, collectedAt, days }: MenusCollectedMessage): Promise<void> {
+  // restaurant the page dropped or renamed does not linger. The hours it carries are not a day's: RestaurantHours keeps
+  // them.
+  async store(message: MenusCollectedMessage): Promise<void> {
+    const { source, collectedAt, days } = message;
     const collected = new Date(collectedAt);
     // The identifiers are made here, so that each line is given its restaurant's without reading it back.
     const restaurants = days.flatMap((day) =>
@@ -59,6 +64,7 @@ export class MenusService {
           })),
         ),
       });
+      await this.hours.keep(tx, message);
     });
   }
 

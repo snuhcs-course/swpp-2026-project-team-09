@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -64,9 +65,10 @@ describe('the mock of Location Sharing', () => {
   it('keeps a position on campus and answers one off campus', async () => {
     await answered(mockClient.setMasterSwitch(true));
 
-    expect(await answered(mockClient.uploadPosition(ON_CAMPUS))).toEqual({ offCampus: false });
+    expect(await answered(mockClient.uploadPosition(ON_CAMPUS))).toEqual({ offCampus: false, privateZone: false });
     expect(await answered(mockClient.uploadPosition({ ...ON_CAMPUS, latitude: 37.5665, longitude: 126.978 }))).toEqual({
       offCampus: true,
+      privateZone: false,
     });
   });
 });

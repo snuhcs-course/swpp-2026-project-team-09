@@ -17,6 +17,8 @@ export interface GatheringPerson {
   free: readonly FreeInterval[];
   // The Place of the position the asker may use for them now, or null.
   locationPlaceId: string | null;
+  // The asker's app sent no location and said why: they set out from their previous item's Place at any time.
+  locationMissing?: boolean;
   // What the asker fixed for them: where they set out from, the earliest they are ready, and the latest they leave.
   chosenPlaceId?: string;
   notBefore?: Date;
@@ -33,7 +35,8 @@ export type OriginBasis = 'timetable' | 'location' | 'chosen';
 export interface PersonPart {
   personId: string;
   readyAt: Date;
-  origin: { placeId: string; basis: OriginBasis } | null;
+  // `assumed`: taken from the Timetable because the location was missing.
+  origin: { placeId: string; basis: OriginBasis; assumed?: true } | null;
   // Their whole way, to the merging point and on to the place. Null when the origin is unknown.
   walkMinutes: number | null;
   // The earliest they can be at the place. Null when the origin is unknown.
@@ -75,6 +78,8 @@ export interface GatheringDrop {
   togetherMinutes: number;
   // Who could stay the shortest on their own, and for how long (never below 0). The first such person on a tie.
   shortest: { personId: string; minutes: number };
+  // In the order of the people.
+  parts: PersonPart[];
 }
 
 export interface Gathering {
@@ -92,33 +97,40 @@ export const RECENT_CLASS_MINUTES = 15;
 // The most a Friend's way may grow by going through the asker's origin to meet there.
 export const DETOUR_MINUTES = 1;
 
-// The asker is the first person. `now` is a whole minute.
+// The Places, or those of a stretch from its sides, as a meet adds the buildings the people set out from.
+export type GatheringPlaces =
+  readonly GatheringPlace[] | ((sides: readonly GatheringSide[]) => readonly GatheringPlace[]);
+
+// The asker is the first person. `now` is a whole minute. Without `merging`, everyone walks to the place on their own,
+// as for a meet, where meeting on the way would be the meet itself.
 export function gather(
   people: readonly [GatheringPerson, ...GatheringPerson[]],
-  places: readonly GatheringPlace[],
+  places: GatheringPlaces,
   when: { window: Interval; now: Date },
   travel: Pick<TravelProvider, 'walkingSeconds'>,
+  { merging = true }: { merging?: boolean } = {},
 ): Gathering {
   const stretches = sharedTime(
     people.map(({ free }) => free),
     when.window,
   );
-  const plans = stretches.map((stretch) => planIn(stretch, people, places, when, travel));
+  const plans = stretches.map((stretch) => planIn(stretch, people, places, when, { travel, merging }));
   return plans.find(({ fits }) => fits.length > 0) ?? plans[0] ?? { shared: null, sides: [], fits: [], dropped: [] };
 }
 
 function planIn(
   stretch: Interval,
   [asker, ...friends]: readonly [GatheringPerson, ...GatheringPerson[]],
-  places: readonly GatheringPlace[],
+  places: GatheringPlaces,
   { window, now }: { window: Interval; now: Date },
-  travel: Walking,
+  { travel, merging }: { travel: Walking; merging: boolean },
 ): Gathering {
   const sides: [GatheringSide, ...GatheringSide[]] = [
     sideOf(asker, stretch, now),
     ...friends.map((friend) => sideOf(friend, stretch, now)),
   ];
-  const all = places.map((place) => fitAt(place, sides, window, travel));
+  const candidates = typeof places === 'function' ? places(sides) : places;
+  const all = candidates.map((place) => fitAt(place, sides, window, { travel, merging }));
   const fits = all.filter((fit) => fitsTogether(fit)).toSorted(byLongestTogether);
   const dropped = all.filter((fit) => !fitsTogether(fit)).map((fit) => dropOf(fit, window));
   return { shared: stretch, sides, fits, dropped };
@@ -143,7 +155,7 @@ function dropOf({ key, placeId, togetherMinutes, parts }: GatheringFit, window: 
     ),
   }));
   const shortest = stays.reduce((least, stay) => (stay.minutes < least.minutes ? stay : least));
-  return { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest };
+  return { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest, parts };
 }
 
 type Walking = Pick<TravelProvider, 'walkingSeconds'>;
@@ -159,9 +171,10 @@ function minutes(from: string, to: string, travel: Walking): number {
 }
 
 // Where a person sets out from for a stretch of Free Time: what the asker chose, else the Place of the item that keeps
-// them until then, else the Place of their location, else that of an item that ended at most RECENT_CLASS_MINUTES ago.
+// them until then, else the Place of their location, else, when their location is said to be missing, that of the
+// previous item however long ago it ended, else that of an item that ended at most RECENT_CLASS_MINUTES ago.
 export function originOf(
-  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId'>,
+  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId' | 'locationMissing'>,
   { start, previous }: Pick<FreeInterval, 'start' | 'previous'>,
   now: Date,
 ): PersonPart['origin'] {
@@ -175,6 +188,9 @@ export function originOf(
   }
   if (person.locationPlaceId !== null) {
     return { placeId: person.locationPlaceId, basis: 'location' };
+  }
+  if (person.locationMissing === true) {
+    return timetable === null ? null : { ...timetable, assumed: true };
   }
   return previous !== null && minutesBetween(previous.end, now) <= RECENT_CLASS_MINUTES ? timetable : null;
 }
@@ -266,9 +282,9 @@ function fitAt(
   place: GatheringPlace,
   [asker, ...friends]: readonly [GatheringSide, ...GatheringSide[]],
   window: Interval,
-  travel: Walking,
+  { travel, merging }: { travel: Walking; merging: boolean },
 ): GatheringFit {
-  const earliestMeeting = meetingOf(place.placeId, asker, friends, travel);
+  const earliestMeeting = merging ? meetingOf(place.placeId, asker, friends, travel) : null;
   const arriving = [asker, ...friends].map((side) => partOf(side, place.placeId, earliestMeeting, travel));
   const start = latest([window.start, ...arriving.map((part) => part.canArriveAt ?? part.readyAt)]);
   const end = earliest([window.end, ...arriving.flatMap(({ leaveBy }) => (leaveBy === null ? [] : [leaveBy]))]);

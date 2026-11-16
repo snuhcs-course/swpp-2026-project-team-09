@@ -326,7 +326,7 @@ What the project was built and run with:
 | Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                                                                      |
 | Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                                                                      |
 | Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                                                                             |
-| Assistant              | Vercel AI SDK 7 with the OpenRouter provider; the model set by `ASSISTANT_MODEL`                                                                  |
+| Assistant              | Vercel AI SDK 7 with the OpenRouter and Anthropic providers; the key, and with it the provider, chosen by the global setting `llm.key`            |
 | Admin site             | Next.js 16 with React 19, in a desktop browser                                                                                                    |
 | App                    | Expo SDK 57, React Native 0.86, Expo Router, expo-updates; local modules: Kakao Maps SDK, ML Kit, cookies                                         |
 | Android build          | JDK 17 (Temurin) locally, JDK 21 (Temurin) for the Production APK in CI; Android SDK Platform and Build-Tools 36, Gradle 9.3.1                    |
@@ -446,8 +446,7 @@ file's.
 | `MATCH_SERVER_URL`                 | Where the match server is reached.                                                                                                       |
 | `MATCH_SERVER_TOKEN`               | The secret the main and match servers send each other; generated in [Setup](#setup).                                                     |
 | `DEMO_ACCOUNT_EMAILS`              | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.                                        |
-| `OPENROUTER_API_KEY`               | The OpenRouter key SNU Now AI calls its model with. Empty, the Assistant answers it is unavailable.                                      |
-| `ASSISTANT_MODEL`                  | The OpenRouter id of the Assistant's model; `anthropic/claude-haiku-5.5` in `.env.example`.                                              |
+| `OPENROUTER_API_KEY`               | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.   |
 | `ASSISTANT_DAILY_MESSAGES`         | Optional: the messages a User may send in a day in Korea; 50 unless set.                                                                 |
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                                                     |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                                                        |
@@ -669,13 +668,15 @@ the location to a point on campus in the extended controls.
 
 ## Running the tests
 
-Each project has the same four checks, which CI runs on every push. A test's level, unit, integration or end-to-end, is
-in its file name ([ADR 0007](docs/adr/0007-test-levels-by-what-a-test-starts.md)), and follows what the test starts: a
-unit test (`.unit.test.ts(x)`) calls one module with stand-ins and does no I/O; an integration test
-(`.integration.test.ts(x)`) joins two of our layers or crosses a real boundary, such as a database container or a
-started server; an end-to-end test (`.e2e.test.ts`) drives the whole system from outside, through a screen or the
-servers' public interfaces. A Maestro flow's level is its folder. Each runner picks up only its own level's suffix. Run
-them in the project's folder:
+Each project has the same four checks. On a pull request's own push, CI runs them for the projects its changes reach,
+with the unit tests only (`pnpm test:unit`); the merge queue runs every check with every test before the merge, and a
+failure there sends the pull request back. So run the integration and end-to-end test files you touched before a pull
+request is ready. A test's level, unit, integration or end-to-end, is in its file name ([ADR
+0007](docs/adr/0007-test-levels-by-what-a-test-starts.md)), and follows what the test starts: a unit test
+(`.unit.test.ts(x)`) calls one module with stand-ins and does no I/O; an integration test (`.integration.test.ts(x)`)
+joins two of our layers or crosses a real boundary, such as a database container or a started server; an end-to-end test
+(`.e2e.test.ts`) drives the whole system from outside, through a screen or the servers' public interfaces. A Maestro
+flow's level is its folder. Each runner picks up only its own level's suffix. Run them in the project's folder:
 
 ```bash
 pnpm lint

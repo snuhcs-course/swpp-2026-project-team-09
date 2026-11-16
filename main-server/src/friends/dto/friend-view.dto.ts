@@ -12,6 +12,9 @@ export interface FriendView {
   id: string;
   name: string;
   department: string;
+  friendId: string;
+  // When the friendship was accepted, in Korea with its offset.
+  friendsSince: string;
   level: FriendLevel;
   // Only at 'exact'.
   position: { latitude: number; longitude: number; measuredAt: string } | null;

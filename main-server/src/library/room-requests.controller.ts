@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Body, Controller, Get, Header, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
@@ -9,6 +10,8 @@ import { Idempotent } from '@nestjs/idempotency';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import {
+  type AskCompanionDto,
+  askCompanionSchema,
   type CreateRoomRequestDto,
   createRoomRequestSchema,
   type RoomCompanionDto,
@@ -60,6 +63,17 @@ export class RoomRequestsController {
     @Param('id', { schema: z.uuid() }) id: string,
   ): Promise<RoomCompanionDto[]> {
     return this.bookings.companions(user.id, id);
+  }
+
+  // The booker asks one more Friend. A repeat would refuse the Friend already asked, so it takes an Idempotency-Key.
+  @Post('room-requests/:id/companions')
+  @Idempotent({ required: true })
+  askOneMore(
+    @CurrentUser() user: SignedInUser,
+    @Param('id', { schema: z.uuid() }) id: string,
+    @Body({ schema: askCompanionSchema }) body: AskCompanionDto,
+  ): Promise<RoomRequestDto> {
+    return this.requests.askOneMore(user.id, id, body.friendId);
   }
 
   // A repeat consents again, which changes nothing.

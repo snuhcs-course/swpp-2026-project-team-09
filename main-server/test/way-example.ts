@@ -42,6 +42,14 @@ export async function readCampus(): Promise<void> {
   }));
 }
 
+// The seed's walking table and shuttle timing.
+export function seedTravel(): SeedTravel {
+  if (travel === null) {
+    throw new Error('Read the campus first');
+  }
+  return travel;
+}
+
 // The Place of that name.
 export function place(name: string): PlaceDto {
   const found = places.find((each) => each.name === name);
@@ -52,6 +60,15 @@ export function place(name: string): PlaceDto {
 }
 
 export const id = (name: string): string => place(name).id;
+
+// The Place of that number.
+export function numbered(number: string): PlaceDto {
+  const found = places.find((each) => each.number === number);
+  if (found === undefined) {
+    throw new Error(`The seed has no Place numbered ${number}`);
+  }
+  return found;
+}
 
 export function placeOf(placeId: string): PlaceDto {
   const found = places.find((each) => each.id === placeId);
@@ -102,13 +119,13 @@ export const classAt = (date: string, start: string, end: string, placeName: str
   isClass: true,
 });
 
-// The asker's way at `now`, with nothing known unless given: no shuttle is reported, and the travel times are the
-// seed's.
-export function wayFor(now: Date, given: Partial<Omit<WayArgs, 'now' | 'placeOf'>>): WayAnswer {
+// What a way of the asker at `now` is worked out from, with nothing known unless given: no shuttle is reported, and
+// the travel times are the seed's.
+export function wayArgs(now: Date, given: Partial<Omit<WayArgs, 'now' | 'placeOf'>>): WayArgs {
   if (travel === null) {
     throw new Error('Read the campus first');
   }
-  return wayAnswer({
+  return {
     now,
     me: { userId: ME, name: '유상', items: [] },
     location: null,
@@ -120,5 +137,8 @@ export function wayFor(now: Date, given: Partial<Omit<WayArgs, 'now' | 'placeOf'
     shuttle: { stops, reported: [] },
     placeOf,
     ...given,
-  });
+  };
 }
+
+export const wayFor = (now: Date, given: Partial<Omit<WayArgs, 'now' | 'placeOf'>>): WayAnswer =>
+  wayAnswer(wayArgs(now, given));

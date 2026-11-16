@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react';
@@ -14,6 +15,7 @@ import EventPage from '@/app/(signed-in)/events/[id]/page';
 import NewEventPage from '@/app/(signed-in)/events/new/page';
 import PlacesPage from '@/app/(signed-in)/places/page';
 import QueuePage from '@/app/(signed-in)/queue/page';
+import SettingsPage from '@/app/(signed-in)/settings/page';
 import UserPage from '@/app/(signed-in)/users/[id]/page';
 import UsersPage from '@/app/(signed-in)/users/page';
 import EventsPage from '@/app/(signed-in)/page';
@@ -54,6 +56,10 @@ export async function openQueue(): Promise<void> {
 
 export async function openCollection(): Promise<void> {
   await openPage(async () => SignedInLayout({ children: await CollectionPage() }));
+}
+
+export async function openSettings(): Promise<void> {
+  await openPage(async () => SignedInLayout({ children: await SettingsPage() }));
 }
 
 export async function openPlaces(): Promise<void> {

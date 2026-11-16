@@ -11,8 +11,8 @@ import { type Step } from './scripted-model.js';
 
 // How many minutes to the next Class and whether the User will be late, at the Assistant's endpoint with the scripted
 // model, the seed's walking table, and Places: boards q2 and q3 (a Tuesday at 12:40 and 12:50 at 301동, the next Class
-// at 13:00 in 24동), board q15 from off campus (on a Tuesday here), what the model is given, a time the User named, and
-// no next item.
+// at 13:00 in 24동), boards q15 and n14 from off campus (on a Tuesday here), what the model is given, a time the User
+// named, and no next item.
 
 const stage = new MealPlanStage();
 
@@ -105,17 +105,22 @@ describe('"늦나" at 12:50 at 301동 (board q3)', () => {
   });
 });
 
-describe('"9시 수업인데 늦나" from off campus (board q15)', () => {
-  it('counts from the main gate, without the location', async () => {
-    await stage.asking('2096-04-17', '08:35');
+describe('"9시 수업인데 늦나" from off campus (boards q15 and n14)', () => {
+  it.each([
+    ['a position off campus', '2096-04-17', { location: OFF_CAMPUS }],
+    ['no position, the app saying it is off campus', '2096-06-05', { locationMissing: 'off-campus' }],
+  ])('counts from the main gate, from %s', async (_, date, context) => {
+    await stage.asking(date, '08:35');
     await stage.classAt(stage.asker, '09:00', '09:50', '24');
 
-    const response = await stage.send([findWay(), { text: '…' }], { context: { location: OFF_CAMPUS } });
+    const response = await stage.send([findWay(), { text: '…' }], { context });
 
     const lookup = lookupIn(response.body);
     expect(lookup.chips.map(({ text }) => text)).toEqual(['정문에서', '09:00 수업까지']);
-    expect(linesOf(lookup)).toEqual(['정문을 08:50까지 지나면', '09:00 수업에 맞아요']);
-    expect(lookup.basis).toEqual(['정문 → 24동 걸어서 10분', '지금 위치는 캠퍼스 밖이라 쓰지 않고 정문부터 쟀어요']);
+    expect(linesOf(lookup)).toEqual(['정문을 08:50까지 지나면 돼요', '캠퍼스 밖이라 정문부터 계산했어요']);
+    expect(lookup.basis).toEqual(['정문 → 24동 걸어서 10분', '지금 위치는 캠퍼스 밖이라 쓰지 않았어요']);
+    expect(lookup.note).toBe('캠퍼스 밖이라 친구에게 내 위치가 보이지 않아요');
+    expect(lookup.actions).toEqual([]);
     expect(lookup.scene.people[0]?.at).not.toEqual(OFF_CAMPUS);
   });
 });

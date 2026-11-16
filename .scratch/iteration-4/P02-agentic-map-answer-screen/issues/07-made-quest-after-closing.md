@@ -1,6 +1,6 @@
 # 07: A Quest made from a Plan stays on the everyday map after the answer is closed
 
-Parent: [P02 spec](../spec.md) ("Inviting as it is")
+Parent: [P02 spec](../spec.md) ("Inviting as it is", "A made Quest after closing")
 Status: ready-for-agent
 Blocked by: 05
 
@@ -10,13 +10,52 @@ A User who invited Friends from a Plan and closed the answer still sees the Ques
 
 ## Acceptance criteria
 
-- [ ] With the switch on, a Quest the User leads that was made from a Plan and has not ended is drawn on the everyday map as a flag at its destination step's Place, with that step's start and the number of Friends who accepted out of those invited.
-- [ ] One line above the input says the same, and gives way while the keyboard is up or another answer is shown.
-- [ ] A press on the flag or on the line shows the card after inviting for that Quest, with its members' states, and the Quest's steps; the map draws what the Quest holds (its Places and the User's own position), and nobody's location.
-- [ ] The flag and the line follow the Quest: an acceptance changes the count at once, and they go when the Quest ends, is left, or is deleted.
-- [ ] With the switch off nothing is drawn.
-- [ ] Tests at the main screen over the fake main server for each of the above, and the app's README.
-- [ ] The screen is run on an Android emulator, and the pull request carries its screen.
-- [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
+- [x] With the switch on, a Quest the User leads that was made from a Plan and has not ended is drawn on the everyday map as a flag at its destination step's Place, with that step's start and the number of Friends who accepted out of those invited.
+- [x] One line above the input says the same, and gives way while the keyboard is up or another answer is shown.
+- [x] A press on the flag or on the line shows the card after inviting for that Quest, with its members' states, and the Quest's steps; the map draws what the Quest holds (its Places and the User's own position), and nobody's location.
+- [x] The flag and the line follow the Quest: an acceptance changes the count at once, and they go when the Quest ends, is left, or is deleted.
+- [x] With the switch off nothing is drawn.
+- [x] Tests at the main screen over the fake main server for each of the above, and the app's README.
+- [x] The screen is run on an Android emulator, and the pull request carries its screen.
+- [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
+
+### Decisions (2026-11-15)
+
+1. **Which Quests count.** Nothing the main server sends marks a Quest as made from a Plan: `POST /plans` makes a Closed Quest on no Board, led by the asker as its one Holder, with the Plan's title and steps and an invitation for each Friend (main-server `plans/plans.service.ts`), and a matched Shared Quest of a Global Event (`matching/`) and a library booking's Quest "관정 X 예약" (`library/room-requests.service.ts`) look the same. So the phone keeps the id of each Quest that `POST /plans` answered with, as it keeps the switch (`Kept.madeQuests`, `features/assistant/made-quest-ids.ts`), and with the switch on a Quest counts when its id is among them, the User leads it, and its destination has not ended; that it is Closed, no Class Quest, and holds someone besides the User among its members stays as a guard. A Quest made from a Plan on another phone of the User shows no flag here. An id whose Quest is gone from the User's Quests or has ended is dropped when the Quests are read, by a read that came after the ids last changed; keeping an id reads the Quests again, so that a read begun before the Quest was made cannot drop it.
+2. **The destination** is the last step not cancelled that has a start and a point, since a Plan writes its meeting steps before the meal. It has ended when the server marks it `ended` or its end (its start without one) is not after now, the clock read when the Quests are read, as the Quest list reads it: nothing ticks between two reads.
+3. **The words** are "HH:MM <meal> · 수락 n/m": the destination's start in Korea time, after its day when that is not today (decision 14); the meal, the title's words after its last "에서 ", as the server writes a Plan's title "<Restaurant>에서 <meal>", or else the whole title, while the destination is the meal (decision 17); n the Friends accepted or late, m every Friend among the members, one who declined included, since they were invited. A Friend who left or whose invitation was taken back is no longer among the members and leaves m.
+4. **How each Friend stands** is ticket 05's rule (`friendStandings`), with the members but the User as the invited and the Quests' `dataUpdatedAt` as the time they were read; the signals of an answer are heard while the switch is on, each with its time, so that an acceptance counts at once and the members count once read after it. `friendStandings` takes any Quest with the user ids invited to it, the reply of `POST /plans` among them.
+5. **The flag stands for the Quest's own card.** With the switch on, a card of kind `made-quest`, `made-quest:<id>`, stands at the destination outside the place groups (`features/map/made-quest-cards.ts`), and the Quest's card `party:<id>` stays among the cards, out of the groups and within the flag, so that it has no marker of its own and nothing is drawn twice. With the switch off the card stays as today, and nothing is read or subscribed: the kept ids are not read, the Quests' observer of `useMadeQuests` has `subscribed: false`, and no signal is listened to.
+6. **The flag's look** is the answer's pick: the dot in the Quest colour without a number, with the words in the pick's label above it, at every level of detail. Its name read aloud is the words.
+7. **The line** stands at the left above the row of buttons, and above the tutorial's start button and the line that asks for interests when they are shown, as `InterestsHint` does: 34 high and 8 above them, with the flag icon and the words in the Quest colour. It says the first made Quest's words, by the destination's start; each made Quest has its own flag. It gives way while the keyboard is up, while a card or the shuttle's notice takes the bottom, and while the answer frame or a card nobody asked for is shown, and the map's credit and the friend list's rows make room for it (`layout.ts`, `Room.madeLine`).
+8. **The card opened again is a card nobody asked for**, as a received invitation's: the frame's card without a pill, the input, or the tab bar; "닫기" and Android's back button close it; it is shown only while the answer frame is not; and a press on the map does nothing meanwhile.
+9. **It is built from the Quest, with no old answer kept** (`answer/made-quest-frame.tsx`): a person chip for each Friend among the members, by the name the members give, with the state; no chip of where from or until when, since the Quest keeps no conditions; "답이 없어도 12:15에 가면 돼요" with the destination's start; and the Quest's steps. `InvitedCard` takes the steps in place of the reply of `POST /plans`, and the answer's card passes its Quest's.
+10. **The map under it** (`madeQuestScene`, drawn with `drawingOfScene` and the camera of a received invitation, `useInvitationMap`) holds the destination as the pick, labelled with its Place's label and the destination's words under it, a dark flag with the start and the title at each other step's Place, and the User's own dot, "나", where the phone was when the card opened (decision 16); no route and no Avatar. A later move of the phone moves no camera (decision 15).
+11. **The mock** lists the Quest its `POST /plans` made among its Quests from then on: the stored reply's Quest with the mock's User as its asker, its leader, its one Holder, and its accepted member, so that the flag shows on the emulator after "이대로 초대" and "닫기". `startFresh` empties the list; the reply of `POST /plans` stays the stored copy.
+12. **The tests sign in as the stored answer's asker**, 유상, who leads the stored reply's Quest of `POST /plans`, in place of the fake main server's own User.
+13. **An address opens what it opened before.** `/main?card=party:<id>` (a push, a Notification's row, the leave-by Notification "지금 나서요 · X까지 걸어서 N분") selects the Quest's own card, which opens with its route's "길찾기" as before this ticket, also for its Leader with the switch on, and the camera goes to it once (`useAskedCard`). A row of the Quest list opens the own card too. Only a press on the flag or on the line selects the flag's card, the card after inviting, whose one camera move is its drawing's.
+14. **The day.** A destination not on today's date in Korea says its day before its start, in the words the Quest's own card says a day with (`koreaDay`: "내일", "11월 17일 (화)"), by the clock read when the Quests are read: "내일 12:33 점심 · 수락 1/2". One today says no day.
+15. **The camera stays while the card is open.** The scene under the card is kept by what it draws, the Quest's Places with the destination's words and the User's drawn position, and is made anew only when that changes (`useScene` in `use-made-quest-card.ts`, held in state, since the React Compiler may not keep a `useMemo` keyed by anything else). A read of the Quests or a signal changes the chips' states and the flag's count, and moves no camera; so the destination's mark under the card carries no count, as the design's "12:33 점심" after inviting.
+16. **The User's dot after a cold start.** When the card opens before the phone's position is known, the first position known after is drawn, and then kept.
+17. **The flag's words come from the step it stands at.** The meal the Quest's title names is said while the destination is the Quest's last step, as a Plan's meal is; with the meal cancelled the flag stands at the meeting step and says that step's title: "12:18 유상, 민수: 301동 앞에서 만나기 · 수락 0/1".
+18. **The flag draws its words in two lines.** The pick's label is at most 180 points wide whatever the phone (`design-system/map-answer.tsx`), so in one line it cut the stored Quest's "11월 17일 (화) 12:15 점심 · 수락 0/1" with "…" on a 411-point phone. The label's title is the destination's start and step, "12:15 점심", and its second line, which the label already has, the day when it is not today and the count: "11월 17일 (화) · 수락 0/1", "내일 · 수락 0/1", or "수락 0/1" today (`flagWords`' `flag`, carried to the look by the card's `flag`). The flag's name read aloud, the line above the input, and the destination's words under the card after inviting keep the words in one line. A meeting step's long title (decision 17) can still be cut on the flag, whose name says it whole.
+
+### Checked on an emulator (2026-11-15)
+
+On the Android emulator (1080 × 2400, density 2.625), a development build answering from the stored copies of real replies, with the switch on:
+
+- After "배고파, 민수랑 같이", "이대로 초대", and "닫기", the flag stood at 제2공학관 in place of the Quest's own marker, reading "12:15 점심" over "11월 17일 (화) · 수락 0/1", and the line "11월 17일 (화) 12:15 점심 · 수락 0/1" stood above the interests' hint.
+- A press on the line and a press on the flag each opened the card after inviting ("민수 · 아직 안 봄", the two lines, the step, "닫기") with no tab bar and no input, the map drawing the destination and "나" alone; "닫기" and Android's back each closed it.
+- With the input focused the line was gone.
+- `snunow://main?card=party:<id>` opened the Quest's own card, "302동식당에서 점심" with "길찾기".
+
+Fixed after the check: the flag's words were cut in one line (decision 18). Seen and left: a Friend's Avatar standing near the flag can lie over its words, since the native map draws every Avatar above every marker. Not seen on the emulator, because the mock sends no signal and starts with a known position: a count changed by an acceptance while the card is open, and the User's dot drawn on a cold start; the tests cover both.
+
+### Agent usage (2026-11-15)
+
+One session with five subagents for this ticket (the implementation, two reviewers, the reviews' fixes, and the flag's two lines); the session's own time counted is the emulator check and the pull request.
+
+- Agent time: about 87 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 479,482; input 132,148,767, of which 130,799,143 were cache reads, 1,348,586 cache writes, and 1,038 uncached. Without cache reads: 1,829,106.

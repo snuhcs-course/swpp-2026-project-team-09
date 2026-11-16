@@ -14,6 +14,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -22,7 +23,7 @@ import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
-import { mockAssistantReply, mockRecalculation } from './assistant';
+import { mockAssistantReply, mockRecalculation, mockTap } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { LATE_WAY } from './data/late-way';
@@ -36,7 +37,8 @@ import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
 import { mockParty } from './party';
-import { mockBetterPlan, mockChangedPlanQuest, mockPlanQuest } from './plan-quest';
+import { mockBetterPlan, mockChangedPlanQuest, mockMadeQuests, mockPlanQuest } from './plan-quest';
+import { insidePrivateZone, mockPrivateZones } from './private-zones';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
@@ -44,8 +46,10 @@ import { mockRoom } from './room';
 import { mockTutorial } from './tutorial';
 import { mockWalkingRoute } from './walking-route';
 
-// The Master Switch, which the main server keeps on the User. The mock keeps it in memory: off at each start.
+// The Master Switch, which the main server keeps on the User, and whether the app asked before it was turned off. The
+// mock keeps them in memory: off and not asked at each start.
 let masterSwitchOn = false;
+let masterOffAsked = false;
 
 // The 학번, the 학적상 이름 and the 소속, which Onboarding does not ask. The mock keeps them in memory, as the switch.
 type LibraryDetails = Pick<Profile, 'studentNumber' | 'registeredName' | 'affiliation'>;
@@ -55,6 +59,7 @@ let libraryDetails = NO_LIBRARY_DETAILS;
 // For the tests: a new start of the app.
 export function forgetMockSwitch(): void {
   masterSwitchOn = false;
+  masterOffAsked = false;
   libraryDetails = NO_LIBRARY_DETAILS;
 }
 
@@ -111,7 +116,11 @@ export const mockClient: ApiClient = {
     });
   },
   enterLobby: () =>
-    answer('enterLobby', async () => ({ profile: profileOf(await onboardingAnswers()), masterSwitch: masterSwitchOn })),
+    answer('enterLobby', async () => ({
+      profile: profileOf(await onboardingAnswers()),
+      masterSwitch: masterSwitchOn,
+      masterOffAsked,
+    })),
   // The profile is the Onboarding's answers on the phone, so the next Lobby holds the change, and the library's
   // details in memory.
   updateProfile: (change) =>
@@ -130,13 +139,15 @@ export const mockClient: ApiClient = {
     }),
   // A mock build never registers for push.
   registerPushToken: () => Promise.resolve(),
-  // As the main server: refused while the switch is off, and not kept off campus, here the camera's rectangle.
+  // As the main server: refused while the switch is off, and not kept off campus, here the camera's rectangle, nor
+  // inside a Private Zone.
   uploadPosition: (position) =>
     answer('uploadPosition', () => {
       if (!masterSwitchOn) {
         throw new ApiError(409, 'MASTER_SWITCH_OFF');
       }
-      return { offCampus: !isInside(position, CAMPUS_BOUNDS) };
+      const offCampus = !isInside(position, CAMPUS_BOUNDS);
+      return { offCampus, privateZone: !offCampus && insidePrivateZone(position) };
     }),
   listFriends: () => answer('listFriends', friendships.listFriends, []),
   setFriendLevel: async (userId, level) => {
@@ -147,6 +158,21 @@ export const mockClient: ApiClient = {
   endFriendship: async (userId) => {
     await answer('endFriendship', () => {
       friendships.endFriendship(userId);
+    });
+  },
+  recordFriendsAsked: async (userIds, moment) => {
+    await answer('recordFriendsAsked', () => {
+      friendships.recordAsked(userIds, moment);
+    });
+  },
+  recordMasterOffAsked: async () => {
+    await answer('recordMasterOffAsked', () => {
+      masterOffAsked = true;
+    });
+  },
+  lowerFriendLevels: async (level) => {
+    await answer('lowerFriendLevels', () => {
+      friendships.lowerLevels(level);
     });
   },
   findFriendId: (friendId) => answer('findFriendId', () => friendships.findFriendId(friendId)),
@@ -176,7 +202,7 @@ export const mockClient: ApiClient = {
   },
   listPositions: () => answer('listPositions', friendships.listPositions, []),
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
-  listQuests: () => answer('listQuests', () => QUESTS, []),
+  listQuests: () => answer('listQuests', () => [...QUESTS, ...mockMadeQuests()], []),
   listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
   listNotifications: () => answer('listNotifications', () => [], []),
   // The User leads no Quest of the mock's.
@@ -212,6 +238,7 @@ export const mockClient: ApiClient = {
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
+  answerTap: (tapped) => answer('answerTap', () => mockTap(tapped)),
   makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
   getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
   changePlanQuest: () => answer('changePlanQuest', mockChangedPlanQuest),
@@ -223,4 +250,5 @@ export const mockClient: ApiClient = {
   ...mockEvents,
   ...mockTutorial,
   ...mockInterests,
+  ...mockPrivateZones,
 };
