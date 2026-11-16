@@ -9,6 +9,8 @@
 
 import { awayPlaceOf } from '@/features/assistant/study-area';
 import { useAskingShown } from '@/features/assistant/use-how-about';
+import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import type { CardView } from '@/features/map/adapter';
 import { useMarkPresses } from '@/features/map/use-interest-marks';
 import type { MapAvatar, MapLine } from '@/map';
@@ -65,6 +67,14 @@ export interface UnaskedCards {
 // What the map draws, what a press on it does, and what watches the touches around it.
 export type MapView = AnswerMap & { around: MapTouches };
 
+// The answer and the Lookup the map draws: those on screen while the frame is, none while it is hidden, so that the
+// map is the everyday map. They come back, with their camera, when it shows again.
+function onMap({ framed, answer, lookup }: ChatSheetControl): { answer: ShownAnswer; lookup: ShownLookup } {
+  return framed
+    ? { answer, lookup }
+    : { answer: { ...answer, answer: null, plan: null }, lookup: { ...lookup, lookup: null, reply: null } };
+}
+
 // A meal's Plan on screen whose buildings take a press ("여기면 어때?", P02 ticket 26): a press on a mark keeps its tap
 // from asking about a building and, while a building is asked about, does nothing else; the pressed building is
 // marked as on the everyday map.
@@ -101,10 +111,11 @@ export function useMapView(
   const marks = useMarkPresses(chat.chat, me, cards);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null, marks.byId);
   useViewport(chat, map, room);
-  const seats = useAwaySeats(awayPlaceOf(chat.lookup.lookup));
-  const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars, seats);
+  const drawn = onMap(chat);
+  const seats = useAwaySeats(awayPlaceOf(drawn.lookup.lookup));
+  const lookup = useLookupMap(drawn.lookup, map, room, { avatars: things.avatars, cards }, me.avatars, seats);
   const { howAbout } = chat;
-  const shown = useAskingShown(chat.answer, howAbout.point);
+  const shown = useAskingShown(drawn.answer, howAbout.point);
   const plan = useAnswerMap(shown, map, room, { avatars: things.avatars, cards }, chat.invitation);
   const answer = plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;

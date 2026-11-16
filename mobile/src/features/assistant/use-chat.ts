@@ -31,6 +31,7 @@ import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
 import { useAskApp } from './app-turn';
+import { useLetGo } from './let-go';
 
 type Tapped = NonNullable<RequestContext['tapped']>;
 
@@ -112,6 +113,8 @@ export interface Chat {
   retry: () => void;
   // 새 대화: forgets the conversation, and a reply still on its way.
   reset: () => void;
+  // 그만: takes back the question on its way, and drops its reply when it comes.
+  stop: () => void;
   // Adds the app's own bubble, which no request sends.
   addOwn: (bubble: OwnBubble) => void;
   // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
@@ -311,7 +314,7 @@ export function useChat(readContext: () => RequestContext): Chat {
   const context = useRef(readContext);
   context.current = readContext;
   const [waiting, setWaiting] = useState(false);
-  // Which conversation a reply belongs to: 새 대화 starts another, and a reply to the one before is dropped.
+  // Which conversation a reply belongs to: 새 대화 and 그만 start another, and a reply to the one before is dropped.
   const conversation = useRef(0);
   const { outcomes, finish, unfinish, rooms, showRoom, sent: roomsShown, forget } = useCardsKept();
 
@@ -345,14 +348,9 @@ export function useChat(readContext: () => RequestContext): Chat {
     ask();
   }, [ask, said, show]);
 
-  const reset = useCallback((): void => {
-    conversation.current += 1;
-    show([]);
-    forget();
-    setWaiting(false);
-  }, [forget, show]);
+  const { reset, stop } = useLetGo({ said, show }, conversation, setWaiting, forget);
   const own = useAddOwn(add);
   const askApp = useAskApp({ said, show, add }, conversation, setWaiting);
 
-  return { bubbles, waiting, send, retry, reset, ...own, askApp, outcomes, finish, unfinish, rooms, showRoom };
+  return { bubbles, waiting, send, retry, reset, stop, ...own, askApp, outcomes, finish, unfinish, rooms, showRoom };
 }

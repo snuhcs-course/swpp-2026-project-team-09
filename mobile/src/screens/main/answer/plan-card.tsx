@@ -244,7 +244,7 @@ interface PlanCardProps extends CardProps {
 }
 
 // While the band is moved over someone's busy stretch, the lines say who cannot come and why.
-function linesOf({ plan, moving }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
+export function linesOf({ plan, moving }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
   if (adding) {
     return [whoOf(answer.input.kind), plan === null ? HOW_WITHOUT_PLAN : HOW];
   }

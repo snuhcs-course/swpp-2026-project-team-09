@@ -173,14 +173,15 @@ function EverydayBottom(props: EverydayProps): ReactElement {
 // keyboard is up and nothing is asked, the examples stand above the input. A message sent from the AI input shows the
 // answer frame, which hides the rest, and the input is its card's: it stays in the same place in the tree, so that it
 // keeps the focus. While the keyboard is up, the input stands right above it. The conversation is kept while the app
-// runs. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom without the input.
+// runs: while the frame is hidden, "이전 답" in the input shows it again. A card nobody asked for, a received
+// invitation's or a made Quest's, takes the bottom without the input.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { onAnswerHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
   const { invitation, made } = unasked;
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const cardShown = invitation.shown || made.shown !== null;
-  // The open list of Friends to add takes the input's place in the answer's card, and so does 보는 중 with 그만. The
+  // The open list of Friends to add takes the input's place in the answer's card, and so do the dots with 그만. The
   // time band moved whole hides the input but keeps its room, so that the card and its lanes stay under the finger.
   const inputGone = chat.framed && (chat.answer.adding || chat.chat.waiting);
   const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
@@ -200,6 +201,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       {inputShown && !cardShown ? (
         <AiInput
           lift={lift}
+          onEarlier={chat.showAgain}
           onHeight={setInputHeight}
           placeholder={chat.framed ? '이어서 말하기' : undefined}
           restore={restoreOf(chat.chat.bubbles)}

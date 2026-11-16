@@ -29,12 +29,11 @@ import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features
 import { openPost } from '../party/post-card';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
+import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
-export interface ChatSheetControl {
+export interface ChatSheetControl extends Omit<KeptConversation, 'chat'> {
   chat: Chat;
-  // The answer frame is shown: the conversation holds something.
-  framed: boolean;
   // Where the answer frame's cards lead, and its map buttons.
   leaving: CardLeaving & { showLayer: (layer: MapLayer) => void };
   // The answer on screen and its Plan, which the map and the frame's card draw.
@@ -63,10 +62,10 @@ function openPartyForm(proposal: QuestProposal): void {
   openProposalForm(proposal, ignoreMade);
 }
 
-// A map button of the answer frame: forgets the conversation and turns its layer on.
-function forgettingFor(reset: () => void, turnOn: (layer: MapLayer) => void): (layer: MapLayer) => void {
+// A map button of the answer frame: leaves the frame and turns its layer on.
+function hidingFor(hide: () => void, turnOn: (layer: MapLayer) => void): (layer: MapLayer) => void {
   return (layer) => {
-    reset();
+    hide();
     turnOn(layer);
   };
 }
@@ -99,25 +98,26 @@ function useAnswerOnScreen(
 // The conversation, every request of which carries the context at `where` the User is, and what the answer frame
 // draws of it. A card that leads elsewhere leaves the frame as it is: an event card opens the 행사 tab at the event, as
 // the room's event does; a Quest card opens the post, as 찾기's card does; a Proposal, once made, shows 내 파티, as the
-// party form does, and its 수정, like a Restaurant card's 파티 만들기, opens that form. A map button forgets the
-// conversation and turns its layer on with `turnOn`, the map's own layers. A Lookup's "길 안내" starts the route
-// guidance with `start` and forgets the conversation once it started.
+// party form does, and its 수정, like a Restaurant card's 파티 만들기, opens that form. A map button leaves the frame
+// and turns its layer on with `turnOn`, the map's own layers. A Lookup's "길 안내" starts the route guidance with
+// `start` and leaves the frame once it started. Leaving keeps the conversation (`useKeptConversation`).
 export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, start: StartGuidance): ChatSheetControl {
   const shownNow = useRef<ShownAnswer | null>(null);
-  const { chat, ...pressing } = useContextChat(where, shownNow);
+  const { chat: said, ...pressing } = useContextChat(where, shownNow);
+  const { chat, ...kept } = useKeptConversation(said);
   const proposals = useProposalMaking();
   return {
     chat,
-    framed: chat.bubbles.length > 0 || chat.waiting,
+    ...kept,
     leaving: {
-      showLayer: forgettingFor(chat.reset, turnOn),
+      showLayer: hidingFor(kept.hide, turnOn),
       openEvent,
       openQuestPost: openPost,
       openPartyForm,
       proposals,
     },
     ...useAnswerOnScreen(chat.bubbles, where, shownNow),
-    lookup: useShownLookup(chat.bubbles, start, chat.reset),
+    lookup: useShownLookup(chat.bubbles, start, kept.hide),
     ...pressing,
   };
 }
