@@ -66,6 +66,8 @@ export interface QuestSettings {
   description?: string;
   // A Quest taken alone: never a 파티, so it is in no list or count of parties.
   takenAlone?: boolean;
+  // A seat's stay at 관정관, which is no busy time (`heldSubQuests`).
+  seatStay?: boolean;
 }
 
 @Injectable()
@@ -130,10 +132,11 @@ export class QuestsService {
     ].filter(({ subQuests }) => subQuests.some(({ ended }) => !ended));
   }
 
-  // Every Sub Quest of the stored Quests the User holds, whether it passed or not.
+  // Every Sub Quest of the stored Quests the User holds, whether it passed or not, but a seat's stay, which is no busy
+  // time: the User still eats, meets and goes out from a seat, so no planner reads it.
   async heldSubQuests(userId: string): Promise<SubQuestContent[]> {
     const quests = await this.prisma.quest.findMany({
-      where: { holders: { some: { userId } } },
+      where: { holders: { some: { userId } }, seatStay: false },
       include: QUEST_INCLUDE,
     });
     return quests.flatMap((quest) => subQuestContentsOf(quest));

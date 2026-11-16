@@ -2336,7 +2336,10 @@ number stay on the phone. A space that is
 not a seat is a 400 `NOT_A_SEAT`. The leave-by is the Quest's `leave-by` Notification for the first item of the
 User's day that starts during the stay at a Place other than 관정관, at its start minus the walk from 관정관, whatever
 the walk (`seatLeaveBy`); none when that time has passed or comes before the stay. `leaveAt` is null when none is
-kept, and a leave-by that fails to be kept never fails the stay.
+kept, and a leave-by that fails to be kept never fails the stay. The Quest is marked `seatStay`: the User's day as the
+planners read it (`heldSubQuests`, for `UserDayService.itemsOn`) leaves it out, so a seat is no busy time for the User
+or a Friend planning with them. The phone ends it with `DELETE /quests/:id` when it cancels or returns the seat, and a
+seat it never reports ends at its booked end.
 
 ## Assistant
 

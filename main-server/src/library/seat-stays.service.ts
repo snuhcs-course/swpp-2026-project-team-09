@@ -57,7 +57,7 @@ export class SeatStaysService {
     const kwanjeong = this.places.numbered(KWANJEONG_PLACE_NUMBER);
     const startsAt = startsAtOf(date, start);
     const endsAt = new Date(startsAt.getTime() + minutes * MINUTE_MS);
-    // Read before the stay is held, so that the stay is not its own next item.
+    // A seat's stay is no busy time, so the day as the planners read it holds no stay, this one included.
     const items = await this.days.itemsOn(userId, date);
     const leave =
       kwanjeong === null
@@ -77,7 +77,7 @@ export class SeatStaysService {
         },
         [userId],
         tx,
-        { capacity: ALONE_CAPACITY, takenAlone: true },
+        { capacity: ALONE_CAPACITY, takenAlone: true, seatStay: true },
       ),
     );
     this.signals.send([userId], 'quests-changed');

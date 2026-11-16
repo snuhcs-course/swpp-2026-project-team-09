@@ -105,8 +105,8 @@ async function sendBooking(booking: Booking, seat: LibrarySeat, press: Confirmed
   const info = result.bookingResultInfo;
   if (info !== undefined) {
     booking.close('booked');
-    booking.hold(space, slot);
     const made = { slot, label: seat.VNAME, bseqno: bseqnoOf(info), notes: card.notes };
+    booking.hold(space, slot, made.bseqno);
     const done = doneOf(space, made, now());
     booking.actions.addOwn({ text: done.title, done });
     return null;

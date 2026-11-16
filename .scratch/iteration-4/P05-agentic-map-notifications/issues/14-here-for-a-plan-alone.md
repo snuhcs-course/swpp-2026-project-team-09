@@ -17,11 +17,13 @@ Everything a User does alone can be a Quest held by that User alone. A meal's Pl
 - **The seat's leave-by** is for the first item of the User's day that starts during the stay at a Place other than 관정관, at its start minus the walk from 관정관: "지금 나서요", "8동까지 걸어서 4분", "15:56 나설 시각". None is kept when that time has passed or comes before the stay starts.
 - **What the seat sends.** The space, the date, the start and the minutes. The seat and the booking number stay on the phone, as every library reply does.
 - **A failure** of the stay's request never undoes the booking or changes its done message: the seat stays booked, with no Quest.
+- **No busy time.** A seat's stay (`seatStay`) is left out of the User's day as the planners read it, for the User and for Friends who plan with them: "배고파" during a seat plans as without it.
+- **A return or a cancel** of the seat on the phone ends its Quest with its leave-by (`DELETE /quests/:id`). The phone keeps which Quest a booking made, as it does for a room's booking; the server never learns the booking's number. A seat the phone never reports ends at its booked end.
 
 ## Files
 
-- Main server, new (package D's `src/library/`): `seat-stays.controller.ts`, `seat-stays.service.ts`, `seat-stays.module.ts`, `seat-leave-by.ts`, `dto/seat-stay.dto.ts`; registered in `app.module.ts`. Tests: `test/seat-leave-by.unit.test.ts`, `test/seat-stays.integration.test.ts`. README: "A seat's stay".
-- App: "여기로" in `screens/main/answer/main-buttons.tsx` and `plan-card.tsx`; the seat's call in `screens/main/library/use-seat-stay.ts` and `book-seat-card.tsx`; `makeSeatStay` in `api/seat-stay-types.ts`, `api/client.ts`, `api/server/seat-stay-client.ts`, `api/mock/seat-stays.ts`. Tests: `__tests__/answer-here-alone.integration.test.tsx`, `__tests__/answer-frame-library-seat-stay.integration.test.tsx`.
+- Main server, new (package D's `src/library/`): `seat-stays.controller.ts`, `seat-stays.service.ts`, `seat-stays.module.ts`, `seat-leave-by.ts`, `dto/seat-stay.dto.ts`; registered in `app.module.ts`. The column `Quest.seatStay` (`prisma/schema.prisma`, an additive migration), and the planners' read of the User's Sub Quests leaving it out (`quests.service.ts`'s `heldSubQuests`, agreed with package C). Tests: `test/seat-leave-by.unit.test.ts`, `test/seat-stays.integration.test.ts`, `test/seat-stay-free-time.integration.test.ts`. README: "A seat's stay".
+- App: "여기로" in `screens/main/answer/main-buttons.tsx` and `plan-card.tsx`; the seat's call in `screens/main/library/use-seat-stay.ts` and `book-seat-card.tsx`; `makeSeatStay` in `api/seat-stay-types.ts`, `api/client.ts`, `api/server/seat-stay-client.ts`, `api/mock/seat-stays.ts`; the booking's Quest kept and ended in `library/seat-stays.ts` and `screens/main/library/use-confirming.ts`. Tests: `__tests__/answer-here-alone.integration.test.tsx`, `__tests__/answer-frame-library-seat-stay.integration.test.tsx`.
 - Not here, package C's (P03 ticket 15): `use-plan-invitation.ts` (`again`), `taken-card.tsx`, the answer frame's choice of it, `plan-quest-types.ts` (`alone`), and everything in `main-server/src/plans/` and `src/quests/`.
 
 ## Must not change
@@ -37,6 +39,7 @@ Everything a User does alone can be a Quest held by that User alone. A meal's Pl
 - [x] "다시 고르기" sends `DELETE /quests/:id` and shows the Plan again; a press after it sends a new key; "닫기" guides the User to the Restaurant when they walk there.
 - [x] The push sheet is asked for at "여기로", and a Plan with a Friend still has "이대로 초대".
 - [x] **a1 → a6**: a seat in 7A 열람실 2 구역 from 14:00 with 철학개론 at 16:00 in 두산인문관 makes the Quest at 관정관 and a `leave-by` at 15:56 ("8동까지 걸어서 4분"); none with nothing during the stay; a room is refused with `NOT_A_SEAT`.
+- [x] A seat from 11:00 to 13:00 changes none of the Plans of "배고파" at 11:50, nor of a Friend's meal with the User; a returned seat's Quest and leave-by are gone, and the phone drops the Quest of the booking it returns or cancels.
 - [x] After 예약하기 the phone sends the space and the time, never the seat or the booking number; a failure leaves the booking and its done message.
 - [x] The screens are run on an Android emulator by taps ("배고파" above the input, 민수 taken out of the chips), and the pull request carries s4 and s4b. The seat changes no screen (its done message is as it was, and booking a real seat is not done for a test); its Quest and leave-by are shown by the integration test over the database.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass in both projects; and no native file changed.
@@ -54,14 +57,15 @@ The rule's eight decisions (`solo-quests/rule.md` of the orchestrating session) 
 5. **It sends the space and the time only.** The seat and the booking number stay on the phone, as the done message's test already requires (`expectNothingOfTheLibrarySent`), so the Quest is titled by the room, "관정 7층 7A 열람실 2 구역".
 6. **It is marked `takenAlone`, with capacity 1**, as package C makes a Plan taken alone: the column, not the capacity or the count of Holders, keeps it out of every list and count of parties, and the capacity keeps anyone else from entering.
 7. **A seat's leave-by is kept whatever the walk.** Board a6 keeps "15:56 나설 시각" for a walk of 4 minutes. The 5-minute rule is for a walk alone from a meal or an event, where the User sets off at once; at a seat the User is studying and needs the reminder. It uses the Quest's `leave-by` kind, so 알림 and the push read as the Leader's do.
-8. **The next item** is the first that starts during the stay at another Place than 관정관, read before the stay is stored so that the stay is not its own next item. An item at 관정관 needs no walk and is skipped.
+8. **The next item** is the first that starts during the stay at another Place than 관정관. The User's day as the planners read it leaves seat stays out (decision 12), so a stay is never its own next item. An item at 관정관 needs no walk and is skipped.
 9. **The stay's request runs beside the done message.** Board a4 shows no leave-by in it, so the message is not held for the main server, and a failure leaves the booking as it is.
 10. **No made-Quest flag.** The flag of a Quest made from a Plan is about the Friends' answers, so package C keeps none for a Quest taken alone, and the seat follows. It is on the everyday map as the User's own Quest with a Place, worded "퀘스트" with 길찾기, and in 알림 through its leave-by. The plan line above the input stays out (rule 8).
-11. **Cancelling or returning the seat** does not end its Quest in this ticket; it ends at the booking's end as other Quests do. Ending it there needs the booking's time matched to the Quest, which is a follow-up.
+11. **A returned or cancelled seat ends its Quest, with its leave-by** (changed in review, 2026-11-16). A Quest that says the User is at a seat they gave back is false. Only the phone knows of the return, so it keeps, beside a room booking's map, which Quest each seat booking made, and calls `DELETE /quests/:id` after the library's cancel or return; the server never learns the booking's number. A repeat after a failed call ends it later, and a Quest already gone counts as ended. A seat the phone never reports (the kiosk's automatic return, the library's own site, another phone) ends at its booked end, as other Quests do.
+12. **A seat's stay is no busy time** (review of PR 336, 2026-11-16). A person at a reading-room seat still eats, meets and goes to an event, and comes back to the seat, and the seat's own scene expects items during the stay (the leave-by for the 16:00 Class at 15:56). Stored as an ordinary Sub Quest, a 2-hour seat at 11:00 left "배고파" at 12:00 no Plan before 13:00, made the User busy for any Friend planning with them, and, past 3 hours, blocked only its first 30 minutes. So the column `Quest.seatStay` marks it, and the planners' read of the User's Sub Quests (`heldSubQuests`, read only by `UserDayService.itemsOn`) leaves it out, whatever its length.
 
 ### Agent usage (2026-11-16)
 
 The rework of this ticket on 2026-11-16 (the parked branch's first build is not counted here). Estimates from the session transcript, gaps of 5 minutes or more left out:
 
-- Agent time: about 54 minutes, in one session (package D's), no subagents.
-- Tokens: output 178,884; input 99,163,287, of which 98,684,087 cache reads, 478,590 cache writes and 610 uncached.
+- Agent time: about 69 minutes, in one session (package D's), no subagents, the review's fix included.
+- Tokens: output 220,353; input 135,505,688, of which 134,954,796 cache reads, 550,142 cache writes and 750 uncached.

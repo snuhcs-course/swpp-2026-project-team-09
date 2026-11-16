@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useState } from 'react';
 import { library } from '@/library/library';
 import type { LibraryBooking } from '@/library/replies';
 import { reportRoomCancelled } from '@/library/room-bookings';
+import { endSeatStay } from '@/library/seat-stays';
 import { libraryMessage, type PendingMark, useWrite, type Write } from './use-library-call';
 
 // The words and the confirm of a cancel or a return, which a cancel or a return card and a row of 내 예약 share.
@@ -56,8 +58,10 @@ export function useConfirming(
           message: message === '' ? ACT_WORDS[act].failed : `${ACT_WORDS[act].failed}: ${message}`,
         };
       }
-      // A room booked through a room request: the server is told, so that its booking party stops blocking the day.
+      // A room booked through a room request: the server is told, so that its booking party stops blocking the day; a
+      // seat's stay ends with it (P05-14).
       await reportRoomCancelled(booking.BSEQNO);
+      await endSeatStay(booking.BSEQNO);
       setOutcome('done');
       if (reloadAfter) {
         reload();

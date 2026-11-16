@@ -9,8 +9,12 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
+import { libraryCard } from '@/api/mock/data/library';
+import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import {
   askForCards,
+  bookingRow,
+  card,
   expectNothingOfTheLibrarySent,
   expectNoWrite,
   inCard,
@@ -40,6 +44,9 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const SEAT_TEST_ID = `library-book-${SEAT_CARD.library.key}`;
 const STAY = 'POST /library/seat-stays';
+const RETURN = card(libraryCard('return:-', 'return', { target: {} }));
+// The stay's Quest as the main server answers it, taken alone at 관정관.
+const STAY_QUEST = { ...PLAN_QUEST.quest, id: '5f0c1d2e-3a4b-4c5d-8e6f-7a8b9c0d1e2f', capacity: 1, takenAlone: true };
 
 let server: FakeServer;
 let library: FakeLibrary;
@@ -81,5 +88,37 @@ describe('the stay of a seat booked', () => {
 
     expect(library.writes()).toHaveLength(1);
     expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
+  });
+});
+
+// Partitions: a seat booked and then returned, and a booking of no stay returned. Expected values: the stay's Quest
+// dropped by its id, which only the phone ties to the booking; nothing for another booking.
+describe('A seat returned', () => {
+  it("ends the stay's Quest that the booking made", async () => {
+    server.on(STAY, { status: 201, body: { quest: STAY_QUEST, leaveAt: null } });
+    server.on(`DELETE /quests/${STAY_QUEST.id}`, { status: 204 });
+    await askForCards({ server, library }, [SEAT_CARD]);
+    await pressIn(inCard(SEAT_TEST_ID), '예약하기');
+    await pass(500);
+    library.addBooking(
+      bookingRow({ BSEQNO: 2000001, STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 17:00:00' }),
+    );
+
+    await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
+    await pressIn(inCard(`library-return-${RETURN.library.key}`), '반납하기');
+    await pass(500);
+
+    expect(server.received(`DELETE /quests/${STAY_QUEST.id}`)).toHaveLength(1);
+    expectNothingOfTheLibrarySent(server, ['7193', '2000001']);
+  });
+
+  it('drops no Quest for a booking that made none', async () => {
+    library.addBooking(bookingRow({ STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' }));
+    await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
+
+    await pressIn(inCard(`library-return-${RETURN.library.key}`), '반납하기');
+    await pass(500);
+
+    expect(server.received().filter(({ method }) => method === 'DELETE')).toEqual([]);
   });
 });
