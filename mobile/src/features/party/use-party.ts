@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ import {
 import type { CompanionSeeker, OfficialRecruiting, ShownQuestInvitation } from '@/api/quest-parts-types';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { Board, Quest } from '@/api/types';
+import type { MyJoinRequest } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
 import { declinedPartiesQuery } from '@/features/parties/declined';
@@ -210,6 +212,12 @@ export function useMineCards(): ScreenData<MineCardView[]> {
 export function useInvitations(): ScreenData<ShownQuestInvitation[]> {
   const invitations = useQuery(questInvitationsQuery);
   return combined([invitations], () => invitations.data ?? []);
+}
+
+// 보낸 신청: the User's waiting requests to join, the newest first, wherever they were sent, a chat card included.
+export function useSentRequests(): ScreenData<MyJoinRequest[]> {
+  const requests = useQuery(myJoinRequestsQuery);
+  return combined([requests], () => requests.data ?? []);
 }
 
 // The tabs' counts: the User's Quests but the Class Quests, and what waits under 초대, the Quest invitations. 0 while
