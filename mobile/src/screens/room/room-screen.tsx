@@ -135,7 +135,7 @@ function goingAsk(room: RoomView, actions: RoomActions, onLeft: () => void): Ask
       body: '퀘스트가 사라져요.',
       confirm: '퀘스트 없애기',
       danger: true,
-      onConfirm: () => void actions.endQuest(room.quest.id, party).then(leave),
+      onConfirm: () => void actions.endQuest(room.quest.id, party, true).then(leave),
     };
   }
   return room.leads
@@ -186,7 +186,8 @@ interface BodyProps {
 }
 
 // The frame's order: the head, the activation, the event card, 일정, 신청, 멤버, 초대 중 and 파티 채팅. A Quest taken
-// alone has no Party to switch on and no 파티 채팅: either would show it to Friends.
+// alone has no Party to switch on and no 파티 채팅, either of which would show it to Friends, and no 멤버, as the User is
+// its one Holder.
 function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
   const walks = useWalkingTimes(room, open);
   const party = !heldAlone(room.quest);
@@ -197,11 +198,16 @@ function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
       {room.quest.globalEvent === null ? null : <RoomEvent event={room.quest.globalEvent} />}
       <PlanSection actions={actions} room={room} />
       <RequestsSection actions={actions} room={room} />
-      <MembersSection actions={actions} room={room} walks={walks} />
+      {party ? <MembersSection actions={actions} room={room} walks={walks} /> : null}
       <InvitationsSection actions={actions} room={room} />
       {party ? <PartyChat questId={room.quest.id} /> : null}
     </View>
   );
+}
+
+// The app bar's title, once the room is read: a Quest taken alone is a 퀘스트, any other a 파티.
+function titleOf(room: RoomView): string {
+  return heldAlone(room.quest) ? '퀘스트' : '파티';
 }
 
 // A Quest's room, the frame's `PartyDetail`: what the Holders plan, who comes and whether the Quest's Party runs.
@@ -234,7 +240,7 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
       actions={room === undefined ? undefined : <RecruitingActions room={room} />}
       footerHidesForKeyboard
       leave={{ kind: 'back', onPress: leaveRoom }}
-      title={room !== undefined && heldAlone(room.quest) ? '퀘스트' : '파티'}
+      title={room === undefined ? '' : titleOf(room)}
     >
       {room === undefined ? null : <Body actions={actions} onAsk={setAsk} open={open} room={room} />}
       {room === undefined && isPending ? <LoadingState /> : null}

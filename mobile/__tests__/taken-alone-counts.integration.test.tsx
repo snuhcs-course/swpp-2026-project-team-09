@@ -14,11 +14,11 @@ import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
-import { answerRoom, openRoom, PICNIC } from './support/room';
+import { answer, answerRoom, openRoom, PICNIC, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// A Quest taken alone (P03 ticket 17) beside the User's 비공개 파티, against the fake main server: no count of parties
-// counts it, and its room offers no 수정, which would invite or recruit into it.
+// A Quest taken alone (P03 tickets 17 and 19) beside the User's 비공개 파티, against the fake main server: no count of
+// parties counts it, and its room offers no 수정, which would invite or recruit into it, and says no 파티 word.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -99,5 +99,38 @@ describe('the room of a Quest taken alone', () => {
 
     expect(screen.getByText('퀘스트를 없앨까요?')).toBeVisible();
     expect(screen.getByText('퀘스트가 사라져요.')).toBeVisible();
+  });
+});
+
+// Partitions: the read room, the room once ended, and the room while it is read. Expected values: the decisions on the
+// read of PR 339 (4): no 멤버 and so no 파티장, "퀘스트를 없앴어요", and no title until the room is read.
+describe("the room of a Quest taken alone, in a 퀘스트's words", () => {
+  it('shows no 멤버, so no 파티장', async () => {
+    await openRoom(TAKEN);
+
+    expect(screen.getByRole('header', { name: '퀘스트' })).toBeVisible();
+    expect(screen.queryByLabelText('멤버')).toBeNull();
+    expect(screen.queryByText('파티장')).toBeNull();
+  });
+
+  it('says "퀘스트를 없앴어요" once ended', async () => {
+    server.on(`POST /quests/${TAKEN.id}/end`, { status: 204 });
+    const user = await openRoom(TAKEN);
+
+    await user.press(screen.getByRole('button', { name: '퀘스트 없애기' }));
+    await answer(user, '퀘스트 없애기');
+
+    expect(server.received(`POST /quests/${TAKEN.id}/end`)).toHaveLength(1);
+    expect(toast()).toHaveTextContent('퀘스트를 없앴어요');
+    expect(toast()).not.toHaveTextContent('파티');
+  });
+
+  it('has no title until the room is read', async () => {
+    server.on(`GET /quests/${TAKEN.id}`, { status: 200, body: TAKEN, afterMs: 3000 });
+    await openRoom(TAKEN);
+
+    expect(screen.queryByRole('header', { name: '파티' })).toBeNull();
+    await pass(3000);
+    expect(screen.getByRole('header', { name: '퀘스트' })).toBeVisible();
   });
 });

@@ -43,6 +43,9 @@ const ASKED = '오늘 볼 만한 거 있어?';
 const CULTURE_HALL = { latitude: 37.46159, longitude: 126.95104 };
 const TAKEN = takenAloneOf(firstPlan(EVENTS_ANSWER), { id: ASKER, name: '유상', department: '컴퓨터공학부' });
 const DROP = `DELETE /quests/${TAKEN.quest.id}`;
+// The Quest once the party form made it a 파티 for the job fair.
+const GATHERING = { ...TAKEN.quest, takenAlone: false, capacity: 4 };
+const NOT_DROPPED = '다시 고르지 못했어요. 잠시 후 다시 시도해 주세요';
 
 let server: FakeServer;
 
@@ -67,6 +70,22 @@ async function takeJobFair(): Promise<Awaited<ReturnType<typeof sayOnMap>>> {
   await user.press(card().getByRole('button', { name: '여기로' }));
   await pass(500);
   return user;
+}
+
+// The party form made the Quest a 파티, and the main server tells the phone.
+async function gathered(): Promise<void> {
+  await socketServer((socket) => {
+    socket.accept();
+  });
+  server.on('GET /quests', { status: 200, body: [GATHERING] });
+  await socketServer((socket) => {
+    socket.send('quests-changed');
+  });
+  await pass(500);
+}
+
+function keysSent(): (string | undefined)[] {
+  return server.received('POST /plans').map(({ idempotencyKey }) => idempotencyKey);
 }
 
 // Partitions: the request; the card after it.
@@ -141,7 +160,7 @@ describe('the card of an event taken alone', () => {
     await pass(500);
 
     expect(card().getByTestId('taken-card')).toBeVisible();
-    expect(screen.getByText('다시 고르지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
+    expect(screen.getByText(NOT_DROPPED)).toBeVisible();
   });
 });
 
@@ -157,7 +176,7 @@ describe('an event taken alone, refused or gone', () => {
 
     expect(card().queryByTestId('taken-card')).toBeNull();
     expect(card().getByRole('button', { name: '여기로' })).toBeEnabled();
-    expect(screen.queryByText('다시 고르지 못했어요. 잠시 후 다시 시도해 주세요')).toBeNull();
+    expect(screen.queryByText(NOT_DROPPED)).toBeNull();
   });
 
   it('"여기로" refused for a 파티 of the User\'s own for the event says so', async () => {
@@ -169,38 +188,61 @@ describe('an event taken alone, refused or gone', () => {
   });
 });
 
-// Partitions: a taken card whose Quest the party form made a 파티 since; "여기로" pressed again after a refusal.
-// Expected values: the review of PR 338 (B and D).
+// Partitions: a taken card whose Quest the party form made a 파티 since, and "여기로" after it. Expected values: the
+// review of PR 338 (B), and the decision on the read of PR 339 (2).
 describe('a taken card, later', () => {
   it('goes once its Quest is a 파티, and the 파티 is not dropped', async () => {
     server.on(DROP, { status: 204 });
     await takeJobFair();
-    await socketServer((socket) => {
-      socket.accept();
-    });
 
-    server.on('GET /quests', { status: 200, body: [{ ...TAKEN.quest, takenAlone: false, capacity: 4 }] });
-    await socketServer((socket) => {
-      socket.send('quests-changed');
-    });
-    await pass(500);
+    await gathered();
 
     expect(card().queryByTestId('taken-card')).toBeNull();
     expect(card().getByRole('button', { name: '여기로' })).toBeEnabled();
     expect(server.received(DROP)).toEqual([]);
   });
 
-  it('a refused "여기로" asks anew, with another key', async () => {
-    server.on('POST /plans', refusal(409, 'SHARED_QUEST_HELD'));
+  it('goes with the key, so "여기로" then asks anew and hears the 파티', async () => {
     const user = await takeJobFair();
-    server.on('POST /plans', { status: 201, body: TAKEN });
+    await gathered();
+    server.on('POST /plans', refusal(409, 'SHARED_QUEST_HELD'));
 
     await user.press(card().getByRole('button', { name: '여기로' }));
     await pass(500);
 
-    const keys = server.received('POST /plans').map(({ idempotencyKey }) => idempotencyKey);
+    const keys = keysSent();
     expect(keys).toHaveLength(2);
     expect(keys[1]).not.toBe(keys[0]);
+    expect(screen.getByText('이 행사에 함께 가는 파티가 이미 있어요')).toBeVisible();
+  });
+});
+
+// Partitions: the User's Quests read at "다시 고르기" show the Quest a 파티 the phone was not told of yet, or cannot be
+// read. Expected values: the decision on the read of PR 339 (3): the Quests read first, and no DELETE either way.
+describe('"다시 고르기" on a taken card', () => {
+  it('reads the Quests first, and only clears the card of a Quest that is a 파티 by now', async () => {
+    server.on(DROP, { status: 204 });
+    const user = await takeJobFair();
+    server.on('GET /quests', { status: 200, body: [GATHERING] });
+
+    await user.press(card().getByRole('button', { name: '다시 고르기' }));
+    await pass(500);
+
+    expect(server.received(DROP)).toEqual([]);
+    expect(card().queryByTestId('taken-card')).toBeNull();
+    expect(card().getByRole('button', { name: '여기로' })).toBeEnabled();
+  });
+
+  it('drops nothing and says so when the Quests cannot be read', async () => {
+    server.on(DROP, { status: 204 });
+    const user = await takeJobFair();
+    server.on('GET /quests', { status: 500, body: { statusCode: 500, message: 'Internal' } });
+
+    await user.press(card().getByRole('button', { name: '다시 고르기' }));
+    await pass(500);
+
+    expect(server.received(DROP)).toEqual([]);
     expect(card().getByTestId('taken-card')).toBeVisible();
+    expect(screen.getByText(NOT_DROPPED)).toBeVisible();
   });
 });
