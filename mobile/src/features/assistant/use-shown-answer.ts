@@ -15,7 +15,7 @@ import { withPerson } from './plan-input';
 import type { Stretch } from './time-band';
 import type { ChatBubble } from './use-chat';
 
-// A drag of a handle, or of the band's body, which moves it whole.
+// A drag of a handle, or of the band's lanes, which moves it whole.
 type ChangeBy = 'drag' | 'move';
 
 export interface ShownAnswer {
@@ -48,7 +48,7 @@ export interface ShownAnswer {
   // The band of the Plan shown before the last drag, while "되돌리기" can bring that answer back.
   ghost: Stretch | null;
   undo: () => void;
-  // The band's place while its body is dragged, and after it is let go until the recalculation it asked for ends; the
+  // The band's place while it is dragged whole, and after it is let go until the recalculation it asked for ends; the
   // input gives way to it.
   moving: Stretch | null;
   setMoving: (at: Stretch | null) => void;
