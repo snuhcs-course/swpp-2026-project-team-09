@@ -60,6 +60,35 @@ export function withAwaySeats(scene: MapScene, seats: AwaySeats | null): MapScen
   return { ...scene, flags };
 }
 
+// The rooms open only to others at one building as one faded mark, named after the first ("{space} · {to whom} 외 N"):
+// the server sends one `dropped` place per room, all at the building's point, and the map draws one mark a point.
+export function oneMarkPerBuilding(scene: MapScene): MapScene {
+  const rooms = new Map<string, number>();
+  for (const { place, role } of scene.places) {
+    if (role === 'dropped') {
+      rooms.set(place.label, (rooms.get(place.label) ?? 0) + 1);
+    }
+  }
+  const seen = new Set<string>();
+  const places = scene.places.flatMap((item) => {
+    if (item.role !== 'dropped') {
+      return [item];
+    }
+    if (seen.has(item.place.label)) {
+      return [];
+    }
+    seen.add(item.place.label);
+    const more = (rooms.get(item.place.label) ?? 1) - 1;
+    return [more === 0 || item.tag === null ? item : { ...item, tag: `${item.tag} 외 ${String(more)}` }];
+  });
+  return { ...scene, places };
+}
+
+// A `study` Lookup's scene as the map draws it: one faded mark a building, and the free seats on the flag to 관정.
+export function studyScene(lookup: Lookup, seats: AwaySeats | null): MapScene {
+  return lookup.kind === 'study' ? withAwaySeats(oneMarkPerBuilding(lookup.scene), seats) : lookup.scene;
+}
+
 // The Place a `study` Lookup's `away` flag points to, or null.
 export function awayPlaceOf(lookup: Lookup | null): string | null {
   if (lookup?.kind !== 'study') {

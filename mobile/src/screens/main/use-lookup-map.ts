@@ -8,11 +8,10 @@
 import { useMemo } from 'react';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
-import { awayPlaceOf, studyDrawing, withAwaySeats } from '@/features/assistant/study-area';
+import { type AwaySeats, studyDrawing, studyScene } from '@/features/assistant/study-area';
 import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
 import type { Room } from './layout';
-import { useAwaySeats } from './library/use-away-seats';
 import {
   ANSWER_LIMITS,
   type AnswerMap,
@@ -47,23 +46,23 @@ function useUnselected(avatars: readonly MapAvatar[]): MapAvatar[] {
 // and lines. The everyday Friends' Avatars stay but for those it draws, none with a "+": a Lookup is not recalculated,
 // so nothing on the map takes a press. The User's own Avatar (`mine`) stays when the Lookup does not draw the User, as
 // for a Friend. The camera follows the conversation's last reply, but for a `study` Lookup, which outlines the area
-// its request sent where the User left the camera, its flag to 관정 with the free seats the phone read. Null while no
-// Lookup is shown.
+// its request sent where the User left the camera, one faded mark a building, and its flag to 관정 with the free
+// `seats` the phone read. Null while no Lookup is shown.
 export function useLookupMap(
   { lookup, reply }: ShownLookup,
   map: MainMap,
   room: Room,
   everyday: EverydayAvatars,
   mine: readonly MapAvatar[],
+  seats: AwaySeats | null = null,
 ): AnswerMap | null {
-  const seats = useAwaySeats(awayPlaceOf(lookup));
   const area = reply?.area ?? null;
   const draw = useMemo(
     () =>
       lookup === null
         ? null
         : (view: LabelView | null): AnswerDrawing =>
-            studyDrawing(drawingOfScene(withAwaySeats(lookup.scene, seats), view), lookup, area),
+            studyDrawing(drawingOfScene(studyScene(lookup, seats), view), lookup, area),
     [lookup, seats, area],
   );
   const framing = useFraming(map, room, true);

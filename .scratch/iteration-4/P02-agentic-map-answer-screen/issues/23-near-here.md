@@ -45,6 +45,8 @@ Details the ticket left open, listed so that any of them can be vetoed.
 6. **The mock** points the stored a9 copy's `away` flag at the mock layer's 관정관 (`place-62-1`), so that the phone's seat read finds its sectors on the mock; the stored server copy is unchanged.
 7. **The request context** moved out of `chat-sheet.tsx` into `use-context-chat.ts` (the file's 300-line limit); what was pressed and the visible area are kept in one ref.
 8. **The board's words**: the line reads the server's building name, "보는 범위에선 **공대 신양학술정보관**" (P05-11 decision 3), and the faded rooms read their stored names and labels ("해동학술정보실 · 전기·정보공학부·컴퓨터공학부", "화생공 해동학술정보실·학생라운지 · 화학생물공학부").
+9. **One faded mark a building** (from the review): the server sends one `dropped` place per restricted room, all at the building's point; the app draws a building's rooms as one faded mark named after the first, the others counted ("… 외 2"), so no two marks share an id. Board a9 has one room a building and is unchanged.
+10. **The seat read sits in the map view** (from the review): `useMapView` reads the free seats and gives them to `useLookupMap`, which needs no library session.
 
 ### Checked on an emulator (2026-11-16)
 
