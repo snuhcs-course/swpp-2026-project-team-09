@@ -9,87 +9,18 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useRef } from 'react';
-import { Keyboard, Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import type { ReactElement, ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 import type { MapLayer, QuestProposal } from '@/api/assistant-types';
-import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
+import { Button, type IconName, space } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { type CardActions, Cards, type ProposalActions } from './chat-cards';
-import { ChatMarkdown } from './chat-markdown';
 import { ChatProposalCard } from './chat-proposal-card';
 import type { LibraryDone } from '@/library/cards/done';
 import { LibraryDoneRows } from './library/library-done';
-
-// The examples of the empty chat, each with its icon on its layer's colour. They replace the frame's library seats,
-// and 파티 찾기 takes the Party's colour. A press sends the words.
-const CHAT_EXAMPLES: readonly { words: string; icon: IconName; tint: string }[] = [
-  { words: '식사 메뉴 추천', icon: 'meal', tint: color.svcDining },
-  { words: '현재 통학/순환 셔틀 위치', icon: 'bus', tint: color.svcShuttle },
-  { words: '파티 찾기', icon: 'users', tint: color.party },
-];
-
-// What a chat's scroll view holds, filling it: a press on it that nothing in it takes puts the keyboard down. It lies
-// inside the scroll view, not around it: on Android a JS responder around a scroll view takes the drag from it.
-function Dismissing({ style, children }: { style: StyleProp<ViewStyle>; children: ReactNode }): ReactElement {
-  return (
-    <Pressable
-      accessible={false}
-      onPress={() => {
-        Keyboard.dismiss();
-      }}
-      style={style}
-    >
-      {children}
-    </Pressable>
-  );
-}
-
-interface ChatEmptyProps {
-  onSend: (text: string) => void;
-  // How far from the sheet's bottom the content ends, clear of the AI input.
-  under: number;
-}
-
-// The empty chat: the greeting, where what the User writes goes, and the examples as rows. A drag puts the keyboard
-// down, and so does a press that no example takes; a press on an example sends it at once, keyboard up or not.
-export function ChatEmpty({ onSend, under }: ChatEmptyProps): ReactElement {
-  return (
-    <ScrollView
-      contentContainerStyle={[styles.fill, { paddingBottom: under }]}
-      keyboardDismissMode="on-drag"
-      keyboardShouldPersistTaps="handled"
-      testID="chat-empty"
-    >
-      <Dismissing style={styles.empty}>
-        <Text accessibilityRole="header" style={styles.greeting}>
-          무엇을 도와드릴까요?
-        </Text>
-        <Text style={styles.notice}>대화 내용은 AI 제공자에게 전송돼요</Text>
-        <View style={styles.examples}>
-          {CHAT_EXAMPLES.map(({ words, icon, tint }) => (
-            <Pressable
-              accessibilityLabel={words}
-              accessibilityRole="button"
-              key={words}
-              onPress={() => {
-                onSend(words);
-              }}
-              style={({ pressed }) => [styles.example, pressed && styles.examplePressed]}
-            >
-              <View style={[styles.exampleIcon, { backgroundColor: tint }]}>
-                <Icon color={color.onPrimary} name={icon} size={18} />
-              </View>
-              <Text style={styles.exampleText}>{words}</Text>
-              <Icon color={color.inkMuted} name="chevronRight" size={18} />
-            </Pressable>
-          ))}
-        </View>
-      </Dismissing>
-    </ScrollView>
-  );
-}
 
 // The map button of each layer, with the layer's own icon.
 const MAP_BUTTONS: Record<MapLayer, { label: string; icon: IconName }> = {
@@ -186,133 +117,7 @@ export function BubbleParts({
   );
 }
 
-type BubbleProps = Omit<BubblePartsProps, 'words'>;
-
-function Bubble({ bubble, onRetry, onShowLayer, cardActions }: BubbleProps): ReactElement {
-  const mine = bubble.role === 'user';
-  return (
-    <View
-      style={[styles.bubble, mine ? styles.mine : styles.theirs]}
-      testID={mine ? 'user-bubble' : 'assistant-bubble'}
-    >
-      <BubbleParts
-        bubble={bubble}
-        cardActions={cardActions}
-        onRetry={onRetry}
-        onShowLayer={onShowLayer}
-        words={
-          // The model writes markdown, and the Assistant's bubbles render it; the User's words are shown as typed.
-          mine ? (
-            <Text style={[styles.words, styles.mineWords]}>{bubble.text}</Text>
-          ) : (
-            <ChatMarkdown style={styles.words} text={bubble.text} />
-          )
-        }
-      />
-    </View>
-  );
-}
-
-interface ChatBubblesProps {
-  bubbles: readonly ChatBubble[];
-  waiting: boolean;
-  onRetry: () => void;
-  // A map button: shows that layer on the map.
-  onShowLayer: (layer: MapLayer) => void;
-  // What the cards of the answers do.
-  cardActions: CardActions;
-  // How far from the sheet's bottom the last bubble ends, clear of the AI input.
-  under: number;
-}
-
-// The conversation: the User's bubbles at the right, the Assistant's at the left, and "···" while the Assistant
-// works. It keeps the latest in view. A drag puts the keyboard down, and so does a press that no button takes; a press
-// on a button sends it at once, keyboard up or not.
-export function ChatBubbles(props: ChatBubblesProps): ReactElement {
-  const { bubbles, waiting, onRetry, onShowLayer, cardActions, under } = props;
-  const scroller = useRef<ScrollView>(null);
-  return (
-    <ScrollView
-      contentContainerStyle={[styles.fill, { paddingBottom: under }]}
-      keyboardDismissMode="on-drag"
-      keyboardShouldPersistTaps="handled"
-      onContentSizeChange={() => {
-        scroller.current?.scrollToEnd({ animated: true });
-      }}
-      ref={scroller}
-      testID="chat-bubbles"
-    >
-      <Dismissing style={styles.bubbles}>
-        {bubbles.map((bubble, index) => (
-          <Bubble
-            bubble={bubble}
-            cardActions={cardActions}
-            key={bubble.id}
-            onRetry={bubble.failure === 'unavailable' && index === bubbles.length - 1 && !waiting ? onRetry : null}
-            onShowLayer={onShowLayer}
-          />
-        ))}
-        {waiting ? (
-          <View accessibilityLabel="답변을 기다리는 중" style={[styles.bubble, styles.theirs]} testID="waiting-bubble">
-            <Text style={styles.waiting}>···</Text>
-          </View>
-        ) : null}
-      </Dismissing>
-    </ScrollView>
-  );
-}
-
-// The frame's corners: 16, and 6 at the corner toward the speaker.
-const TAIL = 6;
-const EXAMPLE_ICON = 36;
-
 const styles = StyleSheet.create({
-  // A chat's scroll view: what it holds fills it, so that a press below the last of it puts the keyboard down too.
-  fill: { flexGrow: 1 },
-  empty: { flexGrow: 1, gap: space[3], paddingTop: space[4], paddingHorizontal: space[4] },
-  greeting: { ...text.titleLg, color: color.ink },
-  notice: { ...text.caption, marginTop: -space[2], color: color.inkMuted },
-  examples: { gap: space[2] },
-  example: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    minHeight: 56,
-    paddingVertical: space[2],
-    paddingHorizontal: 14,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: color.border,
-    backgroundColor: color.surface,
-  },
-  examplePressed: { backgroundColor: color.blue50 },
-  exampleIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: EXAMPLE_ICON,
-    height: EXAMPLE_ICON,
-    borderRadius: radius.md,
-  },
-  exampleText: { flex: 1, fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
-  bubbles: { flexGrow: 1, gap: space[3], paddingTop: space[2], paddingHorizontal: space[4] },
-  bubble: { paddingVertical: space[3], borderRadius: radius.lg },
-  mine: {
-    alignSelf: 'flex-end',
-    maxWidth: '84%',
-    paddingHorizontal: space[4],
-    borderBottomRightRadius: TAIL,
-    backgroundColor: color.snuBlue,
-  },
-  theirs: {
-    alignSelf: 'flex-start',
-    maxWidth: '92%',
-    paddingHorizontal: 14,
-    borderBottomLeftRadius: TAIL,
-    backgroundColor: color.blue50,
-  },
-  words: { ...text.bodyLg, color: color.ink },
-  mineWords: { color: color.onPrimary },
   // 다시 시도 and the map buttons.
   below: { marginTop: space[2] },
-  waiting: { ...text.bodyLg, fontFamily: font.bold, letterSpacing: 3.2, color: color.inkMuted },
 });

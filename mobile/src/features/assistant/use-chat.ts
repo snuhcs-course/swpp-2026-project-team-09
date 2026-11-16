@@ -71,9 +71,9 @@ export interface ChatBubble {
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
-// booked, cancelled, returned or was dismissed never offers its button again when the sheet opens anew.
+// booked, cancelled, returned or was dismissed never offers its button again when it is drawn anew.
 export interface CardOutcome {
-  // `pending` from the confirm press until the library answers, so that a sheet opened anew meanwhile offers no
+  // `pending` from the confirm press until the library answers, so that a card drawn anew meanwhile offers no
   // button; the card clears it when the write fails.
   kind: 'pending' | 'booked' | 'declined' | 'cancelled' | 'returned' | 'stopped';
   words: string;
