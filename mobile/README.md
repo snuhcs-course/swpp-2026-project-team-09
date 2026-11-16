@@ -508,7 +508,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. Of the Global Events, only Favorite Events
   and those held today in Korea stand on the map, an event of several days only on its first and last day
-  (`src/features/map/event-pins.ts`); the others are in the 행사 tab only. A Favorite Event is the official pin with a
+  (`src/features/map/event-pins.ts`); the others are in the 행사 tab only, unless the interest marks keep them: once
+  the main server answers the matches, every event goes to the marks, which keep one mark per place for what matches
+  a watched interest, with "!" on what is new (`src/features/map/interest-marks.ts`). A Favorite Event is the official pin with a
   filled star at every zoom, and so is a place one of whose events is one. A short name is the title cut at a word's end within 8 characters,
   counted in whole characters, so that an emoji is never cut. A given name is the name without its first syllable for
   a Korean name of three syllables, and the whole name otherwise (`src/features/map/short-name.ts`). A marker is read as the wireframe reads it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어

@@ -115,7 +115,6 @@
   "__tests__/design-system/text-field.unit.test.tsx": 2.0,
   "__tests__/design-system/toast.unit.test.tsx": 2.0,
   "__tests__/dining-layer.integration.test.tsx": 62.3,
-  "__tests__/events-matching.integration.test.tsx": 93.6,
   "__tests__/events-party-form.integration.test.tsx": 88.2,
   "__tests__/events-recruiting.integration.test.tsx": 140.0,
   "__tests__/events-tab.integration.test.tsx": 80.9,
