@@ -11,6 +11,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -165,6 +166,11 @@ export interface Position {
   // At 'building' the User sees only the Place the Friend is in: the point is the Place's own, and `placeId` names it.
   level?: 'building' | 'exact';
   placeId?: string;
+  // Only GET /positions gives these two; the socket's `position` does not. The name of the Place nearest the Friend,
+  // and the walk to it in minutes from the Place nearest the User's own last position, by the main server's walking
+  // table: 0 when both are the same Place. Null when the main server does not know it.
+  nearPlace?: string | null;
+  walkMinutes?: number | null;
 }
 
 // POST /positions: the User's own position. `accuracy` is the radius in metres the phone places itself within, and
@@ -183,7 +189,8 @@ export interface PositionKept {
   privateZone?: boolean;
 }
 
-export type Presence = 'free' | 'class' | 'moving' | 'off';
+// `on` is a Friend the User can see who has no status: all the main server says is that the position is shared.
+export type Presence = 'free' | 'class' | 'moving' | 'on' | 'off';
 
 // The app's own: what the frame's friend list and card show and no answer holds.
 export interface FriendStatus {
@@ -264,7 +271,7 @@ export interface QuestMember {
 
 // --- What is on the map ---
 
-// GET /global-events: the published Global Events that have not ended, by their start.
+// A published Global Event, as the Assistant's cards carry it, and the list without what is the User's own.
 export interface GlobalEvent {
   id: string;
   title: string;
@@ -276,6 +283,14 @@ export interface GlobalEvent {
   latitude: number;
   longitude: number;
   sourceUrl: string | null;
+}
+
+// GET /global-events: the published Global Events that have not ended, by their start, with what is the User's own.
+export interface ListedGlobalEvent extends GlobalEvent {
+  // When it was published; null for one published before the main server recorded it.
+  publishedAt: string | null;
+  // The User starred it: a Favorite Event, which stays on the map until it ends.
+  favorite: boolean;
 }
 
 export type JoinPolicy = 'open' | 'approval' | 'closed';
@@ -316,16 +331,6 @@ export interface MyParty {
   sharing: boolean;
   // In the order they joined, the User among them.
   members: { id: string; name: string; department: string; leader: boolean; visible: boolean }[];
-}
-
-// The app's own: what the main screen's "오늘의 발자국" shows, which no answer of the main server holds. The `Main`
-// frame counts the people who left a story today, the User left out, and draws the faces of the first three by the
-// time of their story.
-export interface Footprints {
-  // How many Friends left a story today.
-  friendCount: number;
-  // The first three of them. A photo is an image address; null shows the name's letters.
-  faces: { userId: string; name: string; photo: string | null }[];
 }
 
 // --- Timetable (GET /timetable/classes) and Places (GET /places) ---

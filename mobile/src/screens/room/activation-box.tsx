@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -14,6 +15,7 @@ import { useMasterSwitch } from '@/features/sharing/use-master-switch';
 import type { OtherParty, RoomView } from '@/features/quests/room-adapter';
 import { opensParty } from '@/features/quests/rules';
 import { myUserId } from '@/auth/sign-in';
+import { MasterOffLine } from '../master-off-line';
 import type { Ask } from './confirm-sheet';
 import type { RoomActions } from './use-room-actions';
 
@@ -198,6 +200,7 @@ function useShown(props: ActivationBoxProps): Shown {
 export function ActivationBox(props: ActivationBoxProps): ReactElement {
   const { room, actions } = props;
   const { title, sub, buttons } = useShown(props);
+  const masterOff = useMasterSwitch().off;
   const tone = TONES[room.activation.state];
   return (
     <View
@@ -214,11 +217,16 @@ export function ActivationBox(props: ActivationBoxProps): ReactElement {
         </View>
       </View>
       {room.activation.state === 'in' ? (
-        <SwitchRow
-          label="내 위치 공유"
-          onValueChange={(on) => void actions.setSharing(on)}
-          value={room.activation.switchOn}
-        />
+        <View>
+          <MasterOffLine />
+          {/* Off and disabled while the Master Switch is off; the stored value comes back with it. */}
+          <SwitchRow
+            disabled={masterOff}
+            label="내 위치 공유"
+            onValueChange={(on) => void actions.setSharing(on)}
+            value={!masterOff && room.activation.switchOn}
+          />
+        </View>
       ) : null}
       {buttons.length === 0 ? null : (
         <View style={styles.buttons}>

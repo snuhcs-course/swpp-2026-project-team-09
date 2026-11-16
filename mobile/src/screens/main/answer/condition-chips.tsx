@@ -38,8 +38,10 @@ interface ConditionChipsProps {
   corner: CornerAction | null;
   // One of `chips` whose words a drag of the band is changing: drawn marked, as one the server eased.
   changed?: ConditionChip | null;
-  // The chips are a meet's: "＋ 같이" adds a Friend to meet, not to eat with.
-  meet?: boolean;
+  // The name "＋ 같이" is read by, by what a Friend is added to ("같이 만날 친구 추가"); null leaves it out.
+  addName?: string | null;
+  // The where-from and time chips take no press: the answer's band is read-only.
+  fixed?: boolean;
 }
 
 const CHIP_HEIGHT = 34;
@@ -146,14 +148,15 @@ function PersonChip({ chip, disabled, onRemove, onProfile }: PersonChipProps): R
 interface AddChipProps {
   adding: boolean;
   disabled: boolean;
-  meet: boolean;
+  // A meal's when left out.
+  name?: string;
   onAdd: () => void;
 }
 
-function AddChip({ adding, disabled, meet, onAdd }: AddChipProps): ReactElement {
+function AddChip({ adding, disabled, name = '같이 먹을 친구 추가', onAdd }: AddChipProps): ReactElement {
   return (
     <Pressable
-      accessibilityLabel={meet ? '같이 만날 친구 추가' : '같이 먹을 친구 추가'}
+      accessibilityLabel={name}
       accessibilityRole="button"
       accessibilityState={{ disabled, selected: adding }}
       disabled={disabled}
@@ -178,7 +181,7 @@ function pressOf(chip: ConditionChip, on: Pick<ConditionChipsProps, 'onOrigin' |
 // The first row of the answer's card: the conditions the answer used, each a control that corrects it, then
 // "＋ 같이", in lines that wrap so that no chip is cut, with the corner's action fixed at the right of the first line.
 export function ConditionChips(props: ConditionChipsProps): ReactElement {
-  const { chips, adding, disabled, corner, onProfile, friendIds, changed = null, meet = false, ...on } = props;
+  const { chips, adding, disabled, corner, onProfile, friendIds, changed = null, addName, ...on } = props;
   const profileOf = (userId: string | null): (() => void) | null =>
     userId === null || onProfile === null || !friendIds.has(userId)
       ? null
@@ -199,7 +202,7 @@ export function ConditionChips(props: ConditionChipsProps): ReactElement {
             />
           ) : (
             <ChipButton
-              disabled={disabled}
+              disabled={disabled || props.fixed === true}
               key={chip.kind}
               label={chip.text}
               marked={chip.mark !== undefined || chip === changed}
@@ -207,7 +210,7 @@ export function ConditionChips(props: ConditionChipsProps): ReactElement {
             />
           ),
         )}
-        <AddChip adding={adding} disabled={disabled} meet={meet} onAdd={on.onAdd} />
+        {addName === null ? null : <AddChip adding={adding} disabled={disabled} name={addName} onAdd={on.onAdd} />}
       </View>
       {corner === null ? null : (
         <Pressable

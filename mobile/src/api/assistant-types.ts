@@ -34,9 +34,10 @@ export interface CardReference {
 
 // What the app tells the main server it can draw, with every chat request: library cards. An app without it (the
 // 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map, the study
-// spaces of the visible area it sends as `viewport`, and a meet ("민수랑 만나고 싶어").
+// spaces of the visible area it sends as `viewport`, a meet ("민수랑 만나고 싶어"), and the answers of events,
+// recruiting parties, and a new party ("오늘 볼 만한 거 있어?", "배드민턴 칠 사람").
 export const CLIENT_CAPABILITIES = ['library'] as const;
-export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer', 'area', 'meet'] as const;
+export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer', 'area', 'meet', 'events'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -270,7 +271,7 @@ export interface Plan {
   parts: PlanPart[];
   // The Sub Quests of the Quest the plan becomes.
   subQuests: { at: string; placeId: string; title: string }[];
-  // At most two.
+  // At most three.
   lines: AnswerLine[];
   basis: string[];
   scene: MapScene;

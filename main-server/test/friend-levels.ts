@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -34,6 +35,7 @@ export const IN_NO_PLACE = { latitude: 37.4590612345, longitude: 126.9569512345 
 const placeSchema = z.object({
   id: z.string(),
   number: z.string().nullable(),
+  name: z.string(),
   latitude: z.number(),
   longitude: z.number(),
 });

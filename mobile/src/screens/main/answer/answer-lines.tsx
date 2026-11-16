@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -12,7 +13,7 @@ import { color, font, Icon, space, text } from '@/design-system';
 
 const ICON = 16;
 
-// The lines the server wrote for an answer, at most two: each a run of words, the strong ones bold in the key colour.
+// The lines the server wrote for an answer, at most three: each a run of words, the strong ones bold in the key colour.
 // A `way`, a received invitation's, reads as body text after the route arrow, its strong words semibold.
 export function AnswerLines({ lines, way = false }: { lines: readonly AnswerLine[]; way?: boolean }): ReactElement {
   const look = way ? WAY : ANSWER;

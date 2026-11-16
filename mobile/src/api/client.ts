@@ -15,6 +15,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
@@ -36,11 +37,10 @@ import type {
   AskedMoment,
   Board,
   ClassSave,
-  Footprints,
   Friend,
   FriendLevel,
   FriendStatus,
-  GlobalEvent,
+  ListedGlobalEvent,
   InviteLink,
   LatLng,
   Lobby,
@@ -137,7 +137,10 @@ export interface ApiClient {
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
   searchPlaces: (words: string) => Promise<Place[]>;
-  listGlobalEvents: () => Promise<GlobalEvent[]>;
+  listGlobalEvents: () => Promise<ListedGlobalEvent[]>;
+  // Stars a published Global Event, or clears its star; a repeat changes nothing. Refused with 404
+  // GLOBAL_EVENT_NOT_FOUND for an event that is not published.
+  setFavoriteEvent: (globalEventId: string, favorite: boolean) => Promise<void>;
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
   listParties: () => Promise<Party[]>;
@@ -151,9 +154,6 @@ export interface ApiClient {
   // Null for a User who is in no Party. The main server says so with a refusal, 404 NOT_IN_PARTY: the operation turns
   // exactly that one into null, with `isRefusal`, and throws any other.
   getMyParty: () => Promise<MyParty | null>;
-  // What "오늘의 발자국" shows: how many Friends left a story today, and three faces. The app's own: no answer of the
-  // main server holds it.
-  getFootprints: () => Promise<Footprints>;
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
   // One day's menus, a calendar day in Korea as "2026-10-06", by restaurant.
   listMenus: (date: string) => Promise<RestaurantMenus[]>;
@@ -301,6 +301,7 @@ export const apiClient: ShownClient = {
   listPlaces: () => chosen().listPlaces(),
   searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
+  setFavoriteEvent: (globalEventId, favorite) => chosen().setFavoriteEvent(globalEventId, favorite),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),
   requestMatching: (globalEventId, size) => chosen().requestMatching(globalEventId, size),
@@ -308,7 +309,6 @@ export const apiClient: ShownClient = {
   getMatchingRequest: (globalEventId) => chosen().getMatchingRequest(globalEventId),
   withdrawMatchingRequest: (globalEventId) => chosen().withdrawMatchingRequest(globalEventId),
   getMyParty: () => chosen().getMyParty(),
-  getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
   listMenus: (date) => chosen().listMenus(date),
   getShuttle: () => chosen().getShuttle(),

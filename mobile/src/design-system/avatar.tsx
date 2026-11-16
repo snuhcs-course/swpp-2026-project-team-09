@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -10,12 +11,13 @@ import type { ReactElement } from 'react';
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { color, font, presence, radius, size as sizes } from './tokens';
 
-export type PresenceStatus = 'free' | 'class' | 'moving' | 'off';
+export type PresenceStatus = 'free' | 'class' | 'moving' | 'on' | 'off';
 
 const PRESENCE_LABEL: Record<PresenceStatus, string> = {
   free: '공강',
   class: '수업 중',
   moving: '이동 중',
+  on: '위치 켜짐',
   off: '위치 꺼짐',
 };
 

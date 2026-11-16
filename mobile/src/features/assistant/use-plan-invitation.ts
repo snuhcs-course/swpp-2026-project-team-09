@@ -16,6 +16,7 @@ import type { LocationMissing } from '@/api/refusal-types';
 import { questsQuery } from '@/api/queries';
 import type { LatLng, Quest } from '@/api/types';
 import { onInvitationAnswer } from '@/live/invitation-answers';
+import { useAskForPush } from '@/push/push-ask-host';
 import { friendStandings, type HeardAnswer, NO_STANDINGS, type ReadMembers, type Standing } from './invited-friends';
 import { useKeepMadeQuest } from './made-quest-ids';
 import type { ShownAnswer } from './use-shown-answer';
@@ -115,7 +116,8 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
 
 // Sends the Plan on screen to be made into a Quest, unless a request of this hook is on its way or the Quest is made.
 // A Quest that comes while its answer and Plan are still on screen is held; otherwise it is only told, for it is among
-// the User's Quests. Either way the phone keeps its id. A refusal counts only while its answer and Plan are on screen.
+// the User's Quests. Either way the phone keeps its id and asks about push (board t17). A refusal counts only while its
+// answer and Plan are on screen.
 function useInvite(
   current: InvitationState,
   shown: OnScreen,
@@ -126,6 +128,7 @@ function useInvite(
   const flight = useRef(false);
   const [sending, setSending] = useState(false);
   const keepMade = useKeepMadeQuest();
+  const askForPush = useAskForPush();
   useEffect(() => {
     live.current = { current, shown, inviting };
   });
@@ -149,6 +152,7 @@ function useInvite(
     apiClient.makePlanQuest(making, key).then(
       (made) => {
         keepMade(made.quest.id);
+        askForPush();
         if (settle()) {
           setStored((last) => (last.answer === answer && last.planId === plan.id ? { ...last, made } : last));
         } else {

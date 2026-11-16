@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen, shownAddress } from './support/app';
@@ -139,13 +140,14 @@ describe("the friend panel's search and chips", () => {
   });
 
   it('hides a chip whose count is 0, except 전체', async () => {
-    // Without the app's own statuses a Friend is free or has the location off.
+    // Without the app's own statuses a Friend has the location on or off, and is never 공강.
     process.env.EXPO_PUBLIC_MOCK_EMPTY = 'listFriendStatuses';
     await openPanel();
 
     expect(screen.getByRole('button', { name: '전체 12' })).toBeVisible();
-    expect(screen.getByRole('button', { name: '공강 10' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '위치 켜짐 10' })).toBeVisible();
     expect(screen.getByRole('button', { name: '위치 꺼짐 2' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: /^공강/u })).toBeNull();
     expect(screen.queryByRole('button', { name: /^수업 중/u })).toBeNull();
     expect(screen.queryByRole('button', { name: /^이동 중/u })).toBeNull();
   });

@@ -121,7 +121,7 @@ describe('words typed while a meet is on screen', () => {
 
     expect(lastContext()).toMatchObject({ conditions: MET_MIN_SU.input, planId: '302동 앞' });
     expect(server.received('POST /assistant/messages').at(-1)?.body).toMatchObject({
-      clientCapabilities: ['library', 'answer', 'area', 'meet'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
     });
   });
 });

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -50,6 +51,8 @@ describe("A User's list of Global Events", () => {
         place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
         ...place132,
         sourceUrl: postAddress(1),
+        publishedAt: null,
+        favorite: false,
       },
     ]);
   });

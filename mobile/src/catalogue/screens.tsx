@@ -185,7 +185,12 @@ export function ListRows(): ReactElement {
           title="자료구조"
           trailing={<Text style={styles.time}>14:00</Text>}
         />
-        <SwitchRow description="12명" label="친구와 위치 공유" onValueChange={setSharing} value={sharing} />
+        <SwitchRow
+          description="위치 공유를 허용한 친구 12명"
+          label="위치 공유"
+          onValueChange={setSharing}
+          value={sharing}
+        />
       </View>
     </Section>
   );

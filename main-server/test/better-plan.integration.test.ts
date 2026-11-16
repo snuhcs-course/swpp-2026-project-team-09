@@ -81,7 +81,7 @@ describe('After 지은 declines a Quest made without the location permission (bo
     const better = betterOf(response.body);
     expect(better?.id).toBe('301동식당');
     expect(better?.parts[0]).toMatchObject({ origin: { basis: 'timetable', place: { label: '301동' } } });
-    expect(linesOf(better?.lines)).toEqual(['위치를 몰라 직전 수업의', '301동에서 출발로 잡았어요']);
+    expect(linesOf(better?.lines)).toEqual(['위치를 몰라 직전 수업의', '301동에서 출발로 잡았어요', '오늘 제육볶음']);
   });
 
   it('knows no origin of the Leader without the reason, and plans where 민수 is', async () => {

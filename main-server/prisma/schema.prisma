@@ -24,6 +24,7 @@
 // 2026-11-14  Opus 5.5   prompted by TaeHyun79
 // 2026-11-14  Opus 5.5   prompted by fyoon46
 // 2026-11-15  Opus 5.5   prompted by fyoon46
+// 2026-11-15  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-16  Opus 5.5   prompted by fyoon46
 // 2026-11-16  Opus 5.5   prompted by Jaehyun0320
@@ -92,6 +93,7 @@ model User {
   roomConsents      RoomConsent[]
   roomNotices       RoomNotice[]
   notifications     Notification[]
+  favoriteEvents    GlobalEventFavorite[]
   watchedInterests  WatchedInterest[]
   privateZones      PrivateZone[]
 
@@ -358,10 +360,13 @@ model GlobalEvent {
   // update keep working; a later migration drops them.
   retiredPostNumber  Int?                @unique @map("post_number")
   retiredSourceUrl   String?             @map("source_url")
+  // When it was published, which tells a New Event. Empty for an event published before it was recorded.
+  publishedAt        DateTime?           @map("published_at")
   // None for an event an Administrator created.
   sessions           SourcePostSession[]
   quests             Quest[]
   questHolders       QuestHolder[]
+  favorites          GlobalEventFavorite[]
   // The topic words the model read in its title and description, normalised (README.md: Interests).
   topics             String[]            @default([])
   // When the topics were last asked for, and how many times.
@@ -369,6 +374,19 @@ model GlobalEvent {
   topicsTries        Int                 @default(0) @map("topics_tries")
 
   @@map("global_events")
+}
+
+// A Global Event a User starred, which stays on their map until it ends. Deleted with the User or the event.
+model GlobalEventFavorite {
+  userId        String      @map("user_id") @db.Uuid
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  globalEventId String      @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent @relation(fields: [globalEventId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@id([userId, globalEventId])
+  @@index([globalEventId])
+  @@map("global_event_favorites")
 }
 
 enum GlobalEventState {

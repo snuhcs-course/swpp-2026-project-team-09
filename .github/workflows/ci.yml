@@ -7,6 +7,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-15  Opus 5.5   prompted by fyoon46
+# 2026-11-16  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 name: CI
@@ -89,7 +90,7 @@ jobs:
   mobile-tests:
     name: mobile-tests (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:

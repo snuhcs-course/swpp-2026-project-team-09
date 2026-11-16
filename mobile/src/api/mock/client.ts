@@ -13,6 +13,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
@@ -24,14 +25,14 @@ import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
 import { mockAssistantReply, mockRecalculation, mockTap } from './assistant';
-import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { LATE_WAY } from './data/late-way';
 import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
-import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
+import { GLOBAL_EVENT_ANNOUNCERS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
+import { mockGlobalEvents } from './global-events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
@@ -223,11 +224,10 @@ export const mockClient: ApiClient = {
   },
   listPlaces: () => answer('listPlaces', () => PLACES, []),
   searchPlaces: (words) => answer('searchPlaces', () => timetable.searchPlaces(words), []),
-  listGlobalEvents: () => answer('listGlobalEvents', () => GLOBAL_EVENTS, []),
+  ...mockGlobalEvents,
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),
   getMyParty: () => answer('getMyParty', () => MY_PARTY, null),
-  getFootprints: () => answer('getFootprints', () => FOOTPRINTS, { friendCount: 0, faces: [] }),
   findWalkingRoute: (from, to) =>
     answer('findWalkingRoute', () => mockWalkingRoute(from, to), {
       status: 'ROUTE_RESULT_NOT_FOUND',

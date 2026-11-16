@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -62,7 +63,7 @@ describe("a failure of an operation of the app's own", () => {
 
     expect(result.current.isError).toBe(false);
     expect(result.current.data).toHaveLength(12);
-    expect(result.current.data?.find(({ id }) => id === 'f1')).toMatchObject({ presence: 'free', line: '공강' });
+    expect(result.current.data?.find(({ id }) => id === 'f1')).toMatchObject({ presence: 'on', line: '위치 켜짐' });
   });
 
   it('leaves the cards of the map, a Global Event without its announcer', async () => {

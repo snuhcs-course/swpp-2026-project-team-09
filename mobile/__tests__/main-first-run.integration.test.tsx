@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -90,15 +91,15 @@ describe('the first run after Onboarding', () => {
     expect(server.received('POST /interests')).toEqual([]);
   });
 
-  it('hides the row of buttons while a card is shown', async () => {
+  it('hides the 편의기능 button while a card is shown', async () => {
     const user = await finishOnboarding();
-    expect(screen.queryByRole('button', { name: /^오늘의 발자국/u })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^편의기능/u })).toBeNull();
 
     await later(user);
     await later(user);
     await later(user);
 
-    expect(screen.getByRole('button', { name: /^오늘의 발자국/u })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^편의기능/u })).toBeVisible();
   });
 });
 

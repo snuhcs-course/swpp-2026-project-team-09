@@ -2,14 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { MenuLineKind } from '../../generated/prisma/client.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
-import { servedLines } from '../../menus/open-rule.js';
 import { type AnswerLine, type AnswerReply, type Lookup, type MapScene, type Plan } from '../dto/answer.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { withTopic } from '../gathering/answer-words.js';
+import { cornersOf, dishName } from '../gathering/meal-menu.js';
 import { dayWords } from '../library/library-parts.js';
 import { part } from './way-naming.js';
 
@@ -38,20 +38,11 @@ const clock = (time: string): string => time.slice(11, 16);
 
 const mealWord = (meal: HandledMeal): string => (meal === 'lunch' ? '점심' : '저녁');
 
-// The dishes of the main line, the first corner that holds one: a heading with the lines under it, or the lines before
-// the first heading. A dish is called by its name without its price.
+// The dishes of the main line: the first corner that holds one (`cornersOf`), each by its name without its price, as
+// a meal Plan's menu line names the first.
 export function dishesOf(lines: readonly MenuLineDto[]): string[] {
-  const served = servedLines(lines);
-  const corners: MenuLineDto[][] = [[]];
-  for (const line of served) {
-    if (line.kind === MenuLineKind.heading) {
-      corners.push([]);
-    } else {
-      corners.at(-1)?.push(line);
-    }
-  }
-  const main = corners.find((corner) => corner.length > 0) ?? served;
-  return main.slice(0, DISHES_MAX).map(({ name, text }) => (name ?? text).trim());
+  const [main] = cornersOf(lines);
+  return (main?.items ?? []).slice(0, DISHES_MAX).map((line) => dishName(line));
 }
 
 function linesOf({ key, date, meal, now }: MenuArgs, plan: Plan, dishes: readonly string[]): AnswerLine[] {

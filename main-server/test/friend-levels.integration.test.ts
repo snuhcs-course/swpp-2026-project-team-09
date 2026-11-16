@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -177,10 +178,12 @@ describe('PUT /friends/:userId/sharing, for an app of before', () => {
 
 // What GET /positions gives at each level of a subject in 중앙도서관: the position, the Place's point, or nothing.
 function shownAt(seen: FriendLevel, subject: TestUser, library: SeedPlace, measuredAt: string): object[] {
-  const { id, latitude, longitude } = library;
+  const { id, name, latitude, longitude } = library;
+  // The viewer has no position kept, so no walk is known.
+  const near = { nearPlace: name, walkMinutes: null };
   const shown = {
-    exact: [{ userId: subject.id, ...IN_LIBRARY, measuredAt, level: 'exact' }],
-    building: [{ userId: subject.id, placeId: id, latitude, longitude, measuredAt, level: 'building' }],
+    exact: [{ userId: subject.id, ...IN_LIBRARY, measuredAt, level: 'exact', ...near }],
+    building: [{ userId: subject.id, placeId: id, latitude, longitude, measuredAt, level: 'building', ...near }],
     timetable: [],
   };
   return shown[seen];
@@ -236,7 +239,14 @@ describe('GET /positions, by the Master Switches and a common Party', () => {
       await expectStatus(uploadPosition(app, subject, IN_LIBRARY), 200);
 
       expect((await getPositions(app, viewer)).body).toEqual([
-        { userId: subject.id, ...IN_LIBRARY, measuredAt: ANY_STRING, level: 'exact' },
+        {
+          userId: subject.id,
+          ...IN_LIBRARY,
+          measuredAt: ANY_STRING,
+          level: 'exact',
+          nearPlace: ANY_STRING,
+          walkMinutes: null,
+        },
       ]);
     },
   );
