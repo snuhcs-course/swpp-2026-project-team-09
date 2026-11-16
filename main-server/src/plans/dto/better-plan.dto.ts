@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlacePoint, type Plan, type PlanInput } from '../../assistant/dto/answer.dto.js';
 
 // What the Leader is offered after a decline, declared with the same shape in the app's plan-quest-types.ts. All three
-// are null when the Quest has no destination step in a meal's window.
+// are null when the Quest has no destination step in a meal's window, or its step is a meet's.
 export interface BetterPlanDto {
   // The Quest's destination step as it stands, its times Korea time with the offset.
   current: { place: PlacePoint; startAt: string; endAt: string; togetherMinutes: number } | null;

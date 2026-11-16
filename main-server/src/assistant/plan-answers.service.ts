@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -24,11 +25,12 @@ export class PlanAnswersService {
     readonly meets: MeetPlanService,
   ) {}
 
-  // Only a meal's plan reads why the location is missing.
+  // Only a meal's plan reads why the location is missing; a meal's and a meet's leave out the Sub Quests `leftOut`
+  // names, as a Quest being planned again does with its own.
   plan(
     askerId: string,
     input: PlanInput,
-    at: { now: Date; location: Position | null; locationMissing?: LocationMissing },
+    at: { now: Date; location: Position | null; locationMissing?: LocationMissing; leftOut?: readonly string[] },
   ): Promise<AnswerReply> {
     if (input.kind === 'meal') {
       return this.meals.plan(askerId, input, at);
