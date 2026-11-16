@@ -53,3 +53,19 @@ P02-03 drags one handle at a time, and a handle stops 15 minutes short of the ot
 20. While the band moves, the red parts of the busy stretches it covers are drawn on their lanes over the band and its handles, which take no touch from them; under the band they were hidden, and on a12's band, about 24 points wide, the two handles cover nearly all of it (seen on the emulator). Without a move the red stays under the band, as before.
 21. While the band moves, the input is not drawn but its room stays: the card keeps its bottom padding and its content's height, and a blank strip shows where the input was. At the drag's first step the card's bottom dropped about 62 points and the lanes slid away from the finger (seen on the emulator). Board a12 draws the card lower; a card that moves under the finger is worse. The list of Friends to add and 보는 중 still take the input's room as before.
 22. The pick's label is never left out at a view: when no side is free, it takes the first side of its list whose box stays inside the area, though it covers other symbols, else its first side; the labels placed after it keep clear of it. On the emulator a6's first Plan showed no pick: its own points do not fit the area even at the outer zoom, and the camera rests with the view's bottom on the south edge of the camera's bounds, so 302동 앞 stands at 493 of 914, its lines below would reach past the card's top, and above they cover the symbols of 제1공학관 앞 and 유회진 학술정보관 앞. The camera cannot leave room below without wider bounds, which ticket 08's native camera rests on, so the label gives way instead. Ticket 08's test of the pick left out under an area two points shorter now puts the pick above, over 301동's symbol.
+
+### Checked on an emulator (2026-11-16)
+
+On the Android emulator, with the mock and the switch on, at `73c2358b`, after asking 김민준's "만나고 싶다" (a5):
+- A drag that starts beside the band, at about 13:20 on the lanes, moves it whole; held at 15:20 (a12): the chip "15:20" in the Quest colour, "**민수**는 15:30부터 302동 수업이라" / "이때는 만날 수 없어요", "15:20–15:48 · 민수가 안 돼요", 민수's overlap red across the band, the dashed outline at 12:15–12:43, and the input's room left blank, the card not moving.
+- Let go at 14:00 (a6): the chips "24동에서", "14:00부터", "민수 ✕", "14:07 302동 앞에서 만나요" / "15:30까지 함께 83분이에요", the band at 14:07–15:30, "1/5", "되돌리기" and "이대로 초대"; on the map "나 · 17분" from 24동, 민수 dashed at 302동, and the pick "302동 앞 · 14:07 만남" above 민수.
+- "되돌리기" brings back a5.
+- Left as it is: on a6 the face of a Friend not in the meet (하은) covers part of the pick's label, since the native map draws every Avatar above every marker.
+- The first check, before decisions 20–22, showed a12's red hidden under the handles, the card dropping about 62 points at the drag's first step, and a6's pick with no label; those decisions fixed them.
+
+### Agent usage (2026-11-16)
+
+One session with five subagents for this ticket (the arithmetic built ahead, the screen, the merge with ticket 24 and the drag on the lanes, a review, and the emulator's three findings); the session's own time counted is the briefs, the merges, and two emulator checks.
+
+- Agent time: about 99 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
+- Tokens: output 396,075; input 93,389,173, of which 92,288,765 were cache reads, 1,099,508 cache writes, and 900 uncached. Without cache reads: 1,496,483.
