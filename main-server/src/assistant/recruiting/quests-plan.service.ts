@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -15,6 +16,7 @@ import {
   type RecruitingQuestDto,
   type StoredQuest,
   subQuestContentsOf,
+  type SubQuestPlaceDto,
 } from '../../quests/dto/quest.dto.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
@@ -25,7 +27,14 @@ import { UserDayService } from '../free-time/user-day.service.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { koreaDate } from '../korea-time.js';
 import { questAnswer } from './quest-answer.js';
-import { type DayQuest, fitQuests, judgedStep, meetingPlaceOf, type QuestPlanning } from './quest-fit.js';
+import {
+  type DayQuest,
+  fitQuests,
+  judgedStep,
+  meetingPlaceOf,
+  type QuestPlanning,
+  type QuestStep,
+} from './quest-fit.js';
 
 // The one place that gathers what an answer of recruiting Quests needs: the Quests the recruiting list gives the asker,
 // their steps and Holders, the asker's Friends and days, and the Places, for the tool and the recalculation alike.
@@ -87,7 +96,7 @@ export class QuestsPlanService {
     const friendIds = new Set(friends.map(({ id }) => id));
     return listed.flatMap(({ id }) => {
       const quest = stored.find((each) => each.id === id);
-      return quest === undefined ? [] : [dayQuestOf(quest, friendIds)];
+      return quest === undefined ? [] : [dayQuestOf(quest, friendIds, (place) => this.places.placeIdOf(place))];
     });
   }
 
@@ -114,17 +123,45 @@ export class QuestsPlanService {
   }
 }
 
-function dayQuestOf(quest: StoredQuest, friendIds: ReadonlySet<string>): DayQuest {
+type PlaceIdOf = (place: SubQuestPlaceDto) => string | null;
+
+// The steps with each Place read one way: `attending` for the attending step, `written` for any other.
+function stepsReadAs(quest: StoredQuest, attending: PlaceIdOf, written: PlaceIdOf): QuestStep[] {
+  return subQuestContentsOf(quest).map(({ startsAt, endsAt, place, cancelled }, index) => {
+    const read = quest.subQuests[index]?.attending === true ? attending : written;
+    return {
+      start: dateOf(startsAt),
+      end: dateOf(endsAt),
+      placeId: place === null ? null : read(place),
+      place: place?.label ?? null,
+      cancelled,
+    };
+  });
+}
+
+// The Place id a step names itself.
+const named: PlaceIdOf = ({ placeId }) => placeId;
+
+const timedSome = (steps: readonly QuestStep[]): boolean =>
+  steps.some(({ start, placeId, cancelled }) => !cancelled && start !== null && placeId !== null);
+
+// A party is judged on the steps that name a Place of the list. When none does, as the party form writes an event's
+// place as its point and words, on those its Holders wrote, at the Place their point or words are; and when those have
+// none either, at its Global Event's place, by its attending step, as a Global Event is placed.
+function stepsOf(quest: StoredQuest, placeIdOf: PlaceIdOf): QuestStep[] {
+  const own = stepsReadAs(quest, named, named);
+  if (timedSome(own)) {
+    return own;
+  }
+  const written = stepsReadAs(quest, named, placeIdOf);
+  return timedSome(written) ? written : stepsReadAs(quest, placeIdOf, placeIdOf);
+}
+
+function dayQuestOf(quest: StoredQuest, friendIds: ReadonlySet<string>, placeIdOf: PlaceIdOf): DayQuest {
   return {
     id: quest.id,
     title: quest.title,
-    steps: subQuestContentsOf(quest).map(({ startsAt, endsAt, place, cancelled }) => ({
-      start: dateOf(startsAt),
-      end: dateOf(endsAt),
-      placeId: place?.placeId ?? null,
-      place: place?.label ?? null,
-      cancelled,
-    })),
+    steps: stepsOf(quest, placeIdOf),
     eventEnd: quest.globalEvent?.endsAt ?? null,
     friendNames: quest.holders.filter(({ userId }) => friendIds.has(userId)).map(({ user }) => user.name),
   };
