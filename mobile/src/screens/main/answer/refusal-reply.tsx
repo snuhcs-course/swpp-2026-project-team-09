@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Href, router } from 'expo-router';
@@ -56,7 +57,7 @@ export function pressOffer(offer: ButtonOffer, onAsk: (words: string) => void): 
 }
 
 // The first offer is the main one when it is the only one or the offers differ in kind; a choice of asks is even.
-function hasMain(offers: readonly ButtonOffer[]): boolean {
+export function hasMain(offers: readonly ButtonOffer[]): boolean {
   return offers.length === 1 || new Set(offers.map(({ kind }) => kind)).size > 1;
 }
 
@@ -66,7 +67,7 @@ interface OfferCellProps {
   onAsk: RefusalAsk;
 }
 
-function OfferCell({ offer, main, onAsk }: OfferCellProps): ReactElement {
+export function OfferCell({ offer, main, onAsk }: OfferCellProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={offer.label}

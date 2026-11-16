@@ -8,10 +8,12 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type AnswerReply, type Lookup, type RequestContext } from './dto/answer.dto.js';
+import { type ReplyOffer } from './dto/assistant-messages.dto.js';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
@@ -88,6 +90,8 @@ export interface Presented {
   lookup: Lookup | null;
   // What refuse wrote; the reply keeps it only without an answer or a Lookup.
   refusal: Refusal | null;
+  // Buttons under the text, which the reply keeps only without an answer, a Lookup, or a refusal.
+  offers?: ReplyOffer[];
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.

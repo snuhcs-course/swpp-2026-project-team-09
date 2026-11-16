@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -89,7 +90,7 @@ describe('An upload taken', () => {
     const response = await uploadPosition(app, user, { accuracy: 100, measuredAt });
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ offCampus: false });
+    expect(response.body).toEqual({ offCampus: false, privateZone: false });
     expect((await getPositions(app, friend)).body).toEqual([
       { userId: user.id, ...ON_CAMPUS, measuredAt, level: 'exact' },
     ]);
@@ -98,7 +99,10 @@ describe('An upload taken', () => {
   it("up to 10 seconds ahead of the server's clock is kept", async () => {
     const [user] = await sharingFriends(app);
 
-    expect((await uploadPosition(app, user, { measuredAt: secondsFromNow(5) })).body).toEqual({ offCampus: false });
+    expect((await uploadPosition(app, user, { measuredAt: secondsFromNow(5) })).body).toEqual({
+      offCampus: false,
+      privateZone: false,
+    });
   });
 
   it('replaces the position before', async () => {
@@ -119,7 +123,7 @@ describe('An upload taken', () => {
     const response = await uploadPosition(app, user, OFF_CAMPUS);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ offCampus: true });
+    expect(response.body).toEqual({ offCampus: true, privateZone: false });
     expect((await getPositions(app, friend)).body).toEqual([]);
     expect(await app.get<Redis>(REDIS).exists(`position:${user.id}`)).toBe(0);
   });

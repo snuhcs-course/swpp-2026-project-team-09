@@ -25,6 +25,7 @@
 // 2026-11-14  Opus 5.5   prompted by fyoon46
 // 2026-11-15  Opus 5.5   prompted by fyoon46
 // 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+// 2026-11-16  Opus 5.5   prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -90,6 +91,7 @@ model User {
   roomNotices       RoomNotice[]
   notifications     Notification[]
   watchedInterests  WatchedInterest[]
+  privateZones      PrivateZone[]
 
   @@map("users")
 }
@@ -1130,4 +1132,19 @@ model WatchedInterest {
 
   @@index([userId])
   @@map("watched_interests")
+}
+
+// An area the User drew round, inside which their position is not kept. A User keeps at most five.
+model PrivateZone {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // "{Place} 근처" after the Place nearest its middle, or "그린 구역", named when the zone is made.
+  label     String
+  // The ring of positions, left open: the last joins the first.
+  outline   Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("private_zones")
 }
