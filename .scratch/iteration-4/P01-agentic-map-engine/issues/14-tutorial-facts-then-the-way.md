@@ -64,3 +64,10 @@ The button needs a reply that carries buttons without being a refusal. When pack
   - `features/assistant/use-chat.ts`: the bubble carries the offers.
   - `screens/main/answer/answer-frame.tsx`: `Words` draws the words with their offers before the Plan's lines.
 
+
+### Agent usage (2026-11-16)
+
+- Agent time: about 39 minutes. This is an estimate from this session's transcript timestamps: the union of active stretches, with gaps over 5 minutes left out. It includes a few minutes spent briefing ticket P02-28's build and exporting the cafés for ticket 15.
+- Tokens, this session only (no subagent worked on this ticket):
+  - output: 118,687;
+  - input: 34,518,644, of which 34,183,104 were cache reads, 335,286 cache writes, and 254 uncached.
