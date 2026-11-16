@@ -9,7 +9,8 @@ import { apiClient } from '@/api/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
-import type { PlanQuest } from '@/api/plan-quest-types';
+import type { AnswerLine } from '@/api/assistant-types';
+import type { PlanQuest, TakenAlone } from '@/api/plan-quest-types';
 import type * as PushDevice from '@/push/device';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -25,8 +26,8 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // "여기로" (P05-14) against the fake main server, over its stored answer to "배고파" for the User alone (boards s1 and
 // s2: 301동식당 where the User is, then 학생회관식당 15 minutes away, the Class at 24동 at 13:00). The Plan becomes a
-// Quest the User holds alone through POST /plans, and the card says where the User goes and whether they will be told
-// when to leave (boards s4b and s4), from the User's own part of the Plan.
+// Quest the User holds alone through POST /plans (P03-15), and the card draws the reply's two lines (boards s4b and
+// s4).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -46,13 +47,35 @@ jest.mock('expo', () => jest.requireActual<typeof PushFake>('./support/push').ex
 jest.mock('expo-notifications', () => jest.requireActual<typeof PushFake>('./support/push').notificationsModule);
 
 const REPLY = { text: '301동식당에서 먹어요.', mapButtons: [], cards: [], proposal: null, answer: MEAL_ANSWER_ALONE };
-// The stored Quest as the main server makes it of a Plan for one person: its asker its one Holder and member.
-const [ASKER] = PLAN_QUEST.quest.members ?? [];
-const MADE_ALONE: PlanQuest = {
-  quest: { ...PLAN_QUEST.quest, members: ASKER === undefined ? [] : [ASKER] },
-  invitations: [],
-  askLevels: [],
+const line = (words: string): AnswerLine => [{ text: words, strong: false }];
+const S4B: TakenAlone = {
+  lines: [
+    [
+      { text: '301동식당', strong: true },
+      { text: '에서 먹어요', strong: false },
+    ],
+    line('12:45에 나설 시각을 알려 드릴게요'),
+  ],
+  remindAt: '2026-11-17T03:45:00.000Z',
 };
+const S4: TakenAlone = {
+  lines: [
+    [
+      { text: '학생회관식당', strong: true },
+      { text: '으로 가요', strong: false },
+    ],
+    line('수업까지 1분이라 나설 알림은 없어요'),
+  ],
+  remindAt: null,
+};
+// The stored Quest as the main server makes it of a Plan for one person: Closed with capacity 1, its asker its one
+// Holder and member.
+const [ASKER] = PLAN_QUEST.quest.members ?? [];
+function madeAlone(alone: TakenAlone): PlanQuest {
+  const quest = { ...PLAN_QUEST.quest, capacity: 1, members: ASKER === undefined ? [] : [ASKER] };
+  return { quest, invitations: [], askLevels: [], alone };
+}
+const MADE_ALONE = madeAlone(S4B);
 const DROP = `DELETE /quests/${MADE_ALONE.quest.id}`;
 const HAKGWAN = { latitude: 37.45932, longitude: 126.95058 };
 const QUESTION = '나설 시각을 휴대폰으로 알려 드릴까요?';
@@ -143,6 +166,7 @@ describe('"여기로" on a Plan where the User is (s1 → s4b)', () => {
 // Partitions: the Plan the User walks to, and "닫기". Expected values: boards s2 and s4.
 describe('"여기로" on a Plan the User walks to (s2 → s4)', () => {
   it('says no leave-by is kept for a short walk on, and "닫기" guides the User to the Restaurant', async () => {
+    server.on('POST /plans', { status: 201, body: madeAlone(S4) });
     const user = await askOnMap(server, REPLY);
     await user.press(card().getByRole('button', { name: '다음 후보' }));
     await take(user);
@@ -176,7 +200,7 @@ describe('what "여기로" leaves as it was', () => {
 
     await take(user);
 
-    expect(screen.getByText('답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
+    expect(screen.getByText(/못했어요. 잠시 후 다시 시도해 주세요$/u)).toBeVisible();
     expect(card().getByRole('button', { name: '여기로' })).toBeVisible();
   });
 });

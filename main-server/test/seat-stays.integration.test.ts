@@ -88,6 +88,8 @@ describe('POST /library/seat-stays', () => {
     expect(response.body).toMatchObject({
       quest: {
         title: '관정 7층 7A 열람실 2 구역',
+        capacity: 1,
+        joinPolicy: 'closed',
         holders: [{ id: user.id }],
         subQuests: [
           {

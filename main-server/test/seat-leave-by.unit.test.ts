@@ -31,7 +31,13 @@ describe('seatLeaveBy', () => {
   it('leaves for the first item with a Place during the stay, whatever the walk', () => {
     const items = [item('철학개론', '16:00', 'doosan'), item('자료구조', '18:00', 'b24')];
 
-    expect(seatLeaveBy(items, STAY, walking, NOW)).toEqual({ at: korea('15:56'), placeId: 'doosan', walkMinutes: 4 });
+    expect(seatLeaveBy(items, STAY, walking, NOW)).toEqual({
+      at: korea('15:56'),
+      placeId: 'doosan',
+      walkMinutes: 4,
+      start: korea('16:00'),
+      isClass: true,
+    });
   });
 
   it.each([
@@ -55,6 +61,8 @@ describe('seatLeaveBy', () => {
       at: korea('17:45'),
       placeId: 'b24',
       walkMinutes: 15,
+      start: korea('18:00'),
+      isClass: true,
     });
   });
 });

@@ -20,6 +20,9 @@ export interface SeatLeaveBy {
   // The next item's Place, and the walk there from 관정관.
   placeId: string;
   walkMinutes: number;
+  // The next item's start, and whether it is a Class.
+  start: Date;
+  isClass: boolean;
 }
 
 // When to leave a seat for the first item that starts during the stay at a Place other than 관정관, by the walk there.
@@ -33,9 +36,9 @@ export function seatLeaveBy(
 ): SeatLeaveBy | null {
   const from = Math.max(stay.startsAt.getTime(), now.getTime());
   const next = items
-    .flatMap(({ start, placeId }) =>
+    .flatMap(({ start, placeId, isClass }) =>
       placeId !== null && placeId !== stay.placeId && start.getTime() >= from && start < stay.endsAt
-        ? [{ start, placeId }]
+        ? [{ start, placeId, isClass }]
         : [],
     )
     .toSorted((a, b) => a.start.getTime() - b.start.getTime())[0];
@@ -44,5 +47,5 @@ export function seatLeaveBy(
   }
   const walkMinutes = walkingMinutes(stay.placeId, next.placeId);
   const at = new Date(next.start.getTime() - walkMinutes * MINUTE_MS);
-  return at.getTime() <= from ? null : { at, placeId: next.placeId, walkMinutes };
+  return at.getTime() <= from ? null : { ...next, at, walkMinutes };
 }

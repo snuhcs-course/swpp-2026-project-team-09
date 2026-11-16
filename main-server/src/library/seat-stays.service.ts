@@ -9,12 +9,12 @@ import { UserDayService } from '../assistant/free-time/user-day.service.js';
 import { type Catalogue, KWANJEONG_PLACE_NUMBER, roomLabelOf } from '../assistant/library/catalogue.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { JoinPolicy } from '../generated/prisma/client.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { PlaceLookup } from '../places/place-lookup.js';
 import { placeLabel } from '../plans/own-way.js';
+import { clockOf } from '../assistant/free-time/free-time.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { QuestsService } from '../quests/quests.service.js';
+import { ALONE_CAPACITY, QuestsService } from '../quests/quests.service.js';
 import { shownMinutes, TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
 import { type SeatStayBody, type SeatStayDto } from './dto/seat-stay.dto.js';
 import { startsAtOf } from './room-request-parts.js';
@@ -77,7 +77,7 @@ export class SeatStaysService {
         },
         [userId],
         tx,
-        { capacity: 1, joinPolicy: JoinPolicy.closed },
+        { capacity: ALONE_CAPACITY },
       ),
     );
     this.signals.send([userId], 'quests-changed');
@@ -95,16 +95,17 @@ export class SeatStaysService {
   private async keepLeaveBy(
     userId: string,
     questId: string,
-    { at, placeId, walkMinutes }: SeatLeaveBy,
+    { at, placeId, walkMinutes, start, isClass }: SeatLeaveBy,
   ): Promise<boolean> {
     const place = this.places.byId(placeId);
     if (place === null) {
       return false;
     }
+    const toward = { start: clockOf(start), word: isClass ? '수업' : '일정' } as const;
     try {
       await this.notifications.schedule(
         userId,
-        { kind: 'leave-by', questId, placeLabel: placeLabel(place), walkMinutes },
+        { kind: 'leave-by', questId, placeLabel: placeLabel(place), walkMinutes, toward },
         at,
       );
       return true;
