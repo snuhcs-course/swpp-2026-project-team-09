@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -87,6 +88,11 @@ const ICONS = {
   play: [{ path: 'M7 5l12 7-12 7z' }],
   // Not the design system's: the ☆ of a Global Event, filled for a Favorite Event.
   star: [{ path: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z' }],
+  // Not the design system's: the answer frame draws them on 그만 (filled), on "이전 답" in the AI input, and on
+  // "새 대화" beside the pill.
+  stop: [{ rect: [7, 7, 10, 10, 2] }],
+  history: [{ path: 'M3.5 12a8.5 8.5 0 1 0 2.5-6' }, { path: 'M3.5 3.5V8H8' }, { path: 'M12 8v4l3 2' }],
+  chatPlus: [{ path: 'M4 5h16v11H9l-5 4z' }, { path: 'M12 8v5' }, { path: 'M9.5 10.5h5' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;
