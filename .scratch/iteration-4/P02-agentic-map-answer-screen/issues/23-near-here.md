@@ -55,3 +55,9 @@ On the Android emulator (1080 × 2400), a development build on the mock with its
 - "관정 보기" sent "관정 지금 자리 있어?" as the next turn, and the mock answered with its library card (no session, so "관정도서관 로그인이 필요해요"; nothing was signed in).
 - "가는 길" closed the answer and started the route guidance to 공대 신양학술정보관 on the everyday map.
 
+### Agent usage (2026-11-16)
+
+One session (package D's), no subagents; the window runs from the assignment to the pull request and includes a few minutes of drafting ticket 26 while tests ran.
+
+- Agent time: about 50 minutes, an estimate from the transcript's timestamps (active stretches, gaps of five minutes or more left out), with the emulator check and the merges of `4.0/Main`.
+- Tokens: input 67,117,044, of which 66,768,890 cache reads, 347,748 cache writes, and 406 uncached; output 145,056.
