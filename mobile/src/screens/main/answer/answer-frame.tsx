@@ -31,6 +31,7 @@ import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { HowAboutCard } from './how-about-card';
 import { InvitedCard } from './invited-card';
 import { LookupCard } from './lookup-card';
+import { OfferedWords } from './offered-words';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
 
@@ -112,6 +113,9 @@ function Words(props: WordsProps): ReactElement {
   }
   if (bubble.failure === 'unavailable') {
     return <FailedLines text={bubble.text} />;
+  }
+  if (bubble.offers !== undefined && bubble.offers.length > 0) {
+    return <OfferedWords offers={bubble.offers} onAsk={onAsk} text={bubble.text} />;
   }
   const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? lookup?.lines;
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;

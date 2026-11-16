@@ -30,3 +30,18 @@ Blocked by: package A's meet input and its planning (row-6-seams, ticket 24); 18
 - Board a5; notes (1) (the longest time together; 302동 앞 28 minutes before 301동 앞 27), (2) (the candidates, row 6's decision D6), and (9) (a Friend seen through the Timetable only).
 - a5's map card has a third line, "내가 3분 걸어가요 · 12:43에 나서요"; a mark's label has a title and one line (P02 spec, "Where the words go"), so the third line is in the basis or the lines as the server writes them.
 - Row 8's offer "만나고 싶다" (P02-10, #271) sends the words "{이름}랑 만나고 싶어"; with this ticket and A's meet tool, those words plan the same meet.
+
+### Package C's line in `POST /plans` (2026-11-16)
+
+- `POST /plans` makes a meet's Plan into a Quest as a meal's: the Plan's title and Sub Quest, the asker leading, the Friends invited. `PUT /plans/:questId` plans a meet again as a meet. The invitee's card gives their own way with no change to `own-way.ts` or `invitation-card.service.ts`; two tests show it.
+- `GET /plans/:questId/better` offers nothing for a meet's Quest, found by its step's title "…에서 만나기": a meet has no meal's window to be planned better in.
+- Package A's meet planner takes `leftOut`, as the meal planner does, so that a meet's Quest planned again does not meet its own step.
+- A meet with only the asker is refused by A's `meetInputSchema` (`people.min(2)`) before `PLAN_ALONE` is reached.
+- Left as it is: an invitee's time-to-leave notification names the building ("301동") where the Leader's names "301동 앞", since `invitee-time-to-leave.service.ts` reads a meal's step title.
+
+### Agent usage (2026-11-16)
+
+Package C's line only. One implementing subagent (Opus 5.5); this session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 33 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots and the heavy lock.
+- Tokens: output 91,013; input 21,881,808, of which 21,591,605 were cache reads, 289,981 cache writes, and 222 uncached. Without cache reads: 381,216.

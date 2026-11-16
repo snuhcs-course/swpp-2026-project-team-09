@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MINUTE_MS } from '../gathering/gathering.js';
@@ -75,7 +76,7 @@ const plus = (at: Date, minutes: number): Date => new Date(at.getTime() + minute
 const later = (one: Date, other: Date): Date => (one > other ? one : other);
 
 // The earliest start at or after the arrival at which the stop is open for its whole stay.
-function startOf({ open, stayMinutes }: Stop, arrival: Date): Date | null {
+export function stayStart({ open, stayMinutes }: Pick<Stop, 'open' | 'stayMinutes'>, arrival: Date): Date | null {
   if (open === null) {
     return arrival;
   }
@@ -112,7 +113,7 @@ function visitOf(
 ): Visit | null {
   const walk = walkMinutes(from.placeId, stop.placeId);
   const arrival = plus(from.at, walk);
-  const start = startOf(stop, arrival);
+  const start = stayStart(stop, arrival);
   if (start === null) {
     return null;
   }
@@ -164,7 +165,7 @@ function reasonOf(stop: Stop, args: OrderArgs, deadline: Date, chosen: number): 
   if (plus(arrival, stop.stayMinutes) > latestEnd) {
     return 'no-time';
   }
-  const start = startOf(stop, arrival);
+  const start = stayStart(stop, arrival);
   if (start === null || plus(start, stop.stayMinutes) > latestEnd) {
     return 'closed';
   }

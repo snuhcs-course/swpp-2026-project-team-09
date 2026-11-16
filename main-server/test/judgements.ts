@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -178,13 +179,38 @@ export class JudgementWorld {
   }
 
   async collected(post: Record<string, unknown>, app = this.judging): Promise<void> {
-    await send(app, eventsMessage([post]));
+    await this.sent(app, eventsMessage([post]));
     await this.stepOver(Number(post.key));
   }
 
   // The next Collection of the Source, with nothing new, takes up the posts not finished.
   async nextCollection(app = this.judging): Promise<void> {
-    await send(app, eventsMessage([]));
+    await this.sent(app, eventsMessage([]));
+  }
+
+  // Sends a message and, to the judging server, waits for the step after it to return. A wait for the posts alone can
+  // end while the step still goes on, and its calls would then reach the next test's spies.
+  async sent(app: INestApplication<Server>, message: object): Promise<void> {
+    if (app !== this.judging) {
+      await send(app, message);
+      return;
+    }
+    const runs: Promise<void>[] = [];
+    const original = this.step.run.bind(this.step);
+    const run = vi.spyOn(this.step, 'run').mockImplementation((source) => {
+      const done = original(source);
+      runs.push(done);
+      return done;
+    });
+    try {
+      await send(app, message);
+      await vi.waitFor(() => {
+        expect(run).toHaveBeenCalled();
+      });
+      await Promise.all(runs);
+    } finally {
+      run.mockRestore();
+    }
   }
 
   async leftBeforeTheStep(postNumber: number): Promise<SourcePost> {
