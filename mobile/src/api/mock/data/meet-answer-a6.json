@@ -1,0 +1,1444 @@
+{
+  "input": {
+    "kind": "meet",
+    "date": "2026-11-17",
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "constraints": []
+      },
+      {
+        "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+        "constraints": []
+      }
+    ],
+    "window": {
+      "from": "14:00",
+      "until": null
+    },
+    "placeId": null
+  },
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "24동에서",
+      "userId": null
+    },
+    {
+      "kind": "from",
+      "text": "14:00부터",
+      "userId": null
+    },
+    {
+      "kind": "person",
+      "text": "민수",
+      "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37"
+    }
+  ],
+  "plans": [
+    {
+      "id": "302동 앞",
+      "title": "302동 앞에서 만나기",
+      "place": {
+        "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+        "label": "302동 앞",
+        "latitude": 37.44887,
+        "longitude": 126.95265
+      },
+      "startAt": "2026-11-17T14:07:00+09:00",
+      "endAt": "2026-11-17T15:30:00+09:00",
+      "togetherMinutes": 83,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+              "label": "24동",
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T13:50:00+09:00",
+          "walkMinutes": 17,
+          "arriveAt": "2026-11-17T14:07:00+09:00",
+          "leaveBy": "2026-11-17T16:33:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T17:00:00+09:00",
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            }
+          }
+        },
+        {
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+          "name": "민수",
+          "me": false,
+          "origin": {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T14:07:00+09:00",
+          "walkMinutes": 0,
+          "arriveAt": "2026-11-17T12:15:00+09:00",
+          "leaveBy": "2026-11-17T15:30:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T15:30:00+09:00",
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            }
+          }
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T14:07:00+09:00",
+          "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+          "title": "302동 앞에서 만나기"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "14:07 302동 앞",
+            "strong": true
+          },
+          {
+            "text": "에서 만나요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "15:30까지 함께 83분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "민수 12:15 302동 수업 끝 · 15:30에 나서요",
+        "24동 → 302동 앞 걸어서 17분",
+        "302동 앞 → 58동 걸어서 27분, 그래서 16:33에 나서요"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "source": "timetable",
+            "tag": "나 · 17분"
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "me": false,
+            "at": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "source": "timetable",
+            "tag": "민수"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동 앞",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "pick",
+            "tag": "302동 앞"
+          },
+          {
+            "place": {
+              "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+              "label": "유회진 학술정보관 앞",
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "role": "candidate",
+            "tag": "유회진 학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "제1공학관 앞",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "candidate",
+            "tag": "제1공학관 앞"
+          },
+          {
+            "place": {
+              "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+              "label": "신양학술정보관 앞",
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "role": "candidate",
+            "tag": "신양학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "제3학생식당 앞",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "candidate",
+            "tag": "제3학생식당 앞"
+          },
+          {
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "role": "next",
+            "tag": "17:00 수업 · 58동"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "to": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "minutes": 17
+          },
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "next",
+            "from": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "to": {
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "minutes": 27
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "text": "14:07 만남",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T12:00:00+09:00",
+          "endAt": "2026-11-17T18:30:00+09:00"
+        },
+        "now": "2026-11-17T12:10:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-17T13:00:00+09:00",
+                "endAt": "2026-11-17T13:50:00+09:00",
+                "label": "24동 수업"
+              },
+              {
+                "startAt": "2026-11-17T17:00:00+09:00",
+                "endAt": "2026-11-17T18:15:00+09:00",
+                "label": "58동 수업"
+              }
+            ]
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "busy": [
+              {
+                "startAt": "2026-11-17T12:00:00+09:00",
+                "endAt": "2026-11-17T12:15:00+09:00",
+                "label": "302동 수업"
+              },
+              {
+                "startAt": "2026-11-17T15:30:00+09:00",
+                "endAt": "2026-11-17T16:45:00+09:00",
+                "label": "302동 수업"
+              }
+            ]
+          }
+        ],
+        "startAt": "2026-11-17T14:07:00+09:00",
+        "endAt": "2026-11-17T15:30:00+09:00",
+        "text": "14:07–15:30 · 함께 83분"
+      }
+    },
+    {
+      "id": "유회진 학술정보관 앞",
+      "title": "유회진 학술정보관 앞에서 만나기",
+      "place": {
+        "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+        "label": "유회진 학술정보관 앞",
+        "latitude": 37.45095,
+        "longitude": 126.9527
+      },
+      "startAt": "2026-11-17T14:04:00+09:00",
+      "endAt": "2026-11-17T15:26:00+09:00",
+      "togetherMinutes": 82,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+              "label": "24동",
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T13:50:00+09:00",
+          "walkMinutes": 14,
+          "arriveAt": "2026-11-17T14:04:00+09:00",
+          "leaveBy": "2026-11-17T16:36:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T17:00:00+09:00",
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            }
+          }
+        },
+        {
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+          "name": "민수",
+          "me": false,
+          "origin": {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T14:00:00+09:00",
+          "walkMinutes": 4,
+          "arriveAt": "2026-11-17T12:19:00+09:00",
+          "leaveBy": "2026-11-17T15:26:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T15:30:00+09:00",
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            }
+          }
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T14:04:00+09:00",
+          "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+          "title": "유회진 학술정보관 앞에서 만나기"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "14:04 유회진 학술정보관 앞",
+            "strong": true
+          },
+          {
+            "text": "에서 만나요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "15:26까지 함께 82분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "민수 12:15 302동 수업 끝 · 유회진 학술정보관 앞까지 걸어서 4분 · 15:26에 나서요",
+        "24동 → 유회진 학술정보관 앞 걸어서 14분",
+        "유회진 학술정보관 앞 → 58동 걸어서 24분, 그래서 16:36에 나서요"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "source": "timetable",
+            "tag": "나 · 14분"
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "me": false,
+            "at": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "source": "timetable",
+            "tag": "민수 · 4분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+              "label": "유회진 학술정보관 앞",
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "role": "pick",
+            "tag": "유회진 학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동 앞",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "candidate",
+            "tag": "302동 앞"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "제1공학관 앞",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "candidate",
+            "tag": "제1공학관 앞"
+          },
+          {
+            "place": {
+              "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+              "label": "신양학술정보관 앞",
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "role": "candidate",
+            "tag": "신양학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "제3학생식당 앞",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "candidate",
+            "tag": "제3학생식당 앞"
+          },
+          {
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "role": "next",
+            "tag": "17:00 수업 · 58동"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "to": {
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "minutes": 14
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "role": "friend",
+            "from": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "to": {
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "minutes": 4
+          },
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "next",
+            "from": {
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "to": {
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "minutes": 24
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "text": "14:04 만남",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T12:00:00+09:00",
+          "endAt": "2026-11-17T18:30:00+09:00"
+        },
+        "now": "2026-11-17T12:10:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-17T13:00:00+09:00",
+                "endAt": "2026-11-17T13:50:00+09:00",
+                "label": "24동 수업"
+              },
+              {
+                "startAt": "2026-11-17T17:00:00+09:00",
+                "endAt": "2026-11-17T18:15:00+09:00",
+                "label": "58동 수업"
+              }
+            ]
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "busy": [
+              {
+                "startAt": "2026-11-17T12:00:00+09:00",
+                "endAt": "2026-11-17T12:15:00+09:00",
+                "label": "302동 수업"
+              },
+              {
+                "startAt": "2026-11-17T15:30:00+09:00",
+                "endAt": "2026-11-17T16:45:00+09:00",
+                "label": "302동 수업"
+              }
+            ]
+          }
+        ],
+        "startAt": "2026-11-17T14:04:00+09:00",
+        "endAt": "2026-11-17T15:26:00+09:00",
+        "text": "14:04–15:26 · 함께 82분"
+      }
+    },
+    {
+      "id": "제1공학관 앞",
+      "title": "제1공학관 앞에서 만나기",
+      "place": {
+        "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+        "label": "제1공학관 앞",
+        "latitude": 37.45016,
+        "longitude": 126.95259
+      },
+      "startAt": "2026-11-17T14:05:00+09:00",
+      "endAt": "2026-11-17T15:27:00+09:00",
+      "togetherMinutes": 82,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+              "label": "24동",
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T13:50:00+09:00",
+          "walkMinutes": 15,
+          "arriveAt": "2026-11-17T14:05:00+09:00",
+          "leaveBy": "2026-11-17T16:35:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T17:00:00+09:00",
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            }
+          }
+        },
+        {
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+          "name": "민수",
+          "me": false,
+          "origin": {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T14:02:00+09:00",
+          "walkMinutes": 3,
+          "arriveAt": "2026-11-17T12:18:00+09:00",
+          "leaveBy": "2026-11-17T15:27:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T15:30:00+09:00",
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            }
+          }
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T14:05:00+09:00",
+          "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+          "title": "제1공학관 앞에서 만나기"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "14:05 제1공학관 앞",
+            "strong": true
+          },
+          {
+            "text": "에서 만나요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "15:27까지 함께 82분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "민수 12:15 302동 수업 끝 · 제1공학관 앞까지 걸어서 3분 · 15:27에 나서요",
+        "24동 → 제1공학관 앞 걸어서 15분",
+        "제1공학관 앞 → 58동 걸어서 25분, 그래서 16:35에 나서요"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "source": "timetable",
+            "tag": "나 · 15분"
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "me": false,
+            "at": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "source": "timetable",
+            "tag": "민수 · 3분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "제1공학관 앞",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "pick",
+            "tag": "제1공학관 앞"
+          },
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동 앞",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "candidate",
+            "tag": "302동 앞"
+          },
+          {
+            "place": {
+              "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+              "label": "유회진 학술정보관 앞",
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "role": "candidate",
+            "tag": "유회진 학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+              "label": "신양학술정보관 앞",
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "role": "candidate",
+            "tag": "신양학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "제3학생식당 앞",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "candidate",
+            "tag": "제3학생식당 앞"
+          },
+          {
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "role": "next",
+            "tag": "17:00 수업 · 58동"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "to": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "minutes": 15
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "role": "friend",
+            "from": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "to": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "minutes": 3
+          },
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "next",
+            "from": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "to": {
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "minutes": 25
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "text": "14:05 만남",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T12:00:00+09:00",
+          "endAt": "2026-11-17T18:30:00+09:00"
+        },
+        "now": "2026-11-17T12:10:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-17T13:00:00+09:00",
+                "endAt": "2026-11-17T13:50:00+09:00",
+                "label": "24동 수업"
+              },
+              {
+                "startAt": "2026-11-17T17:00:00+09:00",
+                "endAt": "2026-11-17T18:15:00+09:00",
+                "label": "58동 수업"
+              }
+            ]
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "busy": [
+              {
+                "startAt": "2026-11-17T12:00:00+09:00",
+                "endAt": "2026-11-17T12:15:00+09:00",
+                "label": "302동 수업"
+              },
+              {
+                "startAt": "2026-11-17T15:30:00+09:00",
+                "endAt": "2026-11-17T16:45:00+09:00",
+                "label": "302동 수업"
+              }
+            ]
+          }
+        ],
+        "startAt": "2026-11-17T14:05:00+09:00",
+        "endAt": "2026-11-17T15:27:00+09:00",
+        "text": "14:05–15:27 · 함께 82분"
+      }
+    },
+    {
+      "id": "신양학술정보관 앞",
+      "title": "신양학술정보관 앞에서 만나기",
+      "place": {
+        "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+        "label": "신양학술정보관 앞",
+        "latitude": 37.4552,
+        "longitude": 126.95206
+      },
+      "startAt": "2026-11-17T14:00:00+09:00",
+      "endAt": "2026-11-17T15:20:00+09:00",
+      "togetherMinutes": 80,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+              "label": "24동",
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T13:52:00+09:00",
+          "walkMinutes": 8,
+          "arriveAt": "2026-11-17T13:58:00+09:00",
+          "leaveBy": "2026-11-17T16:42:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T17:00:00+09:00",
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            }
+          }
+        },
+        {
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+          "name": "민수",
+          "me": false,
+          "origin": {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T13:50:00+09:00",
+          "walkMinutes": 10,
+          "arriveAt": "2026-11-17T12:25:00+09:00",
+          "leaveBy": "2026-11-17T15:20:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T15:30:00+09:00",
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            }
+          }
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T14:00:00+09:00",
+          "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+          "title": "신양학술정보관 앞에서 만나기"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "14:00 신양학술정보관 앞",
+            "strong": true
+          },
+          {
+            "text": "에서 만나요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "15:20까지 함께 80분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "민수 12:15 302동 수업 끝 · 신양학술정보관 앞까지 걸어서 10분 · 15:20에 나서요",
+        "24동 → 신양학술정보관 앞 걸어서 8분",
+        "신양학술정보관 앞 → 58동 걸어서 18분, 그래서 16:42에 나서요"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "source": "timetable",
+            "tag": "나 · 8분"
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "me": false,
+            "at": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "source": "timetable",
+            "tag": "민수 · 10분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+              "label": "신양학술정보관 앞",
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "role": "pick",
+            "tag": "신양학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동 앞",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "candidate",
+            "tag": "302동 앞"
+          },
+          {
+            "place": {
+              "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+              "label": "유회진 학술정보관 앞",
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "role": "candidate",
+            "tag": "유회진 학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "제1공학관 앞",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "candidate",
+            "tag": "제1공학관 앞"
+          },
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "제3학생식당 앞",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "candidate",
+            "tag": "제3학생식당 앞"
+          },
+          {
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "role": "next",
+            "tag": "17:00 수업 · 58동"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "to": {
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "minutes": 8
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "role": "friend",
+            "from": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "to": {
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "minutes": 10
+          },
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "next",
+            "from": {
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "to": {
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "minutes": 18
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "text": "14:00 만남",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T12:00:00+09:00",
+          "endAt": "2026-11-17T18:30:00+09:00"
+        },
+        "now": "2026-11-17T12:10:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-17T13:00:00+09:00",
+                "endAt": "2026-11-17T13:50:00+09:00",
+                "label": "24동 수업"
+              },
+              {
+                "startAt": "2026-11-17T17:00:00+09:00",
+                "endAt": "2026-11-17T18:15:00+09:00",
+                "label": "58동 수업"
+              }
+            ]
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "busy": [
+              {
+                "startAt": "2026-11-17T12:00:00+09:00",
+                "endAt": "2026-11-17T12:15:00+09:00",
+                "label": "302동 수업"
+              },
+              {
+                "startAt": "2026-11-17T15:30:00+09:00",
+                "endAt": "2026-11-17T16:45:00+09:00",
+                "label": "302동 수업"
+              }
+            ]
+          }
+        ],
+        "startAt": "2026-11-17T14:00:00+09:00",
+        "endAt": "2026-11-17T15:20:00+09:00",
+        "text": "14:00–15:20 · 함께 80분"
+      }
+    },
+    {
+      "id": "제3학생식당 앞",
+      "title": "제3학생식당 앞에서 만나기",
+      "place": {
+        "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+        "label": "제3학생식당 앞",
+        "latitude": 37.45647,
+        "longitude": 126.94851
+      },
+      "startAt": "2026-11-17T14:00:00+09:00",
+      "endAt": "2026-11-17T15:15:00+09:00",
+      "togetherMinutes": 75,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+          "name": "유상",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+              "label": "24동",
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T13:54:00+09:00",
+          "walkMinutes": 6,
+          "arriveAt": "2026-11-17T13:56:00+09:00",
+          "leaveBy": "2026-11-17T16:44:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T17:00:00+09:00",
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            }
+          }
+        },
+        {
+          "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+          "name": "민수",
+          "me": false,
+          "origin": {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-17T13:45:00+09:00",
+          "walkMinutes": 15,
+          "arriveAt": "2026-11-17T12:30:00+09:00",
+          "leaveBy": "2026-11-17T15:15:00+09:00",
+          "next": {
+            "startAt": "2026-11-17T15:30:00+09:00",
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            }
+          }
+        }
+      ],
+      "subQuests": [
+        {
+          "at": "2026-11-17T14:00:00+09:00",
+          "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+          "title": "제3학생식당 앞에서 만나기"
+        }
+      ],
+      "lines": [
+        [
+          {
+            "text": "14:00 제3학생식당 앞",
+            "strong": true
+          },
+          {
+            "text": "에서 만나요",
+            "strong": false
+          }
+        ],
+        [
+          {
+            "text": "15:15까지 함께 75분이에요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "민수 12:15 302동 수업 끝 · 제3학생식당 앞까지 걸어서 15분 · 15:15에 나서요",
+        "24동 → 제3학생식당 앞 걸어서 6분",
+        "제3학생식당 앞 → 58동 걸어서 16분, 그래서 16:44에 나서요"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "유상",
+            "me": true,
+            "at": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "source": "timetable",
+            "tag": "나 · 6분"
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "me": false,
+            "at": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "source": "timetable",
+            "tag": "민수 · 15분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "label": "제3학생식당 앞",
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "role": "pick",
+            "tag": "제3학생식당 앞"
+          },
+          {
+            "place": {
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "label": "302동 앞",
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "role": "candidate",
+            "tag": "302동 앞"
+          },
+          {
+            "place": {
+              "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+              "label": "유회진 학술정보관 앞",
+              "latitude": 37.45095,
+              "longitude": 126.9527
+            },
+            "role": "candidate",
+            "tag": "유회진 학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "label": "제1공학관 앞",
+              "latitude": 37.45016,
+              "longitude": 126.95259
+            },
+            "role": "candidate",
+            "tag": "제1공학관 앞"
+          },
+          {
+            "place": {
+              "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+              "label": "신양학술정보관 앞",
+              "latitude": 37.4552,
+              "longitude": 126.95206
+            },
+            "role": "candidate",
+            "tag": "신양학술정보관 앞"
+          },
+          {
+            "place": {
+              "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+              "label": "58동",
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "role": "next",
+            "tag": "17:00 수업 · 58동"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "me",
+            "from": {
+              "latitude": 37.45942,
+              "longitude": 126.94989
+            },
+            "to": {
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "minutes": 6
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "role": "friend",
+            "from": {
+              "latitude": 37.44887,
+              "longitude": 126.95265
+            },
+            "to": {
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "minutes": 15
+          },
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "role": "next",
+            "from": {
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "to": {
+              "latitude": 37.46568,
+              "longitude": 126.95203
+            },
+            "minutes": 16
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "latitude": 37.45647,
+              "longitude": 126.94851
+            },
+            "text": "14:00 만남",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-17T12:00:00+09:00",
+          "endAt": "2026-11-17T18:30:00+09:00"
+        },
+        "now": "2026-11-17T12:10:00+09:00",
+        "lanes": [
+          {
+            "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-17T13:00:00+09:00",
+                "endAt": "2026-11-17T13:50:00+09:00",
+                "label": "24동 수업"
+              },
+              {
+                "startAt": "2026-11-17T17:00:00+09:00",
+                "endAt": "2026-11-17T18:15:00+09:00",
+                "label": "58동 수업"
+              }
+            ]
+          },
+          {
+            "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+            "name": "민수",
+            "busy": [
+              {
+                "startAt": "2026-11-17T12:00:00+09:00",
+                "endAt": "2026-11-17T12:15:00+09:00",
+                "label": "302동 수업"
+              },
+              {
+                "startAt": "2026-11-17T15:30:00+09:00",
+                "endAt": "2026-11-17T16:45:00+09:00",
+                "label": "302동 수업"
+              }
+            ]
+          }
+        ],
+        "startAt": "2026-11-17T14:00:00+09:00",
+        "endAt": "2026-11-17T15:15:00+09:00",
+        "text": "14:00–15:15 · 함께 75분"
+      }
+    }
+  ],
+  "dropped": [],
+  "noPlan": null
+}

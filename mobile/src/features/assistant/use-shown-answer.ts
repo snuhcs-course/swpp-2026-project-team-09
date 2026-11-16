@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,6 +14,9 @@ import type { LatLng } from '@/api/types';
 import { withPerson } from './plan-input';
 import type { Stretch } from './time-band';
 import type { ChatBubble } from './use-chat';
+
+// A drag of a handle, or of the band's lanes, which moves it whole.
+type ChangeBy = 'drag' | 'move';
 
 export interface ShownAnswer {
   // The answer of the conversation's last reply, or null: the frame's card finds its bubble by it.
@@ -35,7 +39,7 @@ export interface ShownAnswer {
   // Asks for the answer to the conditions of the answer on screen when it is called, as `alter` changes them; it
   // replaces the one on screen. Without an answer on screen, or when `alter` gives the same conditions back, it does
   // nothing.
-  change: (alter: (input: PlanInput) => PlanInput, by?: 'drag') => void;
+  change: (alter: (input: PlanInput) => PlanInput, by?: ChangeBy) => void;
   // Adds a Friend to the conditions as `change` does, chosen in the list or on the map, and holds them as the pending
   // add until the answer comes: the list of Friends stays open until then and closes with that answer.
   add: (userId: string) => void;
@@ -44,6 +48,10 @@ export interface ShownAnswer {
   // The band of the Plan shown before the last drag, while "되돌리기" can bring that answer back.
   ghost: Stretch | null;
   undo: () => void;
+  // The band's place while it is dragged whole, and after it is let go until the recalculation it asked for ends; the
+  // input gives way to it.
+  moving: Stretch | null;
+  setMoving: (at: Stretch | null) => void;
 }
 
 // Where the User is, or why that is not known, which a recalculation sends, and what a failed one says.
@@ -69,6 +77,7 @@ interface AnswerState extends Shown {
   kept: Shown | null;
   recalculating: boolean;
   pendingAdd: string | null;
+  moving: Stretch | null;
   // Counts the replies: an answer that comes for an earlier one is dropped.
   epoch: number;
 }
@@ -104,6 +113,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     kept: null,
     recalculating: false,
     pendingAdd: null,
+    moving: null,
     epoch,
   };
 }
@@ -112,9 +122,10 @@ function withPlan(state: AnswerState, index: number): AnswerState {
   return index === state.index ? state : { ...state, index, basisOpen: false };
 }
 
-// After a drag the Plan with the id of the one on screen stays when the new answer has it, otherwise the first: the
-// User moved the time of the Plan they look at. Any other change changed who eats or where from, and so the order.
-function replaced(last: AnswerState, next: AnswerReply, by: 'drag' | undefined): AnswerState {
+// After a drag of a handle the Plan with the id of the one on screen stays when the new answer has it, otherwise the
+// first: the User moved the time of the Plan they look at. The band moved whole asked the server to plan again from a
+// new start, and any other change changed who eats or where from, and so the order.
+function replaced(last: AnswerState, next: AnswerReply, by: ChangeBy | undefined): AnswerState {
   const shownId = last.answer?.plans[last.index]?.id;
   const index =
     by === 'drag'
@@ -123,9 +134,10 @@ function replaced(last: AnswerState, next: AnswerReply, by: 'drag' | undefined):
           next.plans.findIndex(({ id }) => id === shownId),
         )
       : 0;
-  const kept = by === 'drag' ? { answer: last.answer, index: last.index } : null;
+  const kept = by === undefined ? null : { answer: last.answer, index: last.index };
   const adding = last.adding && last.pendingAdd === null;
-  return { ...last, answer: next, index, basisOpen: false, adding, kept, recalculating: false, pendingAdd: null };
+  const settled = { recalculating: false, pendingAdd: null, moving: null };
+  return { ...last, answer: next, index, basisOpen: false, adding, kept, ...settled };
 }
 
 function ghostOf(kept: Shown | null): Stretch | null {
@@ -139,6 +151,7 @@ function useBrowsing(setStored: SetStored): {
   toggleBasis: ShownAnswer['toggleBasis'];
   setAdding: ShownAnswer['setAdding'];
   undo: ShownAnswer['undo'];
+  setMoving: ShownAnswer['setMoving'];
 } {
   const browse = useCallback(
     (step: 1 | -1): void => {
@@ -172,15 +185,23 @@ function useBrowsing(setStored: SetStored): {
       last.kept === null || last.recalculating ? last : { ...last, ...last.kept, kept: null, basisOpen: false },
     );
   }, [setStored]);
-  return { browse, show, toggleBasis, setAdding, undo };
+  const setMoving = useCallback(
+    (at: Stretch | null): void => {
+      setStored((last) =>
+        last.moving?.startAt === at?.startAt && last.moving?.endAt === at?.endAt ? last : { ...last, moving: at },
+      );
+    },
+    [setStored],
+  );
+  return { browse, show, toggleBasis, setAdding, undo, setMoving };
 }
 
 // A change of the conditions, and the Friend it adds, when it adds one.
-type Ask = (alter: (input: PlanInput) => PlanInput, by: 'drag' | undefined, adds: string | null) => void;
+type Ask = (alter: (input: PlanInput) => PlanInput, by: ChangeBy | undefined, adds: string | null) => void;
 
 // Asks for a recalculation of the answer on screen when it is called, unless one of that epoch is on its way: a
 // control may call a `change` of an earlier render. Its answer, or its failure, counts only while the epoch it was
-// asked in is still the one on screen.
+// asked in is still the one on screen. A band let go where no recalculation is asked goes back.
 function useChange(current: AnswerState, setStored: SetStored, recalculation: Recalculation): Ask {
   const live = useRef({ current, recalculation });
   const flight = useRef<number | null>(null);
@@ -194,6 +215,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
     } = live.current;
     const input = answer === null ? null : alter(answer.input);
     if (input === null || input === answer?.input || flight.current === epoch) {
+      setStored((last) => (last.moving === null ? last : { ...last, moving: null }));
       return;
     }
     flight.current = epoch;
@@ -211,7 +233,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
         settle((last) => replaced(last, next, by));
       },
       () => {
-        if (settle((last) => ({ ...last, recalculating: false, pendingAdd: null }))) {
+        if (settle((last) => ({ ...last, recalculating: false, pendingAdd: null, moving: null }))) {
           onFailed();
         }
       },
@@ -252,5 +274,6 @@ export function useShownAnswer(
     },
     pendingAdd: current.pendingAdd,
     ghost: ghostOf(current.kept),
+    moving: current.moving,
   };
 }

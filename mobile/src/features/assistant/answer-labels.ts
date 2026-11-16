@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -37,12 +38,13 @@ export interface MarkPoint {
 }
 
 // A mark that may take a label: the index of its point, its own position, the words of its label, null for none, and
-// the sides its label may take, in order.
+// the sides its label may take, in order. `kept`: the pick's, whose label is never left out.
 export interface Unplaced {
   point: number;
   position: LatLng;
   words: Words | null;
   sides: readonly LabelSide[];
+  kept?: boolean;
 }
 
 // Whether another point lies within a label's reach on that side of its point.
@@ -180,11 +182,16 @@ function sharedEdges(
   });
 }
 
+// The side a kept label takes at a view where none is free: the first whose box stays inside the area, else the first.
+function keptAt(view: LabelView, position: LatLng, words: Words, list: readonly LabelSide[]): LabelSide | null {
+  return atView(view, position, words, list, []) ?? list[0] ?? null;
+}
+
 // The labels of an answer's marks, taken in the order given, each at a side of its list that no earlier label at its
 // point took. Without a view, the first side with no other point within its reach in metres, or with none such the
 // first. At a view, the first whose box stays inside the area and covers neither another point's symbol box nor a
-// label placed before it, or with none such no label; labels at the left and the right of neighbouring marks then
-// share an edge.
+// label placed before it, or with none such no label, except a kept one's (`keptAt`); labels at the left and the
+// right of neighbouring marks then share an edge.
 export function placeLabels(
   points: readonly MarkPoint[],
   marks: readonly Unplaced[],
@@ -193,14 +200,17 @@ export function placeLabels(
   const taken = points.map(() => new Set<LabelSide>());
   const symbols = view === null ? [] : points.map(({ symbol }) => (symbol === null ? null : symbolBox(view, symbol)));
   const boxes: ViewArea[] = [];
-  const labels = marks.map(({ point, position, words, sides }): AnswerLabel | null => {
+  const labels = marks.map(({ point, position, words, sides, kept = false }): AnswerLabel | null => {
     const free = taken[point];
     if (words === null || free === undefined) {
       return null;
     }
     const list = sides.filter((side) => !free.has(side));
     const covering = [...othersThan(symbols, point), ...boxes];
-    const side = view === null ? inMetres(points, point, list) : atView(view, position, words, list, covering);
+    const side =
+      view === null
+        ? inMetres(points, point, list)
+        : (atView(view, position, words, list, covering) ?? (kept ? keptAt(view, position, words, list) : null));
     if (side === null) {
       return null;
     }

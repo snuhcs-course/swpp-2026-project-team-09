@@ -7,6 +7,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -46,7 +47,7 @@ import {
   MEAL_ANSWER_THREE,
   MEAL_ANSWER_UNFIT_PLACE,
 } from './data/meal-answers';
-import { MEET_ANSWER } from './data/meet-answer';
+import { MEET_ANSWER, MEET_ANSWER_FROM_14 } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
 import { mockTimetable } from './timetable';
@@ -156,11 +157,12 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
-// The mock holds copies of meal answers and of one meet, so other conditions are read as a meal of the User alone.
-// Three people at a pressed Place get the copy of that Place when there is one ("여기면 어때?").
+// The mock holds copies of meal answers and of one meet, asked as it first is and again from 14:00, so other conditions
+// are read as a meal of the User alone. Three people at a pressed Place get the copy of that Place when there is one
+// ("여기면 어때?").
 function copyFor(input: PlanInput): AnswerReply {
   if (input.kind === 'meet') {
-    return MEET_ANSWER;
+    return input.window.from === MEET_ANSWER_FROM_14.input.window.from ? MEET_ANSWER_FROM_14 : MEET_ANSWER;
   }
   const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
   const from = input.kind === 'meal' ? input.window.from : null;
