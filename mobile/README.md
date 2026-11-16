@@ -626,8 +626,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   waiting dots (`WaitingDots`, read aloud as "보는 중") and the round stop button "그만". A reply whose answer has a Plan shows the
   Plan's two lines (`answer-lines.tsx`) in place of the model's sentence; any other reply is drawn with the chat's own
   parts (`chat-bubbles.tsx`'s `BubbleParts`): the text as Markdown, the cards with their buttons, a Proposal, the map
-  buttons, and "다시 시도" under a failure. The lists, the row of buttons, 편의기능, the zoom control, the shuttle's
-  notice, the selected thing's card, and the tabs give way, and a marker takes no press. Another card leads where it
+  buttons, and "다시 시도" under a failure. The lists, the row of buttons, 편의기능, the zoom control, the selected
+  thing's card, and the tabs give way, and a marker takes no press. Another card leads where it
   does and leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it
   is laid out.
   - Leaving the frame hides it and keeps the conversation (`use-kept-conversation.ts`): ✕, Android's back button, a
@@ -818,10 +818,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   in loop order, and has no button but "가까이 보기"; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
   "{stop}에 있어요 · 다음 정류장 {next}", follows the vehicle's sets and closes when it goes, and "노선 보기" fits the
   camera to the whole line and closes the card. Outside weekdays from 08:00 to 21:00 in Korea's time
-  (`SERVICE_HOURS`), a notice at the bottom card's place says "지금은 셔틀버스가 운행하지 않아요" over the route's
-  service hours as the server words them; it is checked every 5 seconds, gives way to an open card, hides the row of
-  buttons and the zoom control as a card does, and the 편의기능 button stands 8 above it. Turning the layer off takes
-  everything away and closes a stop's or a vehicle's card.
+  (`SERVICE_HOURS`), a toast with the bus icon says "지금은 셔틀버스가 운행하지 않아요 · 평일 08:00–21:00" for 3.5
+  seconds: each time the layer is turned on, and once when the hours end while it is on (checked every 5 seconds).
+  Nothing else at the bottom moves for it. Turning the layer off takes everything away and closes a stop's or a
+  vehicle's card.
 - **How a vehicle travels.** The operator reports a vehicle only at a stop. A vehicle seen for the first time is
   placed at its stop. One reported at a new stop travels there along the line in the line's direction, the order of
   the stops, past any stops skipped between two sets, in 10 seconds (`TRIP_MS`): every second it glides for a second

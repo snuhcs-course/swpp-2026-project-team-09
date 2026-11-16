@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -20,11 +21,10 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { DINNER, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
-import { answerShuttle, toggleShuttle } from './support/shuttle';
 
 // What else gives way to the answer frame (P02 ticket 01, "What gives way" and "The input") against the fake main
-// server: the shuttle's notice, a selected thing's card, the tab bar, which stays on the other tabs, the map's credit,
-// and the keyboard after a send.
+// server: a selected thing's card, the tab bar, which stays on the other tabs, the map's credit, and the keyboard after
+// a send.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -42,8 +42,6 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const REPLY = '셔틀은 월요일에 다녀요.';
 const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal: null } };
-// A Saturday at noon, outside the shuttle's service hours, as shuttle-layer.integration.test.tsx has it.
-const SATURDAY_NOON = new Date('2026-10-10T12:00:00+09:00');
 
 let server: FakeServer;
 
@@ -74,22 +72,8 @@ async function closeFrame(user: User): Promise<void> {
   await user.press(within(screen.getByTestId('answer-pill')).getByRole('button', { name: '답 닫기' }));
 }
 
-// Partitions: the shuttle's notice outside the service hours; a thing selected before asking.
+// Partitions: a thing selected before asking.
 describe('what gives way to the frame and comes back after ✕', () => {
-  it("hides the shuttle's notice", async () => {
-    await start(SATURDAY_NOON);
-    answerShuttle(server);
-    const user = await openMain();
-    await toggleShuttle(user);
-    expect(screen.getByTestId('shuttle-notice')).toBeVisible();
-
-    await ask(user);
-    expect(screen.queryByTestId('shuttle-notice')).toBeNull();
-
-    await closeFrame(user);
-    expect(screen.getByTestId('shuttle-notice')).toBeVisible();
-  });
-
   it('hides the card of a thing selected before asking, which stays selected', async () => {
     await start();
     const user = await openMain();
