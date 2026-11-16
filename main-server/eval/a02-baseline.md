@@ -16,7 +16,7 @@ A02 ticket 05 (`.scratch/iteration-4/A02-llm-provider-and-key-switch/issues/05-b
 | Changed condition | **A01's retry**: a call that fails with 429 or 529 is sent once more. The last OpenRouter collection runs had none. The scorecards say "429·529에만 한 번 재시도".                                                                                  |
 | Prices            | `eval/cost.ts`: USD 0.10 in and 0.50 out per million tokens on both; on Anthropic a cache read is 0.1x and a write 1.25x.                                                                                                                           |
 | Order             | One eval at a time, under the shared lock `/tmp/claude-0/itest.lock`.                                                                                                                                                                               |
-| Who ran it        | An agent (Claude Opus 5.5) for 안진영, who approved up to USD 10 for the baseline on 2026-11-15.                                                                                                                                                    |
+| Who ran it        | An agent (Claude Opus 5.5), within a USD 10 budget approved on 2026-11-15.                                                                                                                                                                          |
 
 ## Collection evaluations (A and B), Anthropic only
 
