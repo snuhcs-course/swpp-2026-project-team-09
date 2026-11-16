@@ -29,6 +29,7 @@ import { AnswerLines } from './answer-lines';
 import { AnswerPill } from './answer-pill';
 import { EarlierTurns, TurnQuestion } from './earlier-turns';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
+import { FollowUpChips } from './follow-up-chips';
 import { useForgetWithUndo } from './forget-with-undo';
 import { useHeldHeight } from './held-height';
 import { HowAboutCard } from './how-about-card';
@@ -214,11 +215,22 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
               />
             </View>
           ))}
-          {waiting ? <WaitingReply onStop={control.chat.stop} /> : null}
+          {waiting ? <WaitingReply onStop={control.chat.stop} /> : <FollowUps control={control} />}
           <EarlierTurns bubbles={bubbles} />
         </>
       )}
     </FrameCard>
+  );
+}
+
+// The follow-ups under the reply on screen, while neither the list of Friends to add nor the time band moved whole
+// takes the card.
+function FollowUps({ control }: { control: ChatSheetControl }): ReactElement | null {
+  const { answer, chat } = control;
+  const reply = lastReply(chat.bubbles);
+  const onScreen = reply !== undefined && (turnOf(chat.bubbles)?.after.includes(reply) ?? false);
+  return answer.adding || answer.moving !== null || !onScreen ? null : (
+    <FollowUpChips onAsk={chat.send} reply={reply} />
   );
 }
 

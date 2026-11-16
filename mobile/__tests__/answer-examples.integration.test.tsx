@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -80,8 +81,8 @@ function sentBodies(): unknown[] {
   return server.received('POST /assistant/messages').map(({ body }) => body);
 }
 
-// The examples the empty chat offered, by their words.
-const EXAMPLES = ['식사 메뉴 추천', '현재 통학/순환 셔틀 위치', '파티 찾기'];
+// The examples, by their words (P02 ticket 36).
+const EXAMPLES = ['배고파', '오늘 볼 만한 거 있어?', '공부할 자리'];
 
 // Partitions: the keyboard down and up with nothing asked; something asked; an example pressed.
 describe('the examples above the bar (P02 ticket 04)', () => {
@@ -116,12 +117,12 @@ describe('the examples above the bar (P02 ticket 04)', () => {
     const user = await openMain();
     await showKeyboard(KEYBOARD);
 
-    await user.press(screen.getByRole('button', { name: '파티 찾기' }));
+    await user.press(screen.getByRole('button', { name: '오늘 볼 만한 거 있어?' }));
     await pass(1000);
 
-    expect(pill().getByText('파티 찾기')).toBeVisible();
+    expect(pill().getByText('오늘 볼 만한 거 있어?')).toBeVisible();
     expect(sentBodies()).toEqual([
-      expect.objectContaining({ messages: [{ role: 'user', text: '파티 찾기' }], context: CONTEXT }),
+      expect.objectContaining({ messages: [{ role: 'user', text: '오늘 볼 만한 거 있어?' }], context: CONTEXT }),
     ]);
   });
 });

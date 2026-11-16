@@ -42,7 +42,7 @@ const OPENING = '안녕';
 const OPENING_REPLY = '안녕하세요. 무엇을 도와드릴까요?';
 const FIRST = '셔틀 어디 있어?';
 const LATE = '셔틀 두 대가 정문과 자연대에 있어요.';
-const EXAMPLE = '식사 메뉴 추천';
+const EXAMPLE = '배고파';
 const SECOND_REPLY = '오늘 점심은 302동식당이 가까워요.';
 
 let server: FakeServer;

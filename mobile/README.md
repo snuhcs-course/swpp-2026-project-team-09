@@ -618,7 +618,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - "활성 파티" never shrinks: its two lines stay whole on a screen narrower than the wireframe's 390.
 - **The answer frame** (`answer/answer-frame.tsx`), the one screen of the conversation with the Assistant. While the
   bar has the keyboard and nothing is asked, the three examples of the empty chat stand above it as chips with an icon
-  in their layer's colour, 식사 메뉴 추천 (식당), 현재 통학/순환 셔틀 위치 (셔틀버스) and 파티 찾기 (the Party's), with
+  in their layer's colour, 배고파 (식당), 오늘 볼 만한 거 있어? (the Party's) and 공부할 자리 (공부공간), with
   the line "대화 내용은 AI 제공자에게 전송돼요" (`answer/asked-examples.tsx`); a press sends the example as the
   User's message. Once something is asked, what the User asked last stands as a pill at the top left with "답 닫기"
   (✕) and the round "새 대화" at its right, and one white card at the bottom of the screen holds the rest of the turn
@@ -629,8 +629,14 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   "만나고 싶다") shows the dots in place of its label (`Button`'s `busy`). A reply whose answer has a Plan shows the
   Plan's two lines (`answer-lines.tsx`) in place of the model's sentence; any other reply is drawn with the chat's own
   parts (`chat-bubbles.tsx`'s `BubbleParts`): the text as Markdown, the cards with their buttons, a Proposal, the map
-  buttons, and "다시 시도" under a failure. The lists, the row of buttons, 편의기능, the zoom control, the selected
-  thing's card, and the tabs give way, and a marker takes no press. Another card leads where it
+  buttons, and "다시 시도" under a failure. Under the reply on screen, up to two follow-ups in cells of one width
+  (`follow-up-chips.tsx`, `features/assistant/follow-ups.ts`) send whole sentences filled from the reply: the next
+  meals of a meal's Plan ("오늘 저녁 배고파", or "김민수랑 내일 저녁 먹자" with its Friends), "{친구}랑 같이 밥 먹자"
+  and tomorrow's meet under a meet, "같이 갈 파티 있어?" and tomorrow's under a day's events, "{친구}랑 같이 밥
+  먹자" under a Friend's Lookup, tomorrow's menu under a menu's, "운동 파티만 보여줘" under parties and "다른 열람실"
+  under a seat card; none under a refusal, a reply with its own offers, a failure or an answer without a Plan. The
+  lists, the row of buttons, 편의기능, the zoom control, the selected thing's card, and the tabs give way, and a
+  marker takes no press. Another card leads where it
   does and leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it
   is laid out.
   - Leaving the frame hides it and keeps the conversation (`use-kept-conversation.ts`): ✕, Android's back button, a

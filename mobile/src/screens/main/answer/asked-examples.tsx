@@ -2,17 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, Icon, type IconName, radius, shadow, size, space, text } from '@/design-system';
 
-// What the empty chat offered, each with its icon in its layer's colour; 파티 찾기 takes the Party's.
+// The asks the agentic map answers best, each tried against the main server's Assistant (P02 ticket 36): a meal's
+// Plan, the day's events, and a seat. Each with an icon in its layer's colour; the events take the Party's.
 const EXAMPLES: readonly { words: string; icon: IconName; tint: string }[] = [
-  { words: '식사 메뉴 추천', icon: 'meal', tint: color.svcDining },
-  { words: '현재 통학/순환 셔틀 위치', icon: 'bus', tint: color.svcShuttle },
-  { words: '파티 찾기', icon: 'users', tint: color.party },
+  { words: '배고파', icon: 'meal', tint: color.svcDining },
+  { words: '오늘 볼 만한 거 있어?', icon: 'calendar', tint: color.party },
+  { words: '공부할 자리', icon: 'book', tint: color.svcStudy },
 ];
 
 // The frame's chip height.
