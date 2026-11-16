@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -104,7 +105,7 @@ function expectSent(messages: object[]): void {
 // Partitions: the new turn by an example (a message) and by a card's button (a recalculated turn). Expected values:
 // the review's path, where the late reply answered the new turn and two User messages went out in a row.
 describe('a turn asked while a hidden reply is on its way', () => {
-  it('by an example: the late reply answers nothing, and the input waits for the new reply', async () => {
+  it('by an example: the late reply answers nothing, and the input stays while the new reply is on its way', async () => {
     answerInTurn([
       { text: LATE, afterMs: 2000 },
       { text: SECOND_REPLY, afterMs: 3000 },
@@ -118,7 +119,7 @@ describe('a turn asked while a hidden reply is on its way', () => {
     expect(pill().getByText(EXAMPLE)).toBeVisible();
     expect(screen.queryByText(LATE)).toBeNull();
     expect(screen.getByLabelText('보는 중')).toBeVisible();
-    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
+    expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
     await pass(1500);
     expect(screen.getByText(SECOND_REPLY)).toBeVisible();
     await send(user, '고마워');
@@ -142,6 +143,46 @@ describe('a turn asked while a hidden reply is on its way', () => {
     expect(screen.queryByText(LATE)).toBeNull();
     expect(screen.queryByLabelText('보는 중')).toBeNull();
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
+  });
+});
+
+// Partitions: typed on the everyday map with the frame hidden, and typed in the frame. Expected values: the same rule
+// as an example's, after-release item 9, where 보내기 stayed grey until the hidden reply came.
+describe('a message typed while a reply is on its way', () => {
+  it('is sent from the everyday map, and takes the hidden question back', async () => {
+    answerInTurn([
+      { text: LATE, afterMs: 2000 },
+      { text: SECOND_REPLY, afterMs: 500 },
+    ]);
+    const user = await openMain();
+    await askThenHide(user);
+
+    await user.type(screen.getByLabelText(AI_INPUT), '저녁은?');
+    expect(screen.getByRole('button', { name: '보내기' })).toBeEnabled();
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(2500);
+
+    expect(pill().getByText('저녁은?')).toBeVisible();
+    expect(screen.queryByText(LATE)).toBeNull();
+    expect(screen.getByText(SECOND_REPLY)).toBeVisible();
+    expectSent([{ role: 'user', text: '저녁은?' }]);
+  });
+
+  it('is sent in the frame, and takes the waiting question back', async () => {
+    answerInTurn([
+      { text: LATE, afterMs: 2000 },
+      { text: SECOND_REPLY, afterMs: 500 },
+    ]);
+    const user = await openMain();
+    await send(user, FIRST);
+
+    await send(user, '저녁은?');
+    await pass(2500);
+
+    expect(pill().getByText('저녁은?')).toBeVisible();
+    expect(screen.queryByText(LATE)).toBeNull();
+    expect(screen.getByText(SECOND_REPLY)).toBeVisible();
+    expectSent([{ role: 'user', text: '저녁은?' }]);
   });
 });
 

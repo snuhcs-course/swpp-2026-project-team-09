@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -46,7 +47,8 @@ const TEXT_REPLY = { text: REPLY, mapButtons: ['shuttle'], cards: [], proposal: 
 // The first Plan's headline, and a mark of it on the map.
 const PLAN_LINE = '점심 12:15 302동식당';
 const PLAN_MARK = '302동식당 · 12:15 점심';
-const EARLIER = '이전 답';
+// Named "이전 답, 새 답 있음" while it holds a reply not yet seen.
+const EARLIER = /^이전 답/u;
 
 let server: FakeServer;
 let back: () => Promise<boolean>;

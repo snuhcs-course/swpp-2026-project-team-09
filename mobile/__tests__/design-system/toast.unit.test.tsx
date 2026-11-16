@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -224,5 +225,43 @@ describe("Toast's place among screens that stay mounted", () => {
 
     await screen.rerender(tabs('map'));
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 134 + 24 });
+  });
+});
+
+function Forgetting({ onUndo }: { onUndo: () => void }): ReactElement {
+  const showToast = useToast();
+  return (
+    <Button
+      onPress={() => {
+        showToast('대화를 지웠어요', 5000, 'check', { label: '되돌리기', onPress: onUndo });
+      }}
+    >
+      새 대화
+    </Button>
+  );
+}
+
+describe("Toast's action", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('acts once when its word is pressed, and the toast goes', async () => {
+    const onUndo = jest.fn<void, []>();
+    await render(
+      <ToastProvider>
+        <Forgetting onUndo={onUndo} />
+      </ToastProvider>,
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: '새 대화' }));
+    await fireEvent.press(screen.getByRole('button', { name: '되돌리기' }));
+
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('대화를 지웠어요')).toBeNull();
   });
 });

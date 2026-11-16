@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useRef, useState } from 'react';
@@ -17,6 +18,8 @@ export const NOT_ANSWERED = '답을 가져오지 못했어요. 잠시 후 다시
 
 export interface PlanAsk {
   asking: boolean;
+  // The label of the button whose answer is on its way.
+  asked: string | null;
   ask: (action: PlanAction) => void;
 }
 
@@ -26,7 +29,8 @@ export interface PlanAsk {
 export function usePlanAsk(addRecalculated: Chat['addRecalculated'], title: string): PlanAsk {
   const position = useCampusPosition();
   const showToast = useToast();
-  const [asking, setAsking] = useState(false);
+  const [asked, setAsked] = useState<string | null>(null);
+  const asking = asked !== null;
   const shown = useRef(true);
   useEffect(() => {
     shown.current = true;
@@ -38,21 +42,21 @@ export function usePlanAsk(addRecalculated: Chat['addRecalculated'], title: stri
     if (asking) {
       return;
     }
-    setAsking(true);
+    setAsked(action.label);
     apiClient.recalculateAnswer(action.input, position).then(
       (answer) => {
         if (shown.current) {
-          setAsking(false);
+          setAsked(null);
           addRecalculated(`${title} · ${action.label}`, answer);
         }
       },
       () => {
         if (shown.current) {
-          setAsking(false);
+          setAsked(null);
           showToast(NOT_ANSWERED);
         }
       },
     );
   };
-  return { asking, ask };
+  return { asking, asked, ask };
 }

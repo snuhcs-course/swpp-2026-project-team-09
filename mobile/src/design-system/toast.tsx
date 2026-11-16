@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -17,7 +18,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { Icon, type IconName } from './icon';
@@ -28,8 +29,21 @@ const SHOWN_MS = 2400;
 
 const NOT_READY = '준비 중이에요';
 
+// A word at the toast's end that acts, such as 되돌리기. Pressing it acts and hides the toast.
+export interface ToastAction {
+  label: string;
+  onPress: () => void;
+}
+
 // `shownMs` is how long the words stay. Left out, 2400 ms. `icon` is the check mark unless given, such as `alert`.
-type ShowToast = (message: string, shownMs?: number, icon?: IconName) => void;
+type ShowToast = (message: string, shownMs?: number, icon?: IconName, action?: ToastAction) => void;
+
+interface Toast {
+  message: string;
+  shownMs: number;
+  icon: IconName;
+  action?: ToastAction;
+}
 
 interface Toasts {
   show: ShowToast;
@@ -54,12 +68,12 @@ function useToastFloor(): number {
 // side to side with a check mark before its words and no shadow, and the app adds it in the design system's terms.
 export function ToastProvider({ children }: { children: ReactNode }): ReactElement {
   // A new object for every toast, so that the same words shown twice start the time again.
-  const [toast, setToast] = useState<{ message: string; shownMs: number; icon: IconName } | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
   const [claims, setClaims] = useState<readonly { height: number }[]>([]);
   const taken = claims.at(-1)?.height ?? 0;
   const floor = useToastFloor();
-  const show = useCallback<ShowToast>((message, shownMs = SHOWN_MS, icon = 'check') => {
-    setToast({ message, shownMs, icon });
+  const show = useCallback<ShowToast>((message, shownMs = SHOWN_MS, icon = 'check', action) => {
+    setToast({ message, shownMs, icon, action });
     // iOS has no live regions: the words are announced by hand. Android reads the live region below.
     if (Platform.OS === 'ios') {
       AccessibilityInfo.announceForAccessibility(message);
@@ -91,14 +105,45 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
     <ToastContext value={toasts}>
       {children}
       {toast === null ? null : (
-        <View style={[styles.layer, { bottom: floor + taken + space[6] }]} testID="toast-layer">
-          <View accessibilityLiveRegion="polite" accessibilityRole="alert" accessible style={styles.toast}>
-            <Icon color={color.onPrimary} name={toast.icon} size={ICON} />
-            <Text style={styles.words}>{toast.message}</Text>
-          </View>
-        </View>
+        <ToastBar
+          bottom={floor + taken + space[6]}
+          onDone={() => {
+            setToast(null);
+          }}
+          toast={toast}
+        />
       )}
     </ToastContext>
+  );
+}
+
+function ToastBar({ toast, bottom, onDone }: { toast: Toast; bottom: number; onDone: () => void }): ReactElement {
+  return (
+    <View style={[styles.layer, toast.action !== undefined && styles.acting, { bottom }]} testID="toast-layer">
+      <View style={styles.toast}>
+        <View accessibilityLiveRegion="polite" accessibilityRole="alert" accessible style={styles.said}>
+          <Icon color={color.onPrimary} name={toast.icon} size={ICON} />
+          <Text style={styles.words}>{toast.message}</Text>
+        </View>
+        {toast.action === undefined ? null : <ActionWord action={toast.action} onDone={onDone} />}
+      </View>
+    </View>
+  );
+}
+
+function ActionWord({ action, onDone }: { action: ToastAction; onDone: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      hitSlop={space[3]}
+      onPress={() => {
+        action.onPress();
+        onDone();
+      }}
+      style={({ pressed }) => pressed && styles.pressed}
+    >
+      <Text style={styles.action}>{action.label}</Text>
+    </Pressable>
   );
 }
 
@@ -142,6 +187,8 @@ const styles = StyleSheet.create({
     left: space[4],
     pointerEvents: 'none',
   },
+  // A toast with an action takes presses on itself alone.
+  acting: { pointerEvents: 'box-none' },
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -151,6 +198,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: color.ink,
   },
+  said: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: GAP },
   // The frame's words are the label's size in the medium weight.
   words: { ...text.label, flexShrink: 1, fontFamily: font.medium, color: color.onPrimary },
+  action: { ...text.label, fontFamily: font.semiBold, color: color.onPrimary, textDecorationLine: 'underline' },
+  pressed: { opacity: 0.6 },
 });

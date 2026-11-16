@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -75,7 +76,8 @@ function Buttons({ actions, plan, onGuide }: ButtonsProps): ReactElement {
       {plans.map((action, index) => (
         <View key={action.label} style={styles.cell}>
           <Button
-            disabled={plan.asking}
+            busy={plan.asked === action.label}
+            disabled={plan.asking && plan.asked !== action.label}
             full
             onPress={() => {
               plan.ask(action);

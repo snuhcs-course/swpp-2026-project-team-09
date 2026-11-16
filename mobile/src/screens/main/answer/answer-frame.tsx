@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -26,8 +27,10 @@ import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import type { Room } from '../layout';
 import { AnswerLines } from './answer-lines';
 import { AnswerPill } from './answer-pill';
-import { EarlierTurns } from './earlier-turns';
+import { EarlierTurns, TurnQuestion } from './earlier-turns';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
+import { useForgetWithUndo } from './forget-with-undo';
+import { useHeldHeight } from './held-height';
 import { HowAboutCard } from './how-about-card';
 import { KeyboardHeadline } from './keyboard-headline';
 import { LookupCard } from './lookup-card';
@@ -128,6 +131,8 @@ interface FrameCardProps {
   stageHeight: number | null;
   onHeight: (height: number) => void;
   testID: string;
+  // Keeps the content's height, while a reply is on its way.
+  hold?: boolean;
   // Null leaves the card empty.
   children: ReactNode;
 }
@@ -141,8 +146,10 @@ function contentMaxOf(stageHeight: number | null, barRoom: number): number | nul
 }
 
 // The frame's card, attached to the bottom of the screen. Its content scrolls inside it.
-export function FrameCard({ barRoom, stageHeight, onHeight, testID, children }: FrameCardProps): ReactElement {
+export function FrameCard(props: FrameCardProps): ReactElement {
+  const { barRoom, stageHeight, onHeight, testID, hold = false, children } = props;
   const contentMax = contentMaxOf(stageHeight, barRoom);
+  const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -153,8 +160,11 @@ export function FrameCard({ barRoom, stageHeight, onHeight, testID, children }: 
     >
       {children === null ? null : (
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { minHeight }]}
           keyboardShouldPersistTaps="handled"
+          onContentSizeChange={onContentSizeChange}
+          ref={scroll}
+          testID={`${testID}-content`}
           style={contentMax === null ? undefined : { maxHeight: contentMax }}
         >
           {children}
@@ -164,21 +174,23 @@ export function FrameCard({ barRoom, stageHeight, onHeight, testID, children }: 
   );
 }
 
-// The card at the bottom: "지난 답 N개", the turn's bubbles without a bubble around them, or the dots with 그만, and
-// under them the room of the bar. While the keyboard is up, the turn's headline stands in place of its content.
+// The card at the bottom: what was asked, the turn's bubbles without a bubble around them or the dots with 그만 in
+// their place, and "지난 답 N개" under them, then the room of the bar. While the keyboard is up, the turn's headline
+// stands in place of its content.
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose } = props;
   const { bubbles, waiting, retry } = control.chat;
-  const after = turnOf(bubbles)?.after ?? [];
+  const turn = turnOf(bubbles);
+  const after = turn?.after ?? [];
   const last = bubbles.at(-1);
   const contentMax = contentMaxOf(stageHeight, barRoom);
   return (
-    <FrameCard barRoom={barRoom} onHeight={onHeight} stageHeight={stageHeight} testID="answer-card">
+    <FrameCard barRoom={barRoom} hold={waiting} onHeight={onHeight} stageHeight={stageHeight} testID="answer-card">
       {keyboardUp ? (
         <KeyboardHeadline control={control} />
       ) : (
         <>
-          <EarlierTurns bubbles={bubbles} />
+          {turn === null ? null : <TurnQuestion turn={turn} />}
           {after.map((bubble) => (
             <View key={bubble.id} style={styles.part}>
               <BubbleParts
@@ -203,6 +215,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
             </View>
           ))}
           {waiting ? <WaitingReply onStop={control.chat.stop} /> : null}
+          <EarlierTurns bubbles={bubbles} />
         </>
       )}
     </FrameCard>
@@ -220,7 +233,7 @@ interface FramedProps {
 
 // The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
 // ✕, Android's back button, and a card's "닫기" hide the frame and keep the conversation, a reply on its way included;
-// "새 대화" forgets it. While a building is asked about over the answer ("여기면 어때?"), ✕ and back return to the
+// "새 대화" forgets it, with 되돌리기 for a few seconds. While a building is asked about over the answer ("여기면 어때?"), ✕ and back return to the
 // answer instead, and the pill names the building. A Friend's profile opened from the card stands over it until a new
 // reply; while it is shown, the back button hides it alone. This handler is the only one, and listens only while the
 // main screen is in front, so a screen pushed from the profile goes back to it.
@@ -231,10 +244,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
     Keyboard.dismiss();
     hide();
   }, [hide]);
-  const forget = useCallback((): void => {
-    Keyboard.dismiss();
-    reset();
-  }, [reset]);
+  const forget = useForgetWithUndo(reset);
   const profile = useProfileOver(lastReply(chat.bubbles)?.id ?? null);
   const profileShown = profile.friend !== null && !keyboardUp;
   const { title, keep } = control.howAbout;

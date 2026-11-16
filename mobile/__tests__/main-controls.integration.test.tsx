@@ -110,7 +110,7 @@ describe("the main screen's AI input", () => {
 
     await ask(user, '식사 메뉴 추천');
 
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
   });
 });
 

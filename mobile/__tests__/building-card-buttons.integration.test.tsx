@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -109,6 +110,21 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
     expect(screen.getByText('답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
     expect(screen.queryByTestId('answer-pill')).toBeNull();
     expect(buildingCard().getByRole('header', { name: '63동' })).toBeVisible();
+  });
+});
+
+describe('"여기서 먹기" while its answer is on its way', () => {
+  it('shows the dots in the pressed button while its answer is on its way', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: EATEN_HERE, afterMs: 1000 });
+    const user = await openMain();
+    await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
+
+    await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
+
+    expect(buildingCard().getByLabelText('여기서 먹기 · 보는 중')).toBeVisible();
+    expect(buildingCard().queryByText('여기서 먹기')).toBeNull();
+    await pass(1000);
+    expect(card().getByText('12:45엔 나서야 해요')).toBeVisible();
   });
 });
 
