@@ -2900,6 +2900,7 @@ into the database.
 | `restaurant-places.json`         | The number of each Restaurant's Place, by its name as `GET /menus` gives it, read by the server         | Written by hand                                      |
 | `study-spaces.json`              | The 공부공간 layer's Study Spaces by building, each at a Place number, read by the server               | Written by hand from P13's research                  |
 | `department-colleges.json`       | The college of each department of the app's list, or `null`, read by the server                         | Written by hand from the app's department list       |
+| `openstreetmap-cafes.json`       | The campus cafés with a name, each by its point, tied to a Place by position when the server starts     | OpenStreetMap, through Overpass                      |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
