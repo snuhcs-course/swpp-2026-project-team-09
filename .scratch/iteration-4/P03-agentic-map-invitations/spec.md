@@ -77,16 +77,32 @@ interface MakePlanQuest {
 interface PlanQuest {
   quest: Quest;                                   // as the asker reads any Quest they hold
   invitations: { id: string; userId: string }[];  // one for each Friend of the Plan, in the Plan's order
+  // A Plan taken alone ("여기로", ticket 15): the card's two lines, and when its leave-by rings (null for none).
+  // Absent for a Plan with a Friend.
+  alone?: { lines: AnswerLine[]; remindAt: string | null };
 }
 ```
 
 - The server plans again through the service the Assistant's tool and the recalculation call, with the time now and the location given, and takes the Plan whose id is `planId`. It reads nothing else of a Plan from the app.
 - **Refused with 409 `PLAN_CHANGED`** when the recalculation has no Plan of that id, or that Plan no longer starts at `startAt`. The app then recalculates and shows the answer as it is now.
-- **Refused with 400** as a recalculation is: a first person who is not the asker, a person who is not the asker's Friend, a date out of reach, a body of another shape. **Refused with 400 `PLAN_ALONE`** for a Plan with no Friend: what "여기로" does is package D's.
+- **Refused with 400** as a recalculation is: a first person who is not the asker, a person who is not the asker's Friend, a date out of reach, a body of another shape.
 - **The Quest**: the Plan's title; the asker leads it and is its only Holder; Closed; on no Board; capacity 4, or the number of people of the Plan when that is more.
 - **The Sub Quests** are the Plan's, in its order, each at its Place. Each ends where the next starts, and the last ends at the Plan's end, so that a step passes by time and the Quest leaves the list once the meal is over. A mark of done stays each Holder's own.
 - **The invitations** go to every other person of the Plan, and are created by the one service that creates invitations, inside the transaction that makes the Quest. The asker and each invitee are told with `quests-changed`, as an invitation tells today.
 - Nothing is stored of a Plan beyond the Quest, its Sub Quests, and its invitations.
+
+### A Plan taken alone
+
+A Plan the User takes becomes a Quest held by the people in it; with one person it is a Quest held by that User (ticket 15). "여기로" sends it to the same `POST /plans`.
+
+- **Taken alone**: an events Plan, and a meal's or a meet's Plan whose people are the asker only. There is no `PLAN_ALONE`.
+- **The Quest**: the asker holds and leads it alone, Closed, on no Board, with **capacity 1**. Capacity 1 marks a Quest held alone: no one else enters it, and it is never a 파티. A meal's has the Plan's steps. An event's points at the Global Event, in place of a Quest the asker held alone for it. A Shared Quest held for the event refuses it with 409 `SHARED_QUEST_HELD`.
+- **No invitation and no signal to anyone else.** The asker is told with `quests-changed`. `invitations` and `askLevels` are empty.
+- **Not a 파티**: 내 파티 leaves it out. The Quest list and the everyday map call it a 퀘스트. It is in no recruiting list, being Closed. A Friend who holds an event alone is still a candidate of a new party for it: entering a party leaves the Quest held alone, with its leave-by.
+- **Its leave-by** is the `leave-by` Notification of the Quest's own mechanism (card `party:<questId>`). It is kept for the first walk of 5 minutes or more whose time is still ahead: to the Plan's Place, as for an event later in the day, or else on from it to the next item, as for a meal now. It is kept with the next item it is for ("24동까지 걸어서 15분이에요. 13:00 수업에 맞아요.") and a way by shuttle as one ("두레문예관까지 셔틀로 18분").
+- **`alone.lines`**: the first line is "**{Place}**으로 가요", "**{Place}**에서 먹어요" for a meal where the User is, or "**{event}**에 가요". The second says the leave-by: "{HH:MM}에 나설 시각을 알려 드릴게요", "{수업|일정}까지 N분이라 나설 알림은 없어요", "오늘은 다음 일정이 없어 나설 알림은 없어요", or "{HH:MM}엔 나서야 해요".
+- **"다시 고르기"** is `DELETE /quests/:questId`, which ends the Quest and its leave-by.
+- **The released app (1.0.2)** never sends a Plan taken alone. It lists such a Quest among its Quests as one it holds alone, and its leave-by as any other.
 
 ### The invitee's own way
 
@@ -302,7 +318,8 @@ The Assistant asks at two moments and remembers that it asked (design section 7,
 
 A good test states a behaviour a User or another package depends on, through a public seam, with expected values taken from the design's worked example or chosen by hand, never recomputed the way the code does.
 
-- **Making a Quest from a Plan, integration tests.** The seam is `POST /plans` over the started server with the scripted model, the seed's walking table, and Places, on the stage the meal Plan's tests use. The worked example with 민수: the Quest's title, Leader, Join Policy, and capacity; the Sub Quests in order with their times and Places; the invitation the Friend then lists; the signals to both. With both Friends: the meeting step first. The refusals: a Plan that changed, a Plan alone, a person who is no Friend. A repeat with the same key makes one Quest.
+- **Making a Quest from a Plan, integration tests.** The seam is `POST /plans` over the started server with the scripted model, the seed's walking table, and Places, on the stage the meal Plan's tests use. The worked example with 민수: the Quest's title, Leader, Join Policy, and capacity; the Sub Quests in order with their times and Places; the invitation the Friend then lists; the signals to both. With both Friends: the meeting step first. The refusals: a Plan that changed, a person who is no Friend. A repeat with the same key makes one Quest.
+- **A Plan taken alone, integration tests.** The same seam: boards s4b and s4 for a meal (the Quest held alone, its lines, its leave-by row), and the design's 6.3 Alone 2 and 3 for an event (the job fair's walk on to the Class, the concert by shuttle). Also: taking an event again replaces the Quest, a Shared Quest held refuses it, 다시 고르기 ends it with its leave-by, a Friend's recruiting list leaves it out, and a Friend going alone stays a candidate. Unit tests for the leave-by rule and the lines.
 - **The invitee's own way, unit tests.** The seam is the pure function from the Quest's steps, the invitee's day, their location's Place, and the walking times to their way. The worked example on the seed's walking table: 민수 through the Merging Point (sets out at 12:15, 18 minutes), 지은 straight (5 minutes, leave-by for the 13:00 Class), and 민수 at 302동식당 (0 minutes). Boundaries on a small walking table: a detour of one minute and of two; reaching the meeting step exactly at its start and a minute after; a step that only ends where the next starts; a way that starts at the meeting step's Place; arriving a minute after the start; no step with a Place; an unknown origin; a location off campus with and without a Class before; and no Free Time at the gathering.
 - **The invitee's card, integration tests.** The seam is `GET /quest-invitations/:id` over the started server. The card of the worked example; the location of the request used only when no Class comes right before; another User, the Leader included, gets 404; nothing is signalled; and the reply holds no position of another person.
 - **Members and signals, integration tests.** The seam is the Quest a Holder reads and the signals on Redis. Invited then accepted then a second invitee declining; the order of the members; `invitation-accepted` and `invitation-declined` reach the Leader with the Quest and the User and reach nobody else; a Class Quest has no members.
