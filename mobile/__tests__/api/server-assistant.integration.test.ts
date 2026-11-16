@@ -58,7 +58,7 @@ describe("the Assistant's request to the main server", () => {
     await apiClient.askAssistant(MESSAGES, CONTEXT);
 
     expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
-      { clientCapabilities: ['library', 'answer', 'area', 'meet'], context: CONTEXT, messages: MESSAGES },
+      { clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'], context: CONTEXT, messages: MESSAGES },
     ]);
   });
 

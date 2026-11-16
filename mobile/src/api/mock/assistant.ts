@@ -51,6 +51,7 @@ import {
 import { MEET_ANSWER, MEET_ANSWER_FROM_14 } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
+import { rowFourCopyOf, rowFourReplyOf } from './row-four-copies';
 import { mockTimetable } from './timetable';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
@@ -170,6 +171,10 @@ const PRESSED_ON_MOCK: Readonly<Record<string, AnswerReply>> = {
 // are read as a meal of the User alone. Three people at a pressed Place get the copy of that Place when there is one
 // ("여기면 어때?"). A meal 지금 of three is board n11's, and one eased from 지금 board n11b's.
 function copyFor(input: PlanInput): AnswerReply {
+  const rowFour = rowFourCopyOf(input);
+  if (rowFour !== null) {
+    return rowFour;
+  }
   if (input.kind === 'meet') {
     return input.window.from === MEET_ANSWER_FROM_14.input.window.from ? MEET_ANSWER_FROM_14 : MEET_ANSWER;
   }
@@ -242,7 +247,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes('민수') && last.includes('어디')) {
     return FRIEND_LOOKUP_REPLY;
   }
-  return wayReplyOf(last);
+  return rowFourReplyOf(last) ?? wayReplyOf(last);
 }
 
 // The stored Lookups of a way, by the words of boards q4, q3, q2, and n21: by the shuttle, late, on time, and the

@@ -60,7 +60,8 @@ export function withStart(input: PlanInput, time: string): PlanInput {
 }
 
 export function withOrigin(input: PlanInput, placeId: string): PlanInput {
-  if (!hasPeople(input)) {
+  // A new party's people carry no constraints: the main server refuses them.
+  if (!hasPeople(input) || input.kind === 'new-quest') {
     return input;
   }
   const [asker, ...others] = input.people;
