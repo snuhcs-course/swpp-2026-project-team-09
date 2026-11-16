@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -36,7 +37,12 @@ export class MeetPlanService {
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
-  async plan(askerId: string, input: MeetInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
+  // `leftOut` names Sub Quests that stand in nobody's way, as a meal's plan takes them.
+  async plan(
+    askerId: string,
+    input: MeetInput,
+    at: { now: Date; location: Position | null; leftOut?: readonly string[] },
+  ): Promise<AnswerReply> {
     const friends = await this.meals.friendsOf(askerId, input);
     this.meals.refuseUnknownPlaces(input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
@@ -46,6 +52,10 @@ export class MeetPlanService {
       this.menus.findByDate(date),
       this.studySpaces.listFor(askerId),
     ]);
+    const leftOut = new Set(at.leftOut);
+    for (const person of people) {
+      person.items = person.items.filter(({ id }) => !leftOut.has(id));
+    }
     const [asker, ...others] = people.map(({ userId, items, position }, index): GatheringPerson => ({
       id: userId,
       free: freeTimeOf(items, date, now),
