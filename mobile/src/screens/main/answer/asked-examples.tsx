@@ -71,5 +71,13 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.6 },
   label: { ...text.label, color: color.ink },
-  notice: { ...text.caption, color: color.inkMuted },
+  // On a white ground, so that the map's labels and faces under it do not run into it.
+  notice: {
+    ...text.caption,
+    alignSelf: 'flex-start',
+    paddingHorizontal: space[2],
+    borderRadius: radius.full,
+    backgroundColor: color.surface,
+    color: color.inkMuted,
+  },
 });
