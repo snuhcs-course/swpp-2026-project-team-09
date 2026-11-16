@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -22,7 +23,7 @@ export interface FirstRun {
   answer: (card: FirstRunCard) => void;
 }
 
-const FIRST_RUN_KEY = 'first-run';
+export const FIRST_RUN_KEY = 'first-run';
 
 function lengthOf(list: readonly unknown[]): number {
   return list.length;

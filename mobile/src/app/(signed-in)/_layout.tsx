@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -17,12 +18,14 @@ import { Stack as JsStack, type StackNavigationOptions } from 'expo-router/js-st
 import { type ReactElement, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { MatchingWatch } from '@/features/events/matching-watch';
+import { TabTourProvider } from '@/features/tab-tour/use-tab-tour';
 import { VersionsAtLaunch } from '@/features/timetable/use-versions';
 import { useEdgeCloser } from '@/hooks/use-back-to-close';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { EDGE_WIDTH } from '@/navigation/swipe-rule';
 import { BackgroundSharingProvider, PositionProvider, PositionSending } from '@/position';
 import { useNotificationLinks } from '@/push/use-notification-links';
+import { TabTour } from '@/screens/shell/tab-tour';
 import { useOwnPlace } from '@/session/session';
 import { keep, readKeptAfterChanges } from '@/storage/kept';
 
@@ -131,7 +134,8 @@ function useInviteLinks(here: boolean): void {
 // The signed-in place: a User who agreed to the legal documents and finished Onboarding. The tabs, and the screens
 // that cover them. The User's position is watched here, once for all of them, and sent
 // from here while the Master Switch is on, in front and, where the User chose it, in the background. The User's requests
-// for Matching are watched here too, and a switch of timetable versions left unfinished is finished from here.
+// for Matching are watched here too, and a switch of timetable versions left unfinished is finished from here. The tour
+// of the bottom tabs is drawn from here, over the tabs, so that the tab bar itself does not change for it.
 export default function SignedInLayout(): ReactElement {
   const reduceMotion = useReduceMotion();
   const away = useOwnPlace('ready');
@@ -146,7 +150,10 @@ export default function SignedInLayout(): ReactElement {
         <BackgroundSharingProvider>
           <MatchingWatch />
           <VersionsAtLaunch />
-          <AboveTabs reduceMotion={reduceMotion} />
+          <TabTourProvider>
+            <AboveTabs reduceMotion={reduceMotion} />
+            <TabTour />
+          </TabTourProvider>
         </BackgroundSharingProvider>
       </PositionSending>
     </PositionProvider>
