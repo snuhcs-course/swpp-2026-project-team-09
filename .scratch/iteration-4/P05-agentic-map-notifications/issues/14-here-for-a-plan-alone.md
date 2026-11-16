@@ -38,7 +38,7 @@ Everything a User does alone can be a Quest held by that User alone. A meal's Pl
 - [ ] The push sheet is asked for at "여기로", and a Plan with a Friend still has "이대로 초대".
 - [ ] **a1 → a6**: a seat in 7A 열람실 2 구역 from 14:00 with 철학개론 at 16:00 in 두산인문관 makes the Quest at 관정관 and a `leave-by` at 15:56 ("8동까지 걸어서 4분"); none with nothing during the stay; a room is refused with `NOT_A_SEAT`.
 - [ ] After 예약하기 the phone sends the space and the time, never the seat or the booking number; a failure leaves the booking and its done message.
-- [ ] The screens are run on an Android emulator by taps ("배고파" above the input), and the pull request carries s4, s4b and the seat's leave-by in 알림.
+- [ ] The screens are run on an Android emulator by taps ("배고파" above the input, 민수 taken out of the chips), and the pull request carries s4 and s4b. The seat changes no screen (its done message is as it was, and booking a real seat is not done for a test); its Quest and leave-by are shown by the integration test over the database.
 - [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass in both projects; and no native file changed.
 
 ## Comments
