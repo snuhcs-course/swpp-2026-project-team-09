@@ -215,7 +215,7 @@ describe('Friends on the map', () => {
 
     await pass(150_000);
     expect(lookOf('김민준')).toMatch(/:stale/u);
-    expect(wordsUnder('김민준', '민준 · 2분 전')).not.toBeNull();
+    expect(wordsUnder('김민준', '김민준 · 2분 전')).not.toBeNull();
     expect(screen.getByText('공강 · 2분 전 위치')).toBeVisible();
 
     await pass(480_000);
