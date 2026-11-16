@@ -3,9 +3,11 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Logger } from '@nestjs/common';
+import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type Step } from './scripted-model.js';
 import { eventsMessage, postNumbersFrom } from './global-events.js';
 import { answer, draftPost, JudgementWorld } from './judgements.js';
@@ -120,9 +122,14 @@ describe('A server that died during the call', () => {
     world.scripted.script(answer());
     const postNumber = newPost();
     const { id } = await world.leftBeforeTheStep(postNumber);
-    await world.prisma.judgement.create({ data: { sourcePostId: id, attempts: 1, claimedAt: new Date() } });
+    const claimedAt = new Date();
+    await world.prisma.judgement.create({ data: { sourcePostId: id, attempts: 1, claimedAt } });
+    // The server's clock stays at the claim, so that the claim is a call still running however slow the machine is: the
+    // server takes a claim older than twice JUDGEMENT_TIMEOUT_MS, 400 ms here, as left by a server that stopped.
+    const clock = vi.spyOn(world.judging.get<Clock>(CLOCK), 'now').mockReturnValue(claimedAt);
 
     await world.judgements.judgePost(id);
+    clock.mockRestore();
     expect(world.scripted.received()).toEqual([]);
 
     const old = new Date(Date.now() - 60_000);
