@@ -2,58 +2,21 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useEffect, useRef, useState } from 'react';
-import { type GestureResponderEvent, Pressable, StyleSheet, View } from 'react-native';
+import { type ReactElement, useMemo, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import type { PrivateZone } from '@/api/private-zone-types';
+import { zoneLines } from '@/features/private-zones/zone-lines';
 import { color, Icon, radius, shadow, size as sizes, space } from '@/design-system';
 import { CAMPUS_BOUNDS, CAMPUS_CAMERA, isInside, Map, type MapCamera, type MapHandle, type Size } from '@/map';
 import { usePosition } from '@/position';
 import type { ZoneDrawing, ZoneView } from './use-zone-drawing';
-import { DrawingOverlay, ZoneLayer } from './zone-layer';
+import { DrawingOverlay, StrokeLayer } from './zone-layer';
 
 // Close enough to draw round a building.
 const OPENING_ZOOM = 17;
-// A touch that moved nothing brings no report of the camera: the zones come back this long after the last finger.
-const SHOW_AGAIN_MS = 1000;
-
-// Whether the map may be moving under a finger, during which the zones, put in the view by the last camera, are hidden.
-function useMoving(): {
-  moving: boolean;
-  touched: () => void;
-  lifted: (event: GestureResponderEvent) => void;
-  settled: () => void;
-} {
-  const [moving, setMoving] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const clear = (): void => {
-    if (timer.current !== null) {
-      clearTimeout(timer.current);
-      timer.current = null;
-    }
-  };
-  useEffect(() => clear, []);
-  return {
-    moving,
-    touched: () => {
-      clear();
-      setMoving(true);
-    },
-    lifted: ({ nativeEvent }) => {
-      if (nativeEvent.touches.length === 0) {
-        clear();
-        timer.current = setTimeout(() => {
-          setMoving(false);
-        }, SHOW_AGAIN_MS);
-      }
-    },
-    settled: () => {
-      clear();
-      setMoving(false);
-    },
-  };
-}
 
 function Pencil({ on, disabled, onPress }: { on: boolean; disabled: boolean; onPress: () => void }): ReactElement {
   const ink = on ? color.onPrimary : color.ink;
@@ -87,25 +50,24 @@ export function ZoneMap({ zones, drawing, view, full, onCamera, onSize }: ZoneMa
   const { position } = usePosition();
   const map = useRef<MapHandle>(null);
   const opened = useRef(false);
-  const { moving, touched, lifted, settled } = useMoving();
+  const zoom = view?.camera.zoom ?? OPENING_ZOOM;
+  const unsaved = drawing.stroke.path === null ? drawing.unsaved : null;
+  const lines = useMemo(() => zoneLines(zones, unsaved, zoom), [zones, unsaved, zoom]);
   return (
     <View style={styles.area}>
       <View
         onLayout={({ nativeEvent: { layout } }) => {
           onSize({ width: layout.width, height: layout.height });
         }}
-        onTouchEnd={lifted}
-        onTouchStart={touched}
         style={styles.area}
         testID="zone-map"
       >
         <Map
           avatars={[]}
           {...CAMPUS_CAMERA}
-          lines={[]}
+          lines={lines}
           markers={[]}
           onCameraIdle={(camera) => {
-            settled();
             onCamera(camera);
             if (!opened.current) {
               opened.current = true;
@@ -117,8 +79,8 @@ export function ZoneMap({ zones, drawing, view, full, onCamera, onSize }: ZoneMa
           ref={map}
         />
       </View>
-      {view === null || moving ? null : (
-        <ZoneLayer stroke={drawing.stroke.path} unsaved={drawing.unsaved} view={view} zones={zones} />
+      {view === null || drawing.stroke.path === null ? null : (
+        <StrokeLayer size={view.size} stroke={drawing.stroke.path} />
       )}
       {drawing.pencil ? <DrawingOverlay stroke={drawing.stroke} /> : null}
       <Pencil disabled={full && !drawing.pencil} on={drawing.pencil} onPress={drawing.togglePencil} />
