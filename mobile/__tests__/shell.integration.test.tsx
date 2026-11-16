@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -23,7 +24,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const NOT_READY = '준비 중이에요';
+const FINDING_POSITION = '위치를 찾는 중이에요';
 const SIGN_IN = '서울대학교 구글 계정(@snu.ac.kr)으로 로그인';
 
 beforeEach(async () => {
@@ -62,14 +63,24 @@ describe('a slot of the bottom navigation', () => {
     expect(screen.getByRole('button', { name: '확대' })).toBeVisible();
   });
 
-  it('올리기 says that it is not ready, and opens nothing', async () => {
+  it.each([
+    ['지도', 'button', '확대'],
+    ['행사', 'header', '행사'],
+  ] as const)('올리기 on %s opens 파티 만들기, empty, and 뒤로 shows the tab again', async (slot, role, name) => {
     const user = await openMain();
+    await user.press(screen.getByRole('tab', { name: slot }));
 
     await user.press(screen.getByRole('button', { name: '올리기' }));
 
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
-    await pass(2400);
+    expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue('');
+    expect(screen.queryByText('준비 중이에요')).toBeNull();
+
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
+
+    expect(screen.queryByRole('header', { name: '파티 만들기' })).toBeNull();
+    expect(screen.getByRole('tab', { name: slot })).toBeSelected();
+    expect(screen.getByRole(role, { name })).toBeVisible();
   });
 });
 
@@ -122,9 +133,10 @@ describe('the map behind another tab', () => {
 describe("a toast on a tab's screen", () => {
   it('sits 16 above the navigation on a tab other than 지도, as the frames draw it 96 from the bottom', async () => {
     const user = await openMain();
-    await user.press(screen.getByRole('tab', { name: '행사' }));
+    await user.press(screen.getByRole('tab', { name: '내 정보' }));
+    await pass(500);
 
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await user.press(screen.getByRole('button', { name: '빈 시간 말하기' }));
 
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 96 });
   });
@@ -134,7 +146,8 @@ describe("a toast on a tab's screen", () => {
     await user.press(screen.getByRole('tab', { name: '행사' }));
     await user.press(screen.getByRole('tab', { name: '지도' }));
 
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await user.press(screen.getByRole('button', { name: '내 위치로 이동' }));
+    expect(screen.getByText(FINDING_POSITION)).toBeVisible();
 
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
