@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimeBand } from '@/api/assistant-types';
@@ -38,7 +39,8 @@ describe('the stored copy of the real answer of a5', () => {
   });
 
   it('answers a recalculation of a meet, holding its input', () => {
-    const input: MeetInput = { ...MEET_ANSWER.input, window: { from: '14:00', until: null } };
+    // A start that no stored copy holds: a meet from 14:00 is answered with a6's copy (P02-25).
+    const input: MeetInput = { ...MEET_ANSWER.input, window: { from: '13:30', until: null } };
 
     expect(mockRecalculation(input)).toEqual({ ...MEET_ANSWER, input });
   });
