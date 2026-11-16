@@ -23,7 +23,7 @@ Each meal Plan now says the day's menu of that meal at that Restaurant and, wher
 - [x] The recalculation (`POST /assistant/answers`) gives the same lines, since it calls the same service.
 - [x] `planMeal` answers each plan's `menu` (its corners in words) and `closesAt`. It takes `restaurant`, a Restaurant's name as it answered it, which the server turns into that Restaurant's Place. `PLAN_RULES` says how to choose by food, and what to say when no plan's menu has it.
 - [x] The app draws the lines as it is. The stored meal answers in `mobile/src/api/mock/data/` are copied again from the endpoint with real menus.
-- [ ] An emulator check shows the card alone and with Friends: not done (see Comments).
+- [x] An emulator check shows the card alone and with Friends (after the Mac restarted, 15:34–15:50; screens in the pull request).
 - [x] Tests:
   - unit: the menu's words on the stored lines of 2026-10-01 (a dish menu, a buffet, a self corner with orders, the takeout corner, a menu with no dish line) and the line's place among the Plan's lines;
   - integration: at `POST /assistant/messages` with the scripted model, the Plans' lines and 근거 alone and with Friends, with hours and without, `planMeal`'s menu words, and a plan made at a Restaurant named by `restaurant`.
@@ -63,7 +63,11 @@ Each meal Plan now says the day's menu of that meal at that Restaurant and, wher
   - `PLAN_RULES`: read the plans' menus under the conditions on screen, then plan again at the restaurant that serves it. When none does, say so. Never name a dish that no plan's menu has.
   - The scripted model covers the tool. These rules were not run against the real model.
 - **No closing time said twice.** When another line of the same Plan already says the Restaurant closes (P02 ticket 14's "302동식당은 13:30에 닫아요" for a fixed end past its hours), the menu line leaves out its "· HH:MM까지". A line about another Restaurant (board n12's dropped 학생회관식당) does not count.
-- **No emulator check.** When the build was done, the emulator showed a system "Application Not Responding" dialog in front, not SNU Now, and the Mac's load average was above 40. The Release waits for this pull request, so it opened without screens. The card's content has no fixed height and scrolls past its room, so a third line pushes the band down.
+- **The emulator check came after the pull request opened.** When the build was done, the emulator showed a system "Application Not Responding" dialog in front, not SNU Now. The check ran once the Mac had restarted.
+  - The Plan was reached without typing Korean: a pressed building, then "여기서 먹기".
+  - The answer on the map was switched on for the check and back off afterwards.
+  - The third line is neither cut nor overlapped.
+- **The better plan carries the menu too.** The Leader's better-plan check (#321) answers with a meal Plan, so it says the menu as every meal Plan does, and its test now expects the line. The queue found this after #321 merged: the pull request's own run has only unit tests.
 - **Not done:** the map's labels. The pick's label keeps "11:50 점심" and a candidate keeps its name, so menus are compared with the arrows, one Plan at a time.
 - **The stored answers** in `mobile/src/api/mock/data/` (the meal answers and `meal-answer-plan-1` to `-5`) were printed again from `POST /assistant/answers`.
   - Setting: the stage's Tuesday at 11:50, with the 2026-10-01 lunch menus and the hours P02 ticket 16 reads from those pages. These are 302동식당 11:30–13:30, 학생회관식당 11:00–14:30, 3식당 11:00–14:00, 자하연식당 2층 11:30–14:00, and none for 301동식당.
