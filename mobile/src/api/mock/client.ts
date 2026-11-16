@@ -38,6 +38,7 @@ import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
 import { mockParty } from './party';
 import { mockBetterPlan, mockChangedPlanQuest, mockMadeQuests, mockPlanQuest } from './plan-quest';
+import { mockSeatStays } from './seat-stays';
 import { insidePrivateZone, mockPrivateZones } from './private-zones';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
@@ -252,4 +253,5 @@ export const mockClient: ApiClient = {
   ...mockTutorial,
   ...mockInterests,
   ...mockPrivateZones,
+  ...mockSeatStays,
 };

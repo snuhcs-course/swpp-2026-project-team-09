@@ -56,6 +56,7 @@ import { partyClient } from './party-client';
 import { planQuestClient } from './plan-quest-client';
 import { privateZoneClient } from './private-zone-client';
 import { roomClient } from './room-client';
+import { seatStayClient } from './seat-stay-client';
 import { TUTORIAL_SERVED, tutorialClient } from './tutorial-client';
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
@@ -74,6 +75,7 @@ export const serverClient: ApiClient = {
   ...interestClient,
   ...privateZoneClient,
   ...lateClient,
+  ...seatStayClient,
   listFriendStatuses: () => Promise.resolve([]),
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),

@@ -585,6 +585,9 @@ model Quest {
   // A Quest taken alone, made from a Plan for one person or from a booked seat: it gathers nobody, so it is never a
   // 파티 and is in no list or count of parties (README.md: Quests).
   takenAlone    Boolean            @default(false) @map("taken_alone")
+  // A seat's stay at 관정관, taken alone: the User still eats, meets and goes out from a seat, so its Sub Quest is no
+  // busy time for any planner (README.md: A seat's stay).
+  seatStay      Boolean            @default(false) @map("seat_stay")
   // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
   matchId       String?            @unique @map("match_id") @db.Uuid
   createdAt     DateTime           @default(now()) @map("created_at")
