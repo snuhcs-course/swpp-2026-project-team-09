@@ -11,7 +11,9 @@ import {
   AREA_LINE_ID,
   areaLine,
   awayPlaceOf,
+  oneMarkPerBuilding,
   studyDrawing,
+  studyScene,
   viewportOf,
   withAwaySeats,
 } from '@/features/assistant/study-area';
@@ -108,5 +110,41 @@ describe("a study Lookup's drawing", () => {
 
   it('leaves the drawing of another Lookup as it is', () => {
     expect(studyDrawing(DRAWING, { ...STUDY_LOOKUP, kind: 'way' }, AREA)).toBe(DRAWING);
+  });
+});
+
+// Partitions: one room a building (board a9), and three at one building with `any`. Expected values: the decision that
+// a building's rooms are one faded mark named after the first, the others counted.
+describe('the rooms open only to others', () => {
+  const dropped = STUDY_LOOKUP.scene.places.filter(({ role }) => role === 'dropped');
+  const [first] = dropped;
+  if (first === undefined) {
+    throw new Error('Board a9 has faded rooms');
+  }
+  const more = [
+    { ...first, tag: '전기공학 열람실 · 전기·정보공학부' },
+    { ...first, tag: '컴퓨터공학 세미나실 · 컴퓨터공학부' },
+  ];
+
+  it('stay one mark a building when each building has one, as on board a9', () => {
+    expect(oneMarkPerBuilding(STUDY_LOOKUP.scene).places).toEqual(STUDY_LOOKUP.scene.places);
+  });
+
+  it('of one building are one mark, named after the first with the others counted', () => {
+    const scene = { ...STUDY_LOOKUP.scene, places: [...STUDY_LOOKUP.scene.places, ...more] };
+
+    const faded = oneMarkPerBuilding(scene).places.filter(({ role }) => role === 'dropped');
+
+    expect(faded.map(({ place, tag }) => `${place.label}: ${String(tag)}`)).toEqual([
+      `${first.place.label}: ${String(first.tag)} 외 2`,
+      ...dropped.slice(1).map(({ place, tag }) => `${place.label}: ${String(tag)}`),
+    ]);
+  });
+
+  it('are merged only in a study Lookup', () => {
+    const scene = { ...STUDY_LOOKUP.scene, places: [...STUDY_LOOKUP.scene.places, ...more] };
+
+    expect(studyScene({ ...STUDY_LOOKUP, kind: 'way', scene }, null)).toBe(scene);
+    expect(studyScene({ ...STUDY_LOOKUP, scene }, null).places).toHaveLength(scene.places.length - 2);
   });
 });

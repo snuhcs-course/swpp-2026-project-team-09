@@ -7,11 +7,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { awayPlaceOf } from '@/features/assistant/study-area';
 import type { CardView } from '@/features/map/adapter';
 import { useMarkPresses } from '@/features/map/use-interest-marks';
 import type { MapAvatar, MapLine } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
+import { useAwaySeats } from './library/use-away-seats';
 import { type AnswerMap, ignorePress, useAnswerMap, useEverydayLimits, useInvitationMap } from './use-answer-map';
 import { useLookupMap } from './use-lookup-map';
 import { pressOnMap } from './use-main-layers';
@@ -80,7 +82,8 @@ export function useMapView(
   const marks = useMarkPresses(chat.chat, me, cards);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap, marks.byId);
   useViewport(chat, map, room);
-  const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
+  const seats = useAwaySeats(awayPlaceOf(chat.lookup.lookup));
+  const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars, seats);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
