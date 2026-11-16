@@ -73,3 +73,4 @@ The main server already answers events, recruiting parties, and a new recruiting
 13. **"길 안내" and the words to the Assistant** reach the card through a context put around the answer frame in `map-bottom.tsx` (`answer/row-four-actions.tsx`), since the frame gives the Plan's card neither.
 14. **What was dropped is said in the card.** The main server's scene of events and parties draws nothing it dropped, so the card lists each dropped reason in faint ink above the buttons ("17:00 파티는 17:02에야 도착해요"). The design's browsing into a faded party with the arrows is not built.
 15. **The mock's POST /plans** still answers the meal's stored Quest for any Plan, a new party's included: no real reply to a new party is stored. The tests post with a reply built by hand.
+16. The push permission is asked at "이대로 초대" and "이대로 모집" (board t17), as at the booking cards: once `POST /plans` made the Quest, by `useAskForPush` in `use-plan-invitation.ts`'s `invite`.
