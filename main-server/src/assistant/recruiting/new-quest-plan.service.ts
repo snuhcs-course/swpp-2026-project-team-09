@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -97,6 +98,7 @@ export class NewQuestPlanService {
       title: where.title,
       placeId: where.placeId,
       placeWords: where.placeWords,
+      event: where.event,
       placeOf: (placeId) => this.placeOf(placeId),
     });
     return { answer, planning };

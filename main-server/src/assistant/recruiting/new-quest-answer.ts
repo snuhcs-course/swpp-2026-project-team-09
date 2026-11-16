@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -35,6 +36,8 @@ export interface NewQuestAnswerArgs extends NamingArgs {
   placeId: string;
   // The Global Event's words for its place, else the Place's name.
   placeWords: string;
+  // The Global Event's own times, null for an activity.
+  event: { start: Date; end: Date | null } | null;
 }
 
 type Naming = EventNaming<NewQuestAnswerArgs>;
@@ -92,7 +95,7 @@ function friendPart({ userId, origin, there, leaveAt, leaveBy, next }: PersonWay
 
 // With Friends, everyone meets at the Place; then the Global Event until the asker must leave, or the activity.
 function subQuestsOf(plan: EventPlan, naming: Naming): Plan['subQuests'] {
-  const { title, placeId, placeWords, people, input } = naming.args;
+  const { title, placeId, placeWords, people, input, event } = naming.args;
   const at = koreaTime(plan.start);
   const meeting = { at, placeId, title: `${people.map(({ name }) => name).join(', ')}: ${placeWords} 앞에서 만나기` };
   const { next, leaveBy, end } = plan;
@@ -100,7 +103,10 @@ function subQuestsOf(plan: EventPlan, naming: Naming): Plan['subQuests'] {
   const nextPlaceId = next?.item.placeId ?? null;
   const onward = nextPlaceId === null ? '' : ` · ${withToward(naming.placeLabel(nextPlaceId))} 나서기`;
   const step = { at, placeId, title: cut ? `${clockOf(end)}까지 ${title}${onward}` : title };
-  return people.length > 1 ? [meeting, step] : [step];
+  // From the event's own start and not cut short, the step is the event itself, which the Quest's attending Sub Quest
+  // already is.
+  const steps = event !== null && !cut && plan.start.getTime() === event.start.getTime() ? [] : [step];
+  return people.length > 1 ? [meeting, ...steps] : steps;
 }
 
 // Where and when, posted for how many; and whose arrival set the time, when it was not said.
