@@ -41,7 +41,8 @@ describe("The Assistant's sources", () => {
 // findFriend and what it draws, which answer where a Friend is.
 const FIND_FRIEND = ['lookup/friend-tools.ts', 'lookup/friend.service.ts', 'lookup/friend-lookup.ts'];
 
-// What findFriend may read from outside the Assistant: the Friend view, and the Places it names.
+// What findFriend may read from outside the Assistant: the Friend view, the Places it names, and the walk between
+// Places (the walking table, which holds no one's position).
 const FIND_FRIEND_READS = new Set([
   '@nestjs/common',
   'zod',
@@ -50,6 +51,7 @@ const FIND_FRIEND_READS = new Set([
   '../../places/place-lookup.js',
   '../../places/dto/place.dto.js',
   '../../common/geometry.js',
+  '../../travel/travel.js',
 ]);
 
 describe("findFriend's sources", () => {

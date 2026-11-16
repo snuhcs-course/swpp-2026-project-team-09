@@ -100,8 +100,8 @@ export function Panels(): ReactElement {
       <SidePanel label="친구" onClose={close} open={open === 'side'}>
         <AppBar actions={<IconButton icon="x" label="닫기" onPress={close} />} count={12} line={false} title="친구" />
       </SidePanel>
-      <BottomSheet label="AI 매칭" onClose={close} open={open === 'sheet'}>
-        <Text style={styles.body}>인원</Text>
+      <BottomSheet label="파티 찾기" onClose={close} open={open === 'sheet'}>
+        <Text style={styles.body}>같이 갈 파티</Text>
       </BottomSheet>
     </Section>
   );

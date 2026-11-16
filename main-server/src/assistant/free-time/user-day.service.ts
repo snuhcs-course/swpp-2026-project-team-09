@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -21,12 +22,22 @@ export class UserDayService {
   ) {}
 
   async itemsOn(userId: string, date: string): Promise<DayItem[]> {
-    const [classes, subQuests] = await Promise.all([
-      this.timetable.classesOf(userId),
-      this.quests.heldSubQuests(userId),
-    ]);
+    const [meetings, subQuests] = await Promise.all([this.classesOn(userId, date), this.quests.heldSubQuests(userId)]);
+    const timed = subQuests.flatMap(({ id, questTitle, startsAt, endsAt, place, cancelled }) => {
+      const start = dateOf(startsAt);
+      if (cancelled || start === null || koreaDate(start) !== date) {
+        return [];
+      }
+      const end = busyEnd(start, dateOf(endsAt));
+      return [{ id, name: questTitle, start, end, placeId: this.places.placeIdOf(place), isClass: false }];
+    });
+    return [...meetings, ...timed];
+  }
+
+  // The Class meetings of the day, read from the Timetable alone.
+  async classesOn(userId: string, date: string): Promise<DayItem[]> {
     const weekday = weekdayOf(date);
-    const meetings = classes.flatMap(({ courseName, times }) =>
+    return (await this.timetable.classesOf(userId)).flatMap(({ courseName, times }) =>
       times
         .filter((time) => time.weekday === weekday)
         .map(({ id, startTime, endTime, placeId }) => ({
@@ -38,14 +49,5 @@ export class UserDayService {
           isClass: true,
         })),
     );
-    const timed = subQuests.flatMap(({ id, questTitle, startsAt, endsAt, place, cancelled }) => {
-      const start = dateOf(startsAt);
-      if (cancelled || start === null || koreaDate(start) !== date) {
-        return [];
-      }
-      const end = busyEnd(start, dateOf(endsAt));
-      return [{ id, name: questTitle, start, end, placeId: this.places.placeIdOf(place), isClass: false }];
-    });
-    return [...meetings, ...timed];
   }
 }

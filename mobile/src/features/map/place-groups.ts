@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -56,9 +57,12 @@ function placeName(members: readonly Member[]): string {
 }
 
 // The card of a place where two or more things are. Of one kind, its marker is that kind's pin with their count; of
-// several, a circle with a small one for each kind. Its card lists them, each with its first line that is not where.
+// several, a circle with a small one for each kind. Either has the star when one of them is a Favorite Event. Its card
+// lists them, each with its first line that is not where, and ★ on a Favorite Event's row.
 function groupCard(position: LatLng, members: readonly Member[]): CardView {
   const place = placeName(members);
+  const starred = members.some(({ card }) => card.event?.favorite === true);
+  const star = starred ? { starred } : {};
   const kinds = PLACE_KINDS.filter((kind) => members.some((member) => member.kind === kind));
   // The one kind of a group of one kind, or null.
   const alone = kinds.length === 1 ? (kinds[0] ?? null) : null;
@@ -71,7 +75,7 @@ function groupCard(position: LatLng, members: readonly Member[]): CardView {
   return {
     id: placeGroupId(position),
     kind: 'place-group',
-    mark: alone === null ? { type: 'group', kinds } : { type: 'place', place: alone },
+    mark: alone === null ? { type: 'group', kinds, ...star } : { type: 'place', place: alone, ...star },
     marker: {
       name: `${subLabel} · ${place}`,
       short: shortTitle(place),
@@ -84,11 +88,12 @@ function groupCard(position: LatLng, members: readonly Member[]): CardView {
     primary: null,
     secondary: null,
     position,
-    choices: members.map(({ card: { id, title, lines }, kind }) => ({
+    choices: members.map(({ card: { id, title, lines, event }, kind }) => ({
       id,
       kind,
       title,
       detail: lines.find(({ icon }) => icon !== 'pin')?.text ?? '',
+      ...(event?.favorite === true ? { favorite: true } : {}),
     })),
   };
 }

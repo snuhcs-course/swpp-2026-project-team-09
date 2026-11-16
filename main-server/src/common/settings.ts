@@ -15,10 +15,13 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
 import { z } from 'zod';
+// .ts, not .js: `pnpm eval` loads this file in plain Node, which does not map .js to .ts.
+import { aiKeysOf } from './llm-keys.ts';
 
 const port = z.string().pipe(z.coerce.number<string>().int().min(1).max(65535));
 
@@ -46,6 +49,33 @@ function es256Key(type: 'private' | 'public'): z.ZodString {
     }
   }, `Expected a P-256 ${type} key in PEM, beginning with ${header}`);
 }
+
+// The AI's other keys by name, as the Release writes them from the llm-key-<name> parameters
+// (infra/production/README.md: The AI's keys): a JSON object of name to key, {} or empty when there is none. A refusal
+// never repeats the text, since JSON.parse's own message would quote part of it. `default` is OPENROUTER_API_KEY's.
+const llmKeys = z
+  .string()
+  .default('{}')
+  .transform((text, context): unknown => {
+    try {
+      return text.trim() === '' ? {} : JSON.parse(text);
+    } catch {
+      context.addIssue({ code: 'custom', message: 'Expected a JSON object of key names to keys' });
+      return z.NEVER;
+    }
+  })
+  .pipe(
+    z.record(
+      z
+        .string()
+        .regex(/^[a-z0-9-]+$/u, 'Expected key names of lowercase letters, digits and dashes')
+        .refine((name) => name !== 'default', 'The key named default is OPENROUTER_API_KEY'),
+      z.string().min(1, 'Expected a non-empty key'),
+    ),
+  );
+
+export const MODEL_CACHE_MODES = ['breakpoints', 'auto', 'off'] as const;
+export type ModelCache = (typeof MODEL_CACHE_MODES)[number];
 
 // Every setting arrives as a string from the environment; the schema converts it to the type the code uses.
 export const settingsSchema = z
@@ -76,10 +106,15 @@ export const settingsSchema = z
     MATCH_SERVER_URL: z.url(),
     // The secret that this server and the match server send with each call to the other.
     MATCH_SERVER_TOKEN: z.string().min(32),
-    // The Assistant's (README.md: Assistant): the OpenRouter key, empty when there is none, and the OpenRouter id of
-    // the model, such as anthropic/claude-haiku-5.5.
+    // The AI's keys (README.md: Assistant): the OpenRouter key, the one `llm.key` names `default`, empty when there is
+    // none, and the others by name. The global setting `llm.key` chooses among them, and each provider's model is a
+    // constant (src/common/llm-keys.ts).
     OPENROUTER_API_KEY: z.string().default(''),
-    ASSISTANT_MODEL: z.string().default(''),
+    LLM_KEYS: llmKeys,
+    // What the Anthropic requests cache: "breakpoints" marks the end of the constant prompt and caches the chat's
+    // conversation automatically, "auto" caches every request automatically only, "off" caches nothing. The server
+    // keeps the default; the others are there for the evaluations' --cache.
+    MODEL_CACHE: z.enum(MODEL_CACHE_MODES).default('breakpoints'),
     // The Assistant's limits: the messages a User may send in a day in Korea, and per message the model calls, the
     // time in milliseconds and the tokens the model may write in each call. Its reasoning counts towards those tokens,
     // and at 1,000 it could use them all and leave no answer (eval/p5/r0a.md).
@@ -131,6 +166,9 @@ export const settingsSchema = z
     // How often, in seconds, the main server sends the Notifications whose time has come. 0 never sends them by itself,
     // so an empty value is refused rather than read as 0.
     NOTIFICATIONS_TICK_SECONDS: z.string().regex(/^\d+$/u).default('15').pipe(z.coerce.number<string>().max(3600)),
+    // How often, in seconds, the topics of new events and recruiting Quests are read (README.md: Interests). 0 never,
+    // so an empty value is refused rather than read as 0.
+    TOPICS_TICK_SECONDS: z.string().regex(/^\d+$/u).default('60').pipe(z.coerce.number<string>().max(3600)),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
@@ -143,17 +181,19 @@ export const settingsSchema = z
       when: ({ issues }) => issues.length === 0,
     },
   )
-  // Refused at the start, so that a Release shows the mistake and no try of a Judgement is used on it.
-  .refine(
-    ({ AUTOMATIC_JUDGEMENT, OPENROUTER_API_KEY, ASSISTANT_MODEL }) =>
-      !AUTOMATIC_JUDGEMENT || (OPENROUTER_API_KEY !== '' && ASSISTANT_MODEL !== ''),
-    { path: ['AUTOMATIC_JUDGEMENT'], message: 'Needs OPENROUTER_API_KEY and ASSISTANT_MODEL' },
-  )
-  .refine(
-    ({ SAME_EVENT_AI_CHOICE, OPENROUTER_API_KEY, ASSISTANT_MODEL }) =>
-      !SAME_EVENT_AI_CHOICE || (OPENROUTER_API_KEY !== '' && ASSISTANT_MODEL !== ''),
-    { path: ['SAME_EVENT_AI_CHOICE'], message: 'Needs OPENROUTER_API_KEY and ASSISTANT_MODEL' },
-  )
+  // Refused at the start, so that a Release shows the mistake and no try of a Judgement is used on it: a step that asks
+  // the model needs a key whose provider its value tells. Only once every setting passed its own check, so that
+  // LLM_KEYS is a record.
+  .refine(({ AUTOMATIC_JUDGEMENT, ...keys }) => !AUTOMATIC_JUDGEMENT || aiKeysOf(keys).offered.length > 0, {
+    path: ['AUTOMATIC_JUDGEMENT'],
+    message: 'Needs OPENROUTER_API_KEY or a key in LLM_KEYS',
+    when: ({ issues }) => issues.length === 0,
+  })
+  .refine(({ SAME_EVENT_AI_CHOICE, ...keys }) => !SAME_EVENT_AI_CHOICE || aiKeysOf(keys).offered.length > 0, {
+    path: ['SAME_EVENT_AI_CHOICE'],
+    message: 'Needs OPENROUTER_API_KEY or a key in LLM_KEYS',
+    when: ({ issues }) => issues.length === 0,
+  })
   // With one client ID in both settings, either sign-in would accept the other's ID token.
   .refine((settings) => settings.GOOGLE_APP_CLIENT_ID !== settings.GOOGLE_ADMIN_CLIENT_ID, {
     path: ['GOOGLE_ADMIN_CLIENT_ID'],

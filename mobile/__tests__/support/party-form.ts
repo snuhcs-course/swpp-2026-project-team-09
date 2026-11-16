@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { userEvent } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
-import type { GlobalEvent } from '@/api/types';
+import type { ListedGlobalEvent } from '@/api/types';
 import type { FakeServer } from './fake-server';
 import { screen } from './app';
 import { BOOK_TALK, CAREER, MAJOR } from './events';
@@ -19,7 +20,7 @@ import { LOBBY } from './server';
 type User = ReturnType<typeof userEvent.setup>;
 
 // A festival on Friday.
-export const FESTIVAL: GlobalEvent = {
+export const FESTIVAL: ListedGlobalEvent = {
   id: 'e4',
   title: '가을 축제 개막 공연',
   description: '총학생회가 여는 축제의 첫 공연',
@@ -29,6 +30,8 @@ export const FESTIVAL: GlobalEvent = {
   latitude: 37.4579,
   longitude: 126.9535,
   sourceUrl: null,
+  publishedAt: null,
+  favorite: false,
 };
 
 export const PHOTO_URI = 'file:///photos/run.jpg';

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput } from '@/api/assistant-types';
@@ -9,9 +10,11 @@ import { mockRecalculation } from '@/api/mock/assistant';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import {
   MEAL_ANSWER_ALONE,
+  MEAL_ANSWER_FIXED_PLACE,
   MEAL_ANSWER_FIXED_START,
   MEAL_ANSWER_OTHER_ORIGIN,
   MEAL_ANSWER_THREE,
+  MEAL_ANSWER_UNFIT_PLACE,
 } from '@/api/mock/data/meal-answers';
 
 // The mock's choice of a stored copy for a recalculation (P02 spec, "The mock client"), each holding the conditions
@@ -75,6 +78,26 @@ describe('the mock of a recalculation with a window', () => {
   it('answers a window that fixes only its end with the first copy', () => {
     // The first copy's input with its end fixed at 13:00, which takes no copy of its own.
     const input: PlanInput = { ...MEAL_ANSWER.input, window: { from: null, until: '13:00' } };
+
+    expect(mockRecalculation(input)).toEqual({ ...MEAL_ANSWER, input });
+  });
+});
+
+// Partitions: three people at 자하연식당, at 301동식당, and at a Place with no copy; two people at 자하연식당.
+describe('the mock of a recalculation at a pressed Place', () => {
+  it('answers 자하연식당 with the copy of a7, and 301동식당 with the copy of a8', () => {
+    expect(mockRecalculation(MEAL_ANSWER_FIXED_PLACE.input)).toEqual(MEAL_ANSWER_FIXED_PLACE);
+    expect(mockRecalculation(MEAL_ANSWER_UNFIT_PLACE.input)).toEqual(MEAL_ANSWER_UNFIT_PLACE);
+  });
+
+  it('answers a Place with no copy with the copy for three', () => {
+    const input: PlanInput = { ...MEAL_ANSWER_THREE.input, placeId: 'place-without-copy' };
+
+    expect(mockRecalculation(input)).toEqual({ ...MEAL_ANSWER_THREE, input });
+  });
+
+  it('answers two people at 자하연식당 with the first copy', () => {
+    const input: PlanInput = { ...MEAL_ANSWER.input, placeId: MEAL_ANSWER_FIXED_PLACE.input.placeId };
 
     expect(mockRecalculation(input)).toEqual({ ...MEAL_ANSWER, input });
   });

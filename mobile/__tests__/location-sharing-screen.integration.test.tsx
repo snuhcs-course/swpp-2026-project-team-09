@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -14,6 +15,7 @@ import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
+import { zone, ZONES_ROUTE } from './support/private-zones';
 import { answerMainScreen, askMainServer, JI_WOO, LOBBY, MIN_JUN, PHONE_NOW } from './support/server';
 
 // The 위치 공유 screen (P02 ticket 11, board n7b) against the fake main server: its four parts in the board's words,
@@ -74,6 +76,7 @@ beforeEach(async () => {
     server.on(route, { status: 204 });
   }
   server.on('POST /positions', { status: 200, body: { offCampus: false } });
+  server.on(ZONES_ROUTE, { status: 200, body: { zones: [] } });
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -134,7 +137,29 @@ describe('The 위치 공유 screen', () => {
     expect(screen.getByLabelText('누가 나를 찾았는지 · 기록 안 함')).toBeVisible();
     expect(screen.getByLabelText('지난 위치 · 저장 안 함')).toBeVisible();
     expect(screen.getByText('과목과 강의실은 보이지 않고, 후보로 검토된 것은 누구에게도 알리지 않아요.')).toBeVisible();
-    expect(screen.queryByText('비공개 구역')).toBeNull();
+  });
+});
+
+// P02 ticket 29: the way to the zone screen, with the number of zones the User drew.
+describe('The 비공개 구역 row', () => {
+  it('says 0곳 with no zone', async () => {
+    await openScreen();
+
+    expect(screen.getByText('비공개 구역')).toBeVisible();
+    expect(screen.getByText('칠한 곳 안에서는 시간표만 보여요')).toBeVisible();
+    expect(screen.getByText('0곳')).toBeVisible();
+  });
+
+  it('counts the zones and opens the zone screen', async () => {
+    server.on(ZONES_ROUTE, { status: 200, body: { zones: [zone(1, '301동 근처'), zone(2, '302동 근처')] } });
+    const user = await openScreen();
+
+    expect(screen.getByText('2곳')).toBeVisible();
+    await user.press(screen.getByRole('button', { name: /^비공개 구역/u }));
+    await pass(500);
+
+    expect(shownAddress()).toBe('/me/private-zones');
+    expect(screen.getByText('301동 근처')).toBeVisible();
   });
 });
 

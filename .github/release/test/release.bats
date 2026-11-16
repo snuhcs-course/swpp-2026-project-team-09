@@ -5,6 +5,8 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
@@ -34,7 +36,8 @@ setup() {
 }
 
 # Makes the faked GitHub list these CI runs of the commit, each "id status conclusion push", in every poll or, after
-# --poll N, in poll N. The push is `branch` or `tag`, the Release's tag.
+# --poll N, in poll N. The last field is `queue`, the merge queue's run, `tag`, the run of the Release's tag, or a
+# branch's name, the run of a push to it.
 serve_runs() {
   local file=$FAKE_GITHUB/runs.json
   if [[ "$1" == --poll ]]; then
@@ -44,7 +47,9 @@ serve_runs() {
   printf '%s\n' "$@" | jq --raw-input --slurp --arg commit "$COMMIT" --arg tag "$TAG" '
     [split("\n")[] | select(length > 0) | split(" ") |
       {id: (.[0] | tonumber), name: "CI", path: ".github/workflows/ci.yml", head_sha: $commit,
-        head_branch: (if .[3] == "tag" then $tag else "2.0/Main" end), status: .[1],
+        head_branch: (if .[3] == "tag" then $tag elif .[3] == "queue" then "gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d"
+          else .[3] end),
+        event: (if .[3] == "queue" then "merge_group" else "push" end), status: .[1],
         conclusion: (if .[2] == "null" then null else .[2] end)}] |
     {total_count: length, workflow_runs: .}' >"$file"
 }
@@ -370,7 +375,7 @@ print_certs() {
 }
 
 @test "a job that failed in every run of the commit stops the gate" {
-  serve_runs '41 completed failure branch' '57 completed failure tag'
+  serve_runs '41 completed failure queue' '57 completed failure tag'
   mapfile -t jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   serve_jobs 41 "${jobs[@]}"
   serve_jobs 57 "${jobs[@]}"
@@ -383,9 +388,41 @@ print_certs() {
   [ "$(polls)" -eq 1 ]
 }
 
-@test "a job that failed on the branch's push but still runs on the tag's is waited for, and one success of each job is enough" {
+@test "the runs of a push to a Main or to a working branch are not read, since their jobs may skip work" {
+  mapfile -t failed < <(ci_jobs completed success mobile; echo 'mobile completed failure')
+  mapfile -t passed < <(ci_jobs completed success)
+  serve_runs '41 completed failure queue' '57 completed success 2.0/feature' '63 completed success 2.0/Main' \
+    '77 completed failure tag'
+  serve_jobs 41 "${failed[@]}"
+  serve_jobs 57 "${passed[@]}"
+  serve_jobs 63 "${passed[@]}"
+  serve_jobs 77 "${failed[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"mobile=failure"* ]] || false
+  grep -E 'runs/(57|63)/jobs' "$FAKE_CALLS" && false
+  [ "$(polls)" -eq 1 ]
+}
+
+@test "the runs of pushes to main and development are read, since they do every job" {
+  mapfile -t failed < <(ci_jobs completed success mobile; echo 'mobile completed failure')
+  mapfile -t passed < <(ci_jobs completed success)
+  serve_runs '41 completed success main' '57 completed success development' '77 completed failure tag'
+  serve_jobs 41 "${failed[@]}"
+  serve_jobs 57 "${passed[@]}"
+  serve_jobs 77 "${failed[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  [ "$status" -eq 0 ]
+  grep -q 'runs/57/jobs' "$FAKE_CALLS"
+}
+
+@test "a job that failed in the merge queue's run but still runs on the tag's is waited for, and one success of each job is enough" {
   mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
-  serve_runs '41 completed failure branch' '57 in_progress null tag'
+  serve_runs '41 completed failure queue' '57 in_progress null tag'
   serve_jobs 41 "${branch_jobs[@]}"
   serve_jobs 57 'mobile in_progress null' 'main-server queued null'
   serve_jobs --poll 2 57 'mobile completed success' 'main-server in_progress null'
@@ -401,7 +438,7 @@ print_certs() {
 @test "a run that has not listed its jobs yet keeps a job that failed elsewhere waiting" {
   mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   mapfile -t tag_jobs < <(ci_jobs completed success)
-  serve_runs '41 completed failure branch' '57 queued null tag'
+  serve_runs '41 completed failure queue' '57 queued null tag'
   serve_jobs 41 "${branch_jobs[@]}"
   serve_jobs 57
   serve_jobs --poll 2 57 "${tag_jobs[@]}"
@@ -413,11 +450,11 @@ print_certs() {
   [[ "${lines[0]}" == *"mobile=queued"* ]] || false
 }
 
-@test "a job that failed on the branch's push is waited for until GitHub lists the tag's run" {
+@test "a job that failed in the merge queue's run is waited for until GitHub lists the tag's run" {
   mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   mapfile -t tag_jobs < <(ci_jobs completed success)
-  serve_runs '41 completed failure branch'
-  serve_runs --poll 2 '41 completed failure branch' '57 completed success tag'
+  serve_runs '41 completed failure queue'
+  serve_runs --poll 2 '41 completed failure queue' '57 completed success tag'
   serve_jobs 41 "${branch_jobs[@]}"
   serve_jobs 57 "${tag_jobs[@]}"
 
@@ -440,7 +477,7 @@ print_certs() {
 
 @test "a run cancelled by a newer push to its branch is waited for, not failed" {
   mapfile -t jobs < <(ci_jobs completed success flow-tests; echo 'flow-tests completed cancelled')
-  serve_runs '41 completed cancelled branch'
+  serve_runs '41 completed cancelled queue'
   serve_jobs 41 "${jobs[@]}"
 
   GATE_LIMIT_SECONDS=0 run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
@@ -494,6 +531,7 @@ WORKER_TOKEN=3f9a1c77d2e0
 MATCH_SERVER_TOKEN=8e21b4a09c5d
 KAKAO_REST_API_KEY=5c1d0e9f8a7b
 OPENROUTER_API_KEY=sk-or-v1-77aa
+LLM_KEYS={}
 INITIAL_ADMINISTRATOR_EMAILS=a@snu.ac.kr,b@snu.ac.kr
 EOF
   diff "$secrets/access-token-private-key.pem" <(printf '%s\n' "$PRIVATE_KEY")
@@ -525,6 +563,40 @@ EOF
   run "$RELEASE" write-secrets "$secrets" '' <"$BATS_TEST_TMPDIR/parameters.json"
   [ "$status" -eq 1 ]
   [[ "$output" == *"database endpoint"* ]] || false
+}
+
+@test "every llm-key-<name> parameter is one LLM_KEYS line, a JSON object of name to key sorted by name, beside OPENROUTER_API_KEY, and no key is printed" {
+  serve_parameters "${PARAMETERS[@]}" llm-key-team-2 sk-ant-api03-Zq9/x+b= llm-key-anthropic sk-ant-api03-7f3c \
+    llm-key-or-backup sk-or-v1-9e1d
+  local secrets=$BATS_TEST_TMPDIR/secrets
+
+  run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+
+  [ "$status" -eq 0 ]
+  [ "$(grep -c '^LLM_KEYS=' "$secrets/secrets.env")" -eq 1 ]
+  [ "$(sed -n 's/^LLM_KEYS=//p' "$secrets/secrets.env")" = \
+    '{"anthropic":"sk-ant-api03-7f3c","or-backup":"sk-or-v1-9e1d","team-2":"sk-ant-api03-Zq9/x+b="}' ]
+  [ "$(sed -n 's/^OPENROUTER_API_KEY=//p' "$secrets/secrets.env")" = sk-or-v1-77aa ]
+  [[ "$output" != *sk-ant* && "$output" != *sk-or* ]] || false
+}
+
+@test "a key's name outside lowercase letters, digits and dashes, the name default, or a value with whitespace, a quote or a backslash fails, naming the parameter and printing no value" {
+  local secrets=$BATS_TEST_TMPDIR/secrets name value
+
+  for name in llm-key-Team llm-key-team_2 llm-key- llm-key-default; do
+    serve_parameters "${PARAMETERS[@]}" "$name" sk-ant-api03-7f3c
+    run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"/snunow/production/$name is not"* && "$output" != *sk-ant* ]] || false
+  done
+
+  for value in 'sk-ant 7f3c' $'sk-ant\n7f3c' 'sk-ant"7f3c' "sk-ant'7f3c" 'sk-ant\7f3c' $'sk-ant\t7f3c'; do
+    serve_parameters "${PARAMETERS[@]}" llm-key-anthropic "$value"
+    run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"/snunow/production/llm-key-anthropic holds"* && "$output" != *7f3c* ]] || false
+  done
+  [ ! -e "$secrets/secrets.env" ]
 }
 
 # A ConfigMap or Secret as `kubectl get -o json` lists it: kind, name, and creation time.

@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -21,7 +22,6 @@ import {
   LoadingState,
   radius,
   space,
-  useToast,
   useToastAbove,
 } from '@/design-system';
 import type { RoomView } from '@/features/quests/room-adapter';
@@ -142,16 +142,15 @@ function goingAsk(room: RoomView, actions: RoomActions, onLeft: () => void): Ask
       };
 }
 
-// A Quest the User no longer holds closes its room, unless the User just left it here.
+// A Quest the User no longer holds closes its room, unless the User just left it here. The signed-in layout's
+// `GoneQuestsWatch` tells it, once, whichever screen is shown.
 function useCloseWhenGone(gone: boolean, left: { current: boolean }): void {
-  const showToast = useToast();
   useEffect(() => {
     if (gone && !left.current) {
       left.current = true;
-      showToast('파티에서 빠졌어요');
       leaveRoom();
     }
-  }, [gone, left, showToast]);
+  }, [gone, left]);
 }
 
 // The footer's full-width danger button: `나가기`, or `파티 없애기` for the Leader.

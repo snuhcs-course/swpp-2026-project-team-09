@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type {
@@ -19,7 +20,7 @@ import type {
 } from '@/main-server';
 import type * as MainServerModule from '@/main-server';
 
-import { SameEventRoutes } from './fake-same-event-routes';
+import { SettingsRoutes } from './fake-settings-routes';
 import { FakeUsers } from './fake-users';
 import {
   byStart,
@@ -40,7 +41,7 @@ interface Account extends Administrator {
 }
 
 // Behaves like the main server's administrator routes, and records each request as "METHOD /path".
-class FakeMainServer extends SameEventRoutes implements MainServer {
+class FakeMainServer extends SettingsRoutes implements MainServer {
   requests: string[] = [];
   private accounts: Account[] = [];
   private issued = 0;
@@ -52,6 +53,7 @@ class FakeMainServer extends SameEventRoutes implements MainServer {
   readonly users = new FakeUsers();
 
   reset(): void {
+    this.settings.reset();
     this.requests = [];
     this.accounts = [];
     this.events = [];
@@ -284,7 +286,7 @@ class FakeMainServer extends SameEventRoutes implements MainServer {
     return account;
   }
 
-  protected answer<T>(request: string, token: string, answer: () => T): Promise<T> {
+  protected answer<T>(request: string, token: string, answer: (account: Account) => T): Promise<T> {
     this.requests.push(request);
     return this.as(token, answer);
   }

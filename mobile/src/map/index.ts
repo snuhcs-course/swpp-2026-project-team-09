@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The app's one map. A screen shows a map with `Map` and nothing else: no screen calls a map SDK or the native
@@ -19,6 +20,7 @@ export {
   MAX_ZOOM,
   MIN_ZOOM,
   NATIVE_MIN_LEVEL,
+  nativeLevelZoom,
   ZOOM_OFFSET,
   type ZoomDetail,
   zoomDetail,
@@ -26,7 +28,7 @@ export {
 export { CREDIT_ROOM, Map } from './map';
 export { MarkerImageStage, unmadeImage, useMarkerImages } from './marker-images';
 export type { MarkerForm, MarkerLook } from './marker-looks';
-export { inView, project, type Size, unproject } from './projection';
+export { atPoint, inView, type Point, project, type Size, unproject } from './projection';
 export type {
   CameraMove,
   FitOptions,

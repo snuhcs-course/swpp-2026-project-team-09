@@ -3,8 +3,10 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
 import { CAMPUS_BOUNDS, isInside, type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
@@ -13,8 +15,17 @@ import { useLocationExplanation } from './use-location-explanation';
 import type { MainMap } from './use-main-map';
 
 // The identifier of the User's own Avatar on the map. It takes no press, as in the frame: a press on it reaches a
-// Friend's marker that it stands over.
+// Friend's marker that it stands over. With the switch of the answer on the map on, it takes one (`pressableMe`).
 export const ME_AVATAR_ID = 'me';
+
+// Under every other Avatar, whose order is 0 or more.
+const UNDER_FACES = -1;
+
+// The User's own Avatar as it is drawn while the switch of the answer on the map is on, as row 6's boards draw it: it
+// takes a press, which opens the User's own card, and lies under the faces, so that a face over it keeps its press.
+export function pressableMe(avatars: readonly MapAvatar[]): MapAvatar[] {
+  return avatars.map((avatar) => ({ ...avatar, passive: false, order: UNDER_FACES }));
+}
 
 export const OFF_CAMPUS = '캠퍼스 밖에 있어요';
 export const FINDING_POSITION = '위치를 찾는 중이에요';
@@ -32,6 +43,9 @@ export interface Me {
   avatars: readonly MapAvatar[];
   // The phone told a position and it is outside the campus rectangle.
   offCampus: boolean;
+  // Why the Assistant is sent no position: the permission refused or never asked, or off campus. Null otherwise, while
+  // the permission is being read included.
+  locationMissing: LocationMissing;
   // "내 위치로 이동".
   goToMe: () => void;
   // Says why the map has no position to start from, for a part that needs one: the explanation before the location
@@ -44,6 +58,13 @@ export interface Me {
   blocked: boolean;
   allow: () => void;
   later: () => void;
+}
+
+function missingOf(permission: PositionPermission, offCampus: boolean): LocationMissing {
+  if (permission !== 'granted' && permission !== 'checking') {
+    return 'permission';
+  }
+  return offCampus ? 'off-campus' : null;
 }
 
 // The User on the main screen's map: their Avatar while they are on campus, and the button that brings the map to
@@ -79,7 +100,6 @@ export function useMe(map: MainMap): Me {
       map.showCampus();
     }
   };
-  const blocked = permission === 'blocked';
   return {
     permission,
     position,
@@ -88,13 +108,14 @@ export function useMe(map: MainMap): Me {
         ? []
         : [{ id: ME_AVATAR_ID, name: '내 위치', position, image, glideMs: stepMs, order: 1, passive: true }],
     offCampus,
+    locationMissing: missingOf(permission, offCampus),
     goToMe,
     sayWhyNotHere,
     explaining,
-    blocked,
+    blocked: permission === 'blocked',
     allow: (): void => {
       close();
-      void (blocked ? openLocationSettings() : ask());
+      void (permission === 'blocked' ? openLocationSettings() : ask());
     },
     later: close,
   };

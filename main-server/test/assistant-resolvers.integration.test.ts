@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -91,8 +92,10 @@ function friendName(name: string): string {
   return `<data label="friend.name">${name}</data>`;
 }
 
+const DEPARTMENT = '<data label="friend.department">컴퓨터공학부</data>';
+
 describe('resolveFriend', () => {
-  it('answers the one Friend a name matches, by name and id only', async () => {
+  it('answers the one Friend a name matches, by full name and id only, without the department', async () => {
     expect(await resolve('resolveFriend', { name: '칠지은' }, '칠지은 초대해줘')).toEqual({
       result: 'one',
       candidate: { id: friendIds.jieun, name: friendName(friends.jieun) },
@@ -103,8 +106,8 @@ describe('resolveFriend', () => {
     expect(await resolve('resolveFriend', { name: '칠 민수' })).toEqual({
       result: 'several',
       candidates: [
-        { id: friendIds.garam, name: friendName(friends.garam) },
-        { id: friendIds.narae, name: friendName(friends.narae) },
+        { id: friendIds.garam, name: friendName(friends.garam), department: DEPARTMENT },
+        { id: friendIds.narae, name: friendName(friends.narae), department: DEPARTMENT },
       ],
       more: false,
     });
@@ -119,7 +122,7 @@ describe('resolveFriend', () => {
 });
 
 describe('resolveFriend, for a Friend the Friend view puts at the Timetable whose position is kept', () => {
-  it('answers them by name and id, and nothing of where they are reaches the model or the reply', async () => {
+  it('answers them by full name and id, and nothing of where they are reaches the model or the reply', async () => {
     const friend = await named('칠하은');
     await befriend(app, user, friend);
     await keptButHidden(app, user, friend);

@@ -15,18 +15,23 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
 import type { InvitationCard, OwnWay } from './invitation-card-types';
+import type { Lookup, Tapped } from './lookup-types';
+import type { LocationMissing } from './refusal-types';
 import { mockClient } from './mock/client';
 import { tellAskLevels } from './plan-asks';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
-import type { WatchedInterest } from './interest-types';
+import type { InterestMatches, WatchedInterest } from './interest-types';
 import type { MatchingRequest } from './matching-types';
+import type { PrivateZone } from './private-zone-types';
 import type {
   AskedMoment,
   Board,
@@ -35,7 +40,7 @@ import type {
   Friend,
   FriendLevel,
   FriendStatus,
-  GlobalEvent,
+  ListedGlobalEvent,
   InviteLink,
   LatLng,
   Lobby,
@@ -123,7 +128,10 @@ export interface ApiClient {
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
   searchPlaces: (words: string) => Promise<Place[]>;
-  listGlobalEvents: () => Promise<GlobalEvent[]>;
+  listGlobalEvents: () => Promise<ListedGlobalEvent[]>;
+  // Stars a published Global Event, or clears its star; a repeat changes nothing. Refused with 404
+  // GLOBAL_EVENT_NOT_FOUND for an event that is not published.
+  setFavoriteEvent: (globalEventId: string, favorite: boolean) => Promise<void>;
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
   listParties: () => Promise<Party[]>;
@@ -198,14 +206,19 @@ export interface ApiClient {
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked when it gives that.
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
-  // An answer drawn on the map, recalculated from its changed input and where the User is now, without the model.
-  recalculateAnswer: (input: PlanInput, location: LatLng | null) => Promise<AnswerReply>;
+  // An answer drawn on the map, recalculated from its changed input and where the User is now or why that is not
+  // known, without the model.
+  recalculateAnswer: (input: PlanInput, location: LatLng | null, missing?: LocationMissing) => Promise<AnswerReply>;
+  // The card of a building or a Friend's face pressed on the everyday map, without the model and without counting the
+  // User's messages. Refused with 400 for an id that is no Place and with 404 FRIEND_NOT_FOUND for someone who is not
+  // the User's Friend.
+  answerTap: (tapped: Tapped, location: LatLng | null) => Promise<Lookup>;
   // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
   // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
   makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
   // For the Leader after a decline: whether the people left have a better Plan than the Quest as it stands, worked
-  // out from where the Leader is now when the app knows.
-  getBetterPlan: (questId: string, location: LatLng | null) => Promise<BetterPlan>;
+  // out from where the Leader is now when the app knows, or else from why that is not known, as the Quest was made.
+  getBetterPlan: (questId: string, location: LatLng | null, missing?: LocationMissing) => Promise<BetterPlan>;
   // The Quest changed to the Plan named, its Holders and waiting invitations kept. Refused with 409 PLAN_CHANGED as
   // the making is, and with 400 PLAN_PEOPLE_CHANGED when the input is not for the Quest's people.
   changePlanQuest: (questId: string, making: MakePlanQuest) => Promise<Quest>;
@@ -224,6 +237,15 @@ export interface ApiClient {
   watchInterest: (words: string) => Promise<WatchedInterest>;
   // Refused with 404 INTEREST_NOT_FOUND.
   removeInterest: (interestId: string) => Promise<void>;
+  // What matches the User's hashtags and watched interests. Null from a main server that does not answer it yet.
+  listInterestMatches: () => Promise<InterestMatches | null>;
+  // The User's Private Zones, the oldest first.
+  privateZones: () => Promise<PrivateZone[]>;
+  // Refused with 400 PRIVATE_ZONE_INVALID, PRIVATE_ZONE_OFF_CAMPUS or PRIVATE_ZONE_TOO_SMALL, and with 409
+  // PRIVATE_ZONES_FULL for a sixth.
+  addPrivateZone: (outline: LatLng[]) => Promise<PrivateZone>;
+  // Refused with 404 PRIVATE_ZONE_NOT_FOUND.
+  removePrivateZone: (zoneId: string) => Promise<void>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -271,6 +293,7 @@ export const apiClient: ShownClient = {
   listPlaces: () => chosen().listPlaces(),
   searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
+  setFavoriteEvent: (globalEventId, favorite) => chosen().setFavoriteEvent(globalEventId, favorite),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),
   requestMatching: (globalEventId, size) => chosen().requestMatching(globalEventId, size),
@@ -327,14 +350,15 @@ export const apiClient: ShownClient = {
   listCompanionSeekers: () => chosen().listCompanionSeekers(),
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
-  recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
+  recalculateAnswer: (input, location, missing) => chosen().recalculateAnswer(input, location, missing),
+  answerTap: (tapped, location) => chosen().answerTap(tapped, location),
   // Whatever screen made the Quest, the question about the Friends the reply names is asked by its own host.
   makePlanQuest: async (making, key) => {
     const made = await chosen().makePlanQuest(making, key);
     tellAskLevels(made.askLevels);
     return made;
   },
-  getBetterPlan: (questId, location) => chosen().getBetterPlan(questId, location),
+  getBetterPlan: (questId, location, missing) => chosen().getBetterPlan(questId, location, missing),
   changePlanQuest: (questId, making) => chosen().changePlanQuest(questId, making),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
   reportLate: (questId, minutes, location) => chosen().reportLate(questId, minutes, location),
@@ -347,4 +371,8 @@ export const apiClient: ShownClient = {
   listInterests: () => chosen().listInterests(),
   watchInterest: (words) => chosen().watchInterest(words),
   removeInterest: (interestId) => chosen().removeInterest(interestId),
+  listInterestMatches: () => chosen().listInterestMatches(),
+  privateZones: () => chosen().privateZones(),
+  addPrivateZone: (outline) => chosen().addPrivateZone(outline),
+  removePrivateZone: (zoneId) => chosen().removePrivateZone(zoneId),
 };

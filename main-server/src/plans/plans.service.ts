@@ -3,12 +3,18 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { type MealInput, type NewQuestInput, type Plan, type PlanInput } from '../assistant/dto/answer.dto.js';
+import {
+  type MealInput,
+  type MeetInput,
+  type NewQuestInput,
+  type Plan,
+  type PlanInput,
+} from '../assistant/dto/answer.dto.js';
 import { outOfReach } from '../assistant/free-time/tool-parts.js';
-import { MealPlanService } from '../assistant/gathering/meal-plan.service.js';
 import { PlanAnswersService } from '../assistant/plan-answers.service.js';
 import { CAPACITY_MIN } from '../assistant/recruiting/new-quest-answer.js';
 import { PrismaService } from '../common/prisma.service.js';
@@ -48,14 +54,15 @@ const newQuestStepsOf = ({ subQuests, endAt }: Plan): SubQuestColumns[] =>
     placeLabel: null,
   }));
 
-// A meal's Plan and a new recruiting Quest's are made into a Quest; the Quests to join are joined from their cards.
-export function mealInputOf(input: PlanInput): MealInput {
-  if (input.kind !== 'meal') {
+// A meal's Plan, a meet's, and a new recruiting Quest's are made into a Quest; the Quests to join are joined from their
+// cards.
+export function mealOrMeetInputOf(input: PlanInput): MealInput | MeetInput {
+  if (input.kind !== 'meal' && input.kind !== 'meet') {
     throw new BadRequestException({
       statusCode: HttpStatus.BAD_REQUEST,
       error: 'Bad Request',
       code: 'PLAN_KIND',
-      message: "Only a meal's plan and a new recruiting Quest's are made into a Quest.",
+      message: "Only a meal's plan, a meet's, and a new recruiting Quest's are made into a Quest.",
     });
   }
   return input;
@@ -67,7 +74,6 @@ export class PlansService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly mealPlans: MealPlanService,
     private readonly answers: PlanAnswersService,
     private readonly users: UsersService,
     private readonly quests: QuestsService,
@@ -84,7 +90,7 @@ export class PlansService {
     if (making.input.kind === 'new-quest') {
       return this.makeNewQuest(userId, making, making.input);
     }
-    if (mealInputOf(making.input).people.length < 2) {
+    if (mealOrMeetInputOf(making.input).people.length < 2) {
       throw new BadRequestException({
         statusCode: HttpStatus.BAD_REQUEST,
         error: 'Bad Request',
@@ -106,15 +112,15 @@ export class PlansService {
   // Plans again as the recalculation does, with these Sub Quests left out of everyone's day, and answers the Plan named.
   async replanned(
     userId: string,
-    { input, planId, startAt, location }: PlanQuestBody,
+    { input, planId, startAt, location, locationMissing }: PlanQuestBody,
     leftOut: readonly string[],
   ): Promise<Plan> {
-    const meal = mealInputOf(input);
+    const planned = mealOrMeetInputOf(input);
     const now = this.clock.now();
-    if (outOfReach(meal.date, now)) {
+    if (outOfReach(planned.date, now)) {
       throw new BadRequestException('A plan is for a day from today to a week ahead');
     }
-    const { plans } = await this.mealPlans.plan(userId, meal, { now, location, leftOut });
+    const { plans } = await this.answers.plan(userId, planned, { now, location, locationMissing, leftOut });
     return planNamed(plans, planId, startAt);
   }
 

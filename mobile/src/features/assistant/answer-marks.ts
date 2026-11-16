@@ -4,66 +4,35 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, type LabelSide } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, type FaceBadge, initials } from '@/design-system';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
+import {
+  destinationOf,
+  type Draft,
+  DRAW_ORDER,
+  FLAG_TONES,
+  type Group,
+  OWN,
+  restOf,
+  ROUTE_STYLES,
+  SIDE_ORDER,
+  SIDES,
+  stopDraft,
+  SYMBOL_ORDER,
+} from './answer-groups';
+import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
-// The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
-// flags, which have none.
-type Group = 'flag' | 'pick' | 'person' | 'next' | 'candidate' | 'dropped';
-
-interface Draft {
-  id: string;
-  name: string;
-  position: LatLng;
-  planId: string | null;
-  group: Group;
-  symbol: AnswerSymbol | null;
-  tone: AnswerLabel['tone'];
-  // Null for a mark that takes no label.
-  title: string | null;
-  line: string | null;
-  // The number a pick or a candidate carries in its label when its dot is not drawn.
-  number: number | null;
-}
-
-const SIDE_ORDER: Group[] = ['flag', 'pick', 'person', 'next', 'candidate', 'dropped'];
-const SYMBOL_ORDER: Group[] = ['person', 'pick', 'next', 'candidate', 'dropped'];
-const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'next', 'candidate', 'dropped'];
-const OWN = new Set<Group>(['person', 'pick', 'next', 'flag']);
-
-const SIDES: Record<Group, LabelSide[]> = {
-  flag: ['above', 'below', 'right', 'left'],
-  pick: ['below', 'above'],
-  person: ['right', 'left'],
-  next: ['left', 'below', 'right', 'above'],
-  candidate: ['left', 'right', 'below', 'above'],
-  dropped: ['left', 'right', 'below', 'above'],
-};
-
-const ROUTE_STYLES = {
-  me: { color: color.snuBlue, width: 5 },
-  friend: { color: color.friend, width: 4 },
-  next: { color: color.borderStrong, width: 3 },
-  shuttle: { color: color.svcShuttle, width: 4 },
-  alt: { color: color.border, width: 2 },
-} as const;
-
 const ONE_POINT = 15;
-// How far a label reaches from its point: sideways and how far up or down for a side label, up or down and how far
-// sideways for one above or below.
-const SIDE_REACH = { along: 400, across: 50 };
-const UPRIGHT_REACH = { along: 120, across: 150 };
-// How many characters of a name a face shows (`MapAnswerMark`).
-const FACE_LETTERS = 2;
 
 function samePoint(one: LatLng, other: LatLng): boolean {
   return metresBetween(one, other) <= ONE_POINT;
@@ -84,22 +53,26 @@ const BADGES: Partial<Record<Standing['state'], FaceBadge>> = {
   late: 'accepted',
 };
 
-function faceOf(name: string, dashed: boolean, standing: Standing | undefined): AnswerSymbol {
+type Face = Extract<AnswerSymbol, { type: 'face' }>;
+
+function faceOf(name: string, source: MapScene['people'][number]['source'], standing: Standing | undefined): Face {
   const badge = standing === undefined ? undefined : BADGES[standing.state];
-  return badge === undefined ? { type: 'face', name, dashed } : { type: 'face', name, dashed, badge };
+  const face: Face = {
+    type: 'face',
+    name,
+    dashed: source === 'timetable',
+    ...(source === 'exact' ? { exact: true } : {}),
+  };
+  return badge === undefined ? face : { ...face, badge };
 }
 
-// The words of a face's tag that the face does not show already: a face shows the first two characters of the name,
-// so the tag of a name that short leaves the name out, and is none when the name is all it says.
+// The words of a face's tag that the face does not show already: a face shows the everyday Avatar's letters, so the
+// tag of a name they show whole leaves the name out, and is none when the name is all it says.
 function faceTitle(name: string, tag: string): string | null {
-  if (Array.from(name).length > FACE_LETTERS) {
+  if (initials(name) !== name) {
     return tag;
   }
-  if (tag === name) {
-    return null;
-  }
-  const lead = `${name} · `;
-  return tag.startsWith(lead) ? tag.slice(lead.length) : tag;
+  return tag === name ? null : restOf(name, tag);
 }
 
 // A Friend who was invited is named with how they stand, in place of the tag.
@@ -114,7 +87,7 @@ function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>)
       position: at,
       planId: null,
       group: 'person',
-      symbol: me ? { type: 'me' } : faceOf(name, source === 'timetable', standing),
+      symbol: me ? { type: 'me' } : faceOf(name, source, standing),
       tone: 'person',
       title: me ? said : faceTitle(name, said),
       line: null,
@@ -144,7 +117,8 @@ function placeDraft(
   const base = { position, planId: null, title, line: null, number: null };
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
-    const name = flag === undefined ? title : `${title} · ${flag.text}`;
+    const line = flag === undefined ? null : restOf(title, flag.text);
+    const name = line === null ? title : `${title} · ${line}`;
     const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     return {
       ...base,
@@ -153,7 +127,7 @@ function placeDraft(
       group: role,
       symbol,
       tone: role,
-      line: flag?.text ?? null,
+      line,
       number: pickNumber,
     };
   }
@@ -174,9 +148,8 @@ function placeDraft(
       number,
     };
   }
-  // A stop is not drawn until its look is settled (P01 ticket 11).
-  if (role === 'meeting' || role === 'stop') {
-    return null;
+  if (role === 'stop' || role === 'meeting') {
+    return role === 'stop' ? stopDraft(item) : null;
   }
   const id = role === 'next' ? `answer:next:${place.placeId}` : `answer:dropped:${place.label}`;
   return { ...base, id, name: title, group: role, symbol: { type: 'dot', role, number: null }, tone: role };
@@ -192,7 +165,7 @@ function flagDrafts(scene: MapScene): Draft[] {
     ) {
       return [];
     }
-    const tone = role === 'meeting' ? 'meeting' : 'pick';
+    const tone = FLAG_TONES[role];
     return [
       {
         id: `answer:meeting:${index}`,
@@ -228,57 +201,57 @@ function byGroup(order: Group[]): (one: Draft, other: Draft) => number {
   return (one, other) => order.indexOf(one.group) - order.indexOf(other.group);
 }
 
-// Whether another point lies within a label's reach on that side of its point.
-function blocked(at: LatLng, side: LabelSide, others: LatLng[]): boolean {
-  return others.some((other) => {
-    const { east, north } = offset(at, other);
-    const [along, across, reach] =
-      side === 'right' || side === 'left'
-        ? [side === 'right' ? east : -east, north, SIDE_REACH]
-        : [side === 'above' ? north : -north, east, UPRIGHT_REACH];
-    return along > 0 && along <= reach.along && Math.abs(across) <= reach.across;
-  });
-}
-
 interface Placed {
   draft: Draft;
   symbol: AnswerSymbol | null;
-  side: LabelSide | null;
+  label: AnswerLabel | null;
 }
 
-// One symbol at a point, and each label at the first free side of its list.
-function placeAll(drafts: Draft[]): Placed[] {
-  const points = pointsOf(drafts);
-  return points.flatMap(({ position, drafts: here }, index) => {
-    const others = points.filter((_, other) => other !== index).map((other) => other.position);
-    const drawn = here.filter(({ symbol }) => symbol !== null).toSorted(byGroup(SYMBOL_ORDER))[0];
-    const taken = new Set<LabelSide>();
-    return here.toSorted(byGroup(SIDE_ORDER)).map((draft) => {
-      const list = draft.title === null ? [] : SIDES[draft.group].filter((side) => !taken.has(side));
-      const side = list.find((one) => !blocked(position, one, others)) ?? list[0] ?? null;
-      if (side !== null) {
-        taken.add(side);
-      }
-      return { draft, symbol: draft === drawn ? draft.symbol : null, side };
-    });
-  });
+// A draft at the point of that index, its label without its side: a pick or a candidate whose dot is not drawn
+// carries its number in it. The pick's label is kept, the answer's main mark.
+function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null): Unplaced {
+  const { position, group, tone, title, line, number } = draft;
+  const words = title === null ? null : { tone, title, line, number: symbol === null ? number : null };
+  return { point, position, words, sides: SIDES[group], kept: group === 'pick' };
 }
 
-function thingOf({ draft, symbol, side }: Placed, order: number): AnswerThing {
-  const { id, name, position, planId, tone, title, line, number } = draft;
-  const label: AnswerLabel | null =
-    side === null || title === null ? null : { side, tone, title, line, number: symbol === null ? number : null };
+// One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
+// Plan's own marks take theirs first.
+function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
+  const points = pointsOf(drafts).map(({ position, drafts: here }) => ({
+    position,
+    here,
+    drawn: here.filter(({ symbol }) => symbol !== null).toSorted(byGroup(SYMBOL_ORDER))[0],
+  }));
+  const placed = points
+    .flatMap(({ here, drawn }, point) =>
+      here.map((draft) => ({ draft, point, symbol: draft === drawn ? draft.symbol : null })),
+    )
+    .toSorted((one, other) => byGroup(SIDE_ORDER)(one.draft, other.draft));
+  const marks = placed.map(({ draft, point, symbol }) => unplaced(draft, point, symbol));
+  const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
+  const labels = placeLabels(symbols, marks, view);
+  return placed.map(({ draft, symbol }, at) => ({ draft, symbol, label: labels[at] ?? null }));
+}
+
+function thingOf({ draft, symbol, label }: Placed, order: number): AnswerThing {
+  const { id, name, position, planId } = draft;
   return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
 }
 
-// What the map shows for a scene: its marks, its lines, and the points the camera fits.
-export function drawingOfScene(scene: MapScene, setting: SceneSetting = BARE): AnswerDrawing {
+// What the map shows for a scene: its marks, its lines, and the points the camera fits. At a view, the labels' sides
+// are chosen in its points too.
+export function drawingOfScene(
+  scene: MapScene,
+  view: LabelView | null = null,
+  setting: SceneSetting = BARE,
+): AnswerDrawing {
   const drafts = [
     ...personDrafts(scene, setting.standings),
     ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
   ];
-  const placed = placeAll(drafts).toSorted(
+  const placed = placeAll(drafts, view).toSorted(
     (one, other) =>
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),
   );
@@ -293,28 +266,36 @@ export function drawingOfScene(scene: MapScene, setting: SceneSetting = BARE): A
     lines,
     points: [...things.map(({ position }) => position), ...scene.routes.flatMap(({ from, to }) => [from, to])],
     own: drafts.filter(({ group }) => OWN.has(group)).map(({ position }) => position),
-    pick: drafts.find(({ group }) => group === 'pick')?.position ?? null,
+    pick: destinationOf(drafts),
     userIds: scene.people.map(({ userId }) => userId),
   };
 }
 
 // What the map shows for the Plan at `planIndex` of an answer: its scene, with the Plan's number on the pick and the
 // other Plans as candidates. `standings` holds how each invited Friend stands, by user id, once the Plan was made
-// into a Quest.
+// into a Quest. At a view, the labels' sides are chosen in its points too.
 export function drawingOf(
   answer: AnswerReply,
   planIndex: number,
   standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
+  view: LabelView | null = null,
 ): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
     return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
-  return drawingOfScene(plan.scene, { number: planIndex + 1, plans: answer.plans, standings });
+  return drawingOfScene(plan.scene, view, { number: planIndex + 1, plans: answer.plans, standings });
 }
 
-// The looks of every Plan's drawing, each once.
-export function looksOf(answer: AnswerReply): MarkerLook[] {
-  const looks = answer.plans.flatMap((_, index) => drawingOf(answer, index).things.map(({ look }) => look));
+// The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides
+// chosen in metres, or with those sides.
+export function looksOf(
+  answer: AnswerReply,
+  viewOf: (drawing: AnswerDrawing) => LabelView | null = (): null => null,
+): MarkerLook[] {
+  const looks = answer.plans.flatMap((_, index) => {
+    const view = viewOf(drawingOf(answer, index));
+    return drawingOf(answer, index, NO_STANDINGS, view).things.map(({ look }) => look);
+  });
   return looks.filter((look, index) => looks.findIndex((other) => lookName(other) === lookName(look)) === index);
 }

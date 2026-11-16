@@ -13,6 +13,8 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -21,20 +23,22 @@ import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
-import { mockAssistantReply, mockRecalculation } from './assistant';
+import { mockAssistantReply, mockRecalculation, mockTap } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { LATE_WAY } from './data/late-way';
 import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
-import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
+import { GLOBAL_EVENT_ANNOUNCERS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
+import { mockGlobalEvents } from './global-events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
 import { mockParty } from './party';
 import { mockBetterPlan, mockChangedPlanQuest, mockMadeQuests, mockPlanQuest } from './plan-quest';
+import { insidePrivateZone, mockPrivateZones } from './private-zones';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { STUDY_BUILDINGS } from './data/study-spaces';
@@ -135,13 +139,15 @@ export const mockClient: ApiClient = {
     }),
   // A mock build never registers for push.
   registerPushToken: () => Promise.resolve(),
-  // As the main server: refused while the switch is off, and not kept off campus, here the camera's rectangle.
+  // As the main server: refused while the switch is off, and not kept off campus, here the camera's rectangle, nor
+  // inside a Private Zone.
   uploadPosition: (position) =>
     answer('uploadPosition', () => {
       if (!masterSwitchOn) {
         throw new ApiError(409, 'MASTER_SWITCH_OFF');
       }
-      return { offCampus: !isInside(position, CAMPUS_BOUNDS) };
+      const offCampus = !isInside(position, CAMPUS_BOUNDS);
+      return { offCampus, privateZone: !offCampus && insidePrivateZone(position) };
     }),
   listFriends: () => answer('listFriends', friendships.listFriends, []),
   setFriendLevel: async (userId, level) => {
@@ -216,7 +222,7 @@ export const mockClient: ApiClient = {
   },
   listPlaces: () => answer('listPlaces', () => PLACES, []),
   searchPlaces: (words) => answer('searchPlaces', () => timetable.searchPlaces(words), []),
-  listGlobalEvents: () => answer('listGlobalEvents', () => GLOBAL_EVENTS, []),
+  ...mockGlobalEvents,
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),
   getMyParty: () => answer('getMyParty', () => MY_PARTY, null),
@@ -232,6 +238,7 @@ export const mockClient: ApiClient = {
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
+  answerTap: (tapped) => answer('answerTap', () => mockTap(tapped)),
   makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
   getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
   changePlanQuest: () => answer('changePlanQuest', mockChangedPlanQuest),
@@ -243,4 +250,5 @@ export const mockClient: ApiClient = {
   ...mockEvents,
   ...mockTutorial,
   ...mockInterests,
+  ...mockPrivateZones,
 };

@@ -231,3 +231,22 @@ describe('Outside the shuttle service', () => {
     ]);
   });
 });
+
+// Partitions: asked about the shuttle while it is not running, and while it runs. Expected values: board n21.
+describe('A way asked about the shuttle (board n21)', () => {
+  it('says first that the shuttle is not running, in the words of the basis, then the walk, flags the arrival, and offers no button', () => {
+    const lookup = lookupOf({ travel: timed(11, null), about: 'shuttle' }, at('22:10'));
+
+    expect(linesOf(lookup)).toEqual([
+      '셔틀은 지금 다니지 않아요 (평일 8–21시)',
+      'SK경영관(58동)까지 걸어서 11분이에요',
+    ]);
+    expect(lookup.lines[1]).toContainEqual({ text: '11분', strong: true });
+    expect(lookup.scene.flags).toEqual([{ at: position('SK경영관'), text: '22:21 도착 · 58동', role: 'place' }]);
+    expect(lookup.actions).toEqual([]);
+  });
+
+  it('is the way of a walk while the shuttle runs', () => {
+    expect(lookupOf({ travel: timed(11), about: 'shuttle' })).toEqual(lookupOf({ travel: timed(11) }));
+  });
+});

@@ -4,6 +4,7 @@
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 export const MEALS = ['breakfast', 'lunch', 'dinner'] as const;
@@ -23,9 +24,19 @@ export interface MenuLine {
   price: number | null;
 }
 
+// A meal's hours, read from the one hours line of its cell ("※ 운영시간 : 11:00~14:30"): times of day in Asia/Seoul as
+// "HH:MM", and the line they were read from. The line stays among the lines as a note.
+export interface MealHours {
+  meal: Meal;
+  opensAt: string;
+  closesAt: string;
+  line: string;
+}
+
 export interface RestaurantMenu {
   name: string;
   lines: MenuLine[];
+  hours: MealHours[];
 }
 
 // Every restaurant a page lists for one day. `date` is a calendar day in Asia/Seoul, as YYYY-MM-DD.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { apiClient } from '@/api/client';
@@ -44,6 +45,24 @@ describe('a press of "이대로 초대"', () => {
     expect(held.invitation().sending).toBe(false);
     expect(held.invitation().made).toBe(PLAN_QUEST);
     expect(held.invitation().standings).toEqual(new Map([[MINSU, { state: 'invited', lateMinutes: null }]]));
+  });
+
+  it('sends why there is no position when the app knows, as a recalculation does (P02-13 review)', async () => {
+    heldBack(make);
+    const held = await hold(onScreen(MEAL_ANSWER, MEAL_PLAN_1), { location: null, locationMissing: 'permission' });
+
+    await pressed(held);
+
+    expect(make).toHaveBeenCalledWith(
+      {
+        input: MEAL_ANSWER.input,
+        planId: '302동식당',
+        startAt: '2026-11-17T12:15:00+09:00',
+        location: null,
+        locationMissing: 'permission',
+      },
+      expect.any(String),
+    );
   });
 
   it('sends nothing while the request is on its way or after the Quest was made', async () => {

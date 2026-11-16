@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -11,14 +13,45 @@ import type { CardView, PlaceKind } from '@/features/map/adapter';
 import { KIND_WORDS, PLACE_KINDS } from '@/features/map/place-groups';
 
 interface ChoicesProps {
-  card: CardView;
+  card: Pick<CardView, 'choices'>;
   // A press on one of the choices, with the id of the card it opens.
   onChoose?: (id: string) => void;
 }
 
+type Choice = NonNullable<CardView['choices']>[number];
+
+// One thing at the place, which opens its own card: its title, with ★ for a Favorite Event, and its line.
+function ChoiceRow({ choice, onChoose }: { choice: Choice; onChoose: ChoicesProps['onChoose'] }): ReactElement {
+  const { id, title, detail, favorite = false } = choice;
+  return (
+    <Pressable
+      accessibilityLabel={favorite ? `즐겨찾기 · ${title}` : title}
+      accessibilityRole="button"
+      onPress={() => {
+        onChoose?.(id);
+      }}
+      style={styles.choice}
+    >
+      <View style={styles.words}>
+        <View style={styles.titleLine}>
+          {favorite ? <Icon color={color.snuBlue} filled name="star" size={14} /> : null}
+          <Text numberOfLines={1} style={styles.choiceTitle}>
+            {title}
+          </Text>
+        </View>
+        <Text numberOfLines={1} style={styles.detail}>
+          {detail}
+        </Text>
+      </View>
+      <Icon color={color.inkMuted} name="chevronRight" size={18} />
+    </Pressable>
+  );
+}
+
 // The choices of a card that stands for several things at one place: a row each, with its title and a line of its
 // card such as its time, which opens the thing's own card. Of several kinds, a chip for each kind above the rows
-// shows that kind's things alone, the first kind's at first. A kind that leaves the place gives way to the first.
+// shows that kind's things alone, the first kind's at first. A kind that leaves the place gives way to the first. A
+// Favorite Event's row has ★ before its title, which only its own card changes.
 export function Choices({ card, onChoose }: ChoicesProps): ReactElement | null {
   const [chosen, setChosen] = useState<PlaceKind | null>(null);
   if (card.choices === undefined) {
@@ -45,26 +78,8 @@ export function Choices({ card, onChoose }: ChoicesProps): ReactElement | null {
           ))}
         </View>
       ) : null}
-      {rows.map(({ id, title, detail }) => (
-        <Pressable
-          accessibilityLabel={title}
-          accessibilityRole="button"
-          key={id}
-          onPress={() => {
-            onChoose?.(id);
-          }}
-          style={styles.choice}
-        >
-          <View style={styles.words}>
-            <Text numberOfLines={1} style={styles.choiceTitle}>
-              {title}
-            </Text>
-            <Text numberOfLines={1} style={styles.detail}>
-              {detail}
-            </Text>
-          </View>
-          <Icon color={color.inkMuted} name="chevronRight" size={18} />
-        </Pressable>
+      {rows.map((choice) => (
+        <ChoiceRow choice={choice} key={choice.id} onChoose={onChoose} />
       ))}
     </View>
   );
@@ -88,7 +103,8 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], paddingVertical: space[1] },
   choice: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: ROW, paddingVertical: space[1] },
   words: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
-  choiceTitle: { ...text.body, fontFamily: font.semiBold, color: color.ink },
+  titleLine: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+  choiceTitle: { ...text.body, flexShrink: 1, fontFamily: font.semiBold, color: color.ink },
   detail: { ...text.body, flexShrink: 1, color: color.inkMuted },
   group: {
     flexDirection: 'row',

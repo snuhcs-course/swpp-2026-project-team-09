@@ -192,14 +192,23 @@ function statusOf(link: Link): OpenedInviteLink['status'] {
 
 const NEWEST_FIRST = (one: Request, other: Request): number => other.sentAt.localeCompare(one.sentAt);
 
+// A Friend's position as GET /positions answers it: none for a Friend the User does not see or sees through the
+// Timetable only, else with the level the two see each other at, which the mock writes as the main server sends it.
+function seenPosition(position: Position): Position[] {
+  if (!FRIENDS.some(({ id }) => id === position.userId)) {
+    return [position];
+  }
+  const friend = state.friends.find(({ id }) => id === position.userId);
+  if (friend === undefined || !friend.visible || friend.seen === 'timetable') {
+    return [];
+  }
+  return [{ ...position, level: friend.seen }];
+}
+
 export const mockFriendships = {
   listFriends: (): Friend[] => state.friends,
   // The positions of the Friends the User sees, and of the member of the User's Party who is no Friend.
-  listPositions: (): Position[] =>
-    POSITIONS.filter(
-      ({ userId }) =>
-        !FRIENDS.some(({ id }) => id === userId) || state.friends.some(({ id, visible }) => id === userId && visible),
-    ),
+  listPositions: (): Position[] => POSITIONS.flatMap((position) => seenPosition(position)),
   setFriendLevel: (userId: string, level: FriendLevel): void => {
     const friend = friendOrRefuse(userId);
     state.friends = state.friends.map((other) => (other === friend ? atLevel(friend, level) : other));

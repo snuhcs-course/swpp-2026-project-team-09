@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -19,19 +21,16 @@ import type { QuestCardActions } from './chat-quest-cards';
 
 // What the cards of the chat's answers do, for the chat's sheet and the answer frame alike.
 
-// What the event cards of the answers do. Their 파티 찾기/모집 and AI 매칭 open the 행사 tab's own sheets over the chat,
-// which stays open under them, and what those sheets open next lies over the main screen as it does over the tab.
+// What the event cards of the answers do. Their 파티 찾기/모집 opens the 행사 tab's own sheet over the chat,
+// which stays open under it, and what that sheet opens next lies over the main screen as it does over the tab.
 function useEventCards(onOpenEvent: (globalEventId: string) => void): {
   actions: EventCardActions;
   sheets: ReactElement;
 } {
   const sheets = useEventSheets();
   const quests = useQuery(questsQuery).data ?? [];
-  const { setRecruitEvent, setMatchEvent } = sheets;
-  const actions = useMemo(
-    () => ({ open: onOpenEvent, recruit: setRecruitEvent, match: setMatchEvent }),
-    [onOpenEvent, setMatchEvent, setRecruitEvent],
-  );
+  const { setRecruitEvent } = sheets;
+  const actions = useMemo(() => ({ open: onOpenEvent, recruit: setRecruitEvent }), [onOpenEvent, setRecruitEvent]);
   return { actions, sheets: <EventSheets quests={quests} sheets={sheets} /> };
 }
 
@@ -69,16 +68,37 @@ export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: Car
   const { openEvent, openQuestPost, openPartyForm, proposals } = leaving;
   const eventCards = useEventCards(openEvent);
   const questCards = useQuestCards(openQuestPost);
-  const { addOwn, outcomes, finish, unfinish } = chat;
+  const { addOwn, outcomes, finish, unfinish, rooms, showRoom, bubbles } = chat;
   const actions: CardActions = useMemo(
     () => ({
       events: eventCards.actions,
       quests: questCards.actions,
       proposals,
       openPartyForm,
-      library: { addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish, unfinish },
+      library: {
+        addOwn,
+        outcomeOf: (card: string) => outcomes.get(card) ?? null,
+        finish,
+        unfinish,
+        roomOf: (card: string) => rooms.get(card) ?? null,
+        showRoom,
+        askedBefore: (bubbleId: number) =>
+          bubbles.findLast(({ id, role }) => role === 'user' && id < bubbleId)?.text ?? '',
+      },
     }),
-    [eventCards.actions, questCards.actions, proposals, openPartyForm, addOwn, outcomes, finish, unfinish],
+    [
+      eventCards.actions,
+      questCards.actions,
+      proposals,
+      openPartyForm,
+      addOwn,
+      outcomes,
+      finish,
+      unfinish,
+      rooms,
+      showRoom,
+      bubbles,
+    ],
   );
   return {
     actions,

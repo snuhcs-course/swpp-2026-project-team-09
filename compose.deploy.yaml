@@ -5,6 +5,7 @@
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Dev Server's stack: compose.yaml with this file over it, and the settings file as Compose's --env-file
@@ -49,7 +50,8 @@ services:
       MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
       # May be absent from a settings file written before the Assistant, which is then off.
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-}
+      # The AI's other keys, by name; absent or empty, the main server reads it as {}.
+      LLM_KEYS: ${LLM_KEYS:-}
       AUTOMATIC_PUBLICATION: ${AUTOMATIC_PUBLICATION:-on}
       AUTOMATIC_JUDGEMENT: ${AUTOMATIC_JUDGEMENT:-off}
       SAME_EVENT_TITLE_RULE: ${SAME_EVENT_TITLE_RULE:-off}

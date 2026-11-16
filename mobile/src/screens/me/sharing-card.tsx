@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -79,11 +80,12 @@ function Whole(): ReactElement {
 }
 
 // The 위치 공유 card: the Master Switch, with the Friends and the 파티 members the User allows under it while it is on
-// (while it is off nobody is shared with, so no number shows), the row for background sharing, the line that says the User is not shared off campus, and the way to the 위치 공유 screen.
+// (while it is off nobody is shared with, so no number shows), the row for background sharing, the line that says the
+// User is not shared off campus or inside a Private Zone, and the way to the 위치 공유 screen.
 export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): ReactElement {
   const friends = useQuery({ ...friendsQuery, select: friendsLine }).data;
   const party = useQuery({ ...myPartyQuery, select: partyLine }).data ?? null;
-  const { offCampus } = useSending();
+  const { offCampus, privateZone } = useSending();
   return (
     <View onLayout={onLayout} style={[cardStyles.card, styles.card]}>
       <Text accessibilityRole="header" style={styles.title}>
@@ -98,6 +100,9 @@ export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): 
       {sharing.on && party !== null ? <Text style={styles.party}>{party}</Text> : null}
       <BackgroundRow masterOn={sharing.on} />
       {sharing.on && offCampus ? <Text style={styles.offCampus}>캠퍼스 밖이라 위치가 공유되지 않아요</Text> : null}
+      {sharing.on && privateZone ? (
+        <Text style={styles.privateZone}>비공개 구역 안 · 친구에게는 시간표만 보여요</Text>
+      ) : null}
       <Whole />
       <Outline on={outlined} />
     </View>
@@ -109,6 +114,7 @@ const styles = StyleSheet.create({
   title: { ...text.title, marginTop: space[2], marginBottom: space[1], color: color.ink },
   party: { ...text.caption, marginBottom: space[2], color: color.inkMuted },
   offCampus: { ...text.caption, marginBottom: space[2], color: color.warning },
+  privateZone: { ...text.caption, marginBottom: space[2], color: color.private },
   whole: {
     flexDirection: 'row',
     alignItems: 'center',

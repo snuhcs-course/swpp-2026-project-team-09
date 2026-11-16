@@ -11,6 +11,8 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -122,6 +124,10 @@ export interface Friend {
   // them became a Quest. Each is asked once.
   askedOff: boolean;
   askedPlan: boolean;
+  // The Friend's own Friend ID, "7KX2M9QD", and when the two became Friends, in ISO 8601 with Korea's offset. Left
+  // out until the main server sends them.
+  friendId?: string;
+  friendsSince?: string;
 }
 
 // The two moments the app asks a User about a Friend at, which the main server keeps.
@@ -171,9 +177,11 @@ export interface PositionUpload {
   measuredAt: string;
 }
 
-// The answer to an upload: a position off the Campus Boundary was not kept, and the User is not shared.
+// The answer to an upload: a position off the Campus Boundary, or inside one of the User's Private Zones, was not
+// kept, and the User is not shared. A main server older than the zones leaves `privateZone` out: false.
 export interface PositionKept {
   offCampus: boolean;
+  privateZone?: boolean;
 }
 
 export type Presence = 'free' | 'class' | 'moving' | 'off';
@@ -257,7 +265,7 @@ export interface QuestMember {
 
 // --- What is on the map ---
 
-// GET /global-events: the published Global Events that have not ended, by their start.
+// A published Global Event, as the Assistant's cards carry it, and the list without what is the User's own.
 export interface GlobalEvent {
   id: string;
   title: string;
@@ -269,6 +277,14 @@ export interface GlobalEvent {
   latitude: number;
   longitude: number;
   sourceUrl: string | null;
+}
+
+// GET /global-events: the published Global Events that have not ended, by their start, with what is the User's own.
+export interface ListedGlobalEvent extends GlobalEvent {
+  // When it was published; null for one published before the main server recorded it.
+  publishedAt: string | null;
+  // The User starred it: a Favorite Event, which stays on the map until it ends.
+  favorite: boolean;
 }
 
 export type JoinPolicy = 'open' | 'approval' | 'closed';
