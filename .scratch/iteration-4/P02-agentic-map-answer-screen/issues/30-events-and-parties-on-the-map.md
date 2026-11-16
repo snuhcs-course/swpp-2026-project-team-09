@@ -74,3 +74,14 @@ The main server already answers events, recruiting parties, and a new recruiting
 14. **What was dropped is said in the card.** The main server's scene of events and parties draws nothing it dropped, so the card lists each dropped reason in faint ink above the buttons ("17:00 파티는 17:02에야 도착해요"). The design's browsing into a faded party with the arrows is not built.
 15. **The mock's POST /plans** still answers the meal's stored Quest for any Plan, a new party's included: no real reply to a new party is stored. The tests post with a reply built by hand.
 16. The push permission is asked at "이대로 초대" and "이대로 모집" (board t17), as at the booking cards: once `POST /plans` made the Quest, by `useAskForPush` in `use-plan-invitation.ts`'s `invite`.
+
+### Emulator check (2026-11-16)
+
+Not done. At 14:34 the shared emulator showed Android's own dialog "Process system isn't responding" in front, while the Mac's load average stood at 20 to 50. The dialog is the system's, not SNU Now's, so nothing was pressed on it, and the check stopped there: the bundle of this branch had loaded (2,836 modules), and the app's bundler address was set back to 8081. The way in needs no Korean typing: on the mock, press 문화관 (73동), then "행사 보기"; "같이 갈 파티" and "새로 모집" follow from the answer. The screens are added to the pull request once the emulator is usable.
+
+### Agent usage (2026-11-16)
+
+One implementing subagent (Opus 5.5), resumed for the merge of `4.0/Main` and the push permission's ask. This session's ticket, review, and pull request are counted under P03 ticket 07.
+
+- Agent time: about 150 minutes, an estimate from the transcript's timestamps; it includes long waits for test runs at a load average of 30 to 50 and for the Mac's shared check slots.
+- Tokens: output 194,619; input 89,653,619, of which 89,174,843 were cache reads, 478,252 cache writes, and 524 uncached. Without cache reads: 673,395.
