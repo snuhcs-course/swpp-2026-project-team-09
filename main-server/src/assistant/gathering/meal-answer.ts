@@ -158,12 +158,12 @@ function firstBy(parts: readonly PersonPart[], at: (part: PersonPart) => number)
 // When a person reaches the place on their own: ready, plus their whole walk; ready alone when their origin is unknown.
 const ownArrival = ({ readyAt, walkMinutes }: PersonPart): number => readyAt.getTime() + (walkMinutes ?? 0) * 60_000;
 
-// Who keeps the plan from the window the User fixed, or the meal's own window when it, not a person, does: the start
-// first, then the end.
-function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string | null {
+// Who keeps the plan from the window the User fixed, or the window it was fitted in when that, not a person, does: the
+// meal's own, or the Restaurant's hours. The start first, then the end.
+function missedLine({ key, start, end, parts, window: own }: GatheringFit, naming: Naming): string | null {
   const { input } = naming.args;
   const { date, window } = input;
-  const held = windowOf(input);
+  const held = own ?? windowOf(input);
   const meal = mealWord(naming);
   if (window.from !== null) {
     if (start > held.start) {
@@ -178,7 +178,9 @@ function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string
         : `${withSubject(name)} ${clock}에 도착해요`;
     }
     if (held.start > onDay(date, window.from)) {
-      return `${withTopic(meal)} ${clockOf(held.start)}부터예요`;
+      return own === undefined
+        ? `${withTopic(meal)} ${clockOf(held.start)}부터예요`
+        : `${withTopic(key)} ${clockOf(held.start)}에 열어요`;
     }
   }
   if (window.until !== null) {
@@ -188,7 +190,9 @@ function missedLine({ start, end, parts }: GatheringFit, naming: Naming): string
       return me ? `${clockOf(end)}엔 나서야 해요` : `${withTopic(name)} ${clockOf(end)}에 나서야 해요`;
     }
     if (held.end < onDay(date, window.until)) {
-      return `${withTopic(meal)} ${clockOf(held.end)}까지예요`;
+      return own === undefined
+        ? `${withTopic(meal)} ${clockOf(held.end)}까지예요`
+        : `${withTopic(key)} ${clockOf(held.end)}에 닫아요`;
     }
   }
   return null;

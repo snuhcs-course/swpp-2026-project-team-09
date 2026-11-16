@@ -4,70 +4,20 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type AnswerReply, type MealInput, planInputSchema } from '../src/assistant/dto/answer.dto.js';
+import { type AnswerReply, planInputSchema } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
 import { type GatheringPlace } from '../src/assistant/gathering/gathering.js';
-import { type AnswerPerson, mealAnswer } from '../src/assistant/gathering/meal-answer.js';
-import { conditionsOf } from '../src/assistant/gathering/plan-conditions.js';
-import { gatherMeal, withHours } from '../src/assistant/gathering/unmet-plans.js';
-import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
+import { type AnswerPerson } from '../src/assistant/gathering/meal-answer.js';
 import { type Hours } from '../src/menus/restaurant-hours.js';
-import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
 import { HAEUN, JIEUN, ME, me, MINSU, person, plain, strong, time } from './meal-answers.js';
-import { at, classAt, DATE, gatheringPerson, id, placeOf, readWorld, restaurants } from './worked-example.js';
+import { answerFor, NOW_WINDOW as NOW, readUnmetWorld } from './unmet-answers.js';
+import { classAt, DATE, id, restaurants } from './worked-example.js';
 
 // Conditions that cannot be met (P02-14, boards n10, n11, n11b, n12, n23), on the worked example's Places and the
 // seed's walking table, Tuesday 2026-11-17: a meal "now" that nobody can make, the conditions to ease, a plan moved
 // past a Class too soon to eat before, a Restaurant that closes first, and a Friend whose position is unknown.
 
-let travel: SeedTravel;
-
-beforeAll(async () => {
-  await readWorld();
-  travel = await readSeedTravel(SEED_DIRECTORY);
-});
-
-interface Asking {
-  people: [AnswerPerson, ...AnswerPerson[]];
-  clock: string;
-  meal?: MealInput['meal'];
-  window?: MealInput['window'];
-  candidates?: GatheringPlace[];
-  // Each candidate's hours, as RestaurantHours reads them; none read when left out.
-  hours?: (Hours | null)[];
-}
-
-// The answer as MealPlanService makes it: the hours, the gathering, and what could not be met.
-function answerFor({
-  people,
-  clock,
-  meal = 'lunch',
-  window: bounds,
-  candidates = restaurants(),
-  hours,
-}: Asking): AnswerReply {
-  const now = at(clock);
-  const input: MealInput = {
-    kind: 'meal',
-    date: DATE,
-    meal,
-    people: people.map(({ userId }) => ({ userId, constraints: [] })),
-    window: bounds ?? { from: null, until: null },
-    placeId: null,
-  };
-  const { places, window } = withHours(input, candidates, hours ?? candidates.map(() => null));
-  const [first, ...rest] = people.map(({ userId, items }) => ({
-    ...gatheringPerson(userId, items, null, now),
-    ...conditionsOf([], DATE),
-  }));
-  if (first === undefined) {
-    throw new Error('No asker');
-  }
-  const { gathering, unmet } = gatherMeal([first, ...rest], places, { input, now, window }, travel);
-  return mealAnswer({ input, now, people, gathering, aloneMinutes: null, menus: 'open', placeOf, unmet });
-}
-
-const NOW: MealInput['window'] = { from: null, until: null, now: true };
+beforeAll(() => readUnmetWorld());
 
 // Board n11's day: the asker in 301동 until 11:50 and in 24동 from 14:00, 민수 in 302동 until 12:15, and 지은 free
 // from 11:50 until her Class in 두산인문관 from 12:00 to 12:50.

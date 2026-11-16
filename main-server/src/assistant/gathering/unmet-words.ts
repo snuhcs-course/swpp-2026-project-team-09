@@ -4,13 +4,14 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type AnswerLine, type AnswerReply, type ConditionChip } from '../dto/answer.dto.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
-import { type AnswerPerson, type Naming, withSubject, withTopic } from './answer-words.js';
+import { type AnswerPerson, mealWord, type Naming, withSubject, withTopic } from './answer-words.js';
 import { type GatheringFit, minutesBetween } from './gathering.js';
 import { missingLines, NEAREST_BASIS } from './missing-inputs.js';
-import { type Relax } from './unmet-plans.js';
+import { type Relax, startsByOf, type Unmet } from './unmet-plans.js';
 
 // The words of a meal whose conditions cannot all be met (P02-14): a meal 지금 nobody can make (board n11) and the one
 // eased from it (n11b), a plan moved past a Class too soon to eat before (n10), a nearer Restaurant that closes first
@@ -37,12 +38,17 @@ const byStart = (a: DayItem, b: DayItem): number => a.start.getTime() - b.start.
 const eased = ({ input }: Naming['args']): string | null =>
   input.window.now === true && input.window.from !== null ? input.window.from : null;
 
-// What keeps a person from a meal now: the item they are in until its end, else the next item and its start, a
-// Friend's only when it is a Class.
-function busyLine({ me, name, items }: AnswerPerson, now: Date): AnswerLine | null {
+// The meal's first serving as a line ("저녁은 17:00부터예요").
+const servedLine = (naming: Naming, opensAt: Date): string =>
+  `${withTopic(mealWord(naming))} ${clockOf(opensAt)}부터예요`;
+
+// What keeps a person from a meal 지금: the item they are in until its end, else their next item when it starts before
+// a meal begun by `startsBy` could end; a Friend's only when it is a Class. Null when no item stands in the way.
+function busyLine({ me, name, items }: AnswerPerson, now: Date, startsBy: Date): AnswerLine | null {
   const current = items.find(({ start, end }) => start <= now && now < end);
   const next = items.filter(({ start }) => start > now).toSorted(byStart)[0];
-  const item = current ?? next;
+  const cuts = next !== undefined && next.start.getTime() < startsBy.getTime() + SHORTEST_MEAL_SECONDS * 1000;
+  const item = current ?? (cuts ? next : undefined);
   if (item === undefined || (!me && !item.isClass)) {
     return null;
   }
@@ -68,19 +74,28 @@ function offerOf(relax: Relax, naming: Naming): RelaxOffer {
   return { ...relax, label: `${relax.time} 이후` };
 }
 
+// Why nothing fits 지금: the meal is not served by then, else what keeps the one in the way from it, if anything does.
+function whyNotNow(naming: Naming, { opensAt, blocker }: Unmet, startsBy: Date): AnswerLine | null {
+  if (opensAt > startsBy) {
+    return [plain(servedLine(naming, opensAt))];
+  }
+  return blocker === null ? null : busyLine(naming.personOf(blocker), naming.args.now, startsBy);
+}
+
 // Board n11: nothing fits 지금. Null for any other answer without a plan.
 export function notNowPlan(naming: Naming): AnswerReply['noPlan'] {
-  const { unmet, people, menus, now } = naming.args;
-  if (unmet?.relax === null || unmet?.relax === undefined || menus !== 'open') {
+  const { unmet, people, menus, now, input } = naming.args;
+  const startsBy = startsByOf(input, now);
+  if (unmet?.relax === null || unmet?.relax === undefined || startsBy === undefined || menus !== 'open') {
     return null;
   }
   const first = [
     plain(people.length > 1 ? `지금은 ${together(people.length)} 먹을 때가 없어요` : '지금은 먹을 때가 없어요'),
   ];
-  const busy = unmet.blocker === null ? null : busyLine(naming.personOf(unmet.blocker), now);
+  const why = whyNotNow(naming, unmet, startsBy);
   return {
     reason: 'no-shared-time',
-    lines: busy === null ? [first] : [first, busy],
+    lines: why === null ? [first] : [first, why],
     relax: unmet.relax.map((relax) => offerOf(relax, naming)),
   };
 }
@@ -193,14 +208,19 @@ function unknownBasis({ name, items, level }: AnswerPerson, now: Date): string[]
   return [seen, `${name}의 길은 ${name}의 초대장에 떠요. 나에게는 수락과 거절만 와요`];
 }
 
-// Board n11b's first line: whose item, ending last before the eased start, keeps them all from eating sooner.
-function easedBasis({ args }: Naming, from: string): string | null {
-  const { people, now } = args;
+// Board n11b's first line: whose item, ending last before the eased start and after the meal is first served, kept
+// them all from eating sooner. When no item did, and the meal was not served yet, when it is.
+function easedBasis(naming: Naming, from: string): string | null {
+  const { people, now, unmet } = naming.args;
+  const opensAt = unmet?.opensAt ?? now;
   const before = people
     .flatMap((person) => person.items.map((item) => ({ person, item })))
-    .filter(({ item }) => item.end > now && clockOf(item.end) <= from)
+    .filter(({ item }) => item.end > now && item.end > opensAt && clockOf(item.end) <= from)
     .toSorted((a, b) => b.item.end.getTime() - a.item.end.getTime())[0];
-  if (people.length < 2 || before === undefined || (!before.person.me && !before.item.isClass)) {
+  if (before === undefined) {
+    return opensAt > now ? servedLine(naming, opensAt) : null;
+  }
+  if (people.length < 2 || (!before.person.me && !before.item.isClass)) {
     return null;
   }
   const { person, item } = before;

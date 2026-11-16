@@ -94,8 +94,8 @@ export class MealPlanService {
     }));
     const candidates = input.placeId === null ? open : open.filter(({ placeId }) => placeId === input.placeId);
     const hours = await Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date)));
-    const { places, window } = withHours(input, candidates, hours);
-    const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, window }, this.travel);
+    const { places, ...served } = withHours(input, candidates, hours);
+    const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, ...served }, this.travel);
     return mealAnswer({
       input,
       now,

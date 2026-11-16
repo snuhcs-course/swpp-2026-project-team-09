@@ -73,6 +73,8 @@ export interface GatheringFit {
   meeting: { placeId: string; at: Date; personIds: string[]; onwardMinutes: number } | null;
   // In the order of the people.
   parts: PersonPart[];
+  // The Restaurant's own window it was fitted in, when its hours gave one.
+  window?: Interval;
 }
 
 export interface GatheringDrop {
@@ -86,6 +88,8 @@ export interface GatheringDrop {
   parts: PersonPart[];
   // The Restaurant closes before a meal fits: when, and the asker's walk there.
   closing?: { at: Date; walkMinutes: number | null };
+  // The Restaurant's own window, when its hours gave one.
+  window?: Interval;
 }
 
 export interface Gathering {
@@ -160,8 +164,8 @@ function byLongestTogether(a: GatheringFit, b: GatheringFit): number {
 const fitsTogether = ({ togetherMinutes }: GatheringFit): boolean => togetherMinutes >= SHORTEST_MEAL_SECONDS / 60;
 
 function dropOf(fit: GatheringFit, place: GatheringPlace, gatheringWindow: Interval): GatheringDrop {
-  const { key, placeId, togetherMinutes, end, parts } = fit;
-  const window = place.window ?? gatheringWindow;
+  const { key, placeId, togetherMinutes, end, parts, window: own } = fit;
+  const window = own ?? gatheringWindow;
   const stays = parts.map(({ personId, canArriveAt, readyAt, leaveBy }) => ({
     personId,
     minutes: Math.max(
@@ -170,7 +174,14 @@ function dropOf(fit: GatheringFit, place: GatheringPlace, gatheringWindow: Inter
     ),
   }));
   const shortest = stays.reduce((least, stay) => (stay.minutes < least.minutes ? stay : least));
-  const drop = { key, placeId, togetherMinutes: Math.max(0, togetherMinutes), shortest, parts };
+  const drop = {
+    key,
+    placeId,
+    togetherMinutes: Math.max(0, togetherMinutes),
+    shortest,
+    parts,
+    ...(own === undefined ? {} : { window: own }),
+  };
   const { closesAt } = place;
   return closesAt === undefined || end.getTime() !== closesAt.getTime()
     ? drop
@@ -313,5 +324,6 @@ function fitAt(
   const parts = arriving.map((part) => settingOut(part, start));
   const meeting =
     earliestMeeting === null ? null : { ...earliestMeeting, at: plusMinutes(start, -earliestMeeting.onwardMinutes) };
-  return { ...place, start, end, togetherMinutes: minutesBetween(start, end), meeting, parts };
+  const fit = { ...place, start, end, togetherMinutes: minutesBetween(start, end), meeting, parts };
+  return own === undefined ? fit : { ...fit, window: own };
 }

@@ -9,7 +9,7 @@ import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type TravelProvider } from '../../travel/travel.js';
 import { type MealInput } from '../dto/answer.dto.js';
 import { clockOf, type DayItem, onDay } from '../free-time/free-time.js';
-import { earliest, type Interval, latest } from '../free-time/meal-fit.js';
+import { earliest, type Interval, latest, mealWindow } from '../free-time/meal-fit.js';
 import { gather, type Gathering, type GatheringPerson, type GatheringPlace, MINUTE_MS } from './gathering.js';
 import { windowOf } from './plan-conditions.js';
 
@@ -35,9 +35,11 @@ export interface Unmet {
   blocker: string | null;
   // The asker alone, free now only until this item, too soon to eat before it.
   tooSoon: DayItem | null;
+  // When the first Restaurant serves the meal, whatever the User fixed.
+  opensAt: Date;
 }
 
-const NOTHING_UNMET: Unmet = { relax: null, blocker: null, tooSoon: null };
+const NOTHING_UNMET: Omit<Unmet, 'opensAt'> = { relax: null, blocker: null, tooSoon: null };
 
 const plusMinutes = (at: Date, minutes: number): Date => new Date(at.getTime() + minutes * MINUTE_MS);
 
@@ -47,17 +49,18 @@ export function startsByOf({ window }: MealInput, now: Date): Date | undefined {
 }
 
 // Each Restaurant's window: its own hours narrowed by what the User fixed, else the meal's. The gathering's window
-// holds them all. Without hours, the places come back as they are.
+// holds them all. Without hours, the places come back as they are. `opensAt` is the earliest any of them opens.
 export function withHours(
   input: MealInput,
   places: readonly GatheringPlace[],
   hours: readonly (Hours | null)[],
-): { places: GatheringPlace[]; window: Interval } {
+): { places: GatheringPlace[]; window: Interval; opensAt: Date } {
   const meal = windowOf(input);
-  if (hours.every((each) => each === null)) {
-    return { places: [...places], window: meal };
-  }
   const { date, window: fixed } = input;
+  const served = mealWindow(date, input.meal).start;
+  if (hours.every((each) => each === null)) {
+    return { places: [...places], window: meal, opensAt: served };
+  }
   const withWindows = places.map((place, index): GatheringPlace => {
     const own = hours[index] ?? null;
     if (own === null) {
@@ -70,9 +73,11 @@ export function withHours(
     return { ...place, window, closesAt };
   });
   const windows = withWindows.map(({ window }) => window ?? meal);
+  const openings = hours.map((own) => (own === null ? served : onDay(date, own.opensAt)));
   return {
     places: withWindows,
     window: { start: earliest(windows.map(({ start }) => start)), end: latest(windows.map(({ end }) => end)) },
+    opensAt: earliest(openings),
   };
 }
 
@@ -113,8 +118,9 @@ interface Asked {
   travel: Walking;
 }
 
-// Each Friend whose leaving out lets the rest eat by `startsBy`, then when everyone is free next.
-function notNow(people: People, { places, when, travel }: Asked, startsBy: Date): Unmet {
+// Each Friend whose leaving out lets the rest eat by `startsBy`, then when everyone is free next. Nobody's day keeps
+// the meal from now when no Restaurant serves it by then.
+function notNow(people: People, { places, when, travel }: Asked, startsBy: Date): Omit<Unmet, 'opensAt'> {
   const [asker, ...friends] = people;
   const fitsBy = (some: People): boolean => gather(some, places, when, travel, { startsBy }).fits.length > 0;
   const left = friends.filter(({ id }) => fitsBy([asker, ...friends.filter((friend) => friend.id !== id)]));
@@ -123,7 +129,8 @@ function notNow(people: People, { places, when, travel }: Asked, startsBy: Date)
     ...left.map(({ id }) => ({ kind: 'without' as const, userId: id })),
     ...(from === null ? [] : [{ kind: 'from' as const, time: from }]),
   ];
-  const blocker = left[0]?.id ?? (fitsBy([asker]) ? null : asker.id);
+  const served = when.window.start <= startsBy;
+  const blocker = served ? (left[0]?.id ?? (fitsBy([asker]) ? null : asker.id)) : null;
   return { relax, blocker, tooSoon: null };
 }
 
@@ -140,7 +147,7 @@ interface Gathered {
 export function gatherMeal(
   people: People,
   places: readonly GatheringPlace[],
-  { input, now, window }: { input: MealInput; now: Date; window: Interval },
+  { input, now, window, opensAt }: { input: MealInput; now: Date; window: Interval; opensAt: Date },
   travel: Walking,
 ): Gathered {
   const when = { window, now };
@@ -151,10 +158,10 @@ export function gatherMeal(
     people.length === 1 ? null : (gather([asker], places, when, travel, { startsBy }).fits[0]?.togetherMinutes ?? null);
   if (startsBy !== undefined) {
     const unmet = gathering.fits.length > 0 ? NOTHING_UNMET : notNow(people, { places, when, travel }, startsBy);
-    return { gathering, unmet, aloneMinutes };
+    return { gathering, unmet: { ...unmet, opensAt }, aloneMinutes };
   }
   const { from, until, now: soon = false } = input.window;
   const alone = people.length === 1 && !soon && from === null && until === null;
   const tooSoon = alone ? tooSoonOf(asker, places, now, travel) : null;
-  return { gathering, unmet: { ...NOTHING_UNMET, tooSoon }, aloneMinutes };
+  return { gathering, unmet: { ...NOTHING_UNMET, tooSoon, opensAt }, aloneMinutes };
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -69,8 +70,8 @@ function topicOf(part: PersonPart, naming: GatheringNaming): string {
 }
 
 // What ends a person's stay: their next item, the leave-by the User fixed for them, the end the User fixed, or the
-// gathering's own hours.
-function leaveLine(part: PersonPart, naming: GatheringNaming, window: Interval, word: string): string {
+// hours of the gathering or of the Restaurant, as `ownEnd` says them.
+function leaveLine(part: PersonPart, naming: GatheringNaming, window: Interval, ownEnd: string): string {
   const { leaveBy, next } = part;
   if (leaveBy !== null && leaveBy <= window.end) {
     const ownLeaveBy = next === null ? null : next.start.getTime() - (next.walkMinutes ?? 0) * MINUTE_MS;
@@ -82,7 +83,7 @@ function leaveLine(part: PersonPart, naming: GatheringNaming, window: Interval, 
   }
   const { date, window: fixed } = naming.args.input;
   const fixedEnd = fixed.until !== null && onDay(date, fixed.until).getTime() === window.end.getTime();
-  return fixedEnd ? `${clockOf(window.end)}까지로 정했어요` : `${withTopic(word)} ${clockOf(window.end)}까지예요`;
+  return fixedEnd ? `${clockOf(window.end)}까지로 정했어요` : ownEnd;
 }
 
 // The one who cannot stay long enough even alone: from when, for how long, and what makes them leave. The asker is
@@ -107,7 +108,12 @@ function shortestLines(
     // An arrival is timed only when it is known and is why there is no time.
     first = arrives ? `${who}${from}에야 도착해요` : `${who}시간이 안 돼요`;
   }
-  return [plain(first), plain(leaveLine(part, naming, window, words.word))];
+  const close = clockOf(window.end);
+  const ownEnd =
+    drop.window === undefined
+      ? `${withTopic(words.word)} ${close}까지예요`
+      : `${withTopic(drop.key)} ${close}에 닫아요`;
+  return [plain(first), plain(leaveLine(part, naming, window, ownEnd))];
 }
 
 // Everyone could stay long enough alone but not together: one arrives after the other must leave, or nearly.
@@ -124,16 +130,17 @@ function togetherLines(drop: GatheringDrop, naming: GatheringNaming, window: Int
   ];
 }
 
-// The lines of the Place the User fixed when it does not fit, over the window it was gathered in; null when the input
-// fixed no Place or that Place was not dropped.
+// The lines of the Place the User fixed when it does not fit, over the window it was fitted in: its own hours, else
+// the gathering's `window`. Null when the input fixed no Place or that Place was not dropped.
 export function unfitLines(naming: GatheringNaming, window: Interval, words: StayWords): AnswerLine[] | null {
   const { input, gathering } = naming.args;
   const drop = gathering.dropped.find(({ placeId }) => placeId === input.placeId);
   if (drop === undefined) {
     return null;
   }
+  const held = drop.window ?? window;
   const shortest = drop.parts.find(({ personId }) => personId === drop.shortest.personId);
   return shortest !== undefined && drop.shortest.minutes < SHORTEST_MINUTES
-    ? shortestLines(drop, shortest, naming, window, words)
-    : togetherLines(drop, naming, window);
+    ? shortestLines(drop, shortest, naming, held, words)
+    : togetherLines(drop, naming, held);
 }
