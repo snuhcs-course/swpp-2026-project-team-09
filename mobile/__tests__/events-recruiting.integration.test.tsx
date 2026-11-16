@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -217,10 +218,11 @@ describe('+ 파티 모집', () => {
 
 describe("the map's event card", () => {
   it('counts the Quests gathering for the event, and opens 파티 만들기 with it', async () => {
-    answerEvents(server);
+    // A Favorite Event, which the everyday map keeps.
+    answerEvents(server, { events: [{ ...CAREER, favorite: true }] });
     const user = await openMain();
     await zoomIn(user, 2);
-    expect(lookOf(EVENT)).toBe('official:pin:2');
+    expect(lookOf(EVENT)).toBe('official:pin:2:starred');
 
     await press(user, EVENT);
     expect(screen.getByText('같이 갈 파티 2개 모집 중')).toBeVisible();

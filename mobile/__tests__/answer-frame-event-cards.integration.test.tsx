@@ -56,9 +56,10 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Sends a question from the map's bar and lets the Assistant answer with the cards of MAJOR, then CAREER.
-async function answered(): Promise<User> {
-  const cards = [MAJOR, CAREER].map((globalEvent) => ({ kind: 'globalEvent', globalEvent }));
+// Sends a question from the map's bar and lets the Assistant answer with the cards of `events`, MAJOR then CAREER
+// unless given.
+async function answered(events: readonly object[] = [MAJOR, CAREER]): Promise<User> {
+  const cards = events.map((globalEvent) => ({ kind: 'globalEvent', globalEvent }));
   server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards, proposal: null } });
   const user = await openMain();
   await user.type(screen.getByLabelText(AI_INPUT), '이번 주에 설명회 있어?');
@@ -112,6 +113,16 @@ describe('the event cards of an answer', () => {
         ],
       }),
     );
+  });
+});
+
+describe("an event card's ☆", () => {
+  it("is on an event of the User's list, and not on one the list no longer holds, such as an ended one", async () => {
+    const ended = { ...CAREER, id: 'e-ended', title: '지난주 설명회' };
+    await answered([MAJOR, ended]);
+
+    expect(cardInFrame(MAJOR.id).getByRole('button', { name: '즐겨찾기' })).toBeVisible();
+    expect(cardInFrame(ended.id).queryByRole('button', { name: '즐겨찾기' })).toBeNull();
   });
 });
 

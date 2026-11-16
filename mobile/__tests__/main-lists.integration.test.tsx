@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Animated } from 'react-native';
@@ -239,7 +240,7 @@ describe("a press on a class's row", () => {
     await press(user, CLASS_ROW);
 
     // The Global Event stands on the class's building: it is a pin without words, and the map moved.
-    expect(lookOf(EVENT)).toBe('official:pin');
+    expect(lookOf(EVENT)).toBe('official:pin:starred');
     expect(wordsUnder(EVENT, 'AI 커리어')).toBeNull();
     expect(placeOf(EVENT)).not.toEqual(before);
     expect(screen.getByText('자료구조 · 301동 118호')).toBeVisible();

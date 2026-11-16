@@ -6,6 +6,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen } from './support/app';
@@ -66,10 +67,10 @@ describe('the map of the main screen, with the whole campus in view', () => {
     expect(screen.queryByRole('button', { name: /^신예린 · /u })).toBeNull();
   });
 
-  it('shows the Global Event, the Party and the Shared Quest as dots, without names', async () => {
+  it("shows the Party and the Shared Quest as dots, and the Global Event, which the User starred, as the star's pin, without names", async () => {
     await openMain();
 
-    expect(lookOf(EVENT)).toBe('official:dot');
+    expect(lookOf(EVENT)).toBe('official:pin:starred');
     expect(lookOf(PARTY)).toBe('party:dot');
     expect(lookOf(DINNER)).toBe('party:dot');
     expect(wordsUnder(FRIEND, '김민준')).toBeNull();
@@ -86,7 +87,7 @@ describe('the map of the main screen, closer', () => {
     expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact');
     expect(lookOf(MEMBER)).toBe('person:full:member:pm1');
     // One Party goes to the Global Event: its pin has no count.
-    expect(lookOf(EVENT)).toBe('official:pin');
+    expect(lookOf(EVENT)).toBe('official:pin:starred');
     expect(lookOf(PARTY)).toBe('party:pin:4');
     expect(lookOf(DINNER)).toBe('party:pin');
     expect(wordsUnder(FRIEND, '김민준')).toBeNull();
@@ -101,7 +102,7 @@ describe('the map of the main screen, closer', () => {
 
     await zoomIn(user, 2);
 
-    expect(lookOf(EVENT)).toBe('official:pin:2');
+    expect(lookOf(EVENT)).toBe('official:pin:2:starred');
   });
 });
 
@@ -134,7 +135,7 @@ describe('the map of the main screen, closest', () => {
     await press(user, '가까이 보기');
 
     // The Global Event "AI 커리어 설명회" and the Party "AI 커리어 설명회 같이 가요", which stand side by side.
-    expect(lookOf(EVENT)).toBe('official:pin:selected');
+    expect(lookOf(EVENT)).toBe('official:pin:starred:selected');
     expect(lookOf(PARTY)).toBe('party:pin:4');
     expect(wordsUnder(EVENT, 'AI 커리어')).toBeNull();
     expect(wordsUnder(PARTY, 'AI 커리어')).toBeNull();
@@ -150,7 +151,7 @@ describe('a selected marker', () => {
 
     await press(user, EVENT);
     expect(lookOf(FRIEND)).toBe('person:small:free:f1:exact');
-    expect(lookOf(EVENT)).toBe('official:dot:selected');
+    expect(lookOf(EVENT)).toBe('official:pin:starred:selected');
   });
 
   it('is drawn above the others, the User included', async () => {

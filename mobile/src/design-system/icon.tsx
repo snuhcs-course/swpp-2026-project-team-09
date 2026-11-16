@@ -19,7 +19,7 @@ type Stroke =
   | { circle: readonly [x: number, y: number, r: number] }
   | { rect: readonly [x: number, y: number, width: number, height: number, corner: number] };
 
-// The design system's line icons: a 24-point grid, a 2-point round stroke, never filled.
+// The design system's line icons: a 24-point grid, a 2-point round stroke, filled only where `Icon` is asked to.
 const ICONS = {
   map: [{ path: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z' }, { path: 'M9 4v14' }, { path: 'M15 6v14' }],
   chat: [{ path: 'M4 5h16v11H9l-5 4z' }],
@@ -85,6 +85,8 @@ const ICONS = {
   // Not the design system's: the `Party` frame draws them on the button that pauses and plays the official banner.
   pause: [{ path: 'M9 5v14' }, { path: 'M15 5v14' }],
   play: [{ path: 'M7 5l12 7-12 7z' }],
+  // Not the design system's: the ☆ of a Global Event, filled for a Favorite Event.
+  star: [{ path: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;
@@ -116,6 +118,8 @@ interface IconProps {
   // Set when the icon stands alone and carries meaning: it becomes the accessible name. Without it a screen reader
   // skips the icon.
   label?: string;
+  // Filled with the colour, as a Favorite Event's star is.
+  filled?: boolean;
   testID?: string;
 }
 
@@ -131,12 +135,19 @@ function screenReaderProps(label: string | undefined): object {
   return { accessible: true, accessibilityLabel: label, accessibilityRole: 'image', importantForAccessibility: 'yes' };
 }
 
-export function Icon({ name, size = 20, color: tint = color.ink, label, testID }: IconProps): ReactElement {
+export function Icon({
+  name,
+  size = 20,
+  color: tint = color.ink,
+  label,
+  filled = false,
+  testID,
+}: IconProps): ReactElement {
   const strokes: readonly Stroke[] = ICONS[name];
   return (
     <Svg
       {...screenReaderProps(label)}
-      fill="none"
+      fill={filled ? tint : 'none'}
       height={size}
       stroke={tint}
       strokeLinecap="round"

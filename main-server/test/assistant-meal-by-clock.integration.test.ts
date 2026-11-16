@@ -91,7 +91,11 @@ describe('A start the User names before dinner is served', () => {
     expect(answer.input).toMatchObject({ meal: 'dinner', window: { from: '15:00', until: null } });
     expect(answer.plans.find(({ id }) => id === '302동식당')).toMatchObject({
       startAt: `${date}T17:00:00+09:00`,
-      lines: [[plain('저녁 '), { text: '17:00 302동식당', strong: true }], [plain('저녁은 17:00부터예요')]],
+      lines: [
+        [plain('저녁 '), { text: '17:00 302동식당', strong: true }],
+        [plain('오늘 '), { text: '돈까스', strong: true }],
+        [plain('저녁은 17:00부터예요')],
+      ],
     });
   });
 });

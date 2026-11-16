@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { KeptNotification } from '@/api/waiting-types';
@@ -83,7 +84,7 @@ describe("a mark's answer", () => {
 // Partitions: a mark of two at a place where only its items stand, one where another thing stands too, a mark of one.
 // Expected values: decision 4, the place's own card stands where another thing shares the point.
 describe('the marks the map draws as marks', () => {
-  const [job] = toCards(sources({ globalEvents: [JOB] }));
+  const [job] = toCards(sources({ globalEvents: [JOB], forInterestMarks: true }));
   const mark = markOf({ id: HALL_ID, items: ['event:job', 'event:talk'], events: [JOB_ITEM, TALK_ITEM] });
   const within = (id: string): CardView[] => (job === undefined ? [] : [{ ...job, id, within: HALL_ID }]);
 
@@ -102,8 +103,11 @@ describe('the marks the map draws as marks', () => {
 
 // Partitions: the cards of events matched and not, a Friend, a party matched and one already a card.
 // Expected values: the ticket, other events are not on the map and a recruiting party gets a party card.
+// The interest marks choose among every event.
+const MARKED = { globalEvents: [JOB, CONCERT], friends: [friendView(MIN_JUN)], forInterestMarks: true };
+
 describe("the map's cards with the marks", () => {
-  const cards = toCards(sources({ globalEvents: [JOB, CONCERT], friends: [friendView(MIN_JUN)] }));
+  const cards = toCards(sources(MARKED));
 
   it('leaves out the events no mark holds, keeps the rest, and adds a card for each party a mark holds', () => {
     const marks = marksOf(inputs(matches([['job', true]], [['run', true]])));

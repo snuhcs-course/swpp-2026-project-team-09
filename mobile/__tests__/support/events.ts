@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import { type userEvent, within } from '@testing-library/react-native';
-import type { GlobalEvent, Quest } from '@/api/types';
+import type { GlobalEvent, ListedGlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import type { FakeServer } from './fake-server';
 import { pass, screen } from './app';
@@ -17,7 +17,7 @@ import { answerMainScreen, DINNER, ME_ID } from './server';
 // that uses it mocks what `server.ts` and `live.ts` say.
 
 // Today 18:00 to 20:00. Its id is the one the app's own list of announcers names.
-export const CAREER: GlobalEvent = {
+export const CAREER: ListedGlobalEvent = {
   id: 'e1',
   title: 'AI 커리어 설명회',
   description: '현직자가 들려주는 AI 직무 이야기',
@@ -27,10 +27,12 @@ export const CAREER: GlobalEvent = {
   latitude: 37.45016,
   longitude: 126.95259,
   sourceUrl: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525',
+  publishedAt: null,
+  favorite: false,
 };
 
 // Thursday at 17:00, this week.
-export const MAJOR: GlobalEvent = {
+export const MAJOR: ListedGlobalEvent = {
   id: 'e2',
   title: '지능형통신 연합전공 설명회',
   description: '2027학년도 1학기 선발 안내',
@@ -40,10 +42,12 @@ export const MAJOR: GlobalEvent = {
   latitude: 37.45487,
   longitude: 126.95407,
   sourceUrl: null,
+  publishedAt: null,
+  favorite: false,
 };
 
 // Next week.
-export const BOOK_TALK: GlobalEvent = {
+export const BOOK_TALK: ListedGlobalEvent = {
   id: 'e3',
   title: '도서관 북토크',
   description: '작가와의 대화',
@@ -53,6 +57,8 @@ export const BOOK_TALK: GlobalEvent = {
   latitude: 37.4598,
   longitude: 126.9521,
   sourceUrl: null,
+  publishedAt: null,
+  favorite: false,
 };
 
 export const SEO_YEON = { id: '6d1c3f5e-3333-4a5b-8c9d-000000000003', name: '이서연', department: '경영학과' };
@@ -109,7 +115,7 @@ export const MY_CAREER: Quest = {
 };
 
 interface Given {
-  events?: GlobalEvent[];
+  events?: ListedGlobalEvent[];
   recruiting?: RecruitingQuest[];
   quests?: Quest[];
 }
