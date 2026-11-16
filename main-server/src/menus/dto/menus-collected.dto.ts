@@ -4,6 +4,7 @@
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -18,9 +19,24 @@ const menuLineSchema = z.strictObject({
   price: z.int32().nonnegative().nullable(),
 });
 
+const timeOfDaySchema = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/u, 'Expected a time of day, HH:MM');
+
+// A meal's hours, which the worker read from the one hours line of the meal's cell.
+const mealHoursSchema = z.strictObject({
+  meal: z.enum(Meal),
+  opensAt: timeOfDaySchema,
+  closesAt: timeOfDaySchema,
+  line: z.string().min(1),
+});
+
 const restaurantSchema = z.strictObject({
   name: z.string().min(1),
   lines: z.array(menuLineSchema),
+  // A message without them, as from a worker that does not read hours, keeps the hours as they are.
+  hours: z
+    .array(mealHoursSchema)
+    .refine((hours) => new Set(hours.map(({ meal }) => meal)).size === hours.length, 'Each meal must appear once')
+    .default([]),
 });
 
 const daySchema = z.strictObject({

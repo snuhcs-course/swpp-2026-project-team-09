@@ -21,7 +21,7 @@ The app must accept `pick-friend` before package A sends it: the reply check is 
 - [x] The app's refusal types and reply check accept `which-friend` and `pick-friend`; an offer missing a field still fails the reply.
 - [x] The cells: one per candidate, the choice grid's, of one width and two to a row, the full name with the department under it in small muted text, and at the end the mark that opens the Friend's profile without picking.
 - [x] A press sends `text` with `tapped` set to that Friend; the next request after it carries no `tapped` unless the User tapped again.
-- [ ] The mock answers "민수랑 점심" with a `which-friend` copy over the mock's two Friends of one given name, when it has them (or the copy is added with package A's real reply once it exists).
+- [x] The mock answers "민수랑 점심" with a `which-friend` copy over the mock's two Friends of one given name, when it has them (or the copy is added with package A's real reply once it exists).
 - [x] Tests: the reply check, the cells, and the press's request.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; no native file changed.
 
@@ -41,3 +41,7 @@ One implementing subagent (Opus 5.5), resumed four times (the full-name cells, t
 
 - Agent time: about 52 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
 - Tokens: output 101,867; input 25,892,194, of which 25,272,878 were cache reads, 619,040 cache writes, and 276 uncached. Without cache reads: 721,183.
+
+### Mock copy (2026-11-16)
+
+- Package A's real reply (P01-20, #304) to "배고파, 민수랑 같이" over two Friends 김민수 (컴퓨터공학부) and 이민수 (경영학과) is kept in `mobile/src/api/mock/data/refusals.json` under "민수랑 점심", so that a mock build shows the question; "배고파, 민수랑 같이" stays the mock's meal answer. Its two ids are not the mock's Friends, so a press sends words the mock answers in general.

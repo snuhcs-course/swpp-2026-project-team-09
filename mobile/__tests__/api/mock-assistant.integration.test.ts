@@ -12,8 +12,10 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
 import { FRIENDS } from '@/api/mock/data/friends';
+import { STUDY_LOOKUP_REPLY } from '@/api/mock/data/study-lookup';
 import { FRIEND_TAPS, TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
+import { LATE_LOOKUP_REPLY, LEAVE_LOOKUP_REPLY, SHUTTLE_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 
 // The mock of the Assistant, where the app asks no main server: asked to eat together with what the app knew, it
@@ -60,6 +62,22 @@ describe('the mock of an answer drawn on the map', () => {
     await expect(answered(mockClient.askAssistant(FRIEND, CONTEXT))).resolves.toEqual(FRIEND_LOOKUP_REPLY);
   });
 
+  it("answers a place to study near here with a context by the main server's Lookup of board a9", async () => {
+    const near: ChatMessage[] = [{ role: 'user', text: '이 근처 조용히 공부할 곳' }];
+
+    await expect(answered(mockClient.askAssistant(near, CONTEXT))).resolves.toEqual(STUDY_LOOKUP_REPLY);
+  });
+
+  it.each([
+    ['24동까지 몇 분?', LEAVE_LOOKUP_REPLY],
+    ['24동까지 몇 분? 늦나', LATE_LOOKUP_REPLY],
+    ['셔틀 탈까 걸을까', SHUTTLE_LOOKUP_REPLY],
+  ])("answers %s with a context by the main server's Lookup", async (text, reply) => {
+    await expect(answered(mockClient.askAssistant([{ role: 'user', text }], CONTEXT))).resolves.toEqual(reply);
+  });
+});
+
+describe('the mock of a question answered with nothing drawn', () => {
   it('answers where a Place is without a context as before, with no Lookup', async () => {
     await expect(answered(mockClient.askAssistant(WHERE))).resolves.not.toHaveProperty('lookup');
   });
@@ -105,6 +123,27 @@ describe('the mock of a recalculation', () => {
     await expect(answered(mockClient.recalculateAnswer(MEAL_ANSWER_ALONE.input, null))).resolves.toEqual(
       MEAL_ANSWER_ALONE,
     );
+  });
+});
+
+// Partitions: words near those of a way that ask something else. Expected values: the mock's replies without a
+// context, and the boards' words of a way (q2 to q4).
+describe('the mock of a question that is no way', () => {
+  it('answers when the shuttle comes with a context by the shuttle layer, as without one', async () => {
+    const reply = await answered(mockClient.askAssistant([{ role: 'user', text: '셔틀 몇 분 뒤에 와?' }], CONTEXT));
+
+    expect(reply).toEqual({
+      text: '셔틀이 어디 있는지 지도에서 볼 수 있어요.',
+      mapButtons: ['shuttle'],
+      cards: [],
+      proposal: null,
+    });
+  });
+
+  it('answers a question that says 늦게 of no way with no Lookup', async () => {
+    const asked = mockClient.askAssistant([{ role: 'user', text: '늦게까지 여는 식당?' }], CONTEXT);
+
+    await expect(answered(asked)).resolves.not.toHaveProperty('lookup');
   });
 });
 

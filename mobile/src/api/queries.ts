@@ -202,3 +202,9 @@ export const companionSeekersQuery = queryOptions({
 export const tutorialQuery = queryOptions({ queryKey: TUTORIAL_KEY, queryFn: () => apiClient.getTutorial() });
 // The User's watched interests: null from a main server that does not keep them yet.
 export const interestsQuery = queryOptions({ queryKey: INTERESTS_KEY, queryFn: () => apiClient.listInterests() });
+// What matches them and the profile's hashtags, under their key, so that a change of the interests asks it again: null
+// from a main server that does not answer it yet.
+export const interestMatchesQuery = queryOptions({
+  queryKey: [...INTERESTS_KEY, 'matches'],
+  queryFn: () => apiClient.listInterestMatches(),
+});

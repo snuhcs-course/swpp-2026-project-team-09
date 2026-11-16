@@ -15,7 +15,8 @@ import type { Lookup } from './lookup-types';
 import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
-import type { WithRefusal } from './refusal-types';
+import type { DroppedPlace, PlanPart } from './plan-part-types';
+import type { WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
@@ -30,9 +31,10 @@ export interface CardReference {
 }
 
 // What the app tells the main server it can draw, with every chat request: library cards. An app without it (the
-// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map.
+// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map, and the study
+// spaces of the visible area it sends as `viewport`.
 export const CLIENT_CAPABILITIES = ['library'] as const;
-export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer'] as const;
+export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer', 'area'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -174,7 +176,7 @@ export function referenceOf(card: ChatCard): CardReference {
 // Times are Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
 
 // What the app knows when the User asks, each part null when it does not know it.
-export interface RequestContext {
+export interface RequestContext extends WithLocationMissing {
   location: LatLng | null;
   // The visible map area.
   viewport: { south: number; west: number; north: number; east: number } | null;
@@ -221,7 +223,7 @@ export type PersonConstraint =
   | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
   | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
 
-export interface AnswerReply {
+export interface AnswerReply extends WithMissing {
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];
@@ -232,9 +234,10 @@ export interface AnswerReply {
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
 }
 
-// `from` is the start the User fixed for a meet.
-export interface ConditionChip {
-  kind: 'origin' | 'from' | 'until' | 'person';
+// `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
+// of "이 근처".
+export interface ConditionChip extends WithMark {
+  kind: 'origin' | 'from' | 'until' | 'person' | 'area' | 'what';
   text: string;
   userId: string | null;
 }
@@ -246,11 +249,6 @@ export interface PlacePoint {
   label: string;
   latitude: number;
   longitude: number;
-}
-
-export interface DroppedPlace {
-  place: PlacePoint;
-  reason: string;
 }
 
 export interface Plan {
@@ -282,21 +280,6 @@ export interface Plan {
   candidates?: { userId: string; name: string; line: string }[];
 }
 
-export interface PlanPart {
-  userId: string;
-  name: string;
-  me: boolean;
-  // Null when the position is unknown.
-  origin: { place: PlacePoint; basis: 'timetable' | 'location' | 'chosen' } | null;
-  leaveAt: string | null;
-  walkMinutes: number | null;
-  // Null when nothing follows.
-  leaveBy: string | null;
-  next: { startAt: string; place: PlacePoint | null } | null;
-  // How they travel, absent for a walk.
-  mode?: 'walk' | 'shuttle';
-}
-
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {
   people: {
@@ -309,7 +292,8 @@ export interface MapScene {
     source: 'exact' | 'building' | 'timetable';
     tag: string | null;
   }[];
-  places: { place: PlacePoint; role: PlaceRole; tag: string | null }[];
+  // `order`: the number a place carries in a list (1, 2, 3), as a day's Classes or the Tutorial Quests in order.
+  places: { place: PlacePoint; role: PlaceRole; tag: string | null; order?: number }[];
   // `mode` is absent for a walk.
   routes: {
     userId: string;
@@ -319,7 +303,8 @@ export interface MapScene {
     minutes: number;
     mode?: 'walk' | 'shuttle';
   }[];
-  flags: { at: LatLng; text: string; role: FlagRole }[];
+  // `placeId`: the Place an `away` flag points to.
+  flags: { at: LatLng; text: string; role: FlagRole; placeId?: string }[];
 }
 
 export interface TimeBand {

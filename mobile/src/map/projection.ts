@@ -158,3 +158,9 @@ export function inView(position: LatLng, camera: MapCamera, size: Size): Point {
   const at = project(position, camera.zoom);
   return { x: at.x - centre.x + size.width / 2, y: at.y - centre.y + size.height / 2 };
 }
+
+// The position at a point of the view of a camera, `inView` the other way.
+export function atPoint({ x, y }: Point, camera: MapCamera, size: Size): LatLng {
+  const centre = project(camera.centre, camera.zoom);
+  return unproject({ x: centre.x + x - size.width / 2, y: centre.y + y - size.height / 2 }, camera.zoom);
+}

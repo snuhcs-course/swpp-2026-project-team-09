@@ -6,6 +6,7 @@
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -94,6 +95,7 @@ describe('A Collection of the menu Sources', () => {
               {
                 name: '수의대식당',
                 lines: [{ meal: 'lunch', text: '카레라이스', kind: null, name: null, price: null }],
+                hours: [],
               },
             ],
           },
@@ -103,6 +105,7 @@ describe('A Collection of the menu Sources', () => {
               {
                 name: '수의대식당',
                 lines: [{ meal: 'lunch', text: '소불고기덮밥', kind: null, name: null, price: null }],
+                hours: [],
               },
             ],
           },

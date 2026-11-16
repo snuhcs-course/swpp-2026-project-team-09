@@ -25,8 +25,9 @@ An Administrator opens "Settings" in the admin site's menu and sees every regist
 
 ### Agent usage (2026-11-15)
 
-- Agent time: about 45 minutes in one session (estimate).
-- Tokens (estimate): input about 3.2M, of which about 3.0M cache reads and about 160k cache writes; output about 40k.
+- Agent time: about 85 minutes over two rounds in one session (estimate): about 45 minutes to build the page and about
+  40 minutes to take `4.0/Main` in and act on the review.
+- Tokens (estimate): input about 5.2M, of which about 4.9M cache reads and about 250k cache writes; output about 55k.
   No subagents.
 - Screenshots of the page before and after a save are left to a person: the agent ran no browser.
 - Deviations: a "wrong type" refusal is tested at the route as a body value that is not text (400), because the only

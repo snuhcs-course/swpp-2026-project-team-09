@@ -28,7 +28,7 @@ export {
 export { CREDIT_ROOM, Map } from './map';
 export { MarkerImageStage, unmadeImage, useMarkerImages } from './marker-images';
 export type { MarkerForm, MarkerLook } from './marker-looks';
-export { inView, project, type Size, unproject } from './projection';
+export { atPoint, inView, type Point, project, type Size, unproject } from './projection';
 export type {
   CameraMove,
   FitOptions,

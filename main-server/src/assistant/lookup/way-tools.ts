@@ -24,7 +24,7 @@ const NONE_REASONS: Record<Extract<WayAnswer, { result: 'none' }>['reason'], str
     'The time given as by is not later than now. Give it as 24-hour HH:MM (2시 in the afternoon is 14:00); if the time the User named has passed today, say so.',
 };
 
-const STARTS: Record<Way['start']['basis'], string> = {
+export const STARTS: Record<Way['start']['basis'], string> = {
   location: 'where the User is now',
   chosen: 'the Place the User named',
   timetable: "the Place of the User's last item today",
@@ -49,6 +49,10 @@ const input = z.object({
     .describe(
       'The time the User must be there by, as 24-hour HH:MM, when they named one (2시까지 in the afternoon is 14:00). Left out otherwise.',
     ),
+  about: z
+    .enum(['shuttle'])
+    .optional()
+    .describe('shuttle when the User asked about the shuttle (셔틀 언제 와?, 셔틀 탈까 걸을까). Left out otherwise.'),
 });
 
 // When the User must be there and whether it is a Class, when to set out, and how late they are if they set out now.
@@ -93,7 +97,7 @@ export function findWay(ways: WayService): Tool {
     description:
       "Finds the way from where the User is to a Place, or to the Place of their next item today, on foot or by the campus shuttle when it is at least 3 minutes faster, and the app draws it on the map. Answers result 'found' with where the User sets out from, the Place, the minutes on foot, the shuttle weighed against the walk, and, when they must be there by a time, when to set out and how many minutes late they are if they set out now, or result 'none' with the reason.",
     input,
-    run: async ({ to, from, by }, { userId, now, context, found, presented }) => {
+    run: async ({ to, from, by, about }, { userId, now, context, found, presented }) => {
       const tapped = context.tapped?.kind === 'place' ? context.tapped.placeId : null;
       found.refuseUnfound(
         'place',
@@ -101,8 +105,8 @@ export function findWay(ways: WayService): Tool {
       );
       const answer = await ways.find(
         userId,
-        { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null },
-        { now, location: context.location },
+        { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null, about },
+        { now, location: context.location, locationMissing: context.locationMissing },
       );
       if (answer.result === 'none') {
         return noneFound(NONE_REASONS[answer.reason]);
@@ -129,6 +133,7 @@ export const WAY_RULES = `A way is drawn on the map: the server finds where the 
 
 - When the User asks where a Place is (문화관이 어디야?, 24동 어떻게 가?), or how many minutes it takes to a Place (24동까지 몇 분?), find the Place with resolvePlace first, then call findWay with it as to. When they name where they set out from (301동에서), find that Place with resolvePlace too and give it as from.
 - When the User asks how many minutes it takes to their next Class, whether they will be late, or whether to take the shuttle (늦나?, 다음 수업까지 몇 분?, 9시 수업인데 늦나, 셔틀 탈까 걸을까), call findWay with to left out: the server takes the Place of their next item today. A time they must be there by (2시까지) is by, as 24-hour HH:MM: 2시 in the afternoon is 14:00.
+- When the User asks about the shuttle to a Place or to their next Class (기숙사 가는 셔틀 언제 와?, 셔틀 탈까 걸을까), give about 'shuttle' to findWay, which then says first when the shuttle is not running.
 - A line [Tapped: place …] gives the Place the User tapped (여기): give it as to.
 - The app draws the way and writes its minutes and times itself. Your reply is one sentence, such as "문화관은 지금 있는 301동에서 걸어서 18분이에요.", "12:45에 나서면 13:00 수업에 맞아요.", "지금 가도 5분 늦어요.", or, when the shuttle is taken, "16:43에 나서 셔틀을 타면 16:53에 도착해요." When findWay gives atPlace, the User is there already: say so, such as "지금 24동에 있어요." Do not call showOnMap for a way: the app already draws it.
 - When findWay answers none because it does not know where the User sets out from, ask where they set out from. When it answers none because there is no next item, say that they have nothing later today.`;

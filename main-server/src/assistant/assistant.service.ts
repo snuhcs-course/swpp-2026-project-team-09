@@ -49,9 +49,7 @@ import { koreaDate } from './korea-time.js';
 import { ModelPort } from './model-port.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
-import { FriendLookupService } from './lookup/friend.service.js';
-import { MenuLookupService } from './lookup/menu.service.js';
-import { WayService } from './lookup/way.service.js';
+import { LookupServices } from './lookup/lookup-services.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
@@ -64,7 +62,7 @@ const COUNT_LIFETIME_SECONDS = 2 * 24 * 60 * 60;
 @Injectable()
 export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
-  // The chat, the same for an app that draws answers on the map, and for one that also draws a day's events.
+  // The chat of each kind of app.
   private readonly chats: Record<ChatKind, Feature>;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
@@ -90,9 +88,7 @@ export class AssistantService {
     users: UsersService,
     tutorial: TutorialService,
     plans: PlanAnswersService,
-    ways: WayService,
-    menuLookups: MenuLookupService,
-    friendLookups: FriendLookupService,
+    lookups: LookupServices,
     interests: InterestsService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
@@ -109,9 +105,7 @@ export class AssistantService {
       library: { catalogue, freeTime, friends, quests, users, arrival: { days, places: placeLookup, travel }, enabled },
       tutorial,
       plans,
-      ways,
-      menuLookups,
-      friendLookups,
+      lookups,
       interests,
     };
     this.chats = chatsOf(services);
@@ -165,7 +159,9 @@ export class AssistantService {
       return this.chats.plain;
     }
     const drawn = capabilities.includes('events') ? 'events' : 'answer';
-    return this.chats[capabilities.includes('meet') ? (`${drawn}-meet` as const) : drawn];
+    const meet = capabilities.includes('meet') ? '-meet' : '';
+    const area = capabilities.includes('area') ? '-area' : '';
+    return this.chats[`${drawn}${meet}${area}` as const];
   }
 
   // Counts the User's message in their day in Korea, and answers how many they have sent that day.
@@ -177,15 +173,24 @@ export class AssistantService {
   }
 }
 
-type ChatKind = 'plain' | 'answer' | 'events' | 'answer-meet' | 'events-meet';
+// The chat of an app that does not draw answers, and of one that does, by what else it draws: a day's events, a meet,
+// and the visible area's study spaces.
+type Drawn = 'answer' | 'events';
+type ChatKind = 'plain' | Drawn | `${Drawn}-meet` | `${Drawn}-area` | `${Drawn}-meet-area`;
 
 function chatsOf(services: ChatAssistantServices): Record<ChatKind, Feature> {
+  const chat = (drawsEvents: boolean, drawsMeets: boolean, drawsArea: boolean): Feature =>
+    chatAssistant(services, { drawsAnswers: true, drawsEvents, drawsMeets, drawsArea });
   return {
     plain: chatAssistant(services),
-    answer: chatAssistant(services, { drawsAnswers: true }),
-    events: chatAssistant(services, { drawsAnswers: true, drawsEvents: true }),
-    'answer-meet': chatAssistant(services, { drawsAnswers: true, drawsMeets: true }),
-    'events-meet': chatAssistant(services, { drawsAnswers: true, drawsEvents: true, drawsMeets: true }),
+    answer: chat(false, false, false),
+    events: chat(true, false, false),
+    'answer-meet': chat(false, true, false),
+    'events-meet': chat(true, true, false),
+    'answer-area': chat(false, false, true),
+    'events-area': chat(true, false, true),
+    'answer-meet-area': chat(false, true, true),
+    'events-meet-area': chat(true, true, true),
   };
 }
 

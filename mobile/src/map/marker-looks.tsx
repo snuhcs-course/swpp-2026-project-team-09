@@ -21,6 +21,7 @@ import {
   MapDot,
   MapGroupDot,
   MapGroupPin,
+  MapMarkBadge,
   MapPerson,
   MapPin,
   type MapPlaceKind,
@@ -40,6 +41,7 @@ import type { Size } from './projection';
 //   a Friend who can be added to the answer on screen;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
 // - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected;
+// - while the switch is on, the same places and sets with the "!" of a mark newly posted or faded (`fresh`, `faded`);
 // - one for the tutorial's place pin.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
@@ -54,6 +56,13 @@ import type { Size } from './projection';
 
 // A dot is the look from far away, a pin the look from close.
 export type MarkerForm = 'dot' | 'pin';
+
+// An interest mark's, while the switch of the answer on the map is on: `fresh` carries "!", something newly posted
+// for the User; `faded` is drawn faint, shown for want of anything the User watches.
+interface InterestLook {
+  fresh?: boolean;
+  faded?: boolean;
+}
 
 export type MarkerLook =
   // The User's own Avatar. `small` is its look while the whole campus is in view: three quarters of its size.
@@ -76,14 +85,15 @@ export type MarkerLook =
       photo: string | null;
     }
   // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
-  // `muted` is translucent grey: a study building none of whose spaces the User may use.
-  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean; muted?: boolean }
+  // `muted` is translucent grey: a study building none of whose spaces the User may use. `fresh` and `faded` are an
+  // interest mark's (`InterestLook`).
+  | ({ kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean; muted?: boolean } & InterestLook)
   // Study pins merged while the whole campus is in view, with how many they are.
   | { kind: 'study-cluster'; count: number; selected?: boolean }
   // The Place of restaurants with menus today, at every level of detail.
   | { kind: 'restaurant'; selected?: boolean }
   // Things of several kinds at one place: a small round for each kind, in the order given.
-  | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean }
+  | ({ kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean } & InterestLook)
   // The place 지도에서 보기 of a tutorial quest shows: a red teardrop with a white circle, at every level of detail.
   | { kind: 'tutorialPlace' }
   // A mark of an answer: its symbol and its label, words included, in one picture.
@@ -136,7 +146,7 @@ export function lookName(look: MarkerLook): string {
     return parts('restaurant', selected);
   }
   if (look.kind === 'group') {
-    return parts('group', look.kinds.join('+'), look.form, selected);
+    return parts('group', look.kinds.join('+'), look.form, selected, ...interestParts(look));
   }
   if (look.kind === 'study-cluster') {
     return parts('study-cluster', String(look.count), selected);
@@ -150,7 +160,24 @@ export function lookName(look: MarkerLook): string {
     return parts('person', size, look.tone, look.id, photo, exact, stale, selected, addable);
   }
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
-  return parts(look.kind, look.form, count, look.muted === true && 'muted', selected);
+  return parts(look.kind, look.form, count, look.muted === true && 'muted', selected, ...interestParts(look));
+}
+
+// Named only when set, so that every name with the switch off stays as it was.
+function interestParts({ fresh, faded }: InterestLook): (string | false)[] {
+  return [fresh === true && 'fresh', faded === true && 'faded'];
+}
+
+// A mark's "!" and fade around a place's or a group's view, which grows to hold the "!".
+function withInterest(look: InterestLook & { form: MarkerForm }, view: ReactElement): ReactElement {
+  if (look.fresh !== true && look.faded !== true) {
+    return view;
+  }
+  return (
+    <MapMarkBadge faded={look.faded} form={look.form} fresh={look.fresh}>
+      {view}
+    </MapMarkBadge>
+  );
 }
 
 export function hasPhoto(look: MarkerLook): boolean {
@@ -193,7 +220,7 @@ interface LookViewProps {
 }
 
 // The design system's view of a look.
-export function LookView({ look, onPhotoSettled, testID }: LookViewProps): ReactElement {
+function PlainLookView({ look, onPhotoSettled, testID }: LookViewProps): ReactElement {
   if (look.kind === 'me') {
     return <MapPin kind="me" small={look.small} />;
   }
@@ -237,4 +264,10 @@ export function LookView({ look, onPhotoSettled, testID }: LookViewProps): React
   ) : (
     <MapPin count={look.count} kind={look.kind} muted={look.muted} selected={look.selected} />
   );
+}
+
+// The design system's view of a look, with an interest mark's "!" or fade around a place's or a group's.
+export function LookView(props: LookViewProps): ReactElement {
+  const { look } = props;
+  return 'form' in look ? withInterest(look, <PlainLookView {...props} />) : <PlainLookView {...props} />;
 }

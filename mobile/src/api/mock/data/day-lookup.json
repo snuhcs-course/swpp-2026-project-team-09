@@ -1,0 +1,118 @@
+{
+  "kind": "day",
+  "chips": [],
+  "lines": [
+    [
+      {
+        "text": "11월 17일 화요일 ",
+        "strong": false
+      },
+      {
+        "text": "수업 3개",
+        "strong": true
+      }
+    ],
+    [
+      {
+        "text": "빈 시간 70분, 3시간 10분",
+        "strong": false
+      }
+    ],
+    [
+      {
+        "text": "수업 사이 걸어서 15분, 12분",
+        "strong": false
+      }
+    ]
+  ],
+  "basis": ["301동 → 24동 걸어서 15분", "24동 → 58동 걸어서 12분"],
+  "scene": {
+    "people": [],
+    "places": [
+      {
+        "place": {
+          "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+          "label": "301동",
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "role": "next",
+        "tag": "11:00–11:50 · 301동",
+        "order": 1
+      },
+      {
+        "place": {
+          "placeId": "055a68b1-3f09-5ea7-a98f-6f5febf1c6af",
+          "label": "24동",
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "role": "next",
+        "tag": "13:00–13:50 · 24동",
+        "order": 2
+      },
+      {
+        "place": {
+          "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+          "label": "58동",
+          "latitude": 37.46568,
+          "longitude": 126.95203
+        },
+        "role": "next",
+        "tag": "17:00–18:15 · 58동",
+        "order": 3
+      }
+    ],
+    "routes": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "next",
+        "from": {
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "to": {
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "minutes": 15
+      },
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "role": "next",
+        "from": {
+          "latitude": 37.45942,
+          "longitude": 126.94989
+        },
+        "to": {
+          "latitude": 37.46568,
+          "longitude": 126.95203
+        },
+        "minutes": 12
+      }
+    ],
+    "flags": []
+  },
+  "band": null,
+  "actions": [
+    {
+      "kind": "remind",
+      "at": "2026-11-17T12:45:00+09:00",
+      "text": "지금 나서면 13:00 수업에 맞아요 · 24동까지 걸어서 15분"
+    }
+  ],
+  "steps": [
+    {
+      "at": "11:00–11:50",
+      "text": "301동"
+    },
+    {
+      "at": "13:00–13:50",
+      "text": "24동"
+    },
+    {
+      "at": "17:00–18:15",
+      "text": "58동"
+    }
+  ]
+}

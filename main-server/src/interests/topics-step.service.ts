@@ -5,13 +5,15 @@
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma.service.js';
+import { type Settings } from '../common/settings.js';
 import { GlobalEventState, JoinPolicy, type Prisma } from '../generated/prisma/client.js';
 import { notEnded } from '../global-events/global-events.service.js';
 import { type Told } from '../notifications/notification.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { QUEST_INCLUDE, toRecruitingQuestDto } from '../quests/dto/quest.dto.js';
+import { QUEST_INCLUDE, subQuestsAheadWhere, toRecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { TopicsReader } from './topics-reader.js';
 
 // The most events, and the most Quests, one step reads.
@@ -20,13 +22,8 @@ const PER_STEP = 10;
 // A text is asked about at most this many times: a try counts when it is claimed.
 export const TOPICS_TRIES = 2;
 
-// Recruiting Quests looked at to find those with a Sub Quest ahead.
-const QUESTS_LOOKED_AT = 100;
-
-const UNREAD = {
-  topicsTries: { lt: TOPICS_TRIES },
-  OR: [{ topicsReadAt: null }, { topics: { isEmpty: true } }],
-};
+// Added to the topics call's time limit before a try left without topics counts as over.
+const RETRY_MARGIN_MS = 60_000;
 
 type Tagged = Omit<Told & { kind: 'interest-new' }, 'kind'>;
 
@@ -43,30 +40,52 @@ interface Item {
 @Injectable()
 export class TopicsStep {
   private readonly logger = new Logger(TopicsStep.name);
+  private readonly retryAfterMs: number;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly reader: TopicsReader,
     private readonly notifications: NotificationsService,
     @Inject(CLOCK) private readonly clock: Clock,
-  ) {}
+    settings: ConfigService<Settings, true>,
+  ) {
+    this.retryAfterMs = settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }) + RETRY_MARGIN_MS;
+  }
 
   // Never throws.
   async run(): Promise<void> {
     try {
       const now = this.clock.now();
-      for (const item of [...(await this.events(now)), ...(await this.quests(now))]) {
+      const items = [...(await this.events(now)), ...(await this.quests(now))];
+      if (items.length === 0) {
+        return;
+      }
+      // Read once a step. The words each text is given join it, so that two texts of one step can share a new word.
+      const inUse = new Set(await this.reader.inUse());
+      for (const item of items) {
         // oxlint-disable-next-line no-await-in-loop -- one model call at a time
-        await this.read(item, now);
+        await this.read(item, now, inUse);
       }
     } catch (error) {
       this.logger.warn(`The topics step failed: ${String(error)}`);
     }
   }
 
+  // Never read, or left without topics by fewer than TOPICS_TRIES tries the last of which is over: its call cannot still
+  // be running, so no server asks while another's call may. The selection and the claim both go by it.
+  private unread(now: Date): Prisma.GlobalEventWhereInput & Prisma.QuestWhereInput {
+    const over = new Date(now.getTime() - this.retryAfterMs);
+    return {
+      OR: [
+        { topicsReadAt: null },
+        { topics: { isEmpty: true }, topicsTries: { lt: TOPICS_TRIES }, topicsReadAt: { lt: over } },
+      ],
+    };
+  }
+
   private async events(now: Date): Promise<Item[]> {
     const events = await this.prisma.globalEvent.findMany({
-      where: { state: GlobalEventState.published, ...UNREAD, AND: [notEnded(now)] },
+      where: { state: GlobalEventState.published, AND: [this.unread(now), notEnded(now)] },
       orderBy: [{ topicsTries: 'asc' }, { startsAt: { sort: 'asc', nulls: 'last' } }, { id: 'asc' }],
       take: PER_STEP,
     });
@@ -78,57 +97,65 @@ export class TopicsStep {
     }));
   }
 
+  // A Quest with no Sub Quest ahead is not loaded and not marked as tried: a new Sub Quest can make it recruiting.
   private async quests(now: Date): Promise<Item[]> {
     const quests = await this.prisma.quest.findMany({
-      where: { joinPolicy: { in: [JoinPolicy.open, JoinPolicy.approval] }, board: { not: null }, ...UNREAD },
+      where: {
+        joinPolicy: { in: [JoinPolicy.open, JoinPolicy.approval] },
+        board: { not: null },
+        AND: [this.unread(now), subQuestsAheadWhere(now)],
+      },
       include: QUEST_INCLUDE,
       orderBy: [{ topicsTries: 'asc' }, { createdAt: 'desc' }, { id: 'asc' }],
-      take: QUESTS_LOOKED_AT,
+      take: PER_STEP,
     });
-    return quests
-      .flatMap((quest) => {
-        const recruiting = toRecruitingQuestDto(quest, now);
-        if (recruiting === null) {
-          return [];
-        }
-        const { startsAt, place } = recruiting.nextSubQuest;
-        return [
-          {
-            tagged: {
-              subject: 'quest' as const,
-              id: quest.id,
-              title: quest.title,
-              startsAt: startsAt === null ? null : new Date(startsAt),
-              placeLabel: place?.label ?? null,
-            },
-            text: `${quest.title}\n${quest.description}`,
-            tries: quest.topicsTries,
-            untold: quest.holders.map(({ user }) => user.id),
+    return quests.flatMap((quest) => {
+      const recruiting = toRecruitingQuestDto(quest, now);
+      if (recruiting === null) {
+        return [];
+      }
+      const { startsAt, place } = recruiting.nextSubQuest;
+      return [
+        {
+          tagged: {
+            subject: 'quest' as const,
+            id: quest.id,
+            title: quest.title,
+            startsAt: startsAt === null ? null : new Date(startsAt),
+            placeLabel: place?.label ?? null,
           },
-        ];
-      })
-      .slice(0, PER_STEP);
+          text: `${quest.title}\n${quest.description}`,
+          tries: quest.topicsTries,
+          untold: quest.holders.map(({ user }) => user.id),
+        },
+      ];
+    });
   }
 
-  private async read(item: Item, now: Date): Promise<void> {
+  private async read(item: Item, now: Date, inUse: Set<string>): Promise<void> {
     try {
-      if (!(await this.claim(item, now))) {
+      if (!(await this.claim(item))) {
         return;
       }
-      const topics = await this.reader.read(item.text);
+      const topics = await this.reader.read(item.text, [...inUse]);
       if (topics.length === 0) {
         return;
       }
       await this.store(item, { topics });
+      for (const topic of topics) {
+        inUse.add(topic);
+      }
       await this.tell(item, topics, now);
     } catch (error) {
       this.logger.warn(`Reading the topics of ${item.tagged.subject} ${item.tagged.id} failed: ${String(error)}`);
     }
   }
 
-  // Counts the try before the model is asked, and only when no other server counted it first.
-  private async claim({ tagged, tries }: Item, now: Date): Promise<boolean> {
-    const where = { id: tagged.id, topicsTries: tries };
+  // Counts the try before the model is asked, and only when no other server counted it first and the text is still
+  // unread. The try's time is when it is claimed, not when the step began, since the call starts then.
+  private async claim({ tagged, tries }: Item): Promise<boolean> {
+    const now = this.clock.now();
+    const where = { id: tagged.id, topicsTries: tries, AND: [this.unread(now)] };
     const data = { topicsTries: tries + 1, topicsReadAt: now };
     const { count } =
       tagged.subject === 'event'

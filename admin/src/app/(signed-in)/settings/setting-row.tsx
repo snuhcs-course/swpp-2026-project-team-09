@@ -21,6 +21,19 @@ function choicesOf({ type, allowed }: Setting): { value: string; label: string }
   return type === 'BOOLEAN' ? ['true', 'false'].map((value) => ({ value, label: value })) : null;
 }
 
+// What the input starts at: the last saved value, or the value in effect when nothing was saved or the saved value is
+// no longer among the choices, as a key whose parameter was removed. A select would otherwise show its first option,
+// and a save would store that one.
+function startingValue(setting: Setting): string {
+  const inEffect = String(setting.value);
+  const lastSaved = setting.lastChange?.newValue;
+  if (lastSaved === undefined) {
+    return inEffect;
+  }
+  const choices = choicesOf(setting);
+  return choices === null || choices.some(({ value }) => value === lastSaved) ? lastSaved : inEffect;
+}
+
 function labelOf(setting: Setting, value: SettingValue | string): string {
   return setting.allowed?.find((each) => String(each.value) === String(value))?.label ?? String(value);
 }
@@ -44,8 +57,8 @@ function ChangeState({ appliesAt }: { appliesAt: string }): ReactElement {
   return <span>{applied ? 'applied' : `applies at ${inSeoul(appliesAt).time}:00`}</span>;
 }
 
-// The input for the setting's type and allowed values: a select of the choices when it has them. Keyed by the saved
-// value, so that a save shows the new one.
+// The input for the setting's type and allowed values: a select of the choices when it has them. Keyed by the value it
+// starts at, so that a save shows the new one.
 function ValueInput({ setting, id, saved }: { setting: Setting; id: string; saved: string }): ReactElement {
   const choices = choicesOf(setting);
   return choices === null ? (
@@ -79,7 +92,7 @@ function SettingForm({
   action: (form: FormData) => void;
   pending: boolean;
 }): ReactElement {
-  const saved = setting.lastChange?.newValue ?? String(setting.value);
+  const saved = startingValue(setting);
   const inputId = `setting-${setting.name}`;
   return (
     <form

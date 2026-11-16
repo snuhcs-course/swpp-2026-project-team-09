@@ -114,6 +114,29 @@ describe('a setting saved earlier', () => {
   });
 });
 
+describe('a saved value no longer among the choices', () => {
+  it('starts the select at the value in effect, and a save sends that one', async () => {
+    // As when claude applied, then the parameter of the key named "gone", saved after it, was removed.
+    fakeMainServer.settings.hasInEffect('llm.key', 'claude');
+    fakeMainServer.settings.hasChange({
+      name: 'llm.key',
+      oldValue: 'claude',
+      newValue: 'gone',
+      administratorEmail: 'lee@gmail.com',
+      changedAt: '2026-11-15T04:30:10.000Z',
+      appliesAt: '2026-11-15T04:31:00.000Z',
+    });
+    await openSettings();
+
+    expect(within(llmKeyRow()).getByRole('combobox', { name: 'New value of llm.key' })).toHaveValue('claude');
+    save();
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Change llm.key to claude (Anthropic)? It applies on every server at the next minute.',
+    );
+  });
+});
+
 describe('the history', () => {
   it('lists who changed what, when, and the old and new values, newest first', async () => {
     fakeMainServer.settings.hasChange({

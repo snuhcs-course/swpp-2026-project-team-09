@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -18,6 +19,7 @@ import {
   type GatheringSide,
   type PersonPart,
 } from './gathering.js';
+import { type MissingInputs } from './missing-inputs.js';
 import { PlaceNaming } from './place-naming.js';
 
 // What the words of a meal's answer share: who is who, how a Place is called, and the pieces of a way.
@@ -49,6 +51,8 @@ export interface MealAnswerArgs extends GatheringArgs<MealInput> {
   // No menu collected for the day, menus but no Restaurant with a Place open for the meal, open ones but none at the
   // Place the User fixed, or open ones.
   menus: 'none' | 'closed' | 'closed-at-place' | 'open';
+  // What the app could not give, left out when nothing was missing.
+  missing?: MissingInputs;
 }
 
 const SHORTEST_MEAL_MINUTES = SHORTEST_MEAL_SECONDS / 60;
@@ -144,4 +148,5 @@ export class GatheringNaming<Args extends GatheringArgs = GatheringArgs> extends
 
 export type Naming = GatheringNaming<MealAnswerArgs>;
 
-export const mealWord = ({ args }: Naming): string => (args.input.meal === 'lunch' ? '점심' : '저녁');
+export const mealWord = ({ args }: { args: Pick<MealAnswerArgs, 'input'> }): string =>
+  args.input.meal === 'lunch' ? '점심' : '저녁';

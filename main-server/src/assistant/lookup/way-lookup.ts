@@ -18,6 +18,7 @@ import { MINUTE_MS } from '../gathering/gathering.js';
 import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import {
+  NOT_RUNNING,
   shuttleActions,
   shuttleBand,
   shuttleBasis,
@@ -40,9 +41,16 @@ export type WayAnswer =
   | { result: 'none'; reason: 'no-start' | 'no-next' | 'past-by' };
 
 export const GATE_BASIS = '지금 위치는 캠퍼스 밖이라 쓰지 않고 정문부터 쟀어요';
+// Board n14's, where the lines say it was counted from the gate.
+const GATE_UNUSED = '지금 위치는 캠퍼스 밖이라 쓰지 않았어요';
+const OFF_CAMPUS_NOTE = '캠퍼스 밖이라 친구에게 내 위치가 보이지 않아요';
 
 const takenShuttle = ({ shuttle }: Way): ShuttleTaken | null =>
   shuttle !== null && shuttle !== 'not running' && shuttle.taken ? shuttle : null;
+
+// Board n14: a walk from the gate that is in time for the deadline.
+const gateInTime = (way: Way): boolean =>
+  gated(way) && takenShuttle(way) === null && way.deadline !== null && way.deadline.lateMinutes === 0;
 
 function chipsOf(way: Way, naming: WayNaming): ConditionChip[] {
   const origin: ConditionChip = { kind: 'origin', text: `${naming.from(way)}에서`, userId: null };
@@ -78,7 +86,10 @@ function linesOf(way: Way, naming: WayNaming): AnswerLine[] {
     return [[part(going), part(clockOf(arrival), true), part(' 도착')], [part(`${deadline.lateMinutes}분 늦어요`)]];
   }
   if (gated(way)) {
-    return [[part('정문을 '), part(leaveBy, true), part('까지 지나면')], [part(`${dueWords(deadline)}에 맞아요`)]];
+    return [
+      [part('정문을 '), part(leaveBy, true), part('까지 지나면 돼요')],
+      [part('캠퍼스 밖이라 정문부터 계산했어요')],
+    ];
   }
   return [
     [part(`${to.label}까지 걸어서 `), part(`${walkMinutes}분`, true)],
@@ -101,7 +112,10 @@ function basisOf(way: Way, naming: WayNaming): string[] {
   } else if (compared !== null) {
     lines = [...lines, compared];
   }
-  return gated(way) ? [...lines, GATE_BASIS] : lines;
+  if (!gated(way)) {
+    return lines;
+  }
+  return [...lines, gateInTime(way) ? GATE_UNUSED : GATE_BASIS];
 }
 
 // One flag: the minutes at the Place without a deadline, the arrival there when late, else when to set out at the
@@ -116,7 +130,7 @@ function flagOf(way: Way, naming: WayNaming): MapScene['flags'][number] {
     return { at: to, text: `${clockOf(arrival)} 도착 · ${deadline.lateMinutes}분 늦어요`, role: 'late' };
   }
   const leaveBy = clockOf(deadline.leaveBy);
-  const text = gated(way) ? `${leaveBy}까지 정문 통과` : `${leaveBy} 나서기`;
+  const text = gated(way) ? `${leaveBy}까지` : `${leaveBy} 나서기`;
   return { at: naming.position(start.placeId), text, role: 'leave' };
 }
 
@@ -175,7 +189,8 @@ function bandOf(way: Way, args: WayArgs, naming: WayNaming): TimeBand | null {
   };
 }
 
-// Route guidance, after a leave-by notification while the leave-by time is ahead and the walk is long enough.
+// Route guidance, after a leave-by notification while the leave-by time is ahead and the walk is long enough. From
+// off campus in time, nothing but closing: the way starts at the gate, not where the User is.
 function actionsOf(way: Way, naming: WayNaming): LookupAction[] {
   const { toPlaceId, walkMinutes, deadline, now } = way;
   const { label } = naming.to(way);
@@ -184,11 +199,13 @@ function actionsOf(way: Way, naming: WayNaming): LookupAction[] {
   if (shuttle !== null) {
     return shuttleActions(way, shuttle, naming, guide);
   }
+  if (gateInTime(way)) {
+    return [];
+  }
   if (deadline === null || deadline.leaveBy <= now || walkMinutes < REMIND_WALK_MINUTES) {
     return [guide];
   }
-  const going = gated(way) ? '지금 정문을 지나면' : '지금 나서면';
-  const text = `${going} ${dueWords(deadline)}에 맞아요 · ${label}까지 걸어서 ${walkMinutes}분`;
+  const text = `지금 나서면 ${dueWords(deadline)}에 맞아요 · ${label}까지 걸어서 ${walkMinutes}분`;
   return [{ kind: 'remind', at: koreaTime(deadline.leaveBy), text }, guide];
 }
 
@@ -227,6 +244,22 @@ function hereLookup(way: Way, naming: WayNaming): Lookup {
   };
 }
 
+// Asked about the shuttle while it is not running and nothing is due (board n21): that it is not, in the words of the
+// basis, the walk, its arrival, and no button.
+function notRunning(lookup: Lookup, way: Way, naming: WayNaming): Lookup {
+  const { toPlaceId, walkMinutes, arrival } = way;
+  const flag = { at: naming.position(toPlaceId), text: `${clockOf(arrival)} 도착 · ${naming.placeLabel(toPlaceId)}` };
+  return {
+    ...lookup,
+    lines: [
+      [part(NOT_RUNNING)],
+      [part(`${naming.to(way).label}까지 걸어서 `), part(`${walkMinutes}분`, true), part('이에요')],
+    ],
+    scene: { ...lookup.scene, flags: [{ ...flag, role: 'place' }] },
+    actions: [],
+  };
+}
+
 export function wayAnswer(args: WayArgs): WayAnswer {
   const way = wayOf(args);
   if (typeof way === 'string') {
@@ -244,5 +277,12 @@ export function wayAnswer(args: WayArgs): WayAnswer {
         band: bandOf(way, args, naming),
         actions: actionsOf(way, naming),
       };
-  return { result: 'found', way, lookup, labels: { from: naming.from(way), to: naming.to(way).label } };
+  const asked = args.about === 'shuttle' && way.shuttle === 'not running' && way.deadline === null;
+  const shown = asked ? notRunning(lookup, way, naming) : lookup;
+  return {
+    result: 'found',
+    way,
+    lookup: gated(way) ? { ...shown, note: OFF_CAMPUS_NOTE } : shown,
+    labels: { from: naming.from(way), to: naming.to(way).label },
+  };
 }

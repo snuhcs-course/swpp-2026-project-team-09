@@ -2,16 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type AnswerReply, type Lookup } from '../src/assistant/dto/answer.dto.js';
+import { QUESTION_SHOWN } from '../src/assistant/refusals/friend-question.js';
 import { MealPlanStage, type Named, planMeal, resolve } from './meal-plan.js';
 import { type Step } from './scripted-model.js';
 
 // Words that fit two Friends, at the Assistant's endpoint with the scripted model: resolveFriend answers each with full
-// name and department, and no tool takes either until a later answer names one alone. Each test asks on a Tuesday of
-// 2079, which no other file uses, as a new User.
+// name and department, and no tool takes either until a later answer names one alone, by full name only. Each test asks
+// on a Tuesday of 2079, which no other file uses, as a new User.
 
 const stage = new MealPlanStage();
 
@@ -43,6 +45,9 @@ const candidate = ({ id, name }: Named, department: string): object => ({
   name: nameText(name),
   department: departmentText(department),
 });
+
+// The Friend of a 'one', whose department never reaches the model.
+const single = ({ id, name }: Named): object => ({ id, name: nameText(name) });
 
 const resolveIn = (name: string, department: string): Step => ({
   tool: 'resolveFriend',
@@ -85,6 +90,7 @@ describe('"배고파, 민수랑 같이" with 김민수 (컴퓨터공학부) and 
       result: 'several',
       candidates: [candidate(kim, '컴퓨터공학부'), candidate(lee, '경영학과')],
       more: false,
+      note: QUESTION_SHOWN,
     });
     expect(JSON.stringify(refused)).toContain(ASKS);
     expect(replySchema.parse(response.body).answer).toBeNull();
@@ -121,7 +127,7 @@ describe('findFreeFriends after resolveFriend answered both 민수', () => {
     expect(JSON.stringify(withIds)).toContain(ASKS);
     expect(free).toMatchObject({ result: 'found', friends: [{ id: kim.id }, { id: lee.id }] });
     expect(JSON.stringify(refused)).toContain(ASKS);
-    expect(one).toEqual({ result: 'one', candidate: candidate(lee, '경영학과') });
+    expect(one).toEqual({ result: 'one', candidate: single(lee) });
     expect(plannedWith(response.body)).toEqual([stage.asker.id, lee.id]);
   });
 });
@@ -135,7 +141,7 @@ describe('Two Friends both named 김민수, of 컴퓨터공학부 and 경영학�
     const candidates = cs.id.localeCompare(biz.id) < 0 ? both : both.toReversed();
 
     await stage.send([resolve('김민수'), { text: '…' }], {}, '김민수랑 밥 먹을래');
-    expect(stage.model.toolResults()).toEqual([{ result: 'several', candidates, more: false }]);
+    expect(stage.model.toolResults()).toEqual([{ result: 'several', candidates, more: false, note: QUESTION_SHOWN }]);
 
     const response = await stage.send(
       [resolveIn('김민수', '경영'), planMeal(date, [biz.id]), { text: '…' }],
@@ -143,7 +149,7 @@ describe('Two Friends both named 김민수, of 컴퓨터공학부 and 경영학�
       '경영',
     );
 
-    expect(stage.model.toolResults()[0]).toEqual({ result: 'one', candidate: candidate(biz, '경영학과') });
+    expect(stage.model.toolResults()[0]).toEqual({ result: 'one', candidate: single(biz) });
     expect(plannedWith(response.body)).toEqual([stage.asker.id, biz.id]);
   });
 });

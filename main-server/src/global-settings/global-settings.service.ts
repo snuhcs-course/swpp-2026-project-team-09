@@ -83,7 +83,8 @@ export class GlobalSettings implements OnModuleInit {
     }));
   }
 
-  // Every registered setting with the value in effect, as list() gives it, and the labels of its allowed values and its last change.
+  // Every registered setting with the value in effect, as list() gives it, and the labels of its allowed values and
+  // its last change.
   async forAdministrators(): Promise<AdministratorSettingRow[]> {
     const latest = await this.prisma.settingChange.findMany({
       distinct: ['name'],

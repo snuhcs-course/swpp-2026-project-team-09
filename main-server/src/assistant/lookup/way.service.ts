@@ -12,6 +12,7 @@ import { PlaceLookup } from '../../places/place-lookup.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
+import { type LocationMissing } from '../dto/answer.dto.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
 import { wayAnswer, type WayAnswer, type WayArgs } from './way-lookup.js';
@@ -34,8 +35,8 @@ export class WayService {
 
   async find(
     userId: string,
-    ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null },
-    at: { now: Date; location: Position | null },
+    ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null; about?: 'shuttle' },
+    at: { now: Date; location: Position | null; locationMissing: LocationMissing },
   ): Promise<WayAnswer> {
     return wayAnswer(await this.argsFor(userId, ask, at));
   }
@@ -43,9 +44,9 @@ export class WayService {
   async argsFor(
     userId: string,
     ask: { fromPlaceId: string | null; toPlaceId: string | null; by: string | null },
-    at: { now: Date; location: Position | null },
+    at: { now: Date; location: Position | null; locationMissing?: LocationMissing },
   ): Promise<WayArgs> {
-    const { now, location } = at;
+    const { now, location, locationMissing = null } = at;
     const [user, items, { stops }, vehicles] = await Promise.all([
       this.users.findById(userId),
       this.days.itemsOn(userId, koreaDate(now)),
@@ -55,10 +56,8 @@ export class WayService {
     return {
       now,
       me: { userId, name: user.name, items },
-      location:
-        location === null
-          ? null
-          : { at: location, placeId: this.placeIdAt(location), onCampus: this.campus.contains(location) },
+      location: this.located(location),
+      locationMissing,
       ...ask,
       gatePlaceId: this.gatePlaceId(),
       travel: this.travel,
@@ -70,7 +69,14 @@ export class WayService {
     };
   }
 
-  private gatePlaceId(): string {
+  // Where the app says the User is, with the Place it is in or the nearest within 150 m, and whether it is on campus.
+  located(location: Position | null): WayArgs['location'] {
+    return location === null
+      ? null
+      : { at: location, placeId: this.placeIdAt(location), onCampus: this.campus.contains(location) };
+  }
+
+  gatePlaceId(): string {
     const placeId = this.places.placeIdOf({ placeId: null, label: MAIN_GATE, latitude: null, longitude: null });
     if (placeId === null) {
       throw new Error(`No Place ${MAIN_GATE}`);
@@ -79,11 +85,11 @@ export class WayService {
   }
 
   // The Place the position is in, or the nearest within 150 m.
-  private placeIdAt(position: Position): string | null {
+  placeIdAt(position: Position): string | null {
     return (this.places.at(position)?.place ?? this.places.nearTo(position))?.id ?? null;
   }
 
-  private placeOf(placeId: string): PlaceDto {
+  placeOf(placeId: string): PlaceDto {
     const place = this.places.byId(placeId);
     if (place === null) {
       throw new Error(`No Place ${placeId}`);

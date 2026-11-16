@@ -21,6 +21,9 @@ export const REFUSAL_KINDS = [
   'not-watched-friend',
   'not-watched-shuttle',
   'which-friend',
+  'course-and-room',
+  'other-library',
+  'for-someone-else',
 ] as const;
 
 export type RefusalKind = (typeof REFUSAL_KINDS)[number];
@@ -57,4 +60,32 @@ export interface Refusal {
 // The refusal's part of the Assistant's reply, null when there is none. A main server before P02-10 leaves it out.
 export interface WithRefusal {
   refusal?: Refusal | null;
+}
+
+// Row 8's other cases (P02-13): what the app tells the main server and what an answer says when an input is missing,
+// the same shapes as main-server `assistant/dto/answer.dto.ts`.
+
+// Why the app sends no location: the permission is not granted, or the phone's position is off campus and is not sent.
+export type LocationMissing = 'permission' | 'off-campus' | null;
+
+// The request context's part: why its location is null. Left out, it is read as null.
+export interface WithLocationMissing {
+  locationMissing?: LocationMissing;
+}
+
+// A condition chip's part, drawn in the Quest colour: `assumed` in place of a missing input, `relaxed` a condition
+// eased.
+export interface WithMark {
+  mark?: 'assumed' | 'relaxed';
+}
+
+// An answer's offers only open screens, as a refusal's `open` offers do.
+export type AnswerOffer = Extract<RefusalOffer, { kind: 'open' }>;
+
+// An answer's part when an input was missing. A main server before P02-13 leaves both out.
+export interface WithMissing {
+  // Screens the card opens beside its buttons.
+  offers?: AnswerOffer[];
+  // One short line of the card above its buttons.
+  note?: string;
 }

@@ -21,13 +21,13 @@ import { offerLocation } from './location-offer';
 // Sends words as if the User typed them, with the Friend they were said of when a cell was pressed.
 export type RefusalAsk = (words: string, tapped?: { kind: 'friend'; userId: string }) => void;
 
-type ButtonOffer = Exclude<RefusalOffer, PickFriendOffer>;
+export type ButtonOffer = Exclude<RefusalOffer, PickFriendOffer>;
 
 function isPick(offer: RefusalOffer): offer is PickFriendOffer {
   return offer.kind === 'pick-friend';
 }
 
-function isButton(offer: RefusalOffer): offer is ButtonOffer {
+export function isButton(offer: RefusalOffer): offer is ButtonOffer {
   return !isPick(offer);
 }
 
@@ -38,11 +38,20 @@ const ROUTES: Record<Exclude<RefusalScreen, 'location'>, Href> = {
   interests: '/me/interests',
 };
 
-function opened(screen: RefusalScreen): void {
+export function openScreen(screen: RefusalScreen): void {
   if (screen === 'location') {
     offerLocation();
   } else {
     router.push(ROUTES[screen]);
+  }
+}
+
+// An `ask` sends its words as if typed; an `open` opens its screen.
+export function pressOffer(offer: ButtonOffer, onAsk: (words: string) => void): void {
+  if (offer.kind === 'ask') {
+    onAsk(offer.text);
+  } else {
+    openScreen(offer.screen);
   }
 }
 
@@ -63,11 +72,7 @@ function OfferCell({ offer, main, onAsk }: OfferCellProps): ReactElement {
       accessibilityLabel={offer.label}
       accessibilityRole="button"
       onPress={() => {
-        if (offer.kind === 'ask') {
-          onAsk(offer.text);
-        } else {
-          opened(offer.screen);
-        }
+        pressOffer(offer, onAsk);
       }}
       style={({ pressed }): StyleProp<ViewStyle> => [
         styles.cell,

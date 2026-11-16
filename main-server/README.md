@@ -473,7 +473,8 @@ They are separate from the env settings in `src/common/settings.ts`, which stay 
 
 - Each one is registered in code, in `registeredSettings()` in `src/global-settings/registered-settings.ts`, with a
   name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values and a check of
-  its own, and a `label` that names a value on the Settings page. One is registered: `llm.key`, the name of the AI's key ([Assistant](#assistant)).
+  its own, and a `label` that names a value on the Settings page. One is registered: `llm.key`, the name of the AI's
+  key ([Assistant](#assistant)).
 - The table `settings` holds a row only for a setting that was saved. A setting with no row has its default. The table
   `setting_changes` keeps every save: the old and the new value, the Administrator and the time. The one row of
   `settings_revision` counts the saves.
@@ -489,16 +490,16 @@ They are separate from the env settings in `src/common/settings.ts`, which stay 
 The admin site's Settings page changes them through these routes, guarded like every `/admin` route. Any
 Administrator may change any setting.
 
-- `GET /admin/settings` lists every registered setting in the registry's order as `{ name, type, description, default,
-value, allowed, lastChange }`. `value` is the one in effect on the pod that answers; `allowed` is null when any value
-  of the type is allowed, or each allowed value as `{ value, label }`; `lastChange` is null, or the latest save as
-  `{ newValue, appliesAt }`. `llm.key` labels each key's name with its provider, such as `default (OpenRouter)`, and
-  never gives a key's value.
-- `PUT /admin/settings/:name` with `{ "value": "..." }`, the value as text, saves it and answers `200 { appliesAt }`, the
-  next minute. An unregistered name, a value of the wrong type or not allowed, or one the setting's check refuses,
+- `GET /admin/settings` lists every registered setting in the registry's order, each with `name`, `type`,
+  `description`, `default`, `value`, `allowed` and `lastChange`. `value` is the one in effect on the pod that answers;
+  `allowed` is null when any value of the type is allowed, or each allowed value as `{ value, label }`; `lastChange`
+  is null, or the latest save as `{ newValue, appliesAt }`. `llm.key` labels each key's name with its provider, such
+  as `default (OpenRouter)`, and never gives a key's value.
+- `PUT /admin/settings/:name` with `{ "value": "..." }`, the value as text, saves it and answers `200 { appliesAt }`,
+  the next minute. An unregistered name, a value of the wrong type or not allowed, or one the setting's check refuses,
   such as a key name the server has no key for, gets 400 with the reason as `message`, and nothing is saved.
-- `GET /admin/settings/history` lists the latest 100 saves, newest first, as `{ name, oldValue, newValue,
-administratorEmail, changedAt, appliesAt }`.
+- `GET /admin/settings/history` lists the latest 100 saves, newest first, each with `name`, `oldValue`, `newValue`,
+  `administratorEmail`, `changedAt` and `appliesAt`.
 
 To register a setting, add it with `defineSetting()` from `src/global-settings/registry.ts`, and read it with
 `GlobalSettings.get(THE_SETTING)`, which answers a value of its type:
@@ -1707,7 +1708,8 @@ for today and the six days after, and posts them to `/menus/collected` (see
 - `text` is the line as the page wrote it, prices and markers such as `(#)` (no meat) included. The worker sets the
   rest only when it is sure, and leaves it `null` otherwise:
   - `kind`: `heading` for a corner or section, `dish`, or `note` for hours, notices and closures such as
-    `개천절 휴무`. There is no operating hours field: hours are note lines of the meal.
+    `개천절 휴무`. Hours stay note lines of the meal here; the hours read from them are kept apart
+    ([Restaurant hours](#restaurant-hours)) and are not served by this route.
   - `name`: a dish's text without its price, when the line ends with that price.
   - `price`: in won, when the line gives exactly one price. `9,900원 / 12,400원`, or a price with a typo, stays in
     `text` alone.
@@ -1727,6 +1729,31 @@ keeps getting the last menus collected.
 
 The worker server's README says how each line is read and how to run a Collection by hand. What the collectors sent
 on the real pages is recorded in `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
+
+### Restaurant hours
+
+A message to `/menus/collected` also carries each restaurant's `hours`, which the worker read from the one hours line
+of a meal's cell (`※ 운영시간 : 11:00~14:30`; the worker server's README lists the forms it reads):
+
+```json
+{ "meal": "lunch", "opensAt": "11:00", "closesAt": "14:30", "line": "※ 운영시간 : 11:00~14:30" }
+```
+
+`RestaurantHours` (`src/menus/restaurant-hours.ts`) keeps them in `restaurant_hours`, one row for each Source,
+restaurant name, meal and kind of day (`weekday`, `saturday` or `sunday`, from the day's date), with `opensAt` and
+`closesAt` as times of day in Asia/Seoul, the line they were read from, and `readAt`, the time of the Collection that
+read them. The line stays a menu line as well.
+
+- Hours rarely change, so a Collection writes a row only when it reads other times than the kept ones, or none were
+  kept. A day whose cell has no hours line, such as a closure (`개천절 휴무`) or a day not yet filled in, leaves them.
+  When the days of one message read different times for one kind of day, the earliest day's are kept.
+- The pages give no hours for a public holiday, and the server keeps no calendar of holidays, so a holiday is read by
+  its day of the week. Whether a Restaurant serves on that day is in the day's cell
+  ([ADR 0011](../docs/adr/0011-a-restaurant-is-open-when-a-meal-cell-has-a-line-that-is-not-a-note.md)).
+- `hoursOf(restaurant, meal, date)` answers `{ opensAt, closesAt }` for a restaurant's name as `GET /menus` gives it, a
+  meal and a calendar day in Asia/Seoul, or `null` when no hours were read for that kind of day. Nothing guesses hours
+  that were never read.
+- A message without `hours`, as from a worker that does not read them, keeps the hours as they are.
 
 ## Walking route
 
@@ -2368,7 +2395,11 @@ Proposal)`.
   - **What the User fixed.** `window.from` and `window.until` narrow the meal's window; a plan that starts later than
     `from` or ends earlier than `until` says what holds it: who arrives last or leaves first, and when, or the meal's
     own serving time. `placeId` plans only the open Restaurants at that Place, and the answer says `그곳에는 여는 식당이 없어요`
-    when none is. A person's constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
+    when none is. A fixed Place that does not fit is in `dropped` with each person's `parts`, and `noPlan.lines` say who
+    stays there shortest and why (`지은은 12:31에 도착해 13분만 먹어요` / `13:00 수업에 가려면 12:44엔 나서야 해요`), or,
+    when everyone could stay 15 minutes alone, who arrives last and who leaves first. Each person's part of a meal or a
+    meet carries `arriveAt`, the earliest they can be at the place, `null` when their position is unknown. A person's
+    constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
@@ -2376,8 +2407,9 @@ Proposal)`.
     place where they
     are together longest, from the latest arrival to the earliest leave-by, at least 15 minutes; at most five Plans. The
     places are 학생회관, the buildings of `GET /study-spaces`, the Restaurants open that day, and the buildings each
-    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip.
-    `people` holds the asker and at least one Friend.
+    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip, and a
+    fixed Place that does not fit is worded as a meal's (`12:45부터 14분만 있을 수 있어요`). `people` holds the asker and
+    at least one Friend.
   - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
     person is not the User, a person who is not the User's Friend, the same User twice, a day before today or more than
     a week ahead, a constraint whose `source` is `person` (only the asker sets constraints for now), and an unknown
@@ -2544,13 +2576,15 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       Restaurants. It can answer `needs` as `findFreeTimeEvents` does. A Friend's item without a Place only leaves out
       that side's travel.
     - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
-    - `planMeal(date, meal, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
+    - `planMeal(date, meal?, friendIds?)` takes the place of `findMealRestaurants` and `showRestaurants`, and
       `PLAN_RULES` that of the meal part of the 공강 rules, for an app that sends `answer` (`gathering/`). It plans the
       meal on the map: `MealPlanService` reads each person's day, the asker's location from the request context, and a
       Friend's position only as the asker's map shows it, computes the plans and words them, and the tool puts them in
-      the reply's `answer`. It answers the model `planned` with each plan's Restaurant, clock times, meeting, and each
-      person's way in minutes, and the Restaurants dropped, or `none` with the reason, never coordinates, course names,
-      or rooms.
+      the reply's `answer`. The model gives `meal` only when the User's words name it; otherwise the server takes it by
+      the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
+      and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
+      meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
+      never coordinates, course names, or rooms.
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
@@ -2567,6 +2601,14 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the message. It answers the model `planned` with each plan's title, place, arrival, stay, leave-by, and clash in
       words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` refuses any but a
       meal's with 400 `PLAN_KIND`.
+    - `findStudyNearby(what)` and `STUDY_RULES` join for an app that sends both `answer` and `area` (`lookup/study-*`).
+      `StudyAreaService` reads the 공부공간 layer for the asker and keeps the spaces of the kind asked (`quiet`,
+      `group`, `pc`, `any`) whose building's Place lies in the request context's `viewport`. Of those the User may use
+      it picks the one with the longest stay: from when the User is ready (now, or the end of the item under way) and
+      where they set out from, the walk there, and the next item's start less the walk on to its Place. The Lookup
+      (kind `study`) fades the restricted rooms and, when 관정관 is outside the area, flags the area's edge towards it
+      (role `away`, with its `placeId`), where the phone adds its free seats. The model gets names, hours, and
+      minutes, never the area; without a `viewport` the tool answers `none`.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
@@ -2675,7 +2717,7 @@ User or the model receives, never the prompt's wording or a real model's prose.
 
 `pnpm eval` puts the cases of `eval/cases/` to the real model through the real server code and records what the model
 did (P19). It calls the provider `--provider` names with the team's key in `.env` (`OPENROUTER_API_KEY`, or
-`ANTHROPIC_API_KEY` for `anthropic`), never the key `llm.key` names, so it costs credit: it never runs in `pnpm test` or CI,
+`ANTHROPIC_API_KEY` for `anthropic`, which the command's environment may give instead), never the key `llm.key` names, so it costs credit: it never runs in `pnpm test` or CI,
 which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`) on the integration tests'
 machinery: Docker, fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and the clock fixed at
 2026-10-21 (수) 14:05 in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User, with the daily
@@ -2766,6 +2808,10 @@ and the action is read as if the words were right, so that a failure lands in th
 (`eval/p4/holdout.yaml`), which P11 does not tune on. Nothing else reaches those wordings, so `pnpm eval --world p4`
 still runs exactly the 40 cases. Its scorecard gives the pass rates and the layer rates, with what the run cost and its
 settings, and names no case, and `pnpm eval:compare` refuses its runs. `eval/p4/record.md` is the record of the suite's runs.
+
+`pnpm eval --world p4-answer` runs the cases of `eval/cases/` that name that world in the P4 world, its clock and its
+travel fixture, asked as the app asks with a context (`clientCapabilities: ['library', 'answer']`), so that the meal is
+planned on the map with `planMeal`. They are outside the suite's 40: `eval/cases/meal-clock.yaml` holds P01 ticket 21's.
 
 #### The P05 suite
 
@@ -3092,7 +3138,8 @@ src/
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
 │                                    the Shared Quests of its matches
-├── menus/                           a feature: the menus the worker collects, stored and served by day
+├── menus/                           a feature: the menus the worker collects, stored and served by day, and each
+│                                    Restaurant's hours
 ├── travel/                          Travel Time: the walking table's builder, and the provider that looks it up
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
@@ -3494,11 +3541,17 @@ names, on a failed call, or on an answer of another shape, it gives none and nev
 is kept with its normalised words as its one topic.
 
 **The topics step.** `TopicsStep.run()` takes up to 10 published Global Events that have not ended and up to 10
-recruiting Quests (Open or Approval, on a Board, with a Sub Quest ahead) that were never read, or that have no topics
-and were tried fewer than 2 times. For each it counts the try and its time (`topicsTries`, `topicsReadAt`) before it
-asks, so that two servers never ask for the same one, reads the topics of its title and description, and stores them.
-It never throws. `TopicsTimer` runs it every `TOPICS_TICK_SECONDS` seconds (0 to 3600, 60 by default; 0 never, as in
-the tests, which run the step themselves).
+recruiting Quests (Open or Approval, on a Board, with a Sub Quest ahead) that were never read, or that have no topics,
+were tried fewer than 2 times, and were last tried longer ago than the topics call's time limit (`ASSISTANT_TIMEOUT_MS`)
+and a minute, so that no server asks about a text while another's call about it may still be running; a failed call is
+tried once more at a later step. For each it counts the try and its time (`topicsTries`, `topicsReadAt`) before it
+asks, and only while the count is unchanged and the text is still unread by that rule, so that two servers never ask
+for the same one. It then reads the topics of its title and description and stores them. The topics in use are read
+once a step, and each text's topics join that list, so that two texts of one step that mean the same get the same word.
+A Quest without a Sub Quest ahead is not loaded and no try is counted, so that it is read once a new Sub Quest makes it
+recruiting. An event or a Quest edited after its topics were stored keeps them: the step does not read it again. It
+never throws. `TopicsTimer` runs it every `TOPICS_TICK_SECONDS` seconds (0 to 3600, 60 by default; 0 never, as in the
+tests, which run the step themselves).
 
 **A match** is an event or a Quest whose topics share one with the User's interests: the profile's hashtags and the
 watched interests' topics. `watched` says whether a watched interest matched, not only a hashtag. Each new match of a

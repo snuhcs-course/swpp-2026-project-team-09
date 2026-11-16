@@ -43,8 +43,16 @@ const FAILED = '답을 가져오지 못했어요.';
 const WAITING = '보는 중';
 const CLOSE = '답 닫기';
 const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
-// The request context of this ticket: the User's position, and nothing of an answer on screen yet.
-const CONTEXT = { location: ON_CAMPUS, viewport: null, tapped: null, conditions: null, planId: null };
+// The request context of this ticket: the User's position, no reason it is missing, and nothing of an answer on screen
+// yet.
+const CONTEXT = {
+  location: ON_CAMPUS,
+  locationMissing: null,
+  viewport: null,
+  tapped: null,
+  conditions: null,
+  planId: null,
+};
 
 let server: FakeServer;
 
@@ -183,23 +191,29 @@ describe('what gives way to the frame', () => {
 });
 
 describe('the request with the switch on', () => {
-  it("carries the User's position, nulls for the rest, and the capability that says the app draws answers", async () => {
+  it("carries the User's position, nulls for the rest, and the capabilities that say the app draws answers", async () => {
     const user = await openFramed();
 
     await ask(user);
 
     expect(sentBodies()).toEqual([
-      { messages: [{ role: 'user', text: ASKED }], context: CONTEXT, clientCapabilities: ['library', 'answer'] },
+      {
+        messages: [{ role: 'user', text: ASKED }],
+        context: CONTEXT,
+        clientCapabilities: ['library', 'answer', 'area'],
+      },
     ]);
   });
 
-  it('says no position while the User is off campus', async () => {
+  it('says no position while the User is off campus, and that they are off campus (P02-13)', async () => {
     givePhone({ permission: 'granted', position: OFF_CAMPUS });
     const user = await openFramed();
 
     await ask(user);
 
-    expect(sentBodies()).toEqual([expect.objectContaining({ context: { ...CONTEXT, location: null } })]);
+    expect(sentBodies()).toEqual([
+      expect.objectContaining({ context: { ...CONTEXT, location: null, locationMissing: 'off-campus' } }),
+    ]);
   });
 
   it('joins a follow-up to the same conversation, and the pill says the new words', async () => {
@@ -217,7 +231,7 @@ describe('the request with the switch on', () => {
         { role: 'user', text: '한식' },
       ],
       context: CONTEXT,
-      clientCapabilities: ['library', 'answer'],
+      clientCapabilities: ['library', 'answer', 'area'],
     });
   });
 });
