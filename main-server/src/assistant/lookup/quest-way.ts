@@ -193,7 +193,9 @@ function sceneOf(visit: Visit, base: Lookup, args: WayArgs, pick: PlacePoint): M
       ...nextPlace,
     ],
     routes: [...scene.routes, ...onward],
-    flags: [...scene.flags.filter(({ role }) => role !== 'place' && role !== 'late'), ...arrived],
+    // The plain way's arrival, and its time to set out when the next item is at the quest's Place, give way to the
+    // quest's own arrival and lines.
+    flags: [...scene.flags.filter(({ role }) => role === 'shuttle'), ...arrived],
   };
 }
 

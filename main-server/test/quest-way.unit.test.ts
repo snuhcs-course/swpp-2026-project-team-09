@@ -175,6 +175,15 @@ describe('The way to a quest, at other times', () => {
     expect(near.scene.routes.map(({ role }) => role)).toEqual(['me', 'next']);
   });
 
+  it("draws only the quest's own arrival when the next item is at the quest's Place", () => {
+    const items = [classAt(TUESDAY, '13:00', '13:50', 'NH농협두레문예관')];
+    const sameBuilding = lookupOf(cardWay('12:00', { at: '63', items }));
+    expect(sameBuilding.lines[1]).toEqual([strong('13:00 수업 전'), plain('에 다녀올 수 있어요')]);
+    expect(sameBuilding.scene.flags).toEqual([
+      { at: positionOf('67'), text: '12:08 도착 · NH농협두레문예관 2층', role: 'place' },
+    ]);
+  });
+
   it('says the User is there already, with no way and no button', () => {
     const there = lookupOf(cardWay('11:50', { at: '67' }));
     expect(there.lines[0]).toEqual([plain('지금 '), strong('NH농협두레문예관 2층'), plain('에 있어요')]);
