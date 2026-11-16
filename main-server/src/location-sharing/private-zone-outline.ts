@@ -7,7 +7,7 @@
 import { BadRequestException, HttpStatus } from '@nestjs/common';
 import { placeLabelOf } from '../assistant/gathering/place-naming.js';
 import { type CampusBoundary } from '../common/campus-boundary.js';
-import { enclosesByWinding, metresToRing, middleOf, type Position, squareMetresInside } from '../common/geometry.js';
+import { boxSidesOf, enclosesByWinding, metresToRing, middleOf, type Position } from '../common/geometry.js';
 import { type PlaceDto } from '../places/dto/place.dto.js';
 import { addPrivateZoneSchema } from './dto/private-zone.dto.js';
 
@@ -15,7 +15,9 @@ const MIN_POINTS = 3;
 const MAX_POINTS = 200;
 // So that a loop round a building at the campus's edge need not squeeze between its wall and the Boundary.
 const OFF_CAMPUS_METRES = 300;
-const MIN_SQUARE_METRES = 300;
+// An outline is too small when both sides of its bounding box are shorter. The box, not the enclosed area, decides, so
+// that a figure eight of two equal lobes, whose shoelace sum is near zero, is taken.
+const MIN_SIDE_METRES = 17;
 // The Campus Boundary's margin: the edge leans towards hiding.
 const EDGE_METRES = 10;
 
@@ -52,8 +54,9 @@ export function outlineOf(body: unknown, boundary: CampusBoundary): Position[] {
       `Each point lies within ${OFF_CAMPUS_METRES} m of the Campus Boundary, and one inside it.`,
     );
   }
-  if (squareMetresInside(outline) < MIN_SQUARE_METRES) {
-    throw zoneRefused('PRIVATE_ZONE_TOO_SMALL', `An outline encloses at least ${MIN_SQUARE_METRES} m².`);
+  const { eastWest, northSouth } = boxSidesOf(outline);
+  if (eastWest < MIN_SIDE_METRES && northSouth < MIN_SIDE_METRES) {
+    throw zoneRefused('PRIVATE_ZONE_TOO_SMALL', `An outline that fits in a ${MIN_SIDE_METRES} m square is too small.`);
   }
   return outline;
 }

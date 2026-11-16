@@ -83,22 +83,14 @@ export function middleOf(ring: readonly Position[]): Position {
   };
 }
 
-// The absolute value of the shoelace sum, with each point as metres east and north of the ring's middle. Turns of a
-// loop that crosses itself in opposite directions take from each other.
-export function squareMetresInside(ring: readonly Position[]): number {
-  const middle = middleOf(ring);
-  const east = metresPerDegreeEast(middle.latitude);
-  const x = ({ longitude }: Position): number => (longitude - middle.longitude) * east;
-  const y = ({ latitude }: Position): number => (latitude - middle.latitude) * METRES_PER_DEGREE;
-  let twice = 0;
-  let previous = ring.at(-1);
-  for (const point of ring) {
-    if (previous !== undefined) {
-      twice += x(previous) * y(point) - x(point) * y(previous);
-    }
-    previous = point;
-  }
-  return Math.abs(twice) / 2;
+// The sides of the ring's bounding box in metres, west to east as long as at the box's middle.
+export function boxSidesOf(ring: readonly Position[]): { eastWest: number; northSouth: number } {
+  const latitudes = ring.map(({ latitude }) => latitude);
+  const longitudes = ring.map(({ longitude }) => longitude);
+  return {
+    eastWest: (Math.max(...longitudes) - Math.min(...longitudes)) * metresPerDegreeEast(middleOf(ring).latitude),
+    northSouth: (Math.max(...latitudes) - Math.min(...latitudes)) * METRES_PER_DEGREE,
+  };
 }
 
 // From the position to the nearest edge of the ring.

@@ -121,7 +121,7 @@ describe('An outline refused with 400', () => {
       'PRIVATE_ZONE_INVALID',
     ],
     ['far from the campus', (): object => ({ outline: squareRound(FAR_AWAY, 100) }), 'PRIVATE_ZONE_OFF_CAMPUS'],
-    ['round less than 300 m²', (): object => ({ outline: zoneRound301(15) }), 'PRIVATE_ZONE_TOO_SMALL'],
+    ['that fits in a 17 m square', (): object => ({ outline: zoneRound301(15) }), 'PRIVATE_ZONE_TOO_SMALL'],
   ])('%s', async (_case, body, code) => {
     const user = await signInUser(app);
 

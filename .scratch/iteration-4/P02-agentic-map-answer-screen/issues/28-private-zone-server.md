@@ -17,7 +17,7 @@ The server half of the Private Zone: the User's zones, each one closed outline, 
   - `GET /users/me/private-zones` (oldest first), `POST /users/me/private-zones`, and `DELETE /users/me/private-zones/:id`, beside `PUT /users/me/master-switch`.
   - A body is checked whole: 3 to 200 points. A last point that repeats the first is dropped before counting. Anything else is 400 `PRIVATE_ZONE_INVALID`.
   - The outline may run past the Campus Boundary. Each point must lie within 300 m of it (`metresToRing` on the boundary's outline) and at least one inside it (`CampusBoundary.contains`); otherwise 400 `PRIVATE_ZONE_OFF_CAMPUS`.
-  - An outline that encloses less than 300 m² is 400 `PRIVATE_ZONE_TOO_SMALL`. The area is the absolute value of the shoelace sum, in metres around the outline's middle.
+  - An outline that fits in a 17 m square (both sides of its bounding box under 17 m, in metres around the outline's middle) is 400 `PRIVATE_ZONE_TOO_SMALL`. The box decides, not the enclosed area: a shoelace area would measure a figure eight of two equal lobes near 0 m².
   - A sixth zone is 409 `PRIVATE_ZONES_FULL`.
   - A zone that is not the User's is 404 on delete and is never listed.
 - **The label.** The server names a zone when it is made: the Place nearest the middle of the outline's bounding box, "{Place's label} 근처". With no Place near, it is "그린 구역".
@@ -47,7 +47,7 @@ The server half of the Private Zone: the User's zones, each one closed outline, 
 - [x] Unit tests:
   - the winding test, with a plain loop, a loop that crosses itself (a figure eight, and a loop drawn twice round), and a point just outside;
   - the 10 m edge;
-  - the area, and the refusal under 300 m²;
+  - the refusal of an outline inside a 17 m square, and a figure eight of two equal lobes accepted;
   - the label, with a Place near and with none.
 - [x] Integration tests over the endpoints and the upload.
 - [x] Each changed source file has its AI-generated row, and lint, format, and type checks pass.
@@ -65,17 +65,13 @@ The server half of the Private Zone: the User's zones, each one closed outline, 
 - The checks run in the order of the contract's errors: the shape and the count, off campus, too small, then the limit of five. The limit is counted under the lock of the User's row, so that two saves at once cannot make a sixth.
 - A last point is dropped only when it equals the first exactly.
 - A delete of a zone that is not the User's is 404 `PRIVATE_ZONE_NOT_FOUND`. An id that is not a UUID is 400, as for every other `:id`.
-- The outline's middle is the middle of its bounding box, for the label and for the area. The area projects each point to metres east and north of that middle, east scaled at its latitude.
+- The outline's middle is the middle of its bounding box, for the label and for the size check. The box's west-to-east side is measured in metres at that middle's latitude.
 - A Place is near when `PlaceLookup.nearTo` finds it: the Place whose point is nearest, within 150 m.
 - An upload off campus does not read the zones and answers `{ offCampus: true, privateZone: false }`.
 - `POST` takes no `Idempotency-Key`, as the contract has none: a repeat makes a second zone, up to the limit.
 - `created_at` is the database's clock.
-- A figure eight whose two lobes are of one size has a shoelace sum near zero, so it is refused as too small, by the rule above.
+- Decision 5 now measures the bounding box, not the enclosed area, so a figure eight of two equal lobes is accepted.
 - The main server's README gains a section "Private Zones" under Location Sharing.
-
-### Open for review (2026-11-16)
-
-The area is the absolute value of the shoelace sum, as the spec's decision 5 says. So a figure eight of two equal lobes comes out near 0 m² and is refused as too small, although the nonzero rule fills both lobes and would hide the User there. A fix would measure the area the nonzero rule fills, for instance by counting a grid of points inside the bounding box. The app's check in ticket 29 would need the same rule, so the area stays as the spec says until the spec's owner decides.
 
 ### Agent usage (2026-11-16)
 

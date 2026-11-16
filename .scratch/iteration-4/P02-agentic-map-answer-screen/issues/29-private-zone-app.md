@@ -30,7 +30,7 @@ The app half of the Private Zone, over the contract in the spec's section. No na
 - **Before sending.**
   - The finger's path is thinned to at most 200 points: drop a point within 6 pt of the one before it, then simplify (Douglas–Peucker) until 200 or fewer remain.
   - A path that barely moves, under 3 points after thinning, draws nothing.
-  - An outline enclosing under 300 m² shows "조금 더 크게 둘러 주세요" and is not sent.
+  - An outline that fits in a 17 m square (both sides of its bounding box under 17 m) shows "조금 더 크게 둘러 주세요" and is not sent.
   - The server's 400 answers show one line each: "캠퍼스 가까이에서만 그릴 수 있어요" for `PRIVATE_ZONE_OFF_CAMPUS` (an outline may run a little past the campus's edge), "조금 더 크게 둘러 주세요" for too small.
   - After saving, the toast "저장했어요 · 이 안에서는 친구에게 시간표만 보여요".
 - **The projection.**
@@ -43,7 +43,7 @@ The app half of the Private Zone, over the contract in the spec's section. No na
 ## Acceptance criteria
 
 - [ ] The projection's round trip at zooms 15 to 18 stays within 0.5 m, and the camera's centre falls on the view's middle (unit test).
-- [ ] Thinning keeps 200 points or fewer, and the area check refuses under 300 m² (unit tests).
+- [ ] Thinning keeps 200 points or fewer, and the size check refuses an outline inside a 17 m square but takes a figure eight of two equal lobes (unit tests).
 - [ ] Integration tests at the screens over the fake main server:
   - the row's count;
   - the pencil on, a loop drawn by a simulated pan, and the POST body (the outline);

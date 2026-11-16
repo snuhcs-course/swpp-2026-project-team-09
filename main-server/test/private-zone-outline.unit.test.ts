@@ -5,12 +5,12 @@
  ******************************************************************************/
 
 // The rules of a Private Zone's outline on rings measured in metres from one point on the campus: the winding test,
-// the 10 m edge, the area, the checks of a body and the label.
+// the 10 m edge, the checks of a body (its size among them) and the label.
 
 import { HttpException } from '@nestjs/common';
 import { z } from 'zod';
 import { CampusBoundary } from '../src/common/campus-boundary.js';
-import { encloses, enclosesByWinding, type Position, squareMetresInside } from '../src/common/geometry.js';
+import { encloses, enclosesByWinding, type Position } from '../src/common/geometry.js';
 import { outlineOf, zoneHolds, zoneLabel } from '../src/location-sharing/private-zone-outline.js';
 import { circleRound, offset, squareRound } from './zone-shapes.js';
 
@@ -57,18 +57,6 @@ describe('zoneHolds', () => {
     ['9 m out from a corner, diagonally', at(100 + 9 / Math.SQRT2, 100 + 9 / Math.SQRT2), true],
   ])('a position %s → %s', (_where, position, held) => {
     expect(zoneHolds(square, position)).toBe(held);
-  });
-});
-
-describe('squareMetresInside', () => {
-  it('is the area of a plain loop, either way round', () => {
-    expect(squareMetresInside(square)).toBeCloseTo(10_000, 0);
-    expect(squareMetresInside(square.toReversed())).toBeCloseTo(10_000, 0);
-  });
-
-  it('takes the turns of a loop that crosses itself from each other, as the shoelace sum does', () => {
-    expect(squareMetresInside(figureEight)).toBeCloseTo(0, 0);
-    expect(squareMetresInside(twiceRound)).toBeCloseTo(20_000, 0);
   });
 });
 
@@ -122,10 +110,19 @@ describe('outlineOf', () => {
     expect(refusalOf({ outline })).toBe('PRIVATE_ZONE_OFF_CAMPUS');
   });
 
-  it('refuses an outline that encloses less than 300 m², and takes one of 300 m² or more', () => {
-    expect(refusalOf({ outline: squareRound(ORIGIN, 17) })).toBe('PRIVATE_ZONE_TOO_SMALL');
-    expect(refusalOf({ outline: figureEight })).toBe('PRIVATE_ZONE_TOO_SMALL');
-    expect(refusalOf({ outline: squareRound(ORIGIN, 17.4) })).toBeNull();
+  it.each([
+    ['a square of 16.5 m', squareRound(ORIGIN, 16.5)],
+    ['a strip 16.5 m by 2 m', [at(0, 0), at(16.5, 0), at(16.5, 2), at(0, 2)]],
+  ])('refuses an outline that fits in a 17 m square, %s, as too small', (_case, outline) => {
+    expect(refusalOf({ outline })).toBe('PRIVATE_ZONE_TOO_SMALL');
+  });
+
+  it.each([
+    ['a figure eight of two equal lobes', figureEight],
+    ['a strip 17.5 m west to east and 3 m south to north', [at(0, 0), at(17.5, 0), at(17.5, 3), at(0, 3)]],
+    ['a strip 3 m west to east and 17.5 m south to north', [at(0, 0), at(3, 0), at(3, 17.5), at(0, 17.5)]],
+  ])('takes %s, whose bounding box has a side of 17 m or more', (_case, outline) => {
+    expect(refusalOf({ outline })).toBeNull();
   });
 });
 

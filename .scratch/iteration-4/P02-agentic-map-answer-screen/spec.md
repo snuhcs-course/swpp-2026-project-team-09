@@ -213,7 +213,7 @@ interface PrivateZone {
 Errors:
 - 400 `PRIVATE_ZONE_INVALID`: the shape or a count;
 - 400 `PRIVATE_ZONE_OFF_CAMPUS`: a point more than 300 m outside the Campus Boundary, or no point inside it;
-- 400 `PRIVATE_ZONE_TOO_SMALL`: the outline encloses less than 300 m², about a 17 m square;
+- 400 `PRIVATE_ZONE_TOO_SMALL`: the outline fits in a 17 m square (both sides of its bounding box under 17 m, in metres around its middle);
 - 409 `PRIVATE_ZONES_FULL`: five zones already.
 
 The server accepts a ring whose last point repeats the first and drops the repeat.
@@ -225,9 +225,9 @@ The server accepts a ring whose last point repeats the first and drops the repea
 3. **A loop that crosses itself encloses everything inside any of its turns** (nonzero winding), the same rule the screen's fill uses, so what is shown filled is what hides the User.
 4. **The edge leans towards hiding:** within 10 m of the outline counts as inside, the Campus Boundary's margin.
 5. **Too small is refused with one line:**
-   - under 300 m² enclosed, the app shows "조금 더 크게 둘러 주세요" before sending, and the server refuses it too;
+   - an outline that fits in a 17 m square (both sides of its bounding box under 17 m) gets "조금 더 크게 둘러 주세요" in the app before sending, and the server refuses it too;
    - a finger that barely moves draws nothing;
-   - the area is the absolute value of the shoelace sum in metres.
+   - the bounding box, not the enclosed area, decides. An area by the shoelace sum would measure a figure eight of two equal lobes near 0 m² and refuse it, though both lobes are filled and hidden. The box is the same simple test on both sides.
 6. **The limits:** five zones and 3 to 200 points per outline.
    - The app thins the finger's path to 200 points or fewer before saving.
    - The outline may run past the Campus Boundary, so that a loop round a building at the campus's edge need not squeeze between its wall and the line. A position off campus is never kept anyway.

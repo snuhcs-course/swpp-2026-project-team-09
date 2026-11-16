@@ -438,12 +438,12 @@ A position is inside a zone when the outline encloses it by the nonzero winding 
 loop that crosses itself hides everything the app shows filled, or when it lies within 10 m of the outline. Each upload
 reads the User's zones once by an indexed query, without a cache (`src/location-sharing/private-zones.service.ts`).
 
-| Refusal                                                                       | Status | `code`                    |
-| ----------------------------------------------------------------------------- | ------ | ------------------------- |
-| Not `{ outline }`, or fewer than 3 or more than 200 points                    | 400    | `PRIVATE_ZONE_INVALID`    |
-| A point more than 300 m outside the Campus Boundary, or none inside it        | 400    | `PRIVATE_ZONE_OFF_CAMPUS` |
-| An outline that encloses less than 300 m² (the shoelace sum's absolute value) | 400    | `PRIVATE_ZONE_TOO_SMALL`  |
-| Five zones already                                                            | 409    | `PRIVATE_ZONES_FULL`      |
+| Refusal                                                                          | Status | `code`                    |
+| -------------------------------------------------------------------------------- | ------ | ------------------------- |
+| Not `{ outline }`, or fewer than 3 or more than 200 points                       | 400    | `PRIVATE_ZONE_INVALID`    |
+| A point more than 300 m outside the Campus Boundary, or none inside it           | 400    | `PRIVATE_ZONE_OFF_CAMPUS` |
+| An outline that fits in a 17 m square: both sides of its bounding box under 17 m | 400    | `PRIVATE_ZONE_TOO_SMALL`  |
+| Five zones already                                                               | 409    | `PRIVATE_ZONES_FULL`      |
 
 ## Administrators
 
