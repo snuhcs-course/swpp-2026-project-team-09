@@ -3,6 +3,7 @@
  *
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // A type, not an interface, so that a list of positions is JSON that Prisma stores.
@@ -48,6 +49,56 @@ export function encloses(ring: readonly Position[], { latitude, longitude }: Pos
     previous = point;
   }
   return inside;
+}
+
+// Whether the ring holds the position by the nonzero winding rule, SVG's default fill: a loop that crosses itself holds
+// everything inside any of its turns, where `encloses` leaves out what two turns cover.
+export function enclosesByWinding(ring: readonly Position[], { latitude, longitude }: Position): boolean {
+  let winding = 0;
+  let previous = ring.at(-1);
+  for (const point of ring) {
+    if (previous !== undefined) {
+      // Above zero when the position lies left of the edge from previous to point.
+      const side =
+        (point.longitude - previous.longitude) * (latitude - previous.latitude) -
+        (longitude - previous.longitude) * (point.latitude - previous.latitude);
+      if (previous.latitude <= latitude && point.latitude > latitude && side > 0) {
+        winding += 1;
+      } else if (previous.latitude > latitude && point.latitude <= latitude && side < 0) {
+        winding -= 1;
+      }
+    }
+    previous = point;
+  }
+  return winding !== 0;
+}
+
+// The middle of the ring's bounding box.
+export function middleOf(ring: readonly Position[]): Position {
+  const latitudes = ring.map(({ latitude }) => latitude);
+  const longitudes = ring.map(({ longitude }) => longitude);
+  return {
+    latitude: (Math.min(...latitudes) + Math.max(...latitudes)) / 2,
+    longitude: (Math.min(...longitudes) + Math.max(...longitudes)) / 2,
+  };
+}
+
+// The absolute value of the shoelace sum, with each point as metres east and north of the ring's middle. Turns of a
+// loop that crosses itself in opposite directions take from each other.
+export function squareMetresInside(ring: readonly Position[]): number {
+  const middle = middleOf(ring);
+  const east = metresPerDegreeEast(middle.latitude);
+  const x = ({ longitude }: Position): number => (longitude - middle.longitude) * east;
+  const y = ({ latitude }: Position): number => (latitude - middle.latitude) * METRES_PER_DEGREE;
+  let twice = 0;
+  let previous = ring.at(-1);
+  for (const point of ring) {
+    if (previous !== undefined) {
+      twice += x(previous) * y(point) - x(point) * y(previous);
+    }
+    previous = point;
+  }
+  return Math.abs(twice) / 2;
 }
 
 // From the position to the nearest edge of the ring.
