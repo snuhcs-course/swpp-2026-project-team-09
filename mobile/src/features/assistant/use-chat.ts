@@ -31,6 +31,7 @@ import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
 import { useAskApp } from './app-turn';
+import { useLetGo, useWaiting } from './let-go';
 
 type Tapped = NonNullable<RequestContext['tapped']>;
 
@@ -112,6 +113,8 @@ export interface Chat {
   retry: () => void;
   // 새 대화: forgets the conversation, and a reply still on its way.
   reset: () => void;
+  // 그만: takes back the question on its way, and drops its reply when it comes.
+  stop: () => void;
   // Adds the app's own bubble, which no request sends.
   addOwn: (bubble: OwnBubble) => void;
   // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
@@ -223,7 +226,7 @@ function useBubbles(): Bubbles {
 }
 
 // The app's own bubbles, added after what was said, and the turns of a card's button.
-function useAddOwn(add: Bubbles['add']): Pick<Chat, 'addOwn' | 'addRecalculated'> {
+function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOwn' | 'addRecalculated'> {
   const addOwn = useCallback(
     ({ text, cards = [], done }: OwnBubble): void => {
       add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done });
@@ -232,11 +235,12 @@ function useAddOwn(add: Bubbles['add']): Pick<Chat, 'addOwn' | 'addRecalculated'
   );
   const addRecalculated = useCallback(
     (asked: string, answer: AnswerReply): void => {
+      takeBack();
       const parts = { cards: [], mapButtons: [], proposal: null, failure: null, recalculated: true };
       add({ role: 'user', text: asked, ...parts });
       add({ role: 'assistant', text: '', ...parts, answer });
     },
-    [add],
+    [add, takeBack],
   );
   return { addOwn, addRecalculated };
 }
@@ -310,10 +314,11 @@ export function useChat(readContext: () => RequestContext): Chat {
   const { bubbles, said, show, add } = useBubbles();
   const context = useRef(readContext);
   context.current = readContext;
-  const [waiting, setWaiting] = useState(false);
-  // Which conversation a reply belongs to: 새 대화 starts another, and a reply to the one before is dropped.
+  const { waiting, setWaiting, waitingNow } = useWaiting();
+  // Which conversation a reply belongs to: 새 대화 and 그만 start another, and a reply to the one before is dropped.
   const conversation = useRef(0);
   const { outcomes, finish, unfinish, rooms, showRoom, sent: roomsShown, forget } = useCardsKept();
+  const { reset, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow }, forget);
 
   // Asks the Assistant to answer the conversation as it stands, the User's message last.
   const ask = useCallback((): void => {
@@ -327,14 +332,16 @@ export function useChat(readContext: () => RequestContext): Chat {
         }
       },
     );
-  }, [add, said, roomsShown]);
+  }, [add, said, roomsShown, setWaiting]);
 
+  // A message while a reply is on its way takes that question back first.
   const send = useCallback(
     (text: string, tapped?: Tapped): void => {
+      takeBack();
       add({ role: 'user', text, cards: [], mapButtons: [], proposal: null, failure: null, tapped });
       ask();
     },
-    [add, ask],
+    [add, ask, takeBack],
   );
 
   const retry = useCallback((): void => {
@@ -345,14 +352,8 @@ export function useChat(readContext: () => RequestContext): Chat {
     ask();
   }, [ask, said, show]);
 
-  const reset = useCallback((): void => {
-    conversation.current += 1;
-    show([]);
-    forget();
-    setWaiting(false);
-  }, [forget, show]);
-  const own = useAddOwn(add);
-  const askApp = useAskApp({ said, show, add }, conversation, setWaiting);
+  const own = useAddOwn(add, takeBack);
+  const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
 
-  return { bubbles, waiting, send, retry, reset, ...own, askApp, outcomes, finish, unfinish, rooms, showRoom };
+  return { bubbles, waiting, send, retry, reset, stop, ...own, askApp, outcomes, finish, unfinish, rooms, showRoom };
 }

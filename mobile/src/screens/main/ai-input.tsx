@@ -29,6 +29,8 @@ interface AiInputProps {
   placeholder?: string;
   // The words of a message that failed, while that failure is the last thing said.
   restore?: Restore | null;
+  // "이전 답" at the bar's left, which shows the hidden answer frame again; null or left out for none.
+  onEarlier?: (() => void) | null;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -71,13 +73,27 @@ function useMessage(restore: Restore | null): [string, (message: string) => void
   return [message, setMessage];
 }
 
+function EarlierButton({ onPress }: { onPress: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel="이전 답"
+      accessibilityRole="button"
+      hitSlop={space[1]}
+      onPress={onPress}
+      style={styles.send}
+    >
+      <Icon color={color.ink} name="history" size={18} />
+    </Pressable>
+  );
+}
+
 // The AI input of the `Main` frame: the white bar with the placeholder and the send button. It grows with its text up
 // to 120, takes at most the characters the Assistant takes in a message, Enter starts a new line, and only the send
 // button sends, in the key colour while there is something to send. The field grows by itself, between its least and
 // its most height: nothing sets its height from its content, which would lay it out again and could swing it between
-// two heights.
+// two heights. "이전 답", when given, stands at the left as the send button does at the right.
 export function AiInput(props: AiInputProps): ReactElement {
-  const { waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요', restore } = props;
+  const { waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요', restore, onEarlier = null } = props;
   const [message, setMessage] = useMessage(restore ?? null);
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '' && !waiting;
@@ -92,9 +108,11 @@ export function AiInput(props: AiInputProps): ReactElement {
         styles.bar,
         { bottom: AI_INPUT.bottom + lift },
         height > AI_INPUT.height && { borderRadius: BAR_RADIUS_TALL },
+        onEarlier !== null && styles.barEarlier,
       ]}
       testID="ai-input"
     >
+      {onEarlier === null ? null : <EarlierButton onPress={onEarlier} />}
       <TextInput
         accessibilityLabel="AI에게 메시지"
         maxLength={USER_MESSAGE_MAX}
@@ -138,6 +156,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
+  barEarlier: { paddingLeft: space[1] },
   field: {
     ...text.bodyLg,
     flex: 1,

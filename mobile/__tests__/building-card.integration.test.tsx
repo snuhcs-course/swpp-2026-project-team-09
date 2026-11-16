@@ -183,7 +183,7 @@ describe("a14's Friend line", () => {
 
 // Partitions: the card while it is asked, after a failure, and "다시 시도".
 describe("a building's card before its answer", () => {
-  it('says "보는 중이에요" under the Place\'s name while it is asked', async () => {
+  it('waits with the dots, labelled "보는 중이에요", under the Place\'s name while it is asked', async () => {
     answerBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     server.on('POST /assistant/taps', { status: 200, body: TAP_LOOKUPS.a1, afterMs: 2000 });
     await openMain();
@@ -191,9 +191,10 @@ describe("a building's card before its answer", () => {
     await tapGround();
 
     expect(buildingCard().getByRole('header', { name: '63동' })).toBeVisible();
-    expect(buildingCard().getByText('보는 중이에요')).toBeVisible();
-    await pass(2000);
+    expect(buildingCard().getByLabelText('보는 중이에요')).toBeVisible();
     expect(buildingCard().queryByText('보는 중이에요')).toBeNull();
+    await pass(2000);
+    expect(buildingCard().queryByLabelText('보는 중이에요')).toBeNull();
     expect(factLines()).toHaveLength(3);
   });
 

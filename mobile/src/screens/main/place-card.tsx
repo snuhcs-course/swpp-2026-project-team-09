@@ -10,7 +10,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
 import type { LookupAction, LookupCard } from '@/api/lookup-types';
 import type { Place } from '@/api/types';
-import { Button, color, RoundIcon, space, text } from '@/design-system';
+import { Button, color, RoundIcon, space, text, WaitingDots } from '@/design-system';
 import { useTapAnswer } from '@/features/assistant/use-tap-answer';
 import { cardId } from '@/features/map/adapter';
 import { Chips } from './answer/lookup-card';
@@ -145,7 +145,7 @@ function Answered({ card, chips, basis, onFriend, ...buttons }: AnsweredProps): 
 function NotYet({ failed, onRetry }: { failed: boolean; onRetry: () => void }): ReactElement {
   return (
     <View style={styles.notYet}>
-      <Text style={styles.status}>{failed ? '답을 가져오지 못했어요' : '보는 중이에요'}</Text>
+      {failed ? <Text style={styles.status}>답을 가져오지 못했어요</Text> : <WaitingDots label="보는 중이에요" />}
       {failed ? (
         <Button onPress={onRetry} variant="secondary">
           다시 시도
@@ -156,7 +156,7 @@ function NotYet({ failed, onRetry }: { failed: boolean; onRetry: () => void }): 
 }
 
 // The card of a building pressed on the everyday map (P02 ticket 22): the Place's name while the main server is
-// asked, with "보는 중이에요", then its card. A failure says so, with "다시 시도". A Friend's line opens that
+// asked, with the waiting dots ("보는 중이에요"), then its card. A failure says so, with "다시 시도". A Friend's line opens that
 // Friend's card, "가는 길" starts the route guidance and closes the card, and a `plan` button opens its answer in
 // the frame.
 export function PlaceCard({ place, selection, chat, route, onHeight }: PlaceCardProps): ReactElement {

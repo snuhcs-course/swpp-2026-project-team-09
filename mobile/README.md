@@ -621,15 +621,30 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   in their layer's colour, 식사 메뉴 추천 (식당), 현재 통학/순환 셔틀 위치 (셔틀버스) and 파티 찾기 (the Party's), with
   the line "대화 내용은 AI 제공자에게 전송돼요" (`answer/asked-examples.tsx`); a press sends the example as the
   User's message. Once something is asked, what the User asked last stands as a pill at the top left with "답 닫기"
-  (✕), and one white card at the bottom of the screen holds the rest of the turn (`turn.ts`) without bubbles, "보는
-  중이에요" while the Assistant works, with the bar under it ("이어서 말하기"). A reply whose answer has a Plan shows the
+  (✕) and the round "새 대화" at its right, and one white card at the bottom of the screen holds the rest of the turn
+  (`turn.ts`) without bubbles, with the bar under it ("이어서 말하기"). While the Assistant works, the card shows the
+  waiting dots (`WaitingDots`, read aloud as "보는 중") and the round stop button "그만". A reply whose answer has a Plan shows the
   Plan's two lines (`answer-lines.tsx`) in place of the model's sentence; any other reply is drawn with the chat's own
   parts (`chat-bubbles.tsx`'s `BubbleParts`): the text as Markdown, the cards with their buttons, a Proposal, the map
   buttons, and "다시 시도" under a failure. The lists, the row of buttons, 편의기능, the zoom control, the shuttle's
-  notice, the selected thing's card, and the tabs give way, and a marker takes no press. ✕ and Android's back button
-  forget the conversation, a reply on its way included; a map button forgets it and turns its layer on; another card
-  leads where it does and leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above
-  the card once it is laid out.
+  notice, the selected thing's card, and the tabs give way, and a marker takes no press. Another card leads where it
+  does and leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it
+  is laid out.
+  - Leaving the frame hides it and keeps the conversation (`use-kept-conversation.ts`): ✕, Android's back button, a
+    card's "닫기", a map button, which also turns its layer on, and the start of route guidance. A reply on its way
+    still comes and is kept. While the frame is hidden, the map is the everyday map, without the answer's marks, and
+    its presses and cards work as without a conversation; the AI input has the round "이전 답" at its left, which shows
+    the frame again at the turn on screen as it was, with the answer's marks and camera. A message sent from the
+    everyday map goes on with the conversation and shows the frame, and so does any turn a card's button or a mark
+    asks. "새 대화" forgets the conversation and closes the frame; it is the only way the conversation is forgotten
+    while the app runs. "그만" takes the question on its way back and drops its reply when it comes: the frame shows
+    the turn before, or closes when there is none.
+  - When the conversation has turns before the one on screen, "지난 답 N개" at the top of the card opens them above
+    it, read-only (`earlier-turns.tsx`): for each, the words asked and the reply's lines, a Plan's first Plan's, a
+    Lookup's, or any other reply's words. "접기" closes them.
+  - While the keyboard is up, the card shows one line in place of its content, cut to fit (`keyboard-headline.tsx`):
+    the headline of the turn on screen, which is the Plan's first line as its card draws it, the Lookup's title, or
+    the reply's first line, or the dots while the reply is on its way. The map is left as it is.
   - The conversation (`chat-sheet.tsx`, whose chat sheet is gone, and `useChat()` in
     `src/features/assistant/use-chat.ts`) lives in memory, held by the main screen, so it stays while the app runs and
     restarting the app loses it. The server stores none of it. Each message sends the latest 20 messages of the
@@ -717,12 +732,12 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   "초대하지 못했어요. 잠시 후 다시 시도해 주세요". The made Quest's card shows the chips without a press, each Friend's
   with the state ("민수 · 아직 안 봄", "수락", "거절", "5분 늦음", "빠짐"), "파티를 만들고 초대를 보냈어요" and "답이 없어도
   12:15에 가면 돼요", the Quest's steps in three columns (`quest-steps.tsx`: a white number on navy, the start, and
-  the title), and "닫기" across the card, which closes the answer as ✕ does. The latest word counts
+  the title), and "닫기" across the card, which hides the answer as ✕ does. The latest word counts
   (`invited-friends.ts`): a signal of an answer heard after the Quest's members were last read, else those members
   ("빠짐" for a Friend no longer among them), else the reply's invitations; a Friend's face on the map carries "?"
   while invited and "✓" once in (accepted or late), its name read aloud the state after the name, and its tag the
-  state alone beside a face that shows the whole name ("아직 안 봄"). A new answer, another Plan, or ✕ drops
-  the made Quest from the screen.
+  state alone beside a face that shows the whole name ("아직 안 봄"). A new answer, another Plan, or "새 대화" drops
+  the made Quest from the screen; ✕ hides it with the frame, and "이전 답" brings it back.
 - **A made Quest after closing** (`src/features/assistant/made-quests.ts`, `made-quest-ids.ts`, `use-made-quests.ts`,
   `use-made-quest-card.ts`, `answer/made-quest-frame.tsx`, `made-quest-line.tsx`). Nothing the server sends tells a
   Quest made from a Plan from a matched Shared Quest or a library booking's, so the phone keeps the id of each Quest
@@ -1448,6 +1463,8 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   - `Switch`, React Native's switch in navy, and `SwitchRow` with a label and a description.
   - `EmptyState` (the caller's words in `inkFaint`), `LoadingState` ("불러오는 중") and `ErrorState` ("불러오지
     못했어요" and "다시 시도").
+  - `WaitingDots`: three dots of 8 that pulse in turn while something is on its way, still where the phone asks for
+    less motion, read aloud as the words they stand for ("보는 중", "보는 중이에요").
 - **Toast**: the design system has none and the wireframes use one. It is the `Main` wireframe's: a dark bar from 16
   to 16 from the sides with a check mark before its words, and no shadow. `useToast()` gives the call that shows a sentence for 2.4
   seconds, or for the time given as its second argument (`showToast(words, 2000)`), and `useNotReadyToast()` the call

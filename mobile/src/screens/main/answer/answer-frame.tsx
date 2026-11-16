@@ -26,8 +26,10 @@ import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import type { Room } from '../layout';
 import { AnswerLines } from './answer-lines';
 import { AnswerPill } from './answer-pill';
+import { EarlierTurns } from './earlier-turns';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { HowAboutCard } from './how-about-card';
+import { KeyboardHeadline } from './keyboard-headline';
 import { LookupCard } from './lookup-card';
 import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
@@ -126,13 +128,16 @@ interface FrameCardProps {
   stageHeight: number | null;
   onHeight: (height: number) => void;
   testID: string;
-  // Null leaves the card empty, as while the keyboard is up.
+  // Null leaves the card empty.
   children: ReactNode;
 }
 
-// The most the card's content takes, about half the stage, null until the stage is laid out.
+// The most the card's content takes, about half the stage, null until the stage is laid out. It never takes less
+// than the headline's line, which is all it shows while the keyboard is up and leaves little of the stage.
+const LEAST_CONTENT = CONTENT_TOP + text.title.lineHeight;
+
 function contentMaxOf(stageHeight: number | null, barRoom: number): number | null {
-  return stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom);
+  return stageHeight === null ? null : Math.max(LEAST_CONTENT, stageHeight / 2 - barRoom);
 }
 
 // The frame's card, attached to the bottom of the screen. Its content scrolls inside it.
@@ -159,8 +164,8 @@ export function FrameCard({ barRoom, stageHeight, onHeight, testID, children }: 
   );
 }
 
-// The card at the bottom: the turn's bubbles without a bubble around them, or "보는 중" with 그만, and under them the
-// room of the bar. Its content gives way to the keyboard.
+// The card at the bottom: "지난 답 N개", the turn's bubbles without a bubble around them, or the dots with 그만, and
+// under them the room of the bar. While the keyboard is up, the turn's headline stands in place of its content.
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose } = props;
   const { bubbles, waiting, retry } = control.chat;
@@ -169,8 +174,11 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   const contentMax = contentMaxOf(stageHeight, barRoom);
   return (
     <FrameCard barRoom={barRoom} onHeight={onHeight} stageHeight={stageHeight} testID="answer-card">
-      {keyboardUp ? null : (
+      {keyboardUp ? (
+        <KeyboardHeadline control={control} />
+      ) : (
         <>
+          <EarlierTurns bubbles={bubbles} />
           {after.map((bubble) => (
             <View key={bubble.id} style={styles.part}>
               <BubbleParts
@@ -194,7 +202,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
               />
             </View>
           ))}
-          {waiting ? <WaitingReply onStop={onClose} /> : null}
+          {waiting ? <WaitingReply onStop={control.chat.stop} /> : null}
         </>
       )}
     </FrameCard>
@@ -211,14 +219,19 @@ interface FramedProps {
 }
 
 // The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
-// ✕ and Android's back button forget the conversation, a reply on its way included; while a building is asked about
-// over the answer ("여기면 어때?"), they return to the answer instead, and the pill names the building. A Friend's profile opened from
-// the card stands over it until a new reply; while it is shown, the back button hides it alone. This handler is the
-// only one, and listens only while the main screen is in front, so a screen pushed from the profile goes back to it.
+// ✕, Android's back button, and a card's "닫기" hide the frame and keep the conversation, a reply on its way included;
+// "새 대화" forgets it. While a building is asked about over the answer ("여기면 어때?"), ✕ and back return to the
+// answer instead, and the pill names the building. A Friend's profile opened from the card stands over it until a new
+// reply; while it is shown, the back button hides it alone. This handler is the only one, and listens only while the
+// main screen is in front, so a screen pushed from the profile goes back to it.
 function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
-  const { chat, leaving } = control;
+  const { chat, leaving, hide } = control;
   const { reset } = chat;
   const close = useCallback((): void => {
+    Keyboard.dismiss();
+    hide();
+  }, [hide]);
+  const forget = useCallback((): void => {
     Keyboard.dismiss();
     reset();
   }, [reset]);
@@ -234,6 +247,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
         asked={title ?? turnOf(chat.bubbles)?.asked ?? ''}
         icon={title === null ? pillIconOf(chat.bubbles) : 'pin'}
         onClose={leave}
+        onNew={forget}
       />
       <AnswerCard
         barRoom={barRoom}
@@ -258,7 +272,7 @@ interface AnswerFrameProps {
   room: Room;
 }
 
-// The answer frame over the map while the conversation holds something.
+// The answer frame over the map while the conversation holds something and the frame was not left.
 export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: AnswerFrameProps): ReactElement | null {
   return control.framed ? (
     <Framed

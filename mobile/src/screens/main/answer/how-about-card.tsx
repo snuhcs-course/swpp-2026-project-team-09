@@ -7,7 +7,7 @@
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { AnswerLine, Plan } from '@/api/assistant-types';
-import { Button, color, font, space, text } from '@/design-system';
+import { Button, color, font, space, text, WaitingDots } from '@/design-system';
 import { type HowAboutRow, howAboutOf, noteOf, rowsOf } from '@/features/assistant/how-about';
 import type { HowAbout } from '@/features/assistant/use-how-about';
 
@@ -48,7 +48,7 @@ function WarningLines({ lines }: { lines: readonly AnswerLine[] }): ReactElement
 // The card of a building pressed while a meal's Plan is on screen: "여기면 어때?" over the Place's name, one row per
 // person with when they get there, and the time together against the Plan on screen, with "여기로 바꾸기" and "그대로".
 // A Place that does not fit has the kicker in the warning colour, the rows of the Place that was dropped, the server's
-// two lines, and "그대로" alone. While it is asked the card says "보는 중이에요".
+// two lines, and "그대로" alone. While it is asked the card shows the waiting dots ("보는 중이에요").
 export function HowAboutCard({ howAbout, current }: HowAboutCardProps): ReactElement | null {
   const { place, title, reply, keep, change } = howAbout;
   if (place === null) {
@@ -64,7 +64,7 @@ export function HowAboutCard({ howAbout, current }: HowAboutCardProps): ReactEle
           {title}
         </Text>
       </View>
-      {answer === null ? <Text style={styles.asking}>보는 중이에요</Text> : null}
+      {answer === null ? <WaitingDots label="보는 중이에요" /> : null}
       {answer?.fits === true ? (
         <>
           <Rows rows={rowsOf(answer.plan.parts)} />
@@ -101,7 +101,6 @@ const styles = StyleSheet.create({
   fits: { color: color.quest },
   unfit: { color: color.warning },
   title: { ...text.title, color: color.ink },
-  asking: { ...text.body, color: color.inkMuted },
   rows: { gap: space[1] },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
   name: { ...text.body, color: color.ink },

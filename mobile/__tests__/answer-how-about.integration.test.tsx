@@ -104,6 +104,23 @@ function rows(): string[] {
     );
 }
 
+// Partitions: the card while its answer is on its way.
+describe('a pressed Place while it is asked', () => {
+  it('waits with the dots, labelled "보는 중이에요", until the answer comes', async () => {
+    await askOnMap(server, REPLY);
+    server.on('GET /places/at', { status: 200, body: { place: JAHAYEON, relation: 'inside' } });
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_PLACE, afterMs: 1000 });
+    await tapGround();
+    await pass(100);
+
+    expect(screen.getByText('여기면 어때?')).toBeVisible();
+    expect(card().getByLabelText('보는 중이에요')).toBeVisible();
+    expect(card().queryByText('보는 중이에요')).toBeNull();
+    await pass(1000);
+    expect(card().queryByLabelText('보는 중이에요')).toBeNull();
+  });
+});
+
 // Partitions: a Place that fits, its request, its card, its map, and "여기로 바꾸기". Expected values: board a7.
 describe('a pressed Place that fits (a7)', () => {
   it('asks with the conditions on screen and only the Place changed', async () => {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback } from 'react';
@@ -25,9 +26,11 @@ export function useAskApp(
   { said, show, add }: Pick<Bubbles, 'said' | 'show' | 'add'>,
   conversation: { readonly current: number },
   setWaiting: (waiting: boolean) => void,
+  takeBack: () => void,
 ): Chat['askApp'] {
   return useCallback(
     async (asked: string, reply: () => Promise<AnswerReply>): Promise<'shown' | 'forgotten' | 'failed'> => {
+      takeBack();
       const before = said.current;
       const asking = conversation.current;
       add({ role: 'user', text: asked, cards: [], mapButtons: [], proposal: null, failure: null });
@@ -45,6 +48,6 @@ export function useAskApp(
       add({ role: 'assistant', text, cards: [], mapButtons: [], proposal: null, failure: null, answer });
       return 'shown';
     },
-    [add, conversation, said, setWaiting, show],
+    [add, conversation, said, setWaiting, show, takeBack],
   );
 }
