@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -109,8 +110,8 @@ export class LeaderService {
     });
   }
 
-  // The Holder goes as one who dropped the Quest, with their progress. Nothing records the removal, so the User may
-  // enter again.
+  // The Holder goes as one who dropped the Quest, with their progress. The removal is kept, so that the User comes back
+  // only by the Leader's approval (QuestRemoval).
   async remove(userId: string, questId: string, holderId: string): Promise<void> {
     await this.changeAsLeader(
       userId,
@@ -120,6 +121,7 @@ export class LeaderService {
           throw notHolder();
         }
         await this.quests.removeHolder(questId, holderId, tx);
+        await tx.questRemoval.create({ data: { questId, userId: holderId } });
       },
       holderId,
     );

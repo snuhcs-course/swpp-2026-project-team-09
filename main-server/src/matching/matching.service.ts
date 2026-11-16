@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
@@ -17,7 +18,8 @@ import {
 } from '../quests/matching-quests.service.js';
 import { QuestsService } from '../quests/quests.service.js';
 import { RecruitingService } from '../quests/recruiting.service.js';
-import { conflict } from '../quests/refusals.js';
+import { conflict, removedAsk } from '../quests/refusals.js';
+import { removed } from '../quests/removals.js';
 import { UsersService } from '../users/users.service.js';
 import {
   EligibleAnswerDto,
@@ -120,18 +122,22 @@ export class MatchingService {
     };
   }
 
-  // Makes the User a Holder under the rules of entering a Quest, as long as the Quest is Open and its capacity is the
-  // size the User asked for. A User who holds the Quest already, such as one who joined it after the match server read
-  // the eligible Quests, is answered as entered. The User is locked before that check, as entering locks it.
+  // Makes the User a Holder under the rules of entering a Quest, as long as the Quest is Open, its capacity is the size
+  // the User asked for, and its Leader did not remove the User. A User who holds the Quest already, such as one who
+  // joined it after the match server read the eligible Quests, is answered as entered. The User is locked before that
+  // check, as entering locks it.
   async place({ questId, userId, size }: PlacementDto): Promise<MatchQuestDto> {
     const { holderIds, entered } = await this.prisma.$transaction(async (tx) => {
       await this.users.lock(userId, tx);
       if ((await tx.questHolder.count({ where: { questId, userId } })) > 0) {
         return { holderIds: await this.quests.holderIds(questId, tx), entered: false };
       }
-      const entering = await this.recruiting.enter(questId, userId, tx, ({ joinPolicy, capacity }) => {
+      const entering = await this.recruiting.enter(questId, userId, tx, async ({ joinPolicy, capacity }) => {
         if (joinPolicy !== JoinPolicy.open) {
           throw conflict('QUEST_NOT_OPEN', 'Matching places Users into Open Quests only.');
+        }
+        if (await removed(tx, questId, userId)) {
+          throw removedAsk();
         }
         if (capacity !== size) {
           throw conflict('QUEST_CAPACITY_DIFFERS', "The Quest's capacity is not the size the User asked for.");

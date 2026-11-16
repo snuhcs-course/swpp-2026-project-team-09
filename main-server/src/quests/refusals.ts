@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { ConflictException, ForbiddenException, HttpStatus, NotFoundException } from '@nestjs/common';
@@ -28,6 +29,10 @@ export const notLeader = (): ForbiddenException =>
   });
 
 export const alreadyHolder = (): ConflictException => conflict('ALREADY_HOLDER', 'The User holds this Quest already.');
+
+// A User the Leader removed comes back only by the Leader's approval.
+export const removedAsk = (): ConflictException =>
+  conflict('QUEST_REMOVED_ASK', 'The Leader removed you from this Quest: ask to join it instead.');
 
 export const sharedQuestHeld = (): ConflictException =>
   conflict('SHARED_QUEST_HELD', 'The User holds a Shared Quest for this Global Event.');

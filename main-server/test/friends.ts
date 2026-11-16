@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -58,6 +59,11 @@ export function lookUpFriendId(app: INestApplication<Server>, accessToken: strin
 
 export function sendFriendRequest(app: INestApplication<Server>, from: TestUser, friendId: string): request.Test {
   return withAccessToken(request(app.getHttpServer()).post('/friend-requests'), from.accessToken).send({ friendId });
+}
+
+// By user id, as a 파티's member rows send it.
+export function sendFriendRequestTo(app: INestApplication<Server>, from: TestUser, userId: string): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post('/friend-requests'), from.accessToken).send({ userId });
 }
 
 export function getFriendRequests(app: INestApplication<Server>, user: TestUser): request.Test {

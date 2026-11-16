@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -211,6 +212,16 @@ describe('A placement into a Quest that does not take the User', () => {
     const response = await place(questId, user);
 
     expect(response.body).toMatchObject(refused(409, 'QUEST_ENDED'));
+  });
+
+  it('is refused for a User the Leader removed from the Quest, who comes back only by asking', async () => {
+    const [leader, user] = await Promise.all([signInUser(app), signInUser(app)]);
+    const questId = await questWith(await storeEvent(prisma), [leader]);
+    await prisma.questRemoval.create({ data: { questId, userId: user.id } });
+
+    const response = await place(questId, user);
+
+    expect(response.body).toMatchObject(refused(409, 'QUEST_REMOVED_ASK'));
   });
 });
 

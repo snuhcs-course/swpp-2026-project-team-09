@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -16,22 +17,24 @@ import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import {
+  JoinRequestUserDto,
+  QuestRemovalDto,
   toWaitingDto,
   toWaitingUserDto,
   WAITING_INCLUDE,
   WAITING_USER_INCLUDE,
   WaitingDto,
-  WaitingUserDto,
 } from './dto/waiting.dto.js';
 import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
 import { alreadyHolder, conflict, notFound, notLeader, notRecruiting, sharedQuestHeld } from './refusals.js';
+import { removed } from './removals.js';
 
 const joinRequestNotFound = (): NotFoundException =>
   notFound('QUEST_JOIN_REQUEST_NOT_FOUND', 'No such request to join waits for this answer from this User.');
 
-// Requests to join an Approval Quest. A request waits until the User withdraws it or the Leader answers it, and ends
+// Requests to join an Approval Quest, or an Open one the Leader removed the User from (QuestRemoval). A request waits until the User withdraws it or the Leader answers it, and ends
 // with the Quest and when the User enters it in any way (RecruitingService.enter). Withdrawing and answering lock the
 // User who asked first, so that one request gets one of them.
 @Injectable()
@@ -48,7 +51,7 @@ export class JoinRequestsService {
   ) {}
 
   // A Closed Quest is answered as unknown, as joining it is. A User who holds the Quest alone for its Global Event may
-  // ask, and loses that Quest on being accepted.
+  // ask, and loses that Quest on being accepted. An Open Quest takes a request only from a User the Leader removed.
   async ask(userId: string, questId: string): Promise<WaitingDto> {
     const { request, leaderId } = await this.prisma.$transaction(async (tx) => {
       await this.quests.lock(questId, tx);
@@ -63,7 +66,7 @@ export class JoinRequestsService {
       if (quest.joinPolicy === JoinPolicy.closed) {
         throw notRecruiting();
       }
-      if (quest.joinPolicy === JoinPolicy.open) {
+      if (quest.joinPolicy === JoinPolicy.open && !(await removed(tx, questId, userId))) {
         throw conflict('QUEST_NOT_APPROVAL', 'This Quest is Open: join it instead.');
       }
       if ((await tx.questJoinRequest.findUnique({ where: { questId_userId: { questId, userId } } })) !== null) {
@@ -106,15 +109,31 @@ export class JoinRequestsService {
     this.signals.send([leaderId], 'quests-changed');
   }
 
-  // The requests to the Quest, the newest first.
-  async listReceived(leaderId: string, questId: string): Promise<WaitingUserDto[]> {
-    await this.leader.ledBy(questId, leaderId);
-    const requests = await this.prisma.questJoinRequest.findMany({
-      where: { questId },
-      include: WAITING_USER_INCLUDE,
-      orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
+  // The Quests the Leader removed the User from since the User last entered each, the latest first.
+  async listRemovals(userId: string): Promise<QuestRemovalDto[]> {
+    const removals = await this.prisma.questRemoval.findMany({
+      where: { userId },
+      orderBy: [{ createdAt: 'desc' }, { questId: 'desc' }],
     });
-    return requests.map((request) => toWaitingUserDto(request));
+    return removals.map(({ questId, createdAt }) => ({ questId, removedAt: createdAt.toISOString() }));
+  }
+
+  // The requests to the Quest, whatever its Join Policy, the newest first, each marked when the Leader removed its User
+  // before.
+  async listReceived(leaderId: string, questId: string): Promise<JoinRequestUserDto[]> {
+    await this.leader.ledBy(questId, leaderId);
+    const [requests, removals] = await Promise.all([
+      this.prisma.questJoinRequest.findMany({
+        where: { questId },
+        include: WAITING_USER_INCLUDE,
+        orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
+      }),
+      this.prisma.questRemoval.findMany({ where: { questId }, select: { userId: true } }),
+    ]);
+    const removedIds = new Set(removals.map(({ userId }) => userId));
+    return requests.map((request) =>
+      Object.assign(toWaitingUserDto(request), { removedBefore: removedIds.has(request.userId) }),
+    );
   }
 
   // Whatever the Join Policy is by now: accepting is the Leader's own decision, as an invitation is.

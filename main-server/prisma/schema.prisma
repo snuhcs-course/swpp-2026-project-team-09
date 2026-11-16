@@ -26,6 +26,7 @@
 // 2026-11-15  Opus 5.5   prompted by fyoon46
 // 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-16  Opus 5.5   prompted by fyoon46
+// 2026-11-16  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -77,6 +78,7 @@ model User {
   questJoinRequests QuestJoinRequest[]
   questInvitations  QuestInvitation[]
   questDeclines     QuestDecline[]
+  questRemovals     QuestRemoval[]
   meetupsProposed   Meetup[]           @relation("MeetupProposer")
   meetupsReceived   Meetup[]           @relation("MeetupReceiver")
   partyMember       PartyMember?
@@ -570,6 +572,7 @@ model Quest {
   joinRequests  QuestJoinRequest[]
   invitations   QuestInvitation[]
   declines      QuestDecline[]
+  removals      QuestRemoval[]
   party         Party?
   // As a Global Event's (README.md: Interests).
   topics        String[]           @default([])
@@ -707,6 +710,21 @@ model QuestDecline {
   @@unique([questId, userId])
   @@index([userId])
   @@map("quest_declines")
+}
+
+// A User the Leader removed from a Quest, who comes back only by the Leader's approval: joining refuses, and asking to
+// join is taken even by an Open Quest. It goes when the User enters the Quest again, and with the Quest or the User.
+// Leaving writes none.
+model QuestRemoval {
+  questId   String   @map("quest_id") @db.Uuid
+  quest     Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([questId, userId])
+  @@index([userId])
+  @@map("quest_removals")
 }
 
 // A group of Users who are together now (README.md: Party). It ends, and its row is deleted, when its last member

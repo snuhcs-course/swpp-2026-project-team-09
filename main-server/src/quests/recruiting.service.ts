@@ -10,6 +10,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -32,7 +33,8 @@ import {
 } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
 import { type RecruitingSearch, recruitingSearchCounts, recruitingSearchHits } from './recruiting-search.js';
-import { alreadyHolder, conflict, notRecruiting, sharedQuestHeld } from './refusals.js';
+import { alreadyHolder, conflict, notRecruiting, removedAsk, sharedQuestHeld } from './refusals.js';
+import { removed } from './removals.js';
 
 // A Quest of the list that the reader can still enter, with all its Sub Quests.
 export interface EnterableQuest {
@@ -98,6 +100,11 @@ export class RecruitingService {
       select: { questId: true },
     });
     const askedIds = new Set(asked.map(({ questId }) => questId));
+    const removals = await this.prisma.questRemoval.findMany({
+      where: { userId: readerId },
+      select: { questId: true },
+    });
+    const removedIds = new Set(removals.map(({ questId }) => questId));
     const sharedEvents = await this.sharedQuestEvents(readerId);
     const now = this.clock.now();
     return quests
@@ -106,6 +113,7 @@ export class RecruitingService {
           toRecruitingQuestDto(quest, now) !== null &&
           quest.holders.length < quest.capacity &&
           !askedIds.has(quest.id) &&
+          !(quest.joinPolicy === JoinPolicy.open && removedIds.has(quest.id)) &&
           (quest.globalEventId === null || !sharedEvents.has(quest.globalEventId)),
       )
       .map((quest) => ({ id: quest.id, title: quest.title, subQuests: subQuestContentsOf(quest) }));
@@ -142,15 +150,18 @@ export class RecruitingService {
     });
   }
 
-  // Joining an Open Quest, which makes the User a Holder at once.
+  // Joining an Open Quest, which makes the User a Holder at once, unless the Leader removed the User from it.
   async join(userId: string, questId: string): Promise<QuestDto> {
     const holderIds = await this.prisma.$transaction((tx) =>
-      this.enter(questId, userId, tx, ({ joinPolicy }) => {
+      this.enter(questId, userId, tx, async ({ joinPolicy }) => {
         if (joinPolicy === JoinPolicy.closed) {
           throw notRecruiting();
         }
         if (joinPolicy === JoinPolicy.approval) {
           throw conflict('QUEST_NOT_OPEN', 'The Leader accepts each User who asks to join this Quest.');
+        }
+        if (await removed(tx, questId, userId)) {
+          throw removedAsk();
         }
       }),
     );
@@ -161,9 +172,9 @@ export class RecruitingService {
 
   // Makes the User a Holder of the Quest within its capacity and under the one-Quest rule for its Global Event: a Quest
   // the User held alone for the event is deleted, and a Shared Quest held for it refuses. Ends the User's request to
-  // join the Quest, invitation into it, and decline of one. Every way into a Quest ends here; `admits` refuses whom that
-  // way does not take, once the Quest is locked. Locks the User and then the Quests in the order of their ids, so lock
-  // no Quest before. Answers the Holders to tell, the User included.
+  // join the Quest, invitation into it, decline of one, and removal from it. Every way into a Quest ends here; `admits`
+  // refuses whom that way does not take, once the Quest is locked. Locks the User and then the Quests in the order of
+  // their ids, so lock no Quest before. Answers the Holders to tell, the User included.
   async enter(
     questId: string,
     userId: string,
@@ -199,6 +210,7 @@ export class RecruitingService {
     await tx.questJoinRequest.deleteMany({ where: { questId, userId } });
     await tx.questInvitation.deleteMany({ where: { questId, userId } });
     await tx.questDecline.deleteMany({ where: { questId, userId } });
+    await tx.questRemoval.deleteMany({ where: { questId, userId } });
     return [...quest.holders.map((holder) => holder.userId), userId];
   }
 }

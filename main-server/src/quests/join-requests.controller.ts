@@ -3,12 +3,19 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
-import { type AskToJoinDto, askToJoinSchema, WaitingDto, WaitingUserDto } from './dto/waiting.dto.js';
+import {
+  type AskToJoinDto,
+  askToJoinSchema,
+  JoinRequestUserDto,
+  QuestRemovalDto,
+  WaitingDto,
+} from './dto/waiting.dto.js';
 import { JoinRequestsService } from './join-requests.service.js';
 
 @Controller()
@@ -32,11 +39,16 @@ export class JoinRequestsController {
     return this.joinRequests.withdraw(user.id, id);
   }
 
+  @Get('quest-removals')
+  listRemovals(@CurrentUser() user: SignedInUser): Promise<QuestRemovalDto[]> {
+    return this.joinRequests.listRemovals(user.id);
+  }
+
   @Get('quests/:questId/join-requests')
   listReceived(
     @CurrentUser() user: SignedInUser,
     @Param('questId', { schema: z.uuid() }) questId: string,
-  ): Promise<WaitingUserDto[]> {
+  ): Promise<JoinRequestUserDto[]> {
     return this.joinRequests.listReceived(user.id, questId);
   }
 
