@@ -2,7 +2,9 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +13,7 @@ import { ApiError } from '@/api/errors';
 import { roomRequests } from '@/api/room-requests';
 import { field, isText } from '@/api/server/answers';
 import { isLibraryCardData } from '@/api/server/library-card-answers';
+import { leavingOnPurpose } from '@/features/quests/leaving';
 
 // The phone's map from a room booking's BSEQNO to the room request it was booked for. It stays on the phone: the
 // server is told only that the booking of a request was cancelled, never its number.
@@ -52,9 +55,18 @@ export async function reportRoomCancelled(bseqno: number): Promise<void> {
   if (requestId === undefined) {
     return;
   }
-  try {
-    await roomRequests.cancelled(requestId);
-  } catch {
+  const cancel = async (): Promise<boolean> => {
+    try {
+      await roomRequests.cancelled(requestId);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  // A booking party goes with the cancel. It leaves the User's list by their own doing, and is not told as a removal.
+  const request = await roomRequests.get(requestId).catch(() => null);
+  const reported = request?.madeForBooking === true ? await leavingOnPurpose(request.questId, cancel) : await cancel();
+  if (!reported) {
     return;
   }
   const { [String(bseqno)]: _gone, ...rest } = map;

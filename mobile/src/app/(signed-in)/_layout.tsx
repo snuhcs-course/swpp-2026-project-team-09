@@ -9,6 +9,7 @@
  * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -16,7 +17,7 @@ import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams
 import { Stack as JsStack, type StackNavigationOptions } from 'expo-router/js-stack';
 import { type ReactElement, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { MatchingWatch } from '@/features/events/matching-watch';
+import { GoneQuestsWatch } from '@/features/quests/gone-watch';
 import { VersionsAtLaunch } from '@/features/timetable/use-versions';
 import { useEdgeCloser } from '@/hooks/use-back-to-close';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
@@ -57,7 +58,6 @@ const ABOVE_TABS: readonly (readonly [name: string, edge: Edge])[] = [
   ['boards/[board]', 'right'],
   ['post/[questId]', 'right'],
   ['party-form', 'right'],
-  ['matching', 'right'],
 ];
 
 // A screen above the tabs slides in from its edge, and appears without sliding where the phone asks for less motion.
@@ -130,8 +130,9 @@ function useInviteLinks(here: boolean): void {
 
 // The signed-in place: a User who agreed to the legal documents and finished Onboarding. The tabs, and the screens
 // that cover them. The User's position is watched here, once for all of them, and sent
-// from here while the Master Switch is on, in front and, where the User chose it, in the background. The User's requests
-// for Matching are watched here too, and a switch of timetable versions left unfinished is finished from here.
+// from here while the Master Switch is on, in front and, where the User chose it, in the background. The User's
+// Quests are watched here too, to tell a 파티 the User was taken out of, and a switch of timetable versions left
+// unfinished is finished from here.
 export default function SignedInLayout(): ReactElement {
   const reduceMotion = useReduceMotion();
   const away = useOwnPlace('ready');
@@ -144,7 +145,7 @@ export default function SignedInLayout(): ReactElement {
     <PositionProvider>
       <PositionSending>
         <BackgroundSharingProvider>
-          <MatchingWatch />
+          <GoneQuestsWatch />
           <VersionsAtLaunch />
           <AboveTabs reduceMotion={reduceMotion} />
         </BackgroundSharingProvider>

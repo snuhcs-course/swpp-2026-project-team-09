@@ -24,3 +24,9 @@ In the same pull request, AI matching leaves the app: the "✦ AI 매칭" entry 
 - [ ] The "A 파티 that is gone" and "AI matching in the main UI" rows of `he-revision-log.md` get this pull request.
 
 ## Comments
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 1.5 hours, one session up to opening #260, of which a few minutes on a full suite that was stopped (estimate).
+- Tokens: about 13.9M input, of which about 13.5M cache reads and 0.35M cache writes, and about 70k output, including two code-review subagents (about 0.8M input and 10k output of that). The review loop after the PR opened is not counted.
+- The seven changed test files pass (84 tests); the full app suite was not run locally and is left to CI.
