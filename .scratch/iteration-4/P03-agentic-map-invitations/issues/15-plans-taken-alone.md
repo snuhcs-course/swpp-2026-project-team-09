@@ -70,9 +70,10 @@ Rules 1 to 8 are the orchestrating session's (`solo-quests/rule.md`). They are k
 15. **A Friend going alone to an event is a candidate** of a new party for it, as entering leaves the Quest held alone (`holderIdsFor(id, false)` leaves out Quests held alone).
 16. **"여기로" takes "길 안내"'s cell** on an events Plan and is the main one. Three equal cells fit; four would not. The taken card's "닫기" starts the same guidance, as board Alone 3 guides after "여기로". A Plan where the User already is only closes.
 17. **In the app**, 내 파티 leaves out a Quest taken alone. The Quest list's kicker and label and the map card's sub-label say "퀘스트". The phone keeps no made-Quest flag for it, as that flag counts invited Friends. The toast for a Quest taken while the answer changed is "여기로 정했어요", and a failed "여기로" says "답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요", since it invites nobody.
-18. **The push sheet** is asked after "여기로", as after "이대로 초대" and "이대로 모집".
-19. **The mock** answers an events Plan of its stored answer taken alone with a reply worked out by hand from the main server's rule (job fair 15:12, concert 17:42, company session none), and its `dropQuest` ends the Quest it made. The meal's mock is package D's.
-20. `QuestsService.columnsOf` moved to `quests/sub-quest-columns.ts`, unchanged, to keep `quests.service.ts` under the 300-line limit.
+18. **No "파티에서 빠졌어요" for a Quest taken alone.** The watch that tells a 파티 leaving the list (`GoneQuestsWatch`) leaves out Quests taken alone, since only the User ends one: by "다시 고르기", by entering a 파티 for its event, or by its time passing. Package D found the toast after "다시 고르기" on the emulator.
+19. **The push sheet** is asked after "여기로", as after "이대로 초대" and "이대로 모집".
+20. **The mock** answers an events Plan of its stored answer taken alone with a reply worked out by hand from the main server's rule (job fair 15:12, concert 17:42, company session none), and its `dropQuest` ends the Quest it made. The meal's mock is package D's.
+21. `QuestsService.columnsOf` moved to `quests/sub-quest-columns.ts`, unchanged, to keep `quests.service.ts` under the 300-line limit.
 
 ### Emulator check (2026-11-16)
 
