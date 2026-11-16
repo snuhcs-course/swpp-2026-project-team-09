@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
-import { askForCards, card, expectNoWrite, inCard, pressIn, startLibraryChat } from './support/library-chat';
+import { askForCards, card, expectNoWrite, inCard, inFrame, pressIn, startLibraryChat } from './support/library-chat';
 
 // The seats card's seat numbers and its hint, against the fake main server and the fake library: the large view
 // draws each seat's number and the small map none, and the hint tells the User a free seat books on a tap.
@@ -106,7 +107,7 @@ describe('the seat hint', () => {
     await askForCards({ server, library }, [SEATS_CARD], { words: '좌석현황' });
     await laidOut();
 
-    expect(screen.getByText('오늘은 예약 시간이 끝났어요')).toBeVisible();
+    expect(inFrame().getByText('오늘은 예약 시간이 끝났어요')).toBeVisible();
     expect(screen.queryByText(HINT)).toBeNull();
   });
 });

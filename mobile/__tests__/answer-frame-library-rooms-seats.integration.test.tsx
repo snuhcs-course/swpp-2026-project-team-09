@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -21,17 +22,20 @@ import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { FAKE_ROOM_FORM, type FakeLibrary } from './support/kwanjeong/fake-library';
 import {
+  ASK_CONTEXT,
   askForCards,
   card,
   expectNothingOfTheLibrarySent,
   expectNoWrite,
   inCard,
+  inFrame,
   pressIn,
+  sendFromBar,
   startLibraryChat,
 } from './support/library-chat';
 
-// The room book card and the seats card in the chat, and what a chat request sends of a library card, against the
-// fake main server and the fake library. M4: no test sees a write before the confirm press.
+// The room book card and the seats card in the answer frame, and what a request to the Assistant sends of a library
+// card, against the fake main server and the fake library. M4: no test sees a write before the confirm press.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -117,10 +121,10 @@ describe('the room book card', () => {
         },
       },
     ]);
-    expect(screen.getByText('G412 예약되었어요!')).toBeVisible();
-    expect(screen.getByLabelText('방 G412')).toBeVisible();
+    expect(inFrame().getByText('G412 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByLabelText('방 G412')).toBeVisible();
     expect(screen.queryByText(/좌석배정기/u)).toBeNull();
-    expect(screen.getByText(/사용 다했으면 꼭 반납처리를 해주세요!/u)).toBeVisible();
+    expect(inFrame().getByText(/사용 다했으면 꼭 반납처리를 해주세요!/u)).toBeVisible();
     expectNothingOfTheLibrarySent(server, ['G412']);
   });
 });
@@ -174,19 +178,19 @@ describe('the seats card', () => {
     await askForCards({ server, library }, [SEATS_CARD], { words: '지금 관정 7층 좌석현황 보고 싶어' });
     await laidOut(2529 / 10);
 
-    const image = screen.getByTestId('seat-map-small-image');
+    const image = inFrame().getByTestId('seat-map-small-image');
     expect(image.props.source).toEqual({ uri: seatMapUrl(17202) });
     const scale = 252.9 / 2529;
     expect(image).toHaveStyle({ width: 252.9, height: (252.9 * 1198) / 2529 });
     // 7193 is at 538, 41 on the image.
-    expect(screen.getByRole('button', { name: '7193번 빈 자리' })).toHaveStyle({
+    expect(inFrame().getByRole('button', { name: '7193번 빈 자리' })).toHaveStyle({
       left: 538 * scale,
       top: 41 * scale,
       width: 33 * scale,
       height: 28 * scale,
       backgroundColor: '#F89200',
     });
-    expect(screen.getByText(/관정관 7층 7A 열람실 2 구역 · 지금 기준 · 빈 자리 \d+석/u)).toBeVisible();
+    expect(inFrame().getByText(/관정관 7층 7A 열람실 2 구역 · 지금 기준 · 빈 자리 \d+석/u)).toBeVisible();
     expect(library.requestsTo('getSeatBookingList')[0]?.body).toMatchObject({ bookTime: '1600-1800', useTime: '120' });
     expectNoWrite(library);
   });
@@ -197,7 +201,7 @@ describe('the seats card', () => {
     await laidOut(300);
 
     expect(screen.queryByRole('button', { name: '7193번 빈 자리' })).toBeNull();
-    expect(screen.getByTestId('seat-7193')).toHaveStyle({ backgroundColor: '#F3F0E6' });
+    expect(inFrame().getByTestId('seat-7193')).toHaveStyle({ backgroundColor: '#F3F0E6' });
   });
 });
 
@@ -226,25 +230,24 @@ describe('the seats card, large and tapped', () => {
     const rooms = card(libraryCard('seats:6F-studio:2026-11-02', 'seats', { space: STUDIO, date: '2026-11-02' }));
     await askForCards({ server, library }, [rooms], { words: '스튜디오 빈 시간' });
 
-    expect(screen.getByLabelText('STUDIO A 09:00–17:00')).toBeVisible();
+    expect(inFrame().getByLabelText('STUDIO A 09:00–17:00')).toBeVisible();
     expectNoWrite(library);
   });
 });
 
-describe('the chat request', () => {
+describe('the request to the Assistant', () => {
   it('says the app draws library cards, and sends a library card back by its key alone', async () => {
     const chat = await askForCards({ server, library }, [SEATS_CARD], { words: '좌석현황' });
 
     expect(server.received('POST /assistant/messages')[0]?.body).toEqual({
-      clientCapabilities: ['library'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet'],
+      context: ASK_CONTEXT,
       messages: [{ role: 'user', text: '좌석현황' }],
     });
-    await chat.user.type(screen.getByLabelText('AI에게 메시지'), '고마워');
-    await chat.user.press(screen.getByRole('button', { name: '보내기' }));
-    await pass(500);
+    await sendFromBar(chat.user, '고마워');
 
     expect(server.received('POST /assistant/messages')[1]?.body).toMatchObject({
-      clientCapabilities: ['library'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet'],
       messages: [
         { role: 'user' },
         { role: 'assistant', cards: [{ kind: 'library', id: 'seats:7F-7A-zone2:2026-11-02' }] },
@@ -264,7 +267,7 @@ describe('the seats card after closing time', () => {
 
     expect(screen.queryByRole('button', { name: '자리 예약하기' })).toBeNull();
     expect(screen.queryByRole('button', { name: '7193번 빈 자리' })).toBeNull();
-    expect(screen.getByText('오늘은 예약 시간이 끝났어요')).toBeVisible();
+    expect(inFrame().getByText('오늘은 예약 시간이 끝났어요')).toBeVisible();
     expectNoWrite(library);
   });
 });

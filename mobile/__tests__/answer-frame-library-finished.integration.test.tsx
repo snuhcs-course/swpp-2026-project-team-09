@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -17,14 +18,15 @@ import {
   card,
   expectNoWrite,
   inCard,
+  inFrame,
   pressIn,
-  reopenChat,
+  redrawFrame,
   SEAT_CARD,
   startLibraryChat,
 } from './support/library-chat';
 
-// A library card that booked, cancelled, returned or was dismissed, when the chat sheet closes and opens again: the
-// chat keeps how it ended, so it offers no confirm button again.
+// A library card that booked, cancelled, returned or was dismissed, when the answer frame's card is drawn anew after
+// the keyboard gave way: the conversation keeps how it ended, so it offers no confirm button again.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -56,27 +58,27 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('a finished seat card when the chat opens anew', () => {
+describe('a finished seat card when the frame draws it anew', () => {
   it('shows that it booked, and offers no 예약하기 nor another seat', async () => {
-    const chat = await askForCards({ server, library }, [SEAT_CARD]);
+    await askForCards({ server, library }, [SEAT_CARD]);
     await pressIn(inCard(SEAT_TEST_ID), '예약하기');
     expect(library.writes()).toHaveLength(1);
 
-    await reopenChat(chat.user);
+    await redrawFrame();
 
     const shown = inCard(SEAT_TEST_ID);
     expect(shown.getByText('예약했어요')).toBeVisible();
     expect(shown.queryByRole('button', { name: '예약하기' })).toBeNull();
     expect(shown.queryByText(/7194번/u)).toBeNull();
-    expect(screen.getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
     expect(library.writes()).toHaveLength(1);
   });
 
   it('stays declined after 닫기', async () => {
-    const chat = await askForCards({ server, library }, [SEAT_CARD]);
+    await askForCards({ server, library }, [SEAT_CARD]);
     await pressIn(inCard(SEAT_TEST_ID), '닫기');
 
-    await reopenChat(chat.user);
+    await redrawFrame();
 
     expect(inCard(SEAT_TEST_ID).getByText('예약하지 않았어요')).toBeVisible();
     expect(inCard(SEAT_TEST_ID).queryByRole('button', { name: '예약하기' })).toBeNull();
@@ -84,13 +86,13 @@ describe('a finished seat card when the chat opens anew', () => {
   });
 });
 
-describe('a finished cancel or return card when the chat opens anew', () => {
+describe('a finished cancel or return card when the frame draws it anew', () => {
   it('shows the cancel done, with no 취소하기', async () => {
     library.addBooking(bookingRow());
-    const chat = await askForCards({ server, library }, [CANCEL], { words: '오늘 예약 취소해줘' });
+    await askForCards({ server, library }, [CANCEL], { words: '오늘 예약 취소해줘' });
     await pressIn(inCard(`library-cancel-${CANCEL.library.key}`), '취소하기');
 
-    await reopenChat(chat.user);
+    await redrawFrame();
 
     const shown = inCard(`library-cancel-${CANCEL.library.key}`);
     expect(shown.getByText('예약을 취소했어요')).toBeVisible();
@@ -100,10 +102,10 @@ describe('a finished cancel or return card when the chat opens anew', () => {
 
   it('shows the return done, with no 반납하기', async () => {
     library.addBooking(bookingRow({ STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' }));
-    const chat = await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
+    await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
     await pressIn(inCard(`library-return-${RETURN.library.key}`), '반납하기');
 
-    await reopenChat(chat.user);
+    await redrawFrame();
 
     const shown = inCard(`library-return-${RETURN.library.key}`);
     expect(shown.getByText('반납했어요. 이용해 주셔서 고마워요!')).toBeVisible();
@@ -112,13 +114,13 @@ describe('a finished cancel or return card when the chat opens anew', () => {
   });
 });
 
-describe('a card whose write is on its way when the chat opens anew', () => {
+describe('a card whose write is on its way when the frame draws it anew', () => {
   it('shows the booking in progress with no 예약하기, then the result once the library answers', async () => {
-    const chat = await askForCards({ server, library }, [SEAT_CARD]);
+    await askForCards({ server, library }, [SEAT_CARD]);
     library.holdWrites();
     await pressIn(inCard(SEAT_TEST_ID), '예약하기');
 
-    await reopenChat(chat.user);
+    await redrawFrame();
 
     expect(inCard(SEAT_TEST_ID).queryByRole('button', { name: '예약하기' })).toBeNull();
     expect(inCard(SEAT_TEST_ID).getByText('예약하는 중이에요')).toBeVisible();
@@ -128,16 +130,16 @@ describe('a card whose write is on its way when the chat opens anew', () => {
     await pass(0);
 
     expect(inCard(SEAT_TEST_ID).getByText('예약했어요')).toBeVisible();
-    expect(screen.getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
     expect(library.writes()).toHaveLength(1);
   });
 
-  it('offers 예약하기 again when the held write fails after the sheet opened anew', async () => {
-    const chat = await askForCards({ server, library }, [SEAT_CARD]);
+  it('offers 예약하기 again when the held write fails after the card was drawn anew', async () => {
+    await askForCards({ server, library }, [SEAT_CARD]);
     library.holdWrites();
     library.refuseBookings('예약 가능 시간이 아닙니다.');
     await pressIn(inCard(SEAT_TEST_ID), '예약하기');
-    await reopenChat(chat.user);
+    await redrawFrame();
 
     library.release();
     await pass(0);

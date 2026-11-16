@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
@@ -12,20 +13,23 @@ import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { type FakeLibrary, TAKEN_SEAT_MESSAGE } from './support/kwanjeong/fake-library';
 import {
+  ASK_CONTEXT,
   askForCards,
   card,
   expectNothingOfTheLibrarySent,
   expectNoWrite,
   inCard,
+  inFrame,
   pressIn,
   SEAT_CARD,
+  sendFromBar,
   startLibraryChat,
 } from './support/library-chat';
 import { navigate } from './support/library-session';
-import { AI_INPUT } from './support/lists';
 
-// The book card of a reading-room seat in the chat (MainChatLibReserve) and its done message (MainChatLibReserved),
-// against the fake main server and the fake library. M4: no test sees a write before the confirm press.
+// The book card of a reading-room seat in the answer frame (MainChatLibReserve) and its done message
+// (MainChatLibReserved), against the fake main server and the fake library. M4: no test sees a write before the
+// confirm press.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -129,14 +133,14 @@ describe('예약하기 on the seat book card', () => {
         },
       },
     ]);
-    const done = screen.getByTestId('library-done');
-    expect(screen.getByText('7193번 예약되었어요!')).toBeVisible();
-    expect(screen.getByLabelText('장소 관정관 (62-1동) 7층 7A 열람실 2 구역')).toBeVisible();
-    expect(screen.getByLabelText('좌석 7193번')).toBeVisible();
-    expect(screen.getByLabelText('시간 오늘 17:00–18:00')).toBeVisible();
-    expect(screen.getByLabelText('예약 번호 2000001')).toBeVisible();
-    expect(screen.getByText(/30분 안에 좌석배정기\(키오스크\)에서 확인해 주세요/u)).toBeVisible();
-    expect(screen.getByText(/사용 다했으면 꼭 반납처리를 해주세요!/u)).toBeVisible();
+    const done = inFrame().getByTestId('library-done');
+    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByLabelText('장소 관정관 (62-1동) 7층 7A 열람실 2 구역')).toBeVisible();
+    expect(inFrame().getByLabelText('좌석 7193번')).toBeVisible();
+    expect(inFrame().getByLabelText('시간 오늘 17:00–18:00')).toBeVisible();
+    expect(inFrame().getByLabelText('예약 번호 2000001')).toBeVisible();
+    expect(inFrame().getByText(/30분 안에 좌석배정기\(키오스크\)에서 확인해 주세요/u)).toBeVisible();
+    expect(inFrame().getByText(/사용 다했으면 꼭 반납처리를 해주세요!/u)).toBeVisible();
     expect(done).toBeVisible();
     expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();
   });
@@ -147,14 +151,13 @@ describe('the done message', () => {
     const chat = await askForCards({ server, library }, [SEAT_CARD]);
     await press('예약하기');
 
-    await chat.user.type(screen.getByLabelText(AI_INPUT), '고마워');
-    await chat.user.press(screen.getByRole('button', { name: '보내기' }));
-    await pass(500);
+    await sendFromBar(chat.user, '고마워');
 
     const sent = server.received('POST /assistant/messages');
     expect(sent).toHaveLength(2);
     expect(sent[1]?.body).toEqual({
-      clientCapabilities: ['library'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet'],
+      context: ASK_CONTEXT,
       messages: [
         { role: 'user', text: '관정 7층 열람실 17시에 한 시간 예약해줘' },
         { role: 'assistant', text: '카드에서 확인해 주세요.', cards: [{ kind: 'library', id: SEAT_CARD.library.key }] },
@@ -186,7 +189,7 @@ describe('닫기 and 다른 자리 고르기 on the seat book card', () => {
 
     await press('닫기');
 
-    expect(screen.getByText('알겠어요. 예약하지 않았어요.')).toBeVisible();
+    expect(inFrame().getByText('알겠어요. 예약하지 않았어요.')).toBeVisible();
     expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();
     expectNoWrite(library);
     expect(server.received('POST /assistant/messages')).toHaveLength(1);
@@ -217,7 +220,7 @@ describe('the seat book card when no seat is free', () => {
 
     expect(seatCard().getByText('그 시간에 빈 자리가 없어요')).toBeVisible();
     await press('좌석 현황 보기');
-    expect(screen.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황이에요.')).toBeVisible();
+    expect(inFrame().getByText('관정관 7층 7A 열람실 2 구역 좌석 현황이에요.')).toBeVisible();
     expectNoWrite(library);
   });
 });
@@ -304,6 +307,6 @@ describe("the seat book card's network and session", () => {
     await pass(0);
 
     expect(library.writes()).toHaveLength(2);
-    expect(screen.getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
   });
 });
