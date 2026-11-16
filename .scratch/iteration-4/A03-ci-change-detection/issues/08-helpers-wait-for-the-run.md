@@ -29,7 +29,7 @@ The Mac was shared with other sessions' test runs, which slowed it greatly.
 
 - All 15 files together, twice. First: 12 files passed, and one test each in `same-event-choice`, `same-event-queue` and `same-event-races` ran out of its 5 seconds. Second: 11 files passed; `judgement-settings`, `same-event-judged` and `same-event-unplaced` ran out of their 60 seconds while starting their servers, before any test, and one test in `same-event-detach` ran out of its 5 seconds.
 - Each file that failed there passed when run again with the change: `same-event-choice`, `same-event-queue` and `same-event-races` together 36 of 36, and `same-event-detach` 10 of 10. The other three had passed in the first run. With the helpers of `4.0/Main`, the same runs gave the same results at about the same times; "makes one call for one post" took 2.4 s with the change and 2.6 s without.
-- No time-out was in a step of the helpers: the starting hooks call none of them, and the change waits only for a run that the files' tests already wait for through its posts.
+- The starting hooks that ran out call none of the helpers. Where the four tests' time went is not known; none of them ran out when run again, with or without the change.
 
 ### Agent usage (2026-11-16)
 
