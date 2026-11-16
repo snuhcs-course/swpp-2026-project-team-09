@@ -101,7 +101,7 @@ describe('the marks the map draws as marks', () => {
   });
 });
 
-// Partitions: the switch's cards of events matched and not, a Friend, a party matched and one already a card.
+// Partitions: the cards of events matched and not, a Friend, a party matched and one already a card.
 // Expected values: the ticket, other events are not on the map and a recruiting party gets a party card.
 // The interest marks choose among every event.
 const MARKED = { globalEvents: [JOB, CONCERT], friends: [friendView(MIN_JUN)], forInterestMarks: true };

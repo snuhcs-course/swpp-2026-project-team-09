@@ -14,7 +14,6 @@ import {
   ANSWER_CAPABILITIES,
   type AssistantReply,
   type ChatCard,
-  CLIENT_CAPABILITIES,
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
@@ -34,9 +33,8 @@ import { isLookup } from './lookup-answers';
 import { isAnswerReply } from './plan-answers';
 import { isRefusal } from './refusal-answers';
 
-// The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request says
-// that this app draws library cards (`clientCapabilities`), and one with a context that it draws an answer on the map.
-// A request without a context stays as before P01-01, which a main server of before takes.
+// The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request carries
+// the context and says that this app draws library cards and an answer on the map (`clientCapabilities`).
 
 function isMapLayer(value: unknown): value is MapLayer {
   return MAP_LAYERS.some((layer) => layer === value);
@@ -152,10 +150,7 @@ function isAssistantReply(value: unknown): value is AssistantReply {
 
 export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer' | 'answerTap'> = {
   askAssistant: async (messages, context) => {
-    const body =
-      context === undefined
-        ? { messages, clientCapabilities: CLIENT_CAPABILITIES }
-        : { messages, context, clientCapabilities: ANSWER_CAPABILITIES };
+    const body = { messages, context, clientCapabilities: ANSWER_CAPABILITIES };
     const reply = await call('POST', '/assistant/messages', isAssistantReply, { body });
     return { ...reply, cards: reply.cards.map(filled) };
   },

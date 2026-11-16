@@ -13,6 +13,7 @@
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiClient } from '@/api/client';
 import { forgetMockSwitch } from '@/api/mock/client';
 import { resetMockFriendships } from '@/api/mock/friendships';
 import { resetMockInterests } from '@/api/mock/interests';
@@ -22,7 +23,6 @@ import { resetMockTimetable } from '@/api/mock/timetable';
 import { forgetMockMatching } from '@/api/mock/events';
 import { forgetMockFavorites } from '@/api/mock/global-events';
 import { resetMockTutorial } from '@/api/mock/tutorial';
-import { forgetAnswerSwitch } from '@/features/assistant/answer-switch';
 
 const SETTINGS = [
   'EXPO_PUBLIC_SIGN_IN_ENDING',
@@ -36,7 +36,7 @@ const SETTINGS = [
 ] as const;
 
 // A phone that keeps nothing, an app started without development settings, the mock's friendships, classes, watched
-// interests, made Quests, and Private Zones as they start, and the switch of the answer on the map not yet read.
+// interests, made Quests, and Private Zones as they start.
 export async function startFresh(): Promise<void> {
   resetMockFriendships();
   resetMockTimetable();
@@ -51,7 +51,12 @@ export async function startFresh(): Promise<void> {
   forgetMockMatching();
   forgetMockFavorites();
   resetMockTutorial();
-  forgetAnswerSwitch();
+}
+
+// The everyday map without interest marks (P05 ticket 13), as a main server without the matches draws it: the map's
+// events keep their own markers, for the tests of those markers over the mocks, whose matches would draw marks.
+export function withoutInterestMarks(): void {
+  jest.spyOn(apiClient, 'listInterestMatches').mockResolvedValue(null);
 }
 
 // Lets a mock's wait pass and gives its answer. Use with Jest's fake timers.

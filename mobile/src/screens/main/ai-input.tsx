@@ -7,6 +7,7 @@
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -17,16 +18,12 @@ import type { Restore } from '@/features/assistant/restore';
 import { AI_INPUT } from './layout';
 
 interface AiInputProps {
-  // Whether the chat is open: the bar is its input then, and its border is the focus ring.
-  chatOpen: boolean;
-  // Focusing the bar opens the chat.
-  onOpen: () => void;
   // Nothing is sent while the Assistant works on the message before.
   waiting: boolean;
   onSend: (text: string) => void;
   // How much higher than its place the bar stands: over the keyboard while it is up, 0 while it is down.
   lift: number;
-  // The bar's height, 50 for a line, so that the chat keeps its last bubble clear of the bar.
+  // The bar's height, 50 for a line, so that the answer frame's card keeps its content clear of the bar.
   onHeight: (height: number) => void;
   // In place of "무엇이든 부탁해 보세요".
   placeholder?: string;
@@ -46,7 +43,7 @@ const BAR_RADIUS = 28;
 const BAR_RADIUS_TALL = 22;
 
 // The bar's height from its own layout, whole: a change under 1 is no change. What it sets, the corners and the room
-// the chat keeps, does not change it.
+// the answer frame's card keeps, does not change it.
 function useBarHeight(onHeight: (height: number) => void): [number, (event: LayoutChangeEvent) => void] {
   const [height, setHeight] = useState<number>(AI_INPUT.height);
   const laidOut = ({ nativeEvent }: LayoutChangeEvent): void => {
@@ -74,14 +71,13 @@ function useMessage(restore: Restore | null): [string, (message: string) => void
   return [message, setMessage];
 }
 
-// The AI input of the `Main` frame: the white bar with the placeholder and the send button. Focusing it opens the
-// chat, and it stays at the bottom as the chat's input. It grows with its text up to 120, takes at most the characters
-// the Assistant takes in a message, Enter starts a new line, and only the send button sends, in the key colour while
-// there is something to send.
-// The field grows by itself, between its least and its most height: nothing sets its height from its content, which
-// would lay it out again and could swing it between two heights.
+// The AI input of the `Main` frame: the white bar with the placeholder and the send button. It grows with its text up
+// to 120, takes at most the characters the Assistant takes in a message, Enter starts a new line, and only the send
+// button sends, in the key colour while there is something to send. The field grows by itself, between its least and
+// its most height: nothing sets its height from its content, which would lay it out again and could swing it between
+// two heights.
 export function AiInput(props: AiInputProps): ReactElement {
-  const { chatOpen, onOpen, waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요', restore } = props;
+  const { waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요', restore } = props;
   const [message, setMessage] = useMessage(restore ?? null);
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '' && !waiting;
@@ -95,7 +91,6 @@ export function AiInput(props: AiInputProps): ReactElement {
       style={[
         styles.bar,
         { bottom: AI_INPUT.bottom + lift },
-        chatOpen && styles.open,
         height > AI_INPUT.height && { borderRadius: BAR_RADIUS_TALL },
       ]}
       testID="ai-input"
@@ -105,8 +100,6 @@ export function AiInput(props: AiInputProps): ReactElement {
         maxLength={USER_MESSAGE_MAX}
         multiline
         onChangeText={setMessage}
-        onFocus={onOpen}
-        onPressIn={onOpen}
         placeholder={placeholder}
         placeholderTextColor={color.inkMuted}
         style={styles.field}
@@ -145,7 +138,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  open: { borderColor: color.focusRing },
   field: {
     ...text.bodyLg,
     flex: 1,

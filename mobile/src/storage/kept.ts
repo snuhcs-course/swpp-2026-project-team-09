@@ -6,6 +6,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,8 +35,6 @@ export interface Kept {
   backgroundRunning: boolean;
   // The running Parties whose 활성화 the User declined on this phone, by id. The main server stores no decline.
   declinedParties: string[];
-  // The answer of the Assistant is shown on the map in place of the chat's sheet: the switch on 내 정보's build line.
-  answerOnMap: boolean;
   // The Quests made from a Plan on this phone, by id. The main server marks no such Quest.
   madeQuests: string[];
   // The sheet that asks about push was shown on this phone. A sign-out leaves it as it is.
@@ -58,7 +57,6 @@ const FIRST_STATE: Kept = {
   backgroundChosen: false,
   backgroundRunning: false,
   declinedParties: [],
-  answerOnMap: false,
   madeQuests: [],
   pushAsked: false,
   pushUnregisterOwed: false,
@@ -72,7 +70,6 @@ type Later =
   | 'backgroundChosen'
   | 'backgroundRunning'
   | 'declinedParties'
-  | 'answerOnMap'
   | 'madeQuests'
   | 'pushAsked'
   | 'pushUnregisterOwed';
@@ -114,7 +111,6 @@ export async function readKept(): Promise<Kept> {
         'declinedParties' in value && Array.isArray(value.declinedParties)
           ? value.declinedParties.filter((id): id is string => typeof id === 'string')
           : [],
-      answerOnMap: 'answerOnMap' in value && value.answerOnMap === true,
       madeQuests:
         'madeQuests' in value && Array.isArray(value.madeQuests)
           ? value.madeQuests.filter((id): id is string => typeof id === 'string')

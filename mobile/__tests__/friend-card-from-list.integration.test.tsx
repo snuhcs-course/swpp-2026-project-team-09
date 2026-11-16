@@ -2,12 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, screen, within } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type { Friend } from '@/api/types';
-import { setAnswerSwitch } from '@/features/assistant/answer-switch';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, shownAddress } from './support/app';
@@ -23,7 +23,7 @@ import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './s
 
 // A Friend's row of the main screen's friend list (P02 ticket 21), over the fake main server's Friends: 김민준, whom
 // the User sees at the exact position, and 서지우, of whom the User sees the Timetable only and who has no position.
-// With the switch on the row opens the same card a press on the face opens; with it off, today's.
+// The row opens the same card a press on the face opens.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -72,9 +72,9 @@ function row(friend: Friend): string {
 }
 
 // Partitions: a Friend on the map and one with no position.
-describe("a Friend's row with the switch on", () => {
+describe("a Friend's row", () => {
   it('opens the card of a Friend on the map and brings the map to their face', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     const before = placeOf(MIN_JUN.name);
 
     await press(user, row(MIN_JUN));
@@ -85,7 +85,7 @@ describe("a Friend's row with the switch on", () => {
   });
 
   it('opens the card of a Friend with no position with what the app holds, says nothing, and moves no map', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     const before = placeOf(MIN_JUN.name);
 
     await press(user, row(JI_WOO));
@@ -106,7 +106,7 @@ describe("a Friend's row with the switch on", () => {
 // one card at a time, which takes the bottom of the map as any card does.
 describe('the open card of a Friend with no position', () => {
   it('takes the bottom of the map, where the zoom control gives way to it until its ✕ closes it', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, row(JI_WOO));
     expect(screen.queryByRole('button', { name: ZOOM_IN })).toBeNull();
 
@@ -118,7 +118,7 @@ describe('the open card of a Friend with no position', () => {
 
   it("closes by Android's back button", async () => {
     const back = holdBackButton();
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, row(JI_WOO));
 
     expect(await back()).toBe(true);
@@ -128,7 +128,7 @@ describe('the open card of a Friend with no position', () => {
   });
 
   it('gives way to the card of a face pressed after it, as one card at a time', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, row(JI_WOO));
 
     await press(user, MIN_JUN.name);
@@ -148,24 +148,11 @@ describe('the open card of a Friend with no position', () => {
   });
 });
 
-// Partitions: the switch turned off, and the Friend no longer among the User's Friends. The rule: the selection is
-// dropped, as a thing's that left the map, so the bottom is free again and nothing opens later.
+// Partitions: the Friend no longer among the User's Friends. The rule: the selection is dropped, as a thing's that left
+// the map, so the bottom is free again and nothing opens later.
 describe('the card of a Friend with no position closed for good', () => {
-  it('once the switch is turned off: the zoom control comes back, and the switch on again opens no card', async () => {
-    const user = await openMain({ answerOnMap: true });
-    await press(user, row(JI_WOO));
-    expect(friendCard().getByRole('header', { name: '서지우' })).toBeVisible();
-
-    await act(() => setAnswerSwitch(false));
-    expect(screen.queryByTestId('map-card')).toBeNull();
-    expect(screen.getByRole('button', { name: ZOOM_IN })).toBeVisible();
-    await act(() => setAnswerSwitch(true));
-
-    expect(screen.queryByTestId('map-card')).toBeNull();
-  });
-
   it('once the Friend is no longer among the Friends: the zoom control comes back', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await socketServer((socket) => {
       socket.accept();
     });
@@ -184,35 +171,13 @@ describe('the card of a Friend with no position closed for good', () => {
   });
 });
 
-// Partitions: a Friend on the map and one with no position.
-describe("a Friend's row with the switch off", () => {
-  it("opens today's card, whose 어디까지 보이나 opens 위치 공유", async () => {
-    const user = await openMain();
-
-    await press(user, row(MIN_JUN));
-    await user.press(friendCard().getByRole('button', { name: '어디까지 보이나' }));
-    await pass(500);
-
-    expect(shownAddress()).toBe('/me/location-sharing');
-  });
-
-  it('says that the location is off for a Friend with no position, and opens no card', async () => {
-    const user = await openMain();
-
-    await press(user, row(JI_WOO));
-
-    expect(screen.getByText(LOCATION_OFF)).toBeVisible();
-    expect(screen.queryByTestId('map-card')).toBeNull();
-  });
-});
-
-// Partitions: a Friend on the map and one with no position, both from the list with the switch on.
+// Partitions: a Friend on the map and one with no position, both from the list.
 describe('파티 만들기 on the card', () => {
   it.each([
     ['on the map', MIN_JUN],
     ['with no position', JI_WOO],
   ])('opens the party form as 비공개 with the Friend %s chosen', async (_, friend) => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, row(friend));
 
     await user.press(friendCard().getByRole('button', { name: '파티 만들기' }));

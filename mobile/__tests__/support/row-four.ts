@@ -17,7 +17,7 @@ import type { FakeServer } from './fake-server';
 import { AI_INPUT, SEND } from './lists';
 import { openMain } from './main';
 
-// Events and recruiting parties answered on the map (P02 ticket 30), against the fake main server with the switch on.
+// Events and recruiting parties answered on the map (P02 ticket 30), against the fake main server.
 // The stored copies are the main server's real answers: row 4's job fair (Friday 2026-11-20, asked at 13:50) and
 // row 5's badminton (Thursday 2026-11-19, asked at 16:45), both asked by 유상.
 
@@ -104,10 +104,10 @@ export const POSTED_ALONE: PlanQuest = {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Starts the app with the switch on and sends `words`; the main server answers with `reply`.
+// Starts the app and sends `words` from the map's bar; the main server answers with `reply`.
 export async function sayOnMap(server: FakeServer, words: string, reply: AssistantReply): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body: reply });
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await user.type(screen.getByLabelText(AI_INPUT), words);
   await user.press(screen.getByRole('button', { name: SEND }));
   await pass(500);

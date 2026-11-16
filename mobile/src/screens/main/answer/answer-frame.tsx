@@ -8,7 +8,7 @@
 
 import { useIsFocused } from 'expo-router';
 import { type ReactElement, type ReactNode, useCallback } from 'react';
-import { type LayoutChangeEvent, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type LayoutChangeEvent, Keyboard, ScrollView, StyleSheet, View } from 'react-native';
 import { color, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
@@ -258,23 +258,16 @@ interface AnswerFrameProps {
   room: Room;
 }
 
-// The answer frame over the map while the switch is on and the conversation holds something. Before anything is
-// asked, while the bar has the keyboard, where the conversation goes stands above it.
+// The answer frame over the map while the conversation holds something.
 export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: AnswerFrameProps): ReactElement | null {
-  const { onMap, framed } = control;
-  if (framed) {
-    return (
-      <Framed
-        barRoom={inputTop + space[3]}
-        control={control}
-        keyboardUp={keyboardUp}
-        onHeight={onHeight}
-        stageHeight={room.stage?.height ?? null}
-      />
-    );
-  }
-  return onMap && keyboardUp ? (
-    <Text style={[styles.notice, { bottom: inputTop + space[2] }]}>대화 내용은 AI 제공자에게 전송돼요</Text>
+  return control.framed ? (
+    <Framed
+      barRoom={inputTop + space[3]}
+      control={control}
+      keyboardUp={keyboardUp}
+      onHeight={onHeight}
+      stageHeight={room.stage?.height ?? null}
+    />
   ) : null;
 }
 
@@ -292,5 +285,4 @@ const styles = StyleSheet.create({
   content: { gap: space[3], paddingTop: CONTENT_TOP, paddingHorizontal: space[4] },
   part: { gap: space[2] },
   words: { ...text.bodyLg, color: color.ink },
-  notice: { ...text.caption, position: 'absolute', right: space[4], left: space[4], color: color.inkMuted },
 });

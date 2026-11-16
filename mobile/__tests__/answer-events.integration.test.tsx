@@ -12,16 +12,15 @@ import { card } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT, SEND } from './support/lists';
-import { givePhone, ON_CAMPUS, openMain } from './support/main';
+import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerRecalculations, ASKER, chats, EVENTS_REPLY, JOB_FAIR, sayOnMap } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // An events answer in the answer frame (P02 ticket 30, board Alone 1), over the fake main server, which answers
 // "오늘 볼 만한 거 있어?" with the stored real answer of row 4: the job fair, the concert, and the company session that
-// clashes with the 15:30 Class. Its buttons down to their requests, and the switch off. Expected values: the ticket's
-// inputs, and the stored answer's words.
+// clashes with the 15:30 Class, and its buttons down to their requests. Expected values: the ticket's inputs, and the
+// stored answer's words.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -191,22 +190,5 @@ describe('the buttons of another events Plan, and "길 안내"', () => {
     ]);
     expect(screen.getByText('문화관까지 길 안내')).toBeVisible();
     expect(screen.queryByTestId('answer-pill')).toBeNull();
-  });
-});
-
-describe('with the switch off', () => {
-  it('sends the chat request without the capability of events', async () => {
-    server.on('POST /assistant/messages', {
-      status: 200,
-      body: { text: '네', mapButtons: [], cards: [], proposal: null },
-    });
-    const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-
-    await user.type(screen.getByLabelText(AI_INPUT), ASKED);
-    await user.press(screen.getByRole('button', { name: SEND }));
-    await pass(500);
-
-    expect(chats(server)).toEqual([{ messages: [{ role: 'user', text: ASKED }], clientCapabilities: ['library'] }]);
   });
 });

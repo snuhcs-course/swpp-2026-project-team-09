@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { openBrowserAsync } from 'expo-web-browser';
@@ -180,17 +181,6 @@ describe('the 관정 quest, served as a button quest', () => {
     await pressAndWait(user, '퀘스트 완료');
     expect((await answered(apiClient.getTutorial())).quests[4]?.status).toBe('completed');
     expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 6/15')).toBeVisible();
-  });
-
-  it('asks the Assistant for a seat: the sheet closes and the chat opens with the words sent', async () => {
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
-
-    await user.press(button('어시스턴트에게 예약 부탁하기'));
-    await pass(1000);
-
-    expect(screen.queryByLabelText(SHEET)).toBeNull();
-    expect(screen.getByTestId('chat-sheet')).toBeVisible();
-    expect(screen.getByText('관정도서관 7층 열람실에 한 자리 예약해줘')).toBeVisible();
   });
 });
 

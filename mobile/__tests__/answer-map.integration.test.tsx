@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -22,8 +23,8 @@ import { answerDining, ENGINEERING } from './support/dining';
 import { answerEvents, BOOK_TALK, CAREER, MAJOR } from './support/events';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT, LAYERS, layStage } from './support/lists';
-import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';
+import { LAYERS, layStage } from './support/lists';
+import { givePhone, ME, ON_CAMPUS, type openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { askMainServer, LIBRARY_POSITION, MIN_JUN, PHONE_NOW } from './support/server';
@@ -188,7 +189,7 @@ describe('what gives way to the Plan', () => {
   });
 });
 
-// Partitions: an answer without a Plan, and an answer with the switch off.
+// Partitions: an answer without a Plan.
 describe('an answer that draws nothing', () => {
   it('keeps the everyday map when the answer has no Plan', async () => {
     // The stored answer with this one field changed: no Plan, and the lines of a day without a menu.
@@ -203,20 +204,6 @@ describe('an answer that draws nothing', () => {
     expect(screen.queryByLabelText('나 · 3분')).toBeNull();
     expect(mapThings()).toContain(ME);
     expect(mapThings()).toContain(EVENT);
-  });
-
-  it("draws nothing with the switch off, and the chat is today's", async () => {
-    server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_REPLY });
-    const user = await openMain();
-
-    await user.press(screen.getByLabelText(AI_INPUT));
-    await user.type(screen.getByLabelText(AI_INPUT), '배고파, 민수랑 같이');
-    await user.press(screen.getByRole('button', { name: '보내기' }));
-    await pass(500);
-
-    expect(screen.getByTestId('chat-sheet')).toBeVisible();
-    expect(screen.queryByLabelText('나 · 3분')).toBeNull();
-    expect(mapThings()).toContain(ME);
   });
 });
 

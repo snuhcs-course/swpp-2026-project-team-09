@@ -310,7 +310,7 @@ export function MainScreen(): ReactElement {
   const me = useMe(map);
   const layers = useMainLayers(inFront, map, me);
   const { stack, shuttle, cards, ready, chat, route } = layers;
-  const selection = useSelection(cards, inFront, chat.onMap && me.position !== null, useOffMapFriends(chat.onMap));
+  const selection = useSelection(cards, inFront, me.position !== null, useOffMapFriends());
   const lines = useLines(shuttle, route);
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection, chat);

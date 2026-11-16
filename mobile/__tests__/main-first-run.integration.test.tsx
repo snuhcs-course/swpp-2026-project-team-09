@@ -3,8 +3,10 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
@@ -120,7 +122,8 @@ describe('who sees no card', () => {
 
     expect(cardsShown()).toEqual([]);
     expect(screen.queryByRole('button', { name: HINT })).toBeNull();
-    expect(server.received('GET /interests')).toEqual([]);
+    // The everyday map reads the watched interests for its marks since the answer switch went (P02-04), so a request
+    // for them no longer tells whether the first run asked.
   });
 });
 
@@ -148,14 +151,19 @@ describe('after a restart', () => {
 });
 
 describe('giving way', () => {
-  it('gives way to the chat, and comes back when it closes', async () => {
+  it('gives way to the answer frame, and comes back when it closes', async () => {
+    server.on('POST /assistant/messages', {
+      status: 200,
+      body: { text: '오늘 학생회관식당 점심은 제육볶음이에요.', mapButtons: [], cards: [], proposal: null },
+    });
     const user = await finishOnboarding();
 
-    await user.press(screen.getByLabelText(AI_INPUT));
+    await user.type(screen.getByLabelText(AI_INPUT), '오늘 점심 뭐 나와?');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
     await pass(500);
     expect(cardsShown()).toEqual([]);
 
-    await user.press(screen.getByRole('button', { name: '대화 닫기' }));
+    await user.press(within(screen.getByTestId('answer-pill')).getByRole('button', { name: '답 닫기' }));
     await pass(500);
     expect(cardsShown()).toEqual([TIMETABLE]);
   });

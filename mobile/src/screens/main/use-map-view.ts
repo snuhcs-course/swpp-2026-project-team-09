@@ -83,14 +83,14 @@ function withBuildingPress(answer: AnswerMap, pressed: PressedPlace, asked: bool
 }
 
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
-// selected, the tutorial place pin over them, the User's own Avatar, which takes a press while the switch is on, and
-// the lines. While the switch is on, a tap on a building opens its card and the Place is marked, and a press on an
-// interest mark opens its answer instead of a card. While a Plan of an answer is shown, the Plan is drawn in their
-// place, and a press on a candidate shows its Plan; while a received invitation's card is, its own way is; while a made
-// Quest's card is, its Places and the User are. A Lookup on screen is drawn as a Plan is, and takes no press
-// (`useLookupMap`). Once any of them closes, a camera left further out than the everyday map allows glides back in.
-// While a meal's Plan is on screen, a press on a building asks about it and the map draws that ("여기면 어때?"). Every
-// request carries the map's visible area at rest (`useViewport`).
+// selected, the tutorial place pin over them, the User's own Avatar, which takes a press, and the lines. A tap on a
+// building opens its card and the Place is marked, and a press on an interest mark opens its answer instead of a card.
+// While a Plan of an answer is shown, the Plan is drawn in their place, and a press on a candidate shows its Plan;
+// while a received invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A
+// Lookup on screen is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left
+// further out than the everyday map allows glides back in. While a meal's Plan is on screen, a press on a building asks
+// about it and the map draws that ("여기면 어때?"). Every request carries the map's visible area at rest
+// (`useViewport`).
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
@@ -99,7 +99,7 @@ export function useMapView(
   { invitation, made }: UnaskedCards,
 ): MapView {
   const marks = useMarkPresses(chat.chat, me, cards);
-  const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap, marks.byId);
+  const things = useThings(cards, map.detail, selection.selected?.id ?? null, marks.byId);
   useViewport(chat, map, room);
   const seats = useAwaySeats(awayPlaceOf(chat.lookup.lookup));
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars, seats);
@@ -111,9 +111,9 @@ export function useMapView(
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
   const limits = useEverydayLimits(map, answer !== null || way !== null);
   const everyday = answer === null && way === null && !chat.framed && !unasked;
-  const asking = chat.onMap && howAbout.pressable && plan !== null && !unasked;
+  const asking = howAbout.pressable && plan !== null && !unasked;
   const target = asking ? howAbout.target : selection;
-  const pressed = usePressedPlace(map.camera, target, chat.setTapped, chat.onMap && (everyday || asking));
+  const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || asking);
   const around = bothTouches(pin.touches, pressed);
   if (answer !== null) {
     return asking ? withBuildingPress(answer, pressed, howAbout.place !== null, around) : { ...answer, around };
@@ -122,7 +122,7 @@ export function useMapView(
     return { ...way, around };
   }
   const avatars = unasked ? withoutPeople(things.avatars, cards) : things.avatars;
-  const mine = chat.onMap ? pressableMe(me.avatars) : me.avatars;
+  const mine = pressableMe(me.avatars);
   const markers = [...things.markers, ...pressed.markers, ...pin.markers];
   return {
     contents: { markers, avatars: [...avatars, ...mine], lines },

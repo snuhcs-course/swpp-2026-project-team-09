@@ -2,13 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, color, font, radius, space, text } from '@/design-system';
-import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import type { FriendView } from '@/features/friends/adapter';
 import { seenCardOf } from '@/features/friends/profile';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
@@ -62,20 +62,18 @@ function SeenCard({ friend, mark, onClose, onHeight }: SeenCardProps): ReactElem
   );
 }
 
-// The selected card of the everyday map, which its selection closes. While the switch of the answer on the map is on,
-// a Friend's "어디까지 보이나" opens its own card in this card's place (`selection.seen`), whose ✕ and Android's back
-// bring the Friend's card back; while it is off, it opens 위치 공유.
+// The selected card of the everyday map, which its selection closes. A Friend's "어디까지 보이나" opens its own card in
+// this card's place (`selection.seen`), whose ✕ and Android's back bring the Friend's card back.
 export function CardOrSeen({
   selection,
   ...props
 }: Omit<CardProps, 'onClose' | 'onSeen'> & { selection: SeenSelection }): ReactElement {
-  const onMap = useAnswerSwitch();
   const { card, onHeight } = props;
-  const friend = useFriendProfile(onMap && selection.seen ? friendIdOf(card.id) : null)?.friend ?? null;
+  const friend = useFriendProfile(selection.seen ? friendIdOf(card.id) : null)?.friend ?? null;
   if (friend !== null) {
     return <SeenCard friend={friend} mark={card.mark} onClose={selection.hideSeen} onHeight={onHeight} />;
   }
-  return <Card {...props} onClose={selection.close} onSeen={onMap ? selection.showSeen : undefined} />;
+  return <Card {...props} onClose={selection.close} onSeen={selection.showSeen} />;
 }
 
 // The board's note: its blue ground and its words.

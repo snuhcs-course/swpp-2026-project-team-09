@@ -2,10 +2,9 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act } from '@testing-library/react-native';
-import { setAnswerSwitch } from '@/features/assistant/answer-switch';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { mapThings } from './support/answer-map';
@@ -27,8 +26,8 @@ import { DINNER } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// Received invitations that end, change, or are several (P02 ticket 06), against the fake main server with the switch
-// on: the list of received invitations holds the stored card's invitation, and its card is the stored card of 민수.
+// Received invitations that end, change, or are several (P02 ticket 06), against the fake main server: the list of
+// received invitations holds the stored card's invitation, and its card is the stored card of 민수.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -74,7 +73,7 @@ async function signal(name: string): Promise<void> {
 // the steps changed, which `quests-changed` tells.
 describe('a received invitation that changes while its card is shown', () => {
   it('says it is over and closes the card when the list is read again without it', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
     await openInvitation();
     server.on('GET /quest-invitations', { status: 200, body: [] });
 
@@ -86,7 +85,7 @@ describe('a received invitation that changes while its card is shown', () => {
   });
 
   it('reads the card again on quests-changed', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
     await openInvitation();
     const reads = server.received(CARD_ROUTE).length;
 
@@ -97,12 +96,11 @@ describe('a received invitation that changes while its card is shown', () => {
   });
 });
 
-// Partitions: an address of an invitation the known list does not hold; two invitations; the switch turned off while
-// a card is shown.
+// Partitions: an address of an invitation the known list does not hold; two invitations.
 describe('the addresses and cards of received invitations', () => {
   it('says an invitation no card holds is over, stays on the map, and reads nothing', async () => {
     server.on('GET /quest-invitations', { status: 200, body: [] });
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
 
@@ -113,7 +111,7 @@ describe('the addresses and cards of received invitations', () => {
 
   it("opens each invitation's own card", async () => {
     answerTwoInvitations(server);
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
     await openInvitation(SECOND_RECEIVED.id);
@@ -121,19 +119,5 @@ describe('the addresses and cards of received invitations', () => {
     expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
     expect(server.received(CARD_ROUTE)).toHaveLength(1);
     expect(server.received(SECOND_CARD_ROUTE)).toHaveLength(1);
-  });
-
-  it('closes the card when the switch is turned off, with no word of an ended invitation', async () => {
-    await openMain({ answerOnMap: true });
-    await openInvitation();
-
-    await act(async () => {
-      await setAnswerSwitch(false);
-    });
-    await pass(500);
-
-    expect(screen.queryByTestId('invitation-card')).toBeNull();
-    expect(screen.queryByText(GONE)).toBeNull();
-    expect(mapThings()).toContain(DINNER);
   });
 });

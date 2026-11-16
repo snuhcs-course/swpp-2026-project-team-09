@@ -69,13 +69,12 @@ export interface CardMarker {
 // What a card shows for anything pressed on the map. Its id is also the id of the marker or the Avatar.
 export interface CardView {
   id: string;
-  // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the
-  // Place of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is
-  // on. `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a
-  // building of the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view.
-  // `invitation` is an invitation the User received, while the switch of the answer on the map is on: it has no
-  // marker, and its card is the invitee's own way. `made-quest` is the flag of a Quest made from a Plan while the
-  // switch is on, whose marker's name is the flag's words and whose card is the one after inviting.
+  // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the Place
+  // of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is on.
+  // `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a building of
+  // the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view. `invitation` is an
+  // invitation the User received: it has no marker, and its card is the invitee's own way. `made-quest` is the flag of
+  // a Quest made from a Plan, whose marker's name is the flag's words and whose card is the one after inviting.
   kind:
     | 'global-event'
     | 'place-group'

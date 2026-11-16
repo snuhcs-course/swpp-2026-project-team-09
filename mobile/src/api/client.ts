@@ -211,8 +211,8 @@ export interface ApiClient {
   // A Holder reports being late by a whole number of minutes from 1 to 120, and gets their own way as it now is.
   reportLate: (questId: string, minutes: number, location: LatLng | null) => Promise<OwnWay>;
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
-  // asked when it gives that.
-  askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
+  // asked.
+  askAssistant: (messages: ChatMessage[], context: RequestContext) => Promise<AssistantReply>;
   // An answer drawn on the map, recalculated from its changed input and where the User is now or why that is not
   // known, without the model.
   recalculateAnswer: (input: PlanInput, location: LatLng | null, missing?: LocationMissing) => Promise<AnswerReply>;

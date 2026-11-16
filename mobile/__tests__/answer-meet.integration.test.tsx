@@ -15,17 +15,16 @@ import { card, mapLines, mapThings } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT, SEND } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { answerFriendsWithMinSu, friendCard, MEET, meetFromCard, meetWith, MIN_SU, pill, row } from './support/meet';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
 
-// "만나고 싶다" on a Friend's card of the everyday map (P02 ticket 24), over the fake main server, which answers the
-// meet with the stored real answer of board a5 (`meet-answer.json`): the button down to the request, the answer drawn
-// as a Plan, and nothing with the switch off. Expected values: the ticket's input, and the stored answer, whose words
-// differ from the board's (P01 ticket 18, "Differences from the boards").
+// "만나고 싶다" on a Friend's card of the everyday map (P02 ticket 24), over the fake main server, which answers the meet
+// with the stored real answer of board a5 (`meet-answer.json`): the button down to the request, the answer drawn as a
+// Plan. Expected values: the ticket's input, and the stored answer, whose words differ from the board's (P01 ticket 18,
+// "Differences from the boards").
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -65,7 +64,7 @@ afterEach(() => {
 // request that fails.
 describe('"만나고 싶다" on a Friend\'s card', () => {
   it('stands first among the buttons of a face\'s card, right under its lines and before "파티 만들기"', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await press(user, MIN_JUN.name);
 
@@ -76,7 +75,7 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
   });
 
   it("asks the meet of the User and the face's Friend today, from where the User is, and opens it in the frame", async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
 
     await meetFromCard(user);
@@ -89,7 +88,7 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
   });
 
   it('asks the same from the card of a Friend whom the map does not show', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, row(MIN_SU));
 
     await meetFromCard(user);
@@ -100,7 +99,7 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
 
   it('says that it failed and keeps the card when the recalculation fails', async () => {
     server.on('POST /assistant/answers', { status: 500, body: { statusCode: 500, message: 'Internal' } });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
 
     await meetFromCard(user);
@@ -114,7 +113,7 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
 // Partitions: the first Plan in the card, and on the map.
 describe('the answer of a meet (board a5)', () => {
   it("draws the first Plan's lines, the count of five, the chips, and the band of 나 and 민수", async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
 
     await meetFromCard(user);
@@ -131,7 +130,7 @@ describe('the answer of a meet (board a5)', () => {
   });
 
   it('draws the meeting place picked with its time, the next candidate numbered 2, the next Class, and two lines', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
 
     await meetFromCard(user);
@@ -159,7 +158,7 @@ const MET_QUEST: PlanQuest = {
 // Partitions: the basis, the next Plan by the arrow, and "이대로 초대" down to the request and its reply.
 describe("the controls of a meet's answer", () => {
   it('opens the basis the main server wrote', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
     await meetFromCard(user);
 
@@ -171,7 +170,7 @@ describe("the controls of a meet's answer", () => {
   });
 
   it('shows 301동 앞 for 27 minutes with "›"', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
     await meetFromCard(user);
 
@@ -184,7 +183,7 @@ describe("the controls of a meet's answer", () => {
 
   it('sends the meet and its first Plan with "이대로 초대", and the card then says the Quest was made', async () => {
     server.on('POST /plans', { status: 201, body: MET_QUEST });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
     await meetFromCard(user);
 
@@ -199,34 +198,5 @@ describe("the controls of a meet's answer", () => {
     expect(within(card().getByTestId('quest-steps')).getByText('302동 앞에서 만나기')).toBeVisible();
     expect(card().getByText('민수 · 아직 안 봄')).toBeVisible();
     expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
-  });
-});
-
-// Partitions: the card of a face, and a request of the chat, with the switch off.
-describe('with the switch off', () => {
-  it('draws no "만나고 싶다" on a Friend\'s card', async () => {
-    const user = await openMain();
-
-    await press(user, MIN_JUN.name);
-
-    expect(friendCard().getByRole('header', { name: MIN_JUN.name })).toBeVisible();
-    expect(friendCard().queryByRole('button', { name: MEET })).toBeNull();
-  });
-
-  it('sends the chat request without the capability of a meet', async () => {
-    server.on('POST /assistant/messages', {
-      status: 200,
-      body: { text: '네', mapButtons: [], cards: [], proposal: null },
-    });
-    const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-
-    await user.type(screen.getByLabelText(AI_INPUT), '민수랑 만나고 싶어');
-    await user.press(screen.getByRole('button', { name: SEND }));
-    await pass(500);
-
-    expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
-      { messages: [{ role: 'user', text: '민수랑 만나고 싶어' }], clientCapabilities: ['library'] },
-    ]);
   });
 });

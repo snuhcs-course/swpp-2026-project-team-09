@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -23,6 +24,7 @@ import {
   expectNothingOfTheLibrarySent,
   expectNoWrite,
   inCard,
+  inFrame,
   pressIn,
   startLibraryChat,
 } from './support/library-chat';
@@ -77,14 +79,14 @@ describe('a room card with friends', () => {
       friendIds: [MIN_JUN.friendId, JI_WOO.friendId],
       useDesc: '과제',
     });
-    expect(screen.getByText(/친구들의 동의를 기다리고 있어요 \(0\/2\)/u)).toBeVisible();
-    expect(screen.getByRole('button', { name: '예약하기' })).toBeDisabled();
+    expect(inFrame().getByText(/친구들의 동의를 기다리고 있어요 \(0\/2\)/u)).toBeVisible();
+    expect(inFrame().getByRole('button', { name: '예약하기' })).toBeDisabled();
 
     server.on(`GET /library/room-requests/${REQUEST_ID}`, { status: 200, body: requestOf('ready') });
     await pass(3500);
 
-    expect(screen.getByText(ALL_CONSENTED)).toBeVisible();
-    expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
+    expect(inFrame().getByText(ALL_CONSENTED)).toBeVisible();
+    expect(inFrame().getByRole('button', { name: '예약하기' })).toBeEnabled();
     expectNoWrite(library);
   });
 });
@@ -109,7 +111,7 @@ describe('a room card with friends on 예약하기', () => {
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/result`).map(({ body }) => body)).toEqual([
       { ok: true },
     ]);
-    expect(screen.getByText('G412 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByText('G412 예약되었어요!')).toBeVisible();
     expectNothingOfTheLibrarySent(server, ['G412', '2000001', FAKE_ROOM_FORM.tmpUserNames]);
   });
 });
@@ -123,7 +125,7 @@ describe('a room card with friends when it cannot book', () => {
 
     await pressIn(shown, '예약하기');
 
-    expect(screen.getByText(rejectedWords('서지우'))).toBeVisible();
+    expect(inFrame().getByText(rejectedWords('서지우'))).toBeVisible();
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/result`).map(({ body }) => body)).toEqual([
       { ok: false, failedUserId: JI_WOO.friendId },
     ]);
@@ -140,8 +142,8 @@ describe('a room card with friends when it cannot book', () => {
     await pressIn(inCard(`library-book-${PARTY_CARD.library.key}`), SEND_ASK);
     await pass(100);
 
-    expect(screen.getByText('파티 구성원이 제안을 거절했습니다')).toBeVisible();
-    expect(screen.getByRole('button', { name: '예약하기' })).toBeDisabled();
+    expect(inFrame().getByText('파티 구성원이 제안을 거절했습니다')).toBeVisible();
+    expect(inFrame().getByRole('button', { name: '예약하기' })).toBeDisabled();
   });
 });
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -13,12 +14,12 @@ import { ALL_CONSENTED, forgetPartyRequests, SEND_ASK } from '@/screens/main/lib
 import { WINDOW_OPENED } from '@/screens/main/library/waiting-room';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { pass, screen } from './support/app';
+import { pass } from './support/app';
 import { openMain } from './support/main';
 import { JI_WOO, MIN_JUN, REQUEST_ID, requestOf } from './support/room-requests';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
-import { askForCards, card, expectNoWrite, inCard, pressIn, startLibraryChat } from './support/library-chat';
+import { askForCards, card, expectNoWrite, inCard, inFrame, pressIn, startLibraryChat } from './support/library-chat';
 
 // A study plan after the booking window (P05 ticket 07): the room card of a key that ends in `:wait` gathers the
 // consents without reading the library's rooms, and says when it can be booked. The room-window Notification's
@@ -130,7 +131,7 @@ describe('the room-window Notification’s address', () => {
     });
     await pass(500);
 
-    expect(screen.getByText(WINDOW_OPENED)).toBeVisible();
+    expect(inFrame().getByText(WINDOW_OPENED)).toBeVisible();
     const shown = inCard(`library-book-${TODAY.library.key}`);
     expect(shown.getByText(ALL_CONSENTED)).toBeVisible();
     expect(shown.getByRole('button', { name: '예약하기' })).toBeEnabled();

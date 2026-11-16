@@ -25,15 +25,13 @@ import type { GlobalEvent, LatLng } from '@/api/types';
 import type { KeptNotification } from '@/api/waiting-types';
 import { now } from '@/clock';
 import { useToast } from '@/design-system';
-import { useAnswerSwitch } from '@/features/assistant/answer-switch';
 import type { Chat } from '@/features/assistant/use-chat';
 import { useNow } from '@/hooks/use-now';
 import { keepOpenedMarks, readOpenedMarks } from '@/storage/opened-marks';
 import type { CardView } from './adapter';
 import { askOf, cardsWithMarks, type InterestMark, marksAlone, marksOf, sourcesOf, toldItems } from './interest-marks';
 
-// The interest marks of the everyday map while the switch of the answer on the map is on (P05 ticket 13), and what a
-// press on one does. With the switch off nothing is asked and the map is as before.
+// The interest marks of the everyday map (P05 ticket 13), and what a press on one does.
 
 const OPENED_KEY = ['opened-marks'] as const;
 // The items opened on this phone, read once per sign-in: the cache is cleared at a sign-out.
@@ -54,9 +52,9 @@ const NO_RECRUITING: readonly RecruitingQuest[] = [];
 const NONE_OPENED: readonly string[] = [];
 
 export interface InterestMarks {
-  // Null for the map as before: the switch off, a main server without the matches (404), or a failed read.
+  // Null for the map without marks: a main server without the matches (404), or a failed read.
   marks: readonly InterestMark[] | null;
-  // The switch is on and the matches or the watched interests are still being read.
+  // The matches or the watched interests are still being read.
   pending: boolean;
   recruiting: readonly RecruitingQuest[];
 }
@@ -85,17 +83,16 @@ function marksFrom({ matches, watchesSomething, events, recruiting, kept, opened
 // draws, the kept Notifications, and the items opened on this phone. A failed read of the Notifications only means no
 // "!", and a failed read of the opened items counts as none opened.
 export function useInterestMarks(): InterestMarks {
-  const on = useAnswerSwitch();
   const at = useNow(MINUTE_MS);
-  const matches = useQuery({ ...interestMatchesQuery, enabled: on });
-  const watched = useQuery({ ...interestsQuery, enabled: on });
-  const hashtags = useQuery({ ...lobbyQuery, enabled: on }).data?.profile.hashtags ?? [];
-  const kept = useQuery({ ...notificationsQuery, enabled: on }).data ?? NO_NOTIFICATIONS;
-  const events = useQuery({ ...globalEventsQuery, enabled: on });
-  const recruiting = useQuery({ ...recruitingQuestsQuery, enabled: on });
-  const opened = useQuery({ ...openedQuery, enabled: on });
-  const pending = on && [matches, watched, events, recruiting].some(({ isPending }) => isPending);
-  const found = on && !pending && !matches.isError ? (matches.data ?? null) : null;
+  const matches = useQuery(interestMatchesQuery);
+  const watched = useQuery(interestsQuery);
+  const hashtags = useQuery(lobbyQuery).data?.profile.hashtags ?? [];
+  const kept = useQuery(notificationsQuery).data ?? NO_NOTIFICATIONS;
+  const events = useQuery(globalEventsQuery);
+  const recruiting = useQuery(recruitingQuestsQuery);
+  const opened = useQuery(openedQuery);
+  const pending = [matches, watched, events, recruiting].some(({ isPending }) => isPending);
+  const found = !pending && !matches.isError ? (matches.data ?? null) : null;
   const watchesSomething = hashtags.length > 0 || (watched.data?.length ?? 0) > 0;
   const openedIds = opened.data ?? (opened.isError ? NONE_OPENED : null);
   const marks = useMemo(
@@ -117,7 +114,7 @@ export function useInterestMarks(): InterestMarks {
   return useMemo(() => ({ marks, pending, recruiting: shownRecruiting }), [marks, pending, shownRecruiting]);
 }
 
-// The map's cards while the switch is on: those the marks keep, none yet while the marks are read, or as before.
+// The map's cards: those the marks keep, none yet while the marks are read, or all of them without marks.
 export function withInterestMarks(
   cards: ScreenData<CardView[]>,
   { marks, pending, recruiting }: InterestMarks,
@@ -144,11 +141,10 @@ export interface MarkPresses {
 }
 
 // The matches change with no signal when the Assistant keeps or drops an interest, or the profile's hashtags are
-// saved: while the switch is on, the interests are read again after each answer and at each change of the hashtags.
+// saved: the interests are read again after each answer and at each change of the hashtags.
 function useMatchesRefresh(bubbles: Chat['bubbles']): void {
-  const on = useAnswerSwitch();
   const queryClient = useQueryClient();
-  const hashtags = useQuery({ ...lobbyQuery, enabled: on }).data?.profile.hashtags.join('\n');
+  const hashtags = useQuery(lobbyQuery).data?.profile.hashtags.join('\n');
   const answers = bubbles.filter(({ role }) => role === 'assistant').length;
   const state = hashtags === undefined ? null : `${String(answers)}\n${hashtags}`;
   const last = useRef<string | null>(null);
@@ -156,11 +152,11 @@ function useMatchesRefresh(bubbles: Chat['bubbles']): void {
     if (state === null) {
       return;
     }
-    if (on && last.current !== null && last.current !== state) {
+    if (last.current !== null && last.current !== state) {
       void queryClient.invalidateQueries({ queryKey: INTERESTS_KEY });
     }
     last.current = state;
-  }, [on, state, queryClient]);
+  }, [state, queryClient]);
 }
 
 // A press on a mark gives the same answer as asking: the mark's name as the words and the answer of its items, which

@@ -25,7 +25,7 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 const TALK = 'c750f9a0-887e-4dc1-99d1-34b065ff6257';
 
-// What the card of a pressed building leads to (P02 ticket 22), over the fake main server with the switch on: "여기서
+// What the card of a pressed building leads to (P02 ticket 22), over the fake main server: "여기서
 // 먹기" asks the recalculation and opens its answer in the answer frame, "가는 길" starts the route guidance, and words
 // typed under the card go to the Assistant with the Place in the request context.
 
@@ -72,7 +72,7 @@ afterEach(() => {
 // Partitions: the answer that comes, and a request that fails.
 describe('"여기서 먹기" on the card of a pressed building', () => {
   it('asks the recalculation for its lunch and opens the answer in the frame, the pill saying where and what', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
 
     await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
@@ -88,7 +88,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
   });
 
   it("comes back to the building's card when the frame is closed", async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
     await pass(500);
@@ -100,7 +100,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
 
   it('says that it failed and keeps the card when the recalculation fails', async () => {
     server.on('POST /assistant/answers', { status: 500, body: { statusCode: 500, message: 'Internal' } });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
 
     await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
@@ -119,7 +119,7 @@ describe('"가는 길" on the card of a pressed building', () => {
       status: 200,
       body: { status: 'OK', route: { line: [ON_CAMPUS, STUDENT_POINT], distance: 900, duration: 900 } },
     });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     const before = server.received('GET /walking-route').length;
 
@@ -151,7 +151,7 @@ describe("a2's buttons on the card of 문화관", () => {
   });
 
   it('"행사 보기" asks the recalculation for the events of the card and opens their answer', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, CULTURE_HALL, TAP_LOOKUPS.a2);
 
     await user.press(buildingCard().getByRole('button', { name: '행사 보기' }));
@@ -166,7 +166,7 @@ describe("a2's buttons on the card of 문화관", () => {
   });
 
   it('"같이 갈 파티" asks the recalculation for the job fair\'s parties and opens their answer', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, CULTURE_HALL, TAP_LOOKUPS.a2);
 
     await user.press(buildingCard().getByRole('button', { name: '같이 갈 파티' }));
@@ -189,7 +189,7 @@ function lastContext(): unknown {
 describe('words typed under the card of a pressed building', () => {
   it('carry the Place as what was tapped, and the reply opens in the frame', async () => {
     server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_REPLY });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
 
     await user.type(screen.getByLabelText(AI_INPUT), '민수도 같이');
@@ -204,7 +204,7 @@ describe('words typed under the card of a pressed building', () => {
 
   it('carry nothing tapped once the card is closed', async () => {
     server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_REPLY });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     await user.press(buildingCard().getByRole('button', { name: '닫기' }));
 

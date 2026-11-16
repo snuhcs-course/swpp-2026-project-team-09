@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render } from '@testing-library/react-native';
@@ -52,7 +53,7 @@ describe('a User whom the system no longer asks for the location', () => {
 
     phone.setPermission('granted');
     await phone.comeToFront();
-    expect(screen.getByRole('image', { name: ME })).toBeVisible();
+    expect(screen.getByRole('button', { name: ME })).toBeVisible();
   });
 
   it("sees the way to the settings after a refusal that ends the system's prompts", async () => {
@@ -98,7 +99,7 @@ describe("a phone whose location services are off, with the User's permission", 
     const phone = givePhone({ permission: 'granted', position: ON_CAMPUS, servicesOff: true });
     const user = await openMain();
     expect(phone.watches()).toBe(1);
-    expect(screen.queryByRole('image', { name: ME })).toBeNull();
+    expect(screen.queryByRole('button', { name: ME })).toBeNull();
 
     await user.press(screen.getByRole('button', { name: MY_POSITION }));
     expect(screen.getByText(FINDING)).toBeVisible();
@@ -107,7 +108,7 @@ describe("a phone whose location services are off, with the User's permission", 
     phone.turnServicesOn();
     await user.press(screen.getByRole('button', { name: MY_POSITION }));
     expect(phone.watches()).toBe(3);
-    expect(screen.getByRole('image', { name: ME })).toBeVisible();
+    expect(screen.getByRole('button', { name: ME })).toBeVisible();
   });
 
   it('tries again when the app returns to the front, and not while the watch works', async () => {
@@ -117,7 +118,7 @@ describe("a phone whose location services are off, with the User's permission", 
     phone.turnServicesOn();
     await phone.comeToFront();
     expect(phone.watches()).toBe(2);
-    expect(screen.getByRole('image', { name: ME })).toBeVisible();
+    expect(screen.getByRole('button', { name: ME })).toBeVisible();
 
     await phone.comeToFront();
     expect(phone.watches()).toBe(2);

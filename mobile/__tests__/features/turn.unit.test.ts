@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -24,8 +25,12 @@ describe('a turn of the conversation', () => {
     expect(turnOf([])).toBeNull();
   });
 
-  it("is none while the conversation holds only the app's own bubble", () => {
-    expect(turnOf([answered(1, '좌석 현황이에요.', { own: true })])).toBeNull();
+  // With the chat sheet gone (P02-04), a card the app shows on its own, as the room-window Notification's, has only
+  // the frame to stand in: its words are the pill's.
+  it("is the app's own bubbles, the first one's words asked, while the User said nothing", () => {
+    const own = answered(1, '예약 창이 열렸어요', { own: true });
+
+    expect(turnOf([own])).toEqual({ asked: '예약 창이 열렸어요', after: [own] });
   });
 
   it("is the User's message alone while its reply is on its way", () => {

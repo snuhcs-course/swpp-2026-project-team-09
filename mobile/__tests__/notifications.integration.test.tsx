@@ -6,6 +6,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -110,14 +111,16 @@ describe('알림', () => {
 });
 
 describe("a row of 알림's press", () => {
-  it("opens 파티 at 초대 from an invitation, by the invitation card's address the map does not hold", async () => {
+  // Since the switch went (P02-04) every known invitation is a card of the map, so one the map does not hold has ended
+  // (P02-06): the main screen says so instead of opening 파티 at 초대.
+  it('says that an invitation has ended when the map holds no card at its address', async () => {
     const user = await openNotifications();
 
     await user.press(screen.getByRole('button', { name: ROWS[2] }));
 
-    expect(screen.getByRole('tab', { name: /^초대/u })).toBeSelected();
+    expect(await screen.findByText('이미 끝난 초대예요')).toBeVisible();
     // The test router still prints the main screen's cleared parameter's name, as `card=undefined`.
-    expect(shownAddress()).toMatch(/^\/party\?(?:card=undefined&)?tab=invites$/u);
+    expect(shownAddress()).toMatch(/^\/main(?:\?card=undefined)?$/u);
   });
 
   it('opens 친구 요청 from a Friend Request', async () => {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type userEvent, within } from '@testing-library/react-native';
@@ -29,10 +30,10 @@ export const MADE_ACCEPTED: Quest = {
 };
 // What its flag and its line say before 민수 answers, on the fake main server's day, 6 October.
 export const FLAG = '11월 17일 (화) 12:15 점심 · 수락 0/1';
-// Its own marker on the everyday map, which the flag takes the place of while the switch is on.
+// Its own marker on the everyday map, which the flag takes the place of.
 export const OWN_MARKER = '퀘스트 · 302동식당에서 점심';
-// What the phone keeps once the Quest was made from a Plan on it, with the switch on.
-export const KEPT_MADE: Partial<Kept> = { answerOnMap: true, madeQuests: [MADE.id] };
+// What the phone keeps once the Quest was made from a Plan on it.
+export const KEPT_MADE: Partial<Kept> = { madeQuests: [MADE.id] };
 
 // Signs in as the asker of the stored answer, in place of the fake main server's own User.
 export async function signInAsAsker(): Promise<void> {

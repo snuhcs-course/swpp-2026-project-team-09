@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -100,28 +101,21 @@ function rows(): unknown[] {
 }
 
 async function openMyCard(): Promise<void> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await press(user, ME);
 }
 
-// Partitions: the switch on and off; a Friend's face where the dot is.
+// Partitions: the dot alone; a Friend's face where the dot is.
 describe("the User's own dot", () => {
-  it('opens the card of what each Friend sees of the User with the switch on', async () => {
+  it('opens the card of what each Friend sees of the User', async () => {
     await openMyCard();
 
     expect(myCard().getByRole('header', { name: HEAD })).toBeVisible();
   });
 
-  it('takes no press with the switch off, and is still read', async () => {
-    await openMain();
-
-    expect(screen.queryByRole('button', { name: ME })).toBeNull();
-    expect(screen.getByRole('image', { name: ME })).toBeVisible();
-  });
-
   it("lies under a Friend's face where both are, which keeps its own press", async () => {
     givePhone({ permission: 'granted', position: NEAR_LIBRARY });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     const drawn = within(screen.getByTestId('main-map-touches'))
       .getAllByRole('button')
       .map((thing): unknown => thing.props.accessibilityLabel);

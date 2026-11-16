@@ -174,8 +174,8 @@ function SeenRow({ seen, onPress = openSharing }: { seen: string; onPress?: () =
 }
 
 // The card's lines. A Friend's card is their profile: what the User sees of them before the lines, and their Friend
-// ID and since when the two have been Friends after them, each where the main server sends it. With the switch on, the
-// fact lines of the main server's card of the Friend stand in place of the lines once they came.
+// ID and since when the two have been Friends after them, each where the main server sends it. The fact lines of the
+// main server's card of the Friend stand in place of the lines once they came.
 function Lines({ card, onSeen }: Pick<CardProps, 'card' | 'onSeen'>): ReactElement | null {
   const userId = friendIdOf(card.id);
   const facts = useFriendProfile(userId)?.facts ?? null;

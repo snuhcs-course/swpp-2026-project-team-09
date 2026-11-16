@@ -3,9 +3,10 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent } from '@testing-library/react-native';
+import { fireEvent, within } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { type FakeLibrary, fakeTransport } from './support/kwanjeong/fake-library';
 import { answerFromFakeLibrary } from './support/library-session';
@@ -271,7 +272,7 @@ describe('the skip', () => {
 });
 
 describe('어시스턴트에게 예약 부탁하기', () => {
-  it('is offered after a check that found nothing, and opens the chat with the request and its seat card', async () => {
+  it('is offered after a check that found nothing, and shows the frame with the request and its seat card', async () => {
     await setUp(A_MONTH_LATER);
     const user = await openSheet('kwanjeong', KWANJEONG_ROW);
 
@@ -280,11 +281,13 @@ describe('어시스턴트에게 예약 부탁하기', () => {
     await pass(1000);
 
     expect(screen.queryByLabelText(SHEET)).toBeNull();
-    expect(screen.getByTestId('chat-sheet')).toBeVisible();
-    expect(screen.getByText('관정도서관 7층 열람실에 한 자리 예약해줘')).toBeVisible();
+    expect(
+      within(screen.getByTestId('answer-pill')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
+    ).toBeVisible();
     // The Assistant's library card for 7F-7A-zone2 reads the seats and offers the first free one, writing nothing.
-    expect(screen.getByText(/^관정관 7층 7A 열람실 2 구역 · 7193번$/u)).toBeVisible();
-    expect(button('예약하기')).toBeVisible();
+    const card = within(screen.getByTestId('answer-card'));
+    expect(card.getByText(/^관정관 7층 7A 열람실 2 구역 · 7193번$/u)).toBeVisible();
+    expect(card.getByRole('button', { name: '예약하기' })).toBeVisible();
     expect(library.requestsTo('getSeatBookingList')).toHaveLength(1);
     expect(await status()).toBe('started');
   });

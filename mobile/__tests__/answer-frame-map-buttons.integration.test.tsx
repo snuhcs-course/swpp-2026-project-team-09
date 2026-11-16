@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -19,7 +20,7 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { answerShuttle } from './support/shuttle';
 
-// The map buttons under the Assistant's answers, against the fake main server.
+// The map buttons under the Assistant's answers in the answer frame's card, against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -57,18 +58,26 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Opens the chat, sends a question and lets the Assistant answer with `mapButtons`.
+// Sends a question from the map's bar and lets the Assistant answer.
+async function ask(user: User): Promise<void> {
+  await user.type(screen.getByLabelText(AI_INPUT), '셔틀 어디 있어?');
+  await user.press(screen.getByRole('button', { name: '보내기' }));
+  await pass(500);
+}
+
+// Opens the main screen and asks; the Assistant answers with `mapButtons`.
 async function answered(mapButtons: string[]): Promise<User> {
   server.on('POST /assistant/messages', {
     status: 200,
     body: { text: SHUTTLE_REPLY, mapButtons, cards: [], proposal: null },
   });
   const user = await openMain();
-  await user.press(screen.getByLabelText(AI_INPUT));
-  await user.type(screen.getByLabelText(AI_INPUT), '셔틀 어디 있어?');
-  await user.press(screen.getByRole('button', { name: '보내기' }));
-  await pass(500);
+  await ask(user);
   return user;
+}
+
+function frame(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-card'));
 }
 
 // A layer's toggle that is on offers to turn it off.
@@ -83,44 +92,43 @@ async function layersOn(user: User): Promise<{ dining: boolean; shuttle: boolean
 }
 
 describe('a map button under an answer', () => {
-  it('shows 지도에서 셔틀 보기 for the shuttle, in the bubble of the answer', async () => {
+  it("shows 지도에서 셔틀 보기 for the shuttle, in the frame's card", async () => {
     await answered(['shuttle']);
 
-    const bubble = within(screen.getByTestId('assistant-bubble'));
-    expect(bubble.getByText(SHUTTLE_REPLY)).toBeVisible();
-    expect(bubble.getByRole('button', { name: '지도에서 셔틀 보기' })).toBeVisible();
+    expect(frame().getByText(SHUTTLE_REPLY)).toBeVisible();
+    expect(frame().getByRole('button', { name: '지도에서 셔틀 보기' })).toBeVisible();
     expect(screen.queryByRole('button', { name: '지도에서 식당 보기' })).toBeNull();
   });
 });
 
 describe('a map button pressed', () => {
-  it('closes the sheet and turns the shuttle layer on', async () => {
+  it('closes the frame and turns the shuttle layer on', async () => {
     const user = await answered(['shuttle']);
 
-    await user.press(screen.getByRole('button', { name: '지도에서 셔틀 보기' }));
+    await user.press(frame().getByRole('button', { name: '지도에서 셔틀 보기' }));
     await pass(500);
 
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
+    expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(server.received('GET /shuttle')).toHaveLength(1);
     expect(await layersOn(user)).toEqual({ dining: false, shuttle: true });
   });
 
-  it('closes the sheet and turns the 식당 layer on with 지도에서 식당 보기', async () => {
+  it('closes the frame and turns the 식당 layer on with 지도에서 식당 보기', async () => {
     const user = await answered(['dining']);
 
-    await user.press(screen.getByRole('button', { name: '지도에서 식당 보기' }));
+    await user.press(frame().getByRole('button', { name: '지도에서 식당 보기' }));
     await pass(500);
 
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
+    expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(await layersOn(user)).toEqual({ dining: true, shuttle: false });
   });
 
   it('leaves a layer that is on as it is', async () => {
     const user = await answered(['shuttle']);
-    await user.press(screen.getByRole('button', { name: '지도에서 셔틀 보기' }));
-    await user.press(screen.getByLabelText(AI_INPUT));
+    await user.press(frame().getByRole('button', { name: '지도에서 셔틀 보기' }));
+    await ask(user);
 
-    await user.press(screen.getByRole('button', { name: '지도에서 셔틀 보기' }));
+    await user.press(frame().getByRole('button', { name: '지도에서 셔틀 보기' }));
     await pass(500);
 
     expect(await layersOn(user)).toEqual({ dining: false, shuttle: true });
@@ -134,13 +142,14 @@ describe('a map button', () => {
     await user.type(screen.getByLabelText(AI_INPUT), '고마워');
     await user.press(screen.getByRole('button', { name: '보내기' }));
 
-    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
-      clientCapabilities: ['library'],
-      messages: [
-        { role: 'user', text: '셔틀 어디 있어?' },
-        { role: 'assistant', text: SHUTTLE_REPLY, cards: [] },
-        { role: 'user', text: '고마워' },
-      ],
-    });
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(
+      expect.objectContaining({
+        messages: [
+          { role: 'user', text: '셔틀 어디 있어?' },
+          { role: 'assistant', text: SHUTTLE_REPLY, cards: [] },
+          { role: 'user', text: '고마워' },
+        ],
+      }),
+    );
   });
 });

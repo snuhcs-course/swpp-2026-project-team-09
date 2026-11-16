@@ -111,7 +111,7 @@ function lastContext(): unknown {
 describe('words typed while a meet is on screen', () => {
   it("carry the meet's conditions and its Plan's id, and the meet capability", async () => {
     server.on('POST /assistant/messages', { status: 200, body: FRIEND_LOOKUP_REPLY });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await user.press(screen.getByRole('button', { name: row(MIN_SU) }));
     await meetFromCard(user);
 

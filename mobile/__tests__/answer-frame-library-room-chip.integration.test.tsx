@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
@@ -9,11 +10,18 @@ import { STUDY_BUILDINGS } from '@/api/mock/data/study-spaces';
 import type { LibrarySeat } from '@/library/replies';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
-import { askForCards, card, expectNoWrite, inCard, pressIn, startLibraryChat } from './support/library-chat';
-import { AI_INPUT } from './support/lists';
+import {
+  askForCards,
+  card,
+  expectNoWrite,
+  inCard,
+  inFrame,
+  pressIn,
+  sendFromBar,
+  startLibraryChat,
+} from './support/library-chat';
 
 // The room chip of the seat card ("공부할 자리"): the list of rooms by floor and kind with the free seats of the seat
 // space each would fill, a switch and 되돌리기, and a full room swapped, against the fake main server and the fake
@@ -208,11 +216,9 @@ describe('a switch of room', () => {
     await pressIn(seatCard(), '예약하기');
 
     expect(library.writes().map(({ body }) => body.sectorNo)).toEqual(['18202']);
-    expect(screen.getByLabelText('장소 관정관 (62-1동) 8층 8A 열람실 2 구역(노트북존)')).toBeVisible();
+    expect(inFrame().getByLabelText('장소 관정관 (62-1동) 8층 8A 열람실 2 구역(노트북존)')).toBeVisible();
 
-    await chat.user.type(screen.getByLabelText(AI_INPUT), '고마워');
-    await chat.user.press(screen.getByRole('button', { name: '보내기' }));
-    await pass(500);
+    await sendFromBar(chat.user, '고마워');
 
     expect(server.received('POST /assistant/messages')[1]?.body).toMatchObject({
       messages: [

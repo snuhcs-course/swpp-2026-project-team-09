@@ -3,9 +3,11 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
+import { hideKeyboard, KEYBOARD, showKeyboard } from './support/keyboard';
 import { AI_INPUT, button, findButton, FULL_SCREEN } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND } from './support/markers';
@@ -69,7 +71,8 @@ describe('the start button', () => {
     expect(findButton(START)).toBeNull();
   });
 
-  it('gives way to an open card and to the chat', async () => {
+  // Since the chat sheet went (P02-04), pressing the bar raises the keyboard, and the examples stand above it.
+  it('gives way to an open card and to the keyboard of the AI input', async () => {
     const user = await openAsFreshman();
     expect(button(START)).toBeVisible();
 
@@ -79,7 +82,10 @@ describe('the start button', () => {
     expect(button(START)).toBeVisible();
 
     await user.press(screen.getByLabelText(AI_INPUT));
+    await showKeyboard(KEYBOARD);
     expect(findButton(START)).toBeNull();
+    await hideKeyboard();
+    expect(button(START)).toBeVisible();
   });
 
   it('stays while a quest is not started, and goes once every quest is', async () => {

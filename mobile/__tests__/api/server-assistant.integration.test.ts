@@ -16,9 +16,8 @@ import { TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP, WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import { googleAvailable } from '@/auth/google';
 
-// The Assistant through the main server's client: what the app knew as the User asked goes with the request only when
-// the app gives it, and only then does the app say it can draw an answer on the map. The reply's answer is believed
-// only in the contract's shape.
+// The Assistant through the main server's client: what the app knew as the User asked goes with every request, which
+// says the app can draw an answer on the map. The reply's answer is believed only in the contract's shape.
 
 jest.mock('@/auth/google', () => ({
   googleAvailable: jest.fn<boolean, []>(),
@@ -51,7 +50,7 @@ afterEach(() => {
 });
 
 describe("the Assistant's request to the main server", () => {
-  it('carries the context and both capabilities when the app gives a context', async () => {
+  it('carries the context and the capabilities that say the app draws answers', async () => {
     const server = await askMainServer({ signedIn: true });
     server.on('POST /assistant/messages', { status: 200, body: REPLY });
 
@@ -59,17 +58,6 @@ describe("the Assistant's request to the main server", () => {
 
     expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
       { clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'], context: CONTEXT, messages: MESSAGES },
-    ]);
-  });
-
-  it('is the request of before, with no context and no answer, when the app gives none', async () => {
-    const server = await askMainServer({ signedIn: true });
-    server.on('POST /assistant/messages', { status: 200, body: REPLY });
-
-    await apiClient.askAssistant(MESSAGES);
-
-    expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
-      { clientCapabilities: ['library'], messages: MESSAGES },
     ]);
   });
 });

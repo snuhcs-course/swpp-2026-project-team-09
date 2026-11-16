@@ -13,7 +13,7 @@ import type { FakeServer } from './fake-server';
 import type { openMain } from './main';
 import { JI_WOO, ME_ID, MIN_JUN } from './server';
 
-// "만나고 싶다" (P02 ticket 24), against the fake main server with the switch on.
+// "만나고 싶다" (P02 ticket 24), against the fake main server.
 
 export const MEET = '만나고 싶다';
 

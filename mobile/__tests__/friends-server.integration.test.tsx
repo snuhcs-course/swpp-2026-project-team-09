@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -218,7 +219,7 @@ describe('Friends on the map', () => {
 
     await pass(150_000);
     expect(lookOf('김민준')).toMatch(/:stale/u);
-    expect(wordsUnder('김민준', '민준 · 2분 전')).not.toBeNull();
+    expect(wordsUnder('김민준', '김민준 · 2분 전')).not.toBeNull();
     expect(screen.getByText('위치 켜짐 · 2분 전 위치')).toBeVisible();
 
     await pass(480_000);
@@ -226,12 +227,10 @@ describe('Friends on the map', () => {
   });
 
   it('shows no Avatar for a Friend who is not visible, and 위치 꺼짐 in the lists', async () => {
-    const user = await openMain();
+    await openMain();
 
     expect(screen.queryByRole('button', { name: '서지우' })).toBeNull();
     expect(screen.getByText('위치 꺼짐')).toBeVisible();
-    await user.press(screen.getByRole('button', { name: '서지우 지도에서 보기' }));
-    expect(screen.getByText('서지우님은 위치가 꺼져 있어요')).toBeVisible();
   });
 });
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -38,7 +39,6 @@ const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], 
 const FAILED_FIRST = '답을 가져오지 못했어요.';
 const FAILED_SECOND = '연결이 끊겼거나 서버가 답하지 않았어요. 쓴 말은 입력칸에 그대로 두었어요.';
 const USED_UP = '오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요';
-const SLOW_FAILURE = { status: 503, body: { statusCode: 503, message: 'Refused' }, afterMs: 1000 };
 
 let server: FakeServer;
 
@@ -88,13 +88,13 @@ function sentWith(messages: object[]): unknown {
 // The frame, after the words were sent and the request failed.
 async function failedInFrame(): Promise<User> {
   server.on('POST /assistant/messages', refusal(503));
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await ask(user);
   return user;
 }
 
-// Partitions: the switch on and off; a failure the Assistant may get over, and the daily limit; the words kept,
-// edited, sent again, and dropped with the frame.
+// Partitions: a failure the Assistant may get over, and the daily limit; the words kept, edited, sent again, and dropped
+// with the frame.
 describe('a request that failed, in the frame (n16)', () => {
   it('says what failed in two lines with 다시 시도, and the input holds the words that were sent', async () => {
     await failedInFrame();
@@ -118,7 +118,7 @@ describe('a request that failed, in the frame (n16)', () => {
 
   it('keeps its own words for the daily limit, with no 다시 시도 and nothing put back', async () => {
     server.on('POST /assistant/messages', refusal(429));
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await ask(user);
 
@@ -169,52 +169,10 @@ describe('the words kept after a failure, in the frame (n16)', () => {
   });
 });
 
-describe('a request that failed, in the chat sheet (n16)', () => {
-  it('says the two lines with 다시 시도, and the input holds the words that were sent', async () => {
-    server.on('POST /assistant/messages', refusal(503));
-    const user = await openMain();
-    await user.press(input());
-
-    await ask(user);
-
-    const bubble = screen.getByTestId('assistant-bubble');
-    expect(bubble).toHaveTextContent(FAILED_FIRST, { exact: false });
-    expect(bubble).toHaveTextContent(FAILED_SECOND, { exact: false });
-    expect(input()).toHaveDisplayValue(ASKED);
-  });
-
-  it('keeps what the User wrote while waiting, in place of the words sent', async () => {
-    server.on('POST /assistant/messages', SLOW_FAILURE);
-    const user = await openMain();
-    await user.press(input());
-    await send(user, ASKED);
-
-    await user.type(input(), '한식');
-    await pass(1000);
-
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(FAILED_FIRST, { exact: false });
-    expect(input()).toHaveDisplayValue('한식');
-  });
-
-  it('empties the input once 다시 시도 sends the words again', async () => {
-    server.on('POST /assistant/messages', refusal(503));
-    const user = await openMain();
-    await user.press(input());
-    await ask(user);
-    server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
-
-    await user.press(screen.getByRole('button', { name: '다시 시도' }));
-    await pass(1000);
-
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(REPLY);
-    expect(input()).toHaveDisplayValue('');
-  });
-});
-
 // Partitions: waiting, then the reply; waiting, then 그만.
 describe('waiting for the reply (n18)', () => {
   it('says 보는 중 with 그만, and hides the input', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await send(user, ASKED);
 
@@ -224,7 +182,7 @@ describe('waiting for the reply (n18)', () => {
   });
 
   it('brings the input back with the reply', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await ask(user);
 
@@ -235,7 +193,7 @@ describe('waiting for the reply (n18)', () => {
   });
 
   it('closes the answer with 그만, forgets the reply on its way, and brings the input back', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await send(user, ASKED);
 
     await user.press(card().getByRole('button', { name: '그만' }));

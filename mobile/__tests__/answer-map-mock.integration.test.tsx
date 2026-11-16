@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -36,7 +37,7 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openMain>>;
 
 async function ask(): Promise<User> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await pass(500);
   await user.type(screen.getByLabelText(AI_INPUT), '배고파, 민수랑 같이');
   await user.press(screen.getByRole('button', { name: '보내기' }));
@@ -48,7 +49,7 @@ async function ask(): Promise<User> {
 // the User's Party who is no Friend and not in the Plan.
 describe('what gives way to the Plan over the mocks', () => {
   it('takes the walking route away while the Plan is drawn, and brings it back after ✕', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pass(500);
     expect(mapLines()).toContain('walking-route');
     await user.type(screen.getByLabelText(AI_INPUT), '배고파, 민수랑 같이');

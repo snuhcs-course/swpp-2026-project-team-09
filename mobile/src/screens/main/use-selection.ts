@@ -63,37 +63,34 @@ const OFF_MAP = 'off-map:';
 // The selection of a pressed building, which no card of the map has either.
 const PLACE = 'place:';
 
-// The Friends whose card may be open while the map does not show them, by user id: the User's Friends while the
-// switch of the answer on the map is on, and null while it is off.
-export type OffMapFriends = readonly string[] | null;
+// The Friends whose card may be open while the map does not show them, by user id.
+export type OffMapFriends = readonly string[];
 
 // The Friend of a selection made by `selectFriend`, while their card may be open; null otherwise.
 function offMapFriend(selectedId: string | null, offMap: OffMapFriends): string | null {
   const userId = selectedId?.startsWith(OFF_MAP) === true ? selectedId.slice(OFF_MAP.length) : null;
-  return userId !== null && offMap?.includes(userId) === true ? userId : null;
+  return userId !== null && offMap.includes(userId) ? userId : null;
 }
 
-// The Place of the pressed building that is selected, while buildings take a press; null otherwise.
-function placeOf(pressed: Place | null, selectedId: string | null, buildings: boolean): Place | null {
-  return buildings && pressed !== null && selectedId === `${PLACE}${pressed.id}` ? pressed : null;
+// The Place of the pressed building that is selected; null otherwise.
+function placeOf(pressed: Place | null, selectedId: string | null): Place | null {
+  return pressed !== null && selectedId === `${PLACE}${pressed.id}` ? pressed : null;
 }
 
 // Android's back button over an open card (`shown` while the map is in front): it hides "어디까지 보이나" first, then
 // closes the card. The two are registered in this order, which is also the order they come back in when the map is
-// in front again, and the latest takes the press first. "어디까지 보이나" is shown only while `on`, the switch of the
-// answer on the map, and is hidden once it goes off.
+// in front again, and the latest takes the press first.
 function useBackAndSeen(
   selectedId: string | null,
   shown: boolean,
   close: () => void,
-  on: boolean,
 ): Pick<Selection, 'seen' | 'showSeen' | 'hideSeen'> {
   useBackToClose(shown, close, { edge: false });
   const [seenOf, setSeenOf] = useState<string | null>(null);
-  if (seenOf !== null && (seenOf !== selectedId || !on)) {
+  if (seenOf !== null && seenOf !== selectedId) {
     setSeenOf(null);
   }
-  const seen = on && seenOf !== null && seenOf === selectedId;
+  const seen = seenOf !== null && seenOf === selectedId;
   const showSeen = useCallback(() => {
     setSeenOf(selectedId);
   }, [selectedId]);
@@ -152,20 +149,19 @@ function useSelects(
 // dot is on the map and takes a press; once it does not, the User's own card is closed for good, as a thing's that
 // left the map. `offMap`: the Friends whom a card may be open for without their mark on the map; such a card stays
 // until another selection or a close, also once the map shows them, and is closed for good once its Friend is not
-// among `offMap`. A building takes a press while `offMap` is not null, the switch being on; once it is off, a
-// building's card is closed for good too.
+// among `offMap`.
 export function useSelection(
   cards: readonly CardView[],
   inFront: boolean,
   meShown = false,
-  offMap: OffMapFriends = null,
+  offMap: OffMapFriends = [],
 ): Selection {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [wait, setWait] = useState<Wait | null>(null);
   const selected = cards.find(({ id }) => id === selectedId) ?? null;
   const mine = meShown && selectedId === ME_AVATAR_ID;
   const [pressed, setPressed] = useState<Place | null>(null);
-  const place = placeOf(pressed, selectedId, offMap !== null);
+  const place = placeOf(pressed, selectedId);
   const friend = offMapFriend(selectedId, offMap);
   // The selected thing left the map, or its Friend's card may no longer be open: the selection is dropped, during this
   // render, so that its return opens nothing.
@@ -184,7 +180,7 @@ export function useSelection(
     setSelectedId(null);
     setWait(null);
   }, []);
-  const { seen, showSeen, hideSeen } = useBackAndSeen(selectedId, open && inFront, close, offMap !== null);
+  const { seen, showSeen, hideSeen } = useBackAndSeen(selectedId, open && inFront, close);
   const only = useCallback(
     (id: string) => {
       hideSeen();

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -154,7 +155,7 @@ describe('a withdrawal the Leader answered first', () => {
   });
 });
 
-describe('a request sent from a 파티 card in chat', () => {
+describe('a request sent from a 파티 card in the answer frame', () => {
   it('appears in 보낸 신청 without more', async () => {
     setAnswers({ requests: [] });
     server.on('POST /assistant/messages', {
@@ -166,12 +167,11 @@ describe('a request sent from a 파티 card in chat', () => {
       return { status: 201, body: TO_CODING };
     });
     const user = await openAt('/main');
-    await user.press(screen.getByLabelText(AI_INPUT));
     await user.type(screen.getByLabelText(AI_INPUT), '파티 찾기');
     await user.press(screen.getByRole('button', { name: '보내기' }));
     await pass(500);
-    const chatCard = within(within(screen.getByTestId('chat-sheet')).getByLabelText(CODING.title));
-    await user.press(chatCard.getByRole('button', { name: '참여 신청' }));
+    const questCard = within(within(screen.getByTestId('answer-card')).getByLabelText(CODING.title));
+    await user.press(questCard.getByRole('button', { name: '참여 신청' }));
     await pass(500);
     await answer(user, '참여 신청');
 

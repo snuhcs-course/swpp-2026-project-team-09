@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -24,7 +25,7 @@ import { askMainServer, PHONE_NOW } from './support/server';
 import { answerShuttle } from './support/shuttle';
 
 // What the answer frame's card holds (P02 ticket 01, "Today's answers inside the card" and "A reply that carries a
-// Plan"), against the fake main server, with the switch on: the chat's own parts without a bubble around them.
+// Plan"), against the fake main server: the chat's own parts without a bubble around them.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -75,10 +76,10 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Starts the app with the switch on, and asks; the main server answers with `reply`.
+// Starts the app and asks; the main server answers with `reply`.
 async function askFramed(reply: object): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body: reply });
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await user.type(screen.getByLabelText(AI_INPUT), ASKED);
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(500);
@@ -177,9 +178,9 @@ describe('a Proposal in the frame', () => {
   });
 });
 
-// Opens the main screen with the switch on, opens a Quest's card 180 high, and asks.
+// Opens the main screen, opens a Quest's card 180 high, and asks.
 async function askOverCard(): Promise<User> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await press(user, DINNER_MARKER);
   await fireEvent(screen.getByTestId('map-card'), 'layout', {
     nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },

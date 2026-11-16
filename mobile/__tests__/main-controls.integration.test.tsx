@@ -7,11 +7,11 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act } from '@testing-library/react-native';
-import { BackHandler } from 'react-native';
 import { pass, screen, shownAddress } from './support/app';
+import { holdBackButton } from './support/back';
 import {
   ACTIVE_PARTY,
   AI_INPUT,
@@ -27,7 +27,7 @@ import {
   PARTY_ROW,
   SEND,
 } from './support/lists';
-import { expectContentUnder, hideKeyboard, KEYBOARD, LIFT, quietDismiss, showKeyboard } from './support/keyboard';
+import { hideKeyboard, KEYBOARD, LIFT, quietDismiss, showKeyboard } from './support/keyboard';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND, press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -40,6 +40,15 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 }));
 
 const CREDIT = '지도 데이터 출처 보기';
+
+type User = Awaited<ReturnType<typeof openMain>>;
+
+// Sends the words from the map's bar, which the mocks answer.
+async function ask(user: User, words: string): Promise<void> {
+  await user.type(screen.getByLabelText(AI_INPUT), words);
+  await press(user, SEND);
+  await pass(300);
+}
 
 beforeEach(async () => {
   jest.useFakeTimers();
@@ -95,76 +104,39 @@ describe("the main screen's AI input", () => {
     expect(button(SEND)).toBeDisabled();
   });
 
-  it('opens the chat, which the mocks answer where the app asks no main server', async () => {
+  it('shows the answer frame, which the mocks answer where the app asks no main server', async () => {
     const user = await openMain();
 
-    await user.press(screen.getByLabelText(AI_INPUT));
-    await press(user, '식사 메뉴 추천');
-    await pass(300);
+    await ask(user, '식사 메뉴 추천');
 
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(/^오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^오늘 메뉴예요\./u);
   });
 });
 
 describe("the main screen's AI input over the keyboard", () => {
-  it("rises by the keyboard less the navigation under it, with the chat's room, and comes back when it hides", async () => {
-    const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-    // The bar is 12 above the navigation and 50 high; the chat keeps 32 above it.
+  it('rises by the keyboard less the navigation under it, and comes back when it hides', async () => {
+    await openMain();
+    // The bar is 12 above the navigation.
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 });
-    expectContentUnder('chat-empty', 94);
 
     await showKeyboard(KEYBOARD);
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 + LIFT });
-    expectContentUnder('chat-empty', 94 + LIFT);
 
     await hideKeyboard();
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 });
-    expectContentUnder('chat-empty', 94);
-  });
-
-  it('keeps the last bubble clear of it, and sends an example with its first press', async () => {
-    const dismiss = quietDismiss();
-    const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-    await showKeyboard(KEYBOARD);
-
-    await press(user, '식사 메뉴 추천');
-    await pass(300);
-
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(/^오늘 메뉴예요\./u);
-    expectContentUnder('chat-bubbles', 94 + LIFT);
-    expect(dismiss).not.toHaveBeenCalled();
   });
 });
 
 describe('what puts the keyboard down on the main screen', () => {
-  it("puts the keyboard down when Android's back button closes the chat", async () => {
-    const dismiss = quietDismiss();
-    const listen = jest.spyOn(BackHandler, 'addEventListener');
+  it("puts the keyboard down when Android's back button closes the answer frame", async () => {
+    const back = holdBackButton();
     const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-
-    await act(() => {
-      listen.mock.lastCall?.[1]({ type: 'hardwareBackPress', timeStamp: 0 });
-    });
-
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
-    expect(dismiss).toHaveBeenCalledTimes(1);
-  });
-
-  it("lets a drag of the conversation put the keyboard down, and an answer's map button too", async () => {
+    await ask(user, '식사 메뉴 추천');
     const dismiss = quietDismiss();
-    const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-    expect(screen.getByTestId('chat-empty')).toHaveProp('keyboardDismissMode', 'on-drag');
 
-    await press(user, '식사 메뉴 추천');
-    await pass(300);
-    expect(screen.getByTestId('chat-bubbles')).toHaveProp('keyboardDismissMode', 'on-drag');
+    await back();
 
-    await press(user, '지도에서 식당 보기');
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
+    expect(screen.queryByTestId('answer-pill')).toBeNull();
     expect(dismiss).toHaveBeenCalledTimes(1);
   });
 });

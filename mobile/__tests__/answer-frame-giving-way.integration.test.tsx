@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -78,7 +79,7 @@ describe('what gives way to the frame and comes back after ✕', () => {
   it("hides the shuttle's notice", async () => {
     await start(SATURDAY_NOON);
     answerShuttle(server);
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await toggleShuttle(user);
     expect(screen.getByTestId('shuttle-notice')).toBeVisible();
 
@@ -91,7 +92,7 @@ describe('what gives way to the frame and comes back after ✕', () => {
 
   it('hides the card of a thing selected before asking, which stays selected', async () => {
     await start();
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, DINNER);
     expect(screen.getByTestId('map-card')).toBeVisible();
 
@@ -117,7 +118,7 @@ describe('the tab bar while the frame is shown', () => {
         proposal: null,
       },
     });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await ask(user);
     expect(screen.queryByRole('tab', { name: '지도' })).toBeNull();
 
@@ -137,7 +138,7 @@ describe('the tab bar while the frame is shown', () => {
 describe("the map's credit while the frame is shown", () => {
   it("sits above the frame's card, and back above the row of buttons after ✕", async () => {
     await start();
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await ask(user);
 
     await fireEvent(screen.getByTestId('answer-card'), 'layout', {
@@ -152,15 +153,15 @@ describe("the map's credit while the frame is shown", () => {
   });
 });
 
-// Partitions: a send with the switch on while the keyboard is up.
-describe('a send from the bar with the switch on', () => {
+// Partitions: a send while the keyboard is up.
+describe('a send from the bar', () => {
   it('puts the keyboard down, so that the card shows 보는 중 and then the reply', async () => {
     await start();
     server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
     const dismiss = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
       // The tests' phone has no keyboard to put down; hideKeyboard tells of it going.
     });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await showKeyboard(KEYBOARD);
 
     await user.type(screen.getByLabelText(AI_INPUT), '셔틀 언제 다녀?');

@@ -42,7 +42,7 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openMain>>;
 
 async function ask(words: string): Promise<User> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await pass(500);
   await user.type(screen.getByLabelText(AI_INPUT), words);
   await user.press(screen.getByRole('button', { name: '보내기' }));

@@ -21,8 +21,8 @@ import { DINNER, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// The answer frame (P02 ticket 01) against the fake main server: with the switch on, what the User asks stays as a
-// pill at the top and one card at the bottom holds the reply; with it off, the chat sheet is today's.
+// The answer frame (P02 tickets 01 and 04) against the fake main server: what the User asks stays as a pill at the top
+// and one card at the bottom holds the reply.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -76,7 +76,7 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openMain>>;
 
 function openFramed(): Promise<User> {
-  return openMain({ answerOnMap: true });
+  return openMain();
 }
 
 // Writes the words in the bar and sends them, without waiting for the reply.
@@ -105,20 +105,7 @@ function sentBodies(): unknown[] {
 // What gives way to the frame, by what a screen reader says of it.
 const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, LAYERS, '확대'];
 
-// Partitions: the switch off and on; the conversation empty, waiting, answered, and failed.
-describe('the switch off', () => {
-  it("opens the chat sheet from the bar, and the request is today's: the messages and the library capability", async () => {
-    const user = await openMain();
-
-    await user.press(screen.getByLabelText(AI_INPUT));
-    await ask(user);
-
-    expect(screen.getByTestId('chat-sheet')).toBeVisible();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
-    expect(sentBodies()).toEqual([{ messages: [{ role: 'user', text: ASKED }], clientCapabilities: ['library'] }]);
-  });
-});
-
+// Partitions: the conversation empty, waiting, answered, and failed.
 describe('the frame', () => {
   it('shows the pill with the words and the card saying 보는 중, and no chat sheet, until the reply', async () => {
     const user = await openFramed();
@@ -192,7 +179,7 @@ describe('what gives way to the frame', () => {
   });
 });
 
-describe('the request with the switch on', () => {
+describe('the request', () => {
   it("carries the User's position, nulls for the rest, and the capabilities that say the app draws answers", async () => {
     const user = await openFramed();
 

@@ -2,58 +2,64 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { keep, readKept } from '@/storage/kept';
+import { readKept } from '@/storage/kept';
 
-// The switch of the answer on the map as the phone keeps it (P02 ticket 01): off unless it was kept on.
+// What a phone kept while the answer on the map had its switch (P02 ticket 04): the switch is gone, and the rest of
+// what was kept still counts.
 
 const KEY = 'snunow.kept';
 
-// What a version of the app before the switch kept: a signed-in User who finished Onboarding.
-const OLDER = {
+// What a version with the switch kept: a signed-in User who finished Onboarding, the switch on or off.
+function keptWith(answerOnMap: boolean): object {
+  return {
+    signedIn: true,
+    consented: true,
+    suggestion: null,
+    onboardingCompleted: true,
+    answers: null,
+    locationExplained: true,
+    inviteToken: 'invite-1',
+    masterSwitch: true,
+    backgroundChosen: true,
+    backgroundRunning: false,
+    declinedParties: ['quest-1'],
+    answerOnMap,
+    madeQuests: ['quest-2'],
+    pushAsked: true,
+    pushUnregisterOwed: false,
+  };
+}
+
+const OTHER_VALUES = {
   signedIn: true,
   consented: true,
   suggestion: null,
   onboardingCompleted: true,
   answers: null,
   locationExplained: true,
-  inviteToken: null,
-  masterSwitch: false,
-  backgroundChosen: false,
+  inviteToken: 'invite-1',
+  masterSwitch: true,
+  backgroundChosen: true,
   backgroundRunning: false,
-  declinedParties: [],
+  declinedParties: ['quest-1'],
+  madeQuests: ['quest-2'],
+  pushAsked: true,
+  pushUnregisterOwed: false,
 };
 
 beforeEach(async () => {
   await AsyncStorage.clear();
 });
 
-// Partitions: nothing kept; an older version's data without the field; a value that is not true; kept on.
-describe('the kept switch of the answer on the map', () => {
-  it('is off on a phone that kept nothing', async () => {
-    expect((await readKept()).answerOnMap).toBe(false);
-  });
+// Partitions: the switch kept on; kept off.
+describe('what a phone kept with the switch of the answer on the map', () => {
+  it.each([true, false])('reads its other kept values as before, the switch kept %s', async (answerOnMap) => {
+    await AsyncStorage.setItem(KEY, JSON.stringify(keptWith(answerOnMap)));
 
-  it("is off on a phone that kept an older version's data, which still counts", async () => {
-    await AsyncStorage.setItem(KEY, JSON.stringify(OLDER));
-
-    const kept = await readKept();
-
-    expect(kept.answerOnMap).toBe(false);
-    expect(kept.signedIn).toBe(true);
-  });
-
-  it('is off when what was kept is not true', async () => {
-    await AsyncStorage.setItem(KEY, JSON.stringify({ ...OLDER, answerOnMap: 'yes' }));
-
-    expect((await readKept()).answerOnMap).toBe(false);
-  });
-
-  it('is on once it was kept on', async () => {
-    await keep({ answerOnMap: true });
-
-    expect((await readKept()).answerOnMap).toBe(true);
+    expect(await readKept()).toMatchObject(OTHER_VALUES);
   });
 });

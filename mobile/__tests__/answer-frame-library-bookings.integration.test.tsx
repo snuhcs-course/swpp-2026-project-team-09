@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -20,8 +21,8 @@ import {
   startLibraryChat,
 } from './support/library-chat';
 
-// The cancel and return cards and 내 예약 in the chat, against the fake main server and the fake library. M4: no test
-// sees a write before the confirm press.
+// The cancel and return cards and 내 예약 in the answer frame, against the fake main server and the fake library. M4:
+// no test sees a write before the confirm press.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
