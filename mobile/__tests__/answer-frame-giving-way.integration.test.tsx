@@ -155,7 +155,7 @@ describe("the map's credit while the frame is shown", () => {
 
 // Partitions: a send while the keyboard is up.
 describe('a send from the bar', () => {
-  it('puts the keyboard down, so that the card shows 보는 중 and then the reply', async () => {
+  it('puts the keyboard down, so that the card shows the dots (보는 중) and then the reply', async () => {
     await start();
     server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
     const dismiss = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
@@ -169,7 +169,7 @@ describe('a send from the bar', () => {
 
     expect(dismiss).toHaveBeenCalled();
     await hideKeyboard();
-    expect(within(screen.getByTestId('answer-card')).getByText('보는 중')).toBeVisible();
+    expect(within(screen.getByTestId('answer-card')).getByLabelText('보는 중')).toBeVisible();
     await pass(1000);
     expect(within(screen.getByTestId('answer-card')).getByText(REPLY)).toBeVisible();
   });

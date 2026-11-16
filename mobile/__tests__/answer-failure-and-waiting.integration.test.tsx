@@ -17,7 +17,8 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // P02 ticket 12 against the fake main server: a request that failed says so in two lines and keeps the words in the
-// input (n16), and while the reply is on its way the card says 보는 중 with 그만, and the input is hidden (n18).
+// input (n16), and while the reply is on its way the card shows the dots (보는 중) with 그만, and the input is hidden
+// (n18).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -160,24 +161,29 @@ describe('the words kept after a failure, in the frame (n16)', () => {
     expect(input()).toHaveDisplayValue('');
   });
 
-  it('empties the input when the frame is closed with the words untouched', async () => {
+  it('keeps the words when the frame is hidden with ✕, and empties the input untouched with 새 대화', async () => {
     const user = await failedInFrame();
 
     await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    expect(input()).toHaveDisplayValue(ASKED);
+    await user.press(screen.getByRole('button', { name: '이전 답' }));
+    await user.press(screen.getByRole('button', { name: '새 대화' }));
 
     expect(input()).toHaveDisplayValue('');
   });
 });
 
-// Partitions: waiting, then the reply; waiting, then 그만.
+// Partitions: waiting, then the reply.
 describe('waiting for the reply (n18)', () => {
-  it('says 보는 중 with 그만, and hides the input', async () => {
+  it('shows the dots, labelled 보는 중, with a 그만 icon button, and hides the input', async () => {
     const user = await openMain();
 
     await send(user, ASKED);
 
-    expect(card().getByText('보는 중')).toBeVisible();
+    expect(card().getByLabelText('보는 중')).toBeVisible();
+    expect(card().queryByText('보는 중')).toBeNull();
     expect(card().getByRole('button', { name: '그만' })).toBeVisible();
+    expect(card().queryByText('그만')).toBeNull();
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
   });
 
@@ -187,12 +193,37 @@ describe('waiting for the reply (n18)', () => {
     await ask(user);
 
     expect(card().getByText(REPLY)).toBeVisible();
-    expect(card().queryByText('보는 중')).toBeNull();
+    expect(card().queryByLabelText('보는 중')).toBeNull();
     expect(card().queryByRole('button', { name: '그만' })).toBeNull();
     expect(input()).toHaveProp('placeholder', '이어서 말하기');
   });
+});
 
-  it('closes the answer with 그만, forgets the reply on its way, and brings the input back', async () => {
+// Partitions: 그만 on a follow-up, and on the first question.
+describe('그만 while the reply is on its way (n18)', () => {
+  it('takes a follow-up back: the turn before is shown, and the reply is dropped', async () => {
+    const user = await openMain();
+    await ask(user);
+    server.on('POST /assistant/messages', { status: 200, body: { ...ANSWERED.body, text: '한식이요' }, afterMs: 1000 });
+    await send(user, '한식');
+
+    await user.press(card().getByRole('button', { name: '그만' }));
+    await pass(1000);
+
+    expect(within(screen.getByTestId('answer-pill')).getByText(ASKED)).toBeVisible();
+    expect(card().getByText(REPLY)).toBeVisible();
+    expect(screen.queryByText('한식이요')).toBeNull();
+    await ask(user, '양식');
+    expect(sentBodies().at(-1)).toEqual(
+      sentWith([
+        { role: 'user', text: ASKED },
+        { role: 'assistant', text: REPLY, cards: [] },
+        { role: 'user', text: '양식' },
+      ]),
+    );
+  });
+
+  it('closes the answer on the first question, forgets the reply on its way, and brings the input back', async () => {
     const user = await openMain();
     await send(user, ASKED);
 

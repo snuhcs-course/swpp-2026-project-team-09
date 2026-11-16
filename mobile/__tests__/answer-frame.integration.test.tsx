@@ -107,14 +107,15 @@ const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, LAYERS, '확대'];
 
 // Partitions: the conversation empty, waiting, answered, and failed.
 describe('the frame', () => {
-  it('shows the pill with the words and the card saying 보는 중, and no chat sheet, until the reply', async () => {
+  it('shows the pill with the words, ✕, and 새 대화, the card waiting with 보는 중, and no chat sheet', async () => {
     const user = await openFramed();
 
     await send(user, ASKED);
 
     expect(pill().getByText(ASKED)).toBeVisible();
     expect(pill().getByRole('button', { name: CLOSE })).toBeVisible();
-    expect(card().getByText(WAITING)).toBeVisible();
+    expect(screen.getByRole('button', { name: '새 대화' })).toBeVisible();
+    expect(card().getByLabelText(WAITING)).toBeVisible();
     expect(screen.queryByTestId('chat-sheet')).toBeNull();
   });
 
@@ -124,7 +125,7 @@ describe('the frame', () => {
     await ask(user);
 
     expect(card().getByText(REPLY)).toBeVisible();
-    expect(card().queryByText(WAITING)).toBeNull();
+    expect(card().queryByLabelText(WAITING)).toBeNull();
   });
 
   it('is not shown before anything is asked', async () => {
@@ -147,7 +148,7 @@ describe('what gives way to the frame', () => {
     expect(screen.queryByRole('tab', { name: '행사' })).toBeNull();
   });
 
-  it('brings them back when the frame is closed', async () => {
+  it('brings them back when the frame is hidden', async () => {
     const user = await openFramed();
     await ask(user);
 
@@ -226,7 +227,7 @@ describe('the request', () => {
 });
 
 describe('closing the frame', () => {
-  it('forgets the conversation with ✕, a reply on its way included', async () => {
+  it('hides the frame with ✕ and keeps the conversation, a reply on its way included', async () => {
     const user = await openFramed();
     await send(user, ASKED);
 
@@ -235,10 +236,18 @@ describe('closing the frame', () => {
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
     await ask(user, '한식');
-    expect(sentBodies().at(-1)).toEqual(expect.objectContaining({ messages: [{ role: 'user', text: '한식' }] }));
+    expect(sentBodies().at(-1)).toEqual(
+      expect.objectContaining({
+        messages: [
+          { role: 'user', text: ASKED },
+          { role: 'assistant', text: REPLY, cards: [] },
+          { role: 'user', text: '한식' },
+        ],
+      }),
+    );
   });
 
-  it("forgets the conversation with Android's back button, which goes no further", async () => {
+  it("hides the frame with Android's back button, which goes no further", async () => {
     const back = holdBackButton();
     const user = await openFramed();
     await ask(user);
@@ -271,7 +280,7 @@ describe('a failure in the frame', () => {
 });
 
 describe('the bar and the keyboard', () => {
-  it('stands over the keyboard, and the content of the card gives way to it', async () => {
+  it("stands over the keyboard, and the card's content gives way to the reply's headline", async () => {
     const user = await openFramed();
     await ask(user);
 
@@ -279,7 +288,7 @@ describe('the bar and the keyboard', () => {
 
     // The bar's 12 above the keyboard, which the tests' phone counts from the bottom of the screen.
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 + KEYBOARD });
-    expect(screen.queryByText(REPLY)).toBeNull();
+    expect(card().getByTestId('answer-headline')).toHaveTextContent(REPLY);
   });
 
   it('says where the conversation goes above the bar while the keyboard is up and nothing is asked', async () => {
