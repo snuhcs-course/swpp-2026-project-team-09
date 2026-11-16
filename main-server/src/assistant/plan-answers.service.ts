@@ -6,7 +6,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { type Position } from '../common/geometry.js';
-import { type AnswerReply, type PlanInput } from './dto/answer.dto.js';
+import { type AnswerReply, type LocationMissing, type PlanInput } from './dto/answer.dto.js';
 import { EventsPlanService } from './events/events-plan.service.js';
 import { MealPlanService } from './gathering/meal-plan.service.js';
 import { MeetPlanService } from './gathering/meet-plan.service.js';
@@ -24,7 +24,12 @@ export class PlanAnswersService {
     readonly meets: MeetPlanService,
   ) {}
 
-  plan(askerId: string, input: PlanInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
+  // Only a meal's plan reads why the location is missing.
+  plan(
+    askerId: string,
+    input: PlanInput,
+    at: { now: Date; location: Position | null; locationMissing?: LocationMissing },
+  ): Promise<AnswerReply> {
     if (input.kind === 'meal') {
       return this.meals.plan(askerId, input, at);
     }

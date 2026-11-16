@@ -13,6 +13,7 @@ import type { Refusal } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import { mainActionOf, type ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { AnswerLines } from './answer-lines';
+import { CardNote } from './card-note';
 import { ReadOnlyChip } from './condition-chips';
 import { isButton, pressOffer } from './refusal-reply';
 import { TimeBand } from './time-band';
@@ -181,6 +182,7 @@ export function LookupCard(props: LookupCardProps): ReactElement {
           onDrop={ignoreDrop}
         />
       )}
+      <CardNote note={lookup.note} />
       <Buttons asks={asksOf(props)} main={mainOf(props)} onAsk={props.onAsk} onClose={onClose} />
     </View>
   );

@@ -106,7 +106,7 @@ export function findWay(ways: WayService): Tool {
       const answer = await ways.find(
         userId,
         { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null, about },
-        { now, location: context.location },
+        { now, location: context.location, locationMissing: context.locationMissing },
       );
       if (answer.result === 'none') {
         return noneFound(NONE_REASONS[answer.reason]);

@@ -10,6 +10,7 @@ import { type Position } from '../../common/geometry.js';
 import { QuestBoard } from '../../generated/prisma/client.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import { clockTime } from '../free-time/tool-parts.js';
+import type { LocationMissing, WithMark, WithMissing } from '../refusals/refusal.dto.js';
 
 // The contract of an answer drawn on the map, declared with the same shape in the app's Assistant types. Times are
 // Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
@@ -17,6 +18,7 @@ import { clockTime } from '../free-time/tool-parts.js';
 // What the app knows when the User asks.
 export interface RequestContext {
   location: Position | null;
+  locationMissing: LocationMissing;
   // The visible map area.
   viewport: { south: number; west: number; north: number; east: number } | null;
   tapped: { kind: 'place'; placeId: string } | { kind: 'friend'; userId: string } | null;
@@ -97,7 +99,7 @@ export type PersonConstraint =
   | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
   | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
 
-export interface AnswerReply {
+export interface AnswerReply extends WithMissing {
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];
@@ -110,7 +112,7 @@ export interface AnswerReply {
 
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
 // of "이 근처".
-export interface ConditionChip {
+export interface ConditionChip extends WithMark {
   kind: 'origin' | 'from' | 'until' | 'person' | 'area' | 'what';
   text: string;
   userId: string | null;
@@ -226,6 +228,7 @@ export interface TimeBand {
 }
 
 export type { CardFact, Lookup, LookupAction, LookupCard } from './lookup.dto.js';
+export type { AnswerOffer, LocationMissing } from '../refusals/refusal.dto.js';
 
 // The most people of a plan, and the most constraints on each.
 const PEOPLE_MAX = 8;
@@ -324,9 +327,11 @@ const tappedSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('place'), placeId: z.uuid() }),
   z.strictObject({ kind: z.literal('friend'), userId: z.uuid() }),
 ]);
+const locationMissingSchema = z.enum(['permission', 'off-campus']).nullable().default(null);
 
 export const requestContextSchema = z.strictObject({
   location: z.strictObject({ latitude, longitude }).nullable().default(null),
+  locationMissing: locationMissingSchema,
   viewport: z
     .strictObject({ south: latitude, west: longitude, north: latitude, east: longitude })
     .nullable()
@@ -336,10 +341,11 @@ export const requestContextSchema = z.strictObject({
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
 }) satisfies z.ZodType<RequestContext>;
 
-// The body of a recalculation: the changed input, and where the asker is now.
+// The body of a recalculation: the changed input, and where the asker is now or why that is not sent.
 export const recalculationSchema = z.strictObject({
   input: planInputSchema,
   location: z.strictObject({ latitude, longitude }).nullable().default(null),
+  locationMissing: locationMissingSchema,
 });
 
 export type Recalculation = z.infer<typeof recalculationSchema>;
@@ -354,6 +360,7 @@ export type Tap = z.infer<typeof tapSchema>;
 
 export const NO_CONTEXT: RequestContext = {
   location: null,
+  locationMissing: null,
   viewport: null,
   tapped: null,
   conditions: null,

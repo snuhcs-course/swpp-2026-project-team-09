@@ -10,14 +10,17 @@ import { type ReactElement, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
+import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useOpenFriendProfile } from '../friend-profile';
 import { AnswerLines } from './answer-lines';
+import { CardNote } from './card-note';
 import { ConditionChips, type CornerAction } from './condition-chips';
 import { FriendChoices } from './friend-choices';
+import { MainButtons } from './main-buttons';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
 
@@ -98,14 +101,17 @@ interface StepsProps {
   busy: boolean;
   // Null for a Plan of the User alone, which has no "이대로 초대".
   invitation: PlanInvitation | null;
+  // The screens the answer offers for an input that was missing.
+  offers: readonly AnswerOffer[];
 }
 
 // The arrows at the row's two ends when the answer has more than one Plan, the count right before "›", and the
-// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend.
-function Steps({ shown, count, busy, invitation }: StepsProps): ReactElement | null {
+// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend,
+// then the answer's offers.
+function Steps({ shown, count, busy, invitation, offers }: StepsProps): ReactElement | null {
   const { index, browse, ghost, undo } = shown;
   const arrows = count > 1;
-  if (ghost === null && !arrows && invitation === null) {
+  if (ghost === null && !arrows && invitation === null && offers.length === 0) {
     return null;
   }
   return (
@@ -127,13 +133,7 @@ function Steps({ shown, count, busy, invitation }: StepsProps): ReactElement | n
             </Button>
           </View>
         )}
-        {invitation === null ? null : (
-          <View style={styles.main}>
-            <Button disabled={busy} full onPress={invitation.invite}>
-              {invitation.sending ? '보내는 중이에요' : '이대로 초대'}
-            </Button>
-          </View>
-        )}
+        <MainButtons busy={busy} invitation={invitation} offers={offers} />
       </View>
       {arrows ? (
         <Text numberOfLines={1} style={styles.count} testID="plan-count">
@@ -169,7 +169,7 @@ interface BelowProps extends CardProps {
   onProfile: ((userId: string) => void) | null;
 }
 
-// Under the lines: the list of Friends while it is open, else the Plan's time band and the steps.
+// Under the lines: the list of Friends while it is open, else the Plan's time band, the answer's note, and the steps.
 function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowProps): ReactElement {
   const { plan, ghost } = shown;
   if (fix.adding) {
@@ -198,7 +198,14 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
           fixed={windowOf(answer.input)}
         />
       )}
-      <Steps busy={busy} count={answer.plans.length} invitation={invitable ? invitation : null} shown={shown} />
+      <CardNote note={answer.note} />
+      <Steps
+        busy={busy}
+        count={answer.plans.length}
+        invitation={invitable ? invitation : null}
+        offers={answer.offers ?? []}
+        shown={shown}
+      />
     </>
   );
 }
@@ -290,7 +297,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85 },
   middle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2] },
   undo: { width: UNDO_WIDTH },
-  main: { flex: 1 },
   count: {
     ...text.label,
     width: COUNT_WIDTH,

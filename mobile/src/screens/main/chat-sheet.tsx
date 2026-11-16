@@ -18,7 +18,6 @@ import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import type { Tapped } from '@/api/lookup-types';
-import type { LatLng } from '@/api/types';
 import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answer-switch';
 import type { Viewport } from '@/features/assistant/study-area';
@@ -31,7 +30,7 @@ import { openPost } from '../party/post-card';
 import { ChatBubbles, ChatEmpty } from './chat-bubbles';
 import { type CardLeaving, useCardActions } from './chat-card-actions';
 import type { ProposalActions } from './chat-cards';
-import { useContextChat } from './use-context-chat';
+import { useContextChat, type Where } from './use-context-chat';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 interface ChatSheetProps {
@@ -234,17 +233,18 @@ const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 �
 function useAnswerOnScreen(
   onMap: boolean,
   bubbles: readonly ChatBubble[],
-  position: LatLng | null,
+  { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
 ): { answer: ShownAnswer; invitation: PlanInvitation } {
   const showToast = useToast();
   const shown = useShownAnswer(onMap ? bubbles : NO_BUBBLES, {
     location: position,
+    locationMissing,
     onFailed: () => {
       showToast(NOT_RECALCULATED);
     },
   });
-  const invitation = usePlanInvitation(shown, { location: position, say: showToast });
+  const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
   useEffect(() => {
     shownNow.current = shown;
   });
@@ -257,7 +257,7 @@ function useAnswerOnScreen(
 // once made, closes it and shows 내 파티, as the party form does, and its 수정, like a Restaurant card's 파티 만들기, closes
 // it and opens that form. However the sheet closes, the keyboard goes down with it: the AI input would keep the focus
 // otherwise.
-// With the switch of the answer on the map on, every request carries the context at the User's `position`, the sheet
+// With the switch of the answer on the map on, every request carries the context at `where` the User is, the sheet
 // never opens, and the answer frame shows the conversation instead: a card that leads elsewhere leaves the frame as
 // it is, and a map button forgets the conversation and turns its layer on. A change of the switch closes the sheet and
 // forgets the conversation. A Lookup's "길 안내" starts the route guidance with `start` and forgets the conversation
@@ -265,12 +265,12 @@ function useAnswerOnScreen(
 export function useChatSheet(
   inFront: boolean,
   turnOn: (layer: MapLayer) => void,
-  position: LatLng | null,
+  where: Where,
   start: StartGuidance,
 ): ChatSheetControl {
   const onMap = useAnswerSwitch();
   const shownNow = useRef<ShownAnswer | null>(null);
-  const { chat, ...pressing } = useContextChat(onMap, position, shownNow);
+  const { chat, ...pressing } = useContextChat(onMap, where, shownNow);
   const [shown, setShown] = useState(false);
   const open = useCallback((): void => {
     if (!onMap) {
@@ -293,7 +293,7 @@ export function useChatSheet(
     onMap,
     framed: onMap && (chat.bubbles.length > 0 || chat.waiting),
     leaving: { showLayer: forgettingFor(chat.reset, turnOn), openEvent, openQuestPost, openPartyForm, proposals },
-    ...useAnswerOnScreen(onMap, chat.bubbles, position, shownNow),
+    ...useAnswerOnScreen(onMap, chat.bubbles, where, shownNow),
     lookup: useShownLookup(onMap ? chat.bubbles : NO_BUBBLES, start, chat.reset),
     ...pressing,
     sheet: (inputTop) =>

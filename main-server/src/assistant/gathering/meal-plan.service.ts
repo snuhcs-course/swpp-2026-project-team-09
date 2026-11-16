@@ -13,14 +13,16 @@ import { MenusService } from '../../menus/menus.service.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
+import { TimetableService } from '../../timetable/timetable.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
-import { type AnswerReply, type MealInput } from '../dto/answer.dto.js';
+import { type AnswerReply, type LocationMissing, type MealInput } from '../dto/answer.dto.js';
 import { freeTimeOf } from '../free-time/free-time.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { gather, type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
+import { type MissingInputs } from './missing-inputs.js';
 import { conditionsOf, windowOf } from './plan-conditions.js';
 
 // The one place that gathers what a meal's plan needs: the tool, the recalculation, and the making of a Quest call it,
@@ -48,22 +50,25 @@ export class MealPlanService {
     private readonly menus: MenusService,
     private readonly restaurantPlaces: RestaurantPlaces,
     private readonly places: PlaceLookup,
+    private readonly timetable: TimetableService,
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
   // `leftOut` names Sub Quests that stand in nobody's way: a Quest being planned again leaves its own out.
+  // `locationMissing` says why the app sent no location.
   async plan(
     askerId: string,
     input: MealInput,
-    at: { now: Date; location: Position | null; leftOut?: readonly string[] },
+    at: { now: Date; location: Position | null; locationMissing?: LocationMissing; leftOut?: readonly string[] },
   ): Promise<AnswerReply> {
     const friends = await this.friendsOf(askerId, input);
     this.refuseUnknownPlaces(input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date, meal } = input;
-    const [people, collected] = await Promise.all([
+    const [people, collected, missing] = await Promise.all([
       this.peopleOf(askerId, friends, date, at.location),
       this.menus.findByDate(date),
+      this.missingOf(askerId, at),
     ]);
     const leftOut = new Set(at.leftOut);
     for (const person of people) {
@@ -73,6 +78,7 @@ export class MealPlanService {
       id: userId,
       free: freeTimeOf(items, date, now),
       locationPlaceId: index === 0 ? this.placeIdAt(position) : locationPlaceOf(friends[index - 1]),
+      locationMissing: index === 0 && missing.locationMissing !== null,
       ...conditionsOf(input.people[index]?.constraints ?? [], date),
     }));
     if (askerPerson === undefined) {
@@ -97,7 +103,17 @@ export class MealPlanService {
       aloneMinutes,
       menus: menusOf(collected.length, open.length, candidates.length),
       placeOf: (placeId) => this.placeOf(placeId),
+      missing,
     });
+  }
+
+  // Why the app sent no location, and whether the asker has no Class at all.
+  private async missingOf(
+    askerId: string,
+    { location, locationMissing = null }: { location: Position | null; locationMissing?: LocationMissing },
+  ): Promise<MissingInputs> {
+    const classes = await this.timetable.classesOf(askerId);
+    return { locationMissing: location === null ? locationMissing : null, noClasses: classes.length === 0 };
   }
 
   // The Friends of the plan, in its order, refusing a plan that does not start with the asker, names anyone else or
