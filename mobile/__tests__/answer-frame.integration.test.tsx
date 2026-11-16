@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -14,7 +15,7 @@ import { holdBackButton } from './support/back';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { KEYBOARD, showKeyboard } from './support/keyboard';
-import { AI_INPUT, FOOTPRINTS, FRIEND_PILL, FULL_SCREEN, LAYERS } from './support/lists';
+import { AI_INPUT, FRIEND_PILL, FULL_SCREEN, LAYERS } from './support/lists';
 import { givePhone, OFF_CAMPUS, ON_CAMPUS, openMain } from './support/main';
 import { DINNER, press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -102,7 +103,7 @@ function sentBodies(): unknown[] {
 }
 
 // What gives way to the frame, by what a screen reader says of it.
-const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, FOOTPRINTS, LAYERS, '확대'];
+const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, LAYERS, '확대'];
 
 // Partitions: the conversation empty, waiting, answered, and failed.
 describe('the frame', () => {

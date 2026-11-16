@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useState } from 'react';
@@ -61,7 +62,7 @@ function useOffQuestion({ turn, markOffAsked }: MasterSwitch): Pick<SharingSwitc
   };
 }
 
-// The switch "친구와 위치 공유". It is turned on only with the location permission, which the map's explanation and
+// The switch "위치 공유". It is turned on only with the location permission, which the map's explanation and
 // the system's prompt ask for first; without it the switch stays off. It is turned off at once once the app has asked.
 export function useSharingSwitch(): SharingSwitch {
   const master = useMasterSwitch();

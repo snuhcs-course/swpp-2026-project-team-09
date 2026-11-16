@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -33,7 +34,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const UPLOADS = 'POST /positions';
-const SWITCH = '친구와 위치 공유';
+const SWITCH = '위치 공유';
 const OFF_CAMPUS_LINE = '캠퍼스 밖이라 위치가 공유되지 않아요';
 const PRIVATE_ZONE_LINE = '비공개 구역 안 · 친구에게는 시간표만 보여요';
 

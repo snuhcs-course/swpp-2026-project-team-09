@@ -3,14 +3,24 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: a position's age at 2 and 10 minutes; a Friend seen or not, with a status, without one and with one
-// contradicted; Friend Requests both ways. Expected values: P14-01's criteria and P06's todo.md (iteration 1).
+// contradicted; without a status, the nearest Place known or not and the walk of some minutes, of 0, or unknown;
+// Friend Requests both ways. Expected values: P14-01's criteria, P06's todo.md (iteration 1) and P06-05 of
+// iteration 4.
 
 import { GYM_POINT, HALL, LIBRARY_POINT, measured, MIN_JUN, MINUTE, NOW } from '../support/map-sources';
-import type { Friend, FriendStatus } from '@/api/types';
-import { keptPositions, minutesOld, toFriendRequestViews, toFriendViews, withAge } from '@/features/friends/adapter';
+import type { Friend, FriendStatus, Position } from '@/api/types';
+import {
+  keptPositions,
+  minutesOld,
+  toFriendRequestViews,
+  toFriendViews,
+  walkWords,
+  withAge,
+} from '@/features/friends/adapter';
 
 function friend(visible: boolean, more: Partial<Friend> = {}): Friend {
   return {
@@ -105,9 +115,9 @@ describe("toFriendViews and the main server's word", () => {
     expect(view).toMatchObject({ presence: 'off', line: '위치 꺼짐', position: null, minutesOld: null });
   });
 
-  it('a Friend seen without a status → 공강 alone', () => {
+  it('a Friend seen without a status or a Place → 위치 켜짐 alone, never 공강', () => {
     const [view] = toFriendViews([friend(true)], [], [], NOW);
-    expect(view).toMatchObject({ presence: 'free', line: '공강', detail: '', walk: '', photo: null });
+    expect(view).toMatchObject({ presence: 'on', line: '위치 켜짐', detail: '', walk: '', photo: null });
   });
 
   it("a Friend not seen whose status says seen → the main server's word, 위치 꺼짐", () => {
@@ -128,6 +138,49 @@ describe("toFriendViews and the main server's word", () => {
       ['b', GYM_POINT],
       ['a', LIBRARY_POINT],
     ]);
+  });
+});
+
+// A recent position of 김민준 with what GET /positions adds to it.
+function near(nearPlace: string | null, walkMinutes: number | null, ago = MINUTE): Position {
+  return { ...measured('min-jun', ago), nearPlace, walkMinutes };
+}
+
+describe("the Friend line without a status: the main server's Place and walk", () => {
+  it('a Friend seen → the Place nearest them, and the walk there', () => {
+    const [view] = toFriendViews([friend(true)], [near('중앙도서관', 4)], [], NOW);
+    expect(view).toMatchObject({ presence: 'on', line: '중앙도서관', walk: '도보 4분', minutesOld: null });
+  });
+
+  it('a Friend seen with an old position → the Place, with the age where the line is shown', () => {
+    const [view] = toFriendViews([friend(true)], [near('중앙도서관', 4, 5 * MINUTE)], [], NOW);
+    expect(view).toMatchObject({ line: '중앙도서관', minutesOld: 5 });
+    expect(withAge(view?.line ?? '', view?.minutesOld ?? null)).toBe('중앙도서관 · 5분 전 위치');
+  });
+
+  it('a Friend seen whose nearest Place is not known → 위치 켜짐', () => {
+    const [view] = toFriendViews([friend(true)], [near(null, null)], [], NOW);
+    expect(view).toMatchObject({ line: '위치 켜짐', walk: '' });
+  });
+
+  it('a Friend not seen, whose position with its Place is still answered → 위치 꺼짐 and no walk', () => {
+    const [view] = toFriendViews([friend(false)], [near('중앙도서관', 4)], [], NOW);
+    expect(view).toMatchObject({ presence: 'off', line: '위치 꺼짐', walk: '' });
+  });
+
+  it.each([
+    ['some minutes', near('중앙도서관', 4), '도보 4분'],
+    ['0 minutes, the same Place', near('중앙도서관', 0), '근처'],
+    ["null, the User's own position unknown", near('중앙도서관', null), ''],
+    ['left out, as the socket gives it', measured('min-jun', MINUTE), ''],
+    ['no position', undefined, ''],
+  ])('a walk of %s → "%s"', (_, position, expected) => {
+    expect(walkWords(position)).toBe(expected);
+  });
+
+  it("a Friend with the mock's status → the status's words, as before", () => {
+    const [view] = toFriendViews([friend(true)], [near('중앙도서관', 9)], [LIBRARY], NOW);
+    expect(view).toMatchObject({ presence: 'free', line: '공강 · 중앙도서관', walk: '도보 4분' });
   });
 });
 

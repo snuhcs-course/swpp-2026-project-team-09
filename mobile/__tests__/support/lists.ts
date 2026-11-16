@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fireEvent, type screen as Screen } from '@testing-library/react-native';
@@ -17,7 +18,6 @@ export const UNFOLD_FRIENDS = '친구 목록 펼치기';
 export const FOLD_QUESTS = '퀘스트 목록 접기';
 export const UNFOLD_QUESTS = '퀘스트 목록 펼치기';
 export const FULL_SCREEN = '퀘스트 전체 화면으로 열기';
-export const FOOTPRINTS = '오늘의 발자국 재생 · 친구들의 오늘 스토리';
 export const ACTIVE_PARTY = '활성 파티 AI 커리어 설명회 같이 가요 열기';
 export const LAYERS = '편의기능 (식당 · 셔틀버스 · 공부공간)';
 export const AI_INPUT = 'AI에게 메시지';
