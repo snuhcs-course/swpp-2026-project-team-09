@@ -54,3 +54,10 @@ On the Android emulator (1080 × 2400), a development build on the mock with its
 - "그대로" and the pill's ✕ each returned to the Plan with its card, band, and camera; "여기로 바꾸기" put 자하연식당 2층's Plan on screen (12:35–12:55, 20 minutes), as board g3 shows. Android's back is checked in the integration test.
 - A press near 자하연 first found the mock's pond spot (자하연), which the mock answers with its three-person copy; on a main server every building answers by its own Place.
 
+### Agent usage (2026-11-16)
+
+One session (package D's), no subagents, from branching off ticket 23 to the pull request, with the merges of ticket 23's branch and `4.0/Main`.
+
+- Agent time: about 25 minutes, an estimate from the transcript's timestamps (active stretches, gaps of five minutes or more left out, so the waits for tests and the emulator's load are not counted).
+- Tokens: input 47,973,355, of which 47,833,517 cache reads, 139,672 cache writes, and 166 uncached; output 66,230.
+
