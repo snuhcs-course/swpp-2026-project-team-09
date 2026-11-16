@@ -167,8 +167,9 @@ describe("the map's credit on the main screen", () => {
   it('sits above the row of buttons, in line with the controls at the left', async () => {
     await openMain();
 
-    // The row ends 126 above the navigation; the map's own margin of 8 is over that.
-    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 134 });
+    // The row ends 126 above the navigation; the map's own margin of 8 is over that. The map lies under the
+    // navigation, 80 high, and counts from the screen's bottom.
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 80 + 134 });
   });
 
   it('sits above a card while one is open', async () => {
@@ -177,7 +178,7 @@ describe("the map's credit on the main screen", () => {
     await layCard(180);
 
     // The card's bottom is 72 above the navigation and it is 180 high.
-    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 260 });
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 80 + 260 });
   });
 
   it('leaves the card and the AI input clear of each other', async () => {

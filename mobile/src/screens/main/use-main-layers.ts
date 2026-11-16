@@ -5,6 +5,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -22,6 +23,7 @@ import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
 import { clusteredStudy, studyMerges } from '@/features/study/adapter';
 import { useStudyCards } from '@/features/study/use-study';
 import { type ChatSheetControl, useChatSheet } from './chat-sheet';
+import { type CameraBack, useCameraBack } from './use-camera-back';
 import { type LayerStack, useLayerStack } from './layers';
 import { ROUTE_PADDING } from './layout';
 import type { MainMap } from './use-main-map';
@@ -107,17 +109,20 @@ export interface MainLayers {
   made: readonly MadeQuestView[];
   // The main screen's one route, whose guidance a Lookup's "길 안내" starts too.
   route: MainRoute;
+  // The everyday camera the answer frame's own way out goes back to (`useReturnedCamera`).
+  back: CameraBack;
 }
 
 // The 편의기능 stack and what its layers put on the map, with the map's own cards, and the conversation, which turns a
 // layer on from a map button and which a card's button may ask, and the main screen's route. The Assistant is told
-// where the User is (`me`), and a Lookup's "길 안내" starts the route's guidance.
+// where the User is (`me`), and a Lookup's "길 안내" starts the route's guidance. The frame's own way out brings the
+// camera back (`useCameraBack`).
 export function useMainLayers(inFront: boolean, map: MainMap, me: Me): MainLayers {
   const stack = useLayerStack(inFront);
   const shuttle = useShuttle(stack.layers.shuttle);
   const made = useMadeQuests();
   const { cards, ready } = useCards(stack.layers, shuttle, overviewZoom(map), made);
   const route = useRoute(map, me);
-  const chat = useChatSheet(stack.turnOn, me, route.routeTo);
-  return { stack, shuttle, cards, ready, chat, made, route };
+  const { chat, back } = useCameraBack(useChatSheet(stack.turnOn, me, route.routeTo), map.camera);
+  return { stack, shuttle, cards, ready, chat, made, route, back };
 }

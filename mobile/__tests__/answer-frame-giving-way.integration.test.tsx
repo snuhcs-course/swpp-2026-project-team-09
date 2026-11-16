@@ -132,8 +132,8 @@ describe("the map's credit while the frame is shown", () => {
     // The card's 300 from the stage's bottom, which the hidden tab bar leaves at the screen's, and the map's own 8.
     expect(button('지도 데이터 출처 보기')).toHaveStyle({ left: 16, bottom: 308 });
     await closeFrame(user);
-    // As main-controls.integration.test.tsx has it with nothing open.
-    expect(button('지도 데이터 출처 보기')).toHaveStyle({ left: 16, bottom: 134 });
+    // As main-controls.integration.test.tsx has it with nothing open, over the navigation the map lies under.
+    expect(button('지도 데이터 출처 보기')).toHaveStyle({ left: 16, bottom: 80 + 134 });
   });
 });
 
