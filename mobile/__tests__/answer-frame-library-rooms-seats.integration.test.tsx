@@ -240,14 +240,14 @@ describe('the request to the Assistant', () => {
     const chat = await askForCards({ server, library }, [SEATS_CARD], { words: '좌석현황' });
 
     expect(server.received('POST /assistant/messages')[0]?.body).toEqual({
-      clientCapabilities: ['library', 'answer', 'area', 'meet'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
       context: ASK_CONTEXT,
       messages: [{ role: 'user', text: '좌석현황' }],
     });
     await sendFromBar(chat.user, '고마워');
 
     expect(server.received('POST /assistant/messages')[1]?.body).toMatchObject({
-      clientCapabilities: ['library', 'answer', 'area', 'meet'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
       messages: [
         { role: 'user' },
         { role: 'assistant', cards: [{ kind: 'library', id: 'seats:7F-7A-zone2:2026-11-02' }] },

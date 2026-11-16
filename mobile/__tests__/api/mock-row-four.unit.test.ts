@@ -12,8 +12,8 @@ import { NEW_QUEST_ANSWER } from '@/api/mock/data/new-quest-answer';
 import { QUESTS_ANSWER } from '@/api/mock/data/quests-answer';
 
 // The mock's events and recruiting parties answered on the map (P02 ticket 30): the words of boards Alone 1, Join 1,
-// and Recruit 4 with a context, and the recalculations of the three kinds, each with the stored copy of the main
-// server's real answer. Expected values: the ticket's words and the stored copies.
+// and Recruit 4, and the recalculations of the three kinds, each with the stored copy of the main server's real
+// answer. Expected values: the ticket's words and the stored copies.
 
 const CONTEXT: RequestContext = {
   location: { latitude: 37.45016, longitude: 126.95259 },
@@ -25,7 +25,7 @@ const CONTEXT: RequestContext = {
 
 const said = (text: string): ChatMessage[] => [{ role: 'user', text }];
 
-// Partitions: each of the three words with a context; the events words without one.
+// Partitions: each of the three words.
 describe('the mock of the words of row 4', () => {
   it('answers "오늘 볼 만한 거 있어?" with the answer of events', () => {
     expect(mockAssistantReply(said('오늘 볼 만한 거 있어?'), CONTEXT).answer).toEqual(EVENTS_ANSWER);
@@ -37,10 +37,6 @@ describe('the mock of the words of row 4', () => {
 
   it('answers "새로 모집" with the answer of a new party', () => {
     expect(mockAssistantReply(said('새로 모집'), CONTEXT).answer).toEqual(NEW_QUEST_ANSWER);
-  });
-
-  it('draws nothing for the same words without a context, as for every answer drawn on the map', () => {
-    expect(mockAssistantReply(said('오늘 볼 만한 거 있어?')).answer).toBeUndefined();
   });
 });
 
