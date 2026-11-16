@@ -32,14 +32,14 @@ Everything a User does alone can be a Quest held by that User alone. A meal's Pl
 
 ## Acceptance criteria
 
-- [ ] **s2 → s4**: a Plan alone at 학생회관식당 ("배고파", 301동 at 11:50, 13:00 수업 at 24동) has "여기로"; pressing it sends `POST /plans` and shows "**학생회관식당**으로 가요" / "수업까지 1분이라 나설 알림은 없어요" with "다시 고르기" and "닫기".
-- [ ] **s1 → s4b**: at 301동식당 the card says "**301동식당**에서 먹어요" / "12:45에 나설 시각을 알려 드릴게요".
-- [ ] "다시 고르기" sends `DELETE /quests/:id` and shows the Plan again; a press after it sends a new key; "닫기" guides the User to the Restaurant when they walk there.
-- [ ] The push sheet is asked for at "여기로", and a Plan with a Friend still has "이대로 초대".
-- [ ] **a1 → a6**: a seat in 7A 열람실 2 구역 from 14:00 with 철학개론 at 16:00 in 두산인문관 makes the Quest at 관정관 and a `leave-by` at 15:56 ("8동까지 걸어서 4분"); none with nothing during the stay; a room is refused with `NOT_A_SEAT`.
-- [ ] After 예약하기 the phone sends the space and the time, never the seat or the booking number; a failure leaves the booking and its done message.
-- [ ] The screens are run on an Android emulator by taps ("배고파" above the input, 민수 taken out of the chips), and the pull request carries s4 and s4b. The seat changes no screen (its done message is as it was, and booking a real seat is not done for a test); its Quest and leave-by are shown by the integration test over the database.
-- [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass in both projects; and no native file changed.
+- [x] **s2 → s4**: a Plan alone at 학생회관식당 ("배고파", 301동 at 11:50, 13:00 수업 at 24동) has "여기로"; pressing it sends `POST /plans` and shows "**학생회관식당**으로 가요" / "수업까지 1분이라 나설 알림은 없어요" with "다시 고르기" and "닫기".
+- [x] **s1 → s4b**: at 301동식당 the card says "**301동식당**에서 먹어요" / "12:45에 나설 시각을 알려 드릴게요".
+- [x] "다시 고르기" sends `DELETE /quests/:id` and shows the Plan again; a press after it sends a new key; "닫기" guides the User to the Restaurant when they walk there.
+- [x] The push sheet is asked for at "여기로", and a Plan with a Friend still has "이대로 초대".
+- [x] **a1 → a6**: a seat in 7A 열람실 2 구역 from 14:00 with 철학개론 at 16:00 in 두산인문관 makes the Quest at 관정관 and a `leave-by` at 15:56 ("8동까지 걸어서 4분"); none with nothing during the stay; a room is refused with `NOT_A_SEAT`.
+- [x] After 예약하기 the phone sends the space and the time, never the seat or the booking number; a failure leaves the booking and its done message.
+- [x] The screens are run on an Android emulator by taps ("배고파" above the input, 민수 taken out of the chips), and the pull request carries s4 and s4b. The seat changes no screen (its done message is as it was, and booking a real seat is not done for a test); its Quest and leave-by are shown by the integration test over the database.
+- [x] Each changed source file has its AI-generated row; lint, format, and type checks pass in both projects; and no native file changed.
 
 ## Comments
 
@@ -58,3 +58,10 @@ The rule's eight decisions (`solo-quests/rule.md` of the orchestrating session) 
 9. **The stay's request runs beside the done message.** Board a4 shows no leave-by in it, so the message is not held for the main server, and a failure leaves the booking as it is.
 10. **No made-Quest flag.** The flag of a Quest made from a Plan is about the Friends' answers, so package C keeps none for a Quest taken alone, and the seat follows. It is on the everyday map as the User's own Quest with a Place, worded "퀘스트" with 길찾기, and in 알림 through its leave-by. The plan line above the input stays out (rule 8).
 11. **Cancelling or returning the seat** does not end its Quest in this ticket; it ends at the booking's end as other Quests do. Ending it there needs the booking's time matched to the Quest, which is a follow-up.
+
+### Agent usage (2026-11-16)
+
+The rework of this ticket on 2026-11-16 (the parked branch's first build is not counted here). Estimates from the session transcript, gaps of 5 minutes or more left out:
+
+- Agent time: about 54 minutes, in one session (package D's), no subagents.
+- Tokens: output 178,884; input 99,163,287, of which 98,684,087 cache reads, 478,590 cache writes and 610 uncached.
