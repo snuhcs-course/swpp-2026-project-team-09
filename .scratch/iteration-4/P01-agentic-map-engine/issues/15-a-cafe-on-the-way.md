@@ -33,7 +33,10 @@ Decided by the session that coordinates the packages, for the user's review: an 
    - The destination as `next`, "13:00 수업 · 24동".
    - The band from the arrival to when to set out: "12:45–12:59 · 카페".
    - The chips "301동에서", "13:00 수업까지", and "카페". The action is route guidance to the café.
-6. **The arrows are not built.** A Lookup's card has no arrows (ticket 11). The other two cafés are on the map with their extra minutes, and a press on one opens its building's card (P02-22).
+6. **Review fixes (2026-11-16).**
+   - The walking table does not always keep the triangle inequality: 1동→83동 is 307 s straight, but 60 s plus 235 s through 109동. So the extra minutes are never below 0. A café that saves time reads "가는 길에 있어요", tagged "{name} · 가는 길", with the basis "바로 가면 6분, 들러도 더 걸리지 않아요".
+   - A name that more than one café has is told apart by its Place, as in "Cafe ING(28동)". The map's marks and the model's words then each name one café.
+7. **The arrows are not built.** A Lookup's card has no arrows (ticket 11). The other two cafés are on the map with their extra minutes, and a press on one opens its building's card (P02-22).
 
 
 ### Agent usage (2026-11-16)

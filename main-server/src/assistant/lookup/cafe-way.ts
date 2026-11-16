@@ -70,7 +70,9 @@ function stopsOf(way: Way, args: WayArgs, cafes: readonly Cafe[]): Stop[] {
       const there = walk(way.start.placeId, cafe.placeId);
       const on = walk(cafe.placeId, way.toPlaceId);
       const leaveBy = way.deadline === null ? null : plus(way.deadline.at, -on);
-      return { cafe, there, on, extra: there + on - way.walkMinutes, arrival: plus(way.now, there), leaveBy };
+      // The walking table does not always keep the triangle inequality: a stop never saves time.
+      const extra = Math.max(0, there + on - way.walkMinutes);
+      return { cafe, there, on, extra, arrival: plus(way.now, there), leaveBy };
     })
     .filter(({ arrival, leaveBy }) => leaveBy === null || leaveBy > arrival)
     .toSorted(
@@ -80,7 +82,21 @@ function stopsOf(way: Way, args: WayArgs, cafes: readonly Cafe[]): Stop[] {
 
 const extraWords = ({ extra }: Stop): string => (extra === 0 ? '가는 길에 있어요' : `돌아가는 길 +${extra}분`);
 
-const tagOf = (stop: Stop): string => `${stop.cafe.name} · +${stop.extra}분`;
+const extraTag = (extra: number): string => (extra === 0 ? '가는 길' : `+${extra}분`);
+
+const tagOf = (stop: Stop): string => `${stop.cafe.name} · ${extraTag(stop.extra)}`;
+
+// A name that more than one café has is told apart by its Place ("Cafe ING(28동)"), so that each café's mark and words
+// are its own.
+function named(cafes: readonly Cafe[], naming: WayNaming): Cafe[] {
+  const counts = new Map<string, number>();
+  for (const { name } of cafes) {
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  return cafes.map((cafe) =>
+    (counts.get(cafe.name) ?? 0) > 1 ? { ...cafe, name: `${cafe.name}(${naming.placeLabel(cafe.placeId)})` } : cafe,
+  );
+}
 
 const pointOf = ({ name, placeId, at }: Cafe): PlacePoint => ({ placeId, label: name, ...at });
 
@@ -107,9 +123,14 @@ function basisOf(way: Way, shown: readonly Stop[], naming: WayNaming): string[] 
   }
   const to = naming.placeLabel(way.toPlaceId);
   const same = shown.filter(({ extra }) => extra === pick.extra).length;
-  const lines = [`바로 가면 ${way.walkMinutes}분, 들르면 ${way.walkMinutes}분 + ${pick.extra}분`];
+  const lines = [
+    pick.extra === 0
+      ? `바로 가면 ${way.walkMinutes}분, 들러도 더 걸리지 않아요`
+      : `바로 가면 ${way.walkMinutes}분, 들르면 ${way.walkMinutes}분 + ${pick.extra}분`,
+  ];
   if (same > 1) {
-    lines.push(`${COUNT_WORDS[same] ?? same} 곳 다 +${pick.extra}분이라 ${to}에 가장 가까운 곳을 골랐어요`);
+    const all = pick.extra === 0 ? '가는 길이라' : `+${pick.extra}분이라`;
+    lines.push(`${COUNT_WORDS[same] ?? same} 곳 다 ${all} ${to}에 가장 가까운 곳을 골랐어요`);
   }
   if (way.deadline !== null && pick.leaveBy !== null) {
     lines.push(`${clockOf(pick.leaveBy)}에 나서면 ${dueWords(way.deadline)}에 맞아요 · ${to}까지 걸어서 ${pick.on}분`);
@@ -196,7 +217,7 @@ export function cafeWay(args: WayArgs, cafes: readonly Cafe[]): CafeAnswer {
     return { result: 'none', reason: 'no-cafe' };
   }
   const naming = new WayNaming(args);
-  const shown = stopsOf(way, args, cafes).slice(0, SHOWN);
+  const shown = stopsOf(way, args, named(cafes, naming)).slice(0, SHOWN);
   const [pick] = shown;
   if (pick === undefined) {
     return { result: 'none', reason: 'no-time' };

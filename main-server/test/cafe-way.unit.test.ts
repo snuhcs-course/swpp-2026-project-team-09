@@ -38,14 +38,19 @@ const plain = (text: string): { text: string; strong: boolean } => ({ text, stro
 
 const toClass = (): DayItem[] => [classAt(TUESDAY, '13:00', '13:50', '자연과학관6')];
 
-function cafeAt(clock: string, items: DayItem[] = toClass(), toPlaceId: string | null = null): CafeAnswer {
+function cafeAt(
+  clock: string,
+  items: DayItem[] = toClass(),
+  toPlaceId: string | null = null,
+  list: readonly Cafe[] = cafes,
+): CafeAnswer {
   return cafeWay(
     wayArgs(onDay(TUESDAY, clock), {
       me: { userId: ME, name: '유상', items },
       location: { at: AT_301, placeId: id('제1공학관'), onCampus: true },
       toPlaceId,
     }),
-    cafes,
+    list,
   );
 }
 
@@ -73,8 +78,8 @@ describe('Board q9: a café on the way to the 13:00 Class in 24동', () => {
     const { scene, band, actions } = lookupOf(cafeAt('12:30'));
     expect(scene.places.map(({ role, tag }) => [role, tag])).toEqual([
       ['pick', '공차 · +1분'],
-      ['candidate', 'Cafe ING · +1분'],
-      ['candidate', 'Cafe MUG · +1분'],
+      ['candidate', 'Cafe ING(28동) · +1분'],
+      ['candidate', 'Cafe MUG(44-1동) · +1분'],
       ['next', '13:00 수업 · 24동'],
     ]);
     expect(scene.routes.map(({ role, minutes }) => [role, minutes])).toEqual([
@@ -94,11 +99,43 @@ describe('Board q9: a café on the way to the 13:00 Class in 24동', () => {
         directMinutes: 15,
         cafes: [
           { name: '공차', place: '63동', extraMinutes: 1, arrival: '12:45', until: '12:59' },
-          { name: 'Cafe ING', place: '28동', extraMinutes: 1, arrival: '12:42', until: '12:56' },
-          { name: 'Cafe MUG', place: '44-1동', extraMinutes: 1, arrival: '12:38', until: '12:52' },
+          { name: 'Cafe ING(28동)', place: '28동', extraMinutes: 1, arrival: '12:42', until: '12:56' },
+          { name: 'Cafe MUG(44-1동)', place: '44-1동', extraMinutes: 1, arrival: '12:38', until: '12:52' },
         ],
       },
     });
+  });
+});
+
+// From 1동 to 83동 the walking table gives 307 s straight, but 60 s to 109동 and 235 s on.
+function fromOneToEightyThree(list: readonly Cafe[] = cafes): CafeAnswer {
+  return cafeWay(
+    wayArgs(onDay(TUESDAY, '12:30'), {
+      me: { userId: ME, name: '유상', items: [] },
+      fromPlaceId: numbered('1').id,
+      toPlaceId: numbered('83').id,
+    }),
+    list,
+  );
+}
+
+describe('Where the walking table does not keep the triangle inequality, and cafés of one name', () => {
+  it('counts a stop that saves time as no extra minutes, never fewer', () => {
+    const lookup = lookupOf(fromOneToEightyThree());
+    expect(JSON.stringify(lookup)).not.toContain('+-');
+    expect(lookup.lines[1]?.[0]?.text).toMatch(/^가는 길에 있어요 · /u);
+    expect(lookup.basis[0]).toBe('바로 가면 6분, 들러도 더 걸리지 않아요');
+    expect(lookup.scene.places[0]?.tag).toMatch(/ · 가는 길$/u);
+  });
+
+  it('tells two cafés of one name apart by their Places, on the map and in the words', () => {
+    const ings = cafes.filter(({ name }) => name === 'Cafe ING');
+    const answer = cafeAt('12:30', toClass(), null, ings);
+    const labels = lookupOf(answer)
+      .scene.places.slice(0, 2)
+      .map(({ place }) => place.label);
+    expect(labels.toSorted()).toEqual(['Cafe ING(19동)', 'Cafe ING(28동)']);
+    expect(answer).toMatchObject({ words: { cafes: [{ name: 'Cafe ING(28동)' }, { name: 'Cafe ING(19동)' }] } });
   });
 });
 
