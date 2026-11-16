@@ -30,6 +30,7 @@ import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
 import type { InterestMatches, WatchedInterest } from './interest-types';
 import type { MatchingRequest } from './matching-types';
+import type { PrivateZone } from './private-zone-types';
 import type {
   AskedMoment,
   Board,
@@ -234,6 +235,13 @@ export interface ApiClient {
   removeInterest: (interestId: string) => Promise<void>;
   // What matches the User's hashtags and watched interests. Null from a main server that does not answer it yet.
   listInterestMatches: () => Promise<InterestMatches | null>;
+  // The User's Private Zones, the oldest first.
+  privateZones: () => Promise<PrivateZone[]>;
+  // Refused with 400 PRIVATE_ZONE_INVALID, PRIVATE_ZONE_OFF_CAMPUS or PRIVATE_ZONE_TOO_SMALL, and with 409
+  // PRIVATE_ZONES_FULL for a sixth.
+  addPrivateZone: (outline: LatLng[]) => Promise<PrivateZone>;
+  // Refused with 404 PRIVATE_ZONE_NOT_FOUND.
+  removePrivateZone: (zoneId: string) => Promise<void>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -359,4 +367,7 @@ export const apiClient: ShownClient = {
   watchInterest: (words) => chosen().watchInterest(words),
   removeInterest: (interestId) => chosen().removeInterest(interestId),
   listInterestMatches: () => chosen().listInterestMatches(),
+  privateZones: () => chosen().privateZones(),
+  addPrivateZone: (outline) => chosen().addPrivateZone(outline),
+  removePrivateZone: (zoneId) => chosen().removePrivateZone(zoneId),
 };
