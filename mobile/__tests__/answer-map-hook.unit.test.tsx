@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -55,6 +56,8 @@ const NO_ANSWER: ShownAnswer = {
   pendingAdd: null,
   ghost: null,
   undo: nothing,
+  moving: null,
+  setMoving: nothing,
 };
 
 function shownAt(index: number): ShownAnswer {

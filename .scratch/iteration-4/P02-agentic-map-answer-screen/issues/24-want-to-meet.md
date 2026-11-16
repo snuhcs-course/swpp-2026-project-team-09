@@ -61,6 +61,7 @@ One session with two subagents for this ticket (the implementation, then a revie
 
 - Agent time: about 88 minutes, an estimate from the transcripts' timestamps (the union of the main session's and the subagents' active stretches, gaps of five minutes or more left out).
 - Tokens: output 274,510; input 90,926,174, of which 90,097,995 were cache reads, 827,435 cache writes, and 744 uncached. Without cache reads: 1,102,689.
+- Later the same day, "이대로 초대" on a meet once #315 merged (one more subagent) and the merges with Main: about 9 more minutes of agent time; output 32,635; input 6,574,265, of which 6,439,116 were cache reads, 135,053 cache writes, and 96 uncached (without cache reads: 167,784).
 
 ### Package C's line in `POST /plans` (2026-11-16)
 

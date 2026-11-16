@@ -35,6 +35,8 @@ interface ConditionChipsProps {
   friendIds: ReadonlySet<string>;
   // Null for nothing there, as for an answer without a Plan, which has no basis.
   corner: CornerAction | null;
+  // One of `chips` whose words a drag of the band is changing: drawn marked, as one the server eased.
+  changed?: ConditionChip | null;
   // The name "＋ 같이" is read by, by what a Friend is added to ("같이 만날 친구 추가"); null leaves it out.
   addName?: string | null;
 }
@@ -143,11 +145,12 @@ function PersonChip({ chip, disabled, onRemove, onProfile }: PersonChipProps): R
 interface AddChipProps {
   adding: boolean;
   disabled: boolean;
-  name: string;
+  // A meal's when left out.
+  name?: string;
   onAdd: () => void;
 }
 
-function AddChip({ adding, disabled, name, onAdd }: AddChipProps): ReactElement {
+function AddChip({ adding, disabled, name = '같이 먹을 친구 추가', onAdd }: AddChipProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={name}
@@ -166,7 +169,7 @@ function AddChip({ adding, disabled, name, onAdd }: AddChipProps): ReactElement 
 // The first row of the answer's card: the conditions the answer used, each a control that corrects it, then
 // "＋ 같이", in lines that wrap so that no chip is cut, with the corner's action fixed at the right of the first line.
 export function ConditionChips(props: ConditionChipsProps): ReactElement {
-  const { chips, adding, disabled, corner, onProfile, friendIds, addName = '같이 먹을 친구 추가', ...on } = props;
+  const { chips, adding, disabled, corner, onProfile, friendIds, changed = null, addName, ...on } = props;
   const profileOf = (userId: string | null): (() => void) | null =>
     userId === null || onProfile === null || !friendIds.has(userId)
       ? null
@@ -190,7 +193,7 @@ export function ConditionChips(props: ConditionChipsProps): ReactElement {
               disabled={disabled}
               key={chip.kind}
               label={chip.text}
-              marked={chip.mark !== undefined}
+              marked={chip.mark !== undefined || chip === changed}
               onPress={chip.kind === 'origin' ? on.onOrigin : on.onUntil}
             />
           ),
