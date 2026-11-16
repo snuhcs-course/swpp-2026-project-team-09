@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -20,6 +21,7 @@ import {
   outlineOf,
   pencil,
   SAVED,
+  unsavedZones,
   zone,
   ZONES_ROUTE,
 } from './support/private-zones';
@@ -84,13 +86,13 @@ describe('Drawing a Private Zone', () => {
     expect(pencil()).toBeChecked();
     await draw(LOOP);
 
-    expect(screen.getAllByTestId('unsaved-zone')).toHaveLength(1);
+    expect(unsavedZones()).toHaveLength(1);
     await user.press(screen.getByRole('button', { name: '저장' }));
     await pass(500);
 
     expect(bodies()).toEqual([{ outline: outlineOf(LOOP) }]);
     expect(screen.getByText(SAVED)).toBeVisible();
-    expect(screen.queryByTestId('unsaved-zone')).toBeNull();
+    expect(unsavedZones()).toHaveLength(0);
     expect(pencil()).not.toBeChecked();
   });
 
@@ -101,7 +103,7 @@ describe('Drawing a Private Zone', () => {
     await draw(LOOP);
     await draw(OTHER);
 
-    expect(screen.getAllByTestId('unsaved-zone')).toHaveLength(1);
+    expect(unsavedZones()).toHaveLength(1);
     await user.press(screen.getByRole('button', { name: '저장' }));
     await pass(500);
     expect(bodies()).toEqual([{ outline: outlineOf(OTHER) }]);
@@ -118,7 +120,7 @@ describe('The pencil off, 취소, and a finger that barely moves', () => {
 
     expect(pencil()).not.toBeChecked();
     expect(hasGesture('zone-drawing')).toBe(false);
-    expect(screen.getAllByTestId('unsaved-zone')).toHaveLength(1);
+    expect(unsavedZones()).toHaveLength(1);
     expect(screen.getByRole('button', { name: '저장' })).toBeEnabled();
   });
 
@@ -130,7 +132,7 @@ describe('The pencil off, 취소, and a finger that barely moves', () => {
     await user.press(screen.getByRole('button', { name: '취소' }));
     await pass(500);
 
-    expect(screen.queryByTestId('unsaved-zone')).toBeNull();
+    expect(unsavedZones()).toHaveLength(0);
     expect(screen.queryByRole('button', { name: '저장' })).toBeNull();
     expect(bodies()).toEqual([]);
   });
@@ -144,7 +146,7 @@ describe('The pencil off, 취소, and a finger that barely moves', () => {
       { x: 103, y: 102 },
     ]);
 
-    expect(screen.queryByTestId('unsaved-zone')).toBeNull();
+    expect(unsavedZones()).toHaveLength(0);
   });
 });
 
@@ -175,7 +177,7 @@ describe('An outline refused', () => {
     await pass(500);
 
     expect(screen.getByText(line)).toBeVisible();
-    expect(screen.getAllByTestId('unsaved-zone')).toHaveLength(1);
+    expect(unsavedZones()).toHaveLength(1);
     expect(screen.queryByText(SAVED)).toBeNull();
   });
 });
