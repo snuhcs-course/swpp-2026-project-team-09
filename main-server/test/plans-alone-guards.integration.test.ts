@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -14,6 +15,7 @@ import { MealPlanStage } from './meal-plan.js';
 import { recalculate } from './plan-answers.js';
 import { makePlanQuest } from './plan-quests.js';
 import { invite } from './quest-recruiting.js';
+import { openParty } from './parties.js';
 import { attend, connectToDatabase, getQuest } from './quests.js';
 import { jobFairOn } from './recruiting-parties.js';
 import { refused } from './signals.js';
@@ -134,5 +136,54 @@ describe('a Quest taken alone', () => {
       capacity: 1,
       joinPolicy: 'closed',
     });
+  });
+});
+
+// Partitions: a 파티 the party form made for the event, attended again. Expected values: its own capacity and settings
+// kept, since only a Quest taken alone turns (the review of PR 338, E).
+describe('the party form for an event the User has a 파티 for', () => {
+  it('keeps the 파티 as it is', async () => {
+    const jobFair = await jobFairDay('2069-01-25');
+    const { id } = z.object({ id: z.string() }).parse((await attend(stage.app, stage.asker, jobFair.id)).body);
+    await patch(id, { capacity: 6, joinPolicy: 'open', board: 'career', description: '같이 가요' }).expect(200);
+
+    const again = await attend(stage.app, stage.asker, jobFair.id);
+
+    expect(again.body).toMatchObject({ id, takenAlone: false, capacity: 6, joinPolicy: 'open', board: 'career' });
+  });
+});
+
+// Partitions: a Quest taken alone with no event, as a booked seat's is, and one for an event. Expected values: 409
+// QUEST_TAKEN_ALONE for a change of settings, and for switching its Party on, which would show it to Friends (the review
+// of PR 338, C and E).
+describe('a Quest taken alone, kept from others', () => {
+  it("takes no change of settings with no event, as a seat's", async () => {
+    await jobFairDay('2069-02-01');
+    const seat = await prisma.quest.create({
+      data: {
+        title: '관정관 좌석',
+        leaderId: stage.asker.id,
+        capacity: 1,
+        takenAlone: true,
+        holders: { create: { userId: stage.asker.id } },
+        subQuests: { create: { title: '관정관 좌석', startsAt: new Date('2069-02-01T05:00:00Z') } },
+      },
+    });
+
+    const changed = await patch(seat.id, { joinPolicy: 'open', board: 'hobby', capacity: 4 });
+
+    expect(changed.status).toBe(409);
+    expect(changed.body).toMatchObject(refused(409, 'QUEST_TAKEN_ALONE'));
+  });
+
+  it('opens no Party', async () => {
+    const date = '2069-02-08';
+    const jobFair = await jobFairDay(date);
+    const { quest } = questSchema.parse((await takeAlone(date, jobFair)).body);
+
+    const opened = await openParty(stage.app, stage.asker, { questId: quest.id });
+
+    expect(opened.status).toBe(409);
+    expect(opened.body).toMatchObject(refused(409, 'QUEST_TAKEN_ALONE'));
   });
 });

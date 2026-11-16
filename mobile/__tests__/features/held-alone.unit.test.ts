@@ -30,6 +30,15 @@ describe('내 파티', () => {
 
 // Partitions: a Quest taken alone; a 비공개 파티 held alone so far.
 describe('the Quest list', () => {
+  it('sorts a Quest taken alone as a 퀘스트, so the 파티 chip does not count it (P03 ticket 17)', () => {
+    const rows = toQuestRows({ quests: [TAKEN, PARTY], myParty: null, parties: [], meId: ME.id, now: NOW });
+
+    expect(rows.map(({ id, kind }) => [id, kind])).toEqual([
+      ['taken', 'quest'],
+      ['party', 'party'],
+    ]);
+  });
+
   it('calls a Quest taken alone a 퀘스트, and a 비공개 파티 still one', () => {
     const rows = toQuestRows({ quests: [TAKEN, PARTY], myParty: null, parties: [], meId: ME.id, now: NOW });
 

@@ -3,13 +3,14 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useQuery } from '@tanstack/react-query';
+import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
-import { isRefusal } from '@/api/errors';
+import { ApiError, isRefusal } from '@/api/errors';
 import { refusalWords } from '@/features/quests/refusals';
 import { newIdempotencyKey } from '@/api/idempotency-key';
 import type { MakePlanQuest, PlanQuest } from '@/api/plan-quest-types';
@@ -132,6 +133,22 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
   }
 }
 
+// A refusal (4xx) made nothing, so the Plan's key goes and a press again asks anew; no answer or a 5xx keeps it, as the
+// Quest may have been made.
+function forgetIfRefused(error: unknown, setStored: SetStored, answer: AnswerReply, planId: string): void {
+  if (!(error instanceof ApiError) || error.status >= 500) {
+    return;
+  }
+  setStored((last) => {
+    if (last.answer !== answer) {
+      return last;
+    }
+    const keys = new Map(last.keys);
+    keys.delete(planId);
+    return { ...last, keys };
+  });
+}
+
 // The phone keeps the id of a Quest made with Friends, whose flag the map draws; a Quest taken alone has none.
 function useKeepParty(): (made: PlanQuest) => void {
   const keepMade = useKeepMadeQuest();
@@ -176,8 +193,7 @@ function useInvite(
       const { shown: after } = live.current;
       return after.answer === answer && after.plan?.id === plan.id;
     };
-    const making = makingOf(answer, plan, how);
-    apiClient.makePlanQuest(making, key).then(
+    apiClient.makePlanQuest(makingOf(answer, plan, how), key).then(
       (made) => {
         keepMade(made);
         askForPush();
@@ -188,6 +204,7 @@ function useInvite(
         }
       },
       (error: unknown) => {
+        forgetIfRefused(error, setStored, answer, plan.id);
         if (settle()) {
           tellRefusal(error, how.say, live.current.shown.change, takenAlone(answer.input));
         }
@@ -197,21 +214,44 @@ function useInvite(
   return { sending, invite };
 }
 
+// Whether the User's Quests, as last read, show the Quest without the mark of one taken alone: the party form made it
+// a 파티 for its event.
+function gathers(queryClient: QueryClient, questId: string): boolean {
+  const quests = queryClient.getQueryData<Quest[]>(questsQuery.queryKey);
+  return quests?.find(({ id }) => id === questId)?.takenAlone === false;
+}
+
+// A taken card whose Quest now gathers others goes, once the User's Quests show it so: they are read again on
+// `quests-changed`.
+function useGathered(made: PlanQuest | null, setStored: SetStored): void {
+  const questId = made?.alone === undefined ? undefined : made.quest.id;
+  const { data: gathering } = useQuery({
+    ...questsQuery,
+    enabled: questId !== undefined,
+    select: (quests: Quest[]) => quests.find(({ id }) => id === questId)?.takenAlone === false,
+  });
+  useEffect(() => {
+    if (gathering === true) {
+      setStored((last) => (last.made?.quest.id === questId ? { ...last, made: null } : last));
+    }
+  }, [gathering, questId, setStored]);
+}
+
 // "다시 고르기": drops the Quest taken alone, and once it is gone shows the Plan again with a new key for it, so that
 // "여기로" makes another. A Quest already gone, ended by its time, dropped elsewhere, or replaced by a 파티, counts as
-// given up.
+// given up. One that now gathers others is never dropped from here: the card only goes.
 function useAgain(
   made: PlanQuest | null,
   setStored: SetStored,
   say: Inviting['say'],
 ): Pick<PlanInvitation, 'again' | 'dropping'> {
   const [dropping, setDropping] = useState(false);
+  const queryClient = useQueryClient();
   const questId = made?.alone === undefined ? null : made.quest.id;
   const again = useCallback((): void => {
     if (questId === null || dropping) {
       return;
     }
-    setDropping(true);
     const gone = (): void => {
       setDropping(false);
       setStored((last) => {
@@ -223,6 +263,11 @@ function useAgain(
         return { ...last, keys, made: null };
       });
     };
+    if (gathers(queryClient, questId)) {
+      gone();
+      return;
+    }
+    setDropping(true);
     apiClient.dropQuest(questId).then(gone, (error: unknown) => {
       if (isRefusal(error, 404, 'QUEST_NOT_FOUND')) {
         gone();
@@ -231,7 +276,7 @@ function useAgain(
       setDropping(false);
       say(NOT_DROPPED);
     });
-  }, [questId, dropping, setStored, say]);
+  }, [questId, dropping, setStored, say, queryClient]);
   return { again, dropping };
 }
 
@@ -250,6 +295,7 @@ export function usePlanInvitation(shown: OnScreen, inviting: Inviting): PlanInvi
   const members = useMembers(made);
   useHeard(made, setStored);
   const { again, dropping } = useAgain(made, setStored, inviting.say);
+  useGathered(made, setStored);
   const standings = useMemo(
     () => (made === null ? NO_STANDINGS : friendStandings(made, members, heard)),
     [made, members, heard],

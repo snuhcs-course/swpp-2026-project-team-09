@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -123,7 +124,8 @@ function Groups({ rows, onPress, tutorial }: GroupsProps): ReactElement {
 }
 
 // The User's Quests on the whole screen, the `MainQuests` frame: the started tutorial quests on top under 전체, then
-// every Quest that has not ended, by the day it starts, with chips that filter classes and Parties.
+// every Quest that has not ended, by the day it starts, with chips that filter classes and Parties. A Quest taken alone
+// is under 전체 only.
 export function QuestsScreen(): ReactElement {
   const { data, isPending, refetch } = useQuestRows();
   const tutorial = useTutorial();
