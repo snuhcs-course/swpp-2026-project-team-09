@@ -4,10 +4,11 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { type MealInput, type Plan } from '../assistant/dto/answer.dto.js';
+import { type LocationMissing, type MealInput, type Plan } from '../assistant/dto/answer.dto.js';
 import { mealWindow } from '../assistant/free-time/meal-fit.js';
 import { outOfReach } from '../assistant/free-time/tool-parts.js';
 import { MealPlanService } from '../assistant/gathering/meal-plan.service.js';
@@ -67,7 +68,12 @@ export class BetterPlanService {
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
-  async better(userId: string, questId: string, location: Position | null): Promise<BetterPlanDto> {
+  async better(
+    userId: string,
+    questId: string,
+    location: Position | null,
+    locationMissing: LocationMissing,
+  ): Promise<BetterPlanDto> {
     await this.leaders.ledBy(questId, userId);
     const quest = await this.stored(questId);
     const now = this.clock.now();
@@ -98,7 +104,9 @@ export class BetterPlanService {
       endAt: koreaTime(end),
       togetherMinutes: Math.floor((end.getTime() - start.getTime()) / MINUTE_MS),
     };
-    const [first] = outOfReach(date, now) ? [] : await this.plansFor(userId, input, { now, location, quest });
+    const [first] = outOfReach(date, now)
+      ? []
+      : await this.plansFor(userId, input, { now, location, locationMissing, quest });
     const elsewhere =
       first !== undefined && (first.place.placeId !== placeId || new Date(first.startAt).getTime() !== start.getTime());
     return { current, better: elsewhere && first.togetherMinutes > current.togetherMinutes ? first : null, input };
@@ -137,11 +145,16 @@ export class BetterPlanService {
   private async plansFor(
     userId: string,
     input: MealInput,
-    { now, location, quest }: { now: Date; location: Position | null; quest: StoredQuest },
+    {
+      now,
+      location,
+      locationMissing,
+      quest,
+    }: { now: Date; location: Position | null; locationMissing: LocationMissing; quest: StoredQuest },
   ): Promise<Plan[]> {
     try {
       const leftOut = quest.subQuests.map(({ id }) => id);
-      return (await this.mealPlans.plan(userId, input, { now, location, leftOut })).plans;
+      return (await this.mealPlans.plan(userId, input, { now, location, locationMissing, leftOut })).plans;
     } catch (error) {
       if (error instanceof BadRequestException) {
         return [];
