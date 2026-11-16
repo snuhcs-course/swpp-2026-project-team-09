@@ -8,6 +8,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCard } from './library-card-types';
@@ -31,10 +32,10 @@ export interface CardReference {
 }
 
 // What the app tells the main server it can draw, with every chat request: library cards. An app without it (the
-// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map, and the study
-// spaces of the visible area it sends as `viewport`.
+// 1.0.0 bundle) is never sent one. A request with a context also says it draws an answer on the map, the study
+// spaces of the visible area it sends as `viewport`, and a meet ("민수랑 만나고 싶어").
 export const CLIENT_CAPABILITIES = ['library'] as const;
-export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer', 'area'] as const;
+export const ANSWER_CAPABILITIES = [...CLIENT_CAPABILITIES, 'answer', 'area', 'meet'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
