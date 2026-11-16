@@ -2,15 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AnswerReply } from '@/api/assistant-types';
+import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { isRefusal } from '@/api/errors';
 import { newIdempotencyKey } from '@/api/idempotency-key';
-import type { PlanQuest } from '@/api/plan-quest-types';
+import type { MakePlanQuest, PlanQuest } from '@/api/plan-quest-types';
+import type { LocationMissing } from '@/api/refusal-types';
 import { questsQuery } from '@/api/queries';
 import type { LatLng, Quest } from '@/api/types';
 import { onInvitationAnswer } from '@/live/invitation-answers';
@@ -28,10 +30,19 @@ export interface PlanInvitation {
   invite: () => void;
 }
 
-// Where the User is, which the request sends, and how a refusal or a Quest made out of sight is told.
+// Where the User is or why that is not known, which the request sends, and how a refusal or a Quest made out of sight
+// is told.
 export interface Inviting {
   location: LatLng | null;
+  locationMissing?: LocationMissing;
   say: (message: string) => void;
+}
+
+// The answer's conditions, the Plan on screen, and where the User is or why that is not known, the reason left out
+// when it is, since a main server before P02-13 refuses the key.
+function makingOf(answer: AnswerReply, plan: Plan, { location, locationMissing = null }: Inviting): MakePlanQuest {
+  const why = locationMissing === null ? {} : { locationMissing };
+  return { input: answer.input, planId: plan.id, startAt: plan.startAt, location, ...why };
 }
 
 const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
@@ -134,7 +145,7 @@ function useInvite(
       const { shown: after } = live.current;
       return after.answer === answer && after.plan?.id === plan.id;
     };
-    const making = { input: answer.input, planId: plan.id, startAt: plan.startAt, location: how.location };
+    const making = makingOf(answer, plan, how);
     apiClient.makePlanQuest(making, key).then(
       (made) => {
         keepMade(made.quest.id);

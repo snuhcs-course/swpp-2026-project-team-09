@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -62,13 +63,13 @@ describe('the answer on screen, by the last reply', () => {
 
 // Partitions: a change that is no drag; the Plan on screen in the new answer or not.
 describe('a recalculation', () => {
-  it('sends the input and the location, and is recalculating until its answer comes', async () => {
+  it('sends the input, the location, and no reason for a missing one, and is recalculating until its answer comes', async () => {
     const reply = heldBack(recalculate);
     const held = await hold(ANSWERED);
 
     await change(held, ALONE_INPUT);
 
-    expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE);
+    expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE, null);
     expect(held.shown().recalculating).toBe(true);
     await reply.come(MEAL_ANSWER_ALONE);
     expect(held.shown().recalculating).toBe(false);

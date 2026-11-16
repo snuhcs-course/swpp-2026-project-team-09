@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
 import { CAMPUS_BOUNDS, isInside, type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
@@ -42,6 +43,9 @@ export interface Me {
   avatars: readonly MapAvatar[];
   // The phone told a position and it is outside the campus rectangle.
   offCampus: boolean;
+  // Why the Assistant is sent no position: the permission refused or never asked, or off campus. Null otherwise, while
+  // the permission is being read included.
+  locationMissing: LocationMissing;
   // "내 위치로 이동".
   goToMe: () => void;
   // Says why the map has no position to start from, for a part that needs one: the explanation before the location
@@ -54,6 +58,13 @@ export interface Me {
   blocked: boolean;
   allow: () => void;
   later: () => void;
+}
+
+function missingOf(permission: PositionPermission, offCampus: boolean): LocationMissing {
+  if (permission !== 'granted' && permission !== 'checking') {
+    return 'permission';
+  }
+  return offCampus ? 'off-campus' : null;
 }
 
 // The User on the main screen's map: their Avatar while they are on campus, and the button that brings the map to
@@ -89,7 +100,6 @@ export function useMe(map: MainMap): Me {
       map.showCampus();
     }
   };
-  const blocked = permission === 'blocked';
   return {
     permission,
     position,
@@ -98,13 +108,14 @@ export function useMe(map: MainMap): Me {
         ? []
         : [{ id: ME_AVATAR_ID, name: '내 위치', position, image, glideMs: stepMs, order: 1, passive: true }],
     offCampus,
+    locationMissing: missingOf(permission, offCampus),
     goToMe,
     sayWhyNotHere,
     explaining,
-    blocked,
+    blocked: permission === 'blocked',
     allow: (): void => {
       close();
-      void (blocked ? openLocationSettings() : ask());
+      void (permission === 'blocked' ? openLocationSettings() : ask());
     },
     later: close,
   };

@@ -63,14 +63,14 @@ export class AssistantController {
   @HttpCode(HttpStatus.OK)
   recalculate(
     @CurrentUser() user: SignedInUser,
-    @Body({ schema: recalculationSchema }) { input, location }: Recalculation,
+    @Body({ schema: recalculationSchema }) { input, location, locationMissing }: Recalculation,
   ): Promise<AnswerReply> {
     const now = this.clock.now();
     // Recruiting Quests are each on the day of their own step.
     if (input.kind !== 'quests' && outOfReach(input.date, now)) {
       throw new BadRequestException('A plan is for a day from today to a week ahead');
     }
-    return this.answers.plan(user.id, input, { now, location });
+    return this.answers.plan(user.id, input, { now, location, locationMissing });
   }
 
   // The card of a pressed building or Friend's face, without the model and without counting the User's messages.
