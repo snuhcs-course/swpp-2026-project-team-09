@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -73,11 +74,19 @@ interface AnswerOptions {
   candidates?: GatheringPlace[];
   now?: Date;
   fixed?: Fixed;
+  served?: MealAnswerArgs['served'];
 }
 
 export function answerOf(
   people: [AnswerPerson, ...AnswerPerson[]],
-  { aloneMinutes = null, menus = 'open', candidates = restaurants(), now = NOW, fixed = {} }: AnswerOptions = {},
+  {
+    aloneMinutes = null,
+    menus = 'open',
+    candidates = restaurants(),
+    now = NOW,
+    fixed = {},
+    served,
+  }: AnswerOptions = {},
 ): AnswerReply {
   const input = inputOf(people, fixed);
   const [first, ...rest] = people.map(({ userId, items }, index) => ({
@@ -95,6 +104,7 @@ export function answerOf(
     aloneMinutes,
     menus,
     placeOf,
+    ...(served === undefined ? {} : { served }),
   });
 }
 

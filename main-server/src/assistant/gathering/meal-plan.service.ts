@@ -11,7 +11,7 @@ import { type Position } from '../../common/geometry.js';
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { FriendViewService } from '../../friends/friend-view.service.js';
 import { MenusService } from '../../menus/menus.service.js';
-import { RestaurantHours } from '../../menus/restaurant-hours.js';
+import { type Hours, RestaurantHours } from '../../menus/restaurant-hours.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
@@ -21,9 +21,11 @@ import { UsersService } from '../../users/users.service.js';
 import { type AnswerReply, type LocationMissing, type MealInput } from '../dto/answer.dto.js';
 import { freeTimeOf } from '../free-time/free-time.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
+import { type OpenRestaurant } from '../free-time/restaurant-card.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
+import { type ServedMenu } from './meal-menu.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { conditionsOf } from './plan-conditions.js';
 import { gatherMeal, withHours } from './unmet-plans.js';
@@ -39,6 +41,27 @@ const menusOf = (collected: number, open: number, there: number): MealAnswerArgs
   }
   return there === 0 ? 'closed-at-place' : 'open';
 };
+
+// Each candidate's menu for the meal, by its key, with when it closes.
+function servedOf(
+  restaurants: readonly OpenRestaurant[],
+  candidates: readonly { key: string }[],
+  hours: readonly (Hours | null)[],
+): Map<string, ServedMenu> {
+  return new Map(
+    candidates.map(({ key }, index): [string, ServedMenu] => [
+      key,
+      { lines: restaurants.find((each) => each.key === key)?.lines ?? [], closesAt: hours[index]?.closesAt ?? null },
+    ]),
+  );
+}
+
+interface PlanAt {
+  now: Date;
+  location: Position | null;
+  locationMissing?: LocationMissing;
+  leftOut?: readonly string[];
+}
 
 // The Place the Friend view puts a Friend in now: the one of their position at 'exact', and all there is at 'building'.
 export const locationPlaceOf = (friend: FriendView | undefined): string | null =>
@@ -60,11 +83,16 @@ export class MealPlanService {
 
   // `leftOut` names Sub Quests that stand in nobody's way: a Quest being planned again leaves its own out.
   // `locationMissing` says why the app sent no location.
-  async plan(
+  async plan(askerId: string, input: MealInput, at: PlanAt): Promise<AnswerReply> {
+    return (await this.planned(askerId, input, at)).answer;
+  }
+
+  // The answer, and each candidate Restaurant's menu by its key, which the model reads in words.
+  async planned(
     askerId: string,
     input: MealInput,
-    at: { now: Date; location: Position | null; locationMissing?: LocationMissing; leftOut?: readonly string[] },
-  ): Promise<AnswerReply> {
+    at: PlanAt,
+  ): Promise<{ answer: AnswerReply; served: ReadonlyMap<string, ServedMenu> }> {
     const friends = await this.friendsOf(askerId, input);
     this.refuseUnknownPlaces(input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
@@ -88,15 +116,14 @@ export class MealPlanService {
     if (askerPerson === undefined) {
       throw new Error('A plan has its asker');
     }
-    const open = openRestaurants(collected, meal, this.restaurantPlaces).map(({ key, place }) => ({
-      key,
-      placeId: place.id,
-    }));
+    const restaurants = openRestaurants(collected, meal, this.restaurantPlaces);
+    const open = restaurants.map(({ key, place }) => ({ key, placeId: place.id }));
     const candidates = input.placeId === null ? open : open.filter(({ placeId }) => placeId === input.placeId);
     const hours = await Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date)));
+    const menus = servedOf(restaurants, candidates, hours);
     const { places, ...served } = withHours(input, candidates, hours);
     const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, ...served }, this.travel);
-    return mealAnswer({
+    const answer = mealAnswer({
       input,
       now,
       people,
@@ -104,7 +131,14 @@ export class MealPlanService {
       menus: menusOf(collected.length, open.length, candidates.length),
       placeOf: (placeId) => this.placeOf(placeId),
       missing,
+      served: menus,
     });
+    return { answer, served: menus };
+  }
+
+  // The Place of a Restaurant named as the plans name it, null for one the seed does not place.
+  restaurantPlaceId(name: string): string | null {
+    return this.restaurantPlaces.placeOf(name)?.id ?? null;
   }
 
   // Why the app sent no location, and whether the asker has no Class at all.

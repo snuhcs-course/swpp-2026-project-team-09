@@ -65,7 +65,8 @@ describe('Today, with a start asked for', () => {
 function planned(): { tool: Tool; inputs: MealInput[] } {
   const inputs: MealInput[] = [];
   const tool = planMeal({
-    plan: (_askerId, input) => {
+    restaurantPlaceId: () => null,
+    planned: (_askerId, input) => {
       inputs.push(input);
       const answer: AnswerReply = {
         input,
@@ -74,7 +75,7 @@ function planned(): { tool: Tool; inputs: MealInput[] } {
         dropped: [],
         noPlan: { reason: 'no-shared-time', lines: [] },
       };
-      return Promise.resolve(answer);
+      return Promise.resolve({ answer, served: new Map() });
     },
   });
   return { tool, inputs };

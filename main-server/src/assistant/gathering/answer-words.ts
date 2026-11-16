@@ -20,6 +20,7 @@ import {
   type GatheringSide,
   type PersonPart,
 } from './gathering.js';
+import { type ServedMenu } from './meal-menu.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { PlaceNaming } from './place-naming.js';
 import { type Unmet } from './unmet-plans.js';
@@ -59,6 +60,8 @@ export interface MealAnswerArgs extends GatheringArgs<MealInput> {
   missing?: MissingInputs;
   // What of the conditions could not be met, left out when all were.
   unmet?: Unmet;
+  // Each open Restaurant's menu for the meal, by its key, which its Plan says.
+  served?: ReadonlyMap<string, ServedMenu>;
 }
 
 const SHORTEST_MEAL_MINUTES = SHORTEST_MEAL_SECONDS / 60;

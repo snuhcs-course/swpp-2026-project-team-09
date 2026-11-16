@@ -121,7 +121,11 @@ describe('The recalculations the buttons and chips of board n11 ask for', () => 
 
     expect(response.status).toBe(200);
     const eased = z.custom<AnswerReply>().parse(response.body);
-    expect(textsOf(eased.plans[0]?.lines)).toEqual(['13:00 학생회관식당 · 셋이 59분', '지금 대신 13:00으로 미뤘어요']);
+    expect(textsOf(eased.plans[0]?.lines)).toEqual([
+      '13:00 학생회관식당 · 셋이 59분',
+      '오늘 제육볶음',
+      '지금 대신 13:00으로 미뤘어요',
+    ]);
     expect(eased.chips[1]).toEqual({ kind: 'from', text: '13:00 이후', userId: null, mark: 'relaxed' });
     expect(eased.plans[0]?.basis[0]).toBe('지은이 12:50까지 수업이라 13:00부터 셋이 돼요');
 
@@ -166,6 +170,10 @@ describe("Board n12: 배고파 at 13:47, 학생회관식당's lunch closing at 1
       '학생회관식당 14:00 닫아요',
     ]);
     expect(answer.plans[0]?.id).toBe('자하연식당 2층');
-    expect(textsOf(answer.plans[0]?.lines)).toEqual(['자하연식당 2층 · 13:52 도착', '학생회관식당은 14:00에 닫아요']);
+    expect(textsOf(answer.plans[0]?.lines)).toEqual([
+      '자하연식당 2층 · 13:52 도착',
+      '오늘 제육볶음',
+      '학생회관식당은 14:00에 닫아요',
+    ]);
   });
 });

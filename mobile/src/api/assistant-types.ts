@@ -271,7 +271,7 @@ export interface Plan {
   parts: PlanPart[];
   // The Sub Quests of the Quest the plan becomes.
   subQuests: { at: string; placeId: string; title: string }[];
-  // At most two.
+  // At most three.
   lines: AnswerLine[];
   basis: string[];
   scene: MapScene;
