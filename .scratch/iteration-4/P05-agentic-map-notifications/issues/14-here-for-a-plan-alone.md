@@ -22,6 +22,7 @@ Everything a User does alone can be a Quest held by that User alone. A meal's Pl
 
 - Main server, new (package D's `src/library/`): `seat-stays.controller.ts`, `seat-stays.service.ts`, `seat-stays.module.ts`, `seat-leave-by.ts`, `dto/seat-stay.dto.ts`; registered in `app.module.ts`. Tests: `test/seat-leave-by.unit.test.ts`, `test/seat-stays.integration.test.ts`. README: "A seat's stay".
 - App: "여기로" in `screens/main/answer/main-buttons.tsx` and `plan-card.tsx`; the seat's call in `screens/main/library/use-seat-stay.ts` and `book-seat-card.tsx`; `makeSeatStay` in `api/seat-stay-types.ts`, `api/client.ts`, `api/server/seat-stay-client.ts`, `api/mock/seat-stays.ts`. Tests: `__tests__/answer-here-alone.integration.test.tsx`, `__tests__/answer-frame-library-seat-stay.integration.test.tsx`.
+- Not here, package C's (P03 ticket 15): `use-plan-invitation.ts` (`again`), `taken-card.tsx`, the answer frame's choice of it, `plan-quest-types.ts` (`alone`), and everything in `main-server/src/plans/` and `src/quests/`.
 
 ## Must not change
 
@@ -55,4 +56,5 @@ The rule's eight decisions (`solo-quests/rule.md` of the orchestrating session) 
 7. **A seat's leave-by is kept whatever the walk.** Board a6 keeps "15:56 나설 시각" for a walk of 4 minutes. The 5-minute rule is for a walk alone from a meal or an event, where the User sets off at once; at a seat the User is studying and needs the reminder. It uses the Quest's `leave-by` kind, so 알림 and the push read as the Leader's do.
 8. **The next item** is the first that starts during the stay at another Place than 관정관, read before the stay is stored so that the stay is not its own next item. An item at 관정관 needs no walk and is skipped.
 9. **The stay's request runs beside the done message.** Board a4 shows no leave-by in it, so the message is not held for the main server, and a failure leaves the booking as it is.
-10. **Cancelling or returning the seat** does not end its Quest in this ticket; it ends at the booking's end as other Quests do. Ending it there needs the booking's time matched to the Quest, which is a follow-up.
+10. **No flag on the everyday map.** Package C's hook keeps no id for a Quest held alone, so the everyday map draws no flag or line for it, and the seat follows: it shows in 알림 through its leave-by. Rule 4 also asks for "its card on the everyday map"; that card, and the plan line above the input that rule 8 leaves out, are one follow-up.
+11. **Cancelling or returning the seat** does not end its Quest in this ticket; it ends at the booking's end as other Quests do. Ending it there needs the booking's time matched to the Quest, which is a follow-up.
