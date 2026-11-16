@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import type { DimensionValue } from 'react-native';
+import { type DimensionValue, StyleSheet, type ViewStyle } from 'react-native';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
 import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
@@ -72,15 +72,25 @@ async function meetMinSu(): Promise<void> {
   await layTrack(390);
 }
 
+// The card's room under its content, kept for the input.
+function cardRoom(): ViewStyle['paddingBottom'] {
+  const style: unknown = screen.getByTestId('answer-card').props.style;
+  return StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).paddingBottom;
+}
+
 // Partitions: the band dragged over 민수's class (board a12), with its lane, its words, the card's lines, the outline,
-// the time chip, and the input.
+// the time chip, and the input. a12's band is 28 points here, and its two handles, 16 wide each, cover most of it.
 describe("the band dragged over 민수's class to 15:20 (board a12)", () => {
-  it("draws 민수's class red on his lane where the band covers it, from 15:30 to the band's end at 15:48", async () => {
+  it("draws 민수's class red on his lane where the band covers it, from 15:30 to 15:48, over the band and its handles", async () => {
     await meetMinSu();
 
     await holdBody(185);
 
-    const clash = within(screen.getByTestId(`time-band-lane-${MIN_SU.id}`)).getByTestId('time-band-clash');
+    const track = screen.getByTestId('time-band-track');
+    const red = screen.getByTestId('time-band-red');
+    expect(track.children.at(-1)).toBe(red);
+    expect(red).toHaveStyle({ pointerEvents: 'none' });
+    const clash = within(within(red).getByTestId(`time-band-red-${MIN_SU.id}`)).getByTestId('time-band-clash');
     expect(clash).toHaveStyle({ backgroundColor: color.warning, left: left(210) });
     expect(screen.getAllByTestId('time-band-clash')).toHaveLength(1);
     expect(body()).toHaveAccessibilityValue({ text: '15:20–15:48' });
@@ -110,6 +120,20 @@ describe("the band dragged over 민수's class to 15:20 (board a12)", () => {
     expect(card().getByRole('button', { name: '301동에서' })).toBeVisible();
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
     expect(recalculations(server)).toHaveLength(1);
+  });
+});
+
+// Partitions: the card's room for the input before the band moves and while it is held at 15:20 (board a12).
+describe('the card while the band moves', () => {
+  it("keeps the input's room under the card while the input gives way, so that the lanes stay under the finger", async () => {
+    await meetMinSu();
+    const room = cardRoom();
+
+    await holdBody(185);
+
+    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
+    expect(room).toEqual(expect.any(Number));
+    expect(cardRoom()).toBe(room);
   });
 });
 

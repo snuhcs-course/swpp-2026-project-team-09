@@ -11,6 +11,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import type { MealInput, TimeBand as TimeBandData } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
+import { clashesAt } from '@/features/assistant/band-move';
 import {
   type BandBound,
   clockOf,
@@ -122,6 +123,20 @@ interface LanesProps {
   moving: Stretch | null;
 }
 
+function Red({ stretches, range }: { stretches: readonly Stretch[]; range: Stretch }): ReactElement {
+  return (
+    <>
+      {stretches.map((stretch) => (
+        <View
+          key={`clash-${stretch.startAt}`}
+          style={[styles.clash, placeOf(stretch, range)]}
+          testID="time-band-clash"
+        />
+      ))}
+    </>
+  );
+}
+
 function Lanes({ band, fixed, moving }: LanesProps): ReactElement {
   return (
     <>
@@ -131,18 +146,31 @@ function Lanes({ band, fixed, moving }: LanesProps): ReactElement {
             {lane.busy.map((stretch) => (
               <View key={`busy-${stretch.startAt}`} style={[styles.busy, placeOf(stretch, band.range)]} />
             ))}
-            {redOf(lane, fixed, band, moving).map((stretch) => (
-              <View
-                key={`clash-${stretch.startAt}`}
-                style={[styles.clash, placeOf(stretch, band.range)]}
-                testID="time-band-clash"
-              />
-            ))}
+            <Red range={band.range} stretches={redOf(lane, fixed, band, moving)} />
           </View>
         </View>
       ))}
       <View style={[styles.now, { left: percent(shareOf(band.now, band.range)) }]} />
     </>
+  );
+}
+
+// While the band is moved whole, the parts of the busy stretches it covers, red on their lanes over the band and its
+// handles, which would hide them: the handles cover most of a narrow band.
+function RedOver({ band, moving }: Pick<LanesProps, 'band' | 'moving'>): ReactElement | null {
+  if (moving === null) {
+    return null;
+  }
+  return (
+    <View style={styles.over} testID="time-band-red">
+      {band.lanes.map((lane) => (
+        <View key={lane.userId} style={styles.lane} testID={`time-band-red-${lane.userId}`}>
+          <View style={styles.redBar}>
+            <Red range={band.range} stretches={clashesAt([lane], moving)} />
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -225,6 +253,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
           <BandOnTrack {...props} moving={moving} shown={shown} />
           {handles ? handle('from') : null}
           {handles ? handle('until') : null}
+          <RedOver band={band} moving={moving} />
         </Track>
       </View>
       <View style={styles.ends}>
@@ -245,6 +274,8 @@ const styles = StyleSheet.create({
   bar: { height: BAR_HEIGHT, borderRadius: radius.full, backgroundColor: color.surfaceSunken },
   busy: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.borderStrong },
   clash: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.warning },
+  over: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, pointerEvents: 'none' },
+  redBar: { height: BAR_HEIGHT },
   now: { position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1, backgroundColor: color.me },
   handle: {
     position: 'absolute',

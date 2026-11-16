@@ -177,10 +177,11 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const cardShown = invitation.shown || made.shown !== null;
-  // The open list of Friends to add takes the input's place in the answer's card, and so do 보는 중 with 그만 and the
-  // time band moved whole.
-  const inputShown = !(chat.framed && (chat.answer.adding || chat.chat.waiting || chat.answer.moving !== null));
-  const inputTop = inputShown ? AI_INPUT.bottom + lift + inputHeight : lift;
+  // The open list of Friends to add takes the input's place in the answer's card, and so does 보는 중 with 그만. The
+  // time band moved whole hides the input but keeps its room, so that the card and its lanes stay under the finger.
+  const inputGone = chat.framed && (chat.answer.adding || chat.chat.waiting);
+  const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
+  const inputTop = inputGone ? lift : AI_INPUT.bottom + lift + inputHeight;
   return (
     <>
       {!chat.shown && !chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}

@@ -9,7 +9,7 @@ import { type DimensionValue, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import type { MealInput, TimeBand } from '@/api/assistant-types';
 import { color, radius } from '@/design-system';
-import { bandMoved, bandStepped, clashesAt, movingWords } from '@/features/assistant/band-move';
+import { bandMoved, bandStepped, movingWords } from '@/features/assistant/band-move';
 import { clashes, clockOf, shareOf, type Stretch } from '@/features/assistant/time-band';
 
 // The time band on its track, which a drag on its lanes moves whole (P02 ticket 25).
@@ -29,10 +29,10 @@ export function placeOf(stretch: Stretch, range: Stretch): { left: DimensionValu
   return { left: percent(start), width: percent(shareOf(stretch.endAt, range) - start) };
 }
 
-// What a lane draws red: while the band is moved whole, the parts of its busy stretches the band covers; otherwise
-// those inside the window the User fixed.
+// What a lane draws red under the band: the parts of its busy stretches inside the window the User fixed, and none
+// while the band is moved whole, when the parts it covers are drawn over it.
 export function redOf(lane: Lane, fixed: MealInput['window'], band: TimeBand, moving: Stretch | null): Stretch[] {
-  return moving === null ? clashes(lane.busy, fixed, band) : clashesAt([lane], moving);
+  return moving === null ? clashes(lane.busy, fixed, band) : [];
 }
 
 // The words under the band: who cannot come while it is moved over someone's busy stretch, else its own.
