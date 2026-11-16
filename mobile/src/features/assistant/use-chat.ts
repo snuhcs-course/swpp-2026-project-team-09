@@ -60,6 +60,8 @@ export interface ChatBubble {
   lookup?: Lookup | null;
   refusal?: Refusal | null;
   offers?: ReplyOffer[];
+  // The map's visible area the reply's request sent, which a `study` Lookup outlines.
+  area?: RequestContext['viewport'];
   // A turn a card's button asked of the recalculation, not of the Assistant: its words and its answer are a turn and a
   // reply on screen, and never sent to the Assistant.
   recalculated?: boolean;
@@ -188,8 +190,9 @@ async function answerTo(messages: ChatMessage[], context: RequestContext | undef
       ? apiClient.askAssistant(messages)
       : apiClient.askAssistant(messages, context));
     const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers } = reply;
+    const drawn = { answer, lookup, refusal, area: context?.viewport ?? null };
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, answer, lookup, refusal, ...offered };
+    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };

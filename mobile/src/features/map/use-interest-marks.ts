@@ -19,6 +19,7 @@ import {
   notificationsQuery,
   recruitingQuestsQuery,
 } from '@/api/queries';
+import type { LocationMissing } from '@/api/refusal-types';
 import type { ScreenData } from '@/api/screen-data';
 import type { GlobalEvent, LatLng } from '@/api/types';
 import type { KeptNotification } from '@/api/waiting-types';
@@ -37,6 +38,12 @@ import { askOf, cardsWithMarks, type InterestMark, marksAlone, marksOf, sourcesO
 const OPENED_KEY = ['opened-marks'] as const;
 // The items opened on this phone, read once per sign-in: the cache is cleared at a sign-out.
 const openedQuery = queryOptions({ queryKey: OPENED_KEY, queryFn: readOpenedMarks, staleTime: Infinity });
+
+// Where the User is on campus, or why that is not known.
+interface Where {
+  position: LatLng | null;
+  locationMissing: LocationMissing;
+}
 
 const MINUTE_MS = 60_000;
 const NOT_ANSWERED = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
@@ -157,10 +164,10 @@ function useMatchesRefresh(bubbles: Chat['bubbles']): void {
 }
 
 // A press on a mark gives the same answer as asking: the mark's name as the words and the answer of its items, which
-// the arrows browse. The items the answer shows are kept as opened once it is on screen, and lose "!". `location` is
-// the User's position, which the answer starts from; `cards` are the map's, by which a mark sharing its point with
-// another thing leaves the place's card as it is.
-export function useMarkPresses(chat: Chat, location: LatLng | null, cards: readonly CardView[]): MarkPresses {
+// the arrows browse. The items the answer shows are kept as opened once it is on screen, and lose "!". `where` is the
+// User's position, which the answer starts from, or why it is not known, which the answer says; `cards` are the
+// map's, by which a mark sharing its point with another thing leaves the place's card as it is.
+export function useMarkPresses(chat: Chat, where: Where, cards: readonly CardView[]): MarkPresses {
   const { marks } = useInterestMarks();
   const byId = useMemo(() => (marks === null ? NO_MARKS : marksAlone(marks, cards)), [marks, cards]);
   const queryClient = useQueryClient();
@@ -169,7 +176,7 @@ export function useMarkPresses(chat: Chat, location: LatLng | null, cards: reado
   const open = (mark: InterestMark): void => {
     const { input, shown } = askOf(mark, now());
     void chat
-      .askApp(mark.title, () => apiClient.recalculateAnswer(input, location))
+      .askApp(mark.title, () => apiClient.recalculateAnswer(input, where.position, where.locationMissing))
       .then((ended) => {
         if (ended === 'shown') {
           keepOpened(queryClient, shown);
