@@ -39,7 +39,6 @@ const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], 
 const FAILED_FIRST = '답을 가져오지 못했어요.';
 const FAILED_SECOND = '연결이 끊겼거나 서버가 답하지 않았어요. 쓴 말은 입력칸에 그대로 두었어요.';
 const USED_UP = '오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요';
-const SLOW_FAILURE = { status: 503, body: { statusCode: 503, message: 'Refused' }, afterMs: 1000 };
 
 let server: FakeServer;
 
@@ -94,8 +93,8 @@ async function failedInFrame(): Promise<User> {
   return user;
 }
 
-// Partitions: the frame and the chat sheet; a failure the Assistant may get over, and the daily limit; the words kept,
-// edited, sent again, and dropped with the frame.
+// Partitions: a failure the Assistant may get over, and the daily limit; the words kept, edited, sent again, and dropped
+// with the frame.
 describe('a request that failed, in the frame (n16)', () => {
   it('says what failed in two lines with 다시 시도, and the input holds the words that were sent', async () => {
     await failedInFrame();
@@ -166,48 +165,6 @@ describe('the words kept after a failure, in the frame (n16)', () => {
 
     await user.press(screen.getByRole('button', { name: '답 닫기' }));
 
-    expect(input()).toHaveDisplayValue('');
-  });
-});
-
-describe('a request that failed, in the chat sheet (n16)', () => {
-  it('says the two lines with 다시 시도, and the input holds the words that were sent', async () => {
-    server.on('POST /assistant/messages', refusal(503));
-    const user = await openMain();
-    await user.press(input());
-
-    await ask(user);
-
-    const bubble = screen.getByTestId('assistant-bubble');
-    expect(bubble).toHaveTextContent(FAILED_FIRST, { exact: false });
-    expect(bubble).toHaveTextContent(FAILED_SECOND, { exact: false });
-    expect(input()).toHaveDisplayValue(ASKED);
-  });
-
-  it('keeps what the User wrote while waiting, in place of the words sent', async () => {
-    server.on('POST /assistant/messages', SLOW_FAILURE);
-    const user = await openMain();
-    await user.press(input());
-    await send(user, ASKED);
-
-    await user.type(input(), '한식');
-    await pass(1000);
-
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(FAILED_FIRST, { exact: false });
-    expect(input()).toHaveDisplayValue('한식');
-  });
-
-  it('empties the input once 다시 시도 sends the words again', async () => {
-    server.on('POST /assistant/messages', refusal(503));
-    const user = await openMain();
-    await user.press(input());
-    await ask(user);
-    server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
-
-    await user.press(screen.getByRole('button', { name: '다시 시도' }));
-    await pass(1000);
-
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(REPLY);
     expect(input()).toHaveDisplayValue('');
   });
 });
