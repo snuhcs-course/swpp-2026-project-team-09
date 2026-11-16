@@ -34,8 +34,16 @@ function dayOf(date: string, now: Date): number {
   return koreaDaysAfter(now, new Date(`${date}T12:00:00+09:00`));
 }
 
-function friendsOf(answer: AnswerReply): string[] {
-  return answer.chips.flatMap(({ kind, text }) => (kind === 'person' ? [text] : []));
+// The User's Friends' names by their User ids, as the app knows them.
+export type FriendNames = ReadonlyMap<string, string>;
+
+// The Friends of an answer by their person chips. A chip's words may carry a mark after the name, such as
+// "민수 · 자리 모름" for a Friend whose origin is unknown, so the name is the Friend's own by the chip's User id, or
+// else the words before " · ", as the main server reads them (`plan-tools.ts`).
+function friendsOf(answer: AnswerReply, names: FriendNames): string[] {
+  return answer.chips.flatMap(({ kind, text, userId }) =>
+    kind === 'person' ? [(userId === null ? undefined : names.get(userId)) ?? text.split(' · ')[0] ?? text] : [],
+  );
 }
 
 // The next meals after this one, today's and tomorrow's: a lunch's dinner, then tomorrow's lunch and dinner.
@@ -51,8 +59,8 @@ function laterMeals({ date, meal }: MealInput, now: Date): { day: number; meal: 
   return at < 0 ? [] : all.slice(at + 1);
 }
 
-function mealFollowUps(answer: AnswerReply & { input: MealInput }, now: Date): string[] {
-  const friends = friendsOf(answer);
+function mealFollowUps(answer: AnswerReply & { input: MealInput }, now: Date, names: FriendNames): string[] {
+  const friends = friendsOf(answer, names);
   return laterMeals(answer.input, now).map(({ day, meal }) =>
     friends.length === 0
       ? `${DAY_WORD[day]} ${MEAL_WORD[meal]} 배고파`
@@ -60,16 +68,16 @@ function mealFollowUps(answer: AnswerReply & { input: MealInput }, now: Date): s
   );
 }
 
-function answerFollowUps(answer: AnswerReply, asked: boolean, now: Date): string[] {
+function answerFollowUps(answer: AnswerReply, asked: boolean, now: Date, names: FriendNames): string[] {
   const { input } = answer;
   if (answer.noPlan !== null) {
     return [];
   }
   if (input.kind === 'meal') {
-    return mealFollowUps({ ...answer, input }, now);
+    return mealFollowUps({ ...answer, input }, now, names);
   }
   if (input.kind === 'meet') {
-    const [name] = friendsOf(answer);
+    const [name] = friendsOf(answer, names);
     if (name === undefined) {
       return [];
     }
@@ -111,7 +119,7 @@ export interface FollowUpSource {
 
 // The follow-ups under `reply`, the one that turns the reply into going together first. None under a refusal, a
 // reply with offers of its own, a failure, or an answer without a Plan, whose own buttons say what to try.
-export function followUpsOf(reply: FollowUpSource | undefined, now: Date): string[] {
+export function followUpsOf(reply: FollowUpSource | undefined, now: Date, names: FriendNames = new Map()): string[] {
   if (
     reply === undefined ||
     reply.failure !== null ||
@@ -123,7 +131,7 @@ export function followUpsOf(reply: FollowUpSource | undefined, now: Date): strin
   const asked = reply.recalculated !== true;
   const { answer = null, lookup = null, cards } = reply;
   if (answer !== null) {
-    return answerFollowUps(answer, asked, now).slice(0, MOST);
+    return answerFollowUps(answer, asked, now, names).slice(0, MOST);
   }
   if (lookup !== null) {
     return lookupFollowUps(lookup).slice(0, MOST);

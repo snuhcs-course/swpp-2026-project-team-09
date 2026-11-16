@@ -4,8 +4,10 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { type ReactElement, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { friendsQuery } from '@/api/queries';
 import { now } from '@/clock';
 import { color, radius, size, space, text } from '@/design-system';
 import { followUpsOf } from '@/features/assistant/follow-ups';
@@ -14,8 +16,8 @@ import type { ChatBubble } from '@/features/assistant/use-chat';
 const CELL_HEIGHT = 40;
 const HIT_SLOP = (size.touchMin - CELL_HEIGHT) / 2;
 
-// Under the reply on screen: its follow-ups (`followUpsOf`) in cells of one width, each sending its words as the User's
-// message. Nothing while there are none.
+// Under the reply on screen: its follow-ups (`followUpsOf`), with its Friends named as the User's list of Friends
+// names them, in cells of one width, each sending its words as the User's message. Nothing while there are none.
 export function FollowUpChips({
   reply,
   onAsk,
@@ -23,7 +25,9 @@ export function FollowUpChips({
   reply: ChatBubble | undefined;
   onAsk: (words: string) => void;
 }): ReactElement | null {
-  const words = followUpsOf(reply, now());
+  const friends = useQuery(friendsQuery).data;
+  const names = useMemo(() => new Map((friends ?? []).map(({ id, name }) => [id, name])), [friends]);
+  const words = followUpsOf(reply, now(), names);
   if (words.length === 0) {
     return null;
   }

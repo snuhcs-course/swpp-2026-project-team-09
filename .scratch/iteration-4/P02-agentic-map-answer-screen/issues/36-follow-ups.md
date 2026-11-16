@@ -95,6 +95,11 @@ The debug build with the mock API.
 - This check found a fault in ticket 35: a question asked from a scrolled card kept the scroll, so the question line was out of sight. It was fixed in 35's pull request.
 - f02: the mock's answer to "공부할 자리".
 
+### Review (2026-11-17)
+
+- A person chip's words are not always the Friend's name. For a Friend whose origin is unknown, the main server writes "{name} · 자리 모름" (`gathering/meal-answer.ts` `personChips`, `recruiting/new-quest-answer.ts`), so a follow-up read "민수 · 자리 모름이랑 오늘 저녁 먹자".
+- The follow-ups now name a Friend by the chip's User id from the User's list of Friends, or else by the words before " · ", as `gathering/plan-tools.ts` reads them. Two unit cases with marked chips fail on the rule before and pass now.
+
 ### Agent usage (2026-11-17)
 
 - Agent time: about 65 minutes of one session, including the local stack, the trial, and the fix to ticket 35. An estimate from the transcript's timestamps.

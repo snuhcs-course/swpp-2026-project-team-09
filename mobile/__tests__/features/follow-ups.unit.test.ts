@@ -24,8 +24,8 @@ function reply(parts: Partial<FollowUpSource>): FollowUpSource {
   return { cards: [], failure: null, ...parts };
 }
 
-function person(text: string): ConditionChip {
-  return { kind: 'person', text, userId: text };
+function person(text: string, userId: string | null = text): ConditionChip {
+  return { kind: 'person', text, userId };
 }
 
 function meal(date: string, which: MealInput['meal'], friends: readonly string[] = []): AnswerReply {
@@ -58,6 +58,17 @@ describe('under a meal Plan', () => {
     expect(followUpsOf(reply({ answer }), NOW)).toEqual(['김민수, 박지은이랑 내일 저녁 먹자']);
   });
 
+  it('names a Friend whose origin is unknown by the list of Friends, or by the words before the mark', () => {
+    const answer = {
+      ...meal(TOMORROW, 'lunch'),
+      chips: [person('김민수 · 자리 모름', 'u-minsu'), person('박지은 · 자리 모름', 'u-jieun')],
+    };
+
+    expect(followUpsOf(reply({ answer }), NOW, new Map([['u-minsu', '김민수']]))).toEqual([
+      '김민수, 박지은이랑 내일 저녁 먹자',
+    ]);
+  });
+
   it('offers nothing under an answer without a Plan, whose own buttons say what to try', () => {
     const answer = { ...meal(TODAY, 'lunch'), noPlan: { reason: 'no-shared-time' as const, lines: [], relax: [] } };
 
@@ -66,8 +77,12 @@ describe('under a meal Plan', () => {
 });
 
 describe('under a meet and a day’s events', () => {
-  it('puts the meal with the Friend first, then tomorrow’s meet', () => {
-    const answer = { ...MEET_ANSWER, input: { ...MEET_ANSWER.input, date: TODAY }, chips: [person('김민수')] };
+  it('puts the meal with the Friend first, then tomorrow’s meet, without the mark of an unknown origin', () => {
+    const answer = {
+      ...MEET_ANSWER,
+      input: { ...MEET_ANSWER.input, date: TODAY },
+      chips: [person('김민수 · 자리 모름', null)],
+    };
 
     expect(followUpsOf(reply({ answer, recalculated: true }), NOW)).toEqual([
       '김민수랑 같이 밥 먹자',
