@@ -8,7 +8,7 @@ Blocked by: 24 (the meet's answers for a6); package A's words of a busy stretch 
 
 P02-03 drags one handle at a time, and a handle stops 15 minutes short of the other. Board a12 moves the band whole, and note (3) plans again from where it is let go.
 
-- **A drag on the band's body** moves it whole, keeping its width, in steps of five minutes inside the range. Its place before stays as the dashed outline (holds). The handles keep working as P02-03 built them. This is every Plan's band (row 6's decision D9).
+- **A drag on the band's lanes** moves it whole, keeping its width, by the finger's distance in steps of five minutes inside the range: the drag starts anywhere on the lanes, on the band or beside it, outside the handles' touch areas, which win where they overlap. Its place before stays as the dashed outline (holds). The handles keep working as P02-03 built them. This is every Plan's band (row 6's decision D9).
 - **While it moves**: each busy stretch it overlaps is drawn in red on its lane; the band's words name who cannot come ("15:20–15:48 · 민수가 안 돼요", several names joined); the card's two lines say why, from the first such stretch's words ("**민수**는 15:30부터 302동 수업이라" / "이때는 만날 수 없어요"); the time chip shows the band's start, marked as just changed; the input gives way. A band that overlaps nobody's stretch shows its own words.
 - **Letting go** sends the band's start as the window's `from` and leaves `until` to the server, which plans the longest time together from then. The answer replaces the one on screen; the Plan shown is the first. "되돌리기" brings back the answer before the drag (holds).
 
@@ -18,7 +18,7 @@ P02-03 drags one handle at a time, and a handle stops 15 minutes short of the ot
 - [ ] **a6**: let go at 14:00: the request's window is `{ from: '14:00', until: null }`; the main server's real answer (`meet-answer-a6.json`) "**14:07 302동 앞**에서 만나요" / "15:30까지 함께 83분이에요", "1/5", the second "14:04 유회진 학술정보관 앞" for 82 minutes, the chips "24동에서", "14:00부터", "민수 ✕", the basis "민수 12:15 302동 수업 끝 · 15:30에 나서요", "24동 → 302동 앞 걸어서 17분", "302동 앞 → 58동 걸어서 27분, 그래서 16:33에 나서요", and 민수 drawn dashed at 302동 앞 (his position at 14:00 is taken from the Timetable).
 - [ ] "되돌리기" brings back a5's answer without a request.
 - [ ] A drag past the range's end stops there; a step is five minutes; a drag shorter than half a step changes nothing, and a longer one moves the band to the nearest step; a screen reader moves the band by the same steps.
-- [ ] On a meal's band the body drag works the same, and its handles as before (P02-03's tests unchanged).
+- [ ] On a meal's band the drag on the lanes works the same, and its handles as before (P02-03's tests unchanged).
 - [ ] Unit tests of the whole-band arithmetic (each end of the range, a step, an overlap at one minute and at none) and of who cannot come; integration tests at the main screen over the fake main server of a12 and a6 down to the request.
 - [ ] The screen is run on an Android emulator, and the pull request carries boards a12 and a6.
 - [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
@@ -43,9 +43,10 @@ P02-03 drags one handle at a time, and a handle stops 15 minutes short of the ot
 10. While the band moves, a lane draws red the parts of its busy stretches the band covers, in place of the clashes with the window the User fixed.
 11. The band's place, its words, the card's lines, the time chip, and the input giving way hold from the first move until the recalculation's answer comes or fails. Let go where it started, or where no recalculation is asked, everything goes back at once.
 12. The time chip is the answer's start chip ("14:00부터") when it has one, else its end chip ("13:00 수업까지"). While the band moves it reads the band's start, "15:20", in the Quest colour, the look of a chip the server eased. A handle's drag marked no chip before and still marks none.
-13. The input gives way only to the body's drag; a handle's drag never hid it and still does not.
+13. The input gives way only to the drag that moves the band whole; a handle's drag never hid it and still does not.
 14. A screen reader moves the band with the body's adjustable actions ("시간 띠", its value "12:15–12:43"), one step each, and each step asks at once, as a handle's step does.
 15. A band over nobody's busy stretch keeps the Plan's own words ("12:15–12:43 · 함께 28분") while it moves, though they name the Plan's time and not the band's.
 16. a6's real answer puts 302동 앞 first (14:07–15:30, 83 minutes) where the board drew 신양학술정보관 앞 (14:00–15:20, 80 minutes, fourth in the answer); the criterion follows the answer. Its "14:00부터" chip carries no mark, so it is drawn plain where the board highlighted it.
 17. The mock answers a meet asked from 14:00 with a6's copy, and any other meet with a5's.
-18. Every Plan's band, a meal's and a meet's, takes the body's drag; a Lookup's band, which has no handles, takes none.
+18. Every Plan's band, a meal's and a meet's, takes the drag that moves it whole; a Lookup's band, which has no handles, takes none.
+19. The drag that moves the band whole starts anywhere on its lanes (the track right of the names), on the band or beside it, outside the handles' 44-point touch areas, and moves the band by the finger's distance: the band does not jump to the finger. The handles keep their touch areas and win where they overlap, so a band narrower than the two touch areas, as a5's 28 minutes (about 24 points on a phone), is dragged from beside it. A press on the lanes had no meaning before. The screen reader's action stays on the band.
