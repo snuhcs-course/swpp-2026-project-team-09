@@ -229,6 +229,21 @@ describe('a User who watches nothing', () => {
   });
 });
 
+// Partitions: a Favorite Event that matches no interest, beside the marks the matches give (P06 ticket 01 with the
+// marks always on since P02-04). Expected values: the ticket and the app's README, a Favorite Event's pin at every level.
+describe('a Favorite Event beside the marks', () => {
+  it('keeps its starred pin though it matches nothing, and the marks stay', async () => {
+    starConcert();
+
+    await openMain();
+
+    expect(drawn(STARRED)).toBe(true);
+    expect(looks(STARRED, 'starred')).toBe(true);
+    expect(drawn(FRESH_MARK)).toBe(true);
+    expect(drawn('AI 특강')).toBe(false);
+  });
+});
+
 // Partitions: a main server without the matches. Expected values: the ticket, the map without marks, which keeps only
 // the Favorite Events (P06 ticket 01).
 describe('the map without marks', () => {

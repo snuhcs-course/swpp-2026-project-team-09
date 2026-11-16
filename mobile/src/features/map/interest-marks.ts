@@ -276,8 +276,9 @@ function partyCards(quest: RecruitingQuest, now: Date): CardView[] {
   return [card];
 }
 
-// The map's cards with the marks: the events no mark holds are left out, and each recruiting party a mark holds gets a
-// card after the others, unless the map holds one already. Every other card stays.
+// The map's cards with the marks: the events no mark holds are left out, but a Favorite Event stays (P06 ticket 01),
+// and each recruiting party a mark holds gets a card after the others, unless the map holds one already. Every other
+// card stays.
 export function cardsWithMarks(
   cards: readonly CardView[],
   marks: readonly InterestMark[],
@@ -290,7 +291,10 @@ export function cardsWithMarks(
     const id = cardId.quest(quest.id);
     return shown.has(id) && !known.has(id) ? partyCards(quest, now) : [];
   });
-  return [...cards.filter(({ id, kind }) => kind !== 'global-event' || shown.has(id)), ...parties];
+  const kept = cards.filter(
+    ({ id, kind, event }) => kind !== 'global-event' || shown.has(id) || event?.favorite === true,
+  );
+  return [...kept, ...parties];
 }
 
 // A place's or a group's look with its mark's "!" or fade; any other look, and a plain mark's, as it is.
