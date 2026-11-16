@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -77,7 +78,12 @@ describe('Asking to join an Approval Quest', () => {
     expect(response.body).toEqual(sent);
     expect((await getSentJoinRequests(app, user)).body).toEqual([sent]);
     expect((await getJoinRequests(app, leader, questId)).body).toEqual([
-      { id: ANY_STRING, user: { id: user.id, name: '김철수', department: '경영학과' }, sentAt: ANY_STRING },
+      {
+        id: ANY_STRING,
+        user: { id: user.id, name: '김철수', department: '경영학과' },
+        sentAt: ANY_STRING,
+        removedBefore: false,
+      },
     ]);
     expect((await getQuests(app, user)).body).toEqual([]);
     await vi.waitFor(() => {

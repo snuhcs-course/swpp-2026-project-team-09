@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -169,6 +170,26 @@ function ownerOrRefuse(friendId: string): Person {
   return owner;
 }
 
+// A Friend Request from the User to another, under the main server's rules.
+function requestTo(owner: Person): SentFriendRequest {
+  if (isFriend(owner.id)) {
+    throw refused(409, 'ALREADY_FRIENDS');
+  }
+  if (state.requests.some(({ from, to }) => from === ME.id && to === owner.id)) {
+    throw refused(409, 'FRIEND_REQUEST_ALREADY_SENT');
+  }
+  if (state.requests.some(({ from, to }) => from === owner.id && to === ME.id)) {
+    befriend(owner.id);
+    return { status: 'friends' };
+  }
+  state.made += 1;
+  state.requests = [
+    { id: `request-${state.made}`, from: ME.id, to: owner.id, sentAt: now().toISOString() },
+    ...state.requests,
+  ];
+  return { status: 'waiting' };
+}
+
 function linkOrRefuse(token: string): Link {
   const link = state.links.get(token);
   if (link === undefined) {
@@ -239,32 +260,25 @@ export const mockFriendships = {
     if (owner.id === ME.id) {
       throw refused(400, 'OWN_FRIEND_ID');
     }
-    if (isFriend(owner.id)) {
-      throw refused(409, 'ALREADY_FRIENDS');
+    return requestTo(owner);
+  },
+  // The mock keeps no Holders, so anyone it knows holds a Quest with the User.
+  sendFriendRequestToUser: (userId: string): SentFriendRequest => {
+    const owner = PEOPLE.find(({ id }) => id === userId && id !== ME.id);
+    if (owner === undefined) {
+      throw userId === ME.id ? refused(400, 'OWN_USER_ID') : refused(403, 'NOT_FELLOW_HOLDER');
     }
-    if (state.requests.some(({ from, to }) => from === ME.id && to === owner.id)) {
-      throw refused(409, 'FRIEND_REQUEST_ALREADY_SENT');
-    }
-    if (state.requests.some(({ from, to }) => from === owner.id && to === ME.id)) {
-      befriend(owner.id);
-      return { status: 'friends' };
-    }
-    state.made += 1;
-    state.requests = [
-      { id: `request-${state.made}`, from: ME.id, to: owner.id, sentAt: now().toISOString() },
-      ...state.requests,
-    ];
-    return { status: 'waiting' };
+    return requestTo(owner);
   },
   listFriendRequests: (): FriendRequests => {
     const requests = state.requests.toSorted(NEWEST_FIRST);
     return {
       received: requests
         .filter(({ to }) => to === ME.id)
-        .map(({ id, from, sentAt }) => ({ id, sender: summaryOf(from), sentAt })),
+        .map(({ id, from, sentAt }) => ({ id, sender: { id: from, ...summaryOf(from) }, sentAt })),
       sent: requests
         .filter(({ from }) => from === ME.id)
-        .map(({ id, to, sentAt }) => ({ id, receiver: summaryOf(to), sentAt })),
+        .map(({ id, to, sentAt }) => ({ id, receiver: { id: to, ...summaryOf(to) }, sentAt })),
     };
   },
   acceptFriendRequest: (requestId: string): void => {

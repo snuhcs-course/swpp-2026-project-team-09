@@ -17,6 +17,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -63,7 +64,14 @@ import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
-import type { FriendRequests, JoinRequest, KeptNotification, MyJoinRequest, QuestInvitation } from './waiting-types';
+import type {
+  FriendRequests,
+  JoinRequest,
+  KeptNotification,
+  MyJoinRequest,
+  QuestInvitation,
+  QuestRemoval,
+} from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { BetterPlan, MakePlanQuest, PlanQuest } from './plan-quest-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
@@ -96,6 +104,8 @@ export interface ApiClient {
   findFriendId: (friendId: string) => Promise<UserSummary>;
   // Also refused with 400 OWN_FRIEND_ID, 409 ALREADY_FRIENDS and 409 FRIEND_REQUEST_ALREADY_SENT.
   sendFriendRequest: (friendId: string) => Promise<SentFriendRequest>;
+  // By user id, from a 파티's member row: also refused with 403 NOT_FELLOW_HOLDER unless the two hold one Quest.
+  sendFriendRequestToUser: (userId: string) => Promise<SentFriendRequest>;
   listFriendRequests: () => Promise<FriendRequests>;
   // Each refused with 404 FRIEND_REQUEST_NOT_FOUND for a request that waits no more.
   acceptFriendRequest: (requestId: string) => Promise<void>;
@@ -183,9 +193,10 @@ export interface ApiClient {
   listRecruitingQuests: (filter?: { board?: Board; globalEventId?: string }) => Promise<RecruitingQuest[]>;
   // An Open Quest, at once.
   joinQuest: (questId: string) => Promise<Quest>;
-  // An Approval Quest: a request that the Leader answers.
+  // An Approval Quest, or an Open one the Leader removed the User from: a request that the Leader answers.
   askToJoinQuest: (questId: string) => Promise<void>;
   listMyJoinRequests: () => Promise<MyJoinRequest[]>;
+  listQuestRemovals: () => Promise<QuestRemoval[]>;
   withdrawJoinRequest: (requestId: string) => Promise<void>;
   makeQuest: (making: QuestMaking, idempotencyKey: string) => Promise<Quest>;
   // The User's Quest for the Global Event, Closed, made the first time with the title given or else the event's. A
@@ -268,6 +279,7 @@ export const apiClient: ShownClient = {
   lowerFriendLevels: (level) => chosen().lowerFriendLevels(level),
   findFriendId: (friendId) => chosen().findFriendId(friendId),
   sendFriendRequest: (friendId) => chosen().sendFriendRequest(friendId),
+  sendFriendRequestToUser: (userId) => chosen().sendFriendRequestToUser(userId),
   listFriendRequests: () => chosen().listFriendRequests(),
   acceptFriendRequest: (requestId) => chosen().acceptFriendRequest(requestId),
   declineFriendRequest: (requestId) => chosen().declineFriendRequest(requestId),
@@ -327,6 +339,7 @@ export const apiClient: ShownClient = {
   joinQuest: (questId) => chosen().joinQuest(questId),
   askToJoinQuest: (questId) => chosen().askToJoinQuest(questId),
   listMyJoinRequests: () => chosen().listMyJoinRequests(),
+  listQuestRemovals: () => chosen().listQuestRemovals(),
   withdrawJoinRequest: (requestId) => chosen().withdrawJoinRequest(requestId),
   makeQuest: (making, key) => chosen().makeQuest(making, key),
   attendGlobalEvent: (globalEventId, title, entries) => chosen().attendGlobalEvent(globalEventId, title, entries),

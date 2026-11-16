@@ -5,6 +5,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Party, Quest } from '@/api/types';
@@ -190,7 +191,8 @@ export function waitingNotices(notices: readonly NoticeView[]): NoticeView[] {
   return notices.filter(({ time }) => time === null);
 }
 
-// Whether others ask the User to let them into the Quest: the User leads it, and its Join Policy is Approval.
+// Whether others ask the User to let them into the Quest: the User leads it, and it is Approval, or Open, which takes
+// requests from Users the Leader removed.
 export function takesJoinRequests(quest: Quest, meId: string): boolean {
-  return !quest.classQuest && quest.joinPolicy === 'approval' && quest.leader?.id === meId;
+  return !quest.classQuest && quest.joinPolicy !== 'closed' && quest.leader?.id === meId;
 }

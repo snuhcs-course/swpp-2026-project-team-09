@@ -31,7 +31,7 @@ The short code by which others name a User when they send a Friend Request. Each
 _Avoid_: Friend code, username, handle
 
 **Friend Request**:
-A request to become Friends, sent by a User to the holder of a Friend ID, who accepts or declines it.
+A request to become Friends, sent by a User to the holder of a Friend ID, or to another Holder of the same Quest, who accepts or declines it.
 _Avoid_: Follow request
 
 **Invite Link**:
@@ -100,7 +100,7 @@ The one Holder of a Quest, or the one member of a Party, who holds authority ove
 _Avoid_: Owner, host
 
 **Join Policy**:
-The Leader's setting for how Users enter a Quest or a Party: Open (whoever can see it enters at once), Approval (the Leader accepts each request) or Closed (entry by the Leader's invitation only).
+The Leader's setting for how Users enter a Quest or a Party: Open (whoever can see it enters at once, except a User the Leader removed, who asks as for Approval), Approval (the Leader accepts each request) or Closed (entry by the Leader's invitation only).
 _Avoid_: Visibility, privacy setting
 
 The screens call an Open or Approval Quest a "공개 파티" and a Closed Quest a "비공개 파티". A plan with a Friend is a 비공개 파티.

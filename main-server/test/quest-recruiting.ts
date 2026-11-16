@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -31,6 +32,10 @@ export function withdrawJoinRequest(app: INestApplication<Server>, user: TestUse
 
 export function getJoinRequests(app: INestApplication<Server>, leader: TestUser, questId: string): request.Test {
   return withAccessToken(request(app.getHttpServer()).get(`/quests/${questId}/join-requests`), leader.accessToken);
+}
+
+export function getQuestRemovals(app: INestApplication<Server>, user: TestUser): request.Test {
+  return withAccessToken(request(app.getHttpServer()).get('/quest-removals'), user.accessToken);
 }
 
 export function answerJoinRequest(

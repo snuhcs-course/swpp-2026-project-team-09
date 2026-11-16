@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -9,7 +10,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { signInUser, TestUser } from './friends.js';
-import { changeQuest, handOver, removeHolder } from './quest-recruiting.js';
+import { answerJoinRequest, changeQuest, handOver, joinRequestOf, removeHolder } from './quest-recruiting.js';
 import { dropQuest, getQuest, getQuests, joinQuest, markDone, ownQuest } from './quests.js';
 import { refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
@@ -131,7 +132,7 @@ describe('The Leader removing a Holder', () => {
     });
   });
 
-  it('takes the Holder’s progress, and lets the User join again', async () => {
+  it('takes the Holder’s progress, which the User does not get back on being accepted again', async () => {
     const { questId, holders } = await joinedQuest();
     const [leader, second] = holders;
     const { subQuests } = z
@@ -141,7 +142,8 @@ describe('The Leader removing a Holder', () => {
 
     await removeHolder(app, leader, questId, second.id);
 
-    expect((await joinQuest(app, second, questId)).status).toBe(201);
+    const requestId = await joinRequestOf(app, second, questId);
+    expect((await answerJoinRequest(app, leader, { questId, requestId }, 'accept')).status).toBe(204);
     expect((await getQuest(app, second, questId)).body).toMatchObject({ subQuests: [{ done: false }] });
   });
 

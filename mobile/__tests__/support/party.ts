@@ -3,13 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, type userEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { RecruitingQuest } from '@/api/party-types';
 import type { Quest } from '@/api/types';
-import type { MyJoinRequest, QuestInvitation } from '@/api/waiting-types';
+import type { MyJoinRequest, QuestInvitation, QuestRemoval } from '@/api/waiting-types';
 import type { FakeServer } from './fake-server';
 import { pass } from './app';
 import { openMain } from './main';
@@ -105,11 +106,19 @@ interface Answers {
   quests?: Quest[];
   requests?: MyJoinRequest[];
   invitations?: QuestInvitation[];
+  // The Quests the Leader removed the User from.
+  removals?: QuestRemoval[];
 }
 
 // The main screen's answers, and the 파티 tab's, which the test changes through the returned setter.
 export function answerParty(server: FakeServer, answers: Answers = {}): (next: Answers) => void {
-  let held: Required<Answers> = { recruiting: [RUN, CODING, JAZZ], quests: [DINNER], requests: [], invitations: [] };
+  let held: Required<Answers> = {
+    recruiting: [RUN, CODING, JAZZ],
+    quests: [DINNER],
+    requests: [],
+    invitations: [],
+    removals: [],
+  };
   answerMainScreen(server);
   const set = (next: Answers): void => {
     held = { ...held, ...next };
@@ -122,6 +131,7 @@ export function answerParty(server: FakeServer, answers: Answers = {}): (next: A
   server.on('GET /quests', () => ({ status: 200, body: held.quests }));
   server.on('GET /quest-join-requests', () => ({ status: 200, body: held.requests }));
   server.on('GET /quest-invitations', () => ({ status: 200, body: held.invitations }));
+  server.on('GET /quest-removals', () => ({ status: 200, body: held.removals }));
   const exact = { level: 'exact', seen: 'exact', sharing: true, askedOff: false, askedPlan: false };
   server.on('GET /friends', {
     status: 200,

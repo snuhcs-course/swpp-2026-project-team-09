@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +19,8 @@ export interface FriendChanges {
   endFriendship: (userId: string) => Promise<void>;
   findFriendId: (friendId: string) => Promise<UserSummary>;
   sendFriendRequest: (friendId: string) => Promise<SentFriendRequest>;
+  // From a 파티's member row.
+  sendFriendRequestToUser: (userId: string) => Promise<SentFriendRequest>;
   acceptFriendRequest: (requestId: string) => Promise<void>;
   declineFriendRequest: (requestId: string) => Promise<void>;
   cancelFriendRequest: (requestId: string) => Promise<void>;
@@ -51,6 +54,7 @@ export function useFriendChanges(): FriendChanges {
     endFriendship: changing(apiClient.endFriendship, FRIENDS_SEEN),
     findFriendId: apiClient.findFriendId,
     sendFriendRequest: changing(apiClient.sendFriendRequest, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),
+    sendFriendRequestToUser: changing(apiClient.sendFriendRequestToUser, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),
     acceptFriendRequest: changing(apiClient.acceptFriendRequest, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),
     declineFriendRequest: changing(apiClient.declineFriendRequest, [FRIEND_REQUESTS_KEY]),
     cancelFriendRequest: changing(apiClient.cancelFriendRequest, [FRIEND_REQUESTS_KEY]),
