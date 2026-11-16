@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -34,6 +35,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const UPLOADS = 'POST /positions';
 const SWITCH = '친구와 위치 공유';
 const OFF_CAMPUS_LINE = '캠퍼스 밖이라 위치가 공유되지 않아요';
+const PRIVATE_ZONE_LINE = '비공개 구역 안 · 친구에게는 시간표만 보여요';
 
 let server: FakeServer;
 let phone: Phone;
@@ -183,5 +185,19 @@ describe("the main server's answers", () => {
     await walk(6);
 
     expect(uploads()).toBe(2);
+  });
+});
+
+// P02 ticket 29: the User's own card says so, and asks nothing.
+describe('a position inside a Private Zone', () => {
+  it('is said on the 위치 공유 card, until a position outside every zone is kept', async () => {
+    server.on(UPLOADS, { status: 200, body: { offCampus: false, privateZone: true } });
+    await openMe();
+
+    expect(screen.getByText(PRIVATE_ZONE_LINE)).toBeVisible();
+    expect(screen.queryByText(OFF_CAMPUS_LINE)).toBeNull();
+    server.on(UPLOADS, { status: 200, body: { offCampus: false, privateZone: false } });
+    await walk(6);
+    expect(screen.queryByText(PRIVATE_ZONE_LINE)).toBeNull();
   });
 });

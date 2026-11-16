@@ -42,9 +42,9 @@ The app half of the Private Zone, over the contract in the spec's section. No na
 
 ## Acceptance criteria
 
-- [ ] The projection's round trip at zooms 15 to 18 stays within 0.5 m, and the camera's centre falls on the view's middle (unit test).
-- [ ] Thinning keeps 200 points or fewer, and the size check refuses an outline inside a 17 m square but takes a figure eight of two equal lobes (unit tests).
-- [ ] Integration tests at the screens over the fake main server:
+- [x] The projection's round trip at zooms 15 to 18 stays within 0.5 m, and the camera's centre falls on the view's middle (unit test).
+- [x] Thinning keeps 200 points or fewer, and the size check refuses an outline inside a 17 m square but takes a figure eight of two equal lobes (unit tests).
+- [x] Integration tests at the screens over the fake main server:
   - the row's count;
   - the pencil on, a loop drawn by a simulated pan, and the POST body (the outline);
   - a second loop replacing the first;
@@ -53,12 +53,27 @@ The app half of the Private Zone, over the contract in the spec's section. No na
   - the too-small line;
   - the limit of five;
   - the own card's line after an upload answered `privateZone: true`.
-- [ ] The mock answers as the server does.
+- [x] The mock answers as the server does.
 - [ ] Emulator check: draw a zone round 301동 and save it; the row reads "1곳" and the zone is filled on the zone screen; with the pencil off, the map moves and the zone stays in place. The pull request carries these screens.
-- [ ] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
+- [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
 
 - The contract and the decisions under review are in the spec's section "The Private Zone".
 - Lists of choices are equal-width grid cells, never uneven pills. The zone rows are a list of items with a "삭제" each, not choices.
 - Revised 2026-11-16 from painted strokes to one closed outline drawn in a pencil mode, on the user's word.
+
+### Decisions (2026-11-16)
+
+- The projection is the pair ticket 22 already added, `atPoint` and `inView` in `src/map/projection.ts`, which work from `onCameraIdle`'s camera and the view's size. The new unit test checks them at zooms 15 to 18.
+- The zone screen opens on the User at zoom 17 when they are on campus, as 장소 선택 does, and on the whole campus otherwise, so that a building can be drawn round without zooming in first.
+- The map stands between the app bar and a panel under it, not under a sheet laid over it, so it needs no inset and the map's credit stays in view. The pencil floats at the map's top right as a switch named "그리기".
+- The zones are hidden from a touch that starts on the map until the camera settles. A touch that moves nothing brings no report of the camera, so they come back 1 s after the last finger lifts.
+- Douglas–Peucker splits first the span whose farthest point lies farthest off it, until 200 points are kept, instead of a tolerance that grows. A point 6 pt or less from the last one kept is dropped.
+- A finger that barely moves leaves the unsaved outline as it was. While a finger draws the next loop the unsaved one is hidden, and it is replaced when the finger lifts.
+- An outline that fits in a 17 m square shows "조금 더 크게 둘러 주세요" as soon as the finger lifts, and 저장 stays off until another loop is drawn. The main server's refusals do the same with their lines. 409 `PRIVATE_ZONES_FULL` shows "5곳까지 그릴 수 있어요", and any other failure the toast "저장하지 못했어요".
+- 저장 and 취소 both turn the pencil off, and 취소 stays on the screen. While an outline is unsaved the panel shows its line and 취소 and 저장 in place of the rows.
+- 삭제 asks nothing, as 관심사's 지우기 does. A failure shows "지우지 못했어요", and a zone already deleted elsewhere counts as deleted. With no zone the list says "아직 그린 곳이 없어요".
+- The own card's line is on 내 정보's 위치 공유 card, where the off-campus line is. The main map's card "지금 친구에게 보이는 나" shows no off-campus line either, so it gains none.
+- `privateZone` in the upload's reply is optional, and a reply without it reads as false.
+- The geometry the mock and the screen share (the 17 m box, the winding rule, and the 10 m edge) is in `src/api/private-zone-outline.ts`, mirroring the main server's. The mock's Campus Boundary is the on-campus rectangle, and it names a zone after its own Places within 150 m.
