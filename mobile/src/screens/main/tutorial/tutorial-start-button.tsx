@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -9,7 +10,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import { font, Icon, radius, shadow, size, tutorialTone } from '@/design-system';
 import { TUTORIAL_START } from '../layout';
 
-// "새내기 튜토리얼 시작하기" at the bottom left, above "오늘의 발자국" (MainTutorialStart). It opens the pager. Whether
+// "새내기 튜토리얼 시작하기" at the bottom left, above the row of buttons (MainTutorialStart). It opens the pager. Whether
 // it shows is the main screen's (`showsStartButton`, and no card or chat open).
 export function TutorialStartButton({ onPress }: { onPress: () => void }): ReactElement {
   return (

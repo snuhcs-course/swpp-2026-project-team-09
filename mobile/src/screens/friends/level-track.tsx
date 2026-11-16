@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -23,20 +25,28 @@ interface LevelTrackProps {
   // The level shown chosen, or none.
   level: FriendLevel | null;
   onChoose: (level: FriendLevel) => void;
+  // While the Master Switch is off: `level` stays checked, the track dimmed, and no press.
+  masterOff?: boolean;
 }
 
 // The three levels as cells of one width in a track, whatever the length of their words.
-export function LevelTrack({ label, level, onChoose }: LevelTrackProps): ReactElement {
+export function LevelTrack({ label, level, onChoose, masterOff = false }: LevelTrackProps): ReactElement {
   return (
-    <View accessibilityLabel={label} accessibilityRole="radiogroup" style={styles.track}>
+    <View
+      accessibilityLabel={label}
+      accessibilityRole="radiogroup"
+      accessibilityState={{ disabled: masterOff }}
+      style={[styles.track, masterOff && styles.trackOff]}
+    >
       {LEVELS.map(({ level: each, words }) => {
         const chosen = each === level;
         return (
           <Pressable
             accessibilityLabel={words}
             accessibilityRole="radio"
-            accessibilityState={{ checked: chosen }}
+            accessibilityState={{ checked: chosen, disabled: masterOff }}
             aria-checked={chosen}
+            disabled={masterOff}
             key={each}
             onPress={() => {
               onChoose(each);
@@ -60,6 +70,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: color.surfaceSunken,
   },
+  trackOff: { opacity: 0.5 },
   cell: {
     flex: 1,
     alignItems: 'center',

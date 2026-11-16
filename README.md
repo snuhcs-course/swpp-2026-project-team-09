@@ -93,10 +93,11 @@ P11's walking and shuttle times and P12's changes to the searches and the recrui
   the User's parties, the Places' outlines, the to-do list (퀘스트) of today's classes and parties, a card for whatever
   is pressed, one marker for everything at one place (events, parties, restaurants and shuttle stops) whose card lists
   each kind, and a walking route on request.
-- **Location Sharing**: the Master Switch (친구와 위치 공유) on 내 정보, off until the User turns it on; a switch for
-  each Friend and each active party; the position sent every 5 seconds while the app is open and, on Android, every 30
-  seconds in the background under a notification; Avatars dimmed after 2 minutes without a position and removed after
-  10; nobody shown outside the Campus Boundary, and no history kept.
+- **Location Sharing**: the Master Switch (위치 공유) on 내 정보, off until the User turns it on; a level for
+  each Friend and a switch for each active party, shown off and disabled while the Master Switch is off; the position
+  sent every 5 seconds while the app is open and, on Android, every 30 seconds in the background under a
+  notification; Avatars dimmed after 2 minutes without a position and removed after 10; nobody shown outside the
+  Campus Boundary, and no history kept.
 - **Friends**: Friend Requests by Friend ID, one-time Invite Links sent through any messenger, a sharing switch per
   Friend, and ending a friendship.
 - **Parties (파티)**: a party for a Global Event or a plan of the User's own, with a capacity of 1 to 8 and a Join
@@ -282,8 +283,9 @@ What the demo cannot show, and what is known not to work yet:
 - **The walking route has a quota** of 1,000 routes a day for the team's Kakao app. A route is asked when the User
   asks for one and, while a party room is open, for each sharing member who has moved, at most once a minute each,
   looked at every 15 seconds.
-- **Sample data in a build.** Friends' statuses (such as 공강), who announced a Global Event and "오늘의 발자국" are the
-  app's own sample data even against the servers: no server serves them yet.
+- **Sample data in a build.** Who announced a Global Event is the app's own sample data even against the servers: no
+  server serves it yet. Against the servers a Friend has no status ("공강", "수업 중", "이동 중"): their line shows the
+  Place nearest them ("위치 켜짐" while it is not known), or "위치 꺼짐".
 - **Kept on the phone only.** The party form's 사진 and 태그 and the room's 파티 채팅 are kept on the phone that made
   them: the main server stores none of them yet, so other members do not see them. Timetable versions other than the
   current one belong to one phone, and while a switch runs the server's timetable is empty or partial for a few

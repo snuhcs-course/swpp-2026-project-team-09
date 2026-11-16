@@ -6,6 +6,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -142,6 +143,38 @@ describe('positions over the connection', () => {
 
     expect(server.received('GET /friends')).toHaveLength(before + 1);
     expect(screen.getByRole('button', { name: '서지우' })).toBeVisible();
+  });
+});
+
+// 김민준's row in the friend list.
+function minJunRow(): ReturnType<typeof screen.getByRole> {
+  return screen.getByRole('button', { name: '김민준 지도에서 보기' });
+}
+
+describe("the fetch's Place and walk with positions over the connection", () => {
+  it("keeps the fetch's Place and walk of a Friend whose position arrives without them", async () => {
+    server.on('GET /positions', {
+      status: 200,
+      body: [{ ...LIBRARY_POSITION, nearPlace: '중앙도서관 본관', walkMinutes: 4 }],
+    });
+    const socket = await openLive();
+    expect(minJunRow()).toHaveTextContent(/중앙도서관 본관/u);
+
+    await socketServer(() => {
+      socket.send('position', { ...LIBRARY_POSITION, latitude: 37.4605, measuredAt: '2026-10-06T04:00:05.000Z' });
+    });
+    await pass(100);
+
+    expect(minJunRow()).toHaveTextContent(/중앙도서관 본관/u);
+  });
+
+  it('fetches the positions again every minute while the main screen shows them', async () => {
+    await openLive();
+    const before = server.received('GET /positions').length;
+
+    await pass(60_000);
+
+    expect(server.received('GET /positions')).toHaveLength(before + 1);
   });
 });
 

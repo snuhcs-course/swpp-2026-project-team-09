@@ -2,11 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put } from '@nestjs/common';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
-import { PositionDto, UploadedPositionDto, type UploadPositionDto, uploadPositionSchema } from './dto/position.dto.js';
+import {
+  SeenPositionDto,
+  UploadedPositionDto,
+  type UploadPositionDto,
+  uploadPositionSchema,
+} from './dto/position.dto.js';
 import { type SwitchDto, switchSchema } from './dto/switch.dto.js';
 import { LocationSharingService } from './location-sharing.service.js';
 
@@ -31,7 +37,7 @@ export class LocationSharingController {
   }
 
   @Get('positions')
-  positions(@CurrentUser() user: SignedInUser): Promise<PositionDto[]> {
+  positions(@CurrentUser() user: SignedInUser): Promise<SeenPositionDto[]> {
     return this.locationSharing.visiblePositions(user.id);
   }
 }

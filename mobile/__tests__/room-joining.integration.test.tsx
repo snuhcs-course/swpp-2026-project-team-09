@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
@@ -27,7 +28,7 @@ import {
   SEO_YEON_HOLDER,
   toast,
 } from './support/room';
-import { askMainServer, ME_ID, MIN_JUN, PHONE_NOW } from './support/server';
+import { askMainServer, LOBBY, ME_ID, MIN_JUN, PHONE_NOW } from './support/server';
 
 // Entering, leaving and ending a Quest's 활성화, and the User's switch for it, against the fake main server.
 
@@ -128,6 +129,8 @@ describe('a refused end of 활성화', () => {
 
 describe("the User's switch for the Party", () => {
   it("turns the User's switch for the Party at once, and back after a failure", async () => {
+    // The switch takes a change only while the Master Switch is on.
+    server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
     const mine = answerMyParty(server, myPicnicParty());
     server.on('PUT /parties/mine/sharing', ({ body }) => {
       mine.set({ ...myPicnicParty(), sharing: JSON.stringify(body) === '{"on":true}' });

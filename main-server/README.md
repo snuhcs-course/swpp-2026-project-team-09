@@ -372,8 +372,12 @@ numbers below are provisional until P17 has checked them on a phone.
   before, so it takes no `Idempotency-Key`.
 - `GET /positions` answers what the User may see now of each subject: `{ "userId", "latitude", "longitude",
 "measuredAt", "level": "exact" }` with the position, or `{ "userId", "placeId", "latitude", "longitude",
-"measuredAt", "level": "building" }` with the Place's id and point. The app fetches it when it connects, reconnects
-  and returns to the front.
+"measuredAt", "level": "building" }` with the Place's id and point. Each also has `nearPlace`, the name of the Place
+  nearest the subject, and `walkMinutes`, the walk to that Place from the Place nearest the User's own last position,
+  from the walking table ([ADR 0010](../docs/adr/0010-travel-time-from-a-walking-table-and-logged-shuttle-times.md)):
+  0 when both are the same Place. Either is null when its Place is unknown, and `walkMinutes` also while the User has
+  no position kept. The app fetches it when it connects, reconnects and returns to the front, and every minute while
+  a screen shows the positions.
 
 An upload is refused, and nothing is stored, with these codes. The three numbers are `MAX_POSITION_AGE_MS`,
 `MAX_POSITION_LEAD_MS` and `MAX_ACCURACY_METRES` in `src/location-sharing/location-sharing.service.ts`.
@@ -395,7 +399,8 @@ another phone, a sign-out or a used refresh token, so that the phone's last posi
 
 What is pushed, through the [socket server](../socket-server/README.md#signals):
 
-- Each position kept goes as `position`, in the form `GET /positions` gives, to the Users who may see the subject at
+- Each position kept goes as `position`, in the form `GET /positions` gives without `nearPlace` and `walkMinutes`
+  (the minutes are each viewer's own), to the Users who may see the subject at
   that moment: to a viewer at `exact` each time, and to one at `building` only when the Place differs from the one of
   the position before. Delivery is lossy on purpose: only the newest position matters.
 - `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see something of the

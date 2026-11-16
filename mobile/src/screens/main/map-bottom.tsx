@@ -9,6 +9,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -151,7 +152,7 @@ function EverydayBottom(props: EverydayProps): ReactElement {
   return (
     <>
       {notice === null ? null : <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} />}
-      <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} room={room} />
+      <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} />
       {bottomCard ? null : <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} stack={stack} />}
       {room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
       {firstRun.card === null ? null : (
