@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -41,7 +42,7 @@ const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
 const REPLY = '오늘 학생회관식당 점심은 제육볶음이에요.';
 // The Assistant's answer, with nothing beside its text.
 const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal: null } };
-const FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
+const FAILED = '답을 가져오지 못했어요.\n연결이 끊겼거나 서버가 답하지 않았어요. 쓴 말은 입력칸에 그대로 두었어요.';
 const USED_UP = '오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요';
 
 let server: FakeServer;
@@ -299,6 +300,7 @@ describe("the chat's failures", () => {
     const user = await openChat();
     await say(user, '오늘 점심 뭐 나와?');
     server.on('POST /assistant/messages', ANSWERED);
+    await user.clear(screen.getByLabelText(AI_INPUT));
 
     await say(user, '한식');
 

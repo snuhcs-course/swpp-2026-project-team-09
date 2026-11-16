@@ -19,12 +19,14 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import { IdempotencyModule } from '@nestjs/idempotency';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AdministratorsModule } from './administrators/administrators.module.js';
 import { AssistantModule } from './assistant/assistant.module.js';
 import { AuthModule } from './auth/auth.module.js';
@@ -40,6 +42,8 @@ import { settingsSchema } from './common/settings.js';
 import { SignalsModule } from './common/signals.module.js';
 import { FriendsModule } from './friends/friends.module.js';
 import { GlobalEventsModule } from './global-events/global-events.module.js';
+import { AiKeysModule } from './common/ai-keys.module.js';
+import { GlobalSettingsModule } from './global-settings/global-settings.module.js';
 import { HealthModule } from './health/health.module.js';
 import { InterestsModule } from './interests/interests.module.js';
 import { InviteLinksModule } from './invite-links/invite-links.module.js';
@@ -76,6 +80,10 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     SignalsModule,
     RedisModule,
     CampusBoundaryModule,
+    // Runs the @Cron jobs, such as the global settings' minute check.
+    ScheduleModule.forRoot(),
+    AiKeysModule,
+    GlobalSettingsModule,
     // Makes a handler marked @Idempotent() safe to repeat. Its interceptor must run outside every other global
     // interceptor: one registered by a module imported below runs inside it, but an APP_INTERCEPTOR in the providers
     // of this module would run outside it.

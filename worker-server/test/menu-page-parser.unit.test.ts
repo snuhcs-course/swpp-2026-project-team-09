@@ -3,6 +3,7 @@
  *
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Meal, type MenuLine, type RestaurantMenu } from '../src/menu/dto/menus-collected.dto.js';
@@ -44,6 +45,11 @@ describe("The Co-op's menu page", () => {
         { meal: 'dinner', text: '꽁치무조림(#) : 3,000원', kind: 'dish', name: '꽁치무조림(#)', price: 3000 },
         { meal: 'dinner', text: '※ 운영시간 : 17:00~19:00', kind: 'note', name: null, price: null },
       ],
+      hours: [
+        { meal: 'breakfast', opensAt: '08:00', closesAt: '10:00', line: '※ 운영시간 : 08:00~10:00' },
+        { meal: 'lunch', opensAt: '11:00', closesAt: '14:30', line: '※ 운영시간 : 11:00~14:30' },
+        { meal: 'dinner', opensAt: '17:00', closesAt: '19:00', line: '※ 운영시간 : 17:00~19:00' },
+      ],
     });
   });
 
@@ -59,6 +65,15 @@ describe("The Co-op's menu page", () => {
     expect(mealOn(holidayPage, '학생회관식당', 'lunch')).toEqual([
       { text: '개천절 휴무', kind: 'note', name: null, price: null },
     ]);
+  });
+});
+
+describe('Hours in a cell', () => {
+  it('are none for a meal whose corners have hours of their own', () => {
+    expect(restaurantOn(coopPage, '예술계식당')?.hours).toEqual([
+      { meal: 'dinner', opensAt: '17:00', closesAt: '18:30', line: '※ 운영시간 : 17:00 ~ 18:30' },
+    ]);
+    expect(restaurantOn(coopPage, '301동식당')?.hours).toEqual([]);
   });
 });
 

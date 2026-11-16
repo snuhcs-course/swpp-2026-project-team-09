@@ -1,0 +1,450 @@
+{
+  "f6": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "강도윤", "strong": true },
+        { "text": "은 지금 44-1동에 있어요", "strong": false }
+      ],
+      [{ "text": "14:45까지 수업이에요", "strong": false }]
+    ],
+    "basis": ["강도윤은 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f6",
+          "name": "강도윤",
+          "me": false,
+          "at": { "latitude": 37.45532, "longitude": 126.95206 },
+          "source": "exact",
+          "tag": "강도윤 · 44-1동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f6" }],
+    "card": {
+      "title": "강도윤",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "수업 중 · 14:45까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "44-1동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 10분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f1": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "김민준", "strong": true },
+        { "text": "은 지금 62동에 있어요", "strong": false }
+      ]
+    ],
+    "basis": ["김민준은 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f1",
+          "name": "김민준",
+          "me": false,
+          "at": { "latitude": 37.45952, "longitude": 126.95209 },
+          "source": "exact",
+          "tag": "김민준 · 62동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f1" }],
+    "card": {
+      "title": "김민준",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "공강 · 15:00까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "62동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 17분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f3": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "박지호", "strong": true },
+        { "text": "는 지금 109동에 있어요", "strong": false }
+      ]
+    ],
+    "basis": ["박지호는 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f3",
+          "name": "박지호",
+          "me": false,
+          "at": { "latitude": 37.46108, "longitude": 126.9527 },
+          "source": "exact",
+          "tag": "박지호 · 109동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f3" }],
+    "card": {
+      "title": "박지호",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "공강 · 14:30까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "109동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 19분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f11": {
+    "kind": "friend",
+    "chips": [],
+    "lines": [
+      [
+        { "text": "서지우는 ", "strong": false },
+        { "text": "13:45까지 16-1동 수업", "strong": true },
+        { "text": "이에요", "strong": false }
+      ],
+      [{ "text": "지금 위치는 보여 주지 않아요", "strong": false }]
+    ],
+    "basis": ["서지우는 내게 시간표만 보여요", "서지우에게 묻거나 알리지 않아요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f11",
+          "name": "서지우",
+          "me": false,
+          "at": { "latitude": 37.46271, "longitude": 126.951 },
+          "source": "timetable",
+          "tag": "서지우 · 수업 중 13:45까지"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f11" }],
+    "card": {
+      "title": "서지우",
+      "subtitle": "시간표만 보여요",
+      "facts": [
+        { "icon": "clock", "text": "시간표로는 13:45까지 16-1동 수업이에요", "strong": true, "userId": null },
+        { "icon": "calendar", "text": "다음 수업 15:30 · 16-1동", "strong": false, "userId": null },
+        { "icon": "lock", "text": "지금 위치는 보여 주지 않아요", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f12": {
+    "kind": "friend",
+    "chips": [],
+    "lines": [
+      [
+        { "text": "신예린", "strong": true },
+        { "text": " · 오늘 수업 없음", "strong": false }
+      ]
+    ],
+    "basis": ["신예린은 내게 시간표만 보여요", "신예린에게 묻거나 알리지 않아요"],
+    "scene": { "people": [], "places": [], "routes": [], "flags": [] },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f12" }],
+    "card": {
+      "title": "신예린",
+      "subtitle": "시간표만 보여요",
+      "facts": [
+        { "icon": "clock", "text": "오늘 수업 없음", "strong": true, "userId": null },
+        { "icon": "lock", "text": "지금 위치는 보여 주지 않아요", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f8": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "윤태오", "strong": true },
+        { "text": "는 지금 38동에 있어요", "strong": false }
+      ],
+      [{ "text": "15:00까지 수업이에요", "strong": false }]
+    ],
+    "basis": ["윤태오는 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f8",
+          "name": "윤태오",
+          "me": false,
+          "at": { "latitude": 37.45478, "longitude": 126.95062 },
+          "source": "exact",
+          "tag": "윤태오 · 38동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f8" }],
+    "card": {
+      "title": "윤태오",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "수업 중 · 15:00까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "38동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 12분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f2": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "이서연", "strong": true },
+        { "text": "은 지금 63동에 있어요", "strong": false }
+      ]
+    ],
+    "basis": ["이서연은 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f2",
+          "name": "이서연",
+          "me": false,
+          "at": { "latitude": 37.45942, "longitude": 126.95038 },
+          "source": "exact",
+          "tag": "이서연 · 63동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f2" }],
+    "card": {
+      "title": "이서연",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "공강 · 14:00까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "63동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 17분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f10": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "임채원", "strong": true },
+        { "text": "은 지금 200동 앞에 있어요", "strong": false }
+      ]
+    ],
+    "basis": ["임채원은 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f10",
+          "name": "임채원",
+          "me": false,
+          "at": { "latitude": 37.45799, "longitude": 126.94868 },
+          "source": "exact",
+          "tag": "임채원 · 200동 앞"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f10" }],
+    "card": {
+      "title": "임채원",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "공강 · 14:00까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "200동 앞", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 16분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f5": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "정하은", "strong": true },
+        { "text": "은 지금 301동에 있어요", "strong": false }
+      ],
+      [{ "text": "13:50까지 수업이에요", "strong": false }]
+    ],
+    "basis": ["정하은은 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f5",
+          "name": "정하은",
+          "me": false,
+          "at": { "latitude": 37.45026, "longitude": 126.95234 },
+          "source": "exact",
+          "tag": "정하은 · 301동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f5" }],
+    "card": {
+      "title": "정하은",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "수업 중 · 13:50까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "301동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 3분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f7": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "조수아", "strong": true },
+        { "text": "는 지금 16-1동에 있어요", "strong": false }
+      ],
+      [{ "text": "14:15까지 수업이에요", "strong": false }]
+    ],
+    "basis": ["조수아는 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f7",
+          "name": "조수아",
+          "me": false,
+          "at": { "latitude": 37.46271, "longitude": 126.951 },
+          "source": "exact",
+          "tag": "조수아 · 16-1동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f7" }],
+    "card": {
+      "title": "조수아",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "수업 중 · 14:15까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "16-1동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 22분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f4": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "최유나", "strong": true },
+        { "text": "는 지금 100동에 있어요", "strong": false }
+      ]
+    ],
+    "basis": ["최유나는 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f4",
+          "name": "최유나",
+          "me": false,
+          "at": { "latitude": 37.45848, "longitude": 126.95523 },
+          "source": "exact",
+          "tag": "최유나 · 100동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f4" }],
+    "card": {
+      "title": "최유나",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "공강 · 15:30까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "100동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 18분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  },
+  "f9": {
+    "kind": "friend",
+    "chips": [{ "kind": "origin", "text": "302동에서", "userId": null }],
+    "lines": [
+      [
+        { "text": "한지민", "strong": true },
+        { "text": "은 지금 4동에 있어요", "strong": false }
+      ],
+      [{ "text": "13:50까지 수업이에요", "strong": false }]
+    ],
+    "basis": ["한지민은 내게 정확한 위치를 보여 줘요"],
+    "scene": {
+      "people": [
+        {
+          "userId": "f9",
+          "name": "한지민",
+          "me": false,
+          "at": { "latitude": 37.46097, "longitude": 126.95338 },
+          "source": "exact",
+          "tag": "한지민 · 4동"
+        }
+      ],
+      "places": [],
+      "routes": [],
+      "flags": []
+    },
+    "band": null,
+    "actions": [{ "kind": "meet", "userId": "f9" }],
+    "card": {
+      "title": "한지민",
+      "subtitle": "정확한 위치까지 보여요",
+      "facts": [
+        { "icon": "clock", "text": "수업 중 · 13:50까지", "strong": true, "userId": null },
+        { "icon": "pin", "text": "4동", "strong": false, "userId": null },
+        { "icon": "route", "text": "나에게서 걸어서 19분", "strong": false, "userId": null }
+      ],
+      "note": null
+    }
+  }
+}

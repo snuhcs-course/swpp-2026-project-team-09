@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -153,7 +154,7 @@ describe("the map's credit while the frame is shown", () => {
 
 // Partitions: a send with the switch on while the keyboard is up.
 describe('a send from the bar with the switch on', () => {
-  it('puts the keyboard down, so that the card shows 보는 중이에요 and then the reply', async () => {
+  it('puts the keyboard down, so that the card shows 보는 중 and then the reply', async () => {
     await start();
     server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
     const dismiss = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
@@ -167,7 +168,7 @@ describe('a send from the bar with the switch on', () => {
 
     expect(dismiss).toHaveBeenCalled();
     await hideKeyboard();
-    expect(within(screen.getByTestId('answer-card')).getByText('보는 중이에요')).toBeVisible();
+    expect(within(screen.getByTestId('answer-card')).getByText('보는 중')).toBeVisible();
     await pass(1000);
     expect(within(screen.getByTestId('answer-card')).getByText(REPLY)).toBeVisible();
   });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -10,7 +11,9 @@ import { FRIEND_RULES } from '../src/assistant/lookup/friend-tools.js';
 import { signInUser } from './friends.js';
 import { expectStatus, keptButHidden, keptPositionIn, shareAt, uploadPosition } from './location-sharing.js';
 import { MealPlanStage, type Named, resolve } from './meal-plan.js';
+import { addZone } from './private-zones.js';
 import { type Step } from './scripted-model.js';
+import { squareRound } from './zone-shapes.js';
 
 // Where a Friend is, drawn on the map as a Lookup, at the Assistant's endpoint with the scripted model and the seed's
 // Places: 민수, with a Class in 302동 from 11:00 to 12:15 on a Tuesday, seen at his exact location and at the Timetable
@@ -163,6 +166,22 @@ describe('민수 at the building he is in (board q6)', () => {
       ],
     ]);
     expect(lookup.basis).toEqual(['민수는 내게 지금 있는 건물까지 보여 줘요']);
+  });
+});
+
+describe('민수 inside his Private Zone', () => {
+  it('is found at the Timetable only, though he lets the asker see his exact location', async () => {
+    const minsu = await minsuAt('2082-02-17', '14:00');
+    await shareAt(stage.app, stage.asker, minsu, 'exact');
+    const { latitude, longitude } = await stage.numbered('63');
+    await expectStatus(addZone(stage.app, minsu, { outline: squareRound({ latitude, longitude }, 100) }), 201);
+    const uploaded = await expectStatus(uploadPosition(stage.app, minsu, { latitude, longitude }), 200);
+    expect(uploaded.body).toEqual({ offCampus: false, privateZone: true });
+
+    const response = await stage.send([resolve('민수'), findFriend(minsu.id), { text: '…' }]);
+
+    expect(stage.model.toolResults()[1]).toMatchObject({ result: 'found', shows: 'Timetable only' });
+    expect(lookupIn(response.body).scene.people).toEqual([]);
   });
 });
 

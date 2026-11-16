@@ -5,14 +5,17 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Res } from '@nestjs/common';
 import { type Response } from 'express';
+import { z } from 'zod';
+import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { CollectedPostsService } from './collected-posts.service.js';
 import { type EventsCollectedMessage, eventsCollectedSchema } from './dto/events-collected.dto.js';
-import { PublishedGlobalEventDto } from './dto/global-event.dto.js';
+import { ListedPublishedGlobalEventDto } from './dto/global-event.dto.js';
 import {
   type StoredEventPostsDto,
   type StoredEventPostsQuestion,
@@ -30,8 +33,21 @@ export class GlobalEventsController {
   ) {}
 
   @Get()
-  listPublished(): Promise<PublishedGlobalEventDto[]> {
-    return this.globalEvents.listPublished();
+  listPublished(@CurrentUser() user: SignedInUser): Promise<ListedPublishedGlobalEventDto[]> {
+    return this.globalEvents.listPublishedFor(user.id);
+  }
+
+  // A repeat changes nothing, so it takes no Idempotency-Key.
+  @Put(':id/favorite')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  star(@CurrentUser() user: SignedInUser, @Param('id', { schema: z.uuid() }) id: string): Promise<void> {
+    return this.globalEvents.setFavorite(user.id, id, true);
+  }
+
+  @Delete(':id/favorite')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  unstar(@CurrentUser() user: SignedInUser, @Param('id', { schema: z.uuid() }) id: string): Promise<void> {
+    return this.globalEvents.setFavorite(user.id, id, false);
   }
 
   @Post('collected')

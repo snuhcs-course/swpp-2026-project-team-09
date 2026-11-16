@@ -17,17 +17,30 @@ const NO_USAGE: Result['usage'] = {
 // Topics for a text that no test names, so that what other files stored is read once and left.
 const OTHER_TOPICS = ['기타'];
 
-function textOf({ prompt }: CallOptions): string {
+// The topics, 'fail' for a failed call, or the topics given for the topics in use the call lists.
+type Answer = string[] | 'fail' | ((inUse: readonly string[]) => string[]);
+
+function messageOf({ prompt }: CallOptions): string {
   const message = prompt.findLast(({ role }) => role === 'user');
   const content = message?.role === 'user' ? message.content : [];
-  const whole = content.map((part) => (part.type === 'text' ? part.text : '')).join('');
+  return content.map((part) => (part.type === 'text' ? part.text : '')).join('');
+}
+
+function textOf(call: CallOptions): string {
+  const whole = messageOf(call);
   return whole.slice(whole.indexOf('Text:\n') + 'Text:\n'.length);
 }
 
-// Stands for the model of the topics call: it answers the topics given for the longest text the call's text starts
-// with, 'fail' failing the call, and keeps each text it was asked about.
+function inUseOf(call: CallOptions): string[] {
+  const whole = messageOf(call);
+  const listed = whole.slice('Topics in use: '.length, whole.indexOf('\nText:\n'));
+  return listed === 'none' ? [] : listed.split(', ');
+}
+
+// Stands for the model of the topics call: it answers what is given for the longest text the call's text starts with,
+// and keeps each text it was asked about.
 export class TopicsModel {
-  private readonly answers = new Map<string, string[] | 'fail'>();
+  private readonly answers = new Map<string, Answer>();
 
   readonly model = new MockLanguageModelV4({
     provider: 'topics',
@@ -37,8 +50,9 @@ export class TopicsModel {
       if (answer === 'fail') {
         return Promise.reject(new Error('The provider failed'));
       }
+      const topics = typeof answer === 'function' ? answer(inUseOf(options)) : answer;
       return Promise.resolve({
-        content: [{ type: 'text', text: JSON.stringify({ topics: answer }) }],
+        content: [{ type: 'text', text: JSON.stringify({ topics }) }],
         finishReason: { unified: 'stop', raw: undefined },
         usage: NO_USAGE,
         warnings: [],
@@ -46,7 +60,7 @@ export class TopicsModel {
     },
   });
 
-  answer(text: string, topics: string[] | 'fail'): void {
+  answer(text: string, topics: Answer): void {
     this.answers.set(text, topics);
   }
 
@@ -55,7 +69,7 @@ export class TopicsModel {
     return this.model.doGenerateCalls.filter((call) => textOf(call).startsWith(start)).length;
   }
 
-  private answerFor(text: string): string[] | 'fail' {
+  private answerFor(text: string): Answer {
     const key = [...this.answers.keys()].toSorted((a, b) => b.length - a.length).find((each) => text.startsWith(each));
     return key === undefined ? OTHER_TOPICS : (this.answers.get(key) ?? OTHER_TOPICS);
   }

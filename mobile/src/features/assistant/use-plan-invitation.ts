@@ -2,18 +2,21 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AnswerReply } from '@/api/assistant-types';
+import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { isRefusal } from '@/api/errors';
 import { newIdempotencyKey } from '@/api/idempotency-key';
-import type { PlanQuest } from '@/api/plan-quest-types';
+import type { MakePlanQuest, PlanQuest } from '@/api/plan-quest-types';
+import type { LocationMissing } from '@/api/refusal-types';
 import { questsQuery } from '@/api/queries';
 import type { LatLng, Quest } from '@/api/types';
 import { onInvitationAnswer } from '@/live/invitation-answers';
+import { useAskForPush } from '@/push/push-ask-host';
 import { friendStandings, type HeardAnswer, NO_STANDINGS, type ReadMembers, type Standing } from './invited-friends';
 import { useKeepMadeQuest } from './made-quest-ids';
 import type { ShownAnswer } from './use-shown-answer';
@@ -28,10 +31,19 @@ export interface PlanInvitation {
   invite: () => void;
 }
 
-// Where the User is, which the request sends, and how a refusal or a Quest made out of sight is told.
+// Where the User is or why that is not known, which the request sends, and how a refusal or a Quest made out of sight
+// is told.
 export interface Inviting {
   location: LatLng | null;
+  locationMissing?: LocationMissing;
   say: (message: string) => void;
+}
+
+// The answer's conditions, the Plan on screen, and where the User is or why that is not known, the reason left out
+// when it is, since a main server before P02-13 refuses the key.
+function makingOf(answer: AnswerReply, plan: Plan, { location, locationMissing = null }: Inviting): MakePlanQuest {
+  const why = locationMissing === null ? {} : { locationMissing };
+  return { input: answer.input, planId: plan.id, startAt: plan.startAt, location, ...why };
 }
 
 const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
@@ -104,7 +116,8 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
 
 // Sends the Plan on screen to be made into a Quest, unless a request of this hook is on its way or the Quest is made.
 // A Quest that comes while its answer and Plan are still on screen is held; otherwise it is only told, for it is among
-// the User's Quests. Either way the phone keeps its id. A refusal counts only while its answer and Plan are on screen.
+// the User's Quests. Either way the phone keeps its id and asks about push (board t17). A refusal counts only while its
+// answer and Plan are on screen.
 function useInvite(
   current: InvitationState,
   shown: OnScreen,
@@ -115,6 +128,7 @@ function useInvite(
   const flight = useRef(false);
   const [sending, setSending] = useState(false);
   const keepMade = useKeepMadeQuest();
+  const askForPush = useAskForPush();
   useEffect(() => {
     live.current = { current, shown, inviting };
   });
@@ -134,10 +148,11 @@ function useInvite(
       const { shown: after } = live.current;
       return after.answer === answer && after.plan?.id === plan.id;
     };
-    const making = { input: answer.input, planId: plan.id, startAt: plan.startAt, location: how.location };
+    const making = makingOf(answer, plan, how);
     apiClient.makePlanQuest(making, key).then(
       (made) => {
         keepMade(made.quest.id);
+        askForPush();
         if (settle()) {
           setStored((last) => (last.answer === answer && last.planId === plan.id ? { ...last, made } : last));
         } else {

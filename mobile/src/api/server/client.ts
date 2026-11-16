@@ -13,6 +13,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -52,6 +53,7 @@ import { interestClient } from './interest-client';
 import { lateClient } from './late-client';
 import { partyClient } from './party-client';
 import { planQuestClient } from './plan-quest-client';
+import { privateZoneClient } from './private-zone-client';
 import { roomClient } from './room-client';
 import { TUTORIAL_SERVED, tutorialClient } from './tutorial-client';
 
@@ -69,6 +71,7 @@ export const serverClient: ApiClient = {
   ...planQuestClient,
   ...invitationCardClient,
   ...interestClient,
+  ...privateZoneClient,
   ...lateClient,
   listFriendStatuses: () => Promise.resolve([]),
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).

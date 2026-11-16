@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -32,6 +33,7 @@ import {
   text,
 } from '@/design-system';
 import { type FriendView, PRESENCE_LABEL, withAge } from '@/features/friends/adapter';
+import { profileLabel } from '@/features/friends/profile';
 import { useFriends } from '@/features/friends/use-friends';
 
 type Filter = Presence | 'all';
@@ -41,6 +43,8 @@ const PRESENCES: readonly Presence[] = ['free', 'class', 'moving', 'on', 'off'];
 interface FriendPanelProps {
   open: boolean;
   onClose: () => void;
+  // A press on a Friend's row; without it, a row takes no press.
+  onShow?: (friend: FriendView) => void;
 }
 
 // A search by name and department, where spaces do not count, as in the frame.
@@ -49,10 +53,11 @@ function found(friend: FriendView, query: string): boolean {
   return `${friend.name}${friend.department}`.replaceAll(/\s/gu, '').includes(wanted);
 }
 
-function FriendRow({ friend, onMeet }: { friend: FriendView; onMeet: (friend: FriendView) => void }): ReactElement {
+function FriendRow({ friend, onMeet, onShow }: { friend: FriendView } & Omit<GroupsProps, 'friends'>): ReactElement {
   return (
     <ListRow
       aside={friend.department}
+      label={onShow === undefined ? undefined : profileLabel(friend.name)}
       leading={
         <Avatar
           name={friend.name}
@@ -61,6 +66,13 @@ function FriendRow({ friend, onMeet }: { friend: FriendView; onMeet: (friend: Fr
         />
       }
       lines={[withAge(friend.detail === '' ? friend.line : friend.detail, friend.minutesOld)]}
+      onPress={
+        onShow === undefined
+          ? undefined
+          : () => {
+              onShow(friend);
+            }
+      }
       title={friend.name}
       trailing={
         <Pressable
@@ -81,9 +93,10 @@ function FriendRow({ friend, onMeet }: { friend: FriendView; onMeet: (friend: Fr
 interface GroupsProps {
   friends: readonly FriendView[];
   onMeet: (friend: FriendView) => void;
+  onShow: FriendPanelProps['onShow'];
 }
 
-function Groups({ friends, onMeet }: GroupsProps): ReactElement {
+function Groups({ friends, onMeet, onShow }: GroupsProps): ReactElement {
   if (friends.length === 0) {
     return <EmptyState words="결과 없음" />;
   }
@@ -95,7 +108,7 @@ function Groups({ friends, onMeet }: GroupsProps): ReactElement {
           <View key={presence}>
             <SectionHeader>{`${PRESENCE_LABEL[presence]} · ${group.length}`}</SectionHeader>
             {group.map((friend) => (
-              <FriendRow friend={friend} key={friend.id} onMeet={onMeet} />
+              <FriendRow friend={friend} key={friend.id} onMeet={onMeet} onShow={onShow} />
             ))}
           </View>
         );
@@ -132,8 +145,8 @@ function Footer({ seen, onLeave }: { seen: number; onLeave: () => void }): React
 
 // The friend panel, the `MainFriends` frame: every Friend by what they are doing, with a search and chips, how many
 // the User sees now, the way to the 위치 공유 card of 내 정보 and to 친구 추가. A Friend's calendar button closes the
-// panel and opens 파티 만들기 as 비공개 with that Friend invited.
-export function FriendPanel({ open, onClose }: FriendPanelProps): ReactElement {
+// panel and opens 파티 만들기 as 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
+export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactElement {
   const { data: friends, isPending, refetch } = useFriends();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -171,7 +184,7 @@ export function FriendPanel({ open, onClose }: FriendPanelProps): ReactElement {
       <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled" style={styles.scroll}>
         {shown === undefined && isPending ? <LoadingState /> : null}
         {shown === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
-        {shown === undefined ? null : <Groups friends={shown} onMeet={onMeet} />}
+        {shown === undefined ? null : <Groups friends={shown} onMeet={onMeet} onShow={onShow} />}
       </ScrollView>
       <Footer onLeave={onClose} seen={friends?.filter(({ visible }) => visible).length ?? 0} />
     </SidePanel>

@@ -8,6 +8,8 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,8 +17,10 @@ import { forgetMockSwitch } from '@/api/mock/client';
 import { resetMockFriendships } from '@/api/mock/friendships';
 import { resetMockInterests } from '@/api/mock/interests';
 import { resetMockPlanQuests } from '@/api/mock/plan-quest';
+import { resetMockPrivateZones } from '@/api/mock/private-zones';
 import { resetMockTimetable } from '@/api/mock/timetable';
 import { forgetMockMatching } from '@/api/mock/events';
+import { forgetMockFavorites } from '@/api/mock/global-events';
 import { resetMockTutorial } from '@/api/mock/tutorial';
 import { forgetAnswerSwitch } from '@/features/assistant/answer-switch';
 
@@ -32,18 +36,20 @@ const SETTINGS = [
 ] as const;
 
 // A phone that keeps nothing, an app started without development settings, the mock's friendships, classes, watched
-// interests, and made Quests as they start, and the switch of the answer on the map not yet read.
+// interests, made Quests, and Private Zones as they start, and the switch of the answer on the map not yet read.
 export async function startFresh(): Promise<void> {
   resetMockFriendships();
   resetMockTimetable();
   resetMockInterests();
   resetMockPlanQuests();
+  resetMockPrivateZones();
   for (const setting of SETTINGS) {
     Reflect.deleteProperty(process.env, setting);
   }
   await AsyncStorage.clear();
   forgetMockSwitch();
   forgetMockMatching();
+  forgetMockFavorites();
   resetMockTutorial();
   forgetAnswerSwitch();
 }

@@ -1,0 +1,88 @@
+{
+  "input": {
+    "kind": "meal",
+    "date": "2026-11-17",
+    "meal": "lunch",
+    "people": [
+      {
+        "userId": "11ca538e-e4ef-48d9-9a1f-b7160c553bee",
+        "constraints": []
+      },
+      {
+        "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37",
+        "constraints": []
+      },
+      {
+        "userId": "a4c0f6de-2b7e-4c57-9d3a-5e8f1b2c7d90",
+        "constraints": []
+      }
+    ],
+    "window": {
+      "from": null,
+      "until": null,
+      "now": true
+    },
+    "placeId": null
+  },
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    },
+    {
+      "kind": "from",
+      "text": "지금",
+      "userId": null
+    },
+    {
+      "kind": "person",
+      "text": "민수",
+      "userId": "35976b5c-4daf-454f-b10e-c8b09a33ca37"
+    },
+    {
+      "kind": "person",
+      "text": "지은",
+      "userId": "a4c0f6de-2b7e-4c57-9d3a-5e8f1b2c7d90"
+    }
+  ],
+  "plans": [],
+  "dropped": [],
+  "noPlan": {
+    "reason": "no-shared-time",
+    "lines": [
+      [
+        {
+          "text": "지금은 셋이 먹을 때가 없어요",
+          "strong": false
+        }
+      ],
+      [
+        {
+          "text": "지은이 ",
+          "strong": false
+        },
+        {
+          "text": "12:00",
+          "strong": true
+        },
+        {
+          "text": "에 다시 수업이에요",
+          "strong": false
+        }
+      ]
+    ],
+    "relax": [
+      {
+        "kind": "without",
+        "userId": "a4c0f6de-2b7e-4c57-9d3a-5e8f1b2c7d90",
+        "label": "지은 빼고 보기"
+      },
+      {
+        "kind": "from",
+        "time": "13:00",
+        "label": "13:00 이후"
+      }
+    ]
+  }
+}

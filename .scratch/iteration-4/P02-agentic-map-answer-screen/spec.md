@@ -78,7 +78,7 @@ With the switch off, the app is today's: the same chat sheet, the same request, 
 - The frame is shown while the flag is on and the conversation holds something: a message waiting for its reply, or a turn. A turn is the User's last message and everything after it: the Assistant's reply, a failure, and the app's own bubbles.
 - **The pill** holds what the User asked, on one line, cut with an ellipsis, with a speech-bubble icon and a ✕. The ✕ forgets the conversation, a reply still on its way included, and the everyday map is back. Android's back button does the same.
 - **The card** is attached to the bottom edge of the screen. While the frame is shown on the main tab the tab bar is not shown. The card's parts, from the top: the condition chips with "근거" at their right, the answer, the time band, the buttons, and the input. The card takes at most about half of the screen above it, and its content scrolls inside it.
-- While the Assistant works, the card says "보는 중이에요".
+- While the Assistant works, the card says "보는 중" with "그만", which does what the ✕ does, and the input is hidden until the reply comes (ticket 12).
 - A turn is drawn with the chat's own parts, without a bubble around them: the text as Markdown, the cards with their buttons, a Proposal, the map buttons, and "다시 시도" under a failure.
 - A reply that carries a Plan shows the Plan's two lines, which the server wrote, in place of the model's sentence. A reply whose answer has no Plan shows the lines that say why.
 - While the frame is shown, the Friend list, the Quest list, the row of buttons with the footprints, the 편의기능 button, the zoom control, the shuttle's notice, the tutorial's start button, and the card of a pressed thing are not shown, and a press on a marker opens no card.
@@ -163,6 +163,80 @@ Pure functions, so that the screen and the tests share them: a person taken out,
 - **The card** shows whose invitation it is ("유상의 파티 초대"), the destination step's start and title ("12:33 학생회관식당에서 점심"), who is in so far ("유상, 지은과 함께"), the way's lines as the server wrote them, the Quest's steps in order, "수락" as the main button with "거절" beside it, and "초대장에는 내 길만 보여요. 다른 사람의 위치는 파티를 켠 뒤에 보여요." Off campus the app sends no position, so the server cannot tell the way (`unknown`); the card then says the server's own words for a phone off campus, "캠퍼스 밖이라 길은 그리지 못해요."
 - **수락** accepts and **거절** declines, each with the endpoints the "파티" tab uses today, once for each invitation at a time; another invitation's buttons stay free. After either a toast says what happened, and the card closes to the everyday map while that invitation's card is still the one shown. A failure says so and leaves the card.
 - **An invitation that waits no more**: a 404 read, the list of invitations read again without the shown one (the Leader cancelled it, or it was answered on another device), or an address of one that the known list does not hold. The toast says "이미 끝난 초대예요", the card closes or the map stays, and after a 404 the list is read again. A `quests-changed` signal reads the shown card again, since the Leader may have changed the steps.
+
+### The Private Zone (tickets 28 and 29)
+
+The User draws round an area of the campus with a finger, and inside it their position is not shown to anyone. This is the design's only lowering by place besides being off campus (section 7, "What happens by place"; row 9), presented as a security feature.
+
+- **A zone** is one closed outline, a ring of points.
+  - The User draws round an area with one finger. When the finger lifts, the end joins the start by itself and the inside is filled; nothing asks the User to close it.
+  - A loop that crosses itself counts everything it encloses: the nonzero winding rule, which is also SVG's default fill.
+  - A position is inside when the outline encloses it or it lies within 10 m of the outline, the margin the Campus Boundary also allows.
+  - A User keeps up to five zones and cannot edit one; they delete it and draw again.
+- **The pencil.** On the zone screen a pencil turns drawing on and off, as on the gesture board `GestureAsk`.
+  - On: the map is held still and one finger draws.
+  - Off: the map moves and zooms, and what is drawn stays in its place.
+  - Drawing again while an outline is unsaved replaces it.
+- **Where it acts.** On the server, in the position upload, beside the off-campus check. A position inside a zone is not kept, the one stored is cleared, and every viewer gets `position-removed`, as when the User leaves campus. Friends then see the Timetable only, the way they see someone who never turned location on: no mark, no reason, and no push. Saving a zone round the stored position clears it at once.
+- **What is not lowered.** The User's own map and Assistant. The phone sends its own position with each request, and the User's own location is always used exactly (design section 7).
+- **Drawing needs no native change.**
+  - With the pencil on, the zone screen lays an overlay over the map that catches the finger (`react-native-gesture-handler`), and draws the outline and its fill with `react-native-svg`.
+  - It turns screen points into coordinates and back by Web Mercator from the camera the map reports. `onCameraIdle` gives the centre and a zoom measured against the view's width, and rotation and tilt are off.
+  - The drawn outline is projected again whenever the camera settles.
+- **Names.** The server names a zone after the Place nearest its middle: "{Place} 근처".
+- **Where it shows.**
+  - The 위치 공유 screen's row "비공개 구역 · 칠한 곳 안에서는 시간표만 보여요 · N곳" opens the zone screen.
+  - While the phone's last upload was inside a zone, the User's own card says "비공개 구역 안 · 친구에게는 시간표만 보여요". Nothing asks.
+- **Zones are their owner's alone.** No other User and no Assistant tool reads them. An Assistant that reads Friends through the one visibility function finds the User without a position.
+- **Out of scope:**
+  - buildings whose name alone reveals a situation (no list of them exists);
+  - zones shared between Users;
+  - zones by time of day (the level does not change with the time).
+
+#### The contract
+
+```ts
+// GET    /users/me/private-zones        → 200 { zones: PrivateZone[] }, oldest first
+// POST   /users/me/private-zones        → 201 PrivateZone          body: { outline: LatLng[] }
+// DELETE /users/me/private-zones/:id    → 204; 404 when the zone is not the User's
+interface PrivateZone {
+  id: string;
+  label: string;           // "301동 근처"; "그린 구역" when no Place is near
+  outline: LatLng[];       // 3 to 200 points, the ring left open (the last point joins the first); each within 300 m
+                           // of the Campus Boundary, and at least one inside it
+  createdAt: string;
+}
+// POST /positions answers { offCampus: boolean; privateZone: boolean }: privateZone says the position was inside a
+// zone, was not kept, and the User is not shown.
+```
+
+Errors:
+- 400 `PRIVATE_ZONE_INVALID`: the shape or a count;
+- 400 `PRIVATE_ZONE_OFF_CAMPUS`: a point more than 300 m outside the Campus Boundary, or no point inside it;
+- 400 `PRIVATE_ZONE_TOO_SMALL`: the outline fits in a 17 m square (both sides of its bounding box under 17 m, in metres around its middle);
+- 409 `PRIVATE_ZONES_FULL`: five zones already.
+
+The server accepts a ring whose last point repeats the first and drops the repeat.
+
+#### Decisions for review
+
+1. **One closed outline per zone, drawn round the area.** The design's "painted" area and the idea's "슥슥 색칠" become a loop whose inside is filled, as on the gesture board. The end joins the start when the finger lifts; nothing asks.
+2. **A pencil turns drawing on and off.** With it off the map moves as usual, and the outline stays where it was drawn. One outline at a time; drawing again replaces the unsaved one.
+3. **A loop that crosses itself encloses everything inside any of its turns** (nonzero winding), the same rule the screen's fill uses, so what is shown filled is what hides the User.
+4. **The edge leans towards hiding:** within 10 m of the outline counts as inside, the Campus Boundary's margin.
+5. **Too small is refused with one line:**
+   - an outline that fits in a 17 m square (both sides of its bounding box under 17 m) gets "조금 더 크게 둘러 주세요" in the app before sending, and the server refuses it too;
+   - a finger that barely moves draws nothing;
+   - the bounding box, not the enclosed area, decides. An area by the shoelace sum would measure a figure eight of two equal lobes near 0 m² and refuse it, though both lobes are filled and hidden. The box is the same simple test on both sides.
+6. **The limits:** five zones and 3 to 200 points per outline.
+   - The app thins the finger's path to 200 points or fewer before saving.
+   - The outline may run past the Campus Boundary, so that a loop round a building at the campus's edge need not squeeze between its wall and the line. A position off campus is never kept anyway.
+   - Each point must lie within 300 m of the boundary and at least one inside it, which keeps the data on campus. Anything else is refused with "캠퍼스 가까이에서만 그릴 수 있어요".
+   - There is no cap on a zone's size: a zone round the whole campus hides the User as turning location off would, which they may do anyway.
+7. **No editing a zone:** delete it and draw again.
+8. **The User's own card says when they are inside a zone.** It is a line, not a question, so "once set, it asks nothing more" holds.
+9. **The words, as a security feature:** the zone screen's line "칠한 곳 안의 위치는 저장하지 않아요. 친구에게는 시간표만 보여요." The inside is filled, so "칠한 곳" still reads right.
+10. **No cache.** One indexed read of the User's zones per upload, the database first.
 
 ## Testing Decisions
 

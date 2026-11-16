@@ -10,6 +10,8 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +21,7 @@ import {
   FRIEND_REQUESTS_KEY,
   FRIENDS_KEY,
   GLOBAL_EVENTS_KEY,
+  interestMatchesQuery,
   JOIN_REQUESTS_KEY,
   MATCHING_REQUESTS_KEY,
   MY_JOIN_REQUESTS_KEY,
@@ -58,10 +61,11 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   ],
   // Who is in the User's Party changes whom the User sees.
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
-  'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
+  // A new event or party that matches the User's interests comes with a `notice`, and its mark with the matches.
+  'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY, interestMatchesQuery.queryKey],
   'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
   'room-requests-changed': [ROOM_INBOX_KEY, ROOM_REQUEST_KEY],
-  notice: [NOTIFICATIONS_KEY],
+  notice: [NOTIFICATIONS_KEY, interestMatchesQuery.queryKey],
   'invitation-accepted': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   'invitation-declined': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   late: [QUESTS_KEY],
@@ -101,12 +105,17 @@ function refetch(queryClient: QueryClient, keys: readonly QueryKey[]): void {
   }
 }
 
-// A position replaces the User's one before, which the Avatar glides from. The socket's carries no `nearPlace` or
-// `walkMinutes`, so those of the one before stay until the next fetch of the positions (`positionsQuery`).
+// A position replaces the User's one before, which the Avatar glides from. One without a level keeps the level of the
+// one before, which GET /positions gave. The socket's carries no `nearPlace` or `walkMinutes`, so those of the one
+// before stay until the next fetch of the positions (`positionsQuery`).
 export function withPosition(positions: readonly Position[], position: Position): Position[] {
   const before = positions.find(({ userId }) => userId === position.userId);
-  const kept = { nearPlace: before?.nearPlace, walkMinutes: before?.walkMinutes };
-  return [...positions.filter(({ userId }) => userId !== position.userId), { ...kept, ...position }];
+  const level = position.level ?? before?.level;
+  const moved = { nearPlace: before?.nearPlace, walkMinutes: before?.walkMinutes, ...position };
+  return [
+    ...positions.filter(({ userId }) => userId !== position.userId),
+    level === undefined ? moved : { ...moved, level },
+  ];
 }
 
 // A position that arrives for a Friend or a member whom the answers say the User cannot see means that those answers

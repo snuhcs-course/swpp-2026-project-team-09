@@ -4,6 +4,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -18,9 +19,11 @@ export const uploadPositionSchema = z.strictObject({
 
 export type UploadPositionDto = z.infer<typeof uploadPositionSchema>;
 
-// offCampus says that the position was outside the Campus Boundary: it was not kept, and the User is not shared.
+// offCampus says that the position was outside the Campus Boundary, and privateZone that it was inside one of the
+// User's Private Zones: either way it was not kept, and the User is not shared.
 export interface UploadedPositionDto {
   offCampus: boolean;
+  privateZone: boolean;
 }
 
 // A User's latest position as a viewer sees it, as the fetch answers it and `position` carries it: the position itself

@@ -4,6 +4,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions, for each check of an answer about Users: the documented shape, each checked field left out, null and of
@@ -163,12 +164,21 @@ describe('isPositionKept', () => {
   checks(
     isPositionKept,
     [
-      ['a position kept', { offCampus: false }],
-      ['a position off campus', { offCampus: true }],
+      ['a position kept', { offCampus: false, privateZone: false }],
+      ['a position off campus', { offCampus: true, privateZone: false }],
+      ['a position inside a Private Zone', { offCampus: false, privateZone: true }],
+      ['a position kept, from a main server without Private Zones', { offCampus: false }],
     ],
-    wrongFields({ offCampus: false }, { offCampus: ['false'] }),
+    [
+      ...wrongFields({ offCampus: false, privateZone: false }, { offCampus: ['false'] }),
+      ['privateZone null', { offCampus: false, privateZone: null }],
+      ['privateZone "true"', { offCampus: false, privateZone: 'true' }],
+    ],
   );
 });
+
+// A Friend with the two fields package C adds, which may be left out but are text where they are sent.
+const FRIEND_PROFILED = { ...FRIEND, friendId: 'KM4J8QZA', friendsSince: '2026-10-03T14:05:00+09:00' };
 
 describe('isFriends', () => {
   checks(
@@ -176,9 +186,16 @@ describe('isFriends', () => {
     [
       ['the Friends', [FRIEND]],
       ['no Friends', []],
+      ['a Friend with the Friend ID and the date', [FRIEND_PROFILED]],
     ],
     [
       ['one Friend outside a list', FRIEND],
+      ...inList(FRIEND, [
+        ['friendId null', { ...FRIEND_PROFILED, friendId: null }],
+        ['friendId 1', { ...FRIEND_PROFILED, friendId: 1 }],
+        ['friendsSince null', { ...FRIEND_PROFILED, friendsSince: null }],
+        ['friendsSince 1', { ...FRIEND_PROFILED, friendsSince: 1 }],
+      ]),
       ...inList(
         FRIEND,
         wrongFields(FRIEND, {

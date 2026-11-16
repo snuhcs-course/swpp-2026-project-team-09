@@ -12,7 +12,7 @@ import { ANSWER_SYMBOL_BOX, type AnswerLabel, color, MapAnswerMark } from '@/des
 const PLAIN: AnswerLabel = { side: 'right', tone: 'person', title: '민수 · 18분', line: null, number: null };
 
 // Partitions: no symbol, the User, and a Friend's face with a solid or a dashed ring. Expected values: the brief's
-// look of a mark and the wireframes.
+// look of a mark and the wireframes, and ticket 18's letters in a face, the everyday Avatar's.
 describe("MapAnswerMark: a person's symbol", () => {
   it('keeps a symbol box of 36 by 36 when no symbol is drawn', async () => {
     await render(<MapAnswerMark label={PLAIN} symbol={null} testID="mark" />);
@@ -27,10 +27,10 @@ describe("MapAnswerMark: a person's symbol", () => {
     expect(screen.getByLabelText('내 위치')).toBeVisible();
   });
 
-  it("draws a Friend as a round of 36 with the name's first two letters and a solid ring", async () => {
+  it("draws a Friend as a round of 36 with the everyday Avatar's letters and a solid ring", async () => {
     await render(<MapAnswerMark label={null} symbol={{ type: 'face', name: '김민준', dashed: false }} testID="mark" />);
 
-    expect(screen.getByText('김민')).toBeVisible();
+    expect(screen.getByText('민준')).toBeVisible();
     expect(screen.getByTestId('mark:face')).toHaveStyle({
       width: 36,
       height: 36,
@@ -72,6 +72,48 @@ describe("MapAnswerMark: a Friend's badge", () => {
       right: 0,
       backgroundColor: tone,
     });
+  });
+});
+
+// Partitions: a face at the building level, one at the exact level, and one at the exact level with a badge.
+// Expected values: P02 ticket 20 and board a13, a green round of 11 in the live colour with a white ring of 2 at the
+// face's lower right, as the wireframe kit draws it, apart from the badge at its upper right.
+describe("MapAnswerMark: a Friend's green dot", () => {
+  it('draws no dot on a face at the building level', async () => {
+    await render(<MapAnswerMark label={null} symbol={{ type: 'face', name: '민수', dashed: false }} testID="mark" />);
+
+    expect(screen.queryByTestId('mark:exact')).toBeNull();
+  });
+
+  it('draws the dot at the lower right of the symbol box on a face at the exact level', async () => {
+    await render(
+      <MapAnswerMark label={null} symbol={{ type: 'face', name: '지은', dashed: false, exact: true }} testID="mark" />,
+    );
+
+    expect(screen.getByText('지은')).toBeVisible();
+    expect(screen.getByTestId('mark:exact')).toHaveStyle({
+      position: 'absolute',
+      right: 0,
+      bottom: 0,
+      width: 11,
+      height: 11,
+      borderWidth: 2,
+      borderColor: color.surface,
+      backgroundColor: color.live,
+    });
+  });
+
+  it('keeps the badge at the upper right beside the dot', async () => {
+    await render(
+      <MapAnswerMark
+        label={null}
+        symbol={{ type: 'face', name: '지은', dashed: false, exact: true, badge: 'accepted' }}
+        testID="mark"
+      />,
+    );
+
+    expect(screen.getByTestId('mark:badge')).toHaveStyle({ top: 0, right: 0 });
+    expect(screen.getByTestId('mark:exact')).toHaveStyle({ bottom: 0, right: 0 });
   });
 });
 

@@ -7,6 +7,8 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -38,6 +40,7 @@ describe('the friend list', () => {
     await settle();
 
     expect(result.current.data).toHaveLength(12);
+    // P02 ticket 18 added `seen`, `friendId`, and `friendsSince`; the mock invents the last two.
     expect(result.current.data?.find(({ name }) => name === '김민준')).toEqual({
       id: 'f1',
       name: '김민준',
@@ -51,8 +54,11 @@ describe('the friend list', () => {
       minutesOld: null,
       visible: true,
       level: 'exact',
+      seen: 'exact',
       sharing: true,
       askedOff: false,
+      friendId: 'KM4J8QZA',
+      friendsSince: '2026-10-03T14:05:00+09:00',
     });
   });
 
@@ -180,7 +186,7 @@ describe('the cards of the map', () => {
     expect(cards.find(({ id }) => id === 'event:e1')).toEqual({
       id: 'event:e1',
       kind: 'global-event',
-      mark: { type: 'place', place: 'official' },
+      mark: { type: 'place', place: 'official', starred: true },
       // One Quest gathers for it: a pin shows a count from two on.
       marker: { name: '공식 행사 · AI 커리어 설명회', short: 'AI 커리어', count: 0, minutesOld: null },
       subLabel: '공식 행사 · 컴퓨터공학부 공지',
@@ -193,6 +199,7 @@ describe('the cards of the map', () => {
       primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1' },
       secondary: null,
       position: { latitude: 37.45016, longitude: 126.95259 },
+      event: { id: 'e1', favorite: true },
     });
   });
 });

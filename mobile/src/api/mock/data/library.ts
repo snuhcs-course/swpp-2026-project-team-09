@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
@@ -13,6 +14,7 @@ export const READING_ROOM: LibrarySpace = {
   id: '7F-7A-zone2',
   name: '7A 열람실 2 구역',
   floor: 7,
+  kind: 'reading-room',
   placeNumber: '62-1',
   unit: 'seat',
   roomNo: 172,
@@ -29,6 +31,7 @@ export const GROUP_ROOM: LibrarySpace = {
   id: '4F-group-6',
   name: '그룹스터디룸 6인실',
   floor: 4,
+  kind: 'group-study-room',
   placeNumber: '62-1',
   unit: 'room',
   roomNo: 141,
@@ -45,6 +48,7 @@ export const STUDIO: LibrarySpace = {
   id: '6F-studio',
   name: '창의미디어스페이스',
   floor: 6,
+  kind: 'media',
   placeNumber: '62-1',
   unit: 'room',
   roomNo: 162,

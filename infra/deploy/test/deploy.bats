@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-11-15  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -35,6 +36,7 @@ setup() {
   : >"$FAKE_CALLS"
   export FAKE_TIP=$TIP
   export FAKE_CHECK_RUNS="$BATS_TEST_DIRNAME/fixtures/check-runs.json"
+  export FAKE_CHECK_SUITES="$BATS_TEST_DIRNAME/fixtures/check-suites.json"
   export FAKE_HANDSHAKE='0{"sid":"lv_VI97HAXpY6yYWAAAC","upgrades":["websocket"],"pingInterval":25000,"pingTimeout":20000,"maxPayload":1000000}'
   export FAKE_COMPOSE_OUTPUT="$BATS_TEST_TMPDIR/compose-up.txt"
   cat >"$FAKE_COMPOSE_OUTPUT" <<'EOF'
@@ -66,7 +68,8 @@ field() {
 steps() {
   awk '
     /^git fetch /                  { print "fetch" }
-    /^curl .*api\.github\.com/     { print "check-runs" }
+    /^curl .*api\.github\.com.*\/check-suites/ { print "check-suites" }
+    /^curl .*api\.github\.com.*\/check-runs/   { print "check-runs" }
     /^docker .* exec .*pg_dumpall/ { print "dump" }
     /^git reset .*--hard /         { print "reset" }
     /^git clean /                  { print "clean" }
@@ -87,32 +90,47 @@ verdict() {
   printf '%s\n' "$@" | tr ' ' '\t' | summarize_checks | judge_checks
 }
 
-# Makes the faked GitHub answer with these check runs, each given as "name status conclusion".
+# The id of the check suite of a push to this branch, in the faked GitHub.
+suite_id() {
+  case $1 in
+    development) echo 102805331519 ;;
+    2.0/Main) echo 102805331520 ;;
+    2.0/feature) echo 102805331521 ;;
+    gh-readonly-queue/*) echo 102805331522 ;;
+  esac
+}
+
+# Makes the faked GitHub answer with these check runs, each given as "name status conclusion [branch]": the run belongs
+# to the check suite of a push to the branch, development when left out.
 serve_check_runs() {
-  local run name state conclusion id=113863074690 separator=''
+  local run name state conclusion branch id=113863074690 separator=''
   {
     printf '{\n  "total_count": %d,\n  "check_runs": [' "$#"
     for run; do
-      read -r name state conclusion <<<"$run"
+      read -r name state conclusion branch <<<"$run"
       [ "$conclusion" = null ] || conclusion="\"$conclusion\""
       printf '%s\n    {\n      "id": %d,\n      "name": "%s",\n      "status": "%s",\n      "conclusion": %s,\n' \
         "$separator" $((id++)) "$name" "$state" "$conclusion"
+      printf '      "check_suite": { "id": %d },\n' "$(suite_id "${branch:-development}")"
       printf '      "output": { "title": null, "annotations_count": 0 },\n'
       printf '      "app": { "id": 15368, "slug": "github-actions", "name": "GitHub Actions", "events": [] }\n    }'
       separator=,
     done
     printf '\n  ]\n}\n'
   } >"$BATS_TEST_TMPDIR/check-runs.json"
-  export FAKE_CHECK_RUNS="$BATS_TEST_TMPDIR/check-runs.json"
+  for branch in development 2.0/Main 2.0/feature gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d; do
+    jq -n --arg branch "$branch" --argjson id "$(suite_id "$branch")" '{id: $id, head_branch: $branch}'
+  done | jq -s '{total_count: length, check_suites: .}' >"$BATS_TEST_TMPDIR/check-suites.json"
+  export FAKE_CHECK_RUNS="$BATS_TEST_TMPDIR/check-runs.json" FAKE_CHECK_SUITES="$BATS_TEST_TMPDIR/check-suites.json"
 }
 
-@test "with the fakes, a successful run calls fetch, the check-runs request, the dump, reset and clean, compose build, compose up, the two smoke requests, the prunes, in that order, and writes a status file with every field of the spec's \"The status file\" and recreatedServices taken from Compose's output" {
+@test "with the fakes, a successful run calls fetch, the check-suites and check-runs requests, the dump, reset and clean, compose build, compose up, the two smoke requests, the prunes, in that order, and writes a status file with every field of the spec's \"The status file\" and recreatedServices taken from Compose's output" {
   export FAKE_DB_RUNNING=yes
 
   run "$DEPLOY"
 
   [ "$status" -eq 0 ]
-  [ "$(steps | tr '\n' ' ')" = "fetch check-runs dump reset clean compose-build compose-up ready handshake image-prune builder-prune " ]
+  [ "$(steps | tr '\n' ' ')" = "fetch check-suites check-runs dump reset clean compose-build compose-up ready handshake image-prune builder-prune " ]
   [ "$(field 'keys_unsorted | join(" ")')" = "trackedRef checkedAt result candidateCommit attempt deployedCommit deployedAt checks recreatedServices" ]
   [ "$(field '[.trackedRef, .result, .candidateCommit, .attempt, .deployedCommit] | join(" ")')" = "development deployed $TIP 1 $TIP" ]
   [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
@@ -176,6 +194,25 @@ serve_check_runs() {
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}" 'flow-tests completed failure')" = deploy ]
   [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
+}
+
+@test "only the check runs of the merge queue and of pushes to development or main count; a Main's or a working branch's may have skipped work" {
+  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests completed success 2.0/feature' \
+    'flow-tests completed success 2.0/Main'
+  run "$DEPLOY"
+  [ "$status" -eq 0 ]
+  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=failure" ]
+  [ "$(field .result)" = ci-failed ]
+
+  unset INVOCATION_ID
+  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success 2.0/Main'
+  run "$DEPLOY"
+  [ "$(field .result)" = waiting-for-ci ]
+
+  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success 2.0/Main' \
+    'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
+  run "$DEPLOY"
+  [ "$(field .result)" = deployed ]
 }
 
 @test "a required check whose only run was cancelled, went stale or awaits an action gives waiting-for-ci, also beside a failed run; failure, timed_out, startup_failure, neutral and skipped give ci-failed" {

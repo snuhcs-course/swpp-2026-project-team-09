@@ -7,6 +7,7 @@
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
 import { friendAnswer, type FriendAnswer } from '../src/assistant/lookup/friend-lookup.js';
+import { withTimetableChip } from '../src/assistant/lookup/friend-unseen.js';
 import { friendLookup } from '../src/assistant/lookup/friend.service.js';
 import { type FriendView } from '../src/friends/dto/friend-view.dto.js';
 import { classAt, id, placeOf, position, readCampus, TUESDAY } from './way-example.js';
@@ -29,6 +30,8 @@ const minsu = (changes: Partial<FriendView> = {}): FriendView => ({
   id: MINSU,
   name: '민수',
   department: '컴퓨터공학부',
+  friendId: 'MNS23456',
+  friendsSince: '2026-09-01T12:00:00+09:00',
   level: 'timetable',
   position: null,
   placeId: null,
@@ -169,6 +172,34 @@ describe('민수 at the Timetable only, outside his Class and the 15 minutes aft
 
   it('is what a view at the building with no Place shows', () => {
     expect(lookupAt('12:05', minsu({ level: 'building' }))).toEqual(lookupAt('12:05', minsu()));
+  });
+});
+
+// Partitions: during his Class at the Timetable and at the building; outside it. Expected values: board n4.
+describe('민수 beside a refusal of his course and room (board n4)', () => {
+  const ends = [strong('12:15'), plain('에 302동에서 수업이 끝나요')];
+
+  it('is where and when his Class ends, as the Timetable shows it to every Friend', () => {
+    expect(answerAt('11:50', minsu()).unseen).toEqual(ends);
+    expect(answerAt('11:50', minsu({ level: 'building', placeId: id('제2공학관') })).unseen).toEqual(ends);
+  });
+
+  it("is the Lookup's first line outside his Class", () => {
+    expect(answerAt('12:31', minsu()).unseen).toEqual([strong('민수'), plain(' · 오늘 수업 끝')]);
+  });
+
+  it('names the Timetable in the chip of a Friend seen through it only, drawn or not', () => {
+    for (const clock of ['11:50', '12:31']) {
+      expect(withTimetableChip(lookupAt(clock, minsu())).chips).toEqual([
+        { kind: 'person', text: '민수 · 시간표', userId: MINSU },
+      ]);
+    }
+  });
+
+  it('keeps the chip of a Friend seen at the building', () => {
+    const lookup = lookupAt('11:50', minsu({ level: 'building', placeId: id('제2공학관') }));
+
+    expect(withTimetableChip(lookup)).toEqual(lookup);
   });
 });
 

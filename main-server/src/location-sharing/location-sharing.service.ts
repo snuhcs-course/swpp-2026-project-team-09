@@ -4,6 +4,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { PlaceLookup } from '../places/place-lookup.js';
 import { shownMinutes, TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
 import { SeenPositionDto, UploadedPositionDto, UploadPositionDto } from './dto/position.dto.js';
 import { PositionStore, type StoredPosition } from './position-store.js';
+import { PrivateZonesService } from './private-zones.service.js';
 import { type SeenLevel, VisibilityService } from './visibility.service.js';
 
 // Provisional until P17 has checked them on a phone.
@@ -41,6 +43,7 @@ export class LocationSharingService {
     private readonly signals: SignalsService,
     private readonly places: PlaceLookup,
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
+    private readonly privateZones: PrivateZonesService,
   ) {}
 
   // Turning it off clears the User's position.
@@ -53,8 +56,8 @@ export class LocationSharingService {
     });
   }
 
-  // Keeps a position inside the Campus Boundary and pushes it to whoever may see the User now. One outside is not kept,
-  // and clears the one stored.
+  // Keeps a position inside the Campus Boundary and pushes it to whoever may see the User now. One outside, or inside
+  // one of the User's Private Zones, is not kept, and clears the one stored.
   async upload(
     userId: string,
     { latitude, longitude, accuracy, measuredAt }: UploadPositionDto,
@@ -88,13 +91,14 @@ export class LocationSharingService {
     if (accuracy > MAX_ACCURACY_METRES) {
       throw positionRefused('POSITION_TOO_INACCURATE', `The accuracy radius is over ${MAX_ACCURACY_METRES} m.`);
     }
-    if (!this.campusBoundary.contains({ latitude, longitude })) {
+    const offCampus = !this.campusBoundary.contains({ latitude, longitude });
+    if (offCampus || (await this.privateZones.hide(userId, { latitude, longitude }))) {
       await this.clearPosition(userId);
-      return { offCampus: true };
+      return { offCampus, privateZone: !offCampus };
     }
     const placeId = this.places.at({ latitude, longitude })?.place.id ?? null;
     await this.keep(userId, { latitude, longitude, measuredAt: measured.toISOString(), placeId });
-    return { offCampus: false };
+    return { offCampus: false, privateZone: false };
   }
 
   // Each position the viewer sees, with the Place nearest it and the walk to it from the Place nearest the viewer.

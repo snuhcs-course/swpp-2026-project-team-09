@@ -484,7 +484,8 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
 
    The Kakao key is the REST API key of the team's Kakao app, and the OpenRouter key is the Assistant's
    (`main-server/.env.example` says how to make one). The administrators' addresses are those the team members sign in
-   to the admin site with, separated by commas. The last command lists the nine parameters.
+   to the admin site with, separated by commas. The last command lists the nine parameters. The AI's other keys, the
+   `llm-key-<name>` parameters, are added later and only when wanted ([The AI's keys](#the-ais-keys)).
 
 6. **The consoles, by hand.**
    - In the Google Cloud project, add `https://admin.snunow.com` to the admin Google client's authorized JavaScript
@@ -580,11 +581,11 @@ the rules go on publishing. Turn it on only when all of these hold (ticket 09):
 
 - masked posts may still be sent to the model provider, as Jaehyun0320 and TaeHyun79 agreed on 2026-11-01;
 - evaluation A's floors are met, on the commit being released, and recorded;
-- the OpenRouter key's credit limit allows for it, since Judgements spend the Assistant's credit, and its account allows
-  only providers that do not train on prompts.
+- the chosen key's credit or spend limit allows for it, since Judgements spend the Assistant's key, and, on an
+  OpenRouter key, its account allows only providers that do not train on prompts.
 
 Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no
-`OPENROUTER_API_KEY` or `ASSISTANT_MODEL`, so a Release with that mistake does not replace the running pods. To turn it
+key, neither `OPENROUTER_API_KEY` nor one in `LLM_KEYS`, so a Release with that mistake does not replace the running pods. To turn it
 off again at once, use the ConfigMap patch above with `AUTOMATIC_JUDGEMENT`, and also change the file. Drafts stored while
 it was off are not judged when it is turned on.
 
@@ -607,7 +608,7 @@ and also change the file.
 post leaves the server for it, and a session the rules do not attach is published as before. Turn it on only when both
 hold: evaluation B (ticket 09) has shown D1 at its floor of 0 on the commit being released, and the posts may be sent to the
 model provider. A person decides this, by setting the value to `on` in that file, merging it and releasing. With `on`, the
-server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`. It looks only at posts that go through the
+server refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`. It looks only at posts that go through the
 step afterwards. To turn it off at once, use the ConfigMap patch above with this name, and also change the file.
 
 The queue, attaching, publishing from it and detaching work with the setting off too: `/queue` on the admin site. With it
@@ -653,8 +654,10 @@ The next Release brings the committed value back, so also set it in that file an
 The run appears in the repository's **Actions** tab under the Release workflow, named after the tag:
 
 1. It checks the tag's name.
-2. It waits for CI's results on the tagged commit. Every CI job must have passed; CI runs on the tag's push too, so a
-   tagged commit always gets results. While a job is queued or running, the Release waits. A failed job fails the
+2. It waits for CI's results on the tagged commit. Every CI job must have passed, in the runs that always do every
+   job: the tag's own, the merge queue's, and those of pushes to `main` or `development`. A working branch's run may skip
+   work its changes cannot reach, and a Main's the work the merge queue already passed, so neither is read. CI runs on
+   the tag's push too, so a tagged commit always gets results. While a job is queued or running, the Release waits. A failed job fails the
    Release before any AWS step: fix the commit through a pull request and release the new one.
 3. It builds the target's arm64 images and pushes them to ECR, tagged with the commit and with the tag's name with `/`
    as `-`, for example `main-server-26.11.13-1`. An image already built for the commit is tagged, not built again.
@@ -757,6 +760,58 @@ time.
   parameter.
 - **`initial-administrator-emails`** is read only while the database holds no Administrator. Afterwards Administrators
   register each other on the admin site.
+
+### The AI's keys
+
+The Assistant, the Judgement and the same-event choice call their model with one of the AI's keys, chosen by name on the
+admin site's **Settings** page. The key named `default` is `/snunow/production/openrouter-api-key`. Every other key is a
+parameter of its own, `/snunow/production/llm-key-<name>`, where `<name>` has only lowercase letters, digits and dashes,
+such as `llm-key-anthropic` or `llm-key-team-2`. There may be none. With no key chosen, the main server uses
+`default`. Why the key, and with it the provider, is chosen this way is
+[ADR 0013](../../docs/adr/0013-the-ai-calls-claude-through-the-anthropic-api-or-openrouter.md). Every Release reads them all and hands the main server
+one JSON object of name to key, `LLM_KEYS`, in Secret `secrets`. The deploy role reads them through its
+`GetParametersByPath` call on `/snunow/production`, so Terraform does not change, and the running servers have no AWS
+access. A Release fails at its secrets step, before it changes anything, when a parameter's name breaks the pattern or
+its value holds whitespace, a quote or a backslash; it names the parameter and never prints the value. Every server's
+Release job runs that step, so such a parameter blocks the Release of every server, not only the main server's.
+
+**Adding a key, or replacing one's value.** The key's owner puts it in. It must be a key that has never been pasted
+anywhere else, such as a chat. `read -rs` takes it without showing it or keeping it in the shell's history, and the
+guard writes nothing when the value is empty:
+
+```bash
+name=anthropic
+read -rs LLM_KEY
+[ -n "$LLM_KEY" ] && aws ssm put-parameter --region ap-northeast-2 \
+  --name "/snunow/production/llm-key-$name" --type SecureString --value "$LLM_KEY" --overwrite
+unset LLM_KEY
+```
+
+Then push any Release that deploys the main server (`main-server` or `all`), as for any secret. The key then appears
+among the choices on the Settings page.
+
+**Removing a key.** Choose another key on the Settings page first, so that no answer uses the one going, then delete
+its parameter and push a `main-server` or `all` Release:
+
+```bash
+aws ssm delete-parameter --region ap-northeast-2 --name /snunow/production/llm-key-anthropic
+```
+
+**Switching between keys** needs no Release: an Administrator chooses another key on the Settings page, and every
+main-server pod uses it from the next minute. Only adding a key, removing one or replacing a value needs a Release.
+
+**Switching to an Anthropic key, start to end.**
+
+1. Make a key in the Claude Console on an account with a monthly spend limit, and put it as
+   `/snunow/production/llm-key-anthropic` with the commands under "Adding a key" above (`name=anthropic`).
+2. Push a `main-server` or `all` Release of the newest reviewed commit ([Releases](#releases)). The pods' start-up log
+   lists the keys by name and provider, never a value.
+3. On the admin site, open **Settings**, choose `anthropic (Anthropic)` for `llm.key`, and confirm. The row says
+   "applies at HH:MM:00", the next minute, and then "applied".
+4. Ask the Assistant one question in the app, and check that the main server's log line for it says
+   `Model call with key anthropic on Anthropic: answered` ([Looking into a problem](#looking-into-a-problem)).
+
+To go back, choose `default (OpenRouter)` the same way; no Release is needed.
 
 ## Capacity
 
@@ -1059,7 +1114,7 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    aws ssm get-parameters-by-path --region ap-northeast-2 --path /snunow/production --query 'Parameters[].Name'
    ```
 
-   The last command lists the nine parameters in B. A's stay as they are.
+   The last command lists the nine parameters in B, and any `llm-key-<name>` parameters. A's stay as they are.
 
 5. **B's first Release.** With `kubectx snunow-production-b`, [prepare B's database](#preparing-a-new-database),
    leaving out its first command, which would point `snunow-production` at B. Its `--overwrite` puts B's new database

@@ -7,6 +7,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -44,6 +45,8 @@ describe('the mock of Friends', () => {
       visible: true,
       askedOff: false,
       askedPlan: false,
+      friendId: 'KM4J8QZA',
+      friendsSince: '2026-10-03T14:05:00+09:00',
     });
     expect(friends.filter(({ visible }) => !visible).map(({ name }) => name)).toEqual(['서지우', '신예린']);
   });
@@ -68,6 +71,10 @@ async function seenOf(id: string): Promise<string | undefined> {
   return (await answered(mockClient.listFriends())).find((friend) => friend.id === id)?.seen;
 }
 
+async function levelOf(id: string): Promise<string | undefined> {
+  return (await answered(mockClient.listPositions())).find(({ userId }) => userId === id)?.level;
+}
+
 describe('the mock of what the User and a Friend see of each other', () => {
   it("gives the two with their location off the Timetable, and every other Friend the User's end", async () => {
     const friends = await answered(mockClient.listFriends());
@@ -83,6 +90,19 @@ describe('the mock of what the User and a Friend see of each other', () => {
     expect(await seenOf('f1')).toBe('exact');
     await answered(mockClient.setFriendLevel('f11', 'building'));
     expect(await seenOf('f11')).toBe('timetable');
+  });
+});
+
+// Partitions: a Friend seen at the exact level, the same Friend after the User lowers them to the building, and the
+// Party member who is no Friend. Expected values: GET /positions' `level`, the level the two see each other at, and
+// none on a position that is no Friend's (P02 ticket 20, the mock's positions).
+describe("the mock's level on a position", () => {
+  it("writes on a Friend's position the level the two see each other at, as GET /positions does", async () => {
+    expect(await levelOf('f1')).toBe('exact');
+    expect(await levelOf('pm1')).toBeUndefined();
+
+    await answered(mockClient.setFriendLevel('f1', 'building'));
+    expect(await levelOf('f1')).toBe('building');
   });
 });
 
@@ -119,7 +139,7 @@ describe('the mock of Quests and Global Events', () => {
     });
   });
 
-  it('lists the published Global Events and who announced them', async () => {
+  it("lists the published Global Events, the frame's event starred, and who announced them", async () => {
     expect(await answered(mockClient.listGlobalEvents())).toEqual([
       {
         id: 'e1',
@@ -131,6 +151,8 @@ describe('the mock of Quests and Global Events', () => {
         latitude: 37.45016,
         longitude: 126.95259,
         sourceUrl: null,
+        publishedAt: null,
+        favorite: true,
       },
     ]);
     expect(await answered(mockClient.listGlobalEventAnnouncers())).toEqual([

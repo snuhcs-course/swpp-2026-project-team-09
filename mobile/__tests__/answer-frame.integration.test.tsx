@@ -3,6 +3,8 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -39,12 +41,20 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const ASKED = '배고파, 민수랑 같이';
 const REPLY = '오늘 학생회관식당 점심은 제육볶음이에요.';
 const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal: null } };
-const FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
-const WAITING = '보는 중이에요';
+const FAILED = '답을 가져오지 못했어요.';
+const WAITING = '보는 중';
 const CLOSE = '답 닫기';
 const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
-// The request context of this ticket: the User's position, and nothing of an answer on screen yet.
-const CONTEXT = { location: ON_CAMPUS, viewport: null, tapped: null, conditions: null, planId: null };
+// The request context of this ticket: the User's position, no reason it is missing, and nothing of an answer on screen
+// yet.
+const CONTEXT = {
+  location: ON_CAMPUS,
+  locationMissing: null,
+  viewport: null,
+  tapped: null,
+  conditions: null,
+  planId: null,
+};
 
 let server: FakeServer;
 
@@ -110,7 +120,7 @@ describe('the switch off', () => {
 });
 
 describe('the frame', () => {
-  it('shows the pill with the words and the card saying 보는 중이에요, and no chat sheet, until the reply', async () => {
+  it('shows the pill with the words and the card saying 보는 중, and no chat sheet, until the reply', async () => {
     const user = await openFramed();
 
     await send(user, ASKED);
@@ -183,23 +193,29 @@ describe('what gives way to the frame', () => {
 });
 
 describe('the request with the switch on', () => {
-  it("carries the User's position, nulls for the rest, and the capability that says the app draws answers", async () => {
+  it("carries the User's position, nulls for the rest, and the capabilities that say the app draws answers", async () => {
     const user = await openFramed();
 
     await ask(user);
 
     expect(sentBodies()).toEqual([
-      { messages: [{ role: 'user', text: ASKED }], context: CONTEXT, clientCapabilities: ['library', 'answer'] },
+      {
+        messages: [{ role: 'user', text: ASKED }],
+        context: CONTEXT,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
+      },
     ]);
   });
 
-  it('says no position while the User is off campus', async () => {
+  it('says no position while the User is off campus, and that they are off campus (P02-13)', async () => {
     givePhone({ permission: 'granted', position: OFF_CAMPUS });
     const user = await openFramed();
 
     await ask(user);
 
-    expect(sentBodies()).toEqual([expect.objectContaining({ context: { ...CONTEXT, location: null } })]);
+    expect(sentBodies()).toEqual([
+      expect.objectContaining({ context: { ...CONTEXT, location: null, locationMissing: 'off-campus' } }),
+    ]);
   });
 
   it('joins a follow-up to the same conversation, and the pill says the new words', async () => {
@@ -217,7 +233,7 @@ describe('the request with the switch on', () => {
         { role: 'user', text: '한식' },
       ],
       context: CONTEXT,
-      clientCapabilities: ['library', 'answer'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
     });
   });
 });

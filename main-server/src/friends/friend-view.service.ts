@@ -29,16 +29,18 @@ export class FriendViewService {
       this.locations.visiblePositions(viewerId),
     ]);
     const seen = new Map(positions.map((position) => [position.userId, position]));
-    return friends.map(({ id, name, department }): FriendView => {
+    return friends.map(({ id, name, department, friendId, friendsSince }): FriendView => {
       const kept = seen.get(id);
       if (kept === undefined) {
-        return { id, name, department, level: 'timetable', position: null, placeId: null };
+        return { id, name, department, friendId, friendsSince, level: 'timetable', position: null, placeId: null };
       }
       if (kept.level === 'building') {
-        return { id, name, department, level: 'building', position: null, placeId: kept.placeId };
+        const { placeId } = kept;
+        return { id, name, department, friendId, friendsSince, level: 'building', position: null, placeId };
       }
       const position = { latitude: kept.latitude, longitude: kept.longitude, measuredAt: kept.measuredAt };
-      return { id, name, department, level: 'exact', position, placeId: this.places.at(position)?.place.id ?? null };
+      const placeId = this.places.at(position)?.place.id ?? null;
+      return { id, name, department, friendId, friendsSince, level: 'exact', position, placeId };
     });
   }
 }

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -128,10 +129,11 @@ describe('파티 모집글', () => {
     await user.press(screen.getByRole('button', { name: '신청 취소' }));
     await pass(500);
     expect(server.received('POST /quest-join-requests/qr1/withdraw')).toHaveLength(1);
+    expect(toast()).toHaveTextContent('신청을 취소했어요');
     expect(screen.getByRole('button', { name: '참여 신청' })).toBeVisible();
   });
 
-  it('says why a withdrawal was refused', async () => {
+  it('says, as 보낸 신청 does, that the Leader declined when a withdrawal finds no request', async () => {
     setAnswers({ requests: [requestFor(CODING)] });
     server.on('POST /quest-join-requests/qr1/withdraw', refusal(404, 'QUEST_JOIN_REQUEST_NOT_FOUND'));
     const user = await openAt(`/post/${CODING.id}`);
@@ -139,7 +141,7 @@ describe('파티 모집글', () => {
     await user.press(screen.getByRole('button', { name: '신청 취소' }));
     await pass(500);
 
-    expect(toast()).toHaveTextContent('이미 끝난 신청이에요');
+    expect(toast()).toHaveTextContent('파티장이 신청을 받지 않았어요');
   });
 });
 

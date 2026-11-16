@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { GROUP_ROOM, READING_ROOM } from '@/api/mock/data/library';
@@ -11,7 +12,7 @@ import { tappedSlot } from '@/library/cards/made';
 import { roomBookingOf, seatBookingOf } from '@/library/cards/payloads';
 import { freeRooms, freeStretches, nearestStarts, roomCovers } from '@/library/cards/rooms';
 import { chooseSeat, nextFreeSeat, seatBoxes, seatState } from '@/library/cards/seats';
-import { dayWords, nextStart, siteBookTime } from '@/library/cards/times';
+import { dayWords, kioskDeadline, nextStart, siteBookTime } from '@/library/cards/times';
 import type { LibraryBooking, LibraryRoomTimes, LibrarySeat } from '@/library/replies';
 
 // The library cards' pure parts: the site's booking forms, the seat map's scaling, the choice of a seat and a room,
@@ -249,5 +250,12 @@ describe('the times', () => {
     expect(dayWords('2026-11-02', NOW)).toBe('오늘');
     expect(dayWords('2026-11-03', NOW)).toBe('내일');
     expect(dayWords('2026-11-05', NOW)).toBe('11월 5일 (목)');
+  });
+
+  it('gives the latest time to confirm a seat booked now at the kiosk, 30 minutes on, in Korea', () => {
+    expect(kioskDeadline(new Date('2026-11-04T16:00:00+09:00'))).toBe('16:30');
+    expect(kioskDeadline(new Date('2026-11-04T13:50:00+09:00'))).toBe('14:20');
+    expect(kioskDeadline(new Date('2026-11-04T13:50:40+09:00'))).toBe('14:20');
+    expect(kioskDeadline(new Date('2026-11-04T22:45:00+09:00'))).toBe('23:15');
   });
 });

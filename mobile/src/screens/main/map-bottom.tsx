@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -18,6 +19,7 @@ import { Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
 import { space } from '@/design-system';
+import { restoreOf } from '@/features/assistant/restore';
 import { nextMeal } from '@/features/dining/adapter';
 import type { FirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
@@ -27,6 +29,7 @@ import { AiInput } from './ai-input';
 import { AnswerFrame } from './answer/answer-frame';
 import { MadeQuestFrame } from './answer/made-quest-frame';
 import { InvitationFrame } from './answer/received-invitation-card';
+import { RowFourProvider } from './answer/row-four-actions';
 import { BottomControls } from './bottom-controls';
 import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
@@ -73,20 +76,21 @@ function sendWithKeyboardDown(send: (text: string) => void): (text: string) => v
 
 // What the open card, the first run's card, and the shuttle's notice take. A 식당's card sits at the top: the lists
 // give way to it, and what is at the bottom stays. The first run's card is shown only while nothing is selected, and
-// takes the bottom as a card does. The notice, the shuttle's service hours, gives way to either card; what a card at
-// the bottom hides gives way to the notice too, and the 편의기능 button stands above it.
+// takes the bottom as a card does, as the User's own card does. The notice, the shuttle's service hours, gives way to
+// any card; what a card at the bottom hides gives way to the notice too, and the 편의기능 button stands above it.
+// `otherCard`: the first run's card or the User's own is shown.
 export interface Taken {
   topCard: boolean;
   bottomCard: boolean;
   notice: string | null;
 }
 
-export function takenBy(selected: CardView | null, serviceHours: string | null, firstRun = false): Taken {
+export function takenBy(selected: CardView | null, serviceHours: string | null, otherCard = false): Taken {
   const topCard = selected?.kind === 'dining';
   return {
     topCard,
-    bottomCard: (selected !== null && !topCard) || firstRun,
-    notice: selected === null && !firstRun ? serviceHours : null,
+    bottomCard: (selected !== null && !topCard) || otherCard,
+    notice: selected === null && !otherCard ? serviceHours : null,
   };
 }
 
@@ -175,14 +179,18 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const cardShown = invitation.shown || made.shown !== null;
-  // The open list of Friends to add takes the input's place in the answer's card.
-  const inputShown = !(chat.framed && chat.answer.adding);
-  const inputTop = inputShown ? AI_INPUT.bottom + lift + inputHeight : lift;
+  // The open list of Friends to add takes the input's place in the answer's card, and so does 보는 중 with 그만. The
+  // time band moved whole hides the input but keeps its room, so that the card and its lanes stay under the finger.
+  const inputGone = chat.framed && (chat.answer.adding || chat.chat.waiting);
+  const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
+  const inputTop = inputGone ? lift : AI_INPUT.bottom + lift + inputHeight;
   return (
     <>
       {!chat.shown && !chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
       {chat.sheet(inputTop)}
-      <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+      <RowFourProvider control={chat}>
+        <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+      </RowFourProvider>
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
       {made.shown === null ? null : (
         <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
@@ -194,6 +202,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
           onHeight={setInputHeight}
           onOpen={chat.open}
           placeholder={chat.framed ? '이어서 말하기' : undefined}
+          restore={restoreOf(chat.chat.bubbles)}
           onSend={chat.onMap ? sendWithKeyboardDown(chat.chat.send) : chat.chat.send}
           waiting={chat.chat.waiting}
         />

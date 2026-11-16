@@ -30,11 +30,10 @@ Four evaluators used the app in the heuristic evaluation and found that a User l
 
 - **Sent requests (H1, H2).** The 파티 tab gets a "보낸 신청" section beside the invitations received. Each row shows the Quest's post title and opens that post when tapped. Each row has "신청 취소", which asks for confirmation, withdraws, and says "신청을 취소했어요". If the Leader answered at the same moment and the server refuses, the app reads the User's Quests again and says "이미 파티에 들어갔어요" when the User now holds it, or "파티장이 신청을 받지 않았어요" when not.
 - **Told when a 파티 is gone (UAT-2).** Wherever the User is in the signed-in app, if a 파티 they held disappears from their list, a toast says "○○ 파티에서 빠졌어요". It is not shown when the User left or ended it themselves, and it is shown once even if the room is open. It does not tell removal from ending apart.
-- **Events on the map.** The map keeps only three kinds of Global Event pin:
+- **Events on the map.** The map keeps only two kinds of Global Event pin:
   - a **New Event**, published less than 24 hours ago and not yet checked by this User, drawn with an exclamation mark;
-  - a **Favorite Event** (☆), drawn with a star until the event ends;
-  - an event **held today**, drawn as today's plain pin. An event of several days counts only on its first and last day.
-  A User checks a New Event by closing its card on the map (a single pin's card, or its row opened from a grouped pin's list) or by starring it anywhere. Seeing it in the 행사 tab or in chat does not check it. A checked event leaves the map when its card closes, unless it is a Favorite Event or held today. The ☆ toggle sits at the top right of each event card in the 행사 tab and in chat, and left of the close button on a single event's card on the map. Grouped and merged pins show one look, in the order exclamation mark, star, plain. Pins that overlap at the current zoom merge into one, as study pins do.
+  - a **Favorite Event** (☆), drawn with a star until the event ends.
+  A User checks a New Event by closing its card on the map (a single pin's card, or its row opened from a grouped pin's list) or by starring it anywhere. Seeing it in the 행사 tab or in chat does not check it. A checked event leaves the map when its card closes, unless it is a Favorite Event. The ☆ toggle sits at the top right of each event card in the 행사 tab and in chat, and left of the close button on a single event's card on the map. Grouped and merged pins show one look, in the order exclamation mark, star, plain. Pins that overlap at the current zoom merge into one, as study pins do.
 - **Real Friend data.** 오늘의 발자국 leaves the main screen. A visible Friend's line shows where they are (the nearest Place) and how old the position is, no longer "공강". A Friend who is not visible is "위치 꺼짐". "도보 N분" is the walking time between the Places nearest to the User and to the Friend, "근처" when that is the same Place, and nothing when the User's own position is unknown.
 - **AI matching leaves the app.** The "✦ AI 매칭" entry on event cards, the matching screen, the watcher that toasts a match, and the "결과는 알림으로 와요" toast go away. The match server stays.
 
@@ -65,7 +64,7 @@ Told when a 파티 is gone
 14. As an acceptance tester running UAT-2, I want B to be told on any screen, so that criteria 4 and 6 pass once this ships.
 
 Events on the map
-15. As a User, I want the map to show only new, favorite and today's events, so that it is not covered with pins for weeks ahead.
+15. As a User, I want the map to show only new and favorite events, so that it is not covered with pins for weeks ahead.
 16. As a User, I want events published in the last 24 hours marked with an exclamation mark, so that I notice what is new.
 17. As a User, I want a new event's mark to go once I have checked it, so that the map does not stay noisy.
 18. As a User, I want a checked event to leave the map only when I close its card, so that the pin does not vanish while I read.
@@ -76,67 +75,65 @@ Events on the map
 23. As a User, I want a group with a new event to carry the exclamation mark, so that new events at a busy Place are not hidden.
 24. As a User, I want pins that overlap at the campus zoom to merge, so that I can still read the map, and to split when I zoom in.
 25. As a User, I want a merged or grouped pin to show the strongest look among its events, exclamation mark first, then star, then plain.
-26. As a User, I want events held today to stay on the map as plain pins, so that an event whose mark I missed comes back on its day.
-27. As a User, I want a festival of several days to show on its first and last day only, so that it does not sit on the map all week.
-28. As a User, I want to star an event in the 행사 tab, in chat and on the map, so that I can keep it wherever I see it.
-29. As a User, I want a starred event to show as a star pin until it ends, so that I can find it on the map.
-30. As a User, I want the star to change at once and to change back with a toast if saving fails, so that I can trust what it shows.
-31. As a User, I want starring an event to count as checking it, so that a starred event does not also carry an exclamation mark.
-32. As a User, I want seeing an event in the 행사 tab or in chat not to check it, so that the map still points me to it.
-33. As a User, I want a checked event to stay in the 행사 tab, so that I can always find it there.
-34. As a User on a new install, I want only the last day's events marked new, so that I am not flooded with marks.
-35. As a User, I want events an Administrator entered by hand marked new too, so that "new" means new to me, not how it was collected.
-36. As a User whose event was cancelled, I want it gone from the map at once, as today.
-37. As a User going to an event with a 파티, I want it shown as my 파티's pin, as today.
-38. As a User whose favorites must survive a reinstall, I want them kept on the server, so that they are not lost with the phone.
+26. As a User, I want to star an event in the 행사 tab, in chat and on the map, so that I can keep it wherever I see it.
+27. As a User, I want a starred event to show as a star pin until it ends, so that I can find it on the map.
+28. As a User, I want the star to change at once and to change back with a toast if saving fails, so that I can trust what it shows.
+29. As a User, I want starring an event to count as checking it, so that a starred event does not also carry an exclamation mark.
+30. As a User, I want seeing an event in the 행사 tab or in chat not to check it, so that the map still points me to it.
+31. As a User, I want a checked event to stay in the 행사 tab, so that I can always find it there.
+32. As a User on a new install, I want only the last day's events marked new, so that I am not flooded with marks.
+33. As a User, I want events an Administrator entered by hand marked new too, so that "new" means new to me, not how it was collected.
+34. As a User whose event was cancelled, I want it gone from the map at once, as today.
+35. As a User going to an event with a 파티, I want it shown as my 파티's pin, as today.
+36. As a User whose favorites must survive a reinstall, I want them kept on the server, so that they are not lost with the phone.
 
 Real Friend data
-39. As a User, I want 오늘의 발자국 gone from the main screen, so that I do not see sample faces as if they were real.
-40. As a User, I want a visible Friend shown with where they are and how old the position is, so that I do not read a false "공강".
-41. As a User, I want a Friend I cannot see shown as "위치 꺼짐", as today.
-42. As a User, I want "도보 N분" worked out from the walking table between the Places nearest to me and to my Friend, so that it is true.
-43. As a User standing at the same Place as my Friend, I want "근처", so that it does not say "도보 0분".
-44. As a User whose own position is unknown, I want no walking time, so that the app does not guess.
-45. As a teammate reviewing the change, I want the pull request and the code to say why only the server's facts are shown, so that I can see it leaves 수업 중 and 이동 중 to FriendView.
+37. As a User, I want 오늘의 발자국 gone from the main screen, so that I do not see sample faces as if they were real.
+38. As a User, I want a visible Friend shown with where they are and how old the position is, so that I do not read a false "공강".
+39. As a User, I want a Friend I cannot see shown as "위치 꺼짐", as today.
+40. As a User, I want "도보 N분" worked out from the walking table between the Places nearest to me and to my Friend, so that it is true.
+41. As a User standing at the same Place as my Friend, I want "근처", so that it does not say "도보 0분".
+42. As a User whose own position is unknown, I want no walking time, so that the app does not guess.
+43. As a teammate reviewing the change, I want the pull request and the code to say why only the server's facts are shown, so that I can see it leaves 수업 중 and 이동 중 to FriendView.
 
 AI matching leaves the app
-46. As a User, I want no "✦ AI 매칭" entry on event cards, so that I do not use a feature the team has dropped.
-47. As a User, I want no "결과는 알림으로 와요" promise, so that I am not waiting for a notification that never comes.
+44. As a User, I want no "✦ AI 매칭" entry on event cards, so that I do not use a feature the team has dropped.
+45. As a User, I want no "결과는 알림으로 와요" promise, so that I am not waiting for a notification that never comes.
 
 Location sharing shows its rule
-48. As a User, I want the Master Switch called "위치 공유", so that I can tell it covers 파티 too, not only Friends.
-49. As a User with the Master Switch off, I want the Friend and 파티 switches shown off and disabled, so that I can see that nobody receives my location.
-50. As that User, I want one line saying why with a "켜기" link, so that I know how to turn sharing back on.
-51. As a User turning the Master Switch back on, I want each Friend and 파티 switch as I left it, so that I do not set them one by one again.
-52. As a User, I want to see how many Friends I allow to see my location, so that I know my settings at a glance.
-53. As a User whose 파티 is on, I want to see how many of its members I allow to see my location, so that I see the 파티 side too.
+46. As a User, I want the Master Switch called "위치 공유", so that I can tell it covers 파티 too, not only Friends.
+47. As a User with the Master Switch off, I want the Friend and 파티 switches shown off and disabled, so that I can see that nobody receives my location.
+48. As that User, I want one line saying why with a "켜기" link, so that I know how to turn sharing back on.
+49. As a User turning the Master Switch back on, I want each Friend and 파티 switch as I left it, so that I do not set them one by one again.
+50. As a User, I want to see how many Friends I allow to see my location, so that I know my settings at a glance.
+51. As a User whose 파티 is on, I want to see how many of its members I allow to see my location, so that I see the 파티 side too.
 
 Learning the app
-54. As a new User finishing Onboarding, I want a short tour of the bottom tabs, so that I know what each part of the app is for.
-55. As that User, I want to skip the tour or never see it again, so that it does not get in my way.
-56. As a User, I want to replay the tour from 내 정보, so that I can look again later.
-57. As a User opening an empty 파티 tab or 행사 tab, I want to be told what it holds and given one first action, so that an empty screen is not a dead end.
-58. As a User who just asked to join, I want the toast to link to my sent requests, so that I see where the request went.
-59. As a User who just joined or made a 파티, I want the toast to link to my 파티, so that I find it at once.
-60. As a User who just sent a Friend Request, I want the toast to link to my Friends list, so that I know where it will show.
+52. As a new User finishing Onboarding, I want a short tour of the bottom tabs, so that I know what each part of the app is for.
+53. As that User, I want to skip the tour or never see it again, so that it does not get in my way.
+54. As a User, I want to replay the tour from 내 정보, so that I can look again later.
+55. As a User opening an empty 파티 tab or 행사 tab, I want to be told what it holds and given one first action, so that an empty screen is not a dead end.
+56. As a User who just asked to join, I want the toast to link to my sent requests, so that I see where the request went.
+57. As a User who just joined or made a 파티, I want the toast to link to my 파티, so that I find it at once.
+58. As a User who just sent a Friend Request, I want the toast to link to my Friends list, so that I know where it will show.
 
 Members of the same 파티
-61. As a member of a 파티, I want "친구 추가" on another member's row, so that I can befriend someone I met there.
-62. As that member, I want the button hidden for a Friend, "요청됨" once sent, and "수락" when they sent one, so that it always shows the next step.
-63. As a User, I want the server to accept such a request only between Holders of the same Quest, so that strangers cannot reach me this way.
-64. As a Leader who removed a member, I want them to need my approval to come back, so that removing means something in an Open Quest.
-65. As a removed member, I want one caption telling me why an Open Quest asks for approval, so that I am not confused.
-66. As a Leader, I want the request marked "전에 내보낸 멤버", so that I decide knowing who it is.
-67. As a Leader who accepts that member, I want the removal forgotten, so that a later removal starts fresh.
+59. As a member of a 파티, I want "친구 추가" on another member's row, so that I can befriend someone I met there.
+60. As that member, I want the button hidden for a Friend, "요청됨" once sent, and "수락" when they sent one, so that it always shows the next step.
+61. As a User, I want the server to accept such a request only between Holders of the same Quest, so that strangers cannot reach me this way.
+62. As a Leader who removed a member, I want them to need my approval to come back, so that removing means something in an Open Quest.
+63. As a removed member, I want one caption telling me why an Open Quest asks for approval, so that I am not confused.
+64. As a Leader, I want the request marked "전에 내보낸 멤버", so that I decide knowing who it is.
+65. As a Leader who accepts that member, I want the removal forgotten, so that a later removal starts fresh.
 
 Recording the work
-68. As the person writing the HE revision log, I want one file that says, per HE issue, what was done and in which pull request, so that I can copy it to the Wiki.
+66. As the person writing the HE revision log, I want one file that says, per HE issue, what was done and in which pull request, so that I can copy it to the Wiki.
 
 ## Implementation Decisions
 
 **Tickets.** Eight, each one pull request into `4.0/Main`:
 
-1. Favorite Events end to end: the migration (both columns), the favorite API, the ☆ toggle, the star pin, and the map keeping only Favorite Events and today's events.
+1. Favorite Events end to end: the migration (both columns), the favorite API, the ☆ toggle, the star pin, and the map keeping only Favorite Events.
 2. New Events end to end: recording `publishedAt`, the exclamation pin, checking, and the looks of grouped and merged pins. Built after ticket 1.
 3. The global watch for a 파티 that is gone, and removing the AI matching UI.
 4. Sent requests and withdraw.
@@ -153,9 +150,9 @@ Tickets 1, 3, 4, 5 and 6 do not depend on each other.
 
 **Global Events API (tickets 1 and 2).** Ticket 1: `GET /global-events` adds `publishedAt` (nullable, still null everywhere) and `favorite` (for the caller) to each event, and `PUT` and `DELETE /global-events/{id}/favorite` set and clear a favorite; both are idempotent, and both refuse an event that is not published. Ticket 2: every write that sets `state = published` records `publishedAt`. There are four: the rules that read a post and a Judgement (both when a session settles), an Administrator's publish of a Draft, and an Administrator's publish from the Same-event queue, which sets the same `administrator` route and is easy to miss. Events published before the change keep null and are never New Events. Editing an event's time does not change `publishedAt`.
 
-**Which event pins stay (tickets 1 and 2).** One pure function in the map's event adapter decides it. Input: the published events, now, the ids this User has checked, and each event's `favorite`. Output: the events that stay, each with a look (`new`, `favorite` or `plain`). An event stays if `publishedAt` is within 24 hours and it is not checked (`new`), if it is a favorite (`favorite`), or if it is held today in Seoul time, for an event of several days only on its first or last day (`plain`). When several apply, the order is `new`, `favorite`, `plain`. Ticket 1 builds the function with `favorite` and `plain`; ticket 2 adds `new` and the checked ids. Starring an event adds it to the checked ids. The checked ids live on the phone, keyed by User, and an id is dropped once its event is more than 24 hours past `publishedAt`. A checked event leaves the map when its card closes, never while it is open. Same-Place grouping keeps its current behaviour and takes the strongest look of its members. The study layer's overlap merge applies to every event pin, with the merged pin taking the strongest look and the total count. The exclamation mark and the star are new marker looks drawn by the JS marker images, so they ship over the air and need no native Release.
+**Which event pins stay (tickets 1 and 2).** One pure function in the map's event adapter decides it. Input: the published events, now, the ids this User has checked, and each event's `favorite`. Output: the events that stay, each with a look (`new` or `favorite`). An event stays if `publishedAt` is within 24 hours and it is not checked (`new`), or if it is a favorite (`favorite`). When both apply, `new` comes first. Ticket 1 builds the function with `favorite`; ticket 2 adds `new` and the checked ids. While the switch of the answer on the map is on, the function passes every event on, a non-favorite one as `plain`, and the interest marks keep those that match a watched interest. Events held today are not kept: the agentic map's design puts no other event on the everyday map (`agentic-map-design.md`, Watching interests, after #296; decided in review of #261 on 2026-11-16). Starring an event adds it to the checked ids. The checked ids live on the phone, keyed by User, and an id is dropped once its event is more than 24 hours past `publishedAt`. A checked event leaves the map when its card closes, never while it is open. Same-Place grouping keeps its current behaviour and takes the strongest look of its members. The study layer's overlap merge applies to every event pin, with the merged pin taking the strongest look and the total count. The exclamation mark and the star are new marker looks drawn by the JS marker images, so they ship over the air and need no native Release.
 
-**How this sits with the agentic map's design (tickets 1 and 2).** The design decides the same pins another way. Its "Watching interests" puts on the everyday map only the events and recruiting that match a watched interest, with a "!" on a newly posted one, and its "Many results on the map" groups every mark by one rule. Both are built in Iteration 5, by packages D and B (work split §8). Until then the rule above is the one the map follows. The tickets that build them settle how the two fit: whether Favorite Events and events held today stay beside the events that match a watched interest, when the "!" goes, the design's grouping in place of the zoom merge, and where the ☆ sits once a tap on a mark opens the answer.
+**How this sits with the agentic map's design (tickets 1 and 2).** The design decides the same pins another way. Its "Watching interests" puts on the everyday map only the events and recruiting that match a watched interest, with a "!" on a newly posted one, and its "Many results on the map" groups every mark by one rule. Both are built in Iteration 5, by packages D and B (work split §8). Until then the rule above is the one the map follows. The tickets that build them settle how the two fit: whether New Events stay beside the events that match a watched interest, when the "!" goes, the design's grouping in place of the zoom merge, and where the ☆ sits once a tap on a mark opens the answer.
 
 **The ☆ toggle (ticket 1).** On the 행사 tab's and chat's event item, at the top right, with the source mark moved to its left. On the map, only on a single event's card, left of the close button; the card's data carries the event id and `favorite`. A grouped pin's list rows show ★ for a Favorite Event without a toggle. The hit area is 44pt, like the close button. The change is optimistic, rolled back with a toast on failure. The icon set gains a `star` shape that can be filled.
 
@@ -201,7 +198,7 @@ A good test drives what a User or a client sees: an HTTP response, a rendered sc
   - Ticket 5: `nearPlace` and `walkMinutes` on `GET /positions`, null without the caller's position. Prior art: `friend-sharing`.
   - Ticket 8: removal then join refuses with `QUEST_REMOVED_ASK`; ask on an Open Quest succeeds only with a removal; the Leader sees `removedBefore`; acceptance clears it; leaving writes no removal; a Friend Request by user id only between Holders of the same Quest. Prior art: `party-join-requests`, `party-join-request-answers`, `friend-requests`.
 - **App, unit (pure adapter functions).**
-  - Ticket 1: the pin-selection function for favorite, today and the several-day rule, and Seoul midnight. Ticket 2: the 24-hour edge, checked and unchecked, the look order, grouped and merged looks. Prior art: `features/map-adapter-places`, the study merge.
+  - Ticket 1: the pin-selection function for favorite and not, with the interest marks choosing and not. Ticket 2: the 24-hour edge, checked and unchecked, the look order, grouped and merged looks. Prior art: `features/map-adapter-places`, the study merge.
   - Ticket 5: the Friend line without "공강", "근처", empty walking time. Prior art: `features/friends-adapter`.
   - Ticket 6: the two counts and their words, own end only (a Friend whose own end is off still counts; the words never say "봐요" or "볼 수 있어요"). 
 - **App, integration (router and screens over a fake server).**

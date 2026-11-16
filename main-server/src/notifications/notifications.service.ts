@@ -16,7 +16,16 @@ import { identityOf, type NotificationKind, type Told } from './notification.js'
 import { type Kept, NotificationStore } from './notification-store.js';
 import { wordsOf } from './notification-words.js';
 
-const KINDS: ReadonlySet<string> = new Set<NotificationKind>(['accepted', 'declined', 'leave-by', 'interest-new']);
+const KINDS: ReadonlySet<string> = new Set<NotificationKind>([
+  'accepted',
+  'declined',
+  'leave-by',
+  'room-declined',
+  'room-agreed',
+  'room-ending',
+  'room-window',
+  'interest-new',
+]);
 
 function kept(told: Told, at: Date): Kept {
   const words = wordsOf(told, at);

@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -25,8 +26,9 @@ const DIAMETER = { sm: 28, md: sizes.avatar, lg: 56 } as const;
 const STATUS_DOT = 16;
 const INITIALS_SIZE = { sm: 11, md: 14, lg: 18 } as const;
 
-// The last two syllables of a Korean name, or the first letters of the first two words of another.
-function initials(name: string): string {
+// The last two syllables of a Korean name, or the first letters of the first two words of another: the letters of
+// every face, also of an answer's.
+export function initials(name: string): string {
   const trimmed = name.trim();
   if (trimmed === '') {
     return '?';

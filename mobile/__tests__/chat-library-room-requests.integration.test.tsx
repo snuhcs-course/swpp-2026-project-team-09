@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -11,7 +12,9 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { COMPANIONS, JI_WOO, MIN_JUN, PARTY_CARD, readyCard, REQUEST_ID, requestOf } from './support/room-requests';
-import type { FakeServer } from './support/fake-server';
+import { type FakeServer, refusal } from './support/fake-server';
+import { socketServer } from './support/live';
+import { DINNER } from './support/server';
 import { FAKE_ROOM_FORM, type FakeLibrary } from './support/kwanjeong/fake-library';
 import {
   askForCards,
@@ -159,5 +162,34 @@ describe('the cancel of a room booked through a room request', () => {
       null,
     ]);
     expectNothingOfTheLibrarySent(server, ['3000001']);
+  });
+});
+
+describe("the booking party, gone with the User's own cancel", () => {
+  it('is not told as a removal', async () => {
+    const party = { ...DINNER, id: requestOf('booked').questId, title: '스터디룸 예약' };
+    server.on('GET /quests', { status: 200, body: [party] });
+    server.on(`GET /library/room-requests/${REQUEST_ID}`, { status: 200, body: requestOf('booked') });
+    server.on(`POST /library/room-requests/${REQUEST_ID}/cancelled`, () => {
+      server.on('GET /quests', { status: 200, body: [] });
+      server.on(`GET /quests/${party.id}`, refusal(404, 'QUEST_NOT_FOUND'));
+      return { status: 204 };
+    });
+    library.addBooking(bookingRow());
+    await keepRoomBooking(3000001, REQUEST_ID);
+    const cancel = card(libraryCard('cancel:-:2026-11-02:-', 'cancel', { target: { date: '2026-11-02' } }));
+    await askForCards({ server, library }, [cancel], { words: '오늘 예약 취소해줘' });
+    await socketServer((socket) => {
+      socket.accept();
+    });
+
+    await pressIn(inCard(`library-cancel-${cancel.library.key}`), '취소하기');
+    await socketServer((socket) => {
+      socket.send('quests-changed');
+    });
+    await pass(500);
+
+    expect(server.received(`POST /library/room-requests/${REQUEST_ID}/cancelled`)).toHaveLength(1);
+    expect(screen.queryByText(`${party.title} 파티에서 빠졌어요`)).toBeNull();
   });
 });

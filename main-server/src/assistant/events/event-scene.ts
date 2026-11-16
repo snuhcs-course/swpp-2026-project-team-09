@@ -7,9 +7,10 @@
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type EventsInput, type MapScene, type PlacePoint, type TimeBand } from '../dto/answer.dto.js';
-import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
+import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { type AnswerPerson, placeLabelOf, withAnd } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
+import { busyIn } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import { type EventPlan, type EventPlanning, type PlacedEvent, type Way } from './event-fit.js';
 
@@ -156,13 +157,7 @@ export function bandOf(
     lanes: [{ ...asker, name: '나' }, ...others].map(({ userId, name, items }) => ({
       userId,
       name,
-      busy: items
-        .filter((item) => item.start < until && item.end > from)
-        .toSorted(byStart)
-        .map((item) => ({
-          startAt: koreaTime(item.start < from ? from : item.start),
-          endAt: koreaTime(item.end > until ? until : item.end),
-        })),
+      busy: busyIn(items, from, until, (placeId) => naming.placeLabel(placeId)),
     })),
     startAt: koreaTime(start),
     endAt: koreaTime(end),

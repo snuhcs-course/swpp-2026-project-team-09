@@ -24,6 +24,9 @@
 // 2026-11-14  Opus 5.5   prompted by TaeHyun79
 // 2026-11-14  Opus 5.5   prompted by fyoon46
 // 2026-11-15  Opus 5.5   prompted by fyoon46
+// 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+// 2026-11-16  Opus 5.5   prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -88,7 +91,9 @@ model User {
   roomConsents      RoomConsent[]
   roomNotices       RoomNotice[]
   notifications     Notification[]
+  favoriteEvents    GlobalEventFavorite[]
   watchedInterests  WatchedInterest[]
+  privateZones      PrivateZone[]
 
   @@map("users")
 }
@@ -273,8 +278,59 @@ model Administrator {
   googleSubject    String?   @unique @map("google_subject")
   // The last sign-out. Access tokens issued before it are refused.
   tokensValidAfter DateTime? @map("tokens_valid_after")
+  settingChanges   SettingChange[]
 
   @@map("administrators")
+}
+
+// A global setting an Administrator changed at run time. The settings are registered in code
+// (src/global-settings/registered-settings.ts); one with no row has its default.
+model Setting {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String           @unique
+  valueType SettingValueType @map("value_type")
+  // The value as text, checked against the registry when it is saved and when it is loaded.
+  value     String
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+enum SettingValueType {
+  STRING
+  INTEGER
+  BOOLEAN
+
+  @@map("setting_value_type")
+}
+
+// One save of a setting, kept as its history.
+model SettingChange {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String
+  // The value read before the save: the row's, or the default when there was no row.
+  oldValue           String         @map("old_value")
+  newValue           String         @map("new_value")
+  // None once that Administrator is removed; the address stays.
+  administratorId    String?        @map("administrator_id") @db.Uuid
+  administrator      Administrator? @relation(fields: [administratorId], references: [id], onDelete: SetNull)
+  administratorEmail String         @map("administrator_email")
+  // The revision the save raised the counter to.
+  revision           Int
+  changedAt          DateTime       @default(now()) @map("changed_at")
+
+  @@map("setting_changes")
+}
+
+// One row, id 1, whose counter every save raises in the save's transaction. Each pod checks it every minute and
+// reloads the settings when it changed. The row lock orders the saves' commits, so a check never misses one, as a
+// check of max(updated_at) could when a transaction stamped earlier commits later.
+model SettingsRevision {
+  // An Int, not a UUID like the other tables' ids: the one row is always id 1, which a check constraint keeps.
+  id       Int @id @default(1)
+  revision Int @default(0)
+
+  @@map("settings_revision")
 }
 
 // An Event published to every User, collected from the university's events list or created by an Administrator
@@ -302,10 +358,13 @@ model GlobalEvent {
   // update keep working; a later migration drops them.
   retiredPostNumber  Int?                @unique @map("post_number")
   retiredSourceUrl   String?             @map("source_url")
+  // When it was published, which tells a New Event. Empty for an event published before it was recorded.
+  publishedAt        DateTime?           @map("published_at")
   // None for an event an Administrator created.
   sessions           SourcePostSession[]
   quests             Quest[]
   questHolders       QuestHolder[]
+  favorites          GlobalEventFavorite[]
   // The topic words the model read in its title and description, normalised (README.md: Interests).
   topics             String[]            @default([])
   // When the topics were last asked for, and how many times.
@@ -313,6 +372,19 @@ model GlobalEvent {
   topicsTries        Int                 @default(0) @map("topics_tries")
 
   @@map("global_events")
+}
+
+// A Global Event a User starred, which stays on their map until it ends. Deleted with the User or the event.
+model GlobalEventFavorite {
+  userId        String      @map("user_id") @db.Uuid
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  globalEventId String      @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent @relation(fields: [globalEventId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@id([userId, globalEventId])
+  @@index([globalEventId])
+  @@map("global_event_favorites")
 }
 
 enum GlobalEventState {
@@ -777,6 +849,37 @@ enum Meal {
   @@map("meal")
 }
 
+// A Restaurant's hours for a meal on a kind of day, read by the worker from the one hours line of the meal's cell
+// ("※ 운영시간 : 11:00~14:30"). The line stays a MenuLine as well. A Collection replaces the hours only when it reads
+// other times, and a day without an hours line leaves them.
+model RestaurantHours {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source     Source
+  // As the pages write it, as in RestaurantDay.
+  restaurant String
+  meal       Meal
+  dayKind    DayKind  @map("day_kind")
+  // Times of day in Asia/Seoul, "HH:MM".
+  opensAt    String   @map("opens_at")
+  closesAt   String   @map("closes_at")
+  // The line the hours were read from.
+  line       String
+  // The time of the Collection that read them.
+  readAt     DateTime @map("read_at")
+
+  @@unique([source, restaurant, meal, dayKind])
+  @@map("restaurant_hours")
+}
+
+// A public holiday has no kind of its own: the pages give no holiday hours.
+enum DayKind {
+  weekday
+  saturday
+  sunday
+
+  @@map("day_kind")
+}
+
 // A page or feed outside the project that the worker server collects.
 enum Source {
   coop_menus
@@ -1012,6 +1115,8 @@ model RoomConsent {
   user       User        @relation(fields: [userId], references: [id])
   answeredAt DateTime?   @map("answered_at")
   consented  Boolean?
+  // When the companion was asked, from which their answer's deadline is counted.
+  askedAt    DateTime    @default(now()) @map("asked_at")
 
   @@id([requestId, userId])
   @@index([userId])
@@ -1045,4 +1150,19 @@ model WatchedInterest {
 
   @@index([userId])
   @@map("watched_interests")
+}
+
+// An area the User drew round, inside which their position is not kept. A User keeps at most five.
+model PrivateZone {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // "{Place} 근처" after the Place nearest its middle, or "그린 구역", named when the zone is made.
+  label     String
+  // The ring of positions, left open: the last joins the first.
+  outline   Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("private_zones")
 }

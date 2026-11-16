@@ -74,6 +74,7 @@ describe('the Friends from the main server', () => {
     const friends = await apiClient.listFriends();
     const positions = await apiClient.listPositions();
 
+    // P02 ticket 18 added `seen` to the view; these Friends have no Friend ID and no date.
     expect(toFriendViews(friends, positions, [], now())).toEqual([
       {
         id: MIN_JUN.id,
@@ -88,6 +89,7 @@ describe('the Friends from the main server', () => {
         minutesOld: null,
         visible: true,
         level: 'exact',
+        seen: 'exact',
         sharing: true,
         askedOff: false,
       },
@@ -104,6 +106,7 @@ describe('the Friends from the main server', () => {
         minutesOld: null,
         visible: false,
         level: 'exact',
+        seen: 'timetable',
         sharing: true,
         askedOff: false,
       },

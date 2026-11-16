@@ -12,6 +12,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -30,6 +31,7 @@ import {
   type GlobalEventWithJudgement,
   type GlobalEventWithOwnPost,
   ListedGlobalEventDto,
+  ListedPublishedGlobalEventDto,
   type ListedState,
   missingFor,
   PublishedGlobalEventDto,
@@ -121,6 +123,34 @@ export class GlobalEventsService {
 
   async listPublished(): Promise<PublishedGlobalEventDto[]> {
     return (await this.findListed(GlobalEventState.published)).map((event) => toPublishedGlobalEventDto(event));
+  }
+
+  // The User's list of Global Events: listPublished's, with what is the User's own of each event.
+  async listPublishedFor(userId: string): Promise<ListedPublishedGlobalEventDto[]> {
+    const [events, favorites] = await Promise.all([
+      this.findListed(GlobalEventState.published),
+      this.prisma.globalEventFavorite.findMany({ where: { userId }, select: { globalEventId: true } }),
+    ]);
+    const starred = new Set(favorites.map(({ globalEventId }) => globalEventId));
+    return events.map((event) =>
+      Object.assign(toPublishedGlobalEventDto(event), {
+        publishedAt: event.publishedAt?.toISOString() ?? null,
+        favorite: starred.has(event.id),
+      }),
+    );
+  }
+
+  // Stars a published event for the User, or clears the star. A repeat changes nothing. An event that is not published
+  // is refused as not found, as the User's list never shows it.
+  async setFavorite(userId: string, globalEventId: string, favorite: boolean): Promise<void> {
+    const event = await this.prisma.globalEvent.findUnique({ where: { id: globalEventId }, select: { state: true } });
+    if (event?.state !== GlobalEventState.published) {
+      throw globalEventNotFound();
+    }
+    const data = { userId, globalEventId };
+    await (favorite
+      ? this.prisma.globalEventFavorite.createMany({ data: [data], skipDuplicates: true })
+      : this.prisma.globalEventFavorite.deleteMany({ where: data }));
   }
 
   // The published events of the search that have not ended at `now`, as the User's list serves them and in its order.

@@ -10,8 +10,8 @@ import { classAt, id, ME, point, position, readCampus, time, TUESDAY, WEDNESDAY,
 
 // How many minutes to the next Class, and whether the User will be late, on the seed's walking table and shuttle
 // timing: board q2
-// (Tuesday 12:40 at 301동, the next Class at 13:00 in 24동), board q3 (the same at 12:50), and board q15 (Wednesday
-// 08:35 off campus, a Class at 09:00 in 24동).
+// (Tuesday 12:40 at 301동, the next Class at 13:00 in 24동), board q3 (the same at 12:50), and boards q15 and n14
+// (Wednesday 08:35 off campus, a Class at 09:00 in 24동).
 
 beforeAll(() => readCampus());
 
@@ -155,59 +155,73 @@ describe('Board q3: the same at 12:50', () => {
   });
 });
 
-// "9시 수업인데 늦나", off campus on Wednesday at 08:35.
-const offCampus = (): Lookup =>
+// "9시 수업인데 늦나", off campus on Wednesday at 08:35: the app sends a position off campus (before P02-13), or says it
+// is off campus and sends none (board n14).
+const offCampusFrom = (where: 'position' | 'missing'): Lookup =>
   lookupOf(
     wayFor(onDay(WEDNESDAY, '08:35'), {
       me: me([classAt(WEDNESDAY, '09:00', '09:50', '자연과학관6')]),
-      location: { at: OFF_CAMPUS, placeId: null, onCampus: false },
+      ...(where === 'position'
+        ? { location: { at: OFF_CAMPUS, placeId: null, onCampus: false } }
+        : { locationMissing: 'off-campus' as const }),
     }),
   );
 
-describe('Board q15: Wednesday 08:35 off campus, a Class at 09:00 in 24동', () => {
-  it('counts from the main gate, until the Class', () => {
-    expect(offCampus().chips).toEqual([
-      { kind: 'origin', text: '정문에서', userId: null },
-      { kind: 'until', text: '09:00 수업까지', userId: null },
-    ]);
-  });
+describe.each(['position', 'missing'] as const)(
+  'Board n14: Wednesday 08:35 off campus (%s), a Class at 09:00 in 24동',
+  (where) => {
+    const offCampus = (): Lookup => offCampusFrom(where);
 
-  it('says by when to pass the main gate', () => {
-    expect(offCampus().lines).toEqual([
-      [plain('정문을 '), strong('08:50'), plain('까지 지나면')],
-      [plain('09:00 수업에 맞아요')],
-    ]);
-  });
-
-  it('rests on the way from the gate, and says the location off campus was not used', () => {
-    expect(offCampus().basis).toEqual([
-      '정문 → 24동 걸어서 10분',
-      '지금 위치는 캠퍼스 밖이라 쓰지 않고 정문부터 쟀어요',
-    ]);
-  });
-
-  it('draws the User at the gate, not where they are, the way from it, and by when to pass it', () => {
-    expect(offCampus().scene).toEqual({
-      people: [{ userId: ME, name: '유상', me: true, at: position('서울대 정문'), source: 'timetable', tag: '나' }],
-      places: [{ place: point('자연과학관6', '24동'), role: 'next', tag: '09:00 수업 · 24동' }],
-      routes: [{ userId: ME, role: 'me', from: position('서울대 정문'), to: position('자연과학관6'), minutes: 10 }],
-      flags: [{ at: position('서울대 정문'), text: '08:50까지 정문 통과', role: 'leave' }],
+    it('counts from the main gate, until the Class', () => {
+      expect(offCampus().chips).toEqual([
+        { kind: 'origin', text: '정문에서', userId: null },
+        { kind: 'until', text: '09:00 수업까지', userId: null },
+      ]);
     });
-  });
 
-  it('bands from now to the Class, and reminds at 08:50', () => {
-    const { band, actions } = offCampus();
+    it('says by when to pass the main gate, and that it counted from there', () => {
+      expect(offCampus().lines).toEqual([
+        [plain('정문을 '), strong('08:50'), plain('까지 지나면 돼요')],
+        [plain('캠퍼스 밖이라 정문부터 계산했어요')],
+      ]);
+    });
 
-    expect(band).toMatchObject({
-      range: { startAt: time(WEDNESDAY, '08:30'), endAt: time(WEDNESDAY, '09:00') },
-      startAt: time(WEDNESDAY, '08:50'),
-      endAt: time(WEDNESDAY, '09:00'),
-      text: '08:50까지 정문 통과 · 걸어서 10분',
+    it('rests on the way from the gate, and says the location off campus was not used', () => {
+      expect(offCampus().basis).toEqual(['정문 → 24동 걸어서 10분', '지금 위치는 캠퍼스 밖이라 쓰지 않았어요']);
     });
-    expect(actions[0]).toEqual({
-      kind: 'remind',
-      at: time(WEDNESDAY, '08:50'),
-      text: '지금 정문을 지나면 09:00 수업에 맞아요 · 24동까지 걸어서 10분',
+
+    it('draws the User at the gate, not where they are, the way from it, and by when to pass it', () => {
+      expect(offCampus().scene).toEqual({
+        people: [{ userId: ME, name: '유상', me: true, at: position('서울대 정문'), source: 'timetable', tag: '나' }],
+        places: [{ place: point('자연과학관6', '24동'), role: 'next', tag: '09:00 수업 · 24동' }],
+        routes: [{ userId: ME, role: 'me', from: position('서울대 정문'), to: position('자연과학관6'), minutes: 10 }],
+        flags: [{ at: position('서울대 정문'), text: '08:50까지', role: 'leave' }],
+      });
     });
+
+    it('bands from now to the Class, and offers nothing but closing', () => {
+      const { band, actions } = offCampus();
+
+      expect(band).toMatchObject({
+        range: { startAt: time(WEDNESDAY, '08:30'), endAt: time(WEDNESDAY, '09:00') },
+        startAt: time(WEDNESDAY, '08:50'),
+        endAt: time(WEDNESDAY, '09:00'),
+        text: '08:50까지 · 걸어서 10분',
+      });
+      expect(actions).toEqual([]);
+    });
+
+    it('notes that Friends do not see where the User is', () => {
+      expect(offCampus().note).toBe('캠퍼스 밖이라 친구에게 내 위치가 보이지 않아요');
+    });
+  },
+);
+
+describe('A way without a location for want of the permission', () => {
+  it('sets out from the last item that ended, not the gate, with no note', () => {
+    const lookup = lookupOf(wayFor(onDay(TUESDAY, '12:40'), { me: me(tuesday()), locationMissing: 'permission' }));
+
+    expect(lookup.chips[0]).toEqual({ kind: 'origin', text: '301동에서', userId: null });
+    expect(lookup.note).toBeUndefined();
   });
 });
