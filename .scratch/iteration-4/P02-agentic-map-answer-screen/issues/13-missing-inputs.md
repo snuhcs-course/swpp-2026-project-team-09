@@ -41,6 +41,8 @@ Blocked by: ticket 10 (its offers); #265 (P02-09 changes `use-shown-answer.ts` a
 11. **Review (2026-11-16): "이대로 초대" plans again with the reason.** The making body (`POST /plans` and `PUT /plans/:questId`, `planQuestSchema`) takes `locationMissing` like the recalculation, and `PlansService.replanned` passes it to the meal's plan, so that a Quest made from an n13 answer whose previous Class ended more than 15 minutes ago keeps the assumed origin and is not refused as `PLAN_CHANGED` again and again. `better-plan.service.ts` reaches `replanned` through the same body when a Quest is changed; its own better-plan reading has no reason to pass. The app sends the key only when it knows the reason, so a main server before this ticket still makes the Quest.
 12. **Review (2026-11-16): no order is claimed with a Place fixed.** With `input.placeId` set, the Plans keep the gathering's order, and neither "…이 가장 가까워요" nor "시간표가 없어 가까운 순서로 넘겨 봐요" is said, since nearest was not what the User asked for; the note and "시간표 넣기" stay.
 
+13. **Follow-up (2026-11-16): the Leader's better-plan check plans from the assumed origin too.** `GET /plans/:questId/better` takes `locationMissing` beside the coordinates, read only without them, and plans with it as the making did; the app's `getBetterPlan` sends it only with no location. No screen calls it yet (the offer after a decline is not built).
+
 
 ### Agent usage (2026-11-15)
 
@@ -48,3 +50,10 @@ One implementing subagent (Opus 5.5), resumed for the recalculation and twice to
 
 - Agent time: about 113 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
 - Tokens: output 252,863; input 127,335,757, of which 126,279,072 were cache reads, 1,056,067 cache writes, and 618 uncached. Without cache reads: 1,309,548.
+
+### Agent usage (2026-11-16)
+
+The better-plan follow-up: one implementing subagent (Opus 5.5). This session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 29 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots and the heavy lock.
+- Tokens: output 49,166; input 10,108,349, of which 9,950,786 were cache reads, 157,425 cache writes, and 138 uncached. Without cache reads: 206,729.
