@@ -182,7 +182,10 @@ export class PlansService {
     );
     const leaveBy = aloneLeaveBy(plan, nextWordOf(answer), now);
     if (leaveBy.facts !== null && leaveBy.at !== null) {
-      await this.notifications.schedule(userId, { ...leaveBy.facts, questId }, leaveBy.at);
+      // As the Leader's, it never fails the making.
+      await this.notifications.schedule(userId, { ...leaveBy.facts, questId }, leaveBy.at).catch((error: unknown) => {
+        this.logger.warn(`The time to leave of a Plan taken alone was not kept: ${String(error)}`);
+      });
     }
     const made = await this.made(userId, questId, []);
     const lines = [goingLine(plan, input.kind), [{ text: leaveBy.line, strong: false }]];
