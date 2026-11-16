@@ -24,7 +24,7 @@ import {
   withTopic,
 } from './answer-words.js';
 import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
-import { menuBasis, menuLine, withMenuLine } from './meal-menu.js';
+import { menuBasis, withMenu } from './meal-menu.js';
 import { bandOf, sceneOf } from './meal-scene.js';
 import { missingParts, nearestFirst } from './missing-inputs.js';
 import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
@@ -285,7 +285,6 @@ function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: 
   const { key, placeId, start, end, togetherMinutes } = fit;
   const served = naming.args.served?.get(key);
   const unmet = unmetLines(fit, naming, { first, nearest });
-  const menu = served === undefined ? null : menuLine(served, naming.args.input.date, naming.args.now);
   return {
     id: key,
     title: `${key}에서 ${mealWord(naming)}`,
@@ -296,7 +295,7 @@ function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: 
     meeting: meetingOf(fit, naming),
     parts: fit.parts.map((part) => partOf(part, naming)),
     subQuests: subQuestsOf(fit, naming, `${key}에서 식사`),
-    lines: withMenuLine(unmet ?? linesOf(fit, naming), menu, key),
+    lines: withMenu(unmet ?? linesOf(fit, naming), served, { key, date: naming.args.input.date, now: naming.args.now }),
     basis: [
       ...unmetBasis(fit, naming, basisOf(fit, naming), nearest),
       ...(served === undefined ? [] : menuBasis(served)),

@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { type AnswerLine } from '../src/assistant/dto/answer.dto.js';
-import { menuBasis, menuLine, withMenuLine } from '../src/assistant/gathering/meal-menu.js';
+import { menuBasis, menuLine, withMenu } from '../src/assistant/gathering/meal-menu.js';
 import { dishesOf } from '../src/assistant/lookup/menu-lookup.js';
 import { MenuLineKind } from '../src/generated/prisma/client.js';
 import { type MenuLineDto } from '../src/menus/dto/restaurant-menus.dto.js';
@@ -134,21 +134,30 @@ describe('The main dish', () => {
 });
 
 describe("The menu line among a Plan's lines", () => {
-  const menu: AnswerLine = [plain('오늘 '), strong('제육볶음')];
-  const named: AnswerLine = [plain('점심 '), strong('301동식당'), plain(' · 식사 55분')];
+  const served = { lines: lunchOf('302동식당'), closesAt: '13:30' };
+  const at = { key: '302동식당', date: TODAY, now: NOW };
+  const named: AnswerLine = [plain('점심 '), strong('302동식당'), plain(' · 식사 50분')];
   const other: AnswerLine = [plain('위치를 몰라 직전 수업의')];
-  const leave: AnswerLine = [plain('12:45엔 나서야 해요')];
+  const leave: AnswerLine = [plain('12:43엔 나서야 해요')];
+  const menu = [plain('오늘 '), strong('뼈없는감자탕'), plain(' 외 5 · 13:30까지')];
 
   it('comes right after a first line that names the Restaurant, else last', () => {
-    expect(withMenuLine([named, leave], menu, '301동식당')).toEqual([named, menu, leave]);
-    expect(withMenuLine([other, leave], menu, '301동식당')).toEqual([other, leave, menu]);
-    expect(withMenuLine([named], null, '301동식당')).toEqual([named]);
+    expect(withMenu([named, leave], served, at)).toEqual([named, menu, leave]);
+    expect(withMenu([other, leave], served, at)).toEqual([other, leave, menu]);
+    expect(withMenu([named], undefined, at)).toEqual([named]);
+  });
+
+  it('leaves the closing time out when a line already says the Restaurant closes, not when another one does', () => {
+    const closes: AnswerLine = [plain('302동식당은 13:30에 닫아요')];
+    expect(withMenu([named, closes], served, at)[1]).toEqual([plain('오늘 '), strong('뼈없는감자탕'), plain(' 외 5')]);
+    const another: AnswerLine = [plain('학생회관식당은 14:00에 닫아요')];
+    expect(withMenu([named, another], served, at)).toEqual([named, menu, another]);
   });
 
   it('stands in the Plans alone and with Friends, with the whole menu at the end of 근거', () => {
     const lines = lunchOf('학생회관식당');
-    const served = new Map([['학생회관식당', { lines, closesAt: '14:30' }]]);
-    const alone = answerOf([me()], { served }).plans.find(({ id }) => id === '학생회관식당');
+    const menus = new Map([['학생회관식당', { lines, closesAt: '14:30' }]]);
+    const alone = answerOf([me()], { served: menus }).plans.find(({ id }) => id === '학생회관식당');
     expect(alone?.lines.map((line) => line.map(({ text }) => text).join(''))).toEqual([
       '점심 학생회관식당 · 식사 54분',
       '오늘 눈꽃치즈닭갈비 외 2 · 14:30까지',
@@ -158,7 +167,7 @@ describe("The menu line among a Plan's lines", () => {
       '눈꽃치즈닭갈비 6,000원 · 단호박영양밥&양념장(#) 3,000원 · 수제탕수육 6,000원',
       '메뉴와 닫는 시각: 오늘의 식단',
     ]);
-    const together = firstPlan(answerOf([me(), minsu(), jieun()], { aloneMinutes: 55, served }));
+    const together = firstPlan(answerOf([me(), minsu(), jieun()], { aloneMinutes: 55, served: menus }));
     expect(together.id).toBe('학생회관식당');
     expect(together.lines[1]).toEqual([plain('오늘 '), strong('눈꽃치즈닭갈비'), plain(' 외 2 · 14:30까지')]);
   });

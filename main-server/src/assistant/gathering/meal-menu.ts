@@ -113,13 +113,24 @@ export function menuBasis({ lines, closesAt }: ServedMenu): string[] {
   return [...words, closesAt === null ? `메뉴: ${SOURCE}` : `메뉴와 닫는 시각: ${SOURCE}`];
 }
 
-// The menu line second, right after a first line that names the Restaurant, else last, after lines that say something
-// else first (where the asker was taken to set out from).
-export function withMenuLine(lines: AnswerLine[], line: AnswerLine | null, key: string): AnswerLine[] {
+const wordsOf = (line: AnswerLine): string => line.map(({ text }) => text).join('');
+
+// The Plan's lines with the menu line second, right after a first line that names the Restaurant, else last, after
+// lines that say something else first (where the asker was taken to set out from). The closing time is left out of it
+// when a line already says that the Restaurant closes ("302동식당은 13:30에 닫아요").
+export function withMenu(
+  lines: AnswerLine[],
+  served: ServedMenu | undefined,
+  { key, date, now }: { key: string; date: string; now: Date },
+): AnswerLine[] {
+  if (served === undefined) {
+    return lines;
+  }
+  const closed = lines.some((line) => wordsOf(line).includes(key) && wordsOf(line).includes('닫아요'));
+  const line = menuLine(closed ? { ...served, closesAt: null } : served, date, now);
+  const [first, ...rest] = lines;
   if (line === null) {
     return lines;
   }
-  const [first, ...rest] = lines;
-  const named = first?.some(({ text }) => text.includes(key)) ?? false;
-  return first !== undefined && named ? [first, line, ...rest] : [...lines, line];
+  return first !== undefined && wordsOf(first).includes(key) ? [first, line, ...rest] : [...lines, line];
 }
