@@ -121,7 +121,8 @@ describe('who sees no card', () => {
 
     expect(cardsShown()).toEqual([]);
     expect(screen.queryByRole('button', { name: HINT })).toBeNull();
-    expect(server.received('GET /interests')).toEqual([]);
+    // The everyday map reads the watched interests for its marks since the answer switch went (P02-04), so a request
+    // for them no longer tells whether the first run asked.
   });
 });
 
