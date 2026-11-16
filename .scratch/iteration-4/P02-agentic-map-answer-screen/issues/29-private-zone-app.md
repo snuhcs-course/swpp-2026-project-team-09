@@ -54,7 +54,7 @@ The app half of the Private Zone, over the contract in the spec's section. No na
   - the limit of five;
   - the own card's line after an upload answered `privateZone: true`.
 - [x] The mock answers as the server does.
-- [ ] Emulator check: draw a zone round 301동 and save it; the row reads "1곳" and the zone is filled on the zone screen; with the pencil off, the map moves and the zone stays in place. The pull request carries these screens.
+- [x] Emulator check: draw a zone round 301동 and save it; the row reads "1곳" and the zone is filled on the zone screen; with the pencil off, the map moves and the zone stays in place. The pull request carries these screens.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass; and no native file of the app changed.
 
 ## Comments
@@ -77,3 +77,18 @@ The app half of the Private Zone, over the contract in the spec's section. No na
 - The own card's line is on 내 정보's 위치 공유 card, where the off-campus line is. The main map's card "지금 친구에게 보이는 나" shows no off-campus line either, so it gains none.
 - `privateZone` in the upload's reply is optional, and a reply without it reads as false.
 - The geometry the mock and the screen share (the 17 m box, the winding rule, and the 10 m edge) is in `src/api/private-zone-outline.ts`, mirroring the main server's. The mock's Campus Boundary is the on-campus rectangle, and it names a zone after its own Places within 150 m.
+
+### Emulator check (2026-11-16)
+
+On the shared emulator (API 36), a development build on the mock. The zone was drawn round 교수회관 (65동), since the screen opened on the whole campus with the emulator's position off campus; 301동 is at the screen's edge there.
+- The 위치 공유 row read "0곳", then "1곳" after saving.
+- With the pencil on, a loop drawn by one finger closed by itself and was filled with a dashed edge. When the panel shrank for 취소 and 저장 and the map grew, the outline moved with the map, still round 교수회관.
+- 저장 gave the toast "저장했어요 · 이 안에서는 친구에게 시간표만 보여요", the zone filled solid, and the row "그린 구역" (the mock's label with no Place near) with 삭제.
+- With the pencil off, the map panned, and once it settled the zone was in its place round 교수회관.
+
+### Agent usage (2026-11-16)
+
+One implementing subagent (Opus 5.5). This session's review, the emulator check, and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 31 minutes, an estimate from the transcript's timestamps; it includes waits for the Mac's shared check slots.
+- Tokens: output 141,391; input 31,122,335, of which 30,788,610 were cache reads, 333,477 cache writes, and 248 uncached. Without cache reads: 475,116.
