@@ -47,6 +47,24 @@ The orchestrating session decided 1 to 5 (rules 4, 6 and 8). The details below a
 5. **The Quest list keeps listing a Quest taken alone, as "퀘스트",** since it is where the User's own plan shows (rule 4). Only its "파티" chip leaves it out. Readers of a row's kind check only `class`, so a `quest` row opens as a `party` row did.
 6. **Not in this ticket**: anything else the read noticed is in the report to the orchestrating session.
 
+### The follow-up after the read of PR 338 (2026-11-17)
+
+The orchestrating session's read of Main + 336 + 338 found the chip again (A) and four more (B to E). They go in one follow-up pull request, built on 338. Its decisions:
+
+- **A.** The Quest list's "파티" chip leaves out a Quest taken alone (decision 5 above).
+- **B. A taken card whose Quest now gathers others goes.**
+  - When the User's Quests (read again on `quests-changed`) show the Quest without the mark, the card is cleared (`useGathered`).
+  - "다시 고르기" checks the Quests as last read, and for such a Quest only clears the card. It never sends the DELETE, so the 파티 the party form made is never dropped.
+- **C. The room and 알림 of a Quest taken alone.**
+  - The room is titled "퀘스트" and shows one "퀘스트" badge (with the event's, if any) in place of "파티 · N명", "내가 만든 파티" and "비공개". 비공개 says who may join, and nobody joins.
+  - It has no 파티 활성화, no 파티 채팅, and no 수정. Its one action is "퀘스트 없애기", asking "퀘스트를 없앨까요?" / "퀘스트가 사라져요.".
+  - 알림's leave-by row offers no "파티 켜기" for it.
+  - The server refuses `POST /parties` for it with 409 `QUEST_TAKEN_ALONE`, so no Friend is signalled and no Party is listed.
+  - A seat's Quest opens the same room and gets the same.
+- **D. A refused "여기로" asks anew.** A 4xx refusal made nothing, so the Plan's idempotency key goes. No answer, or a 5xx, keeps it, since the Quest may have been made. This holds for "이대로 초대" too, which shares the hook.
+- **E. Two server tests.** Attending again keeps a 파티's own capacity 6 and its settings. A Quest taken alone with no event, as a seat's is, refuses a change of settings with 409.
+- **Tests.** B, D, the room, and 알림 failed before their fixes (5 app tests), and so did the Party refusal (1 server test). E's two tests guard what already held.
+
 ### Emulator check (2026-11-17)
 
 Run on the mock dev build by taps. For the check only, two uncommitted local changes were made: the example chip "식사 메뉴 추천" answered with the stored events answer, and the mock refused "여기로" on the concert with `SHARED_QUEST_HELD`.

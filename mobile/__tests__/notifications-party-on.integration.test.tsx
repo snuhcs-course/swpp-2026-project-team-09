@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -131,5 +132,18 @@ describe('a press on 파티 켜기 while the User is in another Party', () => {
     expect(asked.indexOf('POST /parties/mine/leave')).toBeGreaterThan(-1);
     expect(asked.indexOf('POST /parties/mine/leave')).toBeLessThan(asked.indexOf('POST /parties'));
     expect(server.received('POST /parties').map(({ body }) => body)).toEqual([OPENING]);
+  });
+});
+
+// Partitions: the row of a Quest taken alone (the review of PR 338, C). Expected values: no 파티 켜기, as its Party
+// would show it to Friends.
+describe('the time to leave of a Quest taken alone', () => {
+  it('offers no 파티 켜기', async () => {
+    server.on('GET /quests', { status: 200, body: [{ ...DINNER, takenAlone: true, capacity: 1 }] });
+
+    await openNotifications();
+
+    expect(screen.getByRole('button', { name: ROW })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '파티 켜기' })).toBeNull();
   });
 });

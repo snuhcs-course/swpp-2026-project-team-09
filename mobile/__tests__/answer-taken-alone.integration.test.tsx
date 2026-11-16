@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -13,6 +14,7 @@ import { pass } from './support/app';
 import { card } from './support/answer-map';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerRecalculations, ASKER, EVENTS_REPLY, firstPlan, JOB_FAIR, sayOnMap } from './support/row-four';
@@ -164,5 +166,41 @@ describe('an event taken alone, refused or gone', () => {
 
     expect(screen.getByText('이 행사에 함께 가는 파티가 이미 있어요')).toBeVisible();
     expect(card().queryByTestId('taken-card')).toBeNull();
+  });
+});
+
+// Partitions: a taken card whose Quest the party form made a 파티 since; "여기로" pressed again after a refusal.
+// Expected values: the review of PR 338 (B and D).
+describe('a taken card, later', () => {
+  it('goes once its Quest is a 파티, and the 파티 is not dropped', async () => {
+    server.on(DROP, { status: 204 });
+    await takeJobFair();
+    await socketServer((socket) => {
+      socket.accept();
+    });
+
+    server.on('GET /quests', { status: 200, body: [{ ...TAKEN.quest, takenAlone: false, capacity: 4 }] });
+    await socketServer((socket) => {
+      socket.send('quests-changed');
+    });
+    await pass(500);
+
+    expect(card().queryByTestId('taken-card')).toBeNull();
+    expect(card().getByRole('button', { name: '여기로' })).toBeEnabled();
+    expect(server.received(DROP)).toEqual([]);
+  });
+
+  it('a refused "여기로" asks anew, with another key', async () => {
+    server.on('POST /plans', refusal(409, 'SHARED_QUEST_HELD'));
+    const user = await takeJobFair();
+    server.on('POST /plans', { status: 201, body: TAKEN });
+
+    await user.press(card().getByRole('button', { name: '여기로' }));
+    await pass(500);
+
+    const keys = server.received('POST /plans').map(({ idempotencyKey }) => idempotencyKey);
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).not.toBe(keys[0]);
+    expect(card().getByTestId('taken-card')).toBeVisible();
   });
 });

@@ -5,6 +5,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -14,7 +15,7 @@ import { FriendsService } from '../friends/friends.service.js';
 import { JoinPolicy, Party, Prisma } from '../generated/prisma/client.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { QuestsService } from '../quests/quests.service.js';
-import { questNotFound } from '../quests/refusals.js';
+import { questNotFound, takenAloneRefused } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
 import { type OpenPartyDto } from './dto/party-requests.dto.js';
 import {
@@ -198,12 +199,16 @@ export class PartiesService {
     }
   }
 
-  // The Party's Quest is a stored Quest the opener holds, with Sub Quests ahead, that no running Party has. The Quest is
-  // locked, so that two Holders opening a Party for it run one after the other.
+  // The Party's Quest is a stored Quest the opener holds, with Sub Quests ahead, that no running Party has and that was
+  // not taken alone, as a Party shows it to Friends. The Quest is locked, so that two Holders opening a Party for it run
+  // one after the other.
   private async checkQuest(userId: string, questId: string, tx: Prisma.TransactionClient): Promise<void> {
     await this.quests.lock(questId, tx);
     if (!(await this.quests.holderIds(questId, tx)).includes(userId)) {
       throw questNotFound();
+    }
+    if ((await tx.quest.findUnique({ where: { id: questId } }))?.takenAlone === true) {
+      throw takenAloneRefused();
     }
     if ((await this.quests.withSubQuestsAhead([questId], tx)).length === 0) {
       throw conflict('QUEST_ENDED', 'This Quest has no Sub Quest ahead.');

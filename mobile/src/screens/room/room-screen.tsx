@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -128,6 +129,15 @@ function goingAsk(room: RoomView, actions: RoomActions, onLeft: () => void): Ask
       onLeft();
     }
   };
+  if (heldAlone(room.quest)) {
+    return {
+      title: '퀘스트를 없앨까요?',
+      body: '퀘스트가 사라져요.',
+      confirm: '퀘스트 없애기',
+      danger: true,
+      onConfirm: () => void actions.endQuest(room.quest.id, party).then(leave),
+    };
+  }
   return room.leads
     ? {
         title: '파티를 없앨까요?',
@@ -156,11 +166,13 @@ function useCloseWhenGone(gone: boolean, left: { current: boolean }): void {
   }, [gone, left]);
 }
 
-// The footer's full-width danger button: `나가기`, or `파티 없애기` for the Leader.
+// The footer's full-width danger button: `나가기`, `파티 없애기` for the Leader, or `퀘스트 없애기` for a Quest taken
+// alone.
 function Footer({ room, onPress }: { room: RoomView; onPress: () => void }): ReactElement {
+  const words = room.leads ? '파티 없애기' : '나가기';
   return (
     <Button full onPress={onPress} size="lg" variant="danger">
-      {room.leads ? '파티 없애기' : '나가기'}
+      {heldAlone(room.quest) ? '퀘스트 없애기' : words}
     </Button>
   );
 }
@@ -173,19 +185,21 @@ interface BodyProps {
   open: boolean;
 }
 
-// The frame's order: the head, the activation, the event card, 일정, 신청, 멤버, 초대 중 and 파티 채팅.
+// The frame's order: the head, the activation, the event card, 일정, 신청, 멤버, 초대 중 and 파티 채팅. A Quest taken
+// alone has no Party to switch on and no 파티 채팅: either would show it to Friends.
 function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
   const walks = useWalkingTimes(room, open);
+  const party = !heldAlone(room.quest);
   return (
     <View style={styles.body}>
       <Head room={room} />
-      <ActivationBox actions={actions} onAsk={onAsk} room={room} />
+      {party ? <ActivationBox actions={actions} onAsk={onAsk} room={room} /> : null}
       {room.quest.globalEvent === null ? null : <RoomEvent event={room.quest.globalEvent} />}
       <PlanSection actions={actions} room={room} />
       <RequestsSection actions={actions} room={room} />
       <MembersSection actions={actions} room={room} walks={walks} />
       <InvitationsSection actions={actions} room={room} />
-      <PartyChat questId={room.quest.id} />
+      {party ? <PartyChat questId={room.quest.id} /> : null}
     </View>
   );
 }
@@ -220,7 +234,7 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
       actions={room === undefined ? undefined : <RecruitingActions room={room} />}
       footerHidesForKeyboard
       leave={{ kind: 'back', onPress: leaveRoom }}
-      title="파티"
+      title={room !== undefined && heldAlone(room.quest) ? '퀘스트' : '파티'}
     >
       {room === undefined ? null : <Body actions={actions} onAsk={setAsk} open={open} room={room} />}
       {room === undefined && isPending ? <LoadingState /> : null}

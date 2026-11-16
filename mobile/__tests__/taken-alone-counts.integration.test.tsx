@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -76,12 +77,27 @@ describe('the counts of parties', () => {
   });
 });
 
-// Partitions: the room of a Quest taken alone that the User leads. Expected values: no 수정.
+// Partitions: the room of a Quest taken alone that the User leads; its one action. Expected values: P03 ticket 17's
+// decisions and the review of PR 338 (C): a 퀘스트, with no 수정, no 파티 활성화 and no 파티 채팅.
 describe('the room of a Quest taken alone', () => {
-  it('offers no 수정', async () => {
+  it('is a 퀘스트, with no 수정, no 파티 활성화 and no 파티 채팅', async () => {
     await openRoom(TAKEN);
 
     expect(screen.getByText(TAKEN.title)).toBeVisible();
+    expect(screen.getByRole('header', { name: '퀘스트' })).toBeVisible();
+    expect(screen.queryByText(/^파티 · /u)).toBeNull();
+    expect(screen.queryByText('내가 만든 파티')).toBeNull();
     expect(screen.queryByRole('button', { name: '수정' })).toBeNull();
+    expect(screen.queryByLabelText('파티 활성화')).toBeNull();
+    expect(screen.queryByText('파티 채팅')).toBeNull();
+  });
+
+  it("asks before 퀘스트 없애기, in a 퀘스트's words", async () => {
+    const user = await openRoom(TAKEN);
+
+    await user.press(screen.getByRole('button', { name: '퀘스트 없애기' }));
+
+    expect(screen.getByText('퀘스트를 없앨까요?')).toBeVisible();
+    expect(screen.getByText('퀘스트가 사라져요.')).toBeVisible();
   });
 });
