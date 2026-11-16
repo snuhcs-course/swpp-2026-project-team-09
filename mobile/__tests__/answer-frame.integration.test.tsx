@@ -312,3 +312,49 @@ describe('the bar and the keyboard', () => {
     expect(screen.getByTestId('answer-card')).toBeVisible();
   });
 });
+
+// The examples the empty chat offered, by their words.
+const EXAMPLES = ['식사 메뉴 추천', '현재 통학/순환 셔틀 위치', '파티 찾기'];
+
+// Partitions: the keyboard down and up with nothing asked; something asked; an example pressed.
+describe('the examples above the bar (P02 ticket 04)', () => {
+  it('are offered above the bar while the keyboard is up and nothing is asked', async () => {
+    await openFramed();
+
+    await showKeyboard(KEYBOARD);
+
+    for (const words of EXAMPLES) {
+      expect(screen.getByRole('button', { name: words })).toBeVisible();
+    }
+  });
+
+  it('are not offered while the keyboard is down', async () => {
+    await openFramed();
+
+    for (const words of EXAMPLES) {
+      expect(screen.queryByRole('button', { name: words })).toBeNull();
+    }
+  });
+
+  it('are offered no more once something is asked', async () => {
+    const user = await openFramed();
+    await showKeyboard(KEYBOARD);
+
+    await ask(user);
+
+    expect(screen.queryByRole('button', { name: EXAMPLES[0] })).toBeNull();
+  });
+
+  it('send the example pressed, with the request context, and the pill says it', async () => {
+    const user = await openFramed();
+    await showKeyboard(KEYBOARD);
+
+    await user.press(screen.getByRole('button', { name: '파티 찾기' }));
+    await pass(1000);
+
+    expect(pill().getByText('파티 찾기')).toBeVisible();
+    expect(sentBodies()).toEqual([
+      expect.objectContaining({ messages: [{ role: 'user', text: '파티 찾기' }], context: CONTEXT }),
+    ]);
+  });
+});

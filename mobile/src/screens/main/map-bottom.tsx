@@ -26,6 +26,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { AnswerFrame } from './answer/answer-frame';
+import { AskedExamples } from './answer/asked-examples';
 import { MadeQuestFrame } from './answer/made-quest-frame';
 import { InvitationFrame } from './answer/received-invitation-card';
 import { BottomControls } from './bottom-controls';
@@ -165,11 +166,11 @@ function EverydayBottom(props: EverydayProps): ReactElement {
 }
 
 // What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
-// card at the bottom hides the row and the button; the notice hides the row, and the button stands above it. A message
-// sent from the AI input shows the answer frame, which hides the rest, and the input is its card's: it stays in the
-// same place in the tree, so that it keeps the focus. While the keyboard is up, the input stands right above it. The
-// conversation is kept while the app runs. A card nobody asked for, a received invitation's or a made Quest's, takes
-// the bottom without the input.
+// card at the bottom hides the row and the button; the notice hides the row, and the button stands above it. While the
+// keyboard is up and nothing is asked, the examples stand above the input. A message sent from the AI input shows the
+// answer frame, which hides the rest, and the input is its card's: it stays in the same place in the tree, so that it
+// keeps the focus. While the keyboard is up, the input stands right above it. The conversation is kept while the app
+// runs. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom without the input.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { onAnswerHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
   const { invitation, made } = unasked;
@@ -181,10 +182,12 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const inputGone = chat.framed && (chat.answer.adding || chat.chat.waiting);
   const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
   const inputTop = inputGone ? lift : AI_INPUT.bottom + lift + inputHeight;
+  const send = sendWithKeyboardDown(chat.chat.send);
   return (
     <>
       {!chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
       <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+      {!chat.framed && keyboardUp ? <AskedExamples bottom={inputTop + space[2]} onSend={send} /> : null}
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
       {made.shown === null ? null : (
         <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
@@ -195,7 +198,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
           onHeight={setInputHeight}
           placeholder={chat.framed ? '이어서 말하기' : undefined}
           restore={restoreOf(chat.chat.bubbles)}
-          onSend={sendWithKeyboardDown(chat.chat.send)}
+          onSend={send}
           waiting={chat.chat.waiting}
         />
       ) : null}
