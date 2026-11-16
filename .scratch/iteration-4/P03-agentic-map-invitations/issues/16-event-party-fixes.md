@@ -35,5 +35,5 @@ Two bugs the smoke test of the Release found in "같이 갈 파티" and "새로 
 
 ### Agent usage (2026-11-16)
 
-- Agent time: about 35 minutes in this session, an estimate from the transcript's timestamps, between the solo-Quest PR's opening and this one's. No subagent took part.
-- Tokens: counted with ticket 15's session total, in that ticket's own section, as the same session did both.
+- Agent time: about 15 minutes in this session, an estimate from the transcript's timestamps (22:43 to 23:04, less about 7 minutes of a fix to PR 334 in the same span). No subagent took part.
+- Tokens, 22:43 to 23:04 including that PR 334 fix: input 32.57M, of which 32.50M cache reads, 0.07M cache writes, and 112 uncached; output 0.04M.
