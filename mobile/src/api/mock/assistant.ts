@@ -157,6 +157,13 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
+// The mock's own Places (`data/places.ts`) of the copies' fixed Places, 자하연식당's building and 301동, so that a
+// building pressed on the mock gets them too.
+const PRESSED_ON_MOCK: Readonly<Record<string, AnswerReply>> = {
+  'place-109': MEAL_ANSWER_FIXED_PLACE,
+  'place-301': MEAL_ANSWER_UNFIT_PLACE,
+};
+
 // The mock holds copies of meal answers and of one meet, asked as it first is and again from 14:00, so other conditions
 // are read as a meal of the User alone. Three people at a pressed Place get the copy of that Place when there is one
 // ("여기면 어때?").
@@ -172,7 +179,7 @@ function copyFor(input: PlanInput): AnswerReply {
   if (people.length >= 3) {
     const placeId = input.kind === 'meal' ? input.placeId : null;
     const pressed = [MEAL_ANSWER_FIXED_PLACE, MEAL_ANSWER_UNFIT_PLACE].find((copy) => copy.input.placeId === placeId);
-    return pressed ?? MEAL_ANSWER_THREE;
+    return pressed ?? (placeId === null ? undefined : PRESSED_ON_MOCK[placeId]) ?? MEAL_ANSWER_THREE;
   }
   if (from !== null) {
     return MEAL_ANSWER_FIXED_START;
