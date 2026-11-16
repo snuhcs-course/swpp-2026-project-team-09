@@ -12,3 +12,11 @@ export interface WatchedInterest {
   topics: string[];
   createdAt: string;
 }
+
+// GET /interests/matches: the published events that have not ended and the recruiting Quests that share a topic with
+// the User's hashtags or watched interests. `watched` is true for a match of a watched interest, false for a match of a
+// hashtag only, which shows on the map and is never told.
+export interface InterestMatches {
+  globalEvents: { id: string; watched: boolean }[];
+  quests: { id: string; watched: boolean }[];
+}

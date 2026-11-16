@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import {
   FRIEND_REQUESTS_KEY,
   FRIENDS_KEY,
   GLOBAL_EVENTS_KEY,
+  interestMatchesQuery,
   JOIN_REQUESTS_KEY,
   MATCHING_REQUESTS_KEY,
   MY_JOIN_REQUESTS_KEY,
@@ -58,10 +60,11 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   ],
   // Who is in the User's Party changes whom the User sees.
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
-  'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
+  // A new event or party that matches the User's interests comes with a `notice`, and its mark with the matches.
+  'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY, interestMatchesQuery.queryKey],
   'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
   'room-requests-changed': [ROOM_INBOX_KEY, ROOM_REQUEST_KEY],
-  notice: [NOTIFICATIONS_KEY],
+  notice: [NOTIFICATIONS_KEY, interestMatchesQuery.queryKey],
   'invitation-accepted': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   'invitation-declined': [QUESTS_KEY, SENT_INVITATIONS_KEY],
   late: [QUESTS_KEY],

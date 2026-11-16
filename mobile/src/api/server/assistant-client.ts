@@ -151,7 +151,10 @@ export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswe
     const reply = await call('POST', '/assistant/messages', isAssistantReply, { body });
     return { ...reply, cards: reply.cards.map(filled) };
   },
-  recalculateAnswer: (input, location) =>
-    call('POST', '/assistant/answers', isAnswerReply, { body: { input, location } }),
+  // A main server before P02-13 refuses a key it does not know, so the reason is sent only when there is one.
+  recalculateAnswer: (input, location, missing) =>
+    call('POST', '/assistant/answers', isAnswerReply, {
+      body: { input, location, ...((missing ?? null) === null ? {} : { locationMissing: missing }) },
+    }),
   answerTap: (tapped, location) => call('POST', '/assistant/taps', isLookup, { body: { tapped, location } }),
 };

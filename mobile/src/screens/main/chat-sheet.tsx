@@ -18,7 +18,6 @@ import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal, RequestContext } from '@/api/assistant-types';
 import type { Tapped } from '@/api/lookup-types';
-import type { LatLng } from '@/api/types';
 import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { onAnswerSwitchChange, useAnswerSwitch } from '@/features/assistant/answer-switch';
 import { type Chat, type ChatBubble, useChat } from '@/features/assistant/use-chat';
@@ -30,6 +29,7 @@ import { openPost } from '../party/post-card';
 import { ChatBubbles, ChatEmpty } from './chat-bubbles';
 import { type CardLeaving, useCardActions } from './chat-card-actions';
 import type { ProposalActions } from './chat-cards';
+import type { Me } from './use-me';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 interface ChatSheetProps {
@@ -215,12 +215,15 @@ function stay(): void {
   // A card that leads elsewhere leaves the answer frame as it is.
 }
 
-// What the app knows when the User asks: where the User is on campus, what was pressed on the map, and the conditions
-// and the Plan of the answer on screen.
-function contextAt(position: LatLng | null, shown: ShownAnswer | null, tapped: Tapped | null): RequestContext {
+type Where = Pick<Me, 'position' | 'locationMissing'>;
+
+// What the app knows when the User asks: where the User is on campus or why that is not known, what was pressed on
+// the map, and the conditions and the Plan of the answer on screen.
+function contextAt(where: Where, shown: ShownAnswer | null, tapped: Tapped | null): RequestContext {
+  const { position, locationMissing } = where;
   const conditions = shown?.answer?.input ?? null;
   const planId = shown?.plan?.id ?? null;
-  return { location: position, viewport: null, tapped, conditions, planId };
+  return { location: position, locationMissing, viewport: null, tapped, conditions, planId };
 }
 
 // A map button of the answer frame: forgets the conversation and turns its layer on.
@@ -238,17 +241,18 @@ const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 �
 function useAnswerOnScreen(
   onMap: boolean,
   bubbles: readonly ChatBubble[],
-  position: LatLng | null,
+  { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
 ): { answer: ShownAnswer; invitation: PlanInvitation } {
   const showToast = useToast();
   const shown = useShownAnswer(onMap ? bubbles : NO_BUBBLES, {
     location: position,
+    locationMissing,
     onFailed: () => {
       showToast(NOT_RECALCULATED);
     },
   });
-  const invitation = usePlanInvitation(shown, { location: position, say: showToast });
+  const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
   useEffect(() => {
     shownNow.current = shown;
   });
@@ -259,13 +263,11 @@ function useAnswerOnScreen(
 // and what was pressed on the map, which `setTapped` keeps.
 function useContextChat(
   onMap: boolean,
-  position: LatLng | null,
+  where: Where,
   shownNow: RefObject<ShownAnswer | null>,
 ): { chat: Chat; setTapped: ChatSheetControl['setTapped'] } {
   const tappedNow = useRef<Tapped | null>(null);
-  const chat = useChat(
-    onMap ? (): RequestContext => contextAt(position, shownNow.current, tappedNow.current) : undefined,
-  );
+  const chat = useChat(onMap ? (): RequestContext => contextAt(where, shownNow.current, tappedNow.current) : undefined);
   const setTapped = useCallback((tapped: Tapped | null): void => {
     tappedNow.current = tapped;
   }, []);
@@ -278,7 +280,7 @@ function useContextChat(
 // once made, closes it and shows 내 파티, as the party form does, and its 수정, like a Restaurant card's 파티 만들기, closes
 // it and opens that form. However the sheet closes, the keyboard goes down with it: the AI input would keep the focus
 // otherwise.
-// With the switch of the answer on the map on, every request carries the context at the User's `position`, the sheet
+// With the switch of the answer on the map on, every request carries the context at `where` the User is, the sheet
 // never opens, and the answer frame shows the conversation instead: a card that leads elsewhere leaves the frame as
 // it is, and a map button forgets the conversation and turns its layer on. A change of the switch closes the sheet and
 // forgets the conversation. A Lookup's "길 안내" starts the route guidance with `start` and forgets the conversation
@@ -286,12 +288,12 @@ function useContextChat(
 export function useChatSheet(
   inFront: boolean,
   turnOn: (layer: MapLayer) => void,
-  position: LatLng | null,
+  where: Where,
   start: StartGuidance,
 ): ChatSheetControl {
   const onMap = useAnswerSwitch();
   const shownNow = useRef<ShownAnswer | null>(null);
-  const { chat, setTapped } = useContextChat(onMap, position, shownNow);
+  const { chat, setTapped } = useContextChat(onMap, where, shownNow);
   const [shown, setShown] = useState(false);
   const open = useCallback((): void => {
     if (!onMap) {
@@ -314,7 +316,7 @@ export function useChatSheet(
     onMap,
     framed: onMap && (chat.bubbles.length > 0 || chat.waiting),
     leaving: { showLayer: forgettingFor(chat.reset, turnOn), openEvent, openQuestPost, openPartyForm, proposals },
-    ...useAnswerOnScreen(onMap, chat.bubbles, position, shownNow),
+    ...useAnswerOnScreen(onMap, chat.bubbles, where, shownNow),
     lookup: useShownLookup(onMap ? chat.bubbles : NO_BUBBLES, start, chat.reset),
     setTapped,
     sheet: (inputTop) =>

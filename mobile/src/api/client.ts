@@ -20,13 +20,14 @@
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
 import type { InvitationCard, OwnWay } from './invitation-card-types';
 import type { Lookup, Tapped } from './lookup-types';
+import type { LocationMissing } from './refusal-types';
 import { mockClient } from './mock/client';
 import { tellAskLevels } from './plan-asks';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
-import type { WatchedInterest } from './interest-types';
+import type { InterestMatches, WatchedInterest } from './interest-types';
 import type { MatchingRequest } from './matching-types';
 import type {
   AskedMoment,
@@ -199,8 +200,9 @@ export interface ApiClient {
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked when it gives that.
   askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
-  // An answer drawn on the map, recalculated from its changed input and where the User is now, without the model.
-  recalculateAnswer: (input: PlanInput, location: LatLng | null) => Promise<AnswerReply>;
+  // An answer drawn on the map, recalculated from its changed input and where the User is now or why that is not
+  // known, without the model.
+  recalculateAnswer: (input: PlanInput, location: LatLng | null, missing?: LocationMissing) => Promise<AnswerReply>;
   // The card of a building or a Friend's face pressed on the everyday map, without the model and without counting the
   // User's messages. Refused with 400 for an id that is no Place and with 404 FRIEND_NOT_FOUND for someone who is not
   // the User's Friend.
@@ -229,6 +231,8 @@ export interface ApiClient {
   watchInterest: (words: string) => Promise<WatchedInterest>;
   // Refused with 404 INTEREST_NOT_FOUND.
   removeInterest: (interestId: string) => Promise<void>;
+  // What matches the User's hashtags and watched interests. Null from a main server that does not answer it yet.
+  listInterestMatches: () => Promise<InterestMatches | null>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -332,7 +336,7 @@ export const apiClient: ShownClient = {
   listCompanionSeekers: () => chosen().listCompanionSeekers(),
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
-  recalculateAnswer: (input, location) => chosen().recalculateAnswer(input, location),
+  recalculateAnswer: (input, location, missing) => chosen().recalculateAnswer(input, location, missing),
   answerTap: (tapped, location) => chosen().answerTap(tapped, location),
   // Whatever screen made the Quest, the question about the Friends the reply names is asked by its own host.
   makePlanQuest: async (making, key) => {
@@ -353,4 +357,5 @@ export const apiClient: ShownClient = {
   listInterests: () => chosen().listInterests(),
   watchInterest: (words) => chosen().watchInterest(words),
   removeInterest: (interestId) => chosen().removeInterest(interestId),
+  listInterestMatches: () => chosen().listInterestMatches(),
 };

@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
+import { useMarkPresses } from '@/features/map/use-interest-marks';
 import type { MapAvatar, MapLine } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
@@ -62,11 +63,11 @@ export type MapView = AnswerMap & { around: MapTouches };
 
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, which takes a press while the switch is on, and
-// the lines. While the switch is on, a tap on a building opens its card and the Place is marked. While a Plan of an
-// answer is shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received
-// invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A Lookup on screen
-// is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left further out than
-// the everyday map allows glides back in.
+// the lines. While the switch is on, a tap on a building opens its card and the Place is marked, and a press on an
+// interest mark opens its answer instead of a card. While a Plan of an answer is shown, the Plan is drawn in their
+// place, and a press on a candidate shows its Plan; while a received invitation's card is, its own way is; while a made
+// Quest's card is, its Places and the User are. A Lookup on screen is drawn as a Plan is, and takes no press
+// (`useLookupMap`). Once any of them closes, a camera left further out than the everyday map allows glides back in.
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
@@ -74,7 +75,8 @@ export function useMapView(
   { me, pin, lines, cards, selection }: Everyday,
   { invitation, made }: UnaskedCards,
 ): MapView {
-  const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap);
+  const marks = useMarkPresses(chat.chat, me.position, cards);
+  const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap, marks.byId);
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
@@ -94,7 +96,10 @@ export function useMapView(
   const markers = [...things.markers, ...pressed.markers, ...pin.markers];
   return {
     contents: { markers, avatars: [...avatars, ...mine], lines },
-    onPress: chat.framed || unasked ? ignorePress : pressWithPin(pin, pressOnMap(cards, map, selection), pressed.keep),
+    onPress:
+      chat.framed || unasked
+        ? ignorePress
+        : pressWithPin(pin, marks.pressing(pressOnMap(cards, map, selection)), pressed.keep),
     around,
     ...limits,
   };

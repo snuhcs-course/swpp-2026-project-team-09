@@ -141,8 +141,8 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
         } else if (primary.action === 'shuttle-line') {
           map.fitTo(shuttleLine, ROUTE_PADDING);
           onClose();
-        } else if (primary.action === 'room') {
-          router.push(`/room/${primary.questId}`);
+        } else if (primary.action === 'room' || primary.action === 'post') {
+          router.push(primary.action === 'room' ? `/room/${primary.questId}` : `/post/${primary.questId}`);
         } else if (primary.action === 'active-party') {
           onActiveParty();
         } else if (primary.action === 'recruit') {

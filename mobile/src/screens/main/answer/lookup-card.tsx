@@ -16,6 +16,7 @@ import { mainActionOf, type ShownLookup } from '@/features/assistant/use-shown-l
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
 import { MEET, useMeetAsk } from '../meet-button';
 import { AnswerLines } from './answer-lines';
+import { CardNote } from './card-note';
 import { ReadOnlyChip } from './condition-chips';
 import { isButton, pressOffer } from './refusal-reply';
 import { TimeBand } from './time-band';
@@ -175,6 +176,7 @@ export function LookupCard(props: LookupCardProps): ReactElement {
           onDrop={ignoreDrop}
         />
       )}
+      <CardNote note={lookup.note} />
       <Buttons main={mainOf(props, meet)} onClose={onClose} />
     </View>
   );

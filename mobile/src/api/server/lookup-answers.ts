@@ -6,7 +6,9 @@
 
 import type { CardFact, Lookup, LookupAction, LookupCard, LookupStep } from '@/api/lookup-types';
 import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
-import { isBand, isChip, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
+import { isChip } from './chip-answers';
+import { isNote } from './missing-input-answers';
+import { isBand, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
 import { isInput, isOneOf } from './plan-inputs';
 
 // The app's check of a reply's Lookup, every field of it, as the answer screen draws each.
@@ -76,6 +78,7 @@ export function isLookup(value: unknown): value is Lookup {
     (band === null || isBand(band)) &&
     listOf(isAction)(field(value, 'actions')) &&
     (card === undefined || card === null || isCard(card)) &&
-    (steps === undefined || listOf(isStep)(steps))
+    (steps === undefined || listOf(isStep)(steps)) &&
+    isNote(field(value, 'note'))
   );
 }
