@@ -22,6 +22,7 @@ import type { Tapped } from '@/api/lookup-types';
 import { useToast } from '@/design-system';
 import type { Viewport } from '@/features/assistant/study-area';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
+import { type HowAbout, useHowAbout } from '@/features/assistant/use-how-about';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features/assistant/use-shown-lookup';
@@ -40,6 +41,8 @@ export interface ChatSheetControl {
   answer: ShownAnswer;
   // The Quest "이대로 초대" made from the Plan on screen, and how each invited Friend stands.
   invitation: PlanInvitation;
+  // A building pressed while a meal's Plan is on screen, and its answer ("여기면 어때?").
+  howAbout: HowAbout;
   // The Lookup on screen, which the map and the frame's card draw.
   lookup: ShownLookup;
   // What was pressed on the map and is open in its card, which every request carries from then on; null for nothing.
@@ -70,25 +73,27 @@ function forgettingFor(reset: () => void, turnOn: (layer: MapLayer) => void): (l
 
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
-// The answer on screen, kept in `shownNow` for the context of the next request, and the Quest made from its Plan.
+// The answer on screen, kept in `shownNow` for the context of the next request, the Quest made from its Plan, and a
+// building asked about over it.
 function useAnswerOnScreen(
   bubbles: readonly ChatBubble[],
   { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
-): { answer: ShownAnswer; invitation: PlanInvitation } {
+): Pick<ChatSheetControl, 'answer' | 'invitation' | 'howAbout'> {
   const showToast = useToast();
-  const shown = useShownAnswer(bubbles, {
+  const recalculation = {
     location: position,
     locationMissing,
-    onFailed: () => {
+    onFailed: (): void => {
       showToast(NOT_RECALCULATED);
     },
-  });
+  };
+  const shown = useShownAnswer(bubbles, recalculation);
   const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
   useEffect(() => {
     shownNow.current = shown;
   });
-  return { answer: shown, invitation };
+  return { answer: shown, invitation, howAbout: useHowAbout(shown, invitation, recalculation) };
 }
 
 // The conversation, every request of which carries the context at `where` the User is, and what the answer frame

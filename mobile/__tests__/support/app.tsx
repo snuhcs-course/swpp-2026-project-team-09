@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -22,7 +23,6 @@ import MeScreen from '@/app/(signed-in)/(tabs)/me';
 import PartyScreen from '@/app/(signed-in)/(tabs)/party';
 import BoardScreen from '@/app/(signed-in)/boards/[board]';
 import BoardsScreen from '@/app/(signed-in)/boards/index';
-import MatchingScreen from '@/app/(signed-in)/matching';
 import NotificationsScreen from '@/app/(signed-in)/notifications';
 import PartyFormScreen from '@/app/(signed-in)/party-form';
 import PlaceMapScreen from '@/app/(signed-in)/place-map';
@@ -99,7 +99,6 @@ export async function startApp(initialUrl = '/', more: Record<string, ComponentT
       '(signed-in)/boards/[board]': BoardScreen,
       '(signed-in)/post/[questId]': PostScreen,
       '(signed-in)/party-form': PartyFormScreen,
-      '(signed-in)/matching': MatchingScreen,
       ...more,
     },
     { initialUrl },

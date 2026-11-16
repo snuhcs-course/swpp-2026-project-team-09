@@ -13,6 +13,7 @@ import { color, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
+import type { HowAbout } from '@/features/assistant/use-how-about';
 import { keepsShown, lastReply, type ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { useBackToClose } from '@/hooks/use-back-to-close';
@@ -26,6 +27,7 @@ import type { Room } from '../layout';
 import { AnswerLines } from './answer-lines';
 import { AnswerPill } from './answer-pill';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
+import { HowAboutCard } from './how-about-card';
 import { InvitedCard } from './invited-card';
 import { LookupCard } from './lookup-card';
 import { OfferedWords } from './offered-words';
@@ -41,6 +43,7 @@ interface WordsProps {
   shown: ShownAnswer;
   lookup: ShownLookup;
   invitation: PlanInvitation;
+  howAbout: HowAbout;
   // How high the Plan's card may stand before the card scrolls, null until it is known.
   room: number | null;
   onClose: () => void;
@@ -55,10 +58,13 @@ interface WordsProps {
 // lines of its answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence;
 // otherwise the sentence as Markdown.
 function Words(props: WordsProps): ReactElement {
-  const { bubble, shown, lookup: onScreen, invitation, room, onClose, onAsk, addRecalculated } = props;
+  const { bubble, shown, lookup: onScreen, invitation, howAbout, room, onClose, onAsk, addRecalculated } = props;
   const { answer, refusal = null } = bubble;
   const keeps = keepsShown(bubble);
   const fromReply = answer !== undefined && answer !== null && answer === shown.source;
+  if (fromReply && howAbout.place !== null && shown.plan !== null) {
+    return <HowAboutCard current={shown.plan} howAbout={howAbout} />;
+  }
   if ((fromReply || keeps) && shown.answer !== null) {
     const { made, standings } = invitation;
     const over = keeps ? refusal?.lines : undefined;
@@ -176,6 +182,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                   <Words
                     addRecalculated={control.chat.addRecalculated}
                     bubble={bubble}
+                    howAbout={control.howAbout}
                     invitation={control.invitation}
                     lookup={control.lookup}
                     onAsk={control.chat.send}
@@ -204,7 +211,8 @@ interface FramedProps {
 }
 
 // The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
-// ✕ and Android's back button forget the conversation, a reply on its way included. A Friend's profile opened from
+// ✕ and Android's back button forget the conversation, a reply on its way included; while a building is asked about
+// over the answer ("여기면 어때?"), they return to the answer instead, and the pill names the building. A Friend's profile opened from
 // the card stands over it until a new reply; while it is shown, the back button hides it alone. This handler is the
 // only one, and listens only while the main screen is in front, so a screen pushed from the profile goes back to it.
 function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
@@ -216,11 +224,17 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
   }, [reset]);
   const profile = useProfileOver(lastReply(chat.bubbles)?.id ?? null);
   const profileShown = profile.friend !== null && !keyboardUp;
-  useBackToClose(useIsFocused(), profileShown ? profile.hide : close, { edge: false });
+  const { title, keep } = control.howAbout;
+  const leave = title === null ? close : keep;
+  useBackToClose(useIsFocused(), profileShown ? profile.hide : leave, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
-      <AnswerPill asked={turnOf(chat.bubbles)?.asked ?? ''} icon={pillIconOf(chat.bubbles)} onClose={close} />
+      <AnswerPill
+        asked={title ?? turnOf(chat.bubbles)?.asked ?? ''}
+        icon={title === null ? pillIconOf(chat.bubbles) : 'pin'}
+        onClose={leave}
+      />
       <AnswerCard
         barRoom={barRoom}
         cardActions={actions}

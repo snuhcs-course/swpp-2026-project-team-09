@@ -32,10 +32,9 @@ interface PlaceCardProps {
   onHeight: (height: number) => void;
 }
 
-// A `plan` button is drawn only for an answer the frame draws: a meal. Row 4's events and Quests have no screen in the
-// frame yet (note (11)).
+// Every `plan` button: the frame draws a meal's answer, and those of events and parties ("행사 보기", "같이 갈 파티").
 function shownPlans(actions: readonly LookupAction[]): PlanAction[] {
-  return actions.filter((action): action is PlanAction => action.kind === 'plan' && action.input.kind === 'meal');
+  return actions.filter((action): action is PlanAction => action.kind === 'plan');
 }
 
 function Head({
@@ -67,33 +66,38 @@ interface ButtonsProps {
   onGuide: (action: GuideAction) => void;
 }
 
-// Each `plan` by its label, then the way as "가는 길"; the first is the main one.
+// Each `plan` by its label, then the way as "가는 길", in cells of one width; the first is the main one.
 function Buttons({ actions, plan, onGuide }: ButtonsProps): ReactElement {
   const guide = actions.find((action): action is GuideAction => action.kind === 'guide');
   const plans = shownPlans(actions);
   return (
     <View style={styles.buttons}>
       {plans.map((action, index) => (
-        <Button
-          disabled={plan.asking}
-          key={action.label}
-          onPress={() => {
-            plan.ask(action);
-          }}
-          variant={index === 0 ? 'primary' : 'secondary'}
-        >
-          {action.label}
-        </Button>
+        <View key={action.label} style={styles.cell}>
+          <Button
+            disabled={plan.asking}
+            full
+            onPress={() => {
+              plan.ask(action);
+            }}
+            variant={index === 0 ? 'primary' : 'secondary'}
+          >
+            {action.label}
+          </Button>
+        </View>
       ))}
       {guide === undefined ? null : (
-        <Button
-          onPress={() => {
-            onGuide(guide);
-          }}
-          variant={plans.length === 0 ? 'primary' : 'secondary'}
-        >
-          가는 길
-        </Button>
+        <View style={styles.cell}>
+          <Button
+            full
+            onPress={() => {
+              onGuide(guide);
+            }}
+            variant={plans.length === 0 ? 'primary' : 'secondary'}
+          >
+            가는 길
+          </Button>
+        </View>
       )}
     </View>
   );
@@ -199,5 +203,6 @@ const styles = StyleSheet.create({
   status: { ...text.body, color: color.inkMuted },
   note: { ...text.body, color: color.quest },
   basis: { ...text.body, color: color.inkMuted },
-  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  buttons: { flexDirection: 'row', gap: space[2] },
+  cell: { flex: 1 },
 });

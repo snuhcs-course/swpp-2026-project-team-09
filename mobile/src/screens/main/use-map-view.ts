@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 import { awayPlaceOf } from '@/features/assistant/study-area';
+import { useAskingShown } from '@/features/assistant/use-how-about';
 import type { CardView } from '@/features/map/adapter';
 import { useMarkPresses } from '@/features/map/use-interest-marks';
 import type { MapAvatar, MapLine } from '@/map';
@@ -21,7 +22,7 @@ import type { MainMap } from './use-main-map';
 import type { MadeQuestCard } from './use-made-quest-card';
 import { type Me, pressableMe } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
-import { bothTouches, type MapTouches, usePressedPlace } from './use-pressed-place';
+import { bothTouches, type MapTouches, type PressedPlace, usePressedPlace } from './use-pressed-place';
 import type { Selection } from './use-selection';
 import { useThings } from './use-things';
 import { useViewport } from './use-viewport';
@@ -64,13 +65,31 @@ export interface UnaskedCards {
 // What the map draws, what a press on it does, and what watches the touches around it.
 export type MapView = AnswerMap & { around: MapTouches };
 
+// A meal's Plan on screen whose buildings take a press ("여기면 어때?", P02 ticket 26): a press on a mark keeps its tap
+// from asking about a building and, while a building is asked about, does nothing else; the pressed building is
+// marked as on the everyday map.
+function withBuildingPress(answer: AnswerMap, pressed: PressedPlace, asked: boolean, around: MapTouches): MapView {
+  return {
+    ...answer,
+    contents: { ...answer.contents, markers: [...answer.contents.markers, ...pressed.markers] },
+    onPress: (id) => {
+      pressed.keep();
+      if (!asked) {
+        answer.onPress(id);
+      }
+    },
+    around,
+  };
+}
+
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, which takes a press, and the lines. A tap on a
 // building opens its card and the Place is marked, and a press on an interest mark opens its answer instead of a card.
 // While a Plan of an answer is shown, the Plan is drawn in their place, and a press on a candidate shows its Plan;
 // while a received invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A
 // Lookup on screen is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left
-// further out than the everyday map allows glides back in. Every request carries the map's visible area at rest
+// further out than the everyday map allows glides back in. While a meal's Plan is on screen, a press on a building asks
+// about it and the map draws that ("여기면 어때?"). Every request carries the map's visible area at rest
 // (`useViewport`).
 export function useMapView(
   chat: ChatSheetControl,
@@ -84,15 +103,20 @@ export function useMapView(
   useViewport(chat, map, room);
   const seats = useAwaySeats(awayPlaceOf(chat.lookup.lookup));
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars, seats);
-  const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
+  const { howAbout } = chat;
+  const shown = useAskingShown(chat.answer, howAbout.point);
+  const plan = useAnswerMap(shown, map, room, { avatars: things.avatars, cards }, chat.invitation);
+  const answer = plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
   const limits = useEverydayLimits(map, answer !== null || way !== null);
   const everyday = answer === null && way === null && !chat.framed && !unasked;
-  const pressed = usePressedPlace(map.camera, selection, chat.setTapped, everyday);
+  const asking = howAbout.pressable && plan !== null && !unasked;
+  const target = asking ? howAbout.target : selection;
+  const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || asking);
   const around = bothTouches(pin.touches, pressed);
   if (answer !== null) {
-    return { ...answer, around };
+    return asking ? withBuildingPress(answer, pressed, howAbout.place !== null, around) : { ...answer, around };
   }
   if (way !== null) {
     return { ...way, around };

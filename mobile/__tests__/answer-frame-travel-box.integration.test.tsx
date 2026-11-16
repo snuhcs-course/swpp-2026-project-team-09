@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -119,7 +120,7 @@ describe('the 이동 시간 box on a card', () => {
     const card = within(frame().getByTestId(`event-${MAJOR.id}`));
     expect(card.getByText('가는 길 셔틀 9분')).toBeVisible();
     expect(card.getByText('끝 시간이 없어요 · 15:44엔 나서야 해요')).toBeVisible();
-    expect(card.getByRole('button', { name: 'AI 매칭' })).toBeVisible();
+    expect(card.getByRole('button', { name: '파티 찾기/모집' })).toBeVisible();
   });
 
   it('is not drawn on a card without its fields', async () => {

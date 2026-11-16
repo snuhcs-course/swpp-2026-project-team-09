@@ -188,7 +188,7 @@ describe('the request', () => {
       {
         messages: [{ role: 'user', text: ASKED }],
         context: CONTEXT,
-        clientCapabilities: ['library', 'answer', 'area', 'meet'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
       },
     ]);
   });
@@ -219,7 +219,7 @@ describe('the request', () => {
         { role: 'user', text: '한식' },
       ],
       context: CONTEXT,
-      clientCapabilities: ['library', 'answer', 'area', 'meet'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
     });
   });
 });

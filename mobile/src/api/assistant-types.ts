@@ -18,6 +18,7 @@ import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { DroppedPlace, PlanPart } from './plan-part-types';
 import type { RefusalOffer, WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
+import type { MealWindow, WithRelax } from './relax-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
@@ -32,9 +33,10 @@ export interface CardReference {
 }
 
 // What the app tells the main server it can draw, with every chat request: library cards, an answer on the map, the
-// study spaces of the visible area it sends as `viewport`, and a meet ("민수랑 만나고 싶어"). An app without it (the
-// 1.0.0 bundle) is never sent one.
-export const ANSWER_CAPABILITIES = ['library', 'answer', 'area', 'meet'] as const;
+// study spaces of the visible area it sends as `viewport`, a meet ("민수랑 만나고 싶어"), and the answers of events,
+// recruiting parties, and a new party ("오늘 볼 만한 거 있어?", "배드민턴 칠 사람"). An app without it (the 1.0.0 bundle)
+// is never sent one.
+export const ANSWER_CAPABILITIES = ['library', 'answer', 'area', 'meet', 'events'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -198,7 +200,7 @@ export interface MealInput {
   // Everyone of the plan, the asker first.
   people: PlanPerson[];
   // What the User fixed on the time band or in words.
-  window: { from: string | null; until: string | null };
+  window: MealWindow;
   // The Place the User fixed.
   placeId: string | null;
 }
@@ -231,7 +233,7 @@ export interface AnswerReply extends WithMissing {
   plans: Plan[];
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
-  noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } | null;
+  noPlan: ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } & WithRelax) | null;
 }
 
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,

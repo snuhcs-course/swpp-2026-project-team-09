@@ -856,7 +856,7 @@ its start ([Assistant](#assistant)); the AI's choice reads it for each call.
 - **What the model answers:** whether the post announces an event, and per session the start, end, place, whether it runs
   over a period, and the lines each came from (`judgement-answer.ts`). The call is limited by `JUDGEMENT_TIMEOUT_MS` (60,000)
   and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again, and runs outside any transaction, after the Collection's
-  answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit. `judgement-model.ts` calls the
+  answer. It uses the key `llm.key` names, as the Assistant does, so it spends the same credit. `judgement-model.ts` calls the
   model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
 - **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is
   in the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
@@ -2298,8 +2298,10 @@ failure is logged as a warning. The room in their words is `관정 {floor}층 {n
 ## Assistant
 
 The Assistant ("SNU Now AI") is the chat that the main screen's input bar opens (P07). It runs in this server and calls
-its model through OpenRouter with the Vercel AI SDK
-([ADR 0005](../docs/adr/0005-assistant-in-the-main-server-without-an-agent-framework.md)).
+its model with the Vercel AI SDK
+([ADR 0005](../docs/adr/0005-assistant-in-the-main-server-without-an-agent-framework.md)), through OpenRouter or the
+Anthropic API as the AI's key says
+([ADR 0013](../docs/adr/0013-the-ai-calls-claude-through-the-anthropic-api-or-openrouter.md)).
 
 - `POST /assistant/messages` with a User's access token and the conversation so far, the User's new message last:
 
@@ -2391,7 +2393,7 @@ Proposal)`.
     `A party that needs approval takes you in once you ask to join and its leader accepts.` It applies to every
     feature that shows Quest cards.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
-    a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
+    a model error, exhausted credit (OpenRouter's 402) or a reached spend limit (Anthropic's 429), the time running out, the step cap reached without an answer,
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
 
@@ -2710,7 +2712,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   feature with an entry point of its own gets a definition of its own that reuses tools, so that it cannot reach
   another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
-  call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
+  call, tool call and answer within the limits per message, on an OpenRouter key asking for providers that do not collect data
   (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
   text from the steps' text, or the fixed sentence. `causeOf` names why a run failed for the log.
 
@@ -2722,7 +2724,7 @@ kept. A step is a tool to call with its arguments, `{ tool, input }`, with `text
 call, the text to answer, `{ text }`, a call cut at the output limit, `{ cut }`, an error to throw as the provider
 would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
-reach OpenRouter. `test/assistant.integration.test.ts` does it this way:
+reach a real model. `test/assistant.integration.test.ts` does it this way:
 
 ```ts
 const model = new ScriptedModel();
@@ -2767,14 +2769,16 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
 | `--budget <USD>`                                       | 5                                                                                 |
-| `--world <small \| p4 \| p5 \| large-world-v1>`        | `small`, P19's world and the cases that name it                                   |
+| `--world <small \| p4 \| p5 \| large-world-v1 \| p6>`  | `small`, P19's world and the cases that name it                                   |
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
 saved run and the provider's listed prices (Anthropic's table in `eval/cost.ts`, or OpenRouter's list), and asks before it starts. It then starts the Vitest project with the
 options as JSON in `EVAL_RUN`. The sampling settings are applied by the recorder's model wrapper, and the limits are
 the settings given to `startApp`. During the run the tokens the model reported are summed, and the run stops past the
-budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
+budget. The budget is an estimate; a credit limit on the OpenRouter key, or the Anthropic account's spend limit, is
+the hard stop. The baseline on both providers (A02, 2026-11-15) is recorded beside each suite's last OpenRouter run:
+`eval/a02-baseline.md`.
 
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
 reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,

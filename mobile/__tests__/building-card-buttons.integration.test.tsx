@@ -13,13 +13,17 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
 import { card } from './support/answer-map';
-import { buildingCard, pressBuilding, STUDENT_HALL } from './support/building';
+import { recalculations } from './support/answer-correct';
+import { buildingCard, CULTURE_HALL, pressBuilding, STUDENT_HALL } from './support/building';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, SEND } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
+import { answerRecalculations, JOB_FAIR } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+
+const TALK = 'c750f9a0-887e-4dc1-99d1-34b065ff6257';
 
 // What the card of a pressed building leads to (P02 ticket 22), over the fake main server: "여기서
 // 먹기" asks the recalculation and opens its answer in the answer frame, "가는 길" starts the route guidance, and words
@@ -137,6 +141,42 @@ describe('"가는 길" on the card of a pressed building', () => {
     ]);
     expect(screen.getByText('63동까지 길 안내')).toBeVisible();
     expect(screen.queryByTestId('map-card')).toBeNull();
+  });
+});
+
+// Partitions: a2's two `plan` buttons, events and parties (P02 ticket 30). Expected values: the stored card's inputs.
+describe("a2's buttons on the card of 문화관", () => {
+  beforeEach(() => {
+    answerRecalculations(server);
+  });
+
+  it('"행사 보기" asks the recalculation for the events of the card and opens their answer', async () => {
+    const user = await openMain();
+    await pressBuilding(server, CULTURE_HALL, TAP_LOOKUPS.a2);
+
+    await user.press(buildingCard().getByRole('button', { name: '행사 보기' }));
+    await pass(500);
+
+    expect(recalculations(server)).toEqual([
+      { input: { kind: 'events', date: '2026-11-20', eventIds: [JOB_FAIR, TALK] }, location: ON_CAMPUS },
+    ]);
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기');
+    expect(card().getByText('13:54 도착 · 78분 볼 수 있어요')).toBeVisible();
+    expect(card().getByRole('button', { name: '같이 갈 파티' })).toBeEnabled();
+  });
+
+  it('"같이 갈 파티" asks the recalculation for the job fair\'s parties and opens their answer', async () => {
+    const user = await openMain();
+    await pressBuilding(server, CULTURE_HALL, TAP_LOOKUPS.a2);
+
+    await user.press(buildingCard().getByRole('button', { name: '같이 갈 파티' }));
+    await pass(500);
+
+    expect(recalculations(server)).toEqual([
+      { input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null }, location: ON_CAMPUS },
+    ]);
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티');
+    expect(card().getByText('18:00 체육관 · 17:43에 나서요')).toBeVisible();
   });
 });
 

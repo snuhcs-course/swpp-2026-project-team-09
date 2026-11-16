@@ -29,6 +29,7 @@ import { AnswerFrame } from './answer/answer-frame';
 import { AskedExamples } from './answer/asked-examples';
 import { MadeQuestFrame } from './answer/made-quest-frame';
 import { InvitationFrame } from './answer/received-invitation-card';
+import { RowFourProvider } from './answer/row-four-actions';
 import { BottomControls } from './bottom-controls';
 import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
@@ -186,7 +187,9 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   return (
     <>
       {!chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
-      <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+      <RowFourProvider control={chat}>
+        <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+      </RowFourProvider>
       {!chat.framed && keyboardUp ? <AskedExamples bottom={inputTop + space[2]} onSend={send} /> : null}
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
       {made.shown === null ? null : (

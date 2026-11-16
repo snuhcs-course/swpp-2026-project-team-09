@@ -137,7 +137,7 @@ describe("the card of a pressed building with fewer lines, as the main server's 
     expect(buildingCard().getByRole('button', { name: '가는 길' })).toBeVisible();
   });
 
-  it('reads a2: the events, with "가는 길" alone while row 4\'s answers have no screen', async () => {
+  it('reads a2: the events, with "행사 보기" and "같이 갈 파티" before "가는 길"', async () => {
     await openMain();
 
     await pressBuilding(server, CULTURE_HALL, TAP_LOOKUPS.a2);
@@ -148,9 +148,7 @@ describe("the card of a pressed building with fewer lines, as the main server's 
       '채용박람회 · 17:00까지 열려요',
       '기업 설명회 · 16:00–17:00',
     ]);
-    expect(buildingCard().queryByRole('button', { name: '행사 보기' })).toBeNull();
-    expect(buildingCard().queryByRole('button', { name: '같이 갈 파티' })).toBeNull();
-    expect(buildingCard().getByRole('button', { name: '가는 길' })).toBeVisible();
+    expect(buttonNames().slice(-3)).toEqual(['행사 보기', '같이 갈 파티', '가는 길']);
   });
 });
 

@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -10,7 +11,7 @@ import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
-import { answerEvents, CAREER, MAJOR, SEO_YEON_GOING, waiting } from './support/events';
+import { answerEvents, CAREER, MAJOR, SEO_YEON_GOING } from './support/events';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
@@ -86,7 +87,7 @@ describe('the event cards of an answer', () => {
     expect(cardInFrame(CAREER.id).getByText('오늘 18:00–20:00')).toBeVisible();
     expect(cardInFrame(CAREER.id).getByText('같이 갈 파티 2개')).toBeVisible();
     expect(cardInFrame(CAREER.id).getByRole('button', { name: '파티 찾기/모집' })).toBeVisible();
-    expect(cardInFrame(CAREER.id).getByRole('button', { name: 'AI 매칭' })).toBeVisible();
+    expect(cardInFrame(CAREER.id).queryByRole('button', { name: /매칭/u })).toBeNull();
   });
 
   it('are sent back as their references only', async () => {
@@ -143,21 +144,5 @@ describe("an event card's 파티 찾기/모집", () => {
     await pass(500);
 
     expect(shownAddress()).toBe(`/post/${SEO_YEON_GOING.id}`);
-  });
-});
-
-describe("an event card's AI 매칭", () => {
-  it("asks for Matching from the tab's sheet", async () => {
-    server.on('POST /matching-requests', { status: 201, body: waiting(CAREER.id) });
-    const user = await answered();
-
-    await user.press(cardInFrame(CAREER.id).getByRole('button', { name: 'AI 매칭' }));
-    await pass(500);
-    await user.press(screen.getByRole('button', { name: '3명' }));
-    await user.press(screen.getByRole('button', { name: '매칭 신청' }));
-    await pass(500);
-
-    expect(server.received('POST /matching-requests').at(-1)?.body).toEqual({ globalEventId: CAREER.id, size: 3 });
-    expect(screen.getByText('매칭을 신청했어요 · 결과는 알림으로 와요')).toBeVisible();
   });
 });
