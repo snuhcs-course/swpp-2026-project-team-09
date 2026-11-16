@@ -41,3 +41,10 @@ Blocked by: package A's review of the seam (`row-8-seams.md`, ticket 14); #265 (
 11. **The real model** (`anthropic/claude-haiku-5.5`) set `now: true` for "민수, 지은이랑 지금 점심" in the first round, after resolving both Friends; no rule change was needed.
 12. **Not built here.** n12's "지금" chip shows only when the model sets 지금, not for "배고파"; n11's faded "학생회관식당 · 지은은 10분뿐이에요" on the map, and "여기로" (package D's), are not built.
 13. **On today's Main.** With the meal taken by the clock (#309), `planMeal` answers `none` with the meal as well, and only the ordinary lines open with the meal: the lines of boards n10, n11b, n12, and n23 stay the boards', as P02-13's do. The drops keep each person's part (#299) beside the closing time. `answer.dto.ts` passed its line limit with `window.now` and `noPlan.relax`, so the plan inputs and their schemas moved to `dto/plan-input.dto.ts`, and `answer.dto.ts` exports them again under the same names.
+
+### Agent usage (2026-11-16)
+
+Two implementing subagents (Opus 5.5): the first build on 2026-11-15 and its port onto `4.0/Main` after #309 and #302 on 2026-11-16. This session's review and the pull request are counted under P03 ticket 07.
+
+- Agent time: about 118 minutes (82 and 36), an estimate from the transcripts' timestamps; it includes waits for the Mac's shared check slots and the heavy lock.
+- Tokens: output 275,913; input 92,190,908, of which 91,473,706 were cache reads, 716,586 cache writes, and 616 uncached. Without cache reads: 993,115.
