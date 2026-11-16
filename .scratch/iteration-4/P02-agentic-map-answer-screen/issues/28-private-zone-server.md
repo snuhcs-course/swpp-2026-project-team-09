@@ -72,3 +72,14 @@ The server half of the Private Zone: the User's zones, each one closed outline, 
 - `created_at` is the database's clock.
 - A figure eight whose two lobes are of one size has a shoelace sum near zero, so it is refused as too small, by the rule above.
 - The main server's README gains a section "Private Zones" under Location Sharing.
+
+### Open for review (2026-11-16)
+
+The area is the absolute value of the shoelace sum, as the spec's decision 5 says. So a figure eight of two equal lobes comes out near 0 m² and is refused as too small, although the nonzero rule fills both lobes and would hide the User there. A fix would measure the area the nonzero rule fills, for instance by counting a grid of points inside the bounding box. The app's check in ticket 29 would need the same rule, so the area stays as the spec says until the spec's owner decides.
+
+### Agent usage (2026-11-16)
+
+- Agent time: about 41 minutes. This is an estimate from the transcripts' timestamps: the union of active stretches, with gaps over 5 minutes left out. It counts the subagent that built it (about 36 minutes) and the review in the session that briefed it (about 5 minutes).
+- Tokens, the builder and the review together:
+  - output: 97,656;
+  - input: 26,159,822, of which 25,867,331 were cache reads, 292,237 cache writes, and 254 uncached.
