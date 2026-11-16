@@ -363,11 +363,13 @@ numbers below are provisional until P17 has checked them on a phone.
   has expired look the same: no position, and `visible` false.
 - `POST /positions` with `{ "latitude": 37.4594, "longitude": 126.95199, "accuracy": 12, "measuredAt": "..." }`
   uploads a position, where `accuracy` is the radius in metres within which the phone places itself and `measuredAt`
-  the time the phone measured it, in ISO 8601 with an offset. It answers `200 { "offCampus": false }` when the position
-  was kept. A position outside the Campus Boundary is not kept and clears the one stored, and the answer is
-  `200 { "offCampus": true }`: the app tells the User that they are not shared because they are off campus. The
-  Boundary is checked in server code, without a database query. Each upload replaces the one before, so it takes no
-  `Idempotency-Key`.
+  the time the phone measured it, in ISO 8601 with an offset. It answers
+  `200 { "offCampus": false, "privateZone": false }` when the position was kept. A position outside the Campus Boundary
+  is not kept and clears the one stored, and the answer is `200 { "offCampus": true, "privateZone": false }`: the app
+  tells the User that they are not shared because they are off campus. The Boundary is checked in server code, without
+  a database query. A position inside one of the User's [Private Zones](#private-zones) is not kept either and clears
+  the one stored, and the answer is `200 { "offCampus": false, "privateZone": true }`. Each upload replaces the one
+  before, so it takes no `Idempotency-Key`.
 - `GET /positions` answers what the User may see now of each subject: `{ "userId", "latitude", "longitude",
 "measuredAt", "level": "exact" }` with the position, or `{ "userId", "placeId", "latitude", "longitude",
 "measuredAt", "level": "building" }` with the Place's id and point. The app fetches it when it connects, reconnects
@@ -387,7 +389,8 @@ What is stored: only each User's latest position, in Redis under `position:<user
 `{ "latitude", "longitude", "measuredAt", "placeId" }`, `placeId` being the Place it is in or null, which expires 10
 minutes after it was stored. Redis counts the 10
 minutes. No position is written to the database or to a log, and no history is kept. The position is cleared when the
-User turns the Master Switch off, uploads a position off campus, and when the User's session ends, by a sign-in on
+User turns the Master Switch off, uploads a position off campus or inside one of their Private Zones, makes a Private
+Zone round the position stored, and when the User's session ends, by a sign-in on
 another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
 
 What is pushed, through the [socket server](../socket-server/README.md#signals):
@@ -397,7 +400,8 @@ What is pushed, through the [socket server](../socket-server/README.md#signals):
   the position before. Delivery is lossy on purpose: only the newest position matters.
 - `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see something of the
   subject before a change and nothing after it: when either turns the Master Switch off or lowers the friendship to
-  `timetable`, when the friendship ends, when the subject leaves the Campus Boundary, or every Place for a viewer at
+  `timetable`, when the friendship ends, when the subject leaves the Campus Boundary or enters one of their Private
+  Zones, or every Place for a viewer at
   `building`, and when the subject's session ends.
 - A viewer who sees only the subject's Place after a change and saw the position, or nothing, before it gets
   `position` with the Place at once: when the friendship is lowered from `exact` to `building`, or raised from
@@ -414,6 +418,32 @@ place that decides who sees what of whom:
   or position the change touches: every sight it can alter includes that User, so a new cause, such as leaving a
   Party, only wraps its change in it. A change that touches several Users at once, as the end of a Party does, passes
   them all as a list, and each sight is announced once.
+
+### Private Zones
+
+A User draws round an area of the campus, and inside it their position is not kept: Friends see them as off campus,
+at the Timetable only, with no reason given. The User's own map and Assistant are not lowered, since the phone sends
+its own position with each request. Each zone (`private_zones`) is one closed outline, a ring of points left open, and
+only its owner reads it; no Assistant tool does. A User keeps at most five.
+
+- `GET /users/me/private-zones` answers `{ "zones": [{ "id", "label", "outline", "createdAt" }] }`, the oldest first.
+- `POST /users/me/private-zones` with `{ "outline": [{ "latitude", "longitude" }, ...] }` answers 201 with the zone.
+  A last point that repeats the first is dropped. The server names the zone after the Place nearest the middle of the
+  outline's bounding box, "301동 근처", or "그린 구역" with no Place within 150 m. A zone round the position stored
+  clears it at once.
+- `DELETE /users/me/private-zones/:id` answers 204, and 404 `PRIVATE_ZONE_NOT_FOUND` for a zone that is not the
+  User's. The User shows again from their next upload outside every zone.
+
+A position is inside a zone when the outline encloses it by the nonzero winding rule, SVG's default fill, so that a
+loop that crosses itself hides everything the app shows filled, or when it lies within 10 m of the outline. Each upload
+reads the User's zones once by an indexed query, without a cache (`src/location-sharing/private-zones.service.ts`).
+
+| Refusal                                                                          | Status | `code`                    |
+| -------------------------------------------------------------------------------- | ------ | ------------------------- |
+| Not `{ outline }`, or fewer than 3 or more than 200 points                       | 400    | `PRIVATE_ZONE_INVALID`    |
+| A point more than 300 m outside the Campus Boundary, or none inside it           | 400    | `PRIVATE_ZONE_OFF_CAMPUS` |
+| An outline that fits in a 17 m square: both sides of its bounding box under 17 m | 400    | `PRIVATE_ZONE_TOO_SMALL`  |
+| Five zones already                                                               | 409    | `PRIVATE_ZONES_FULL`      |
 
 ## Administrators
 
