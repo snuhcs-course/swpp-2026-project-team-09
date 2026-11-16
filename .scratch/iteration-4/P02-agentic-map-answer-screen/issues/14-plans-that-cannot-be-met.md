@@ -46,7 +46,7 @@ Blocked by: package A's review of the seam (`row-8-seams.md`, ticket 14); #265 (
 
 ### Agent usage (2026-11-16)
 
-Two implementing subagents (Opus 5.5): the first build on 2026-11-15 and its port onto `4.0/Main` after #309 and #302 on 2026-11-16. This session's review and the pull request are counted under P03 ticket 07.
+Two implementing subagents (Opus 5.5): the first build on 2026-11-15, and on 2026-11-16 its port onto `4.0/Main` after #309 and #302, the review fixes, and the merges. This session's review and the pull request are counted under P03 ticket 07.
 
-- Agent time: about 118 minutes (82 and 36), an estimate from the transcripts' timestamps; it includes waits for the Mac's shared check slots and the heavy lock.
-- Tokens: output 275,913; input 92,190,908, of which 91,473,706 were cache reads, 716,586 cache writes, and 616 uncached. Without cache reads: 993,115.
+- Agent time: about 139 minutes (82 and 57), an estimate from the transcripts' timestamps; it includes waits for the Mac's shared check slots and the heavy lock.
+- Tokens: output 346,150; input 110,512,159, of which 109,402,761 were cache reads, 1,108,672 cache writes, and 726 uncached. Without cache reads: 1,455,548.
