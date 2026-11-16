@@ -152,6 +152,41 @@ describe('the leave-by of a Plan taken alone, before the way there', () => {
   });
 });
 
+// At 11:47:20, and 학생회관식당 with the walk on to the 13:00 Class from 12:45, its way there setting out at `leaveAt`.
+const OFF = new Date('2026-11-17T02:47:20Z');
+const walk = (leaveAt: string): Plan =>
+  plan(
+    HAKGWAN,
+    part({
+      walkMinutes: 15,
+      leaveAt: `2026-11-17T${leaveAt}:00+09:00`,
+      leaveBy: '2026-11-17T12:45:00+09:00',
+      next: CLASS,
+    }),
+  );
+
+// Partitions: a meal now and an event under way, asked off the minute; a way there that sets out later. Expected values:
+// the review of PR 334. At 11:47:20 the planners read 11:48; 학생회관식당 15 minutes away is reached at 12:03, started at
+// 12:05, so its way there sets out at 11:50, and an event under way at once.
+describe('the leave-by of a Plan taken alone, asked off the minute', () => {
+  it.each([
+    ['a meal now, setting out at 11:50', '11:50'],
+    ['an event under way, setting out at 11:48', '11:48'],
+  ])('keeps the walk on to the Class for %s', (_, leaveAt) => {
+    const { facts, line } = aloneLeaveBy(walk(leaveAt), '수업', OFF);
+
+    expect(facts).toMatchObject({ placeLabel: '24동', walkMinutes: 15 });
+    expect(line).toBe('12:45에 나설 시각을 알려 드릴게요');
+  });
+
+  it('keeps the way there when it sets out more than five minutes after now, at 11:54', () => {
+    const { facts, line } = aloneLeaveBy(walk('11:54'), '수업', OFF);
+
+    expect(facts).toMatchObject({ placeLabel: '학생회관식당', walkMinutes: 15 });
+    expect(line).toBe('11:54에 나설 시각을 알려 드릴게요');
+  });
+});
+
 // Partitions: a meal walked to, a meal where the User is, a meet where the User is, and an event. Expected values: boards
 // s4 and s4b, and the design's 6.3 Alone 3.
 describe('the first line of the card', () => {

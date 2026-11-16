@@ -122,3 +122,35 @@ describe('a meal taken alone, given up', () => {
     expect(await leaveBys()).toEqual([]);
   });
 });
+
+// Partitions: the request landing off the minute. Expected values: the review of PR 334. At 11:50:20 the planners read
+// 11:51; 학생회관식당 is reached at 12:06 and started at 12:10, so its way there sets out at 11:55, within five minutes:
+// the User sets out now, and the walk on to the Class (1 minute) is what the card speaks of.
+describe('a meal taken alone off the minute', () => {
+  it('speaks of the walk on, not of a way there that sets out now', async () => {
+    const date = '2075-01-29';
+    await planQuests.workedExample(stage, date);
+    stage.standAt(`${date}T11:50:20+09:00`);
+    const input = planQuests.inputOf(date, [stage.asker.id]);
+    const answered = await withAccessToken(
+      request(stage.app.getHttpServer()).post('/assistant/answers'),
+      stage.asker.accessToken,
+    ).send({ input, location: null });
+    const { plans } = z
+      .object({ plans: z.array(z.object({ id: z.string(), startAt: z.string() })) })
+      .parse(answered.body);
+    const hakgwan = plans.find(({ id }) => id === '학생회관식당');
+
+    const response = await planQuests.makePlanQuest(stage, {
+      input,
+      planId: '학생회관식당',
+      startAt: hakgwan?.startAt,
+      location: null,
+    });
+
+    expect(response.status).toBe(201);
+    const { alone } = takenSchema.parse(response.body);
+    expect(words(alone.lines)).toEqual(['학생회관식당으로 가요', '수업까지 1분이라 나설 알림은 없어요']);
+    expect(await leaveBys()).toEqual([]);
+  });
+});

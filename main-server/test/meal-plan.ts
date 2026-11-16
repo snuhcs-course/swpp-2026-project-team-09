@@ -80,6 +80,11 @@ export class MealPlanStage {
     this.asker = await this.user(name);
   }
 
+  // Moves the clock on to a moment off the minute, as a request lands, for the same asker.
+  standAt(moment: string): void {
+    this.now = new Date(moment);
+  }
+
   // The hours the plans read for each Restaurant, until the next `asking`.
   hoursAre(hours: Record<string, Partial<Record<'lunch' | 'dinner', Hours>>>): void {
     this.hours = hours;
