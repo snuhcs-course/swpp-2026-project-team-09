@@ -4,7 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { NEW_QUEST_ANSWER } from '@/api/mock/data/new-quest-answer';
 import type { NewQuestInput } from '@/api/recruiting-plan-types';
@@ -100,6 +100,8 @@ describe("a new party's answer (board Recruit 4)", () => {
     expect(card().getByRole('button', { name: '초대할 친구 추가' })).toBeEnabled();
     expect(card().getByRole('button', { name: POST })).toBeEnabled();
     expect(card().queryByRole('button', { name: '이대로 초대' })).toBeNull();
+    expect(screen.queryByLabelText('시작 시각')).toBeNull();
+    expect(card().getByRole('button', { name: '301동에서' })).toBeDisabled();
   });
 
   it('asks who to invite while the list of Friends is open', async () => {

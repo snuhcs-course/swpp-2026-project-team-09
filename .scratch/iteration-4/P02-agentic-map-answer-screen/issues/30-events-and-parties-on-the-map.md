@@ -74,6 +74,7 @@ The main server already answers events, recruiting parties, and a new recruiting
 14. **What was dropped is said in the card.** The main server's scene of events and parties draws nothing it dropped, so the card lists each dropped reason in faint ink above the buttons ("17:00 파티는 17:02에야 도착해요"). The design's browsing into a faded party with the arrows is not built.
 15. **The mock's POST /plans** still answers the meal's stored Quest for any Plan, a new party's included: no real reply to a new party is stored. The tests post with a reply built by hand.
 16. The push permission is asked at "이대로 초대" and "이대로 모집" (board t17), as at the booking cards: once `POST /plans` made the Quest, by `useAskForPush` in `use-plan-invitation.ts`'s `invite`.
+17. **Review (2026-11-16): the band is read-only as decision 4 says.** For events, parties, and a new party the band is drawn without handles and without the whole-band drag, as a Lookup's band is, and the where-from and time chips take no press (`bandIsFixed` in `row-four-inputs.ts`). Before, a handle let go stayed at a time the Plan did not have, and "이대로 모집" would have posted the Plan's own start.
 
 ### Emulator check (2026-11-16)
 

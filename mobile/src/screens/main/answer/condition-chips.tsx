@@ -40,6 +40,8 @@ interface ConditionChipsProps {
   changed?: ConditionChip | null;
   // The name "＋ 같이" is read by, by what a Friend is added to ("같이 만날 친구 추가"); null leaves it out.
   addName?: string | null;
+  // The where-from and time chips take no press: the answer's band is read-only.
+  fixed?: boolean;
 }
 
 const CHIP_HEIGHT = 34;
@@ -200,7 +202,7 @@ export function ConditionChips(props: ConditionChipsProps): ReactElement {
             />
           ) : (
             <ChipButton
-              disabled={disabled}
+              disabled={disabled || props.fixed === true}
               key={chip.kind}
               label={chip.text}
               marked={chip.mark !== undefined || chip === changed}

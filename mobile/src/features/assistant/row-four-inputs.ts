@@ -33,3 +33,9 @@ export function newPartyOf(input: PlanInput, plan: Plan): NewQuestInput | null {
   }
   return null;
 }
+
+// The main server plans an events, a parties, or a new party's answer by its own start, so its band and its where-from
+// and time chips change nothing: they are drawn read-only (ticket decision 4).
+export function bandIsFixed(kind: PlanInput['kind']): boolean {
+  return kind === 'events' || kind === 'quests' || kind === 'new-quest';
+}

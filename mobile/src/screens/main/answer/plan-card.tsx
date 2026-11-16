@@ -15,6 +15,7 @@ import { Button, color, Icon, size, space, text } from '@/design-system';
 import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
+import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useOpenFriendProfile } from '../friend-profile';
@@ -193,6 +194,7 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
   }
   // A new party is posted with "이대로 모집", its friends invited or not.
   const invitable = plan !== null && answer.input.kind !== 'new-quest' && peopleOf(answer.input).length > 1;
+  const fixed = bandIsFixed(answer.input.kind);
   return (
     <>
       {plan === null ? null : (
@@ -203,8 +205,9 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
           ghost={ghost}
           onDrop={fix.drop}
           fixed={windowOf(answer.input)}
+          handles={!fixed}
           moving={shown.moving}
-          onMove={fix.move}
+          onMove={fixed ? undefined : fix.move}
         />
       )}
       <CardNote note={answer.note} />
@@ -272,6 +275,7 @@ export function PlanCard({ shown, answer, invitation, room, over = [], onClose }
         disabled={busy}
         friendIds={fix.friendIds}
         addName={addNameOf(answer.input.kind)}
+        fixed={bandIsFixed(answer.input.kind)}
         onAdd={fix.toggleAdding}
         onOrigin={fix.chooseOrigin}
         onProfile={openProfile}

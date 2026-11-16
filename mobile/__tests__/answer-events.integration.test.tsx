@@ -92,6 +92,20 @@ describe('an events answer (board Alone 1)', () => {
   });
 });
 
+// Ticket decision 4: the main server plans these answers by their own start, so the band is read-only. Partitions: the
+// handles, and the chips of where from and until.
+describe('the band of an events answer', () => {
+  it('draws no handles, and its where-from and until chips take no press', async () => {
+    await sayOnMap(server, ASKED, EVENTS_REPLY);
+
+    expect(card().getByText('13:54 도착 · 78분 볼 수 있어요')).toBeVisible();
+    expect(screen.queryByLabelText('시작 시각')).toBeNull();
+    expect(screen.queryByLabelText('끝 시각')).toBeNull();
+    expect(card().getByRole('button', { name: '15:30 수업까지' })).toBeDisabled();
+    expect(card().getByRole('button', { name: '24동에서' })).toBeDisabled();
+  });
+});
+
 // Partitions: each of the three buttons of the first Plan, and of the second.
 describe('the buttons of an events Plan', () => {
   it('"같이 갈 파티" recalculates the parties of its event, with no model, and draws them', async () => {
