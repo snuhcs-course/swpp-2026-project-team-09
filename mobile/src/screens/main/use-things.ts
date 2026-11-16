@@ -10,9 +10,11 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
+import { withClusterMarks } from '@/features/map/event-merges';
 import { type InterestMark, markedLook } from '@/features/map/interest-marks';
 import { type MapAvatar, type MapMarker, type MarkerLook, useMarkerImages, type ZoomDetail } from '@/map';
 import { POSITION_EVERY_MS } from '@/position';
@@ -36,7 +38,8 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // vehicle a pin, so that a vehicle standing at its stop is seen, and stops at one place stay a dot. A study building
 // none of whose spaces the User may use is grey, and study pins merged at the overview level are their cluster.
 // Things of several kinds at one place are a group's dot or pin. A Favorite Event, and a place one of whose events is
-// one, is a pin with the star at every level, so that the star is seen with the whole campus in view. A Quest made
+// one, is a pin with the star at every level, so that the star is seen with the whole campus in view. Events' pins
+// merged at the overview level are an official pin with how many they are, and the star when one is. A Quest made
 // from a Plan is its flag at every level: the dot in the Quest colour with its two lines above it, as an answer draws
 // its pick.
 function lookOf(
@@ -64,6 +67,9 @@ function lookOf(
     return starred
       ? { kind: 'group', kinds: mark.kinds, form: 'pin', selected, starred }
       : { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected };
+  }
+  if (kind === 'event-cluster') {
+    return { kind: mark.place, form: 'pin', count: marker.count, selected, ...(starred ? { starred } : {}) };
   }
   if (mark.place === 'dining') {
     return { kind: 'restaurant', selected };
@@ -115,9 +121,10 @@ export function useThings(
   detail: ZoomDetail,
   selectedId: string | null,
   onMap: boolean,
-  marks: Marks = NO_MARKS,
+  given: Marks = NO_MARKS,
 ): Things {
   const cards = all.filter(({ kind }) => kind !== 'invitation');
+  const marks = withClusterMarks(cards, given);
   const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
   const isSelected = (card: CardView): boolean => card.id === selectedId || card.id === selectedWithin;
   const shown = cards.map((card) => markedLook(lookOf(card, detail, isSelected(card), onMap), marks.get(card.id)));

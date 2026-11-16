@@ -88,6 +88,7 @@ export interface CardView {
     | 'shuttle-vehicle'
     | 'study'
     | 'study-cluster'
+    | 'event-cluster'
     | 'invitation'
     | 'made-quest';
   mark: CardMark;
@@ -124,7 +125,7 @@ export interface CardView {
   choices?: { id: string; kind: PlaceKind; title: string; detail: string; favorite?: boolean }[];
   // For a building of the 공부공간 layer: its Study Spaces, and 관정관's seat sectors.
   study?: StudyDetail;
-  // For merged study pins: where each building stands, which a press brings into view.
+  // For merged study or event pins: where each building or event stands, which a press brings into view.
   cluster?: readonly LatLng[];
   // Drawn in a translucent grey: a building none of whose Study Spaces the User may use.
   muted?: boolean;

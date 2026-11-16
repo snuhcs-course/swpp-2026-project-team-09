@@ -508,9 +508,12 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
   with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. Of the Global Events, only Favorite Events
-  and those held today in Korea stand on the map, an event of several days only on its first and last day
-  (`src/features/map/event-pins.ts`); the others are in the 행사 tab only. A Favorite Event is the official pin with a
-  filled star at every zoom, and so is a place one of whose events is one. A short name is the title cut at a word's end within 8 characters,
+  stand on the map while the switch of the answer on the map is off; while it is on, the interest marks choose them
+  (`src/features/map/event-pins.ts`, `interest-marks.ts`); the others are in the 행사 tab only. A Favorite Event is the
+  official pin with a filled star at every zoom, and so is a place one of whose events is one. With the whole campus in
+  view, events' pins that would overlap merge, as study pins do (`src/features/map/event-merges.ts`), into one official
+  pin with their count, the star when one is a Favorite Event, and an interest mark's "!" first; a press zooms in to
+  them. A short name is the title cut at a word's end within 8 characters,
   counted in whole characters, so that an emoji is never cut. A given name is the name without its first syllable for
   a Korean name of three syllables, and the whole name otherwise (`src/features/map/short-name.ts`). A marker is read as the wireframe reads it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어
   설명회". The selected marker has the selected look and is drawn above the others, the User's own Avatar included.

@@ -25,3 +25,18 @@ An event published in the last 24 hours shows on the map with an exclamation mar
 - [ ] The "Events on the map" row of `he-revision-log.md` gets this pull request and its state.
 
 ## Comments
+
+### Changed in review (2026-11-16)
+
+The New Event rule is dropped: "!" on every event published in the last 24 hours until checked, the checked ids on the phone, and checking on a card's close or on starring. The agentic map's design gives "!" only to a newly posted match of a watched interest (#296, #306), and one mark cannot mean both. What stays: recording `publishedAt` on the four publishing writes, and the merge of events' pins that overlap at the campus zoom, which now shows the star of a Favorite Event among them and an interest mark's "!" first. `GLOSSARY.md` gains **Favorite Event** only.
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 45 minutes in one session (15:58 to 16:40 KST), an estimate from the session's transcript; the one wait for a person, a short question, is included. About 11 minutes of it went to one jest run that, by a wrong flag order (`--selectProjects` takes every name after it), ran every app unit test instead of four files; later runs named the files first.
+- Tokens, summed from the session's transcript (`~/.claude/projects/…/<session>.jsonl`) and its two review subagents (Standards and Spec):
+
+  | | Input | Cache reads | Cache writes | Output |
+  |---|---|---|---|---|
+  | Main session | 360 | 35,397,932 | 299,146 | 111,418 |
+  | Subagents | 52 | 1,435,062 | 171,218 | 13,454 |
+  | Total | 412 | 36,832,994 | 470,364 | 124,872 |

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -103,7 +104,7 @@ export class SameEventQueueService {
     });
   }
 
-  // Its Draft becomes an event of an Administrator's route, or is refused for what it still needs.
+  // Its Draft becomes an event of an Administrator's route, published now, or is refused for what it still needs.
   async publishAsOwn(sessionId: string, version: number): Promise<void> {
     await withStepLock(this.prisma, async (tx) => {
       const { id, globalEvent } = await this.queued(tx, sessionId, version);
@@ -119,6 +120,7 @@ export class SameEventQueueService {
         data: {
           state: GlobalEventState.published,
           publicationRoute: PublicationRoute.administrator,
+          publishedAt: new Date(),
           version: { increment: 1 },
         },
       });
