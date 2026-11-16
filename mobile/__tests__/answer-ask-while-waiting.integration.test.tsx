@@ -96,13 +96,13 @@ async function askExample(user: User): Promise<void> {
   await hideKeyboard();
 }
 
-function lastSent(): unknown {
-  return server.received('POST /assistant/messages').at(-1)?.body;
+// The messages the last request sent.
+function expectSent(messages: object[]): void {
+  expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(expect.objectContaining({ messages }));
 }
 
-// Partitions: the new turn by an example (a message) and by a card's button (a recalculated turn); 그만 on the new
-// turn. Expected values: the review's path, where the late reply answered the new turn and two User messages went
-// out in a row.
+// Partitions: the new turn by an example (a message) and by a card's button (a recalculated turn). Expected values:
+// the review's path, where the late reply answered the new turn and two User messages went out in a row.
 describe('a turn asked while a hidden reply is on its way', () => {
   it('by an example: the late reply answers nothing, and the input waits for the new reply', async () => {
     answerInTurn([
@@ -122,15 +122,11 @@ describe('a turn asked while a hidden reply is on its way', () => {
     await pass(1500);
     expect(screen.getByText(SECOND_REPLY)).toBeVisible();
     await send(user, '고마워');
-    expect(lastSent()).toEqual(
-      expect.objectContaining({
-        messages: [
-          { role: 'user', text: EXAMPLE },
-          { role: 'assistant', text: SECOND_REPLY, cards: [] },
-          { role: 'user', text: '고마워' },
-        ],
-      }),
-    );
+    expectSent([
+      { role: 'user', text: EXAMPLE },
+      { role: 'assistant', text: SECOND_REPLY, cards: [] },
+      { role: 'user', text: '고마워' },
+    ]);
   });
 
   it("by a card's button: the late reply does not replace the card's answer", async () => {
@@ -147,8 +143,12 @@ describe('a turn asked while a hidden reply is on its way', () => {
     expect(screen.queryByLabelText('보는 중')).toBeNull();
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
   });
+});
 
-  it('then 그만 leaves the turn before, with no question left without its reply', async () => {
+// Partitions: 그만 on the turn that took the waiting question back, with a turn answered before both. Expected values:
+// the review, where 그만 left the first question without its reply.
+describe('그만 on that turn', () => {
+  it('leaves the turn before, with no question left without its reply', async () => {
     answerInTurn([
       { text: OPENING_REPLY, afterMs: 0 },
       { text: LATE, afterMs: 2000 },
@@ -168,14 +168,10 @@ describe('a turn asked while a hidden reply is on its way', () => {
     expect(screen.queryByText(LATE)).toBeNull();
     expect(screen.queryByText(SECOND_REPLY)).toBeNull();
     await send(user, '고마워');
-    expect(lastSent()).toEqual(
-      expect.objectContaining({
-        messages: [
-          { role: 'user', text: OPENING },
-          { role: 'assistant', text: OPENING_REPLY, cards: [] },
-          { role: 'user', text: '고마워' },
-        ],
-      }),
-    );
+    expectSent([
+      { role: 'user', text: OPENING },
+      { role: 'assistant', text: OPENING_REPLY, cards: [] },
+      { role: 'user', text: '고마워' },
+    ]);
   });
 });
