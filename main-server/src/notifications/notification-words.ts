@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { clockOf } from '../assistant/free-time/free-time.js';
@@ -63,6 +64,16 @@ function roomWords(told: Of<'room-declined'> | Of<'room-agreed'> | Of<'room-endi
 }
 
 // The push's body of a new match: the line as a sentence, or why it rang when neither the start nor the Place is known.
+// "걸어서 15분", or "셔틀로 18분".
+function wayWords({ walkMinutes, by }: Of<'leave-by'>): string {
+  return `${by === 'shuttle' ? '셔틀로' : '걸어서'} ${String(walkMinutes)}분`;
+}
+
+// " 13:00 수업에 맞아요.", after a leave-by's walk when it says what the walk is for.
+function towardWords(toward: Of<'leave-by'>['toward']): string {
+  return toward === undefined ? '' : ` ${toward.start} ${toward.word}에 맞아요.`;
+}
+
 function interestBody(time: string | null, placeLabel: string | null): string {
   if (placeLabel !== null) {
     return `${withCopula(time === null ? placeLabel : `${time} ${placeLabel}`)}.`;
@@ -100,11 +111,11 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
     return {
       title: '지금 나서요',
       ahead: `${clockOf(at)} 나설 시각`,
-      line: `${told.placeLabel}까지 걸어서 ${String(told.walkMinutes)}분`,
+      line: `${told.placeLabel}까지 ${wayWords(told)}`,
       card: { kind: 'party', id: told.questId },
       about: null,
       rings: true,
-      body: `${told.placeLabel}까지 걸어서 ${String(told.walkMinutes)}분이에요.`,
+      body: `${told.placeLabel}까지 ${wayWords(told)}이에요.${towardWords(told.toward)}`,
     };
   }
   if (told.kind === 'room-window') {

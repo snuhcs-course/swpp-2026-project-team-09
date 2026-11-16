@@ -2669,8 +2669,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       those that fit, the longer stay first, then those that clash with an item, and drops those the asker cannot
       reach in time or stay at for 30 minutes. `eventIds` are accepted only when `searchGlobalEvents` returned them in
       the message. It answers the model `planned` with each plan's title, place, arrival, stay, leave-by, and clash in
-      words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` refuses any but a
-      meal's, a meet's, or a new recruiting Quest's with 400 `PLAN_KIND`.
+      words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` takes an events Plan
+      alone and refuses a recruiting Quests' Plan with 400 `PLAN_KIND`.
     - `findStudyNearby(what)` and `STUDY_RULES` join for an app that sends both `answer` and `area` (`lookup/study-*`).
       `StudyAreaService` reads the 공부공간 layer for the asker and keeps the spaces of the kind asked (`quiet`,
       `group`, `pc`, `any`) whose building's Place lies in the request context's `viewport`. Of those the User may use
@@ -3507,6 +3507,13 @@ warning and the answer stays as it is.
 part of the Plan sets out, with the Plan's Place and the Leader's own walking minutes, after the transaction and its
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
 Place is unknown or the walk is 0 minutes.
+
+A Plan taken alone ("여기로": an events Plan, or a meal's whose people are the asker only) is a Quest the asker holds
+alone, with capacity 1 (`ALONE_CAPACITY` of `quests.service.ts`). Its `leave-by` is kept, awaited, for the first walk
+of 5 minutes or more whose time is still ahead: to the Plan's Place, else on from it to the next item
+(`plans/alone-plan.ts`). Such a `leave-by` carries the next item, " 13:00 수업에 맞아요.", and says a way by shuttle
+as one. The reply's `alone` holds the card's two lines and `remindAt`. Entering a Shared Quest for a Global Event that
+deletes the Quest held alone for it (`freeForSharedQuest`) cancels that Quest's `leave-by`.
 
 An invited User's `leave-by` is kept when they accept an invitation into a Quest whose steps give a gathering, as a
 party's do. `InvitationsService` tells the listeners given to its `onAccepted()` once the acceptance is stored and

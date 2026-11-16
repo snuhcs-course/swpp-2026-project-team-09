@@ -221,8 +221,9 @@ export interface ApiClient {
   // User's messages. Refused with 400 for an id that is no Place and with 404 FRIEND_NOT_FOUND for someone who is not
   // the User's Friend.
   answerTap: (tapped: Tapped, location: LatLng | null) => Promise<Lookup>;
-  // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
-  // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
+  // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it; a Plan
+  // taken alone, a Quest the User holds alone with the card's lines. Refused with 409 PLAN_CHANGED when the Plan is no
+  // longer the one shown.
   makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
   // A seat booked on the library's site, held as a Quest the User holds alone, with its leave-by for the next item.
   // Refused with 400 NOT_A_SEAT for a space that is not a seat.

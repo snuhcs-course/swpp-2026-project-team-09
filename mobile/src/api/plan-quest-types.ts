@@ -6,7 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { PlacePoint, Plan, PlanInput } from './assistant-types';
+import type { AnswerLine, PlacePoint, Plan, PlanInput } from './assistant-types';
 import type { LocationMissing } from './refusal-types';
 import type { FriendLevel, LatLng, Quest } from './types';
 
@@ -38,6 +38,15 @@ export interface PlanQuest {
   invitations: { id: string; userId: string }[];
   // The Friends to ask how much they usually see, in the Plan's order; none once all were asked.
   askLevels: AskLevel[];
+  // A Plan taken alone ("여기로"), whose Quest the User holds alone. Absent for a Plan with a Friend.
+  alone?: TakenAlone;
+}
+
+// The card after "여기로": where the User goes and whether they will be told when to leave, and when that leave-by
+// rings, null for none.
+export interface TakenAlone {
+  lines: AnswerLine[];
+  remindAt: string | null;
 }
 
 // --- After a decline (GET /plans/:questId/better), as main-server `plans/dto/better-plan.dto.ts` declares it ---

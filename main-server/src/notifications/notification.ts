@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Card } from './card-address.js';
@@ -12,7 +13,15 @@ import { type Card } from './card-address.js';
 export type Told =
   | { kind: 'accepted'; questId: string; questTitle: string; friendId: string; friendName: string }
   | { kind: 'declined'; questId: string; questTitle: string; friendId: string; friendName: string }
-  | { kind: 'leave-by'; questId: string; placeLabel: string; walkMinutes: number }
+  // Given for a Plan taken alone: `toward`, the next item the walk is for, "13:00 수업"; `by`, a way by shuttle.
+  | {
+      kind: 'leave-by';
+      questId: string;
+      placeLabel: string;
+      walkMinutes: number;
+      toward?: { start: string; word: '수업' | '일정' };
+      by?: 'shuttle';
+    }
   | {
       kind: 'room-declined';
       questId: string;
