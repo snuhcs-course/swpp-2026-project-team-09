@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -57,7 +58,7 @@ describe("the Assistant's request to the main server", () => {
     await apiClient.askAssistant(MESSAGES, CONTEXT);
 
     expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
-      { clientCapabilities: ['library', 'answer', 'area'], context: CONTEXT, messages: MESSAGES },
+      { clientCapabilities: ['library', 'answer', 'area', 'meet'], context: CONTEXT, messages: MESSAGES },
     ]);
   });
 

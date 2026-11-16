@@ -12,6 +12,7 @@ import type { ConditionChip, PlanInput } from '@/api/assistant-types';
 import type { RelaxOffer } from '@/api/relax-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
+import { onlyFriendOf } from '@/features/assistant/meet-input';
 import { peopleOf, withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
 import { backToNow, relaxed, timeChipChange } from '@/features/assistant/relaxed-plan';
 import type { BandBound } from '@/features/assistant/time-band';
@@ -76,9 +77,22 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
   };
 }
 
+// A person's ✕: a recalculation without them, but for a meet's only Friend, `close` and that Friend's card by the main
+// screen's address.
+function removerOf(change: ShownAnswer['change'], only: string | null, close: () => void): (userId: string) => void {
+  return (userId) => {
+    if (only === null) {
+      change((conditions) => withoutPerson(conditions, userId));
+    } else {
+      close();
+      router.setParams({ person: only });
+    }
+  };
+}
+
 // What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
-// recalculation. The list of Friends leaves out those `input` holds.
-export function useCorrections(shown: ShownAnswer, input: PlanInput): Corrections {
+// recalculation, but a person's ✕ as `removerOf` says. The list of Friends leaves out those `input` holds.
+export function useCorrections(shown: ShownAnswer, input: PlanInput, close: () => void): Corrections {
   const { change, add, adding, setAdding } = shown;
   const showToast = useToast();
   const { choices, friendIds } = useChoices(input);
@@ -91,9 +105,7 @@ export function useCorrections(shown: ShownAnswer, input: PlanInput): Correction
     choices,
     friendIds,
     choose: add,
-    remove: (userId) => {
-      change((conditions) => withoutPerson(conditions, userId));
-    },
+    remove: removerOf(change, onlyFriendOf(input), close),
     chooseOrigin: () => {
       waitForPlace(({ placeId }) => {
         if (placeId === null) {

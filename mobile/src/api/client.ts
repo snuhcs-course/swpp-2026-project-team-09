@@ -15,6 +15,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -211,8 +212,8 @@ export interface ApiClient {
   // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
   makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
   // For the Leader after a decline: whether the people left have a better Plan than the Quest as it stands, worked
-  // out from where the Leader is now when the app knows.
-  getBetterPlan: (questId: string, location: LatLng | null) => Promise<BetterPlan>;
+  // out from where the Leader is now when the app knows, or else from why that is not known, as the Quest was made.
+  getBetterPlan: (questId: string, location: LatLng | null, missing?: LocationMissing) => Promise<BetterPlan>;
   // The Quest changed to the Plan named, its Holders and waiting invitations kept. Refused with 409 PLAN_CHANGED as
   // the making is, and with 400 PLAN_PEOPLE_CHANGED when the input is not for the Quest's people.
   changePlanQuest: (questId: string, making: MakePlanQuest) => Promise<Quest>;
@@ -344,7 +345,7 @@ export const apiClient: ShownClient = {
     tellAskLevels(made.askLevels);
     return made;
   },
-  getBetterPlan: (questId, location) => chosen().getBetterPlan(questId, location),
+  getBetterPlan: (questId, location, missing) => chosen().getBetterPlan(questId, location, missing),
   changePlanQuest: (questId, making) => chosen().changePlanQuest(questId, making),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),
   reportLate: (questId, minutes, location) => chosen().reportLate(questId, minutes, location),

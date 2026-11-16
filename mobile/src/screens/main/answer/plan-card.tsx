@@ -36,11 +36,12 @@ const COUNT_WIDTH = 44;
 // A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
 const SWIPE_STARTS = 10;
 const SWIPE_COUNTS = 48;
-// The card's lines while the list of Friends is open, in place of the Plan's. The map takes a press on a face only
-// while a Plan is drawn, so without one the second line says how the list is sorted.
+// The card's lines while the list of Friends is open, in place of the Plan's: who comes to eat, or to meet. The map
+// takes a press on a face only while a Plan is drawn, so without one the second line says how the list is sorted.
 const WHO: AnswerLine = [{ text: '누구와 같이 먹을까요?', strong: false }];
-const LIST_LINES: readonly AnswerLine[] = [WHO, [{ text: '지도의 얼굴을 누르거나 아래에서 골라요', strong: false }]];
-const LIST_LINES_WITHOUT_PLAN: readonly AnswerLine[] = [WHO, [{ text: '가까운 친구부터 보여요', strong: false }]];
+const WHO_MEETS: AnswerLine = [{ text: '누구와 같이 만날까요?', strong: false }];
+const HOW: AnswerLine = [{ text: '지도의 얼굴을 누르거나 아래에서 골라요', strong: false }];
+const HOW_WITHOUT_PLAN: AnswerLine = [{ text: '가까운 친구부터 보여요', strong: false }];
 
 // The answer's lines, which a swipe to the left turns to the next Plan and one to the right to the previous, as the
 // arrows do.
@@ -230,9 +231,13 @@ function cornerOf({ plan, basisOpen, toggleBasis }: ShownAnswer, fix: Correction
     : { words: '근거', icon: 'chevronRight', onPress: toggleBasis };
 }
 
+interface PlanCardProps extends CardProps {
+  onClose: () => void;
+}
+
 function linesOf({ plan }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
   if (adding) {
-    return plan === null ? LIST_LINES_WITHOUT_PLAN : LIST_LINES;
+    return [answer.input.kind === 'meet' ? WHO_MEETS : WHO, plan === null ? HOW_WITHOUT_PLAN : HOW];
   }
   return plan?.lines ?? answer.noPlan?.lines ?? [];
 }
@@ -241,12 +246,13 @@ function linesOf({ plan }: ShownAnswer, answer: AnswerReply, adding: boolean): r
 // the Plan's two lines or those that say why there is none, the basis while open, and the time band with the steps.
 // While the list of Friends to add is open, the lines ask who comes, "그대로" closes the list, and the list stands in
 // place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
-// none takes a press while a recalculation or "이대로 초대" is on its way. A Friend's chip and the mark of a Friend's
+// none takes a press while a recalculation or "이대로 초대" is on its way; the ✕ of a meet's only Friend closes the
+// answer (`onClose`, as the frame's ✕) and goes back to that Friend's card. A Friend's chip and the mark of a Friend's
 // cell open the Friend's profile over the card.
-export function PlanCard({ shown, answer, invitation, room, over = [] }: CardProps): ReactElement {
+export function PlanCard({ shown, answer, invitation, room, over = [], onClose }: PlanCardProps): ReactElement {
   const { plan, basisOpen, recalculating } = shown;
   const busy = recalculating || invitation.sending;
-  const fix = useCorrections(shown, answer.input);
+  const fix = useCorrections(shown, answer.input, onClose);
   const openProfile = useOpenFriendProfile();
   const own = linesOf(shown, answer, fix.adding);
   const lines = fix.adding ? own : [...over, ...own.slice(over.length)];
@@ -258,6 +264,7 @@ export function PlanCard({ shown, answer, invitation, room, over = [] }: CardPro
         corner={cornerOf(shown, fix)}
         disabled={busy}
         friendIds={fix.friendIds}
+        meet={answer.input.kind === 'meet'}
         onAdd={fix.toggleAdding}
         onOrigin={fix.chooseOrigin}
         onProfile={openProfile}

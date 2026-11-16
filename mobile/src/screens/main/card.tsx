@@ -44,6 +44,9 @@ export interface CardProps {
   top?: number;
   // A press on what the User sees of a Friend. Left out, it opens 위치 공유.
   onSeen?: () => void;
+  // The main button, first among the card's buttons, such as a Friend's "만나고 싶다"; the card's own one is then
+  // secondary, and the buttons wrap to a second line where they do not fit.
+  lead?: ReactNode;
 }
 
 // A place's kind in the design system: its colour and its icon. A campus service's round is a rounded square, as the
@@ -221,6 +224,7 @@ export function Card({
   onHeight,
   top,
   onSeen,
+  lead,
 }: CardProps): ReactElement {
   return (
     <CardFrame onHeight={onHeight} top={top}>
@@ -228,7 +232,8 @@ export function Card({
       <Lines card={card} onSeen={onSeen} />
       {card.study === undefined ? null : <StudyRows key={`study:${card.id}`} study={card.study} />}
       <Choices card={card} key={card.id} onChoose={onChoose} />
-      <View style={styles.buttons}>
+      <View style={[styles.buttons, lead !== undefined && styles.wrap]}>
+        {lead}
         {canLookCloser ? (
           <Button icon="search" onPress={onLookCloser} variant="secondary">
             {LOOK_CLOSER}
@@ -236,7 +241,7 @@ export function Card({
         ) : null}
         {card.primary === null ? null : (
           <View style={styles.primary}>
-            <Button full onPress={onPrimary}>
+            <Button full onPress={onPrimary} variant={lead === undefined ? 'primary' : 'secondary'}>
               {card.primary.label}
             </Button>
           </View>
@@ -290,5 +295,6 @@ const styles = StyleSheet.create({
   grow: { flexGrow: 1 },
   lineWords: { ...text.body, flexShrink: 1, color: color.inkMuted },
   buttons: { flexDirection: 'row', gap: space[2] },
+  wrap: { flexWrap: 'wrap' },
   primary: { flexGrow: 1, flexShrink: 1 },
 });
