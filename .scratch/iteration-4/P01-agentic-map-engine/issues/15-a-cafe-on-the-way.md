@@ -35,3 +35,10 @@ Decided by the session that coordinates the packages, for the user's review: an 
    - The chips "301동에서", "13:00 수업까지", and "카페". The action is route guidance to the café.
 6. **The arrows are not built.** A Lookup's card has no arrows (ticket 11). The other two cafés are on the map with their extra minutes, and a press on one opens its building's card (P02-22).
 
+
+### Agent usage (2026-11-16)
+
+- Agent time: about 14 minutes. This is an estimate from this session's transcript timestamps: the union of active stretches, with gaps over 5 minutes left out (most of the waiting was for the shared check slots and the Docker lock). The first export of the cafés is counted in ticket 14's record.
+- Tokens, this session only (no subagent worked on this ticket):
+  - output: 47,201;
+  - input: 16,897,281, of which 16,822,654 were cache reads, 74,545 cache writes, and 82 uncached.
