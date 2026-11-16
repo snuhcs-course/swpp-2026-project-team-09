@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { EventsInput, MealInput, PersonConstraint, PlanInput, PlanPerson } from '@/api/assistant-types';
 import type { MeetInput } from '@/api/meet-plan-types';
 import type { NewQuestInput, QuestsInput } from '@/api/recruiting-plan-types';
 import { field, isBoard, isText, isTextOrNull, listOf } from './answers';
+import { hasNow } from './relax-answers';
 
 // The app's check of an answer's `input`, the conditions sent back to recalculate, as main-server
 // `assistant/dto/answer.dto.ts` fixes them.
@@ -48,7 +50,12 @@ function isGathering(value: unknown): boolean {
 }
 
 function isMealInput(value: unknown): value is MealInput {
-  return field(value, 'kind') === 'meal' && isOneOf(['lunch', 'dinner'])(field(value, 'meal')) && isGathering(value);
+  return (
+    field(value, 'kind') === 'meal' &&
+    isOneOf(['lunch', 'dinner'])(field(value, 'meal')) &&
+    isGathering(value) &&
+    hasNow(field(value, 'window'))
+  );
 }
 
 function isMeetInput(value: unknown): value is MeetInput {

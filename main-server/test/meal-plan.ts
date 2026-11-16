@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
+import { type Hours } from '../src/menus/restaurant-hours.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type TravelProvider } from '../src/travel/travel.js';
 import { ask, postAssistantMessages } from './assistant.js';
@@ -49,6 +51,9 @@ export class MealPlanStage {
   asker!: Named;
   private now = new Date('2087-01-06T09:00:00+09:00');
   private places: Place[] = [];
+  // Each Restaurant's hours by meal, which a test gives: those kept in the shared database belong to no day, so the
+  // plans here read none other.
+  private hours: Record<string, Partial<Record<'lunch' | 'dinner', Hours>>> = {};
 
   // A travel provider of the test's own in place of the seed's.
   constructor(private readonly travel?: TravelProvider) {}
@@ -57,6 +62,11 @@ export class MealPlanStage {
     const { model } = this.model;
     this.app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model, [], this.travel);
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockImplementation(() => this.now);
+    // Imported after startApp, so that it is the class AppModule registers.
+    const { RestaurantHours } = await import('../src/menus/restaurant-hours.js');
+    vi.spyOn(this.app.get(RestaurantHours), 'hoursOf').mockImplementation((name, meal) =>
+      Promise.resolve(meal === 'lunch' || meal === 'dinner' ? (this.hours[name]?.[meal] ?? null) : null),
+    );
   }
 
   stop(): Promise<void> {
@@ -66,7 +76,13 @@ export class MealPlanStage {
   // Stands the clock on that time of the day, for a new asker of that name.
   async asking(date: string, clock: string, name = '유상'): Promise<void> {
     this.now = new Date(`${date}T${clock}:00+09:00`);
+    this.hours = {};
     this.asker = await this.user(name);
+  }
+
+  // The hours the plans read for each Restaurant, until the next `asking`.
+  hoursAre(hours: Record<string, Partial<Record<'lunch' | 'dinner', Hours>>>): void {
+    this.hours = hours;
   }
 
   // A new User who is the asker's Friend.

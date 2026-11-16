@@ -14,6 +14,7 @@ import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
+import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useOpenFriendProfile } from '../friend-profile';
@@ -22,6 +23,7 @@ import { CardNote } from './card-note';
 import { ConditionChips, type CornerAction } from './condition-chips';
 import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
+import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
@@ -105,15 +107,17 @@ interface StepsProps {
   invitation: PlanInvitation | null;
   // The screens the answer offers for an input that was missing.
   offers: readonly AnswerOffer[];
+  // "처음으로" back to 지금, null for none.
+  back: (() => void) | null;
 }
 
 // The arrows at the row's two ends when the answer has more than one Plan, the count right before "›", and the
 // middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend,
 // then the answer's offers.
-function Steps({ shown, count, busy, invitation, offers }: StepsProps): ReactElement | null {
+function Steps({ shown, count, busy, invitation, offers, back }: StepsProps): ReactElement | null {
   const { index, browse, ghost, undo } = shown;
   const arrows = count > 1;
-  if (ghost === null && !arrows && invitation === null && offers.length === 0) {
+  if (ghost === null && !arrows && invitation === null && offers.length === 0 && back === null) {
     return null;
   }
   return (
@@ -135,7 +139,7 @@ function Steps({ shown, count, busy, invitation, offers }: StepsProps): ReactEle
             </Button>
           </View>
         )}
-        <MainButtons busy={busy} invitation={invitation} offers={offers} />
+        <MainButtons back={back} busy={busy} invitation={invitation} offers={offers} />
       </View>
       {arrows ? (
         <Text numberOfLines={1} style={styles.count} testID="plan-count">
@@ -204,7 +208,9 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
         />
       )}
       <CardNote note={answer.note} />
+      {plan === null ? <RelaxButtons busy={busy} onRelax={fix.relax} relax={answer.noPlan?.relax ?? []} /> : null}
       <Steps
+        back={plan !== null && easedFromNow(answer.input) ? fix.back : null}
         busy={busy}
         count={answer.plans.length}
         invitation={invitable ? invitation : null}

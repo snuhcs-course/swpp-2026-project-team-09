@@ -8,11 +8,13 @@
 
 import { router } from 'expo-router';
 import { type ComponentProps, useEffect, useState } from 'react';
-import type { PlanInput } from '@/api/assistant-types';
+import type { ConditionChip, PlanInput } from '@/api/assistant-types';
+import type { RelaxOffer } from '@/api/relax-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
 import { onlyFriendOf } from '@/features/assistant/meet-input';
 import { peopleOf, withBound, withOrigin, withoutPerson, withStart } from '@/features/assistant/plan-input';
+import { backToNow, relaxed, timeChipChange } from '@/features/assistant/relaxed-plan';
 import { type BandBound, clockOf, msOf, type Stretch } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
@@ -36,8 +38,11 @@ export interface Corrections {
   remove: (userId: string) => void;
   chooseOrigin: () => void;
   focus: BandBound | null;
-  focusUntil: () => void;
+  focusUntil: (chip: ConditionChip) => void;
   drop: (bound: BandBound, time: string) => void;
+  // A button of an answer that nothing fits 지금, and 처음으로 back to 지금.
+  relax: (offer: RelaxOffer) => void;
+  back: () => void;
   // The band dragged whole to a place, or let go there: let go where it started, it goes back and asks nothing.
   move: (at: Stretch, letGo: boolean) => void;
 }
@@ -74,6 +79,19 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
   };
 }
 
+// A person's ✕: a recalculation without them, but for a meet's only Friend, `close` and that Friend's card by the main
+// screen's address.
+function removerOf(change: ShownAnswer['change'], only: string | null, close: () => void): (userId: string) => void {
+  return (userId) => {
+    if (only === null) {
+      change((conditions) => withoutPerson(conditions, userId));
+    } else {
+      close();
+      router.setParams({ person: only });
+    }
+  };
+}
+
 function moveOf({ plan, setMoving, change }: ShownAnswer): Corrections['move'] {
   return (at, letGo) => {
     const still = plan === null || msOf(at.startAt) === msOf(plan.band.startAt);
@@ -85,14 +103,12 @@ function moveOf({ plan, setMoving, change }: ShownAnswer): Corrections['move'] {
 }
 
 // What the card's controls do to the conditions of the answer on screen when they are pressed or dragged: each change
-// asks for a recalculation, but the ✕ of a meet's only Friend, which closes the answer with `close` and opens that
-// Friend's card by the main screen's address. The list of Friends leaves out those `input` holds.
-export function useCorrections(onScreen: ShownAnswer, input: PlanInput, close: () => void): Corrections {
-  const { change, add, adding, setAdding } = onScreen;
+// asks for a recalculation, but a person's ✕ as `removerOf` says. The list of Friends leaves out those `input` holds.
+export function useCorrections(shown: ShownAnswer, input: PlanInput, close: () => void): Corrections {
+  const { change, add, adding, setAdding } = shown;
   const showToast = useToast();
   const { choices, friendIds } = useChoices(input);
   const { focus, focusUntil } = useFocus();
-  const only = onlyFriendOf(input);
   return {
     adding,
     toggleAdding: () => {
@@ -101,32 +117,36 @@ export function useCorrections(onScreen: ShownAnswer, input: PlanInput, close: (
     choices,
     friendIds,
     choose: add,
-    remove: (userId) => {
-      if (only === null) {
-        change((shown) => withoutPerson(shown, userId));
-      } else {
-        close();
-        router.setParams({ person: only });
-      }
-    },
+    remove: removerOf(change, onlyFriendOf(input), close),
     chooseOrigin: () => {
       waitForPlace(({ placeId }) => {
         if (placeId === null) {
           showToast('건물을 골라 주세요');
         } else {
-          change((shown) => withOrigin(shown, placeId));
+          change((conditions) => withOrigin(conditions, placeId));
         }
       });
       router.push('/place-map');
     },
     focus,
-    focusUntil: () => {
+    focusUntil: (chip) => {
+      const eased = timeChipChange(chip, shown.answer);
+      if (eased !== null) {
+        change(eased);
+        return;
+      }
       setAdding(false);
       focusUntil();
     },
     drop: (bound, time) => {
-      change((shown) => withBound(shown, bound, time), 'drag');
+      change((conditions) => withBound(conditions, bound, time), 'drag');
     },
-    move: moveOf(onScreen),
+    relax: (offer) => {
+      change((conditions) => relaxed(conditions, offer));
+    },
+    back: () => {
+      change(backToNow);
+    },
+    move: moveOf(shown),
   };
 }
