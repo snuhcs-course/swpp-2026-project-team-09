@@ -22,7 +22,14 @@ import type { LibrarySpace } from '@/api/assistant-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import type { LatLng, ListedGlobalEvent, MyParty, Party, Position, Presence, Quest } from '@/api/types';
 import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
-import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
+import {
+  heldAlone,
+  otherHolders,
+  partyOf,
+  positionOf,
+  type QuestParty,
+  shownSubQuest,
+} from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
 import { eventCards } from './event-cards';
 import { placeGroupId } from './place-groups';
@@ -224,7 +231,7 @@ function openPartyCard(
 
 // A Party that others may join shows its members and how to join. A closed Party and a Shared Quest that is no
 // Party's show when and where, and the way there; the frames word both as a "비공개 파티" and draw both as a Party. A
-// Quest the User holds alone is worded and drawn as a Quest.
+// Quest the User holds alone is worded and drawn as a Quest, and one taken alone with "여기로" is never called a 파티.
 function partyCard(
   quest: Quest,
   party: QuestParty | null,
@@ -249,7 +256,7 @@ function partyCard(
     kind: party === null ? 'shared-quest' : 'party',
     mark: { type: 'place', place: alone ? 'quest' : 'party' },
     marker: { name: `${alone ? '퀘스트' : '파티'} · ${title}`, short: shortTitle(title), count: 0, minutesOld: null },
-    subLabel: kindWords,
+    subLabel: heldAlone(quest) ? '퀘스트' : kindWords,
     title,
     lines: [
       ...(start === null ? [] : [line('clock', `${koreaDay(start, now)} ${koreaClock(start)}`)]),

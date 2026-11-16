@@ -5,8 +5,10 @@
  ******************************************************************************/
 
 import { Platform } from 'react-native';
+import { EVENTS_ANSWER } from '@/api/mock/data/events-answer';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import { takenAloneOf } from '@/api/mock/data/taken-alone';
 import type * as PushDevice from '@/push/device';
 import { keep } from '@/storage/kept';
 import type * as SecureStoreFake from '../support/secure-store';
@@ -20,11 +22,11 @@ import { givePhone, ON_CAMPUS } from '../support/main';
 import { startFresh } from '../support/mocks';
 import { givePushPhone, PHONE_TOKEN, type PushPhone } from '../support/push';
 import { REGISTER } from '../support/push-moments';
-import { NEW_QUEST_REPLY, POSTED, sayOnMap } from '../support/row-four';
+import { ASKER, EVENTS_REPLY, firstPlan, NEW_QUEST_REPLY, POSTED, sayOnMap } from '../support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from '../support/server';
 
 // The sheet that asks about push (board t17) after a Plan of the answer frame is made into a Quest (P02 ticket 30):
-// "이대로 초대" of a meal and "이대로 모집" of a new party, as after a booking of the library, against the fake main
+// "이대로 초대" of a meal, "이대로 모집" of a new party, and "여기로" of an event (P03 ticket 15), as after a booking of the library, against the fake main
 // server with the real push wrapper over a mocked `expo-notifications`.
 
 jest.mock('expo-location');
@@ -70,7 +72,7 @@ function sheetShown(): boolean {
   return screen.queryByRole('header', { name: QUESTION }) !== null;
 }
 
-// Partitions: a meal's Quest made; a new party posted; a making that fails; the sheet shown on the phone before.
+// Partitions: a meal's Quest made; a new party posted; an event taken alone.
 describe('the sheet after a Plan made into a Quest', () => {
   it('shows after "이대로 초대", and 알림 받기 asks and registers', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
@@ -97,6 +99,21 @@ describe('the sheet after a Plan made into a Quest', () => {
     expect(screen.getByRole('header', { name: QUESTION })).toBeVisible();
   });
 
+  it('shows after "여기로"', async () => {
+    const taken = takenAloneOf(firstPlan(EVENTS_ANSWER), { id: ASKER, name: '유상', department: '컴퓨터공학부' });
+    server.on('POST /plans', { status: 201, body: taken });
+    const user = await sayOnMap(server, '오늘 볼 만한 거 있어?', EVENTS_REPLY);
+
+    await user.press(card().getByRole('button', { name: '여기로' }));
+    await pass(500);
+
+    expect(card().getByText('채용박람회에 가요')).toBeVisible();
+    expect(screen.getByRole('header', { name: QUESTION })).toBeVisible();
+  });
+});
+
+// Partitions: a making that fails; the sheet shown on the phone before.
+describe('no sheet after a Plan made into a Quest', () => {
   it('does not show when the making fails', async () => {
     server.on('POST /plans', { status: 500, body: { statusCode: 500, message: 'Internal' } });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);

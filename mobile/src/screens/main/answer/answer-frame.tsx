@@ -29,9 +29,9 @@ import { AnswerPill } from './answer-pill';
 import { EarlierTurns } from './earlier-turns';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { HowAboutCard } from './how-about-card';
-import { InvitedCard } from './invited-card';
 import { KeyboardHeadline } from './keyboard-headline';
 import { LookupCard } from './lookup-card';
+import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
 import { pillIconOf } from './pill-icon';
 import { PlanCard } from './plan-card';
@@ -54,7 +54,7 @@ interface WordsProps {
   addRecalculated: Chat['addRecalculated'];
 }
 
-// A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
+// A reply's words: the card of the answer on screen for the reply it came from, the made Quest's once its Plan was
 // made into one, the card of the Lookup on screen for its reply, with a refusal's lines over either when the refusal
 // stands beside the Lookup or keeps what is on screen, else a refusal's lines and offers, a failure's lines, or the
 // lines of its answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence;
@@ -68,18 +68,18 @@ function Words(props: WordsProps): ReactElement {
     return <HowAboutCard current={shown.plan} howAbout={howAbout} />;
   }
   if ((fromReply || keeps) && shown.answer !== null) {
-    const { made, standings } = invitation;
+    const { made } = invitation;
     const over = keeps ? refusal?.lines : undefined;
     return made === null || shown.plan === null ? (
       <PlanCard answer={shown.answer} invitation={invitation} onClose={onClose} over={over} room={room} shown={shown} />
     ) : (
-      <InvitedCard
-        chips={shown.answer.chips}
+      <MadeCard
+        answer={shown.answer}
+        invitation={invitation}
+        made={made}
         onClose={onClose}
         over={over}
-        standings={standings}
-        startAt={shown.plan.startAt}
-        steps={made.quest.subQuests}
+        plan={shown.plan}
       />
     );
   }

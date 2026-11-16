@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { planInputSchema, recalculationSchema } from '../../assistant/dto/answer.dto.js';
+import { type AnswerLine, planInputSchema, recalculationSchema } from '../../assistant/dto/answer.dto.js';
 import { type AskLevelDto } from '../../friends/dto/friends.dto.js';
 import { type QuestDto } from '../../quests/dto/quest.dto.js';
 
@@ -34,4 +34,8 @@ export interface PlanQuestDto {
   // The Friends of the Plan whom the asker was not yet asked about after a Plan became a Quest, in the Plan's order,
   // for the app to ask how much each usually sees.
   askLevels: AskLevelDto[];
+  // A Plan taken alone ("여기로"), whose Quest the asker holds alone: the card's two lines, where the User goes and
+  // whether they will be told when to leave, and when that leave-by rings, null for none. Absent for a Plan with a
+  // Friend.
+  alone?: { lines: AnswerLine[]; remindAt: string | null };
 }

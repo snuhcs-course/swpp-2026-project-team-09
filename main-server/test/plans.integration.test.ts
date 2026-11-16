@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -188,26 +189,6 @@ describe('Refused with 400', () => {
 
   beforeAll(async () => {
     ({ friend, stranger } = await refusalStage(date));
-  });
-
-  it('PLAN_ALONE: a Plan with no Friend', async () => {
-    const response = await makePlanQuest(
-      making(inputOf(date, [stage.asker.id]), '301동식당', `${date}T11:50:00+09:00`),
-    );
-
-    expect(response.status).toBe(400);
-    expect(response.body).toMatchObject(refused(400, 'PLAN_ALONE'));
-    expect(await storedQuests(stage.asker)).toEqual([]);
-  });
-
-  it('PLAN_KIND: a Plan of a day’s events', async () => {
-    const response = await makePlanQuest(
-      making({ kind: 'events', date, eventIds: null }, randomUUID(), `${date}T13:54:00+09:00`),
-    );
-
-    expect(response.status).toBe(400);
-    expect(response.body).toMatchObject(refused(400, 'PLAN_KIND'));
-    expect(await storedQuests(stage.asker)).toEqual([]);
   });
 
   it.each<[string, () => object]>([

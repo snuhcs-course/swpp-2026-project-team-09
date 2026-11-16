@@ -4,11 +4,12 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MyParty, Party, Quest } from '@/api/types';
 import { koreaClock, koreaDaysAfter, koreaWeekday } from '@/korea-time';
-import { shownSubQuest, waitWords } from '@/features/quests/adapter';
+import { heldAlone, shownSubQuest, waitWords } from '@/features/quests/adapter';
 import { whenOf } from './posts';
 
 // 내 파티, the frame's `PartyMine`: the User's Quests but the Class Quests, and the past ones, as cards in groups.
@@ -202,11 +203,18 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
   };
 }
 
+// A Quest held alone is no 파티.
+function withoutAlone(quests: readonly Quest[]): Quest[] {
+  return quests.filter((quest) => !heldAlone(quest));
+}
+
 // The User's Quests but the Class Quests, then the past ones.
 export function toMineCards(sources: MineSources): MineCardView[] {
   return [
-    ...sources.quests.filter(({ classQuest }) => !classQuest).map((quest) => cardOf(quest, sources, false)),
-    ...sources.past.map((quest) => cardOf(quest, sources, true)),
+    ...withoutAlone(sources.quests.filter(({ classQuest }) => !classQuest)).map((quest) =>
+      cardOf(quest, sources, false),
+    ),
+    ...withoutAlone(sources.past).map((quest) => cardOf(quest, sources, true)),
   ];
 }
 

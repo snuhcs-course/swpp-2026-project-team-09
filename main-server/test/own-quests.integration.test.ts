@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -42,6 +43,8 @@ const subQuest = {
 };
 
 const post = { joinPolicy: 'open', board: 'meal', description: '학관에서 저녁 먹을 사람' };
+// A Sub Quest nobody cancelled or marked, whose end has not passed.
+const UNTOUCHED = { cancelled: false, done: false, ended: false };
 
 describe('Making a Quest of one’s own', () => {
   it('gives a Quest without a Global Event, led and held by the User, with the Sub Quest given', async () => {
@@ -72,12 +75,11 @@ describe('Making a Quest of one’s own', () => {
           ...subQuest,
           place: { placeId: null, ...subQuest.place },
           completion: 'by_time',
-          cancelled: false,
-          done: false,
-          ended: false,
+          ...UNTOUCHED,
         },
       ],
       classQuest: false,
+      takenAlone: false,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
     });

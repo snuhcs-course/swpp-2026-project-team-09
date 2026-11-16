@@ -169,18 +169,21 @@ describe('"가까이 보기"', () => {
 
 describe('a toast while a card is open', () => {
   it('shows above the card, so that it never lies over the buttons', async () => {
+    // No position yet: 길찾기 says so and keeps the card.
+    givePhone({ permission: 'granted' });
     const user = await openMain();
-    await press(user, EVENT);
+    await press(user, DINNER);
     await fireEvent(screen.getByTestId('map-card'), 'layout', {
       nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },
     });
 
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await press(user, '길찾기');
 
+    expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
     // The navigation's 80, the card's bottom 72 above it, its height, and 8 of clear room.
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 340 });
     await press(user, '닫기');
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await user.press(screen.getByRole('button', { name: '내 위치로 이동' }));
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
 });
