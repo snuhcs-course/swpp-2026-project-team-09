@@ -145,20 +145,21 @@ function MadeLine({
 
 // What the everyday map has at its bottom while no answer and no card nobody asked for is shown: the shuttle's notice,
 // the row of buttons, the 편의기능 button, the tutorial's start, the first run's card and its line that asks for interests,
-// and the line of a made Quest.
+// and the line of a made Quest. While the AI input has the keyboard, the tutorial's start, the first run's card and line,
+// and the made Quest's line give way to the examples above it.
 function EverydayBottom(props: EverydayProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, room, stack, tutorial, firstRun } = props;
+  const { taken, onParty, onNoticeHeight, room, stack, tutorial, firstRun, keyboardUp } = props;
   const { bottomCard, notice } = taken;
   return (
     <>
       {notice === null ? null : <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} />}
       <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} room={room} />
       {bottomCard ? null : <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} stack={stack} />}
-      {room.tutorialStart ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
-      {firstRun.card === null ? null : (
+      {room.tutorialStart && !keyboardUp ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
+      {firstRun.card === null || keyboardUp ? null : (
         <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
       )}
-      {room.interestsHint ? (
+      {room.interestsHint && !keyboardUp ? (
         <InterestsHint bottom={interestsHintBottom(room.tutorialStart)} onPress={firstRun.openInterests} />
       ) : null}
       <MadeLine {...props} />
