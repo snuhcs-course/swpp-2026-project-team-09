@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -21,7 +22,7 @@ import { answerParty, MY_HIKE, YU_NA } from './support/party';
 import { MIN_JUN_HOLDER, SEO_YEON_HOLDER, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// The Restaurant card of a 공강에 밥 answer, and its 파티 만들기, against the fake main server.
+// The Restaurant card of a 공강에 밥 answer in the answer frame's card, and its 파티 만들기, against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -107,20 +108,23 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Opens the chat and lets the Assistant answer with these cards.
+// Asks from the map's bar and lets the Assistant answer with these cards.
 async function answered(cards: readonly object[]): Promise<User> {
   const body = { text: REPLY, mapButtons: ['dining'], cards, proposal: null };
   server.on('POST /assistant/messages', { status: 200, body });
   const user = await openMain();
-  await user.press(screen.getByLabelText(AI_INPUT));
   await user.type(screen.getByLabelText(AI_INPUT), '민수랑 지은이랑 밥');
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(500);
   return user;
 }
 
+function frame(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-card'));
+}
+
 function card(key = '학생회관식당'): ReturnType<typeof within> {
-  return within(screen.getByTestId(`restaurant-${key}`));
+  return within(frame().getByTestId(`restaurant-${key}`));
 }
 
 function bodies(route: string): unknown[] {
@@ -185,7 +189,6 @@ describe('파티 만들기 on the Restaurant card', () => {
     await openForm(user);
 
     expect(server.received('POST /assistant/messages')).toHaveLength(1);
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
     expect(shownAddress()).toBe('/party-form?fromProposal=1');
     expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
     expect(screen.getByLabelText('제목')).toHaveDisplayValue('학생회관식당에서 점심');
@@ -229,6 +232,6 @@ describe('a card the app does not know', () => {
   it('fails the reply as an ordinary failure, as an APK from before the Restaurant card does', async () => {
     await answered([{ kind: 'menu', menu: {} }]);
 
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent('답을 가져오지 못했어요.', { exact: false });
+    expect(frame().getByText('답을 가져오지 못했어요.')).toBeVisible();
   });
 });

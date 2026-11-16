@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -16,7 +17,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// The 이동 시간 box of the cards of a 공강 파티 answer, against the fake main server.
+// The 이동 시간 box of the cards of a 공강 파티 answer in the answer frame's card, against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -52,21 +53,24 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// Opens the chat and lets the Assistant answer with these cards.
+// Asks from the map's bar and lets the Assistant answer with these cards.
 async function answered(cards: object[]): Promise<void> {
   const body = { text: '갈 수 있는 파티예요.', mapButtons: [], cards, proposal: null };
   server.on('POST /assistant/messages', { status: 200, body });
   const user = await openMain();
-  await user.press(screen.getByLabelText(AI_INPUT));
   await user.type(screen.getByLabelText(AI_INPUT), '갈 수 있는 파티 있어?');
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(500);
 }
 
+function frame(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-card'));
+}
+
 // The box of the Quest's card, as a screen shows it.
 async function boxOfQuest(fields: object): Promise<ReturnType<typeof within>> {
   await answered([{ kind: 'quest', quest: QUEST, ...fields }]);
-  return within(within(screen.getByTestId(`post-${QUEST.id}`)).getByLabelText(BOX));
+  return within(within(frame().getByTestId(`post-${QUEST.id}`)).getByLabelText(BOX));
 }
 
 describe('the 이동 시간 box', () => {
@@ -101,7 +105,7 @@ describe('the 이동 시간 box on a card', () => {
   it("stays beside a Quest card's join button and the places it shows", async () => {
     await answered([{ kind: 'quest', quest: QUEST, travel: { mode: 'walk', minutes: 4 } }]);
 
-    const card = within(screen.getByTestId(`post-${QUEST.id}`));
+    const card = within(frame().getByTestId(`post-${QUEST.id}`));
     expect(card.getByLabelText(BOX)).toBeVisible();
     expect(card.getByText('2/4명')).toBeVisible();
     expect(card.getByRole('button', { name: '참여하기' })).toBeVisible();
@@ -112,7 +116,7 @@ describe('the 이동 시간 box on a card', () => {
 
     await answered([{ kind: 'globalEvent', globalEvent: MAJOR, ...fields }]);
 
-    const card = within(screen.getByTestId(`event-${MAJOR.id}`));
+    const card = within(frame().getByTestId(`event-${MAJOR.id}`));
     expect(card.getByText('가는 길 셔틀 9분')).toBeVisible();
     expect(card.getByText('끝 시간이 없어요 · 15:44엔 나서야 해요')).toBeVisible();
     expect(card.getByRole('button', { name: 'AI 매칭' })).toBeVisible();
@@ -124,6 +128,6 @@ describe('the 이동 시간 box on a card', () => {
       { kind: 'globalEvent', globalEvent: MAJOR },
     ]);
 
-    expect(screen.queryByLabelText(BOX)).toBeNull();
+    expect(frame().queryByLabelText(BOX)).toBeNull();
   });
 });

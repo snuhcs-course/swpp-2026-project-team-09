@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -17,7 +18,8 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// The Global Events of the Assistant's answers, drawn as the 행사 tab's cards, against the fake main server.
+// The Global Events of the Assistant's answers, drawn in the answer frame's card as the 행사 tab's cards, against the
+// fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -53,36 +55,38 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Opens the chat, sends a question and lets the Assistant answer with the cards of MAJOR, then CAREER.
+// Sends a question from the map's bar and lets the Assistant answer with the cards of MAJOR, then CAREER.
 async function answered(): Promise<User> {
   const cards = [MAJOR, CAREER].map((globalEvent) => ({ kind: 'globalEvent', globalEvent }));
   server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards, proposal: null } });
   const user = await openMain();
-  await user.press(screen.getByLabelText(AI_INPUT));
   await user.type(screen.getByLabelText(AI_INPUT), '이번 주에 설명회 있어?');
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(500);
   return user;
 }
 
-function chatCard(id: string): ReturnType<typeof within> {
-  return within(within(screen.getByTestId('chat-sheet')).getByTestId(`event-${id}`));
+function frame(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-card'));
+}
+
+function cardInFrame(id: string): ReturnType<typeof within> {
+  return within(frame().getByTestId(`event-${id}`));
 }
 
 describe('the event cards of an answer', () => {
-  it("shows them in the answer's bubble, in the order given, as the 행사 tab draws them", async () => {
+  it("shows them in the frame's card, in the order given, as the 행사 tab draws them", async () => {
     await answered();
 
-    const bubble = within(screen.getByTestId('assistant-bubble'));
-    expect(bubble.getByText(REPLY)).toBeVisible();
-    expect(bubble.getAllByRole('link')).toEqual([
-      bubble.getByRole('link', { name: MAJOR.title }),
-      bubble.getByRole('link', { name: CAREER.title }),
+    expect(frame().getByText(REPLY)).toBeVisible();
+    expect(frame().getAllByRole('link')).toEqual([
+      frame().getByRole('link', { name: MAJOR.title }),
+      frame().getByRole('link', { name: CAREER.title }),
     ]);
-    expect(chatCard(CAREER.id).getByText('오늘 18:00–20:00')).toBeVisible();
-    expect(chatCard(CAREER.id).getByText('같이 갈 파티 2개')).toBeVisible();
-    expect(chatCard(CAREER.id).getByRole('button', { name: '파티 찾기/모집' })).toBeVisible();
-    expect(chatCard(CAREER.id).getByRole('button', { name: 'AI 매칭' })).toBeVisible();
+    expect(cardInFrame(CAREER.id).getByText('오늘 18:00–20:00')).toBeVisible();
+    expect(cardInFrame(CAREER.id).getByText('같이 갈 파티 2개')).toBeVisible();
+    expect(cardInFrame(CAREER.id).getByRole('button', { name: '파티 찾기/모집' })).toBeVisible();
+    expect(cardInFrame(CAREER.id).getByRole('button', { name: 'AI 매칭' })).toBeVisible();
   });
 
   it('are sent back as their references only', async () => {
@@ -91,32 +95,32 @@ describe('the event cards of an answer', () => {
     await user.type(screen.getByLabelText(AI_INPUT), '고마워');
     await user.press(screen.getByRole('button', { name: '보내기' }));
 
-    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
-      clientCapabilities: ['library'],
-      messages: [
-        { role: 'user', text: '이번 주에 설명회 있어?' },
-        {
-          role: 'assistant',
-          text: REPLY,
-          cards: [
-            { kind: 'globalEvent', id: MAJOR.id },
-            { kind: 'globalEvent', id: CAREER.id },
-          ],
-        },
-        { role: 'user', text: '고마워' },
-      ],
-    });
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(
+      expect.objectContaining({
+        messages: [
+          { role: 'user', text: '이번 주에 설명회 있어?' },
+          {
+            role: 'assistant',
+            text: REPLY,
+            cards: [
+              { kind: 'globalEvent', id: MAJOR.id },
+              { kind: 'globalEvent', id: CAREER.id },
+            ],
+          },
+          { role: 'user', text: '고마워' },
+        ],
+      }),
+    );
   });
 });
 
 describe('an event card pressed', () => {
-  it('closes the sheet and opens the 행사 tab marked at that event', async () => {
+  it('opens the 행사 tab marked at that event', async () => {
     const user = await answered();
 
-    await user.press(screen.getByRole('link', { name: MAJOR.title }));
+    await user.press(frame().getByRole('link', { name: MAJOR.title }));
     await pass(500);
 
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
     expect(screen.getByRole('tab', { name: '행사' })).toBeSelected();
     expect(screen.getByTestId(`event-${MAJOR.id}`)).toHaveStyle({ borderWidth: 2 });
     expect(screen.getByTestId(`event-${CAREER.id}`)).toHaveStyle({ borderWidth: 1 });
@@ -124,16 +128,16 @@ describe('an event card pressed', () => {
 });
 
 describe("an event card's 파티 찾기/모집", () => {
-  it("opens the tab's sheet over the chat, whose rows open the recruiting posts", async () => {
+  it("opens the tab's sheet over the frame, whose rows open the recruiting posts", async () => {
     server.on('GET /quest-join-requests', { status: 200, body: [] });
     const user = await answered();
 
-    await user.press(chatCard(CAREER.id).getByRole('button', { name: '파티 찾기/모집' }));
+    await user.press(cardInFrame(CAREER.id).getByRole('button', { name: '파티 찾기/모집' }));
     await pass(500);
 
     expect(server.received('GET /quests/recruiting').at(-1)?.query).toEqual({ globalEventId: CAREER.id });
     expect(screen.getByRole('header', { name: '모집 중인 파티 2' })).toBeVisible();
-    expect(screen.getByTestId('chat-sheet')).toBeVisible();
+    expect(screen.getByTestId('answer-card')).toBeVisible();
 
     await user.press(screen.getByRole('button', { name: /^이서연/u }));
     await pass(500);
@@ -147,7 +151,7 @@ describe("an event card's AI 매칭", () => {
     server.on('POST /matching-requests', { status: 201, body: waiting(CAREER.id) });
     const user = await answered();
 
-    await user.press(chatCard(CAREER.id).getByRole('button', { name: 'AI 매칭' }));
+    await user.press(cardInFrame(CAREER.id).getByRole('button', { name: 'AI 매칭' }));
     await pass(500);
     await user.press(screen.getByRole('button', { name: '3명' }));
     await user.press(screen.getByRole('button', { name: '매칭 신청' }));

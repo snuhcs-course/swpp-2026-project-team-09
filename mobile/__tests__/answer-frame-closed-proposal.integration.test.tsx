@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -19,8 +20,8 @@ import { answerParty, MY_HIKE, YU_NA } from './support/party';
 import { SEO_YEON_HOLDER, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// A Proposal card of a 비공개 파티 with Friends to invite, a Place and a Global Event, and its 만들기, against the fake
-// main server.
+// A Proposal card of a 비공개 파티 with Friends to invite, a Place and a Global Event, and its 만들기, in the answer
+// frame's card, against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -81,11 +82,10 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Opens the chat, asks for a 파티 and lets the Assistant answer with this Proposal.
+// Asks for a 파티 from the map's bar and lets the Assistant answer with this Proposal.
 async function proposed(proposal: QuestProposal): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal } });
   const user = await openMain();
-  await user.press(screen.getByLabelText(AI_INPUT));
   await user.type(screen.getByLabelText(AI_INPUT), '오늘 설명회 비공개로 서연이랑 유나 초대해서');
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(500);
@@ -93,7 +93,7 @@ async function proposed(proposal: QuestProposal): Promise<User> {
 }
 
 function card(): ReturnType<typeof within> {
-  return within(screen.getByTestId('proposal-card'));
+  return within(within(screen.getByTestId('answer-card')).getByTestId('proposal-card'));
 }
 
 function make(): ReturnType<typeof screen.getByRole> {
@@ -163,7 +163,6 @@ describe('만들기 of a 비공개 파티', () => {
       { userId: YU_NA.id },
     ]);
     expect(toast()).toHaveTextContent('비공개 파티를 만들었어요 · 2명에게 초대 요청');
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
   });
 

@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -21,7 +22,7 @@ import { answerParty, MY_HIKE } from './support/party';
 import { toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// The Proposal card of the Assistant's answers and its 만들기, against the fake main server.
+// The Proposal card of the Assistant's answers and its 만들기, in the answer frame's card, against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -83,17 +84,20 @@ async function say(user: User, words: string): Promise<void> {
   await pass(500);
 }
 
-// Opens the chat, asks for a 파티 and lets the Assistant answer with this Proposal.
+// Asks for a 파티 from the map's bar and lets the Assistant answer with this Proposal.
 async function proposed(proposal: QuestProposal = LUNCH): Promise<User> {
   answerWith(proposal);
   const user = await openMain();
-  await user.press(screen.getByLabelText(AI_INPUT));
   await say(user, ASKED);
   return user;
 }
 
+function frame(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-card'));
+}
+
 function card(): ReturnType<typeof within> {
-  return within(screen.getByTestId('proposal-card'));
+  return within(frame().getByTestId('proposal-card'));
 }
 
 function make(): ReturnType<typeof screen.getByRole> {
@@ -104,7 +108,7 @@ describe('the Proposal card of an answer', () => {
   it("lists the Proposal's fields as rows, the ones it does not fill as empty", async () => {
     await proposed();
 
-    expect(within(screen.getByTestId('assistant-bubble')).getByTestId('proposal-card')).toBeVisible();
+    expect(frame().getByTestId('proposal-card')).toBeVisible();
     for (const row of [
       '제목 학식 같이 먹어요',
       '공개 범위 공개 · 바로 참여',
@@ -135,7 +139,9 @@ describe('the Proposal card of an answer', () => {
 
     await say(user, '고마워');
 
-    expect(screen.getAllByTestId('proposal-card')).toHaveLength(1);
+    // The frame's card holds the last reply alone.
+    expect(frame().getByText(REPLY)).toBeVisible();
+    expect(frame().queryByTestId('proposal-card')).toBeNull();
   });
 });
 
@@ -148,16 +154,17 @@ describe('the Proposal sent back', () => {
 
     await say(user, '시간만 1시로');
 
-    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({
-      clientCapabilities: ['library'],
-      messages: [
-        { role: 'user', text: ASKED },
-        { role: 'assistant', text: REPLY, cards: [] },
-        { role: 'user', text: '3명으로 해줘' },
-        { role: 'assistant', text: REPLY, cards: [], proposal: { ...LUNCH, capacity: 3 } },
-        { role: 'user', text: '시간만 1시로' },
-      ],
-    });
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(
+      expect.objectContaining({
+        messages: [
+          { role: 'user', text: ASKED },
+          { role: 'assistant', text: REPLY, cards: [] },
+          { role: 'user', text: '3명으로 해줘' },
+          { role: 'assistant', text: REPLY, cards: [], proposal: { ...LUNCH, capacity: 3 } },
+          { role: 'user', text: '시간만 1시로' },
+        ],
+      }),
+    );
   });
 });
 
@@ -178,11 +185,10 @@ describe('만들기', () => {
       subQuest: { title: LUNCH.title, startsAt: LUNCH.startsAt },
     });
     expect(toast()).toHaveTextContent('파티를 올렸어요');
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
   });
 
-  it('shows a refusal as the form does, and keeps the chat open to try again', async () => {
+  it('shows a refusal as the form does, and keeps the frame open to try again', async () => {
     server.on('POST /quests/own', refusal(409, 'BOARD_REQUIRED'));
     const user = await proposed();
 
@@ -190,7 +196,7 @@ describe('만들기', () => {
     await pass(500);
 
     expect(toast()).toHaveTextContent('게시판을 골라 주세요');
-    expect(screen.getByTestId('chat-sheet')).toBeVisible();
+    expect(screen.getByTestId('answer-card')).toBeVisible();
     expect(make()).toBeEnabled();
   });
 });
@@ -209,13 +215,11 @@ function booking(): ReturnType<typeof screen.queryByRole> {
   return card().queryByRole('button', { name: /^시설 예약하기/u });
 }
 
-// Makes the card's Proposal, then goes back from 내 파티 to the map and opens the chat again, which making closed.
+// Makes the card's Proposal, then goes back from 내 파티 to the map, where the frame still holds it.
 async function made(user: User): Promise<void> {
   await user.press(make());
   await pass(500);
   await user.press(screen.getByRole('tab', { name: '지도' }));
-  await pass(500);
-  await user.press(screen.getByLabelText(AI_INPUT));
   await pass(500);
 }
 

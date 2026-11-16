@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -20,8 +21,8 @@ import { answerParty, MY_HIKE, YU_NA } from './support/party';
 import { MIN_JUN_HOLDER, SEO_YEON_HOLDER, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// 수정 on the chat's Proposal card: the party form filled with the Proposal, and making the Quest from it, against the
-// fake main server.
+// 수정 on the Proposal card in the answer frame: the party form filled with the Proposal, and making the Quest from it,
+// against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -97,11 +98,10 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Opens the chat, asks for a 파티, lets the Assistant answer with this Proposal and presses 수정 on its card.
+// Asks for a 파티 from the map's bar, lets the Assistant answer with this Proposal and presses 수정 on its card.
 async function edited(proposal: QuestProposal): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal } });
   const user = await openMain();
-  await user.press(screen.getByLabelText(AI_INPUT));
   await user.type(screen.getByLabelText(AI_INPUT), ASKED);
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(500);
@@ -110,8 +110,12 @@ async function edited(proposal: QuestProposal): Promise<User> {
   return user;
 }
 
+function frame(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-card'));
+}
+
 function card(): ReturnType<typeof within> {
-  return within(screen.getByTestId('proposal-card'));
+  return within(frame().getByTestId('proposal-card'));
 }
 
 function bodies(route: string): unknown[] {
@@ -125,10 +129,9 @@ function expectNoPhotoOrTags(): void {
 }
 
 describe('수정 on a Proposal of a 공개 파티', () => {
-  it('closes the chat and opens the party form with every field filled in', async () => {
+  it('opens the party form with every field filled in', async () => {
     await edited(LUNCH);
 
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
     expect(shownAddress()).toBe('/party-form?fromProposal=1');
     expect(screen.getByLabelText('제목')).toHaveDisplayValue(LUNCH.title);
     expect(screen.getByLabelText('본문')).toHaveDisplayValue(LUNCH.description);
@@ -209,16 +212,15 @@ describe('수정 on a Proposal of a 비공개 파티 for an event', () => {
   });
 });
 
-describe('the chat after 수정', () => {
+describe('the frame after 수정', () => {
   it('keeps the conversation and the card as they were when the User comes back without making', async () => {
     const user = await edited(LUNCH);
 
     await user.press(screen.getByRole('button', { name: '뒤로' }));
     await pass(500);
-    await user.press(screen.getByLabelText(AI_INPUT));
 
-    expect(screen.getByTestId('user-bubble')).toHaveTextContent(ASKED);
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(REPLY, { exact: false });
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent(ASKED, { exact: false });
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(REPLY, { exact: false });
     expect(card().getByRole('button', { name: '만들기' })).toBeEnabled();
     expect(card().getByRole('button', { name: '수정' })).toBeEnabled();
     expect(server.received('POST /quests/own')).toEqual([]);
@@ -230,7 +232,6 @@ describe('the chat after 수정', () => {
     await pass(500);
 
     await user.press(screen.getByRole('tab', { name: '지도' }));
-    await user.press(screen.getByLabelText(AI_INPUT));
 
     expect(card().getByRole('button', { name: '만들었어요' })).toBeDisabled();
     expect(card().getByRole('button', { name: '수정' })).toBeDisabled();
