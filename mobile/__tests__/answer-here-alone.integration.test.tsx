@@ -200,7 +200,7 @@ describe('what "여기로" leaves as it was', () => {
 
     await take(user);
 
-    expect(screen.getByText(/못했어요. 잠시 후 다시 시도해 주세요$/u)).toBeVisible();
+    expect(screen.getByText('답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
     expect(card().getByRole('button', { name: '여기로' })).toBeVisible();
   });
 });
