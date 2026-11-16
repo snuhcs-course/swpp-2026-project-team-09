@@ -109,9 +109,11 @@ P11's walking and shuttle times and P12's changes to the searches and the recrui
   each other on the map, Friends or not, until they pause, leave or the Leader ends it. A User is in at most one.
 - **Navigation**: on Android, a swipe from the screen's left edge goes back, as the back button does, and closes an
   open panel or sheet; inputs rise above the keyboard everywhere.
-- **SNU Now AI**: a chat sheet from the map's input bar that answers about today's menus and the shuttle, finds Global
-  Events and recruiting parties, and turns one sentence into a Proposal that the User makes or edits. 50 messages per
-  User a day; the conversation stays on the phone. Its replies render bold, lists and links. Added in Iteration 3:
+- **SNU Now AI**: one screen, the answer frame over the map: what the User asks from the map's input bar stands as a
+  pill at the top, and the answer as a card at the bottom and on the map. It answers about today's menus and the
+  shuttle, finds Global Events and recruiting parties, and turns one sentence into a Proposal that the User makes or
+  edits. 50 messages per User a day; the conversation stays on the phone. Its replies render bold, lists and links.
+  Added in Iteration 3:
   - searches take a time window and leave out full parties, parties already started and those the User cannot enter;
     on `3.0/Main`, not released yet, each result says which words it matched, and a search with too many results
     says how to narrow it;
