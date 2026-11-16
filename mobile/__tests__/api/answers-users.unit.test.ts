@@ -19,7 +19,6 @@ import {
   isNothing,
   isOpenedInviteLink,
   isPositionKept,
-  isPositions,
   isProfile,
   isSentFriendRequest,
   isSignInAnswer,
@@ -27,6 +26,7 @@ import {
   isTokens,
   isUserSummary,
 } from '@/api/server/answers';
+import { isPositions } from '@/api/server/position-answers';
 
 function checks<Answer>(guard: Guard<Answer>, accepted: readonly Variant[], refused: readonly Variant[]): void {
   it.each(accepted)('%s → accepted', (_, answer) => {

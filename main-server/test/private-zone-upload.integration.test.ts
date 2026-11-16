@@ -109,7 +109,7 @@ describe('An upload outside every Private Zone', () => {
 
     expect(response.body).toEqual({ offCampus: false, privateZone: false });
     expect((await getPositions(app, viewer)).body).toEqual([
-      { userId: subject.id, ...ON_CAMPUS, measuredAt, level: 'exact' },
+      { userId: subject.id, ...ON_CAMPUS, measuredAt, level: 'exact', nearPlace: ANY_STRING, walkMinutes: null },
     ]);
   });
 });
@@ -133,7 +133,14 @@ describe('A new Private Zone', () => {
       expect((await getPositions(app, exact)).body).toEqual([]);
       expect((await uploadPosition(app, subject, place301)).body).toEqual({ offCampus: false, privateZone: false });
       expect((await getPositions(app, exact)).body).toEqual([
-        { userId: subject.id, ...place301, measuredAt: ANY_STRING, level: 'exact' },
+        {
+          userId: subject.id,
+          ...place301,
+          measuredAt: ANY_STRING,
+          level: 'exact',
+          nearPlace: ANY_STRING,
+          walkMinutes: null,
+        },
       ]);
     },
   );

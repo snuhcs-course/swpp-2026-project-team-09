@@ -26,7 +26,6 @@ import type {
   PartyQuest,
   Person,
   Place,
-  Position,
   PositionKept,
   Profile,
   SentFriendRequest,
@@ -160,23 +159,6 @@ export function isOpenedInviteLink(value: unknown): value is OpenedInviteLink {
   const status = field(value, 'status');
   return isUserSummary(field(value, 'sender')) && isText(status) && INVITE_LINK_STATUSES.has(status);
 }
-
-const POSITION_LEVELS = new Set<unknown>([undefined, 'building', 'exact']);
-
-function isPosition(value: unknown): value is Position {
-  const [placeId, nearPlace, walkMinutes] = ['placeId', 'nearPlace', 'walkMinutes'].map((name) => field(value, name));
-  return (
-    hasTexts(value, ['userId', 'measuredAt']) &&
-    isNumber(field(value, 'latitude')) &&
-    isNumber(field(value, 'longitude')) &&
-    POSITION_LEVELS.has(field(value, 'level')) &&
-    (placeId === undefined || isText(placeId)) &&
-    (nearPlace === undefined || isTextOrNull(nearPlace)) &&
-    (walkMinutes === undefined || walkMinutes === null || isNumber(walkMinutes))
-  );
-}
-
-export const isPositions = listOf(isPosition);
 
 export function isEventName(value: unknown): value is { id: string; title: string } | null {
   return value === null || hasTexts(value, ['id', 'title']);
