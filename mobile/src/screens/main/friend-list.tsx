@@ -10,19 +10,7 @@
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  color,
-  font,
-  Icon,
-  mapText,
-  onKey,
-  presence,
-  radius,
-  shadow,
-  space,
-  text,
-  textHalo,
-} from '@/design-system';
+import { color, font, Icon, mapText, onKey, presence, radius, shadow, space, text, textHalo } from '@/design-system';
 import { type FriendView, withAge } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 import { cardId } from '@/features/map/adapter';

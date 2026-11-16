@@ -37,11 +37,7 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // overview level are their cluster. Things of several kinds at one place are a group's dot or pin. A Quest made from a
 // Plan is its flag at every level: the dot in the Quest colour with its two lines above it, as an answer draws its
 // pick.
-function lookOf(
-  { kind, mark, marker, muted, flag }: CardView,
-  detail: ZoomDetail,
-  selected: boolean,
-): MarkerLook {
+function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (kind === 'made-quest') {
     const { title, line } = flag ?? { title: marker.name, line: null };

@@ -88,7 +88,11 @@ export function AiInput(props: AiInputProps): ReactElement {
   return (
     <View
       onLayout={laidOut}
-      style={[styles.bar, { bottom: AI_INPUT.bottom + lift }, height > AI_INPUT.height && { borderRadius: BAR_RADIUS_TALL }]}
+      style={[
+        styles.bar,
+        { bottom: AI_INPUT.bottom + lift },
+        height > AI_INPUT.height && { borderRadius: BAR_RADIUS_TALL },
+      ]}
       testID="ai-input"
     >
       <TextInput
