@@ -588,7 +588,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     (`friendsWidth`), 146 at 360, so the two never share a point.
   - A Friend's row has the dot in the status's colour (`presence`), the name and the line, "공강 · 중앙도서관" or
     "위치 꺼짐". A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
-    position is not known it says "<이름>님은 위치가 꺼져 있어요" for 2 seconds.
+    position is not known it opens the same card without moving the map.
   - A Quest's row has the round with its icon, the kicker, the title and the time with the place, and the rail joins
     the rounds. The adapter says the row's `tone` and `icon`: a class is `clock` in grey; `open`, a Party that
     others may join, is `users` in blue; `closed`, a Party that takes nobody else and a Shared Quest, is `lock` in
