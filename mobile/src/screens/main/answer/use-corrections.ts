@@ -12,8 +12,8 @@ import type { PlanInput } from '@/api/assistant-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
 import { onlyFriendOf } from '@/features/assistant/meet-input';
-import { peopleOf, withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
-import type { BandBound } from '@/features/assistant/time-band';
+import { peopleOf, withBound, withOrigin, withoutPerson, withStart } from '@/features/assistant/plan-input';
+import { type BandBound, clockOf, msOf, type Stretch } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
 import type { FriendChoices } from './friend-choices';
@@ -38,6 +38,8 @@ export interface Corrections {
   focus: BandBound | null;
   focusUntil: () => void;
   drop: (bound: BandBound, time: string) => void;
+  // The band dragged whole to a place, or let go there: let go where it started, it goes back and asks nothing.
+  move: (at: Stretch, letGo: boolean) => void;
 }
 
 function useChoices(input: PlanInput): Pick<Corrections, 'choices' | 'friendIds'> {
@@ -72,14 +74,21 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
   };
 }
 
-// What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
-// recalculation, but the ✕ of a meet's only Friend, which closes the answer with `close` and opens that Friend's card
-// by the main screen's address. The list of Friends leaves out those `input` holds.
-export function useCorrections(
-  { change, add, adding, setAdding }: ShownAnswer,
-  input: PlanInput,
-  close: () => void,
-): Corrections {
+function moveOf({ plan, setMoving, change }: ShownAnswer): Corrections['move'] {
+  return (at, letGo) => {
+    const still = plan === null || msOf(at.startAt) === msOf(plan.band.startAt);
+    setMoving(letGo && still ? null : at);
+    if (letGo && !still) {
+      change((input) => withStart(input, clockOf(at.startAt)), 'move');
+    }
+  };
+}
+
+// What the card's controls do to the conditions of the answer on screen when they are pressed or dragged: each change
+// asks for a recalculation, but the ✕ of a meet's only Friend, which closes the answer with `close` and opens that
+// Friend's card by the main screen's address. The list of Friends leaves out those `input` holds.
+export function useCorrections(onScreen: ShownAnswer, input: PlanInput, close: () => void): Corrections {
+  const { change, add, adding, setAdding } = onScreen;
   const showToast = useToast();
   const { choices, friendIds } = useChoices(input);
   const { focus, focusUntil } = useFocus();
@@ -118,5 +127,6 @@ export function useCorrections(
     drop: (bound, time) => {
       change((shown) => withBound(shown, bound, time), 'drag');
     },
+    move: moveOf(onScreen),
   };
 }

@@ -3,16 +3,16 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
-import { type DimensionValue, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { MealInput, TimeBand as TimeBandData } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
 import {
   type BandBound,
-  clashes,
   clockOf,
   droppedAt,
   onBandDay,
@@ -20,6 +20,7 @@ import {
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
+import { BandOnTrack, percent, placeOf, redOf, wordsOf } from './band-body';
 
 interface TimeBandProps {
   band: TimeBandData;
@@ -35,6 +36,10 @@ interface TimeBandProps {
   onDrop: (bound: BandBound, time: string) => void;
   // False draws no handles, as for a Lookup's band, which is not recalculated.
   handles?: boolean;
+  // The band's place while it is moved whole by a drag of its body, drawn in place of the Plan's.
+  moving?: Stretch | null;
+  // The body dragged to a place, or let go or stepped there. Without it the body takes no drag.
+  onMove?: (at: Stretch, letGo: boolean) => void;
 }
 
 // A handle moved by a drag, or let go and held while the recalculation it asked for is on its way.
@@ -52,16 +57,6 @@ const HANDLE_TOUCH = 44;
 const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
 const PAN_STARTS = 10;
 const NAME_WIDTH = 40;
-
-function percent(share: number): DimensionValue {
-  return `${share * 100}%`;
-}
-
-// The part of the track a stretch covers, as its left and its width.
-function placeOf(stretch: Stretch, range: Stretch): { left: DimensionValue; width: DimensionValue } {
-  const start = shareOf(stretch.startAt, range);
-  return { left: percent(start), width: percent(shareOf(stretch.endAt, range) - start) };
-}
 
 interface HandleProps {
   bound: BandBound;
@@ -117,16 +112,22 @@ function Handle({ bound, band, shown, trackWidth, focused, disabled, onMove, onL
   );
 }
 
-function Lanes({ band, fixed }: { band: TimeBandData; fixed: MealInput['window'] }): ReactElement {
+interface LanesProps {
+  band: TimeBandData;
+  fixed: MealInput['window'];
+  moving: Stretch | null;
+}
+
+function Lanes({ band, fixed, moving }: LanesProps): ReactElement {
   return (
     <>
-      {band.lanes.map(({ userId, busy }) => (
-        <View key={userId} style={styles.lane}>
+      {band.lanes.map((lane) => (
+        <View key={lane.userId} style={styles.lane} testID={`time-band-lane-${lane.userId}`}>
           <View style={styles.bar}>
-            {busy.map((stretch) => (
+            {lane.busy.map((stretch) => (
               <View key={`busy-${stretch.startAt}`} style={[styles.busy, placeOf(stretch, band.range)]} />
             ))}
-            {clashes(busy, fixed, band).map((stretch) => (
+            {redOf(lane, fixed, band, moving).map((stretch) => (
               <View
                 key={`clash-${stretch.startAt}`}
                 style={[styles.clash, placeOf(stretch, band.range)]}
@@ -186,10 +187,12 @@ function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandPro
 }
 
 // The time band of the answer's card: each person's busy stretches, the line of now, and the Plan's band with a
-// handle at each end, which a drag or a screen reader's step moves by five minutes.
-export function TimeBand({ band, fixed, ghost, focus, disabled, onDrop, handles = true }: TimeBandProps): ReactElement {
+// handle at each end, which a drag or a screen reader's step moves by five minutes, and a body that moves it whole.
+export function TimeBand(props: TimeBandProps): ReactElement {
+  const { band, fixed, focus, disabled, onDrop, handles = true, moving = null } = props;
   const [trackWidth, setTrackWidth] = useState(0);
   const moved = useMovedBand(band, disabled, onDrop);
+  const shown = moving ?? moved.shown;
   const handle = (bound: BandBound): ReactElement => (
     <Handle
       band={band}
@@ -198,6 +201,7 @@ export function TimeBand({ band, fixed, ghost, focus, disabled, onDrop, handles 
       focused={focus === bound}
       trackWidth={trackWidth}
       {...moved}
+      shown={shown}
     />
   );
   return (
@@ -217,9 +221,8 @@ export function TimeBand({ band, fixed, ghost, focus, disabled, onDrop, handles 
           style={styles.track}
           testID="time-band-track"
         >
-          <Lanes band={band} fixed={fixed} />
-          {ghost === null ? null : <View style={[styles.ghost, placeOf(ghost, band.range)]} testID="time-band-ghost" />}
-          <View style={[styles.band, placeOf(moved.shown, band.range)]} />
+          <Lanes band={band} fixed={fixed} moving={moving} />
+          <BandOnTrack {...props} moving={moving} shown={shown} trackWidth={trackWidth} />
           {handles ? handle('from') : null}
           {handles ? handle('until') : null}
         </View>
@@ -228,7 +231,7 @@ export function TimeBand({ band, fixed, ghost, focus, disabled, onDrop, handles 
         <Text style={styles.end}>{clockOf(band.range.startAt)}</Text>
         <Text style={styles.end}>{clockOf(band.range.endAt)}</Text>
       </View>
-      <Text style={styles.words}>{band.text}</Text>
+      <Text style={styles.words}>{wordsOf(band, moving)}</Text>
     </View>
   );
 }
@@ -244,24 +247,6 @@ const styles = StyleSheet.create({
   busy: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.borderStrong },
   clash: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.warning },
   now: { position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1, backgroundColor: color.me },
-  ghost: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: color.quest,
-    borderRadius: radius.sm,
-  },
-  band: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    borderWidth: 2,
-    borderColor: color.quest,
-    borderRadius: radius.sm,
-    backgroundColor: color.questSoft,
-  },
   handle: {
     position: 'absolute',
     top: 0,
