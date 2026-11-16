@@ -132,9 +132,12 @@ interface FrameCardProps {
   children: ReactNode;
 }
 
-// The most the card's content takes, about half the stage, null until the stage is laid out.
+// The most the card's content takes, about half the stage, null until the stage is laid out. It never takes less
+// than the headline's line, which is all it shows while the keyboard is up and leaves little of the stage.
+const LEAST_CONTENT = CONTENT_TOP + text.title.lineHeight;
+
 function contentMaxOf(stageHeight: number | null, barRoom: number): number | null {
-  return stageHeight === null ? null : Math.max(0, stageHeight / 2 - barRoom);
+  return stageHeight === null ? null : Math.max(LEAST_CONTENT, stageHeight / 2 - barRoom);
 }
 
 // The frame's card, attached to the bottom of the screen. Its content scrolls inside it.
