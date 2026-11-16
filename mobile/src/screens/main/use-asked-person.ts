@@ -22,11 +22,11 @@ export function useAskedPerson(cards: readonly CardView[] | null, map: MainMap, 
     }
     router.setParams({ person: undefined });
     const card = cards.find(({ id }) => id === cardId.friend(person) || id === cardId.partyMember(person));
-    if (card !== undefined) {
+    if (card === undefined) {
+      selection.selectFriend(person);
+    } else {
       map.goTo(card.position, 'close');
       selection.selectOrWait(card.id);
-    } else {
-      selection.selectFriend(person);
     }
   }, [person, cards, map, selection]);
 }
