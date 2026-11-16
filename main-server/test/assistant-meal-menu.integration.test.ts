@@ -125,7 +125,7 @@ describe("A meal Plan's menu to the model", () => {
           menu: ['뷔페 6,500원: 돈까스 · 그린샐러드'],
           closesAt: null,
         }),
-      ]),
+      ]) as unknown,
     });
     const again = await withAccessToken(
       request(stage.app.getHttpServer()).post('/assistant/answers'),
