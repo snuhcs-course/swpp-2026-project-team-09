@@ -36,6 +36,7 @@ import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
 import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
 import { MapBottom, openMenus, type Taken } from './map-bottom';
+import { withMeet } from './meet-button';
 import { MyCard } from './my-card';
 import { PlaceCard } from './place-card';
 import { QuestList } from './quest-list';
@@ -122,7 +123,7 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
   return (
     <CardOrSeen
       canLookCloser={map.detail !== 'names' && !top}
-      card={card}
+      {...withMeet(card, chat)}
       onChoose={selection.select}
       onHeight={onHeight}
       onLookCloser={() => {
@@ -172,7 +173,7 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
   }
   if (selection.friend !== null) {
     return chat.framed ? null : (
-      <OffMapFriendCard onHeight={onHeight} selection={selection} userId={selection.friend} />
+      <OffMapFriendCard chat={chat} onHeight={onHeight} selection={selection} userId={selection.friend} />
     );
   }
   return <ThingCard {...props} />;

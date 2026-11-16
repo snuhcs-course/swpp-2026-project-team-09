@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -11,6 +12,8 @@ import { friendProfileCard } from '@/features/friends/profile';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
 import { useFriends } from '@/features/friends/use-friends';
 import { Card, type CardProps } from './card';
+import type { ChatSheetControl } from './chat-sheet';
+import { withMeet } from './meet-button';
 import { CardOrSeen, type SeenSelection } from './seen-card';
 import type { OffMapFriends } from './use-selection';
 
@@ -77,18 +80,24 @@ export function useOffMapFriends(onMap: boolean): OffMapFriends {
 }
 
 // The card of a Friend whom the map does not show, which a row of the friend list opens over the everyday map while
-// the switch of the answer on the map is on: their profile, with what the app holds of them.
+// the switch of the answer on the map is on: their profile, with what the app holds of them, and "만나고 싶다".
 export function OffMapFriendCard({
   userId,
   selection,
+  chat,
   onHeight,
 }: {
   userId: string;
   selection: SeenSelection;
+  chat: ChatSheetControl;
   onHeight: (height: number) => void;
 }): ReactElement | null {
   const friend = useFriendProfile(userId)?.friend ?? null;
-  return friend === null ? null : <CardOrSeen {...profileCardProps(friend, onHeight)} selection={selection} />;
+  if (friend === null) {
+    return null;
+  }
+  const props = profileCardProps(friend, onHeight);
+  return <CardOrSeen {...props} {...withMeet(props.card, chat)} selection={selection} />;
 }
 
 // What is inside the answer frame may open a Friend's profile (`useOpenFriendProfile`), which stands over the frame's
