@@ -32,3 +32,17 @@ Blocked by: package A's area tool and its Lookup (row-6-seams, ticket 23); PR 27
 - Board a9 and note (6): "이 근처" is the one case where study spaces are not looked for at 관정 alone; the names and hours are the app's study-space list (`main-server/seed/study-spaces.json`).
 - Words that differ from the board: the faded rooms take the stored names and labels ("해동학술정보실", "전기·정보공학부·컴퓨터공학부"), not "301동 열람실 · 전기정보·컴공만".
 - Row 6's decisions D7 (one pick) and D8 (the count added by the phone) hold here.
+
+### Decisions (2026-11-16)
+
+Details the ticket left open, listed so that any of them can be vetoed.
+
+1. **The visible area** is the map's view at the camera the map last reported at rest, less the status bar: the stage (between the status bar and the navigation) and the status bar over it make the view, as the answer's camera counts it (`useFraming`). It is null until the camera and the stage are both known, and it goes with every request while the switch is on, also while an answer is on screen.
+2. **The area outlined is the one the reply's request sent**, kept with the reply (`ChatBubble.area`), so that the outline does not follow the map once the User moves it. It is drawn dashed in SNU blue, 2 points wide, under the route; the native map draws it solid until it draws dashes.
+3. **The camera fits nothing** for a `study` Lookup (its drawing has no points), so it stays where the User left it, and the labels' sides are chosen in metres. The area is the view asked from, so its outline lies along the view's edges until the User moves the map.
+4. **The free seats** are those of the seat sectors the 공부공간 layer gives for the flag's Place (관정관's, already cut by 소속 on the server), each read for the time a tapped seat would be booked (`tappedSlot`: from the next half hour, up to two hours within its hours), added up. A sector whose read fails is left out; with none read, or without a library session, the flag reads "↑ 관정" alone. The count is read at most once a minute and never sent to the main server.
+5. **The card's buttons**: `guide` reads "가는 길" for a `study` Lookup, as the building card says it, while the other Lookups keep "길 안내"; each `ask` is a secondary button after it that sends its words as the User's next turn; "닫기" stays last. Beside a refusal its offers stand in place of the Lookup's buttons, as before.
+6. **The mock** points the stored a9 copy's `away` flag at the mock layer's 관정관 (`place-62-1`), so that the phone's seat read finds its sectors on the mock; the stored server copy is unchanged.
+7. **The request context** moved out of `chat-sheet.tsx` into `use-context-chat.ts` (the file's 300-line limit); what was pressed and the visible area are kept in one ref.
+8. **The board's words**: the line reads the server's building name, "보는 범위에선 **공대 신양학술정보관**" (P05-11 decision 3), and the faded rooms read their stored names and labels ("해동학술정보실 · 전기·정보공학부·컴퓨터공학부", "화생공 해동학술정보실·학생라운지 · 화학생물공학부").
+

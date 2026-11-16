@@ -8,7 +8,7 @@
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
-import type { Lookup } from '@/api/lookup-types';
+import type { Lookup, LookupAction } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import { mainActionOf, type ShownLookup } from '@/features/assistant/use-shown-lookup';
@@ -68,9 +68,19 @@ interface MainButton {
   onPress: () => void;
 }
 
-// "길 안내" with "닫기" beside it, or "닫기" alone across the card.
-function Buttons({ main, onClose }: { main: MainButton | null; onClose: () => void }): ReactElement {
-  if (main === null) {
+type AskAction = Extract<LookupAction, { kind: 'ask' }>;
+
+interface ButtonsProps {
+  main: MainButton | null;
+  // The Lookup's `ask` actions, whose words are sent as if typed ("관정 보기").
+  asks: readonly AskAction[];
+  onAsk: (words: string) => void;
+  onClose: () => void;
+}
+
+// "길 안내" and any `ask` with "닫기" beside them, or "닫기" alone across the card.
+function Buttons({ main, asks, onAsk, onClose }: ButtonsProps): ReactElement {
+  if (main === null && asks.length === 0) {
     return (
       <Button full onPress={onClose} variant="secondary">
         닫기
@@ -79,11 +89,24 @@ function Buttons({ main, onClose }: { main: MainButton | null; onClose: () => vo
   }
   return (
     <View style={styles.buttons}>
-      <View style={styles.main}>
-        <Button full onPress={main.onPress}>
-          {main.label}
+      {main === null ? null : (
+        <View style={styles.main}>
+          <Button full onPress={main.onPress}>
+            {main.label}
+          </Button>
+        </View>
+      )}
+      {asks.map(({ label, text: words }) => (
+        <Button
+          key={label}
+          onPress={() => {
+            onAsk(words);
+          }}
+          variant="secondary"
+        >
+          {label}
         </Button>
-      </View>
+      ))}
       <Button onPress={onClose} variant="secondary">
         닫기
       </Button>
@@ -115,17 +138,22 @@ function mainOf({ lookup, shown, refusal, onAsk }: LookupCardProps): MainButton 
   return guide === null
     ? null
     : {
-        label: '길 안내',
+        label: lookup.kind === 'study' ? '가는 길' : '길 안내',
         onPress: () => {
           shown.guide(guide.to);
         },
       };
 }
 
+// The Lookup's `ask` actions, none beside a refusal, whose offers stand in their place.
+function asksOf({ lookup, refusal }: LookupCardProps): AskAction[] {
+  return refusal === null ? lookup.actions.filter((action): action is AskAction => action.kind === 'ask') : [];
+}
+
 // A Lookup in the answer frame's card, as a Plan's card without its arrows and "이대로 초대": its chips, its two lines,
 // the basis while open, the band without handles when a time matters, and the first action the app draws as the main
-// button beside "닫기". Beside a refusal, the refusal's lines stand in place of the Lookup's, and its offer in place of
-// the main button.
+// button, then its `ask` actions, beside "닫기". The main button of a `study` Lookup ("이 근처") reads "가는 길". Beside a
+// refusal, the refusal's lines stand in place of the Lookup's, and its offer in place of the buttons.
 export function LookupCard(props: LookupCardProps): ReactElement {
   const { lookup, shown, refusal, onClose } = props;
   const { basisOpen, toggleBasis } = shown;
@@ -153,7 +181,7 @@ export function LookupCard(props: LookupCardProps): ReactElement {
           onDrop={ignoreDrop}
         />
       )}
-      <Buttons main={mainOf(props)} onClose={onClose} />
+      <Buttons asks={asksOf(props)} main={mainOf(props)} onAsk={props.onAsk} onClose={onClose} />
     </View>
   );
 }

@@ -21,6 +21,7 @@ import type { ReceivedInvitation } from './use-received-invitation';
 import { bothTouches, type MapTouches, usePressedPlace } from './use-pressed-place';
 import type { Selection } from './use-selection';
 import { useThings } from './use-things';
+import { useViewport } from './use-viewport';
 import { TUTORIAL_PIN_ID, type TutorialPin } from './tutorial/use-tutorial-pin';
 
 // A press on the map, which keeps a tap on the ground from being a press on a building: the tutorial place pin takes
@@ -66,7 +67,7 @@ export type MapView = AnswerMap & { around: MapTouches };
 // answer is shown, the Plan is drawn in their place, and a press on a candidate shows its Plan; while a received
 // invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A Lookup on screen
 // is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left further out than
-// the everyday map allows glides back in.
+// the everyday map allows glides back in. Every request carries the map's visible area at rest (`useViewport`).
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
@@ -75,6 +76,7 @@ export function useMapView(
   { invitation, made }: UnaskedCards,
 ): MapView {
   const things = useThings(cards, map.detail, selection.selected?.id ?? null, chat.onMap);
+  useViewport(chat, map, room);
   const lookup = useLookupMap(chat.lookup, map, room, { avatars: things.avatars, cards }, me.avatars);
   const answer = useAnswerMap(chat.answer, map, room, { avatars: things.avatars, cards }, chat.invitation) ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
