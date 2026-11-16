@@ -4,6 +4,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: a Friend and a Party member, recent, old (2 minutes) and too old (10 minutes); a member who is a
@@ -142,7 +143,8 @@ describe('toCards order', () => {
         friends: [friendView(MIN_JUN)],
         myParty: myParty(null, [member(SEO_YEON, true)]),
         positions: [measured('min-jun', MINUTE), measured('seo-yeon', MINUTE)],
-        globalEvents: [event('e1')],
+        // A Favorite Event, which the map keeps.
+        globalEvents: [event('e1', { favorite: true })],
       }),
     );
     expect(cards.map(({ kind }) => kind)).toEqual(['global-event', 'shared-quest', 'friend', 'party-member']);

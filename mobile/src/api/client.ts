@@ -15,6 +15,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -39,7 +40,7 @@ import type {
   Friend,
   FriendLevel,
   FriendStatus,
-  GlobalEvent,
+  ListedGlobalEvent,
   InviteLink,
   LatLng,
   Lobby,
@@ -127,7 +128,10 @@ export interface ApiClient {
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
   searchPlaces: (words: string) => Promise<Place[]>;
-  listGlobalEvents: () => Promise<GlobalEvent[]>;
+  listGlobalEvents: () => Promise<ListedGlobalEvent[]>;
+  // Stars a published Global Event, or clears its star; a repeat changes nothing. Refused with 404
+  // GLOBAL_EVENT_NOT_FOUND for an event that is not published.
+  setFavoriteEvent: (globalEventId: string, favorite: boolean) => Promise<void>;
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
   listParties: () => Promise<Party[]>;
@@ -289,6 +293,7 @@ export const apiClient: ShownClient = {
   listPlaces: () => chosen().listPlaces(),
   searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
+  setFavoriteEvent: (globalEventId, favorite) => chosen().setFavoriteEvent(globalEventId, favorite),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),
   requestMatching: (globalEventId, size) => chosen().requestMatching(globalEventId, size),

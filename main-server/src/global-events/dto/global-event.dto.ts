@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -61,6 +62,14 @@ export function toPublishedGlobalEventDto(event: GlobalEventWithOwnPost): Publis
     longitude: event.longitude,
     sourceUrl: ownPost(event)?.address ?? null,
   };
+}
+
+// An event of a User's list of Global Events, with what is that User's own.
+export interface ListedPublishedGlobalEventDto extends PublishedGlobalEventDto {
+  // When it was published; empty for an event published before it was recorded.
+  publishedAt: string | null;
+  // That the User starred it.
+  favorite: boolean;
 }
 
 // The states an Administrator lists.
