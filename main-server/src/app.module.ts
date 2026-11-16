@@ -20,6 +20,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
@@ -48,6 +49,7 @@ import { HealthModule } from './health/health.module.js';
 import { InterestsModule } from './interests/interests.module.js';
 import { InviteLinksModule } from './invite-links/invite-links.module.js';
 import { RoomRequestsModule } from './library/room-requests.module.js';
+import { SeatStaysModule } from './library/seat-stays.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
 import { LocationSharingModule } from './location-sharing/location-sharing.module.js';
 import { MatchingModule } from './matching/matching.module.js';
@@ -116,6 +118,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     AssistantModule,
     PlansModule,
     RoomRequestsModule,
+    SeatStaysModule,
     StudySpacesModule,
     PushModule,
     NotificationsModule,
