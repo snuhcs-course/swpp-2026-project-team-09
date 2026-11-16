@@ -21,7 +21,9 @@ Five fixes to what ticket 15 merged:
 - [x] **2.** "여기로" on an event replaces only a Quest taken alone for it. A 파티 of the User's own for the event, even one nobody joined yet, refuses it with 409 `SHARED_QUEST_HELD` and stays. Entering or making a 파티 for the event is unchanged.
   - The app says "이 행사에 함께 가는 파티가 이미 있어요", the words 파티 has for that code.
   - The server and app tests fail before the fix.
-- [x] **3.** The 파티 tab's "내 파티" count, 내 정보's "참여 중인 파티", the 행사 tab's `mine`, and the event's rows of 파티 찾기/모집 leave out a Quest taken alone, as 내 파티's list does. The tests fail before the fix.
+- [x] **3.** The 파티 tab's "내 파티" count, 내 정보's "참여 중인 파티", the 행사 tab's `mine`, and the event's rows of 파티 찾기/모집 leave out a Quest taken alone, as 내 파티's list does.
+  - A fifth place, found on the emulator: the Quest list's "파티" chip. Its rows now have the kind `quest` for a Quest taken alone, listed under 전체 only.
+  - The tests fail before the fix.
 - [x] **4.** "다시 고르기" answered 404 `QUEST_NOT_FOUND` counts as given up: the taken card goes and the Plan shows again. The test fails before the fix.
 - [x] **5.** An invitation into a Quest taken alone and a change of its settings are refused with 409 `QUEST_TAKEN_ALONE`. Its room offers no "수정", the way into the party form, where Friends are invited and 공개 is set. The tests fail before the fix.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass in both projects; no native file and no schema changed.
@@ -42,7 +44,16 @@ The orchestrating session decided 1 to 5 (rules 4, 6 and 8). The details below a
 2. **The refusal of "여기로" is checked only on the alone path** (`forGlobalEvent(…, alone)`). `freeForSharedQuest` is unchanged, so entering or making a 파티 for an event still replaces a Quest the User holds alone, as released.
 3. **"수정" is the room's one way to invite or recruit**, so hiding it hides both. The server refuses both anyway. The released 1.0.2 app shows its usual refusal words for an unknown code: `refusalWords` falls back to "요청하지 못했어요. 다시 시도해 주세요".
 4. **A Quest already gone** is told by `QUEST_NOT_FOUND`. The phone cannot tell how it went, and in each case (its time passed, dropped from its room, replaced by a 파티) the plan is over.
-5. **Not in this ticket**: anything else the read noticed is in the report to the orchestrating session.
+5. **The Quest list keeps listing a Quest taken alone, as "퀘스트",** since it is where the User's own plan shows (rule 4). Only its "파티" chip leaves it out. Readers of a row's kind check only `class`, so a `quest` row opens as a `party` row did.
+6. **Not in this ticket**: anything else the read noticed is in the report to the orchestrating session.
+
+### Emulator check (2026-11-17)
+
+Run on the mock dev build by taps. For the check only, two uncommitted local changes were made: the example chip "식사 메뉴 추천" answered with the stored events answer, and the mock refused "여기로" on the concert with `SHARED_QUEST_HELD`.
+- "여기로" on the concert showed "이 행사에 함께 가는 파티가 이미 있어요".
+- After "여기로" on the job fair, the 파티 tab read "내 파티 2" with the two parties, and the Quest list read "전체 4 · 파티 2" with "퀘스트 · 채용박람회".
+- The Quest's own room could not be shown, since the mock's room does not know the Quests it made; `taken-alone-counts.integration.test.tsx` covers its missing "수정".
+- The dev build's banner "Open debugger to view warnings" took the presses above it until it was closed. That also explains the presses noted in ticket 15's emulator check; it is not the app's.
 
 ### Agent usage (2026-11-16)
 

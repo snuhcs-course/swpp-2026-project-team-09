@@ -23,8 +23,9 @@ export type QuestRowTone = 'class' | 'open' | 'closed';
 // One row of the Quest list, on the map and on the whole screen.
 export interface QuestRowView {
   id: string;
-  // `party` is every Quest that is not a class: the frames draw a Shared Quest as a Party.
-  kind: 'class' | 'party';
+  // `party` is every Quest that is not a class or taken alone: the frames draw a Shared Quest as a Party. `quest` is
+  // one taken alone, which is no 파티.
+  kind: 'class' | 'party' | 'quest';
   tone: QuestRowTone;
   // In the row's round, by its name in the design system: `clock` for a class, `users` for `open`, `lock` for
   // `closed`.
@@ -242,6 +243,13 @@ function timed(quest: Quest): boolean {
   return subQuest === null ? quest.subQuests.some(({ startsAt }) => startsAt !== null) : subQuest.startsAt !== null;
 }
 
+function kindOf(quest: Quest): QuestRowView['kind'] {
+  if (quest.classQuest) {
+    return 'class';
+  }
+  return heldAlone(quest) ? 'quest' : 'party';
+}
+
 // The rows of the Quest list, the earliest first, without the Quests that have no time.
 export function toQuestRows(sources: QuestSources): QuestRowView[] {
   const { quests, myParty, parties, meId, now } = sources;
@@ -253,7 +261,7 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
     const start = subQuest?.startsAt ?? null;
     return {
       id: quest.id,
-      kind: quest.classQuest ? 'class' : 'party',
+      kind: kindOf(quest),
       tone,
       icon: ROW_ICON[tone],
       joinPolicy: quest.classQuest ? null : quest.joinPolicy,
