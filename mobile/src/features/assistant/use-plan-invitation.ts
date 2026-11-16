@@ -6,7 +6,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
@@ -66,11 +66,18 @@ function takenAlone(input: AnswerReply['input']): boolean {
   return input.kind === 'events' || ((input.kind === 'meal' || input.kind === 'meet') && input.people.length < 2);
 }
 
+// The first request for a Plan and its idempotency key. A press again sends the same request: the main server tells a
+// retry by the key and the whole body, which carries where the User was.
+interface Sent {
+  key: string;
+  making: MakePlanQuest;
+}
+
 interface InvitationState {
   answer: AnswerReply | null;
   // By Plan id: made at the first press for a Plan of this answer, and kept while the answer is on screen, so that a
   // press again, also after another Plan was shown, repeats the request.
-  keys: ReadonlyMap<string, string>;
+  sent: ReadonlyMap<string, Sent>;
   planId: string | null;
   made: PlanQuest | null;
   heard: HeardAnswer[];
@@ -80,7 +87,7 @@ type OnScreen = Pick<ShownAnswer, 'answer' | 'plan' | 'change'>;
 type SetStored = (update: (last: InvitationState) => InvitationState) => void;
 
 function fresh(answer: AnswerReply | null, planId: string | null): InvitationState {
-  return { answer, keys: new Map(), planId, made: null, heard: [] };
+  return { answer, sent: new Map(), planId, made: null, heard: [] };
 }
 
 // What is held for the answer and the Plan on screen: another answer drops everything, another Plan what was made.
@@ -133,19 +140,24 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
   }
 }
 
-// A refusal (4xx) made nothing, so the Plan's key goes and a press again asks anew; no answer or a 5xx keeps it, as the
-// Quest may have been made.
+// A refusal (4xx) made nothing, so the Plan's request goes and a press again asks anew. No answer, a 5xx, or the first
+// request still on its way (IDEMPOTENCY_KEY_IN_USE) keeps it, as the Quest may have been made.
 function forgetIfRefused(error: unknown, setStored: SetStored, answer: AnswerReply, planId: string): void {
-  if (!(error instanceof ApiError) || error.status >= 500) {
+  if (
+    !(error instanceof ApiError) ||
+    error.status === 0 ||
+    error.status >= 500 ||
+    isRefusal(error, 409, 'IDEMPOTENCY_KEY_IN_USE')
+  ) {
     return;
   }
   setStored((last) => {
     if (last.answer !== answer) {
       return last;
     }
-    const keys = new Map(last.keys);
-    keys.delete(planId);
-    return { ...last, keys };
+    const sent = new Map(last.sent);
+    sent.delete(planId);
+    return { ...last, sent };
   });
 }
 
@@ -183,17 +195,17 @@ function useInvite(
     if (answer === null || plan === null || state.made !== null || flight.current) {
       return;
     }
-    const key = state.keys.get(plan.id) ?? newIdempotencyKey();
+    const first = state.sent.get(plan.id) ?? { key: newIdempotencyKey(), making: makingOf(answer, plan, how) };
     flight.current = true;
     setSending(true);
-    setStored((last) => (last.answer === answer ? { ...last, keys: new Map(last.keys).set(plan.id, key) } : last));
+    setStored((last) => (last.answer === answer ? { ...last, sent: new Map(last.sent).set(plan.id, first) } : last));
     const settle = (): boolean => {
       flight.current = false;
       setSending(false);
       const { shown: after } = live.current;
       return after.answer === answer && after.plan?.id === plan.id;
     };
-    apiClient.makePlanQuest(makingOf(answer, plan, how), key).then(
+    apiClient.makePlanQuest(first.making, first.key).then(
       (made) => {
         keepMade(made);
         askForPush();
@@ -214,11 +226,20 @@ function useInvite(
   return { sending, invite };
 }
 
-// Whether the User's Quests, as last read, show the Quest without the mark of one taken alone: the party form made it
-// a 파티 for its event.
-function gathers(queryClient: QueryClient, questId: string): boolean {
-  const quests = queryClient.getQueryData<Quest[]>(questsQuery.queryKey);
-  return quests?.find(({ id }) => id === questId)?.takenAlone === false;
+// Whether the User's Quests show the Quest without the mark of one taken alone: the party form made it a 파티 for its
+// event.
+function gathers(quests: Quest[], questId: string): boolean {
+  return quests.find(({ id }) => id === questId)?.takenAlone === false;
+}
+
+// The taken card of the Quest goes, and the Plan's request with it, so that "여기로" asks anew.
+function withoutCard(last: InvitationState, questId: string): InvitationState {
+  if (last.made?.quest.id !== questId || last.planId === null) {
+    return last;
+  }
+  const sent = new Map(last.sent);
+  sent.delete(last.planId);
+  return { ...last, sent, made: null };
 }
 
 // A taken card whose Quest now gathers others goes, once the User's Quests show it so: they are read again on
@@ -228,25 +249,25 @@ function useGathered(made: PlanQuest | null, setStored: SetStored): void {
   const { data: gathering } = useQuery({
     ...questsQuery,
     enabled: questId !== undefined,
-    select: (quests: Quest[]) => quests.find(({ id }) => id === questId)?.takenAlone === false,
+    select: (quests: Quest[]) => questId !== undefined && gathers(quests, questId),
   });
   useEffect(() => {
-    if (gathering === true) {
-      setStored((last) => (last.made?.quest.id === questId ? { ...last, made: null } : last));
+    if (gathering === true && questId !== undefined) {
+      setStored((last) => withoutCard(last, questId));
     }
   }, [gathering, questId, setStored]);
 }
 
 // "다시 고르기": drops the Quest taken alone, and once it is gone shows the Plan again with a new key for it, so that
 // "여기로" makes another. A Quest already gone, ended by its time, dropped elsewhere, or replaced by a 파티, counts as
-// given up. One that now gathers others is never dropped from here: the card only goes.
+// given up. One that now gathers others is never dropped from here: the User's Quests are read first, and the card
+// only goes. When they cannot be read, nothing is dropped.
 function useAgain(
   made: PlanQuest | null,
   setStored: SetStored,
   say: Inviting['say'],
 ): Pick<PlanInvitation, 'again' | 'dropping'> {
   const [dropping, setDropping] = useState(false);
-  const queryClient = useQueryClient();
   const questId = made?.alone === undefined ? null : made.quest.id;
   const again = useCallback((): void => {
     if (questId === null || dropping) {
@@ -254,29 +275,30 @@ function useAgain(
     }
     const gone = (): void => {
       setDropping(false);
-      setStored((last) => {
-        if (last.made?.quest.id !== questId || last.planId === null) {
-          return last;
-        }
-        const keys = new Map(last.keys);
-        keys.delete(last.planId);
-        return { ...last, keys, made: null };
-      });
+      setStored((last) => withoutCard(last, questId));
     };
-    if (gathers(queryClient, questId)) {
-      gone();
-      return;
-    }
-    setDropping(true);
-    apiClient.dropQuest(questId).then(gone, (error: unknown) => {
-      if (isRefusal(error, 404, 'QUEST_NOT_FOUND')) {
-        gone();
-        return;
-      }
+    const failed = (): void => {
       setDropping(false);
       say(NOT_DROPPED);
-    });
-  }, [questId, dropping, setStored, say, queryClient]);
+    };
+    const drop = (): void => {
+      apiClient.dropQuest(questId).then(gone, (error: unknown) => {
+        if (isRefusal(error, 404, 'QUEST_NOT_FOUND')) {
+          gone();
+        } else {
+          failed();
+        }
+      });
+    };
+    setDropping(true);
+    apiClient.listQuests().then((quests) => {
+      if (gathers(quests, questId)) {
+        gone();
+      } else {
+        drop();
+      }
+    }, failed);
+  }, [questId, dropping, setStored, say]);
   return { again, dropping };
 }
 
