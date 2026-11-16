@@ -111,12 +111,13 @@ export class MatchingService {
   async eligibleQuests({ pools }: EligibleQuestionDto): Promise<EligibleAnswerDto> {
     const quests = await this.matchingQuests.eligibleQuests(pools);
     return {
-      quests: quests.map(({ id, globalEventId, capacity, freePlaces, holderIds, createdAt }) => ({
+      quests: quests.map(({ id, globalEventId, capacity, freePlaces, holderIds, removedIds, createdAt }) => ({
         id,
         globalEventId,
         capacity,
         freePlaces,
         holderIds,
+        removedIds,
         createdAt: createdAt.toISOString(),
       })),
     };

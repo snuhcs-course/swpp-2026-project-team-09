@@ -4,6 +4,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -34,6 +35,8 @@ export interface EligibleQuest {
   capacity: number;
   freePlaces: number;
   holderIds: string[];
+  // The Users the Leader removed, whom Matching never places into it (QuestRemoval).
+  removedIds: string[];
   createdAt: Date;
 }
 
@@ -82,7 +85,7 @@ export class MatchingQuestsService {
 
   // The Quests Matching may place a request of the pool into: Open, of the pool's Global Event, with a capacity of the
   // pool's size, a free place and a Sub Quest ahead. The earliest first, each with its Holders in the order they
-  // entered.
+  // entered and the Users its Leader removed.
   async eligibleQuests(pools: readonly MatchingPool[]): Promise<EligibleQuest[]> {
     if (pools.length === 0) {
       return [];
@@ -96,13 +99,18 @@ export class MatchingQuestsService {
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     const now = this.clock.now();
+    const removals = await this.prisma.questRemoval.findMany({
+      where: { questId: { in: quests.map(({ id }) => id) } },
+      select: { questId: true, userId: true },
+    });
     return quests.flatMap((quest) => {
       const { id, globalEventId, capacity, holders, createdAt } = quest;
       if (globalEventId === null || holders.length >= capacity || !hasSubQuestsAhead(quest, now)) {
         return [];
       }
       const holderIds = holders.map(({ userId }) => userId);
-      return [{ id, globalEventId, capacity, freePlaces: capacity - holders.length, holderIds, createdAt }];
+      const removedIds = removals.filter(({ questId }) => questId === id).map(({ userId }) => userId);
+      return [{ id, globalEventId, capacity, freePlaces: capacity - holders.length, holderIds, removedIds, createdAt }];
     });
   }
 

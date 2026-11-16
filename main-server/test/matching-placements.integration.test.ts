@@ -88,6 +88,7 @@ describe('The eligible Quests for Matching', () => {
           capacity: 3,
           freePlaces: 1,
           holderIds: [leader.id, member.id],
+          removedIds: [],
           createdAt: await createdAtOf(earliest),
         },
         {
@@ -96,6 +97,7 @@ describe('The eligible Quests for Matching', () => {
           capacity: 2,
           freePlaces: 1,
           holderIds: [other.id],
+          removedIds: [],
           createdAt: await createdAtOf(later),
         },
         {
@@ -104,6 +106,7 @@ describe('The eligible Quests for Matching', () => {
           capacity: 3,
           freePlaces: 2,
           holderIds: [third.id],
+          removedIds: [],
           createdAt: await createdAtOf(ofSecond),
         },
       ],
@@ -136,6 +139,19 @@ describe('The Quests left out of the eligible ones', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ quests: [] });
+  });
+});
+
+describe('An eligible Quest whose Leader removed a User', () => {
+  it('names that User, whom the match server then never places into it', async () => {
+    const [leader, removed] = await Promise.all([signInUser(app), signInUser(app)]);
+    const event = await storeEvent(prisma);
+    const questId = await questWith(event, [leader]);
+    await prisma.questRemoval.create({ data: { questId, userId: removed.id } });
+
+    const response = await eligibleQuests([{ globalEventId: event.id, size: 3 }]);
+
+    expect(response.body).toMatchObject({ quests: [{ id: questId, removedIds: [removed.id] }] });
   });
 });
 

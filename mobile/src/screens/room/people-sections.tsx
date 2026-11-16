@@ -37,12 +37,14 @@ function Heading({ children, aside }: { children: string; aside?: string | null 
   );
 }
 
-// `신청 {n}`: the requests to join the Quest, for its Leader, each with the note its User wrote, or when it came where
-// no note is known. An Open Quest has them too, from Users the Leader removed, each marked `전에 내보낸 멤버`.
+// `신청 {n}`: the requests to join an Open or Approval Quest, for its Leader, each with the note its User wrote, or when
+// it came where no note is known. An Open Quest has them only from Users the Leader removed, each marked `전에 내보낸
+// 멤버`.
 export function RequestsSection({ room, actions }: SectionProps): ReactElement | null {
   const { quest, leads } = room;
-  const requests = useQuery({ ...joinRequestsQuery(quest.id), enabled: leads }).data ?? [];
-  if (!leads || requests.length === 0) {
+  const asks = leads && quest.joinPolicy !== 'closed';
+  const requests = useQuery({ ...joinRequestsQuery(quest.id), enabled: asks }).data ?? [];
+  if (!asks || requests.length === 0) {
     return null;
   }
   return (

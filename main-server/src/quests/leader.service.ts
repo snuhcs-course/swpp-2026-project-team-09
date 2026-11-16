@@ -121,7 +121,12 @@ export class LeaderService {
           throw notHolder();
         }
         await this.quests.removeHolder(questId, holderId, tx);
-        await tx.questRemoval.create({ data: { questId, userId: holderId } });
+        // A row a seed left behind keeps its time.
+        await tx.questRemoval.upsert({
+          where: { questId_userId: { questId, userId: holderId } },
+          create: { questId, userId: holderId },
+          update: {},
+        });
       },
       holderId,
     );
