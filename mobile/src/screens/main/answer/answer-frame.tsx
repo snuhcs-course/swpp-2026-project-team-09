@@ -9,10 +9,9 @@
 import { useIsFocused } from 'expo-router';
 import { type ReactElement, type ReactNode, useCallback } from 'react';
 import { type LayoutChangeEvent, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, Icon, radius, shadow, space, text } from '@/design-system';
+import { color, radius, shadow, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
-import type { ChatBubble } from '@/features/assistant/use-chat';
+import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { HowAbout } from '@/features/assistant/use-how-about';
 import { keepsShown, lastReply, type ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -24,44 +23,20 @@ import { ChatMarkdown } from '../chat-markdown';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
-import { ANSWER_PILL, listsTop, type Room } from '../layout';
+import type { Room } from '../layout';
 import { AnswerLines } from './answer-lines';
-import { CloseButton } from './close-button';
+import { AnswerPill } from './answer-pill';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { HowAboutCard } from './how-about-card';
 import { InvitedCard } from './invited-card';
 import { LookupCard } from './lookup-card';
 import { OfferedWords } from './offered-words';
+import { pillIconOf } from './pill-icon';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
 
 // Above the first of the card's parts.
 const CONTENT_TOP = space[5];
-
-// What the User asked, on one line, with the chat icon and ✕, which forgets the conversation; or a building asked
-// about over the answer, with the pin icon.
-function AnswerPill({
-  asked,
-  icon,
-  onClose,
-}: {
-  asked: string;
-  icon: 'chat' | 'pin';
-  onClose: () => void;
-}): ReactElement {
-  const { top } = useSafeAreaInsets();
-  return (
-    <View style={[styles.pillRow, { top: listsTop(top) }]}>
-      <View style={styles.pill} testID="answer-pill">
-        <Icon color={color.ink} name={icon} size={20} />
-        <Text ellipsizeMode="tail" numberOfLines={1} style={styles.asked}>
-          {asked}
-        </Text>
-        <CloseButton label="답 닫기" onPress={onClose} />
-      </View>
-    </View>
-  );
-}
 
 interface WordsProps {
   bubble: ChatBubble;
@@ -73,6 +48,8 @@ interface WordsProps {
   room: number | null;
   onClose: () => void;
   onAsk: RefusalAsk;
+  // A turn a Lookup's button asked of the recalculation.
+  addRecalculated: Chat['addRecalculated'];
 }
 
 // A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
@@ -81,7 +58,7 @@ interface WordsProps {
 // lines of its answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence;
 // otherwise the sentence as Markdown.
 function Words(props: WordsProps): ReactElement {
-  const { bubble, shown, lookup: onScreen, invitation, howAbout, room, onClose, onAsk } = props;
+  const { bubble, shown, lookup: onScreen, invitation, howAbout, room, onClose, onAsk, addRecalculated } = props;
   const { answer, refusal = null } = bubble;
   const keeps = keepsShown(bubble);
   const fromReply = answer !== undefined && answer !== null && answer === shown.source;
@@ -92,7 +69,7 @@ function Words(props: WordsProps): ReactElement {
     const { made, standings } = invitation;
     const over = keeps ? refusal?.lines : undefined;
     return made === null || shown.plan === null ? (
-      <PlanCard answer={shown.answer} invitation={invitation} over={over} room={room} shown={shown} />
+      <PlanCard answer={shown.answer} invitation={invitation} onClose={onClose} over={over} room={room} shown={shown} />
     ) : (
       <InvitedCard
         chips={shown.answer.chips}
@@ -106,7 +83,16 @@ function Words(props: WordsProps): ReactElement {
   }
   const lookup = keeps ? onScreen.lookup : (bubble.lookup ?? null);
   if (lookup !== null && lookup === onScreen.lookup) {
-    return <LookupCard lookup={lookup} onAsk={onAsk} onClose={onClose} refusal={refusal} shown={onScreen} />;
+    return (
+      <LookupCard
+        addRecalculated={addRecalculated}
+        lookup={lookup}
+        onAsk={onAsk}
+        onClose={onClose}
+        refusal={refusal}
+        shown={onScreen}
+      />
+    );
   }
   if (refusal !== null) {
     return <RefusalReply onAsk={onAsk} refusal={refusal} />;
@@ -194,6 +180,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                 onShowLayer={control.leaving.showLayer}
                 words={
                   <Words
+                    addRecalculated={control.chat.addRecalculated}
                     bubble={bubble}
                     howAbout={control.howAbout}
                     invitation={control.invitation}
@@ -245,7 +232,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <AnswerPill
         asked={title ?? turnOf(chat.bubbles)?.asked ?? ''}
-        icon={title === null ? 'chat' : 'pin'}
+        icon={title === null ? pillIconOf(chat.bubbles) : 'pin'}
         onClose={leave}
       />
       <AnswerCard
@@ -292,26 +279,6 @@ export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: A
 }
 
 const styles = StyleSheet.create({
-  pillRow: {
-    position: 'absolute',
-    right: ANSWER_PILL.side,
-    left: ANSWER_PILL.side,
-    alignItems: 'flex-start',
-    pointerEvents: 'box-none',
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    maxWidth: '100%',
-    height: ANSWER_PILL.height,
-    paddingLeft: space[4],
-    paddingRight: space[1],
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
-  },
-  asked: { ...text.label, flexShrink: 1, color: color.ink },
   card: {
     position: 'absolute',
     right: 0,

@@ -5,27 +5,24 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useEffect, useRef, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
-import { apiClient } from '@/api/client';
 import type { LookupAction, LookupCard } from '@/api/lookup-types';
 import type { Place } from '@/api/types';
-import { Button, color, RoundIcon, space, text, useToast } from '@/design-system';
-import { useCampusPosition, useTapAnswer } from '@/features/assistant/use-tap-answer';
+import { Button, color, RoundIcon, space, text } from '@/design-system';
+import { useTapAnswer } from '@/features/assistant/use-tap-answer';
 import { cardId } from '@/features/map/adapter';
 import { Chips } from './answer/lookup-card';
 import { CardFacts } from './card-facts';
 import { CardFrame, CloseButton } from './card';
 import type { ChatSheetControl } from './chat-sheet';
 import { placeWords } from './my-card';
+import { type PlanAction, usePlanAsk } from './use-plan-ask';
 import type { MainRoute } from './use-route';
 import type { Selection } from './use-selection';
 
-type PlanAction = Extract<LookupAction, { kind: 'plan' }>;
 type GuideAction = Extract<LookupAction, { kind: 'guide' }>;
-
-export const NOT_ANSWERED = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
 
 interface PlaceCardProps {
   place: Place;
@@ -39,44 +36,6 @@ interface PlaceCardProps {
 // frame yet (note (11)).
 function shownPlans(actions: readonly LookupAction[]): PlanAction[] {
   return actions.filter((action): action is PlanAction => action.kind === 'plan' && action.input.kind === 'meal');
-}
-
-// A `plan` button asks the recalculation for its input, and its answer opens in the answer frame as a turn whose
-// pill reads "{title} · {label}". One is asked at a time; the answer of a card that closed or gave way meanwhile is
-// dropped.
-function usePlanAsk(chat: ChatSheetControl, title: string): { asking: boolean; ask: (action: PlanAction) => void } {
-  const position = useCampusPosition();
-  const showToast = useToast();
-  const [asking, setAsking] = useState(false);
-  const shown = useRef(true);
-  useEffect(() => {
-    shown.current = true;
-    return (): void => {
-      shown.current = false;
-    };
-  }, []);
-  const { addRecalculated } = chat.chat;
-  const ask = (action: PlanAction): void => {
-    if (asking) {
-      return;
-    }
-    setAsking(true);
-    apiClient.recalculateAnswer(action.input, position).then(
-      (answer) => {
-        if (shown.current) {
-          setAsking(false);
-          addRecalculated(`${title} · ${action.label}`, answer);
-        }
-      },
-      () => {
-        if (shown.current) {
-          setAsking(false);
-          showToast(NOT_ANSWERED);
-        }
-      },
-    );
-  };
-  return { asking, ask };
 }
 
 function Head({
@@ -200,7 +159,7 @@ export function PlaceCard({ place, selection, chat, route, onHeight }: PlaceCard
   const tap = useTapAnswer({ kind: 'place', placeId: place.id });
   const card = tap.answer?.card ?? null;
   const title = card?.title ?? placeWords(place);
-  const plan = usePlanAsk(chat, title);
+  const plan = usePlanAsk(chat.chat.addRecalculated, title);
   return (
     <CardFrame onHeight={onHeight}>
       <Head

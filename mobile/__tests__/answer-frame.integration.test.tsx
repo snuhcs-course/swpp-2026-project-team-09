@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -200,7 +201,7 @@ describe('the request with the switch on', () => {
       {
         messages: [{ role: 'user', text: ASKED }],
         context: CONTEXT,
-        clientCapabilities: ['library', 'answer', 'area'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet'],
       },
     ]);
   });
@@ -231,7 +232,7 @@ describe('the request with the switch on', () => {
         { role: 'user', text: '한식' },
       ],
       context: CONTEXT,
-      clientCapabilities: ['library', 'answer', 'area'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet'],
     });
   });
 });

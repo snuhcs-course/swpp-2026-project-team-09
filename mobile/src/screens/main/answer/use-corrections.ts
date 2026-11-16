@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -10,6 +11,7 @@ import { type ComponentProps, useEffect, useState } from 'react';
 import type { PlanInput } from '@/api/assistant-types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
+import { onlyFriendOf } from '@/features/assistant/meet-input';
 import { peopleOf, withBound, withOrigin, withoutPerson } from '@/features/assistant/plan-input';
 import type { BandBound } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -71,11 +73,17 @@ function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
 }
 
 // What the card's controls do to the conditions of the answer on screen when they are pressed: each change asks for a
-// recalculation. The list of Friends leaves out those `input` holds.
-export function useCorrections({ change, add, adding, setAdding }: ShownAnswer, input: PlanInput): Corrections {
+// recalculation, but the ✕ of a meet's only Friend, which closes the answer with `close` and opens that Friend's card
+// by the main screen's address. The list of Friends leaves out those `input` holds.
+export function useCorrections(
+  { change, add, adding, setAdding }: ShownAnswer,
+  input: PlanInput,
+  close: () => void,
+): Corrections {
   const showToast = useToast();
   const { choices, friendIds } = useChoices(input);
   const { focus, focusUntil } = useFocus();
+  const only = onlyFriendOf(input);
   return {
     adding,
     toggleAdding: () => {
@@ -85,7 +93,12 @@ export function useCorrections({ change, add, adding, setAdding }: ShownAnswer, 
     friendIds,
     choose: add,
     remove: (userId) => {
-      change((shown) => withoutPerson(shown, userId));
+      if (only === null) {
+        change((shown) => withoutPerson(shown, userId));
+      } else {
+        close();
+        router.setParams({ person: only });
+      }
     },
     chooseOrigin: () => {
       waitForPlace(({ placeId }) => {
