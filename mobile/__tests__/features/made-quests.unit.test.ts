@@ -2,14 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
- * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INVITATION_CARD } from '@/api/mock/data/invitation-card';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type { Quest, SubQuest } from '@/api/types';
 import type { Standing } from '@/features/assistant/invited-friends';
-import { endedIds, flagWords, isAlone, type MadeQuest, madeQuests } from '@/features/assistant/made-quests';
+import { endedIds, flagWords, type MadeQuest, madeQuests } from '@/features/assistant/made-quests';
 
 const ASKER = '11ca538e-e4ef-48d9-9a1f-b7160c553bee';
 const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
@@ -80,22 +79,13 @@ describe('the Quests made from a Plan', () => {
     expect(madeQuests([MADE], ASKER, BEFORE, [TWO_STEPS.id])).toEqual([]);
   });
 
-  it('holds none for another User', () => {
-    expect(madeQuests([MADE], MINSU, BEFORE, [MADE.id])).toEqual([]);
-  });
-
-  it('holds a Quest of the User alone, with no members known or the User alone among them, as no 파티 (P05-14)', () => {
+  it('holds none for another User, nor without members, nor with the User alone among them', () => {
     const [mine] = MADE.members ?? [];
-    const alone = { ...MADE, members: mine === undefined ? [] : [mine] };
-    const [made] = madeQuests([alone], ASKER, BEFORE, [MADE.id]);
+    const kept = [MADE.id];
 
-    expect(made?.friends).toEqual([]);
-    expect(madeQuests([{ ...MADE, members: undefined }], ASKER, BEFORE, [MADE.id])[0]?.friends).toEqual([]);
-    expect(made === undefined ? null : isAlone(made)).toBe(true);
-    expect(made === undefined ? null : flagWords(made, new Map())).toEqual({
-      words: '12:15 점심',
-      flag: { title: '12:15 점심', line: '오늘' },
-    });
+    expect(madeQuests([MADE], MINSU, BEFORE, kept)).toEqual([]);
+    expect(madeQuests([{ ...MADE, members: undefined }], ASKER, BEFORE, kept)).toEqual([]);
+    expect(madeQuests([{ ...MADE, members: mine === undefined ? [] : [mine] }], ASKER, BEFORE, kept)).toEqual([]);
   });
 
   it('holds none that is not Closed, nor a Class Quest', () => {

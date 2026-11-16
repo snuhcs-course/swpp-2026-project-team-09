@@ -16,7 +16,6 @@ import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
-import { isMealAlone } from '@/features/assistant/taken-lines';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useOpenFriendProfile } from '../friend-profile';
@@ -197,6 +196,8 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
   }
   // A new party is posted with "이대로 모집", its friends invited or not.
   const invitable = plan !== null && answer.input.kind !== 'new-quest' && peopleOf(answer.input).length > 1;
+  // A meal's Plan of the User alone is taken with "여기로", the same press (P05-14).
+  const alone = plan !== null && answer.input.kind === 'meal' && peopleOf(answer.input).length === 1;
   const fixed = bandIsFixed(answer.input.kind);
   return (
     <>
@@ -219,7 +220,7 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
         back={plan !== null && easedFromNow(answer.input) ? fix.back : null}
         busy={busy}
         count={answer.plans.length}
-        here={plan !== null && isMealAlone(answer) ? invitation.invite : null}
+        here={alone ? invitation.invite : null}
         invitation={invitable ? invitation : null}
         offers={answer.offers ?? []}
         shown={shown}

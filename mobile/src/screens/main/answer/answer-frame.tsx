@@ -25,13 +25,14 @@ import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import type { Room } from '../layout';
 import { AnswerLines } from './answer-lines';
-import { AnswerOnScreen } from './answer-on-screen';
 import { AnswerPill } from './answer-pill';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { HowAboutCard } from './how-about-card';
+import { InvitedCard } from './invited-card';
 import { LookupCard } from './lookup-card';
 import { OfferedWords } from './offered-words';
 import { pillIconOf } from './pill-icon';
+import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
 
 // Above the first of the card's parts.
@@ -51,11 +52,11 @@ interface WordsProps {
   addRecalculated: Chat['addRecalculated'];
 }
 
-// A reply's words: the card of the answer on screen for the reply it came from (`AnswerOnScreen`), the card of the
-// Lookup on screen for its reply, with a refusal's lines over either when the refusal stands beside the Lookup or keeps
-// what is on screen, else a refusal's lines and offers, a failure's lines, or the lines of its answer's first Plan,
-// those that say why it has none, or its Lookup's, in place of the model's sentence; otherwise the sentence as
-// Markdown.
+// A reply's words: the card of the answer on screen for the reply it came from, the invited Quest's once its Plan was
+// made into one, the card of the Lookup on screen for its reply, with a refusal's lines over either when the refusal
+// stands beside the Lookup or keeps what is on screen, else a refusal's lines and offers, a failure's lines, or the
+// lines of its answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence;
+// otherwise the sentence as Markdown.
 function Words(props: WordsProps): ReactElement {
   const { bubble, shown, lookup: onScreen, invitation, howAbout, room, onClose, onAsk, addRecalculated } = props;
   const { answer, refusal = null } = bubble;
@@ -65,15 +66,18 @@ function Words(props: WordsProps): ReactElement {
     return <HowAboutCard current={shown.plan} howAbout={howAbout} />;
   }
   if ((fromReply || keeps) && shown.answer !== null) {
-    return (
-      <AnswerOnScreen
-        answer={shown.answer}
-        invitation={invitation}
-        lookup={onScreen}
+    const { made, standings } = invitation;
+    const over = keeps ? refusal?.lines : undefined;
+    return made === null || shown.plan === null ? (
+      <PlanCard answer={shown.answer} invitation={invitation} onClose={onClose} over={over} room={room} shown={shown} />
+    ) : (
+      <InvitedCard
+        chips={shown.answer.chips}
         onClose={onClose}
-        over={keeps ? refusal?.lines : undefined}
-        room={room}
-        shown={shown}
+        over={over}
+        standings={standings}
+        startAt={shown.plan.startAt}
+        steps={made.quest.subQuests}
       />
     );
   }

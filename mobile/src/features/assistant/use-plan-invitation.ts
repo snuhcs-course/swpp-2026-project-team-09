@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { isRefusal } from '@/api/errors';
@@ -18,8 +18,7 @@ import type { LatLng, Quest } from '@/api/types';
 import { onInvitationAnswer } from '@/live/invitation-answers';
 import { useAskForPush } from '@/push/push-ask-host';
 import { friendStandings, type HeardAnswer, NO_STANDINGS, type ReadMembers, type Standing } from './invited-friends';
-import { useDropMadeQuests, useKeepMadeQuest } from './made-quest-ids';
-import { isMealAlone } from './taken-lines';
+import { useKeepMadeQuest } from './made-quest-ids';
 import type { ShownAnswer } from './use-shown-answer';
 
 export interface PlanInvitation {
@@ -30,8 +29,6 @@ export interface PlanInvitation {
   // How each invited Friend stands, by user id: none until the Quest is made.
   standings: ReadonlyMap<string, Standing>;
   invite: () => void;
-  // "다시 고르기" of a Plan taken alone: drops the Quest made of it.
-  again: () => void;
 }
 
 // Where the User is or why that is not known, which the request sends, and how a refusal or a Quest made out of sight
@@ -52,10 +49,6 @@ function makingOf(answer: AnswerReply, plan: Plan, { location, locationMissing =
 const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
 const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요';
 const SENT = '파티를 만들고 초대를 보냈어요';
-const NOT_DROPPED = '다시 고르지 못했어요. 잠시 후 다시 시도해 주세요';
-// A Plan taken alone is no 파티, and nobody is invited (P05-14).
-const NOT_TAKEN = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
-const TAKEN = '가는 곳을 정했어요';
 
 interface InvitationState {
   answer: AnswerReply | null;
@@ -112,12 +105,12 @@ function useHeard(made: PlanQuest | null, setStored: SetStored): void {
 }
 
 // A Plan that changed is recalculated from conditions equal to the same, as a new object, for a change must differ.
-function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['change'], alone: boolean): void {
+function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['change']): void {
   if (isRefusal(error, 409, 'PLAN_CHANGED')) {
     say(CHANGED);
     change((input) => ({ ...input }));
   } else {
-    say(alone ? NOT_TAKEN : FAILED);
+    say(FAILED);
   }
 }
 
@@ -163,12 +156,12 @@ function useInvite(
         if (settle()) {
           setStored((last) => (last.answer === answer && last.planId === plan.id ? { ...last, made } : last));
         } else {
-          live.current.inviting.say(isMealAlone(answer) ? TAKEN : SENT);
+          live.current.inviting.say(SENT);
         }
       },
       (error: unknown) => {
         if (settle()) {
-          tellRefusal(error, how.say, live.current.shown.change, isMealAlone(answer));
+          tellRefusal(error, how.say, live.current.shown.change);
         }
       },
     );
@@ -176,31 +169,7 @@ function useInvite(
   return { sending, invite };
 }
 
-// The Quest made of the Plan on screen is dropped with its leave-by, and the Plan's card shows again; a press after it
-// makes a new Quest.
-function useAgain(made: PlanQuest | null, setStored: SetStored, say: Inviting['say']): () => void {
-  const dropMade = useDropMadeQuests();
-  const questId = made?.quest.id;
-  return useCallback(() => {
-    if (questId === undefined) {
-      return;
-    }
-    setStored((last) => {
-      if (last.made?.quest.id !== questId || last.planId === null) {
-        return last;
-      }
-      const keys = new Map(last.keys);
-      keys.delete(last.planId);
-      return { ...last, keys, made: null, heard: [] };
-    });
-    dropMade([questId]);
-    apiClient.dropQuest(questId).catch(() => {
-      say(NOT_DROPPED);
-    });
-  }, [questId, setStored, dropMade, say]);
-}
-
-// The Quest made from the Plan on screen by "이대로 초대" or "여기로", and how each invited Friend stands: by the latest of the
+// The Quest made from the Plan on screen by "이대로 초대", and how each invited Friend stands: by the latest of the
 // signals heard for the Quest since and its members as the User's Quests hold them, and otherwise invited. A new answer
 // or another Plan on screen drops it, and the Quest stays among the User's Quests.
 export function usePlanInvitation(shown: OnScreen, inviting: Inviting): PlanInvitation {
@@ -212,12 +181,11 @@ export function usePlanInvitation(shown: OnScreen, inviting: Inviting): PlanInvi
   }
   const { sending, invite } = useInvite(current, shown, setStored, inviting);
   const { made, heard } = current;
-  const again = useAgain(made, setStored, inviting.say);
   const members = useMembers(made);
   useHeard(made, setStored);
   const standings = useMemo(
     () => (made === null ? NO_STANDINGS : friendStandings(made, members, heard)),
     [made, members, heard],
   );
-  return { sending, made, standings, invite, again };
+  return { sending, made, standings, invite };
 }

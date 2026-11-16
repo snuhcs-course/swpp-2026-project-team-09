@@ -2,13 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
- * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space } from '@/design-system';
-import { friendChips, isAlone } from '@/features/assistant/made-quests';
+import { friendChips } from '@/features/assistant/made-quests';
 import type { MadeQuestView } from '@/features/assistant/use-made-quests';
 import type { Room } from '../layout';
 import { FrameCard } from './answer-frame';
@@ -22,8 +21,7 @@ interface MadeQuestFrameProps {
 }
 
 // The card after inviting of a Quest made from a Plan, opened again from the everyday map, built from the Quest
-// itself: a chip for each Friend invited with how they stand, the lines with the destination's start, and the steps,
-// or for a Quest held alone, where it goes. It
+// itself: a chip for each Friend invited with how they stand, the lines with the destination's start, and the steps. It
 // stands in the answer frame's card without a pill, the input, or the tab bar under it, as a received invitation's.
 export function MadeQuestFrame({ made, onClose, room, onHeight }: MadeQuestFrameProps): ReactElement {
   const { bottom } = useSafeAreaInsets();
@@ -35,7 +33,6 @@ export function MadeQuestFrame({ made, onClose, room, onHeight }: MadeQuestFrame
       testID="made-quest-frame"
     >
       <InvitedCard
-        alone={isAlone(made) ? (made.destination.step.place?.label ?? made.quest.title) : null}
         chips={friendChips(made)}
         onClose={onClose}
         standings={made.standings}
