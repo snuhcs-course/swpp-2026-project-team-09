@@ -106,12 +106,14 @@ function refetch(queryClient: QueryClient, keys: readonly QueryKey[]): void {
 }
 
 // A position replaces the User's one before, which the Avatar glides from. One without a level keeps the level of the
-// one before, which GET /positions gave. The socket's carries no `nearPlace` or `walkMinutes`, so those of the one
-// before stay until the next fetch of the positions (`positionsQuery`).
+// one before, which GET /positions gave. The socket's carries no `nearPlace` or `walkMinutes`: those of the one before
+// stay until the next fetch of the positions (`positionsQuery`), but only while the level and the Place are unchanged,
+// so a Friend who lowers their level or moves to another building shows no old Place.
 export function withPosition(positions: readonly Position[], position: Position): Position[] {
   const before = positions.find(({ userId }) => userId === position.userId);
   const level = position.level ?? before?.level;
-  const moved = { nearPlace: before?.nearPlace, walkMinutes: before?.walkMinutes, ...position };
+  const same = before !== undefined && before.level === level && before.placeId === position.placeId;
+  const moved = same ? { nearPlace: before.nearPlace, walkMinutes: before.walkMinutes, ...position } : position;
   return [
     ...positions.filter(({ userId }) => userId !== position.userId),
     level === undefined ? moved : { ...moved, level },
