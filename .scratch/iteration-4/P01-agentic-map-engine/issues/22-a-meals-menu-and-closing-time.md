@@ -14,16 +14,17 @@ Each meal Plan now says the day's menu of that meal at that Restaurant and, wher
 
 ## Acceptance criteria
 
-- [ ] Every meal Plan whose Restaurant has a menu for the meal carries a menu line: "{오늘|내일|모레|date} **{main dish}** 외 N · {HH:MM}까지".
+- [x] Every meal Plan whose Restaurant has a menu for the meal carries a menu line: "{오늘|내일|모레|date} **{main dish}** 외 N · {HH:MM}까지".
   - The main dish is the first dish of the menu's first corner, as the building's card and the menu Lookup name it.
   - N counts the other things served.
   - The closing time is the one kept for the Restaurant, meal, and kind of day (`restaurant_hours`, P02 ticket 16). Without one, the line ends at the dish.
-- [ ] The menu line comes right after the line that names the Restaurant. Where the first lines say something else (where the asker was taken to set out from, a condition eased, a Friend's place unknown), it comes last. A Plan has at most three lines.
-- [ ] 근거 ends with the whole menu, one line per corner, with prices, and then its source: "메뉴와 닫는 시각: 오늘의 식단", or "메뉴: 오늘의 식단" without hours.
-- [ ] The recalculation (`POST /assistant/answers`) gives the same lines, since it calls the same service.
-- [ ] `planMeal` answers each plan's `menu` (its corners in words) and `closesAt`. It takes `restaurant`, a Restaurant's name as it answered it, which the server turns into that Restaurant's Place. `PLAN_RULES` says how to choose by food, and what to say when no plan's menu has it.
-- [ ] The app draws the lines as it is. The stored meal answers in `mobile/src/api/mock/data/` are copied again from the endpoint with real menus. An emulator check shows the card alone and with Friends.
-- [ ] Tests:
+- [x] The menu line comes right after the line that names the Restaurant. Where the first lines say something else (where the asker was taken to set out from, a condition eased, a Friend's place unknown), it comes last. A Plan has at most three lines.
+- [x] 근거 ends with the whole menu, one line per corner, with prices, and then its source: "메뉴와 닫는 시각: 오늘의 식단", or "메뉴: 오늘의 식단" without hours.
+- [x] The recalculation (`POST /assistant/answers`) gives the same lines, since it calls the same service.
+- [x] `planMeal` answers each plan's `menu` (its corners in words) and `closesAt`. It takes `restaurant`, a Restaurant's name as it answered it, which the server turns into that Restaurant's Place. `PLAN_RULES` says how to choose by food, and what to say when no plan's menu has it.
+- [x] The app draws the lines as it is. The stored meal answers in `mobile/src/api/mock/data/` are copied again from the endpoint with real menus.
+- [ ] An emulator check shows the card alone and with Friends: not done (see Comments).
+- [x] Tests:
   - unit: the menu's words on the stored lines of 2026-10-01 (a dish menu, a buffet, a self corner with orders, the takeout corner, a menu with no dish line) and the line's place among the Plan's lines;
   - integration: at `POST /assistant/messages` with the scripted model, the Plans' lines and 근거 alone and with Friends, with hours and without, `planMeal`'s menu words, and a plan made at a Restaurant named by `restaurant`.
 
@@ -61,6 +62,8 @@ Each meal Plan now says the day's menu of that meal at that Restaurant and, wher
   - A name the seed places no Restaurant under is refused, with words the model reads.
   - `PLAN_RULES`: read the plans' menus under the conditions on screen, then plan again at the restaurant that serves it. When none does, say so. Never name a dish that no plan's menu has.
   - The scripted model covers the tool. These rules were not run against the real model.
+- **No closing time said twice.** When another line of the same Plan already says the Restaurant closes (P02 ticket 14's "302동식당은 13:30에 닫아요" for a fixed end past its hours), the menu line leaves out its "· HH:MM까지". A line about another Restaurant (board n12's dropped 학생회관식당) does not count.
+- **No emulator check.** When the build was done, the emulator showed a system "Application Not Responding" dialog in front, not SNU Now, and the Mac's load average was above 40. The Release waits for this pull request, so it opened without screens. The card's content has no fixed height and scrolls past its room, so a third line pushes the band down.
 - **Not done:** the map's labels. The pick's label keeps "11:50 점심" and a candidate keeps its name, so menus are compared with the arrows, one Plan at a time.
 - **The stored answers** in `mobile/src/api/mock/data/` (the meal answers and `meal-answer-plan-1` to `-5`) were printed again from `POST /assistant/answers`.
   - Setting: the stage's Tuesday at 11:50, with the 2026-10-01 lunch menus and the hours P02 ticket 16 reads from those pages. These are 302동식당 11:30–13:30, 학생회관식당 11:00–14:30, 3식당 11:00–14:00, 자하연식당 2층 11:30–14:00, and none for 301동식당.
@@ -69,4 +72,11 @@ Each meal Plan now says the day's menu of that meal at that Restaurant and, wher
     - each part's `arriveAt`;
     - the labels of the band;
     - each Restaurant's own end from its hours (the eased answer's 302동식당 until 13:30, and the no-timetable answer's 302동식당, 3식당, and 자하연식당 2층 until they close).
+
+### Agent usage (2026-11-16)
+
+- Agent time: about 1 hour 45 minutes, an estimate from this session's transcript, from the request to the pull request. About 55 minutes of it were turns; the rest were test runs and waits for the Mac's shared check slots and the Docker lock. No subagent.
+- Tokens:
+  - Input: 350 uncached, plus 53,771,267 cache reads and 315,109 cache writes.
+  - Output: 138,938.
 
