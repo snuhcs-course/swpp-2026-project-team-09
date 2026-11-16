@@ -7,6 +7,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -111,8 +112,9 @@ export interface Chat {
   send: (text: string, tapped?: Tapped) => void;
   // Sends the User's last message again, after a failure the Assistant may get over.
   retry: () => void;
-  // 새 대화: forgets the conversation, and a reply still on its way.
-  reset: () => void;
+  // 새 대화: forgets the conversation, and a reply still on its way. The call it gives brings the conversation back
+  // while nothing new was said.
+  reset: () => () => void;
   // 그만: takes back the question on its way, and drops its reply when it comes.
   stop: () => void;
   // Adds the app's own bubble, which no request sends.
@@ -245,8 +247,8 @@ function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOw
   return { addOwn, addRecalculated };
 }
 
-// How the library cards ended, kept with the conversation.
-function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forget: () => void } {
+// How the library cards ended, kept with the conversation by each card's place.
+function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> {
   const [outcomes, setOutcomes] = useState<ReadonlyMap<string, CardOutcome>>(new Map());
   const finish = useCallback((card: string, outcome: CardOutcome): void => {
     setOutcomes((last) => new Map(last).set(card, outcome));
@@ -258,17 +260,13 @@ function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forge
       return next;
     });
   }, []);
-  const forget = useCallback((): void => {
-    setOutcomes(new Map());
-  }, []);
-  return { outcomes, finish, unfinish, forget };
+  return { outcomes, finish, unfinish };
 }
 
 // The rooms the seat cards show, kept with the conversation; `sent` holds them for a request without waiting for a
 // render.
 function useRooms(): Pick<Chat, 'rooms' | 'showRoom'> & {
   sent: { readonly current: ReadonlyMap<string, CardRoom> };
-  forget: () => void;
 } {
   const [rooms, setRooms] = useState<ReadonlyMap<string, CardRoom>>(new Map());
   const sent = useRef<ReadonlyMap<string, CardRoom>>(new Map());
@@ -288,23 +286,12 @@ function useRooms(): Pick<Chat, 'rooms' | 'showRoom'> & {
     },
     [keep],
   );
-  const forget = useCallback((): void => {
-    keep(new Map());
-  }, [keep]);
-  return { rooms, showRoom, sent, forget };
+  return { rooms, showRoom, sent };
 }
 
-// How the library cards ended and the rooms they show, forgotten together.
+// How the library cards ended and the rooms they show.
 function useCardsKept(): ReturnType<typeof useOutcomes> & ReturnType<typeof useRooms> {
-  const outcomes = useOutcomes();
-  const rooms = useRooms();
-  const { forget: forgetOutcomes } = outcomes;
-  const { forget: forgetRooms } = rooms;
-  const forget = useCallback((): void => {
-    forgetOutcomes();
-    forgetRooms();
-  }, [forgetOutcomes, forgetRooms]);
-  return { ...outcomes, ...rooms, forget };
+  return { ...useOutcomes(), ...useRooms() };
 }
 
 // The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
@@ -317,8 +304,8 @@ export function useChat(readContext: () => RequestContext): Chat {
   const { waiting, setWaiting, waitingNow } = useWaiting();
   // Which conversation a reply belongs to: 새 대화 and 그만 start another, and a reply to the one before is dropped.
   const conversation = useRef(0);
-  const { outcomes, finish, unfinish, rooms, showRoom, sent: roomsShown, forget } = useCardsKept();
-  const { reset, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow }, forget);
+  const { outcomes, finish, unfinish, rooms, showRoom, sent: roomsShown } = useCardsKept();
+  const { reset, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow });
 
   // Asks the Assistant to answer the conversation as it stands, the User's message last.
   const ask = useCallback((): void => {

@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerLine } from '@/api/assistant-types';
+import type { ShownChatCard } from '@/api/quest-parts-types';
 import { color, font, Icon, size, space, text } from '@/design-system';
 import { type Turn, turnsOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -26,15 +28,36 @@ function linesOf({ answer, lookup, text: words }: ChatBubble): readonly AnswerLi
   return said === '' ? null : said.split('\n').map((line) => [{ text: line, strong: false }]);
 }
 
+// A card's name as its card shows it on top.
+function titleOf(card: ShownChatCard): string | null {
+  if (card.kind === 'globalEvent') {
+    return card.globalEvent.title;
+  }
+  if (card.kind === 'quest') {
+    return card.quest.title;
+  }
+  return card.kind === 'restaurant' ? card.restaurant.name : (card.library.space?.name ?? null);
+}
+
+// The words the User asked, over a turn. A turn of the app's own bubbles alone has none.
+export function TurnQuestion({ turn }: { turn: Turn }): ReactElement | null {
+  return turn.after[0]?.id === turn.id ? null : (
+    <Text style={styles.asked} testID="turn-question">
+      {turn.asked}
+    </Text>
+  );
+}
+
 function EarlierTurn({ turn }: { turn: Turn }): ReactElement {
   const shown = turn.after.flatMap((bubble) => {
     const lines = linesOf(bubble);
-    return lines === null ? [] : [{ id: bubble.id, lines }];
+    const titles = bubble.cards.flatMap((card) => titleOf(card) ?? []);
+    return lines === null && titles.length === 0 ? [] : [{ id: bubble.id, lines: lines ?? [], titles }];
   });
   return (
     <View style={styles.turn} testID="earlier-turn">
-      <Text style={styles.asked}>{turn.asked}</Text>
-      {shown.map(({ id, lines }) => (
+      <TurnQuestion turn={turn} />
+      {shown.map(({ id, lines, titles }) => (
         <View key={id}>
           {lines.map((line, row) => (
             // The lines have no id, and their order is their meaning.
@@ -48,18 +71,25 @@ function EarlierTurn({ turn }: { turn: Turn }): ReactElement {
               ))}
             </Text>
           ))}
+          {titles.map((title, row) => (
+            // Two cards may share a name; their order is the reply's.
+            // oxlint-disable-next-line react/no-array-index-key
+            <Text key={row} style={styles.title}>
+              · {title}
+            </Text>
+          ))}
         </View>
       ))}
     </View>
   );
 }
 
-// "지난 답 N개" at the top of the card while the conversation has turns before the one on screen: it opens them above
-// that turn, the first first, and "접기" closes them. They are read-only: their Plans and Lookups are no longer on the
-// map, so they have no buttons.
+// "지난 답 N개" under the turn on screen while the conversation has turns before it: it opens them below, the latest
+// first, so the turn on screen stays where it was read; "접기" closes them. They are read-only: their Plans and
+// Lookups are no longer on the map, so they have no buttons, and their cards are named only.
 export function EarlierTurns({ bubbles }: { bubbles: readonly ChatBubble[] }): ReactElement | null {
   const [open, setOpen] = useState(false);
-  const earlier = turnsOf(bubbles).slice(0, -1);
+  const earlier = turnsOf(bubbles).slice(0, -1).toReversed();
   if (earlier.length === 0) {
     return null;
   }
@@ -84,12 +114,13 @@ export function EarlierTurns({ bubbles }: { bubbles: readonly ChatBubble[] }): R
 }
 
 const styles = StyleSheet.create({
-  earlier: { gap: space[3] },
+  earlier: { gap: space[3], paddingTop: space[3], borderTopWidth: 1, borderTopColor: color.border },
   toggle: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 2, height: LINE_HEIGHT },
   toggleWords: { ...text.label, color: color.blue600 },
   pressed: { opacity: 0.6 },
   turn: { gap: space[1], paddingBottom: space[3], borderBottomWidth: 1, borderBottomColor: color.border },
   asked: { ...text.label, color: color.inkMuted },
   line: { ...text.body, color: color.ink },
+  title: { ...text.body, color: color.ink },
   strong: { fontFamily: font.semiBold, color: color.snuBlue },
 });

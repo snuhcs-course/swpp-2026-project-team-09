@@ -622,8 +622,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the line "대화 내용은 AI 제공자에게 전송돼요" (`answer/asked-examples.tsx`); a press sends the example as the
   User's message. Once something is asked, what the User asked last stands as a pill at the top left with "답 닫기"
   (✕) and the round "새 대화" at its right, and one white card at the bottom of the screen holds the rest of the turn
-  (`turn.ts`) without bubbles, with the bar under it ("이어서 말하기"). While the Assistant works, the card shows the
-  waiting dots (`WaitingDots`, read aloud as "보는 중") and the round stop button "그만". A reply whose answer has a Plan shows the
+  (`turn.ts`) without bubbles, the question as a grey line first, with the bar under it ("이어서 말하기"). While the
+  Assistant works, the card keeps the height it had and shows the question with the waiting dots (`WaitingDots`, read
+  aloud as "보는 중") and the round stop button "그만" in place of the reply; the bar stays, and a message sent then
+  takes the waiting question back, as anywhere else. A card's button whose answer is on its way ("여기서 먹기",
+  "만나고 싶다") shows the dots in place of its label (`Button`'s `busy`). A reply whose answer has a Plan shows the
   Plan's two lines (`answer-lines.tsx`) in place of the model's sentence; any other reply is drawn with the chat's own
   parts (`chat-bubbles.tsx`'s `BubbleParts`): the text as Markdown, the cards with their buttons, a Proposal, the map
   buttons, and "다시 시도" under a failure. The lists, the row of buttons, 편의기능, the zoom control, the selected
@@ -634,14 +637,16 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     card's "닫기", a map button, which also turns its layer on, and the start of route guidance. A reply on its way
     still comes and is kept. While the frame is hidden, the map is the everyday map, without the answer's marks, and
     its presses and cards work as without a conversation; the AI input has the round "이전 답" at its left, which shows
-    the frame again at the turn on screen as it was, with the answer's marks and camera. A message sent from the
+    the frame again at the turn on screen as it was, with the answer's marks and camera. A reply that arrived while
+    the frame was hidden puts a red dot on it until the frame is shown. A message sent from the
     everyday map goes on with the conversation and shows the frame, and so does any turn a card's button or a mark
-    asks. "새 대화" forgets the conversation and closes the frame; it is the only way the conversation is forgotten
-    while the app runs. "그만" takes the question on its way back and drops its reply when it comes: the frame shows
+    asks. "새 대화" forgets the conversation and closes the frame, and the toast "대화를 지웠어요" offers 되돌리기 for 5
+    seconds, which brings every turn back while nothing new was said (`forget-with-undo.ts`); it is the only way the
+    conversation is forgotten while the app runs. "그만" takes the question on its way back and drops its reply when it comes: the frame shows
     the turn before, or closes when there is none.
-  - When the conversation has turns before the one on screen, "지난 답 N개" at the top of the card opens them above
-    it, read-only (`earlier-turns.tsx`): for each, the words asked and the reply's lines, a Plan's first Plan's, a
-    Lookup's, or any other reply's words. "접기" closes them.
+  - When the conversation has turns before the one on screen, "지난 답 N개" under its reply opens them below it, the
+    latest first, read-only (`earlier-turns.tsx`): for each, the words asked, the reply's lines (a Plan's first
+    Plan's, a Lookup's, or any other reply's words), and its cards' names. "접기" closes them.
   - While the keyboard is up, the card shows one line in place of its content, cut to fit (`keyboard-headline.tsx`):
     the headline of the turn on screen, which is the Plan's first line as its card draws it, the Lookup's title, or
     the reply's first line, or the dots while the reply is on its way. The map is left as it is.

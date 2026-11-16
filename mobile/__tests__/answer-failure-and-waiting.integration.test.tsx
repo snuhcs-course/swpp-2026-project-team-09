@@ -3,9 +3,11 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
+import { fireEvent, within } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -175,16 +177,40 @@ describe('the words kept after a failure, in the frame (n16)', () => {
 
 // Partitions: waiting, then the reply.
 describe('waiting for the reply (n18)', () => {
-  it('shows the dots, labelled 보는 중, with a 그만 icon button, and hides the input', async () => {
+  it('shows the question and the dots, labelled 보는 중, with a 그만 icon button, and keeps the input', async () => {
     const user = await openMain();
 
     await send(user, ASKED);
 
+    expect(card().getByTestId('turn-question')).toHaveTextContent(ASKED);
     expect(card().getByLabelText('보는 중')).toBeVisible();
     expect(card().queryByText('보는 중')).toBeNull();
     expect(card().getByRole('button', { name: '그만' })).toBeVisible();
     expect(card().queryByText('그만')).toBeNull();
-    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
+    expect(input()).toHaveProp('placeholder', '이어서 말하기');
+  });
+
+  it('keeps the card as high as the reply before while the next one is on its way', async () => {
+    const user = await openMain();
+    await ask(user);
+    const content = screen.getByTestId('answer-card-content');
+    await fireEvent(content, 'contentSizeChange', 390, 420);
+
+    await send(user, '한식');
+    await fireEvent(content, 'contentSizeChange', 390, 120);
+
+    expect(content.props.contentContainerStyle).toContainEqual({ minHeight: 420 });
+  });
+
+  it('starts at the top of the card, where the next question stands, however far the reply was scrolled', async () => {
+    const scrolled = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    const user = await openMain();
+    await ask(user);
+    scrolled.mockClear();
+
+    await send(user, '한식');
+
+    expect(scrolled).toHaveBeenCalledWith({ y: 0, animated: false });
   });
 
   it('brings the input back with the reply', async () => {

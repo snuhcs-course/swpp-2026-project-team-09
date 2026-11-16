@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -35,7 +36,7 @@ function MeetButton({ chat, userId, name }: { chat: Chat; userId: string; name: 
   const meet = useMeetAsk(chat.addRecalculated, name);
   return (
     <Button
-      disabled={meet.asking}
+      busy={meet.asking}
       onPress={() => {
         meet.ask(userId);
       }}
