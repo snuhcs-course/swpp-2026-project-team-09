@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -23,17 +24,14 @@ import {
   LoadingState,
   SectionHeader,
   space,
-  SwitchRow,
   text,
 } from '@/design-system';
 import { LevelTrack } from '../friends/level-track';
 import { OffQuestion } from '../friends/off-question';
 import { type Levels, useLevels } from '../friends/use-levels';
-import { LocationExplanation } from '../main/location-explanation';
 import { useMasterSwitch } from '@/features/sharing/use-master-switch';
 import { MasterOffLine } from '../master-off-line';
 import { PrivateZoneRow } from './private-zone-row';
-import { useSharingSwitch } from './use-sharing-switch';
 
 const SEEN_WORDS: Readonly<Record<FriendLevel, string>> = {
   timetable: '서로 시간표만 보여요',
@@ -80,15 +78,10 @@ function FriendRow({ friend, level, seen, masterOff, onChoose }: FriendRowProps)
   );
 }
 
-interface PerFriendProps {
-  levels: Levels;
-  masterOn: boolean;
-}
-
 // "친구마다": what the two see of each other, and the User's own end as three cells, shown off and disabled under one
 // line while the Master Switch is off.
-function PerFriend({ levels, masterOn }: PerFriendProps): ReactElement {
-  const masterOff = useMasterSwitch().off;
+function PerFriend({ levels }: { levels: Levels }): ReactElement {
+  const { on: masterOn, off: masterOff } = useMasterSwitch();
   const { data, isPending, refetch } = useQuery(friendsQuery);
   return (
     <View style={[cardStyles.card, styles.card]}>
@@ -144,33 +137,17 @@ function NeverKept(): ReactElement {
   );
 }
 
-// 위치 공유 (`/me/location-sharing`, board n7b), from "위치 공유 보기": the Master Switch, each Friend's level, the way
-// to the Private Zones, and what the app never keeps. The switch and the levels ask once, as on 내 정보 and 친구 관리.
+// 위치 공유 (`/me/location-sharing`, board n7b), from "위치 공유 보기": each Friend's level, the way to the Private Zones,
+// and what the app never keeps. The levels ask once, as on 친구 관리.
 export function LocationSharingScreen(): ReactElement {
-  const sharing = useSharingSwitch();
   const levels = useLevels();
   return (
     <FullScreenPanel leave={{ kind: 'back', onPress: router.back }} subtle title="위치 공유">
       <View style={styles.body}>
-        <View style={[cardStyles.card, styles.switchCard]}>
-          <SwitchRow
-            description="끄면 친구 모두에게 시간표만 보여요"
-            label="위치 공유"
-            onValueChange={sharing.change}
-            value={sharing.on}
-          />
-        </View>
-        <PerFriend levels={levels} masterOn={sharing.on} />
+        <PerFriend levels={levels} />
         <PrivateZoneRow />
         <NeverKept />
       </View>
-      <LocationExplanation
-        blocked={sharing.blocked}
-        onAllow={sharing.allow}
-        onLater={sharing.later}
-        visible={sharing.explaining}
-      />
-      <OffQuestion name={null} onAnswer={sharing.answerOff} open={sharing.askingOff} />
       <OffQuestion
         name={levels.asked?.friend.name ?? null}
         onAnswer={levels.answer}
@@ -182,7 +159,6 @@ export function LocationSharingScreen(): ReactElement {
 
 const styles = StyleSheet.create({
   body: { gap: space[3], padding: space[4] },
-  switchCard: { paddingVertical: space[2] },
   card: { gap: space[2] },
   friend: { gap: space[2], paddingBottom: space[3], borderBottomWidth: 1, borderBottomColor: color.border },
   who: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 56 },

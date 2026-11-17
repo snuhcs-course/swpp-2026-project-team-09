@@ -5,15 +5,13 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { type ReactElement, useEffect, useState } from 'react';
 import { Animated, type LayoutChangeEvent, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { friendsQuery, myPartyQuery } from '@/api/queries';
 import { cardStyles, color, font, Icon, radius, space, SwitchRow, text } from '@/design-system';
-import { friendsLine, partyLine } from '@/features/sharing/sharing-lines';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { useSending } from '@/position';
 import { BackgroundRow } from './background-row';
@@ -79,25 +77,16 @@ function Whole(): ReactElement {
   );
 }
 
-// The 위치 공유 card: the Master Switch, with the Friends and the 파티 members the User allows under it while it is on
-// (while it is off nobody is shared with, so no number shows), the row for background sharing, the line that says the
-// User is not shared off campus or inside a Private Zone, and the way to the 위치 공유 screen.
+// The 위치 공유 card: the Master Switch, the row for background sharing, the line that says the User is not shared off
+// campus or inside a Private Zone, and the way to the 위치 공유 screen.
 export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): ReactElement {
-  const friends = useQuery({ ...friendsQuery, select: friendsLine }).data;
-  const party = useQuery({ ...myPartyQuery, select: partyLine }).data ?? null;
   const { offCampus, privateZone } = useSending();
   return (
     <View onLayout={onLayout} style={[cardStyles.card, styles.card]}>
       <Text accessibilityRole="header" style={styles.title}>
         위치 공유
       </Text>
-      <SwitchRow
-        description={sharing.on ? friends : undefined}
-        label="위치 공유"
-        onValueChange={sharing.change}
-        value={sharing.on}
-      />
-      {sharing.on && party !== null ? <Text style={styles.party}>{party}</Text> : null}
+      <SwitchRow label="위치 공유" onValueChange={sharing.change} value={sharing.on} />
       <BackgroundRow masterOn={sharing.on} />
       {sharing.on && offCampus ? <Text style={styles.offCampus}>캠퍼스 밖이라 위치가 공유되지 않아요</Text> : null}
       {sharing.on && privateZone ? (
@@ -112,7 +101,6 @@ export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): 
 const styles = StyleSheet.create({
   card: { paddingVertical: space[2] },
   title: { ...text.title, marginTop: space[2], marginBottom: space[1], color: color.ink },
-  party: { ...text.caption, marginBottom: space[2], color: color.inkMuted },
   offCampus: { ...text.caption, marginBottom: space[2], color: color.warning },
   privateZone: { ...text.caption, marginBottom: space[2], color: color.private },
   whole: {

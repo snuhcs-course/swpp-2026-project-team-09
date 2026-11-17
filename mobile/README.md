@@ -940,10 +940,8 @@ cards from the top:
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
   (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
   불러오기" and "빈 시간 말하기" say "준비 중이에요";
-- 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch, with "위치 공유를 허용한 친구 N명"
-  (Friends whose level the User set above 시간표만) and, while a 파티 is on with the User's own switch on, "○○ 파티에서
-  위치 공유를 허용한 멤버 M명" (its other members), both only while it is on. Both count the User's own end only. While
-  the Master Switch is off, the Friends' levels on 친구 and 위치 공유 and the room's "내 위치 공유" show off and
+- 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch. While the Master Switch is off,
+  the Friends' levels on 친구 and 위치 공유 and the room's "내 위치 공유" show off and
   disabled under "전체 위치 공유가 꺼져 있어요 · 켜기", keeping their stored values; and "캠퍼스 밖이라 위치가 공유되지
   않아요" while the last upload was off campus. Turning it on without the location permission shows the map's
   explanation and the system's prompt first; a refusal leaves it off with "위치 권한을 허용해야 공유할 수 있어요". The
@@ -958,9 +956,9 @@ cards from the top:
   whole screen), and "관심사 {n}" (관심사, with the number of watched interests).
 
 위치 공유 (`/me/location-sharing`, `src/screens/me/location-sharing-screen.tsx`, P02 ticket 11, board n7b), from the
-card's "위치 공유 보기", has three cards. The first is the switch "위치 공유" over
-"끄면 친구 모두에게 시간표만 보여요", the same Master Switch as 내 정보's, with the same explanation and question
-(`use-sharing-switch.ts`). "친구마다" lists the Friends of `GET /friends`, each with what the two see of each other
+card's "위치 공유 보기", has no switch of its own and starts with "친구마다". While the Master Switch is off, "친구마다"
+shows "전체 위치 공유가 꺼져 있어요 · 켜기", whose 켜기 turns it on as 내 정보's switch does (`master-off-line.tsx`).
+"친구마다" lists the Friends of `GET /friends`, each with what the two see of each other
 from `seen`, "서로 시간표만 보여요", "서로 지금 있는 건물까지 보여요" or "서로 정확한 위치까지 보여요", and the
 User's own end as the three cells of 친구 관리, which ask and set the level as there (`use-levels.ts`). The line is
 lowered at once by a choice or a switch on its way, and raised only once `GET /friends` says so, since the app does not
