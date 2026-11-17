@@ -2,7 +2,7 @@
 
 The app's icon is the two-line wordmark "SNU / now" on white, whose "o" is the app's own map marker. The team chose
 it on 2026-11-18. Every image of it that the app ships, the launcher icon, Android's adaptive icon layers, the splash,
-the notification icon and the favicon, is written from one master by one script.
+the notification icon, the favicon and the sign-in screen's wordmark, is written from one master by one script.
 
 ![The master](snu-now-icon.svg)
 
@@ -15,13 +15,17 @@ the notification icon and the favicon, is written from one master by one script.
 | `android-icon-monochrome.svg` | Android's themed icon: the same geometry in one colour, with the pin's hole cut out.                        |
 | `splash-icon.svg`             | The splash: the whole wordmark cropped to its ink, on transparent.                                          |
 | `notification-icon.svg`       | The notification's small icon: the pin alone, white, with its hole cut out.                                 |
+| `sign-in-wordmark.svg`        | The sign-in screen's wordmark: cropped to its ink with no margin, on transparent.                           |
 | `make_icon.py`                | Writes every SVG above from the master's geometry, then renders the PNGs below.                             |
 
-The SVGs and the script are outside `mobile/`, so they are not part of the app's fingerprint. Only the PNGs are.
+The SVGs and the script are outside `mobile/`, so they are not part of the app's fingerprint. Only the PNGs that
+`mobile/app.json` names are.
 
 ## What it writes into the app
 
-Every PNG goes to `mobile/assets/images/`, under the name `mobile/app.json` gives it.
+Every PNG goes to `mobile/assets/images/`. Those that `mobile/app.json` names keep the name it gives them. The sign-in
+screen's wordmark is not in `app.json`: `mobile/src/screens/sign-in-screen.tsx` imports it, so it travels with the
+app's JavaScript.
 
 | PNG                           | From                          | Size        | Mode                 | `app.json`                             |
 | ----------------------------- | ----------------------------- | ----------- | -------------------- | -------------------------------------- |
@@ -31,6 +35,7 @@ Every PNG goes to `mobile/assets/images/`, under the name `mobile/app.json` give
 | `android-icon-monochrome.png` | `android-icon-monochrome.svg` | 1024 × 1024 | RGBA, `#001A72` only | `android.adaptiveIcon.monochromeImage` |
 | `splash-icon.png`             | `splash-icon.svg`             | 1024 × 810  | RGBA                 | `expo-splash-screen`'s `image`         |
 | `notification-icon.png`       | `notification-icon.svg`       | 96 × 96     | RGBA, white only     | `expo-notifications`' `icon`           |
+| `sign-in-wordmark.png`        | `sign-in-wordmark.svg`        | 660 × 513   | RGBA                 | none                                   |
 
 The colours around them are in `app.json` too: the adaptive icon's `backgroundColor` and the splash's are `#FFFFFF`,
 and the notification's `color`, which Android tints the small icon with, is `#001A72`. The splash's `imageWidth` is 140.
@@ -50,8 +55,10 @@ DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib /tmp/app-icon-venv/bin/python docs/
 not needed. `make_icon.py --svg-only` writes only the SVGs and needs only `fonttools`. The images were last written
 with CairoSVG 2.9.1, fontTools 4.68.0, Pillow 13.0.0 and cairo 1.18.
 
-A new PNG changes the app's fingerprint, so it reaches phones only with a raised `version` and a native Release
-(`CLAUDE.md`, "The app's native files"). Write the images again only for a change of the design.
+A new PNG that `app.json` names changes the app's fingerprint, so it reaches phones only with a raised `version` and a
+native Release (`CLAUDE.md`, "The app's native files"). Write the images again only for a change of the design. The
+script writes every PNG each time; with the versions above, an image whose SVG did not change comes out byte for byte
+the same, and `git status` shows which ones changed.
 
 ## The design
 
@@ -82,6 +89,9 @@ A new PNG changes the app's fingerprint, so it reaches phones only with a raised
 - **The splash** is the whole wordmark, its viewBox the ink's box with 2 units of margin on each side. With
   `imageWidth` 140, `expo-splash-screen` puts it 140 dp wide on Android 12's 288 dp splash canvas, whose icon shows
   inside a 192 dp circle. The farthest ink is then 79 dp from the centre; a width above 170 would cut it.
+- **The sign-in screen's wordmark** is the splash's crop with no margin, so the picture's edges are the ink's and the
+  screen places the ink itself. It is 660 px wide, four times the 165 the screen shows it at, so it stays sharp on
+  every phone's density.
 - **The notification icon** is the pin alone, scaled so that its height fills 80 of the 96 px and centred, with 8 px
   clear above and below as Android's 24 dp grid keeps 2 dp. It is white, with its hole cut out like the monochrome
   layer's, since Android draws only its alpha, in the notification's `color`.

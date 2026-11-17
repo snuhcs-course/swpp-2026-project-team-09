@@ -2,13 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Animated, Easing, Image, Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import emblem from '../../assets/images/sign-in-emblem.png';
-import pointing from '../../assets/images/sign-in-pointing.png';
-import refusedDrawing from '../../assets/images/sign-in-refused.png';
 import { color, radius, signInButton } from '@/design-system';
 import { useLoop } from '@/hooks/use-loop';
 import { useMotionAllowed } from '@/hooks/use-reduce-motion';
@@ -17,10 +16,8 @@ const BUTTON = 140;
 const SPINNER = 40;
 const RING_MS = 2200;
 const SPIN_MS = 800;
-const POKE_MS = 1600;
 
 const easeOut = Easing.out(Easing.ease);
-const easeInOut = Easing.inOut(Easing.ease);
 
 // A ring that grows out of the button and fades, to draw the eye to the one thing to press. With reduced motion
 // there is none: standing still it would hide behind the button.
@@ -71,23 +68,8 @@ export function SignInButton({ checking, onPress }: SignInButtonProps): ReactEle
   );
 }
 
-// The drawing that points at the button, nudging towards it. In the refused state another drawing stands still.
-export function Drawing({ refused }: { refused: boolean }): ReactElement {
-  const moving = useMotionAllowed() && !refused;
-  const round = useLoop(moving, POKE_MS, easeInOut);
-  const poke = { transform: [{ translateX: round.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -6, 0] }) }] };
-  return (
-    <Animated.Image
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      source={refused ? refusedDrawing : pointing}
-      style={[styles.drawing, moving ? poke : null]}
-    />
-  );
-}
-
 const styles = StyleSheet.create({
-  place: { position: 'absolute', top: 280, left: 80, width: BUTTON, height: BUTTON },
+  place: { position: 'absolute', top: 280, left: '50%', marginLeft: -BUTTON / 2, width: BUTTON, height: BUTTON },
   ring: { ...StyleSheet.absoluteFill, borderRadius: radius.full, borderWidth: 2, borderColor: color.snuBlue },
   button: {
     ...StyleSheet.absoluteFill,
@@ -109,5 +91,4 @@ const styles = StyleSheet.create({
     borderColor: color.blue100,
     borderTopColor: color.snuBlue,
   },
-  drawing: { position: 'absolute', top: 264, left: 230, width: 170, height: 274 },
 });
