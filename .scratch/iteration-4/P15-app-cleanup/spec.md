@@ -40,6 +40,10 @@ An item is found by using the released app, on a phone or an emulator, and check
 
 Items keep turning up while the others are being fixed. One found during the work may be drawn, written as a ticket, and fixed in the same pull request, with the ticket's acceptance criteria checked there. Its line is added to the list below in the same pull request.
 
+### Implementing a ticket
+
+- Before the code is touched, the item's after board is opened on the team canvas and kept at hand: the screen is made to match its layout and words. Where the board and the ticket differ, the ticket decides, and the difference is reported to the ticket's owner.
+
 ### Pull requests
 
 - Each ticket, or each set of tickets that share a file, is one pull request into `4.0/Main`. A branch takes `4.0/Main` by merge, never by rebase.
