@@ -82,3 +82,10 @@ The rule: nothing stands over an empty place above the AI input. The row's place
 - **Joining and leaving a Party** could not be shown: the mock answers the same Party after "활성화에서 나가기". `main-credit.integration.test.tsx` checks it.
 
 The screenshots, side by side, are in the pull request's body, from `~/Downloads/p15-07/P15-07-emulator-check.png`.
+
+### Agent usage (2026-11-18)
+
+Estimates from the session transcripts, with gaps of 5 minutes or more left out, up to the pull request:
+
+- Agent time: about 90 minutes, in one session with three Opus 5.5 subagents. One implemented the ticket, did the emulator check and fixed what the review found; two reviewed it. The times partly overlap, and the session's share includes a few minutes spent on ticket 06's merge in the same window.
+- Tokens: output about 57,000. Input about 78.1 million: 77.1 million cache reads, 1.0 million cache writes and about 700 uncached.
