@@ -1,6 +1,6 @@
 # 03: The 시간표 card: two buttons, a block opens its Class, and an image read stays on 내 정보
 
-Parent: [P15 spec](../spec.md), item 3; found using `snunow/all/26.11.17-2` on 2026-11-17; the team canvas's before/after board for this item under "P15. 출시 전 앱 청소"
+Parent: [P15 spec](../spec.md), item 3; found using `snunow/all/26.11.17-2` on 2026-11-17; the team canvas's before/after boards for this item (the `P15-03-*` boards under "P15. 출시 전 앱 청소")
 Status: ready-for-agent
 Owner: TaeHyun79
 Blocked by: none
