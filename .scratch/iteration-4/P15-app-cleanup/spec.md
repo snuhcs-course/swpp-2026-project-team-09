@@ -65,8 +65,3 @@ None yet.
 ## Testing Decisions
 
 Each ticket names its own tests by ADR 0007. A ticket that only removes something checks that it is gone and that what stays still works. A ticket that changes what a press does tests the press.
-
-## Out of Scope
-
-- New features. An item that needs one is noted in its ticket and taken to the team.
-- Changes to the agentic map's answers (P02 and its sibling Tasks).
