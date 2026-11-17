@@ -67,7 +67,7 @@ The rule: nothing stands over an empty place above the AI input. The row's place
   - A card and the answer frame: `main-layout.unit.test.ts`; the card tests already in `main-controls.integration.test.tsx` and `main-room.integration.test.tsx`, and the frame's in `answer-frame-giving-way.integration.test.tsx`. A received invitation's card and a made Quest's card give their height as the frame's card does (`onAnswerHeight`), so they take the frame's branch, which this ticket leaves as it was.
   - The friend list on a low screen: `main-layout.unit.test.ts`, "the friend list's window on a low screen", for each case; `main-room.integration.test.tsx`, in a Party and in no Party.
 - **The boards and the ticket agree.** The boards show only the everyday map in no Party and a card. The start button, the two lines, a Party, a taller input and the friend list follow the ticket.
-- **Left as it was:** the input's height is kept while the input is away, as before. An input of several lines that goes away unsent, under a received invitation's card or the list of Friends to add, would come back as one line while the screen still counts the taller height, until the input is laid out at another height. That flow is rare and older than this ticket.
+- **The input tells its height when it comes back.** A received invitation's card or a made Quest's card takes the input away and loses its draft. Before, the input came back at one line but told nothing, since its own count started at one line, and the screen kept the taller height: in no Party the credit stood over empty map. The input now always tells its first layout (`useBarHeight` in `ai-input.tsx`), and after that only a change of 1 or more. The screen still keeps the height while the input is away, so the moved time band keeps the input's room. `main-credit.integration.test.tsx`, "as the AI input comes back", lays the input out at 90, opens and closes an invitation's card, and finds the credit back at 70 once the input lays itself out at 50.
 
 ### Hand check on an Android emulator (2026-11-18)
 
@@ -81,4 +81,4 @@ The rule: nothing stands over an empty place above the AI input. The row's place
 - **The AI input holding three lines, the keyboard down:** the input's top at about 110. The credit and the logo at 118, clear of it. The input covers the 편의기능 button, as the ticket keeps. Emptied back to one line, the credit came back to 70.
 - **Joining and leaving a Party** could not be shown: the mock answers the same Party after "활성화에서 나가기". `main-credit.integration.test.tsx` checks it.
 
-The screenshots, side by side: `~/Downloads/p15-07/P15-07-emulator-check.png`.
+The screenshots, side by side, are in the pull request's body, from `~/Downloads/p15-07/P15-07-emulator-check.png`.

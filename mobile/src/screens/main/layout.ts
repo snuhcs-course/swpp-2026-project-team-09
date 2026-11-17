@@ -142,7 +142,7 @@ export const MADE_LINE = { left: space[4], height: 34 } as const;
 
 // The bottom of the next one at the left: 8 over `top`, the top of what stands under it, or the row's place while
 // nothing does.
-function leftOver(top: number | null): number {
+function bottomOver(top: number | null): number {
   return top === null ? BUTTON_ROW.bottom : top + space[2];
 }
 
@@ -151,7 +151,7 @@ function rowTop({ buttonRow = false }: Room): number | null {
 }
 
 export function tutorialStartBottom(room: Room): number {
-  return leftOver(rowTop(room));
+  return bottomOver(rowTop(room));
 }
 
 function tutorialStartTop(room: Room): number | null {
@@ -159,7 +159,7 @@ function tutorialStartTop(room: Room): number | null {
 }
 
 export function interestsHintBottom(room: Room): number {
-  return leftOver(tutorialStartTop(room));
+  return bottomOver(tutorialStartTop(room));
 }
 
 function interestsHintTop(room: Room): number | null {
@@ -167,7 +167,7 @@ function interestsHintTop(room: Room): number | null {
 }
 
 export function madeLineBottom(room: Room): number {
-  return leftOver(interestsHintTop(room));
+  return bottomOver(interestsHintTop(room));
 }
 
 // The top of what stands at the left above the AI input while no card is open, null while nothing does.
