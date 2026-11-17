@@ -1,7 +1,7 @@
 # 51: The chat's system prompt is cached across Users and knows the campus's short names
 
 Parent: [P15 spec](../spec.md), item 51; found using `snunow/main-server/26.11.16-1` on 2026-11-17 (the Assistant did not understand "아랫공대"), and from the A02 baseline's cost figures (`main-server/eval/a02-baseline.md`)
-Status: ready-for-agent
+Status: done
 Owner: AhnJinYoung
 Blocked by: none
 
@@ -65,15 +65,38 @@ All runs call the Anthropic API directly (`--provider anthropic --cache breakpoi
 
 ## Acceptance criteria
 
-- [ ] Two requests with the same tools and capabilities, made at different minutes and by different Users, have equal bytes up to the cache breakpoint. A unit test builds both and compares them.
-- [ ] The `Now in Korea` line is still in every request, after the breakpoint, with the same words.
-- [ ] On the OpenRouter path the request holds the same instructions in the same order.
-- [ ] The campus short names are data: adding an entry changes the rendered fragment and nothing else. A unit test renders the list and checks that every short name and its meaning is in it.
-- [ ] Every first entry is checked against the server's Places and Restaurants; the ones that matched nothing are listed in the ticket's Comments.
-- [ ] P19 and the P5 small world on Anthropic, before and after, are in the pull request with the scores side by side, and agree within noise or the difference is explained.
-- [ ] The cross-minute measurement is in the pull request: tokens read and written and the cost, before and after.
-- [ ] The short-name questions' transcripts are in the pull request.
-- [ ] `main-server/README.md` says where the list is and how a name is added, and ADR 0013 or the adapter's comment says what is cached and what is not.
-- [ ] Tests by ADR 0007: unit tests for the prompt's parts and the list; the adapter's existing tests still pass.
+- [x] Two requests with the same tools and capabilities, made at different minutes and by different Users, have equal bytes up to the cache breakpoint. A unit test builds both and compares them.
+- [x] The `Now in Korea` line is still in every request, after the breakpoint, with the same words.
+- [x] On the OpenRouter path the request holds the same instructions in the same order.
+- [x] The campus short names are data: adding an entry changes the rendered fragment and nothing else. A unit test renders the list and checks that every short name and its meaning is in it.
+- [x] Every first entry is checked against the server's Places and Restaurants; the ones that matched nothing are listed in the ticket's Comments.
+- [x] P19 and the P5 small world on Anthropic, before and after, are in the pull request with the scores side by side, and agree within noise or the difference is explained.
+- [x] The cross-minute measurement is in the pull request: tokens read and written and the cost, before and after.
+- [x] The short-name questions' transcripts are in the pull request.
+- [x] `main-server/README.md` says where the list is and how a name is added, and ADR 0013 or the adapter's comment says what is cached and what is not.
+- [x] Tests by ADR 0007: unit tests for the prompt's parts and the list; the adapter's existing tests still pass.
 
 ## Comments
+
+### Notes from the implementation (2026-11-18)
+
+- **How it is sent.** `Feature.instructions` is now a string, the same for every request of the feature; the new optional `Feature.requestInstructions(now)` gives the lines of one request. `runFeature` passes both to the SDK as two system messages, stable first. On the Anthropic path (`@ai-sdk/anthropic` 4.0.81) consecutive system messages become two blocks of the request's `system`, and the middleware puts `cache_control` on the **first** system message (it was the last). On the OpenRouter path the two go as two `system` messages in the same order, with no cache mark. The Judgement and the same-event choice send one system message, so for them first and last are the same and nothing changed.
+- **What moved.** Only the `Now in Korea: … Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.` line, word for word, now the chat's `requestInstructions`. Nothing else in the prompt changes per request. No rule's wording changed.
+- **The cached prefix.** For an app with every capability, the tools and the stable prompt are 43,826 tokens (the cross-minute run's cache read); the campus-terms fragment adds 744 tokens (counted with the Messages API's free token count). The ticket's 26,300 is the P19 world's smaller tool set.
+- **Entries checked against the seed** (`seed/campus-map-places.json`, `national-map-places.json`, `restaurant-places.json`, the shuttle stops). Written as the tools find them: 학생회관 (63동); 유회진 학술정보관 (300), 제1공학관 (301), 제2공학관 (302), 해동첨단공학관 (303, from the national map); 데이터사이언스대학원 및 공과대학 강의동 1 (43), 대학원연구동(1단계) (39), 신소재공동연구소 (131); 버들골 풍산마당 (100); 종합운동장; 중앙도서관 (two Places: 중앙도서관 본관 62, 중앙도서관 관정관 62-1); 학생회관식당 and 301동식당 (Restaurants).
+- **Entries that matched nothing, or not as written** (for the owner):
+  - 긱삼 → 기숙사 삼거리: no Place. Only the shuttle stop `기숙사삼거리` has the name. The entry says so.
+  - 긱사, 긱 → 기숙사: no Place is named 기숙사 except the three 외국인학생기숙사 (915–917동). The dormitory is 관악사: `(관악사)학부 생활관` (919) and `(관악사)대학원 생활관` (900). The entry says "기숙사, which is 관악사: …".
+  - 긱운 → 기숙사 운동장: no Place of that name; the Place is `관악사운동장`. The entry names it.
+  - 과방: no data, as the ticket says. The note tells the model to say so.
+  - 천식: 천원의 식사 is no Place or Restaurant; the two Restaurants it names exist.
+- **One change after the first after run.** I first wrote 중도 as "중앙도서관 본관 and 중앙도서관 관정관". P19 on that commit (`ee573f6c`) failed `out-of-scope-library-seats`: the model read "중앙도서관 열람실" as 관정관's and listed its seat spaces. The entry now says only 중앙도서관, as the owner wrote it, and `resolvePlace` finds the two Places. Both after runs are kept; the scores below are of the final code (`d4774178`).
+- **Scores, before (`dc27a523`) and after (`d4774178`).** P19: 59/64 → 56/64, pass^3 5/5 → 5/5, known failures passed 2/8 → 4/8 (`menus-abbreviation-hakgwan` and `making-parties-abbreviation-hakgwan`, the two 학관 cases, now pass). The non-known failures after are cases that failed in earlier runs too (`edd356ae`, `40cb60e5` -3/-4/-5); 56 is inside the 56–59 of earlier runs. P5 small world: 240/300 → 250/300, pass^3 73/100 → 75/100; every floor keeps its verdict (J10 under its floor in both).
+- **Cross-minute.** Base: each of 10 requests wrote 43,276 tokens, USD 0.0545 in all. Branch: the first wrote 43,978, the other nine read 43,826 and wrote 152 each, USD 0.0101 in all (−82%).
+- **Tests.** The bytes-equal check is a unit test that sends the real chat feature, built over services with no data (`test/chat-services.ts`), through the real provider library to a fake fetch. `test/scripted-model.ts`'s `system()` now joins the system messages.
+- Spent on the API: USD 1.24 (P19 ×3, P5 ×2, cross-minute ×2, the short-name questions).
+
+### Agent usage (2026-11-18)
+
+- Agent time: about 1 h 40 min in one session (an estimate), most of it waiting on the four eval runs.
+- Tokens (an estimate; one agent, no subagents): output about 45k; input about 6.5M, of which about 6.2M cache reads and 0.3M cache writes.
