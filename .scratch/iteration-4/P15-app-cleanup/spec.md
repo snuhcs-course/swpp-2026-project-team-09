@@ -66,6 +66,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 4. The map's friend panel: remove the green "친구 N명과 위치 공유 중" banner. Ticket [04](issues/04-friend-panel-banner.md).
 5. The 학과 field (프로필 편집, Onboarding): the words cover the search icon once the field is pressed. Ticket [05](issues/05-department-field-icon.md).
 6. The app's icon, splash and notification icon are still Expo's defaults: give the app its own, the "SNU / now" wordmark. A native change. Ticket [06](issues/06-app-icon.md).
+7. The map's credit and Kakao's logo float far above the AI input, over the place of a row of buttons that is no longer drawn: nothing stands over an empty place above the input. Ticket [07](issues/07-credit-above-the-input.md).
 
 ### 안진영 (`51`–`99`)
 

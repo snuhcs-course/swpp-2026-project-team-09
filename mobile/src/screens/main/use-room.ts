@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -12,8 +13,9 @@ import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToastAbove } from '@/design-system';
 import { type FirstRun, useFirstRun } from '@/features/first-run/use-first-run';
+import { useActiveParty } from '@/features/parties/use-active-party';
 import { useHideTabBarOnMain } from '../shell/main-tab-bar';
-import { type Room, takenUnderToast, takenUnderToastOverAnswer, takenUnderToastOverCard } from './layout';
+import { AI_INPUT, type Room, takenUnderToast, takenUnderToastOverAnswer, takenUnderToastOverCard } from './layout';
 import { type Taken, takenBy } from './map-bottom';
 import type { MainLayers } from './use-main-layers';
 import { useMadeQuestCard } from './use-made-quest-card';
@@ -35,7 +37,8 @@ function useToastOverMap({ cardHeight, answerHeight }: Room, framed: boolean): v
 
 // The room the parts over the map have, and the toast's place. A card at the bottom counts; one that appears counts
 // from the last one's height until it is laid out. The answer frame's card counts on its own while `framed`, from its
-// first layout on. `heights` are the bottom's parts' callbacks: the first run's card's and the answer frame's card's.
+// first layout on. The row of buttons counts while the User is in a Party, as `BottomControls` draws it. `heights`
+// are the bottom's parts' callbacks: the first run's card's, the answer frame's card's and the AI input's.
 export function useRoom(
   { bottomCard }: Taken,
   tutorialStart: boolean,
@@ -46,11 +49,17 @@ export function useRoom(
   room: Room;
   setStage: (stage: Room['stage']) => void;
   setCardHeight: (height: number) => void;
-  heights: { onNoticeHeight: (height: number) => void; onAnswerHeight: (height: number) => void };
+  heights: {
+    onNoticeHeight: (height: number) => void;
+    onAnswerHeight: (height: number) => void;
+    onInputHeight: (height: number) => void;
+  };
 } {
   const atBottom = bottomCard;
+  const party = useActiveParty();
   const [cardHeight, setCardHeight] = useState(0);
   const [answerHeight, setAnswerHeight] = useState<number | null>(null);
+  const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const [stage, setStage] = useState<Room['stage']>(null);
   if (!framed && answerHeight !== null) {
     setAnswerHeight(null);
@@ -62,13 +71,15 @@ export function useRoom(
     tutorialStart: tutorialStart && !atBottom,
     interestsHint: interestsHint && !atBottom,
     madeLine: madeLine && !atBottom,
+    buttonRow: party !== null && !atBottom,
+    inputHeight,
   };
   useToastOverMap(room, framed);
   return {
     room,
     setStage,
     setCardHeight,
-    heights: { onNoticeHeight: setCardHeight, onAnswerHeight: setAnswerHeight },
+    heights: { onNoticeHeight: setCardHeight, onAnswerHeight: setAnswerHeight, onInputHeight: setInputHeight },
   };
 }
 
