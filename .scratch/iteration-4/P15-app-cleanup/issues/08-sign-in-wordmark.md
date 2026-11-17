@@ -131,3 +131,10 @@ check and off again after.
 - Metro's development warning shows at the bottom of these two screenshots. It is not part of the screen.
 
 The screenshots are in the PR body.
+
+### Agent usage (2026-11-18)
+
+Estimates from the session transcripts, with gaps of 5 minutes or more left out, up to the pull request:
+
+- Agent time: about 50 minutes, in one session with three Opus 5.5 subagents: one implemented the ticket and did the emulator check, two reviewed it. The times partly overlap, and the session's share includes a few minutes spent on ticket 07's merge in the same window.
+- Tokens: output about 33,000. Input about 38.1 million: 37.6 million cache reads, 0.44 million cache writes and about 400 uncached.

@@ -23,8 +23,9 @@ The SVGs and the script are outside `mobile/`, so they are not part of the app's
 
 ## What it writes into the app
 
-Every PNG goes to `mobile/assets/images/`, under the name `mobile/app.json` gives it. The sign-in screen's wordmark is
-not in `app.json`: `mobile/src/screens/sign-in-screen.tsx` imports it, so it travels with the app's JavaScript.
+Every PNG goes to `mobile/assets/images/`. Those that `mobile/app.json` names keep the name it gives them. The sign-in
+screen's wordmark is not in `app.json`: `mobile/src/screens/sign-in-screen.tsx` imports it, so it travels with the
+app's JavaScript.
 
 | PNG                           | From                          | Size        | Mode                 | `app.json`                             |
 | ----------------------------- | ----------------------------- | ----------- | -------------------- | -------------------------------------- |

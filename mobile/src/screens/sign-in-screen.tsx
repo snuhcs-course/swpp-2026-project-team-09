@@ -110,7 +110,7 @@ export function SignInScreen(): ReactElement {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface },
   content: { flexGrow: 1 },
-  // The frame's width, in the middle of a wider screen. What the frame draws past its edge is cut off, as there.
+  // The frame's width, in the middle of a wider screen.
   column: { flexGrow: 1, alignSelf: 'center', width: '100%', maxWidth: FRAME_WIDTH, overflow: 'hidden' },
   upper: { position: 'absolute', right: 0, left: 0, height: COPY_TOP + COPY_HEIGHT },
   wordmark: { position: 'absolute', top: 92, left: '50%', marginLeft: -WORDMARK.width / 2, ...WORDMARK },
