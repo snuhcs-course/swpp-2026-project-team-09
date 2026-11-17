@@ -3,12 +3,12 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
 import { File, Paths } from 'expo-file-system';
 import { launchImageLibraryAsync } from 'expo-image-picker';
-import { router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { apiClient } from '@/api/client';
 import type { SentGrid } from '@/api/timetable-reading-types';
@@ -26,10 +26,10 @@ import { type Reading, readTimetable } from './read-timetable';
 import { readingFromServer } from './server-reading';
 
 // `이미지로 불러오기` (P13 spec, "Importing"; P15-52): a screenshot of a timetable picked from the album is read and
-// becomes a new version, which is switched to; the timetable screen then opens. The main server's AI reads it when the
-// User agreed to send it (asked once, before the first send); the phone reads it itself when the User did not, when the
-// main server does not answer or refuses (a server without the route answers 404), and in a build without the main
-// server. The copy the picker may leave in the app's cache is deleted once read.
+// becomes a new version, which is switched to without leaving the screen (P15 ticket 03). The main server's AI reads it
+// when the User agreed to send it (asked once, before the first send); the phone reads it itself when the User did not,
+// when the main server does not answer or refuses (a server without the route answers 404), and in a build without the
+// main server. The copy the picker may leave in the app's cache is deleted once read.
 
 export const READING = '시간표를 읽고 있어요';
 export const NOTHING_READ = '시간표를 찾지 못했어요';
@@ -184,7 +184,6 @@ async function importImage({ versions, read, places, show, showNotReady, picked,
   const made = await versions.make(plan.name, plan.classes);
   // Null: the versions' own toast said why.
   if (made !== null) {
-    router.push('/me/timetable');
     show(madeWords(plan, plan.leftOut + made.dropped.classes + made.dropped.times + made.refused));
   }
 }

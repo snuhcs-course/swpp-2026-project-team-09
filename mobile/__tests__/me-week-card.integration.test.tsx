@@ -1,0 +1,94 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
+import { pass, screen, shownAddress } from './support/app';
+import { givePhone, ON_CAMPUS, openMain } from './support/main';
+import { answered, startFresh } from './support/mocks';
+import { apiClient } from '@/api/client';
+
+// The buttons and the blocks of 내 정보's 시간표 card (P15 ticket 03), against the mocks, which start from the frame's
+// four classes; 운영체제 meets on 월 and 수, 10:30–12:00 at 301동. `이미지로 불러오기` has its own tests.
+
+jest.mock('expo-location');
+jest.mock('@/hooks/use-reduce-motion', () => ({
+  useReduceMotion: (): boolean => true,
+  useMotionAllowed: (): boolean => false,
+  useReduceMotionSetting: (): boolean => true,
+}));
+
+type User = Awaited<ReturnType<typeof openMain>>;
+
+beforeEach(async () => {
+  jest.useFakeTimers();
+  await startFresh();
+  givePhone({ permission: 'granted', position: ON_CAMPUS });
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  jest.useRealTimers();
+});
+
+async function openMe(): Promise<User> {
+  const user = await openMain();
+  await user.press(screen.getByRole('tab', { name: '내 정보' }));
+  await pass(500);
+  return user;
+}
+
+describe('the buttons under the week', () => {
+  it('are 직접 입력/수정 and 이미지로 불러오기, half the row each, without 빈 시간 말하기', async () => {
+    await openMe();
+
+    const open = screen.getByRole('button', { name: '직접 입력/수정' });
+    const image = screen.getByRole('button', { name: '이미지로 불러오기' });
+    expect(open.parent).toBe(image.parent);
+    expect(open.parent?.children).toHaveLength(2);
+    expect(open).toHaveStyle({ flex: 1 });
+    expect(image).toHaveStyle({ flex: 1 });
+    expect(screen.queryByText('빈 시간 말하기')).toBeNull();
+    expect(screen.queryByText('직접 입력')).toBeNull();
+  });
+
+  it('open the timetable with 직접 입력/수정', async () => {
+    const user = await openMe();
+
+    await user.press(screen.getByRole('button', { name: '직접 입력/수정' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe('/me/timetable');
+    expect(screen.getByRole('header', { name: '시간표' })).toBeVisible();
+  });
+});
+
+describe('a class block', () => {
+  it('opens 수업 수정 filled with its class, the same class from either of its days', async () => {
+    const os = (await answered(apiClient.listClasses())).find(({ courseName }) => courseName === '운영체제');
+    const form = `/me/timetable/class?classId=${os?.id ?? ''}`;
+    const user = await openMe();
+
+    await user.press(screen.getByRole('button', { name: '월요일 10:30–12:00 운영체제, 301동' }));
+    await pass(500);
+    expect(shownAddress()).toBe(form);
+    expect(screen.getByRole('header', { name: '수업 수정' })).toBeVisible();
+    expect(screen.getByLabelText('과목명')).toHaveDisplayValue('운영체제');
+    for (const [day, checked] of [
+      ['월', true],
+      ['수', true],
+      ['화', false],
+    ] as const) {
+      expect(screen.getByRole('togglebutton', { name: day }).props).toMatchObject({ accessibilityState: { checked } });
+    }
+    await user.press(screen.getByRole('button', { name: '닫기' }));
+    await pass(500);
+    expect(shownAddress()).toBe('/me');
+
+    await user.press(screen.getByRole('button', { name: '수요일 10:30–12:00 운영체제, 301동' }));
+    await pass(500);
+    expect(shownAddress()).toBe(form);
+    expect(screen.getByLabelText('과목명')).toHaveDisplayValue('운영체제');
+  });
+});

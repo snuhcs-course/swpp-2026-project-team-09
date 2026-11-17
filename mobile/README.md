@@ -862,9 +862,9 @@ screen: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친�
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
 and the department, the detail (or the line where the app has no detail), and the round calendar button "{이름}님과
-파티 만들기", which says "준비 중이에요". Its footer has the live Badge "친구 {n}명과 위치 공유 중", n the Friends the
-User sees now (`visible`); "공유 설정", which closes the panel and shows 내 정보 at `/me?show=sharing`; and "+ 친구
-추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널 닫기"), ✕ and Android's back button close it.
+파티 만들기", which says "준비 중이에요". Its footer has "공유 설정" on the right, which closes the panel and shows 내
+정보 at `/me?show=sharing`, and "+ 친구 추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널
+닫기"), ✕ and Android's back button close it.
 A Friend is under "위치 꺼짐" whenever the main server says the User cannot see them (`visible`), whatever the app's
 own status says.
 
@@ -938,8 +938,12 @@ cards from the top:
   start, else, while today has a class to come, at the current hour or later so that the class shows whole, else at
   the week's earliest class. Today's day in navy, a block for each time of a class
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
-  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
-  불러오기" and "빈 시간 말하기" say "준비 중이에요";
+  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". A press on a block opens its class's 수업
+  수정, as the class's row in 시간표 does. Under the week, two tiles of one width: "직접 입력/수정" opens 시간표, and
+  "이미지로 불러오기" reads a timetable screenshot from the album on the phone (`use-import-from-image.ts`), makes a
+  new version of the timetable from it, switches to it and stays on 내 정보 with "시간표를 만들었어요" or "N개 중
+  15개만 넣었어요", ending in "· M개는 넣지 못했어요" when some could not be put in; it says "준비 중이에요" where the
+  build has no text recognition;
 - 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch. While the Master Switch is off,
   the Friends' levels on 친구 and 위치 공유 and the room's "내 위치 공유" show off and disabled under "전체 위치 공유가
   꺼져 있어요 · 켜기", keeping their stored values; and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was
