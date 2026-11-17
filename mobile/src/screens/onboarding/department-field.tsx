@@ -95,7 +95,7 @@ export function DepartmentField({ level, value, suggested, onChange }: Departmen
           onFocus={search.begin}
           placeholder="학과 검색"
           ref={search.input}
-          room={ROOM}
+          inset={INSET}
           value={shown}
         />
         <View style={styles.icon}>
@@ -126,7 +126,7 @@ export function DepartmentField({ level, value, suggested, onChange }: Departmen
 }
 
 const SIDE = space[10];
-const ROOM = { left: SIDE, right: size.touchMin };
+const INSET = { left: SIDE, right: size.touchMin };
 
 const styles = StyleSheet.create({
   field: { gap: space[2] },

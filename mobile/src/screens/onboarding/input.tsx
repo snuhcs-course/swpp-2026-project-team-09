@@ -31,22 +31,22 @@ interface InputProps {
   // The phone's own keyboard for it, such as the digits' for a 학번.
   keyboardType?: KeyboardTypeOptions;
   // How far the words keep from the left and right edges, for an icon or a button drawn over the field.
-  room?: { left: number; right: number };
-  // The box's, such as its share of a row or a refused border.
+  inset?: { left: number; right: number };
+  // Styles the box around the field, not its words.
   style?: StyleProp<ViewStyle>;
   ref?: RefObject<TextInput | null>;
 }
 
 // A text input as the `Onboarding` frame draws it, with no label of its own: Onboarding's labels carry a badge, and
 // its fields an icon or a button beside them. The focus is marked on a box around the field: on Android a change
-// of the field's own border or ring replaces its background, which puts its words back at the default side padding.
+// of the field's own ring replaces its background, which puts its words back at the default side padding.
 export function Input({
   label,
   value,
   onChangeText,
   placeholder,
   most,
-  room,
+  inset,
   style,
   ref,
   ...on
@@ -75,7 +75,7 @@ export function Input({
         ref={ref}
         // The keyboard stays for the next interest; a field without a button of its own closes it.
         submitBehavior={on.onSubmit === undefined ? 'blurAndSubmit' : 'submit'}
-        style={[styles.input, room && { paddingLeft: room.left, paddingRight: room.right }]}
+        style={[styles.input, inset && { paddingLeft: inset.left, paddingRight: inset.right }]}
         value={value}
       />
     </View>

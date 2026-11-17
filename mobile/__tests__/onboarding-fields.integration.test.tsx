@@ -122,9 +122,7 @@ describe('the department, left without a choice', () => {
 });
 
 describe("the department's field", () => {
-  // Android draws a field's words from its default side padding once a change of the field's border or ring
-  // replaces its background, and so over the search icon.
-  it('marks the focus on a box around it and keeps its own style, which leaves room for the search icon', async () => {
+  it('marks the focus on a box around it and keeps its own style, which keeps its words clear of the search icon', async () => {
     await arriveAtOnboarding(SUGGESTION);
     const first = departmentStyle();
     expect(first).toMatchObject({ paddingLeft: space[10] });
