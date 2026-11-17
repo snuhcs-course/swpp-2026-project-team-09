@@ -25,11 +25,9 @@ export async function openFriendScreen(
   return user;
 }
 
-// The Friends in 친구 관리, by the names on their rows, in the list's order: the buttons after the entry to 친구 요청.
+// The Friends in 친구 관리, by the names on their rows, in the list's order.
 export function friendRows(): string[] {
-  const panel = within(screen.getByTestId('full-screen-panel'));
-  const buttons = panel.getAllByRole('button');
-  const requests = buttons.indexOf(panel.getByRole('button', { name: /^친구 요청/u }));
-  expect(requests).toBeGreaterThanOrEqual(0);
-  return buttons.slice(requests + 1).map((row) => String(row.props.accessibilityLabel));
+  return within(screen.getByTestId('full-screen-panel'))
+    .getAllByTestId('friend-row')
+    .map((row) => String(row.props.accessibilityLabel));
 }

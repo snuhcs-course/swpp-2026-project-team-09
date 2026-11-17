@@ -77,6 +77,7 @@ function FriendRow({ friend, onPress }: { friend: FriendView; onPress: () => voi
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.entry, styles.friend, pressed && styles.pressed]}
+      testID="friend-row"
     >
       <Avatar name={friend.name} source={friend.photo === null ? undefined : { uri: friend.photo }} />
       <View style={styles.words}>
