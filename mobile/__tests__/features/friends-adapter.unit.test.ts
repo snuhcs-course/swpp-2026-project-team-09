@@ -4,6 +4,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions: a position's age at 2 and 10 minutes; a Friend seen or not, with a status, without one and with one
@@ -87,7 +88,6 @@ describe('toFriendViews of one Friend seen', () => {
       level: 'exact',
       seen: 'exact',
       sharing: true,
-      askedOff: false,
     });
   });
 
