@@ -40,12 +40,45 @@ The rule: nothing stands over an empty place above the AI input. The row's place
 
 ## Acceptance criteria
 
-- [ ] In no Party, with no card and no answer shown, the credit is 8 above the AI input's top, and Kakao's logo is at the same height, left of the 편의기능 button. Neither is covered, and neither covers a control.
-- [ ] In no Party, the 새내기 튜토리얼's start button stands 16 above the AI input's top, and the credit and the logo 8 above it. The same holds for the line that asks for interests and for the line of a made Quest, each alone.
-- [ ] In no Party, with more than one of the three shown, they stand in today's order with 8 between them, the lowest 16 above the AI input, and the credit and the logo 8 above the highest.
-- [ ] In a Party, "활성 파티", what is above it, the credit and the logo are where they are today.
-- [ ] Joining and leaving a Party moves them between the two, without the map being opened again.
-- [ ] With the AI input holding several lines, the credit and the logo are 8 above its top, or above what stands at the left where that is higher. Back at one line, they come back down.
-- [ ] With a card, the answer frame, a received invitation's card or a made Quest's card shown, the credit and the logo sit on it as they do today.
-- [ ] On a low screen the friend list's window ends 8 above the credit in every case above, and never reaches the start button or a line.
-- [ ] Tests, by ADR 0007: the rule that gives each height is a pure function and gets unit tests for the cases above. The main screen's integration tests that check where the credit sits follow the new heights, and one renders the map for a User in no Party and for one in a Party. Kakao's logo is drawn by the native map, so its place is checked by hand on an Android emulator with a build that holds the native map, which is an integration check by the ADR; the check and its screenshots are recorded under this ticket's Comments.
+- [x] In no Party, with no card and no answer shown, the credit is 8 above the AI input's top, and Kakao's logo is at the same height, left of the 편의기능 button. Neither is covered, and neither covers a control.
+- [x] In no Party, the 새내기 튜토리얼's start button stands 16 above the AI input's top, and the credit and the logo 8 above it. The same holds for the line that asks for interests and for the line of a made Quest, each alone.
+- [x] In no Party, with more than one of the three shown, they stand in today's order with 8 between them, the lowest 16 above the AI input, and the credit and the logo 8 above the highest.
+- [x] In a Party, "활성 파티", what is above it, the credit and the logo are where they are today.
+- [x] Joining and leaving a Party moves them between the two, without the map being opened again.
+- [x] With the AI input holding several lines, the credit and the logo are 8 above its top, or above what stands at the left where that is higher. Back at one line, they come back down.
+- [x] With a card, the answer frame, a received invitation's card or a made Quest's card shown, the credit and the logo sit on it as they do today.
+- [x] On a low screen the friend list's window ends 8 above the credit in every case above, and never reaches the start button or a line.
+- [x] Tests, by ADR 0007: the rule that gives each height is a pure function and gets unit tests for the cases above. The main screen's integration tests that check where the credit sits follow the new heights, and one renders the map for a User in no Party and for one in a Party. Kakao's logo is drawn by the native map, so its place is checked by hand on an Android emulator with a build that holds the native map, which is an integration check by the ADR; the check and its screenshots are recorded under this ticket's Comments.
+
+## Comments
+
+### Notes from the implementation (2026-11-18)
+
+- **The rule lives in `layout.ts`.** `Room` gains `buttonRow`, whether the row of buttons is drawn, and `inputHeight`, the AI input's own height without the keyboard's lift. `useRoom` fills them: the row from `useActiveParty()`, as `BottomControls` draws it, and the height from the input's layout, which `MapBottom` used to keep to itself.
+  - The start button, the line that asks for interests and the line of a made Quest each take their bottom from the one under them (`tutorialStartBottom`, `interestsHintBottom`, `madeLineBottom`). The lowest stands 8 above the row while it is drawn, or at 78, the row's own place, 16 above the input's top.
+  - `mapInset(room)` gives the credit and the logo the top of what stands at the left, or the input's top where nothing does or the input is higher. The friend list's window counts from the same height (`listRows`), so it follows by its own rule.
+  - The start button now takes its `bottom` from the screen, as the two lines already did.
+- **Where each criterion is checked:**
+  - In no Party, nothing at the left: `main-layout.unit.test.ts` (an inset of 62, the credit at 70); `main-controls.integration.test.tsx`, "for a User in no Party"; `answer-frame-giving-way.integration.test.tsx`, after ✕.
+  - The start button and each line alone, and two or three of them: `main-layout.unit.test.ts`, "what stands at the left above the AI input in no Party".
+  - In a Party, as today: `main-layout.unit.test.ts`, "in a Party"; `main-controls.integration.test.tsx`, "sits above the row of buttons for a User in a Party".
+  - Joining and leaving: `main-credit.integration.test.tsx`, against the fake main server, with `party-changed` over the fake socket while the map is shown.
+  - A taller input, and back at one line: `main-layout.unit.test.ts`, "over a taller AI input"; `main-controls.integration.test.tsx`, which also checks that the keyboard's lift does not move the credit.
+  - A card and the answer frame: `main-layout.unit.test.ts`; the card tests already in `main-controls.integration.test.tsx` and `main-room.integration.test.tsx`, and the frame's in `answer-frame-giving-way.integration.test.tsx`. A received invitation's card and a made Quest's card give their height as the frame's card does (`onAnswerHeight`), so they take the frame's branch, which this ticket leaves as it was.
+  - The friend list on a low screen: `main-layout.unit.test.ts`, "the friend list's window on a low screen", for each case; `main-room.integration.test.tsx`, in a Party and in no Party.
+- **The boards and the ticket agree.** The boards show only the everyday map in no Party and a card. The start button, the two lines, a Party, a taller input and the friend list follow the ticket.
+- **Left as it was:** the input's height is kept while the input is away, as before. An input of several lines that goes away unsent, under a received invitation's card or the list of Friends to add, would come back as one line while the screen still counts the taller height, until the input is laid out at another height. That flow is rare and older than this ticket.
+
+### Hand check on an Android emulator (2026-11-18)
+
+**Setup:** emulator `sdk_gphone64_arm64` (Medium_Phone AVD), the app's debug build 1.0.3 with the native map module, its bundle from Metro, against the app's own mock data, so with no server address and no Google client ID. "No Party" is the mock with `EXPO_PUBLIC_MOCK_EMPTY=getMyParty`. The start button and the line that asks for interests came from a fresh first run (`EXPO_PUBLIC_FIRST_STATE=1`, 26학번, the interests card skipped). Kakao's map drew. Heights are in points above the navigation's top, read from the screen's layout and, for Kakao's logo, from the screenshot's pixels (2.625 pixels a point).
+
+- **In no Party, nothing at the left:** the AI input's top at 62. The credit's bottom at 70, Kakao's logo's at 70. The logo's right edge is 71 from the screen's right, left of the 편의기능 button, whose left edge is 64 from it. Nothing covers either.
+- **In no Party, the start button and the line that asks for interests:** the start button from 78 to 112, its bottom in line with the 편의기능 button's; the line from 120 to 154. The credit and the logo at 162.
+- **In no Party, the start button alone,** after the interests card was answered from the line: the line went, and the credit and the logo came down to 120 without the map being opened again.
+- **In a Party, as today:** "활성 파티" from 78 to 126, the start button's bottom at 134, the line from 176 to 210, the credit and the logo at 218.
+- **A Friend's card open:** the credit and the logo 8 above the card's top, the logo 16 from the right, as today.
+- **The AI input holding three lines, the keyboard down:** the input's top at about 110. The credit and the logo at 118, clear of it. The input covers the 편의기능 button, as the ticket keeps. Emptied back to one line, the credit came back to 70.
+- **Joining and leaving a Party** could not be shown: the mock answers the same Party after "활성화에서 나가기". `main-credit.integration.test.tsx` checks it.
+
+The screenshots, side by side: `~/Downloads/p15-07/P15-07-emulator-check.png`.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -12,8 +13,8 @@ import { INTERESTS_HINT } from '../layout';
 export const INTERESTS_HINT_WORDS = '관심을 맡기면 맞는 행사를 알려 드려요';
 
 // The line over the input for a User of the first run who watches no interest (P05 ticket 09): it opens the
-// interests card again. It stands at the left above the row of buttons, and above the tutorial's start button when
-// that is shown.
+// interests card again. It stands at the left above the row of buttons or in its place, and above the tutorial's
+// start button when that is shown.
 export function InterestsHint({ bottom, onPress }: { bottom: number; onPress: () => void }): ReactElement {
   return (
     <Pressable
