@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place, Weekday } from '@/api/types';
@@ -42,6 +43,8 @@ export interface TruthTime {
   roomLine: string | null;
   building: string | null;
   room: string | null;
+  // Where the truth is uncertain, as a faded block.
+  note?: string;
 }
 
 export interface Truth {
@@ -59,7 +62,10 @@ function weekday(text: string): Weekday {
   return found;
 }
 
-function truthOf(raw: { title: string | null; times: (Omit<TruthTime, 'weekday'> & { weekday: string })[] }): Truth {
+export function truthOf(raw: {
+  title: string | null;
+  times: (Omit<TruthTime, 'weekday'> & { weekday: string })[];
+}): Truth {
   return { title: raw.title, times: raw.times.map((time) => ({ ...time, weekday: weekday(time.weekday) })) };
 }
 

@@ -1,0 +1,43 @@
+{
+  "screenshot": "synthetic-ampm.png",
+  "app": "synthetic",
+  "title": null,
+  "times": [
+    {
+      "weekday": "monday",
+      "start": "10:00",
+      "end": "11:15",
+      "name": "컴퓨터프로그래밍",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "10:00",
+      "end": "11:15",
+      "name": "컴퓨터프로그래밍",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "15:00",
+      "end": "16:45",
+      "name": "데이터구조와알고리즘",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "saturday",
+      "start": "13:00",
+      "end": "15:00",
+      "name": "글쓰기의 기초",
+      "roomLine": "1-201",
+      "building": "1",
+      "room": "201"
+    }
+  ]
+}

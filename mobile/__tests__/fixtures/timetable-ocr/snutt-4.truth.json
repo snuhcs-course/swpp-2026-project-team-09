@@ -1,0 +1,117 @@
+{
+  "screenshot": "snutt-4.png",
+  "app": "SNUTT",
+  "title": "연습3",
+  "times": [
+    {
+      "weekday": "monday",
+      "start": "09:00",
+      "end": "09:50",
+      "name": "수학 1",
+      "roomLine": "25-101",
+      "building": "25",
+      "room": "101"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "09:00",
+      "end": "09:50",
+      "name": "수학 1",
+      "roomLine": "25-101",
+      "building": "25",
+      "room": "101"
+    },
+    {
+      "weekday": "monday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "생물학",
+      "roomLine": "500-L309",
+      "building": "500",
+      "room": "L309"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "생물학",
+      "roomLine": "500-L309",
+      "building": "500",
+      "room": "L309"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "대학영어 2: 말하기",
+      "roomLine": "8-408",
+      "building": "8",
+      "room": "408",
+      "note": "printed over two lines: '대학영어' / '2: 말하기'"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "대학영어 2: 말하기",
+      "roomLine": "8-408",
+      "building": "8",
+      "room": "408",
+      "note": "printed over two lines: '대학영어' / '2: 말하기'"
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:50",
+      "name": "컴퓨터의 개념 및 실습",
+      "roomLine": "302-311-1",
+      "building": "302",
+      "room": "311-1"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:50",
+      "name": "컴퓨터의 개념 및 실습",
+      "roomLine": "302-311-1",
+      "building": "302",
+      "room": "311-1"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "통계학",
+      "roomLine": "56-106",
+      "building": "56",
+      "room": "106"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "통계학",
+      "roomLine": "56-106",
+      "building": "56",
+      "room": "106"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "물리학 1",
+      "roomLine": "56-106",
+      "building": "56",
+      "room": "106"
+    },
+    {
+      "weekday": "thursday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "물리학 1",
+      "roomLine": "56-106",
+      "building": "56",
+      "room": "106"
+    }
+  ]
+}

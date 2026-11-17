@@ -1777,7 +1777,23 @@ model is bundled in the app, so no download is needed at first use; iOS uses the
 - `unavailable` where the build has no module: Expo Go, the web and the tests;
 - `failed`, with a message, when the image could not be opened or ML Kit failed.
 
-ML Kit gives a confidence on Android only; on iOS every `confidence` is null.
+ML Kit gives a confidence on Android only; on iOS every `confidence` is null. Nothing reads it (P15-52).
+
+### Reading a timetable screenshot (`이미지로 불러오기`)
+
+From P15-52 the main server's AI reads the picked screenshot
+([ADR 0015](../docs/adr/0015-a-timetable-screenshot-is-read-by-the-ai-with-the-phones-blocks.md)). Before the first
+send the app asks once, in a dialog: "시간표 사진을 서버에서 읽어요" / "더 정확하게 읽도록 사진을 서버의 AI에 보내요. 사진은
+읽기만 하고 저장하지 않아요." with "보내기" and "휴대폰에서 읽기"; a yes is remembered on the phone
+(`src/storage/reading-notice.ts`). Then `use-import-from-image.ts`:
+
+1. reads the picture with ML Kit, as before, and finds its class blocks, each with its day, times and colour, from the
+   pixels and the day and hour labels' positions (`timedBlocks` in `read-timetable.ts`; a block whose edge it cannot see
+   is not among them);
+2. sends the picture in base64 with those blocks to `POST /timetable/readings` (`apiClient.readTimetableImage`); the
+   answer's rooms are linked to buildings on the phone (`server-reading.ts`);
+3. reads it with the phone's own pipeline, as P13 did, when the User said no, the main server does not answer or
+   refuses (a server without the route answers 404), or the build does not ask the main server (the mock build).
 
 `/ocr-check` (`snunow://ocr-check` in a development build) picks an image from the album (`expo-image-picker`, images
 only, no editing), reads it, lists the lines and saves the module's whole answer as JSON in the app's documents folder.

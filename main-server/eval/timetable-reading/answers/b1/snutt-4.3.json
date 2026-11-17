@@ -1,0 +1,146 @@
+{
+  "screenshot": "snutt-4",
+  "model": "claude-haiku-5-5",
+  "ms": 2471,
+  "inputTokens": 3454,
+  "outputTokens": 524,
+  "boxes": [
+    {
+      "weekday": "monday",
+      "start": "09:00",
+      "end": "09:50"
+    },
+    {
+      "weekday": "monday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:50"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "15:30",
+      "end": "16:45"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "09:00",
+      "end": "09:50"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:50"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "thursday",
+      "start": "15:30",
+      "end": "16:45"
+    }
+  ],
+  "answer": {
+    "title": "연습3",
+    "blocks": [
+      {
+        "number": 1,
+        "nameLines": ["수학 1"],
+        "name": "수학 1",
+        "room": "25-101"
+      },
+      {
+        "number": 2,
+        "nameLines": ["생물학"],
+        "name": "생물학",
+        "room": "500-L309"
+      },
+      {
+        "number": 3,
+        "nameLines": ["컴퓨터의 개념", "및 실습"],
+        "name": "컴퓨터의 개념 및 실습",
+        "room": "302-311-1"
+      },
+      {
+        "number": 4,
+        "nameLines": ["대학영어", "2: 말하기"],
+        "name": "대학영어 2: 말하기",
+        "room": "8-408"
+      },
+      {
+        "number": 5,
+        "nameLines": ["통계학"],
+        "name": "통계학",
+        "room": "56-106"
+      },
+      {
+        "number": 6,
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-106"
+      },
+      {
+        "number": 7,
+        "nameLines": ["수학 1"],
+        "name": "수학 1",
+        "room": "25-101"
+      },
+      {
+        "number": 8,
+        "nameLines": ["생물학"],
+        "name": "생물학",
+        "room": "500-L309"
+      },
+      {
+        "number": 9,
+        "nameLines": ["컴퓨터의 개념", "및 실습"],
+        "name": "컴퓨터의 개념 및 실습",
+        "room": "302-311-1"
+      },
+      {
+        "number": 10,
+        "nameLines": ["대학영어", "2: 말하기"],
+        "name": "대학영어 2: 말하기",
+        "room": "8-408"
+      },
+      {
+        "number": 11,
+        "nameLines": ["통계학"],
+        "name": "통계학",
+        "room": "56-106"
+      },
+      {
+        "number": 12,
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-106"
+      }
+    ]
+  }
+}

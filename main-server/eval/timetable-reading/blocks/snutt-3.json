@@ -1,0 +1,51 @@
+[
+  {
+    "weekday": "monday",
+    "start": "13:00",
+    "end": "14:15",
+    "colour": [73, 150, 225],
+    "fades": false
+  },
+  {
+    "weekday": "monday",
+    "start": "15:30",
+    "end": "16:45",
+    "colour": [212, 84, 94],
+    "fades": false
+  },
+  {
+    "weekday": "tuesday",
+    "start": "11:00",
+    "end": "12:15",
+    "colour": [176, 215, 81],
+    "fades": false
+  },
+  {
+    "weekday": "wednesday",
+    "start": "13:00",
+    "end": "14:15",
+    "colour": [73, 150, 225],
+    "fades": false
+  },
+  {
+    "weekday": "wednesday",
+    "start": "15:30",
+    "end": "16:45",
+    "colour": [212, 84, 94],
+    "fades": false
+  },
+  {
+    "weekday": "wednesday",
+    "start": "19:00",
+    "end": "20:50",
+    "colour": [212, 85, 97],
+    "fades": true
+  },
+  {
+    "weekday": "thursday",
+    "start": "11:00",
+    "end": "12:15",
+    "colour": [176, 215, 81],
+    "fades": false
+  }
+]

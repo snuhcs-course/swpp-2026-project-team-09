@@ -1,6 +1,6 @@
 # Timetable OCR fixtures
 
-The four reference screenshots of P13 and what the native OCR module (`modules/snu-now-ocr`) returned for each, saved
+The four reference screenshots of P13, the five of P15-52 (below), and what the native OCR module (`modules/snu-now-ocr`) returned for each, saved
 from the Android emulator. The reading pipeline's tests (P13 ticket 02) read them. Their owner agreed on 2026-10-18 that
 they be committed to this public repository.
 
@@ -61,3 +61,22 @@ Open the app once before the first link, so that the bundle is loaded. The same 
 album instead (`snunow://ocr-check`, "사진 고르기"). Kakao's map has no x86_64 library, so on the emulator the map
 stays blank; the rest of the app runs. The build needs `KAKAO_NATIVE_APP_KEY` set to some value (these were made with
 a placeholder), or Kakao's SDK stops the app at its start.
+
+## The five screenshots of P15-52
+
+Copies of iPhone screenshots, 921 × 2000 pixels, given by 안진영 on 2026-11-18 as ones the app had read badly in use.
+Their owner agreed on 2026-11-18 that they be committed to this public repository. No device run was made for
+P15-52, so they have no saved ML Kit output (`<name>.json`); `__tests__/support/timetable-ocr-new.ts` stands in only
+the day letters and hour labels, at boxes measured on the pictures, so that the pipeline's pixel half runs on them.
+
+| Screenshot             | App        | Theme                    | What makes it hard                                                             |
+| ---------------------- | ---------- | ------------------------ | ------------------------------------------------------------------------------ |
+| `everytime-2.png`      | 에브리타임 | light                    | a 12-hour axis 9 … 6; blocks ending at 12:15 and 13:45; cards below the grid   |
+| `everytime-dark-1.png` | 에브리타임 | dark                     | a 12-hour axis 9 … 4; starts at 9:30 and 15:30; `프로그래밍의 원 / 리`         |
+| `snutt-4.png`          | SNUTT      | light                    | names wrapped over two lines; the floating tab bar over 18:00                  |
+| `snutt-dark-1.png`     | SNUTT      | dark                     | 9 … 21; a block without a room; one name in two rooms; a block of 14:00–16:50  |
+| `snutt-grey-1.png`     | SNUTT      | grey, focus-mode overlay | the overlay covers the title and 금; `컴퓨터프로그래 / 밍`; a block fading out |
+
+`<name>.truth.json` is written as P13's are: each block's day, start and end read off the picture's pixels against its
+hour lines, the name as printed with wrapped lines joined as they read, and the room as printed. A `note` says where a
+name was wrapped or where the end is read by eye (the block fading behind SNUTT's tab bar in `snutt-grey-1`).

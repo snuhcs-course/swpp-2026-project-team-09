@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place, Weekday } from '@/api/types';
@@ -33,10 +34,13 @@ export type LeftOutReason =
   // The block's top or bottom is outside the day.
   | 'outside-day'
   // No name was read in the block: no text, only a room, or only marks without a letter or digit.
-  | 'no-name';
+  | 'no-name'
+  // The main server's reader (P15-52) left it out: its day, time or name failed a check there.
+  | 'unchecked';
 
 export interface LeftOut {
-  weekday: Weekday;
+  // Null only from the main server's reader, for a block whose day it could not read.
+  weekday: Weekday | null;
   name: string;
   // The times as far as they were read, "13:00", or null.
   start: string | null;
@@ -224,4 +228,50 @@ export function readTimetable(result: NativeOcrResult, places: readonly Place[])
   }
   const title = findTitle(result.lines, result.height, grid.headerTop * result.pixels.scale);
   return { kind: 'read', title, classes: mergeClasses(read), leftOut };
+}
+
+// A class block found on the picture, for the main server's reader (P15-52): its day, its times and its fill colour.
+export interface TimedBlock {
+  weekday: Weekday;
+  start: string;
+  // Where its colour ends; when it fades, its true end is no earlier.
+  end: string;
+  colour: [number, number, number];
+  // Its bottom fades out or runs under a bar, so that its end is not seen: the AI is asked to read it.
+  fades: boolean;
+}
+
+// The blocks of a screenshot whose day and start the pixels and the day and hour labels' positions give for certain,
+// whatever text is in them: the main server's AI then reads only their text, and the end of a block that fades out.
+// A block cut at its top, side by side with another or outside the day is not among them. Null when the picture holds
+// no timetable the labels place.
+export function timedBlocks(result: NativeOcrResult): TimedBlock[] | null {
+  const image = decodePixels(result.pixels);
+  const words = wordsOf(result);
+  const grid = readGrid(words, image);
+  if (typeof grid === 'string') {
+    return null;
+  }
+  const blocks = findBlocks(image, grid.columns, grid.line.a, grid.headerBottom).filter(
+    (found) => found.clippedTop !== true || blockText(linesIn(words, found)).name !== '',
+  );
+  const headerBand = bandOf(image, grid);
+  const timed: TimedBlock[] = [];
+  for (const found of blocks) {
+    if (found.narrow === true || startIsUncertain(image, found, blocks, headerBand)) {
+      continue;
+    }
+    const fades = endIsUncertain(image, found, blocks);
+    const pieces = splitByText(found, linesIn(words, found), grid.line.a);
+    pieces.forEach((block, index) => {
+      const start = clock(hoursAt(grid.line, block.y0));
+      const end = clock(hoursAt(grid.line, block.y1));
+      if (start !== null && end !== null && start < end) {
+        const [red, green, blue] = block.colour;
+        const colour: [number, number, number] = [Math.round(red), Math.round(green), Math.round(blue)];
+        timed.push({ weekday: block.column.weekday, start, end, colour, fades: fades && index === pieces.length - 1 });
+      }
+    });
+  }
+  return timed;
 }

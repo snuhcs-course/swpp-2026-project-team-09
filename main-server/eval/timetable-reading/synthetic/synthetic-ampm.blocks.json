@@ -1,0 +1,30 @@
+[
+  {
+    "weekday": "monday",
+    "start": "10:00",
+    "end": "11:15",
+    "colour": [52, 168, 83],
+    "fades": false
+  },
+  {
+    "weekday": "wednesday",
+    "start": "10:00",
+    "end": "11:15",
+    "colour": [52, 168, 83],
+    "fades": false
+  },
+  {
+    "weekday": "tuesday",
+    "start": "15:00",
+    "end": "16:45",
+    "colour": [240, 140, 40],
+    "fades": false
+  },
+  {
+    "weekday": "saturday",
+    "start": "13:00",
+    "end": "15:00",
+    "colour": [66, 133, 244],
+    "fades": false
+  }
+]

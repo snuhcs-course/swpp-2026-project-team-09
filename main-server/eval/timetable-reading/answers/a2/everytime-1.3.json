@@ -1,0 +1,139 @@
+{
+  "screenshot": "everytime-1",
+  "model": "claude-haiku-5-5",
+  "ms": 12546,
+  "inputTokens": 5604,
+  "outputTokens": 3071,
+  "answer": {
+    "title": "2025년 여름학기",
+    "axis": ["9", "10", "11", "12", "1", "2", "3", "4", "5", "6", "7", "8"],
+    "blocks": [
+      {
+        "day": "화",
+        "start": "9:30",
+        "end": "10:45",
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "9:30",
+        "end": "10:45",
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "12:30",
+        "end": "1:45",
+        "nameLines": ["영상예술의 이해"],
+        "name": "영상예술의 이해",
+        "room": "43-1",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "12:30",
+        "end": "1:45",
+        "nameLines": ["영상예술의 이해"],
+        "name": "영상예술의 이해",
+        "room": "43-1",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "1:00",
+        "end": "1:50",
+        "nameLines": ["인공지능 이론", "및 응용 세미나"],
+        "name": "인공지능 이론 및 응용 세미나",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "2:00",
+        "end": "3:15",
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "2:00",
+        "end": "3:15",
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "2:00",
+        "end": "3:50",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "4:00",
+        "end": "6:00",
+        "nameLines": ["시스템프로그래", "밍"],
+        "name": "시스템프로그래밍",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "5:00",
+        "end": "6:15",
+        "nameLines": ["자연언어처리 개", "론"],
+        "name": "자연언어처리 개론",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "5:00",
+        "end": "6:15",
+        "nameLines": ["자연언어처리 개", "론"],
+        "name": "자연언어처리 개론",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "7:00",
+        "end": "9:00",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "7:00",
+        "end": "9:00",
+        "nameLines": ["시스템프로그래", "밍"],
+        "name": "시스템프로그래밍",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "7:00",
+        "end": "9:00",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null,
+        "cut": false
+      }
+    ]
+  }
+}

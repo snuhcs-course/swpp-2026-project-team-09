@@ -16,6 +16,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -122,6 +123,11 @@ export const settingsSchema = z
     ASSISTANT_MAX_STEPS: count(8),
     ASSISTANT_TIMEOUT_MS: count(30_000),
     ASSISTANT_MAX_OUTPUT_TOKENS: count(4000),
+    // Reading a timetable screenshot (P15-52): the readings a User may ask for in a day in Korea, and per reading the
+    // time in milliseconds and the tokens the model may write, its reasoning included.
+    TIMETABLE_READING_DAILY: count(10),
+    TIMETABLE_READING_TIMEOUT_MS: count(60_000),
+    TIMETABLE_READING_MAX_OUTPUT_TOKENS: count(8000),
     // Whether the step after a Collection publishes what it read. "off" leaves every session a Draft: it is turned off
     // when automatic publication is found to make mistakes (infra/production/README.md).
     AUTOMATIC_PUBLICATION: z

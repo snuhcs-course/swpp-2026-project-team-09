@@ -1,0 +1,114 @@
+[
+  {
+    "weekday": "monday",
+    "start": "09:30",
+    "end": "10:45",
+    "colour": [95, 191, 112],
+    "fades": false
+  },
+  {
+    "weekday": "monday",
+    "start": "13:30",
+    "end": "15:20",
+    "colour": [163, 91, 174],
+    "fades": false
+  },
+  {
+    "weekday": "tuesday",
+    "start": "09:00",
+    "end": "12:00",
+    "colour": [97, 204, 199],
+    "fades": false
+  },
+  {
+    "weekday": "tuesday",
+    "start": "13:00",
+    "end": "13:50",
+    "colour": [230, 146, 78],
+    "fades": false
+  },
+  {
+    "weekday": "tuesday",
+    "start": "14:00",
+    "end": "15:15",
+    "colour": [241, 198, 80],
+    "fades": false
+  },
+  {
+    "weekday": "tuesday",
+    "start": "19:00",
+    "end": "21:00",
+    "colour": [211, 81, 92],
+    "fades": false
+  },
+  {
+    "weekday": "wednesday",
+    "start": "09:30",
+    "end": "10:45",
+    "colour": [95, 191, 112],
+    "fades": false
+  },
+  {
+    "weekday": "wednesday",
+    "start": "13:30",
+    "end": "15:20",
+    "colour": [163, 91, 174],
+    "fades": false
+  },
+  {
+    "weekday": "wednesday",
+    "start": "16:00",
+    "end": "18:00",
+    "colour": [97, 204, 199],
+    "fades": false
+  },
+  {
+    "weekday": "thursday",
+    "start": "09:00",
+    "end": "12:00",
+    "colour": [97, 204, 199],
+    "fades": false
+  },
+  {
+    "weekday": "thursday",
+    "start": "14:00",
+    "end": "15:15",
+    "colour": [241, 198, 80],
+    "fades": false
+  },
+  {
+    "weekday": "thursday",
+    "start": "16:00",
+    "end": "18:00",
+    "colour": [97, 204, 199],
+    "fades": false
+  },
+  {
+    "weekday": "friday",
+    "start": "10:00",
+    "end": "12:50",
+    "colour": [73, 150, 225],
+    "fades": false
+  },
+  {
+    "weekday": "friday",
+    "start": "13:00",
+    "end": "18:50",
+    "colour": [176, 215, 81],
+    "fades": false
+  },
+  {
+    "weekday": "friday",
+    "start": "19:00",
+    "end": "22:00",
+    "colour": [211, 81, 92],
+    "fades": false
+  },
+  {
+    "weekday": "saturday",
+    "start": "09:00",
+    "end": "10:50",
+    "colour": [78, 72, 189],
+    "fades": false
+  }
+]

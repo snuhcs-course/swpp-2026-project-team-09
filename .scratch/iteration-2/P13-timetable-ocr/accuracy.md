@@ -6,6 +6,115 @@ Android emulator in ticket 01) against the hand-written ground truth beside them
 the main server's seed of campus buildings (`main-server/seed/campus-map-places.json`, 250 rows from map.snu.ac.kr),
 as `GET /places` lists them.
 
+## Update of 2026-11-18 (P15-52): reading with the AI
+
+Ticket: `.scratch/iteration-4/P15-app-cleanup/issues/52-timetable-image-reading.md`. Decision:
+[ADR 0015](../../../docs/adr/0015-a-timetable-screenshot-is-read-by-the-ai-with-the-phones-blocks.md). The nine
+screenshots are P13's four and the five of P15-52 (921 × 2000 iPhone screenshots, fixtures since 2026-11-18): **115
+class times** in 63 classes. Every reading below is on Claude Haiku 5.5 through the Anthropic API unless it says
+otherwise; the runs' answers are saved in `main-server/eval/timetable-reading/answers/<run>/` and re-scored with the
+checks as they are now by `main-server/test/timetable-reading-answers.unit.test.ts`
+(`READING_TABLE=1 RUNS=<runs>` prints the tables). A time is **all right** when it is found on its day with start and
+end within 5 minutes, its name character-exact and its room character-exact; **wrong** counts times found with any of
+those wrong plus anything invented; **left out** counts true times not returned, which the reader reported as left out.
+
+### Stage 1: the phone pipeline (before)
+
+| Screenshot       | Before: the phone pipeline                          | What could be measured                                     |
+| ---------------- | --------------------------------------------------- | ---------------------------------------------------------- |
+| everytime-1      | 14/14                                               | the whole pipeline, on the saved ML Kit output             |
+| snutt-1          | 16/16                                               | the same                                                   |
+| snutt-2          | 12/13 (faded block left out)                        | the same                                                   |
+| snutt-3          | 6/7 (faded block left out)                          | the same                                                   |
+| everytime-2      | pixel half: 13/13 blocks at the right times         | the pixel half only, with the day and hour labels stood in |
+| everytime-dark-1 | pixel half: 12/12                                   | the same                                                   |
+| snutt-4          | pixel half: 12/12                                   | the same                                                   |
+| snutt-dark-1     | pixel half: 14/14                                   | the same                                                   |
+| snutt-grey-1     | pixel half: 14/14 (the faded block flagged as such) | the same                                                   |
+
+The text half (names and rooms from ML Kit) could not be measured on the five new screenshots: no emulator or device
+was run, and the native module is the only source of ML Kit's output. The pixel half (`__tests__/timetable-ocr-new-
+screenshots.unit.test.ts`) found every block of the five at its true time once the day letters and hour labels were
+placed where the pictures show them, so the faults 안진영 saw in use lie in the text half or in ML Kit's reading of
+the labels, which could not be checked here. Removing ML Kit's confidence (requirement 4) changed nothing on P13's four:
+their readings are equal with and without it. On 2026-11-18 안진영 moved the work to stage 2.
+
+### Stage 2: the variants measured
+
+| Run             | Split                                                                             | Readings | All right   | Wrong | Left out | Median time | USD a reading |
+| --------------- | --------------------------------------------------------------------------------- | -------- | ----------- | ----- | -------- | ----------- | ------------- |
+| a1              | whole picture; prompt naming SNUTT and 에브리타임                                 | 27       | 343/345     | 1     | 1        | 10.0 s      | 0.0016        |
+| a2              | a1 with edges followed to the axis, and "cut" only for an edge not seen           | 27       | 343/345     | 2     | 0        | 9.2 s       | 0.0017        |
+| a3              | whole picture; generic prompt (any weekly grid), second look at near misses       | 25       | 311/317     | 6     | 0        | 9.7 s       | 0.0018        |
+| s1              | a3 on Claude Sonnet 5.5, as a ceiling                                             | 9        | 113/115     | 1     | 1        | 5.9 s       | 0.0187        |
+| b1              | the phone's blocks (day and times from pixels), the model reads their text only   | 27       | 339/345     | 0     | 6        | 3.1 s       | 0.0008        |
+| d1              | b1 with the generic prompt, colours sent, second look at near misses              | 27       | 336/345     | 0     | 9        | 4.7 s       | 0.0010        |
+| d2              | d1 with blocks that fade out sent too, the model reading their end                | 27       | 343/345     | 0     | 2        | 6.2 s       | 0.0012        |
+| d3              | d2 with the colour's last row given as a hint (the three fading screenshots only) | 9        | 101/102     | 0     | 1        | 6.9 s       | 0.0012        |
+| **d4 (chosen)** | d3 on all nine: the code in this pull request                                     | 27       | **343/345** | **0** | **2**    | **5.6 s**   | **0.0012**    |
+
+Also measured from the saved answers, at no cost: two readings kept where they agree (a time stays only when both read
+it alike) turns a2's 2 wrong into 4 more left out (341/345, 0 wrong) at twice the cost; on d4 it adds a left-out
+(342/345). Not tried, and why: crops of single blocks (the server has no image library to crop with, and the block
+split already reads every name and room character-exact); a tool call instead of structured output, or other thinking
+budgets (the reading errors were all times read off the whole picture, which the block split removes, not text); image
+scaling (the API reads a 921 × 2000 screenshot at 722 × 1568, where block text is legible: no misread character in any
+block-split reading).
+
+What went wrong where:
+
+- **Whole picture (a1–a3, s1): times only.** Every wrong was a time read off the picture, on snutt-1's 15-hour axis
+  an end an hour off (a1: 토 09:00–10:50 read 09:00–11:50; a2: 근장 16:00–18:00 read 16:00–17:00 on 수 and 목 in one
+  reading), 2-hour blocks on the grid's bottom
+  edge read as 1 hour (everytime-1, 19:00–21:00, in 2 of the 3 generic-prompt readings), and on Sonnet 5.5 an end 20
+  minutes short (snutt-grey-1). Names and rooms were exact apart from one name cut with `…`, which the code now
+  completes. A stronger model does not remove the time errors.
+- **Blocks (b1–d4): no wrong at all** on the nine screenshots, over 117 readings. What is left out is the fading block: b1 and d1 left out all
+  three (snutt-2's 물리학실험 1, snutt-3's 소프트웨어 개발의 원리와 실습, snutt-grey-1's 논리설계), since the phone does not
+  trust an end it cannot see; from d2 the model reads their end, and the code takes it only within 5 minutes before
+  to 90 minutes after where the colour ends.
+
+### The chosen design (d4), per screenshot over three readings
+
+| Screenshot       | Before                 | After stage 1 | Stage 2, readings 1 / 2 / 3 |
+| ---------------- | ---------------------- | ------------- | --------------------------- |
+| everytime-1      | 14/14                  | 14/14         | 14/14 · 14/14 · 14/14       |
+| snutt-1          | 16/16                  | 16/16         | 16/16 · 16/16 · 16/16       |
+| snutt-2          | 12/13                  | 12/13         | 13/13 · 13/13 · 13/13       |
+| snutt-3          | 6/7                    | 6/7           | 7/7 · 7/7 · 7/7             |
+| everytime-2      | text half not measured | not measured  | 13/13 · 13/13 · 13/13       |
+| everytime-dark-1 | text half not measured | not measured  | 12/12 · 12/12 · 12/12       |
+| snutt-4          | text half not measured | not measured  | 12/12 · 12/12 · 12/12       |
+| snutt-dark-1     | text half not measured | not measured  | 14/14 · 14/14 · 14/14       |
+| snutt-grey-1     | text half not measured | not measured  | 14/14 · 13/14 · 13/14       |
+
+- **0 wrong, 0 invented, every class grouped right (189/189), 343 of 345 class times all right.** The 100 % bar is
+  missed by one block on two readings: snutt-grey-1's 논리설계 on 월 19:00–20:50, which fades out behind SNUTT's floating
+  tab bar. On two of three readings the model gave no end for it, or one outside the window, and the block was left
+  out and counted ("1개는 넣지 못했어요"); it was never given a wrong end.
+- **Time and cost of one reading:** median 5.6 s, 90th percentile 8.0 s, slowest 8.9 s, from this machine to the
+  Anthropic API and back; about 5,200 input and 1,340 output tokens, USD 0.0012 on average and
+  0.0020 at most (a second look doubles the call; it ran on snutt-1's readings, whose names did not change).
+- **The experiments cost USD 0.45 in all** (a1–d4 and s1, of the USD 10 allowed).
+
+### Generality: synthetic timetables
+
+`main-server/eval/timetable-reading/synthetic/make.py` draws four weekly grids in layouts neither app uses (Pillow and
+Noto Sans CJK, both on the machine): 월–토 with `09:00` labels and a professor's name in each block; English day labels
+with a dark theme and `9 AM` labels; `오전 9시` / `오후 1시` labels with a class code under the room and names wrapped
+inside a word; and a seven-day week from 8 to 21 with two classes back to back. 20 class times. On d1 all 60 of 60
+were all right; on d4, 59 of 60: one reading of `synthetic-ampm` joined `글쓰기의 / 기초` without its space
+(`글쓰기의기초`), the only wrong name in any block-split reading. That is a finding, outside the bar: a wrap at a space
+on a narrow block can still be joined as one word.
+
+### Not measured here
+
+- ML Kit on the five new screenshots, so the blocks the phone sends there are those of its pixel half with the day and
+  hour labels placed by hand; a phone check is owed.
+- Pictures from other apps or a camera, and JPEG or HEIC album pictures (the server takes PNG, JPEG, WebP or GIF;
+  anything else is read on the phone).
+- OpenRouter as the path (`llm.key` naming an OpenRouter key): the same model and prompt, not run.
+
 ## Update of 2026-10-22 (`2.0/fix-timetable-ocr`)
 
 The pipeline no longer uses ML Kit's confidence to keep or drop a class, a time, a name or a title, and it measures
