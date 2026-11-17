@@ -63,6 +63,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 3. The 시간표 card on 내 정보: remove "빈 시간 말하기", a pressed class block opens that class, and reading an image comes back to 내 정보. Ticket [03](issues/03-timetable-card.md).
 4. The map's friend panel: remove the green "친구 N명과 위치 공유 중" banner. Ticket [04](issues/04-friend-panel-banner.md).
 5. The 학과 field (프로필 편집, Onboarding): the words cover the search icon once the field is pressed. Ticket [05](issues/05-department-field-icon.md).
+8. The sign-in screen: remove the drawn character, put the sign-in button in the middle, and show the app icon's wordmark in place of the name and its tagline. Ticket [08](issues/08-sign-in-wordmark.md).
 
 ### 안진영 (`51`–`99`)
 
