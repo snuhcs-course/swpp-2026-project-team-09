@@ -38,7 +38,7 @@ Blocked by: none
 
 - The 위치 공유 screen also loses the explanation sheet and the Master Switch's off question that only its switch opened. "켜기" under "친구마다" keeps its own explanation, so it still asks for the location permission first.
 - The design catalogue's `SwitchRow` sample showed "위치 공유를 허용한 친구 12명". It now shows the 백그라운드에서도 공유 row.
-- The count lines were P06 ticket 06's fix for HE finding H10 ("The User cannot see at a glance whom they share their location with", severity 1). This ticket removes that fix. The P06 HE revision log is not changed here.
+- The count lines were P06 ticket 06's fix for HE finding H10 ("The User cannot see at a glance whom they share their location with", severity 1). They are removed because a count does not tell the User what they need to know. A list shows better whom they share their location with and whom they do not, and 친구마다 on the 위치 공유 screen gives that list. The H10 row of the P06 HE revision log now says so (asked in the review of #347).
 - Board and ticket agree. The after boards still show "빈 시간 말하기", which is ticket 03's.
 
 ### Agent usage (2026-11-18)
