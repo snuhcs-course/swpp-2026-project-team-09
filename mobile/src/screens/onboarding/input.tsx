@@ -3,10 +3,11 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, type RefObject, useState } from 'react';
-import { type KeyboardTypeOptions, type StyleProp, StyleSheet, TextInput, type TextStyle } from 'react-native';
+import { type KeyboardTypeOptions, type StyleProp, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
 import { color, radius, size, space, text } from '@/design-system';
 import { cut } from './length';
 
@@ -29,57 +30,76 @@ interface InputProps {
   hint?: string;
   // The phone's own keyboard for it, such as the digits' for a 학번.
   keyboardType?: KeyboardTypeOptions;
-  style?: StyleProp<TextStyle>;
+  // How far the words keep from the left and right edges, for an icon or a button drawn over the field.
+  inset?: { left: number; right: number };
+  // Styles the box around the field, not its words.
+  style?: StyleProp<ViewStyle>;
   ref?: RefObject<TextInput | null>;
 }
 
 // A text input as the `Onboarding` frame draws it, with no label of its own: Onboarding's labels carry a badge, and
-// its fields an icon or a button beside them.
-export function Input({ label, value, onChangeText, placeholder, most, style, ref, ...on }: InputProps): ReactElement {
+// its fields an icon or a button beside them. The focus is marked on a box around the field: on Android a change
+// of the field's own ring replaces its background, which puts its words back at the default side padding.
+export function Input({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  most,
+  inset,
+  style,
+  ref,
+  ...on
+}: InputProps): ReactElement {
   const [focused, setFocused] = useState(false);
   return (
-    <TextInput
-      accessibilityHint={on.hint}
-      accessibilityLabel={label}
-      keyboardType={on.keyboardType}
-      onBlur={() => {
-        setFocused(false);
-        on.onBlur?.();
-      }}
-      onChangeText={(typed) => {
-        onChangeText(most === undefined ? typed : cut(typed, most));
-      }}
-      onFocus={() => {
-        setFocused(true);
-        on.onFocus?.();
-      }}
-      onSubmitEditing={on.onSubmit}
-      placeholder={placeholder}
-      placeholderTextColor={color.inkSubtle}
-      ref={ref}
-      // The keyboard stays for the next interest; a field without a button of its own closes it.
-      submitBehavior={on.onSubmit === undefined ? 'blurAndSubmit' : 'submit'}
-      style={[styles.input, focused && styles.focused, style]}
-      value={value}
-    />
+    <View style={[styles.box, focused && styles.focused, style]}>
+      <TextInput
+        accessibilityHint={on.hint}
+        accessibilityLabel={label}
+        keyboardType={on.keyboardType}
+        onBlur={() => {
+          setFocused(false);
+          on.onBlur?.();
+        }}
+        onChangeText={(typed) => {
+          onChangeText(most === undefined ? typed : cut(typed, most));
+        }}
+        onFocus={() => {
+          setFocused(true);
+          on.onFocus?.();
+        }}
+        onSubmitEditing={on.onSubmit}
+        placeholder={placeholder}
+        placeholderTextColor={color.inkSubtle}
+        ref={ref}
+        // The keyboard stays for the next interest; a field without a button of its own closes it.
+        submitBehavior={on.onSubmit === undefined ? 'blurAndSubmit' : 'submit'}
+        style={[styles.input, inset && { paddingLeft: inset.left, paddingRight: inset.right }]}
+        value={value}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  input: {
-    ...text.bodyLg,
+  box: {
     height: size.touchMin,
-    paddingVertical: 0,
-    paddingHorizontal: space[4],
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: color.border,
-    color: color.ink,
     backgroundColor: color.surface,
-    // The web's own outline of a focused field: the border and the ring say it here.
+  },
+  focused: { borderColor: color.snuBlue, boxShadow: FOCUS_RING },
+  input: {
+    ...text.bodyLg,
+    flex: 1,
+    paddingVertical: 0,
+    paddingHorizontal: space[4],
+    color: color.ink,
+    // The web's own outline of a focused field: the box's border and ring say it here.
     outlineWidth: 0,
     outlineStyle: 'solid',
     outlineColor: 'transparent',
   },
-  focused: { borderColor: color.snuBlue, boxShadow: FOCUS_RING },
 });
