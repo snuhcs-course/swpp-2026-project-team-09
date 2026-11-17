@@ -6,7 +6,7 @@
 ################################################################################
 
 # Writes the app icon's master and every image derived from it: the SVGs beside this script, then the PNGs that
-# mobile/app.json names. README.md gives the commands.
+# mobile/app.json names and the sign-in screen's wordmark. README.md gives the commands.
 import io
 import math
 import sys
@@ -112,7 +112,7 @@ def adaptive_layer(**colours):
     return svg("0 0 108 108", body, 1024, 1024)
 
 
-def splash(margin=2, width=1024):
+def cropped(margin, width):
     """The whole wordmark, cropped to its ink with a margin on each side."""
     x0, y0, x1, y1 = ink_box()
     w, h = x1 - x0 + 2 * margin, y1 - y0 + 2 * margin
@@ -132,7 +132,8 @@ SVGS = {
     "snu-now-icon.svg": master(),
     "android-icon-foreground.svg": adaptive_layer(),
     "android-icon-monochrome.svg": adaptive_layer(pin_fill=NAVY, hole=None),
-    "splash-icon.svg": splash(),
+    "splash-icon.svg": cropped(margin=2, width=1024),
+    "sign-in-wordmark.svg": cropped(margin=0, width=660),
     "notification-icon.svg": notification(),
 }
 
@@ -144,6 +145,7 @@ PNGS = [
     ("android-icon-foreground.png", "android-icon-foreground.svg", None, "alpha"),
     ("android-icon-monochrome.png", "android-icon-monochrome.svg", None, NAVY),
     ("splash-icon.png", "splash-icon.svg", None, "alpha"),
+    ("sign-in-wordmark.png", "sign-in-wordmark.svg", None, "alpha"),
     ("notification-icon.png", "notification-icon.svg", None, WHITE),
 ]
 
