@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -186,8 +187,8 @@ export function ListRows(): ReactElement {
           trailing={<Text style={styles.time}>14:00</Text>}
         />
         <SwitchRow
-          description="위치 공유를 허용한 친구 12명"
-          label="위치 공유"
+          description="화면이 꺼져도 30초마다 위치를 보내요"
+          label="백그라운드에서도 공유"
           onValueChange={setSharing}
           value={sharing}
         />
