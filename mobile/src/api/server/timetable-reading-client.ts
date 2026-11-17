@@ -80,6 +80,6 @@ export function isTimetableReading(value: unknown): value is ServerTimetableRead
 }
 
 export const timetableReadingClient: Pick<ApiClient, 'readTimetableImage'> = {
-  readTimetableImage: (image, blocks) =>
-    call('POST', '/timetable/readings', isTimetableReading, { body: { image, blocks } }),
+  readTimetableImage: (image, grid) =>
+    call('POST', '/timetable/readings', isTimetableReading, { body: { image, grid } }),
 };

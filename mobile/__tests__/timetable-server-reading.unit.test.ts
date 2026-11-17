@@ -75,6 +75,20 @@ describe('the main server’s reading', () => {
       leftOut: [{ weekday: null, name: '논리설계', start: '19:00', end: null, reason: 'end-uncertain' }],
     });
   });
+});
+
+describe('the main server’s reading with what the phone kept back', () => {
+  it('counts the blocks the phone found and did not send among what was left out', () => {
+    const reading = readingFromServer(READ, PLACES, [
+      { column: 3, reason: 'too-narrow' },
+      { column: 3, reason: 'too-narrow' },
+    ]);
+    expect(reading.kind === 'read' ? reading.leftOut.map(({ reason }) => reason) : []).toEqual([
+      'end-uncertain',
+      'too-narrow',
+      'too-narrow',
+    ]);
+  });
 
   it('is no timetable when the server found none', () => {
     expect(readingFromServer({ kind: 'none' }, PLACES).kind).toBe('none');

@@ -8,6 +8,11 @@
 // label's hour, and a time on the axis's own clock as 24-hour minutes. No app's layout is assumed: days in Korean or
 // English, hours on a 12- or 24-hour clock, with or without 오전/오후, from any first hour.
 
+// The longest an hour label is (`오후 12시`, `12:00 PM`), with room to spare; a longer one is no label.
+const LABEL_LENGTH = 20;
+// More hour labels than a day has.
+const MOST_LABELS = 25;
+
 export const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 
@@ -41,6 +46,9 @@ const ENGLISH_DAYS: readonly [RegExp, Weekday][] = [
 
 // The day a label names: 월, 월요일, (월), Mon, MON, Monday, Thurs. Null for any other.
 export function dayOf(label: string): Weekday | null {
+  if (label.length > LABEL_LENGTH) {
+    return null;
+  }
   const text = label.normalize('NFC').replaceAll(/[\s()[\]]/gu, '');
   const korean = /^([월화수목금토일])(?:요일)?$/u.exec(text)?.[1];
   if (korean !== undefined) {
@@ -57,6 +65,9 @@ export function tidy(text: string): string {
 // One hour label: its number as printed, and its 24-hour hour when it carries a morning or afternoon mark (오전 9시,
 // 오후 1시, 9 AM, 1 PM), else null. `9`, `09`, `9:00`, `9시` carry none. Null for a label that is no hour.
 export function labelOf(label: string): { printed: number; marked: number | null } | null {
+  if (label.length > LABEL_LENGTH) {
+    return null;
+  }
   const text = label.normalize('NFC').trim();
   const match = /^(오전|오후|am|pm)?\s*(\d{1,2})(?::00)?\s*(?:시)?\s*(am|pm|a\.m\.|p\.m\.)?$/iu.exec(text);
   if (match === null) {
@@ -76,7 +87,7 @@ export function labelOf(label: string): { printed: number; marked: number | null
 // hour; on an unmarked 12-hour axis, the first label smaller than the one above it, and every label after it, gains
 // 12 (… 11, 12, 1, 2 → … 11, 12, 13, 14).
 export function axisHours(labels: readonly string[]): number[] | null {
-  const read = labels.map((label) => labelOf(label));
+  const read = labels.length > MOST_LABELS ? [] : labels.map((label) => labelOf(label));
   if (read.length < 2 || read.some((label) => label === null)) {
     return null;
   }

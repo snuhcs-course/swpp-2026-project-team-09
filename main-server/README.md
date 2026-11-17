@@ -2201,21 +2201,31 @@ held today as a Class Quest, computed from these and never stored (see [Quests](
 Haiku 5.5), for `이미지로 불러오기` (P15-52,
 [ADR 0015](../docs/adr/0015-a-timetable-screenshot-is-read-by-the-ai-with-the-phones-blocks.md)). The body is the
 picture in base64 (PNG, JPEG, WebP or GIF, at most 5 MB; the route's JSON limit is 7 MB, every other route's 1 MB) and,
-when the phone found them, its class blocks:
+when the phone found it from the pixels, the grid: how many day columns, and each class block's column (from 0 at the
+left), top and bottom in the picture's pixels, fill colour, and whether its bottom fades out. No label is in it.
 
 ```json
 {
   "image": "iVBORw0KGgo…",
-  "blocks": [{ "weekday": "tuesday", "start": "11:00", "end": "12:15", "colour": [80, 70, 190] }]
+  "grid": {
+    "columns": 5,
+    "blocks": [{ "column": 1, "top": 636, "bottom": 848, "colour": [80, 70, 190], "fades": false }]
+  }
 }
 ```
 
-With blocks the model reads only each block's text; without, it reads the whole picture, hour axis included. Code
-checks the answer (`src/timetable-reading/reading-checks.ts`): a name must be its printed lines joined, a room must
-match the room pattern, a 12-hour axis becomes 24-hour, times snap to five minutes, and blocks whose names are equal
-after NFC and space normalisation are one class, each time with its own room. Blocks whose names are one or two
-characters apart (and of one colour) are read once more on their own before they are grouped. What fails a check is
-left out and counted:
+With the grid, the model is asked twice (`src/timetable-reading/`): first for the layout, the hour labels as printed and
+each listed block's day label and rough start and end (`reading-model.ts`, `GRID_INSTRUCTIONS`); the code then fits one
+line from pixels to minutes through all those times, which a few misread times cannot move, gives each column the day
+most of its blocks were read with (the columns' days running on by one, so a hidden label is filled in), and takes
+every block's start and end from the pixels on that line (`grid-mapping.ts`). Then the model reads each block's text,
+listed by its day and times. When the fit or the days do not hold, or no grid was sent, the model reads the whole
+picture instead, hour axis included. Code checks the answer (`reading-checks.ts`): a name must be its printed lines
+joined, a room must match the room pattern, a 12-hour axis becomes 24-hour, times snap to five minutes, and blocks
+whose names are equal after NFC and space normalisation are one class, each time with its own room. Blocks whose names
+are one or two characters apart (and of one colour) are read once more on their own before they are grouped
+(`second-look.ts`). A fading block keeps the end where its colour is last seen only when the end the model read agrees
+with it within 5 minutes; otherwise it is left out. What fails a check is left out and counted:
 
 ```json
 {
@@ -2236,10 +2246,10 @@ left out and counted:
 
 or `{ "kind": "none" }` for a picture with no timetable. Refused with 400 for a body of another shape, 413 above the
 limit, 422 `UNREADABLE_IMAGE` for bytes that are no picture the model takes, 429 once a User has asked
-`TIMETABLE_READING_DAILY` (10) times that day in Korea, and 503 when the model fails or the server has no key by the
+`TIMETABLE_READING_DAILY` times that day in Korea (a setting, 10 unless set), and 503 when the model fails or the server has no key by the
 name `llm.key` gives; the app then reads the picture on the phone. The picture is neither stored nor logged, nor is
 what was read; the log says only how many classes and blocks left out. `TIMETABLE_READING_TIMEOUT_MS` (60 000) and
-`TIMETABLE_READING_MAX_OUTPUT_TOKENS` (8000) bound each model call. The experiment that chose this design is
+`TIMETABLE_READING_MAX_OUTPUT_TOKENS` (6000) bound each model call. The experiment that chose this design is
 `pnpm eval:timetable` (`eval/timetable-reading/`, results in `.scratch/iteration-2/P13-timetable-ocr/accuracy.md`).
 
 ## Tutorial

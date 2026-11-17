@@ -115,8 +115,31 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
 - **Owed:** a phone check of the notice, the send and the fallback, and an ML Kit run on the five new screenshots to see
   the blocks the phone really sends there.
 
+### Notes from the implementation, later the same day (2026-11-18)
+
+- **The design changed to blocks found from the pixels alone.** The first design placed the blocks with the hour and
+  day labels ML Kit read, which for the five new screenshots were placed by hand: the part that failed in use was not
+  measured. Now the phone sends a label-free grid (`grid-geometry.ts`: day columns and each block's column, top,
+  bottom, colour and fade), the model reads the layout (labels, each block's day and rough times) in one call and the
+  text on the placed days and times in a second, and the code fits the pixels to the model's times
+  (`grid-mapping.ts`). On the nine screenshots, three readings each: 344 of 345 all right, 0 wrong, 0 invented.
+- **Numbers decided on:** a model time counts for the fit within 12 minutes of the line; at least 4 times and 60 % must
+  agree; 60 % of the read day labels must agree on the columns' days. A fading block keeps the end where its colour is
+  last seen only when the model's end agrees within 5 minutes (the rule with no wrong time on synthetic hidden ends;
+  `accuracy.md`). Bounds on the model's answer (review): 80 blocks, 6 name lines of 60 characters, 25 hour labels of 20
+  characters, 6,000 output tokens per call (the most seen was about 4,900).
+- **Still short of 100 %:** snutt-2's 물리학실험 1, fading behind the tab bar, left out on one reading of three.
+- **Tried and dropped:** hour labels found as ink in the pixels (fragile per screenshot); one call naming blocks as
+  "column C, block K" (blocks skipped, and when asked again, the next block's text read); the model's own fading end
+  (9 wrong of 13 synthetic hidden ends).
+- **Cost:** a reading is two calls, median 13.3 s, about USD 0.0025. All experiments: about USD 0.63 of the USD 10.
+- **Review (TaeHyun79):** the name check is linear and the answer is bounded; blocks the phone finds and does not
+  send are counted in the toast; the lint failures are fixed.
+
 ### Agent usage (2026-11-18)
 
 - Agent time: about 2 hours 10 minutes, one session (an estimate), including waiting for the shared test lock.
 - Tokens (estimate, one agent, no subagents): input about 28 million, of which about 26.5 million cache reads and 1.3
   million cache writes; output about 140 thousand.
+- Later the same day: about 2 hours 30 minutes more (an estimate), the same agent; tokens about 35 million more input
+  (about 33.5 million cache reads, 1.4 million cache writes) and 160 thousand more output, no subagents.

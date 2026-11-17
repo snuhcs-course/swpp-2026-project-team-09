@@ -51,6 +51,42 @@ const ANSWER = {
   ],
 };
 
+// The grid the phone found for the same three blocks: 9:00 at y = 300, 100 pixels an hour; and what the model reads
+// on it, one end an hour off, which the pixels mend.
+const GRID = {
+  columns: 5,
+  blocks: [
+    { column: 1, top: 500, bottom: 625, colour: [160, 200, 100], fades: false },
+    { column: 3, top: 500, bottom: 625, colour: [160, 200, 100], fades: false },
+    { column: 3, top: 1100, bottom: 1225, colour: [250, 165, 90], fades: false },
+  ],
+};
+const LAYOUT = {
+  title: '2022년 1학기',
+  axis: ANSWER.axis,
+  blocks: [
+    { number: 1, day: '화', start: '11:00', end: '12:15' },
+    { number: 2, day: '목', start: '11:00', end: '1:15' },
+    { number: 3, day: '목', start: '5:00', end: '6:15' },
+  ],
+};
+const TEXT = {
+  title: '2022년 1학기',
+  blocks: [
+    { number: 1, nameLines: ['대학영어 2: 말', '하기'], name: '대학영어 2: 말하기', room: '8-408' },
+    { number: 2, nameLines: ['대학영어 2: 말', '하기'], name: '대학영어 2: 말하기', room: '8-408' },
+    { number: 3, nameLines: ['물리학 1'], name: '물리학 1', room: '56-105' },
+  ],
+};
+
+// The fake model answers the layout call, the text call and the whole picture's call each in its shape.
+function answerFor(prompt: string): object {
+  if (prompt.includes('column 1') || prompt.includes('column 2')) {
+    return LAYOUT;
+  }
+  return prompt.includes('The blocks:') ? TEXT : ANSWER;
+}
+
 // A PNG's first bytes and a little more: the server reads the kind from them and sends the bytes on.
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64)]).toString(
   'base64',
@@ -67,7 +103,7 @@ const model = new MockLanguageModelV4({
       return Promise.reject(new Error('The provider failed'));
     }
     return Promise.resolve({
-      content: [{ type: 'text', text: JSON.stringify(ANSWER) }],
+      content: [{ type: 'text', text: JSON.stringify(answerFor(JSON.stringify(options.prompt))) }],
       finishReason: { unified: 'stop', raw: undefined },
       usage: NO_USAGE,
       warnings: [],
@@ -117,6 +153,33 @@ describe('reading a timetable screenshot', () => {
     // The picture went to the model as an image, once.
     expect(calls).toHaveLength(1);
     expect(JSON.stringify(calls[0]?.prompt)).toContain('"mediaType":"image/png"');
+  });
+});
+
+describe('reading a timetable screenshot with the grid the phone found', () => {
+  it('places the blocks from the pixels and takes their text from the model', async () => {
+    const { accessToken } = await signInUser(app);
+    const response = await post(accessToken, { image: PNG, grid: GRID }).expect(200);
+    expect(response.body).toEqual({
+      kind: 'read',
+      title: '2022년 1학기',
+      classes: [
+        {
+          name: '대학영어 2: 말하기',
+          times: [
+            { weekday: 'tuesday', start: '11:00', end: '12:15', room: '8-408' },
+            { weekday: 'thursday', start: '11:00', end: '12:15', room: '8-408' },
+          ],
+        },
+        { name: '물리학 1', times: [{ weekday: 'thursday', start: '17:00', end: '18:15', room: '56-105' }] },
+      ],
+      leftOut: [],
+    });
+  });
+
+  it('refuses a grid of another shape', async () => {
+    const { accessToken } = await signInUser(app);
+    await post(accessToken, { image: PNG, grid: { columns: 9, blocks: [] } }).expect(400);
   });
 });
 

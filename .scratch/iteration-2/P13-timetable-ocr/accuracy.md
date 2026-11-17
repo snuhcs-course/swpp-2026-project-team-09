@@ -6,6 +6,86 @@ Android emulator in ticket 01) against the hand-written ground truth beside them
 the main server's seed of campus buildings (`main-server/seed/campus-map-places.json`, 250 rows from map.snu.ac.kr),
 as `GET /places` lists them.
 
+## Update of 2026-11-18, later (P15-52): blocks found without any label, and the fading end
+
+The design measured below (d4) placed the blocks with the hour and day labels ML Kit read on the phone, and on the five
+new screenshots those labels were placed by hand, since no device run was made: the part that failed in use was the
+part not measured. So the blocks are now found from the pixels alone, and the labels are read by the model.
+
+**The label-free grid** (`mobile/src/features/timetable-ocr/grid-geometry.ts`, saved per screenshot in
+`main-server/eval/timetable-reading/grids/`): the day columns from the evenly spaced vertical lines and block sides,
+and every coloured block's column, top, bottom, colour and whether its bottom fades out. It uses no text: on the nine
+screenshots it found all 115 blocks, and flagged the three that fade behind SNUTT's tab bar, from the 330-wide copy
+alone (`__tests__/timetable-ocr-grid-geometry.unit.test.ts`). Finding the hour labels' positions from the pixels was
+tried first (ink blobs in the strip left of the first column) and given up: light-grey labels, a card's edge, and
+block edges bleeding into the strip in the scaled copy each broke the label run on some screenshot, and every fix was
+tuned to one picture.
+
+**Mapping without labels' positions** (`main-server/src/timetable-reading/grid-mapping.ts`): the model reads the hour
+labels, each listed block's day label and its rough start and end; the code fits one line from pixels to minutes
+through all those times by RANSAC over every pair (a time within 12 minutes counts; at least 4 and 60 % must agree), so
+a few misread times cannot move it, and takes each block's start and end from the pixels on it, snapped to 5 minutes.
+Each column takes the day most of its blocks were read with, the columns' days running on by one, so a hidden day
+label (snutt-grey-1's 금) is filled in from the others; labels that disagree, or a week running past Sunday, refuse the
+mapping, and the model then reads the whole picture.
+
+| Run             | Split                                                                                                        | Readings | All right   | Wrong                                | Left out | Median time | USD a reading |
+| --------------- | ------------------------------------------------------------------------------------------------------------ | -------- | ----------- | ------------------------------------ | -------- | ----------- | ------------- |
+| g1              | label-free grid; one call: labels, rough times and text, blocks named "column C, block K"                    | 27       | 315/345     | 0                                    | 30       | 9.7 s       | 0.0017        |
+| g2              | g1, blocks the model skipped asked again (stopped after 6 readings)                                          | 6        | —           | 9 names and rooms of the wrong block | —        | 19 s        | 0.0040        |
+| **g3 (chosen)** | label-free grid; call 1 the layout (labels, days, rough times), call 2 the text on the placed days and times | 27       | **344/345** | **0**                                | **1**    | **13.3 s**  | **0.0025**    |
+
+- g1: when the model answered every listed block, every one was right; but in 3 of 27 readings it answered only some
+  numbers (everytime-1, snutt-1, everytime-dark-1), and those blocks were lost. g2 asked again for the missing ones and
+  showed the deeper fault: naming a block by "column 3, block 2" let the model read the text of the next block in the
+  column (영상예술의 이해 read as 자연언어처리 개론). A wrong name is worse than a lost one, so g2 was stopped.
+- g3 separates the two: the layout call's rough times only fit the line (an outlier is dropped), and the text is then
+  read on the placed day and time ("수 12:30–13:45"), the listing d4 read every name and room right with.
+
+### The fading block
+
+| Rule for a block whose bottom fades or runs under a bar                         | Real fading blocks (9 readings)  | Synthetic, end hidden (13)        |
+| ------------------------------------------------------------------------------- | -------------------------------- | --------------------------------- |
+| the model's end, from 5 min before to 90 min after the colour's end (d2–d4)     | 8 right, 0 wrong, 1 left out     | 2 right, **9 wrong**, 2 left out  |
+| the colour's end when it lands on a usual end (:00, :15, :45, :50)              | 8 right, 0 wrong, 1 left out     | 2 right, **2 wrong**, 9 left out  |
+| two readings agree on the model's end                                           | 7 right, 0 wrong, 2 left out     | 2 right, **5 wrong**, 6 left out  |
+| **the colour's end, when the model's end agrees with it within 5 min (chosen)** | **8 right, 0 wrong, 1 left out** | **0 right, 0 wrong, 13 left out** |
+
+The synthetic fades (`synthetic/make.py`: `synthetic-fades`, `synthetic-fades-2`) draw blocks whose class runs on past
+where their colour stops: under an opaque bar, after a fade, and one whose colour stops at 20:50, a usual end, while the
+class runs to 21:50. Every rule that trusts the model's end or a usual minute alone turned some of those into a wrong
+time; only agreement between the model and the pixels gave none, at the price of leaving out a block whose end is truly
+hidden. A crop of the block's lower part with the axis beside it (rule (a) of the brief) was not tried: the server has
+no image library to crop a JPEG, and agreement already reaches zero wrong.
+
+### The chosen design (g3), per screenshot over three readings
+
+| Screenshot       | Before (phone pipeline)  | d4 (blocks from ML Kit's labels) | g3, readings 1 / 2 / 3 |
+| ---------------- | ------------------------ | -------------------------------- | ---------------------- |
+| everytime-1      | 14/14                    | 14/14 · 14/14 · 14/14            | 14/14 · 14/14 · 14/14  |
+| snutt-1          | 16/16                    | 16/16 · 16/16 · 16/16            | 16/16 · 16/16 · 16/16  |
+| snutt-2          | 12/13                    | 13/13 · 13/13 · 13/13            | 13/13 · 12/13 · 13/13  |
+| snutt-3          | 6/7                      | 7/7 · 7/7 · 7/7                  | 7/7 · 7/7 · 7/7        |
+| everytime-2      | text half not measurable | 13/13 · 13/13 · 13/13            | 13/13 · 13/13 · 13/13  |
+| everytime-dark-1 | text half not measurable | 12/12 · 12/12 · 12/12            | 12/12 · 12/12 · 12/12  |
+| snutt-4          | text half not measurable | 12/12 · 12/12 · 12/12            | 12/12 · 12/12 · 12/12  |
+| snutt-dark-1     | text half not measurable | 14/14 · 14/14 · 14/14            | 14/14 · 14/14 · 14/14  |
+| snutt-grey-1     | text half not measurable | 14/14 · 13/14 · 13/14            | 14/14 · 14/14 · 14/14  |
+
+- **0 wrong, 0 invented, 344 of 345 all right, with no OCR'd label and no hand-placed one.** The 100 % bar is missed
+  by one block on one reading: snutt-2's 물리학실험 1 (화 16:00–17:50), fading behind the tab bar, whose end the model
+  read differently from where its colour ends, so it was left out and counted. Grouping: 188 of 189, the miss being
+  that block's class.
+- **Synthetic layouts:** 59 of 60 (the same `글쓰기의 / 기초` joined as `글쓰기의기초` once); the synthetic fades: 0 wrong.
+- **Time and cost of one reading:** two calls, median 13.3 s, 90th percentile 18.3 s, slowest 20.1 s; about USD 0.0025 (about 9,500 input
+  and 3,000 output tokens for the two calls together). Slower than d4 (5.6 s), which had ML Kit place the blocks first.
+- **Joining wrapped name lines:** over every saved block with two or more name lines (888 across all runs), the
+  model's own joining was right 887 times; joining without a space would have been right 419 times, with one 469. The
+  one miss is the synthetic `글쓰기의기초`. Checking the model's name against its lines with spaces removed, or as the
+  lines joined with at most one space at each break, accepted and refused exactly the same 2,723 names; the stricter
+  check is kept, now in linear time (P15-52 review).
+- **Spend:** about USD 0.63 for all experiments (a1 to g3), of the USD 10 allowed.
+
 ## Update of 2026-11-18 (P15-52): reading with the AI
 
 Ticket: `.scratch/iteration-4/P15-app-cleanup/issues/52-timetable-image-reading.md`. Decision:

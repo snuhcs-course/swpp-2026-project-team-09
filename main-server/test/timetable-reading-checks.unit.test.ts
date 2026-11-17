@@ -200,3 +200,42 @@ describe('labels of any layout', () => {
     expect(axisHours(['8', '9', '10'])).toEqual([8, 9, 10]);
   });
 });
+
+describe('an answer past the bounds', () => {
+  it('leaves out a block of 30 name lines quickly, unread, and still reads the others', () => {
+    const lines = Array.from({ length: 30 }, (_, index) => `줄${index}`);
+    const started = performance.now();
+    const reading = checkedReading({
+      title: null,
+      axis: TO_18,
+      blocks: [
+        { day: '월', start: '11:00', end: '12:15', nameLines: lines, name: lines.join(' '), room: null, cut: false },
+        {
+          day: '화',
+          start: '11:00',
+          end: '12:15',
+          nameLines: ['대학영어 2: 말', '하기'],
+          name: '대학영어 2: 말하기',
+          room: '8-408',
+          cut: false,
+        },
+      ],
+    });
+    expect(performance.now() - started).toBeLessThan(100);
+    expect(reading.kind === 'read' ? reading.leftOut.map(({ reason }) => reason) : []).toEqual(['too-long']);
+    expect(reading.kind === 'read' ? reading.classes.map(({ name }) => name) : []).toEqual(['대학영어 2: 말하기']);
+  });
+
+  it('checks a name against 6 lines in linear time', () => {
+    const lines = ['가', '나', '다', '라', '마', '바'];
+    expect(checkedName('가나 다라마 바', lines)).toBe('가나 다라마 바');
+    expect(checkedName('가나다라마바사', lines)).toBeNull();
+    expect(checkedName('가 나다라마바', [...lines.slice(0, 1), '나 다', ...lines.slice(3)])).toBeNull();
+  });
+
+  it('is no timetable when the axis has more labels than a day has hours, or labels too long', () => {
+    expect(axisHours(Array.from({ length: 30 }, (_, index) => String(index)))).toBeNull();
+    expect(axisHours(['9', `${' '.repeat(5000)}10`])).toBeNull();
+    expect(dayOf(`월${' '.repeat(5000)}`)).toBeNull();
+  });
+});

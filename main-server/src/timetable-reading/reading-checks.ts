@@ -16,6 +16,12 @@ import { type ModelAnswer } from './reading-model.js';
 export const ROOM_PATTERN = /^\d{1,3}(?:-[A-Z]?\d{1,4}){0,3}$/u;
 // The main server's limits on a class: its name's length and its times.
 export const NAME_LENGTH = 30;
+// The most a block's text may be before it is left out unread: name lines, characters in one line or in the room. A
+// timetable block holds two or three short lines; the bounds keep a crafted answer from costing the server time.
+export const MOST_NAME_LINES = 6;
+export const LINE_LENGTH = 60;
+// More blocks than a week of classes has; the rest are left out unread.
+export const MOST_BLOCKS = 80;
 export const MOST_TIMES = 10;
 // The shortest slot an app draws.
 const SHORTEST_MINUTES = 15;
@@ -45,6 +51,8 @@ export type LeftOutReason =
   | 'outside-day'
   // No name, or a name longer than a class may have.
   | 'no-name'
+  // More name lines, or longer ones, than a block holds.
+  | 'too-long'
   // The name is not its lines joined, with or without a space at each break.
   | 'name-unchecked'
   // One more time than a class may have, or a time crossing another of the same class.
@@ -63,17 +71,25 @@ export type TimetableReading =
   // No timetable: fewer than two hour labels, or labels that are not consecutive hours.
   | { kind: 'none' };
 
-// The ways the lines join: at each break with no space or with one. Lines are trimmed and empty ones dropped.
-export function joinings(lines: readonly string[]): string[] {
-  const kept = lines.map((line) => line.trim()).filter((line) => line !== '');
-  let joined = kept.length === 0 ? [] : [kept[0] ?? ''];
-  for (const line of kept.slice(1)) {
-    joined = joined.flatMap((start) => [`${start}${line}`, `${start} ${line}`]);
+// Whether `name` is the lines joined with no space or one space at each break, and nothing else: each line in turn,
+// exactly, then at most one space before the next. Linear in the name's length (P15-52 review: the earlier check made
+// every joining, 2 to the number of breaks).
+export function isJoining(name: string, lines: readonly string[]): boolean {
+  const kept = lines.filter((line) => line !== '');
+  let at = 0;
+  for (const [index, line] of kept.entries()) {
+    if (!name.startsWith(line, at)) {
+      return false;
+    }
+    at += line.length;
+    if (index < kept.length - 1 && name[at] === ' ') {
+      at += 1;
+    }
   }
-  return joined;
+  return kept.length > 0 && at === name.length;
 }
 
-// The name kept: the model's, once spaces are tidied, when it is one of its lines' joinings; else null. The model
+// The name kept: the model's, once spaces are tidied, when it is its lines joined (`isJoining`); else null. The model
 // decides where a break fell inside a word (it reads the words), and the code only checks that nothing was added,
 // dropped or changed.
 export function checkedName(name: string, lines: readonly string[]): string | null {
@@ -81,7 +97,12 @@ export function checkedName(name: string, lines: readonly string[]): string | nu
   if (lines.length === 0) {
     return tidied === '' ? null : tidied;
   }
-  return joinings(lines.map((line) => tidy(line))).includes(tidied) ? tidied : null;
+  return isJoining(
+    tidied,
+    lines.map((line) => tidy(line)),
+  )
+    ? tidied
+    : null;
 }
 
 // The room as printed with spaces around its hyphens removed, when it is one; null for no room or text that is none.
@@ -105,11 +126,25 @@ function compareTimes(one: ReadTime, other: ReadTime): number {
 type Block = ModelAnswer['blocks'][number];
 
 // One block's time, name and room, or why it is left out.
+// Whether a block's text is past the bounds a timetable block holds; it is then left out unread.
+function tooLong(block: Block): boolean {
+  const fields = [block.day, block.start, block.end, block.room ?? ''];
+  return (
+    block.nameLines.length > MOST_NAME_LINES ||
+    block.nameLines.some((line) => line.length > LINE_LENGTH) ||
+    block.name.length > LINE_LENGTH * MOST_NAME_LINES ||
+    fields.some((field) => field.length > LINE_LENGTH)
+  );
+}
+
 function checkedBlock(
   block: Block,
   labels: readonly string[],
   hours: readonly number[],
 ): { name: string; time: ReadTime } | LeftOut {
+  if (tooLong(block)) {
+    return { weekday: null, name: '', start: null, end: null, reason: 'too-long' };
+  }
   const weekday = dayOf(block.day);
   const name = checkedName(block.name, block.nameLines);
   const starts = minutesOf(block.start, labels, hours);
@@ -177,8 +212,11 @@ export function checkedReading(answer: ModelAnswer): TimetableReading {
   const classes = new Map<string, ReadTime[]>();
   const leftOut: LeftOut[] = [];
   const read: { name: string; time: ReadTime }[] = [];
-  for (const block of answer.blocks) {
-    const outcome = checkedBlock(block, answer.axis, hours);
+  for (const [index, block] of answer.blocks.entries()) {
+    const outcome =
+      index < MOST_BLOCKS
+        ? checkedBlock(block, answer.axis, hours)
+        : { weekday: null, name: '', start: null, end: null, reason: 'too-long' as const };
     if ('reason' in outcome) {
       leftOut.push(outcome);
     } else {

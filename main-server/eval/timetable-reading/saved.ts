@@ -8,8 +8,15 @@ import { existsSync, readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { LETTERS, WEEKDAYS } from '../../src/timetable-reading/labels.ts';
 import { checkedReading, type ReadTime, type TimetableReading } from '../../src/timetable-reading/reading-checks.ts';
-import { answerSchema, type ModelAnswer, textSchema } from '../../src/timetable-reading/reading-model.ts';
-import { blocksAnswer } from '../../src/timetable-reading/second-look.ts';
+import { placedAnswer, placedBlocks } from '../../src/timetable-reading/grid-mapping.ts';
+import {
+  answerSchema,
+  gridTextSchema,
+  type ModelAnswer,
+  textSchema,
+} from '../../src/timetable-reading/reading-model.ts';
+import { blocksAnswer, fadingEnd } from '../../src/timetable-reading/second-look.ts';
+import { gridOf } from './boxes.ts';
 import { type ReadingScore, SCREENSHOTS, scoreReading, truthOf } from './score.ts';
 
 // The saved answers of the experiment's runs (answers/<run>/<name>.<n>.json), read again with the checks as they are
@@ -32,7 +39,23 @@ const savedSchema = z.object({
   answer: z.unknown(),
 });
 
-function answerOf(raw: z.infer<typeof savedSchema>): ModelAnswer {
+const gridRawSchema = z.object({
+  mode: z.literal('grid'),
+  mapped: z.literal(true),
+  raw: z.object({ layout: gridTextSchema, text: textSchema }),
+});
+
+// A grid run's answer placed again from its raw layout and text with the code as it is now, so that a change of the
+// placement rules (the fading end) is measured on the same model answers.
+function answerOf(name: string, raw: z.infer<typeof savedSchema>, record: unknown): ModelAnswer {
+  const grid = gridRawSchema.safeParse(record);
+  if (grid.success) {
+    const found = gridOf(name);
+    const placed = placedBlocks(found, grid.data.raw.layout);
+    if (placed !== null) {
+      return placedAnswer(found, placed, grid.data.raw.text);
+    }
+  }
   if (raw.boxes === undefined) {
     return answerSchema.parse(raw.answer);
   }
@@ -47,9 +70,17 @@ export function savedAnswers(run: string, reads = 3, names: readonly string[] = 
       if (!existsSync(file)) {
         return [];
       }
-      const raw = savedSchema.parse(JSON.parse(readFileSync(file, 'utf8')));
+      const record: unknown = JSON.parse(readFileSync(file, 'utf8'));
+      const raw = savedSchema.parse(record);
       return [
-        { name, n, ms: raw.ms, inputTokens: raw.inputTokens, outputTokens: raw.outputTokens, answer: answerOf(raw) },
+        {
+          name,
+          n,
+          ms: raw.ms,
+          inputTokens: raw.inputTokens,
+          outputTokens: raw.outputTokens,
+          answer: answerOf(name, raw, record),
+        },
       ];
     }),
   );
@@ -81,4 +112,64 @@ export function agreed(one: TimetableReading, other: TimetableReading): Timetabl
     })
     .filter(({ times }) => times.length > 0);
   return { kind: 'read', title: one.title === other.title ? one.title : null, classes, leftOut };
+}
+
+// P15-52, the fading block: each rule for a block whose end is not seen, judged on every fading block of a grid run's
+// readings (from the raw answers it saved) against the ground truth: right, wrong, or left out.
+export type FadeRule = 'window' | 'usual-end' | 'model-agrees-with-pixels' | 'two-readings-agree';
+
+export interface FadeCase {
+  name: string;
+  n: number;
+  truthEnd: string | null;
+  seen: string;
+  modelEnd: string | null;
+}
+
+const rawRecordSchema = z.object({ raw: z.object({ layout: gridTextSchema }), mode: z.literal('grid') });
+
+export function fadeCases(run: string, names: readonly string[]): FadeCase[] {
+  return names.flatMap((name) => {
+    const grid = gridOf(name);
+    const truth = truthOf(name);
+    return [1, 2, 3].flatMap((n) => {
+      const file = new URL(`answers/${run}/${name}.${n}.json`, import.meta.url);
+      if (!existsSync(file)) {
+        return [];
+      }
+      const parsed = rawRecordSchema.safeParse(JSON.parse(readFileSync(file, 'utf8')));
+      const placed = parsed.success ? placedBlocks(grid, parsed.data.raw.layout) : null;
+      return grid.blocks.flatMap((block, index) => {
+        const place = placed?.[index];
+        if (block.fades !== true || place === undefined) {
+          return [];
+        }
+        const weekday = WEEKDAYS.find((day) => LETTERS[day] === place.day);
+        const truthEnd =
+          truth.times.find((time) => time.weekday === weekday && time.start === place.start)?.end ?? null;
+        return [{ name, n, truthEnd, seen: place.seen, modelEnd: place.modelEnd }];
+      });
+    });
+  });
+}
+
+const minutesOfClock = (text: string): number => {
+  const [hours = 0, minutes = 0] = text.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+export function fadeRuleEnd(rule: FadeRule, one: FadeCase, other: FadeCase | undefined): string | null {
+  const windowed = fadingEnd(one.seen, one.modelEnd);
+  if (rule === 'window') {
+    return windowed;
+  }
+  if (rule === 'usual-end') {
+    return [0, 15, 45, 50].includes(minutesOfClock(one.seen) % 60) ? one.seen : null;
+  }
+  if (rule === 'model-agrees-with-pixels') {
+    const agrees = one.modelEnd !== null && Math.abs(minutesOfClock(one.modelEnd) - minutesOfClock(one.seen)) <= 5;
+    return agrees ? one.seen : null;
+  }
+  const otherEnd = other === undefined ? null : fadingEnd(other.seen, other.modelEnd);
+  return windowed !== null && otherEnd === windowed ? windowed : null;
 }

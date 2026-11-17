@@ -11,7 +11,7 @@ import { launchImageLibraryAsync } from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { apiClient } from '@/api/client';
-import type { SentBlock } from '@/api/timetable-reading-types';
+import type { SentGrid } from '@/api/timetable-reading-types';
 import { placesQuery } from '@/api/queries';
 import { asksMainServer } from '@/api/servers';
 import type { Place } from '@/api/types';
@@ -21,7 +21,8 @@ import { MOST_VERSIONS, readVersions } from '@/features/timetable/versions';
 import { agreeToReading, readingAgreed } from '@/storage/reading-notice';
 import { type ImportPlan, importPlan, MOST_IMPORTED } from './import-plan';
 import { hasNativeOcr, type NativeOcrResult, type OcrReading, readImageText } from './native-ocr';
-import { type Reading, readTimetable, timedBlocks } from './read-timetable';
+import { gridGeometry, type SkippedBlock } from './grid-geometry';
+import { type Reading, readTimetable } from './read-timetable';
 import { readingFromServer } from './server-reading';
 
 // `이미지로 불러오기` (P13 spec, "Importing"; P15-52): a screenshot of a timetable picked from the album is read and
@@ -106,12 +107,12 @@ async function sendsToServer(agreesToSend: () => Promise<boolean>): Promise<bool
 // The main server's reading, or null when it gave none: no answer, a refusal, or a server without the route.
 async function serverReading(
   image: string,
-  blocks: SentBlock[] | null,
+  found: { grid: SentGrid; skipped: SkippedBlock[] } | null,
   places: () => Promise<Place[]>,
 ): Promise<Reading | null> {
   try {
-    const answer = await apiClient.readTimetableImage(image, blocks);
-    return readingFromServer(answer, await places());
+    const answer = await apiClient.readTimetableImage(image, found?.grid ?? null);
+    return readingFromServer(answer, await places(), found?.skipped ?? []);
   } catch {
     return null;
   }
@@ -119,14 +120,16 @@ async function serverReading(
 
 type Outcome = { kind: 'read'; reading: Reading } | { kind: 'unavailable' } | { kind: 'failed' };
 
-// The blocks the phone's pixels place for certain, sent with the picture; null without the native OCR module or when
-// it found no timetable, and the AI then reads the whole picture.
-function sentBlocks(ocr: OcrReading): SentBlock[] | null {
-  return ocr.kind === 'read' ? timedBlocks(ocr.result) : null;
+// The grid the phone's pixels give, to send with the picture, and the blocks it found and does not send; null without
+// the native module (it gives the pixels with ML Kit's answer) or when no grid is found, and the AI then reads the
+// whole picture. No OCR'd label is used.
+function phoneGrid(ocr: OcrReading): { grid: SentGrid; skipped: SkippedBlock[] } | null {
+  const found = ocr.kind === 'read' ? gridGeometry(ocr.result.pixels) : null;
+  return found === null ? null : { grid: { columns: found.columns, blocks: found.blocks }, skipped: found.skipped };
 }
 
 // The picked picture read: by the main server when it is sent and answers, else by the phone. The phone reads it first
-// either way: its blocks go with the picture, and its reading is there if the server gives none.
+// either way: its grid goes with the picture, and its own reading is there if the server gives none.
 async function readPicked(
   asset: { uri: string; base64?: string | null },
   send: boolean,
@@ -136,7 +139,7 @@ async function readPicked(
   const ocr = await readImageText(asset.uri);
   forgetImage(asset.uri);
   const image = send ? (asset.base64 ?? null) : null;
-  const fromServer = image === null ? null : await serverReading(image, sentBlocks(ocr), places);
+  const fromServer = image === null ? null : await serverReading(image, phoneGrid(ocr), places);
   if (fromServer !== null) {
     return { kind: 'read', reading: fromServer };
   }

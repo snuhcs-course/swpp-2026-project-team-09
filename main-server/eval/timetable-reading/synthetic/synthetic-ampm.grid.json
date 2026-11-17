@@ -1,0 +1,33 @@
+{
+  "columns": 6,
+  "blocks": [
+    {
+      "column": 0,
+      "top": 350,
+      "bottom": 487.5,
+      "colour": [52, 168, 83],
+      "fades": false
+    },
+    {
+      "column": 2,
+      "top": 350,
+      "bottom": 487.5,
+      "colour": [52, 168, 83],
+      "fades": false
+    },
+    {
+      "column": 1,
+      "top": 900,
+      "bottom": 1092.5,
+      "colour": [240, 140, 40],
+      "fades": false
+    },
+    {
+      "column": 5,
+      "top": 680,
+      "bottom": 900,
+      "colour": [66, 133, 244],
+      "fades": false
+    }
+  ]
+}

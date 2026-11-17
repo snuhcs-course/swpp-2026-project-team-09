@@ -5,8 +5,17 @@
  ******************************************************************************/
 
 import { checkedReading } from '../src/timetable-reading/reading-checks.js';
-import { agreed, type Saved, savedAnswers, scored } from '../eval/timetable-reading/saved.ts';
 import {
+  agreed,
+  fadeCases,
+  type FadeRule,
+  fadeRuleEnd,
+  type Saved,
+  savedAnswers,
+  scored,
+} from '../eval/timetable-reading/saved.ts';
+import {
+  FADE_NAMES,
   type ReadingScore,
   SCREENSHOTS,
   scoreReading,
@@ -18,8 +27,8 @@ import {
 // are now and compared with the hand-written ground truth. No model is called. The chosen design's run is held to the
 // bar; `READING_TABLE=1 RUNS=a1,d2-blocks-fades` prints the tables accuracy.md gives.
 
-// The chosen design: the phone's blocks sent, the model reading their text and a fading block's end (accuracy.md).
-const CHOSEN = 'd4-chosen';
+// The chosen design: the label-free grid sent, the model reading the layout and then the text (accuracy.md).
+const CHOSEN = 'g3-grid-two-calls';
 
 function sum(scores: readonly ReadingScore[], key: keyof ReadingScore): number {
   return scores.reduce((total, one) => total + Number(one[key]), 0);
@@ -70,9 +79,9 @@ function agreedLines(run: string): string[] {
   ];
 }
 
-// What the chosen design leaves out (accuracy.md): only snutt-grey-1's block that fades behind the tab bar, when the
-// model does not read its end, which it did on one reading of three.
-const LEFT_OUT: Record<string, number> = { 'snutt-grey-1': 2 };
+// What the chosen design leaves out (accuracy.md): only snutt-2's block that fades behind the tab bar, on one reading
+// of three, when the end the model read did not agree with where its colour is last seen.
+const LEFT_OUT: Record<string, number> = { 'snutt-2': 1 };
 
 it.each(SCREENSHOTS)(
   'reads %s with nothing wrong and nothing invented on each saved reading of the chosen design',
@@ -90,12 +99,49 @@ it.each(SCREENSHOTS)(
   },
 );
 
+function clockMinutes(text: string): number {
+  const [hours = 0, minutes = 0] = text.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+// Whether an end is a true end, to 5 minutes, as the score counts a time right.
+function near(end: string, truth: string | null): boolean {
+  return truth !== null && Math.abs(clockMinutes(end) - clockMinutes(truth)) <= 5;
+}
+
+const FADE_RULES: FadeRule[] = ['window', 'usual-end', 'model-agrees-with-pixels', 'two-readings-agree'];
+
+// Each fading-end rule over the fading blocks of a grid run: right, wrong and left out, real and synthetic apart.
+function fadeLines(run: string): string[] {
+  return [SCREENSHOTS, FADE_NAMES].flatMap((names) => {
+    const cases = fadeCases(run, names);
+    return FADE_RULES.map((rule) => {
+      const ends = cases.map((one, index) => {
+        const other = cases.find(
+          (two) => two !== one && two.name === one.name && two.n === (one.n % 3) + 1 && two.seen === one.seen,
+        );
+        return { end: fadeRuleEnd(rule, one, other ?? cases[index]), truth: one.truthEnd };
+      });
+      const right = ends.filter(({ end, truth }) => end !== null && near(end, truth)).length;
+      const wrong = ends.filter(({ end, truth }) => end !== null && !near(end, truth)).length;
+      return `${run} fades (${names === SCREENSHOTS ? 'real' : 'synthetic'}), ${rule}: right ${right}, wrong ${wrong}, left out ${ends.length - right - wrong} of ${ends.length}`;
+    });
+  });
+}
+
 it('prints the tables', () => {
   if (process.env.READING_TABLE === '1') {
     for (const run of (process.env.RUNS ?? CHOSEN).split(',')) {
       const synthetic = savedAnswers(run, 3, SYNTHETIC_NAMES).length > 0;
-      const out = [...lines(run, SCREENSHOTS), ...(synthetic ? lines(run, SYNTHETIC_NAMES, `${run}, synthetic`) : [])];
-      process.stdout.write(`${[...out, ...agreedLines(run)].join('\n')}\n`);
+      const fades = savedAnswers(run, 3, FADE_NAMES).length > 0;
+      const out = [
+        ...lines(run, SCREENSHOTS),
+        ...(synthetic ? lines(run, SYNTHETIC_NAMES, `${run}, synthetic`) : []),
+        ...(fades ? lines(run, FADE_NAMES, `${run}, synthetic fades`) : []),
+      ];
+      process.stdout.write(
+        `${[...out, ...agreedLines(run), ...(run.startsWith('g') ? fadeLines(run) : [])].join('\n')}\n`,
+      );
     }
   }
   expect(SCREENSHOTS).toHaveLength(9);

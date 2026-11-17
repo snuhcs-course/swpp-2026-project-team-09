@@ -1787,26 +1787,17 @@ send the app asks once, in a dialog: "시간표 사진을 서버에서 읽어요
 읽기만 하고 저장하지 않아요." with "보내기" and "휴대폰에서 읽기"; a yes is remembered on the phone
 (`src/storage/reading-notice.ts`). Then `use-import-from-image.ts`:
 
-1. reads the picture with ML Kit, as before, and finds its class blocks, each with its day, times and colour, from the
-   pixels and the day and hour labels' positions (`timedBlocks` in `read-timetable.ts`; a block whose edge it cannot see
-   is not among them);
-2. sends the picture in base64 with those blocks to `POST /timetable/readings` (`apiClient.readTimetableImage`); the
-   answer's rooms are linked to buildings on the phone (`server-reading.ts`);
-3. reads it with the phone's own pipeline, as P13 did, when the User said no, the main server does not answer or
+1. runs the native module on the picture, as before, for its small copy of the pixels (`readImageText`; the copy comes
+   with ML Kit's answer, which is otherwise not used on this path);
+2. finds the grid from those pixels alone (`grid-geometry.ts`): how many day columns, and each class block's column,
+   top and bottom, colour, and whether its bottom fades out. No OCR'd label is used, so a label ML Kit misreads cannot
+   misplace a block;
+3. sends the picture in base64 with that grid to `POST /timetable/readings` (`apiClient.readTimetableImage`); the
+   server's AI reads the labels and the text, and the server places the blocks. The answer's rooms are linked to
+   buildings on the phone (`server-reading.ts`);
+4. reads it with the phone's own pipeline, as P13 did, when the User said no, the main server does not answer or
    refuses (a server without the route answers 404), or the build does not ask the main server (the mock build).
-
-`/ocr-check` (`snunow://ocr-check` in a development build) picks an image from the album (`expo-image-picker`, images
-only, no editing), reads it, lists the lines and saves the module's whole answer as JSON in the app's documents folder.
-It is for developers: a released app does not show it. The address can name the image and the file, which is how the
-fixtures in `__tests__/fixtures/timetable-ocr/` were made on the emulator (see their README):
-
-```bash
-adb push snutt-1.png /data/local/tmp/
-adb shell run-as com.bonnieandclaude.snunow cp /data/local/tmp/snutt-1.png files/
-adb shell am start -a android.intent.action.VIEW \
-  -d "'snunow://ocr-check?uri=file:///data/data/com.bonnieandclaude.snunow/files/snutt-1.png&name=snutt-1'"
-adb exec-out run-as com.bonnieandclaude.snunow cat files/snutt-1.json > snutt-1.json
-```
+   Without the native module, or when no grid is found, the server's AI reads the whole picture.
 
 ## Push notifications
 

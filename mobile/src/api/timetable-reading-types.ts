@@ -10,14 +10,17 @@ import type { Weekday } from './types';
 // `main-server/src/timetable-reading/reading-checks.ts` fixes it. Rooms come as printed; the app links them to
 // buildings.
 
-// A class block the phone found on the picture, sent with it: the AI then reads only its text.
-export interface SentBlock {
-  weekday: Weekday;
-  start: string;
-  end: string;
-  colour: [number, number, number] | null;
-  // Its end is not seen: the AI reads it.
-  fades: boolean;
+// What the phone found on the picture from its pixels alone, sent with it (`gridGeometry`): the AI then reads the
+// labels and each block's text and rough times, and the server places the blocks.
+export interface SentGrid {
+  columns: number;
+  blocks: {
+    column: number;
+    top: number;
+    bottom: number;
+    colour: [number, number, number] | null;
+    fades: boolean;
+  }[];
 }
 
 export interface ServerReadTime {

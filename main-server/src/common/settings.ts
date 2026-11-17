@@ -123,11 +123,12 @@ export const settingsSchema = z
     ASSISTANT_MAX_STEPS: count(8),
     ASSISTANT_TIMEOUT_MS: count(30_000),
     ASSISTANT_MAX_OUTPUT_TOKENS: count(4000),
-    // Reading a timetable screenshot (P15-52): the readings a User may ask for in a day in Korea, and per reading the
-    // time in milliseconds and the tokens the model may write, its reasoning included.
+    // Reading a timetable screenshot (P15-52): the readings a User may ask for in a day in Korea, and per model call the
+    // time in milliseconds and the tokens the model may write, its reasoning included. The experiment's calls wrote at
+    // most about 4,900 tokens (eval/timetable-reading/answers), so 6,000 leaves room without letting a call run long.
     TIMETABLE_READING_DAILY: count(10),
     TIMETABLE_READING_TIMEOUT_MS: count(60_000),
-    TIMETABLE_READING_MAX_OUTPUT_TOKENS: count(8000),
+    TIMETABLE_READING_MAX_OUTPUT_TOKENS: count(6000),
     // Whether the step after a Collection publishes what it read. "off" leaves every session a Draft: it is turned off
     // when automatic publication is found to make mistakes (infra/production/README.md).
     AUTOMATIC_PUBLICATION: z

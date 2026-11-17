@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import { axisHours, blockTimes, clock, dayOf, LETTERS, minutesOf, tidy } from './labels.js';
+import { NAME_LENGTH } from './reading-checks.js';
 import { type ListedBlock, type ModelAnswer, type TextAnswer } from './reading-model.js';
 
 // P15-52: the answers of the model on the blocks the phone sent, and the second look: blocks whose names are near
@@ -86,6 +87,11 @@ export function nearMiss(
   other: { name: string; colour?: readonly number[] | null },
 ): boolean {
   const [a, b] = [tidy(one.name), tidy(other.name)];
+  const length = Array.from(a).length;
+  // Cheap checks first: the edit distance runs only on two names of one length a class's name can have.
+  if (a === b || length !== Array.from(b).length || length > NAME_LENGTH || marks(a) !== marks(b)) {
+    return false;
+  }
   const distance = editDistance(a, b);
   const colours = (one.colour ?? null) !== null && (other.colour ?? null) !== null;
   const sameColour =
@@ -95,13 +101,7 @@ export function nearMiss(
       (one.colour?.[1] ?? 0) - (other.colour?.[1] ?? 0),
       (one.colour?.[2] ?? 0) - (other.colour?.[2] ?? 0),
     ) <= SAME_COLOUR;
-  return (
-    a !== b &&
-    Array.from(a).length === Array.from(b).length &&
-    distance <= Math.min(2, Math.max(1, Math.floor(Array.from(a).length / 4))) &&
-    marks(a) === marks(b) &&
-    sameColour
-  );
+  return distance <= Math.min(2, Math.max(1, Math.floor(length / 4))) && sameColour;
 }
 
 // The blocks whose names are near misses of another block's: each group is read once more, on its own, so that the

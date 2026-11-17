@@ -27,11 +27,15 @@ export const SCREENSHOTS = [
 // The synthetic timetables (synthetic/make.py): a generality check in other layouts, outside the acceptance bar.
 export const SYNTHETIC_NAMES = ['synthetic-saturday', 'synthetic-english', 'synthetic-ampm', 'synthetic-week'] as const;
 
+// Synthetic blocks whose end is not where their colour is last seen (a bar over them, a fade): the fading-end rule's
+// check that a block left out is never turned into a wrong time.
+export const FADE_NAMES = ['synthetic-fades', 'synthetic-fades-2'] as const;
+
 const FIXTURES = new URL('../../../mobile/__tests__/fixtures/timetable-ocr/', import.meta.url);
 const SYNTHETIC = new URL('synthetic/', import.meta.url);
 
 export function namesOf(withSynthetic: boolean): string[] {
-  return [...SCREENSHOTS, ...(withSynthetic ? SYNTHETIC_NAMES : [])];
+  return [...SCREENSHOTS, ...(withSynthetic ? [...SYNTHETIC_NAMES, ...FADE_NAMES] : [])];
 }
 
 function folderOf(name: string): URL {

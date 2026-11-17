@@ -49,6 +49,17 @@ ${TEXT_RULES}
 - If no class block is at a listed place, give empty nameLines and an empty name.
 And title: the timetable's own name as printed above the grid, without a credit count or the app's own words; null when none can be read.`;
 
+export const GRID_INSTRUCTIONS = `You read the layout of a screenshot of a weekly university timetable: its hour labels, and where each class block is. The class blocks have been found already, by their colour: each is listed with its number as "column C, block K", the K-th block from the top in the C-th day column counted from the left (the hour labels' strip is not a column). Their text is read later; here report only where they are.
+
+${GRID}
+
+What to report:
+- axis: every hour label, top to bottom, exactly as printed.
+- blocks: for every listed number:
+  - day: the day label at the top of its column as printed, or null when it is hidden.
+  - start and end: where its top and bottom edges fall against the hour lines, as "H:MM" on the axis's own clock, to five minutes. For a block whose bottom fades out or runs under a bar, the end where the class ends.
+- title: the timetable's own name as printed above the grid, without a credit count or the app's own words; null when none can be read.`;
+
 // Loose for the provider, since providers differ in the constraints they take; reading-checks.ts checks every field.
 export const answerSchema = z.object({
   title: z.string().nullable(),
@@ -82,6 +93,14 @@ export const textSchema = z.object({
 });
 
 export type TextAnswer = z.infer<typeof textSchema>;
+
+export const gridTextSchema = z.object({
+  title: z.string().nullable(),
+  axis: z.array(z.string()),
+  blocks: z.array(z.object({ number: z.number(), day: z.string().nullable(), start: z.string(), end: z.string() })),
+});
+
+export type GridTextAnswer = z.infer<typeof gridTextSchema>;
 
 export interface ReadingLimits {
   timeoutMs: number;
@@ -163,4 +182,29 @@ export function askForBlockText(
   limits: ReadingLimits,
 ): Promise<ModelCall<TextAnswer>> {
   return ask(model, BLOCK_INSTRUCTIONS, image, `The blocks:\n${blockList(blocks)}`, textSchema, limits);
+}
+
+// Found blocks as listed to the model: each one's day column, counted from 1 at the left, and its place among all the
+// column's blocks (`all`), counted from the top.
+export function gridList(
+  blocks: readonly { column: number; top: number }[],
+  all: readonly { column: number; top: number }[] = blocks,
+): string {
+  return blocks
+    .map(({ column, top }, index) => {
+      const above = all.filter((other) => other.column === column && other.top < top).length;
+      return `${index + 1}. column ${column + 1}, block ${above + 1}`;
+    })
+    .join('\n');
+}
+
+// The labels and each listed block's day and rough times. Throws as askForTimetable does.
+export function askForGridText(
+  model: Model,
+  image: TimetableImage,
+  blocks: readonly { column: number; top: number }[],
+  limits: ReadingLimits,
+  all: readonly { column: number; top: number }[] = blocks,
+): Promise<ModelCall<GridTextAnswer>> {
+  return ask(model, GRID_INSTRUCTIONS, image, `The blocks:\n${gridList(blocks, all)}`, gridTextSchema, limits);
 }

@@ -57,7 +57,9 @@ describe('a near miss looked at again', () => {
     ).toEqual([[0, 2, 3]]);
     expect(nearMissGroups([{ name: '수학 1' }, { name: '수학연습 1' }, { name: '수학 1' }])).toEqual([]);
   });
+});
 
+describe('a second look', () => {
   it('becomes one class when the second look reads one name, and stays two when it reads two', () => {
     const answer = {
       title: null,

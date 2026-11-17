@@ -4,7 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { readTimetable, timedBlocks } from '@/features/timetable-ocr/read-timetable';
+import { readTimetable } from '@/features/timetable-ocr/read-timetable';
 
 import { campusPlaces, type TruthTime } from './support/timetable-ocr';
 import { gridOnly, NEW_SCREENSHOTS, type NewScreenshot, newTruth } from './support/timetable-ocr-new';
@@ -12,8 +12,7 @@ import { gridOnly, NEW_SCREENSHOTS, type NewScreenshot, newTruth } from './suppo
 // P15-52 stage 1: the phone pipeline's pixel half (background, grid, hour axis, blocks) on the five new screenshots,
 // with no ML Kit output: only the day letters and hour labels are stood in, so every block found is reported as
 // `no-name` with the times it was read at. What it finds is compared with the ground truth's times. `OCR_ACCURACY=1`
-// prints the numbers for accuracy.md. The blocks the phone sends to the main server's reader (`timedBlocks`) are the
-// same, a block that fades out marked so.
+// prints the numbers for accuracy.md.
 
 const PLACES = campusPlaces();
 
@@ -92,17 +91,5 @@ describe.each(NEW_SCREENSHOTS)('the new screenshot %s, pixel half only', (name) 
       console.log(`${name}: ${JSON.stringify(result)}`);
     }
     expect({ found: result.found, timesRight: result.timesRight, extra: result.extra }).toEqual(REACHED[name]);
-  });
-
-  it('gives the main server every block with its true time and its colour, a fading one marked', () => {
-    const blocks = timedBlocks(gridOnly(name)) ?? [];
-    const truth = newTruth(name).times;
-    expect(blocks.filter(({ fades }) => fades)).toHaveLength(
-      truth.filter((time) => time.note?.includes('fades') === true).length,
-    );
-    expect(blocks.map(({ weekday, start, end }) => `${weekday} ${start}-${end}`).toSorted()).toEqual(
-      truth.map(({ weekday, start, end }) => `${weekday} ${start}-${end}`).toSorted(),
-    );
-    expect(blocks.every(({ colour }) => colour.length === 3)).toBe(true);
   });
 });

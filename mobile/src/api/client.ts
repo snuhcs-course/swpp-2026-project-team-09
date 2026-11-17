@@ -25,7 +25,7 @@ import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContex
 import type { InvitationCard, OwnWay } from './invitation-card-types';
 import type { Lookup, Tapped } from './lookup-types';
 import type { LocationMissing } from './refusal-types';
-import type { SentBlock, ServerTimetableReading } from './timetable-reading-types';
+import type { SentGrid, ServerTimetableReading } from './timetable-reading-types';
 import { mockClient } from './mock/client';
 import { tellAskLevels } from './plan-asks';
 import { serverClient } from './server/client';
@@ -137,10 +137,10 @@ export interface ApiClient {
   deleteClass: (classId: string) => Promise<void>;
   // Deletes every class of the User, also when there are none.
   resetTimetable: () => Promise<void>;
-  // A screenshot of a timetable, in base64, read by the main server's AI (P15-52), with the blocks the phone found on
-  // it, or null. Refused with 422 UNREADABLE_IMAGE, 429 for the day's readings used up, 503 when it cannot read now,
+  // A screenshot of a timetable, in base64, read by the main server's AI (P15-52), with the grid the phone found on it
+  // from its pixels, or null. Refused with 422 UNREADABLE_IMAGE, 429 for the day's readings used up, 503 when it cannot read now,
   // and 404 by a main server without the route.
-  readTimetableImage: (image: string, blocks: SentBlock[] | null) => Promise<ServerTimetableReading>;
+  readTimetableImage: (image: string, grid: SentGrid | null) => Promise<ServerTimetableReading>;
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
   searchPlaces: (words: string) => Promise<Place[]>;
@@ -309,7 +309,7 @@ export const apiClient: ShownClient = {
   replaceClass: (classId, save) => chosen().replaceClass(classId, save),
   deleteClass: (classId) => chosen().deleteClass(classId),
   resetTimetable: () => chosen().resetTimetable(),
-  readTimetableImage: (image, blocks) => chosen().readTimetableImage(image, blocks),
+  readTimetableImage: (image, grid) => chosen().readTimetableImage(image, grid),
   listPlaces: () => chosen().listPlaces(),
   searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
