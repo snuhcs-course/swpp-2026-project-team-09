@@ -62,7 +62,7 @@ Everything here is still what Expo's template gave the app.
 - [x] The app icon's file is 1024 × 1024 with no alpha channel.
 - [x] `mobile/app.json` names no `ios.icon` and no adaptive background image, the Icon Composer bundle is gone, and none of the images it names is Expo's default, the favicon included.
 - [x] `docs/design/app-icon/` holds the master, its script and the brief.
-- [ ] `version` is 1.0.3, and CI's `app-fingerprint` job passes with its notice that `version` was raised.
+- [x] `version` is 1.0.3, and CI's `app-fingerprint` job passes with its notice that `version` was raised.
 - [x] Tests, by ADR 0007: no app code changes, so no test is added, and the test of the design catalogue still passes. The icon, the splash and the notification icon are native, so they are checked by hand on an Android emulator with an APK built from the branch, which is an integration check by the ADR; the check and its screenshots are recorded under this ticket's Comments.
 - [ ] The pull request's body shows the launcher and the splash before and after, as screenshots of the emulator, in place of the canvas boards.
 - [ ] After the merge and 김태현's approval, the `app` Release is made: its APK installs over 1.0.2 and shows the new icon, and `app-version.json` gives 1.0.3 as `latest`.
@@ -121,7 +121,7 @@ The screenshots are in the pull request's body. The raw ones were kept outside t
 
 - **The layers' SVGs:** the master's folder also holds the four layers' SVGs that the script writes (`android-icon-foreground.svg`, `android-icon-monochrome.svg`, `splash-icon.svg`, `notification-icon.svg`), so that each PNG can be written again from them. The handoff's master PNG is not kept: `icon.png` is that render without alpha.
 - **iOS:** the handoff's brief left it open whether to rebuild the Icon Composer bundle or drop `ios.icon`. The ticket's choice was followed: `ios.icon` is dropped and the bundle deleted.
-- **`app-fingerprint`:** CI's check was run locally with `release.sh fingerprint-and-decide`, the repository's production app variables and the published `app-version.json`. It gave `publish-needs-build`: version 1.0.3 is above the latest native build's 1.0.2, so CI should pass with its notice that `version` was raised. The criterion is ticked once the pull request's CI has run.
+- **`app-fingerprint`:** CI's check was run locally with `release.sh fingerprint-and-decide`, the repository's production app variables and the published `app-version.json`. It gave `publish-needs-build`: version 1.0.3 is above the latest native build's 1.0.2, and CI's run on #355 agreed: `app-fingerprint` passed with its notice "The app's native part changed and version was raised".
 - **Still to do:**
   - The pull request, with the three screenshots in its body.
   - The `app` Release after the merge and 김태현's approval.
