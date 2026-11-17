@@ -862,9 +862,9 @@ screen: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친�
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
 and the department, the detail (or the line where the app has no detail), and the round calendar button "{이름}님과
-파티 만들기", which says "준비 중이에요". Its footer has the live Badge "친구 {n}명과 위치 공유 중", n the Friends the
-User sees now (`visible`); "공유 설정", which closes the panel and shows 내 정보 at `/me?show=sharing`; and "+ 친구
-추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널 닫기"), ✕ and Android's back button close it.
+파티 만들기", which says "준비 중이에요". Its footer has "공유 설정" on the right, which closes the panel and shows 내
+정보 at `/me?show=sharing`, and "+ 친구 추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널
+닫기"), ✕ and Android's back button close it.
 A Friend is under "위치 꺼짐" whenever the main server says the User cannot see them (`visible`), whatever the app's
 own status says.
 
