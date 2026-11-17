@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -33,7 +34,7 @@ export interface MainMapViewProps {
 export function MainMapView({ map, contents, room, around, onPress, ...limits }: MainMapViewProps): ReactElement {
   const { height } = useWindowDimensions();
   const covered = useNavCoverOnMain();
-  const inset = mapInset(room.cardHeight, room.tutorialStart, room.answerHeight, room.interestsHint, room.madeLine);
+  const inset = mapInset(room);
   return (
     <View style={[styles.map, { height }]} testID="main-map-touches" {...around}>
       <Map

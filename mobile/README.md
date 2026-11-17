@@ -586,9 +586,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - **The room** (`Room` in `layout.ts`: the stage's size, which `OverMap` tells, and the open card's height). A
     window shows the whole rows that fit above what is under it, with 8 clear (`listRows`): three, or two, one or
     none on a low screen. Under the Quest list is the zoom control; under the friend list is the strip of the
-    map's credit, on the row of buttons; while a card is open, under both is the credit's strip on the card. The Quest
-    column is 182 wide; the friend column is 160 or, on a screen narrower than 374, what the Quest column leaves
-    (`friendsWidth`), 146 at 360, so the two never share a point.
+    map's credit, on what stands at the left above the AI input or on the input; while a card is open, under both is
+    the credit's strip on the card. The Quest column is 182 wide; the friend column is 160 or, on a screen narrower
+    than 374, what the Quest column leaves (`friendsWidth`), 146 at 360, so the two never share a point.
   - A Friend's row has the dot in the status's colour (`presence`), the name and the line. Against the main server,
     which serves no statuses, the line is the Place nearest the Friend from `GET /positions`'s `nearPlace`
     ("중앙도서관 본관", or "위치 켜짐" while it is not known) or "위치 꺼짐", with "· N분 전 위치" after an old
@@ -762,8 +762,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the Friends accepted or late out of all in its members; its name says them in one line): a card of kind
   `made-quest`, `made-quest:<id>`, outside the place groups, with the Quest's own card `party:<id>` within it, which
   an address or a row of the Quest list opens with its "길찾기" as before. The first made Quest's line says the same
-  in one line at the left above the row of buttons (and above the start button
-  and the line that asks for interests), and gives way to the keyboard, a card at the bottom, and the answer frame. A
+  in one line at the left above the row of buttons or in its place (and above the start button and the line that
+  asks for interests), and gives way to the keyboard, a card at the bottom, and the answer frame. A
   press on either opens the card after inviting again, built from the Quest: a chip for each Friend with the state,
   the lines with the destination's start, the steps, and "닫기"; without a pill, the input, or the tab bar, as a
   received invitation's, with the destination, a dark flag at each other step, and the User's own dot where the phone
@@ -803,8 +803,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   The interests card is passed over for a main server that keeps no interests. A card gives way to a selected
   thing's card and the answer frame, and hides what a card at the bottom hides. A User of the first run
   who watches no interest sees "관심을 맡기면 맞는 행사를 알려 드려요" at the left, 8 above the row of buttons or the
-  tutorial's start button (`InterestsHint`), which opens the interests card again; the friend list and the map's
-  credit stand above it.
+  tutorial's start button, or in the row's place for a User in no Party (`InterestsHint`), which opens the interests
+  card again; the friend list and the map's credit stand above it.
 - **The 편의기능 stack** (`layers.tsx`, the `MainLayers` frame). The button, "편의기능 (식당 · 셔틀버스)", opens and
   closes it and says whether it is open; it is navy with a white icon while the stack is open, and under its icon a
   dot of 5 in each colour of a layer that is on. The stack rises 8 above it, or appears at once where the phone asks
@@ -851,11 +851,15 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   view keeps one size when the navigation gives way to the answer frame and nothing on it moves then; while the
   navigation is shown, its height is added to the inset's bottom and to the bottom padding of the everyday map's
   fits (`useNavCoverOnMain`). It is told what the controls cover of its edges (`mapInset` in `layout.ts`, the
-  `inset` of `<Map>`), counted from the navigation's top: 126 at the bottom, the row of buttons' top, and 62 at the
-  right, the zoom control. So the credit is just above the row of buttons, 16 from the left, and a provider's logo
-  belongs left of the zoom control, above "활성 파티". While a card is open the inset's bottom is the card's top,
-  and the credit sits above the card. Nothing is drawn over the credit: the lists end 8 above its strip
-  (`CREDIT_ROOM` of `@/map`, the credit's margin and its line), on a low screen with fewer rows.
+  `inset` of `<Map>`), counted from the navigation's top: at the bottom, the top of what stands at the left above
+  the AI input, or the input's top where nothing does or the input is higher; 62 at the right, the zoom control. The
+  row of buttons keeps its place only while it is drawn, for a User in a Party: its top is 126. With no row, the
+  tutorial's start button and the lines above the input come down into its place, 16 above the input's top, and
+  with nothing there the credit is 8 above the input. The keyboard's lift does not count. So the credit is never
+  over an empty place, 16 from the left, and Kakao's logo is at its height left of the zoom control and the 편의기능
+  button. While a card is open the inset's bottom is the card's top, and the credit sits above the card. Nothing is
+  drawn over the credit: the lists end 8 above its strip (`CREDIT_ROOM` of `@/map`, the credit's margin and its
+  line), on a low screen with fewer rows.
 
 **The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
 screen: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
