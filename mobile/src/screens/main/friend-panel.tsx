@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -16,7 +17,6 @@ import type { Presence } from '@/api/types';
 import {
   AppBar,
   Avatar,
-  Badge,
   Button,
   ChipRow,
   color,
@@ -115,7 +115,7 @@ function Groups({ friends, onMeet, onShow }: GroupsProps): ReactElement {
 }
 
 // "공유 설정" and "+ 친구 추가" close the panel and show their screen.
-function Footer({ seen, onLeave }: { seen: number; onLeave: () => void }): ReactElement {
+function Footer({ onLeave }: { onLeave: () => void }): ReactElement {
   const { bottom } = useSafeAreaInsets();
   const onShare = (): void => {
     onLeave();
@@ -127,12 +127,9 @@ function Footer({ seen, onLeave }: { seen: number; onLeave: () => void }): React
   };
   return (
     <View style={[styles.footer, { paddingBottom: space[6] + bottom }]}>
-      <View style={styles.sharing}>
-        <Badge tone="live">{`친구 ${seen}명과 위치 공유 중`}</Badge>
-        <Pressable accessibilityRole="link" hitSlop={space[2]} onPress={onShare}>
-          <Text style={styles.link}>공유 설정</Text>
-        </Pressable>
-      </View>
+      <Pressable accessibilityRole="link" hitSlop={space[2]} onPress={onShare} style={styles.sharing}>
+        <Text style={styles.link}>공유 설정</Text>
+      </Pressable>
       <Button full icon="plus" onPress={onAdd} size="lg" variant="secondary">
         친구 추가
       </Button>
@@ -140,9 +137,8 @@ function Footer({ seen, onLeave }: { seen: number; onLeave: () => void }): React
   );
 }
 
-// The friend panel, the `MainFriends` frame: every Friend by what they are doing, with a search and chips, how many
-// the User sees now, the way to the 위치 공유 card of 내 정보 and to 친구 추가. A Friend's calendar button closes the
-// panel and opens 파티 만들기 as 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
+// The friend panel, the `MainFriends` frame. A Friend's calendar button closes the panel and opens 파티 만들기 as
+// 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
 export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactElement {
   const { data: friends, isPending, refetch } = useFriends();
   const [query, setQuery] = useState('');
@@ -183,7 +179,7 @@ export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactE
         {shown === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
         {shown === undefined ? null : <Groups friends={shown} onMeet={onMeet} onShow={onShow} />}
       </ScrollView>
-      <Footer onLeave={onClose} seen={friends?.filter(({ visible }) => visible).length ?? 0} />
+      <Footer onLeave={onClose} />
     </SidePanel>
   );
 }
@@ -213,6 +209,6 @@ const styles = StyleSheet.create({
     borderTopColor: color.border,
     backgroundColor: color.surface,
   },
-  sharing: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
+  sharing: { alignSelf: 'flex-end' },
   link: { ...text.label, paddingVertical: space[3], color: color.blue600 },
 });

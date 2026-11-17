@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -247,16 +248,20 @@ function changeFriends(): void {
 }
 
 describe('friends-changed', () => {
-  it("refreshes the friend panel's count", async () => {
+  it('refreshes the friend panel', async () => {
     await openLive();
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await user.press(screen.getByRole('button', { name: FRIEND_PILL }));
-    expect(screen.getByText('친구 1명과 위치 공유 중')).toBeVisible();
+    expect(screen.getByRole('button', { name: '위치 꺼짐 1' })).toBeVisible();
 
     changeFriends();
     await signal();
 
-    expect(screen.getByText('친구 2명과 위치 공유 중')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /^위치 꺼짐/u })).toBeNull();
+    expect(screen.getByRole('button', { name: '전체 2' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '위치 켜짐 2' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '서지우님과 파티 만들기' })).toBeVisible();
+    expect(screen.queryByText(/명과 위치 공유 중$/u)).toBeNull();
   });
 
   it('refreshes 친구 관리 and 친구 요청', async () => {

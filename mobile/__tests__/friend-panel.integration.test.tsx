@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { screen, shownAddress } from './support/app';
@@ -154,10 +155,19 @@ describe("the friend panel's search and chips", () => {
 });
 
 describe("the friend panel's footer and buttons", () => {
-  it('counts the Friends the User sees now in its footer', async () => {
+  it.each([
+    ["the frame's twelve Friends", undefined],
+    ['Friends who have their location only on or off', 'listFriendStatuses'],
+    ['no Friends', 'listFriends'],
+  ])('has "공유 설정" and "친구 추가" but no banner of how many share, with %s', async (_, empty) => {
+    if (empty !== undefined) {
+      process.env.EXPO_PUBLIC_MOCK_EMPTY = empty;
+    }
     await openPanel();
 
-    expect(screen.getByText('친구 10명과 위치 공유 중')).toBeVisible();
+    expect(screen.queryByText(/명과 위치 공유 중$/u)).toBeNull();
+    expect(screen.getByRole('link', { name: '공유 설정' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '친구 추가' })).toBeVisible();
   });
 
   it('closes and shows 내 정보 at its 위치 공유 card from "공유 설정"', async () => {
@@ -168,5 +178,14 @@ describe("the friend panel's footer and buttons", () => {
     expect(screen.queryByRole('header', { name: '친구 12' })).toBeNull();
     expect(screen.getByRole('tab', { name: '내 정보' })).toBeSelected();
     expect(shownAddress()).toBe('/me?show=sharing');
+  });
+
+  it('closes and opens 친구 추가 from "친구 추가"', async () => {
+    const user = await openPanel();
+
+    await user.press(screen.getByRole('button', { name: '친구 추가' }));
+
+    expect(screen.queryByRole('header', { name: '친구 12' })).toBeNull();
+    expect(shownAddress()).toBe('/me/friends/add');
   });
 });
