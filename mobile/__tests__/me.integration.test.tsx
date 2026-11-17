@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import * as Location from 'expo-location';
@@ -198,7 +199,7 @@ describe('the 위치 공유 card', () => {
   });
 
   // The row is Android's, in a development build. Android's switch is found by its label only.
-  it('keeps the row 백그라운드에서도 공유 under the switch', async () => {
+  it('keeps the row 백그라운드에서도 공유', async () => {
     jest.replaceProperty(Platform, 'OS', 'android');
     jest.mocked(Location.isBackgroundLocationAvailableAsync).mockResolvedValue(true);
     await turnMasterOn();

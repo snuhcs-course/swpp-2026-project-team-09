@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -137,8 +138,8 @@ function NeverKept(): ReactElement {
   );
 }
 
-// 위치 공유 (`/me/location-sharing`, board n7b), from "위치 공유 보기": each Friend's level, the way to the Private Zones,
-// and what the app never keeps. The levels ask once, as on 친구 관리.
+// 위치 공유 (`/me/location-sharing`, board n7b), from "위치 공유 보기". It has no switch of its own (P15 ticket 1): 켜기
+// under 친구마다 turns the Master Switch on while it is off.
 export function LocationSharingScreen(): ReactElement {
   const levels = useLevels();
   return (

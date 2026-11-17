@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -77,8 +78,7 @@ function Whole(): ReactElement {
   );
 }
 
-// The 위치 공유 card: the Master Switch, the row for background sharing, the line that says the User is not shared off
-// campus or inside a Private Zone, and the way to the 위치 공유 screen.
+// The 위치 공유 card on 내 정보, the only place with the Master Switch (P15 ticket 1).
 export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): ReactElement {
   const { offCampus, privateZone } = useSending();
   return (
