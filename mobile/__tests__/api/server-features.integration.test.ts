@@ -7,6 +7,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -91,7 +92,6 @@ describe('the Friends from the main server', () => {
         level: 'exact',
         seen: 'exact',
         sharing: true,
-        askedOff: false,
       },
       {
         id: JI_WOO.id,
@@ -108,7 +108,6 @@ describe('the Friends from the main server', () => {
         level: 'exact',
         seen: 'timetable',
         sharing: true,
-        askedOff: false,
       },
     ]);
   });
