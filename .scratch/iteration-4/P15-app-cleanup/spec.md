@@ -34,10 +34,15 @@ An item is found by using the released app, on a phone or an emulator, and check
   - `Owner:` the GitHub ID of the person who does it. A change of hands changes only this line.
   - `Blocked by:` other tickets, pull requests, or nothing.
 - Numbers are split between the two workers so that new tickets never collide: 김태현 takes `01`–`49`, 안진영 takes `51`–`99`. Each takes the next free number in their own range.
+- When a ticket is finished, the agent work it took is recorded under that ticket's `## Comments`, as `CLAUDE.md`, "Usage reporting" says: one record per ticket, none for the spec as a whole.
 
 ### Items found during the work
 
 Items keep turning up while the others are being fixed. One found during the work may be drawn, written as a ticket, and fixed in the same pull request, with the ticket's acceptance criteria checked there. Its line is added to the list below in the same pull request.
+
+### Implementing a ticket
+
+- Before the code is touched, the item's after board is opened on the team canvas and kept at hand: the screen is made to match its layout and words. Where the board and the ticket differ, the ticket decides, and the difference is reported to the ticket's owner.
 
 ### Pull requests
 
@@ -45,6 +50,7 @@ Items keep turning up while the others are being fixed. One found during the wor
 - Two people do not change the same file at the same time. Items are split by screen where they can be.
 - A ticket that adds a database migration is ordered behind any other ticket that does (`Blocked by:`), since two branches that each add one collide. It also says that its change needs a Release of the main server.
 - A ticket that touches the app's native files (`CLAUDE.md`, "The app's native files") says so in its head, since its change needs a native Release.
+- The pull request's body shows the item's before and after boards from the team canvas as screenshots, where the body says what the pull request does, so that the reviewer compares the app against the drawing that was approved.
 
 ## The items
 
@@ -52,11 +58,11 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 
 ### 김태현 (`01`–`49`)
 
-1. 위치 공유 switch on two screens: keep it on 내 정보 only, and remove the counts under it.
-2. Each Friend's level (시간표만 / 지금 있는 건물 / 정확한 위치) on two screens: keep it on 위치 공유 only, and leave 친구 관리 a list of Friends.
-3. The 시간표 card on 내 정보: remove "빈 시간 말하기", a pressed class block opens that class, and reading an image comes back to 내 정보.
-4. The map's friend panel: remove the green "친구 N명과 위치 공유 중" banner.
-5. The 학과 field (프로필 편집, Onboarding): the words cover the search icon once the field is pressed.
+1. 위치 공유 switch on two screens: keep it on 내 정보 only, and remove the counts under it. Ticket [01](issues/01-one-sharing-switch.md).
+2. Each Friend's level (시간표만 / 지금 있는 건물 / 정확한 위치) on two screens: keep it on 위치 공유 only, and leave 친구 관리 a list of Friends. Ticket [02](issues/02-friend-levels-on-one-screen.md).
+3. The 시간표 card on 내 정보: remove "빈 시간 말하기", a pressed class block opens that class, and reading an image comes back to 내 정보. Ticket [03](issues/03-timetable-card.md).
+4. The map's friend panel: remove the green "친구 N명과 위치 공유 중" banner. Ticket [04](issues/04-friend-panel-banner.md).
+5. The 학과 field (프로필 편집, Onboarding): the words cover the search icon once the field is pressed. Ticket [05](issues/05-department-field-icon.md).
 
 ### 안진영 (`51`–`99`)
 
