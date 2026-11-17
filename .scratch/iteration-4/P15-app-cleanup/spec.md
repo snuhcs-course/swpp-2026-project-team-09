@@ -34,6 +34,7 @@ An item is found by using the released app, on a phone or an emulator, and check
   - `Owner:` the GitHub ID of the person who does it. A change of hands changes only this line.
   - `Blocked by:` other tickets, pull requests, or nothing.
 - Numbers are split between the two workers so that new tickets never collide: 김태현 takes `01`–`49`, 안진영 takes `51`–`99`. Each takes the next free number in their own range.
+- When a ticket is finished, the agent work it took is recorded under that ticket's `## Comments`, as `CLAUDE.md`, "Usage reporting" says: one record per ticket, none for the spec as a whole.
 
 ### Items found during the work
 
@@ -45,6 +46,7 @@ Items keep turning up while the others are being fixed. One found during the wor
 - Two people do not change the same file at the same time. Items are split by screen where they can be.
 - A ticket that adds a database migration is ordered behind any other ticket that does (`Blocked by:`), since two branches that each add one collide. It also says that its change needs a Release of the main server.
 - A ticket that touches the app's native files (`CLAUDE.md`, "The app's native files") says so in its head, since its change needs a native Release.
+- The pull request's body shows the item's before and after boards from the team canvas as screenshots, where the body says what the pull request does, so that the reviewer compares the app against the drawing that was approved.
 
 ## The items
 
