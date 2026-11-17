@@ -157,20 +157,22 @@ function fallbackModel(whole: object): { model: MockLanguageModelV4; calls: stri
     doGenerate: (options): Promise<Result> => {
       const system = options.prompt.find(({ role }) => role === 'system');
       const instructions = system?.role === 'system' ? system.content : '';
-      calls.push(instructions.slice(0, 40));
+      calls.push(instructions.includes('and where it starts') ? 'by id' : instructions.slice(0, 40));
       const answer = instructions.includes('read the layout')
         ? { title: '1', axis: [], blocks: [] }
-        : instructions.includes('report what is printed on it')
-          ? whole
-          : {
-              title: '1',
-              blocks: [1, 2].map((number) => ({
-                number,
-                nameLines: ['컴퓨터프로그래밍'],
-                name: '컴퓨터프로그래밍',
-                room: '302-105',
-              })),
-            };
+        : instructions.includes('and where it starts')
+          ? { title: '1', blocks: [] }
+          : instructions.includes('report what is printed on it')
+            ? whole
+            : {
+                title: '1',
+                blocks: [1, 2].map((number) => ({
+                  number,
+                  nameLines: ['컴퓨터프로그래밍'],
+                  name: '컴퓨터프로그래밍',
+                  room: '302-105',
+                })),
+              };
       return Promise.resolve({
         content: [{ type: 'text', text: JSON.stringify(answer) }],
         finishReason: { unified: 'stop', raw: undefined },
