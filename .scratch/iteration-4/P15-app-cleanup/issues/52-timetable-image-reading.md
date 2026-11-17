@@ -152,6 +152,11 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
 - **Review (TaeHyun79), round 2:** the phone's colours reach the near-miss check only when the answer is on the grid's
   blocks (no colour on the whole picture's fallback, where names alone ask for a second look); the route says
   `usedGrid`, and the phone counts the blocks it kept back only when it is true.
+- **Review (TaeHyun79), round 3:** the layout and text calls are now observed from the start
+  (`Promise.allSettled`); a failed layout aborts the text call and the reading fails with 503 (the phone then reads
+  the picture); a failed text call leaves the text to be read after the layout; a layout that places nothing refuses
+  the grid for the whole picture; a failed fading re-ask reads as no end. Unit tests check that no rejection is left
+  unhandled in each case.
 - **Spend:** about USD 0.87 for all experiments.
 
 ### Agent usage (2026-11-18)

@@ -107,6 +107,8 @@ export interface ReadingLimits {
   maxOutputTokens: number;
   // Whether the model may think first (adaptive thinking, the default). Off makes a short call quicker.
   thinking?: boolean;
+  // Ends the call early, as when the other call of a reading failed.
+  signal?: AbortSignal;
 }
 
 export interface TimetableImage {
@@ -137,7 +139,7 @@ async function ask<Answer>(
   image: TimetableImage,
   text: string,
   schema: z.ZodType<Answer>,
-  { timeoutMs, maxOutputTokens, thinking = true }: ReadingLimits,
+  { timeoutMs, maxOutputTokens, thinking = true, signal }: ReadingLimits,
 ): Promise<ModelCall<Answer>> {
   const { output, usage } = await generateText({
     model,
@@ -155,6 +157,7 @@ async function ask<Answer>(
     maxRetries: 0,
     maxOutputTokens,
     timeout: { totalMs: timeoutMs },
+    ...(signal === undefined ? {} : { abortSignal: signal }),
     providerOptions: {
       openrouter: { provider: { require_parameters: true, data_collection: 'deny' } },
       ...(thinking ? {} : { anthropic: { thinking: { type: 'disabled' } } }),

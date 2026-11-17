@@ -98,7 +98,8 @@ async function reaskedEnds(
     const block = grid.blocks[index];
     return block?.fades === true && placedEnd(block, place) === null ? [index] : [];
   });
-  const ends = await Promise.all(
+  // Each asked at once and each observed; a failed one reads as no end, so the block is left out.
+  const settled = await Promise.allSettled(
     asked.map(async (index) => {
       const place = placed[index];
       return place === undefined
@@ -106,6 +107,7 @@ async function reaskedEnds(
         : (await askForEnd(read.model, read.image, { day: place.day, start: place.start }, read.limits)).answer.end;
     }),
   );
+  const ends = settled.map((one) => (one.status === 'fulfilled' ? one.value : null));
   return {
     placed: placed.map((place, index) => {
       const at = asked.indexOf(index);
@@ -130,10 +132,25 @@ export async function readGrid(
   options: GridOptions = DEFAULT_GRID_OPTIONS,
 ): Promise<GridReading | null> {
   const read = { model, image, limits };
-  const layoutCall = askForGridText(model, image, grid.blocks, { ...limits, thinking: options.layoutThinking });
-  const idCall = options.parallel ? askForIdText(model, image, grid.blocks, limits) : null;
-  const layout = (await layoutCall).answer;
-  const idText = idCall === null ? null : (await idCall).answer;
+  // Both calls are observed from the start (P15-52 review): a rejection left unobserved would end the process. When
+  // the layout fails, the text call is aborted, since nothing can be placed; when the text call fails, the text is read
+  // after the layout instead.
+  const abort = new AbortController();
+  const signal = AbortSignal.any([abort.signal, ...(limits.signal === undefined ? [] : [limits.signal])]);
+  const layoutCall = askForGridText(model, image, grid.blocks, { ...limits, signal, thinking: options.layoutThinking });
+  const idCall = options.parallel ? askForIdText(model, image, grid.blocks, { ...limits, signal }) : null;
+  const [layoutDone, idDone] = await Promise.allSettled([
+    layoutCall.catch((error: unknown) => {
+      abort.abort();
+      throw error;
+    }),
+    idCall,
+  ]);
+  if (layoutDone.status === 'rejected') {
+    throw layoutDone.reason;
+  }
+  const layout = layoutDone.value.answer;
+  const idText = idDone.status === 'fulfilled' && idDone.value !== null ? idDone.value.answer : null;
   const first = placedBlocks(grid, layout);
   if (first === null) {
     return null;
