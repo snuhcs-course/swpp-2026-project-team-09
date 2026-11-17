@@ -52,11 +52,11 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 
 ### 김태현 (`01`–`49`)
 
-1. 위치 공유 switch on two screens: keep it on 내 정보 only, and remove the counts under it.
-2. Each Friend's level (시간표만 / 지금 있는 건물 / 정확한 위치) on two screens: keep it on 위치 공유 only, and leave 친구 관리 a list of Friends.
-3. The 시간표 card on 내 정보: remove "빈 시간 말하기", a pressed class block opens that class, and reading an image comes back to 내 정보.
-4. The map's friend panel: remove the green "친구 N명과 위치 공유 중" banner.
-5. The 학과 field (프로필 편집, Onboarding): the words cover the search icon once the field is pressed.
+1. 위치 공유 switch on two screens: keep it on 내 정보 only, and remove the counts under it. Ticket [01](issues/01-one-sharing-switch.md).
+2. Each Friend's level (시간표만 / 지금 있는 건물 / 정확한 위치) on two screens: keep it on 위치 공유 only, and leave 친구 관리 a list of Friends. Ticket [02](issues/02-friend-levels-on-one-screen.md).
+3. The 시간표 card on 내 정보: remove "빈 시간 말하기", a pressed class block opens that class, and reading an image comes back to 내 정보. Ticket [03](issues/03-timetable-card.md).
+4. The map's friend panel: remove the green "친구 N명과 위치 공유 중" banner. Ticket [04](issues/04-friend-panel-banner.md).
+5. The 학과 field (프로필 편집, Onboarding): the words cover the search icon once the field is pressed. Ticket [05](issues/05-department-field-icon.md).
 
 ### 안진영 (`51`–`99`)
 
