@@ -156,11 +156,13 @@ describe("the friend panel's search and chips", () => {
 
 describe("the friend panel's footer and buttons", () => {
   it.each([
-    ["the frame's twelve Friends", ''],
+    ["the frame's twelve Friends", undefined],
     ['Friends who have their location only on or off', 'listFriendStatuses'],
     ['no Friends', 'listFriends'],
-  ])('has "공유 설정" and 친구 추가 but no banner of how many share, with %s', async (_, empty) => {
-    process.env.EXPO_PUBLIC_MOCK_EMPTY = empty;
+  ])('has "공유 설정" and "친구 추가" but no banner of how many share, with %s', async (_, empty) => {
+    if (empty !== undefined) {
+      process.env.EXPO_PUBLIC_MOCK_EMPTY = empty;
+    }
     await openPanel();
 
     expect(screen.queryByText(/명과 위치 공유 중$/u)).toBeNull();

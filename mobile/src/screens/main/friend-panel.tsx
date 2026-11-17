@@ -137,9 +137,8 @@ function Footer({ onLeave }: { onLeave: () => void }): ReactElement {
   );
 }
 
-// The friend panel, the `MainFriends` frame: every Friend by what they are doing, with a search and chips, the way
-// to the 위치 공유 card of 내 정보 and to 친구 추가. A Friend's calendar button closes the panel and opens 파티 만들기
-// as 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
+// The friend panel, the `MainFriends` frame. A Friend's calendar button closes the panel and opens 파티 만들기 as
+// 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
 export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactElement {
   const { data: friends, isPending, refetch } = useFriends();
   const [query, setQuery] = useState('');

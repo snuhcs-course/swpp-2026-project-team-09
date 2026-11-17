@@ -258,6 +258,10 @@ describe('friends-changed', () => {
     await signal();
 
     expect(screen.queryByRole('button', { name: /^위치 꺼짐/u })).toBeNull();
+    expect(screen.getByRole('button', { name: '전체 2' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '위치 켜짐 2' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '서지우님과 파티 만들기' })).toBeVisible();
+    expect(screen.queryByText(/명과 위치 공유 중$/u)).toBeNull();
   });
 
   it('refreshes 친구 관리 and 친구 요청', async () => {
